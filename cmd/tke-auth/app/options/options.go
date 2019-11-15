@@ -48,7 +48,7 @@ func NewOptions(serverName string) *Options {
 		Generic:        apiserveroptions.NewGenericOptions(),
 		Authentication: apiserveroptions.NewAuthenticationWithAPIOptions(),
 		Authorization:  NewAuthorizationOptions(),
-		ETCD:           storageoptions.NewETCDStorageOptions("/tke/auth"),
+		ETCD:           storageoptions.NewETCDStorageOptions("/tke/auth-api"),
 		Auth:           NewAuthOptions(),
 	}
 }

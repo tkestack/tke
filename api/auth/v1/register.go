@@ -38,16 +38,24 @@ var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
 	// AddToScheme applies all the stored functions to the scheme.
-	AddToScheme = localSchemeBuilder.AddToScheme
+	AddToScheme = SchemeBuilder.AddToScheme
 )
 
 func init() {
 	localSchemeBuilder.Register(addKnownTypes, addConversionFuncs, addDefaultingFuncs)
 }
 
-// Adds the list of known types to the given scheme.
+// addKnownTypes adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion)
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&LocalIdentity{},
+		&LocalIdentityList{},
+		&APIKey{},
+		&APIKeyList{},
+		&APIKeyReq{},
+		&APIKeyReqPassword{},
+	)
+
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }

@@ -23,15 +23,20 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/fields"
+	"strconv"
+	authapi "tkestack.io/tke/api/auth"
+
 	"github.com/dexidp/dex/connector"
 	dexlog "github.com/dexidp/dex/pkg/log"
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
-	"strconv"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	restclient "k8s.io/client-go/rest"
+
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
-	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
-	"tkestack.io/tke/pkg/auth/registry/localidentity"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -42,24 +47,22 @@ var (
 
 // Config holds the configuration parameters for tke local connector login.
 type Config struct {
-	EtcdOpts storageoptions.ETCDClientOptions
+	LookbackClientConfig restclient.Config
 }
 
 // Open returns a strategy for logging in through TKE
 func (c *Config) Open(id string, logger dexlog.Logger) (
 	connector.Connector, error) {
-	client, err := c.EtcdOpts.NewClient()
-	if err != nil {
-		return nil, err
-	}
 
-	return &localIdentityProvider{identityStore: localidentity.NewLocalIdentity(client), tenantID: id}, nil
+	authClient := authinternalclient.NewForConfigOrDie(&c.LookbackClientConfig)
+
+	return &localIdentityProvider{authClient: authClient, tenantID: id}, nil
 }
 
 // NewLocalConnector creates a demo tke connector when there is no connector in backend.
-func NewLocalConnector(etcdOpts *storageoptions.ETCDClientOptions, tenantID string) (*dexstorage.Connector, error) {
+func NewLocalConnector(loopbackClientConfig *restclient.Config, tenantID string) (*dexstorage.Connector, error) {
 	bytes, err := json.Marshal(Config{
-		*etcdOpts,
+		*loopbackClientConfig,
 	})
 	if err != nil {
 		return nil, err
@@ -74,8 +77,8 @@ func NewLocalConnector(etcdOpts *storageoptions.ETCDClientOptions, tenantID stri
 }
 
 type localIdentityProvider struct {
-	tenantID      string
-	identityStore *localidentity.Storage
+	tenantID   string
+	authClient *authinternalclient.AuthClient
 }
 
 func (p *localIdentityProvider) Prompt() string {
@@ -89,7 +92,7 @@ func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scop
 	}
 
 	log.Debug("Check user login", log.String("tenantID", p.tenantID), log.String("username", username), log.String("password", password))
-	localIdentity, err := p.identityStore.Get(p.tenantID, username)
+	localIdentity, err := p.getLocalIdentity(p.tenantID, username)
 	if err != nil {
 		log.Error("Get user failed", log.String("user", username), log.Err(err))
 		return ident, false, nil
@@ -108,22 +111,19 @@ func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scop
 	extra := map[string]string{
 		oidc.TenantIDKey: localIdentity.Spec.TenantID,
 	}
-	if localIdentity.Status != nil {
-		extra["status"] = strconv.FormatBool(localIdentity.Status.Locked)
-	}
+
+	extra["status"] = strconv.FormatBool(localIdentity.Status.Locked)
 
 	if ident.ConnectorData, err = json.Marshal(extra); err != nil {
 		log.Error("Marshal extra data failed", log.Err(err))
 		return ident, false, nil
 	}
 
-	ident.UserID = localIdentity.UID
-	ident.Username = localIdentity.Name
+	ident.UserID = localIdentity.ObjectMeta.Name
+	ident.Username = localIdentity.Spec.UserName
 	ident.Groups = localIdentity.Spec.Groups
 
-	if email, ok := localIdentity.Spec.Extra["email"]; ok {
-		ident.Email = email
-	}
+	ident.Email = localIdentity.Spec.Email
 
 	if emailVerified, ok := localIdentity.Spec.Extra["emailVerified"]; ok {
 		ident.EmailVerified, _ = strconv.ParseBool(emailVerified)
@@ -136,7 +136,7 @@ func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scop
 
 func (p *localIdentityProvider) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
 	// If the user has been deleted, the refresh token will be rejected.
-	ident, err := p.identityStore.Get(p.tenantID, identity.Username)
+	ident, err := p.getLocalIdentity(p.tenantID, identity.Username)
 	if err != nil {
 		if err == dexstorage.ErrNotFound {
 			return connector.Identity{}, errors.New("user not found")
@@ -145,9 +145,26 @@ func (p *localIdentityProvider) Refresh(ctx context.Context, s connector.Scopes,
 	}
 
 	// User removed but a new user with the same name exists.
-	if ident.UID != identity.UserID {
+	if ident.ObjectMeta.Name != identity.UserID {
 		return connector.Identity{}, errors.New("user not found")
 	}
 
 	return identity, nil
+}
+
+func (p *localIdentityProvider) getLocalIdentity(tenantID, userName string) (authapi.LocalIdentity, error) {
+	tenantUserSelector := fields.AndSelectors(
+		fields.OneTermEqualSelector("spec.tenantID", tenantID),
+		fields.OneTermEqualSelector("spec.userName", userName))
+
+	localIdentityList, err := p.authClient.LocalIdentities().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	if err != nil {
+		return authapi.LocalIdentity{}, err
+	}
+
+	if len(localIdentityList.Items) == 0 {
+		return authapi.LocalIdentity{}, err
+	}
+
+	return localIdentityList.Items[0], nil
 }

@@ -97,7 +97,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	return m, nil
 }
 
-// InstallAPIs will install the APIs for the restStorageProviders if they are enabled.
+// InstallAPIs will install th(assoc emp :EmployeeRank "A")e APIs for the restStorageProviders if they are enabled.
 func (m *APIServer) InstallAPIs(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter, restStorageProviders ...storage.RESTStorageProvider) {
 	var apiGroupsInfo []genericapiserver.APIGroupInfo
 

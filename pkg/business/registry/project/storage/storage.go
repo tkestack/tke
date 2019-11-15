@@ -122,6 +122,7 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 	if err := util.FilterProject(ctx, o); err != nil {
 		return nil, err
 	}
+
 	return o, nil
 }
 

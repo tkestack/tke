@@ -21,15 +21,25 @@ package config
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
+	authapi "tkestack.io/tke/api/auth"
+	"tkestack.io/tke/pkg/apiserver/storage"
+	"tkestack.io/tke/pkg/auth"
+	"tkestack.io/tke/pkg/auth/apiserver"
+
 	"github.com/casbin/casbin"
 	casbinlog "github.com/casbin/casbin/log"
 	casbinutil "github.com/casbin/casbin/util"
+	"github.com/coreos/etcd/clientv3"
 	dexserver "github.com/dexidp/dex/server"
-	"github.com/dexidp/dex/storage"
+	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/dexidp/dex/storage/etcd"
 	"github.com/go-openapi/spec"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.etcd.io/etcd/clientv3"
+	"github.com/sirupsen/logrus"
 	genericauthenticator "k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/group"
 	"k8s.io/apiserver/pkg/authentication/request/bearertoken"
@@ -37,30 +47,27 @@ import (
 	"k8s.io/apiserver/pkg/authentication/request/websocket"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/apiserver/pkg/server/healthz"
-	"net/http"
-	"regexp"
-	"strings"
-	"time"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	restclient "k8s.io/client-go/rest"
+	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
+	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
+	generatedopenapi "tkestack.io/tke/api/openapi"
 	"tkestack.io/tke/cmd/tke-auth/app/options"
-	"tkestack.io/tke/pkg/apiserver"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/apiserver/debug"
 	"tkestack.io/tke/pkg/apiserver/handler"
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
-	"tkestack.io/tke/pkg/auth"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
 	"tkestack.io/tke/pkg/auth/authorization/aggregation"
 	casbinlogger "tkestack.io/tke/pkg/auth/logger"
-	authopenapi "tkestack.io/tke/pkg/auth/openapi"
+
 	"tkestack.io/tke/pkg/auth/registry"
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/util/adapter"
 	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/log/dex"
 )
 
 const (
@@ -89,26 +96,31 @@ m = g(r.sub, p.sub)  && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.
 
 // Config is the running configuration structure of the TKE controller manager.
 type Config struct {
-	ServerName             string
-	OIDCExternalAddress    string
-	GenericAPIServerConfig *genericapiserver.Config
-	DexServer              *dexserver.Server
-	CasbinEnforcer         *casbin.SyncedEnforcer
-	Registry               *registry.Registry
-	TokenAuthn             *authenticator.TokenAuthenticator
-	APIKeyAuthn            *authenticator.APIKeyAuthenticator
-	Authorizer             authorizer.Authorizer
-	PolicyFile             string
-	CategoryFile           string
-	TenantAdmin            string
-	TenantAdminSecret      string
+	ServerName                     string
+	OIDCExternalAddress            string
+	GenericAPIServerConfig         *genericapiserver.Config
+	VersionedSharedInformerFactory versionedinformers.SharedInformerFactory
+	StorageFactory                 *serverstorage.DefaultStorageFactory
+
+	DexServer         *dexserver.Server
+	CasbinEnforcer    *casbin.SyncedEnforcer
+	Registry          *registry.Registry
+	TokenAuthn        *authenticator.TokenAuthenticator
+	APIKeyAuthn       *authenticator.APIKeyAuthenticator
+	Authorizer        authorizer.Authorizer
+	PolicyFile        string
+	CategoryFile      string
+	TenantAdmin       string
+	TenantAdminSecret string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
 // on a given TKE auth command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
-	genericAPIServerConfig := genericapiserver.NewConfig(apiserver.Codecs)
+	genericAPIServerConfig := genericapiserver.NewConfig(authapi.Codecs)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(auth.IgnoreAuthPathPrefixes())
+	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
+
 	genericAPIServerConfig.EnableIndex = false
 
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
@@ -118,10 +130,35 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	openapi.SetupOpenAPI(genericAPIServerConfig, authopenapi.GetOpenAPIDefinitions, title, license, opts.Generic.ExternalHost, opts.Generic.ExternalPort)
+	openapi.SetupOpenAPI(genericAPIServerConfig, generatedopenapi.GetOpenAPIDefinitions, title, license, opts.Generic.ExternalHost, opts.Generic.ExternalPort)
 	debug.SetupDebug(genericAPIServerConfig, opts.Debug)
 
-	etcdClient, err := setupETCDClient(genericAPIServerConfig, opts.ETCD)
+	// storageFactory
+	storageFactoryConfig := storage.NewFactoryConfig(authapi.Codecs, authapi.Scheme)
+	storageFactoryConfig.APIResourceConfig = genericAPIServerConfig.MergedResourceConfig
+	completedStorageFactoryConfig, err := storageFactoryConfig.Complete(opts.ETCD)
+	if err != nil {
+		return nil, err
+	}
+	storageFactory, err := completedStorageFactoryConfig.New()
+	if err != nil {
+		return nil, err
+	}
+	if err := opts.ETCD.ApplyWithStorageFactoryTo(storageFactory, genericAPIServerConfig); err != nil {
+		return nil, err
+	}
+
+	// client config
+	genericAPIServerConfig.LoopbackClientConfig.ContentConfig.ContentType = "application/vnd.kubernetes.protobuf"
+
+	kubeClientConfig := genericAPIServerConfig.LoopbackClientConfig
+	clientgoExternalClient, err := versionedclientset.NewForConfig(kubeClientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create real external clientset: %v", err)
+	}
+	versionedInformers := versionedinformers.NewSharedInformerFactory(clientgoExternalClient, 10*time.Minute)
+
+	etcdClient, err := setupETCDClient(opts.ETCD)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +194,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	err = setupDefaultConnectorConfig(opts.ETCD, r, opts.Auth)
+	err = setupDefaultConnectorConfig(genericAPIServerConfig.LoopbackClientConfig, r, opts.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -173,19 +210,21 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 
 	return &Config{
-		ServerName:             serverName,
-		OIDCExternalAddress:    dexConfig.Issuer,
-		GenericAPIServerConfig: genericAPIServerConfig,
-		DexServer:              dexServer,
-		CasbinEnforcer:         enforcer,
-		Registry:               r,
-		TokenAuthn:             tokenAuth,
-		APIKeyAuthn:            apiKeyAuth,
-		Authorizer:             aggregateAuthz,
-		CategoryFile:           opts.Auth.CategoryFile,
-		PolicyFile:             opts.Auth.PolicyFile,
-		TenantAdmin:            opts.Auth.TenantAdmin,
-		TenantAdminSecret:      opts.Auth.TenantAdminSecret,
+		ServerName:                     serverName,
+		OIDCExternalAddress:            dexConfig.Issuer,
+		GenericAPIServerConfig:         genericAPIServerConfig,
+		StorageFactory:                 storageFactory,
+		VersionedSharedInformerFactory: versionedInformers,
+		DexServer:                      dexServer,
+		CasbinEnforcer:                 enforcer,
+		Registry:                       r,
+		TokenAuthn:                     tokenAuth,
+		APIKeyAuthn:                    apiKeyAuth,
+		Authorizer:                     aggregateAuthz,
+		CategoryFile:                   opts.Auth.CategoryFile,
+		PolicyFile:                     opts.Auth.PolicyFile,
+		TenantAdmin:                    opts.Auth.TenantAdmin,
+		TenantAdminSecret:              opts.Auth.TenantAdminSecret,
 	}, nil
 }
 
@@ -221,22 +260,16 @@ func setupAuthorization(genericAPIServerConfig *genericapiserver.Config, authori
 	genericAPIServerConfig.Authorization.Authorizer = authorizer
 }
 
-func setupETCDClient(genericAPIServerConfig *genericapiserver.Config, etcdOpts *storageoptions.ETCDStorageOptions) (*clientv3.Client, error) {
+func setupETCDClient(etcdOpts *storageoptions.ETCDStorageOptions) (*clientv3.Client, error) {
 	client, err := etcdOpts.NewClient()
 	if err != nil {
 		return nil, err
 	}
-	healthCheck, err := etcdOpts.NewHealthCheck()
-	if err != nil {
-		return nil, err
-	}
-	genericAPIServerConfig.HealthzChecks = append(genericAPIServerConfig.HealthzChecks, healthz.NamedCheck("etcd", func(r *http.Request) error {
-		return healthCheck()
-	}))
 	return client, nil
 }
 
 func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, templatePath string, tokenTimeout time.Duration, host string, port int) (*dexserver.Config, error) {
+	logger := logrus.NewLogger(log.ZapLogger())
 	issuer := issuer(host, port)
 	namespace := etcdOpts.Prefix
 	if !strings.HasSuffix(namespace, "/") {
@@ -252,7 +285,6 @@ func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, templatePath st
 		},
 	}
 
-	logger := dex.NewLogger(log.ZapLogger())
 	store, err := opts.Open(logger)
 	if err != nil {
 		return nil, err
@@ -313,7 +345,7 @@ func setupCasbinEnforcer(etcdClient *clientv3.Client, authorizationOptions *opti
 	return enforcer, nil
 }
 
-func setupDefaultConnectorConfig(etcdOpts *storageoptions.ETCDStorageOptions, r *registry.Registry, auth *options.AuthOptions) error {
+func setupDefaultConnectorConfig(loopbackClientConfig *restclient.Config, r *registry.Registry, auth *options.AuthOptions) error {
 	// create dex local identity provider for tke connector.
 	dexserver.ConnectorsConfig[local.TkeConnectorType] = func() dexserver.ConnectorConfig {
 		return new(local.Config)
@@ -332,7 +364,7 @@ func setupDefaultConnectorConfig(etcdOpts *storageoptions.ETCDStorageOptions, r 
 		}
 	}
 	if !exists {
-		tkeConn, err := local.NewLocalConnector(etcdOpts.ETCDClientOptions, auth.InitTenantID)
+		tkeConn, err := local.NewLocalConnector(loopbackClientConfig, auth.InitTenantID)
 		if err != nil {
 			return err
 		}
@@ -359,7 +391,7 @@ func setupDefaultClient(r *registry.Registry, auth *options.AuthOptions) error {
 		}
 	}
 	if !exists {
-		cli := storage.Client{
+		cli := dexstorage.Client{
 			ID:           auth.InitClientID,
 			Secret:       auth.InitClientSecret,
 			Name:         auth.InitClientID,

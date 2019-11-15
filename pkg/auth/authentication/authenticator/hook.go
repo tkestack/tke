@@ -63,6 +63,8 @@ func (h *ProviderHookHandler) PostStartHook() (string, server.PostStartHookFunc,
 				string(jose.RS256),
 			},
 		})
+
+		log.Infof("internal address %s, public address %s", h.internalAddress, h.publicAddress)
 		if err != nil {
 			log.Error("Failed to create the oidc verifier", log.Err(err))
 			return err
