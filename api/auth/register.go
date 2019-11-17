@@ -65,6 +65,12 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&APIKey{},
 		&APIKeyList{},
 		&APIKeyReq{},
-		&APIKeyReqPassword{})
+		&APIKeyReqPassword{},
+		&APISigningKey{},
+		&APISigningKeyList{},
+
+		&ConfigMap{},
+		&ConfigMapList{})
+
 	return nil
 }

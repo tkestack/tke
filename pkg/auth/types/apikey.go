@@ -76,7 +76,7 @@ type APIKeyReqPassword struct {
 	// TenantID for user
 	TenantID string `json:"tenantID,omitempty"`
 
-	// UserName
+	// Username
 	UserName string `json:"username,omitempty"`
 
 	// Password (encoded by base64)

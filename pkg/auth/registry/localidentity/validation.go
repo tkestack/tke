@@ -25,6 +25,8 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/auth"
+	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/validation"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -35,32 +37,47 @@ var (
 )
 
 // ValidateLocalIdentity tests if required fields in the identity are set.
-func ValidateLocalIdentity(authClient *authinternalclient.AuthClient, localIdentity *auth.LocalIdentity, validateCheck bool) field.ErrorList {
+func ValidateLocalIdentity(authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, updateCheck bool) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&localIdentity.ObjectMeta, false, apiMachineryValidation.NameIsDNSSubdomain, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
-	if localIdentity.Spec.UserName == "" {
-		allErrs = append(allErrs, field.Required(fldSpecPath.Child("userName"), "must specify userName"))
-	}
-
-	if err := validation.IsDNS1123Name(localIdentity.Spec.UserName); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("userName"), localIdentity.Spec.UserName, err.Error()))
-	}
-
-	if _, ok := reservedNames[localIdentity.Spec.UserName]; ok {
-		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("userName"), localIdentity.Spec.UserName, `userName is reserved`))
-	}
-
-	if !validateCheck {
-		if exists, err := localIdentityExists(authClient, localIdentity.Spec.TenantID, localIdentity.Spec.UserName); err != nil {
-			allErrs = append(allErrs, field.InternalError(fldSpecPath.Child("userName"), err))
-		} else if exists {
-			allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("userName"), localIdentity.Spec.UserName,
-				fmt.Sprintf("%s %q already exists", auth.Resource("localidentities").String(), localIdentity.Spec.UserName)))
+	if localIdentity.Spec.Username == "" {
+		allErrs = append(allErrs, field.Required(fldSpecPath.Child("username"), "must specify username"))
+	} else {
+		if err := validation.IsDNS1123Name(localIdentity.Spec.Username); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("username"), localIdentity.Spec.Username, err.Error()))
 		}
 
-		if len(localIdentity.Spec.HashedPassword) == 0 {
-			allErrs = append(allErrs, field.Required(fldSpecPath.Child("hashedPassword"), "password is empty or invalid"))
+		if _, ok := reservedNames[localIdentity.Spec.Username]; ok {
+			allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("username"), localIdentity.Spec.Username, `username is reserved`))
+		}
+
+		if !updateCheck {
+			if exists, err := localIdentityExists(authClient, localIdentity.Spec.TenantID, localIdentity.Spec.Username); err != nil {
+				allErrs = append(allErrs, field.InternalError(fldSpecPath.Child("username"), err))
+			} else if exists {
+				allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("username"), localIdentity.Spec.Username,
+					fmt.Sprintf("%s %q already exists", auth.Resource("localidentities").String(), localIdentity.Spec.Username)))
+			}
+		}
+	}
+
+	log.Info("xxx", log.Any("xxx", localIdentity.Spec))
+	if !updateCheck {
+		if localIdentity.Spec.HashedPassword == "" {
+			allErrs = append(allErrs, field.Required(fldSpecPath.Child("hashedPassword"), "must specify hashedPassword"))
+		} else if bcrypted, err := util.BcryptPassword(localIdentity.Spec.HashedPassword); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("hashedPassword"), localIdentity.Spec.HashedPassword, err.Error()))
+		} else {
+			localIdentity.Spec.HashedPassword = bcrypted
+		}
+	} else {
+		if localIdentity.Spec.HashedPassword != "" {
+			if bcrypted, err := util.BcryptPassword(localIdentity.Spec.HashedPassword); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("hashedPassword"), localIdentity.Spec.HashedPassword, err.Error()))
+			} else {
+				localIdentity.Spec.HashedPassword = bcrypted
+			}
 		}
 	}
 
@@ -85,7 +102,7 @@ func ValidateLocalIdentity(authClient *authinternalclient.AuthClient, localIdent
 
 // ValidateLocalIdentityUpdate tests if required fields in the localIdentity are set
 // during an update.
-func ValidateLocalIdentityUpdate(authClient *authinternalclient.AuthClient, localIdentity *auth.LocalIdentity, oldLocalIdentity *auth.LocalIdentity) field.ErrorList {
+func ValidateLocalIdentityUpdate(authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, oldLocalIdentity *auth.LocalIdentity) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, ValidateLocalIdentity(authClient, localIdentity, true)...)
@@ -96,17 +113,17 @@ func ValidateLocalIdentityUpdate(authClient *authinternalclient.AuthClient, loca
 		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("tenantID"), localIdentity.Spec.TenantID, "disallowed change the tenant"))
 	}
 
-	if localIdentity.Spec.UserName != oldLocalIdentity.Spec.UserName {
-		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("userName"), localIdentity.Spec.UserName, "disallowed change the userName"))
+	if localIdentity.Spec.Username != oldLocalIdentity.Spec.Username {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("username"), localIdentity.Spec.Username, "disallowed change the username"))
 	}
 
 	return allErrs
 }
 
-func localIdentityExists(authClient *authinternalclient.AuthClient, tenantID, userName string) (bool, error) {
+func localIdentityExists(authClient authinternalclient.AuthInterface, tenantID, username string) (bool, error) {
 	tenantUserSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
-		fields.OneTermEqualSelector("spec.userName", userName))
+		fields.OneTermEqualSelector("spec.username", username))
 
 	localIdentityList, err := authClient.LocalIdentities().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {

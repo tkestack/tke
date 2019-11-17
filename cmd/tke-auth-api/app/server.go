@@ -20,7 +20,7 @@ package app
 
 import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"tkestack.io/tke/cmd/tke-auth/app/config"
+	"tkestack.io/tke/cmd/tke-auth-api/app/config"
 	"tkestack.io/tke/pkg/auth/apiserver"
 )
 
@@ -59,8 +59,10 @@ func createAuthConfig(cfg *config.Config) *apiserver.Config {
 			Authorizer:              cfg.Authorizer,
 			PolicyFile:              cfg.PolicyFile,
 			CategoryFile:            cfg.CategoryFile,
+			TenantID:                cfg.TenantID,
 			TenantAdmin:             cfg.TenantAdmin,
 			TenantAdminSecret:       cfg.TenantAdminSecret,
+			PrivilegedUsername:      cfg.PrivilegedUsername,
 		},
 	}
 }

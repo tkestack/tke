@@ -21,6 +21,7 @@ package auth
 import (
 	"context"
 	"fmt"
+
 	"github.com/casbin/casbin"
 	dexserver "github.com/dexidp/dex/server"
 	"github.com/emicklei/go-restful"
@@ -30,7 +31,6 @@ import (
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
 	"tkestack.io/tke/pkg/auth/authentication/tenant"
 	"tkestack.io/tke/pkg/auth/authorization/enforcer"
-	apikeyhandler "tkestack.io/tke/pkg/auth/handler/apikey"
 	authnhandler "tkestack.io/tke/pkg/auth/handler/authn"
 	authzhandler "tkestack.io/tke/pkg/auth/handler/authz"
 	categoryhandler "tkestack.io/tke/pkg/auth/handler/category"
@@ -64,6 +64,7 @@ type ExtraConfig struct {
 	Authorizer          authorizer.Authorizer
 	CategoryFile        string
 	PolicyFile          string
+	TenantID            string
 	TenantAdmin         string
 	TenantAdminSecret   string
 }
@@ -148,9 +149,6 @@ func (c completedConfig) registerRoute(container *restful.Container, mux *mux.Pa
 	authz := authzhandler.NewHandler(c.ExtraConfig.Authorizer)
 	route.RegisterAuthRoute(container, token, authz)
 
-	apiKey := apikeyhandler.NewHandler(c.ExtraConfig.APIKeyAuthn)
-	route.RegisterAPIKeyRoute(container, apiKey)
-
 	helper := tenant.NewHelper(c.ExtraConfig.Registry, policy.Service(), c.ExtraConfig.PolicyFile, c.ExtraConfig.CategoryFile, c.ExtraConfig.TenantAdmin, c.ExtraConfig.TenantAdminSecret)
 	idp := idphandler.NewHandler(c.ExtraConfig.Registry.DexStorage(), helper)
 	route.RegisterIdentityProviderRoute(container, idp)
@@ -161,7 +159,7 @@ func (c completedConfig) registerRoute(container *restful.Container, mux *mux.Pa
 
 // registerAuthnHook is used to register postStart hook to create authn provider with local oidc server.
 func (c completedConfig) registerAuthnHook(s *genericapiserver.GenericAPIServer) error {
-	authnProvider := authenticator.NewProviderHookHandler(context.Background(), c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, types.IssuerName), c.ExtraConfig.TokenAuthn)
+	authnProvider := authenticator.NewAuthnHookHandler(context.Background(), c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, types.IssuerName), c.ExtraConfig.TokenAuthn)
 	name, hook, err := authnProvider.PostStartHook()
 	if err != nil {
 		return err

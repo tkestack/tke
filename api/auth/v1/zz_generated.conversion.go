@@ -95,6 +95,46 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*APISigningKey)(nil), (*auth.APISigningKey)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_APISigningKey_To_auth_APISigningKey(a.(*APISigningKey), b.(*auth.APISigningKey), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.APISigningKey)(nil), (*APISigningKey)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_APISigningKey_To_v1_APISigningKey(a.(*auth.APISigningKey), b.(*APISigningKey), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*APISigningKeyList)(nil), (*auth.APISigningKeyList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_APISigningKeyList_To_auth_APISigningKeyList(a.(*APISigningKeyList), b.(*auth.APISigningKeyList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.APISigningKeyList)(nil), (*APISigningKeyList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_APISigningKeyList_To_v1_APISigningKeyList(a.(*auth.APISigningKeyList), b.(*APISigningKeyList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ConfigMap)(nil), (*auth.ConfigMap)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ConfigMap_To_auth_ConfigMap(a.(*ConfigMap), b.(*auth.ConfigMap), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ConfigMap)(nil), (*ConfigMap)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ConfigMap_To_v1_ConfigMap(a.(*auth.ConfigMap), b.(*ConfigMap), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ConfigMapList)(nil), (*auth.ConfigMapList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ConfigMapList_To_auth_ConfigMapList(a.(*ConfigMapList), b.(*auth.ConfigMapList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ConfigMapList)(nil), (*ConfigMapList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ConfigMapList_To_v1_ConfigMapList(a.(*auth.ConfigMapList), b.(*ConfigMapList), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*LocalIdentity)(nil), (*auth.LocalIdentity)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_LocalIdentity_To_auth_LocalIdentity(a.(*LocalIdentity), b.(*auth.LocalIdentity), scope)
 	}); err != nil {
@@ -216,7 +256,7 @@ func Convert_auth_APIKeyReq_To_v1_APIKeyReq(in *auth.APIKeyReq, out *APIKeyReq, 
 
 func autoConvert_v1_APIKeyReqPassword_To_auth_APIKeyReqPassword(in *APIKeyReqPassword, out *auth.APIKeyReqPassword, s conversion.Scope) error {
 	out.TenantID = in.TenantID
-	out.UserName = in.UserName
+	out.Username = in.Username
 	out.Password = in.Password
 	out.Description = in.Description
 	out.Expire = in.Expire
@@ -230,7 +270,7 @@ func Convert_v1_APIKeyReqPassword_To_auth_APIKeyReqPassword(in *APIKeyReqPasswor
 
 func autoConvert_auth_APIKeyReqPassword_To_v1_APIKeyReqPassword(in *auth.APIKeyReqPassword, out *APIKeyReqPassword, s conversion.Scope) error {
 	out.TenantID = in.TenantID
-	out.UserName = in.UserName
+	out.Username = in.Username
 	out.Password = in.Password
 	out.Description = in.Description
 	out.Expire = in.Expire
@@ -245,6 +285,7 @@ func Convert_auth_APIKeyReqPassword_To_v1_APIKeyReqPassword(in *auth.APIKeyReqPa
 func autoConvert_v1_APIKeySpec_To_auth_APIKeySpec(in *APIKeySpec, out *auth.APIKeySpec, s conversion.Scope) error {
 	out.APIkey = in.APIkey
 	out.TenantID = in.TenantID
+	out.Username = in.Username
 	out.Description = in.Description
 	out.IssueAt = in.IssueAt
 	out.ExpireAt = in.ExpireAt
@@ -259,6 +300,7 @@ func Convert_v1_APIKeySpec_To_auth_APIKeySpec(in *APIKeySpec, out *auth.APIKeySp
 func autoConvert_auth_APIKeySpec_To_v1_APIKeySpec(in *auth.APIKeySpec, out *APIKeySpec, s conversion.Scope) error {
 	out.APIkey = in.APIkey
 	out.TenantID = in.TenantID
+	out.Username = in.Username
 	out.Description = in.Description
 	out.IssueAt = in.IssueAt
 	out.ExpireAt = in.ExpireAt
@@ -271,8 +313,7 @@ func Convert_auth_APIKeySpec_To_v1_APIKeySpec(in *auth.APIKeySpec, out *APIKeySp
 }
 
 func autoConvert_v1_APIKeyStatus_To_auth_APIKeyStatus(in *APIKeyStatus, out *auth.APIKeyStatus, s conversion.Scope) error {
-	out.Disabled = (*bool)(unsafe.Pointer(in.Disabled))
-	out.Deleted = (*bool)(unsafe.Pointer(in.Deleted))
+	out.Disabled = in.Disabled
 	return nil
 }
 
@@ -282,14 +323,105 @@ func Convert_v1_APIKeyStatus_To_auth_APIKeyStatus(in *APIKeyStatus, out *auth.AP
 }
 
 func autoConvert_auth_APIKeyStatus_To_v1_APIKeyStatus(in *auth.APIKeyStatus, out *APIKeyStatus, s conversion.Scope) error {
-	out.Disabled = (*bool)(unsafe.Pointer(in.Disabled))
-	out.Deleted = (*bool)(unsafe.Pointer(in.Deleted))
+	out.Disabled = in.Disabled
 	return nil
 }
 
 // Convert_auth_APIKeyStatus_To_v1_APIKeyStatus is an autogenerated conversion function.
 func Convert_auth_APIKeyStatus_To_v1_APIKeyStatus(in *auth.APIKeyStatus, out *APIKeyStatus, s conversion.Scope) error {
 	return autoConvert_auth_APIKeyStatus_To_v1_APIKeyStatus(in, out, s)
+}
+
+func autoConvert_v1_APISigningKey_To_auth_APISigningKey(in *APISigningKey, out *auth.APISigningKey, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.SigningKey = *(*[]byte)(unsafe.Pointer(&in.SigningKey))
+	out.SigningKeyPub = *(*[]byte)(unsafe.Pointer(&in.SigningKeyPub))
+	return nil
+}
+
+// Convert_v1_APISigningKey_To_auth_APISigningKey is an autogenerated conversion function.
+func Convert_v1_APISigningKey_To_auth_APISigningKey(in *APISigningKey, out *auth.APISigningKey, s conversion.Scope) error {
+	return autoConvert_v1_APISigningKey_To_auth_APISigningKey(in, out, s)
+}
+
+func autoConvert_auth_APISigningKey_To_v1_APISigningKey(in *auth.APISigningKey, out *APISigningKey, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.SigningKey = *(*[]byte)(unsafe.Pointer(&in.SigningKey))
+	out.SigningKeyPub = *(*[]byte)(unsafe.Pointer(&in.SigningKeyPub))
+	return nil
+}
+
+// Convert_auth_APISigningKey_To_v1_APISigningKey is an autogenerated conversion function.
+func Convert_auth_APISigningKey_To_v1_APISigningKey(in *auth.APISigningKey, out *APISigningKey, s conversion.Scope) error {
+	return autoConvert_auth_APISigningKey_To_v1_APISigningKey(in, out, s)
+}
+
+func autoConvert_v1_APISigningKeyList_To_auth_APISigningKeyList(in *APISigningKeyList, out *auth.APISigningKeyList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]auth.APISigningKey)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_APISigningKeyList_To_auth_APISigningKeyList is an autogenerated conversion function.
+func Convert_v1_APISigningKeyList_To_auth_APISigningKeyList(in *APISigningKeyList, out *auth.APISigningKeyList, s conversion.Scope) error {
+	return autoConvert_v1_APISigningKeyList_To_auth_APISigningKeyList(in, out, s)
+}
+
+func autoConvert_auth_APISigningKeyList_To_v1_APISigningKeyList(in *auth.APISigningKeyList, out *APISigningKeyList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]APISigningKey)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_auth_APISigningKeyList_To_v1_APISigningKeyList is an autogenerated conversion function.
+func Convert_auth_APISigningKeyList_To_v1_APISigningKeyList(in *auth.APISigningKeyList, out *APISigningKeyList, s conversion.Scope) error {
+	return autoConvert_auth_APISigningKeyList_To_v1_APISigningKeyList(in, out, s)
+}
+
+func autoConvert_v1_ConfigMap_To_auth_ConfigMap(in *ConfigMap, out *auth.ConfigMap, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Data = *(*map[string]string)(unsafe.Pointer(&in.Data))
+	out.BinaryData = *(*map[string][]byte)(unsafe.Pointer(&in.BinaryData))
+	return nil
+}
+
+// Convert_v1_ConfigMap_To_auth_ConfigMap is an autogenerated conversion function.
+func Convert_v1_ConfigMap_To_auth_ConfigMap(in *ConfigMap, out *auth.ConfigMap, s conversion.Scope) error {
+	return autoConvert_v1_ConfigMap_To_auth_ConfigMap(in, out, s)
+}
+
+func autoConvert_auth_ConfigMap_To_v1_ConfigMap(in *auth.ConfigMap, out *ConfigMap, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Data = *(*map[string]string)(unsafe.Pointer(&in.Data))
+	out.BinaryData = *(*map[string][]byte)(unsafe.Pointer(&in.BinaryData))
+	return nil
+}
+
+// Convert_auth_ConfigMap_To_v1_ConfigMap is an autogenerated conversion function.
+func Convert_auth_ConfigMap_To_v1_ConfigMap(in *auth.ConfigMap, out *ConfigMap, s conversion.Scope) error {
+	return autoConvert_auth_ConfigMap_To_v1_ConfigMap(in, out, s)
+}
+
+func autoConvert_v1_ConfigMapList_To_auth_ConfigMapList(in *ConfigMapList, out *auth.ConfigMapList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]auth.ConfigMap)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_ConfigMapList_To_auth_ConfigMapList is an autogenerated conversion function.
+func Convert_v1_ConfigMapList_To_auth_ConfigMapList(in *ConfigMapList, out *auth.ConfigMapList, s conversion.Scope) error {
+	return autoConvert_v1_ConfigMapList_To_auth_ConfigMapList(in, out, s)
+}
+
+func autoConvert_auth_ConfigMapList_To_v1_ConfigMapList(in *auth.ConfigMapList, out *ConfigMapList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]ConfigMap)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_auth_ConfigMapList_To_v1_ConfigMapList is an autogenerated conversion function.
+func Convert_auth_ConfigMapList_To_v1_ConfigMapList(in *auth.ConfigMapList, out *ConfigMapList, s conversion.Scope) error {
+	return autoConvert_auth_ConfigMapList_To_v1_ConfigMapList(in, out, s)
 }
 
 func autoConvert_v1_LocalIdentity_To_auth_LocalIdentity(in *LocalIdentity, out *auth.LocalIdentity, s conversion.Scope) error {
@@ -347,7 +479,7 @@ func Convert_auth_LocalIdentityList_To_v1_LocalIdentityList(in *auth.LocalIdenti
 }
 
 func autoConvert_v1_LocalIdentitySpec_To_auth_LocalIdentitySpec(in *LocalIdentitySpec, out *auth.LocalIdentitySpec, s conversion.Scope) error {
-	out.UserName = in.UserName
+	out.Username = in.Username
 	out.DisplayName = in.DisplayName
 	out.Email = in.Email
 	out.PhoneNumber = in.PhoneNumber
@@ -365,7 +497,7 @@ func Convert_v1_LocalIdentitySpec_To_auth_LocalIdentitySpec(in *LocalIdentitySpe
 }
 
 func autoConvert_auth_LocalIdentitySpec_To_v1_LocalIdentitySpec(in *auth.LocalIdentitySpec, out *LocalIdentitySpec, s conversion.Scope) error {
-	out.UserName = in.UserName
+	out.Username = in.Username
 	out.DisplayName = in.DisplayName
 	out.Email = in.Email
 	out.PhoneNumber = in.PhoneNumber

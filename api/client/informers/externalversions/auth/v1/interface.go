@@ -26,6 +26,10 @@ import (
 type Interface interface {
 	// APIKeys returns a APIKeyInformer.
 	APIKeys() APIKeyInformer
+	// APISigningKeys returns a APISigningKeyInformer.
+	APISigningKeys() APISigningKeyInformer
+	// ConfigMaps returns a ConfigMapInformer.
+	ConfigMaps() ConfigMapInformer
 	// LocalIdentities returns a LocalIdentityInformer.
 	LocalIdentities() LocalIdentityInformer
 }
@@ -44,6 +48,16 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // APIKeys returns a APIKeyInformer.
 func (v *version) APIKeys() APIKeyInformer {
 	return &aPIKeyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// APISigningKeys returns a APISigningKeyInformer.
+func (v *version) APISigningKeys() APISigningKeyInformer {
+	return &aPISigningKeyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// ConfigMaps returns a ConfigMapInformer.
+func (v *version) ConfigMaps() ConfigMapInformer {
+	return &configMapInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // LocalIdentities returns a LocalIdentityInformer.

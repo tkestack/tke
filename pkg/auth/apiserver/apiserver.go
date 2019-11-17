@@ -37,11 +37,23 @@ import (
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
+	authnhandler "tkestack.io/tke/pkg/auth/handler/authn"
+	authzhandler "tkestack.io/tke/pkg/auth/handler/authz"
 	"tkestack.io/tke/pkg/auth/registry"
 	authrest "tkestack.io/tke/pkg/auth/registry/rest"
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/util/log"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+
 )
+
+func IgnoreAuthPathPrefixes() []string {
+	return []string{
+		"/oidc/",
+		"/auth/",
+		"/apis/auth.tkestack.io/v1/apikeys/default/password",
+	}
+}
 
 // ExtraConfig contains the additional configuration of apiserver.
 type ExtraConfig struct {
@@ -49,7 +61,6 @@ type ExtraConfig struct {
 	APIResourceConfigSource serverstorage.APIResourceConfigSource
 	StorageFactory          serverstorage.StorageFactory
 	VersionedInformers      versionedinformers.SharedInformerFactory
-	PrivilegedUsername      string
 
 	OIDCExternalAddress string
 	DexServer           *dexserver.Server
@@ -60,8 +71,10 @@ type ExtraConfig struct {
 	Authorizer          authorizer.Authorizer
 	CategoryFile        string
 	PolicyFile          string
+	TenantID            string
 	TenantAdmin         string
 	TenantAdminSecret   string
+	PrivilegedUsername  string
 }
 
 // Config contains the core configuration instance of apiserver and
@@ -105,15 +118,9 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		return nil, err
 	}
 
-	c.registerRoute(s.Handler.GoRestfulContainer, s.Handler.NonGoRestfulMux)
-
-	if err := c.registerAuthnHook(s); err != nil {
-		return nil, err
-	}
-
-	if err := c.registerCasbinPreStopHook(s); err != nil {
-		return nil, err
-	}
+	hooks := c.registerHooks(s)
+	installHooks(s, hooks)
+	installCasbinPreStopHook(s, c.ExtraConfig.CasbinEnforcer)
 
 	m := &APIServer{
 		GenericAPIServer: s,
@@ -182,23 +189,38 @@ func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
 // registerRoute is used to register routes with the api server of project.
 func (c completedConfig) registerRoute(container *restful.Container, mux *mux.PathRecorderMux) {
 	route.RegisterOIDCRoute(mux, c.ExtraConfig.DexServer)
+
+	token := authnhandler.NewHandler(c.ExtraConfig.TokenAuthn, c.ExtraConfig.APIKeyAuthn)
+	authz := authzhandler.NewHandler(c.ExtraConfig.Authorizer)
+	route.RegisterAuthRoute(container, token, authz)
 }
 
-// registerAuthnHook is used to register postStart hook to create authn provider with local oidc server.
-func (c completedConfig) registerAuthnHook(s *genericapiserver.GenericAPIServer) error {
-	authnProvider := authenticator.NewProviderHookHandler(context.Background(), c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, types.IssuerName), c.ExtraConfig.TokenAuthn)
-	name, hook, err := authnProvider.PostStartHook()
-	if err != nil {
-		return err
-	}
+// registerHooks is used to register postStart hook to create authn provider with local oidc server.
+func (c completedConfig) registerHooks(s *genericapiserver.GenericAPIServer) []genericapiserver.PostStartHookProvider {
+	authClient := authinternalclient.NewForConfigOrDie(s.LoopbackClientConfig)
 
-	return s.AddPostStartHook(name, hook)
+	authnHook := authenticator.NewAuthnHookHandler(context.Background(), c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, types.IssuerName), c.ExtraConfig.TokenAuthn)
+	apiSigningKeyHook := authenticator.NewAPISigningKeyHookHandler(authClient)
+	identityHook := authenticator.NewAdminIdentityHookHandler(authClient, c.ExtraConfig.TenantID, c.ExtraConfig.TenantAdmin, c.ExtraConfig.TenantAdminSecret)
+
+	return []genericapiserver.PostStartHookProvider{authnHook, apiSigningKeyHook, identityHook}
+
 }
 
-// registerCasbinPreStopHook is used to register preStop hook to stop casbin enforcer sync.
-func (c completedConfig) registerCasbinPreStopHook(s *genericapiserver.GenericAPIServer) error {
-	return s.AddPreShutdownHook("stop-casbin-enforcer-sync", func() error {
-		c.ExtraConfig.CasbinEnforcer.StopAutoLoadPolicy()
+// installCasbinPreStopHook is used to register preStop hook to stop casbin enforcer sync.
+func installCasbinPreStopHook(s *genericapiserver.GenericAPIServer, enforcer *casbin.SyncedEnforcer) {
+	s.AddPreShutdownHookOrDie("stop-casbin-enforcer-sync", func() error {
+		enforcer.StopAutoLoadPolicy()
 		return nil
 	})
+}
+
+func installHooks(s *genericapiserver.GenericAPIServer, hooks []genericapiserver.PostStartHookProvider) {
+	for _, hookProvider := range hooks {
+		name, hook, err := hookProvider.PostStartHook()
+		if err != nil {
+			log.Fatal("Failed to install the post start hook", log.Err(err))
+		}
+		s.AddPostStartHookOrDie(name, hook)
+	}
 }

@@ -34,7 +34,6 @@ import (
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 
 	namesutil "tkestack.io/tke/pkg/util/names"
@@ -45,12 +44,12 @@ type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	authClient *authinternalclient.AuthClient
+	authClient authinternalclient.AuthInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating identity objects.
-func NewStrategy(authClient *authinternalclient.AuthClient) *Strategy {
+func NewStrategy(authClient authinternalclient.AuthInterface) *Strategy {
 	return &Strategy{auth.Scheme, namesutil.Generator, authClient}
 }
 
@@ -64,18 +63,6 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldLocalIdentity := old.(*auth.LocalIdentity)
 	localIdentity, _ := obj.(*auth.LocalIdentity)
-
-	if len(localIdentity.Spec.HashedPassword) != 0 {
-		// if Bcrypt failed, no change password
-		hashedPwd, err := util.BcryptPassword(localIdentity.Spec.HashedPassword)
-		if err != nil {
-			localIdentity.Spec.HashedPassword = oldLocalIdentity.Spec.HashedPassword
-		} else {
-			localIdentity.Spec.HashedPassword = hashedPwd
-		}
-	} else {
-		localIdentity.Spec.HashedPassword = oldLocalIdentity.Spec.HashedPassword
-	}
 
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
@@ -103,14 +90,11 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	localIdentity, _ := obj.(*auth.LocalIdentity)
 
-	hashedPwd, _ := util.BcryptPassword(localIdentity.Spec.HashedPassword)
-	localIdentity.Spec.HashedPassword = hashedPwd
-
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		localIdentity.Spec.TenantID = tenantID
 	}
-
+	log.Info("xxx", log.Any("xxx", localIdentity.Spec))
 	if localIdentity.Name == "" && localIdentity.GenerateName == "" {
 		localIdentity.GenerateName = "usr-"
 	}
@@ -146,9 +130,28 @@ func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) 
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	localIdentity, ok := obj.(*auth.LocalIdentity)
 	if !ok {
-		return nil, nil, fmt.Errorf("not a local identity")
+		return nil, nil, fmt.Errorf("not a localIdentity")
 	}
 	return labels.Set(localIdentity.ObjectMeta.Labels), ToSelectableFields(localIdentity), nil
+}
+
+// Decorator is intended for
+// removing hashed password for identity or list of identities on returned from the
+// underlying storage, since they cannot be watched.
+func Decorator(obj runtime.Object) error {
+	if localIdentity, ok := obj.(*auth.LocalIdentity); ok {
+		localIdentity.Spec.HashedPassword = ""
+		return nil
+	}
+
+	if localIdentityList, ok := obj.(*auth.LocalIdentityList); ok {
+		for i := range localIdentityList.Items {
+			localIdentityList.Items[i].Spec.HashedPassword = ""
+		}
+		return nil
+	}
+
+	return fmt.Errorf("unknown type")
 }
 
 // MatchLocalIdentity returns a generic matcher for a given label and field selector.
@@ -159,7 +162,7 @@ func MatchLocalIdentity(label labels.Selector, field fields.Selector) storage.Se
 		GetAttrs: GetAttrs,
 		IndexFields: []string{
 			"spec.tenantID",
-			"spec.userName",
+			"spec.username",
 		},
 	}
 }
@@ -169,7 +172,7 @@ func ToSelectableFields(localIdentity *auth.LocalIdentity) fields.Set {
 	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&localIdentity.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
 		"spec.tenantID": localIdentity.Spec.TenantID,
-		"spec.userName": localIdentity.Spec.UserName,
+		"spec.username": localIdentity.Spec.Username,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }

@@ -58,7 +58,7 @@ type PolicyCreate struct {
 	TenantID  string    `json:"tenantID"`
 	Service   string    `json:"service"`
 	Statement Statement `json:"statement"`
-	// UserName  claims users attached to the policy created and split by ','. e.g: user1,user2.
+	// Username  claims users attached to the policy created and split by ','. e.g: user1,user2.
 	UserName    string `json:"userName"`
 	Description string `json:"description"`
 }

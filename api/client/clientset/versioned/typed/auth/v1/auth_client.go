@@ -27,6 +27,8 @@ import (
 type AuthV1Interface interface {
 	RESTClient() rest.Interface
 	APIKeysGetter
+	APISigningKeysGetter
+	ConfigMapsGetter
 	LocalIdentitiesGetter
 }
 
@@ -37,6 +39,14 @@ type AuthV1Client struct {
 
 func (c *AuthV1Client) APIKeys() APIKeyInterface {
 	return newAPIKeys(c)
+}
+
+func (c *AuthV1Client) APISigningKeys() APISigningKeyInterface {
+	return newAPISigningKeys(c)
+}
+
+func (c *AuthV1Client) ConfigMaps() ConfigMapInterface {
+	return newConfigMaps(c)
 }
 
 func (c *AuthV1Client) LocalIdentities() LocalIdentityInterface {

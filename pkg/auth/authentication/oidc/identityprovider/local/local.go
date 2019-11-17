@@ -23,8 +23,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"k8s.io/apimachinery/pkg/fields"
 	"strconv"
+
+	"k8s.io/apimachinery/pkg/fields"
 	authapi "tkestack.io/tke/api/auth"
 
 	"github.com/dexidp/dex/connector"
@@ -33,8 +34,6 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	restclient "k8s.io/client-go/rest"
-
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/util/log"
@@ -43,27 +42,27 @@ import (
 var (
 	// TkeConnectorType type and id
 	TkeConnectorType = "tke"
+
+	authClient authinternalclient.AuthInterface
 )
 
 // Config holds the configuration parameters for tke local connector login.
 type Config struct {
-	LookbackClientConfig restclient.Config
 }
 
 // Open returns a strategy for logging in through TKE
 func (c *Config) Open(id string, logger dexlog.Logger) (
 	connector.Connector, error) {
 
-	authClient := authinternalclient.NewForConfigOrDie(&c.LookbackClientConfig)
-
+	if authClient == nil {
+		return nil, fmt.Errorf("kubernetes client config is nil")
+	}
 	return &localIdentityProvider{authClient: authClient, tenantID: id}, nil
 }
 
 // NewLocalConnector creates a demo tke connector when there is no connector in backend.
-func NewLocalConnector(loopbackClientConfig *restclient.Config, tenantID string) (*dexstorage.Connector, error) {
-	bytes, err := json.Marshal(Config{
-		*loopbackClientConfig,
-	})
+func NewLocalConnector(tenantID string) (*dexstorage.Connector, error) {
+	bytes, err := json.Marshal(Config{})
 	if err != nil {
 		return nil, err
 	}
@@ -76,13 +75,17 @@ func NewLocalConnector(loopbackClientConfig *restclient.Config, tenantID string)
 	}, nil
 }
 
+func SetupRestClient(authInterface authinternalclient.AuthInterface) {
+	authClient = authInterface
+}
+
 type localIdentityProvider struct {
 	tenantID   string
-	authClient *authinternalclient.AuthClient
+	authClient authinternalclient.AuthInterface
 }
 
 func (p *localIdentityProvider) Prompt() string {
-	return "UserName"
+	return "Username"
 }
 
 func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scopes, username, password string) (connector.Identity, bool, error) {
@@ -120,7 +123,7 @@ func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scop
 	}
 
 	ident.UserID = localIdentity.ObjectMeta.Name
-	ident.Username = localIdentity.Spec.UserName
+	ident.Username = localIdentity.Spec.Username
 	ident.Groups = localIdentity.Spec.Groups
 
 	ident.Email = localIdentity.Spec.Email
@@ -155,7 +158,7 @@ func (p *localIdentityProvider) Refresh(ctx context.Context, s connector.Scopes,
 func (p *localIdentityProvider) getLocalIdentity(tenantID, userName string) (authapi.LocalIdentity, error) {
 	tenantUserSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
-		fields.OneTermEqualSelector("spec.userName", userName))
+		fields.OneTermEqualSelector("spec.username", userName))
 
 	localIdentityList, err := p.authClient.LocalIdentities().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {

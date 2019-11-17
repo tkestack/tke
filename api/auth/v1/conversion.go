@@ -46,7 +46,8 @@ func AddFieldLabelConversionsForLocalIdentify(scheme *runtime.Scheme) error {
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.tenantID",
-				"spec.userName":
+				"spec.username",
+				"metadata.name":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported: %s", label)
@@ -62,7 +63,9 @@ func AddFieldLabelConversionsForAPIKey(scheme *runtime.Scheme) error {
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.tenantID",
-				"spec.apiKey":
+				"spec.apiKey",
+				"spec.username",
+				"metadata.name":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported: %s", label)

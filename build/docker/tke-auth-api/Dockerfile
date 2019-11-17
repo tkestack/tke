@@ -1,4 +1,4 @@
-FROM BASE_IMAGE
+FROM docker.oa.com:8080/tdevops/alpine:3.10
 
 ENV TZ=Asia/Shanghai
 RUN apk add tzdata && cp /usr/share/zoneinfo/$TZ /etc/localtime

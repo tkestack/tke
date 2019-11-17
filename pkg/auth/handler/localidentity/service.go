@@ -84,7 +84,7 @@ func (s *Service) CreateLocalIdentity(identityCreate *types.LocalIdentity) (*typ
 
 // UpdateLocalIdentity to update a existing user.
 func (s *Service) UpdateLocalIdentity(identityUpdate *types.LocalIdentity) (*types.LocalIdentity, error) {
-	// UserName can not be changed
+	// Username can not be changed
 	oldIdentity, err := s.store.Get(identityUpdate.Spec.TenantID, identityUpdate.Name)
 	if err != nil {
 		return nil, err

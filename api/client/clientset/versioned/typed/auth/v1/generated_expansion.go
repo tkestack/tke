@@ -20,4 +20,8 @@ package v1
 
 type APIKeyExpansion interface{}
 
+type APISigningKeyExpansion interface{}
+
+type ConfigMapExpansion interface{}
+
 type LocalIdentityExpansion interface{}

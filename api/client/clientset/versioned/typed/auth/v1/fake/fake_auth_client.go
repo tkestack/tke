@@ -32,6 +32,14 @@ func (c *FakeAuthV1) APIKeys() v1.APIKeyInterface {
 	return &FakeAPIKeys{c}
 }
 
+func (c *FakeAuthV1) APISigningKeys() v1.APISigningKeyInterface {
+	return &FakeAPISigningKeys{c}
+}
+
+func (c *FakeAuthV1) ConfigMaps() v1.ConfigMapInterface {
+	return &FakeConfigMaps{c}
+}
+
 func (c *FakeAuthV1) LocalIdentities() v1.LocalIdentityInterface {
 	return &FakeLocalIdentities{c}
 }

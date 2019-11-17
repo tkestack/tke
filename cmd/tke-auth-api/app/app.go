@@ -19,10 +19,10 @@
 package app
 
 import (
-	"tkestack.io/tke/cmd/tke-auth/app/config"
-	"tkestack.io/tke/cmd/tke-auth/app/options"
+	commonapiserver "k8s.io/apiserver/pkg/server"
+	"tkestack.io/tke/cmd/tke-auth-api/app/config"
+	"tkestack.io/tke/cmd/tke-auth-api/app/options"
 	"tkestack.io/tke/pkg/app"
-	"tkestack.io/tke/pkg/app/signal"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -56,7 +56,7 @@ func run(opts *options.Options) app.RunFunc {
 			return err
 		}
 
-		stopCh := signal.SetupSignalHandler()
+		stopCh := commonapiserver.SetupSignalHandler()
 		return Run(cfg, stopCh)
 	}
 }

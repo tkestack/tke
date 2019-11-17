@@ -55,7 +55,7 @@ type LocalIdentityList struct {
 
 // LocalIdentitySpec is a description of an identity.
 type LocalIdentitySpec struct {
-	UserName         string `json:"userName" protobuf:"bytes,7,opt,name=name"`
+	Username         string `json:"username" protobuf:"bytes,7,opt,name=name"`
 	DisplayName      string `json:"displayName" protobuf:"bytes,8,opt,name=displayName"`
 	Email            string `json:"email" protobuf:"bytes,9,opt,name=email"`
 	PhoneNumber      string `json:"phoneNumber" protobuf:"bytes,10,opt,name=phone"`
@@ -91,8 +91,8 @@ type APIKey struct {
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=objectMeta"`
 
 	// Spec defines the desired identities of APIkey in this set.
-	Spec   APIKeySpec   `protobuf:"bytes,2,opt,name=spec"`
-	Status APIKeyStatus `protobuf:"bytes,3,opt,name=status"`
+	Spec   APIKeySpec   `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	Status APIKeyStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 
 // +genclient:nonNamespaced
@@ -104,7 +104,7 @@ type APIKeyList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=listMeta"`
 	// List of api keys.
-	Items []APIKey `json:"items,omitempty" protobuf:"bytes,2,rep,name=items"`
+	Items []APIKey `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 // APIKeySpec is a description of an apiKey.
@@ -114,9 +114,13 @@ type APIKeySpec struct {
 
 	TenantID string `json:"tenantID,omitempty" protobuf:"bytes,5,opt,name=tenantID"`
 
+	// Username is creator
+	// +optional
+	Username string `json:"username,omitempty" protobuf:"bytes,6,opt,name=username"`
+
 	// Description describes api keys usage.
 	// +optional
-	Description string `json:"description,omitempty" protobuf:"bytes,2,opt,name=description"`
+	Description string `json:"description" protobuf:"bytes,2,opt,name=description"`
 
 	// IssueAt is the created time for api key
 	IssueAt metav1.Time `json:"issue_at,omitempty" protobuf:"bytes,3,opt,name=issue_at,json=issueAt"`
@@ -129,11 +133,7 @@ type APIKeySpec struct {
 type APIKeyStatus struct {
 	// Disabled represents whether the apikey has been disabled.
 	// +optional
-	Disabled *bool `json:"disabled,omitempty" protobuf:"varint,1,opt,name=disabled"`
-
-	// Deleted represents whether the apikey has been deleted.
-	// +optional
-	Deleted *bool `json:"deleted,omitempty" protobuf:"varint,2,opt,name=deleted"`
+	Disabled bool `json:"disabled" protobuf:"varint,1,opt,name=disabled"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -159,8 +159,8 @@ type APIKeyReqPassword struct {
 	// TenantID for user
 	TenantID string `json:"tenantID,omitempty" protobuf:"bytes,2,opt,name=tenantID"`
 
-	// UserName
-	UserName string `json:"username,omitempty" protobuf:"bytes,3,opt,name=username"`
+	// Username
+	Username string `json:"username,omitempty" protobuf:"bytes,3,opt,name=username"`
 
 	// Password (encoded by base64)
 	Password string `json:"password,omitempty" protobuf:"bytes,4,opt,name=password"`
@@ -172,4 +172,75 @@ type APIKeyReqPassword struct {
 	// Expire holds the duration of the api key become invalid. By default, 168h(= seven days)
 	// +optional
 	Expire metav1.Duration `json:"expire,omitempty" protobuf:"bytes,6,opt,name=expire"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// APISigningKey hold encryption and signing key.
+type APISigningKey struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// +optional
+	SigningKey []byte `json:"signingKey,omitempty" protobuf:"bytes,2,opt,name=signingKey"`
+	// +optional
+	SigningKeyPub []byte `json:"signingKeyPub,omitempty" protobuf:"bytes,3,opt,name=signingKeyPub"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// APISigningKeyList is the whole list of all signing key.
+type APISigningKeyList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of keys.
+	Items []APISigningKey `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ConfigMap holds configuration data for tke to consume.
+type ConfigMap struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Data contains the configuration data.
+	// Each key must consist of alphanumeric characters, '-', '_' or '.'.
+	// Values with non-UTF-8 byte sequences must use the BinaryData field.
+	// The keys stored in Data must not overlap with the keys in
+	// the BinaryData field, this is enforced during validation process.
+	// +optional
+	Data map[string]string `json:"data,omitempty" protobuf:"bytes,2,rep,name=data"`
+
+	// BinaryData contains the binary data.
+	// Each key must consist of alphanumeric characters, '-', '_' or '.'.
+	// BinaryData can contain byte sequences that are not in the UTF-8 range.
+	// The keys stored in BinaryData must not overlap with the ones in
+	// the Data field, this is enforced during validation process.
+	// +optional
+	BinaryData map[string][]byte `json:"binaryData,omitempty" protobuf:"bytes,3,rep,name=binaryData"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ConfigMapList is a resource containing a list of ConfigMap objects.
+type ConfigMapList struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Items is the list of ConfigMaps.
+	Items []ConfigMap `json:"items" protobuf:"bytes,2,rep,name=items"`
 }

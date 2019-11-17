@@ -27,7 +27,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
-// FilterProject is used to filter projects that do not belong to the tenant.
+// FilterLocalIdentity is used to filter localIdentity that do not belong to the tenant.
 func FilterLocalIdentity(ctx context.Context, localIdentity *auth.LocalIdentity) error {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
@@ -36,5 +36,18 @@ func FilterLocalIdentity(ctx context.Context, localIdentity *auth.LocalIdentity)
 	if localIdentity.Spec.TenantID != tenantID {
 		return errors.NewNotFound(v1.Resource("localIdentity"), localIdentity.ObjectMeta.Name)
 	}
+	return nil
+}
+
+// FilterAPIKey is used to filter apiKey that do not belong to the tenant.
+func FilterAPIKey(ctx context.Context, apiKey *auth.APIKey) error {
+	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if apiKey.Spec.TenantID != tenantID || apiKey.Spec.Username != username {
+		return errors.NewNotFound(v1.Resource("apiKey"), apiKey.ObjectMeta.Name)
+	}
+
 	return nil
 }

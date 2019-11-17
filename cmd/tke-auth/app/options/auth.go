@@ -58,7 +58,6 @@ const (
 type AuthOptions struct {
 	AssetsPath             string
 	IDTokenTimeout         time.Duration
-	APIKeySignMethod       string
 	PolicyFile             string
 	CategoryFile           string
 	InitTenantID           string
@@ -72,10 +71,9 @@ type AuthOptions struct {
 // NewAuthOptions creates a AuthOptions object with default parameters.
 func NewAuthOptions() *AuthOptions {
 	return &AuthOptions{
-		IDTokenTimeout:   24 * time.Hour,
-		APIKeySignMethod: "RSA",
-		InitTenantID:     "default",
-		InitClientID:     "default",
+		IDTokenTimeout: 24 * time.Hour,
+		InitTenantID:   "default",
+		InitClientID:   "default",
 	}
 }
 
@@ -88,10 +86,6 @@ func (o *AuthOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.Duration(flagAuthIDTokenTimeout, o.IDTokenTimeout,
 		"An optional field indicating the valid duration of the IDToken the OIDC generated. If blank, default value is 24h")
 	_ = viper.BindPFlag(configAuthIDTokenTimeout, fs.Lookup(flagAuthIDTokenTimeout))
-
-	fs.String(flagAPIKeySignMethod, o.APIKeySignMethod,
-		"Signing method to generate sign key value for api token key, support RSA and HMAC. If blank, default is RSA.")
-	_ = viper.BindPFlag(configAPIKeySignMethod, fs.Lookup(flagAPIKeySignMethod))
 
 	fs.String(flagAuthPolicyPath, o.PolicyFile,
 		"Path to the predefine policies which will be load to storage when started.")

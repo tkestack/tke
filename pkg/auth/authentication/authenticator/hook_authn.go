@@ -21,25 +21,28 @@ package authenticator
 import (
 	"context"
 	"crypto/tls"
+
+	genericapiserver "k8s.io/apiserver/pkg/server"
+
+	"net/http"
+
 	gooidc "github.com/coreos/go-oidc"
 	"gopkg.in/square/go-jose.v2"
-	"k8s.io/apiserver/pkg/server"
-	"net/http"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-// ProviderHookHandler is an token authentication handler to provide a post start hook for the api server.
-type ProviderHookHandler struct {
+// authnHookHandler is an token authentication handler to provide a post start hook for the api server.
+type authnHookHandler struct {
 	handler         *TokenAuthenticator
 	publicAddress   string
 	internalAddress string
 	ctx             context.Context
 }
 
-// NewProviderHookHandler creates a new ProviderHookHandler object.
-func NewProviderHookHandler(ctx context.Context, publicAddress string, internalAddress string, handler *TokenAuthenticator) *ProviderHookHandler {
-	return &ProviderHookHandler{
+// NewAuthnHookHandler creates a new authnHookHandler object.
+func NewAuthnHookHandler(ctx context.Context, publicAddress string, internalAddress string, handler *TokenAuthenticator) genericapiserver.PostStartHookProvider {
+	return &authnHookHandler{
 		ctx:             ctx,
 		publicAddress:   publicAddress,
 		internalAddress: internalAddress,
@@ -48,8 +51,8 @@ func NewProviderHookHandler(ctx context.Context, publicAddress string, internalA
 }
 
 // PostStartHook provides a function that is called after the server has started.
-func (h *ProviderHookHandler) PostStartHook() (string, server.PostStartHookFunc, error) {
-	return "create-authn-provider", func(_ server.PostStartHookContext) error {
+func (h *authnHookHandler) PostStartHook() (string, genericapiserver.PostStartHookFunc, error) {
+	return "create-authn-provider", func(_ genericapiserver.PostStartHookContext) error {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
@@ -64,7 +67,6 @@ func (h *ProviderHookHandler) PostStartHook() (string, server.PostStartHookFunc,
 			},
 		})
 
-		log.Infof("internal address %s, public address %s", h.internalAddress, h.publicAddress)
 		if err != nil {
 			log.Error("Failed to create the oidc verifier", log.Err(err))
 			return err

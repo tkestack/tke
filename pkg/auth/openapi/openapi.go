@@ -194,7 +194,7 @@ func schemaAPIKeyReqPassword(ref common.ReferenceCallback) common.OpenAPIDefinit
 					},
 					"username": {
 						SchemaProps: spec.SchemaProps{
-							Description: "UserName",
+							Description: "Username",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1003,7 +1003,7 @@ func schemaPolicyCreate(ref common.ReferenceCallback) common.OpenAPIDefinition {
 					},
 					"userName": {
 						SchemaProps: spec.SchemaProps{
-							Description: "UserName claims users attached to the policy created and split by ','. e.g: user1,user2.",
+							Description: "Username claims users attached to the policy created and split by ','. e.g: user1,user2.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

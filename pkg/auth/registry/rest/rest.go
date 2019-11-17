@@ -25,12 +25,16 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
 	"tkestack.io/tke/api/auth"
+	v1 "tkestack.io/tke/api/auth/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/auth/authorization/enforcer"
+	apikeystorage "tkestack.io/tke/pkg/auth/registry/apikey/storage"
+	apisignstorage "tkestack.io/tke/pkg/auth/registry/apisigningkey/storage"
+	configmapstorage "tkestack.io/tke/pkg/auth/registry/configmap/storage"
 	localidentitystorage "tkestack.io/tke/pkg/auth/registry/localidentity/storage"
 
-	v1 "tkestack.io/tke/api/auth/v1"
+	"tkestack.io/tke/pkg/auth/util/sign"
 )
 
 // StorageProvider is a REST type for core resources storage that implement
@@ -64,9 +68,23 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 	authClient := authinternalclient.NewForConfigOrDie(loopbackClientConfig)
 	storageMap := make(map[string]rest.Storage)
 	{
+
+		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
+		storageMap["configmaps"] = configMapREST.ConfigMap
+
 		localIdentityRest := localidentitystorage.NewStorage(restOptionsGetter, authClient, s.PolicyEnforcer, s.PrivilegedUsername)
 		storageMap["localidentities"] = localIdentityRest.LocalIdentity
 		storageMap["localidentities/status"] = localIdentityRest.Status
+
+		keySigner := sign.NewGenericKeySigner(authClient)
+		apiKeyRest := apikeystorage.NewStorage(restOptionsGetter, authClient, keySigner, s.PrivilegedUsername)
+		storageMap["apikeys"] = apiKeyRest.APIKey
+		storageMap["apikeys/password"] = apiKeyRest.Password
+		storageMap["apikeys/token"] = apiKeyRest.Token
+		storageMap["apikeys/status"] = apiKeyRest.Status
+
+		apiSignRest := apisignstorage.NewStorage(restOptionsGetter)
+		storageMap["apisigningkeys"] = apiSignRest
 	}
 
 	return storageMap

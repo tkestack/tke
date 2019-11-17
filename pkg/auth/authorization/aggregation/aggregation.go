@@ -23,7 +23,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/union"
 	"k8s.io/apiserver/plugin/pkg/authorizer/webhook"
-	"tkestack.io/tke/cmd/tke-auth/app/options"
+	"tkestack.io/tke/cmd/tke-auth-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/authorization/abac"
 	"tkestack.io/tke/pkg/auth/authorization/local"
 )

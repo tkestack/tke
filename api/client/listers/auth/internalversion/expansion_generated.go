@@ -22,6 +22,14 @@ package internalversion
 // APIKeyLister.
 type APIKeyListerExpansion interface{}
 
+// APISigningKeyListerExpansion allows custom methods to be added to
+// APISigningKeyLister.
+type APISigningKeyListerExpansion interface{}
+
+// ConfigMapListerExpansion allows custom methods to be added to
+// ConfigMapLister.
+type ConfigMapListerExpansion interface{}
+
 // LocalIdentityListerExpansion allows custom methods to be added to
 // LocalIdentityLister.
 type LocalIdentityListerExpansion interface{}

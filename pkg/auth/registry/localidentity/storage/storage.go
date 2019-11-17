@@ -20,7 +20,6 @@ package storage
 
 import (
 	"context"
-
 	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/auth/util"
 
@@ -46,19 +45,21 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against identify.
-func NewStorage(optsGetter generic.RESTOptionsGetter, authClient *authinternalclient.AuthClient, policyEnforcer *enforcer.PolicyEnforcer, privilegedUsername string) *Storage {
+func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, policyEnforcer *enforcer.PolicyEnforcer, privilegedUsername string) *Storage {
 	strategy := localidentity.NewStrategy(authClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.LocalIdentity{} },
 		NewListFunc:              func() runtime.Object { return &auth.LocalIdentityList{} },
 		DefaultQualifiedResource: auth.Resource("localidentities"),
-		ReturnDeletedObject: true,
+		ReturnDeletedObject:      true,
 
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 
+		// TODO If remove hashedpassword, internal check password will failed.
+		//Decorator:     localidentity.Decorator,
 		PredicateFunc: localidentity.MatchLocalIdentity,
 	}
 	options := &generic.StoreOptions{
@@ -91,6 +92,8 @@ func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, na
 	if err := util.FilterLocalIdentity(ctx, o); err != nil {
 		return nil, err
 	}
+
+	o.Spec.HashedPassword = ""
 	return o, nil
 }
 
@@ -109,6 +112,27 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 	return o, nil
 }
 
+// ValidateListObject validate if list by admin, if true not return hashed password.
+func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, options *metainternal.ListOptions) (runtime.Object, error) {
+	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
+	obj, err := store.List(ctx, wrappedOptions)
+	if err != nil {
+		return obj, err
+	}
+
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return obj, err
+	}
+
+	identityList := obj.(*auth.LocalIdentityList)
+	for i := range identityList.Items {
+		identityList.Items[i].Spec.HashedPassword = ""
+	}
+
+	return identityList, nil
+}
+
 // REST implements a RESTStorage for identities against etcd.
 type REST struct {
 	*registry.Store
@@ -125,8 +149,7 @@ func (r *REST) ShortNames() []string {
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
-	return r.Store.List(ctx, wrappedOptions)
+	return ValidateListObjectAndTenantID(ctx, r.Store, options)
 }
 
 // DeleteCollection selects all resources in the storage matching given 'listOptions'
@@ -157,19 +180,20 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 	if err != nil {
 		return nil, false, err
 	}
+
 	return r.Store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
 // Delete enforces life-cycle rules for local identity termination
 func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	obj, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
+	_, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
 	}
 
-	localIdentity := obj.(*auth.LocalIdentity)
 	//TODO use controller to delete rules
-	_ = r.policyEnforcer.RemoveAllPermsForUser(localIdentity.Spec.TenantID, name)
+	//localIdentity := obj.(*auth.LocalIdentity)
+	//_ = r.policyEnforcer.RemoveAllPermsForUser(localIdentity.Spec.TenantID, localIdentity.Spec.Username)
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 

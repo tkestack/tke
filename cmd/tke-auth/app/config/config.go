@@ -48,7 +48,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	restclient "k8s.io/client-go/rest"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	generatedopenapi "tkestack.io/tke/api/openapi"
@@ -61,7 +61,6 @@ import (
 	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
-	"tkestack.io/tke/pkg/auth/authorization/aggregation"
 	casbinlogger "tkestack.io/tke/pkg/auth/logger"
 
 	"tkestack.io/tke/pkg/auth/registry"
@@ -102,16 +101,18 @@ type Config struct {
 	VersionedSharedInformerFactory versionedinformers.SharedInformerFactory
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 
-	DexServer         *dexserver.Server
-	CasbinEnforcer    *casbin.SyncedEnforcer
-	Registry          *registry.Registry
-	TokenAuthn        *authenticator.TokenAuthenticator
-	APIKeyAuthn       *authenticator.APIKeyAuthenticator
-	Authorizer        authorizer.Authorizer
-	PolicyFile        string
-	CategoryFile      string
-	TenantAdmin       string
-	TenantAdminSecret string
+	DexServer          *dexserver.Server
+	CasbinEnforcer     *casbin.SyncedEnforcer
+	Registry           *registry.Registry
+	TokenAuthn         *authenticator.TokenAuthenticator
+	APIKeyAuthn        *authenticator.APIKeyAuthenticator
+	Authorizer         authorizer.Authorizer
+	PolicyFile         string
+	CategoryFile       string
+	TenantID           string
+	TenantAdmin        string
+	TenantAdminSecret  string
+	PrivilegedUsername string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -173,10 +174,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	aggregateAuthz, err := aggregation.NewAuthorizer(opts.Authorization, opts.Auth, enforcer)
-	if err != nil {
-		return nil, err
-	}
+	var aggregateAuthz authorizer.Authorizer
 	setupAuthorization(genericAPIServerConfig, aggregateAuthz)
 
 	dexConfig, err := setupDexConfig(opts.ETCD, opts.Auth.AssetsPath, opts.Auth.IDTokenTimeout, opts.Generic.ExternalHost, opts.Generic.ExternalPort)
@@ -189,12 +187,13 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	apiKeyAuth, err := authenticator.NewAPIKeyAuthenticator(opts.Auth.APIKeySignMethod, r.APIKeyStorage(), r.LocalIdentityStorage())
+	authClient := authinternalclient.NewForConfigOrDie(genericAPIServerConfig.LoopbackClientConfig)
+	apiKeyAuth, err := authenticator.NewAPIKeyAuthenticator(authClient)
 	if err != nil {
 		return nil, err
 	}
 
-	err = setupDefaultConnectorConfig(genericAPIServerConfig.LoopbackClientConfig, r, opts.Auth)
+	err = setupDefaultConnectorConfig(authClient, r, opts.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -223,8 +222,10 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		Authorizer:                     aggregateAuthz,
 		CategoryFile:                   opts.Auth.CategoryFile,
 		PolicyFile:                     opts.Auth.PolicyFile,
+		TenantID:                       opts.Auth.InitTenantID,
 		TenantAdmin:                    opts.Auth.TenantAdmin,
 		TenantAdminSecret:              opts.Auth.TenantAdminSecret,
+		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 	}, nil
 }
 
@@ -345,7 +346,7 @@ func setupCasbinEnforcer(etcdClient *clientv3.Client, authorizationOptions *opti
 	return enforcer, nil
 }
 
-func setupDefaultConnectorConfig(loopbackClientConfig *restclient.Config, r *registry.Registry, auth *options.AuthOptions) error {
+func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, r *registry.Registry, auth *options.AuthOptions) error {
 	// create dex local identity provider for tke connector.
 	dexserver.ConnectorsConfig[local.TkeConnectorType] = func() dexserver.ConnectorConfig {
 		return new(local.Config)
@@ -364,7 +365,7 @@ func setupDefaultConnectorConfig(loopbackClientConfig *restclient.Config, r *reg
 		}
 	}
 	if !exists {
-		tkeConn, err := local.NewLocalConnector(loopbackClientConfig, auth.InitTenantID)
+		tkeConn, err := local.NewLocalConnector(auth.InitTenantID)
 		if err != nil {
 			return err
 		}
@@ -374,6 +375,7 @@ func setupDefaultConnectorConfig(loopbackClientConfig *restclient.Config, r *reg
 		}
 	}
 
+	local.SetupRestClient(authClient)
 	return nil
 }
 
@@ -398,7 +400,7 @@ func setupDefaultClient(r *registry.Registry, auth *options.AuthOptions) error {
 			RedirectURIs: auth.InitClientRedirectUris,
 		}
 
-		// if no connectors, create a default connector
+		// Create a default connector
 		if err = r.DexStorage().CreateClient(cli); err != nil {
 			return err
 		}

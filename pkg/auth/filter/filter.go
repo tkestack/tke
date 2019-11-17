@@ -118,7 +118,7 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 }
 
 var (
-	unprotectedVerbSets = sets.NewString("listPortal", "createApikey", "listApikey", "updateApikey")
+	unprotectedVerbSets = sets.NewString("listPortal", "createApikey", "listApikeys", "getApikey", "listApikey", "deleteApikey", "updateApikey", "createApikeyToken")
 )
 
 // UnprotectedAuthorized checks a request attribute has privileged to pass authorization.

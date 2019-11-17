@@ -63,7 +63,7 @@ message APIKeyReqPassword {
   // TenantID for user
   optional string tenantID = 2;
 
-  // UserName
+  // Username
   optional string username = 3;
 
   // Password (encoded by base64)
@@ -85,6 +85,10 @@ message APIKeySpec {
 
   optional string tenantID = 5;
 
+  // Username is creator
+  // +optional
+  optional string username = 6;
+
   // Description describes api keys usage.
   // +optional
   optional string description = 2;
@@ -101,10 +105,58 @@ message APIKeyStatus {
   // Disabled represents whether the apikey has been disabled.
   // +optional
   optional bool disabled = 1;
+}
 
-  // Deleted represents whether the apikey has been deleted.
+// APISigningKey hold encryption and signing key.
+message APISigningKey {
   // +optional
-  optional bool deleted = 2;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // +optional
+  optional bytes signingKey = 2;
+
+  // +optional
+  optional bytes signingKeyPub = 3;
+}
+
+// APISigningKeyList is the whole list of all signing key.
+message APISigningKeyList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of keys.
+  repeated APISigningKey items = 2;
+}
+
+// ConfigMap holds configuration data for tke to consume.
+message ConfigMap {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Data contains the configuration data.
+  // Each key must consist of alphanumeric characters, '-', '_' or '.'.
+  // Values with non-UTF-8 byte sequences must use the BinaryData field.
+  // The keys stored in Data must not overlap with the keys in
+  // the BinaryData field, this is enforced during validation process.
+  // +optional
+  map<string, string> data = 2;
+
+  // BinaryData contains the binary data.
+  // Each key must consist of alphanumeric characters, '-', '_' or '.'.
+  // BinaryData can contain byte sequences that are not in the UTF-8 range.
+  // The keys stored in BinaryData must not overlap with the ones in
+  // the Data field, this is enforced during validation process.
+  // +optional
+  map<string, bytes> binaryData = 3;
+}
+
+// ConfigMapList is a resource containing a list of ConfigMap objects.
+message ConfigMapList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // Items is the list of ConfigMaps.
+  repeated ConfigMap items = 2;
 }
 
 // LocalIdentity is an object that contains the metadata about identify used to

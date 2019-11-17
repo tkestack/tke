@@ -21,9 +21,6 @@ package apikey
 import (
 	"context"
 	"fmt"
-	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/auth/util"
-	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -34,9 +31,10 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
+	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/auth/util/sign"
 
 	namesutil "tkestack.io/tke/pkg/util/names"
-	//"tkestack.io/tke/api/auth"
 )
 
 // Strategy implements verification logic for project.
@@ -44,13 +42,14 @@ type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	keySigner util.KeySigner
+	keySigner          sign.KeySigner
+	privilegedUsername string
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating project objects.
-func NewStrategy(signer util.KeySigner) *Strategy {
-	return &Strategy{auth.Scheme, namesutil.Generator, signer}
+func NewStrategy(keySigner sign.KeySigner, privilegedUsername string) *Strategy {
+	return &Strategy{auth.Scheme, namesutil.Generator, keySigner, privilegedUsername}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -61,13 +60,9 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	oldAPIKey := old.(*auth.APIKey)
 	newAPIKey, _ := obj.(*auth.APIKey)
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
-		if oldAPIKey.Spec.TenantID != tenantID {
-			log.Panic("Unauthorized update project information", log.String("oldTenantID", oldAPIKey.Spec.TenantID), log.String("newTenantID", newAPIKey.Spec.TenantID), log.String("userTenantID", tenantID))
-		}
 		newAPIKey.Spec.TenantID = tenantID
 	}
 }
@@ -77,15 +72,29 @@ func (Strategy) NamespaceScoped() bool {
 	return false
 }
 
+// Export strips fields that can not be set by the user.
+func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) error {
+	return nil
+}
+
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
-func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+	apiKey := obj.(*auth.APIKey)
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if len(tenantID) != 0 {
+		apiKey.Spec.TenantID = tenantID
+	}
 
+	if apiKey.Name == "" && apiKey.GenerateName == "" {
+		apiKey.GenerateName = "apk"
+	}
+	return
 }
 
 // Validate validates a new project.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateAPIkey(obj.(*auth.APIKey))
+	return ValidateAPIkey(obj.(*auth.APIKey), s.keySigner, s.privilegedUsername)
 }
 
 // AllowCreateOnUpdate is false for projects.
@@ -113,7 +122,7 @@ func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) 
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	project, ok := obj.(*auth.APIKey)
 	if !ok {
-		return nil, nil, fmt.Errorf("not a project")
+		return nil, nil, fmt.Errorf("not a apikey")
 	}
 	return labels.Set(project.ObjectMeta.Labels), ToSelectableFields(project), nil
 }
@@ -124,33 +133,46 @@ func MatchAPIKey(label labels.Selector, field fields.Selector) storage.Selection
 		Label:       label,
 		Field:       field,
 		GetAttrs:    GetAttrs,
-		IndexFields: []string{"spec.tenantID"},
+		IndexFields: []string{"spec.tenantID", "spec.apiKey", "spec.username"},
 	}
 }
 
 // ToSelectableFields returns a field set that represents the object
-func ToSelectableFields(project *auth.APIKey) fields.Set {
-	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&project.ObjectMeta, false)
+func ToSelectableFields(apiKey *auth.APIKey) fields.Set {
+	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&apiKey.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID": project.Spec.TenantID,
+		"spec.tenantID": apiKey.Spec.TenantID,
+		"spec.apiKey":   apiKey.Spec.APIkey,
+		"spec.username": apiKey.Spec.Username,
 	}
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
 
-// PasswordStrategy implements password generation for password.
-type PasswordStrategy struct {
+// StatusStrategy implements verification logic for status of Machine.
+type StatusStrategy struct {
 	*Strategy
 }
 
+var _ rest.RESTUpdateStrategy = &StatusStrategy{}
+
 // NewStatusStrategy create the StatusStrategy object by given strategy.
-func NewPasswordStrategy(strategy *Strategy) *PasswordStrategy {
-	return &PasswordStrategy{strategy}
+func NewStatusStrategy(strategy *Strategy) *StatusStrategy {
+	return &StatusStrategy{strategy}
 }
 
-// PrepareForCreate is invoked on create before validation to normalize
+// PrepareForUpdate is invoked on update before validation to normalize
+// the object.  For example: remove fields that are not to be persisted,
+// sort order-insensitive list fields, etc.  This should not remove fields
+// whose presence would be considered a validation error.
+func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	newAPIKey := obj.(*auth.APIKey)
+	oldAPIKey := old.(*auth.APIKey)
+	newAPIKey.Spec = oldAPIKey.Spec
+}
+
+// ValidateUpdate is invoked after default fields in the object have been
+// filled in before the object is persisted.  This method should not mutate
 // the object.
-func (s PasswordStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	return
+func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return nil
 }
-
-var _ rest.RESTCreateStrategy = &PasswordStrategy{}

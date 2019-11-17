@@ -29,7 +29,7 @@ package v1
 // AUTO-GENERATED FUNCTIONS START HERE. DO NOT EDIT.
 var map_APIKey = map[string]string{
 	"":     "APIKey contains expiration time used to apply the api key.",
-	"Spec": "Spec defines the desired identities of APIkey in this set.",
+	"spec": "Spec defines the desired identities of APIkey in this set.",
 }
 
 func (APIKey) SwaggerDoc() map[string]string {
@@ -58,7 +58,7 @@ func (APIKeyReq) SwaggerDoc() map[string]string {
 var map_APIKeyReqPassword = map[string]string{
 	"":            "APIKeyReqPassword contains userinfo and expiration time used to apply the api key.",
 	"tenantID":    "TenantID for user",
-	"username":    "UserName",
+	"username":    "Username",
 	"password":    "Password (encoded by base64)",
 	"description": "Description describes api keys usage.",
 	"expire":      "Expire holds the duration of the api key become invalid. By default, 168h(= seven days)",
@@ -71,6 +71,7 @@ func (APIKeyReqPassword) SwaggerDoc() map[string]string {
 var map_APIKeySpec = map[string]string{
 	"":            "APIKeySpec is a description of an apiKey.",
 	"apiKey":      "APIkey is the jwt token used to authenticate user, and contains user info and sign.",
+	"username":    "Username is creator",
 	"description": "Description describes api keys usage.",
 	"issue_at":    "IssueAt is the created time for api key",
 	"expire_at":   "ExpireAt is the expire time for api key",
@@ -83,11 +84,46 @@ func (APIKeySpec) SwaggerDoc() map[string]string {
 var map_APIKeyStatus = map[string]string{
 	"":         "APIKeyStatus is a description of an api key status.",
 	"disabled": "Disabled represents whether the apikey has been disabled.",
-	"deleted":  "Deleted represents whether the apikey has been deleted.",
 }
 
 func (APIKeyStatus) SwaggerDoc() map[string]string {
 	return map_APIKeyStatus
+}
+
+var map_APISigningKey = map[string]string{
+	"": "APISigningKey hold encryption and signing key.",
+}
+
+func (APISigningKey) SwaggerDoc() map[string]string {
+	return map_APISigningKey
+}
+
+var map_APISigningKeyList = map[string]string{
+	"":      "APISigningKeyList is the whole list of all signing key.",
+	"items": "List of keys.",
+}
+
+func (APISigningKeyList) SwaggerDoc() map[string]string {
+	return map_APISigningKeyList
+}
+
+var map_ConfigMap = map[string]string{
+	"":           "ConfigMap holds configuration data for tke to consume.",
+	"data":       "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+	"binaryData": "BinaryData contains the binary data. Each key must consist of alphanumeric characters, '-', '_' or '.'. BinaryData can contain byte sequences that are not in the UTF-8 range. The keys stored in BinaryData must not overlap with the ones in the Data field, this is enforced during validation process.",
+}
+
+func (ConfigMap) SwaggerDoc() map[string]string {
+	return map_ConfigMap
+}
+
+var map_ConfigMapList = map[string]string{
+	"":      "ConfigMapList is a resource containing a list of ConfigMap objects.",
+	"items": "Items is the list of ConfigMaps.",
+}
+
+func (ConfigMapList) SwaggerDoc() map[string]string {
+	return map_ConfigMapList
 }
 
 var map_LocalIdentity = map[string]string{

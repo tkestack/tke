@@ -54,6 +54,11 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&APIKeyList{},
 		&APIKeyReq{},
 		&APIKeyReqPassword{},
+		&APISigningKey{},
+		&APISigningKeyList{},
+
+		&ConfigMap{},
+		&ConfigMapList{},
 	)
 
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)

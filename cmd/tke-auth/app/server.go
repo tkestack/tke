@@ -56,6 +56,7 @@ func createAuthConfig(cfg *config.Config) *auth.Config {
 			Authorizer:          cfg.Authorizer,
 			PolicyFile:          cfg.PolicyFile,
 			CategoryFile:        cfg.CategoryFile,
+			TenantID:            cfg.TenantID,
 			TenantAdmin:         cfg.TenantAdmin,
 			TenantAdminSecret:   cfg.TenantAdminSecret,
 		},

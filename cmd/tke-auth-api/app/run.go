@@ -19,7 +19,7 @@
 package app
 
 import (
-	"tkestack.io/tke/cmd/tke-auth/app/config"
+	"tkestack.io/tke/cmd/tke-auth-api/app/config"
 	"tkestack.io/tke/pkg/util/log"
 )
 

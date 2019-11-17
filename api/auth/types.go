@@ -49,7 +49,7 @@ type LocalIdentityList struct {
 
 // LocalIdentitySpec is a description of an identity.
 type LocalIdentitySpec struct {
-	UserName         string
+	Username         string
 	DisplayName      string
 	Email            string
 	PhoneNumber      string
@@ -102,8 +102,13 @@ type APIKeySpec struct {
 	APIkey string `json:"apiKey,omitempty"`
 
 	TenantID string `json:"tenantID,omitempty"`
+
+	// Creator
+	// +optional
+	Username string `json:"username,omitempty"`
+
 	// Description describes api keys usage.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description"`
 
 	// IssueAt is the created time for api key
 	IssueAt metav1.Time `json:"issue_at,omitempty"`
@@ -115,10 +120,7 @@ type APIKeySpec struct {
 // APIKeyStatus is a description of an api key status.
 type APIKeyStatus struct {
 	// Disabled represents whether the apikey has been disabled.
-	Disabled *bool `json:"disabled,omitempty"`
-
-	// Deleted represents whether the apikey has been deleted.
-	Deleted *bool `json:"deleted,omitempty"`
+	Disabled bool `json:"disabled"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -134,7 +136,6 @@ type APIKeyReq struct {
 	Description string `json:"description"`
 }
 
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // APIKeyReqPassword contains userinfo and expiration time used to apply the api key.
@@ -144,8 +145,8 @@ type APIKeyReqPassword struct {
 	// TenantID for user
 	TenantID string `json:"tenantID,omitempty"`
 
-	// UserName
-	UserName string `json:"username,omitempty"`
+	// Username
+	Username string `json:"username,omitempty"`
 
 	// Password (encoded by base64)
 	Password string `json:"password,omitempty"`
@@ -155,4 +156,70 @@ type APIKeyReqPassword struct {
 
 	// Expire holds the duration of the api key become invalid. By default, 168h(= seven days)
 	Expire metav1.Duration `json:"expire,omitempty"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// APISigningKey hold encryption and signing key for api key.
+type APISigningKey struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	SigningKey    []byte
+	SigningKeyPub []byte
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// APISigningKeyList is the whole list of all signing keys.
+type APISigningKeyList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+
+	Items []APISigningKey
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ConfigMap holds configuration data for tke to consume.
+type ConfigMap struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	// Data contains the configuration data.
+	// Each key must consist of alphanumeric characters, '-', '_' or '.'.
+	// Values with non-UTF-8 byte sequences must use the BinaryData field.
+	// The keys stored in Data must not overlap with the keys in
+	// the BinaryData field, this is enforced during validation process.
+	// +optional
+	Data map[string]string
+
+	// BinaryData contains the binary data.
+	// Each key must consist of alphanumeric characters, '-', '_' or '.'.
+	// BinaryData can contain byte sequences that are not in the UTF-8 range.
+	// The keys stored in BinaryData must not overlap with the ones in
+	// the Data field, this is enforced during validation process.
+	// +optional
+	BinaryData map[string][]byte
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ConfigMapList is a resource containing a list of ConfigMap objects.
+type ConfigMapList struct {
+	metav1.TypeMeta
+
+	// +optional
+	metav1.ListMeta
+
+	// Items is the list of ConfigMaps.
+	Items []ConfigMap
 }
