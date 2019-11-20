@@ -37,7 +37,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter) *Storage {
 	strategy := apisigningkey.NewStrategy()
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.APISigningKey{} },
-		NewListFunc:              func() runtime.Object { return &auth.APISigningKey{} },
+		NewListFunc:              func() runtime.Object { return &auth.APISigningKeyList{} },
 		DefaultQualifiedResource: auth.Resource("apisigningkeys"),
 
 		CreateStrategy: strategy,

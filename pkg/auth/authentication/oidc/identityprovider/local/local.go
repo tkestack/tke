@@ -57,6 +57,7 @@ func (c *Config) Open(id string, logger dexlog.Logger) (
 	if authClient == nil {
 		return nil, fmt.Errorf("kubernetes client config is nil")
 	}
+
 	return &localIdentityProvider{authClient: authClient, tenantID: id}, nil
 }
 

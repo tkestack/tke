@@ -174,7 +174,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	aggregateAuthz, err := aggregation.NewAuthorizer(opts.Authorization, opts.Auth, enforcer)
+	aggregateAuthz, err := aggregation.NewAuthorizer(opts.Authorization, opts.Auth, enforcer, opts.Authentication.PrivilegedUsername)
 	if err != nil {
 		return nil, err
 	}

@@ -21,16 +21,18 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	gooidc "github.com/coreos/go-oidc"
 	"github.com/emicklei/go-restful"
 	"golang.org/x/oauth2"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
-	"net/http"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/gateway/auth"
 	"tkestack.io/tke/pkg/gateway/token"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // UserInfo defines a data structure containing user information.
@@ -45,15 +47,6 @@ func registerTokenRoute(container *restful.Container, oauthConfig *oauth2.Config
 	ws := new(restful.WebService)
 	ws.Path(fmt.Sprintf("/apis/%s/%s/tokens", GroupName, Version))
 
-	ws.Route(ws.
-		POST("/").
-		Doc("generate token by username and password").
-		Operation("createPasswordToken").
-		Produces(restful.MIME_JSON).
-		Returns(http.StatusCreated, "Created", v1.Status{}).
-		Returns(http.StatusInternalServerError, "InternalError", v1.Status{}).
-		Returns(http.StatusUnauthorized, "Unauthorized", v1.Status{}).
-		To(handleTokenGenerateFunc(oauthConfig, oidcHTTPClient)))
 	ws.Route(ws.
 		GET("info").
 		Doc("obtain the user information corresponding to the token").
@@ -86,33 +79,6 @@ func registerTokenRoute(container *restful.Container, oauthConfig *oauth2.Config
 	container.Add(ws)
 }
 
-func handleTokenGenerateFunc(oauthConfig *oauth2.Config, oidcHTTPClient *http.Client) func(*restful.Request, *restful.Response) {
-	return func(request *restful.Request, response *restful.Response) {
-		username, password, err := retrievePassword(request.Request)
-		if err != nil {
-			responsewriters.WriteRawJSON(http.StatusUnauthorized, errors.NewUnauthorized(err.Error()), response.ResponseWriter)
-			return
-		}
-
-		ctx := gooidc.ClientContext(context.Background(), oidcHTTPClient)
-		t, err := oauthConfig.PasswordCredentialsToken(ctx, username, password)
-		if err != nil {
-			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), response.ResponseWriter)
-			return
-		}
-
-		if err := token.ResponseToken(t, response.ResponseWriter); err != nil {
-			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), response.ResponseWriter)
-			return
-		}
-
-		responsewriters.WriteRawJSON(http.StatusCreated, v1.Status{
-			Status: v1.StatusSuccess,
-			Code:   http.StatusCreated,
-		}, response.ResponseWriter)
-	}
-}
-
 func handleTokenInfo(oidcAuthenticator *oidc.Authenticator) func(*restful.Request, *restful.Response) {
 	return func(request *restful.Request, response *restful.Response) {
 		t, err := token.RetrieveToken(request.Request)
@@ -120,6 +86,8 @@ func handleTokenInfo(oidcAuthenticator *oidc.Authenticator) func(*restful.Reques
 			responsewriters.WriteRawJSON(http.StatusUnauthorized, errors.NewUnauthorized(err.Error()), response.ResponseWriter)
 			return
 		}
+
+		log.Info("TokenID", log.String("id", t.ID))
 		r, authenticated, err := oidcAuthenticator.AuthenticateToken(request.Request.Context(), t.ID)
 		if err != nil {
 			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), response.ResponseWriter)
@@ -129,6 +97,8 @@ func handleTokenInfo(oidcAuthenticator *oidc.Authenticator) func(*restful.Reques
 			responsewriters.WriteRawJSON(http.StatusUnauthorized, errors.NewUnauthorized("invalid token"), response.ResponseWriter)
 			return
 		}
+
+		log.Info("After auth", log.Any("info", r))
 		userInfo := &UserInfo{
 			Name:   r.User.GetName(),
 			UID:    r.User.GetUID(),

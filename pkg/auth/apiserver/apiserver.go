@@ -21,6 +21,7 @@ package apiserver
 import (
 	"context"
 	"fmt"
+
 	"github.com/emicklei/go-restful"
 	"k8s.io/apiserver/pkg/server/mux"
 	"tkestack.io/tke/pkg/auth/route"
@@ -34,6 +35,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	authv1 "tkestack.io/tke/api/auth/v1"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
@@ -43,8 +45,6 @@ import (
 	authrest "tkestack.io/tke/pkg/auth/registry/rest"
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/util/log"
-	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
-
 )
 
 func IgnoreAuthPathPrefixes() []string {
@@ -121,6 +121,8 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	hooks := c.registerHooks(s)
 	installHooks(s, hooks)
 	installCasbinPreStopHook(s, c.ExtraConfig.CasbinEnforcer)
+
+	c.registerRoute(s.Handler.GoRestfulContainer, s.Handler.NonGoRestfulMux)
 
 	m := &APIServer{
 		GenericAPIServer: s,

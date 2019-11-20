@@ -37,7 +37,7 @@ var (
 	minExpire = 1 * time.Second
 	maxExpire = 100 * 365 * 24 * time.Hour
 
-	DefaultAPISigningKey = "api-signing-key"
+	DefaultAPISigningKey = "default-api-signing-key"
 )
 
 // APIClaims is the claims section of jwt token.
