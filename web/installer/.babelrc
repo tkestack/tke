@@ -1,0 +1,25 @@
+{
+  "presets": ["react"],
+  "plugins": ["transform-es3-member-expression-literals", "transform-es3-property-literals"],
+  "env": {
+    "development": {
+      "presets": [
+        [
+          "env",
+          {
+            "loose": true,
+            "modules": "commonjs",
+            "exclude": [
+              "babel-plugin-transform-async-to-generator",
+              "babel-plugin-transform-regenerator",
+              "babel-plugin-transform-es2015-spread"
+            ]
+          }
+        ]
+      ]
+    },
+    "production": {
+      "presets": ["es2015"]
+    }
+  }
+}

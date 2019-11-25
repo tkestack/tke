@@ -1,0 +1,29 @@
+{
+  "debug": false,
+{{- if .IsGPU }}
+  "default-runtime": "nvidia",
+  "runtimes": {
+    "nvidia": {
+      "path": "/usr/bin/nvidia-container-runtime"
+    }
+  },
+{{- end}}
+  "insecure-registries": [
+    {{ .InsecureRegistries }}
+  ],
+  "ip-forward": true,
+  "ip-masq": false,
+  "iptables": false,
+  "ipv6": false,
+  "live-restore": true,
+  "log-driver": "json-file",
+  "log-level": "warn",
+  "log-opts": {
+    "max-file": "10",
+    "max-size": "100m"
+  },
+  "registry-mirrors": [
+    "https://{{ .RegistryDomain }}"
+  ],
+  "selinux-enabled": false
+}

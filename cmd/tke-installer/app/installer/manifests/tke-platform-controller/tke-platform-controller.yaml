@@ -1,0 +1,157 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-platform-controller
+  name: tke-platform-controller
+  namespace: tke
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: tke-platform-controller
+  template:
+    metadata:
+      labels:
+        app: tke-platform-controller
+    spec:
+      initContainers:
+        - command:
+            - sh
+            - -c
+            - cp -vr /app/bin /app/plugins/baremetal/bin
+          image: {{ .BaremetalClusterProviderImage }}
+          name: baremetal-cluster-provider
+          volumeMounts:
+            - mountPath: /app/plugins/baremetal
+              name: plugins-volume
+        - command:
+            - sh
+            - -c
+            - cp -vr /app/bin/* /app/plugins/baremetal/bin
+          image: {{ .BaremetalMachineProviderImage }}
+          name: baremetal-machine-provider
+          volumeMounts:
+            - mountPath: /app/plugins/baremetal
+              name: plugins-volume
+        - command:
+            - sh
+            - -c
+            - cp -r /data/res /app/plugins/baremetal/
+          image: {{ .ProviderResImage }}
+          name: provider-res
+          volumeMounts:
+            - mountPath: /app/plugins/baremetal
+              name: plugins-volume
+      containers:
+        - name: tke-platform-controller
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-platform-controller.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-platform-controller-volume
+              mountPath: /app/conf
+            - name: plugins-volume
+              mountPath: /app/plugins/baremetal
+            - name: provider-config-volume
+              mountPath: /app/plugins/baremetal/conf/
+            - name: docker-volume
+              mountPath: /app/plugins/baremetal/conf/docker/
+            - name: kubelet-volume
+              mountPath: /app/plugins/baremetal/conf/kubelet/
+            - name: kubeadm-volume
+              mountPath: /app/plugins/baremetal/conf/kubeadm/
+          ports:
+            - containerPort: 9445
+          livenessProbe:
+            httpGet:
+              port: 9445
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-platform-controller-volume
+          configMap:
+            name: tke-platform-controller
+        - name: plugins-volume
+          emptyDir: {}
+        - name: provider-config-volume
+          configMap:
+            name: provider-config
+        - name: docker-volume
+          configMap:
+            name: docker
+        - name: kubelet-volume
+          configMap:
+            name: kubelet
+        - name: kubeadm-volume
+          configMap:
+            name: kubeadm
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-platform-controller
+  namespace: tke
+data:
+  tke-platform-controller.toml: |
+
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [providers]
+    cluster = [
+      "/app/plugins/baremetal/bin/baremetal-cluster-provider=/app/plugins/baremetal/conf/config.yaml"
+    ]
+    machine = [
+      "/app/plugins/baremetal/bin/baremetal-machine-provider=/app/plugins/baremetal/conf/config.yaml"
+    ]
+
+    [client]
+
+      [client.platform]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+
+    [registry]
+    container_domain = "{{ .RegistryDomain }}"
+    container_namespace = "tkestack"
+
+    [features]
+    monitor_storage_type = "{{ .MonitorStorageType }}"
+    monitor_storage_addresses = "{{ .MonitorStorageAddresses }}"
+
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-platform-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke

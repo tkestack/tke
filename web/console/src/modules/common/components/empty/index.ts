@@ -1,0 +1,1 @@
+export { emptyTips } from './emptyTips';

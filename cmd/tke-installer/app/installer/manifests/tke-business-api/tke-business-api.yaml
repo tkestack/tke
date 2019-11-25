@@ -1,0 +1,177 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: tke-business-api
+  namespace: tke
+spec:
+  selector:
+    app: tke-business-api
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 9447
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-business-api
+  name: tke-business-api
+  namespace: tke
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: tke-business-api
+  template:
+    metadata:
+      labels:
+        app: tke-business-api
+    spec:
+      containers:
+        - name: tke-business-api
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-business-api.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-business-api-volume
+              mountPath: /app/conf
+          ports:
+            - containerPort: 9447
+          readinessProbe:
+            httpGet:
+              port: 9447
+              path: /healthz/ping
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 9447
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-business-api-volume
+          configMap:
+            name: tke-business-api
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-business-api
+  namespace: tke
+data:
+  tke-business-api.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [etcd]
+    servers = [
+      "https://etcd:2379"
+    ]
+    cafile = "/app/certs/etcd-ca.crt"
+    certfile = "/app/certs/etcd.crt"
+    keyfile = "/app/certs/etcd.key"
+
+    [generic]
+    external_hostname = "tke-business-api"
+    external_port = 443
+
+    [authentication]
+    token_auth_file = "/app/certs/token.csv"
+    client_ca_file = "/app/certs/ca.crt"
+
+      [authentication.oidc]
+{{- if .EnableAuth }}
+      client_id = "default"
+      issuer_url = "https://tke-auth/oidc"
+      external_issuer_url = "https://tke-auth/oidc"
+      ca_file = "/app/certs/ca.crt"
+      username_prefix ="-"
+      username_claim = "name"
+      tenantid_claim = "federated_claims"
+{{- else }}
+      client_id = {{ .OIDCClientID }}
+      issuer_url = {{ .OIDCIssuerURL }}
+  {{- if .UseOIDCCA }}
+      ca_file = "/app/certs/oidc-ca.crt"
+  {{- end}}
+{{- end }}
+
+      [authentication.requestheader]
+      client_ca_file = "/app/certs/ca.crt"
+      username_headers = "X-Remote-User"
+      extra_headers_prefix = "X-Remote-Extra-"
+
+    [authorization]
+{{- if .EnableAuth }}
+    mode = "Webhook"
+    webhook_config_file = "/app/conf/tke-auth-webhook.yaml"
+{{- end }}
+
+    [client]
+
+      [client.platform]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+
+    [features]
+    initial_administrator_tenant = "{{ .TenantID }}"
+    initial_administrator_user = "{{ .Username }}"
+    sync_projects_with_namespaces = {{ .SyncProjectsWithNamespaces }}
+
+  tke-auth-webhook.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-auth/auth/authz
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+    - context:
+        cluster: tke
+        user: admin-cert
+      name: tke
+
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-platform-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke

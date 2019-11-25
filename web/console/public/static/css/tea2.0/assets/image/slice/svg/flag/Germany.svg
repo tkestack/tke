@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="20px" height="20px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>德国</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path d="M9,18 C13.9705627,18 18,13.9705627 18,9 C18,4.02943725 13.9705627,-1.77635684e-15 9,-1.77635684e-15 C4.02943725,-1.77635684e-15 0,4.02943725 0,9 C0,13.9705627 4.02943725,18 9,18 Z" id="path-1"></path>
+    </defs>
+    <g id="控制台界面" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="画板" transform="translate(-593.000000, -680.000000)">
+            <g id="德国" transform="translate(593.000000, 680.000000)">
+                <path d="M10,20 C4.4771525,20 0,15.5228475 0,10 C0,4.4771525 4.4771525,-1.77635684e-15 10,-1.77635684e-15 C15.5228475,-1.77635684e-15 20,4.4771525 20,10 C20,15.5228475 15.5228475,20 10,20 Z" id="路径" fill="#E5E5E5" fill-rule="nonzero"></path>
+                <g id="分组-22" transform="translate(1.000000, 1.000000)">
+                    <mask id="mask-2" fill="white">
+                        <use xlink:href="#path-1"></use>
+                    </mask>
+                    <use id="路径" fill="#F2F2F2" fill-rule="nonzero" xlink:href="#path-1"></use>
+                    <polygon id="Fill-446" fill="#000000" mask="url(#mask-2)" points="-1.125 5.625 18.875 5.625 18.875 -1.125 -1.125 -1.125"></polygon>
+                    <polygon id="Fill-447" fill="#E1001F" mask="url(#mask-2)" points="-1.125 12.375 18.875 12.375 18.875 5.625 -1.125 5.625"></polygon>
+                    <polygon id="Fill-448" fill="#F6D928" mask="url(#mask-2)" points="-1.125 19.125 18.875 19.125 18.875 12.375 -1.125 12.375"></polygon>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

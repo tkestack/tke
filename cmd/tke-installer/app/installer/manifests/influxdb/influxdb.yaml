@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: influxdb
+  namespace: tke
+  labels:
+    app: influxdb
+spec:
+  replicas: 1
+  serviceName: influxdb
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+      - name: influxdb
+        image: {{ .Image }}
+        livenessProbe:
+          tcpSocket:
+            port: 8086
+          initialDelaySeconds: 1
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 8086
+          initialDelaySeconds: 1
+          periodSeconds: 10
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/influxdb
+          subPath:
+      nodeName: {{ .NodeName }}
+      hostNetwork: true
+      volumes:
+      - name: data
+        hostPath:
+          path: /var/lib/influxdb
+          type: DirectoryOrCreate

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53.2 (72643) - https://sketchapp.com -->
+    <title>当前</title>
+    <desc>Created with Sketch.</desc>
+    <g id="修改组件" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Slider滑动输入条-Copy-2" transform="translate(-480.000000, -347.000000)">
+            <g id="日期选择器-月份" transform="translate(50.000000, 292.000000)">
+                <g id="日期选择器-天" transform="translate(252.000000, 35.000000)">
+                    <g id="当前" transform="translate(178.000000, 20.000000)">
+                        <rect id="矩形" x="0" y="0" width="16" height="16"></rect>
+                        <circle id="椭圆形" fill="#888888" cx="8" cy="8" r="5"></circle>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

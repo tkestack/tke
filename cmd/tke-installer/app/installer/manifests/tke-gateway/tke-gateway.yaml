@@ -1,0 +1,161 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: tke-gateway
+  namespace: tke
+spec:
+  selector:
+    app: tke-gateway
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 9442
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 9441
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: tke-gateway
+  namespace: tke
+spec:
+  selector:
+    matchLabels:
+      app: tke-gateway
+  template:
+    metadata:
+      labels:
+        app: tke-gateway
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      containers:
+        - name: tke-gateway
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-gateway.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-gateway-volume
+              mountPath: /app/conf
+          ports:
+            - containerPort: 9441
+              hostPort: 443
+            - containerPort: 9442
+              hostPort: 80
+          readinessProbe:
+            httpGet:
+              port: 9442
+              path: /healthz
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 9442
+              path: /healthz
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-gateway-volume
+          configMap:
+            name: tke-gateway
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tke-gateway
+  namespace: tke
+data:
+  tke-gateway.toml: |
+    gateway_config = "/app/conf/tke-gateway-config.yaml"
+
+    [authentication]
+
+      [authentication.oidc]
+      client_secret = "{{ .OIDCClientSecret }}"
+      client_id = "default"
+      issuer_url = "https://tke-auth/oidc"
+      ca_file = "/app/certs/ca.crt"
+      username_prefix ="-"
+      username_claim = "name"
+      tenantid_claim = "federated_claims"
+
+    [secure_serving]
+{{- if .SelfSigned }}
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+{{- else }}
+    tls_cert_file = "/app/conf/server.crt"
+    tls_private_key_file = "/app/conf/server.key"
+{{- end }}
+
+  tke-gateway-config.yaml: |
+    apiVersion: gateway.config.tkestack.io/v1
+    kind: GatewayConfiguration
+{{- if .EnableAuth }}
+    auth:
+      defaultTenant: {{ .TenantID }}
+{{- end }}
+{{- if .EnableRegistry }}
+    registry:
+      defaultTenant: {{ .TenantID }}
+      domainSuffix: {{ .RegistryDomainSuffix }}
+{{- end }}
+    components:
+{{- if .EnableAuth }}
+      auth:
+        address: https://tke-auth
+        passthrough:
+          caFile: /app/certs/ca.crt
+{{- end }}
+      platform:
+        address: https://tke-platform-api
+        passthrough:
+          caFile: /app/certs/ca.crt
+{{- if .EnableBusiness }}
+      business:
+        address: https://tke-business-api
+        passthrough:
+          caFile: /app/certs/ca.crt
+{{- end }}
+{{- if .EnableMonitor }}
+      monitor:
+        address: https://tke-monitor-api
+        passthrough:
+          caFile: /app/certs/ca.crt
+      notify:
+        address: https://tke-notify-api
+        passthrough:
+          caFile: /app/certs/ca.crt
+{{- end }}
+{{- if .EnableRegistry }}
+      registry:
+        address: https://tke-registry-api
+        passthrough:
+          caFile: /app/certs/ca.crt
+{{- end }}
+
+
+{{- if not .SelfSigned }}
+  server.crt: |
+    {{ .ServerCrt }}
+  server.key: |
+    {{ .ServerKey }}
+{{- end }}

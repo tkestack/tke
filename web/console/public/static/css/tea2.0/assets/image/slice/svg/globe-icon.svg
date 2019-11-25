@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="20px" height="20px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>分组 24</title>
+    <desc>Created with Sketch.</desc>
+    <g id="控制台界面" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="画板" transform="translate(-568.000000, -766.000000)">
+            <g id="分组-24" transform="translate(568.000000, 766.000000)">
+                <rect id="矩形" fill-rule="nonzero" x="0" y="0" width="20" height="20"></rect>
+                <path d="M10,1 C14.97025,1 19,5.02975 19,10 C19,14.97025 14.97025,19 10,19 C5.02975,19 1,14.97025 1,10 C1,5.02975 5.02975,1 10,1 Z M3.25,10 C3.25,13.722625 6.277375,16.75 10,16.75 L10,14.5 L7.75,14.5 L7.75,13.375 L3.33775,8.96275 C3.286,9.301375 3.25,9.64675 3.25,10 Z M16.75,10 C16.75,7.06825 14.867875,4.573 12.25,3.64375 L12.25,5.5 L10,5.5 L10,8.875 L6.625,8.875 L6.625,11.125 L12.25,11.125 L14.5,13.375 L15.8365,13.375 C16.413625,12.3805 16.75,11.229625 16.75,10 Z" id="Fill-1" fill="#006EFF"></path>
+            </g>
+        </g>
+    </g>
+</svg>

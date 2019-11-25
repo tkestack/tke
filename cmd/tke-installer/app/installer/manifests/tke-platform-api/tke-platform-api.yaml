@@ -1,0 +1,197 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: tke-platform-api
+  namespace: tke
+spec:
+  selector:
+    app: tke-platform-api
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 9443
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-platform-api
+  name: tke-platform-api
+  namespace: tke
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: tke-platform-api
+  template:
+    metadata:
+      labels:
+        app: tke-platform-api
+    spec:
+      initContainers:
+        - command:
+            - sh
+            - -c
+            - cp -vr /app/bin /app/plugins/baremetal/bin
+          image: {{ .BaremetalClusterProviderImage }}
+          name: baremetal-cluster-provider
+          volumeMounts:
+            - mountPath: /app/plugins/baremetal
+              name: plugins-volume
+        - command:
+            - sh
+            - -c
+            - cp -vr /app/bin/* /app/plugins/baremetal/bin
+          image: {{ .BaremetalMachineProviderImage }}
+          name: baremetal-machine-provider
+          volumeMounts:
+            - mountPath: /app/plugins/baremetal
+              name: plugins-volume
+      containers:
+        - name: tke-platform-api
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-platform-api.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-platform-api-volume
+              mountPath: /app/conf
+            - name: plugins-volume
+              mountPath: /app/plugins/baremetal
+            - name: provider-config-volume
+              mountPath: /app/plugins/baremetal/conf/
+            - name: docker-volume
+              mountPath: /app/plugins/baremetal/conf/docker/
+            - name: kubelet-volume
+              mountPath: /app/plugins/baremetal/conf/kubelet/
+            - name: kubeadm-volume
+              mountPath: /app/plugins/baremetal/conf/kubeadm/
+          ports:
+            - containerPort: 9443
+          readinessProbe:
+            httpGet:
+              port: 9443
+              path: /healthz/ping
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 9443
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-platform-api-volume
+          configMap:
+            name: tke-platform-api
+        - name: plugins-volume
+          emptyDir: {}
+        - name: provider-config-volume
+          configMap:
+            name: provider-config
+        - name: docker-volume
+          configMap:
+            name: docker
+        - name: kubelet-volume
+          configMap:
+            name: kubelet
+        - name: kubeadm-volume
+          configMap:
+            name: kubeadm
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-platform-api
+  namespace: tke
+data:
+  tke-platform-api.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [etcd]
+    servers = [
+      "https://etcd:2379"
+    ]
+    cafile = "/app/certs/etcd-ca.crt"
+    certfile = "/app/certs/etcd.crt"
+    keyfile = "/app/certs/etcd.key"
+
+    [generic]
+    external_hostname = "tke-platform-api"
+    external_port = 443
+
+    [authentication]
+    token_auth_file = "/app/certs/token.csv"
+    client_ca_file = "/app/certs/ca.crt"
+
+      [authentication.oidc]
+{{- if .EnableAuth }}
+      client_id = "default"
+      issuer_url = "https://tke-auth/oidc"
+      external_issuer_url = "https://tke-auth/oidc"
+      ca_file = "/app/certs/ca.crt"
+      username_prefix ="-"
+      username_claim = "name"
+      tenantid_claim = "federated_claims"
+{{- else }}
+      client_id = {{ .OIDCClientID }}
+      issuer_url = {{ .OIDCIssuerURL }}
+  {{- if .UseOIDCCA }}
+      ca_file = "/app/certs/oidc-ca.crt"
+  {{- end}}
+{{- end }}
+
+      [authentication.requestheader]
+      client_ca_file = "/app/certs/ca.crt"
+      username_headers = "X-Remote-User"
+      extra_headers_prefix = "X-Remote-Extra-"
+
+    [authorization]
+{{- if .EnableAuth }}
+    mode = "Webhook"
+    webhook_config_file = "/app/conf/tke-auth-webhook.yaml"
+{{- end }}
+
+    [providers]
+    cluster = [
+      "/app/plugins/baremetal/bin/baremetal-cluster-provider=/app/plugins/baremetal/conf/config.yaml"
+    ]
+    machine = [
+      "/app/plugins/baremetal/bin/baremetal-machine-provider=/app/plugins/baremetal/conf/config.yaml"
+    ]
+
+  tke-auth-webhook.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-auth/auth/authz
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+    - context:
+        cluster: tke
+        user: admin-cert
+      name: tke

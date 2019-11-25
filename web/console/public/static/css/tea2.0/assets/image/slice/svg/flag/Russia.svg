@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="20px" height="20px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>俄罗斯</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path d="M10,19 C14.9705627,19 19,14.9705627 19,10 C19,5.02943725 14.9705627,1 10,1 C5.02943725,1 1,5.02943725 1,10 C1,14.9705627 5.02943725,19 10,19 Z" id="path-1"></path>
+    </defs>
+    <g id="控制台界面" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="画板" transform="translate(-619.000000, -678.000000)">
+            <g id="俄罗斯" transform="translate(619.000000, 678.000000)">
+                <path d="M10,20 C4.4771525,20 0,15.5228475 0,10 C0,4.4771525 4.4771525,0 10,0 C15.5228475,0 20,4.4771525 20,10 C20,15.5228475 15.5228475,20 10,20 Z" id="路径" fill="#E5E5E5" fill-rule="nonzero"></path>
+                <mask id="mask-2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <use id="路径" fill="#F2F2F2" fill-rule="nonzero" xlink:href="#path-1"></use>
+                <g id="分组-5" mask="url(#mask-2)">
+                    <g transform="translate(-0.125000, -0.125000)">
+                        <polygon id="Fill-446" fill="#FFFFFF" points="0 6.75 20.25 6.75 20.25 0 0 0"></polygon>
+                        <polygon id="Fill-447" fill="#28348F" points="0 13.5 20.25 13.5 20.25 6.75 0 6.75"></polygon>
+                        <polygon id="Fill-448" fill="#E1001F" points="0 20.25 20.25 20.25 20.25 13.5 0 13.5"></polygon>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

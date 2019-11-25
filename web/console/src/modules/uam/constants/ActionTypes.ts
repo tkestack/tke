@@ -1,0 +1,19 @@
+export const UserList = 'UserList';
+export const FetchUserList = 'FetchUserList';
+export const AddUser = 'AddUser';
+export const RemoveUser = 'RemoveUser';
+export const GetUser = 'GetUser';
+export const UpdateUser = 'UpdateUser';
+export const FetchUserByName = 'FetchUserByName';
+export const UserStrategyList = 'UserStrategyList';
+
+export const StrategyList = 'StrategyList';
+export const AddStrategy = 'AddStrategy';
+export const RemoveStrategy = 'RemoveStrategy';
+export const GetStrategy = 'GetStrategy';
+export const UpdateStrategy = 'UpdateStrategy';
+export const AssociateUser = 'AssociateUser';
+export const GetCategories = 'GetCategories';
+export const GetStrategyAssociatedUsers = 'GetStrategyAssociatedUsers';
+export const RemoveAssociatedUser = 'RemoveAssociatedUser';
+export const AddAssociatedUser = 'AddAssociatedUser';

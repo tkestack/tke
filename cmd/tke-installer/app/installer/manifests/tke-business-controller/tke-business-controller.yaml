@@ -1,0 +1,112 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-business-controller
+  name: tke-business-controller
+  namespace: tke
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: tke-business-controller
+  template:
+    metadata:
+      labels:
+        app: tke-business-controller
+    spec:
+      containers:
+        - name: tke-business-controller
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-business-controller.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-business-controller-volume
+              mountPath: /app/conf
+          ports:
+            - containerPort: 9449
+          livenessProbe:
+            httpGet:
+              port: 9449
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-business-controller-volume
+          configMap:
+            name: tke-business-controller
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-business-controller
+  namespace: tke
+data:
+  tke-business-controller.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [client]
+
+      [client.platform]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+
+      [client.business]
+      api_server = "https://tke-business-api"
+      api_server_client_config = "/app/conf/tke-business-config.yaml"
+
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-platform-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+
+  tke-business-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-business-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke

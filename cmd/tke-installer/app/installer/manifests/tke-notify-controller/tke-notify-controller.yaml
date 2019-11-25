@@ -1,0 +1,89 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-notify-controller
+  name: tke-notify-controller
+  namespace: tke
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: tke-notify-controller
+  template:
+    metadata:
+      labels:
+        app: tke-notify-controller
+    spec:
+      containers:
+        - name: tke-notify-controller
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-notify-controller.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-notify-controller-volume
+              mountPath: /app/conf
+          ports:
+            - containerPort: 9459
+          livenessProbe:
+            httpGet:
+              port: 9459
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-notify-controller-volume
+          configMap:
+            name: tke-notify-controller
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-notify-controller
+  namespace: tke
+data:
+  tke-notify-controller.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [client]
+
+      [client.notify]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-notify-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <title>success-icon-grey</title>
+  <g>
+    <polygon points="10.586 5.211 7.042 8.79 5.299 7.048 3.885 8.462 7.042 11.619 8.456 10.205 12 6.625 10.586 5.211" style="fill: #bbb"/>
+    <path d="M8,1a7,7,0,1,0,7,7A7,7,0,0,0,8,1ZM8,13a5,5,0,1,1,5-5A5.006,5.006,0,0,1,8,13Z" style="fill: #bbb"/>
+  </g>
+</svg>

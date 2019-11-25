@@ -1,0 +1,444 @@
+import * as React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { TablePanel, LinkButton, usePrevious, emptyTips } from '../../../common/components';
+import { bindActionCreators, insertCSS } from '@tencent/qcloud-lib';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { selectable, removeable } from '@tea/component/table/addons';
+import { dateFormat } from '../../../../../helpers/dateUtil';
+import { router } from '../../router';
+import { allActions } from '../../actions';
+import { STRATEGY_TYPE } from '../../constants/Config';
+import {
+  Button,
+  TableColumn,
+  Text,
+  Modal,
+  Card,
+  Tabs,
+  TabPanel,
+  CodeEditor,
+  LoadingTip,
+  Input,
+  Transfer,
+  Table,
+  SearchBox,
+  Tooltip
+} from '@tea/component';
+const { useState, useEffect, useRef } = React;
+const _isEqual = require('lodash/isEqual');
+
+insertCSS(
+  'StrategyDetailsPanel',
+  `
+    .item-descr-list .is-error {
+      color: #e1504a;
+      border-color: #e1504a;
+    }
+`
+);
+
+let editorRef;
+const tabs = [
+  { id: 'actions', label: '策略语法' },
+  { id: 'users', label: '关联用户' }
+];
+export const StrategyDetailsPanel = () => {
+  const state = useSelector(state => state);
+  const dispatch = useDispatch();
+  const { actions } = bindActionCreators({ actions: allActions }, dispatch);
+
+  const { route, associatedUsersList, userList, getStrategy, updateStrategy } = state;
+  const associatedUsersListRecords = associatedUsersList.list.data.records;
+  const userListRecords = userList.list.data.records;
+  const getStrategyData = getStrategy.data[0];
+  const updateStrategyData = updateStrategy.data[0];
+
+  const { sub } = router.resolve(route);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [basicParamsValue, setBasicParamsValue] = useState({ name: '', description: '' });
+  const [userMsgsValue, setUserMsgsValue] = useState({
+    inputValue: '',
+    targetKeys: associatedUsersListRecords,
+    newTargetKeys: []
+  });
+  const [editValue, setEditValue] = useState({ editorStatement: {}, editBasic: false });
+  const [editorValue, setEditorValue] = useState({ ready: false, readOnly: true });
+  const [strategy, setStrategy] = useState(undefined);
+
+  useEffect(() => {
+    // 请求策略详情
+    actions.strategy.getStrategy.fetch({
+      noCache: true,
+      data: { id: sub }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // 初始化策略详情
+    if (getStrategyData && getStrategyData.target.id === sub) {
+      const showStrategy = getStrategyData.target;
+      setStrategy(showStrategy);
+      setBasicParamsValue({ name: showStrategy.name, description: showStrategy.description });
+    }
+  }, [getStrategyData, sub]);
+
+  useEffect(() => {
+    // 更新strategy
+    if (updateStrategyData && updateStrategyData.success && !_isEqual(strategy, updateStrategyData.target)) {
+      const showStrategy = updateStrategyData.target;
+      setStrategy(showStrategy);
+      // setBasicParamsValue({ name: showStrategy.name, description: showStrategy.description });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateStrategyData]);
+
+  useEffect(() => {
+    // 关联用户
+    if (!_isEqual(associatedUsersListRecords, userMsgsValue.targetKeys)) {
+      setUserMsgsValue({ ...userMsgsValue, targetKeys: associatedUsersListRecords });
+    }
+  }, [associatedUsersListRecords, userMsgsValue]);
+
+  const { name, description } = basicParamsValue;
+  const { name: newName = '', description: newDescription = '', email: pEmail = '' } = strategy ? strategy : {};
+  const isNameError = name.length <= 0 || name.length > 255;
+  const enabled = (name !== newName || description !== newDescription) && !isNameError;
+  const modalColumns = [
+    {
+      key: 'name',
+      header: '用户',
+      render: user => {
+        if (userMsgsValue.targetKeys.indexOf(user.name) !== -1) {
+          return (
+            <Tooltip title="用户已被关联">
+              {user.name}({user.Spec.extra.displayName})
+            </Tooltip>
+          );
+        }
+        return (
+          <p>
+            {user.name}({user.Spec.extra.displayName})
+          </p>
+        );
+      }
+    }
+  ];
+  const columns: TableColumn<string>[] = [
+    {
+      key: 'name',
+      header: t('关联用户'),
+      render: name => <Text parent="div">{name}</Text>
+    },
+    { key: 'operation', header: t('操作'), render: name => _renderOperationCell(name) }
+  ];
+  return (
+    <React.Fragment>
+      <Card>
+        <Card.Body
+          title={t('基本信息')}
+          subtitle={
+            strategy && strategy.type !== 1 ? (
+              <Button type="link" onClick={_onBasicEdit}>
+                编辑
+              </Button>
+            ) : (
+              ''
+            )
+          }
+        >
+          {strategy && (
+            <ul className="item-descr-list">
+              <li>
+                <span className="item-descr-tit">策略id</span>
+                <span className="item-descr-txt">{strategy.id}</span>
+              </li>
+              <li>
+                <span className="item-descr-tit">策略名称</span>
+                {editValue.editBasic ? (
+                  <Input
+                    value={name}
+                    className={isNameError && 'is-error'}
+                    onChange={value => {
+                      setBasicParamsValue({ ...basicParamsValue, name: value });
+                    }}
+                  />
+                ) : (
+                  <span className="item-descr-txt">{strategy.name || '-'}</span>
+                )}
+                {editValue.editBasic && isNameError && <p className="is-error">输入不能为空且需要小于256个字符</p>}
+              </li>
+              <li>
+                <span className="item-descr-tit">描述</span>
+                {editValue.editBasic ? (
+                  <Input
+                    multiline
+                    value={description}
+                    onChange={value => setBasicParamsValue({ ...basicParamsValue, description: value })}
+                  />
+                ) : (
+                  <span className="item-descr-txt">{strategy.description || '-'}</span>
+                )}
+              </li>
+              <li>
+                <span className="item-descr-tit">策略类型</span>
+                <span className="item-descr-txt">{STRATEGY_TYPE[strategy.type]}</span>
+              </li>
+              <li>
+                <span className="item-descr-tit">创建时间</span>
+                <span className="item-descr-txt">{dateFormat(new Date(strategy.createAt), 'yyyy-MM-dd hh:mm:ss')}</span>
+              </li>
+              <li>
+                <span className="item-descr-tit">更新时间</span>
+                <span className="item-descr-txt">
+                  {dateFormat(new Date((strategy && strategy.updateAt) || strategy.updateAt), 'yyyy-MM-dd hh:mm:ss')}
+                </span>
+              </li>
+            </ul>
+          )}
+          {editValue.editBasic && (
+            <div>
+              <Button type="primary" disabled={!enabled} onClick={_onSubmitBasic}>
+                保存
+              </Button>
+              <Button style={{ marginLeft: '10px' }} onClick={_onCancelBasicEdit}>
+                取消
+              </Button>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
+      <Card>
+        <Card.Body>
+          <Tabs
+            tabs={tabs}
+            onActive={tab => {
+              if (tab.id === 'users') {
+                actions.associateActions.applyFilter({ search: sub });
+              }
+            }}
+          >
+            <TabPanel id="actions">
+              {strategy && (
+                <React.Fragment>
+                  <Button
+                    style={{ marginBottom: '10px' }}
+                    disabled={!editorValue.ready}
+                    onClick={_onStrategyGrammarEdit}
+                  >
+                    编辑
+                  </Button>
+                  {editorValue.readOnly && (
+                    <CodeEditor
+                      style={{ height: 400 }}
+                      options={{ language: 'json', readOnly: true }}
+                      onReady={_onReady}
+                      onEdit={_onEdit}
+                      loadingPlaceholder={<LoadingTip style={{ textAlign: 'center', padding: 20 }} />}
+                    />
+                  )}
+                  {!editorValue.readOnly && (
+                    <CodeEditor
+                      style={{ height: 400 }}
+                      options={{ language: 'json', readOnly: false }}
+                      onReady={_onReady}
+                      onEdit={_onEdit}
+                      loadingPlaceholder={<LoadingTip style={{ textAlign: 'center', padding: 20 }} />}
+                    />
+                  )}
+                  {!editorValue.readOnly && (
+                    <div>
+                      <Button type="primary" onClick={_onSubmitStrategyGrammar}>
+                        保存
+                      </Button>
+                      <Button style={{ marginLeft: '10px' }} onClick={_onCancelStrategyGrammarEdit}>
+                        取消
+                      </Button>
+                    </div>
+                  )}
+                </React.Fragment>
+              )}
+            </TabPanel>
+            <TabPanel id="users">
+              <Button type="primary" onClick={_setModalVisible} style={{ marginBottom: '10px' }}>
+                关联用户
+              </Button>
+              <aside>
+                <Modal caption={t('关联用户')} size="l" visible={modalVisible} onClose={_close}>
+                  <Modal.Body>
+                    <Transfer
+                      leftCell={
+                        <Transfer.Cell
+                          title={t('关联用户')}
+                          tip={t('支持按住 shift 键进行多选')}
+                          header={
+                            <SearchBox
+                              value={userMsgsValue.inputValue}
+                              onChange={value => setUserMsgsValue({ ...userMsgsValue, inputValue: value })}
+                            />
+                          }
+                        >
+                          <Table
+                            records={userListRecords.filter(user => {
+                              return (
+                                (user.name.includes(userMsgsValue.inputValue) ||
+                                  user.Spec.extra.displayName.includes(userMsgsValue.inputValue)) &&
+                                user.name.toLowerCase() !== 'admin'
+                              );
+                            })}
+                            rowDisabled={record => {
+                              return userMsgsValue.targetKeys.indexOf(record.name) !== -1;
+                            }}
+                            recordKey="name"
+                            columns={modalColumns}
+                            addons={[
+                              selectable({
+                                value: userMsgsValue.newTargetKeys.concat(userMsgsValue.targetKeys),
+                                onChange: keys => {
+                                  const newKeys = [];
+                                  keys.forEach(item => {
+                                    if (userMsgsValue.targetKeys.indexOf(item) === -1) {
+                                      newKeys.push(item);
+                                    }
+                                  });
+                                  return setUserMsgsValue({ ...userMsgsValue, newTargetKeys: newKeys });
+                                },
+                                rowSelect: true
+                              })
+                            ]}
+                          />
+                        </Transfer.Cell>
+                      }
+                      rightCell={
+                        <Transfer.Cell title={t(`已选择 (${userMsgsValue.newTargetKeys.length}条)`)}>
+                          <Table
+                            records={userListRecords.filter(i => userMsgsValue.newTargetKeys.includes(i.name))}
+                            recordKey="name"
+                            columns={modalColumns}
+                            addons={[
+                              removeable({
+                                onRemove: key =>
+                                  setUserMsgsValue({
+                                    ...userMsgsValue,
+                                    newTargetKeys: userMsgsValue.newTargetKeys.filter(i => i !== key)
+                                  })
+                              })
+                            ]}
+                          />
+                        </Transfer.Cell>
+                      }
+                    />
+                  </Modal.Body>
+                  <Modal.Footer>
+                    <Button type="primary" onClick={_onSubmit}>
+                      <Trans>确定</Trans>
+                    </Button>
+                    <Button type="weak" onClick={_close}>
+                      <Trans>取消</Trans>
+                    </Button>
+                  </Modal.Footer>
+                </Modal>
+              </aside>
+              <TablePanel
+                columns={columns}
+                model={associatedUsersList}
+                action={actions.strategy}
+                emptyTips={emptyTips}
+                bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
+              />
+            </TabPanel>
+          </Tabs>
+        </Card.Body>
+      </Card>
+    </React.Fragment>
+  );
+  // }
+
+  function _renderOperationCell(name: string) {
+    return (
+      <LinkButton tipDirection="right" onClick={() => _removeAssociateUser(name)}>
+        <Trans>解除关联</Trans>
+      </LinkButton>
+    );
+  }
+
+  function _onBasicEdit() {
+    setEditValue({ ...editValue, editBasic: true });
+  }
+
+  async function _onSubmitBasic() {
+    const { name, description } = basicParamsValue;
+    await actions.strategy.updateStrategy.fetch({
+      noCache: true,
+      data: { ...strategy, name, description }
+    });
+    setEditValue({ ...editValue, editBasic: false });
+  }
+
+  function _onCancelBasicEdit() {
+    setEditValue({ ...editValue, editBasic: false });
+  }
+
+  function _onStrategyGrammarEdit() {
+    setEditorValue({ ...editorValue, readOnly: !editorValue.readOnly });
+  }
+
+  async function _onSubmitStrategyGrammar() {
+    // strategy.statement = editValue.editorStatement;
+    await actions.strategy.updateStrategy.fetch({
+      noCache: true,
+      data: { ...strategy, statement: editValue.editorStatement }
+    });
+    setEditValue({ ...editValue, editorStatement: strategy.statement });
+    setEditorValue({ ...editorValue, readOnly: true });
+  }
+
+  function _onCancelStrategyGrammarEdit() {
+    setEditorValue({ ...editorValue, readOnly: true });
+  }
+
+  function _onReady(instance) {
+    editorRef = instance;
+    editorRef.setValue(JSON.stringify(strategy.statement, null, 2));
+    editorRef.focus();
+    setEditValue({ ...editValue, editorStatement: strategy.statement });
+    setEditorValue({ ...editorValue, ready: true });
+  }
+
+  function _onEdit(instance) {
+    instance.getValue().then(value => {
+      setEditValue({ ...editValue, editorStatement: JSON.parse(value) });
+    });
+  }
+
+  async function _removeAssociateUser(name: string) {
+    const yes = await Modal.confirm({
+      message: t('确认删除当前所选用户？'),
+      okText: t('删除'),
+      cancelText: t('取消')
+    });
+    if (yes) {
+      actions.associateActions.removeAssociatedUser.start([{ id: sub, userNames: [name] }]);
+      actions.associateActions.removeAssociatedUser.perform();
+    }
+  }
+
+  function _setModalVisible() {
+    actions.user.applyFilter({ ifAll: true });
+    setModalVisible(true);
+  }
+  function _close() {
+    setModalVisible(false);
+  }
+  function _onSubmit() {
+    actions.associateActions.associateUser.start([{ id: strategy.id, userNames: userMsgsValue.newTargetKeys }]);
+    actions.associateActions.associateUser.perform();
+    setModalVisible(false);
+    setUserMsgsValue({
+      ...userMsgsValue,
+      targetKeys: userMsgsValue.targetKeys.concat(userMsgsValue.newTargetKeys),
+      newTargetKeys: []
+    });
+  }
+};

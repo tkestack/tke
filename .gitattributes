@@ -1,0 +1,7 @@
+**/zz_generated.*.go linguist-generated=true
+**/types_swagger_doc_generated.go linguist-generated=true
+**/generated.pb.go linguist-generated=true
+**/generated.proto
+api/client/**/*.go linguist-generated=true
+**/assets/assets.go linguist-generated=true
+third_party/node_modules.zip filter=lfs diff=lfs merge=lfs -text

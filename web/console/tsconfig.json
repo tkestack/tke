@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "jsx": "react",
+    "module": "commonjs",
+    "outDir": "./tsbuild",
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "target": "es2017",
+    "allowJs": true,
+    "noLib": false,
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@i18n/translation": ["i18n/translation/zh.js"],
+      "@i18n/translation_en": ["i18n/translation/en.js"],
+      "@tea/app": ["./node_modules/@tencent/tea-app"],
+      "@tea/app/*": ["./node_modules/@tencent/tea-app/lib/*"],
+      "@tea/component": ["./node_modules/@tencent/tea-component/lib"],
+      "@tea/component/*": ["./node_modules/@tencent/tea-component/lib/*"],
+      "@tencent/qcloud-lib": ["./lib/qcloud-lib"],
+      "d3": ["./node_modules/d3"],
+      "@helper": ["./helpers"],
+      "@helper/*": ["./helpers/*"],
+      "@config": ["./config"],
+      "@config/*": ["./config/*"],
+      "@src/*": ["./src/*"],
+      "@src": ["./src"],
+    }
+  },
+  "exclude": ["node_modules", "dist", "tea-cli", "build"],
+  "compoileOnSave": false
+}

@@ -1,0 +1,1 @@
+export { SidePanel, SidePanelProps } from './SidePanel';

@@ -1,0 +1,1 @@
+export { RegionBar, RegionBarProps } from './RegionBar';

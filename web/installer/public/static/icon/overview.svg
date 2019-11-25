@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="16px" height="16px" viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#29CC85;}
+	.st1{fill:#222222;}
+	.st2{fill:#BBBBBB;}
+	.st3{fill:#888888;}
+	.st4{fill-rule:evenodd;clip-rule:evenodd;fill:#888888;}
+	.st5{clip-path:url(#SVGID_2_);}
+	.st6{fill:#FF9D00;}
+	.st7{fill:#E54545;}
+	.st8{fill:#0ABF5B;}
+	.st9{fill:#FFFFFF;}
+	.st10{fill:#0000FF;}
+	.st11{fill:none;stroke:#FFFFFF;stroke-width:2;stroke-miterlimit:10;}
+</style>
+<g>
+	<rect x="1" y="1" class="st3" width="6" height="6"/>
+	<path class="st3" d="M5,11v2H3v-2H5 M7,9H1v6h6V9L7,9z"/>
+	<path class="st3" d="M13,3v2h-2V3H13 M15,1H9v6h6V1L15,1z"/>
+	<rect x="9" y="9" class="st3" width="6" height="6"/>
+</g>
+</svg>

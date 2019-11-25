@@ -1,0 +1,43 @@
+run:
+  # timeout for analysis, e.g. 30s, 5m
+  deadline: 10m
+  # include test files or not
+  tests: true
+  # disallowed from the implicit automatic updating of go.mod described above
+  modules-download-mode: readonly
+  # which dirs to skip: they won't be analyzed;
+  skip-dirs:
+    - third_party
+    - api
+    - web
+    - pkg/gateway/apis/config
+    - pkg/gateway/apis/config/v1
+    - pkg/registry/apis/config
+    - pkg/registry/apis/config/v1
+    - pkg/monitor/apis/config
+    - pkg/monitor/apis/config/v1
+
+linters:
+  disable-all: true
+  enable:
+    - unused
+    - gofmt
+    - ineffassign
+    - govet
+    - deadcode
+    - structcheck
+    - varcheck
+    - typecheck
+    - golint
+    - unconvert
+    - staticcheck
+    - gosimple
+
+issues:
+  exclude-rules:
+    - linters:
+        - staticcheck
+      text: "SA1019:"
+
+service:
+  golangci-lint-version: 1.20.x

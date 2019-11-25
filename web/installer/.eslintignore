@@ -1,0 +1,8 @@
+node_modules/*
+dist/*
+.vscode/*
+loader/*
+ambient/*
+typings/*
+**.log
+**.lock

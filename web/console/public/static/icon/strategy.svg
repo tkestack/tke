@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>策略</title>
+    <desc>Created with Sketch.</desc>
+    <g id="策略" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Group-4" transform="translate(1.000000, 1.000000)">
+            <path d="M2,12 L12,12 L12,4 L2,4 L2,12 Z M3,1 C3.553,1 4,1.448 4,2 C4,2.552 3.553,3 3,3 C2.447,3 2,2.552 2,2 C2,1.448 2.447,1 3,1 Z M6,1 C6.553,1 7,1.448 7,2 C7,2.552 6.553,3 6,3 C5.447,3 5,2.552 5,2 C5,1.448 5.447,1 6,1 Z M0,14 L14,14 L14,0 L0,0 L0,14 Z" id="Fill-1" fill="#888888"></path>
+            <polygon id="&lt;" stroke="#979797" stroke-width="0.5" fill="#BBBBBB" points="5 7 5 7.55598456 3.4950495 8.5 5 9.44401544 5 10 3 8.72586873 3 8.26833977"></polygon>
+            <path d="M8.5,6 L6,9.3872" id="Line-2" stroke="#979797" stroke-linecap="square"></path>
+            <polygon id="&lt;" stroke="#979797" stroke-width="0.5" fill="#BBBBBB" transform="translate(10.000000, 8.500000) scale(-1, 1) translate(-10.000000, -8.500000) " points="11 7 11 7.55598456 9.4950495 8.5 11 9.44401544 11 10 9 8.72586873 9 8.26833977"></polygon>
+        </g>
+    </g>
+</svg>

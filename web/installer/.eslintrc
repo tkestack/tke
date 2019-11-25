@@ -1,0 +1,30 @@
+{
+  "extends": ["eslint-config-alloy/typescript-react"],
+  "rules": {
+    "indent": ["off"],
+    "no-script-url": ["off"],
+    "no-implicit-coercion": ["off"],
+    "react/no-deprecated": ["off"],
+    "react/jsx-indent-props": ["error", 2],
+    "complexity": ["error", 40],
+    "radix": ["off"],
+    "one-var": ["off"],
+    "react/jsx-pascal-case": ["off"],
+    "guard-for-in": ["off"],
+    "no-undefined": ["off"],
+    "no-throw-literal": ["off"]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "rules": {
+        "no-unused-vars": ["off"]
+      }
+    }
+  ],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

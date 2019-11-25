@@ -1,0 +1,13 @@
+registry:
+  prefix: docker.io/tkestack
+  ip: ""
+  domain: docker.io
+  namespace: tkestack
+docker:
+  defaultVersion: 18.09.9
+cniPlugins:
+  defaultVersion: 0.7.5
+nvidiaDriver:
+  defaultVersion: "440.31"
+nvidiaContainerRuntime:
+  defaultVersion: 3.1.4

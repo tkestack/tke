@@ -1,0 +1,3634 @@
+Tencent is pleased to support the open source community by making TKEStack available.
+
+Copyright (C) 2019 THL A29 Limited, a Tencent company.  All rights reserved.
+
+TKEStack is licensed under the Apache License Version 2.0, except for the third-party components listed below.
+
+A copy of the Apache License Version 2.0 is included in this file.
+
+Other dependencies and licenses:
+
+
+Open Source Software Licensed Under the MIT License:
+--------------------------------------------------------------------
+1. circbuf
+Copyright (c) 2013 Armon Dadgar
+
+2. codec
+Copyright (c) 2012-2018 Ugorji Nwoke.
+
+3. dedent
+Copyright (c) 2018 Peter Lithammer
+
+4. diskv
+Copyright (c) 2011-2012 Peter Bourgon
+
+5. easyjson
+Copyright (c) 2016 Mail.Ru Group
+
+6. go
+Copyright (c) 2016 json-iterator
+
+7. go-restful
+Copyright (c) 2012-2018 Ernest Micklei
+
+8. go-shellwords
+Copyright (c) 2017 Yasuhiro Matsumoto
+
+9. httpcache
+Copyright © 2012 Greg Jones (greg.jones@gmail.com)
+
+10. go 1.1.4
+Copyright (c) 2016 json-iterator
+
+11. jwt-go
+Copyright (c) 2012 Dave Grijalva
+
+12. logrus
+Copyright (c) 2014 Simon Eskildsen
+
+13. logrus v1.4.1
+Copyright (c) 2014 Simon Eskildsen
+
+14. pty
+Copyright (c) 2019 Keith Rarick
+
+15. quantile
+Copyright (C) 2013 Blake Mizerany
+
+16. retry
+Copyright (C) 2016 Trevor N. Suarez (Rican7)
+
+17. semver
+Copyright (c) 2014 Benedikt Lang <github at benediktlang.de>
+
+18. arping v1.0.0
+Copyright (c) 2014-2016 j-keck [jhyphenkeck@gmail.com]
+
+19. coreos/bbolt v1.3.2
+Copyright (c) 2013 Ben Johnson
+
+20. diskv v2.0.1
+Copyright (c) 2011-2012 Peter Bourgon
+
+21. ginkgo v1.10.2
+Copyright (c) 2013-2014 Onsi Fakhouri
+
+22. goconvey
+Copyright (c) 2016 SmartyStreets, LLC
+
+23. gomega v1.7.0
+Copyright (c) 2013-2014 Onsi Fakhouri
+
+24. gomega
+Copyright (c) 2013-2014 Onsi Fakhouri
+
+25. gorequest v0.2.15
+Copyright (c) 2014 Theeraphol Wattanavekin
+
+26. go-restful v2.10.0
+Copyright (c) 2012-2018 Ernest Micklei
+
+27. go-restful v2.9.3
+Copyright (c) 2012-2018 Ernest Micklei
+
+28. go-restful-swagger12
+Copyright (c) 2017 Ernest Micklei
+
+29. gorm v1.9.11
+Copyright (c) 2013-NOW  Jinzhu <wosmvp@gmail.com>
+
+30. go-shellwords v1.0.5
+Copyright (c) 2017 Yasuhiro Matsumoto
+
+31. grpc-websocket-proxy
+Copyright (C) 2016 Travis Cline
+
+32. http2curl v1.0.0
+Copyright (c) 2015 Manfred Touron
+
+33. json-iterator/go v1.1.6
+Copyright (c) 2016 json-iterator
+
+34. jwt-go v3.2.0
+Copyright (c) 2012 Dave Grijalva
+
+35. pretty v0.1.0
+Copyright 2012 Keith Rarick
+
+36. probing
+Copyright (c) 2015 Xiang Li
+
+Terms of the MIT License:
+---------------------------------------------------
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+
+
+Open Source Software Licensed under the MIT License and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. yaml
+Copyright (c) 2014 Sam Ghods
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Sam Ghods
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Open Source Software Licensed under the MIT License and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. yaml v1.1.0
+Copyright (c) 2014 Sam Ghods
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Sam Ghods
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Open Source Software Licensed Under the BSD 2-Clause License:
+--------------------------------------------------------------------
+1. capability
+Copyright (c) 2013, Suryandaru Triandana <syndtr@gmail.com>
+
+2. dbus
+Copyright (c) 2013, Georg Reinke (<guelfey at gmail dot com>), Google
+All rights reserved.
+
+3. errors
+Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+
+4. gotty
+Copyright (c) 2012, Neal van Veen (nealvanveen@gmail.com)
+
+5. safefile
+Copyright (c) 2013 Dmitry Chestnykh <dmitry@codingrobots.com>
+
+6. sftp
+Copyright (c) 2013, Dave Cheney
+
+7. warnings v0.1.2
+Copyright (c) 2016 Péter Surányi.
+
+8. dbus v4.1.0
+Copyright (c) 2013, Georg Reinke (<guelfey at gmail dot com>), Google
+All rights reserved.
+
+9. websocket v1.4.0
+Copyright (c) 2013 The Gorilla WebSocket Authors. All rights reserved.
+
+10. pkg/errors v0.8.1
+Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+
+Terms of the BSD 2-Clause License:
+--------------------------------------------
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.
+
+
+Open Source Software Licensed Under the BSD 3-Clause License:
+--------------------------------------------------------------------
+1. context
+Copyright The Go Authors.
+
+2. crypto
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+3. exp
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+4. fs
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+5. fsnotify
+Copyright (c) 2012 The Go Authors. All rights reserved.
+Copyright (c) 2012-2019 fsnotify Authors. All rights reserved.
+
+6. gcfg v1.2.3
+Copyright (c) 2012 Péter Surányi.
+Portions Copyright (c) 2009 The Go Authors. All rights reserved.
+
+7. Inf v0.9.1
+Copyright (c) 2012 Péter Surányi.
+Portions Copyright (c) 2009 The Go Authors. All rights reserved.
+
+8. Inf v0.9.0
+Copyright (c) 2012 Péter Surányi.
+Portions Copyright (c) 2009 The Go Authors. All rights reserved.
+
+9. json-patch
+Copyright (c) 2014, Evan Phoenix
+
+10. mergo v0.3.5
+Copyright (c) 2013 Dario Castañé. All rights reserved.
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+11. net
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+12. oauth2
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+13. pflag
+Copyright (c) 2012 Alex Ogier. All rights reserved.
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+14. protobuf v1.1.0
+Copyright 2010 The Go Authors.
+
+15. protobuf
+Copyright (c) 2013, The GoGo Authors.
+Copyright 2010 The Go Authors.
+
+16. protobuf v0.5
+Copyright (c) 2013, The GoGo Authors.
+Copyright 2010 The Go Authors.
+
+17. purell
+Copyright (c) 2012, Martin Angers
+
+18. sys
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+19. text v0.3.0
+Copyright (c) 2009 The Go Authors.
+
+20. text
+Copyright (c) 2009 The Go Authors.
+
+21. time
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+22. urlesc
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+23. uuid
+Copyright (c) 2009,2014 Google Inc. All rights reserved.
+
+24. dhcp4
+Copyright (c) 2013 Skagerrak Software Limited. All rights reserved.
+
+24. goproxy
+Copyright (c) 2012 Elazar Leibovich. All rights reserved.
+
+25. json-patch v4.4.0
+Copyright (c) 2014, Evan Phoenix
+
+26. mergo v0.3.7
+Copyright (c) 2013 Dario Castañé. All rights reserved.
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+27. pflag v1.0.5
+Copyright (c) 2012 Alex Ogier. All rights reserved.
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+28. pflag v1.0.3
+Copyright (c) 2012 Alex Ogier. All rights reserved.
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+29. protobuf v1.3.2
+Copyright 2010 The Go Authors.  All rights reserved.
+
+30. protobuf v1.2.1
+Copyright (c) 2013, The GoGo Authors. All rights reserved.
+Copyright 2010 The Go Authors.  All rights reserved.
+
+31. uuid v1.1.1
+Copyright (c) 2009,2014 Google Inc. All rights reserved.
+
+32. uuid v1.2.0
+Copyright (c) 2009,2014 Google Inc. All rights reserved.
+
+
+Terms of the BSD 3-Clause License:
+--------------------------------------------
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software
+without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Open Source Software Licensed Under the BSD 3-Clause License and Other Licenses of the Third-party Components therein:
+--------------------------------------------------------------------
+1. filepath-securejoin
+Copyright (C) 2014-2015 Docker Inc & Go Authors. All rights reserved.
+Copyright (C) 2017 SUSE LLC. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Open Source Software Licensed Under the BSD 3-Clause License and Other Licenses of the Third-party Components therein:
+--------------------------------------------------------------------
+1. grpc-gateway
+Copyright (c) 2015, Gengo, Inc.
+Copyright (c) Google Inc.
+
+Copyright (c) 2015, Gengo, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+
+    * Neither the name of Gengo, Inc. nor the names of its
+      contributors may be used to endorse or promote products derived from this
+      software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for googleapis:
+Copyright  Google LLC.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+Open Source Software Licensed Under the BSD 3-Clause License and Other Licenses of the Third-party Components therein:
+--------------------------------------------------------------------
+1. grpc-gateway v1.8.5
+Copyright (c) 2015, Gengo, Inc.
+Copyright (c) Google Inc.
+
+Copyright (c) 2015, Gengo, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+
+    * Neither the name of Gengo, Inc. nor the names of its
+      contributors may be used to endorse or promote products derived from this
+      software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for googleapis:
+Copyright  Google LLC.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+Open Source Software Licensed Under the ISC License:
+--------------------------------------------------------------------
+1. gopass
+Copyright (c) 2012 Chris Howey
+
+2. go-spew
+Copyright (c) 2012-2016 Dave Collins <dave@davec.name>
+
+3. spew
+Copyright (c) 2012-2016 Dave Collins <dave@davec.name>
+
+
+Terms of the ISC License:
+--------------------------------------------
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+Open Source Software Licensed Under the LGPL v3 with a special exception:
+--------------------------------------------------------------------
+1. ratelimit
+Copyright (C) 2014 2015 Canonical Ltd
+
+As a special exception to the GNU Lesser General Public License version 3
+("LGPL3"), the copyright holders of this Library give you permission to
+convey to a third party a Combined Work that links statically or dynamically
+to this Library without providing any Minimal Corresponding Source or
+Minimal Application Code as set out in 4d or providing the installation
+information set out in section 4e, provided that you comply with the other
+provisions of LGPL3 and provided that you meet, for the Application the
+terms and conditions of the license(s) which apply to the Application.
+
+Except as stated in this special exception, the provisions of LGPL3 will
+continue to comply in full to this Library. If you modify this Library, you
+may apply this exception to your version of this Library, but you are not
+obliged to do so. If you do not wish to do so, delete this exception
+statement from your version. This exception does not (and cannot) modify any
+license terms which apply to the Application, with which you must still
+comply.
+
+
+                   GNU LESSER GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+
+  This version of the GNU Lesser General Public License incorporates
+the terms and conditions of version 3 of the GNU General Public
+License, supplemented by the additional permissions listed below.
+
+  0. Additional Definitions.
+
+  As used herein, "this License" refers to version 3 of the GNU Lesser
+General Public License, and the "GNU GPL" refers to version 3 of the GNU
+General Public License.
+
+  "The Library" refers to a covered work governed by this License,
+other than an Application or a Combined Work as defined below.
+
+  An "Application" is any work that makes use of an interface provided
+by the Library, but which is not otherwise based on the Library.
+Defining a subclass of a class defined by the Library is deemed a mode
+of using an interface provided by the Library.
+
+  A "Combined Work" is a work produced by combining or linking an
+Application with the Library.  The particular version of the Library
+with which the Combined Work was made is also called the "Linked
+Version".
+
+  The "Minimal Corresponding Source" for a Combined Work means the
+Corresponding Source for the Combined Work, excluding any source code
+for portions of the Combined Work that, considered in isolation, are
+based on the Application, and not on the Linked Version.
+
+  The "Corresponding Application Code" for a Combined Work means the
+object code and/or source code for the Application, including any data
+and utility programs needed for reproducing the Combined Work from the
+Application, but excluding the System Libraries of the Combined Work.
+
+  1. Exception to Section 3 of the GNU GPL.
+
+  You may convey a covered work under sections 3 and 4 of this License
+without being bound by section 3 of the GNU GPL.
+
+  2. Conveying Modified Versions.
+
+  If you modify a copy of the Library, and, in your modifications, a
+facility refers to a function or data to be supplied by an Application
+that uses the facility (other than as an argument passed when the
+facility is invoked), then you may convey a copy of the modified
+version:
+
+   a) under this License, provided that you make a good faith effort to
+   ensure that, in the event an Application does not supply the
+   function or data, the facility still operates, and performs
+   whatever part of its purpose remains meaningful, or
+
+   b) under the GNU GPL, with none of the additional permissions of
+   this License applicable to that copy.
+
+  3. Object Code Incorporating Material from Library Header Files.
+
+  The object code form of an Application may incorporate material from
+a header file that is part of the Library.  You may convey such object
+code under terms of your choice, provided that, if the incorporated
+material is not limited to numerical parameters, data structure
+layouts and accessors, or small macros, inline functions and templates
+(ten or fewer lines in length), you do both of the following:
+
+   a) Give prominent notice with each copy of the object code that the
+   Library is used in it and that the Library and its use are
+   covered by this License.
+
+   b) Accompany the object code with a copy of the GNU GPL and this license
+   document.
+
+  4. Combined Works.
+
+  You may convey a Combined Work under terms of your choice that,
+taken together, effectively do not restrict modification of the
+portions of the Library contained in the Combined Work and reverse
+engineering for debugging such modifications, if you also do each of
+the following:
+
+   a) Give prominent notice with each copy of the Combined Work that
+   the Library is used in it and that the Library and its use are
+   covered by this License.
+
+   b) Accompany the Combined Work with a copy of the GNU GPL and this license
+   document.
+
+   c) For a Combined Work that displays copyright notices during
+   execution, include the copyright notice for the Library among
+   these notices, as well as a reference directing the user to the
+   copies of the GNU GPL and this license document.
+
+   d) Do one of the following:
+
+       0) Convey the Minimal Corresponding Source under the terms of this
+       License, and the Corresponding Application Code in a form
+       suitable for, and under terms that permit, the user to
+       recombine or relink the Application with a modified version of
+       the Linked Version to produce a modified Combined Work, in the
+       manner specified by section 6 of the GNU GPL for conveying
+       Corresponding Source.
+
+       1) Use a suitable shared library mechanism for linking with the
+       Library.  A suitable mechanism is one that (a) uses at run time
+       a copy of the Library already present on the user's computer
+       system, and (b) will operate properly with a modified version
+       of the Library that is interface-compatible with the Linked
+       Version.
+
+   e) Provide Installation Information, but only if you would otherwise
+   be required to provide such information under section 6 of the
+   GNU GPL, and only to the extent that such information is
+   necessary to install and execute a modified version of the
+   Combined Work produced by recombining or relinking the
+   Application with a modified version of the Linked Version. (If
+   you use option 4d0, the Installation Information must accompany
+   the Minimal Corresponding Source and Corresponding Application
+   Code. If you use option 4d1, you must provide the Installation
+   Information in the manner specified by section 6 of the GNU GPL
+   for conveying Corresponding Source.)
+
+  5. Combined Libraries.
+
+  You may place library facilities that are a work based on the
+Library side by side in a single library together with other library
+facilities that are not Applications and are not covered by this
+License, and convey such a combined library under terms of your
+choice, if you do both of the following:
+
+   a) Accompany the combined library with a copy of the same work based
+   on the Library, uncombined with any other library facilities,
+   conveyed under the terms of this License.
+
+   b) Give prominent notice with the combined library that part of it
+   is a work based on the Library, and explaining where to find the
+   accompanying uncombined form of the same work.
+
+  6. Revised Versions of the GNU Lesser General Public License.
+
+  The Free Software Foundation may publish revised and/or new versions
+of the GNU Lesser General Public License from time to time. Such new
+versions will be similar in spirit to the present version, but may
+differ in detail to address new problems or concerns.
+
+  Each version is given a distinguishing version number. If the
+Library as you received it specifies that a certain numbered version
+of the GNU Lesser General Public License "or any later version"
+applies to it, you have the option of following the terms and
+conditions either of that published version or of any later version
+published by the Free Software Foundation. If the Library as you
+received it does not specify a version number of the GNU Lesser
+General Public License, you may choose any version of the GNU Lesser
+General Public License ever published by the Free Software Foundation.
+
+  If the Library as you received it specifies that a proxy can decide
+whether future versions of the GNU Lesser General Public License shall
+apply, that proxy's public statement of acceptance of any version is
+permanent authorization for you to choose that version for the
+Library.
+
+
+Open Source Software Licensed Under the Mozilla Public License, version 2.0:
+--------------------------------------------------------------------
+1. golang-lru v0.5.0
+Copyright (c) HashiCorp
+
+2. dhcp4client v1.0.0
+copyright © Dan Goldsmith
+
+3. golang-lru
+Copyright (c) HashiCorp
+
+Terms of the Mozilla Public License, version 2.0:
+--------------------------------------------------------------------
+1. Definitions
+
+1.1. "Contributor"
+
+     means each individual or legal entity that creates, contributes to the
+     creation of, or owns Covered Software.
+
+1.2. "Contributor Version"
+
+     means the combination of the Contributions of others (if any) used by a
+     Contributor and that particular Contributor's Contribution.
+
+1.3. "Contribution"
+
+     means Covered Software of a particular Contributor.
+
+1.4. "Covered Software"
+
+     means Source Code Form to which the initial Contributor has attached the
+     notice in Exhibit A, the Executable Form of such Source Code Form, and
+     Modifications of such Source Code Form, in each case including portions
+     thereof.
+
+1.5. "Incompatible With Secondary Licenses"
+     means
+
+     a. that the initial Contributor has attached the notice described in
+        Exhibit B to the Covered Software; or
+
+     b. that the Covered Software was made available under the terms of
+        version 1.1 or earlier of the License, but not also under the terms of
+        a Secondary License.
+
+1.6. "Executable Form"
+
+     means any form of the work other than Source Code Form.
+
+1.7. "Larger Work"
+
+     means a work that combines Covered Software with other material, in a
+     separate file or files, that is not Covered Software.
+
+1.8. "License"
+
+     means this document.
+
+1.9. "Licensable"
+
+     means having the right to grant, to the maximum extent possible, whether
+     at the time of the initial grant or subsequently, any and all of the
+     rights conveyed by this License.
+
+1.10. "Modifications"
+
+     means any of the following:
+
+     a. any file in Source Code Form that results from an addition to,
+        deletion from, or modification of the contents of Covered Software; or
+
+     b. any new file in Source Code Form that contains any Covered Software.
+
+1.11. "Patent Claims" of a Contributor
+
+      means any patent claim(s), including without limitation, method,
+      process, and apparatus claims, in any patent Licensable by such
+      Contributor that would be infringed, but for the grant of the License,
+      by the making, using, selling, offering for sale, having made, import,
+      or transfer of either its Contributions or its Contributor Version.
+
+1.12. "Secondary License"
+
+      means either the GNU General Public License, Version 2.0, the GNU Lesser
+      General Public License, Version 2.1, the GNU Affero General Public
+      License, Version 3.0, or any later versions of those licenses.
+
+1.13. "Source Code Form"
+
+      means the form of the work preferred for making modifications.
+
+1.14. "You" (or "Your")
+
+      means an individual or a legal entity exercising rights under this
+      License. For legal entities, "You" includes any entity that controls, is
+      controlled by, or is under common control with You. For purposes of this
+      definition, "control" means (a) the power, direct or indirect, to cause
+      the direction or management of such entity, whether by contract or
+      otherwise, or (b) ownership of more than fifty percent (50%) of the
+      outstanding shares or beneficial ownership of such entity.
+
+
+2. License Grants and Conditions
+
+2.1. Grants
+
+     Each Contributor hereby grants You a world-wide, royalty-free,
+     non-exclusive license:
+
+     a. under intellectual property rights (other than patent or trademark)
+        Licensable by such Contributor to use, reproduce, make available,
+        modify, display, perform, distribute, and otherwise exploit its
+        Contributions, either on an unmodified basis, with Modifications, or
+        as part of a Larger Work; and
+
+     b. under Patent Claims of such Contributor to make, use, sell, offer for
+        sale, have made, import, and otherwise transfer either its
+        Contributions or its Contributor Version.
+
+2.2. Effective Date
+
+     The licenses granted in Section 2.1 with respect to any Contribution
+     become effective for each Contribution on the date the Contributor first
+     distributes such Contribution.
+
+2.3. Limitations on Grant Scope
+
+     The licenses granted in this Section 2 are the only rights granted under
+     this License. No additional rights or licenses will be implied from the
+     distribution or licensing of Covered Software under this License.
+     Notwithstanding Section 2.1(b) above, no patent license is granted by a
+     Contributor:
+
+     a. for any code that a Contributor has removed from Covered Software; or
+
+     b. for infringements caused by: (i) Your and any other third party's
+        modifications of Covered Software, or (ii) the combination of its
+        Contributions with other software (except as part of its Contributor
+        Version); or
+
+     c. under Patent Claims infringed by Covered Software in the absence of
+        its Contributions.
+
+     This License does not grant any rights in the trademarks, service marks,
+     or logos of any Contributor (except as may be necessary to comply with
+     the notice requirements in Section 3.4).
+
+2.4. Subsequent Licenses
+
+     No Contributor makes additional grants as a result of Your choice to
+     distribute the Covered Software under a subsequent version of this
+     License (see Section 10.2) or under the terms of a Secondary License (if
+     permitted under the terms of Section 3.3).
+
+2.5. Representation
+
+     Each Contributor represents that the Contributor believes its
+     Contributions are its original creation(s) or it has sufficient rights to
+     grant the rights to its Contributions conveyed by this License.
+
+2.6. Fair Use
+
+     This License is not intended to limit any rights You have under
+     applicable copyright doctrines of fair use, fair dealing, or other
+     equivalents.
+
+2.7. Conditions
+
+     Sections 3.1, 3.2, 3.3, and 3.4 are conditions of the licenses granted in
+     Section 2.1.
+
+
+3. Responsibilities
+
+3.1. Distribution of Source Form
+
+     All distribution of Covered Software in Source Code Form, including any
+     Modifications that You create or to which You contribute, must be under
+     the terms of this License. You must inform recipients that the Source
+     Code Form of the Covered Software is governed by the terms of this
+     License, and how they can obtain a copy of this License. You may not
+     attempt to alter or restrict the recipients' rights in the Source Code
+     Form.
+
+3.2. Distribution of Executable Form
+
+     If You distribute Covered Software in Executable Form then:
+
+     a. such Covered Software must also be made available in Source Code Form,
+        as described in Section 3.1, and You must inform recipients of the
+        Executable Form how they can obtain a copy of such Source Code Form by
+        reasonable means in a timely manner, at a charge no more than the cost
+        of distribution to the recipient; and
+
+     b. You may distribute such Executable Form under the terms of this
+        License, or sublicense it under different terms, provided that the
+        license for the Executable Form does not attempt to limit or alter the
+        recipients' rights in the Source Code Form under this License.
+
+3.3. Distribution of a Larger Work
+
+     You may create and distribute a Larger Work under terms of Your choice,
+     provided that You also comply with the requirements of this License for
+     the Covered Software. If the Larger Work is a combination of Covered
+     Software with a work governed by one or more Secondary Licenses, and the
+     Covered Software is not Incompatible With Secondary Licenses, this
+     License permits You to additionally distribute such Covered Software
+     under the terms of such Secondary License(s), so that the recipient of
+     the Larger Work may, at their option, further distribute the Covered
+     Software under the terms of either this License or such Secondary
+     License(s).
+
+3.4. Notices
+
+     You may not remove or alter the substance of any license notices
+     (including copyright notices, patent notices, disclaimers of warranty, or
+     limitations of liability) contained within the Source Code Form of the
+     Covered Software, except that You may alter any license notices to the
+     extent required to remedy known factual inaccuracies.
+
+3.5. Application of Additional Terms
+
+     You may choose to offer, and to charge a fee for, warranty, support,
+     indemnity or liability obligations to one or more recipients of Covered
+     Software. However, You may do so only on Your own behalf, and not on
+     behalf of any Contributor. You must make it absolutely clear that any
+     such warranty, support, indemnity, or liability obligation is offered by
+     You alone, and You hereby agree to indemnify every Contributor for any
+     liability incurred by such Contributor as a result of warranty, support,
+     indemnity or liability terms You offer. You may include additional
+     disclaimers of warranty and limitations of liability specific to any
+     jurisdiction.
+
+4. Inability to Comply Due to Statute or Regulation
+
+   If it is impossible for You to comply with any of the terms of this License
+   with respect to some or all of the Covered Software due to statute,
+   judicial order, or regulation then You must: (a) comply with the terms of
+   this License to the maximum extent possible; and (b) describe the
+   limitations and the code they affect. Such description must be placed in a
+   text file included with all distributions of the Covered Software under
+   this License. Except to the extent prohibited by statute or regulation,
+   such description must be sufficiently detailed for a recipient of ordinary
+   skill to be able to understand it.
+
+5. Termination
+
+5.1. The rights granted under this License will terminate automatically if You
+     fail to comply with any of its terms. However, if You become compliant,
+     then the rights granted under this License from a particular Contributor
+     are reinstated (a) provisionally, unless and until such Contributor
+     explicitly and finally terminates Your grants, and (b) on an ongoing
+     basis, if such Contributor fails to notify You of the non-compliance by
+     some reasonable means prior to 60 days after You have come back into
+     compliance. Moreover, Your grants from a particular Contributor are
+     reinstated on an ongoing basis if such Contributor notifies You of the
+     non-compliance by some reasonable means, this is the first time You have
+     received notice of non-compliance with this License from such
+     Contributor, and You become compliant prior to 30 days after Your receipt
+     of the notice.
+
+5.2. If You initiate litigation against any entity by asserting a patent
+     infringement claim (excluding declaratory judgment actions,
+     counter-claims, and cross-claims) alleging that a Contributor Version
+     directly or indirectly infringes any patent, then the rights granted to
+     You by any and all Contributors for the Covered Software under Section
+     2.1 of this License shall terminate.
+
+5.3. In the event of termination under Sections 5.1 or 5.2 above, all end user
+     license agreements (excluding distributors and resellers) which have been
+     validly granted by You or Your distributors under this License prior to
+     termination shall survive termination.
+
+6. Disclaimer of Warranty
+
+   Covered Software is provided under this License on an "as is" basis,
+   without warranty of any kind, either expressed, implied, or statutory,
+   including, without limitation, warranties that the Covered Software is free
+   of defects, merchantable, fit for a particular purpose or non-infringing.
+   The entire risk as to the quality and performance of the Covered Software
+   is with You. Should any Covered Software prove defective in any respect,
+   You (not any Contributor) assume the cost of any necessary servicing,
+   repair, or correction. This disclaimer of warranty constitutes an essential
+   part of this License. No use of  any Covered Software is authorized under
+   this License except under this disclaimer.
+
+7. Limitation of Liability
+
+   Under no circumstances and under no legal theory, whether tort (including
+   negligence), contract, or otherwise, shall any Contributor, or anyone who
+   distributes Covered Software as permitted above, be liable to You for any
+   direct, indirect, special, incidental, or consequential damages of any
+   character including, without limitation, damages for lost profits, loss of
+   goodwill, work stoppage, computer failure or malfunction, or any and all
+   other commercial damages or losses, even if such party shall have been
+   informed of the possibility of such damages. This limitation of liability
+   shall not apply to liability for death or personal injury resulting from
+   such party's negligence to the extent applicable law prohibits such
+   limitation. Some jurisdictions do not allow the exclusion or limitation of
+   incidental or consequential damages, so this exclusion and limitation may
+   not apply to You.
+
+8. Litigation
+
+   Any litigation relating to this License may be brought only in the courts
+   of a jurisdiction where the defendant maintains its principal place of
+   business and such litigation shall be governed by laws of that
+   jurisdiction, without reference to its conflict-of-law provisions. Nothing
+   in this Section shall prevent a party's ability to bring cross-claims or
+   counter-claims.
+
+9. Miscellaneous
+
+   This License represents the complete agreement concerning the subject
+   matter hereof. If any provision of this License is held to be
+   unenforceable, such provision shall be reformed only to the extent
+   necessary to make it enforceable. Any law or regulation which provides that
+   the language of a contract shall be construed against the drafter shall not
+   be used to construe this License against a Contributor.
+
+
+10. Versions of the License
+
+10.1. New Versions
+
+      Mozilla Foundation is the license steward. Except as provided in Section
+      10.3, no one other than the license steward has the right to modify or
+      publish new versions of this License. Each version will be given a
+      distinguishing version number.
+
+10.2. Effect of New Versions
+
+      You may distribute the Covered Software under the terms of the version
+      of the License under which You originally received the Covered Software,
+      or under the terms of any subsequent version published by the license
+      steward.
+
+10.3. Modified Versions
+
+      If you create software not governed by this License, and you want to
+      create a new license for such software, you may create and use a
+      modified version of this License if you rename the license and remove
+      any references to the name of the license steward (except to note that
+      such modified license differs from this License).
+
+10.4. Distributing Source Code Form that is Incompatible With Secondary
+      Licenses If You choose to distribute Source Code Form that is
+      Incompatible With Secondary Licenses under the terms of this version of
+      the License, the notice described in Exhibit B of this License must be
+      attached.
+
+Exhibit A - Source Code Form License Notice
+
+      This Source Code Form is subject to the
+      terms of the Mozilla Public License, v.
+      2.0. If a copy of the MPL was not
+      distributed with this file, You can
+      obtain one at
+      http://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular file,
+then You may include the notice in a location (such as a LICENSE file in a
+relevant directory) where a recipient would be likely to look for such a
+notice.
+
+You may add additional accurate notices of copyright ownership.
+
+Exhibit B - "Incompatible With Secondary Licenses" Notice
+
+      This Source Code Form is "Incompatible
+      With Secondary Licenses", as defined by
+      the Mozilla Public License, v. 2.0.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. apimachinery
+Copyright The Kubernetes Authors.
+Copyright 2009 2013 The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+for json:
+// Copyright 2013 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+for reflect and netutil:
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. apimachinery kubernetes-1.15.4
+Copyright The Kubernetes Authors.
+Copyright 2009 2013 The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+for json:
+// Copyright 2013 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+for reflect and netutil:
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1.  Kubernetes APIMachinery v1.12.7
+Copyright The Kubernetes Authors.
+Copyright 2009 2013 The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+for json:
+// Copyright 2013 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+for reflect:
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. ffjson
+Copyright (c) 2014, Paul Querna
+Copyright (c) 2012 The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+Portions of this software were developed as
+part of Go, Copyright (c) 2012 The Go Authors.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. Kubernetes v1.12.7
+Copyright 2016 The Kubernetes Authors.
+Copyright 2015 CoreOS, Inc.
+Copyright (c) 2012 The Go Authors.
+Copyright ©2013 The gonum Authors.
+(c) 2009 Manolo Carrasco (Manuel Carrasco Moñino)
+Copyright 2015 Karl Isenberg
+Copyright 2008 Google Inc.
+Copyright 2014 Reverb Technologies, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+for etcd221, etcd237:
+// Copyright 2015 CoreOS, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+for golang:
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for gonum/graph
+Copyright ©2013 The gonum Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the gonum project nor the names of its authors and
+      contributors may be used to endorse or promote products derived from this
+      software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for shell2junit
+shell2junit library and sample code is licensed under Apache License, v.2.0.
+(c) 2009 Manolo Carrasco (Manuel Carrasco Moñino)
+
+for intemp:
+Copyright 2015 Karl Isenberg
+ Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+for protobuf/google/protobuf
+// Protocol Buffers - Google's data interchange format
+// Copyright 2008 Google Inc.  All rights reserved.
+// https://developers.google.com/protocol-buffers/
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for swagger-ui:
+Copyright 2014 Reverb Technologies, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at [apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. Kubernetes v1.16.0-alpha.0
+Copyright 2016 The Kubernetes Authors.
+Copyright 2015 CoreOS, Inc.
+Copyright (c) 2012 The Go Authors.
+Copyright ©2013 The gonum Authors.
+(c) 2009 Manolo Carrasco (Manuel Carrasco Moñino)
+Copyright 2015 Karl Isenberg
+Copyright (c) 2015-2016 Manfred Touron
+Copyright 2008 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+for etcd 221 and etcd 237:
+// Copyright 2015 CoreOS, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+for golang:
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for gonum/graph:
+Copyright ©2013 The gonum Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the gonum project nor the names of its authors and
+      contributors may be used to endorse or promote products derived from this
+      software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for shell2junit:
+shell2junit library and sample code is licensed under Apache License, v.2.0.
+(c) 2009 Manolo Carrasco (Manuel Carrasco Moñino)
+
+for go-srcimporter:
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for intemp:
+Copyright 2015 Karl Isenberg
+ Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+for multiarch/qemu-user-static:
+The MIT License (MIT)
+
+Copyright (c) 2015-2016 Manfred Touron
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+for protobuf/google/protobuf:
+// Protocol Buffers - Google's data interchange format
+// Copyright 2008 Google Inc.  All rights reserved.
+// https://developers.google.com/protocol-buffers/
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. kubernetes
+Copyright 2016 The Kubernetes Authors.
+Copyright (c) 2012 The Go Authors.
+Copyright ©2013 The gonum Authors.
+(c) 2009 Manolo Carrasco (Manuel Carrasco Moñino)
+Copyright (c) 2015-2016 Manfred Touron
+Copyright 2015 Karl Isenberg
+Copyright 2008 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+for golang:
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for gonum/graph
+Copyright ©2013 The gonum Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the gonum project nor the names of its authors and
+      contributors may be used to endorse or promote products derived from this
+      software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for shell2junit
+shell2junit library and sample code is licensed under Apache License, v.2.0.
+(c) 2009 Manolo Carrasco (Manuel Carrasco Moñino)
+
+for go-srcimporter
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+for intemp:
+Copyright 2015 Karl Isenberg
+ Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+for multiarch/qemu-user-static:
+The MIT License (MIT)
+
+Copyright (c) 2015-2016 Manfred Touron
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+for protobuf/google/protobuf
+// Protocol Buffers - Google's data interchange format
+// Copyright 2008 Google Inc.  All rights reserved.
+// https://developers.google.com/protocol-buffers/
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. Kubernetes Client-go v1.12.7
+Copyright The Kubernetes Authors.
+Copyright (c) The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+Portions are copied from Go library text/template, which is licensed under a BSD-style License.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. client-go kubernetes-1.15.4
+Copyright The Kubernetes Authors.
+Copyright (c) The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+Portions are copied from Go library text/template, which is licensed under a BSD-style License.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. k8s.io/client-go v9.0.0
+Copyright The Kubernetes Authors.
+Copyright (c) The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+Portions are copied from Go library text/template, which is licensed under a BSD-style License.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. Kubernetes Client-go
+Copyright The Kubernetes Authors.
+Copyright (c) The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+Portions are copied from Go library text/template, which is licensed under a BSD-style License.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. utils
+Copyright The Kubernetes Authors.
+Copyright (c) 2012 The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+for golang:
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+© 2019 GitHub, Inc.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. utils v1.12.7
+Copyright The Kubernetes Authors.
+Copyright (c) 2012 The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+for golang:
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+© 2019 GitHub, Inc.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. utils kubernetes-1.15.4
+Copyright The Kubernetes Authors.
+Copyright (c) 2012 The Go Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+for golang:
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+© 2019 GitHub, Inc.
+
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. yaml v2.2.4
+Copyright 2011-2016 Canonical Ltd.
+Copyright (c) 2006 Kirill Simonov
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+The following files were ported to Go from C files of libyaml, and thus
+are still covered by their original copyright and license:
+
+    apic.go
+    emitterc.go
+    parserc.go
+    readerc.go
+    scannerc.go
+    writerc.go
+    yamlh.go
+    yamlprivateh.go
+
+Copyright (c) 2006 Kirill Simonov
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Open Source Software Licensed under the Apache License Version 2.0 and Other Licenses of the Third-party Components therein:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. yaml v2.2.2
+Copyright 2011-2016 Canonical Ltd.
+Copyright (c) 2006 Kirill Simonov
+
+Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+(A copy of the Apache License Version 2.0 is included in this file)
+
+The following files were ported to Go from C files of libyaml, and thus
+are still covered by their original copyright and license:
+
+    apic.go
+    emitterc.go
+    parserc.go
+    readerc.go
+    scannerc.go
+    writerc.go
+    yamlh.go
+    yamlprivateh.go
+
+Copyright (c) 2006 Kirill Simonov
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Open Source Software Licensed under the Apache License Version 2.0 and Creative Commons Attribution 4.0 International License:
+----------------------------------------------------------------------------------------------------------------------------------------
+1. containerd v1.0.2
+Copyright 2013-2016 Docker, Inc.
+
+2. go-digest
+Copyright © 2016 Docker, Inc.
+
+3. spdystream
+Copyright 2014-2015 Docker, Inc.
+
+4. go-digest v1.0.0-rc1
+Copyright © 2016 Docker, Inc.
+
+All rights reserved, except as follows. Code is released under the Apache 2.0 license. This README.md file and the CONTRIBUTING.md file are licensed
+under the Creative Commons Attribution 4.0 International License under the terms and conditions set forth in the file LICENSE.docs. You may obtain a
+duplicate copy of the same license, titled CC BY-SA 4.0, at http://creativecommons.org/licenses/by-sa/4.0/.
+
+（A copy of the Apache 2.0 license is included in this file)
+
+Attribution 4.0 International
+=======================================================================
+
+Creative Commons Corporation ("Creative Commons") is not a law firm and
+does not provide legal services or legal advice. Distribution of
+Creative Commons public licenses does not create a lawyer-client or
+other relationship. Creative Commons makes its licenses and related
+information available on an "as-is" basis. Creative Commons gives no
+warranties regarding its licenses, any material licensed under their
+terms and conditions, or any related information. Creative Commons
+disclaims all liability for damages resulting from their use to the
+fullest extent possible.
+
+Using Creative Commons Public Licenses
+
+Creative Commons public licenses provide a standard set of terms and
+conditions that creators and other rights holders may use to share
+original works of authorship and other material subject to copyright
+and certain other rights specified in the public license below. The
+following considerations are for informational purposes only, are not
+exhaustive, and do not form part of our licenses.
+
+     Considerations for licensors: Our public licenses are
+     intended for use by those authorized to give the public
+     permission to use material in ways otherwise restricted by
+     copyright and certain other rights. Our licenses are
+     irrevocable. Licensors should read and understand the terms
+     and conditions of the license they choose before applying it.
+     Licensors should also secure all rights necessary before
+     applying our licenses so that the public can reuse the
+     material as expected. Licensors should clearly mark any
+     material not subject to the license. This includes other CC-
+     licensed material, or material used under an exception or
+     limitation to copyright. More considerations for licensors:
+	wiki.creativecommons.org/Considerations_for_licensors
+
+     Considerations for the public: By using one of our public
+     licenses, a licensor grants the public permission to use the
+     licensed material under specified terms and conditions. If
+     the licensor's permission is not necessary for any reason--for
+     example, because of any applicable exception or limitation to
+     copyright--then that use is not regulated by the license. Our
+     licenses grant only permissions under copyright and certain
+     other rights that a licensor has authority to grant. Use of
+     the licensed material may still be restricted for other
+     reasons, including because others have copyright or other
+     rights in the material. A licensor may make special requests,
+     such as asking that all changes be marked or described.
+     Although not required by our licenses, you are encouraged to
+     respect those requests where reasonable. More_considerations
+     for the public:
+	wiki.creativecommons.org/Considerations_for_licensees
+
+=======================================================================
+
+Creative Commons Attribution 4.0 International Public License
+
+By exercising the Licensed Rights (defined below), You accept and agree
+to be bound by the terms and conditions of this Creative Commons
+Attribution 4.0 International Public License ("Public License"). To the
+extent this Public License may be interpreted as a contract, You are
+granted the Licensed Rights in consideration of Your acceptance of
+these terms and conditions, and the Licensor grants You such rights in
+consideration of benefits the Licensor receives from making the
+Licensed Material available under these terms and conditions.
+
+
+Section 1 -- Definitions.
+
+  a. Adapted Material means material subject to Copyright and Similar
+     Rights that is derived from or based upon the Licensed Material
+     and in which the Licensed Material is translated, altered,
+     arranged, transformed, or otherwise modified in a manner requiring
+     permission under the Copyright and Similar Rights held by the
+     Licensor. For purposes of this Public License, where the Licensed
+     Material is a musical work, performance, or sound recording,
+     Adapted Material is always produced where the Licensed Material is
+     synched in timed relation with a moving image.
+
+  b. Adapter's License means the license You apply to Your Copyright
+     and Similar Rights in Your contributions to Adapted Material in
+     accordance with the terms and conditions of this Public License.
+
+  c. Copyright and Similar Rights means copyright and/or similar rights
+     closely related to copyright including, without limitation,
+     performance, broadcast, sound recording, and Sui Generis Database
+     Rights, without regard to how the rights are labeled or
+     categorized. For purposes of this Public License, the rights
+     specified in Section 2(b)(1)-(2) are not Copyright and Similar
+     Rights.
+
+  d. Effective Technological Measures means those measures that, in the
+     absence of proper authority, may not be circumvented under laws
+     fulfilling obligations under Article 11 of the WIPO Copyright
+     Treaty adopted on December 20, 1996, and/or similar international
+     agreements.
+
+  e. Exceptions and Limitations means fair use, fair dealing, and/or
+     any other exception or limitation to Copyright and Similar Rights
+     that applies to Your use of the Licensed Material.
+
+  f. Licensed Material means the artistic or literary work, database,
+     or other material to which the Licensor applied this Public
+     License.
+
+  g. Licensed Rights means the rights granted to You subject to the
+     terms and conditions of this Public License, which are limited to
+     all Copyright and Similar Rights that apply to Your use of the
+     Licensed Material and that the Licensor has authority to license.
+
+  h. Licensor means the individual(s) or entity(ies) granting rights
+     under this Public License.
+
+  i. Share means to provide material to the public by any means or
+     process that requires permission under the Licensed Rights, such
+     as reproduction, public display, public performance, distribution,
+     dissemination, communication, or importation, and to make material
+     available to the public including in ways that members of the
+     public may access the material from a place and at a time
+     individually chosen by them.
+
+  j. Sui Generis Database Rights means rights other than copyright
+     resulting from Directive 96/9/EC of the European Parliament and of
+     the Council of 11 March 1996 on the legal protection of databases,
+     as amended and/or succeeded, as well as other essentially
+     equivalent rights anywhere in the world.
+
+  k. You means the individual or entity exercising the Licensed Rights
+     under this Public License. Your has a corresponding meaning.
+
+
+Section 2 -- Scope.
+
+  a. License grant.
+
+       1. Subject to the terms and conditions of this Public License,
+          the Licensor hereby grants You a worldwide, royalty-free,
+          non-sublicensable, non-exclusive, irrevocable license to
+          exercise the Licensed Rights in the Licensed Material to:
+
+            a. reproduce and Share the Licensed Material, in whole or
+               in part; and
+
+            b. produce, reproduce, and Share Adapted Material.
+
+       2. Exceptions and Limitations. For the avoidance of doubt, where
+          Exceptions and Limitations apply to Your use, this Public
+          License does not apply, and You do not need to comply with
+          its terms and conditions.
+
+       3. Term. The term of this Public License is specified in Section
+          6(a).
+
+       4. Media and formats; technical modifications allowed. The
+          Licensor authorizes You to exercise the Licensed Rights in
+          all media and formats whether now known or hereafter created,
+          and to make technical modifications necessary to do so. The
+          Licensor waives and/or agrees not to assert any right or
+          authority to forbid You from making technical modifications
+          necessary to exercise the Licensed Rights, including
+          technical modifications necessary to circumvent Effective
+          Technological Measures. For purposes of this Public License,
+          simply making modifications authorized by this Section 2(a)
+          (4) never produces Adapted Material.
+
+       5. Downstream recipients.
+
+            a. Offer from the Licensor -- Licensed Material. Every
+               recipient of the Licensed Material automatically
+               receives an offer from the Licensor to exercise the
+               Licensed Rights under the terms and conditions of this
+               Public License.
+
+            b. No downstream restrictions. You may not offer or impose
+               any additional or different terms or conditions on, or
+               apply any Effective Technological Measures to, the
+               Licensed Material if doing so restricts exercise of the
+               Licensed Rights by any recipient of the Licensed
+               Material.
+
+       6. No endorsement. Nothing in this Public License constitutes or
+          may be construed as permission to assert or imply that You
+          are, or that Your use of the Licensed Material is, connected
+          with, or sponsored, endorsed, or granted official status by,
+          the Licensor or others designated to receive attribution as
+          provided in Section 3(a)(1)(A)(i).
+
+  b. Other rights.
+
+       1. Moral rights, such as the right of integrity, are not
+          licensed under this Public License, nor are publicity,
+          privacy, and/or other similar personality rights; however, to
+          the extent possible, the Licensor waives and/or agrees not to
+          assert any such rights held by the Licensor to the limited
+          extent necessary to allow You to exercise the Licensed
+          Rights, but not otherwise.
+
+       2. Patent and trademark rights are not licensed under this
+          Public License.
+
+       3. To the extent possible, the Licensor waives any right to
+          collect royalties from You for the exercise of the Licensed
+          Rights, whether directly or through a collecting society
+          under any voluntary or waivable statutory or compulsory
+          licensing scheme. In all other cases the Licensor expressly
+          reserves any right to collect such royalties.
+
+
+Section 3 -- License Conditions.
+
+Your exercise of the Licensed Rights is expressly made subject to the
+following conditions.
+
+  a. Attribution.
+
+       1. If You Share the Licensed Material (including in modified
+          form), You must:
+
+            a. retain the following if it is supplied by the Licensor
+               with the Licensed Material:
+
+                 i. identification of the creator(s) of the Licensed
+                    Material and any others designated to receive
+                    attribution, in any reasonable manner requested by
+                    the Licensor (including by pseudonym if
+                    designated);
+
+                ii. a copyright notice;
+
+               iii. a notice that refers to this Public License;
+
+                iv. a notice that refers to the disclaimer of
+                    warranties;
+
+                 v. a URI or hyperlink to the Licensed Material to the
+                    extent reasonably practicable;
+
+            b. indicate if You modified the Licensed Material and
+               retain an indication of any previous modifications; and
+
+            c. indicate the Licensed Material is licensed under this
+               Public License, and include the text of, or the URI or
+               hyperlink to, this Public License.
+
+       2. You may satisfy the conditions in Section 3(a)(1) in any
+          reasonable manner based on the medium, means, and context in
+          which You Share the Licensed Material. For example, it may be
+          reasonable to satisfy the conditions by providing a URI or
+          hyperlink to a resource that includes the required
+          information.
+
+       3. If requested by the Licensor, You must remove any of the
+          information required by Section 3(a)(1)(A) to the extent
+          reasonably practicable.
+
+       4. If You Share Adapted Material You produce, the Adapter's
+          License You apply must not prevent recipients of the Adapted
+          Material from complying with this Public License.
+
+
+Section 4 -- Sui Generis Database Rights.
+
+Where the Licensed Rights include Sui Generis Database Rights that
+apply to Your use of the Licensed Material:
+
+  a. for the avoidance of doubt, Section 2(a)(1) grants You the right
+     to extract, reuse, reproduce, and Share all or a substantial
+     portion of the contents of the database;
+
+  b. if You include all or a substantial portion of the database
+     contents in a database in which You have Sui Generis Database
+     Rights, then the database in which You have Sui Generis Database
+     Rights (but not its individual contents) is Adapted Material; and
+
+  c. You must comply with the conditions in Section 3(a) if You Share
+     all or a substantial portion of the contents of the database.
+
+For the avoidance of doubt, this Section 4 supplements and does not
+replace Your obligations under this Public License where the Licensed
+Rights include other Copyright and Similar Rights.
+
+
+Section 5 -- Disclaimer of Warranties and Limitation of Liability.
+
+  a. UNLESS OTHERWISE SEPARATELY UNDERTAKEN BY THE LICENSOR, TO THE
+     EXTENT POSSIBLE, THE LICENSOR OFFERS THE LICENSED MATERIAL AS-IS
+     AND AS-AVAILABLE, AND MAKES NO REPRESENTATIONS OR WARRANTIES OF
+     ANY KIND CONCERNING THE LICENSED MATERIAL, WHETHER EXPRESS,
+     IMPLIED, STATUTORY, OR OTHER. THIS INCLUDES, WITHOUT LIMITATION,
+     WARRANTIES OF TITLE, MERCHANTABILITY, FITNESS FOR A PARTICULAR
+     PURPOSE, NON-INFRINGEMENT, ABSENCE OF LATENT OR OTHER DEFECTS,
+     ACCURACY, OR THE PRESENCE OR ABSENCE OF ERRORS, WHETHER OR NOT
+     KNOWN OR DISCOVERABLE. WHERE DISCLAIMERS OF WARRANTIES ARE NOT
+     ALLOWED IN FULL OR IN PART, THIS DISCLAIMER MAY NOT APPLY TO YOU.
+
+  b. TO THE EXTENT POSSIBLE, IN NO EVENT WILL THE LICENSOR BE LIABLE
+     TO YOU ON ANY LEGAL THEORY (INCLUDING, WITHOUT LIMITATION,
+     NEGLIGENCE) OR OTHERWISE FOR ANY DIRECT, SPECIAL, INDIRECT,
+     INCIDENTAL, CONSEQUENTIAL, PUNITIVE, EXEMPLARY, OR OTHER LOSSES,
+     COSTS, EXPENSES, OR DAMAGES ARISING OUT OF THIS PUBLIC LICENSE OR
+     USE OF THE LICENSED MATERIAL, EVEN IF THE LICENSOR HAS BEEN
+     ADVISED OF THE POSSIBILITY OF SUCH LOSSES, COSTS, EXPENSES, OR
+     DAMAGES. WHERE A LIMITATION OF LIABILITY IS NOT ALLOWED IN FULL OR
+     IN PART, THIS LIMITATION MAY NOT APPLY TO YOU.
+
+  c. The disclaimer of warranties and limitation of liability provided
+     above shall be interpreted in a manner that, to the extent
+     possible, most closely approximates an absolute disclaimer and
+     waiver of all liability.
+
+
+Section 6 -- Term and Termination.
+
+  a. This Public License applies for the term of the Copyright and
+     Similar Rights licensed here. However, if You fail to comply with
+     this Public License, then Your rights under this Public License
+     terminate automatically.
+
+  b. Where Your right to use the Licensed Material has terminated under
+     Section 6(a), it reinstates:
+
+       1. automatically as of the date the violation is cured, provided
+          it is cured within 30 days of Your discovery of the
+          violation; or
+
+       2. upon express reinstatement by the Licensor.
+
+     For the avoidance of doubt, this Section 6(b) does not affect any
+     right the Licensor may have to seek remedies for Your violations
+     of this Public License.
+
+  c. For the avoidance of doubt, the Licensor may also offer the
+     Licensed Material under separate terms or conditions or stop
+     distributing the Licensed Material at any time; however, doing so
+     will not terminate this Public License.
+
+  d. Sections 1, 5, 6, 7, and 8 survive termination of this Public
+     License.
+
+
+Section 7 -- Other Terms and Conditions.
+
+  a. The Licensor shall not be bound by any additional or different
+     terms or conditions communicated by You unless expressly agreed.
+
+  b. Any arrangements, understandings, or agreements regarding the
+     Licensed Material not stated herein are separate from and
+     independent of the terms and conditions of this Public License.
+
+
+Section 8 -- Interpretation.
+
+  a. For the avoidance of doubt, this Public License does not, and
+     shall not be interpreted to, reduce, limit, restrict, or impose
+     conditions on any use of the Licensed Material that could lawfully
+     be made without permission under this Public License.
+
+  b. To the extent possible, if any provision of this Public License is
+     deemed unenforceable, it shall be automatically reformed to the
+     minimum extent necessary to make it enforceable. If the provision
+     cannot be reformed, it shall be severed from this Public License
+     without affecting the enforceability of the remaining terms and
+     conditions.
+
+  c. No term or condition of this Public License will be waived and no
+     failure to comply consented to unless expressly agreed to by the
+     Licensor.
+
+  d. Nothing in this Public License constitutes or may be interpreted
+     as a limitation upon, or waiver of, any privileges and immunities
+     that apply to the Licensor or You, including from the legal
+     processes of any jurisdiction or authority.
+
+
+=======================================================================
+
+Creative Commons is not a party to its public
+licenses. Notwithstanding, Creative Commons may elect to apply one of
+its public licenses to material it publishes and in those instances
+will be considered the “Licensor.” The text of the Creative Commons
+public licenses is dedicated to the public domain under the CC0 Public
+Domain Dedication. Except for the limited purpose of indicating that
+material is shared under a Creative Commons public license or as
+otherwise permitted by the Creative Commons policies published at
+creativecommons.org/policies, Creative Commons does not authorize the
+use of the trademark "Creative Commons" or any other trademark or logo
+of Creative Commons without its prior written consent including,
+without limitation, in connection with any unauthorized modifications
+to any of its public licenses or any other arrangements,
+understandings, or agreements concerning use of licensed material. For
+the avoidance of doubt, this paragraph does not form part of the
+public licenses.
+
+Creative Commons may be contacted at creativecommons.org.
+
+
+Open Source Software Licensed under the Apache License Version 2.0:
+--------------------------------------------------------------------
+1. afero
+Copyright © 2014-2016 2018 Steve Francia <spf@spf13.com>.
+Copyright 2013 tsuru authors.
+Copyright 2009 2015 The Go Authors.
+Copyright ©2015 The Hugo Authors
+Copyright 2016-present Bjørn Erik Pedersen <bjorn.erik.pedersen@gmail.com>
+All rights reserved.
+
+2. api
+Copyright 2018 The Kubernetes Authors.
+
+3. apiextensions-apiserver
+Copyright 2017 The Kubernetes Authors.
+
+4. apiserver
+Copyright The Kubernetes Authors.
+
+5. aws-sdk-go
+Copyright 2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2014-2015 Stripe, Inc.
+
+6. btree
+Copyright 2014 Google Inc.
+
+7. cadvisor v0.31.0
+Copyright 2014 The cAdvisor Authors
+
+8. cni
+Copyright CNI authors
+
+9. component-base
+Copyright The Kubernetes Authors.
+
+10. concurrent 1.0.3
+Copyright Modern Go Programming
+
+11. console
+Copyright The containerd Authors
+
+12. continuity
+Copyright The containerd Authors
+
+13. dlopen
+Copyright 2015 2016 CoreOS, Inc.
+
+14. moby
+Copyright 2013-2018 Docker, Inc.
+
+15. etcd
+Copyright The etcd Authors
+
+16. fileutils
+Copyright 2014 Docker, Inc.
+
+17. genproto
+Copyright 2016 2019 Google Inc.
+
+18. glog
+Copyright 2013 Google Inc. All Rights Reserved.
+
+19. gnostic
+Copyright 2017, Google Inc.
+
+20. gofuzz
+Copyright 2014 Google Inc. All rights reserved.
+
+21. go-http-auth
+Copyright 2012-2013 Lev Shamardin
+
+22. go-jose v2.4.0
+Copyright Square Inc.
+
+23. go-jmespath
+Copyright 2015 James Saryerwinnie
+
+24. gonvml
+Copyright 1993-2016 NVIDIA Corporation.  All rights reserved.
+Copyright 2017 Google Inc.
+
+25. go-systemd v16
+Copyright 2018 CoreOS, Inc
+
+26. go-units
+Copyright 2015 Docker, Inc.
+
+27. go-zfs
+Copyright (c) 2014, OmniTI Computer Consulting, Inc.
+
+28. groupcache
+Copyright 2012 2013 Google Inc.
+
+29. grpc-go
+Copyright gRPC authors.
+
+30. ini
+Copyright 2014 Unknwon
+
+31. jsonpointer
+Copyright 2013 sigu-399
+
+32. jsonreference
+Copyright 2013 sigu-399
+
+33. klog
+Copyright 2013 Google Inc.
+
+34. kmsgparser
+Copyright 2016 Euan Kemp
+
+35. kube-openapi v1.12.7
+Copyright The Kubernetes Authors.
+
+36. kube-openapi
+Copyright The Kubernetes Authors.
+
+37. Kubernetes API v1.12.7
+Copyright The Kubernetes Authors.
+
+38. Kubernetes apiextensions-apiserver v1.12.7
+Copyright The Kubernetes Authors.
+
+39. Kubernetes APIServer v1.12.7
+Copyright 2016 The Kubernetes Authors.
+
+40. Kubernetes CSI-API v1.12.7
+Copyright The Kubernetes Authors.
+
+41. libtrust
+Copyright 2014 Docker, Inc.
+
+42. mesos-go
+Copyright 2013-2015, Mesosphere, Inc.
+
+43. metadata
+Copyright 2014 2016 2018 Google LLC
+
+44. nat
+Copyright 2015 Docker, Inc.
+
+45. netlink
+Copyright 2014 Vishvananda Ishaya.
+Copyright 2014 Docker, Inc.
+
+46. netns
+Copyright 2014 Vishvananda Ishaya.
+Copyright 2014 Docker, Inc.
+
+47. openapiv2
+Copyright 2017, Google Inc.
+
+48. opencontainers image-spec
+Copyright 2016 The Linux Foundation.
+
+49. pbutil
+Copyright 2013 2016 Matt T. Proud
+
+50. prometheus
+Copyright 2012-2019 The Prometheus Authors
+
+51. prometheus common
+Copyright 2015 The Prometheus Authors
+
+52. prometheus procfs
+Copyright 2014-2015 The Prometheus Authors
+
+53. prometheuse go client
+Copyright 2012-2015 The Prometheus Authors
+
+54. reference
+Copyright Docker, Inc.
+
+55. reflect2
+Copyright Modern Go Programming
+
+56. rkt
+Copyright 2015 The rkt Authors
+
+57. runc
+Copyright 2012-2015 Docker, Inc.
+
+58. selinux
+copyright © Open Container Initiative
+
+59. spec
+Copyright 2015 go-swagger maintainers
+
+60. specs-go
+Copyright 2015 The Linux Foundation.
+
+61. swag
+Copyright 2015 go-swagger maintainers
+
+62. afero v1.2.2
+Copyright © 2014-2016 2018 Steve Francia <spf@spf13.com>.
+Copyright 2013 tsuru authors. All rights reserved.
+Copyright 2009 2015 The Go Authors.
+Copyright ©2015 The Hugo Authors
+Copyright 2016-present Bjørn Erik Pedersen <bjorn.erik.pedersen@gmail.com>
+All rights reserved.
+
+63. api kubernetes-1.15.4
+Copyright 2018 The Kubernetes Authors.
+
+64. apiextensions-apiserver kubernetes-1.15.4
+Copyright 2017 The Kubernetes Authors.
+
+65. appengine v1.5.0
+Copyright Google Inc. All rights reserved.
+
+66. btree v1.0.0
+Copyright 2014 Google Inc.
+
+67. clockwork v0.1.0
+Copyright © Jonathan Boulle
+
+68. cmux v0.1.4
+Copyright 2016 The CMux Authors. All rights reserved.
+
+69. cni v0.6.0
+Copyright CNI authors
+
+70. cobra v0.0.3
+Copyright © 2013 Steve Francia <spf@spf13.com>.
+
+71. component-base kubernetes-1.15.4
+Copyright The Kubernetes Authors.
+
+72. coreos/etcd v3.3.13
+Copyright 2014 CoreOS, Inc
+
+73. coreos/go-semver v0.3.0
+Copyright 2018 CoreOS, Inc
+
+74. coreos/pkg
+Copyright 2014 CoreOS, Inc
+
+75. docker distribution v2.7.1
+Copyright Docker, Inc.
+
+76. engine-api v0.4.0
+ Copyright 2015-2016 Docker, Inc.
+
+77. go-connections v0.4.0
+ Copyright 2015 Docker, Inc.
+
+78. gofuzz v1.0.0
+Copyright 2014 Google Inc. All rights reserved.
+
+79. go-grpc-middleware v1.0.0
+Copyright 2016 Michal Witkowski. All Rights Reserved.
+
+80. go-grpc-prometheus v1.2.0
+Copyright 2016 Michal Witkowski. All Rights Reserved.
+
+81. go-iptables v0.4.3
+Copyright 2018 CoreOS, Inc
+
+82. go-jose v2.3.1
+Copyright Square Inc.
+
+83. go-systemd
+Copyright 2018 CoreOS, Inc
+
+84. grpc-go v1.24.0
+Copyright gRPC authors.
+
+85. klog v0.3.1
+Copyright 2013 Google Inc.
+
+86. kube-openapi kubernetes-1.15.4
+Copyright The Kubernetes Authors.
+
+87. modern-go/reflect2 v1.0.1
+Copyright Modern Go Programming
+
+88. mousetrap v1.0.0
+Copyright 2014 Alan Shreve
+
+89. netlink v1.0.0
+Copyright 2014 Vishvananda Ishaya.
+Copyright 2014 Docker, Inc.
+
+90. plugins v0.6.0
+Copyright CNI authors
+
+91. qcloudapi-sdk-go
+Copyright (c） dbdd4us wangtong2712@gmail.com
+
+92. k8s.io/klog v0.2.0
+Copyright 2013 Google Inc. All Rights Reserved.
+
+Terms of the Apache License Version 2.0:
+--------------------------------------------------------------------
+Apache License
+
+Version 2.0, January 2004
+
+http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+1. Definitions.
+
+"License" shall mean the terms and conditions for use, reproduction, and distribution as defined by Sections 1 through 9 of this document.
+
+"Licensor" shall mean the copyright owner or entity authorized by the copyright owner that is granting the License.
+
+"Legal Entity" shall mean the union of the acting entity and all other entities that control, are controlled by, or are under common control with that
+entity. For the purposes of this definition, "control" means (i) the power, direct or indirect, to cause the direction or management of such entity,
+whether by contract or otherwise, or (ii) ownership of fifty percent (50%) or more of the outstanding shares, or (iii) beneficial ownership of such entity.
+
+"You" (or "Your") shall mean an individual or Legal Entity exercising permissions granted by this License.
+
+"Source" form shall mean the preferred form for making modifications, including but not limited to software source code, documentation source, and
+configuration files.
+
+"Object" form shall mean any form resulting from mechanical transformation or translation of a Source form, including but not limited to compiled object
+code, generated documentation, and conversions to other media types.
+
+"Work" shall mean the work of authorship, whether in Source or Object form, made available under the License, as indicated by a copyright notice that
+is included in or attached to the work (an example is provided in the Appendix below).
+
+"Derivative Works" shall mean any work, whether in Source or Object form, that is based on (or derived from) the Work and for which the editorial
+revisions, annotations, elaborations, or other modifications represent, as a whole, an original work of authorship. For the purposes of this License,
+Derivative Works shall not include works that remain separable from, or merely link (or bind by name) to the interfaces of, the Work and Derivative
+Works thereof.
+
+"Contribution" shall mean any work of authorship, including the original version of the Work and any modifications or additions to that Work or
+Derivative Works thereof, that is intentionally submitted to Licensor for inclusion in the Work by the copyright owner or by an individual or Legal
+Entity authorized to submit on behalf of the copyright owner. For the purposes of this definition, "submitted" means any form of electronic, verbal,
+or written communication sent to the Licensor or its representatives, including but not limited to communication on electronic mailing lists, source
+code control systems, and issue tracking systems that are managed by, or on behalf of, the Licensor for the purpose of discussing and improving the
+Work, but excluding communication that is conspicuously marked or otherwise designated in writing by the copyright owner as "Not a Contribution."
+
+"Contributor" shall mean Licensor and any individual or Legal Entity on behalf of whom a Contribution has been received by Licensor and subsequently
+incorporated within the Work.
+
+2. Grant of Copyright License. Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide,
+non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform,
+sublicense, and distribute the Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License. Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide,
+non-exclusive, no-charge, royalty-free, irrevocable (except as stated in this section) patent license to make, have made, use, offer to sell,
+sell, import, and otherwise transfer the Work, where such license applies only to those patent claims licensable by such Contributor that are
+necessarily infringed by their Contribution(s) alone or by combination of their Contribution(s) with the Work to which such Contribution(s) was
+submitted. If You institute patent litigation against any entity (including a cross-claim or counterclaim in a lawsuit) alleging that the Work
+or a Contribution incorporated within the Work constitutes direct or contributory patent infringement, then any patent licenses granted to You
+under this License for that Work shall terminate as of the date such litigation is filed.
+
+4. Redistribution. You may reproduce and distribute copies of the Work or Derivative Works thereof in any medium, with or without modifications,
+and in Source or Object form, provided that You meet the following conditions:
+
+You must give any other recipients of the Work or Derivative Works a copy of this License; and
+
+You must cause any modified files to carry prominent notices stating that You changed the files; and
+
+You must retain, in the Source form of any Derivative Works that You distribute, all copyright, patent, trademark, and attribution notices from
+the Source form of the Work, excluding those notices that do not pertain to any part of the Derivative Works; and
+
+If the Work includes a "NOTICE" text file as part of its distribution, then any Derivative Works that You distribute must include a readable copy
+of the attribution notices contained within such NOTICE file, excluding those notices that do not pertain to any part of the Derivative Works, in
+at least one of the following places: within a NOTICE text file distributed as part of the Derivative Works; within the Source form or documentation,
+if provided along with the Derivative Works; or, within a display generated by the Derivative Works, if and wherever such third-party notices normally
+appear. The contents of the NOTICE file are for informational purposes only and do not modify the License. You may add Your own attribution notices
+within Derivative Works that You distribute, alongside or as an addendum to the NOTICE text from the Work, provided that such additional attribution
+notices cannot be construed as modifying the License.
+
+You may add Your own copyright statement to Your modifications and may provide additional or different license terms and conditions for use, reproduction,
+or distribution of Your modifications, or for any such Derivative Works as a whole, provided Your use, reproduction, and distribution of the Work otherwise
+complies with the conditions stated in this License.
+
+5. Submission of Contributions. Unless You explicitly state otherwise, any Contribution intentionally submitted for inclusion in the Work by You to
+the Licensor shall be under the terms and conditions of this License, without any additional terms or conditions. Notwithstanding the above, nothing
+herein shall supersede or modify the terms of any separate license agreement you may have executed with Licensor regarding such Contributions.
+
+6. Trademarks. This License does not grant permission to use the trade names, trademarks, service marks, or product names of the Licensor, except as
+required for reasonable and customary use in describing the origin of the Work and reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty. Unless required by applicable law or agreed to in writing, Licensor provides the Work (and each Contributor provides its
+Contributions) on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including, without limitation, any warranties
+or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. You are solely responsible for determining the
+appropriateness of using or redistributing the Work and assume any risks associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability. In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by
+applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall any Contributor be liable to You for damages, including
+any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this License or out of the use or inability
+to use the Work (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other
+commercial damages or losses), even if such Contributor has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability. While redistributing the Work or Derivative Works thereof, You may choose to offer, and charge a fee for,
+acceptance of support, warranty, indemnity, or other liability obligations and/or rights consistent with this License. However, in accepting such
+obligations, You may act only on Your own behalf and on Your sole responsibility, not on behalf of any other Contributor, and only if You agree to
+indemnify, defend, and hold each Contributor harmless for any liability incurred by, or claims asserted against, such Contributor by reason of your
+accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+
+
+Open Source Software Licensed Under the Specific License:
+--------------------------------------------------------------------
+1. NVIDIA CUDA Toolkit 10.1 Update 2
+Copyright 1993-2018 NVIDIA Corporation.  All rights reserved.
+
+This software contains source code provided by NVIDIA Corporation
+
+ * This source code and/or documentation ("Licensed Deliverables") are
+ * subject to NVIDIA intellectual property rights under U.S. and
+ * international Copyright laws.
+ *
+ * These Licensed Deliverables contained herein is PROPRIETARY and
+ * CONFIDENTIAL to NVIDIA and is being provided under the terms and
+ * conditions of a form of NVIDIA software license agreement by and
+ * between NVIDIA and Licensee ("License Agreement") or electronically
+ * accepted by Licensee.  Notwithstanding any terms or conditions to
+ * the contrary in the License Agreement, reproduction or disclosure
+ * of the Licensed Deliverables to any third party without the express
+ * written consent of NVIDIA is prohibited.
+ *
+ * NOTWITHSTANDING ANY TERMS OR CONDITIONS TO THE CONTRARY IN THE
+ * LICENSE AGREEMENT, NVIDIA MAKES NO REPRESENTATION ABOUT THE
+ * SUITABILITY OF THESE LICENSED DELIVERABLES FOR ANY PURPOSE.  IT IS
+ * PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY OF ANY KIND.
+ * NVIDIA DISCLAIMS ALL WARRANTIES WITH REGARD TO THESE LICENSED
+ * DELIVERABLES, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY,
+ * NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE.
+ * NOTWITHSTANDING ANY TERMS OR CONDITIONS TO THE CONTRARY IN THE
+ * LICENSE AGREEMENT, IN NO EVENT SHALL NVIDIA BE LIABLE FOR ANY
+ * SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, OR ANY
+ * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+ * OF THESE LICENSED DELIVERABLES.
+ *
+ * U.S. Government End Users.  These Licensed Deliverables are a
+ * "commercial item" as that term is defined at 48 C.F.R. 2.101 (OCT
+ * 1995), consisting of "commercial computer software" and "commercial
+ * computer software documentation" as such terms are used in 48
+ * C.F.R. 12.212 (SEPT 1995) and is provided to the U.S. Government
+ * only as a commercial end item.  Consistent with 48 C.F.R.12.212 and
+ * 48 C.F.R. 227.7202-1 through 227.7202-4 (JUNE 1995), all
+ * U.S. Government End Users acquire the Licensed Deliverables with
+ * only those rights set forth herein.
+ *
+ * Any use of the Licensed Deliverables in individual and commercial
+ * software must include, in the user documentation and internal
+ * comments to the code, the above Disclaimer and U.S. Government End
+ * Users Notice.
+ */
+
+For NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement，please see
+https://docs.nvidia.com/cuda/eula/index.html#licensing-not-suitable
+
+The following third party components included in the SOFTWARE are licensed to Licensee pursuant to the following terms and conditions:
+
+Licensee's use of the GDB third party component is subject to the terms and conditions of GNU GPL v3:
+This product includes copyrighted third-party software licensed
+under the terms of the GNU General Public License v3 ("GPL v3").
+All third-party software packages are copyright by their respective
+authors. GPL v3 terms and conditions are hereby incorporated into
+the Agreement by this reference: http://www.gnu.org/licenses/gpl.txt
+
+Consistent with these licensing requirements, the software listed below is provided under the terms of the specified open source software licenses.
+To obtain source code for software provided under licenses that require redistribution of source code, including the GNU General Public License (GPL)
+and GNU Lesser General Public License (LGPL), contact oss-requests@nvidia.com. This offer is valid for a period of three (3) years from the date of
+the distribution of this product by NVIDIA CORPORATION.
+Component          License
+CUDA-GDB           GPL v3
+
+Licensee represents and warrants that any and all third party licensing and/or royalty payment obligations in connection with Licensee's use of the
+H.264 video codecs are solely the responsibility of Licensee.
+
+Licensee's use of the Thrust library is subject to the terms and conditions of the Apache License Version 2.0. All third-party software packages are
+copyright by their respective authors. Apache License Version 2.0 terms and conditions are hereby incorporated into the Agreement by this
+reference. http://www.apache.org/licenses/LICENSE-2.0.html
+In addition, Licensee acknowledges the following notice: Thrust includes source code from the Boost Iterator, Tuple, System, and Random Number libraries.
+
+Boost Software License - Version 1.0 - August 17th, 2003
+. . . .
+
+Permission is hereby granted, free of charge, to any person or
+organization obtaining a copy of the software and accompanying
+documentation covered by this license (the "Software") to use,
+reproduce, display, distribute, execute, and transmit the Software,
+and to prepare derivative works of the Software, and to permit
+third-parties to whom the Software is furnished to do so, all
+subject to the following:
+
+The copyright notices in the Software and this entire statement,
+including the above license grant, this restriction and the following
+disclaimer, must be included in all copies of the Software, in whole
+or in part, and all derivative works of the Software, unless such
+copies or derivative works are solely in the form of machine-executable
+object code generated by a source language processor.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND
+NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE FOR ANY DAMAGES OR
+OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+Licensee's use of the LLVM third party component is subject to the following terms and conditions:
+======================================================
+LLVM Release License
+======================================================
+University of Illinois/NCSA
+Open Source License
+
+Copyright (c) 2003-2010 University of Illinois at Urbana-Champaign.
+All rights reserved.
+
+Developed by:
+
+    LLVM Team
+
+    University of Illinois at Urbana-Champaign
+
+    http://llvm.org
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to
+deal with the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+*  Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimers.
+
+*  Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimers in the
+   documentation and/or other materials provided with the distribution.
+
+*  Neither the names of the LLVM Team, University of Illinois at Urbana-
+   Champaign, nor the names of its contributors may be used to endorse or
+   promote products derived from this Software without specific prior
+   written permission.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS WITH THE SOFTWARE.
+
+Licensee's use of the PCRE third party component is subject to the following terms and conditions:
+------------
+PCRE LICENCE
+------------
+PCRE is a library of functions to support regular expressions whose syntax
+and semantics are as close as possible to those of the Perl 5 language.
+Release 8 of PCRE is distributed under the terms of the "BSD" licence, as
+specified below. The documentation for PCRE, supplied in the "doc"
+directory, is distributed under the same terms as the software itself. The
+basic library functions are written in C and are freestanding. Also
+included in the distribution is a set of C++ wrapper functions, and a just-
+in-time compiler that can be used to optimize pattern matching. These are
+both optional features that can be omitted when the library is built.
+
+THE BASIC LIBRARY FUNCTIONS
+---------------------------
+Written by:       Philip Hazel
+Email local part: ph10
+Email domain:     cam.ac.uk
+University of Cambridge Computing Service,
+Cambridge, England.
+Copyright (c) 1997-2012 University of Cambridge
+All rights reserved.
+
+PCRE JUST-IN-TIME COMPILATION SUPPORT
+-------------------------------------
+Written by:       Zoltan Herczeg
+Email local part: hzmester
+Emain domain:     freemail.hu
+Copyright(c) 2010-2012 Zoltan Herczeg
+All rights reserved.
+
+STACK-LESS JUST-IN-TIME COMPILER
+--------------------------------
+Written by:       Zoltan Herczeg
+Email local part: hzmester
+Emain domain:     freemail.hu
+Copyright(c) 2009-2012 Zoltan Herczeg
+All rights reserved.
+
+THE C++ WRAPPER FUNCTIONS
+-------------------------
+Contributed by:   Google Inc.
+Copyright (c) 2007-2012, Google Inc.
+All rights reserved.
+THE "BSD" LICENCE
+-----------------
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  * Neither the name of the University of Cambridge nor the name of Google
+    Inc. nor the names of their contributors may be used to endorse or
+    promote products derived from this software without specific prior
+    written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+Some of the cuBLAS library routines were written by or derived from code written by Vasily Volkov and are subject to the Modified Berkeley
+Software Distribution License as follows:
+Copyright (c) 2007-2009, Regents of the University of California
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+    * Neither the name of the University of California, Berkeley nor
+      the names of its contributors may be used to endorse or promote
+      products derived from this software without specific prior
+      written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+Some of the cuBLAS library routines were written by or derived from code written by Davide Barbieri and are subject to the Modified Berkeley
+Software Distribution License as follows:
+Copyright (c) 2008-2009 Davide Barbieri @ University of Rome Tor Vergata.
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+    * The name of the author may not be used to endorse or promote
+      products derived from this software without specific prior
+      written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+Some of the cuBLAS library routines were derived from code developed by the University of Tennessee and are subject to the Modified Berkeley
+Software Distribution License as follows:
+Copyright (c) 2010 The University of Tennessee.
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer listed in this license in the documentation and/or
+      other materials provided with the distribution.
+    * Neither the name of the copyright holders nor the names of its
+      contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Some of the cuBLAS library routines were written by or derived from code written by Jonathan Hogg and are subject to the Modified Berkeley
+Software Distribution License as follows:
+Copyright (c) 2012, The Science and Technology Facilities Council (STFC).
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+    * Neither the name of the STFC nor the names of its contributors
+      may be used to endorse or promote products derived from this
+      software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE STFC BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Some of the cuBLAS library routines were written by or derived from code written by Ahmad M. Abdelfattah, David Keyes, and Hatem Ltaief, and are
+subject to the Apache License, Version 2.0, as follows:
+ -- (C) Copyright 2013 King Abdullah University of Science and Technology
+  Authors:
+  Ahmad Abdelfattah (ahmad.ahmad@kaust.edu.sa)
+  David Keyes (david.keyes@kaust.edu.sa)
+  Hatem Ltaief (hatem.ltaief@kaust.edu.sa)
+
+  Redistribution  and  use  in  source and binary forms, with or without
+  modification,  are  permitted  provided  that the following conditions
+  are met:
+
+  * Redistributions  of  source  code  must  retain  the above copyright
+    notice,  this  list  of  conditions  and  the  following  disclaimer.
+  * Redistributions  in  binary  form must reproduce the above copyright
+    notice,  this list of conditions and the following disclaimer in the
+    documentation  and/or other materials provided with the distribution.
+  * Neither  the  name of the King Abdullah University of Science and
+    Technology nor the names of its contributors may be used to endorse
+    or promote products derived from this software without specific prior
+    written permission.
+
+  THIS  SOFTWARE  IS  PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  ``AS IS''  AND  ANY  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A  PARTICULAR  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+  HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL,  EXEMPLARY,  OR  CONSEQUENTIAL  DAMAGES  (INCLUDING,  BUT NOT
+  LIMITED  TO,  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA,  OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY  OF  LIABILITY,  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF  THIS  SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+
+Some of the cuSPARSE library routines were written by or derived from code written by Li-Wen Chang and are subject to the
+NCSA Open Source License as follows:
+Copyright (c) 2012, University of Illinois.
+
+All rights reserved.
+
+Developed by: IMPACT Group, University of Illinois, http://impact.crhc.illinois.edu
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal with the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimers in the documentation and/or other materials provided
+      with the distribution.
+    * Neither the names of IMPACT Group, University of Illinois, nor
+      the names of its contributors may be used to endorse or promote
+      products derived from this Software without specific prior
+      written permission.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE CONTRIBUTORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
+SOFTWARE.
+
+Some of the cuRAND library routines were written by or derived from code written by Mutsuo Saito and Makoto Matsumoto and are subject
+to the following license:
+Copyright (c) 2009, 2010 Mutsuo Saito, Makoto Matsumoto and Hiroshima
+University. All rights reserved.
+
+Copyright (c) 2011 Mutsuo Saito, Makoto Matsumoto, Hiroshima
+University and University of Tokyo.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+    * Neither the name of the Hiroshima University nor the names of
+      its contributors may be used to endorse or promote products
+      derived from this software without specific prior written
+      permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Some of the cuRAND library routines were derived from code developed by D. E. Shaw Research and are subject to the following license:
+Copyright 2010-2011, D. E. Shaw Research.
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions, and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions, and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+    * Neither the name of D. E. Shaw Research nor the names of its
+      contributors may be used to endorse or promote products derived
+      from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Some of the Math library routines were written by or derived from code developed by Norbert Juffa and are subject to the following license:
+Copyright (c) 2015-2017, Norbert Juffa
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Licensee's use of the lz4 third party component is subject to the following terms and conditions:
+Copyright (C) 2011-2013, Yann Collet.
+BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+    * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+The NPP library uses code from the Boost Math Toolkit, and is subject to the following license:
+Boost Software License - Version 1.0 - August 17th, 2003
+. . . .
+
+Permission is hereby granted, free of charge, to any person or
+organization obtaining a copy of the software and accompanying
+documentation covered by this license (the "Software") to use,
+reproduce, display, distribute, execute, and transmit the Software,
+and to prepare derivative works of the Software, and to permit
+third-parties to whom the Software is furnished to do so, all
+subject to the following:
+
+The copyright notices in the Software and this entire statement,
+including the above license grant, this restriction and the following
+disclaimer, must be included in all copies of the Software, in whole
+or in part, and all derivative works of the Software, unless such
+copies or derivative works are solely in the form of machine-executable
+object code generated by a source language processor.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND
+NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE FOR ANY DAMAGES OR
+OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+Portions of the Nsight Eclipse Edition is subject to the following license:
+The Eclipse Foundation makes available all content in this plug-in
+("Content"). Unless otherwise indicated below, the Content is provided
+to you under the terms and conditions of the Eclipse Public License
+Version 1.0 ("EPL"). A copy of the EPL is available at http://
+www.eclipse.org/legal/epl-v10.html. For purposes of the EPL, "Program"
+will mean the Content.
+
+If you did not receive this Content directly from the Eclipse
+Foundation, the Content is being redistributed by another party
+("Redistributor") and different terms and conditions may apply to your
+use of any object code in the Content. Check the Redistributor's
+license that was provided with the Content. If no such license exists,
+contact the Redistributor. Unless otherwise indicated below, the terms
+and conditions of the EPL still apply to any source code in the
+Content and such source code may be obtained at http://www.eclipse.org.
+
+Some of the cuBLAS library routines uses code from OpenAI, which is subject to the following license:
+License URL
+https://github.com/openai/openai-gemm/blob/master/LICENSE
+
+License Text
+The MIT License
+
+Copyright (c) 2016 OpenAI (http://openai.com), 2016 Google Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Licensee's use of the Visual Studio Setup Configuration Samples is subject to the following license:
+The MIT License (MIT)
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Licensee's use of linmath.h header for CPU functions for GL vector/matrix operations from lunarG is subject to the Apache License Version 2.0.
+The DX12-CUDA sample uses the d3dx12.h header, which is subject to the MIT license .
+
+

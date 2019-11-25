@@ -1,0 +1,5 @@
+{
+  "eslintIntegration": true,
+  "singleQuote": true,
+  "printWidth": 120
+}

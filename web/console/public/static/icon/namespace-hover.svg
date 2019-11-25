@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 50.2 (55047) - http://www.bohemiancoding.com/sketch -->
+    <title>VPN连接开</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="ICON-已有" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="VPN连接开">
+            <path d="M8,0 L1,4.001 L1,6 L4.999,8.285 L4.999,5.982 L3.281,5 L8,2.304 L12.999,5.161 L12.999,6.554 L15,7.697 L15,4.001 L8,0 Z M7,10 L9,10 L9,6 L7,6 L7,10 Z M11,10.018 L12.719,11 L8,13.696 L3,10.84 L3,9.446 L1,8.304 L1,12.001 L8,16 L15,12.001 L15,10 L11,7.715 L11,10.018 Z" id="Fill-1" fill="#006EFF"></path>
+            <rect id="Rectangle-3-Copy-8" fill="#D8D8D8" opacity="0" x="0" y="0" width="16" height="16"></rect>
+        </g>
+    </g>
+</svg>

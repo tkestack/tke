@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>TKEStack - OOB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/oidc/static/style.css" rel="stylesheet" data-role="global">
+    <link rel="apple-touch-icon" sizes="57x57" href="/oidc/static/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/oidc/static/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/oidc/static/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/oidc/static/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/oidc/static/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/oidc/static/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/oidc/static/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/oidc/static/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/oidc/static/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="/oidc/static/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/oidc/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/oidc/static/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/oidc/static/favicon-16x16.png">
+    <link rel="manifest" href="/oidc/static/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/oidc/static/ms-icon-144x144.png">
+    <meta name="theme-color" content="#262626">
+</head>
+
+<body>
+    <div class="clg-head">
+			<div class="clg-head-inner">
+				<div class="clg-logo ">
+					<a href="/">TKEStack</a>
+				</div>
+			</div>
+		</div>
+		<div class="clg-wrap">
+                <div class="clg-wrap-inner">
+                    <form method="post" action="{{ .PostURL }}" id ="loginForm">
+                        <div class="clg-wrap-con clg-onpage" id="loginBox">
+                            <div class="clg-mod J-commonLoginContent ">
+                                <div class="clg-mod-tab J-loginContentBox J-qcloginBox">
+                                    <div class="clg-mod-tit J-txtLoginTitle">登录成功</div>
+                                    <div class="clg-form J-loginForm">
+                                        <ul class="clg-form-list">
+                                            <li>
+                                                <div class="clg-form-input">
+                                                    <code class="clg-form-unit">
+                                                        <p class="clg-form-unit-txt">请拷贝下面的授权码，切换到需要授权的TKE应用并粘贴:</p>
+                                                        <p class="clg-form-unit-txt" style="margin-top:10px">{{ .Code }}</p>
+                                                    </code>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="clg-wrap-aside">
+                                <div class="clg-wrap-aside-inner">
+                                    <div class="clg-wrap-aside-tit">TKEStack</div>
+                                    <div class="clg-wrap-aside-list">
+                                        <ul>
+                                            <li><span>Container management platform</span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="clg-wrap-aside-btn"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+		</div>
+</body>
+</html>

@@ -1,0 +1,141 @@
+.clg-head-aside {
+  position: absolute;
+  right: 150px;
+  top: 8px;
+  width: 130px;
+}
+.clg-dropdown {
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+  font-size: 14px;
+  line-height: 1;
+  width: 100%;
+}
+
+.clg-dropdown-link {
+  display: block;
+  text-decoration: none;
+  height: 45px;
+  line-height: 45px;
+  border: 1px solid #ddd;
+  z-index: 2;
+  padding: 0 21px 0 10px;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  -ms-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.clg-dropdown-link:hover {
+  border: 1px solid #00a4ff;
+}
+
+.clg-dropdown-link .caret {
+  position: absolute;
+  top: 15px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  background-image: url(sprite/login-20181107-201811271527.png);
+  background-position: 0px 0px;
+}
+
+.clg-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1;
+  margin-top: -1px;
+  border: 1px solid #d1d2d3;
+  background-color: #fff;
+  width: 100%;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.clg-dropdown-menu li a {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+  padding: 0 10px;
+  height: 33px;
+  line-height: 33px;
+  color: #171d25;
+  text-decoration: none;
+}
+
+.clg-dropdown-menu li a:hover,
+.clg-dropdown-menu li.actived a {
+  background-color: #f2f2f2;
+}
+
+.clg-dropdown.disabled .clg-dropdown-link {
+  cursor: default;
+  background-color: #f0f1f2;
+  border-color: #d5d5d5;
+  color: #a2a2a2;
+}
+
+.clg-dropdown-menu-tit {
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+  padding: 0 10px;
+  height: 33px;
+  line-height: 33px;
+  text-decoration: none;
+}
+.lang .clg-dropdown-link {
+  border: 1px solid #666;
+  color: #ddd;
+  line-height: 34px;
+  height: 34px;
+}
+
+.lang .clg-dropdown-link .caret {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  margin-top: -2px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 4px 4px 0;
+  border-color: #ccc transparent;
+  -webkit-transition: transform 0.2s ease, -webkit-transform 0.2s ease;
+  transition: transform 0.2s ease, -webkit-transform 0.2s ease;
+  background-image: none;
+}
+
+.lang.clg-dropdown:hover .caret {
+  transform: rotate(180deg);
+}
+
+.lang .clg-dropdown-menu {
+  background-color: #383c42;
+  border: 0;
+  top: 100%;
+}
+
+.lang .clg-dropdown-menu li a {
+  color: #ddd;
+}
+
+.lang .clg-dropdown-menu li a:hover,
+.lang .clg-dropdown-menu li.actived a {
+  background-color: inherit;
+  color: #00a4ff;
+}

@@ -1,0 +1,64 @@
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: InitConfiguration
+bootstrapTokens:
+  - token: {{.BootstrapToken}}
+    description: "TKE kubeadm bootstrap token"
+    ttl: "0"
+nodeRegistration:
+  name: {{.NodeName}}
+certificateKey: {{.CertificateKey}}
+---
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+etcd:
+  local:
+    imageTag: {{.ETCDImageTag}}
+    serverCertSANs:
+      - "etcd"
+dns:
+  type: CoreDNS
+  imageTag: {{.CoreDNSImageTag}}
+kubernetesVersion: {{.KubernetesVersion}}
+controlPlaneEndpoint: {{.ControlPlaneEndpoint}}
+networking:
+  dnsDomain: {{.DNSDomain}}
+  serviceSubnet: {{.ServiceSubnet}}
+apiServer:
+  extraArgs:
+    token-auth-file: /etc/kubernetes/known_tokens.csv
+  {{- range $k, $v := .APIServerExtraArgs }}
+    {{ $k }}: "{{ $v }}"
+  {{- end }}
+  extraVolumes:
+    - name: vol-dir-0
+      hostPath: /etc/kubernetes
+      mountPath: /etc/kubernetes
+  certSANs:
+    - "127.0.0.1"
+    - "localhost"
+controllerManager:
+  extraArgs:
+    allocate-node-cidrs: "true"
+    node-cidr-mask-size: "{{.NodeCIDRMaskSize}}"
+    cluster-cidr: {{.ClusterCIDR}}
+    service-cluster-ip-range: {{.ServiceClusterIPRange}}
+  {{- range $k, $v := .ControllerManagerExtraArgs }}
+    {{ $k }}: "{{ $v }}"
+  {{- end }}
+  extraVolumes:
+    - name: vol-dir-0
+      hostPath: /etc/kubernetes
+      mountPath: /etc/kubernetes
+scheduler:
+  extraArgs:
+    use-legacy-policy-config: "true"
+    policy-config-file: /etc/kubernetes/scheduler-policy-config.json
+  {{- range $k, $v := .SchedulerExtraArgs }}
+    {{ $k }}: "{{ $v }}"
+  {{- end }}
+  extraVolumes:
+    - name: vol-dir-0
+      hostPath: /etc/kubernetes
+      mountPath: /etc/kubernetes
+imageRepository: {{.ImageRepository}}
+clusterName: {{.ClusterName}}

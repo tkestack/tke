@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53.2 (72643) - https://sketchapp.com -->
+    <title>非当前</title>
+    <desc>Created with Sketch.</desc>
+    <g id="修改组件" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Slider滑动输入条-Copy-2" transform="translate(-554.000000, -347.000000)">
+            <g id="日期选择器-月份" transform="translate(50.000000, 292.000000)">
+                <g id="日期选择器-天" transform="translate(252.000000, 35.000000)">
+                    <g id="非当前" transform="translate(252.000000, 20.000000)">
+                        <rect id="矩形" x="0" y="0" width="16" height="16"></rect>
+                        <path d="M8,11 C9.65685425,11 11,9.65685425 11,8 C11,6.34314575 9.65685425,5 8,5 C6.34314575,5 5,6.34314575 5,8 C5,9.65685425 6.34314575,11 8,11 Z M8,13 C5.23857625,13 3,10.7614237 3,8 C3,5.23857625 5.23857625,3 8,3 C10.7614237,3 13,5.23857625 13,8 C13,10.7614237 10.7614237,13 8,13 Z" id="椭圆形" fill="#888888" fill-rule="nonzero"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
