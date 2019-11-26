@@ -1,4 +1,4 @@
-Maintainers of this repository with their focus areas:
+# Maintainers of this repository with their focus areas:
 
 * Jimmy Chou <liangyuzhou@tencent.com> @choujimmy: Cluster resource management, addon framework, and docker registry.
 * Wallace Qian <wallaceqian@tencent.com> @QianChenglong: Cluster and node lifecycle management, and installer.

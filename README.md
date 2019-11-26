@@ -1,6 +1,6 @@
-# TKE
+# TKE - Tencent Kubernetes Engine
 
-![](https://github.com/tkestack/tke/workflows/build/badge.svg?branch=master)
+![TKEStack Logo](https://github.com/tkestack/tke/workflows/build/badge.svg?branch=master)
 
 <img src="https://avatars0.githubusercontent.com/u/57258287?s=200&v=4" width="100">
 
@@ -29,6 +29,10 @@
   * Authorization provider plugin.
   * Event persistence storage plugin.
   * System and application log persistence storage plugin.
+
+## Architecture
+
+![Architecture Of TKE](docs/images/TKEStackHighLevelArchitecture@2x.png)
 
 ## To start using TKE
 
