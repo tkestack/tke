@@ -163,5 +163,14 @@ var (
 		"Storage.S3.StorageClass",
 		"Storage.S3.UserAgent",
 		"Storage.S3.V4Auth",
+		"Redis.Addr",
+		"Redis.DB",
+		"Redis.DialTimeoutMillisecond",
+		"Redis.Password",
+		"Redis.PoolIdleTimeoutSeconds",
+		"Redis.PoolMaxActive",
+		"Redis.PoolMaxIdle",
+		"Redis.ReadTimeoutMillisecond",
+		"Redis.WriteTimeoutMillisecond",
 	)
 )

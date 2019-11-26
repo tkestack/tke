@@ -50,8 +50,9 @@ func TestValidateRegistryConfiguration(t *testing.T) {
 				Bucket: "",
 			},
 		},
+		Redis: &registryconfig.Redis{},
 	}
-	const numErrs = 6
+	const numErrs = 7
 	if allErrors := ValidateRegistryConfiguration(errorCase); len(allErrors.(utilerrors.Aggregate).Errors()) != numErrs {
 		t.Errorf("expect %d errors, got %v", numErrs, len(allErrors.(utilerrors.Aggregate).Errors()))
 	}

@@ -61,16 +61,23 @@ func ValidateRegistryConfiguration(rc *registryconfig.RegistryConfiguration) err
 		allErrors = append(allErrors, field.Required(storageFld, "at least 1 storage driver is required"))
 	}
 
-	securityfld := field.NewPath("security")
+	securityFld := field.NewPath("security")
 	if rc.Security.TokenPrivateKeyFile == "" {
-		allErrors = append(allErrors, field.Required(securityfld.Child("tokenPrivateKeyFile"), "must be specify"))
+		allErrors = append(allErrors, field.Required(securityFld.Child("tokenPrivateKeyFile"), "must be specify"))
 	}
 	if rc.Security.TokenPublicKeyFile == "" {
-		allErrors = append(allErrors, field.Required(securityfld.Child("tokenPublicKeyFile"), "must be specify"))
+		allErrors = append(allErrors, field.Required(securityFld.Child("tokenPublicKeyFile"), "must be specify"))
 	}
 
 	if rc.DefaultTenant == "" {
 		allErrors = append(allErrors, field.Required(field.NewPath("defaultTenant"), "must be specify"))
+	}
+
+	if rc.Redis != nil {
+		redisFld := field.NewPath("redis")
+		if rc.Redis.Addr == "" {
+			allErrors = append(allErrors, field.Required(redisFld.Child("addr"), "must be specify"))
+		}
 	}
 
 	return utilerrors.NewAggregate(allErrors)

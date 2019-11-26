@@ -30,7 +30,8 @@ type RegistryConfiguration struct {
 
 	Storage  Storage
 	Security Security
-
+	// +optional
+	Redis         *Redis
 	DefaultTenant string
 	// +optional
 	DomainSuffix string
@@ -102,8 +103,35 @@ type S3Storage struct {
 type Security struct {
 	TokenPrivateKeyFile string
 	TokenPublicKeyFile  string
-	TokenExpiredHours   *int64
-	HTTPSecret          string
-	AdminUsername       string
-	AdminPassword       string
+	// +optional
+	TokenExpiredHours *int64
+	HTTPSecret        string
+	AdminUsername     string
+	AdminPassword     string
+}
+
+// Redis configures the redis pool available to the registry cache.
+type Redis struct {
+	// Addr specifies the the redis instance available to the registry API server.
+	Addr string
+	// Password string to use when making a connection.
+	Password string
+	// DB specifies the database to connect to on the redis instance.
+	DB int32
+	// +optional
+	ReadTimeoutMillisecond *int64
+	// +optional
+	DialTimeoutMillisecond *int64
+	// +optional
+	WriteTimeoutMillisecond *int64
+	// PoolMaxIdle sets the maximum number of idle connections.
+	// +optional
+	PoolMaxIdle *int32
+	// PoolMaxActive sets the maximum number of connections that should be opened before
+	// blocking a connection request.
+	// +optional
+	PoolMaxActive *int32
+	// PoolIdleTimeoutSeconds sets the amount time to wait before closing inactive connections.
+	// +optional
+	PoolIdleTimeoutSeconds *int64
 }
