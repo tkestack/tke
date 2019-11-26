@@ -140,7 +140,7 @@ func (p *Provider) EnsureSysctl(m *Machine) error {
 }
 
 func (p *Provider) EnsureDisableSwap(m *Machine) error {
-	_, err := m.CombinedOutput("swapoff -a && sed 's/^[^#]*swap/#&/' /etc/fstab")
+	_, err := m.CombinedOutput("swapoff -a && sed -i 's/^[^#]*swap/#&/' /etc/fstab")
 	if err != nil {
 		return err
 	}
