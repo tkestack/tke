@@ -30,10 +30,11 @@ type RegistryConfiguration struct {
 
 	Storage  Storage  `json:"storage"`
 	Security Security `json:"security"`
-
+	// +optional
+	Redis         *Redis `json:"redis,omitempty"`
 	DefaultTenant string `json:"defaultTenant"`
 	// +optional
-	DomainSuffix string `json:"domainSuffix"`
+	DomainSuffix string `json:"domainSuffix,omitempty"`
 }
 
 type Storage struct {
@@ -102,8 +103,35 @@ type S3Storage struct {
 type Security struct {
 	TokenPrivateKeyFile string `json:"tokenPrivateKeyFile"`
 	TokenPublicKeyFile  string `json:"tokenPublicKeyFile"`
-	TokenExpiredHours   *int64 `json:"tokenExpiredHours"`
-	HTTPSecret          string `json:"httpSecret"`
-	AdminUsername       string `json:"adminUsername"`
-	AdminPassword       string `json:"adminPassword"`
+	// +optional
+	TokenExpiredHours *int64 `json:"tokenExpiredHours,omitempty"`
+	HTTPSecret        string `json:"httpSecret"`
+	AdminUsername     string `json:"adminUsername"`
+	AdminPassword     string `json:"adminPassword"`
+}
+
+// Redis configures the redis pool available to the registry cache.
+type Redis struct {
+	// Addr specifies the the redis instance available to the registry API server.
+	Addr string `json:"addr"`
+	// Password string to use when making a connection.
+	Password string `json:"password"`
+	// DB specifies the database to connect to on the redis instance.
+	DB int32 `json:"db"`
+	// +optional
+	ReadTimeoutMillisecond *int64 `json:"readTimeoutMillisecond,omitempty"`
+	// +optional
+	DialTimeoutMillisecond *int64 `json:"dialTimeoutMillisecond,omitempty"`
+	// +optional
+	WriteTimeoutMillisecond *int64 `json:"writeTimeoutMillisecond,omitempty"`
+	// PoolMaxIdle sets the maximum number of idle connections.
+	// +optional
+	PoolMaxIdle *int32 `json:"poolMaxIdle,omitempty"`
+	// PoolMaxActive sets the maximum number of connections that should be opened before
+	// blocking a connection request.
+	// +optional
+	PoolMaxActive *int32 `json:"poolMaxActive,omitempty"`
+	// PoolIdleTimeoutSeconds sets the amount time to wait before closing inactive connections.
+	// +optional
+	PoolIdleTimeoutSeconds *int64 `json:"poolIdleTimeoutSeconds,omitempty"`
 }

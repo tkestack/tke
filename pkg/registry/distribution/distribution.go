@@ -114,6 +114,32 @@ func buildDistributionConfig(opts *Options) (*configuration.Configuration, error
 	dist.Notifications.Endpoints = endpoints
 	dist.HTTP.Secret = opts.RegistryConfig.Security.HTTPSecret
 	dist.Compatibility.Schema1.Enabled = false
+
+	if opts.RegistryConfig.Redis != nil {
+		redisCfg := opts.RegistryConfig.Redis
+		dist.Redis.Addr = redisCfg.Addr
+		dist.Redis.Password = redisCfg.Password
+		dist.Redis.DB = int(redisCfg.DB)
+		if redisCfg.DialTimeoutMillisecond != nil {
+			dist.Redis.DialTimeout = time.Duration(*redisCfg.DialTimeoutMillisecond) * time.Millisecond
+		}
+		if redisCfg.ReadTimeoutMillisecond != nil {
+			dist.Redis.ReadTimeout = time.Duration(*redisCfg.ReadTimeoutMillisecond) * time.Millisecond
+		}
+		if redisCfg.WriteTimeoutMillisecond != nil {
+			dist.Redis.WriteTimeout = time.Duration(*redisCfg.WriteTimeoutMillisecond) * time.Millisecond
+		}
+		if redisCfg.PoolMaxIdle != nil {
+			dist.Redis.Pool.MaxIdle = int(*redisCfg.PoolMaxIdle)
+		}
+		if redisCfg.PoolMaxActive != nil {
+			dist.Redis.Pool.MaxActive = int(*redisCfg.PoolMaxActive)
+		}
+		if redisCfg.PoolIdleTimeoutSeconds != nil {
+			dist.Redis.Pool.IdleTimeout = time.Duration(*redisCfg.PoolIdleTimeoutSeconds) * time.Second
+		}
+	}
+
 	return dist, nil
 }
 
@@ -150,8 +176,14 @@ func buildAuthConfiguration(opts *Options) map[string]configuration.Parameters {
 }
 
 func buildStorageConfiguration(opts *Options) map[string]configuration.Parameters {
-	storageCfg := &opts.RegistryConfig.Storage
 	storage := make(map[string]configuration.Parameters)
+	if opts.RegistryConfig.Redis != nil {
+		cache := make(map[string]interface{}, 1)
+		cache["blobdescriptor"] = "redis"
+		storage["cache"] = cache
+	}
+
+	storageCfg := &opts.RegistryConfig.Storage
 	if storageCfg.FileSystem != nil {
 		fileSystem := make(map[string]interface{})
 		fileSystem["rootdirectory"] = storageCfg.FileSystem.RootDirectory
