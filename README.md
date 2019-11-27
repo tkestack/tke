@@ -40,6 +40,8 @@ We are preparing how to use TKE-related documentation. At the same time, the rel
 
 ## To start developing TKE
 
+Make sure that you have [Git-LFS](https://github.com/git-lfs/git-lfs) installed before developing TKE.
+
 If you have an eligible development environment, you can simply do it:
 
 ```
