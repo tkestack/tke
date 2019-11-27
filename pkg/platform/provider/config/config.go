@@ -20,8 +20,6 @@ package config
 
 import (
 	"sync"
-
-	"github.com/hashicorp/go-plugin"
 )
 
 // Config defines the configuration of different types of clusters and machine
@@ -29,7 +27,6 @@ import (
 type Config struct {
 	ClusterProviders *sync.Map
 	MachineProviders *sync.Map
-	Clients          []*plugin.Client
 }
 
 // NewConfig creates default Config object and returns it.

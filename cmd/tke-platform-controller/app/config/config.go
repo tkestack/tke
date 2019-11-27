@@ -30,6 +30,8 @@ import (
 	"tkestack.io/tke/cmd/tke-platform-controller/app/options"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+	baremetalmachine "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
 	providerconfig "tkestack.io/tke/pkg/platform/provider/config"
 )
 
@@ -68,9 +70,16 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	leaderElectionClient := versionedclientset.NewForConfigOrDie(restclient.AddUserAgent(&config, "leader-election"))
 
 	providerConfig := providerconfig.NewConfig()
-	if err := opts.Provider.ApplyTo(providerConfig); err != nil {
+	clusterProvider, err := baremetalcluster.NewProvider()
+	if err != nil {
 		return nil, err
 	}
+	providerConfig.ClusterProviders.Store(clusterProvider.Name(), clusterProvider)
+	machineProvider, err := baremetalmachine.NewProvider()
+	if err != nil {
+		return nil, err
+	}
+	providerConfig.ClusterProviders.Store(machineProvider.Name(), machineProvider)
 
 	controllerManagerConfig := &Config{
 		ServerName:                    serverName,

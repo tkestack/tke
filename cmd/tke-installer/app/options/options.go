@@ -57,7 +57,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Config = fs.String("input", "conf/tke.json", "specify input file")
 	o.Force = fs.Bool("force", false, "force run as clean")
 	o.SyncProjectsWithNamespaces = fs.Bool("sync-projects-with-namespaces", false, "Enable creating/deleting the corresponding namespace when creating/deleting a project.")
-	o.Replicas = fs.Int("Replicas", 2, "tke components replicas")
+	o.Replicas = fs.Int("replicas", 2, "tke components replicas")
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file

@@ -20,9 +20,10 @@ package app
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"os"
 	"tkestack.io/tke/pkg/app/version"
 )
 
@@ -181,6 +182,7 @@ func (a *App) Run() {
 }
 
 func (a *App) runCommand(cmd *cobra.Command, args []string) {
+	printWorkingDir()
 	if !a.noVersion {
 		// display application version information
 		version.PrintAndExitIfRequested(a.name)
@@ -220,4 +222,9 @@ func (a *App) runCommand(cmd *cobra.Command, args []string) {
 func printVersion() {
 	fmt.Printf("%v Version:\n", progressMessage)
 	fmt.Printf("%s\n", version.Get())
+}
+
+func printWorkingDir() {
+	wd, _ := os.Getwd()
+	fmt.Printf("%v WorkingDir: %s\n", progressMessage, wd)
 }

@@ -64,6 +64,9 @@ const (
 	// This is a duplicate definition of the constant in pkg/controller/service/service_controller.go
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
 
-	SrcDir  = "res/"
-	ConfDir = "conf/"
+	ProviderDir  = "provider/baremetal/"
+	SrcDir       = ProviderDir + "res/"
+	ConfDir      = ProviderDir + "conf/"
+	ManifestsDir = ProviderDir + "manifests/"
+	ConfigFile   = ConfDir + "config.yaml"
 )

@@ -20,30 +20,12 @@ spec:
         - command:
             - sh
             - -c
-            - cp -vr /app/bin /app/plugins/baremetal/bin
-          image: {{ .BaremetalClusterProviderImage }}
-          name: baremetal-cluster-provider
-          volumeMounts:
-            - mountPath: /app/plugins/baremetal
-              name: plugins-volume
-        - command:
-            - sh
-            - -c
-            - cp -vr /app/bin/* /app/plugins/baremetal/bin
-          image: {{ .BaremetalMachineProviderImage }}
-          name: baremetal-machine-provider
-          volumeMounts:
-            - mountPath: /app/plugins/baremetal
-              name: plugins-volume
-        - command:
-            - sh
-            - -c
-            - cp -r /data/res /app/plugins/baremetal/
+            - cp -r /data/res /app/provider/baremetal/
           image: {{ .ProviderResImage }}
           name: provider-res
           volumeMounts:
-            - mountPath: /app/plugins/baremetal
-              name: plugins-volume
+            - mountPath: /app/provider/baremetal
+              name: provider-volume
       containers:
         - name: tke-platform-controller
           image: {{ .Image }}
@@ -54,16 +36,18 @@ spec:
               mountPath: /app/certs
             - name: tke-platform-controller-volume
               mountPath: /app/conf
-            - name: plugins-volume
-              mountPath: /app/plugins/baremetal
+            - name: provider-volume
+              mountPath: /app/provider/baremetal
             - name: provider-config-volume
-              mountPath: /app/plugins/baremetal/conf/
+              mountPath: /app/provider/baremetal/conf/
             - name: docker-volume
-              mountPath: /app/plugins/baremetal/conf/docker/
+              mountPath: /app/provider/baremetal/conf/docker/
             - name: kubelet-volume
-              mountPath: /app/plugins/baremetal/conf/kubelet/
+              mountPath: /app/provider/baremetal/conf/kubelet/
             - name: kubeadm-volume
-              mountPath: /app/plugins/baremetal/conf/kubeadm/
+              mountPath: /app/provider/baremetal/conf/kubeadm/
+            - name: gpu-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/gpu/
           ports:
             - containerPort: 9445
           livenessProbe:
@@ -87,7 +71,7 @@ spec:
         - name: tke-platform-controller-volume
           configMap:
             name: tke-platform-controller
-        - name: plugins-volume
+        - name: provider-volume
           emptyDir: {}
         - name: provider-config-volume
           configMap:
@@ -101,6 +85,9 @@ spec:
         - name: kubeadm-volume
           configMap:
             name: kubeadm
+        - name: gpu-manifests-volume
+          configMap:
+            name: gpu-manifests
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -113,14 +100,6 @@ data:
     [secure_serving]
     tls_cert_file = "/app/certs/server.crt"
     tls_private_key_file = "/app/certs/server.key"
-
-    [providers]
-    cluster = [
-      "/app/plugins/baremetal/bin/baremetal-cluster-provider=/app/plugins/baremetal/conf/config.yaml"
-    ]
-    machine = [
-      "/app/plugins/baremetal/bin/baremetal-machine-provider=/app/plugins/baremetal/conf/config.yaml"
-    ]
 
     [client]
 

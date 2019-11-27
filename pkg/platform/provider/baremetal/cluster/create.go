@@ -256,7 +256,7 @@ func (p *Provider) EnsureNvidiaContainerRuntime(c *Cluster) error {
 func (p *Provider) EnsureDocker(c *Cluster) error {
 	insecureRegistries := fmt.Sprintf(`"%s"`, c.Registry.Domain)
 	if c.Config.Registry.UseTKE() {
-		insecureRegistries = fmt.Sprintf(`"%s","%s"`, insecureRegistries, c.Spec.TenantID+"."+c.Registry.Domain)
+		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+c.Registry.Domain)
 	}
 	option := &docker.Option{
 		Version:            c.Docker.DefaultVersion,

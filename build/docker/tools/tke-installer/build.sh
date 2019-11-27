@@ -39,14 +39,13 @@ EOF
 }
 
 function prepare_baremetal_provider() {
-  mkdir -p "$DST_DIR"/plugins/baremetal/bin
+  mkdir -p "$DST_DIR"/provider/baremetal/
 
-  cp -v "$OUTPUT_DIR"/linux/amd64/baremetal-cluster-provider "$DST_DIR"/plugins/baremetal/bin
-  cp -rv pkg/platform/provider/baremetal/conf "$DST_DIR"/plugins/baremetal
-  ls -l "$DST_DIR"/plugins/baremetal
+  cp -rv pkg/platform/provider/baremetal/conf "$DST_DIR"/provider/baremetal
+  ls -l "$DST_DIR"/provider/baremetal
 
   id=$(docker create $REGISTRY_PREFIX/provider-res:"$PROVIDER_RES_VERSION")
-  docker cp "$id":/data/res "$DST_DIR"/plugins/baremetal/
+  docker cp "$id":/data/res "$DST_DIR"/provider/baremetal/
   docker rm "$id"
 }
 
@@ -97,7 +96,7 @@ while getopts "hq" o; do
 done
 shift $((OPTIND-1))
 
-make build BINS="tke-installer baremetal-cluster-provider" OS=linux ARCH=amd64 VERSION="$VERSION"
+make build BINS="tke-installer" OS=linux ARCH=amd64 VERSION="$VERSION"
 
 prepare_baremetal_provider
 prepare_tke_installer

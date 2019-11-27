@@ -71,7 +71,7 @@ type Registry struct {
 }
 
 func (r *Registry) UseTKE() bool {
-	return r.IP != ""
+	return r.Domain != "docker.io"
 }
 
 type Docker struct {
