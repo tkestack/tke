@@ -27,6 +27,8 @@ tools].
 
 Note that Mingw64/Cygwin on Windows is not supported yet.
 
+If you don't have Git-LFS installed, see [Git-LFS](https://github.com/git-lfs/git-lfs) for instructions on how to install on different operating systems.
+
 ### Go
 
 TKE's backend is written in [Go](http://golang.org). If you don't have a Go
