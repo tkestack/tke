@@ -23,6 +23,6 @@
       "@tencent/qcloud-lib/*": ["./node_modules/@tencent/qcloud-lib/*"]
     }
   },
-  "exclude": ["node_modules", "dist", "tea-cli", "build"],
+  "exclude": ["node_modules", "dist", "build"],
   "compoileOnSave": false
 }

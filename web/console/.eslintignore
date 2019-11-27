@@ -6,5 +6,4 @@ typings/*
 **.log
 **.lock
 tsconfig.json
-tea-cli/*
 build/*

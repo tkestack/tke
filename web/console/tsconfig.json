@@ -31,6 +31,6 @@
       "@src": ["./src"],
     }
   },
-  "exclude": ["node_modules", "dist", "tea-cli", "build"],
+  "exclude": ["node_modules", "dist", "build"],
   "compoileOnSave": false
 }
