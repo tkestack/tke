@@ -20,16 +20,10 @@ package machine
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"runtime"
 	"strings"
 	"time"
-
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
-	"tkestack.io/tke/pkg/util/ssh"
-
-	"tkestack.io/tke/pkg/util/containerregistry"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,8 +31,12 @@ import (
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/ssh"
 )
 
 const providerName = "baremetal-machine"
@@ -53,31 +51,16 @@ const (
 
 type Handler func(*Machine) error
 
-type Provider struct {
-	config *config.Config
+func NewProvider() (*Provider, error) {
+	p := new(Provider)
 
-	createHandlers []Handler
-
-	platformv1.Cluster
-}
-
-var _ machineprovider.Provider = &Provider{}
-
-func (p *Provider) Name() (string, error) {
-	return providerName, nil
-}
-
-func (p *Provider) Init(configFile string) error {
-	wd, _ := os.Getwd()
-	log.Infow("Init provider", "WoringDir", wd, "ConfigFile", configFile)
-
-	cfg, err := config.New(configFile)
+	cfg, err := config.New(constants.ConfigFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
-
 	p.config = cfg
+
+	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
 	p.createHandlers = []Handler{
 		p.EnsureClean,
@@ -99,7 +82,18 @@ func (p *Provider) Init(configFile string) error {
 		p.EnsureNodeReady,
 	}
 
-	return nil
+	return p, nil
+}
+
+type Provider struct {
+	config         *config.Config
+	createHandlers []Handler
+}
+
+var _ machineprovider.Provider = &Provider{}
+
+func (p *Provider) Name() string {
+	return providerName
 }
 
 func (p *Provider) Validate(m platform.Machine) (field.ErrorList, error) {

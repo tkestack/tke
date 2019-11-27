@@ -53,14 +53,6 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 		return err
 	}
 
-	defer func() {
-		if len(cfg.Provider.Clients) > 0 {
-			for _, c := range cfg.Provider.Clients {
-				c.Kill()
-			}
-		}
-	}()
-
 	run := func(ctx context.Context) {
 		rootClientBuilder := controller.SimpleControllerClientBuilder{
 			ClientConfig: cfg.PlatformAPIServerClientConfig,

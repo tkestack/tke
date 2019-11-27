@@ -21,13 +21,10 @@ package cluster
 import (
 	"fmt"
 	"net"
-	"os"
 	"reflect"
 	"runtime"
 	"strings"
 	"time"
-
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 
 	"github.com/AlekSi/pointer"
 	"github.com/pkg/errors"
@@ -37,6 +34,8 @@ import (
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
@@ -59,29 +58,16 @@ var (
 
 type Handler func(*Cluster) error
 
-type Provider struct {
-	config *config.Config
+func NewProvider() (*Provider, error) {
+	p := new(Provider)
 
-	createHandlers []Handler
-}
-
-var _ clusterprovider.Provider = &Provider{}
-
-func (p *Provider) Name() (string, error) {
-	return providerName, nil
-}
-
-func (p *Provider) Init(configFile string) error {
-	wd, _ := os.Getwd()
-	log.Infow("Init provider", "WoringDir", wd, "ConfigFile", configFile)
-
-	cfg, err := config.New(configFile)
+	cfg, err := config.New(constants.ConfigFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
-
 	p.config = cfg
+
+	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
 	p.createHandlers = []Handler{
 		p.EnsureRegistryHosts,
@@ -123,7 +109,18 @@ func (p *Provider) Init(configFile string) error {
 		p.EnsureNvidiaDevicePlugin,
 	}
 
-	return nil
+	return p, nil
+}
+
+type Provider struct {
+	config         *config.Config
+	createHandlers []Handler
+}
+
+var _ clusterprovider.Provider = &Provider{}
+
+func (p *Provider) Name() string {
+	return providerName
 }
 
 func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {

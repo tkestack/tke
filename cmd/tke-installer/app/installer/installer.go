@@ -23,12 +23,23 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	stdlog "log"
+	"net"
+	"net/http"
+	"net/http/httputil"
+	"os"
+	"os/exec"
+	"path"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/emicklei/go-restful"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	"gopkg.in/go-playground/validator.v9"
-	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,17 +53,6 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
-	stdlog "log"
-	"net"
-	"net/http"
-	"net/http/httputil"
-	"os"
-	"os/exec"
-	"path"
-	"path/filepath"
-	"strings"
-	"sync"
-	"time"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -60,7 +60,9 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/certs"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
+	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
@@ -71,6 +73,7 @@ import (
 	"tkestack.io/tke/pkg/util/kubeconfig"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
+
 	// import platform schema
 	_ "tkestack.io/tke/api/platform/install"
 )
@@ -295,8 +298,7 @@ const (
 )
 
 const (
-	pluginFile       = "plugins/baremetal/bin/baremetal-cluster-provider"
-	pluginConfigFile = "plugins/baremetal/conf/config.yaml"
+	pluginConfigFile = "provider/baremetal/conf/config.yaml"
 )
 
 func NewTKE(config *config.Config) *TKE {
@@ -613,17 +615,12 @@ func (t *TKE) WebService() *restful.WebService {
 }
 
 func (t *TKE) completeWithProvider() {
-	absPluginConfigFile, _ := filepath.Abs(pluginConfigFile) // provider working dir is not same as installer
-	client, err := clusterprovider.NewClient(pluginFile, absPluginConfigFile)
+	clusterProvider, err := baremetalcluster.NewProvider()
 	if err != nil {
-		log.Fatal(err.Error())
+		panic(err)
 	}
-	if client == nil {
-		log.Error("Cluster provider client is nil")
-		return
-	}
-	t.clusterProvider = client.Provider
-	t.clusterProviders.Store(client.Name, client.Provider)
+	t.clusterProvider = clusterProvider
+	t.clusterProviders.Store(clusterProvider.Name(), clusterProvider)
 }
 
 // Global Filter
@@ -1327,19 +1324,23 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 	}{
 		{
 			Name: "provider-config",
-			File: "plugins/baremetal/conf/config.yaml",
+			File: baremetalconstants.ConfDir + "config.yaml",
 		},
 		{
 			Name: "docker",
-			File: "plugins/baremetal/conf/docker/*",
+			File: baremetalconstants.ConfDir + "docker/*",
 		},
 		{
 			Name: "kubelet",
-			File: "plugins/baremetal/conf/kubelet/*",
+			File: baremetalconstants.ConfDir + "kubelet/*",
 		},
 		{
 			Name: "kubeadm",
-			File: "plugins/baremetal/conf/kubeadm/*",
+			File: baremetalconstants.ConfDir + "kubeadm/*",
+		},
+		{
+			Name: "gpu-manifests",
+			File: baremetalconstants.ManifestsDir + "/gpu/*",
 		},
 	}
 	for _, one := range configMaps {

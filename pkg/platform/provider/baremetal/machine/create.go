@@ -171,7 +171,7 @@ func (p *Provider) EnsureKubeconfig(m *Machine) error {
 func (p *Provider) EnsureDocker(m *Machine) error {
 	insecureRegistries := fmt.Sprintf(`"%s"`, m.Registry.Domain)
 	if m.Config.Registry.UseTKE() {
-		insecureRegistries = fmt.Sprintf(`"%s","%s"`, insecureRegistries, m.Spec.TenantID+"."+m.Registry.Domain)
+		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, m.Spec.TenantID+"."+m.Registry.Domain)
 	}
 
 	option := &docker.Option{

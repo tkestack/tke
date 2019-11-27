@@ -95,7 +95,7 @@ type NvidiaDevicePluginOption struct {
 }
 
 func InstallNvidiaDevicePlugin(clientset clientset.Interface, option *NvidiaDevicePluginOption) error {
-	err := apiclient.CreateResourceWithFile(clientset, "manifests/gpu/nvidia-device-plugin.yaml", option)
+	err := apiclient.CreateResourceWithFile(clientset, constants.ManifestsDir+"gpu/nvidia-device-plugin.yaml", option)
 	if err != nil {
 		return err
 	}

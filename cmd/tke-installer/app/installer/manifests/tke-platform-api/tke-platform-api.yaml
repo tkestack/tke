@@ -29,25 +29,6 @@ spec:
       labels:
         app: tke-platform-api
     spec:
-      initContainers:
-        - command:
-            - sh
-            - -c
-            - cp -vr /app/bin /app/plugins/baremetal/bin
-          image: {{ .BaremetalClusterProviderImage }}
-          name: baremetal-cluster-provider
-          volumeMounts:
-            - mountPath: /app/plugins/baremetal
-              name: plugins-volume
-        - command:
-            - sh
-            - -c
-            - cp -vr /app/bin/* /app/plugins/baremetal/bin
-          image: {{ .BaremetalMachineProviderImage }}
-          name: baremetal-machine-provider
-          volumeMounts:
-            - mountPath: /app/plugins/baremetal
-              name: plugins-volume
       containers:
         - name: tke-platform-api
           image: {{ .Image }}
@@ -58,16 +39,18 @@ spec:
               mountPath: /app/certs
             - name: tke-platform-api-volume
               mountPath: /app/conf
-            - name: plugins-volume
-              mountPath: /app/plugins/baremetal
+            - name: provider-volume
+              mountPath: /app/provider/baremetal
             - name: provider-config-volume
-              mountPath: /app/plugins/baremetal/conf/
+              mountPath: /app/provider/baremetal/conf/
             - name: docker-volume
-              mountPath: /app/plugins/baremetal/conf/docker/
+              mountPath: /app/provider/baremetal/conf/docker/
             - name: kubelet-volume
-              mountPath: /app/plugins/baremetal/conf/kubelet/
+              mountPath: /app/provider/baremetal/conf/kubelet/
             - name: kubeadm-volume
-              mountPath: /app/plugins/baremetal/conf/kubeadm/
+              mountPath: /app/provider/baremetal/conf/kubeadm/
+            - name: gpu-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/gpu/
           ports:
             - containerPort: 9443
           readinessProbe:
@@ -98,7 +81,7 @@ spec:
         - name: tke-platform-api-volume
           configMap:
             name: tke-platform-api
-        - name: plugins-volume
+        - name: provider-volume
           emptyDir: {}
         - name: provider-config-volume
           configMap:
@@ -112,6 +95,9 @@ spec:
         - name: kubeadm-volume
           configMap:
             name: kubeadm
+        - name: gpu-manifests-volume
+          configMap:
+            name: gpu-manifests
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -167,14 +153,6 @@ data:
     mode = "Webhook"
     webhook_config_file = "/app/conf/tke-auth-webhook.yaml"
 {{- end }}
-
-    [providers]
-    cluster = [
-      "/app/plugins/baremetal/bin/baremetal-cluster-provider=/app/plugins/baremetal/conf/config.yaml"
-    ]
-    machine = [
-      "/app/plugins/baremetal/bin/baremetal-machine-provider=/app/plugins/baremetal/conf/config.yaml"
-    ]
 
   tke-auth-webhook.yaml: |
     apiVersion: v1
