@@ -20,8 +20,7 @@
     "build_project": "cross-env NODE_ENV=production  webpack --config webpack/webpack.prod.js --version=project --lng=zh --filename=project",
     "build": "npm run build_console && npm run build_project",
     "eslint": "eslint src --ext .ts,.tsx",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "scan": "node ../third_party/tea-cli/bin/tea-scan.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "Apache-2.0",
   "dependencies": {
