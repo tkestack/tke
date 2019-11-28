@@ -20,13 +20,15 @@ package config
 
 import (
 	"fmt"
+	"time"
+
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/client-go/rest"
-	"time"
 	"tkestack.io/tke/api/business"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	generatedopenapi "tkestack.io/tke/api/openapi"
 	"tkestack.io/tke/cmd/tke-business-api/app/options"
@@ -52,6 +54,7 @@ type Config struct {
 	VersionedSharedInformerFactory versionedinformers.SharedInformerFactory
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 	PlatformClient                 platformversionedclient.PlatformV1Interface
+	RegistryClient                 registryversionedclient.RegistryV1Interface
 	PrivilegedUsername             string
 	FeatureOptions                 *options.FeatureOptions
 }
@@ -118,12 +121,23 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
+	// client config for registry apiserver
+	registryAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.RegistryAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	registryClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(registryAPIServerClientConfig, "tke-business-api"))
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		ServerName:                     serverName,
 		GenericAPIServerConfig:         genericAPIServerConfig,
 		VersionedSharedInformerFactory: versionedInformers,
 		StorageFactory:                 storageFactory,
 		PlatformClient:                 platformClient.PlatformV1(),
+		RegistryClient:                 registryClient.RegistryV1(),
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 		FeatureOptions:                 opts.FeatureOptions,
 	}, nil

@@ -66,6 +66,59 @@ message HardQuantity {
   map<string, k8s.io.apimachinery.pkg.api.resource.Quantity> hard = 1;
 }
 
+// ImageNamespace is an image namespace.
+message ImageNamespace {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of namespaces in this set.
+  // +optional
+  optional ImageNamespaceSpec spec = 2;
+
+  // +optional
+  optional ImageNamespaceStatus status = 3;
+}
+
+// ImageNamespaceList is the whole list of all image namespaces which owned by a tenant.
+message ImageNamespaceList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of namespaces
+  repeated ImageNamespace items = 2;
+}
+
+// ImageNamespaceSpec represents an image namespace.
+message ImageNamespaceSpec {
+  // Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
+  // +optional
+  repeated string finalizers = 1;
+
+  optional string name = 2;
+
+  optional string tenantID = 3;
+
+  optional string displayName = 4;
+}
+
+// ImageNamespaceStatus represents information about the status of an image namespace.
+message ImageNamespaceStatus {
+  // +optional
+  optional string phase = 1;
+
+  // The last time the condition transitioned from one status to another.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 2;
+
+  // The reason for the condition's last transition.
+  // +optional
+  optional string reason = 3;
+
+  // A human readable message indicating details about the transition.
+  // +optional
+  optional string message = 4;
+}
+
 // Namespace is a namespace in cluster.
 message Namespace {
   // +optional

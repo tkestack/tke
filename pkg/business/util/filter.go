@@ -20,9 +20,10 @@ package util
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"tkestack.io/tke/api/business"
-	"tkestack.io/tke/api/business/v1"
+	v1 "tkestack.io/tke/api/business/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
@@ -58,6 +59,18 @@ func FilterPlatform(ctx context.Context, platform *business.Platform) error {
 	}
 	if platform.Spec.TenantID != tenantID {
 		return errors.NewNotFound(v1.Resource("platform"), platform.ObjectMeta.Name)
+	}
+	return nil
+}
+
+// FilterImageNamespace is used to filter projects that do not belong to the tenant.
+func FilterImageNamespace(ctx context.Context, namespace *business.ImageNamespace) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if namespace.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("namespace"), namespace.ObjectMeta.Name)
 	}
 	return nil
 }

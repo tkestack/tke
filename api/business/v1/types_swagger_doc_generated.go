@@ -56,6 +56,44 @@ func (HardQuantity) SwaggerDoc() map[string]string {
 	return map_HardQuantity
 }
 
+var map_ImageNamespace = map[string]string{
+	"":     "ImageNamespace is an image namespace.",
+	"spec": "Spec defines the desired identities of namespaces in this set.",
+}
+
+func (ImageNamespace) SwaggerDoc() map[string]string {
+	return map_ImageNamespace
+}
+
+var map_ImageNamespaceList = map[string]string{
+	"":      "ImageNamespaceList is the whole list of all image namespaces which owned by a tenant.",
+	"items": "List of namespaces",
+}
+
+func (ImageNamespaceList) SwaggerDoc() map[string]string {
+	return map_ImageNamespaceList
+}
+
+var map_ImageNamespaceSpec = map[string]string{
+	"":           "ImageNamespaceSpec represents an image namespace.",
+	"finalizers": "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
+}
+
+func (ImageNamespaceSpec) SwaggerDoc() map[string]string {
+	return map_ImageNamespaceSpec
+}
+
+var map_ImageNamespaceStatus = map[string]string{
+	"":                   "ImageNamespaceStatus represents information about the status of an image namespace.",
+	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
+	"reason":             "The reason for the condition's last transition.",
+	"message":            "A human readable message indicating details about the transition.",
+}
+
+func (ImageNamespaceStatus) SwaggerDoc() map[string]string {
+	return map_ImageNamespaceStatus
+}
+
 var map_Namespace = map[string]string{
 	"":     "Namespace is a namespace in cluster.",
 	"spec": "Spec defines the desired identities of namespaces in this set.",

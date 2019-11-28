@@ -221,6 +221,7 @@ func (d *namespacedResourcesDeleter) finalizeNamespace(namespace *v1.Namespace) 
 	namespace = &v1.Namespace{}
 	err := d.businessClient.RESTClient().Put().
 		Resource("namespaces").
+		Namespace(namespaceFinalize.Namespace).
 		Name(namespaceFinalize.Name).
 		SubResource("finalize").
 		Body(&namespaceFinalize).

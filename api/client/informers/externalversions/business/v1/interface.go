@@ -28,6 +28,8 @@ import (
 type Interface interface {
 	// ConfigMaps returns a ConfigMapInformer.
 	ConfigMaps() ConfigMapInformer
+	// ImageNamespaces returns a ImageNamespaceInformer.
+	ImageNamespaces() ImageNamespaceInformer
 	// Namespaces returns a NamespaceInformer.
 	Namespaces() NamespaceInformer
 	// Platforms returns a PlatformInformer.
@@ -50,6 +52,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // ConfigMaps returns a ConfigMapInformer.
 func (v *version) ConfigMaps() ConfigMapInformer {
 	return &configMapInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// ImageNamespaces returns a ImageNamespaceInformer.
+func (v *version) ImageNamespaces() ImageNamespaceInformer {
+	return &imageNamespaceInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // Namespaces returns a NamespaceInformer.

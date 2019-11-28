@@ -20,15 +20,17 @@ package app
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cacheddiscovery "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
-	"net/http"
-	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
-	v1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	registryv1 "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-business-controller/app/config"
 	"tkestack.io/tke/pkg/controller"
@@ -69,7 +71,9 @@ type ControllerContext struct {
 	ResyncPeriod            func() time.Duration
 	ControllerStartInterval time.Duration
 
-	PlatformClient v1.PlatformV1Interface
+	PlatformClient platformv1.PlatformV1Interface
+
+	RegistryClient registryv1.RegistryV1Interface
 }
 
 // IsControllerEnabled returns whether the controller has been enabled
@@ -81,7 +85,12 @@ func (c ControllerContext) IsControllerEnabled(name string) bool {
 // controllers such as the cloud provider and clientBuilder. rootClientBuilder is only used for
 // the shared-informers client and token controller.
 func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.ClientBuilder, stop <-chan struct{}) (ControllerContext, error) {
-	client, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.PlatformAPIServerClientConfig, "tke-business-controller"))
+	platformClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.PlatformAPIServerClientConfig, "tke-business-controller"))
+	if err != nil {
+		return ControllerContext{}, fmt.Errorf("failed to create the platform client: %v", err)
+	}
+
+	registryClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.RegistryAPIServerClientConfig, "tke-business-controller"))
 	if err != nil {
 		return ControllerContext{}, fmt.Errorf("failed to create the platform client: %v", err)
 	}
@@ -118,7 +127,8 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
 
-		PlatformClient: client.PlatformV1(),
+		PlatformClient: platformClient.PlatformV1(),
+		RegistryClient: registryClient.RegistryV1(),
 	}
 	return ctx, nil
 }

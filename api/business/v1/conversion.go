@@ -29,6 +29,7 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		AddFieldLabelConversionsForPlatform,
 		AddFieldLabelConversionsForProject,
 		AddFieldLabelConversionsForNamespace,
+		AddFieldLabelConversionsForImageNamespace,
 	}
 	for _, f := range funcs {
 		if err := f(scheme); err != nil {
@@ -84,6 +85,23 @@ func AddFieldLabelConversionsForPlatform(scheme *runtime.Scheme) error {
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.tenantID",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForImageNamespace adds a conversion function to convert
+// field selectors of ImageNamespace from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForImageNamespace(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Namespace"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.tenantID",
+				"status.phase",
 				"metadata.name":
 				return label, value, nil
 			default:
