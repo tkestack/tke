@@ -70,16 +70,18 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	leaderElectionClient := versionedclientset.NewForConfigOrDie(restclient.AddUserAgent(&config, "leader-election"))
 
 	providerConfig := providerconfig.NewConfig()
+
 	clusterProvider, err := baremetalcluster.NewProvider()
 	if err != nil {
 		return nil, err
 	}
 	providerConfig.ClusterProviders.Store(clusterProvider.Name(), clusterProvider)
+
 	machineProvider, err := baremetalmachine.NewProvider()
 	if err != nil {
 		return nil, err
 	}
-	providerConfig.ClusterProviders.Store(machineProvider.Name(), machineProvider)
+	providerConfig.MachineProviders.Store(machineProvider.Name(), machineProvider)
 
 	controllerManagerConfig := &Config{
 		ServerName:                    serverName,
