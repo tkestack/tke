@@ -98,6 +98,7 @@ message ImageNamespaceSpec {
 
   optional string tenantID = 3;
 
+  // +optional
   optional string displayName = 4;
 }
 
@@ -252,6 +253,7 @@ message ProjectSpec {
 
   optional string tenantID = 2;
 
+  // +optional
   optional string displayName = 3;
 
   // Members represents the user list of project.

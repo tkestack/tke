@@ -58,9 +58,10 @@ type ProjectList struct {
 type ProjectSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
-	TenantID    string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
-	DisplayName string          `json:"displayName" protobuf:"bytes,3,opt,name=displayName"`
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	TenantID   string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	// +optional
+	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,3,opt,name=displayName"`
 
 	// Members represents the user list of project.
 	Members []string `json:"members" protobuf:"bytes,4,rep,name=members"`
@@ -334,10 +335,11 @@ type ImageNamespaceList struct {
 type ImageNamespaceSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
-	Name        string          `json:"name" protobuf:"bytes,2,opt,name=name"`
-	TenantID    string          `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
-	DisplayName string          `json:"displayName" protobuf:"bytes,4,opt,name=displayName"`
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	Name       string          `json:"name" protobuf:"bytes,2,opt,name=name"`
+	TenantID   string          `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
+	// +optional
+	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,4,opt,name=displayName"`
 }
 
 // ImageNamespaceStatus represents information about the status of an image namespace.
@@ -365,7 +367,9 @@ const (
 	ImageNamespacePending ImageNamespacePhase = "Pending"
 	// ImageNamespaceAvailable indicates the image namespace of the project is available.
 	ImageNamespaceAvailable ImageNamespacePhase = "Available"
-	// ImageNamespace indicates that the image namespace failed to be created or deleted
+	// ImageNamespaceLocked indicates the image namespace of the project is locked.
+	ImageNamespaceLocked ImageNamespacePhase = "Locked"
+	// ImageNamespaceFailed indicates that the image namespace failed to be created or deleted
 	// after it has been created.
 	ImageNamespaceFailed ImageNamespacePhase = "Failed"
 	// ImageNamespaceTerminating means the image namespace is undergoing graceful termination.

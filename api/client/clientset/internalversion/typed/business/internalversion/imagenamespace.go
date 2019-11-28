@@ -43,6 +43,7 @@ type ImageNamespaceInterface interface {
 	Update(*business.ImageNamespace) (*business.ImageNamespace, error)
 	UpdateStatus(*business.ImageNamespace) (*business.ImageNamespace, error)
 	Delete(name string, options *v1.DeleteOptions) error
+	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
 	Get(name string, options v1.GetOptions) (*business.ImageNamespace, error)
 	List(opts v1.ListOptions) (*business.ImageNamespaceList, error)
 	Watch(opts v1.ListOptions) (watch.Interface, error)
@@ -156,6 +157,22 @@ func (c *imageNamespaces) Delete(name string, options *v1.DeleteOptions) error {
 		Namespace(c.ns).
 		Resource("imagenamespaces").
 		Name(name).
+		Body(options).
+		Do().
+		Error()
+}
+
+// DeleteCollection deletes a collection of objects.
+func (c *imageNamespaces) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+	var timeout time.Duration
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	}
+	return c.client.Delete().
+		Namespace(c.ns).
+		Resource("imagenamespaces").
+		VersionedParams(&listOptions, scheme.ParameterCodec).
+		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()

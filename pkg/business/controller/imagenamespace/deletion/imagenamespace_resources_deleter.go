@@ -25,7 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
-	v1 "tkestack.io/tke/api/business/v1"
+	businessv1 "tkestack.io/tke/api/business/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/pkg/util/log"
@@ -41,7 +41,7 @@ type ImageNamespaceResourcesDeleterInterface interface {
 // implement the ImageNamespaceResourcesDeleterInterface by given businessClient,
 // registryClient and configure.
 func NewImageNamespaceResourcesDeleter(registryClient registryversionedclient.RegistryV1Interface,
-	businessClient v1clientset.BusinessV1Interface, finalizerToken v1.FinalizerName,
+	businessClient v1clientset.BusinessV1Interface, finalizerToken businessv1.FinalizerName,
 	deleteImageNamespaceWhenDone bool) ImageNamespaceResourcesDeleterInterface {
 	d := &imageNamespaceResourcesDeleter{
 		businessClient:               businessClient,
@@ -61,7 +61,7 @@ type imageNamespaceResourcesDeleter struct {
 	registryClient registryversionedclient.RegistryV1Interface
 	// The finalizer token that should be removed from the imageNamespace
 	// when all resources in that imageNamespace have been deleted.
-	finalizerToken v1.FinalizerName
+	finalizerToken businessv1.FinalizerName
 	// Also delete the imageNamespace when all resources in the imageNamespace have been deleted.
 	deleteImageNamespaceWhenDone bool
 }
@@ -143,7 +143,7 @@ func (d *imageNamespaceResourcesDeleter) Delete(projectName, imageNamespaceName 
 }
 
 // Deletes the given imageNamespace.
-func (d *imageNamespaceResourcesDeleter) deleteImageNamespace(imageNamespace *v1.ImageNamespace) error {
+func (d *imageNamespaceResourcesDeleter) deleteImageNamespace(imageNamespace *businessv1.ImageNamespace) error {
 	var opts *metav1.DeleteOptions
 	uid := imageNamespace.UID
 	if len(uid) > 0 {
@@ -157,12 +157,12 @@ func (d *imageNamespaceResourcesDeleter) deleteImageNamespace(imageNamespace *v1
 }
 
 // updateImageNamespaceFunc is a function that makes an update to an imageNamespace
-type updateImageNamespaceFunc func(imageNamespace *v1.ImageNamespace) (*v1.ImageNamespace, error)
+type updateImageNamespaceFunc func(imageNamespace *businessv1.ImageNamespace) (*businessv1.ImageNamespace, error)
 
 // retryOnConflictError retries the specified fn if there was a conflict error
 // it will return an error if the UID for an object changes across retry operations.
 // TODO RetryOnConflict should be a generic concept in businessClient code
-func (d *imageNamespaceResourcesDeleter) retryOnConflictError(imageNamespace *v1.ImageNamespace, fn updateImageNamespaceFunc) (result *v1.ImageNamespace, err error) {
+func (d *imageNamespaceResourcesDeleter) retryOnConflictError(imageNamespace *businessv1.ImageNamespace, fn updateImageNamespaceFunc) (result *businessv1.ImageNamespace, err error) {
 	latestImageNamespace := imageNamespace
 	for {
 		result, err = fn(latestImageNamespace)
@@ -184,25 +184,25 @@ func (d *imageNamespaceResourcesDeleter) retryOnConflictError(imageNamespace *v1
 }
 
 // updateImageNamespaceStatusFunc will verify that the status of the imageNamespace is correct
-func (d *imageNamespaceResourcesDeleter) updateImageNamespaceStatusFunc(imageNamespace *v1.ImageNamespace) (*v1.ImageNamespace, error) {
-	if imageNamespace.DeletionTimestamp.IsZero() || imageNamespace.Status.Phase == v1.ImageNamespaceTerminating {
+func (d *imageNamespaceResourcesDeleter) updateImageNamespaceStatusFunc(imageNamespace *businessv1.ImageNamespace) (*businessv1.ImageNamespace, error) {
+	if imageNamespace.DeletionTimestamp.IsZero() || imageNamespace.Status.Phase == businessv1.ImageNamespaceTerminating {
 		return imageNamespace, nil
 	}
-	newImageNamespace := v1.ImageNamespace{}
+	newImageNamespace := businessv1.ImageNamespace{}
 	newImageNamespace.ObjectMeta = imageNamespace.ObjectMeta
 	newImageNamespace.Status = imageNamespace.Status
-	newImageNamespace.Status.Phase = v1.ImageNamespaceTerminating
+	newImageNamespace.Status.Phase = businessv1.ImageNamespaceTerminating
 	return d.businessClient.ImageNamespaces(imageNamespace.Namespace).UpdateStatus(&newImageNamespace)
 }
 
 // finalized returns true if the imageNamespace.Spec.Finalizers is an empty list
-func finalized(imageNamespace *v1.ImageNamespace) bool {
+func finalized(imageNamespace *businessv1.ImageNamespace) bool {
 	return len(imageNamespace.Spec.Finalizers) == 0
 }
 
 // finalizeImageNamespace removes the specified finalizerToken and finalizes the imageNamespace
-func (d *imageNamespaceResourcesDeleter) finalizeImageNamespace(imageNamespace *v1.ImageNamespace) (*v1.ImageNamespace, error) {
-	imageNamespaceFinalize := v1.ImageNamespace{}
+func (d *imageNamespaceResourcesDeleter) finalizeImageNamespace(imageNamespace *businessv1.ImageNamespace) (*businessv1.ImageNamespace, error) {
+	imageNamespaceFinalize := businessv1.ImageNamespace{}
 	imageNamespaceFinalize.ObjectMeta = imageNamespace.ObjectMeta
 	imageNamespaceFinalize.Spec = imageNamespace.Spec
 	finalizerSet := sets.NewString()
@@ -211,12 +211,12 @@ func (d *imageNamespaceResourcesDeleter) finalizeImageNamespace(imageNamespace *
 			finalizerSet.Insert(string(imageNamespace.Spec.Finalizers[i]))
 		}
 	}
-	imageNamespaceFinalize.Spec.Finalizers = make([]v1.FinalizerName, 0, len(finalizerSet))
+	imageNamespaceFinalize.Spec.Finalizers = make([]businessv1.FinalizerName, 0, len(finalizerSet))
 	for _, value := range finalizerSet.List() {
-		imageNamespaceFinalize.Spec.Finalizers = append(imageNamespaceFinalize.Spec.Finalizers, v1.FinalizerName(value))
+		imageNamespaceFinalize.Spec.Finalizers = append(imageNamespaceFinalize.Spec.Finalizers, businessv1.FinalizerName(value))
 	}
 
-	imageNamespace = &v1.ImageNamespace{}
+	imageNamespace = &businessv1.ImageNamespace{}
 	err := d.businessClient.RESTClient().Put().
 		Resource("imagenamespaces").
 		Namespace(imageNamespaceFinalize.Namespace).
@@ -235,7 +235,7 @@ func (d *imageNamespaceResourcesDeleter) finalizeImageNamespace(imageNamespace *
 	return imageNamespace, err
 }
 
-type deleteResourceFunc func(deleter *imageNamespaceResourcesDeleter, imageNamespace *v1.ImageNamespace) error
+type deleteResourceFunc func(deleter *imageNamespaceResourcesDeleter, imageNamespace *businessv1.ImageNamespace) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteImageNamespace,
@@ -244,7 +244,7 @@ var deleteResourceFuncs = []deleteResourceFunc{
 // deleteAllContent will use the dynamic businessClient to delete each resource identified in groupVersionResources.
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
-func (d *imageNamespaceResourcesDeleter) deleteAllContent(imageNamespace *v1.ImageNamespace) error {
+func (d *imageNamespaceResourcesDeleter) deleteAllContent(imageNamespace *businessv1.ImageNamespace) error {
 	log.Debug("ImageNamespace controller - deleteAllContent", log.String("imageNamespaceName", imageNamespace.Name))
 
 	var errs []error
@@ -264,7 +264,7 @@ func (d *imageNamespaceResourcesDeleter) deleteAllContent(imageNamespace *v1.Ima
 	return nil
 }
 
-func deleteImageNamespace(deleter *imageNamespaceResourcesDeleter, imageNamespace *v1.ImageNamespace) error {
+func deleteImageNamespace(deleter *imageNamespaceResourcesDeleter, imageNamespace *businessv1.ImageNamespace) error {
 	namespaceList, err := deleter.registryClient.Namespaces().List(metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", imageNamespace.Spec.TenantID, imageNamespace.Name),
 	})

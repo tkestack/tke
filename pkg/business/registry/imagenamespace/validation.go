@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/business"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
@@ -39,7 +39,7 @@ func ValidateImageNamespaceCreate(imageNamespace *business.ImageNamespace,
 	allErrs := validateImageNamespace(imageNamespace, businessClient, registryClient)
 
 	fldName := field.NewPath("spec", "name")
-	namespaceList, err := registryClient.Namespaces().List(v1.ListOptions{
+	namespaceList, err := registryClient.Namespaces().List(metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", imageNamespace.Spec.TenantID, imageNamespace.Name),
 	})
 	if err != nil {

@@ -21,12 +21,12 @@ package imagenamespace
 import (
 	"sync"
 
-	v1 "tkestack.io/tke/api/business/v1"
+	businessv1 "tkestack.io/tke/api/business/v1"
 )
 
 type cachedImageNamespace struct {
 	// The cached state of the value
-	state *v1.ImageNamespace
+	state *businessv1.ImageNamespace
 }
 
 type imageNamespaceCache struct {

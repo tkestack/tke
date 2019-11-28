@@ -33861,7 +33861,7 @@ func schema_tke_api_business_v1_ImageNamespaceSpec(ref common.ReferenceCallback)
 						},
 					},
 				},
-				Required: []string{"name", "tenantID", "displayName"},
+				Required: []string{"name", "tenantID"},
 			},
 		},
 	}
@@ -34464,7 +34464,7 @@ func schema_tke_api_business_v1_ProjectSpec(ref common.ReferenceCallback) common
 						},
 					},
 				},
-				Required: []string{"tenantID", "displayName", "members"},
+				Required: []string{"tenantID", "members"},
 			},
 		},
 		Dependencies: []string{

@@ -58,8 +58,9 @@ type ProjectList struct {
 type ProjectSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName
-	TenantID    string
+	Finalizers []FinalizerName
+	TenantID   string
+	// +optional
 	DisplayName string
 
 	// Members represents the user list of project.
@@ -329,9 +330,10 @@ type ImageNamespaceList struct {
 type ImageNamespaceSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName
-	Name        string
-	TenantID    string
+	Finalizers []FinalizerName
+	Name       string
+	TenantID   string
+	// +optional
 	DisplayName string
 }
 
@@ -360,7 +362,9 @@ const (
 	ImageNamespacePending ImageNamespacePhase = "Pending"
 	// ImageNamespaceAvailable indicates the image namespace of the project is available.
 	ImageNamespaceAvailable ImageNamespacePhase = "Available"
-	// ImageNamespace indicates that the image namespace failed to be created or deleted
+	// ImageNamespaceLocked indicates the image namespace of the project is locked.
+	ImageNamespaceLocked ImageNamespacePhase = "Locked"
+	// ImageNamespaceFailed indicates that the image namespace failed to be created or deleted
 	// after it has been created.
 	ImageNamespaceFailed ImageNamespacePhase = "Failed"
 	// ImageNamespaceTerminating means the image namespace is undergoing graceful termination.

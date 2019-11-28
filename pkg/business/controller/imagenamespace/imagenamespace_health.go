@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
-	v1 "tkestack.io/tke/api/business/v1"
+	businessv1 "tkestack.io/tke/api/business/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -55,11 +55,11 @@ func (s *imageNamespaceHealth) Set(key string) {
 	s.imageNamespaces.Insert(key)
 }
 
-func (c *Controller) startNamespaceHealthCheck(key string) {
+func (c *Controller) startImageNamespaceHealthCheck(key string) {
 	if !c.health.Exist(key) {
 		c.health.Set(key)
 		go func() {
-			if err := wait.PollImmediateUntil(1*time.Minute, c.watchNamespaceHealth(key), c.stopCh); err != nil {
+			if err := wait.PollImmediateUntil(1*time.Minute, c.watchImageNamespaceHealth(key), c.stopCh); err != nil {
 				log.Error("Failed to wait poll immediate until", log.Err(err))
 			}
 		}()
@@ -70,7 +70,7 @@ func (c *Controller) startNamespaceHealthCheck(key string) {
 }
 
 // for PollImmediateUntil, when return true ,an err while exit
-func (c *Controller) watchNamespaceHealth(key string) func() (bool, error) {
+func (c *Controller) watchImageNamespaceHealth(key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Debug("Check imageNamespace health", log.String("key", key))
 
@@ -98,14 +98,14 @@ func (c *Controller) watchNamespaceHealth(key string) func() (bool, error) {
 			return false, nil
 		}
 		// if status is terminated,to exit the  health check loop
-		if imageNamespace.Status.Phase == v1.ImageNamespaceTerminating || imageNamespace.Status.Phase == v1.ImageNamespacePending {
+		if imageNamespace.Status.Phase == businessv1.ImageNamespaceTerminating || imageNamespace.Status.Phase == businessv1.ImageNamespacePending {
 			log.Warn("ImageNamespace status is terminated, to exit the health check loop",
 				log.String("projectName", projectName), log.String("imageNamespaceName", imageNamespaceName))
 			c.health.Del(imageNamespaceName)
 			return true, nil
 		}
 
-		if err := c.checkNamespaceHealth(imageNamespace); err != nil {
+		if err := c.checkImageNamespaceHealth(imageNamespace); err != nil {
 			log.Error("Failed to check imageNamespace health",
 				log.String("projectName", projectName), log.String("imageNamespaceName", imageNamespaceName), log.Err(err))
 		}
@@ -113,15 +113,52 @@ func (c *Controller) watchNamespaceHealth(key string) func() (bool, error) {
 	}
 }
 
-func (c *Controller) checkNamespaceHealth(imageNamespace *v1.ImageNamespace) error {
-	namespaceList, err := c.registryClient.Namespaces().List(metav1.ListOptions{
+func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageNamespace) error {
+	imageNamespaceList, err := c.registryClient.Namespaces().List(metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", imageNamespace.Spec.TenantID, imageNamespace.Spec.Name),
 	})
 	if err != nil {
 		return err
 	}
-	if len(namespaceList.Items) == 0 {
-		return fmt.Errorf("imagenamespace %s in tenant %s not exist", imageNamespace.Spec.Name, imageNamespace.Spec.TenantID)
+
+	switch imageNamespace.Status.Phase {
+	case businessv1.ImageNamespaceAvailable:
+		if len(imageNamespaceList.Items) == 0 {
+			imageNamespace.Status.Phase = businessv1.ImageNamespaceFailed
+			imageNamespace.Status.Message = "ListRegistryNamespace failed"
+			imageNamespace.Status.Reason = "RegistryNamespace may has been removed."
+			imageNamespace.Status.LastTransitionTime = metav1.Now()
+			return c.persistUpdate(imageNamespace)
+		} else {
+			imageNamespaceObject := imageNamespaceList.Items[0]
+			if imageNamespaceObject.Status.Locked != nil && *imageNamespaceObject.Status.Locked {
+				imageNamespace.Status.Phase = businessv1.ImageNamespaceLocked
+				imageNamespace.Status.Message = "RegistryNamespace locked"
+				imageNamespace.Status.Reason = "RegistryNamespace has been locked."
+				imageNamespace.Status.LastTransitionTime = metav1.Now()
+				return c.persistUpdate(imageNamespace)
+			}
+		}
+	case businessv1.ImageNamespaceLocked:
+		if len(imageNamespaceList.Items) == 0 {
+			imageNamespace.Status.Phase = businessv1.ImageNamespaceFailed
+			imageNamespace.Status.Message = "ListRegistryNamespace failed"
+			imageNamespace.Status.Reason = "RegistryNamespace may has been removed."
+			imageNamespace.Status.LastTransitionTime = metav1.Now()
+			return c.persistUpdate(imageNamespace)
+		} else {
+			imageNamespaceObject := imageNamespaceList.Items[0]
+			if imageNamespaceObject.Status.Locked == nil || !*imageNamespaceObject.Status.Locked {
+				imageNamespace.Status.Phase = businessv1.ImageNamespaceAvailable
+				imageNamespace.Status.Message = ""
+				imageNamespace.Status.Reason = ""
+				imageNamespace.Status.LastTransitionTime = metav1.Now()
+				return c.persistUpdate(imageNamespace)
+			}
+		}
+	default:
+		return fmt.Errorf("internal error, checkImageNamespaceHealth(%s/%s) found unexpected status %s",
+			imageNamespace.Namespace, imageNamespace.Name, imageNamespace.Status.Phase)
 	}
 	return nil
 }

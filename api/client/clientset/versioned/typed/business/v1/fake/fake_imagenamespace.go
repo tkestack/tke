@@ -122,6 +122,14 @@ func (c *FakeImageNamespaces) Delete(name string, options *v1.DeleteOptions) err
 	return err
 }
 
+// DeleteCollection deletes a collection of objects.
+func (c *FakeImageNamespaces) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(imagenamespacesResource, c.ns, listOptions)
+
+	_, err := c.Fake.Invokes(action, &businessv1.ImageNamespaceList{})
+	return err
+}
+
 // Patch applies the patch and returns the patched imageNamespace.
 func (c *FakeImageNamespaces) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *businessv1.ImageNamespace, err error) {
 	obj, err := c.Fake.

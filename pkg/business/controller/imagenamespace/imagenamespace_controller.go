@@ -222,7 +222,7 @@ func (c *Controller) syncItem(key string) error {
 	default:
 		if imageNamespace.Status.Phase == businessv1.ImageNamespacePending ||
 			imageNamespace.Status.Phase == businessv1.ImageNamespaceAvailable ||
-			imageNamespace.Status.Phase == businessv1.ImageNamespaceFailed {
+			imageNamespace.Status.Phase == businessv1.ImageNamespaceLocked {
 			cachedImageNamespace := c.cache.getOrCreate(key)
 			err = c.processUpdate(cachedImageNamespace, imageNamespace, key)
 		} else if imageNamespace.Status.Phase == businessv1.ImageNamespaceTerminating {
@@ -288,7 +288,7 @@ func (c *Controller) handlePhase(key string, cachedImageNamespace *cachedImageNa
 		err := c.createRegistryNamespace(imageNamespace)
 		if err != nil {
 			imageNamespace.Status.Phase = businessv1.ImageNamespaceFailed
-			imageNamespace.Status.Message = "CreateImageNamespaceFailed"
+			imageNamespace.Status.Message = "CreateRegistryNamespace failed"
 			imageNamespace.Status.Reason = err.Error()
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
 			return c.persistUpdate(imageNamespace)
@@ -298,8 +298,8 @@ func (c *Controller) handlePhase(key string, cachedImageNamespace *cachedImageNa
 		imageNamespace.Status.Reason = ""
 		imageNamespace.Status.LastTransitionTime = metav1.Now()
 		return c.persistUpdate(imageNamespace)
-	case businessv1.ImageNamespaceAvailable, businessv1.ImageNamespaceFailed:
-		c.startNamespaceHealthCheck(key)
+	case businessv1.ImageNamespaceAvailable, businessv1.ImageNamespaceLocked:
+		c.startImageNamespaceHealthCheck(key)
 	}
 	return nil
 }
