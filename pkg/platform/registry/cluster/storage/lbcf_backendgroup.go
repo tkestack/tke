@@ -121,7 +121,7 @@ func (h *lbcfBackendGroupProxyHandler) ServeHTTP(w http.ResponseWriter, req *htt
 	loc.RawQuery = req.URL.RawQuery
 
 	// todo: Change the apigroup here once the integration pipeline configuration is complete using the tapp in the tkestack group
-	prefix := "/apis/lbcf.tke.cloud.tencent.com/v1beta1"
+	prefix := "/apis/lbcf.tkestack.io/v1beta1"
 
 	if len(h.action) > 0 {
 		h.serveAction(w, req)
@@ -184,7 +184,7 @@ func (h *lbcfBackendGroupProxyHandler) getBackendRecords() ([]unstructured.Unstr
 	}
 
 	selector := labels.SelectorFromValidatedSet(labels.Set(map[string]string{
-		"lbcf.tke.cloud.tencent.com/backend-group": h.name,
+		"lbcf.tkestack.io/backend-group": h.name,
 	}))
 	recordList, err := dynamicClient.Resource(recordResource).Namespace(h.namespace).List(metav1.ListOptions{
 		LabelSelector: selector.String(),
