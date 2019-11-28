@@ -48,7 +48,7 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var versionMap = map[string]Components{
 	LatestVersion: {
-		LBCFController: containerregistry.Image{Name: "lbcf-controller", Tag: "v0.2.2"},
+		LBCFController: containerregistry.Image{Name: "lbcf-controller", Tag: "v1.0.0.rc.2"},
 	},
 }
 
