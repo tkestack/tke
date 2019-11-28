@@ -126,7 +126,7 @@ func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageN
 		if len(imageNamespaceList.Items) == 0 {
 			imageNamespace.Status.Phase = businessv1.ImageNamespaceFailed
 			imageNamespace.Status.Message = "ListRegistryNamespace failed"
-			imageNamespace.Status.Reason = "RegistryNamespace may has been removed."
+			imageNamespace.Status.Reason = "RegistryNamespace may have been removed."
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
 			return c.persistUpdate(imageNamespace)
 		} else {
@@ -143,7 +143,7 @@ func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageN
 		if len(imageNamespaceList.Items) == 0 {
 			imageNamespace.Status.Phase = businessv1.ImageNamespaceFailed
 			imageNamespace.Status.Message = "ListRegistryNamespace failed"
-			imageNamespace.Status.Reason = "RegistryNamespace may has been removed."
+			imageNamespace.Status.Reason = "RegistryNamespace may have been removed."
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
 			return c.persistUpdate(imageNamespace)
 		} else {
