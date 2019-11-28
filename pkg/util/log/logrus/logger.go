@@ -34,6 +34,7 @@ type Logger struct {
 	// levels and log entries. For example, to send errors to an error tracking
 	// service, log to StatsD or dump the core on fatal errors.
 	Hooks LevelHooks
+	level Level
 }
 
 // NewLogger create the field logger object by giving zap logger.
@@ -41,7 +42,20 @@ func NewLogger(logger *zap.Logger) *Logger {
 	return &Logger{
 		logger: logger,
 		Hooks:  make(LevelHooks),
+		level:  InfoLevel,
 	}
+}
+
+// SetLevel sets the logger level.
+func (l *Logger) SetLevel(level Level) {
+	// todo: dynamic change zap logger level
+	l.level = level
+}
+
+// GetLevel returns the logger level.
+func (l *Logger) GetLevel() Level {
+	// todo: return zap logger level
+	return l.level
 }
 
 // Print logs a message at level Print on the compatibleLogger.
