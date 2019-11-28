@@ -73,6 +73,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&ConfigMap{},
 		&ConfigMapList{},
+
+		&ImageNamespace{},
+		&ImageNamespaceList{},
 	)
 	return nil
 }

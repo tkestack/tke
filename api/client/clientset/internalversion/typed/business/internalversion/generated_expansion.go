@@ -22,6 +22,8 @@ package internalversion
 
 type ConfigMapExpansion interface{}
 
+type ImageNamespaceExpansion interface{}
+
 type NamespaceExpansion interface{}
 
 type PlatformExpansion interface{}

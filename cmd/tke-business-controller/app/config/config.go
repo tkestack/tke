@@ -46,6 +46,8 @@ type Config struct {
 	PlatformAPIServerClientConfig *restclient.Config
 	// the rest config for the business apiserver
 	BusinessAPIServerClientConfig *restclient.Config
+	// the rest config for the registry apiserver
+	RegistryAPIServerClientConfig *restclient.Config
 	Component                     controlleroptions.ComponentConfiguration
 }
 
@@ -66,6 +68,11 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
+	registryAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.RegistryAPIClient)
+	if err != nil {
+		return nil, err
+	}
+
 	// shallow copy, do not modify the apiServerClientConfig.Timeout.
 	config := *businessAPIServerClientConfig
 	config.Timeout = opts.Component.LeaderElection.RenewDeadline
@@ -76,6 +83,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		LeaderElectionClient:          leaderElectionClient,
 		PlatformAPIServerClientConfig: platformAPIServerClientConfig,
 		BusinessAPIServerClientConfig: businessAPIServerClientConfig,
+		RegistryAPIServerClientConfig: registryAPIServerClientConfig,
 		Authorization: apiserver.AuthorizationInfo{
 			Authorizer: authorizerfactory.NewAlwaysAllowAuthorizer(),
 		},

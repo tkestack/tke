@@ -34,6 +34,10 @@ func (c *FakeBusiness) ConfigMaps() internalversion.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }
 
+func (c *FakeBusiness) ImageNamespaces(namespace string) internalversion.ImageNamespaceInterface {
+	return &FakeImageNamespaces{c, namespace}
+}
+
 func (c *FakeBusiness) Namespaces(namespace string) internalversion.NamespaceInterface {
 	return &FakeNamespaces{c, namespace}
 }

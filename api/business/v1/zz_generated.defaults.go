@@ -32,6 +32,8 @@ import (
 func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&ConfigMap{}, func(obj interface{}) { SetObjectDefaults_ConfigMap(obj.(*ConfigMap)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMapList{}, func(obj interface{}) { SetObjectDefaults_ConfigMapList(obj.(*ConfigMapList)) })
+	scheme.AddTypeDefaultingFunc(&ImageNamespace{}, func(obj interface{}) { SetObjectDefaults_ImageNamespace(obj.(*ImageNamespace)) })
+	scheme.AddTypeDefaultingFunc(&ImageNamespaceList{}, func(obj interface{}) { SetObjectDefaults_ImageNamespaceList(obj.(*ImageNamespaceList)) })
 	scheme.AddTypeDefaultingFunc(&Namespace{}, func(obj interface{}) { SetObjectDefaults_Namespace(obj.(*Namespace)) })
 	scheme.AddTypeDefaultingFunc(&NamespaceList{}, func(obj interface{}) { SetObjectDefaults_NamespaceList(obj.(*NamespaceList)) })
 	scheme.AddTypeDefaultingFunc(&Project{}, func(obj interface{}) { SetObjectDefaults_Project(obj.(*Project)) })
@@ -47,6 +49,17 @@ func SetObjectDefaults_ConfigMapList(in *ConfigMapList) {
 	for i := range in.Items {
 		a := &in.Items[i]
 		SetObjectDefaults_ConfigMap(a)
+	}
+}
+
+func SetObjectDefaults_ImageNamespace(in *ImageNamespace) {
+	SetDefaults_ImageNamespaceStatus(&in.Status)
+}
+
+func SetObjectDefaults_ImageNamespaceList(in *ImageNamespaceList) {
+	for i := range in.Items {
+		a := &in.Items[i]
+		SetObjectDefaults_ImageNamespace(a)
 	}
 }
 

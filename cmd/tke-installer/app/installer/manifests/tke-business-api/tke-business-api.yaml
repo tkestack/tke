@@ -131,7 +131,11 @@ data:
       api_server = "https://tke-platform-api"
       api_server_client_config = "/app/conf/tke-platform-config.yaml"
 
-    [features]
+      [client.registry]
+      api_server = "https://tke-registry-api"
+      api_server_client_config = "/app/conf/tke-registry-config.yaml"
+
+  [features]
     initial_administrator_tenant = "{{ .TenantID }}"
     initial_administrator_user = "{{ .Username }}"
     sync_projects_with_namespaces = {{ .SyncProjectsWithNamespaces }}
@@ -175,3 +179,23 @@ data:
           cluster: tke
           user: admin-cert
         name: tke
+
+tke-registry-config.yaml: |
+  apiVersion: v1
+  kind: Config
+  clusters:
+    - name: tke
+      cluster:
+        certificate-authority: /app/certs/ca.crt
+        server: https://tke-registry-api
+  users:
+    - name: admin-cert
+      user:
+        client-certificate: /app/certs/admin.crt
+        client-key: /app/certs/admin.key
+  current-context: tke
+  contexts:
+    - context:
+        cluster: tke
+        user: admin-cert
+      name: tke

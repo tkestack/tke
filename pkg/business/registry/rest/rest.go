@@ -25,12 +25,14 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
 	"tkestack.io/tke/api/business"
-	"tkestack.io/tke/api/business/v1"
+	v1 "tkestack.io/tke/api/business/v1"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/cmd/tke-business-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	configmapstorage "tkestack.io/tke/pkg/business/registry/configmap/storage"
+	imagenamespacestorage "tkestack.io/tke/pkg/business/registry/imagenamespace/storage"
 	namespacestorage "tkestack.io/tke/pkg/business/registry/namespace/storage"
 	platformstorage "tkestack.io/tke/pkg/business/registry/platform/storage"
 	portalstorage "tkestack.io/tke/pkg/business/registry/portal/storage"
@@ -42,6 +44,7 @@ import (
 type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
 	PlatformClient       platformversionedclient.PlatformV1Interface
+	RegistryClient       registryversionedclient.RegistryV1Interface
 	PrivilegedUsername   string
 	Features             *options.FeatureOptions
 }
@@ -90,6 +93,11 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
+
+		imageNamespaceREST := imagenamespacestorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)
+		storageMap["imagenamespaces"] = imageNamespaceREST.ImageNamespace
+		storageMap["imagenamespaces/status"] = imageNamespaceREST.Status
+		storageMap["imagenamespaces/finalize"] = imageNamespaceREST.Finalize
 	}
 
 	return storageMap

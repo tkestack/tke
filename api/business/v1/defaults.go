@@ -70,3 +70,9 @@ func SetDefaults_ConfigMap(obj *ConfigMap) {
 		obj.Data = make(map[string]string)
 	}
 }
+
+func SetDefaults_ImageNamespaceStatus(obj *ImageNamespaceStatus) {
+	if obj.Phase == "" {
+		obj.Phase = ImageNamespacePending
+	}
+}

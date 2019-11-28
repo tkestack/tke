@@ -19,11 +19,12 @@
 package app
 
 import (
+	"net/http"
+	"time"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/server/mux"
-	"net/http"
-	"time"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -49,6 +50,7 @@ func NewControllerInitializers() map[string]InitFunc {
 
 	controllers["namespace"] = startNamespaceController
 	controllers["project"] = startProjectController
+	controllers["imagenamespace"] = startImageNamespaceController
 	return controllers
 }
 

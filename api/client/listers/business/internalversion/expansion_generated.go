@@ -24,6 +24,14 @@ package internalversion
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}
 
+// ImageNamespaceListerExpansion allows custom methods to be added to
+// ImageNamespaceLister.
+type ImageNamespaceListerExpansion interface{}
+
+// ImageNamespaceNamespaceListerExpansion allows custom methods to be added to
+// ImageNamespaceNamespaceLister.
+type ImageNamespaceNamespaceListerExpansion interface{}
+
 // NamespaceListerExpansion allows custom methods to be added to
 // NamespaceLister.
 type NamespaceListerExpansion interface{}

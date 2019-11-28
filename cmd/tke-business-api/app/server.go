@@ -56,6 +56,7 @@ func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 			StorageFactory:          cfg.StorageFactory,
 			APIResourceConfigSource: cfg.StorageFactory.APIResourceConfigSource,
 			PlatformClient:          cfg.PlatformClient,
+			RegistryClient:          cfg.RegistryClient,
 			PrivilegedUsername:      cfg.PrivilegedUsername,
 			FeatureOptions:          cfg.FeatureOptions,
 		},

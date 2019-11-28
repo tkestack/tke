@@ -61,6 +61,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=business.tkestack.io, Version=internalVersion
 	case business.SchemeGroupVersion.WithResource("configmaps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().ConfigMaps().Informer()}, nil
+	case business.SchemeGroupVersion.WithResource("imagenamespaces"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().ImageNamespaces().Informer()}, nil
 	case business.SchemeGroupVersion.WithResource("namespaces"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().Namespaces().Informer()}, nil
 	case business.SchemeGroupVersion.WithResource("platforms"):

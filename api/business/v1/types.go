@@ -58,9 +58,10 @@ type ProjectList struct {
 type ProjectSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
-	TenantID    string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
-	DisplayName string          `json:"displayName" protobuf:"bytes,3,opt,name=displayName"`
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	TenantID   string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	// +optional
+	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,3,opt,name=displayName"`
 
 	// Members represents the user list of project.
 	Members []string `json:"members" protobuf:"bytes,4,rep,name=members"`
@@ -106,6 +107,8 @@ const (
 	ProjectFinalize FinalizerName = "project"
 	// NamespaceFinalize is an internal finalizer values to Namespace.
 	NamespaceFinalize FinalizerName = "namespace"
+	// ImageNamespaceFinalize is an internal finalizer values to ImageNamespace.
+	ImageNamespaceFinalize FinalizerName = "imagenamespace"
 )
 
 // ResourceList is a set of (resource name, quantity) pairs.
@@ -299,3 +302,76 @@ type ConfigMapList struct {
 	// Items is the list of ConfigMaps.
 	Items []ConfigMap `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ImageNamespace is an image namespace.
+type ImageNamespace struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of namespaces in this set.
+	// +optional
+	Spec ImageNamespaceSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	// +optional
+	Status ImageNamespaceStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ImageNamespaceList is the whole list of all image namespaces which owned by a tenant.
+type ImageNamespaceList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of namespaces
+	Items []ImageNamespace `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// ImageNamespaceSpec represents an image namespace.
+type ImageNamespaceSpec struct {
+	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
+	// +optional
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	Name       string          `json:"name" protobuf:"bytes,2,opt,name=name"`
+	TenantID   string          `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
+	// +optional
+	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,4,opt,name=displayName"`
+}
+
+// ImageNamespaceStatus represents information about the status of an image namespace.
+type ImageNamespaceStatus struct {
+	// +optional
+	Phase ImageNamespacePhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=ImageNamespacePhase"`
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,2,opt,name=lastTransitionTime"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,4,opt,name=message"`
+}
+
+// ImageNamespacePhase indicates the phase of image namespaces.
+type ImageNamespacePhase string
+
+// These are valid phases of image namespaces.
+const (
+	// ImageNamespacePending indicates that the image namespace has been declared,
+	// when the image namespace has not actually been created.
+	ImageNamespacePending ImageNamespacePhase = "Pending"
+	// ImageNamespaceAvailable indicates the image namespace of the project is available.
+	ImageNamespaceAvailable ImageNamespacePhase = "Available"
+	// ImageNamespaceLocked indicates the image namespace of the project is locked.
+	ImageNamespaceLocked ImageNamespacePhase = "Locked"
+	// ImageNamespaceFailed indicates that the image namespace failed to be created or deleted
+	// after it has been created.
+	ImageNamespaceFailed ImageNamespacePhase = "Failed"
+	// ImageNamespaceTerminating means the image namespace is undergoing graceful termination.
+	ImageNamespaceTerminating ImageNamespacePhase = "Terminating"
+)

@@ -58,8 +58,9 @@ type ProjectList struct {
 type ProjectSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName
-	TenantID    string
+	Finalizers []FinalizerName
+	TenantID   string
+	// +optional
 	DisplayName string
 
 	// Members represents the user list of project.
@@ -104,6 +105,8 @@ const (
 	ProjectFinalize FinalizerName = "project"
 	// NamespaceFinalize is an internal finalizer values to Namespace.
 	NamespaceFinalize FinalizerName = "namespace"
+	// ImageNamespaceFinalize is an internal finalizer values to ImageNamespace.
+	ImageNamespaceFinalize FinalizerName = "imagenamespace"
 )
 
 // ResourceList is a set of (resource name, quantity) pairs.
@@ -294,3 +297,76 @@ type ConfigMapList struct {
 	// Items is the list of ConfigMaps.
 	Items []ConfigMap
 }
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ImageNamespace is an image namespace.
+type ImageNamespace struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of namespaces in this set.
+	// +optional
+	Spec ImageNamespaceSpec
+	// +optional
+	Status ImageNamespaceStatus
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ImageNamespaceList is the whole list of all image namespaces which owned by a tenant.
+type ImageNamespaceList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+
+	// List of namespaces
+	Items []ImageNamespace
+}
+
+// ImageNamespaceSpec represents an image namespace.
+type ImageNamespaceSpec struct {
+	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
+	// +optional
+	Finalizers []FinalizerName
+	Name       string
+	TenantID   string
+	// +optional
+	DisplayName string
+}
+
+// ImageNamespaceStatus represents information about the status of an image namespace.
+type ImageNamespaceStatus struct {
+	// +optional
+	Phase ImageNamespacePhase
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string
+}
+
+// ImageNamespacePhase indicates the phase of image namespaces.
+type ImageNamespacePhase string
+
+// These are valid phases of image namespaces.
+const (
+	// ImageNamespacePending indicates that the image namespace has been declared,
+	// when the image namespace has not actually been created.
+	ImageNamespacePending ImageNamespacePhase = "Pending"
+	// ImageNamespaceAvailable indicates the image namespace of the project is available.
+	ImageNamespaceAvailable ImageNamespacePhase = "Available"
+	// ImageNamespaceLocked indicates the image namespace of the project is locked.
+	ImageNamespaceLocked ImageNamespacePhase = "Locked"
+	// ImageNamespaceFailed indicates that the image namespace failed to be created or deleted
+	// after it has been created.
+	ImageNamespaceFailed ImageNamespacePhase = "Failed"
+	// ImageNamespaceTerminating means the image namespace is undergoing graceful termination.
+	ImageNamespaceTerminating ImageNamespacePhase = "Terminating"
+)

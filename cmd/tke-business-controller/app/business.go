@@ -24,6 +24,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	v1 "tkestack.io/tke/api/business/v1"
+	"tkestack.io/tke/pkg/business/controller/imagenamespace"
 	"tkestack.io/tke/pkg/business/controller/namespace"
 	"tkestack.io/tke/pkg/business/controller/project"
 )
@@ -34,6 +35,9 @@ const (
 
 	projectSyncPeriod      = 5 * time.Minute
 	concurrentProjectSyncs = 10
+
+	imageNamespaceSyncPeriod      = 30 * time.Second
+	concurrentImageNamespaceSyncs = 10
 )
 
 func startNamespaceController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -67,6 +71,24 @@ func startProjectController(ctx ControllerContext) (http.Handler, bool, error) {
 	)
 
 	go ctrl.Run(concurrentProjectSyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startImageNamespaceController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: "v1", Resource: "imagenamespaces"}] {
+		return nil, false, nil
+	}
+
+	ctrl := imagenamespace.NewController(
+		ctx.RegistryClient,
+		ctx.ClientBuilder.ClientOrDie("imagenamespace-controller"),
+		ctx.InformerFactory.Business().V1().ImageNamespaces(),
+		imageNamespaceSyncPeriod,
+		v1.ImageNamespaceFinalize,
+	)
+
+	go ctrl.Run(concurrentImageNamespaceSyncs, ctx.Stop)
 
 	return nil, true, nil
 }

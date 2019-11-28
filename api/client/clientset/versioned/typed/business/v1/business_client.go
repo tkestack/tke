@@ -29,6 +29,7 @@ import (
 type BusinessV1Interface interface {
 	RESTClient() rest.Interface
 	ConfigMapsGetter
+	ImageNamespacesGetter
 	NamespacesGetter
 	PlatformsGetter
 	PortalsGetter
@@ -42,6 +43,10 @@ type BusinessV1Client struct {
 
 func (c *BusinessV1Client) ConfigMaps() ConfigMapInterface {
 	return newConfigMaps(c)
+}
+
+func (c *BusinessV1Client) ImageNamespaces(namespace string) ImageNamespaceInterface {
+	return newImageNamespaces(c, namespace)
 }
 
 func (c *BusinessV1Client) Namespaces(namespace string) NamespaceInterface {

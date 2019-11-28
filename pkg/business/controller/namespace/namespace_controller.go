@@ -208,7 +208,6 @@ func (c *Controller) syncItem(key string) error {
 	if err != nil {
 		return err
 	}
-	var cachedNamespace *cachedNamespace
 	// Namespace holds the latest Namespace info from apiserver
 	namespace, err := c.lister.Namespaces(projectName).Get(namespaceName)
 	switch {
@@ -219,7 +218,7 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve namespace from store", log.String("projectName", projectName), log.String("namespaceName", namespaceName), log.Err(err))
 	default:
 		if namespace.Status.Phase == v1.NamespacePending || namespace.Status.Phase == v1.NamespaceAvailable || namespace.Status.Phase == v1.NamespaceFailed {
-			cachedNamespace = c.cache.getOrCreate(key)
+			cachedNamespace := c.cache.getOrCreate(key)
 			err = c.processUpdate(cachedNamespace, namespace, key)
 		} else if namespace.Status.Phase == v1.NamespaceTerminating {
 			log.Info("Namespace has been terminated. Attempting to cleanup resources", log.String("projectName", projectName), log.String("namespaceName", namespaceName))

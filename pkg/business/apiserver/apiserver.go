@@ -28,6 +28,7 @@ import (
 	businessv1 "tkestack.io/tke/api/business/v1"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-business-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/storage"
@@ -42,6 +43,7 @@ type ExtraConfig struct {
 	StorageFactory          serverstorage.StorageFactory
 	VersionedInformers      versionedinformers.SharedInformerFactory
 	PlatformClient          platformversionedclient.PlatformV1Interface
+	RegistryClient          registryversionedclient.RegistryV1Interface
 	PrivilegedUsername      string
 	FeatureOptions          *options.FeatureOptions
 }
@@ -96,6 +98,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		&businessrest.StorageProvider{
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
 			PlatformClient:       c.ExtraConfig.PlatformClient,
+			RegistryClient:       c.ExtraConfig.RegistryClient,
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
 			Features:             c.ExtraConfig.FeatureOptions,
 		},
