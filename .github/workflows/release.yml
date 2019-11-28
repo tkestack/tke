@@ -1,9 +1,12 @@
-name: build
+name: release
 
-on: [push, pull_request]
+on:
+  create:
+    tags:
+    - v*
 
 jobs:
-  build:
+  release:
 
     runs-on: self-hosted
 
@@ -18,4 +21,4 @@ jobs:
           ${{ runner.os }}-go-
 
     - run: |
-        make
+        make release
