@@ -60,16 +60,18 @@ type Config struct {
 // on a given TKE platform apiserver command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	providerConfig := providerconfig.NewConfig()
+
 	clusterProvider, err := baremetalcluster.NewProvider()
 	if err != nil {
 		return nil, err
 	}
 	providerConfig.ClusterProviders.Store(clusterProvider.Name(), clusterProvider)
+
 	machineProvider, err := baremetalmachine.NewProvider()
 	if err != nil {
 		return nil, err
 	}
-	providerConfig.ClusterProviders.Store(machineProvider.Name(), machineProvider)
+	providerConfig.MachineProviders.Store(machineProvider.Name(), machineProvider)
 
 	genericAPIServerConfig := genericapiserver.NewConfig(platform.Codecs)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil)
