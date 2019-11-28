@@ -20,5 +20,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
+    - uses: azure/docker-login@v1
+      with:
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+
     - run: |
         make release
