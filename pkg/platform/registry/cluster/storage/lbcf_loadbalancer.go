@@ -121,7 +121,7 @@ func (h *lbcfLoadBalancerProxyHandler) ServeHTTP(w http.ResponseWriter, req *htt
 	loc.RawQuery = req.URL.RawQuery
 
 	// todo: Change the apigroup here once the integration pipeline configuration is complete using the tapp in the tkestack group
-	prefix := "/apis/lbcf.tke.cloud.tencent.com/v1beta1"
+	prefix := "/apis/lbcf.tkestack.io/v1beta1"
 
 	if len(h.action) > 0 {
 		h.serveAction(w, req)
@@ -175,9 +175,9 @@ func (h *lbcfLoadBalancerProxyHandler) serveAction(w http.ResponseWriter, req *h
 }
 
 var (
-	lbResource     = schema.GroupVersionResource{Group: "lbcf.tke.cloud.tencent.com", Version: "v1beta1", Resource: "loadbalancers"}
-	bgResource     = schema.GroupVersionResource{Group: "lbcf.tke.cloud.tencent.com", Version: "v1beta1", Resource: "backendgroups"}
-	recordResource = schema.GroupVersionResource{Group: "lbcf.tke.cloud.tencent.com", Version: "v1beta1", Resource: "backendrecords"}
+	lbResource     = schema.GroupVersionResource{Group: "lbcf.tkestack.io", Version: "v1beta1", Resource: "loadbalancers"}
+	bgResource     = schema.GroupVersionResource{Group: "lbcf.tkestack.io", Version: "v1beta1", Resource: "backendgroups"}
+	recordResource = schema.GroupVersionResource{Group: "lbcf.tkestack.io", Version: "v1beta1", Resource: "backendrecords"}
 )
 
 func (h *lbcfLoadBalancerProxyHandler) getEventList() (*corev1.EventList, error) {
@@ -199,7 +199,7 @@ func (h *lbcfLoadBalancerProxyHandler) getBackendGroups() ([]unstructured.Unstru
 	}
 
 	selector := labels.SelectorFromValidatedSet(labels.Set(map[string]string{
-		"lbcf.tke.cloud.tencent.com/lb-name": h.name,
+		"lbcf.tkestack.io/lb-name": h.name,
 	}))
 	groupList, err := dynamicClient.Resource(bgResource).Namespace(h.namespace).List(metav1.ListOptions{
 		LabelSelector: selector.String(),

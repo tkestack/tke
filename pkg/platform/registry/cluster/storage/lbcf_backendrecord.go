@@ -123,7 +123,7 @@ func (h *lbcfBackendRecordHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 	loc.RawQuery = req.URL.RawQuery
 
 	// todo: Change the apigroup here once the integration pipeline configuration is complete using the tapp in the tkestack group
-	prefix := "/apis/lbcf.tke.cloud.tencent.com/v1beta1"
+	prefix := "/apis/lbcf.tkestack.io/v1beta1"
 
 	if len(h.action) > 0 {
 		h.serveAction(w, req)
