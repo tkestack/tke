@@ -165,7 +165,7 @@ func MatchNamespace(label labels.Selector, field fields.Selector) storage.Select
 func ToSelectableFields(imageNamespace *business.ImageNamespace) fields.Set {
 	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&imageNamespace.ObjectMeta, true)
 	specificFieldsSet := fields.Set{
-		"spec.name": imageNamespace.Spec.Name,
+		"spec.name":     imageNamespace.Spec.Name,
 		"spec.tenantID": imageNamespace.Spec.TenantID,
 	}
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)

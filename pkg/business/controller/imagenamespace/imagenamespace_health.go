@@ -129,15 +129,14 @@ func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageN
 			imageNamespace.Status.Reason = "RegistryNamespace may have been removed."
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
 			return c.persistUpdate(imageNamespace)
-		} else {
-			imageNamespaceObject := imageNamespaceList.Items[0]
-			if imageNamespaceObject.Status.Locked != nil && *imageNamespaceObject.Status.Locked {
-				imageNamespace.Status.Phase = businessv1.ImageNamespaceLocked
-				imageNamespace.Status.Message = "RegistryNamespace locked"
-				imageNamespace.Status.Reason = "RegistryNamespace has been locked."
-				imageNamespace.Status.LastTransitionTime = metav1.Now()
-				return c.persistUpdate(imageNamespace)
-			}
+		}
+		imageNamespaceObject := imageNamespaceList.Items[0]
+		if imageNamespaceObject.Status.Locked != nil && *imageNamespaceObject.Status.Locked {
+			imageNamespace.Status.Phase = businessv1.ImageNamespaceLocked
+			imageNamespace.Status.Message = "RegistryNamespace locked"
+			imageNamespace.Status.Reason = "RegistryNamespace has been locked."
+			imageNamespace.Status.LastTransitionTime = metav1.Now()
+			return c.persistUpdate(imageNamespace)
 		}
 	case businessv1.ImageNamespaceLocked:
 		if len(imageNamespaceList.Items) == 0 {
@@ -146,15 +145,14 @@ func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageN
 			imageNamespace.Status.Reason = "RegistryNamespace may have been removed."
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
 			return c.persistUpdate(imageNamespace)
-		} else {
-			imageNamespaceObject := imageNamespaceList.Items[0]
-			if imageNamespaceObject.Status.Locked == nil || !*imageNamespaceObject.Status.Locked {
-				imageNamespace.Status.Phase = businessv1.ImageNamespaceAvailable
-				imageNamespace.Status.Message = ""
-				imageNamespace.Status.Reason = ""
-				imageNamespace.Status.LastTransitionTime = metav1.Now()
-				return c.persistUpdate(imageNamespace)
-			}
+		}
+		imageNamespaceObject := imageNamespaceList.Items[0]
+		if imageNamespaceObject.Status.Locked == nil || !*imageNamespaceObject.Status.Locked {
+			imageNamespace.Status.Phase = businessv1.ImageNamespaceAvailable
+			imageNamespace.Status.Message = ""
+			imageNamespace.Status.Reason = ""
+			imageNamespace.Status.LastTransitionTime = metav1.Now()
+			return c.persistUpdate(imageNamespace)
 		}
 	default:
 		return fmt.Errorf("internal error, checkImageNamespaceHealth(%s/%s) found unexpected status %s",
