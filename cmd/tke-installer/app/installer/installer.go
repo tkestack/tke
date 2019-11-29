@@ -576,6 +576,10 @@ func (t *TKE) runWithUI() error {
 
 	restful.Filter(globalLogging)
 
+	if t.isFromRestore {
+		go t.do()
+	}
+
 	log.Infof("Starting %s at http://%s", t.Config.ServerName, t.Config.ListenAddr)
 	return http.ListenAndServe(t.Config.ListenAddr, nil)
 }
