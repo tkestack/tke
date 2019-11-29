@@ -161,4 +161,75 @@ func (LocalIdentityStatus) SwaggerDoc() map[string]string {
 	return map_LocalIdentityStatus
 }
 
+var map_Policy = map[string]string{
+	"":     "Policy represents a policy document for access control.",
+	"spec": "Spec defines the desired identities of policy document in this set.",
+}
+
+func (Policy) SwaggerDoc() map[string]string {
+	return map_Policy
+}
+
+var map_PolicyList = map[string]string{
+	"":      "PolicyList is the whole list of all policies.",
+	"items": "List of policies.",
+}
+
+func (PolicyList) SwaggerDoc() map[string]string {
+	return map_PolicyList
+}
+
+var map_PolicySpec = map[string]string{
+	"":         "PolicySpec is a description of a policy.",
+	"subjects": "Subjects is the policy subjects.",
+}
+
+func (PolicySpec) SwaggerDoc() map[string]string {
+	return map_PolicySpec
+}
+
+var map_PolicyStatus = map[string]string{
+	"":      "PolicyStatus represents information about the status of a policy.",
+	"rules": "Rules represents rules that have been saved into the storage.",
+}
+
+func (PolicyStatus) SwaggerDoc() map[string]string {
+	return map_PolicyStatus
+}
+
+var map_Rule = map[string]string{
+	"":     "Rule represents a rule document for access control.",
+	"spec": "Spec defines the desired identities of policy document in this set.",
+}
+
+func (Rule) SwaggerDoc() map[string]string {
+	return map_Rule
+}
+
+var map_RuleList = map[string]string{
+	"":      "RuleList is the whole list of all policies.",
+	"items": "List of rules.",
+}
+
+func (RuleList) SwaggerDoc() map[string]string {
+	return map_RuleList
+}
+
+var map_RuleSpec = map[string]string{
+	"": "RuleSpec is a description of a policy.",
+}
+
+func (RuleSpec) SwaggerDoc() map[string]string {
+	return map_RuleSpec
+}
+
+var map_Statement = map[string]string{
+	"":       "Statement defines a series of action on resource can be done or not.",
+	"effect": "Effect indicates action on the resource is allowed or not, can be \"allow\" or \"deny\"",
+}
+
+func (Statement) SwaggerDoc() map[string]string {
+	return map_Statement
+}
+
 // AUTO-GENERATED FUNCTIONS END HERE

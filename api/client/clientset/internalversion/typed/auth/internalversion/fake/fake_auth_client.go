@@ -44,6 +44,14 @@ func (c *FakeAuth) LocalIdentities() internalversion.LocalIdentityInterface {
 	return &FakeLocalIdentities{c}
 }
 
+func (c *FakeAuth) Policies() internalversion.PolicyInterface {
+	return &FakePolicies{c}
+}
+
+func (c *FakeAuth) Rules() internalversion.RuleInterface {
+	return &FakeRules{c}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeAuth) RESTClient() rest.Interface {

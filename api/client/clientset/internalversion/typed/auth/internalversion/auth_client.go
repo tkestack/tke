@@ -29,6 +29,8 @@ type AuthInterface interface {
 	APISigningKeysGetter
 	ConfigMapsGetter
 	LocalIdentitiesGetter
+	PoliciesGetter
+	RulesGetter
 }
 
 // AuthClient is used to interact with features provided by the auth.tkestack.io group.
@@ -50,6 +52,14 @@ func (c *AuthClient) ConfigMaps() ConfigMapInterface {
 
 func (c *AuthClient) LocalIdentities() LocalIdentityInterface {
 	return newLocalIdentities(c)
+}
+
+func (c *AuthClient) Policies() PolicyInterface {
+	return newPolicies(c)
+}
+
+func (c *AuthClient) Rules() RuleInterface {
+	return newRules(c)
 }
 
 // NewForConfig creates a new AuthClient for the given config.

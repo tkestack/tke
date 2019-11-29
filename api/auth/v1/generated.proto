@@ -215,3 +215,105 @@ message LocalIdentityStatus {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastUpdateTime = 2;
 }
 
+// Policy represents a policy document for access control.
+message Policy {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of policy document in this set.
+  // +optional
+  optional PolicySpec spec = 2;
+
+  // +optional
+  optional PolicyStatus status = 3;
+}
+
+// PolicyList is the whole list of all policies.
+message PolicyList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of policies.
+  repeated Policy items = 2;
+}
+
+// PolicySpec is a description of a policy.
+message PolicySpec {
+  repeated string finalizers = 8;
+
+  optional string tenantID = 1;
+
+  optional string displayName = 7;
+
+  optional string username = 2;
+
+  // +optional
+  optional string description = 3;
+
+  // Subjects is the policy subjects.
+  // +optional
+  repeated string subjects = 4;
+
+  optional Statement statement = 5;
+
+  // +optional
+  optional bytes conditions = 6;
+}
+
+// PolicyStatus represents information about the status of a policy.
+message PolicyStatus {
+  // +optional
+  optional string phase = 1;
+
+  // +optional
+  // Rules represents rules that have been saved into the storage.
+  repeated string rules = 2;
+}
+
+// Rule represents a rule document for access control.
+message Rule {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of policy document in this set.
+  optional RuleSpec spec = 2;
+}
+
+// RuleList is the whole list of all policies.
+message RuleList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of rules.
+  repeated Rule items = 2;
+}
+
+// RuleSpec is a description of a policy.
+message RuleSpec {
+  optional string ptype = 1;
+
+  optional string v0 = 2;
+
+  optional string v1 = 3;
+
+  optional string v2 = 4;
+
+  optional string v3 = 5;
+
+  optional string v4 = 6;
+
+  optional string v5 = 7;
+
+  optional string v6 = 8;
+}
+
+// Statement defines a series of action on resource can be done or not.
+message Statement {
+  repeated string actions = 1;
+
+  repeated string resources = 2;
+
+  // Effect indicates action on the resource is allowed or not, can be "allow" or "deny"
+  optional string effect = 3;
+}
+

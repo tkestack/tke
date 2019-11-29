@@ -94,7 +94,6 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if len(tenantID) != 0 {
 		localIdentity.Spec.TenantID = tenantID
 	}
-	log.Info("xxx", log.Any("xxx", localIdentity.Spec))
 	if localIdentity.Name == "" && localIdentity.GenerateName == "" {
 		localIdentity.GenerateName = "usr-"
 	}

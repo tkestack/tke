@@ -203,6 +203,136 @@ type APISigningKeyList struct {
 	Items []APISigningKey `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
+// ProjectPhase defines the phase of project constructor.
+type PolicyPhase string
+
+const (
+	// PolicyActive indicates the policy is active.
+	PolicyActive PolicyPhase = "Active"
+	// ProjectTerminating means the project is undergoing graceful termination.
+	PolicyTerminating PolicyPhase = "Terminating"
+)
+
+// FinalizerName is the name identifying a finalizer during project lifecycle.
+type FinalizerName string
+
+const (
+	// ProjectFinalize is an internal finalizer values to Project.
+	PolicyFinalize FinalizerName = "policy"
+)
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Policy represents a policy document for access control.
+type Policy struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of policy document in this set.
+	// +optional
+	Spec PolicySpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+
+	// +optional
+	Status PolicyStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PolicyList is the whole list of all policies.
+type PolicyList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of policies.
+	Items []Policy `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// Effect defines the policy effect.
+type Effect string
+
+const (
+	// Allow is the allow type.
+	Allow Effect = "allow"
+	// Deny is the deny type.
+	Deny Effect = "deny"
+)
+
+// PolicySpec is a description of a policy.
+type PolicySpec struct {
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,8,rep,name=finalizers,casttype=FinalizerName"`
+
+	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	DisplayName string `json:"displayName" protobuf:"bytes,7,opt,name=displayName"`
+	Username    string `json:"username" protobuf:"bytes,2,opt,name=username"`
+	// +optional
+	Description string `json:"description" protobuf:"bytes,3,opt,name=description"`
+	// Subjects is the policy subjects.
+	// +optional
+	Subjects  []string  `json:"subjects,omitempty" protobuf:"bytes,4,rep,name=subjects"`
+	Statement Statement `json:"statement" protobuf:"bytes,5,rep,name=statement"`
+	// +optional
+	Conditions []byte `json:"conditions,omitempty" protobuf:"bytes,6,rep,name=conditions"`
+}
+
+// Statement defines a series of action on resource can be done or not.
+type Statement struct {
+	Actions   []string `json:"actions" protobuf:"bytes,1,rep,name=actions"`
+	Resources []string `json:"resources" protobuf:"bytes,2,rep,name=resources"`
+	// Effect indicates action on the resource is allowed or not, can be "allow" or "deny"
+	Effect Effect `json:"effect" protobuf:"bytes,3,opt,name=effect,casttype=Effect"`
+}
+
+// PolicyStatus represents information about the status of a policy.
+type PolicyStatus struct {
+	// +optional
+	Phase PolicyPhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=PolicyPhase"`
+	// +optional
+	// Rules represents rules that have been saved into the storage.
+	Rules []string `json:"rules" protobuf:"bytes,2,rep,name=rules"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Rule represents a rule document for access control.
+type Rule struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// Spec defines the desired identities of policy document in this set.
+	Spec RuleSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// RuleList is the whole list of all policies.
+type RuleList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of rules.
+	Items []Rule `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// RuleSpec is a description of a policy.
+type RuleSpec struct {
+	PType string `json:"ptype" protobuf:"bytes,1,opt,name=ptype"`
+	V0    string `json:"v0" protobuf:"bytes,2,opt,name=v0"`
+	V1    string `json:"v1" protobuf:"bytes,3,opt,name=v1"`
+	V2    string `json:"v2" protobuf:"bytes,4,opt,name=v2"`
+	V3    string `json:"v3" protobuf:"bytes,5,opt,name=v3"`
+	V4    string `json:"v4" protobuf:"bytes,6,opt,name=v4"`
+	V5    string `json:"v5" protobuf:"bytes,7,opt,name=v5"`
+	V6    string `json:"v6" protobuf:"bytes,8,opt,name=v6"`
+}
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection

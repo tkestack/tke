@@ -55,8 +55,8 @@ func AddFieldLabelConversionsForLocalIdentify(scheme *runtime.Scheme) error {
 		})
 }
 
-// AddFieldLabelConversionsForLocalIdentify adds a conversion function to convert
-// field selectors of LocalIdentify from the given version to internal version
+// AddFieldLabelConversionsForAPIKey adds a conversion function to convert
+// field selectors of APIKey from the given version to internal version
 // representation.
 func AddFieldLabelConversionsForAPIKey(scheme *runtime.Scheme) error {
 	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("APIKey"),
@@ -72,3 +72,44 @@ func AddFieldLabelConversionsForAPIKey(scheme *runtime.Scheme) error {
 			}
 		})
 }
+
+// AddFieldLabelConversionsForPolicy adds a conversion function to convert
+// field selectors of Policy from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForPolicy(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Policy"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.tenantID",
+				"spec.username",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForRule adds a conversion function to convert
+// field selectors of Rule from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForRule(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Rule"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.ptype",
+				"spec.v0",
+				"spec.v1",
+				"spec.v2",
+				"spec.v3",
+				"spec.v4",
+				"spec.v5",
+				"spec.v6",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+

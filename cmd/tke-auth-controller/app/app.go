@@ -22,7 +22,7 @@ import (
 	"tkestack.io/tke/cmd/tke-auth-controller/app/config"
 	"tkestack.io/tke/cmd/tke-auth-controller/app/options"
 	"tkestack.io/tke/pkg/app"
-	"tkestack.io/tke/pkg/app/signal"
+	commonapiserver "k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -55,7 +55,7 @@ func run(opts *options.Options) app.RunFunc {
 			return err
 		}
 
-		stopCh := signal.SetupSignalHandler()
+		stopCh := commonapiserver.SetupSignalHandler()
 		return Run(cfg, stopCh)
 	}
 }

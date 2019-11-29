@@ -33,3 +33,11 @@ type ConfigMapListerExpansion interface{}
 // LocalIdentityListerExpansion allows custom methods to be added to
 // LocalIdentityLister.
 type LocalIdentityListerExpansion interface{}
+
+// PolicyListerExpansion allows custom methods to be added to
+// PolicyLister.
+type PolicyListerExpansion interface{}
+
+// RuleListerExpansion allows custom methods to be added to
+// RuleLister.
+type RuleListerExpansion interface{}

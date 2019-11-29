@@ -33,7 +33,7 @@ import (
 	apisignstorage "tkestack.io/tke/pkg/auth/registry/apisigningkey/storage"
 	configmapstorage "tkestack.io/tke/pkg/auth/registry/configmap/storage"
 	localidentitystorage "tkestack.io/tke/pkg/auth/registry/localidentity/storage"
-
+	policystorage "tkestack.io/tke/pkg/auth/registry/policy/storage"
 	"tkestack.io/tke/pkg/auth/util/sign"
 )
 
@@ -85,6 +85,9 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		apiSignRest := apisignstorage.NewStorage(restOptionsGetter)
 		storageMap["apisigningkeys"] = apiSignRest
+
+		policyRest := policystorage.NewStorage(restOptionsGetter)
+		storageMap["policies"] = policyRest.Policy
 	}
 
 	return storageMap

@@ -32,6 +32,10 @@ type Interface interface {
 	ConfigMaps() ConfigMapInformer
 	// LocalIdentities returns a LocalIdentityInformer.
 	LocalIdentities() LocalIdentityInformer
+	// Policies returns a PolicyInformer.
+	Policies() PolicyInformer
+	// Rules returns a RuleInformer.
+	Rules() RuleInformer
 }
 
 type version struct {
@@ -63,4 +67,14 @@ func (v *version) ConfigMaps() ConfigMapInformer {
 // LocalIdentities returns a LocalIdentityInformer.
 func (v *version) LocalIdentities() LocalIdentityInformer {
 	return &localIdentityInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// Policies returns a PolicyInformer.
+func (v *version) Policies() PolicyInformer {
+	return &policyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// Rules returns a RuleInformer.
+func (v *version) Rules() RuleInformer {
+	return &ruleInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

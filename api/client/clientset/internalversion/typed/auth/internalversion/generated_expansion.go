@@ -25,3 +25,7 @@ type APISigningKeyExpansion interface{}
 type ConfigMapExpansion interface{}
 
 type LocalIdentityExpansion interface{}
+
+type PolicyExpansion interface{}
+
+type RuleExpansion interface{}

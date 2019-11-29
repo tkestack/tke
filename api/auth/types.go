@@ -182,6 +182,127 @@ type APISigningKeyList struct {
 	Items []APISigningKey
 }
 
+// ProjectPhase defines the phase of project constructor.
+type PolicyPhase string
+
+const (
+	// PolicyActive indicates the policy is active.
+	PolicyActive PolicyPhase = "Active"
+	// ProjectTerminating means the project is undergoing graceful termination.
+	PolicyTerminating PolicyPhase = "Terminating"
+)
+
+// FinalizerName is the name identifying a finalizer during project lifecycle.
+type FinalizerName string
+
+const (
+	// ProjectFinalize is an internal finalizer values to Project.
+	PolicyFinalize FinalizerName = "policy"
+)
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Policy represents a policy document for access control.
+type Policy struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+	// Spec defines the desired identities of policy document in this set.
+	Spec PolicySpec
+
+	// +optional
+	Status PolicyStatus
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PolicyList is the whole list of all policies.
+type PolicyList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of policies.
+	Items []Policy
+}
+
+// Effect defines the policy effect.
+type Effect string
+
+const (
+	// Allow is the allow type.
+	Allow Effect = "allow"
+	// Deny is the deny type.
+	Deny Effect = "deny"
+)
+
+// PolicySpec is a description of a policy.
+type PolicySpec struct {
+	Finalizers []FinalizerName
+
+	TenantID    string
+	DisplayName string
+	// Creator
+	Username    string
+	Description string
+	Statement   Statement
+	// Subjects is the policy subjects.
+	Subjects   []string
+	Conditions []byte
+}
+
+// Statement defines a series of action on resource can be done or not.
+type Statement struct {
+	Actions   []string
+	Resources []string
+	// Effect indicates action on the resource is allowed or not, can be "allow" or "deny"
+	Effect Effect
+}
+
+// PolicyStatus represents information about the status of a policy.
+type PolicyStatus struct {
+	// +optional
+	Phase PolicyPhase
+	// +optional
+	// Rules represents rules that have been saved into the storage.
+	Rules []string
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Rule represents a rule document for access control.
+type Rule struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+	// Spec defines the desired identities of policy document in this set.
+	Spec RuleSpec
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// RuleList is the whole list of all policies.
+type RuleList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of rules.
+	Items []Rule
+}
+
+// RuleSpec is a description of a policy.
+type RuleSpec struct {
+	PType string `json:"ptype"`
+	V0    string `json:"v0"`
+	V1    string `json:"v1"`
+	V2    string `json:"v2"`
+	V3    string `json:"v3"`
+	V4    string `json:"v4"`
+	V5    string `json:"v5"`
+	V6    string `json:"v6"`
+}
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection
