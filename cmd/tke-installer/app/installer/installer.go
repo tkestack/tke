@@ -1462,11 +1462,9 @@ func (t *TKE) installTKEAuth() error {
 
 func (t *TKE) installTKEPlatformAPI() error {
 	options := map[string]interface{}{
-		"Replicas":                      t.Config.Replicas,
-		"Image":                         images.Get().TKEPlatformAPI.FullName(),
-		"BaremetalClusterProviderImage": images.Get().BaremetalClusterProvider.FullName(),
-		"BaremetalMachineProviderImage": images.Get().BaremetalMachineProvider.FullName(),
-		"EnableAuth":                    t.Para.Config.Auth.TKEAuth != nil,
+		"Replicas":   t.Config.Replicas,
+		"Image":      images.Get().TKEPlatformAPI.FullName(),
+		"EnableAuth": t.Para.Config.Auth.TKEAuth != nil,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1489,14 +1487,12 @@ func (t *TKE) installTKEPlatformAPI() error {
 
 func (t *TKE) installTKEPlatformController() error {
 	params := map[string]interface{}{
-		"Replicas":                      t.Config.Replicas,
-		"Image":                         images.Get().TKEPlatformController.FullName(),
-		"BaremetalClusterProviderImage": images.Get().BaremetalClusterProvider.FullName(),
-		"BaremetalMachineProviderImage": images.Get().BaremetalMachineProvider.FullName(),
-		"ProviderResImage":              images.Get().ProviderRes.FullName(),
-		"RegistryDomain":                t.Para.Config.Registry.Domain(),
-		"MonitorStorageType":            "",
-		"MonitorStorageAddresses":       "",
+		"Replicas":                t.Config.Replicas,
+		"Image":                   images.Get().TKEPlatformController.FullName(),
+		"ProviderResImage":        images.Get().ProviderRes.FullName(),
+		"RegistryDomain":          t.Para.Config.Registry.Domain(),
+		"MonitorStorageType":      "",
+		"MonitorStorageAddresses": "",
 	}
 	if t.Para.Config.Monitor != nil {
 		if t.Para.Config.Monitor.InfluxDBMonitor != nil {

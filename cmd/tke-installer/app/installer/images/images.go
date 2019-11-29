@@ -32,9 +32,7 @@ type Components struct {
 	Keepalived containerregistry.Image
 	InfluxDB   containerregistry.Image
 
-	ProviderRes              containerregistry.Image
-	BaremetalClusterProvider containerregistry.Image
-	BaremetalMachineProvider containerregistry.Image
+	ProviderRes containerregistry.Image
 
 	TKEGateway            containerregistry.Image
 	TKEAuth               containerregistry.Image
@@ -68,9 +66,6 @@ var components = Components{
 	InfluxDB:   containerregistry.Image{Name: "influxdb", Tag: "1.7.6-alpine"},
 
 	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.14.6-1"},
-
-	BaremetalClusterProvider: containerregistry.Image{Name: "baremetal-cluster-provider", Tag: Version},
-	BaremetalMachineProvider: containerregistry.Image{Name: "baremetal-machine-provider", Tag: Version},
 
 	TKEAuth:               containerregistry.Image{Name: "tke-auth", Tag: Version},
 	TKEBusinessAPI:        containerregistry.Image{Name: "tke-business-api", Tag: Version},
