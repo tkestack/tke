@@ -22,46 +22,34 @@ import (
 	"context"
 	"github.com/segmentio/ksuid"
 	genericrequest "k8s.io/apiserver/pkg/endpoints/request"
-	"net"
 	"net/http"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-const localRequestContextKey = "localRequest"
-const localRequestContextValue = "true"
+const headerRequestID = "X-Remote-Extra-RequestID"
+const requestIDContextKey = "requestID"
 
 // WithRequestID adds the unique requestID to the context of the http access
 // chain.
 func WithRequestID(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		requestID := req.Header.Get("X-Remote-Extra-RequestID")
+		requestID := req.Header.Get(headerRequestID)
 		if requestID == "" {
 			requestID = ksuid.New().String()
 		}
 		log.Debug("Received http request", log.String("requestID", requestID))
-		w.Header().Set("X-Remote-Extra-RequestID", requestID)
+		// add request id to context
+		req = req.WithContext(genericrequest.WithValue(req.Context(), requestIDContextKey, requestID))
+		w.Header().Set(headerRequestID, requestID)
 		handler.ServeHTTP(w, req)
 	})
 }
 
-// WithLocal adds the local identify to the context of the http access chain.
-func WithLocal(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if ip, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-			userIP := net.ParseIP(ip)
-			if userIP.IsLoopback() {
-				req = req.WithContext(genericrequest.WithValue(req.Context(), localRequestContextKey, localRequestContextValue))
-			}
-		}
-		handler.ServeHTTP(w, req)
-	})
-}
-
-// LocalFrom get the local identity from request context.
-func LocalFrom(ctx context.Context) bool {
-	b, ok := ctx.Value(localRequestContextKey).(string)
+// RequestIDFrom get the request id from request context.
+func RequestIDFrom(ctx context.Context) string {
+	b, ok := ctx.Value(requestIDContextKey).(string)
 	if !ok {
-		return false
+		return ""
 	}
-	return b == localRequestContextValue
+	return b
 }

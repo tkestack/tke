@@ -43,6 +43,7 @@ import (
 	_ "tkestack.io/tke/pkg/registry/distribution/auth/token"
 )
 
+// PathPrefix defines the path prefix for accessing the docker registry v2 server.
 const PathPrefix = "/v2/"
 const APIPrefix = "/registry/"
 
@@ -59,7 +60,9 @@ type Options struct {
 	OIDCCAFile           string
 }
 
-func IgnoreAuthPathPrefixes() []string {
+// IgnoredAuthPathPrefixes returns a list of path prefixes that does not need to
+// go through the built-in authentication and authorization middleware of apiserver.
+func IgnoredAuthPathPrefixes() []string {
 	return []string{
 		PathPrefix,
 		auth.Path,
@@ -67,6 +70,7 @@ func IgnoreAuthPathPrefixes() []string {
 	}
 }
 
+// RegisterRoute to register the docker distribution server path prefix to apiserver.
 func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 	distConfig, err := buildDistributionConfig(opts)
 	if err != nil {
@@ -76,6 +80,7 @@ func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 	distCtx := rcontext.BuildDistributionContext()
 	distHandler := handlers.NewApp(distCtx, distConfig)
 	wrappedDistHandler := tenant.WithTenant(distHandler, PathPrefix, opts.RegistryConfig.DomainSuffix, opts.RegistryConfig.DefaultTenant)
+	wrappedDistHandler = rcontext.WithDistribution(wrappedDistHandler)
 	m.HandlePrefix(PathPrefix, wrappedDistHandler)
 
 	authHandler, err := auth.NewHandler(&auth.Options{

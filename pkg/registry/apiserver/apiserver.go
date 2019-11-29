@@ -26,7 +26,7 @@ import (
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
-	"tkestack.io/tke/pkg/registry/apiserver/filter"
+	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
 	registryrest "tkestack.io/tke/pkg/registry/registry/rest"
 	"tkestack.io/tke/pkg/util/log"
@@ -90,8 +90,6 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		GenericAPIServer: s,
 	}
 
-	s.Handler.FullHandlerChain = filter.WithDistribution(s.Handler.FullHandlerChain)
-
 	distributionOpts := &distribution.Options{
 		RegistryConfig:       c.ExtraConfig.RegistryConfig,
 		ExternalScheme:       c.ExtraConfig.ExternalScheme,
@@ -101,6 +99,13 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		OIDCIssuerURL:        c.ExtraConfig.OIDCIssuerURL,
 	}
 	if err := distribution.RegisterRoute(s.Handler.NonGoRestfulMux, distributionOpts); err != nil {
+		return nil, err
+	}
+
+	chartmuseumOpts := &chartmuseum.Options{
+		RegistryConfig: c.ExtraConfig.RegistryConfig,
+	}
+	if err := chartmuseum.RegisterRoute(s.Handler.NonGoRestfulMux, chartmuseumOpts); err != nil {
 		return nil, err
 	}
 

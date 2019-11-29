@@ -16,24 +16,23 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package context
+package request
 
 import (
-	"context"
-	dcontext "github.com/docker/distribution/context"
-	"github.com/sirupsen/logrus"
-	"tkestack.io/tke/pkg/util/log"
+	"net/http"
+	"tkestack.io/tke/pkg/apiserver/filter"
 )
 
-// BuildDistributionContext create a background context with logger for
-// distribution and returns it.
-func BuildDistributionContext() context.Context {
-	ctx := context.Background()
-	return BuildRequestContext(ctx)
-}
+const headerChartRequestID = "X-Request-Id"
 
-// BuildRequestContext create a new context with logger by given context.
-func BuildRequestContext(ctx context.Context) context.Context {
-	logger := logrus.NewLogger(log.ZapLogger())
-	return dcontext.WithLogger(ctx, logger.WithField("system", "distribution"))
+// WithRequestID add an interceptor to http request chain for convert requestID
+// of apiserver to chartmuseum requestID.
+func WithRequestID(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		requestID := filter.RequestIDFrom(req.Context())
+		if requestID != "" {
+			req.Header.Add(headerChartRequestID, requestID)
+		}
+		handler.ServeHTTP(w, req)
+	})
 }

@@ -18,22 +18,13 @@
 
 package context
 
-import (
-	"context"
-	dcontext "github.com/docker/distribution/context"
-	"github.com/sirupsen/logrus"
-	"tkestack.io/tke/pkg/util/log"
-)
+import "net/http"
 
-// BuildDistributionContext create a background context with logger for
-// distribution and returns it.
-func BuildDistributionContext() context.Context {
-	ctx := context.Background()
-	return BuildRequestContext(ctx)
-}
-
-// BuildRequestContext create a new context with logger by given context.
-func BuildRequestContext(ctx context.Context) context.Context {
-	logger := logrus.NewLogger(log.ZapLogger())
-	return dcontext.WithLogger(ctx, logger.WithField("system", "distribution"))
+// WithDistribution adds the distribution context value to the context of the
+// http access chain.
+func WithDistribution(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		req = req.WithContext(BuildRequestContext(req.Context()))
+		handler.ServeHTTP(w, req)
+	})
 }

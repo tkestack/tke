@@ -20,6 +20,8 @@ package config
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/server/filters"
 	"time"
 
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -75,6 +77,10 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 
 	genericAPIServerConfig := genericapiserver.NewConfig(platform.Codecs)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil)
+	genericAPIServerConfig.LongRunningFunc = filters.BasicLongRunningRequestCheck(
+		sets.NewString("watch", "proxy"),
+		sets.NewString("attach", "exec", "proxy", "log", "portforward"),
+	)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
 

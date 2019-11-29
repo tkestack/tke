@@ -20,43 +20,33 @@ package tenant
 
 import (
 	"fmt"
-	"github.com/docker/distribution/registry/api/v2"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
 	utilregistryrequest "tkestack.io/tke/pkg/registry/util/request"
 )
 
-const CrossTenantNamespace = "library"
-
 // WithTenant adds an interceptor to the original http request handle and
-// converts the request for docker distribution to multi-tenant mode.
+// converts the request for chartmuseum to multi-tenant mode.
 func WithTenant(handler http.Handler, pathPrefix, domainSuffix, defaultTenant string) http.Handler {
-	router := v2.Router()
-	return &tenant{handler, router, pathPrefix, domainSuffix, defaultTenant}
+	return &tenant{handler, pathPrefix, domainSuffix, defaultTenant}
 }
 
 type tenant struct {
 	handler       http.Handler
-	router        *mux.Router
 	pathPrefix    string
 	domainSuffix  string
 	defaultTenant string
 }
 
+// ServeHTTP responds to an HTTP request.
 func (t *tenant) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	if !strings.HasPrefix(strings.ToLower(path), fmt.Sprintf("/v2/%s/", CrossTenantNamespace)) {
-		var match mux.RouteMatch
-		if matched := t.router.Match(r, &match); matched {
-			routeName := match.Route.GetName()
-			if routeName == v2.RouteNameManifest ||
-				routeName == v2.RouteNameTags ||
-				routeName == v2.RouteNameBlob ||
-				routeName == v2.RouteNameBlobUpload {
-				tenant := utilregistryrequest.TenantID(r, t.domainSuffix, t.defaultTenant)
-				r.URL.Path = strings.Replace(path, t.pathPrefix, fmt.Sprintf("%s%s-", t.pathPrefix, tenant), 1)
-			}
+	if strings.HasPrefix(path, t.pathPrefix) {
+		tenant := utilregistryrequest.TenantID(r, t.domainSuffix, t.defaultTenant)
+		if strings.HasPrefix(path, fmt.Sprintf("%sapi/", t.pathPrefix)) {
+			r.URL.Path = strings.Replace(path, fmt.Sprintf("%sapi/", t.pathPrefix), fmt.Sprintf("%sapi/%s/", t.pathPrefix, tenant), 1)
+		} else {
+			r.URL.Path = strings.Replace(path, t.pathPrefix, fmt.Sprintf("%s%s/", t.pathPrefix, tenant), 1)
 		}
 	}
 	t.handler.ServeHTTP(w, r)
