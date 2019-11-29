@@ -42,6 +42,7 @@ function prepare_baremetal_provider() {
   mkdir -p "$DST_DIR"/provider/baremetal/
 
   cp -rv pkg/platform/provider/baremetal/conf "$DST_DIR"/provider/baremetal
+  cp -rv pkg/platform/provider/baremetal/manifests "$DST_DIR"/provider/baremetal
   ls -l "$DST_DIR"/provider/baremetal
 
   id=$(docker create $REGISTRY_PREFIX/provider-res:"$PROVIDER_RES_VERSION")
