@@ -431,6 +431,15 @@ func (t *TKE) initSteps() {
 		},
 	}...)
 
+	if t.Para.Config.Registry.TKERegistry != nil {
+		t.steps = append(t.steps, []handler{
+			{
+				Name: "Install tke-registry-api",
+				Func: t.installTKERegistryAPI,
+			},
+		}...)
+	}
+
 	if t.Para.Config.Business != nil {
 		t.steps = append(t.steps, []handler{
 			{
@@ -470,15 +479,6 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Install tke-notify-controller",
 				Func: t.installTKENotifyController,
-			},
-		}...)
-	}
-
-	if t.Para.Config.Registry.TKERegistry != nil {
-		t.steps = append(t.steps, []handler{
-			{
-				Name: "Install tke-registry-api",
-				Func: t.installTKERegistryAPI,
 			},
 		}...)
 	}
