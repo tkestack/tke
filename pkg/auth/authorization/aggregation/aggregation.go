@@ -29,7 +29,7 @@ import (
 )
 
 // NewAuthorizer creates a authorizer for subject access review and returns it.
-func NewAuthorizer(authorizationOpts *options.AuthorizationOptions, authOpts *options.AuthOptions, enforcer *casbin.SyncedEnforcer) (authorizer.Authorizer, error) {
+func NewAuthorizer(authorizationOpts *options.AuthorizationOptions, authOpts *options.AuthOptions, enforcer *casbin.SyncedEnforcer, privilegedUsername string) (authorizer.Authorizer, error) {
 	var (
 		authorizers []authorizer.Authorizer
 	)
@@ -54,7 +54,7 @@ func NewAuthorizer(authorizationOpts *options.AuthorizationOptions, authOpts *op
 		authorizers = append(authorizers, abacAuthorizer)
 	}
 
-	authorizers = append(authorizers, local.NewAuthorizer(enforcer, authOpts.TenantAdmin))
+	authorizers = append(authorizers, local.NewAuthorizer(enforcer, authOpts.TenantAdmin, privilegedUsername))
 
 	return union.New(authorizers...), nil
 }
