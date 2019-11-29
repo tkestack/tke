@@ -90,6 +90,8 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		GenericAPIServer: s,
 	}
 
+	s.Handler.FullHandlerChain = filter.WithDistribution(s.Handler.FullHandlerChain)
+
 	distributionOpts := &distribution.Options{
 		RegistryConfig:       c.ExtraConfig.RegistryConfig,
 		ExternalScheme:       c.ExtraConfig.ExternalScheme,
