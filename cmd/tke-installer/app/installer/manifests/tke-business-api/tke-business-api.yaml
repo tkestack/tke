@@ -135,10 +135,10 @@ data:
       api_server = "https://tke-registry-api"
       api_server_client_config = "/app/conf/tke-registry-config.yaml"
 
-  [features]
-    initial_administrator_tenant = "{{ .TenantID }}"
-    initial_administrator_user = "{{ .Username }}"
-    sync_projects_with_namespaces = {{ .SyncProjectsWithNamespaces }}
+    [features]
+      initial_administrator_tenant = "{{ .TenantID }}"
+      initial_administrator_user = "{{ .Username }}"
+      sync_projects_with_namespaces = {{ .SyncProjectsWithNamespaces }}
 
   tke-auth-webhook.yaml: |
     apiVersion: v1
