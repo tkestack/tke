@@ -201,3 +201,33 @@ func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Ob
 	return ValidateNamespaceUpdate(obj.(*business.Namespace), old.(*business.Namespace),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
+
+// FinalizeStrategy implements verification logic for status of Namespace.
+type FinalizeStrategy struct {
+	*Strategy
+}
+
+var _ rest.RESTUpdateStrategy = &FinalizeStrategy{}
+
+// NewFinalizeStrategy create the FinalizeStrategy object by given strategy.
+func NewFinalizeStrategy(strategy *Strategy) *FinalizeStrategy {
+	return &FinalizeStrategy{strategy}
+}
+
+// PrepareForUpdate is invoked on update before validation to normalize
+// the object.  For example: remove fields that are not to be persisted,
+// sort order-insensitive list fields, etc.  This should not remove fields
+// whose presence would be considered a validation error.
+func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	newNamespace := obj.(*business.Namespace)
+	oldNamespace := old.(*business.Namespace)
+	newNamespace.Status = oldNamespace.Status
+}
+
+// ValidateUpdate is invoked after default fields in the object have been
+// filled in before the object is persisted.  This method should not mutate
+// the object.
+func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateNamespaceUpdate(obj.(*business.Namespace), old.(*business.Namespace),
+		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
+}

@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,6 +46,7 @@ import (
 type Storage struct {
 	Namespace *REST
 	Status    *StatusREST
+	Finalize  *FinalizeREST
 }
 
 // NewStorage returns a Storage object that will work against namespace sets.
@@ -74,9 +76,14 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, businessClient *bu
 	statusStore.UpdateStrategy = namespace.NewStatusStrategy(strategy)
 	statusStore.ExportStrategy = namespace.NewStatusStrategy(strategy)
 
+	finalizeStore := *store
+	finalizeStore.UpdateStrategy = namespace.NewFinalizeStrategy(strategy)
+	finalizeStore.ExportStrategy = namespace.NewFinalizeStrategy(strategy)
+
 	return &Storage{
 		Namespace: &REST{store, privilegedUsername},
 		Status:    &StatusREST{&statusStore},
+		Finalize:  &FinalizeREST{&finalizeStore},
 	}
 }
 
@@ -305,6 +312,37 @@ func (r *StatusREST) Export(ctx context.Context, name string, options metav1.Exp
 func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
 	// subresources should never allow create on update.
+	_, err := ValidateGetObjectAndTenantID(ctx, r.store, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
+}
+
+// FinalizeREST implements the REST endpoint for finalizing a namespace.
+type FinalizeREST struct {
+	store *registry.Store
+}
+
+// New returns an empty object that can be used with Create and Update after
+// request data has been put into it.
+func (r *FinalizeREST) New() runtime.Object {
+	return r.store.New()
+}
+
+// Get retrieves the object from the storage. It is required to support Patch.
+func (r *FinalizeREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
+}
+
+// Export an object.  Fields that are not user specified are stripped out
+// Returns the stripped object.
+func (r *FinalizeREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
+	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
+}
+
+// Update alters the status finalizers subset of an object.
+func (r *FinalizeREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	_, err := ValidateGetObjectAndTenantID(ctx, r.store, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
