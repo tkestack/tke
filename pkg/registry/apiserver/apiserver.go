@@ -103,7 +103,12 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	}
 
 	chartmuseumOpts := &chartmuseum.Options{
-		RegistryConfig: c.ExtraConfig.RegistryConfig,
+		RegistryConfig:       c.ExtraConfig.RegistryConfig,
+		LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
+		OIDCCAFile:           c.ExtraConfig.OIDCCAFile,
+		OIDCTokenReviewPath:  c.ExtraConfig.OIDCTokenReviewPath,
+		OIDCIssuerURL:        c.ExtraConfig.OIDCIssuerURL,
+		ExternalScheme:       c.ExtraConfig.ExternalScheme,
 	}
 	if err := chartmuseum.RegisterRoute(s.Handler.NonGoRestfulMux, chartmuseumOpts); err != nil {
 		return nil, err

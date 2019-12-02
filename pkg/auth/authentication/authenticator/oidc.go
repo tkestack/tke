@@ -43,7 +43,6 @@ func NewTokenAuthenticator() *TokenAuthenticator {
 
 // AuthenticateToken verifies oidc token and returns user info.
 func (h *TokenAuthenticator) AuthenticateToken(ctx context.Context, token string) (*genericauthenticator.Response, bool, error) {
-
 	startTime := time.Now()
 	defer func() {
 		log.Debug("Finish verifying oidc bearer token", log.String("token", token), log.Duration("processTime", time.Since(startTime)))

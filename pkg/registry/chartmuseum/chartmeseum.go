@@ -25,8 +25,11 @@ import (
 	cmrouter "helm.sh/chartmuseum/pkg/chartmuseum/router"
 	"helm.sh/chartmuseum/pkg/chartmuseum/server/multitenant"
 	"k8s.io/apiserver/pkg/server/mux"
+	restclient "k8s.io/client-go/rest"
 	"strings"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
+	"tkestack.io/tke/pkg/registry/chartmuseum/authentication"
+	"tkestack.io/tke/pkg/registry/chartmuseum/authorization"
 	"tkestack.io/tke/pkg/registry/chartmuseum/request"
 	"tkestack.io/tke/pkg/registry/chartmuseum/tenant"
 	"tkestack.io/tke/pkg/util/log"
@@ -48,7 +51,12 @@ func IgnoredAuthPathPrefixes() []string {
 }
 
 type Options struct {
-	RegistryConfig *registryconfig.RegistryConfiguration
+	RegistryConfig       *registryconfig.RegistryConfiguration
+	LoopbackClientConfig *restclient.Config
+	OIDCIssuerURL        string
+	OIDCTokenReviewPath  string
+	OIDCCAFile           string
+	ExternalScheme       string
 }
 
 // RegisterRoute to register the chartmuseum server path prefix to apiserver.
@@ -63,9 +71,14 @@ func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 		log.Error("Failed to create chartmuseum server", log.Err(err))
 		return err
 	}
-	wrappedChartHandler := tenant.WithTenant(multiTenantServer.Router, PathPrefix, opts.RegistryConfig.DomainSuffix, opts.RegistryConfig.DefaultTenant)
-	wrappedChartHandler = request.WithRequestID(wrappedChartHandler)
-	m.HandlePrefix(PathPrefix, wrappedChartHandler)
+
+	// add handler chain
+	handler := authorization.WithAuthorization(multiTenantServer.Router)
+	handler = authentication.WithAuthentication(handler, opts.ExternalScheme)
+	handler = tenant.WithTenant(handler, PathPrefix, opts.RegistryConfig.DomainSuffix, opts.RegistryConfig.DefaultTenant)
+	handler = request.WithRequestID(handler)
+	m.HandlePrefix(PathPrefix, handler)
+
 	return nil
 }
 
