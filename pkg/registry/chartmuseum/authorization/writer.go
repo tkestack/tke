@@ -20,19 +20,39 @@ package authorization
 
 import "net/http"
 
-type writer struct {
+type statusWrite struct {
+	http.ResponseWriter
+	status int
+	length int
+}
+
+func (w *statusWrite) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *statusWrite) Write(b []byte) (int, error) {
+	if w.status == 0 {
+		w.status = 200
+	}
+	n, err := w.ResponseWriter.Write(b)
+	w.length += n
+	return n, err
+}
+
+type statusBodyWrite struct {
 	http.ResponseWriter
 	status int
 	length int
 	body   []byte
 }
 
-func (w *writer) WriteHeader(status int) {
+func (w *statusBodyWrite) WriteHeader(status int) {
 	w.status = status
 	w.ResponseWriter.WriteHeader(status)
 }
 
-func (w *writer) Write(b []byte) (int, error) {
+func (w *statusBodyWrite) Write(b []byte) (int, error) {
 	if w.status == 0 {
 		w.status = 200
 	}

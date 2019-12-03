@@ -37,26 +37,18 @@ func (a *authorization) apiCreateChart(w http.ResponseWriter, req *http.Request)
 	if err != nil {
 		return
 	}
-	// // Read the content
-	// var reqBody []byte
-	// if req.Body != nil {
-	// 	reqBody, _ = ioutil.ReadAll(req.Body)
-	// }
-	// // Restore the io.ReadCloser to its original state
-	// req.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
-	// Use the content
-	hw := &writer{ResponseWriter: w}
-	a.nextHandler.ServeHTTP(hw, req)
-	if hw.status != http.StatusCreated {
+	sw := &statusBodyWrite{ResponseWriter: w}
+	a.nextHandler.ServeHTTP(sw, req)
+	if sw.status != http.StatusCreated {
 		return
 	}
 	var savedResponse model.SavedResponse
-	if err := json.Unmarshal(hw.body, &savedResponse); err != nil {
-		log.Error("Failed to unmarshal response of chartmuseum", log.ByteString("body", hw.body), log.Err(err))
+	if err := json.Unmarshal(sw.body, &savedResponse); err != nil {
+		log.Error("Failed to unmarshal response of chartmuseum", log.ByteString("body", sw.body), log.Err(err))
 		return
 	}
 	if !savedResponse.Saved {
-		log.Error("Chartmuseum server that does not meet expectations", log.ByteString("body", hw.body), log.Int("status", hw.status))
+		log.Error("Chartmuseum server that does not meet expectations", log.ByteString("body", sw.body), log.Int("status", sw.status))
 		return
 	}
 	file, header, err := req.FormFile("chart")

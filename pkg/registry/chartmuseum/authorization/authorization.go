@@ -80,12 +80,6 @@ func (a *authorization) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	a.router.ServeHTTP(w, req)
 }
 
-// getChart serve http get request on /chart/{tenantID}/{chartGroup}/charts/{file}
-func (a *authorization) getChart(w http.ResponseWriter, req *http.Request) {
-	// todo: authorization
-	a.nextHandler.ServeHTTP(w, req)
-}
-
 // apiListChart serve http get request on /chart/api/{tenantID}/{chartGroup}/charts
 func (a *authorization) apiListChart(w http.ResponseWriter, req *http.Request) {
 	// todo: authorization
