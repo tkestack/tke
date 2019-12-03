@@ -216,7 +216,7 @@ type ChartStatus struct {
 
 type ChartVersion struct {
 	Version     string
-	Size        int64
+	ChartSize   int64
 	TimeCreated metav1.Time
 }
 

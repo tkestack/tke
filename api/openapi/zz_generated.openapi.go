@@ -40874,7 +40874,7 @@ func schema_tke_api_registry_v1_ChartVersion(ref common.ReferenceCallback) commo
 							Format: "",
 						},
 					},
-					"size": {
+					"chartSize": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
 							Format: "int64",
@@ -40886,7 +40886,7 @@ func schema_tke_api_registry_v1_ChartVersion(ref common.ReferenceCallback) commo
 						},
 					},
 				},
-				Required: []string{"version", "size"},
+				Required: []string{"version", "chartSize"},
 			},
 		},
 		Dependencies: []string{

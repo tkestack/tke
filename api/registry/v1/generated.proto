@@ -120,7 +120,7 @@ message ChartStatus {
 message ChartVersion {
   optional string version = 1;
 
-  optional int64 size = 2;
+  optional int64 chartSize = 2;
 
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time timeCreated = 3;
 }

@@ -216,7 +216,7 @@ type ChartStatus struct {
 
 type ChartVersion struct {
 	Version     string      `json:"version" protobuf:"bytes,1,opt,name=version"`
-	Size        int64       `json:"size" protobuf:"varint,2,opt,name=size"`
+	ChartSize   int64       `json:"chartSize" protobuf:"varint,2,opt,name=chartSize"`
 	TimeCreated metav1.Time `json:"timeCreated,omitempty" protobuf:"bytes,3,opt,name=timeCreated"`
 }
 

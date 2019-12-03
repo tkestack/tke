@@ -450,7 +450,7 @@ func Convert_registry_ChartStatus_To_v1_ChartStatus(in *registry.ChartStatus, ou
 
 func autoConvert_v1_ChartVersion_To_registry_ChartVersion(in *ChartVersion, out *registry.ChartVersion, s conversion.Scope) error {
 	out.Version = in.Version
-	out.Size = in.Size
+	out.ChartSize = in.ChartSize
 	out.TimeCreated = in.TimeCreated
 	return nil
 }
@@ -462,7 +462,7 @@ func Convert_v1_ChartVersion_To_registry_ChartVersion(in *ChartVersion, out *reg
 
 func autoConvert_registry_ChartVersion_To_v1_ChartVersion(in *registry.ChartVersion, out *ChartVersion, s conversion.Scope) error {
 	out.Version = in.Version
-	out.Size = in.Size
+	out.ChartSize = in.ChartSize
 	out.TimeCreated = in.TimeCreated
 	return nil
 }
