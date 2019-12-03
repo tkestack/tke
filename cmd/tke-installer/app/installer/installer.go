@@ -128,7 +128,7 @@ type CreateClusterPara struct {
 
 // Config is the installer config
 type Config struct {
-	Basic    Basic     `json:"basic"`
+	Basic    *Basic    `json:"basic"`
 	Auth     Auth      `json:"auth"`
 	Registry Registry  `json:"registry"`
 	Business *Business `json:"business,omitempty"`
@@ -183,6 +183,10 @@ func (r *Registry) Namespace() string {
 		return r.ThirdPartyRegistry.Namespace
 	}
 	return r.TKERegistry.Namespace
+}
+
+func (r *Registry) Prefix() string {
+	return path.Join(r.Domain(), r.Namespace())
 }
 
 type TKERegistry struct {
@@ -249,7 +253,7 @@ type ThirdPartyHA struct {
 
 type Gateway struct {
 	Domain string `json:"domain"`
-	Cert   Cert   `json:"cert"`
+	Cert   *Cert  `json:"cert"`
 }
 
 type Cert struct {
@@ -291,10 +295,10 @@ type handler struct {
 type ClusterProgressStatus string
 
 const (
-	statusUnknown = "Unknown"
-	statusDoing   = "Doing"
-	statusSuccess = "Success"
-	statusFailed  = "Failed"
+	StatusUnknown = "Unknown"
+	StatusDoing   = "Doing"
+	StatusSuccess = "Success"
+	StatusFailed  = "Failed"
 )
 
 const (
@@ -330,7 +334,7 @@ func NewTKE(config *config.Config) *TKE {
 
 	c.clusterProviders = new(sync.Map)
 	c.process = new(ClusterProgress)
-	c.process.Status = statusUnknown
+	c.process.Status = StatusUnknown
 
 	return c
 }
@@ -689,6 +693,13 @@ func (t *TKE) prepare() errors.APIStatus {
 }
 
 func (t *TKE) SetConfigDefault(config *Config) {
+	if config.Basic == nil {
+		config.Basic = &Basic{
+			Username: "admin",
+			Password: []byte("admin"),
+		}
+	}
+
 	if config.Registry.TKERegistry != nil {
 		config.Registry.TKERegistry.Namespace = "library"
 		config.Registry.TKERegistry.Username = config.Basic.Username
@@ -700,16 +711,41 @@ func (t *TKE) SetConfigDefault(config *Config) {
 		config.Auth.TKEAuth.Password = config.Basic.Password
 	}
 
+	if config.Gateway != nil {
+		if config.Gateway.Domain == "" {
+			config.Gateway.Domain = "console.tke.com"
+		}
+		if config.Gateway.Cert == nil {
+			config.Gateway.Cert = &Cert{
+				SelfSignedCert: &SelfSignedCert{},
+			}
+		}
+	}
+
 }
 func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
+	if cluster.APIVersion == "" {
+		cluster.APIVersion = platformv1.SchemeGroupVersion.String()
+	}
+	if cluster.Kind == "" {
+		cluster.Kind = "Cluster"
+	}
 	cluster.Name = "global"
 	cluster.Spec.DisplayName = "TKE"
-
 	cluster.Spec.TenantID = defaultTeantID
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
 	cluster.Spec.Version = k8sVersion
+	if cluster.Spec.ClusterCIDR == "" {
+		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
+	}
+	if cluster.Spec.Type == "" {
+		cluster.Spec.Type = platformv1.ClusterBaremetal
+	}
+	if cluster.Spec.NetworkDevice == "" {
+		cluster.Spec.NetworkDevice = "eth0"
+	}
 
 	if config.HA != nil && config.HA.ThirdPartyHA != nil {
 		cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
@@ -810,15 +846,12 @@ func (t *TKE) initProviderConfig() error {
 	if err != nil {
 		return err
 	}
-	c.Registry.Domain = t.Para.Config.Registry.Domain()
-	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
-		t.Para.Config.Registry.TKERegistry != nil {
-		ip := t.Cluster.Spec.Machines[0].IP
-		if t.Para.Config.HA != nil {
-			ip = t.Para.Config.HA.VIP()
-		}
-		c.Registry.IP = ip
+	c.Registry.Prefix = t.Para.Config.Registry.Prefix()
+	ip, err := util.GetExternalIP()
+	if err != nil {
+		return pkgerrors.Wrap(err, "get external ip error")
 	}
+	c.Registry.IP = ip
 
 	return c.Save(pluginConfigFile)
 }
@@ -840,7 +873,7 @@ func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 	if apiStatus != nil {
 		_ = rsp.WriteHeaderAndJson(int(apiStatus.Status().Code), apiStatus.Status(), restful.MIME_JSON)
 	} else {
-		_ = rsp.WriteEntity(t.Para)
+		_ = rsp.WriteHeaderAndEntity(http.StatusCreated, t.Para)
 	}
 }
 
@@ -895,42 +928,6 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 	if apiStatus != nil {
 		response.WriteHeaderAndJson(int(apiStatus.Status().Code), apiStatus.Status(), restful.MIME_JSON)
 	} else {
-		if t.process.Status == statusSuccess {
-			if t.Para.Config.Gateway != nil {
-				var host string
-				if t.Para.Config.Gateway.Domain != "" {
-					host = t.Para.Config.Gateway.Domain
-				} else if t.Para.Config.HA != nil {
-					host = t.Para.Config.HA.VIP()
-				} else {
-					host = t.Para.Cluster.Spec.Machines[0].IP
-				}
-				t.process.URL = fmt.Sprintf("http://%s", host)
-
-				t.process.Username = t.Para.Config.Basic.Username
-				t.process.Password = t.Para.Config.Basic.Password
-
-				if t.Para.Config.Gateway.Cert.SelfSignedCert != nil {
-					t.process.CACert, _ = ioutil.ReadFile(constants.CACrtFile)
-				}
-
-				if t.Para.Config.Gateway.Domain != "" {
-					t.process.Hosts = append(t.process.Hosts, t.Para.Config.Gateway.Domain)
-				}
-
-				cfg, _ := t.getKubeconfig()
-				t.process.Kubeconfig, _ = runtime.Encode(clientcmdlatest.Codec, cfg)
-			}
-
-			if t.Para.Config.Registry.TKERegistry != nil {
-				t.process.Hosts = append(t.process.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
-			}
-
-			t.process.Servers = t.servers
-			if t.Para.Config.HA != nil {
-				t.process.Servers = append(t.process.Servers, t.Para.Config.HA.VIP())
-			}
-		}
 		response.WriteEntity(t.process)
 	}
 }
@@ -943,7 +940,7 @@ func (t *TKE) do() {
 
 	if t.Step == 0 {
 		t.log.Print("===>starting install task")
-		t.process.Status = statusDoing
+		t.process.Status = StatusDoing
 	}
 
 	if t.runAfterClusterReady() {
@@ -955,7 +952,7 @@ func (t *TKE) do() {
 		start := time.Now()
 		err := t.steps[t.Step].Func()
 		if err != nil {
-			t.process.Status = statusFailed
+			t.process.Status = StatusFailed
 			t.log.Printf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
 			return
 		}
@@ -965,7 +962,41 @@ func (t *TKE) do() {
 		t.backup()
 	}
 
-	t.process.Status = statusSuccess
+	t.process.Status = StatusSuccess
+	if t.Para.Config.Gateway != nil {
+		var host string
+		if t.Para.Config.Gateway.Domain != "" {
+			host = t.Para.Config.Gateway.Domain
+		} else if t.Para.Config.HA != nil {
+			host = t.Para.Config.HA.VIP()
+		} else {
+			host = t.Para.Cluster.Spec.Machines[0].IP
+		}
+		t.process.URL = fmt.Sprintf("http://%s", host)
+
+		t.process.Username = t.Para.Config.Basic.Username
+		t.process.Password = t.Para.Config.Basic.Password
+
+		if t.Para.Config.Gateway.Cert.SelfSignedCert != nil {
+			t.process.CACert, _ = ioutil.ReadFile(constants.CACrtFile)
+		}
+
+		if t.Para.Config.Gateway.Domain != "" {
+			t.process.Hosts = append(t.process.Hosts, t.Para.Config.Gateway.Domain)
+		}
+
+		cfg, _ := t.getKubeconfig()
+		t.process.Kubeconfig, _ = runtime.Encode(clientcmdlatest.Codec, cfg)
+	}
+
+	if t.Para.Config.Registry.TKERegistry != nil {
+		t.process.Hosts = append(t.process.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
+	}
+
+	t.process.Servers = t.servers
+	if t.Para.Config.HA != nil {
+		t.process.Servers = append(t.process.Servers, t.Para.Config.HA.VIP())
+	}
 	t.log.Printf("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
 }
 
@@ -1118,6 +1149,9 @@ func (t *TKE) loadImages() error {
 			continue
 		}
 		nameAndTag := strings.Split(imageNames[1], ":")
+		if nameAndTag[0] == "tke-installer" { // no need to push installer image for speed up
+			continue
+		}
 		if nameAndTag[1] == "<none>" {
 			t.log.Printf("skip invalid tag:name=%s", image)
 			continue
@@ -1151,41 +1185,11 @@ func (t *TKE) setupLocalRegistry() error {
 		return err
 	}
 
-	// for pull image from local registry on node
-	ip, err := util.GetExternalIP()
+	data, err := ioutil.ReadFile("hosts")
 	if err != nil {
-		return pkgerrors.Wrap(err, "get external ip error")
+		return err
 	}
-	err = t.injectRemoteHosts([]string{t.Para.Config.Registry.Domain()}, ip)
-	if err != nil {
-		return pkgerrors.Wrap(err, "inject remote hosts error")
-	}
-
-	return nil
-}
-
-func (t *TKE) injectRemoteHosts(host []string, ip string) error {
-	for _, machine := range t.Cluster.Spec.Machines {
-		sshConfig := &ssh.Config{
-			User:       machine.Username,
-			Host:       machine.IP,
-			Port:       int(machine.Port),
-			Password:   string(machine.Password),
-			PrivateKey: machine.PrivateKey,
-			PassPhrase: machine.PassPhrase,
-		}
-		s, err := ssh.New(sshConfig)
-		if err != nil {
-			return err
-		}
-		for _, one := range host {
-			remoteHosts := hosts.RemoteHosts{Host: one, SSH: s}
-			err = remoteHosts.Set(ip)
-			if err != nil {
-				return err
-			}
-		}
-	}
+	t.log.Print(string(data))
 
 	return nil
 }
@@ -1322,6 +1326,24 @@ func (t *TKE) prepareCertificates() error {
 }
 
 func (t *TKE) prepareBaremetalProviderConfig() error {
+	c, err := baremetalconfig.New(pluginConfigFile)
+	if err != nil {
+		return err
+	}
+	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
+		t.Para.Config.Registry.TKERegistry != nil {
+		ip := t.Cluster.Spec.Machines[0].IP
+		if t.Para.Config.HA != nil {
+			ip = t.Para.Config.HA.VIP()
+		}
+		c.Registry.IP = ip
+	}
+
+	err = c.Save(pluginConfigFile)
+	if err != nil {
+		return err
+	}
+
 	configMaps := []struct {
 		Name string
 		File string
@@ -1911,6 +1933,7 @@ func (t *TKE) pushImages() error {
 	cmd := exec.Command("sh", "-c",
 		fmt.Sprintf("docker images --format='{{.Repository}}:{{.Tag}}' --filter='reference=%s'", imagesFilter),
 	)
+	t.log.Print(cmd)
 	out, err := cmd.Output()
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker images error")
@@ -1918,6 +1941,9 @@ func (t *TKE) pushImages() error {
 	tkeImages := strings.Split(strings.TrimSpace(string(out)), "\n")
 	for i, image := range tkeImages {
 		nameAndTag := strings.Split(image, ":")
+		if len(nameAndTag) != 2 {
+			continue
+		}
 		if nameAndTag[1] == "<none>" {
 			t.log.Printf("skip invalid tag:name=%s", image)
 			continue
