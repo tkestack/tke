@@ -23,6 +23,7 @@ import (
 	genericapiserveroptions "k8s.io/apiserver/pkg/server/options"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
+	provideroptions "tkestack.io/tke/pkg/platform/provider/options"
 	"tkestack.io/tke/pkg/util/cachesize"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -36,6 +37,7 @@ type Options struct {
 	Generic        *apiserveroptions.GenericOptions
 	Authentication *apiserveroptions.AuthenticationWithAPIOptions
 	Authorization  *apiserveroptions.AuthorizationOptions
+	Provider       *provideroptions.Options
 }
 
 // NewOptions creates a new Options with a default config.
@@ -48,6 +50,7 @@ func NewOptions(serverName string) *Options {
 		Generic:        apiserveroptions.NewGenericOptions(),
 		Authentication: apiserveroptions.NewAuthenticationWithAPIOptions(),
 		Authorization:  apiserveroptions.NewAuthorizationOptions(),
+		Provider:       provideroptions.NewOptions(),
 	}
 }
 
@@ -60,6 +63,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Generic.AddFlags(fs)
 	o.Authentication.AddFlags(fs)
 	o.Authorization.AddFlags(fs)
+	o.Provider.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file

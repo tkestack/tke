@@ -111,6 +111,9 @@ data:
     container_domain = "{{ .RegistryDomain }}"
     container_namespace = "tkestack"
 
+    [provider]
+    providers=["Baremetal"]
+
     [features]
     monitor_storage_type = "{{ .MonitorStorageType }}"
     monitor_storage_addresses = "{{ .MonitorStorageAddresses }}"
