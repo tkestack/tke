@@ -16,7 +16,6 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -29,23 +28,29 @@ unset LD_LIBRARY_PATH
 
 export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
-target=${1:-tke-installer}
+die()
+{
+    echo '[FAIL] Operation failed.' >&2
+    exit 1
+}
 
-cd $(dirname $0)
+cd `dirname "${0}"`     || exit 1
+cwd=`pwd`               || exit 1
+file=`basename "${0}"`  || exit 1
 
-echo "===> Begin to create $target in $(pwd)"
+me="${cwd}/${file}"
+tmp="${me}.tmp"
 
-echo "Step.1 cleanup"
-rm -f $target
+rm -rf "${tmp}"                                                 || die
+mkdir "${tmp}" && cd "${tmp}"                                   || die
 
-echo "Step.2 prepare package"
-chmod +x *.sh
-cp -f init_installer.sh $target
-tar -czf package.tgz install.sh res
+tailNum=`sed -n '/^#real installing packages append below/{=;q;}' ${me}`
+tailNum=$((tailNum +1))
+tail -n +${tailNum} "${me}" >package.tgz    || die
+tar -zxf package.tgz                        || die
 
-echo "Step.3 generate installer"
-cat package.tgz >>$target
-chmod +x $target
-rm -f package.tgz
+./install.sh                                || die
+cd "${cwd}"                                 || die
+exit 0
 
-echo "===> Success to create $target"
+#real installing packages append below

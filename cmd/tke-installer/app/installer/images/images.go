@@ -28,6 +28,7 @@ import (
 )
 
 type Components struct {
+	LocalTCR   containerregistry.Image
 	Busybox    containerregistry.Image
 	Keepalived containerregistry.Image
 	InfluxDB   containerregistry.Image
@@ -61,6 +62,7 @@ func (c Components) Get(name string) *containerregistry.Image {
 var Version = version.Get().GitVersion
 
 var components = Components{
+	LocalTCR:   containerregistry.Image{Name: "local-tcr", Tag: "v1.0.0"},
 	Busybox:    containerregistry.Image{Name: "busybox", Tag: "1.31.0"},
 	Keepalived: containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
 	InfluxDB:   containerregistry.Image{Name: "influxdb", Tag: "1.7.6-alpine"},

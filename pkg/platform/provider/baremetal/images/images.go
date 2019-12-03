@@ -23,7 +23,16 @@ import (
 	"tkestack.io/tke/pkg/util/containerregistry"
 )
 
+const (
+	k8sVersion = "v1.14.6"
+)
+
 type Components struct {
+	KubeAPIServer         containerregistry.Image
+	KubeControllerManager containerregistry.Image
+	KubeScheduler         containerregistry.Image
+	KubeProxy             containerregistry.Image
+
 	ETCD               containerregistry.Image
 	CoreDNS            containerregistry.Image
 	Pause              containerregistry.Image
@@ -42,6 +51,11 @@ func (c Components) Get(name string) *containerregistry.Image {
 }
 
 var components = Components{
+	KubeAPIServer:         containerregistry.Image{Name: "kube-apiserver", Tag: k8sVersion},
+	KubeControllerManager: containerregistry.Image{Name: "kube-controller-manager", Tag: k8sVersion},
+	KubeScheduler:         containerregistry.Image{Name: "kube-scheduler", Tag: k8sVersion},
+	KubeProxy:             containerregistry.Image{Name: "kube-proxy", Tag: k8sVersion},
+
 	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.3.12"},
 	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.2.6"},
 	Pause:              containerregistry.Image{Name: "pause", Tag: "3.1"},
