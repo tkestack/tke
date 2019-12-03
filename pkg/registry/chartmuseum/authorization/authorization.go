@@ -20,14 +20,18 @@ package authorization
 
 import (
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 	restclient "k8s.io/client-go/rest"
 	"net/http"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 type Options struct {
 	AdminUsername  string
+	ExternalScheme string
 	LoopbackConfig *restclient.Config
 }
 
@@ -41,8 +45,9 @@ func WithAuthorization(handler http.Handler, opts *Options) (http.Handler, error
 
 	authorizationHandler := &authorization{
 		registryClient: registryClient,
-		handler:        handler,
+		nextHandler:    handler,
 		adminUsername:  opts.AdminUsername,
+		externalScheme: opts.ExternalScheme,
 	}
 	router := mux.NewRouter()
 	router.HandleFunc("/chart/{tenantID}/{chartGroup}/index.yaml", authorizationHandler.index).Methods(http.MethodGet)
@@ -61,74 +66,52 @@ func WithAuthorization(handler http.Handler, opts *Options) (http.Handler, error
 type authorization struct {
 	router         *mux.Router
 	registryClient *registryinternalclient.RegistryClient
-	handler        http.Handler
+	nextHandler    http.Handler
 	adminUsername  string
+	externalScheme string
 }
 
 func (a *authorization) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	username, tenantID := authentication.GetUsernameAndTenantID(req.Context())
 	if tenantID == "" && username != "" && username == a.adminUsername {
-		a.handler.ServeHTTP(w, req)
+		a.nextHandler.ServeHTTP(w, req)
 		return
 	}
 	a.router.ServeHTTP(w, req)
 }
 
-// index serve http get request on /chart/{tenantID}/{chartGroup}/index.yaml
-func (a *authorization) index(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	tenantID, ok := vars["tenantID"]
-	if !ok || tenantID == "" {
-		a.notFound(w)
-		return
-	}
-	chartGroupName, ok := vars["chartGroup"]
-	if !ok || chartGroupName == "" {
-		a.notFound(w)
-		return
-	}
-	// todo: authorization
-	a.handler.ServeHTTP(w, req)
-}
-
 // getChart serve http get request on /chart/{tenantID}/{chartGroup}/charts/{file}
 func (a *authorization) getChart(w http.ResponseWriter, req *http.Request) {
 	// todo: authorization
-	a.handler.ServeHTTP(w, req)
+	a.nextHandler.ServeHTTP(w, req)
 }
 
 // apiListChart serve http get request on /chart/api/{tenantID}/{chartGroup}/charts
 func (a *authorization) apiListChart(w http.ResponseWriter, req *http.Request) {
 	// todo: authorization
-	a.handler.ServeHTTP(w, req)
+	a.nextHandler.ServeHTTP(w, req)
 }
 
 // apiGetChart serve http get request on /chart/api/{tenantID}/{chartGroup}/charts/{name}
 func (a *authorization) apiGetChart(w http.ResponseWriter, req *http.Request) {
 	// todo: authorization
-	a.handler.ServeHTTP(w, req)
+	a.nextHandler.ServeHTTP(w, req)
 }
 
 // apiGetChartVersion serve http get request on /chart/api/{tenantID}/{chartGroup}/charts/{name}/{version}
 func (a *authorization) apiGetChartVersion(w http.ResponseWriter, req *http.Request) {
 	// todo: authorization
-	a.handler.ServeHTTP(w, req)
-}
-
-// apiCreateChart serve http post request on /chart/api/{tenantID}/{chartGroup}/charts
-func (a *authorization) apiCreateChart(w http.ResponseWriter, req *http.Request) {
-	// todo: authorization
-	a.handler.ServeHTTP(w, req)
+	a.nextHandler.ServeHTTP(w, req)
 }
 
 // apiCreateProvenance serve http post request on /chart/api/{tenantID}/{chartGroup}/prov
 func (a *authorization) apiCreateProvenance(w http.ResponseWriter, req *http.Request) {
 	// todo: authorization
-	a.handler.ServeHTTP(w, req)
+	a.nextHandler.ServeHTTP(w, req)
 }
 
 // apiDeleteChartVersion serve http delete request on /chart/api/{tenantID}/{chartGroup}/charts/{name}/{version}
 func (a *authorization) apiDeleteChartVersion(w http.ResponseWriter, req *http.Request) {
 	// todo: authorization
-	a.handler.ServeHTTP(w, req)
+	a.nextHandler.ServeHTTP(w, req)
 }

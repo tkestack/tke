@@ -19,6 +19,7 @@
 package authorization
 
 import (
+	"fmt"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"net/http"
 	"tkestack.io/tke/pkg/registry/chartmuseum/model"
@@ -27,4 +28,26 @@ import (
 func (a *authorization) notFound(w http.ResponseWriter) {
 	err := &model.ErrorResponse{Error: "not found"}
 	responsewriters.WriteRawJSON(http.StatusNotFound, err, w)
+}
+
+func (a *authorization) internalError(w http.ResponseWriter) {
+	err := &model.ErrorResponse{Error: "internal error"}
+	responsewriters.WriteRawJSON(http.StatusInternalServerError, err, w)
+}
+
+func (a *authorization) locked(w http.ResponseWriter) {
+	err := &model.ErrorResponse{Error: "locked chart repository"}
+	responsewriters.WriteRawJSON(http.StatusLocked, err, w)
+}
+
+func (a *authorization) forbidden(w http.ResponseWriter) {
+	err := &model.ErrorResponse{Error: "forbidden"}
+	responsewriters.WriteRawJSON(http.StatusForbidden, err, w)
+}
+
+func (a *authorization) notAuthenticated(w http.ResponseWriter, req *http.Request) {
+	realm := fmt.Sprintf("%s://%s", a.externalScheme, req.Host)
+	w.Header().Add("WWW-Authenticate", fmt.Sprintf("Basic realm=\"%s\"", realm))
+	err := &model.ErrorResponse{Error: "unauthorized"}
+	responsewriters.WriteRawJSON(http.StatusUnauthorized, err, w)
 }

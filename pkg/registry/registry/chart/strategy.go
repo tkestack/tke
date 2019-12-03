@@ -87,7 +87,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if len(tenantID) != 0 {
 		chart.Spec.TenantID = tenantID
 	}
-	chart.ObjectMeta.GenerateName = "repo-"
+	chart.ObjectMeta.GenerateName = "chart-"
 	chart.ObjectMeta.Name = ""
 }
 

@@ -69,10 +69,3 @@ func (a *authentication) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	a.handler.ServeHTTP(w, req)
 }
-
-// func (a *authentication) notAuthenticated(w http.ResponseWriter, req *http.Request) {
-// 	realm := fmt.Sprintf("%s://%s", a.externalScheme, req.Host)
-// 	w.Header().Add("WWW-Authenticate", fmt.Sprintf("Basic realm=\"%s\"", realm))
-// 	err := &model.ErrorResponse{Error: "unauthorized"}
-// 	responsewriters.WriteRawJSON(http.StatusUnauthorized, err, w)
-// }

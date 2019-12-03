@@ -45,25 +45,25 @@ func ValidateChart(chart *registry.Chart, registryClient *registryinternalclient
 	}
 
 	if chart.Spec.ChartGroupName != "" && chart.Spec.Name != "" {
-		namespaceList, err := registryClient.Namespaces().List(metav1.ListOptions{
+		chartGroupList, err := registryClient.ChartGroups().List(metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chart.Spec.TenantID, chart.Spec.ChartGroupName),
 		})
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(fldSpecPath.Child("chartGroupName"), err))
-		} else if len(namespaceList.Items) == 0 {
+		} else if len(chartGroupList.Items) == 0 {
 			allErrs = append(allErrs, field.NotFound(fldSpecPath.Child("chartGroupName"), chart.Spec.ChartGroupName))
 		} else {
-			namespace := namespaceList.Items[0]
-			if chart.ObjectMeta.Namespace != namespace.ObjectMeta.Name {
+			chartGroup := chartGroupList.Items[0]
+			if chart.ObjectMeta.Namespace != chartGroup.ObjectMeta.Name {
 				allErrs = append(allErrs, field.NotFound(field.NewPath("metadata", "namespace"), chart.ObjectMeta.Namespace))
 			}
 
-			repoList, err := registryClient.Repositories(namespace.ObjectMeta.Name).List(metav1.ListOptions{
+			chartList, err := registryClient.Charts(chartGroup.ObjectMeta.Name).List(metav1.ListOptions{
 				FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s,spec.chartGroupName=%s", chart.Spec.TenantID, chart.Spec.Name, chart.Spec.ChartGroupName),
 			})
 			if err != nil {
 				allErrs = append(allErrs, field.InternalError(fldSpecPath.Child("name"), err))
-			} else if len(repoList.Items) > 0 {
+			} else if len(chartList.Items) > 0 {
 				allErrs = append(allErrs, field.Duplicate(fldSpecPath.Child("name"), chart.Spec.TenantID))
 			}
 		}

@@ -115,6 +115,7 @@ require (
 	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.0.0
 	k8s.io/component-base v0.0.0
+	k8s.io/helm v2.14.1+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/kube-aggregator v0.0.0
 )

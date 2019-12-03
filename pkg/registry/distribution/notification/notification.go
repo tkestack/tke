@@ -177,7 +177,8 @@ func pushRepository(registryClient *registryinternalclient.RegistryClient, names
 				log.String("tenantID", namespace.Spec.TenantID),
 				log.String("namespace", namespace.Spec.Name),
 				log.String("repo", repoName),
-				log.String("tag", tag))
+				log.String("tag", tag),
+				log.Err(err))
 			return err
 		}
 	} else {
@@ -198,7 +199,8 @@ func pushRepository(registryClient *registryinternalclient.RegistryClient, names
 							log.String("tenantID", namespace.Spec.TenantID),
 							log.String("namespace", namespace.Spec.Name),
 							log.String("repo", repoName),
-							log.String("tag", tag))
+							log.String("tag", tag),
+							log.Err(err))
 						return err
 					}
 					break
@@ -217,7 +219,8 @@ func pushRepository(registryClient *registryinternalclient.RegistryClient, names
 					log.String("tenantID", namespace.Spec.TenantID),
 					log.String("namespace", namespace.Spec.Name),
 					log.String("repo", repoName),
-					log.String("tag", tag))
+					log.String("tag", tag),
+					log.Err(err))
 				return err
 			}
 		}
@@ -231,7 +234,8 @@ func pushRepository(registryClient *registryinternalclient.RegistryClient, names
 				log.String("tenantID", namespace.Spec.TenantID),
 				log.String("namespace", namespace.Spec.Name),
 				log.String("repo", repoName),
-				log.String("tag", tag))
+				log.String("tag", tag),
+				log.Err(err))
 			return err
 		}
 	}
@@ -248,7 +252,8 @@ func pullRepository(registryClient *registryinternalclient.RegistryClient, names
 			log.String("tenantID", namespace.Spec.TenantID),
 			log.String("namespace", namespace.Spec.Name),
 			log.String("repo", repoName),
-			log.String("tag", tag))
+			log.String("tag", tag),
+			log.Err(err))
 		return err
 	}
 	return nil

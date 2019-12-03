@@ -78,6 +78,7 @@ func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 	var handler http.Handler
 	handler, chainErr = authorization.WithAuthorization(multiTenantServer.Router, &authorization.Options{
 		AdminUsername:  opts.RegistryConfig.Security.AdminUsername,
+		ExternalScheme: opts.ExternalScheme,
 		LoopbackConfig: opts.LoopbackClientConfig,
 	})
 	if chainErr != nil {
