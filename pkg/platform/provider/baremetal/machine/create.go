@@ -114,12 +114,12 @@ func setFileContent(file, pattern, content string) string {
 }
 
 func (p *Provider) EnsureSysctl(m *Machine) error {
-	_, err := m.CombinedOutput(setFileContent(sysctlFile, "net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
+	_, err := m.CombinedOutput(setFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
 	if err != nil {
 		return err
 	}
 
-	_, err = m.CombinedOutput(setFileContent(sysctlFile, "net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
+	_, err = m.CombinedOutput(setFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
 	if err != nil {
 		return err
 	}
