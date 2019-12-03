@@ -29,6 +29,102 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "v1";
 
+// Chart is a chart in chart group of chartmuseum registry.
+message Chart {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of chart in this set.
+  // +optional
+  optional ChartSpec spec = 2;
+
+  // +optional
+  optional ChartStatus status = 3;
+}
+
+// ChartGroup is a chart container in chartmuseum registry.
+message ChartGroup {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of chart group in this set.
+  // +optional
+  optional ChartGroupSpec spec = 2;
+
+  // +optional
+  optional ChartGroupStatus status = 3;
+}
+
+// ChartGroupList is the whole list of all chart groups which owned by a tenant.
+message ChartGroupList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of chart groups
+  repeated ChartGroup items = 2;
+}
+
+// ChartGroupSpec is a description of a chart group.
+message ChartGroupSpec {
+  optional string name = 1;
+
+  optional string tenantID = 2;
+
+  // +optional
+  optional string displayName = 3;
+
+  // +optional
+  optional string visibility = 4;
+}
+
+// ChartGroupStatus represents information about the status of a chart group.
+message ChartGroupStatus {
+  // +optional
+  optional bool locked = 1;
+
+  optional int32 chartCount = 2;
+}
+
+// ChartList is the whole list of all charts which owned by a chart group.
+message ChartList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of charts
+  repeated Chart items = 2;
+}
+
+message ChartSpec {
+  optional string name = 1;
+
+  optional string tenantID = 2;
+
+  optional string chartGroupName = 3;
+
+  // +optional
+  optional string displayName = 4;
+
+  // +optional
+  optional string visibility = 5;
+}
+
+message ChartStatus {
+  // +optional
+  optional bool locked = 1;
+
+  optional int32 pullCount = 2;
+
+  repeated ChartVersion versions = 3;
+}
+
+message ChartVersion {
+  optional string version = 1;
+
+  optional int64 size = 2;
+
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time timeCreated = 3;
+}
+
 // ConfigMap holds configuration data for tke to consume.
 message ConfigMap {
   // +optional

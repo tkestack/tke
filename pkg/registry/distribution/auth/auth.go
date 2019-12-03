@@ -113,7 +113,12 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	scopes := parseScopes(req.URL)
 	log.Debug("Received docker registry authentication request", log.Strings("scopes", scopes))
 
-	username, userTenantID, authenticated := authenticationutil.RequestUser(req, h.authenticator)
+	var username, userTenantID string
+	user, authenticated := authenticationutil.RequestUser(req, h.authenticator)
+	if user != nil {
+		username = user.GetName()
+		userTenantID = user.TenantID()
+	}
 	requestTenantID := utilregistryrequest.TenantID(req, h.domainSuffix, h.defaultTenant)
 
 	if len(scopes) == 0 {

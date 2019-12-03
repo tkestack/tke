@@ -26,6 +26,7 @@ import (
 	"helm.sh/chartmuseum/pkg/chartmuseum/server/multitenant"
 	"k8s.io/apiserver/pkg/server/mux"
 	restclient "k8s.io/client-go/rest"
+	"net/http"
 	"strings"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	"tkestack.io/tke/pkg/registry/chartmuseum/authentication"
@@ -73,8 +74,25 @@ func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 	}
 
 	// add handler chain
-	handler := authorization.WithAuthorization(multiTenantServer.Router)
-	handler = authentication.WithAuthentication(handler, opts.ExternalScheme)
+	var chainErr error
+	var handler http.Handler
+	handler, chainErr = authorization.WithAuthorization(multiTenantServer.Router, &authorization.Options{
+		AdminUsername:  opts.RegistryConfig.Security.AdminUsername,
+		LoopbackConfig: opts.LoopbackClientConfig,
+	})
+	if chainErr != nil {
+		return chainErr
+	}
+	handler, chainErr = authentication.WithAuthentication(handler, &authentication.Options{
+		SecurityConfig:  &opts.RegistryConfig.Security,
+		ExternalScheme:  opts.ExternalScheme,
+		OIDCIssuerURL:   opts.OIDCIssuerURL,
+		OIDCCAFile:      opts.OIDCCAFile,
+		TokenReviewPath: opts.OIDCTokenReviewPath,
+	})
+	if chainErr != nil {
+		return chainErr
+	}
 	handler = tenant.WithTenant(handler, PathPrefix, opts.RegistryConfig.DomainSuffix, opts.RegistryConfig.DefaultTenant)
 	handler = request.WithRequestID(handler)
 	m.HandlePrefix(PathPrefix, handler)

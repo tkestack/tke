@@ -29,6 +29,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/casbin/casbin v1.8.1
+	github.com/chartmuseum/storage v0.5.0
 	github.com/coreos/etcd v3.3.15+incompatible
 	github.com/coreos/go-oidc v2.1.0+incompatible
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
@@ -105,7 +106,6 @@ require (
 )
 
 require (
-	github.com/chartmuseum/storage v0.5.0
 	github.com/golang/glog v0.0.0
 	github.com/sirupsen/logrus v1.4.2
 	k8s.io/api v0.0.0

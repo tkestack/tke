@@ -30,6 +30,14 @@ type FakeRegistry struct {
 	*testing.Fake
 }
 
+func (c *FakeRegistry) Charts(namespace string) internalversion.ChartInterface {
+	return &FakeCharts{c, namespace}
+}
+
+func (c *FakeRegistry) ChartGroups() internalversion.ChartGroupInterface {
+	return &FakeChartGroups{c}
+}
+
 func (c *FakeRegistry) ConfigMaps() internalversion.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }

@@ -125,6 +125,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().VolumeDecorators().Informer()}, nil
 
 		// Group=registry.tkestack.io, Version=v1
+	case registryv1.SchemeGroupVersion.WithResource("charts"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Registry().V1().Charts().Informer()}, nil
+	case registryv1.SchemeGroupVersion.WithResource("chartgroups"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Registry().V1().ChartGroups().Informer()}, nil
 	case registryv1.SchemeGroupVersion.WithResource("configmaps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Registry().V1().ConfigMaps().Informer()}, nil
 	case registryv1.SchemeGroupVersion.WithResource("namespaces"):

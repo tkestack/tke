@@ -37,6 +37,96 @@ func init() {
 // RegisterConversions adds conversion functions to the given scheme.
 // Public to allow building arbitrary schemes.
 func RegisterConversions(s *runtime.Scheme) error {
+	if err := s.AddGeneratedConversionFunc((*Chart)(nil), (*registry.Chart)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_Chart_To_registry_Chart(a.(*Chart), b.(*registry.Chart), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*registry.Chart)(nil), (*Chart)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_registry_Chart_To_v1_Chart(a.(*registry.Chart), b.(*Chart), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ChartGroup)(nil), (*registry.ChartGroup)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ChartGroup_To_registry_ChartGroup(a.(*ChartGroup), b.(*registry.ChartGroup), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*registry.ChartGroup)(nil), (*ChartGroup)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_registry_ChartGroup_To_v1_ChartGroup(a.(*registry.ChartGroup), b.(*ChartGroup), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ChartGroupList)(nil), (*registry.ChartGroupList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ChartGroupList_To_registry_ChartGroupList(a.(*ChartGroupList), b.(*registry.ChartGroupList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*registry.ChartGroupList)(nil), (*ChartGroupList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_registry_ChartGroupList_To_v1_ChartGroupList(a.(*registry.ChartGroupList), b.(*ChartGroupList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ChartGroupSpec)(nil), (*registry.ChartGroupSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ChartGroupSpec_To_registry_ChartGroupSpec(a.(*ChartGroupSpec), b.(*registry.ChartGroupSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*registry.ChartGroupSpec)(nil), (*ChartGroupSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_registry_ChartGroupSpec_To_v1_ChartGroupSpec(a.(*registry.ChartGroupSpec), b.(*ChartGroupSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ChartGroupStatus)(nil), (*registry.ChartGroupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ChartGroupStatus_To_registry_ChartGroupStatus(a.(*ChartGroupStatus), b.(*registry.ChartGroupStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*registry.ChartGroupStatus)(nil), (*ChartGroupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_registry_ChartGroupStatus_To_v1_ChartGroupStatus(a.(*registry.ChartGroupStatus), b.(*ChartGroupStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ChartList)(nil), (*registry.ChartList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ChartList_To_registry_ChartList(a.(*ChartList), b.(*registry.ChartList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*registry.ChartList)(nil), (*ChartList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_registry_ChartList_To_v1_ChartList(a.(*registry.ChartList), b.(*ChartList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ChartSpec)(nil), (*registry.ChartSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ChartSpec_To_registry_ChartSpec(a.(*ChartSpec), b.(*registry.ChartSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*registry.ChartSpec)(nil), (*ChartSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_registry_ChartSpec_To_v1_ChartSpec(a.(*registry.ChartSpec), b.(*ChartSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ChartStatus)(nil), (*registry.ChartStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ChartStatus_To_registry_ChartStatus(a.(*ChartStatus), b.(*registry.ChartStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*registry.ChartStatus)(nil), (*ChartStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_registry_ChartStatus_To_v1_ChartStatus(a.(*registry.ChartStatus), b.(*ChartStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ChartVersion)(nil), (*registry.ChartVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ChartVersion_To_registry_ChartVersion(a.(*ChartVersion), b.(*registry.ChartVersion), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*registry.ChartVersion)(nil), (*ChartVersion)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_registry_ChartVersion_To_v1_ChartVersion(a.(*registry.ChartVersion), b.(*ChartVersion), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*ConfigMap)(nil), (*registry.ConfigMap)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_ConfigMap_To_registry_ConfigMap(a.(*ConfigMap), b.(*registry.ConfigMap), scope)
 	}); err != nil {
@@ -148,6 +238,238 @@ func RegisterConversions(s *runtime.Scheme) error {
 		return err
 	}
 	return nil
+}
+
+func autoConvert_v1_Chart_To_registry_Chart(in *Chart, out *registry.Chart, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_ChartSpec_To_registry_ChartSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1_ChartStatus_To_registry_ChartStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_Chart_To_registry_Chart is an autogenerated conversion function.
+func Convert_v1_Chart_To_registry_Chart(in *Chart, out *registry.Chart, s conversion.Scope) error {
+	return autoConvert_v1_Chart_To_registry_Chart(in, out, s)
+}
+
+func autoConvert_registry_Chart_To_v1_Chart(in *registry.Chart, out *Chart, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_registry_ChartSpec_To_v1_ChartSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_registry_ChartStatus_To_v1_ChartStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_registry_Chart_To_v1_Chart is an autogenerated conversion function.
+func Convert_registry_Chart_To_v1_Chart(in *registry.Chart, out *Chart, s conversion.Scope) error {
+	return autoConvert_registry_Chart_To_v1_Chart(in, out, s)
+}
+
+func autoConvert_v1_ChartGroup_To_registry_ChartGroup(in *ChartGroup, out *registry.ChartGroup, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_ChartGroupSpec_To_registry_ChartGroupSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1_ChartGroupStatus_To_registry_ChartGroupStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_ChartGroup_To_registry_ChartGroup is an autogenerated conversion function.
+func Convert_v1_ChartGroup_To_registry_ChartGroup(in *ChartGroup, out *registry.ChartGroup, s conversion.Scope) error {
+	return autoConvert_v1_ChartGroup_To_registry_ChartGroup(in, out, s)
+}
+
+func autoConvert_registry_ChartGroup_To_v1_ChartGroup(in *registry.ChartGroup, out *ChartGroup, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_registry_ChartGroupSpec_To_v1_ChartGroupSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_registry_ChartGroupStatus_To_v1_ChartGroupStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_registry_ChartGroup_To_v1_ChartGroup is an autogenerated conversion function.
+func Convert_registry_ChartGroup_To_v1_ChartGroup(in *registry.ChartGroup, out *ChartGroup, s conversion.Scope) error {
+	return autoConvert_registry_ChartGroup_To_v1_ChartGroup(in, out, s)
+}
+
+func autoConvert_v1_ChartGroupList_To_registry_ChartGroupList(in *ChartGroupList, out *registry.ChartGroupList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]registry.ChartGroup)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_ChartGroupList_To_registry_ChartGroupList is an autogenerated conversion function.
+func Convert_v1_ChartGroupList_To_registry_ChartGroupList(in *ChartGroupList, out *registry.ChartGroupList, s conversion.Scope) error {
+	return autoConvert_v1_ChartGroupList_To_registry_ChartGroupList(in, out, s)
+}
+
+func autoConvert_registry_ChartGroupList_To_v1_ChartGroupList(in *registry.ChartGroupList, out *ChartGroupList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]ChartGroup)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_registry_ChartGroupList_To_v1_ChartGroupList is an autogenerated conversion function.
+func Convert_registry_ChartGroupList_To_v1_ChartGroupList(in *registry.ChartGroupList, out *ChartGroupList, s conversion.Scope) error {
+	return autoConvert_registry_ChartGroupList_To_v1_ChartGroupList(in, out, s)
+}
+
+func autoConvert_v1_ChartGroupSpec_To_registry_ChartGroupSpec(in *ChartGroupSpec, out *registry.ChartGroupSpec, s conversion.Scope) error {
+	out.Name = in.Name
+	out.TenantID = in.TenantID
+	out.DisplayName = in.DisplayName
+	out.Visibility = registry.Visibility(in.Visibility)
+	return nil
+}
+
+// Convert_v1_ChartGroupSpec_To_registry_ChartGroupSpec is an autogenerated conversion function.
+func Convert_v1_ChartGroupSpec_To_registry_ChartGroupSpec(in *ChartGroupSpec, out *registry.ChartGroupSpec, s conversion.Scope) error {
+	return autoConvert_v1_ChartGroupSpec_To_registry_ChartGroupSpec(in, out, s)
+}
+
+func autoConvert_registry_ChartGroupSpec_To_v1_ChartGroupSpec(in *registry.ChartGroupSpec, out *ChartGroupSpec, s conversion.Scope) error {
+	out.Name = in.Name
+	out.TenantID = in.TenantID
+	out.DisplayName = in.DisplayName
+	out.Visibility = Visibility(in.Visibility)
+	return nil
+}
+
+// Convert_registry_ChartGroupSpec_To_v1_ChartGroupSpec is an autogenerated conversion function.
+func Convert_registry_ChartGroupSpec_To_v1_ChartGroupSpec(in *registry.ChartGroupSpec, out *ChartGroupSpec, s conversion.Scope) error {
+	return autoConvert_registry_ChartGroupSpec_To_v1_ChartGroupSpec(in, out, s)
+}
+
+func autoConvert_v1_ChartGroupStatus_To_registry_ChartGroupStatus(in *ChartGroupStatus, out *registry.ChartGroupStatus, s conversion.Scope) error {
+	out.Locked = (*bool)(unsafe.Pointer(in.Locked))
+	out.ChartCount = in.ChartCount
+	return nil
+}
+
+// Convert_v1_ChartGroupStatus_To_registry_ChartGroupStatus is an autogenerated conversion function.
+func Convert_v1_ChartGroupStatus_To_registry_ChartGroupStatus(in *ChartGroupStatus, out *registry.ChartGroupStatus, s conversion.Scope) error {
+	return autoConvert_v1_ChartGroupStatus_To_registry_ChartGroupStatus(in, out, s)
+}
+
+func autoConvert_registry_ChartGroupStatus_To_v1_ChartGroupStatus(in *registry.ChartGroupStatus, out *ChartGroupStatus, s conversion.Scope) error {
+	out.Locked = (*bool)(unsafe.Pointer(in.Locked))
+	out.ChartCount = in.ChartCount
+	return nil
+}
+
+// Convert_registry_ChartGroupStatus_To_v1_ChartGroupStatus is an autogenerated conversion function.
+func Convert_registry_ChartGroupStatus_To_v1_ChartGroupStatus(in *registry.ChartGroupStatus, out *ChartGroupStatus, s conversion.Scope) error {
+	return autoConvert_registry_ChartGroupStatus_To_v1_ChartGroupStatus(in, out, s)
+}
+
+func autoConvert_v1_ChartList_To_registry_ChartList(in *ChartList, out *registry.ChartList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]registry.Chart)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_ChartList_To_registry_ChartList is an autogenerated conversion function.
+func Convert_v1_ChartList_To_registry_ChartList(in *ChartList, out *registry.ChartList, s conversion.Scope) error {
+	return autoConvert_v1_ChartList_To_registry_ChartList(in, out, s)
+}
+
+func autoConvert_registry_ChartList_To_v1_ChartList(in *registry.ChartList, out *ChartList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]Chart)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_registry_ChartList_To_v1_ChartList is an autogenerated conversion function.
+func Convert_registry_ChartList_To_v1_ChartList(in *registry.ChartList, out *ChartList, s conversion.Scope) error {
+	return autoConvert_registry_ChartList_To_v1_ChartList(in, out, s)
+}
+
+func autoConvert_v1_ChartSpec_To_registry_ChartSpec(in *ChartSpec, out *registry.ChartSpec, s conversion.Scope) error {
+	out.Name = in.Name
+	out.TenantID = in.TenantID
+	out.ChartGroupName = in.ChartGroupName
+	out.DisplayName = in.DisplayName
+	out.Visibility = registry.Visibility(in.Visibility)
+	return nil
+}
+
+// Convert_v1_ChartSpec_To_registry_ChartSpec is an autogenerated conversion function.
+func Convert_v1_ChartSpec_To_registry_ChartSpec(in *ChartSpec, out *registry.ChartSpec, s conversion.Scope) error {
+	return autoConvert_v1_ChartSpec_To_registry_ChartSpec(in, out, s)
+}
+
+func autoConvert_registry_ChartSpec_To_v1_ChartSpec(in *registry.ChartSpec, out *ChartSpec, s conversion.Scope) error {
+	out.Name = in.Name
+	out.TenantID = in.TenantID
+	out.ChartGroupName = in.ChartGroupName
+	out.DisplayName = in.DisplayName
+	out.Visibility = Visibility(in.Visibility)
+	return nil
+}
+
+// Convert_registry_ChartSpec_To_v1_ChartSpec is an autogenerated conversion function.
+func Convert_registry_ChartSpec_To_v1_ChartSpec(in *registry.ChartSpec, out *ChartSpec, s conversion.Scope) error {
+	return autoConvert_registry_ChartSpec_To_v1_ChartSpec(in, out, s)
+}
+
+func autoConvert_v1_ChartStatus_To_registry_ChartStatus(in *ChartStatus, out *registry.ChartStatus, s conversion.Scope) error {
+	out.Locked = (*bool)(unsafe.Pointer(in.Locked))
+	out.PullCount = in.PullCount
+	out.Versions = *(*[]registry.ChartVersion)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_v1_ChartStatus_To_registry_ChartStatus is an autogenerated conversion function.
+func Convert_v1_ChartStatus_To_registry_ChartStatus(in *ChartStatus, out *registry.ChartStatus, s conversion.Scope) error {
+	return autoConvert_v1_ChartStatus_To_registry_ChartStatus(in, out, s)
+}
+
+func autoConvert_registry_ChartStatus_To_v1_ChartStatus(in *registry.ChartStatus, out *ChartStatus, s conversion.Scope) error {
+	out.Locked = (*bool)(unsafe.Pointer(in.Locked))
+	out.PullCount = in.PullCount
+	out.Versions = *(*[]ChartVersion)(unsafe.Pointer(&in.Versions))
+	return nil
+}
+
+// Convert_registry_ChartStatus_To_v1_ChartStatus is an autogenerated conversion function.
+func Convert_registry_ChartStatus_To_v1_ChartStatus(in *registry.ChartStatus, out *ChartStatus, s conversion.Scope) error {
+	return autoConvert_registry_ChartStatus_To_v1_ChartStatus(in, out, s)
+}
+
+func autoConvert_v1_ChartVersion_To_registry_ChartVersion(in *ChartVersion, out *registry.ChartVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	out.Size = in.Size
+	out.TimeCreated = in.TimeCreated
+	return nil
+}
+
+// Convert_v1_ChartVersion_To_registry_ChartVersion is an autogenerated conversion function.
+func Convert_v1_ChartVersion_To_registry_ChartVersion(in *ChartVersion, out *registry.ChartVersion, s conversion.Scope) error {
+	return autoConvert_v1_ChartVersion_To_registry_ChartVersion(in, out, s)
+}
+
+func autoConvert_registry_ChartVersion_To_v1_ChartVersion(in *registry.ChartVersion, out *ChartVersion, s conversion.Scope) error {
+	out.Version = in.Version
+	out.Size = in.Size
+	out.TimeCreated = in.TimeCreated
+	return nil
+}
+
+// Convert_registry_ChartVersion_To_v1_ChartVersion is an autogenerated conversion function.
+func Convert_registry_ChartVersion_To_v1_ChartVersion(in *registry.ChartVersion, out *ChartVersion, s conversion.Scope) error {
+	return autoConvert_registry_ChartVersion_To_v1_ChartVersion(in, out, s)
 }
 
 func autoConvert_v1_ConfigMap_To_registry_ConfigMap(in *ConfigMap, out *registry.ConfigMap, s conversion.Scope) error {

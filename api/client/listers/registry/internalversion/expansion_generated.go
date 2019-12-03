@@ -20,6 +20,18 @@
 
 package internalversion
 
+// ChartListerExpansion allows custom methods to be added to
+// ChartLister.
+type ChartListerExpansion interface{}
+
+// ChartNamespaceListerExpansion allows custom methods to be added to
+// ChartNamespaceLister.
+type ChartNamespaceListerExpansion interface{}
+
+// ChartGroupListerExpansion allows custom methods to be added to
+// ChartGroupLister.
+type ChartGroupListerExpansion interface{}
+
 // ConfigMapListerExpansion allows custom methods to be added to
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}

@@ -27,6 +27,8 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 	funcs := []func(scheme *runtime.Scheme) error{
 		AddFieldLabelConversionsForNamespace,
 		AddFieldLabelConversionsForRepository,
+		AddFieldLabelConversionsForChartGroup,
+		AddFieldLabelConversionsForChart,
 	}
 	for _, f := range funcs {
 		if err := f(scheme); err != nil {
@@ -64,6 +66,41 @@ func AddFieldLabelConversionsForRepository(scheme *runtime.Scheme) error {
 			case "spec.tenantID",
 				"spec.name",
 				"spec.namespaceName",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForChartGroup adds a conversion function to convert
+// field selectors of ChartGroup from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForChartGroup(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("ChartGroup"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.tenantID",
+				"spec.name",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForChart adds a conversion function to convert
+// field selectors of Chart from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForChart(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Chart"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.tenantID",
+				"spec.name",
+				"spec.chartGroupName",
 				"metadata.name":
 				return label, value, nil
 			default:

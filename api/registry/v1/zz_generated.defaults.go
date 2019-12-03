@@ -30,6 +30,10 @@ import (
 // Public to allow building arbitrary schemes.
 // All generated defaulters are covering - they call all nested defaulters.
 func RegisterDefaults(scheme *runtime.Scheme) error {
+	scheme.AddTypeDefaultingFunc(&Chart{}, func(obj interface{}) { SetObjectDefaults_Chart(obj.(*Chart)) })
+	scheme.AddTypeDefaultingFunc(&ChartGroup{}, func(obj interface{}) { SetObjectDefaults_ChartGroup(obj.(*ChartGroup)) })
+	scheme.AddTypeDefaultingFunc(&ChartGroupList{}, func(obj interface{}) { SetObjectDefaults_ChartGroupList(obj.(*ChartGroupList)) })
+	scheme.AddTypeDefaultingFunc(&ChartList{}, func(obj interface{}) { SetObjectDefaults_ChartList(obj.(*ChartList)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMap{}, func(obj interface{}) { SetObjectDefaults_ConfigMap(obj.(*ConfigMap)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMapList{}, func(obj interface{}) { SetObjectDefaults_ConfigMapList(obj.(*ConfigMapList)) })
 	scheme.AddTypeDefaultingFunc(&Namespace{}, func(obj interface{}) { SetObjectDefaults_Namespace(obj.(*Namespace)) })
@@ -37,6 +41,29 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&Repository{}, func(obj interface{}) { SetObjectDefaults_Repository(obj.(*Repository)) })
 	scheme.AddTypeDefaultingFunc(&RepositoryList{}, func(obj interface{}) { SetObjectDefaults_RepositoryList(obj.(*RepositoryList)) })
 	return nil
+}
+
+func SetObjectDefaults_Chart(in *Chart) {
+	SetDefaults_ChartSpec(&in.Spec)
+	SetDefaults_ChartStatus(&in.Status)
+}
+
+func SetObjectDefaults_ChartGroup(in *ChartGroup) {
+	SetDefaults_ChartGroupSpec(&in.Spec)
+}
+
+func SetObjectDefaults_ChartGroupList(in *ChartGroupList) {
+	for i := range in.Items {
+		a := &in.Items[i]
+		SetObjectDefaults_ChartGroup(a)
+	}
+}
+
+func SetObjectDefaults_ChartList(in *ChartList) {
+	for i := range in.Items {
+		a := &in.Items[i]
+		SetObjectDefaults_Chart(a)
+	}
 }
 
 func SetObjectDefaults_ConfigMap(in *ConfigMap) {

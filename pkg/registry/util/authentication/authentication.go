@@ -20,24 +20,33 @@ package authentication
 
 import (
 	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/authentication/user"
 	"net/http"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 )
 
 // RequestUser according to the basic auth credentials carried in the http
 // request, use the password as an APIKey to call the authentication method,
-// and return the user's username and tenant id.
-func RequestUser(req *http.Request, apiKeyAuthenticator authenticator.Password) (username, tenantID string, authenticated bool) {
-	user, password, ok := req.BasicAuth()
+// and return the tenantUser.
+func RequestUser(req *http.Request, apiKeyAuthenticator authenticator.Password) (*TenantUser, bool) {
+	username, password, ok := req.BasicAuth()
 	if !ok {
-		return
+		return nil, false
 	}
-	res, authOk, err := apiKeyAuthenticator.AuthenticatePassword(req.Context(), user, password)
+	res, authOk, err := apiKeyAuthenticator.AuthenticatePassword(req.Context(), username, password)
 	if err != nil || !authOk || res == nil {
-		return
+		return nil, false
 	}
-	username = res.User.GetName()
-	extra := res.User.GetExtra()
+	return &TenantUser{res.User}, true
+}
+
+type TenantUser struct {
+	user.Info
+}
+
+func (u *TenantUser) TenantID() string {
+	var tenantID string
+	extra := u.GetExtra()
 	if len(extra) > 0 {
 		if t, ok := extra[genericoidc.TenantIDKey]; ok {
 			if len(t) > 0 {
@@ -45,6 +54,5 @@ func RequestUser(req *http.Request, apiKeyAuthenticator authenticator.Password) 
 			}
 		}
 	}
-	authenticated = true
-	return
+	return tenantID
 }

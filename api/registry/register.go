@@ -68,6 +68,12 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&Repository{},
 		&RepositoryList{},
+
+		&ChartGroup{},
+		&ChartGroupList{},
+
+		&Chart{},
+		&ChartList{},
 	)
 	return nil
 }
