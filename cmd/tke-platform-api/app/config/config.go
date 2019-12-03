@@ -38,8 +38,6 @@ import (
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/platform/apiserver"
-	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
-	baremetalmachine "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
 	providerconfig "tkestack.io/tke/pkg/platform/provider/config"
 )
 
@@ -62,19 +60,6 @@ type Config struct {
 // on a given TKE platform apiserver command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	providerConfig := providerconfig.NewConfig()
-
-	clusterProvider, err := baremetalcluster.NewProvider()
-	if err != nil {
-		return nil, err
-	}
-	providerConfig.ClusterProviders.Store(clusterProvider.Name(), clusterProvider)
-
-	machineProvider, err := baremetalmachine.NewProvider()
-	if err != nil {
-		return nil, err
-	}
-	providerConfig.MachineProviders.Store(machineProvider.Name(), machineProvider)
-
 	genericAPIServerConfig := genericapiserver.NewConfig(platform.Codecs)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil)
 	genericAPIServerConfig.LongRunningFunc = filters.BasicLongRunningRequestCheck(
@@ -88,6 +73,9 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 	if err := opts.SecureServing.ApplyTo(&genericAPIServerConfig.SecureServing, &genericAPIServerConfig.LoopbackClientConfig); err != nil {
+		return nil, err
+	}
+	if err := opts.Provider.ApplyTo(providerConfig); err != nil {
 		return nil, err
 	}
 
