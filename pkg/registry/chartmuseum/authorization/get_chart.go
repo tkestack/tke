@@ -32,7 +32,28 @@ import (
 
 // getChart serve http get request on /chart/{tenantID}/{chartGroup}/charts/{file}
 func (a *authorization) getChart(w http.ResponseWriter, req *http.Request) {
-	chartObject, err := a.validateGetChart(w, req)
+	vars := mux.Vars(req)
+	tenantID, ok := vars["tenantID"]
+	if !ok || tenantID == "" {
+		a.notFound(w)
+		return
+	}
+	chartGroupName, ok := vars["chartGroup"]
+	if !ok || chartGroupName == "" {
+		a.notFound(w)
+		return
+	}
+	file, ok := vars["file"]
+	if !ok || file == "" {
+		a.notFound(w)
+		return
+	}
+	chartName, _, ok := ChartNameVersionFromFile(file)
+	if !ok {
+		a.notFound(w)
+		return
+	}
+	chartObject, err := a.validateGetChart(w, req, tenantID, chartGroupName, chartName)
 	if err != nil {
 		return
 	}
@@ -46,28 +67,37 @@ func (a *authorization) getChart(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (a *authorization) validateGetChart(w http.ResponseWriter, req *http.Request) (*registry.Chart, error) {
+// apiGetChart serve http get request on /chart/api/{tenantID}/{chartGroup}/charts/{name}
+func (a *authorization) apiGetChart(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	tenantID, ok := vars["tenantID"]
 	if !ok || tenantID == "" {
 		a.notFound(w)
-		return nil, fmt.Errorf("not found")
+		return
 	}
 	chartGroupName, ok := vars["chartGroup"]
 	if !ok || chartGroupName == "" {
 		a.notFound(w)
-		return nil, fmt.Errorf("not found")
+		return
 	}
-	file, ok := vars["file"]
-	if !ok || file == "" {
+	chartName, ok := vars["name"]
+	if !ok || chartName == "" {
 		a.notFound(w)
-		return nil, fmt.Errorf("not found")
+		return
 	}
-	chartName, _, ok := ChartNameVersionFromFile(file)
-	if !ok {
-		a.notFound(w)
-		return nil, fmt.Errorf("not found")
+	_, err := a.validateGetChart(w, req, tenantID, chartGroupName, chartName)
+	if err != nil {
+		return
 	}
+	a.nextHandler.ServeHTTP(w, req)
+}
+
+// apiGetChartVersion serve http get request on /chart/api/{tenantID}/{chartGroup}/charts/{name}/{version}
+func (a *authorization) apiGetChartVersion(w http.ResponseWriter, req *http.Request) {
+	a.apiGetChart(w, req)
+}
+
+func (a *authorization) validateGetChart(w http.ResponseWriter, req *http.Request, tenantID, chartGroupName, chartName string) (*registry.Chart, error) {
 	chartGroupList, err := a.registryClient.ChartGroups().List(metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartGroupName),
 	})

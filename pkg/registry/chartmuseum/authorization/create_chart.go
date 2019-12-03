@@ -33,6 +33,15 @@ import (
 
 // apiCreateChart serve http post request on /chart/api/{tenantID}/{chartGroup}/charts
 func (a *authorization) apiCreateChart(w http.ResponseWriter, req *http.Request) {
+	a.doAPICreateProvenance(w, req, "chart")
+}
+
+// apiCreateProvenance serve http post request on /chart/api/{tenantID}/{chartGroup}/prov
+func (a *authorization) apiCreateProvenance(w http.ResponseWriter, req *http.Request) {
+	a.doAPICreateProvenance(w, req, "prov")
+}
+
+func (a *authorization) doAPICreateProvenance(w http.ResponseWriter, req *http.Request, fieldName string) {
 	chartGroup, err := a.validateAPICreateChart(w, req)
 	if err != nil {
 		return
@@ -51,7 +60,7 @@ func (a *authorization) apiCreateChart(w http.ResponseWriter, req *http.Request)
 		log.Error("Chartmuseum server that does not meet expectations", log.ByteString("body", sw.body), log.Int("status", sw.status))
 		return
 	}
-	file, header, err := req.FormFile("chart")
+	file, header, err := req.FormFile(fieldName)
 	if err != nil {
 		log.Error("Failed to retrieve chart file from request", log.Err(err))
 		return

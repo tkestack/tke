@@ -80,30 +80,6 @@ func (a *authorization) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	a.router.ServeHTTP(w, req)
 }
 
-// apiListChart serve http get request on /chart/api/{tenantID}/{chartGroup}/charts
-func (a *authorization) apiListChart(w http.ResponseWriter, req *http.Request) {
-	// todo: authorization
-	a.nextHandler.ServeHTTP(w, req)
-}
-
-// apiGetChart serve http get request on /chart/api/{tenantID}/{chartGroup}/charts/{name}
-func (a *authorization) apiGetChart(w http.ResponseWriter, req *http.Request) {
-	// todo: authorization
-	a.nextHandler.ServeHTTP(w, req)
-}
-
-// apiGetChartVersion serve http get request on /chart/api/{tenantID}/{chartGroup}/charts/{name}/{version}
-func (a *authorization) apiGetChartVersion(w http.ResponseWriter, req *http.Request) {
-	// todo: authorization
-	a.nextHandler.ServeHTTP(w, req)
-}
-
-// apiCreateProvenance serve http post request on /chart/api/{tenantID}/{chartGroup}/prov
-func (a *authorization) apiCreateProvenance(w http.ResponseWriter, req *http.Request) {
-	// todo: authorization
-	a.nextHandler.ServeHTTP(w, req)
-}
-
 // apiDeleteChartVersion serve http delete request on /chart/api/{tenantID}/{chartGroup}/charts/{name}/{version}
 func (a *authorization) apiDeleteChartVersion(w http.ResponseWriter, req *http.Request) {
 	// todo: authorization
