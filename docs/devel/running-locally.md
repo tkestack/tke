@@ -52,7 +52,7 @@ package management tool corresponding to the OS.
   
   ```sh
   $ brew install etcd
-  $ brew service start etcd
+  $ brew services start etcd
   ```
 
   * **Linux** You can use docker to start a single-node etcd to run in the 
