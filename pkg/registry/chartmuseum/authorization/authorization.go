@@ -79,9 +79,3 @@ func (a *authorization) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	a.router.ServeHTTP(w, req)
 }
-
-// apiDeleteChartVersion serve http delete request on /chart/api/{tenantID}/{chartGroup}/charts/{name}/{version}
-func (a *authorization) apiDeleteChartVersion(w http.ResponseWriter, req *http.Request) {
-	// todo: authorization
-	a.nextHandler.ServeHTTP(w, req)
-}

@@ -23,3 +23,9 @@ package model
 type SavedResponse struct {
 	Saved bool `json:"saved"`
 }
+
+// DeletedResponse defines the return structure of the chartmuseum server after
+// the delete chart version operation is successful.
+type DeletedResponse struct {
+	Deleted bool `json:"deleted"`
+}
