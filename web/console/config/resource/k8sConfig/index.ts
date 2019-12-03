@@ -1,6 +1,6 @@
 export { deployment } from './deployment';
 export { statefulset } from './statefulset';
-export { daemonset } from './daemonSet';
+export { daemonset } from './daemonset';
 export { jobs } from './jobs';
 export { cronjobs } from './cronjobs';
 export { tapps } from './tapp';

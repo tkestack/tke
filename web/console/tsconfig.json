@@ -13,6 +13,7 @@
     "experimentalDecorators": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
       "@i18n/translation": ["i18n/translation/zh.js"],
@@ -28,7 +29,7 @@
       "@config": ["./config"],
       "@config/*": ["./config/*"],
       "@src/*": ["./src/*"],
-      "@src": ["./src"],
+      "@src": ["./src"]
     }
   },
   "exclude": ["node_modules", "dist", "build"],

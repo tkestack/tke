@@ -62,6 +62,7 @@ export interface RootState {
   clusterVersion?: string;
 
   alarmPolicy?: ListModel<AlarmPolicy, AlarmPolicyFilter>;
+
   userList?: ListModel<User, UserFilter>;
 
   /** 当前新建告警 */
@@ -91,4 +92,25 @@ export interface RootState {
 
   /** 是否为国际版 */
   isI18n?: boolean;
+
+  // /** namespace列表 */
+  // namespaceList?: FetcherState<RecordSet<Namespace>>;
+
+  // /** namespace查询条件 */
+  // namespaceQuery?: QueryState<ResourceFilter>;
+
+  /** namespace selection */
+  namespaceSelection?: string;
+
+  /** namespacesetQuery */
+  projectNamespaceQuery?: QueryState<ResourceFilter>;
+
+  /** namespaceset */
+  projectNamespaceList?: FetcherState<RecordSet<Resource>>;
+
+  /** projectList */
+  projectList?: any[];
+
+  /** projectSelection */
+  projectSelection?: string;
 }

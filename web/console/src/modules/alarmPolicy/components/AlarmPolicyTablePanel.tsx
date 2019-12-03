@@ -94,6 +94,13 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
         </div>
       );
 
+    let isNeedPagination = true;
+
+    /// 业务侧不需要分页
+    /// #if project
+    isNeedPagination = false;
+    /// #endif
+
     return (
       <React.Fragment>
         {this.renderPromTip()}
@@ -129,7 +136,7 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
               );
             }
           }}
-          isNeedPagination
+          isNeedPagination={isNeedPagination}
         />
       </React.Fragment>
     );
@@ -142,20 +149,28 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
       showTip && (
         <TipInfo className="warning">
           <span style={{ verticalAlign: 'middle' }}>
-            <Trans>
-              该集群未安装Prometheus组件, 请前往
-              <a
-                href={`/tke/addon?clusterId=${cluster.selection.metadata.name}`}
-                onClick={event => {
-                  // this.setupHelm();
-                  addonRouter.navigate({}, { clusterId: cluster.selection.metadata.name });
-                  event.preventDefault();
-                }}
-              >
-                扩展组件
-              </a>
-              进行安装
-            </Trans>
+            {
+              /// #if tke
+              <Trans>
+                该集群未安装Prometheus组件, 请前往
+                <a
+                  href={`/tkestack/addon?clusterId=${cluster.selection.metadata.name}`}
+                  onClick={event => {
+                    addonRouter.navigate({}, { clusterId: cluster.selection.metadata.name });
+                    event.preventDefault();
+                  }}
+                >
+                  扩展组件
+                </a>
+                进行安装
+              </Trans>
+              /// #endif
+            }
+            {
+              /// #if project
+              <Trans>该集群未安装Prometheus组件, 请通知平台管理员进行安装</Trans>
+              /// #endif
+            }
           </span>
         </TipInfo>
       )
