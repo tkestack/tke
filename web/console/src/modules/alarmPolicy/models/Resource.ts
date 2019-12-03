@@ -27,6 +27,8 @@ export interface ResourceFilter {
   /** 地域id */
   regionId?: number;
 
+  specificName?: string;
+
   /** type */
   workloadType?: string;
 }

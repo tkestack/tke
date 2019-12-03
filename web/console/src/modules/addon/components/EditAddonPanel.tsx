@@ -1,4 +1,4 @@
-import * as React from 'React';
+import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { allActions } from '../actions';

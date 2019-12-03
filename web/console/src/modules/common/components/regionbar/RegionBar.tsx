@@ -3,7 +3,6 @@ import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
 import { RecordSet } from '@tencent/qcloud-lib';
 import { ButtonBar, DownMenu } from '../../components';
 import { isEmpty } from '../../utils';
-import { DownMenuItem } from '../DownMenu/DownMenu';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { CardMenuItem, CardMenu } from '../cardMenu';
 

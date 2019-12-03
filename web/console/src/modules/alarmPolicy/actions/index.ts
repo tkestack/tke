@@ -1,3 +1,4 @@
+import { projectNamespaceActions } from './projectNamespaceActions.project';
 import { workloadActions } from './workloadActions';
 // import { groupActions } from './groupActions';
 import { alarmPolicyActions } from './alarmPolicyActions';
@@ -19,5 +20,6 @@ export const allActions = {
   resourceActions: resourceActions,
   user: userActions,
   namespace: namespaceActions,
-  workload: workloadActions
+  workload: workloadActions,
+  projectNamespace: projectNamespaceActions
 };
