@@ -28,7 +28,7 @@ import (
 
 	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 
-	"github.com/casbin/casbin"
+	"github.com/casbin/casbin/v2"
 	dexserver "github.com/dexidp/dex/server"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -36,6 +36,7 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	authv1 "tkestack.io/tke/api/auth/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
@@ -205,8 +206,10 @@ func (c completedConfig) registerHooks(s *genericapiserver.GenericAPIServer) []g
 	apiSigningKeyHook := authenticator.NewAPISigningKeyHookHandler(authClient)
 	identityHook := authenticator.NewAdminIdentityHookHandler(authClient, c.ExtraConfig.TenantID, c.ExtraConfig.TenantAdmin, c.ExtraConfig.TenantAdminSecret)
 
-	return []genericapiserver.PostStartHookProvider{authnHook, apiSigningKeyHook, identityHook}
+	authVersionedClient := versionedclientset.NewForConfigOrDie(s.LoopbackClientConfig)
+	adapterHook := enforcer.NewAdapterHookHandler(authVersionedClient, c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.VersionedInformers)
 
+	return []genericapiserver.PostStartHookProvider{authnHook, apiSigningKeyHook, identityHook, adapterHook}
 }
 
 // installCasbinPreStopHook is used to register preStop hook to stop casbin enforcer sync.

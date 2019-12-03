@@ -19,11 +19,12 @@
 package app
 
 import (
+	"net/http"
+	"time"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/server/mux"
-	"net/http"
-	"time"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -47,7 +48,7 @@ func KnownControllers() []string {
 func NewControllerInitializers() map[string]InitFunc {
 	controllers := map[string]InitFunc{}
 
-	controllers["auth"] = startAuthController
+	controllers["policy"] = startPolicyController
 	return controllers
 }
 

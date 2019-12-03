@@ -31,7 +31,7 @@ import (
 // AddRolePolicies to add some policies into role.
 func (pe *PolicyEnforcer) AddRolePolicies(roleID string, policyIDs []string) error {
 	for _, pid := range policyIDs {
-		if _, err := pe.enforcer.AddGroupingPolicySafe(roleID, pid); err != nil {
+		if _, err := pe.Enforcer.AddGroupingPolicy(roleID, pid); err != nil {
 			log.Error("add new policy to role failed", log.Any("policy", pid), log.String("role", roleID), log.Err(err))
 			return err
 		}
@@ -43,7 +43,7 @@ func (pe *PolicyEnforcer) AddRolePolicies(roleID string, policyIDs []string) err
 // RemoveRolePolicies to remove some policy from role.
 func (pe *PolicyEnforcer) RemoveRolePolicies(roleID string, policyIDs []string) error {
 	for _, id := range policyIDs {
-		if _, err := pe.enforcer.RemoveFilteredGroupingPolicySafe(idIndex, roleID, id); err != nil {
+		if _, err := pe.Enforcer.RemoveFilteredGroupingPolicy(idIndex, roleID, id); err != nil {
 			log.Error("remove policy from role failed", log.Any("policy", id), log.String("role", roleID), log.Err(err))
 			return err
 		}
@@ -60,7 +60,7 @@ func (pe *PolicyEnforcer) ListRolePolicies(tenantID, roleID string) (policyIDs [
 		}
 	}()
 
-	rules := pe.enforcer.GetFilteredGroupingPolicy(idIndex, roleID)
+	rules := pe.Enforcer.GetFilteredGroupingPolicy(idIndex, roleID)
 	log.Debugf("Get grouping rules role: %s, %v", roleID, rules)
 	for _, rule := range rules {
 		if parseTenantID(rule[1]) == tenantID {
@@ -82,7 +82,7 @@ func (pe *PolicyEnforcer) ListUserRoles(tenantID, userName string) (roleIDs []st
 	}()
 
 	// will get policies and roles that a user has, filter roles.
-	roles := pe.enforcer.GetRolesForUser(keyUser(tenantID, userName))
+	roles, _ := pe.Enforcer.GetRolesForUser(keyUser(tenantID, userName))
 	log.Debugf("Get policies or roles for user: %s, %v", userName, roles)
 	for _, role := range roles {
 		if parseTenantID(role) == tenantID {
@@ -103,7 +103,7 @@ func (pe *PolicyEnforcer) DeleteRole(roleID string) (err error) {
 		}
 	}()
 	// Delete role will remove policy and role inheritance
-	pe.enforcer.DeleteRole(roleID)
+	pe.Enforcer.DeleteRole(roleID)
 
 	return err
 }
@@ -167,14 +167,14 @@ func (pe *PolicyEnforcer) syncRole(id string) error {
 
 	// Todo check user exists with 3rd idp
 	// Remove user rule if not exists, comment it to support 3rd idp
-	//userRules := pe.enforcer.GetFilteredGroupingPolicy(idIndex+1, id)
+	//userRules := pe.Enforcer.GetFilteredGroupingPolicy(idIndex+1, id)
 	//for _, rule := range userRules {
 	//	if strings.HasPrefix(rule[0], types.UserPrefix) {
 	//		userName := splitUserPrefix(tenantID, rule[0])
 	//		_, err := pe.registry.LocalIdentityStorage().Get(tenantID, userName)
 	//		if err != nil && err == etcd.ErrNotFound {
 	//			log.Info("User is not exists, unbind it", log.Strings("rule", rule))
-	//			if _, err := pe.enforcer.RemoveFilteredGroupingPolicySafe(idIndex, rule...); err != nil {
+	//			if _, err := pe.Enforcer.RemoveFilteredGroupingPolicy(idIndex, rule...); err != nil {
 	//				log.Errorf("sync role failed: %+v", err)
 	//				return err
 	//			}
@@ -188,7 +188,7 @@ func (pe *PolicyEnforcer) syncRole(id string) error {
 // listRoleIDs returns all roles id in casbin.
 func (pe *PolicyEnforcer) listRoleIDs(tenantID string) ([]string, error) {
 	idSets := sets.NewString()
-	rules := pe.enforcer.GetAllRoles()
+	rules := pe.Enforcer.GetAllRoles()
 
 	for _, rule := range rules {
 		if strings.HasPrefix(rule, types.RoleIDPrefix) {

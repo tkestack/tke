@@ -20,8 +20,9 @@ package policy
 
 import (
 	"fmt"
-	"github.com/pborman/uuid"
 	"time"
+
+	"github.com/pborman/uuid"
 
 	util2 "tkestack.io/tke/pkg/util"
 
@@ -64,7 +65,7 @@ type Service struct {
 // NewPolicyService creates a new policy service object
 func NewPolicyService(registry *registry.Registry, policyEnforcer *enforcer.PolicyEnforcer) *Service {
 	policyEnforcer.StartSyncPolicy()
-	return &Service{store: registry.PolicyStorage(), identityStorage: registry.LocalIdentityStorage(), policyEnforcer: policyEnforcer}
+	return &Service{store: nil, identityStorage: registry.LocalIdentityStorage(), policyEnforcer: policyEnforcer}
 }
 
 // CreatePolicy to create a new policy.
@@ -76,11 +77,13 @@ func (s *Service) CreatePolicy(policyCreate *types.Policy, attachUsers []string)
 	if err := s.store.Create(policyCreate); err != nil {
 		return nil, err
 	}
+	//
+	//err := s.policyEnforcer.AddPolicy(policyCreate)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	err := s.policyEnforcer.AddPolicy(policyCreate)
-	if err != nil {
-		return nil, err
-	}
+	var err error
 
 	if len(attachUsers) == 0 && specialServices.Has(policyCreate.Service) {
 		err = s.policyEnforcer.AddUsersPolicy(policyCreate.TenantID, policyCreate.ID, attachUsers)
@@ -166,10 +169,10 @@ func (s *Service) DeletePolicy(tenantID, id string) error {
 		return err
 	}
 
-	err := s.policyEnforcer.DeletePolicy(id)
-	if err != nil {
-		return err
-	}
+	//err := s.policyEnforcer.DeletePolicy(id)
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }

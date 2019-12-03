@@ -48,7 +48,6 @@ func NewStorage(optsGetter generic.RESTOptionsGetter) *Storage {
 		PredicateFunc:            rule.MatchRule,
 
 		CreateStrategy: strategy,
-		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
 	options := &generic.StoreOptions{

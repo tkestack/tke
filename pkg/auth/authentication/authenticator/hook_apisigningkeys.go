@@ -41,7 +41,7 @@ type apiSigningKeysHookHandler struct {
 	authClient authinternalclient.AuthInterface
 }
 
-// NewAPISigningKeyHookHandler creates a new authnHookHandler object.
+// NewAPISigningKeyHookHandler creates a new apiSigningKeysHookHandler object.
 func NewAPISigningKeyHookHandler(authClient authinternalclient.AuthInterface) genericapiserver.PostStartHookProvider {
 	return &apiSigningKeysHookHandler{
 		authClient: authClient,

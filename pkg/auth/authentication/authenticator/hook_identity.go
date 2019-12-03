@@ -38,7 +38,7 @@ type adminIdentityHookHandler struct {
 	password string
 }
 
-// NewAPISigningKeyHookHandler creates a new authnHookHandler object.
+// NewAdminIdentityHookHandler creates a new adminIdentityHookHandler object.
 func NewAdminIdentityHookHandler(authClient authinternalclient.AuthInterface, tenantID, userName, password string) genericapiserver.PostStartHookProvider {
 	return &adminIdentityHookHandler{
 		authClient: authClient,

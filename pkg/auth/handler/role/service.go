@@ -20,8 +20,9 @@ package role
 
 import (
 	"fmt"
-	"github.com/pborman/uuid"
 	"time"
+
+	"github.com/pborman/uuid"
 
 	"tkestack.io/tke/pkg/auth/util"
 
@@ -47,7 +48,7 @@ type Service struct {
 // NewRoleService creates a new role service object
 func NewRoleService(registry *registry.Registry, policyEnforcer *enforcer.PolicyEnforcer) *Service {
 	policyEnforcer.StartSyncRoles()
-	return &Service{store: registry.RoleStorage(), policyStore: registry.PolicyStorage(), policyEnforcer: policyEnforcer}
+	return &Service{store: registry.RoleStorage(), policyStore: nil, policyEnforcer: policyEnforcer}
 }
 
 // CreateRole to create a new role with policies.

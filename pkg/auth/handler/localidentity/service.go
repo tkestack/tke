@@ -20,10 +20,11 @@ package localidentity
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/pborman/uuid"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"time"
 	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	policyService "tkestack.io/tke/pkg/auth/handler/policy"
 	"tkestack.io/tke/pkg/auth/registry"
@@ -53,7 +54,7 @@ type Service struct {
 func NewLocalIdentityService(registry *registry.Registry, policyEnforcer *enforcer.PolicyEnforcer) *Service {
 	return &Service{
 		store:          registry.LocalIdentityStorage(),
-		policyStore:    registry.PolicyStorage(),
+		policyStore:    nil,
 		roleStore:      registry.RoleStorage(),
 		policyEnforcer: policyEnforcer,
 	}

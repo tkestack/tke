@@ -19,18 +19,24 @@
 package enforcer
 
 import (
-	"github.com/casbin/casbin"
+	"time"
+
+	"github.com/casbin/casbin/v2"
 	"tkestack.io/tke/pkg/auth/registry"
 )
 
-// PolicyEnforcer contains a casbin enforcer to handle policy crud with the casbin
+// PolicyEnforcer contains a casbin Enforcer to handle policy crud with the casbin
 type PolicyEnforcer struct {
-	enforcer *casbin.SyncedEnforcer
+	Enforcer *casbin.SyncedEnforcer
 	registry *registry.Registry
 }
 
-// NewPolicyEnforcer creates a policy enforcer object with casbin enforcer.
+// NewPolicyEnforcer creates a policy Enforcer object with casbin Enforcer.
 func NewPolicyEnforcer(enforcer *casbin.SyncedEnforcer, registry *registry.Registry) *PolicyEnforcer {
-	pe := &PolicyEnforcer{enforcer: enforcer, registry: registry}
+	pe := &PolicyEnforcer{Enforcer: enforcer, registry: registry}
 	return pe
+}
+
+func (pe *PolicyEnforcer) StartAutoLoadPolicy(duration time.Duration) {
+	pe.Enforcer.StartAutoLoadPolicy(duration)
 }

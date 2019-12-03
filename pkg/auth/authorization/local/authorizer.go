@@ -22,7 +22,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/casbin/casbin"
+	"github.com/casbin/casbin/v2"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/filter"
@@ -70,8 +70,15 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	log.Debug("Authorize get user perms", log.Any("user perm", a.enforcer.GetImplicitPermissionsForUser(fmt.Sprintf("%s%s-%s", types.UserPrefix, tenantID, subject))))
-	if !a.enforcer.Enforce(fmt.Sprintf("%s%s-%s", types.UserPrefix, tenantID, subject), resource, action) {
+	perms, _ := a.enforcer.GetImplicitPermissionsForUser(fmt.Sprintf("%s%s-%s", types.UserPrefix, tenantID, subject))
+
+	log.Debug("Authorize get user perms", log.Any("user perm", perms))
+	allow, err := a.enforcer.Enforce(fmt.Sprintf("%s%s-%s", types.UserPrefix, tenantID, subject), resource, action)
+	if err != nil {
+		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
+		return authorizer.DecisionDeny, "", err
+	}
+	if !allow {
 		log.Info("Casbin enforcer: ", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "false"))
 		return authorizer.DecisionDeny, "permission not verify", nil
 	}

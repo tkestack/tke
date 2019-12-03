@@ -18,7 +18,6 @@
 
 package rule
 
-
 import (
 	"context"
 	"fmt"
@@ -34,11 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	"tkestack.io/tke/api/auth"
-	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/util/log"
-
 	namesutil "tkestack.io/tke/pkg/util/names"
-
 )
 
 // Strategy implements verification logic for rule.
@@ -54,22 +49,14 @@ func NewStrategy() *Strategy {
 }
 
 // DefaultGarbageCollectionRule returns the default garbage collection behavior.
-func (Strategy) DefaultGarbageCollectionRule(ctx context.Context) rest.GarbageCollectionRule {
+func (Strategy) DefaultGarbageCollectionRule(ctx context.Context) rest.GarbageCollectionPolicy {
 	return rest.Unsupported
 }
 
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if len(tenantID) != 0 {
-		oldRule := old.(*auth.Rule)
-		rule, _ := obj.(*auth.Rule)
-		if oldRule.Spec.TenantID != tenantID {
-			log.Panic("Unauthorized update rule information", log.String("oldTenantID", oldRule.Spec.TenantID), log.String("newTenantID", rule.Spec.TenantID), log.String("userTenantID", tenantID))
-		}
-		rule.Spec.TenantID = tenantID
-	}
+	return
 }
 
 // NamespaceScoped is false for policies.
@@ -81,14 +68,6 @@ func (Strategy) NamespaceScoped() bool {
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	rule, _ := obj.(*auth.Rule)
-	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if len(tenantID) != 0 {
-		rule.Spec.TenantID = tenantID
-	}
-
-	if rule.Spec.Username == "" {
-		rule.Spec.Username = username
-	}
 
 	if rule.Name == "" && rule.GenerateName == "" {
 		rule.GenerateName = "rul-"
@@ -133,12 +112,18 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 // MatchRule returns a generic matcher for a given label and field selector.
 func MatchRule(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{
-		Label:       label,
-		Field:       field,
-		GetAttrs:    GetAttrs,
+		Label:    label,
+		Field:    field,
+		GetAttrs: GetAttrs,
 		IndexFields: []string{
-			"spec.tenantID",
-			"spec.username",
+			"spec.ptype",
+			"spec.v0",
+			"spec.v1",
+			"spec.v2",
+			"spec.v3",
+			"spec.v4",
+			"spec.v5",
+			"spec.v6",
 		},
 	}
 }
@@ -147,9 +132,14 @@ func MatchRule(label labels.Selector, field fields.Selector) storage.SelectionPr
 func ToSelectableFields(rule *auth.Rule) fields.Set {
 	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&rule.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID": rule.Spec.TenantID,
-		"spec.username": rule.Spec.Username,
+		"spec.ptype": rule.Spec.PType,
+		"spec.v0":    rule.Spec.V0,
+		"spec.v1":    rule.Spec.V1,
+		"spec.v2":    rule.Spec.V2,
+		"spec.v3":    rule.Spec.V3,
+		"spec.v4":    rule.Spec.V4,
+		"spec.v5":    rule.Spec.V5,
+		"spec.v6":    rule.Spec.V6,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
-

@@ -28,6 +28,8 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 	funcs := []func(scheme *runtime.Scheme) error{
 		AddFieldLabelConversionsForLocalIdentify,
 		AddFieldLabelConversionsForAPIKey,
+		AddFieldLabelConversionsForPolicy,
+		AddFieldLabelConversionsForRule,
 	}
 	for _, f := range funcs {
 		if err := f(scheme); err != nil {
@@ -112,4 +114,3 @@ func AddFieldLabelConversionsForRule(scheme *runtime.Scheme) error {
 			}
 		})
 }
-

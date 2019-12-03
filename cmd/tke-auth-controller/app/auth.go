@@ -19,30 +19,33 @@
 package app
 
 import (
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
 	"time"
-	"tkestack.io/tke/api/auth/v1"
-	"tkestack.io/tke/pkg/auth/controller/apikey"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	v1 "tkestack.io/tke/api/auth/v1"
+	"tkestack.io/tke/pkg/auth/controller/policy"
 )
 
 const (
-	apikeySyncPeriod      = 5 * time.Minute
-	concurrentApiKeySyncs = 10
+	policySyncPeriod      = 5 * time.Minute
+	concurrentPolicySyncs = 10
 )
 
-func startAuthController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "apikeys"}] {
+func startPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "policies"}] {
 		return nil, false, nil
 	}
 
-	ctrl := apikey.NewController(
-		ctx.ClientBuilder.ClientOrDie("auth-controller"),
-		ctx.InformerFactory.Auth().V1().APIKeys(),
-		apikeySyncPeriod,
-		)
+	ctrl := policy.NewController(
+		ctx.ClientBuilder.ClientOrDie("policy-controller"),
+		ctx.InformerFactory.Auth().V1().Policies(),
+		ctx.InformerFactory.Auth().V1().Rules(),
+		policySyncPeriod,
+		v1.PolicyFinalize,
+	)
 
-	go ctrl.Run(concurrentApiKeySyncs, ctx.Stop)
+	go ctrl.Run(concurrentPolicySyncs, ctx.Stop)
 
 	return nil, true, nil
 }

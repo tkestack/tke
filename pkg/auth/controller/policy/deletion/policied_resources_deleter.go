@@ -20,87 +20,91 @@ package deletion
 
 import (
 	"fmt"
+
+	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"tkestack.io/tke/api/auth/v1"
-	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
-	authUtil "tkestack.io/tke/pkg/auth/util"
+	v1 "tkestack.io/tke/api/auth/v1"
+	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 // PoliciedResourcesDeleterInterface to delete a policy with all resources in
 // it.
 type PoliciedResourcesDeleterInterface interface {
-	Delete(projectName string) error
+	Delete(policyName string) error
 }
 
 // NewPoliciedResourcesDeleter to create the policiedResourcesDeleter that
 // implement the PoliciedResourcesDeleterInterface by given client and
 // configure.
-func NewPoliciedResourcesDeleter(projectClient v1clientset.ProjectInterface,
-	businessClient v1clientset.BusinessV1Interface,
+func NewPoliciedResourcesDeleter(pilicyClient v1clientset.PolicyInterface,
+	authClient v1clientset.AuthV1Interface,
+	enforcer *casbin.SyncedEnforcer,
 	finalizerToken v1.FinalizerName,
-	deleteProjectWhenDone bool) PoliciedResourcesDeleterInterface {
+	deletePolicyWhenDone bool) PoliciedResourcesDeleterInterface {
 	d := &policiedResourcesDeleter{
-		projectClient:         projectClient,
-		businessClient:        businessClient,
-		finalizerToken:        finalizerToken,
-		deleteProjectWhenDone: deleteProjectWhenDone,
+		policyClient:         pilicyClient,
+		authClient:           authClient,
+		enforcer:             enforcer,
+		finalizerToken:       finalizerToken,
+		deletePolicyWhenDone: deletePolicyWhenDone,
 	}
 	return d
 }
 
 var _ PoliciedResourcesDeleterInterface = &policiedResourcesDeleter{}
 
-// policiedResourcesDeleter is used to delete all resources in a given project.
+// policiedResourcesDeleter is used to delete all resources in a given policy.
 type policiedResourcesDeleter struct {
-	// Client to manipulate the project.
-	projectClient  v1clientset.ProjectInterface
-	businessClient v1clientset.AU
-	// The finalizer token that should be removed from the project
-	// when all resources in that project have been deleted.
+	// Client to manipulate the policy.
+	policyClient v1clientset.PolicyInterface
+	authClient   v1clientset.AuthV1Interface
+
+	enforcer *casbin.SyncedEnforcer
+	// The finalizer token that should be removed from the policy
+	// when all resources in that policy have been deleted.
 	finalizerToken v1.FinalizerName
-	// Also delete the project when all resources in the project have been deleted.
-	deleteProjectWhenDone bool
+	// Also delete the policy when all resources in the policy have been deleted.
+	deletePolicyWhenDone bool
 }
 
-// Delete deletes all resources in the given project.
+// Delete deletes all resources in the given policy.
 // Before deleting resources:
 // * It ensures that deletion timestamp is set on the
-//   project (does nothing if deletion timestamp is missing).
-// * Verifies that the project is in the "terminating" phase
-//   (updates the project phase if it is not yet marked terminating)
+//   policy (does nothing if deletion timestamp is missing).
+// * Verifies that the policy is in the "terminating" phase
+//   (updates the policy phase if it is not yet marked terminating)
 // After deleting the resources:
-// * It removes finalizer token from the given project.
-// * Deletes the project if deleteProjectWhenDone is true.
+// * It removes finalizer token from the given policy.
+// * Deletes the policy if deletePolicyWhenDone is true.
 //
 // Returns an error if any of those steps fail.
 // Returns ResourcesRemainingError if it deleted some resources but needs
 // to wait for them to go away.
 // Caller is expected to keep calling this until it succeeds.
-func (d *policiedResourcesDeleter) Delete(projectName string) error {
-	// Multiple controllers may edit a project during termination
-	// first get the latest state of the project before proceeding
-	// if the project was deleted already, don't do anything
-	project, err := d.projectClient.Get(projectName, metav1.GetOptions{})
+func (d *policiedResourcesDeleter) Delete(policyName string) error {
+	// Multiple controllers may edit a policy during termination
+	// first get the latest state of the policy before proceeding
+	// if the policy was deleted already, don't do anything
+	policy, err := d.policyClient.Get(policyName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
 		}
 		return err
 	}
-	if project.DeletionTimestamp == nil {
+	if policy.DeletionTimestamp == nil {
 		return nil
 	}
 
-	log.Infof("project controller - syncProject - project: %s, finalizerToken: %s", project.Name, d.finalizerToken)
+	log.Infof("policy controller - syncPolicy - policy: %s, finalizerToken: %s", policy.Name, d.finalizerToken)
 
-	// ensure that the status is up to date on the project
-	// if we get a not found error, we assume the project is truly gone
-	project, err = d.retryOnConflictError(project, d.updateProjectStatusFunc)
+	// ensure that the status is up to date on the policy
+	// if we get a not found error, we assume the policy is truly gone
+	policy, err = d.retryOnConflictError(policy, d.updatePolicyStatusFunc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -108,27 +112,27 @@ func (d *policiedResourcesDeleter) Delete(projectName string) error {
 		return err
 	}
 
-	// the latest view of the project asserts that project is no longer deleting..
-	if project.DeletionTimestamp.IsZero() {
+	// the latest view of the policy asserts that policy is no longer deleting..
+	if policy.DeletionTimestamp.IsZero() {
 		return nil
 	}
 
-	// Delete the project if it is already finalized.
-	if d.deleteProjectWhenDone && finalized(project) {
-		return d.deleteProject(project)
+	// Delete the policy if it is already finalized.
+	if d.deletePolicyWhenDone && finalized(policy) {
+		return d.deletePolicy(policy)
 	}
 
 	// there may still be content for us to remove
-	err = d.deleteAllContent(project)
+	err = d.deleteAllContent(policy)
 	if err != nil {
 		return err
 	}
 
 	// we have removed content, so mark it finalized by us
-	project, err = d.retryOnConflictError(project, d.finalizeProject)
+	policy, err = d.retryOnConflictError(policy, d.finalizePolicy)
 	if err != nil {
 		// in normal practice, this should not be possible, but if a deployment is running
-		// two controllers to do project deletion that share a common finalizer token it's
+		// two controllers to do policy deletion that share a common finalizer token it's
 		// possible that a not found could occur since the other controller would have finished the delete.
 		if errors.IsNotFound(err) {
 			return nil
@@ -137,121 +141,122 @@ func (d *policiedResourcesDeleter) Delete(projectName string) error {
 	}
 
 	// Check if we can delete now.
-	if d.deleteProjectWhenDone && finalized(project) {
-		return d.deleteProject(project)
+	if d.deletePolicyWhenDone && finalized(policy) {
+		return d.deletePolicy(policy)
 	}
+
 	return nil
 }
 
-// Deletes the given project.
-func (d *policiedResourcesDeleter) deleteProject(project *v1.Project) error {
+// Deletes the given policy.
+func (d *policiedResourcesDeleter) deletePolicy(policy *v1.Policy) error {
 	var opts *metav1.DeleteOptions
-	uid := project.UID
+	uid := policy.UID
 	if len(uid) > 0 {
 		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.projectClient.Delete(project.Name, opts)
+	log.Info("policy", log.Any("policy", policy))
+	err := d.policyClient.Delete(policy.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
+		log.Error("error", log.Err(err))
 		return err
 	}
 	return nil
 }
 
-// updateProjectFunc is a function that makes an update to a project
-type updateProjectFunc func(project *v1.Project) (*v1.Project, error)
+// updatePolicyFunc is a function that makes an update to a policy
+type updatePolicyFunc func(policy *v1.Policy) (*v1.Policy, error)
 
 // retryOnConflictError retries the specified fn if there was a conflict error
 // it will return an error if the UID for an object changes across retry operations.
 // TODO RetryOnConflict should be a generic concept in client code
-func (d *policiedResourcesDeleter) retryOnConflictError(project *v1.Project, fn updateProjectFunc) (result *v1.Project, err error) {
-	latestProject := project
+func (d *policiedResourcesDeleter) retryOnConflictError(policy *v1.Policy, fn updatePolicyFunc) (result *v1.Policy, err error) {
+	latestPolicy := policy
 	for {
-		result, err = fn(latestProject)
+		result, err = fn(latestPolicy)
 		if err == nil {
 			return result, nil
 		}
 		if !errors.IsConflict(err) {
 			return nil, err
 		}
-		prevProject := latestProject
-		latestProject, err = d.projectClient.Get(latestProject.Name, metav1.GetOptions{})
+		prevPolicy := latestPolicy
+		latestPolicy, err = d.policyClient.Get(latestPolicy.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
-		if prevProject.UID != latestProject.UID {
-			return nil, fmt.Errorf("project uid has changed across retries")
+		if prevPolicy.UID != latestPolicy.UID {
+			return nil, fmt.Errorf("policy uid has changed across retries")
 		}
 	}
 }
 
-// updateProjectStatusFunc will verify that the status of the project is correct
-func (d *policiedResourcesDeleter) updateProjectStatusFunc(project *v1.Project) (*v1.Project, error) {
-	if project.DeletionTimestamp.IsZero() || project.Status.Phase == v1.ProjectTerminating {
-		return project, nil
+// updatePolicyStatusFunc will verify that the status of the policy is correct
+func (d *policiedResourcesDeleter) updatePolicyStatusFunc(policy *v1.Policy) (*v1.Policy, error) {
+	if policy.DeletionTimestamp.IsZero() || policy.Status.Phase == v1.PolicyTerminating {
+		return policy, nil
 	}
-	newProject := v1.Project{}
-	newProject.ObjectMeta = project.ObjectMeta
-	newProject.Status = project.Status
-	newProject.Status.Phase = v1.ProjectTerminating
-	return d.projectClient.UpdateStatus(&newProject)
+	newPolicy := v1.Policy{}
+	newPolicy.ObjectMeta = policy.ObjectMeta
+	newPolicy.Status = policy.Status
+	newPolicy.Status.Phase = v1.PolicyTerminating
+	return d.policyClient.UpdateStatus(&newPolicy)
 }
 
-// finalized returns true if the project.Spec.Finalizers is an empty list
-func finalized(project *v1.Project) bool {
-	return len(project.Spec.Finalizers) == 0
+// finalized returns true if the policy.Spec.Finalizers is an empty list
+func finalized(policy *v1.Policy) bool {
+	return len(policy.Spec.Finalizers) == 0
 }
 
-// finalizeProject removes the specified finalizerToken and finalizes the project
-func (d *policiedResourcesDeleter) finalizeProject(project *v1.Project) (*v1.Project, error) {
-	projectFinalize := v1.Project{}
-	projectFinalize.ObjectMeta = project.ObjectMeta
-	projectFinalize.Spec = project.Spec
+// finalizePolicy removes the specified finalizerToken and finalizes the policy
+func (d *policiedResourcesDeleter) finalizePolicy(policy *v1.Policy) (*v1.Policy, error) {
+	policyFinalize := v1.Policy{}
+	policyFinalize.ObjectMeta = policy.ObjectMeta
+	policyFinalize.Spec = policy.Spec
 	finalizerSet := sets.NewString()
-	for i := range project.Spec.Finalizers {
-		if project.Spec.Finalizers[i] != d.finalizerToken {
-			finalizerSet.Insert(string(project.Spec.Finalizers[i]))
+	for i := range policy.Spec.Finalizers {
+		if policy.Spec.Finalizers[i] != d.finalizerToken {
+			finalizerSet.Insert(string(policy.Spec.Finalizers[i]))
 		}
 	}
-	projectFinalize.Spec.Finalizers = make([]v1.FinalizerName, 0, len(finalizerSet))
+	policyFinalize.Spec.Finalizers = make([]v1.FinalizerName, 0, len(finalizerSet))
 	for _, value := range finalizerSet.List() {
-		projectFinalize.Spec.Finalizers = append(projectFinalize.Spec.Finalizers, v1.FinalizerName(value))
+		policyFinalize.Spec.Finalizers = append(policyFinalize.Spec.Finalizers, v1.FinalizerName(value))
 	}
 
-	project = &v1.Project{}
-	err := d.businessClient.RESTClient().Put().
-		Resource("projects").
-		Name(projectFinalize.Name).
+	policy = &v1.Policy{}
+	err := d.authClient.RESTClient().Put().
+		Resource("policies").
+		Name(policyFinalize.Name).
 		SubResource("finalize").
-		Body(&projectFinalize).
+		Body(&policyFinalize).
 		Do().
-		Into(project)
+		Into(policy)
 
 	if err != nil {
 		// it was removed already, so life is good
 		if errors.IsNotFound(err) {
-			return project, nil
+			return policy, nil
 		}
 	}
-	return project, err
+	return policy, err
 }
 
-type deleteResourceFunc func(deleter *policiedResourcesDeleter, project *v1.Project) error
+type deleteResourceFunc func(deleter *policiedResourcesDeleter, policy *v1.Policy) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
-	deleteNamespace,
-	deleteChildProject,
-	recalculateParentProjectUsed,
+	deleteRelatedRules,
 }
 
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
-func (d *policiedResourcesDeleter) deleteAllContent(project *v1.Project) error {
-	log.Debug("Project controller - deleteAllContent", log.String("projectName", project.ObjectMeta.Name))
+func (d *policiedResourcesDeleter) deleteAllContent(policy *v1.Policy) error {
+	log.Debug("Policy controller - deleteAllContent", log.String("policyName", policy.ObjectMeta.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
-		err := deleteFunc(d, project)
+		err := deleteFunc(d, policy)
 		if err != nil {
 			// If there is an error, hold on to it but proceed with all the remaining resource.
 			errs = append(errs, err)
@@ -262,66 +267,12 @@ func (d *policiedResourcesDeleter) deleteAllContent(project *v1.Project) error {
 		return utilerrors.NewAggregate(errs)
 	}
 
-	log.Debug("Project controller - deletedAllContent", log.String("projectName", project.ObjectMeta.Name))
+	log.Debug("Policy controller - deletedAllContent", log.String("policyName", policy.ObjectMeta.Name))
 	return nil
 }
 
-func recalculateParentProjectUsed(deleter *policiedResourcesDeleter, project *v1.Project) error {
-	log.Debug("Project controller - recalculateParentProjectUsed", log.String("projectName", project.ObjectMeta.Name))
-
-	if project.Spec.ParentProjectName != "" {
-		parentProject, err := deleter.businessClient.Projects().Get(project.Spec.ParentProjectName, metav1.GetOptions{})
-		if err != nil {
-			log.Error("Failed to get the parent project", log.String("projectName", project.ObjectMeta.Name), log.String("parentProjectName", project.Spec.ParentProjectName), log.Err(err))
-			return err
-		}
-		calculatedChildProjectNames := sets.NewString(parentProject.Status.CalculatedChildProjects...)
-		if calculatedChildProjectNames.Has(project.ObjectMeta.Name) {
-			calculatedChildProjectNames.Delete(project.ObjectMeta.Name)
-			parentProject.Status.CalculatedChildProjects = calculatedChildProjectNames.List()
-			if parentProject.Status.Clusters != nil {
-				authUtil.SubClusterHardFromUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
-			}
-			_, err := deleter.businessClient.Projects().Update(parentProject)
-			if err != nil {
-				log.Error("Failed to update the parent project status", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func deleteChildProject(deleter *policiedResourcesDeleter, project *v1.Project) error {
-	log.Debug("Project controller - deleteChildProject", log.String("projectName", project.ObjectMeta.Name))
-
-	childProjectList, err := deleter.businessClient.Projects().List(metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("spec.parentProjectName", project.ObjectMeta.Name).String(),
-	})
-	if err != nil {
-		log.Error("Project controller - failed to list child projects", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
-		return err
-	}
-	for _, childProject := range childProjectList.Items {
-		background := metav1.DeletePropagationBackground
-		deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-		if err := deleter.businessClient.Projects().Delete(childProject.ObjectMeta.Name, deleteOpt); err != nil {
-			log.Error("Project controller - failed to delete child project", log.String("projectName", project.ObjectMeta.Name), log.String("childProjectName", childProject.ObjectMeta.Name), log.Err(err))
-			return err
-		}
-	}
-	return nil
-}
-
-func deleteNamespace(deleter *policiedResourcesDeleter, project *v1.Project) error {
-	log.Debug("Project controller - deleteNamespace", log.String("projectName", project.ObjectMeta.Name))
-
-	background := metav1.DeletePropagationBackground
-	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-	if err := deleter.businessClient.Namespaces(project.ObjectMeta.Name).DeleteCollection(deleteOpt, metav1.ListOptions{}); err != nil {
-		log.Error("Project controller - failed to delete namespace collections", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
-		return err
-	}
-
-	return nil
+func deleteRelatedRules(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
+	log.Debug("Policy controller - deleteRelatedRules", log.String("policyName", policy.ObjectMeta.Name))
+	_, err := deleter.enforcer.DeleteRole(policy.Name)
+	return err
 }

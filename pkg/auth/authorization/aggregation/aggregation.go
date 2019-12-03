@@ -19,7 +19,7 @@
 package aggregation
 
 import (
-	"github.com/casbin/casbin"
+	"github.com/casbin/casbin/v2"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/union"
 	"k8s.io/apiserver/plugin/pkg/authorizer/webhook"

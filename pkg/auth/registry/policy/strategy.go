@@ -18,39 +18,41 @@
 
 package policy
 
-
 import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/apiserver/pkg/storage/names"
-
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
-
+	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/util/log"
 
 	namesutil "tkestack.io/tke/pkg/util/names"
-
 )
 
 // Strategy implements verification logic for policy.
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
+
+	enforcer *enforcer.PolicyEnforcer
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating policy objects.
-func NewStrategy() *Strategy {
-	return &Strategy{auth.Scheme, namesutil.Generator}
+func NewStrategy(enforcer *enforcer.PolicyEnforcer) *Strategy {
+	return &Strategy{
+		ObjectTyper:   auth.Scheme,
+		NameGenerator: namesutil.Generator,
+		enforcer:      enforcer}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -77,6 +79,11 @@ func (Strategy) NamespaceScoped() bool {
 	return false
 }
 
+// Export strips fields that can not be set by the user.
+func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) error {
+	return nil
+}
+
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
@@ -93,6 +100,41 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if policy.Name == "" && policy.GenerateName == "" {
 		policy.GenerateName = "pol-"
 	}
+
+	policy.Status.Phase = auth.PolicyActive
+
+	policy.Spec.Finalizers = []auth.FinalizerName{
+		auth.PolicyFinalize,
+	}
+}
+
+// AfterCreate implements a further operation to run after a resource is
+// created and before it is decorated, optional.
+func (s *Strategy) AfterCreate(obj runtime.Object) error {
+	policy, _ := obj.(*auth.Policy)
+
+	if err := func() error {
+		return s.enforcer.AddPolicy(policy)
+	}(); err != nil {
+		return fmt.Errorf("failed to create policy '%s', for '%s'", policy.Name, err)
+	}
+
+	return nil
+}
+
+// AfterDelete implements a further operation to run after a resource
+// has been deleted.
+func (s *Strategy) AfterDelete(obj runtime.Object) error {
+	policy, _ := obj.(*auth.Policy)
+
+	if err := func() error {
+		//	return s.enforcer.DeletePolicy(policy)
+		return nil
+	}(); err != nil {
+		return fmt.Errorf("failed to delete policy '%s', for '%s'", policy.Name, err)
+	}
+
+	return nil
 }
 
 // Validate validates a new policy.
@@ -133,9 +175,9 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 // MatchPolicy returns a generic matcher for a given label and field selector.
 func MatchPolicy(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{
-		Label:       label,
-		Field:       field,
-		GetAttrs:    GetAttrs,
+		Label:    label,
+		Field:    field,
+		GetAttrs: GetAttrs,
 		IndexFields: []string{
 			"spec.tenantID",
 			"spec.username",
@@ -153,3 +195,60 @@ func ToSelectableFields(policy *auth.Policy) fields.Set {
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
 
+// StatusStrategy implements verification logic for status of Machine.
+type StatusStrategy struct {
+	*Strategy
+}
+
+var _ rest.RESTUpdateStrategy = &StatusStrategy{}
+
+// NewStatusStrategy create the StatusStrategy object by given strategy.
+func NewStatusStrategy(strategy *Strategy) *StatusStrategy {
+	return &StatusStrategy{strategy}
+}
+
+// PrepareForUpdate is invoked on update before validation to normalize
+// the object.  For example: remove fields that are not to be persisted,
+// sort order-insensitive list fields, etc.  This should not remove fields
+// whose presence would be considered a validation error.
+func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	newPolicy := obj.(*auth.Policy)
+	oldPolicy := old.(*auth.Policy)
+	newPolicy.Spec = oldPolicy.Spec
+}
+
+// ValidateUpdate is invoked after default fields in the object have been
+// filled in before the object is persisted.  This method should not mutate
+// the object.
+func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return nil
+}
+
+// FinalizeStrategy implements finalizer logic for Machine.
+type FinalizeStrategy struct {
+	*Strategy
+}
+
+var _ rest.RESTUpdateStrategy = &FinalizeStrategy{}
+
+// NewFinalizerStrategy create the FinalizeStrategy object by given strategy.
+func NewFinalizerStrategy(strategy *Strategy) *FinalizeStrategy {
+	return &FinalizeStrategy{strategy}
+}
+
+// PrepareForUpdate is invoked on update before validation to normalize
+// the object.  For example: remove fields that are not to be persisted,
+// sort order-insensitive list fields, etc.  This should not remove fields
+// whose presence would be considered a validation error.
+func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	newPolicy := obj.(*auth.Policy)
+	oldPolicy := old.(*auth.Policy)
+	newPolicy.Status = oldPolicy.Status
+}
+
+// ValidateUpdate is invoked after default fields in the object have been
+// filled in before the object is persisted.  This method should not mutate
+// the object.
+func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return nil
+}

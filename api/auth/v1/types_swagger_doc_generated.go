@@ -1,17 +1,19 @@
 /*
- * Copyright 2019 THL A29 Limited, a Tencent company.
+ * Tencent is pleased to support the open source community by making TKEStack
+ * available.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at
+ *
+ * https://opensource.org/licenses/Apache-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 
 package v1
@@ -107,6 +109,15 @@ func (APISigningKeyList) SwaggerDoc() map[string]string {
 	return map_APISigningKeyList
 }
 
+var map_Binding = map[string]string{
+	"":        "Binding references the objects a policy applies to, but does not contain it.",
+	"subject": "Subjects holds references to the objects the policy applies to.",
+}
+
+func (Binding) SwaggerDoc() map[string]string {
+	return map_Binding
+}
+
 var map_ConfigMap = map[string]string{
 	"":           "ConfigMap holds configuration data for tke to consume.",
 	"data":       "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
@@ -189,8 +200,8 @@ func (PolicySpec) SwaggerDoc() map[string]string {
 }
 
 var map_PolicyStatus = map[string]string{
-	"":      "PolicyStatus represents information about the status of a policy.",
-	"rules": "Rules represents rules that have been saved into the storage.",
+	"":         "PolicyStatus represents information about the status of a policy.",
+	"subjects": "Subjects represents the objects the policy applies to.",
 }
 
 func (PolicyStatus) SwaggerDoc() map[string]string {
@@ -230,6 +241,14 @@ var map_Statement = map[string]string{
 
 func (Statement) SwaggerDoc() map[string]string {
 	return map_Statement
+}
+
+var map_Subject = map[string]string{
+	"": "Subject references a user can specify by id or name.",
+}
+
+func (Subject) SwaggerDoc() map[string]string {
+	return map_Subject
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE

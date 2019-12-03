@@ -19,42 +19,31 @@
 package rule
 
 import (
-	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/auth"
 )
 
-// ValidatePolicyName is a ValidateNameFunc for names that must be a DNS
-// subdomain.
-var ValidatePolicyName = apiMachineryValidation.NameIsDNSLabel
+// ValidateRule tests if required fields in the policy are set.
+func ValidateRule(rule *auth.Rule) field.ErrorList {
+	allErrs := field.ErrorList{}
+	fldStatPath := field.NewPath("spec")
 
-// ValidatePolicy tests if required fields in the policy are set.
-func ValidatePolicy(policy *auth.Policy) field.ErrorList {
-	allErrs := apiMachineryValidation.ValidateObjectMeta(&policy.ObjectMeta, false, ValidatePolicyName, field.NewPath("metadata"))
-
-	fldStatPath := field.NewPath("spec", "statement")
-
-	if len(policy.Spec.Statement.Actions) == 0 {
-		allErrs = append(allErrs, field.Required(fldStatPath.Child("actions"), "must specify actions"))
+	if rule.Spec.PType == "" {
+		allErrs = append(allErrs, field.Required(fldStatPath.Child("ptype"), "must specify ptype"))
 	}
 
-	if len(policy.Spec.Statement.Resources) == 0 {
-		allErrs = append(allErrs, field.Required(fldStatPath.Child("resources"), "must specify resources"))
-	}
-
-	if policy.Spec.Statement.Effect == "" {
-		allErrs = append(allErrs, field.Required(fldStatPath.Child( "effect"), "must specify resources"))
-	} else if policy.Spec.Statement.Effect != auth.Allow && policy.Spec.Statement.Effect != auth.Deny {
-		allErrs = append(allErrs, field.Invalid(fldStatPath.Child( "effect"), policy.Spec.Statement.Effect, "must specify one of: `allow` or `deny`"))
+	if rule.Spec.V0 == "" {
+		allErrs = append(allErrs, field.Required(fldStatPath.Child("v0"), "must specify v0"))
 	}
 
 	return allErrs
 }
 
-// ValidatePolicyUpdate tests if required fields in the policy are set during
+// ValidateRuleUpdate tests if required fields in the policy are set during
 // an update.
-func ValidatePolicyUpdate(policy *auth.Policy, old *auth.Policy) field.ErrorList {
-	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&policy.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidatePolicy(policy)...)
-	return allErrs
+func ValidateRuleUpdate(rule *auth.Rule, old *auth.Rule) field.ErrorList {
+	//allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&policy.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, ValidateRule(rule)...)
+	return nil
 }

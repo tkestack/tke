@@ -26,21 +26,26 @@ import (
 
 // CreateServerChain creates the auth connected via delegation.
 func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, error) {
-	authConfig := createAuthConfig(cfg)
-	authServer, err := CreateAuth(authConfig, genericapiserver.NewEmptyDelegate())
+	apiServerConfig := createAPIServerConfig(cfg)
+	apiServer, err := CreateAPIServer(apiServerConfig, genericapiserver.NewEmptyDelegate())
 	if err != nil {
 		return nil, err
 	}
 
-	return authServer.GenericAPIServer, nil
+	apiServer.GenericAPIServer.AddPostStartHookOrDie("start-auth-api-server-informers", func(context genericapiserver.PostStartHookContext) error {
+		cfg.VersionedSharedInformerFactory.Start(context.StopCh)
+		return nil
+	})
+
+	return apiServer.GenericAPIServer, nil
 }
 
-// CreateAuth creates and wires a workable tke-auth.
-func CreateAuth(authConfig *apiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*apiserver.APIServer, error) {
+// CreateAPIServer creates and wires a workable tke-auth.
+func CreateAPIServer(authConfig *apiserver.Config, delegateAPIServer genericapiserver.DelegationTarget) (*apiserver.APIServer, error) {
 	return authConfig.Complete().New(delegateAPIServer)
 }
 
-func createAuthConfig(cfg *config.Config) *apiserver.Config {
+func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 	return &apiserver.Config{
 		GenericConfig: &genericapiserver.RecommendedConfig{
 			Config: *cfg.GenericAPIServerConfig,

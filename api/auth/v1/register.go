@@ -60,6 +60,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&PolicyList{},
 		&Rule{},
 		&RuleList{},
+		&Binding{},
 
 		&ConfigMap{},
 		&ConfigMapList{},

@@ -25,13 +25,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/casbin/casbin/v2/model"
+
 	authapi "tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/auth/apiserver"
 
-	"github.com/casbin/casbin"
 	casbinlog "github.com/casbin/casbin/log"
 	casbinutil "github.com/casbin/casbin/util"
+	"github.com/casbin/casbin/v2"
 	"github.com/coreos/etcd/clientv3"
 	dexserver "github.com/dexidp/dex/server"
 	dexstorage "github.com/dexidp/dex/storage"
@@ -65,7 +67,6 @@ import (
 
 	"tkestack.io/tke/pkg/auth/registry"
 	"tkestack.io/tke/pkg/auth/types"
-	"tkestack.io/tke/pkg/util/adapter"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -75,23 +76,6 @@ const (
 
 	policyRulesPrefix = "policy-rules"
 )
-
-var defaultModel = `
-[request_definition]
-r = sub, obj, act
-
-[policy_definition]
-p = sub, obj, act, eft
-
-[role_definition]
-g = _, _
-
-[policy_effect]
-e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
-
-[matchers]
-m = g(r.sub, p.sub)  && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.act)
-`
 
 // Config is the running configuration structure of the TKE controller manager.
 type Config struct {
@@ -164,7 +148,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	enforcer, err := setupCasbinEnforcer(etcdClient, opts.Authorization)
+	enforcer, err := setupCasbinEnforcer(opts.Authorization)
 	if err != nil {
 		return nil, err
 	}
@@ -229,6 +213,9 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		TenantAdmin:                    opts.Auth.TenantAdmin,
 		TenantAdminSecret:              opts.Auth.TenantAdminSecret,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
+		//TODO add config
+		//CasbinReloadInterval:       	opts.Authorization.CasbinReloadInterval
+
 	}, nil
 }
 
@@ -322,15 +309,23 @@ func issuer(advertiseAddress string, advertisePort int) string {
 	return fmt.Sprintf("%s://%s%s/%s", scheme, advertiseAddress, port, types.IssuerName)
 }
 
-func setupCasbinEnforcer(etcdClient *clientv3.Client, authorizationOptions *options.AuthorizationOptions) (*casbin.SyncedEnforcer, error) {
+func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*casbin.SyncedEnforcer, error) {
 	var enforcer *casbin.SyncedEnforcer
 	var err error
-	adpt := adapter.NewAdapter(etcdClient, policyRulesPrefix)
 	if len(authorizationOptions.CasbinModelFile) == 0 {
-		m := casbin.NewModel(defaultModel)
-		enforcer, err = casbin.NewSyncedEnforcerSafe(m, adpt)
+		m, err := model.NewModelFromString(authapi.DefaultRuleModel)
+		if err != nil {
+			return nil, err
+		}
+		enforcer, err = casbin.NewSyncedEnforcer(m)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		enforcer, err = casbin.NewSyncedEnforcerSafe(authorizationOptions.CasbinModelFile, adpt)
+		enforcer, err = casbin.NewSyncedEnforcer(authorizationOptions.CasbinModelFile)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err != nil {
@@ -343,8 +338,6 @@ func setupCasbinEnforcer(etcdClient *clientv3.Client, authorizationOptions *opti
 	}
 
 	enforcer.AddFunction("keyMatchCustom", CustomFunctionWrapper)
-
-	enforcer.StartAutoLoadPolicy(authorizationOptions.CasbinReloadInterval)
 
 	return enforcer, nil
 }
@@ -417,7 +410,7 @@ func CustomFunctionWrapper(args ...interface{}) (interface{}, error) {
 	key1 := args[0].(string)
 	key2 := args[1].(string)
 
-	return keyMatchCustomFunction(key1, key2), nil
+	return bool(keyMatchCustomFunction(key1, key2)), nil
 }
 
 // keyMatchCustomFunction determines whether key1 matches the pattern of key2 , key2 can contain a * and :*.

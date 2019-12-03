@@ -51,3 +51,15 @@ func FilterAPIKey(ctx context.Context, apiKey *auth.APIKey) error {
 
 	return nil
 }
+
+// FilterPolicy is used to filter policies that do not belong to the tenant.
+func FilterPolicy(ctx context.Context, policy *auth.Policy) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if policy.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("policy"), policy.ObjectMeta.Name)
+	}
+	return nil
+}

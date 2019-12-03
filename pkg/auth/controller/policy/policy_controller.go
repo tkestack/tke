@@ -22,19 +22,27 @@ import (
 	"fmt"
 	"reflect"
 	"time"
-	v1 "tkestack.io/tke/api/auth/v1"
 
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"tkestack.io/tke/api/auth"
+	v1 "tkestack.io/tke/api/auth/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
 	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
-	"tkestack.io/tke/pkg/business/controller/project/deletion"
+	"tkestack.io/tke/pkg/auth/authorization/enforcer"
+	"tkestack.io/tke/pkg/auth/controller/policy/deletion"
+	authutil "tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/auth/util/adapter"
 	controllerutil "tkestack.io/tke/pkg/controller"
+	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -51,24 +59,27 @@ const (
 	controllerName = "policy-controller"
 )
 
-// Controller is responsible for performing actions dependent upon a project phase.
+// Controller is responsible for performing actions dependent upon a policy phase.
 type Controller struct {
-	client       clientset.Interface
-	cache        *policyCache
-	queue        workqueue.RateLimitingInterface
-	lister       authv1lister.PolicyLister
-	listerSynced cache.InformerSynced
-	// helper to delete all resources in the project when the project is deleted.
-	projectedResourcesDeleter deletion.ProjectedResourcesDeleterInterface
+	client             clientset.Interface
+	cache              *policyCache
+	queue              workqueue.RateLimitingInterface
+	policyLister       authv1lister.PolicyLister
+	policyListerSynced cache.InformerSynced
+	ruleLister         authv1lister.RuleLister
+	ruleListerSynced   cache.InformerSynced
+	// helper to delete all resources in the policy when the policy is deleted.
+	policyedResourcesDeleter deletion.PoliciedResourcesDeleterInterface
+	enforcer                 *enforcer.PolicyEnforcer
 }
 
-// NewController creates a new Project object.
-func NewController(client clientset.Interface, policyInformer authv1informer.APIKeyInformer, resyncPeriod time.Duration) *Controller {
+// NewController creates a new policy object.
+func NewController(client clientset.Interface, policyInformer authv1informer.PolicyInformer, ruleInformer authv1informer.RuleInformer, resyncPeriod time.Duration, finalizerToken v1.FinalizerName) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
-		client:                    client,
-		cache:                     &policyCache{policyMap: make(map[string]*cachedPolicy)},
-		queue:                     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
+		client: client,
+		cache:  &policyCache{policyMap: make(map[string]*cachedPolicy)},
+		queue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
 	}
 
 	if client != nil && client.AuthV1().RESTClient().GetRateLimiter() != nil {
@@ -77,7 +88,7 @@ func NewController(client clientset.Interface, policyInformer authv1informer.API
 
 	policyInformer.Informer().AddEventHandlerWithResyncPeriod(
 		cache.ResourceEventHandlerFuncs{
-			//AddFunc: controller.enqueue,
+			AddFunc: controller.enqueue,
 			UpdateFunc: func(oldObj, newObj interface{}) {
 				old, ok1 := oldObj.(*v1.Policy)
 				cur, ok2 := newObj.(*v1.Policy)
@@ -90,12 +101,28 @@ func NewController(client clientset.Interface, policyInformer authv1informer.API
 		},
 		resyncPeriod,
 	)
-	controller.lister = policyInformer.Lister()
-	controller.listerSynced = policyInformer.Informer().HasSynced
+	controller.policyLister = policyInformer.Lister()
+	controller.policyListerSynced = policyInformer.Informer().HasSynced
+
+	controller.ruleLister = ruleInformer.Lister()
+	controller.ruleListerSynced = ruleInformer.Informer().HasSynced
+
+	adpt := adapter.NewAdapter(client.AuthV1().Rules(), controller.ruleLister)
+	m, err := model.NewModelFromString(auth.DefaultRuleModel)
+	if err != nil {
+		panic(err)
+	}
+	e, err := casbin.NewSyncedEnforcer(m, adpt)
+	if err != nil {
+		panic(err)
+	}
+	controller.enforcer = enforcer.NewPolicyEnforcer(e, nil)
+	controller.policyedResourcesDeleter = deletion.NewPoliciedResourcesDeleter(client.AuthV1().Policies(), client.AuthV1(), controller.enforcer.Enforcer, finalizerToken, true)
+
 	return controller
 }
 
-// obj could be an *v1.Project, or a DeletionFinalStateUnknown marker item.
+// obj could be an *v1.policy, or a DeletionFinalStateUnknown marker item.
 func (c *Controller) enqueue(obj interface{}) {
 	key, err := controllerutil.KeyFunc(obj)
 	if err != nil {
@@ -114,9 +141,12 @@ func (c *Controller) needsUpdate(old *v1.Policy, new *v1.Policy) bool {
 		return true
 	}
 
+	if !reflect.DeepEqual(old.Status, new.Status) {
+		return true
+	}
+
 	return false
 }
-
 
 // Run will set up the event handlers for types we are interested in, as well
 // as syncing informer caches and starting workers.
@@ -125,12 +155,13 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 	defer c.queue.ShutDown()
 
 	// Start the informer factories to begin populating the informer caches
-	log.Info("Starting project controller")
-	defer log.Info("Shutting down project controller")
+	log.Info("Starting policy controller")
+	defer log.Info("Shutting down policy controller")
 
-	if ok := cache.WaitForCacheSync(stopCh, c.listerSynced); !ok {
-		log.Error("Failed to wait for project caches to sync")
+	if ok := cache.WaitForCacheSync(stopCh, c.policyListerSynced, c.ruleListerSynced); !ok {
+		log.Error("Failed to wait for policy caches to sync")
 	}
+	c.enforcer.Enforcer.StartAutoLoadPolicy(1 * time.Second)
 
 	for i := 0; i < workers; i++ {
 		go wait.Until(c.worker, time.Second, stopCh)
@@ -139,10 +170,10 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 	<-stopCh
 }
 
-// worker processes the queue of project objects.
-// Each project can be in the queue at most once.
+// worker processes the queue of policy objects.
+// Each policy can be in the queue at most once.
 // The system ensures that no two workers can process
-// the same project at the same time.
+// the same policy at the same time.
 func (c *Controller) worker() {
 	workFunc := func() bool {
 		key, quit := c.queue.Get()
@@ -151,14 +182,14 @@ func (c *Controller) worker() {
 		}
 		defer c.queue.Done(key)
 
-		requeue, err := c.syncItem(key.(string))
-		if err == nil && !requeue {
+		err := c.syncItem(key.(string))
+		if err == nil {
 			// no error, forget this entry and return
 			c.queue.Forget(key)
 			return false
 		}
 
-		// rather than wait for a full resync, re-add the project to the queue to be processed
+		// rather than wait for a full resync, re-add the policy to the queue to be processed
 		c.queue.AddRateLimited(key)
 		runtime.HandleError(err)
 		return false
@@ -173,30 +204,113 @@ func (c *Controller) worker() {
 	}
 }
 
-// syncItem will sync the ApiKey with the given key if it has had
-// its expectations fulfilled, meaning the apikey has been deleted by user but not expired.
-func (c *Controller) syncItem(key string) (bool, error) {
+// syncItem will sync the policy with the given key if it has had
+func (c *Controller) syncItem(key string) error {
 	startTime := time.Now()
 
 	defer func() {
-		log.Info("Finished syncing policy", log.String("apikey", key), log.Duration("processTime", time.Since(startTime)))
+		log.Info("Finished syncing policy", log.String("policy", key), log.Duration("processTime", time.Since(startTime)))
 	}()
 
 	_, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	policy, err := c.lister.Get(name)
+	var cachedPolicy *cachedPolicy
+	policy, err := c.policyLister.Get(name)
 	switch {
 	case errors.IsNotFound(err):
-		log.Infof("Api key has been deleted %v", key)
-		return false, nil
+		log.Infof("Policy has been deleted %v", key)
+		err = c.processDeletion(key)
 	case err != nil:
 		log.Warn("Unable to retrieve policy from store", log.String("policy name", key), log.Err(err))
 	default:
-		// api key has been deleted check whether it has expired
-		log.Info("Create policy", log.Any("policy", policy))
+		if policy.Status.Phase == v1.PolicyActive {
+			cachedPolicy = c.cache.getOrCreate(key)
+			err = c.processUpdate(cachedPolicy, policy, key)
+		} else if policy.Status.Phase == v1.PolicyTerminating {
+			_ = c.processDeletion(key)
+			err = c.policyedResourcesDeleter.Delete(key)
+		}
+
+		//log.Info("Handle policy", log.Any("policy", policy))
 	}
-	return false, nil
+	return err
+}
+
+func (c *Controller) processUpdate(cachedPolicy *cachedPolicy, policy *v1.Policy, key string) error {
+	if cachedPolicy.state != nil {
+		// exist and the policy  name changed
+		if cachedPolicy.state.UID != policy.UID {
+			if err := c.processDelete(cachedPolicy, key); err != nil {
+				return err
+			}
+		}
+	}
+	// start update policy if needed
+	err := c.handlePhase(key, cachedPolicy, policy)
+	if err != nil {
+		return err
+	}
+	cachedPolicy.state = policy
+	// Always update the cache upon success.
+	c.cache.set(key, cachedPolicy)
+	return nil
+}
+
+func (c *Controller) handlePhase(key string, cachedProject *cachedPolicy, policy *v1.Policy) error {
+	existedRule := c.enforcer.Enforcer.GetFilteredPolicy(0, key)
+
+	var outPolicy = &auth.Policy{}
+	err := v1.Convert_v1_Policy_To_auth_Policy(policy, outPolicy, nil)
+	if err != nil {
+		log.Error("unable to convert policy object: %v", log.Err(err))
+		return err
+	}
+
+	expectedRule := authutil.ConvertPolicyToRuleArray(outPolicy)
+	added, removed := util.Diff2DStringSlice(existedRule, expectedRule)
+
+	log.Info("Handle policy added and removed", log.String("policy", key), log.Any("added", added), log.Any("removed", removed))
+	var errs []error
+	if len(added) != 0 {
+		for _, add := range added {
+			if _, err := c.enforcer.Enforcer.AddPolicy(add); err != nil {
+				log.Errorf("Add policy failed", log.Strings("rule", add), log.Err(err))
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	if len(removed) != 0 {
+		for _, remove := range removed {
+			if _, err := c.enforcer.Enforcer.RemovePolicy(remove); err != nil {
+				log.Errorf("Remove policy failed", log.Strings("rule", remove), log.Err(err))
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
+}
+
+func (c *Controller) processDeletion(key string) error {
+	cachedPol, ok := c.cache.get(key)
+	if !ok {
+		log.Debug("Policy not in cache even though the watcher thought it was. Ignoring the deletion", log.String("name", key))
+		return nil
+	}
+	return c.processDelete(cachedPol, key)
+}
+
+func (c *Controller) processDelete(cachedNamespace *cachedPolicy, key string) error {
+	log.Info("Policy will be dropped", log.String("name", key))
+
+	if c.cache.Exist(key) {
+		log.Info("Delete the policy cache", log.String("name", key))
+		c.cache.delete(key)
+	}
+
+	return nil
 }

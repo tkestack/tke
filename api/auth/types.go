@@ -263,10 +263,30 @@ type Statement struct {
 type PolicyStatus struct {
 	// +optional
 	Phase PolicyPhase
+
 	// +optional
-	// Rules represents rules that have been saved into the storage.
-	Rules []string
+	// Subjects represents the objects the policy applies to.
+	Subjects []Subject
 }
+
+const (
+	DefaultRuleModel = `
+[request_definition]
+r = sub, obj, act
+
+[policy_definition]
+p = sub, obj, act, eft
+
+[role_definition]
+g = _, _
+
+[policy_effect]
+e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
+
+[matchers]
+m = g(r.sub, p.sub)  && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.act)
+`
+)
 
 // +genclient
 // +genclient:nonNamespaced
@@ -301,6 +321,23 @@ type RuleSpec struct {
 	V4    string `json:"v4"`
 	V5    string `json:"v5"`
 	V6    string `json:"v6"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Binding references the objects a policy applies to, but does not contain it.
+type Binding struct {
+	metav1.TypeMeta
+
+	// Subjects holds references to the objects the policy applies to.
+	// +optional
+	Subjects []Subject
+}
+
+// Subject references a user can specify by id or name.
+type Subject struct {
+	ID   string
+	Name string
 }
 
 // +genclient

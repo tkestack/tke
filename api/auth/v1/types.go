@@ -292,9 +292,28 @@ type PolicyStatus struct {
 	// +optional
 	Phase PolicyPhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=PolicyPhase"`
 	// +optional
-	// Rules represents rules that have been saved into the storage.
-	Rules []string `json:"rules" protobuf:"bytes,2,rep,name=rules"`
+	// Subjects represents the objects the policy applies to.
+	Subjects []Subject `json:"subjects" protobuf:"bytes,2,rep,name=subjects"`
 }
+
+const (
+	DefaultRuleModel = `
+[request_definition]
+r = sub, obj, act
+
+[policy_definition]
+p = sub, obj, act, eft
+
+[role_definition]
+g = _, _
+
+[policy_effect]
+e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
+
+[matchers]
+m = g(r.sub, p.sub)  && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.act)
+`
+)
 
 // +genclient
 // +genclient:nonNamespaced
@@ -331,6 +350,23 @@ type RuleSpec struct {
 	V4    string `json:"v4" protobuf:"bytes,6,opt,name=v4"`
 	V5    string `json:"v5" protobuf:"bytes,7,opt,name=v5"`
 	V6    string `json:"v6" protobuf:"bytes,8,opt,name=v6"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Binding references the objects a policy applies to, but does not contain it.
+type Binding struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Subjects holds references to the objects the policy applies to.
+	// +optional
+	Subjects []Subject `json:"subject" protobuf:"bytes,1,rep,name=subject"`
+}
+
+// Subject references a user can specify by id or name.
+type Subject struct {
+	ID   string `json:"id" protobuf:"bytes,1,opt,name=id"`
+	Name string `json:"name" protobuf:"bytes,2,opt,name=name"`
 }
 
 // +genclient
