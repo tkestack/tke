@@ -26,4 +26,6 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
 
     - run: |
+        VERSION=$(git describe --dirty --always --tags | sed 's/-/./g')
         make release
+        make release-test

@@ -111,12 +111,17 @@ test:
 ## quick-release: Quick release tke
 .PHONY: quick-release
 quick-release:
-	build/docker/tools/tke-installer/build.sh -q
+	build/docker/tools/tke-installer/release.sh -q
 
 ## release: Release tke
 .PHONY: release
 release:
-	build/docker/tools/tke-installer/build.sh
+	build/docker/tools/tke-installer/release.sh
+
+## release-test: test release
+.PHONY: release
+release-test:
+	go test tkestack.io/tke/test/e2e_installer
 
 ## help: Show this help info.
 .PHONY: help
