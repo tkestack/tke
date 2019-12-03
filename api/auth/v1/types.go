@@ -270,11 +270,8 @@ type PolicySpec struct {
 	DisplayName string `json:"displayName" protobuf:"bytes,7,opt,name=displayName"`
 	Username    string `json:"username" protobuf:"bytes,2,opt,name=username"`
 	// +optional
-	Description string `json:"description" protobuf:"bytes,3,opt,name=description"`
-	// Subjects is the policy subjects.
-	// +optional
-	Subjects  []string  `json:"subjects,omitempty" protobuf:"bytes,4,rep,name=subjects"`
-	Statement Statement `json:"statement" protobuf:"bytes,5,rep,name=statement"`
+	Description string    `json:"description" protobuf:"bytes,3,opt,name=description"`
+	Statement   Statement `json:"statement" protobuf:"bytes,5,rep,name=statement"`
 	// +optional
 	Conditions []byte `json:"conditions,omitempty" protobuf:"bytes,6,rep,name=conditions"`
 }
@@ -360,7 +357,7 @@ type Binding struct {
 
 	// Subjects holds references to the objects the policy applies to.
 	// +optional
-	Subjects []Subject `json:"subject" protobuf:"bytes,1,rep,name=subject"`
+	Subjects []Subject `json:"subjects" protobuf:"bytes,1,rep,name=subject"`
 }
 
 // Subject references a user can specify by id or name.

@@ -110,8 +110,8 @@ func (APISigningKeyList) SwaggerDoc() map[string]string {
 }
 
 var map_Binding = map[string]string{
-	"":        "Binding references the objects a policy applies to, but does not contain it.",
-	"subject": "Subjects holds references to the objects the policy applies to.",
+	"":         "Binding references the objects a policy applies to, but does not contain it.",
+	"subjects": "Subjects holds references to the objects the policy applies to.",
 }
 
 func (Binding) SwaggerDoc() map[string]string {
@@ -191,8 +191,7 @@ func (PolicyList) SwaggerDoc() map[string]string {
 }
 
 var map_PolicySpec = map[string]string{
-	"":         "PolicySpec is a description of a policy.",
-	"subjects": "Subjects is the policy subjects.",
+	"": "PolicySpec is a description of a policy.",
 }
 
 func (PolicySpec) SwaggerDoc() map[string]string {

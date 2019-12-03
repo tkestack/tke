@@ -529,11 +529,6 @@ func (in *PolicySpec) DeepCopyInto(out *PolicySpec) {
 		copy(*out, *in)
 	}
 	in.Statement.DeepCopyInto(&out.Statement)
-	if in.Subjects != nil {
-		in, out := &in.Subjects, &out.Subjects
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
 		*out = make([]byte, len(*in))

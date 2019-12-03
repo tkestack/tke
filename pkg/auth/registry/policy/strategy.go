@@ -35,6 +35,7 @@ import (
 	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/util/log"
 
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
@@ -251,4 +252,33 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return nil
+}
+
+// BindingStrategy implements Binding logic for Machine.
+type BindingStrategy struct {
+	*Strategy
+	authClient authinternalclient.AuthInterface
+}
+
+var _ rest.RESTUpdateStrategy = &BindingStrategy{}
+
+// NewFinalizerStrategy create the FinalizeStrategy object by given strategy.
+func NewBindingStrategy(strategy *Strategy, authClient authinternalclient.AuthInterface) *BindingStrategy {
+	return &BindingStrategy{strategy, authClient}
+}
+
+// PrepareForCreate is invoked on create before validation to normalize
+// the object.
+func (BindingStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+	//binding, _ := obj.(*auth.Binding)
+	//
+	//_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	//
+	//// fufill user ID and userName
+	//for _, subj := range binding.Subjects {
+	//	if subj.ID == "" {
+	//
+	//	}
+	//}
+	return
 }

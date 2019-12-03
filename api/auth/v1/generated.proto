@@ -258,10 +258,6 @@ message PolicySpec {
   // +optional
   optional string description = 3;
 
-  // Subjects is the policy subjects.
-  // +optional
-  repeated string subjects = 4;
-
   optional Statement statement = 5;
 
   // +optional

@@ -246,9 +246,7 @@ type PolicySpec struct {
 	Username    string
 	Description string
 	Statement   Statement
-	// Subjects is the policy subjects.
-	Subjects   []string
-	Conditions []byte
+	Conditions  []byte
 }
 
 // Statement defines a series of action on resource can be done or not.

@@ -20,25 +20,28 @@ package storage
 
 import (
 	"context"
-	"fmt"
-	"github.com/casbin/casbin/v2"
+
+	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"tkestack.io/tke/api/auth"
-	"tkestack.io/tke/pkg/util/log"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"tkestack.io/tke/api/auth"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
 // BindingREST implements the REST endpoint.
 type BindingREST struct {
 	*registry.Store
-	enforcer    *casbin.SyncedEnforcer
+
+	authClient authinternalclient.AuthInterface
+	//enforcer    *casbin.SyncedEnforcer
 }
 
 var _ = rest.Creater(&BindingREST{})
@@ -55,23 +58,44 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
+	log.Info("requestinfo", log.Any("requestInfo", requestInfo))
+
 	bind := obj.(*auth.Binding)
 	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	policy := polObj.(*auth.Policy)
-	var errs []error
-	for _, user := range bind.Subjects {
-		if _, err := r.enforcer.Enforcer.AddRoleForUser(fmt.Sprintf("%s::%s", policy.Spec.TenantID, user.Name), requestInfo.Name); err != nil {
-			log.Error("Add policy for user failed", log.String("pol", requestInfo.Name), log.String("user", user.Name), log.Err(err))
-			errs = append(errs, err)
+
+	for _, sub := range bind.Subjects {
+		if sub.Name != "" {
+			localIdentity, err := util.GetLocalIdentity(r.authClient, policy.Spec.TenantID, sub.Name)
+			if err != nil && !apierrors.IsNotFound(err) {
+				log.Error("Get localIdentity failed", log.String("user", sub.Name), log.Err(err))
+				continue
+			}
+
+			if err == nil {
+				sub.ID = localIdentity.Name
+			}
+			log.Info("1")
+			if !inSubjects(sub, policy.Status.Subjects) {
+				log.Info("2")
+				policy.Status.Subjects = append(policy.Status.Subjects, sub)
+			}
 		}
 	}
 
-	if len(errs) == 0 {
-		return nil, nil
-	}
+	log.Info("policies", log.Any("subjects", policy.Status.Subjects))
 
-	return nil, errors.NewInternalError(utilerrors.NewAggregate(errs))
+	return r.authClient.Policies().UpdateStatus(policy)
+}
+
+func inSubjects(subject auth.Subject, slice []auth.Subject) bool {
+	for _, s := range slice {
+		if subject.ID == s.ID && subject.Name == s.Name {
+			return true
+		}
+	}
+	return false
 }

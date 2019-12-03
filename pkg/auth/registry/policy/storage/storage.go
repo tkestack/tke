@@ -40,6 +40,8 @@ import (
 	"tkestack.io/tke/pkg/auth/registry/policy"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
+
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
 // Storage includes storage for policies and all sub resources.
@@ -52,7 +54,7 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against policies.
-func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyEnforcer, privilegedUsername string) *Storage {
+func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
 	strategy := policy.NewStrategy(enforcer)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.Policy{} },
@@ -87,7 +89,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyE
 		Policy:   &REST{store, privilegedUsername},
 		Status:   &StatusREST{&statusStore},
 		Finalize: &FinalizeREST{&finalizeStore},
-		Binding:  &BindingREST{store, enforcer.Enforcer},
+		Binding:  &BindingREST{store, authClient},
 	}
 }
 
@@ -313,6 +315,8 @@ func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.Updat
 	if err != nil {
 		return nil, false, err
 	}
+
+	log.Info("update status")
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 

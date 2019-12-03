@@ -21,17 +21,17 @@ package policy
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	"k8s.io/apimachinery/pkg/api/errors"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"tkestack.io/tke/api/auth"
 	v1 "tkestack.io/tke/api/auth/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
@@ -259,7 +259,23 @@ func (c *Controller) processUpdate(cachedPolicy *cachedPolicy, policy *v1.Policy
 	return nil
 }
 
-func (c *Controller) handlePhase(key string, cachedProject *cachedPolicy, policy *v1.Policy) error {
+func (c *Controller) handlePhase(key string, cachedPolicy *cachedPolicy, policy *v1.Policy) error {
+
+	var errs []error
+	err := c.handleSpec(key, cachedPolicy, policy)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	err = c.handleSubjects(key, policy)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return utilerrors.NewAggregate(errs)
+}
+
+func (c *Controller) handleSpec(key string, cachedPolicy *cachedPolicy, policy *v1.Policy) error {
 	existedRule := c.enforcer.Enforcer.GetFilteredPolicy(0, key)
 
 	var outPolicy = &auth.Policy{}
@@ -295,6 +311,46 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedPolicy, policy
 	return utilerrors.NewAggregate(errs)
 }
 
+func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
+	rules := c.enforcer.Enforcer.GetFilteredGroupingPolicy(1, policy.Name)
+	log.Debugf("Get grouping rules for policy: %s, %v", policy.Name, rules)
+	var existSubj []string
+	for _, rule := range rules {
+		if strings.HasPrefix(rule[0], userPrefix(policy.Spec.TenantID)) {
+			existSubj = append(existSubj, strings.TrimPrefix(rule[0], userPrefix(policy.Spec.TenantID)))
+		}
+	}
+
+	var expectedSubj []string
+	for _, subj := range policy.Status.Subjects {
+		expectedSubj = append(expectedSubj, subj.Name)
+	}
+
+	var errs []error
+	added, removed := util.DiffStringSlice(existSubj, expectedSubj)
+
+	log.Info("Handle policy subjects changed", log.String("policy", key), log.Strings("added", added), log.Strings("removed", removed))
+	if len(added) > 0 {
+		for _, add := range added {
+			if _, err := c.enforcer.Enforcer.AddRoleForUser(keyUser(policy.Spec.TenantID, add), policy.Name); err != nil {
+				log.Errorf("Bind policy to user failed", log.String("policy", policy.Name), log.String("user", add), log.Err(err))
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	if len(removed) > 0 {
+		for _, remove := range removed {
+			if _, err := c.enforcer.Enforcer.DeleteRoleForUser(keyUser(policy.Spec.TenantID, remove), policy.Name); err != nil {
+				log.Errorf("Bind policy to user failed", log.String("policy", policy.Name), log.String("user", remove), log.Err(err))
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
+}
+
 func (c *Controller) processDeletion(key string) error {
 	cachedPol, ok := c.cache.get(key)
 	if !ok {
@@ -313,4 +369,12 @@ func (c *Controller) processDelete(cachedNamespace *cachedPolicy, key string) er
 	}
 
 	return nil
+}
+
+func keyUser(tenantID string, name string) string {
+	return fmt.Sprintf("%s%s", userPrefix(tenantID), name)
+}
+
+func userPrefix(tenantID string) string {
+	return fmt.Sprintf("%s::", tenantID)
 }

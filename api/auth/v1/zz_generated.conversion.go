@@ -692,17 +692,7 @@ func Convert_auth_Policy_To_v1_Policy(in *auth.Policy, out *Policy, s conversion
 
 func autoConvert_v1_PolicyList_To_auth_PolicyList(in *PolicyList, out *auth.PolicyList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]auth.Policy, len(*in))
-		for i := range *in {
-			if err := Convert_v1_Policy_To_auth_Policy(&(*in)[i], &(*out)[i], s); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
+	out.Items = *(*[]auth.Policy)(unsafe.Pointer(&in.Items))
 	return nil
 }
 
@@ -713,17 +703,7 @@ func Convert_v1_PolicyList_To_auth_PolicyList(in *PolicyList, out *auth.PolicyLi
 
 func autoConvert_auth_PolicyList_To_v1_PolicyList(in *auth.PolicyList, out *PolicyList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]Policy, len(*in))
-		for i := range *in {
-			if err := Convert_auth_Policy_To_v1_Policy(&(*in)[i], &(*out)[i], s); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
+	out.Items = *(*[]Policy)(unsafe.Pointer(&in.Items))
 	return nil
 }
 
@@ -738,7 +718,6 @@ func autoConvert_v1_PolicySpec_To_auth_PolicySpec(in *PolicySpec, out *auth.Poli
 	out.DisplayName = in.DisplayName
 	out.Username = in.Username
 	out.Description = in.Description
-	out.Subjects = *(*[]string)(unsafe.Pointer(&in.Subjects))
 	if err := Convert_v1_Statement_To_auth_Statement(&in.Statement, &out.Statement, s); err != nil {
 		return err
 	}
@@ -760,7 +739,6 @@ func autoConvert_auth_PolicySpec_To_v1_PolicySpec(in *auth.PolicySpec, out *Poli
 	if err := Convert_auth_Statement_To_v1_Statement(&in.Statement, &out.Statement, s); err != nil {
 		return err
 	}
-	out.Subjects = *(*[]string)(unsafe.Pointer(&in.Subjects))
 	out.Conditions = *(*[]byte)(unsafe.Pointer(&in.Conditions))
 	return nil
 }
