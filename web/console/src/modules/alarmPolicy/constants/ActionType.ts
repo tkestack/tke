@@ -49,3 +49,15 @@ export const InputAlarmWorkLoadNameSpace = 'InputAlarmWorkLoadNameSpace';
 export const ValidateAlarmMetrics = 'ValidateAlarmMetrics';
 export const ValidatetAlarmNotifyWay = 'ValidatetAlarmNotifyWay';
 export const ClearAlarmPolicyEdit = 'ClearAlarmPolicyEdit';
+
+//业务侧
+
+export const SelectNamespace = 'SelectNamespace';
+
+export const InitProjectList = 'InitProjectList';
+
+export const ProjectSelection = 'ProjectSelection';
+
+export const FetchProjectNamespace = 'FetchProjectNamespace';
+
+export const QueryProjectNamespace = 'QueryProjectNamespace';

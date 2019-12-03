@@ -1,5 +1,3 @@
-import { GameBackgroupEdition } from './LbcfEdit';
-
 import { CLB } from './ServiceEdit';
 import { Namespace } from './Namespace';
 import { Identifiable, RecordSet, extend } from '@tencent/qcloud-lib';

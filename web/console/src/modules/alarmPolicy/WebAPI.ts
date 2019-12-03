@@ -75,6 +75,14 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
     let { pageIndex, pageSize } = paging;
     params['page'] = pageIndex;
     params['page_size'] = pageSize;
+
+    //业务侧一次性拉取
+    /// #if project
+    params['page'] = 1;
+    params['page_size'] = 999;
+    /// #endif
+
+    params.url += `?page=${params['page']}&page_size=${params['page_size']}`;
   }
 
   // if (search) {
@@ -455,6 +463,62 @@ export async function fetchResourceList(query: QueryState<ResourceFilter>, resou
   const result: RecordSet<Resource> = {
     recordCount: resourceList.length,
     records: resourceList
+  };
+
+  return result;
+}
+
+/**
+ * 获取资源的具体的 yaml文件
+ * @param resourceIns: Resource[]   当前需要请求的具体资源数据
+ * @param resourceInfo: ResouceInfo 当前请求数据url的基本配置
+ */
+export async function fetchUserPortal(resourceInfo: ResourceInfo) {
+  let url = reduceK8sRestfulPath({ resourceInfo });
+
+  // 构建参数
+  let params: RequestParams = {
+    method: Method.get,
+    url
+  };
+
+  let response = await reduceNetworkRequest(params);
+  return response.data;
+}
+
+/**
+ * Namespace查询
+ * @param query Namespace查询的一些过滤条件
+ */
+export async function fetchProjectNamespaceList(query: QueryState<ResourceFilter>) {
+  let { filter } = query;
+  let NamespaceResourceInfo: ResourceInfo = resourceConfig().namespaces;
+  let url = reduceK8sRestfulPath({
+    resourceInfo: NamespaceResourceInfo,
+    specificName: filter.specificName,
+    extraResource: 'namespaces'
+  });
+  /** 构建参数 */
+  let method = 'GET';
+  let params: RequestParams = {
+    method,
+    url
+  };
+
+  let response = await reduceNetworkRequest(params);
+  let namespaceList = [],
+    total = 0;
+  if (response.code === 0) {
+    let list = response.data;
+    total = list.items.length;
+    namespaceList = list.items.map(item => {
+      return Object.assign({}, item, { id: uuid(), name: item.metadata.name });
+    });
+  }
+
+  const result: RecordSet<Resource> = {
+    recordCount: total,
+    records: namespaceList
   };
 
   return result;

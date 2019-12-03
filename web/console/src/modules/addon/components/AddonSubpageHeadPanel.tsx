@@ -1,4 +1,4 @@
-import * as React from 'React';
+import * as React from 'react';
 import { Justify, Icon, Text } from '@tencent/tea-component';
 import { router } from '../router';
 import { RouteState } from '../../../../helpers';

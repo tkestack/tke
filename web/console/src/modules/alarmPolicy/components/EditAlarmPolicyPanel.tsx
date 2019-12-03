@@ -205,24 +205,29 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
                     tipMode="popup"
                   />
                 </FormItem> */}
-                <FormItem label={t('策略类型')}>
-                  <SelectList
-                    value={alarmPolicyEdition.alarmPolicyType}
-                    recordList={AlarmPolicyType}
-                    valueField="value"
-                    textField="text"
-                    textFields={['text']}
-                    textFormat={`\${text}`}
-                    className="tc-15-select s"
-                    isUnshiftDefaultItem={false}
-                    style={{ marginRight: '5px' }}
-                    validator={alarmPolicyEdition.v_alarmPolicyType}
-                    onSelect={value => {
-                      actions.alarmPolicy.inputAlarmPolicyType(value);
-                      actions.validator.validateAlarmPolicyType();
-                    }}
-                  />
-                </FormItem>
+                {
+                  /// #if tke
+                  <FormItem label={t('策略类型')}>
+                    <SelectList
+                      value={alarmPolicyEdition.alarmPolicyType}
+                      recordList={AlarmPolicyType}
+                      valueField="value"
+                      textField="text"
+                      textFields={['text']}
+                      textFormat={`\${text}`}
+                      className="tc-15-select s"
+                      isUnshiftDefaultItem={false}
+                      style={{ marginRight: '5px' }}
+                      validator={alarmPolicyEdition.v_alarmPolicyType}
+                      onSelect={value => {
+                        actions.alarmPolicy.inputAlarmPolicyType(value);
+                        actions.validator.validateAlarmPolicyType();
+                      }}
+                    />
+                  </FormItem>
+                  /// #endif
+                }
+
                 <EditAlarmPolicyObject {...this.props} />
 
                 <FormItem label={t('统计周期')}>
