@@ -31,25 +31,25 @@ import (
 	registryapi "tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
-	namespacestrategy "tkestack.io/tke/pkg/registry/registry/namespace"
+	chartgroupstrategy "tkestack.io/tke/pkg/registry/registry/chartgroup"
 	registryutil "tkestack.io/tke/pkg/registry/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-// Storage includes storage for namespaces and all sub resources.
+// Storage includes storage for chart groups and all sub resources.
 type Storage struct {
-	Namespace *REST
-	Status    *StatusREST
+	ChartGroup *REST
+	Status     *StatusREST
 }
 
-// NewStorage returns a Storage object that will work against namespaces.
+// NewStorage returns a Storage object that will work against chart groups.
 func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *registryinternalclient.RegistryClient, privilegedUsername string) *Storage {
-	strategy := namespacestrategy.NewStrategy(registryClient)
+	strategy := chartgroupstrategy.NewStrategy(registryClient)
 	store := &registry.Store{
-		NewFunc:                  func() runtime.Object { return &registryapi.Namespace{} },
-		NewListFunc:              func() runtime.Object { return &registryapi.NamespaceList{} },
-		DefaultQualifiedResource: registryapi.Resource("namespaces"),
-		PredicateFunc:            namespacestrategy.MatchNamespace,
+		NewFunc:                  func() runtime.Object { return &registryapi.ChartGroup{} },
+		NewListFunc:              func() runtime.Object { return &registryapi.ChartGroupList{} },
+		DefaultQualifiedResource: registryapi.Resource("chartgroups"),
+		PredicateFunc:            chartgroupstrategy.MatchChartGroup,
 		ReturnDeletedObject:      true,
 
 		CreateStrategy: strategy,
@@ -59,52 +59,52 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *re
 	}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
-		AttrFunc:    namespacestrategy.GetAttrs,
+		AttrFunc:    chartgroupstrategy.GetAttrs,
 	}
 
 	if err := store.CompleteWithOptions(options); err != nil {
-		log.Panic("Failed to create namespace etcd rest storage", log.Err(err))
+		log.Panic("Failed to create chart group etcd rest storage", log.Err(err))
 	}
 
 	statusStore := *store
-	statusStore.UpdateStrategy = namespacestrategy.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = namespacestrategy.NewStatusStrategy(strategy)
+	statusStore.UpdateStrategy = chartgroupstrategy.NewStatusStrategy(strategy)
+	statusStore.ExportStrategy = chartgroupstrategy.NewStatusStrategy(strategy)
 
 	return &Storage{
-		Namespace: &REST{store, privilegedUsername},
-		Status:    &StatusREST{&statusStore},
+		ChartGroup: &REST{store, privilegedUsername},
+		Status:     &StatusREST{&statusStore},
 	}
 }
 
-// ValidateGetObjectAndTenantID validate name and tenantID, if success return Namespace
+// ValidateGetObjectAndTenantID validate name and tenantID, if success return ChartGroup
 func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := store.Get(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	o := obj.(*registryapi.Namespace)
-	if err := registryutil.FilterNamespace(ctx, o); err != nil {
+	o := obj.(*registryapi.ChartGroup)
+	if err := registryutil.FilterChartGroup(ctx, o); err != nil {
 		return nil, err
 	}
 	return o, nil
 }
 
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return Namespace
+// ValidateExportObjectAndTenantID validate name and tenantID, if success return ChartGroup
 func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
 	obj, err := store.Export(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	o := obj.(*registryapi.Namespace)
-	if err := registryutil.FilterNamespace(ctx, o); err != nil {
+	o := obj.(*registryapi.ChartGroup)
+	if err := registryutil.FilterChartGroup(ctx, o); err != nil {
 		return nil, err
 	}
 	return o, nil
 }
 
-// REST implements a RESTStorage for namespaces against etcd.
+// REST implements a RESTStorage for chart groups against etcd.
 type REST struct {
 	*registry.Store
 	privilegedUsername string
@@ -114,7 +114,7 @@ var _ rest.ShortNamesProvider = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
-	return []string{"rns"}
+	return []string{"rcg"}
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -127,7 +127,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
 	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, apierrors.NewMethodNotSupported(registryapi.Resource("namespaces"), "delete collection")
+		return nil, apierrors.NewMethodNotSupported(registryapi.Resource("chartgroups"), "delete collection")
 	}
 	return r.Store.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
@@ -154,7 +154,7 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 	return r.Store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
-// Delete enforces life-cycle rules for cluster termination
+// Delete enforces life-cycle rules for chart group termination
 func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	_, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
 	if err != nil {
@@ -163,7 +163,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 
-// StatusREST implements the REST endpoint for changing the status of a namespace.
+// StatusREST implements the REST endpoint for changing the status of a chart group.
 type StatusREST struct {
 	store *registry.Store
 }

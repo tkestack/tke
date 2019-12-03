@@ -28,6 +28,8 @@ import (
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	chartstorage "tkestack.io/tke/pkg/registry/registry/chart/storage"
+	chartgroupstorage "tkestack.io/tke/pkg/registry/registry/chartgroup/storage"
 	configmapstorage "tkestack.io/tke/pkg/registry/registry/configmap/storage"
 	namespacestorage "tkestack.io/tke/pkg/registry/registry/namespace/storage"
 	repositorystorage "tkestack.io/tke/pkg/registry/registry/repository/storage"
@@ -75,6 +77,14 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		repositoryREST := repositorystorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername)
 		storageMap["repositories"] = repositoryREST.Repository
 		storageMap["repositories/status"] = repositoryREST.Status
+
+		chartGroupREST := chartgroupstorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername)
+		storageMap["chartgroups"] = chartGroupREST.ChartGroup
+		storageMap["chartgroups/status"] = chartGroupREST.Status
+
+		chartREST := chartstorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername)
+		storageMap["charts"] = chartREST.Chart
+		storageMap["charts/status"] = chartREST.Status
 	}
 
 	return storageMap

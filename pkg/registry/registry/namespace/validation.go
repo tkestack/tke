@@ -60,7 +60,7 @@ func ValidateNamespace(namespace *registry.Namespace, registryClient *registryin
 
 // ValidateNamespaceUpdate tests if required fields in the namespace are set during
 // an update.
-func ValidateNamespaceUpdate(namespace *registry.Namespace, old *registry.Namespace, registryClient *registryinternalclient.RegistryClient) field.ErrorList {
+func ValidateNamespaceUpdate(namespace *registry.Namespace, old *registry.Namespace) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&namespace.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 
 	if namespace.Spec.TenantID != old.Spec.TenantID {

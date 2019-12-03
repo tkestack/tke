@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package repository
+package chart
 
 import (
 	"context"
@@ -36,7 +36,7 @@ import (
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
-// Strategy implements verification logic for repository.
+// Strategy implements verification logic for chart.
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
@@ -45,27 +45,27 @@ type Strategy struct {
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
-// creating and updating repository objects.
+// creating and updating chart objects.
 func NewStrategy(registryClient *registryinternalclient.RegistryClient) *Strategy {
 	return &Strategy{registry.Scheme, namesutil.Generator, registryClient}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
-func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.GarbageCollectionPolicy {
+func (Strategy) DefaultGarbageCollectionPolicy(context.Context) rest.GarbageCollectionPolicy {
 	return rest.Unsupported
 }
 
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	oldRepository := old.(*registry.Repository)
-	repository, _ := obj.(*registry.Repository)
+	oldChart := old.(*registry.Chart)
+	chart, _ := obj.(*registry.Chart)
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
-		if oldRepository.Spec.TenantID != tenantID {
-			log.Panic("Unauthorized update repository information", log.String("oldTenantID", oldRepository.Spec.TenantID), log.String("newTenantID", repository.Spec.TenantID), log.String("userTenantID", tenantID))
+		if oldChart.Spec.TenantID != tenantID {
+			log.Panic("Unauthorized update chart information", log.String("oldTenantID", oldChart.Spec.TenantID), log.String("newTenantID", chart.Spec.TenantID), log.String("userTenantID", tenantID))
 		}
-		repository.Spec.TenantID = tenantID
+		chart.Spec.TenantID = tenantID
 	}
 }
 
@@ -75,7 +75,7 @@ func (Strategy) NamespaceScoped() bool {
 }
 
 // Export strips fields that can not be set by the user.
-func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) error {
+func (Strategy) Export(context.Context, runtime.Object, bool) error {
 	return nil
 }
 
@@ -83,17 +83,17 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	repository, _ := obj.(*registry.Repository)
+	chart, _ := obj.(*registry.Chart)
 	if len(tenantID) != 0 {
-		repository.Spec.TenantID = tenantID
+		chart.Spec.TenantID = tenantID
 	}
-	repository.ObjectMeta.GenerateName = "repo-"
-	repository.ObjectMeta.Name = ""
+	chart.ObjectMeta.GenerateName = "repo-"
+	chart.ObjectMeta.Name = ""
 }
 
-// Validate validates a new repository.
-func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateRepository(obj.(*registry.Repository), s.registryClient)
+// Validate validates a new chart.
+func (s *Strategy) Validate(_ context.Context, obj runtime.Object) field.ErrorList {
+	return ValidateChart(obj.(*registry.Chart), s.registryClient)
 }
 
 // AllowCreateOnUpdate is false for repositories.
@@ -109,25 +109,25 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 }
 
 // Canonicalize normalizes the object after validation.
-func (Strategy) Canonicalize(obj runtime.Object) {
+func (Strategy) Canonicalize(runtime.Object) {
 }
 
-// ValidateUpdate is the default update validation for an end repository.
-func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRepositoryUpdate(obj.(*registry.Repository), old.(*registry.Repository))
+// ValidateUpdate is the default update validation for an end chart.
+func (s *Strategy) ValidateUpdate(_ context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateChartUpdate(obj.(*registry.Chart), old.(*registry.Chart))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	repository, ok := obj.(*registry.Repository)
+	chart, ok := obj.(*registry.Chart)
 	if !ok {
-		return nil, nil, fmt.Errorf("not a repository")
+		return nil, nil, fmt.Errorf("not a chart")
 	}
-	return repository.ObjectMeta.Labels, ToSelectableFields(repository), nil
+	return chart.ObjectMeta.Labels, ToSelectableFields(chart), nil
 }
 
-// MatchRepository returns a generic matcher for a given label and field selector.
-func MatchRepository(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
+// MatchChart returns a generic matcher for a given label and field selector.
+func MatchChart(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{
 		Label:    label,
 		Field:    field,
@@ -135,24 +135,24 @@ func MatchRepository(label labels.Selector, field fields.Selector) storage.Selec
 		IndexFields: []string{
 			"spec.tenantID",
 			"spec.name",
-			"spec.namespaceName",
+			"spec.chartGroupName",
 			"metadata.name",
 		},
 	}
 }
 
 // ToSelectableFields returns a field set that represents the object
-func ToSelectableFields(repository *registry.Repository) fields.Set {
-	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&repository.ObjectMeta, false)
+func ToSelectableFields(chart *registry.Chart) fields.Set {
+	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&chart.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID":      repository.Spec.TenantID,
-		"spec.namespaceName": repository.Spec.NamespaceName,
-		"spec.name":          repository.Spec.Name,
+		"spec.tenantID":       chart.Spec.TenantID,
+		"spec.chartGroupName": chart.Spec.ChartGroupName,
+		"spec.name":           chart.Spec.Name,
 	}
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
 
-// StatusStrategy implements verification logic for status of repository request.
+// StatusStrategy implements verification logic for status of chart request.
 type StatusStrategy struct {
 	*Strategy
 }
@@ -169,14 +169,14 @@ func NewStatusStrategy(strategy *Strategy) *StatusStrategy {
 // sort order-insensitive list fields, etc.  This should not remove fields
 // whose presence would be considered a validation error.
 func (StatusStrategy) PrepareForUpdate(_ context.Context, obj, old runtime.Object) {
-	newRepository := obj.(*registry.Repository)
-	oldRepository := old.(*registry.Repository)
-	newRepository.Spec = oldRepository.Spec
+	newChart := obj.(*registry.Chart)
+	oldChart := old.(*registry.Chart)
+	newChart.Spec = oldChart.Spec
 }
 
 // ValidateUpdate is invoked after default fields in the object have been
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(_ context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRepositoryUpdate(obj.(*registry.Repository), old.(*registry.Repository))
+	return ValidateChartUpdate(obj.(*registry.Chart), old.(*registry.Chart))
 }

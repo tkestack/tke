@@ -20,7 +20,7 @@ package storage
 
 import (
 	"context"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,25 +31,25 @@ import (
 	registryapi "tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
-	namespacestrategy "tkestack.io/tke/pkg/registry/registry/namespace"
+	chartstrategy "tkestack.io/tke/pkg/registry/registry/chart"
 	registryutil "tkestack.io/tke/pkg/registry/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-// Storage includes storage for namespaces and all sub resources.
+// Storage includes storage for charts and all sub resources.
 type Storage struct {
-	Namespace *REST
-	Status    *StatusREST
+	Chart  *REST
+	Status *StatusREST
 }
 
-// NewStorage returns a Storage object that will work against namespaces.
+// NewStorage returns a Storage object that will work against charts.
 func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *registryinternalclient.RegistryClient, privilegedUsername string) *Storage {
-	strategy := namespacestrategy.NewStrategy(registryClient)
+	strategy := chartstrategy.NewStrategy(registryClient)
 	store := &registry.Store{
-		NewFunc:                  func() runtime.Object { return &registryapi.Namespace{} },
-		NewListFunc:              func() runtime.Object { return &registryapi.NamespaceList{} },
-		DefaultQualifiedResource: registryapi.Resource("namespaces"),
-		PredicateFunc:            namespacestrategy.MatchNamespace,
+		NewFunc:                  func() runtime.Object { return &registryapi.Chart{} },
+		NewListFunc:              func() runtime.Object { return &registryapi.ChartList{} },
+		DefaultQualifiedResource: registryapi.Resource("charts"),
+		PredicateFunc:            chartstrategy.MatchChart,
 		ReturnDeletedObject:      true,
 
 		CreateStrategy: strategy,
@@ -59,52 +59,52 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *re
 	}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
-		AttrFunc:    namespacestrategy.GetAttrs,
+		AttrFunc:    chartstrategy.GetAttrs,
 	}
 
 	if err := store.CompleteWithOptions(options); err != nil {
-		log.Panic("Failed to create namespace etcd rest storage", log.Err(err))
+		log.Panic("Failed to create chart etcd rest storage", log.Err(err))
 	}
 
 	statusStore := *store
-	statusStore.UpdateStrategy = namespacestrategy.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = namespacestrategy.NewStatusStrategy(strategy)
+	statusStore.UpdateStrategy = chartstrategy.NewStatusStrategy(strategy)
+	statusStore.ExportStrategy = chartstrategy.NewStatusStrategy(strategy)
 
 	return &Storage{
-		Namespace: &REST{store, privilegedUsername},
-		Status:    &StatusREST{&statusStore},
+		Chart:  &REST{store, privilegedUsername},
+		Status: &StatusREST{&statusStore},
 	}
 }
 
-// ValidateGetObjectAndTenantID validate name and tenantID, if success return Namespace
+// ValidateGetObjectAndTenantID validate name and tenantID, if success return Message
 func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := store.Get(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	o := obj.(*registryapi.Namespace)
-	if err := registryutil.FilterNamespace(ctx, o); err != nil {
+	repo := obj.(*registryapi.Chart)
+	if err := registryutil.FilterChart(ctx, repo); err != nil {
 		return nil, err
 	}
-	return o, nil
+	return repo, nil
 }
 
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return Namespace
+// ValidateExportObjectAndTenantID validate name and tenantID, if success return Chart
 func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
 	obj, err := store.Export(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	o := obj.(*registryapi.Namespace)
-	if err := registryutil.FilterNamespace(ctx, o); err != nil {
+	repo := obj.(*registryapi.Chart)
+	if err := registryutil.FilterChart(ctx, repo); err != nil {
 		return nil, err
 	}
-	return o, nil
+	return repo, nil
 }
 
-// REST implements a RESTStorage for namespaces against etcd.
+// REST implements a RESTStorage for charts against etcd.
 type REST struct {
 	*registry.Store
 	privilegedUsername string
@@ -114,7 +114,7 @@ var _ rest.ShortNamesProvider = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
-	return []string{"rns"}
+	return []string{"chart"}
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -127,14 +127,14 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
 	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, apierrors.NewMethodNotSupported(registryapi.Resource("namespaces"), "delete collection")
+		return nil, errors.NewMethodNotSupported(registryapi.Resource("charts"), "delete collection")
 	}
 	return r.Store.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
 
 // Get finds a resource in the storage by name and returns it.
-func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
+func (r *REST) Get(ctx context.Context, messageName string, options *metav1.GetOptions) (runtime.Object, error) {
+	return ValidateGetObjectAndTenantID(ctx, r.Store, messageName, options)
 }
 
 // Export an object.  Fields that are not user specified are stripped out
@@ -143,7 +143,7 @@ func (r *REST) Export(ctx context.Context, name string, options metav1.ExportOpt
 	return ValidateExportObjectAndTenantID(ctx, r.Store, name, options)
 }
 
-// Update alters the object subset of an object.
+// Update finds a resource in the storage and updates it.
 func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
 	// subresources should never allow create on update.
@@ -163,16 +163,12 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 
-// StatusREST implements the REST endpoint for changing the status of a namespace.
+// StatusREST implements the REST endpoint for changing the status of a chart request.
 type StatusREST struct {
 	store *registry.Store
 }
 
-// StatusREST implements Patcher.
-var _ = rest.Patcher(&StatusREST{})
-
-// New returns an empty object that can be used with Create and Update after
-// request data has been put into it.
+// New returns an empty object that can be used with Create and Update after request data has been put into it.
 func (r *StatusREST) New() runtime.Object {
 	return r.store.New()
 }
