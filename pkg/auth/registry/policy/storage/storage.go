@@ -48,14 +48,15 @@ import (
 type Storage struct {
 	Policy *REST
 
-	Status   *StatusREST
-	Finalize *FinalizeREST
-	Binding  *BindingREST
+	Status    *StatusREST
+	Finalize  *FinalizeREST
+	Binding   *BindingREST
+	Unbinding *UnbindingREST
 }
 
 // NewStorage returns a Storage object that will work against policies.
 func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
-	strategy := policy.NewStrategy(enforcer)
+	strategy := policy.NewStrategy(enforcer, authClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.Policy{} },
 		NewListFunc:              func() runtime.Object { return &auth.PolicyList{} },
@@ -66,7 +67,6 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyE
 		AfterCreate:    strategy.AfterCreate,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
-		AfterDelete:    strategy.AfterDelete,
 	}
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
@@ -86,10 +86,11 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyE
 	finalizeStore.ExportStrategy = policy.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		Policy:   &REST{store, privilegedUsername},
-		Status:   &StatusREST{&statusStore},
-		Finalize: &FinalizeREST{&finalizeStore},
-		Binding:  &BindingREST{store, authClient},
+		Policy:    &REST{store, privilegedUsername},
+		Status:    &StatusREST{&statusStore},
+		Finalize:  &FinalizeREST{&finalizeStore},
+		Binding:   &BindingREST{store, authClient},
+		Unbinding: &UnbindingREST{store, authClient},
 	}
 }
 

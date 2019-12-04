@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -37,10 +36,8 @@ import (
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
 	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/auth/controller/policy/deletion"
 	authutil "tkestack.io/tke/pkg/auth/util"
-	"tkestack.io/tke/pkg/auth/util/adapter"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -70,16 +67,18 @@ type Controller struct {
 	ruleListerSynced   cache.InformerSynced
 	// helper to delete all resources in the policy when the policy is deleted.
 	policyedResourcesDeleter deletion.PoliciedResourcesDeleterInterface
-	enforcer                 *enforcer.PolicyEnforcer
+	enforcer                 *casbin.SyncedEnforcer
 }
 
 // NewController creates a new policy object.
-func NewController(client clientset.Interface, policyInformer authv1informer.PolicyInformer, ruleInformer authv1informer.RuleInformer, resyncPeriod time.Duration, finalizerToken v1.FinalizerName) *Controller {
+func NewController(client clientset.Interface, policyInformer authv1informer.PolicyInformer, ruleInformer authv1informer.RuleInformer, enforcer *casbin.SyncedEnforcer, resyncPeriod time.Duration, finalizerToken v1.FinalizerName) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
-		client: client,
-		cache:  &policyCache{policyMap: make(map[string]*cachedPolicy)},
-		queue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
+		client:                   client,
+		cache:                    &policyCache{policyMap: make(map[string]*cachedPolicy)},
+		queue:                    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
+		enforcer:                 enforcer,
+		policyedResourcesDeleter: deletion.NewPoliciedResourcesDeleter(client.AuthV1().Policies(), client.AuthV1(), enforcer, finalizerToken, true),
 	}
 
 	if client != nil && client.AuthV1().RESTClient().GetRateLimiter() != nil {
@@ -106,18 +105,6 @@ func NewController(client clientset.Interface, policyInformer authv1informer.Pol
 
 	controller.ruleLister = ruleInformer.Lister()
 	controller.ruleListerSynced = ruleInformer.Informer().HasSynced
-
-	adpt := adapter.NewAdapter(client.AuthV1().Rules(), controller.ruleLister)
-	m, err := model.NewModelFromString(auth.DefaultRuleModel)
-	if err != nil {
-		panic(err)
-	}
-	e, err := casbin.NewSyncedEnforcer(m, adpt)
-	if err != nil {
-		panic(err)
-	}
-	controller.enforcer = enforcer.NewPolicyEnforcer(e, nil)
-	controller.policyedResourcesDeleter = deletion.NewPoliciedResourcesDeleter(client.AuthV1().Policies(), client.AuthV1(), controller.enforcer.Enforcer, finalizerToken, true)
 
 	return controller
 }
@@ -161,7 +148,6 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 	if ok := cache.WaitForCacheSync(stopCh, c.policyListerSynced, c.ruleListerSynced); !ok {
 		log.Error("Failed to wait for policy caches to sync")
 	}
-	c.enforcer.Enforcer.StartAutoLoadPolicy(1 * time.Second)
 
 	for i := 0; i < workers; i++ {
 		go wait.Until(c.worker, time.Second, stopCh)
@@ -276,7 +262,7 @@ func (c *Controller) handlePhase(key string, cachedPolicy *cachedPolicy, policy 
 }
 
 func (c *Controller) handleSpec(key string, cachedPolicy *cachedPolicy, policy *v1.Policy) error {
-	existedRule := c.enforcer.Enforcer.GetFilteredPolicy(0, key)
+	existedRule := c.enforcer.GetFilteredPolicy(0, key)
 
 	var outPolicy = &auth.Policy{}
 	err := v1.Convert_v1_Policy_To_auth_Policy(policy, outPolicy, nil)
@@ -292,7 +278,7 @@ func (c *Controller) handleSpec(key string, cachedPolicy *cachedPolicy, policy *
 	var errs []error
 	if len(added) != 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.Enforcer.AddPolicy(add); err != nil {
+			if _, err := c.enforcer.AddPolicy(add); err != nil {
 				log.Errorf("Add policy failed", log.Strings("rule", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -301,7 +287,7 @@ func (c *Controller) handleSpec(key string, cachedPolicy *cachedPolicy, policy *
 
 	if len(removed) != 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.Enforcer.RemovePolicy(remove); err != nil {
+			if _, err := c.enforcer.RemovePolicy(remove); err != nil {
 				log.Errorf("Remove policy failed", log.Strings("rule", remove), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -312,12 +298,12 @@ func (c *Controller) handleSpec(key string, cachedPolicy *cachedPolicy, policy *
 }
 
 func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
-	rules := c.enforcer.Enforcer.GetFilteredGroupingPolicy(1, policy.Name)
+	rules := c.enforcer.GetFilteredGroupingPolicy(1, policy.Name)
 	log.Debugf("Get grouping rules for policy: %s, %v", policy.Name, rules)
 	var existSubj []string
 	for _, rule := range rules {
-		if strings.HasPrefix(rule[0], userPrefix(policy.Spec.TenantID)) {
-			existSubj = append(existSubj, strings.TrimPrefix(rule[0], userPrefix(policy.Spec.TenantID)))
+		if strings.HasPrefix(rule[0], authutil.UserPrefix(policy.Spec.TenantID)) {
+			existSubj = append(existSubj, strings.TrimPrefix(rule[0], authutil.UserPrefix(policy.Spec.TenantID)))
 		}
 	}
 
@@ -328,11 +314,10 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 
 	var errs []error
 	added, removed := util.DiffStringSlice(existSubj, expectedSubj)
-
 	log.Info("Handle policy subjects changed", log.String("policy", key), log.Strings("added", added), log.Strings("removed", removed))
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.Enforcer.AddRoleForUser(keyUser(policy.Spec.TenantID, add), policy.Name); err != nil {
+			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(policy.Spec.TenantID, add), policy.Name); err != nil {
 				log.Errorf("Bind policy to user failed", log.String("policy", policy.Name), log.String("user", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -341,7 +326,7 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.Enforcer.DeleteRoleForUser(keyUser(policy.Spec.TenantID, remove), policy.Name); err != nil {
+			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(policy.Spec.TenantID, remove), policy.Name); err != nil {
 				log.Errorf("Bind policy to user failed", log.String("policy", policy.Name), log.String("user", remove), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -369,12 +354,4 @@ func (c *Controller) processDelete(cachedNamespace *cachedPolicy, key string) er
 	}
 
 	return nil
-}
-
-func keyUser(tenantID string, name string) string {
-	return fmt.Sprintf("%s%s", userPrefix(tenantID), name)
-}
-
-func userPrefix(tenantID string) string {
-	return fmt.Sprintf("%s::", tenantID)
 }

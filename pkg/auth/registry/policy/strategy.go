@@ -44,16 +44,19 @@ type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	enforcer *enforcer.PolicyEnforcer
+	enforcer   *enforcer.PolicyEnforcer
+	authClient authinternalclient.AuthInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating policy objects.
-func NewStrategy(enforcer *enforcer.PolicyEnforcer) *Strategy {
+func NewStrategy(enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface) *Strategy {
 	return &Strategy{
 		ObjectTyper:   auth.Scheme,
 		NameGenerator: namesutil.Generator,
-		enforcer:      enforcer}
+		enforcer:      enforcer,
+		authClient:    authClient,
+	}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -90,11 +93,11 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	policy, _ := obj.(*auth.Policy)
 	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if len(tenantID) != 0 {
+	if tenantID != "" {
 		policy.Spec.TenantID = tenantID
 	}
 
-	if policy.Spec.Username == "" {
+	if username != "" {
 		policy.Spec.Username = username
 	}
 
@@ -113,7 +116,6 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 // created and before it is decorated, optional.
 func (s *Strategy) AfterCreate(obj runtime.Object) error {
 	policy, _ := obj.(*auth.Policy)
-
 	if err := func() error {
 		return s.enforcer.AddPolicy(policy)
 	}(); err != nil {
@@ -123,24 +125,9 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 	return nil
 }
 
-// AfterDelete implements a further operation to run after a resource
-// has been deleted.
-func (s *Strategy) AfterDelete(obj runtime.Object) error {
-	policy, _ := obj.(*auth.Policy)
-
-	if err := func() error {
-		//	return s.enforcer.DeletePolicy(policy)
-		return nil
-	}(); err != nil {
-		return fmt.Errorf("failed to delete policy '%s', for '%s'", policy.Name, err)
-	}
-
-	return nil
-}
-
 // Validate validates a new policy.
-func (Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidatePolicy(obj.(*auth.Policy))
+func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	return ValidatePolicy(obj.(*auth.Policy), s.authClient)
 }
 
 // AllowCreateOnUpdate is false for policies.
@@ -160,8 +147,8 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 }
 
 // ValidateUpdate is the default update validation for an end policy.
-func (Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidatePolicyUpdate(obj.(*auth.Policy), old.(*auth.Policy))
+func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidatePolicyUpdate(obj.(*auth.Policy), old.(*auth.Policy), s.authClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -182,6 +169,7 @@ func MatchPolicy(label labels.Selector, field fields.Selector) storage.Selection
 		IndexFields: []string{
 			"spec.tenantID",
 			"spec.username",
+			"spec.category",
 		},
 	}
 }
@@ -192,6 +180,7 @@ func ToSelectableFields(policy *auth.Policy) fields.Set {
 	specificFieldsSet := fields.Set{
 		"spec.tenantID": policy.Spec.TenantID,
 		"spec.username": policy.Spec.Username,
+		"spec.category": policy.Spec.Category,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
@@ -222,7 +211,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return nil
+	return ValidatePolicyUpdate(obj.(*auth.Policy), old.(*auth.Policy), s.authClient)
 }
 
 // FinalizeStrategy implements finalizer logic for Machine.
@@ -251,34 +240,5 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return nil
-}
-
-// BindingStrategy implements Binding logic for Machine.
-type BindingStrategy struct {
-	*Strategy
-	authClient authinternalclient.AuthInterface
-}
-
-var _ rest.RESTUpdateStrategy = &BindingStrategy{}
-
-// NewFinalizerStrategy create the FinalizeStrategy object by given strategy.
-func NewBindingStrategy(strategy *Strategy, authClient authinternalclient.AuthInterface) *BindingStrategy {
-	return &BindingStrategy{strategy, authClient}
-}
-
-// PrepareForCreate is invoked on create before validation to normalize
-// the object.
-func (BindingStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	//binding, _ := obj.(*auth.Binding)
-	//
-	//_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	//
-	//// fufill user ID and userName
-	//for _, subj := range binding.Subjects {
-	//	if subj.ID == "" {
-	//
-	//	}
-	//}
-	return
+	return ValidatePolicyUpdate(obj.(*auth.Policy), old.(*auth.Policy), s.authClient)
 }

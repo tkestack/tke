@@ -19,9 +19,15 @@
 package policy
 
 import (
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/auth"
+	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/validation"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
 // ValidatePolicyName is a ValidateNameFunc for names that must be a DNS
@@ -29,23 +35,69 @@ import (
 var ValidatePolicyName = apiMachineryValidation.NameIsDNSLabel
 
 // ValidatePolicy tests if required fields in the policy are set.
-func ValidatePolicy(policy *auth.Policy) field.ErrorList {
+func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&policy.ObjectMeta, false, ValidatePolicyName, field.NewPath("metadata"))
 
-	fldStatPath := field.NewPath("spec", "statement")
+	fldSpecPath := field.NewPath("spec")
+	if err := validation.IsDisplayName(policy.Spec.DisplayName); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("displayName"), policy.Spec.DisplayName, err.Error()))
+	}
 
+	if policy.Spec.Category == "" {
+		allErrs = append(allErrs, field.Required(fldSpecPath.Child("category"), policy.Spec.Category))
+	}
+
+	fldStmtPath := field.NewPath("spec", "statement")
 	if len(policy.Spec.Statement.Actions) == 0 {
-		allErrs = append(allErrs, field.Required(fldStatPath.Child("actions"), "must specify actions"))
+		allErrs = append(allErrs, field.Required(fldStmtPath.Child("actions"), "must specify actions"))
 	}
 
 	if len(policy.Spec.Statement.Resources) == 0 {
-		allErrs = append(allErrs, field.Required(fldStatPath.Child("resources"), "must specify resources"))
+		allErrs = append(allErrs, field.Required(fldStmtPath.Child("resources"), "must specify resources"))
 	}
 
 	if policy.Spec.Statement.Effect == "" {
-		allErrs = append(allErrs, field.Required(fldStatPath.Child( "effect"), "must specify resources"))
+		allErrs = append(allErrs, field.Required(fldStmtPath.Child("effect"), "must specify effect"))
 	} else if policy.Spec.Statement.Effect != auth.Allow && policy.Spec.Statement.Effect != auth.Deny {
-		allErrs = append(allErrs, field.Invalid(fldStatPath.Child( "effect"), policy.Spec.Statement.Effect, "must specify one of: `allow` or `deny`"))
+		allErrs = append(allErrs, field.Invalid(fldStmtPath.Child("effect"), policy.Spec.Statement.Effect, "must specify one of: `allow` or `deny`"))
+	}
+
+	fldStatPath := field.NewPath("status")
+	if len(policy.Status.Subjects) != 0 {
+		for i, subj := range policy.Status.Subjects {
+			if subj.ID == "" && subj.Name == "" {
+				allErrs = append(allErrs, field.Required(fldStatPath.Child("subjects"), "must specify id or name"))
+				continue
+			}
+
+			// if specify id, ensure name
+			if subj.ID != "" {
+				val, err := authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						allErrs = append(allErrs, field.NotFound(fldStatPath.Child("subjects"), subj.ID))
+					} else {
+						allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
+					}
+				} else {
+					if val.Spec.TenantID != val.Spec.TenantID {
+						allErrs = append(allErrs, field.Invalid(fldStmtPath.Child("subjects"), subj.ID, "must in the same tenant with the policy"))
+					} else {
+						policy.Status.Subjects[i].Name = val.Name
+					}
+				}
+			} else {
+				localIdentity, err := util.GetLocalIdentity(authClient, policy.Spec.TenantID, subj.Name)
+				if err != nil && apierrors.IsNotFound(err) {
+					continue
+				}
+				if err != nil {
+					allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
+				} else {
+					policy.Status.Subjects[i].ID = localIdentity.Name
+				}
+			}
+		}
 	}
 
 	return allErrs
@@ -53,8 +105,13 @@ func ValidatePolicy(policy *auth.Policy) field.ErrorList {
 
 // ValidatePolicyUpdate tests if required fields in the policy are set during
 // an update.
-func ValidatePolicyUpdate(policy *auth.Policy, old *auth.Policy) field.ErrorList {
+func ValidatePolicyUpdate(policy *auth.Policy, old *auth.Policy, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&policy.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidatePolicy(policy)...)
+	allErrs = append(allErrs, ValidatePolicy(policy, authClient)...)
+
+	fldSpecPath := field.NewPath("spec")
+	if policy.Spec.TenantID != old.Spec.TenantID {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("tenantID"), policy.Spec.TenantID, "disallowed change the tenant"))
+	}
 	return allErrs
 }
