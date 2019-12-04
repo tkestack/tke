@@ -20,6 +20,8 @@ package app
 
 import (
 	"fmt"
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/model"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cacheddiscovery "k8s.io/client-go/discovery/cached"
@@ -27,10 +29,12 @@ import (
 	"k8s.io/client-go/restmapper"
 	"net/http"
 	"time"
+	"tkestack.io/tke/api/auth"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	"tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-auth-controller/app/config"
+	adapter2 "tkestack.io/tke/pkg/auth/util/adapter"
 	"tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/controller/util"
 )
@@ -55,6 +59,9 @@ type ControllerContext struct {
 
 	// AvailableResources is a map listing currently available resources
 	AvailableResources map[schema.GroupVersionResource]bool
+
+	// Enforcer is a casbin enforcer to operate policy.
+	Enforcer *casbin.SyncedEnforcer
 
 	// Stop is the stop channel
 	Stop <-chan struct{}
@@ -108,11 +115,24 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		return ControllerContext{}, err
 	}
 
+	adpt := adapter2.NewAdapter(client.AuthV1().Rules(), sharedInformers.Auth().V1().Rules().Lister())
+	m, err := model.NewModelFromString(auth.DefaultRuleModel)
+	if err != nil {
+		return ControllerContext{}, fmt.Errorf("failed to new casbin model: %v", err)
+	}
+	e, err := casbin.NewSyncedEnforcer(m, adpt)
+	if err != nil {
+		return ControllerContext{}, fmt.Errorf("failed to new casbin enforcer: %v", err)
+	}
+
+	e.StartAutoLoadPolicy(1 * time.Second)
+
 	ctx := ControllerContext{
 		ClientBuilder:           rootClientBuilder,
 		InformerFactory:         sharedInformers,
 		RESTMapper:              restMapper,
 		AvailableResources:      availableResources,
+		Enforcer:                e,
 		Stop:                    stop,
 		InformersStarted:        make(chan struct{}),
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),

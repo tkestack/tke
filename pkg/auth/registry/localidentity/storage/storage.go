@@ -20,6 +20,9 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/apiserver/pkg/util/dryrun"
 	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/auth/util"
 
@@ -30,6 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	storageerr "k8s.io/apiserver/pkg/storage/errors"
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
@@ -42,6 +46,8 @@ import (
 type Storage struct {
 	LocalIdentity *REST
 	Status        *StatusREST
+	Policy        *PolicyREST
+	Finalize      *FinalizeREST
 }
 
 // NewStorage returns a Storage object that will work against identify.
@@ -75,9 +81,15 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 	statusStore.UpdateStrategy = localidentity.NewStatusStrategy(strategy)
 	statusStore.ExportStrategy = localidentity.NewStatusStrategy(strategy)
 
+	finalizeStore := *store
+	finalizeStore.UpdateStrategy = localidentity.NewFinalizerStrategy(strategy)
+	finalizeStore.ExportStrategy = localidentity.NewFinalizerStrategy(strategy)
+
 	return &Storage{
-		LocalIdentity: &REST{store, policyEnforcer, privilegedUsername},
+		LocalIdentity: &REST{store, privilegedUsername},
 		Status:        &StatusREST{&statusStore},
+		Finalize:      &FinalizeREST{&finalizeStore},
+		Policy:        &PolicyREST{authClient, policyEnforcer.Enforcer},
 	}
 }
 
@@ -136,7 +148,6 @@ func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, o
 // REST implements a RESTStorage for identities against etcd.
 type REST struct {
 	*registry.Store
-	policyEnforcer     *enforcer.PolicyEnforcer
 	privilegedUsername string
 }
 
@@ -184,16 +195,113 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 	return r.Store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
-// Delete enforces life-cycle rules for local identity termination
+// Delete enforces life-cycle rules for localIdentity termination
 func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	_, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
+	object, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
 	}
+	policy := object.(*auth.LocalIdentity)
 
-	//TODO use controller to delete rules
-	//localIdentity := obj.(*auth.LocalIdentity)
-	//_ = r.policyEnforcer.RemoveAllPermsForUser(localIdentity.Spec.TenantID, localIdentity.Spec.Username)
+	// Ensure we have a UID precondition
+	if options == nil {
+		options = metav1.NewDeleteOptions(0)
+	}
+	if options.Preconditions == nil {
+		options.Preconditions = &metav1.Preconditions{}
+	}
+	if options.Preconditions.UID == nil {
+		options.Preconditions.UID = &policy.UID
+	} else if *options.Preconditions.UID != policy.UID {
+		err = apierrors.NewConflict(
+			auth.Resource("localidentities"),
+			name,
+			fmt.Errorf("precondition failed: UID in precondition: %v, UID in object meta: %v", *options.Preconditions.UID, policy.UID),
+		)
+		return nil, false, err
+	}
+
+	// upon first request to delete, we switch the phase to start policy termination
+	if policy.DeletionTimestamp.IsZero() {
+		key, err := r.Store.KeyFunc(ctx, name)
+		if err != nil {
+			return nil, false, err
+		}
+
+		preconditions := storage.Preconditions{UID: options.Preconditions.UID}
+
+		out := r.Store.NewFunc()
+		err = r.Store.Storage.GuaranteedUpdate(
+			ctx, key, out, false, &preconditions,
+			storage.SimpleUpdate(func(existing runtime.Object) (runtime.Object, error) {
+				existingLocalIdentity, ok := existing.(*auth.LocalIdentity)
+				if !ok {
+					// wrong type
+					return nil, fmt.Errorf("expected *auth.LocalIdentity, got %v", existing)
+				}
+				if err := deleteValidation(ctx, existingLocalIdentity); err != nil {
+					return nil, err
+				}
+				// Set the deletion timestamp if needed
+				if existingLocalIdentity.DeletionTimestamp.IsZero() {
+					now := metav1.Now()
+					existingLocalIdentity.DeletionTimestamp = &now
+				}
+				// Set the policy phase to terminating, if needed
+				if existingLocalIdentity.Status.Phase != auth.LocalIdentityDeleting {
+					existingLocalIdentity.Status.Phase = auth.LocalIdentityDeleting
+				}
+
+				// the current finalizers which are on namespace
+				currentFinalizers := map[string]bool{}
+				for _, f := range existingLocalIdentity.Finalizers {
+					currentFinalizers[f] = true
+				}
+				// the finalizers we should ensure on rule
+				shouldHaveFinalizers := map[string]bool{
+					metav1.FinalizerOrphanDependents: apiserverutil.ShouldHaveOrphanFinalizer(options, currentFinalizers[metav1.FinalizerOrphanDependents]),
+					metav1.FinalizerDeleteDependents: apiserverutil.ShouldHaveDeleteDependentsFinalizer(options, currentFinalizers[metav1.FinalizerDeleteDependents]),
+				}
+				// determine whether there are changes
+				changeNeeded := false
+				for finalizer, shouldHave := range shouldHaveFinalizers {
+					changeNeeded = currentFinalizers[finalizer] != shouldHave || changeNeeded
+					if shouldHave {
+						currentFinalizers[finalizer] = true
+					} else {
+						delete(currentFinalizers, finalizer)
+					}
+				}
+				// make the changes if needed
+				if changeNeeded {
+					var newFinalizers []string
+					for f := range currentFinalizers {
+						newFinalizers = append(newFinalizers, f)
+					}
+					existingLocalIdentity.Finalizers = newFinalizers
+				}
+				return existingLocalIdentity, nil
+			}),
+			dryrun.IsDryRun(options.DryRun),
+		)
+
+		if err != nil {
+			err = storageerr.InterpretGetError(err, auth.Resource("localidentities"), name)
+			err = storageerr.InterpretUpdateError(err, auth.Resource("localidentities"), name)
+			if _, ok := err.(*apierrors.StatusError); !ok {
+				err = apierrors.NewInternalError(err)
+			}
+			return nil, false, err
+		}
+
+		return out, false, nil
+	}
+
+	// prior to final deletion, we must ensure that finalizers is empty
+	if len(policy.Spec.Finalizers) != 0 {
+		err = apierrors.NewConflict(auth.Resource("localidentities"), policy.Name, fmt.Errorf("the system is ensuring all content is removed from this policy.  Upon completion, this policy will automatically be purged by the system"))
+		return nil, false, err
+	}
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 
@@ -226,5 +334,36 @@ func (r *StatusREST) Export(ctx context.Context, name string, options metav1.Exp
 func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
 	// subresources should never allow create on update.
+	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
+}
+
+// FinalizeREST implements the REST endpoint for finalizing a policy.
+type FinalizeREST struct {
+	store *registry.Store
+}
+
+// New returns an empty object that can be used with Create and Update after
+// request data has been put into it.
+func (r *FinalizeREST) New() runtime.Object {
+	return r.store.New()
+}
+
+// Get retrieves the object from the storage. It is required to support Patch.
+func (r *FinalizeREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
+}
+
+// Export an object.  Fields that are not user specified are stripped out
+// Returns the stripped object.
+func (r *FinalizeREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
+	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
+}
+
+// Update alters the status finalizers subset of an object.
+func (r *FinalizeREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	_, err := ValidateGetObjectAndTenantID(ctx, r.store, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }

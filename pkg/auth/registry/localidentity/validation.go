@@ -26,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/auth/util"
-	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/validation"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -62,7 +61,6 @@ func ValidateLocalIdentity(authClient authinternalclient.AuthInterface, localIde
 		}
 	}
 
-	log.Info("xxx", log.Any("xxx", localIdentity.Spec))
 	if !updateCheck {
 		if localIdentity.Spec.HashedPassword == "" {
 			allErrs = append(allErrs, field.Required(fldSpecPath.Child("hashedPassword"), "must specify hashedPassword"))

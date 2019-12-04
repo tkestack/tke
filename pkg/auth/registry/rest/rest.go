@@ -93,6 +93,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["policies/finalize"] = policyRest.Finalize
 		storageMap["policies/status"] = policyRest.Status
 		storageMap["policies/binding"] = policyRest.Binding
+		storageMap["policies/unbinding"] = policyRest.Unbinding
 
 		ruleRest := rulestorage.NewStorage(restOptionsGetter)
 		storageMap["rules"] = ruleRest.Rule

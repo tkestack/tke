@@ -715,6 +715,7 @@ func Convert_auth_PolicyList_To_v1_PolicyList(in *auth.PolicyList, out *PolicyLi
 func autoConvert_v1_PolicySpec_To_auth_PolicySpec(in *PolicySpec, out *auth.PolicySpec, s conversion.Scope) error {
 	out.Finalizers = *(*[]auth.FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
+	out.Category = in.Category
 	out.DisplayName = in.DisplayName
 	out.Username = in.Username
 	out.Description = in.Description
@@ -733,6 +734,7 @@ func Convert_v1_PolicySpec_To_auth_PolicySpec(in *PolicySpec, out *auth.PolicySp
 func autoConvert_auth_PolicySpec_To_v1_PolicySpec(in *auth.PolicySpec, out *PolicySpec, s conversion.Scope) error {
 	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
+	out.Category = in.Category
 	out.DisplayName = in.DisplayName
 	out.Username = in.Username
 	out.Description = in.Description

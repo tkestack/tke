@@ -21,6 +21,7 @@ package app
 import (
 	"net/http"
 	"time"
+	"tkestack.io/tke/pkg/auth/controller/localidentity"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	v1 "tkestack.io/tke/api/auth/v1"
@@ -30,6 +31,9 @@ import (
 const (
 	policySyncPeriod      = 5 * time.Minute
 	concurrentPolicySyncs = 10
+
+	localIdentitySyncPeriod      = 5 * time.Minute
+	concurrentLocalIdentitySyncs = 10
 )
 
 func startPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -41,11 +45,31 @@ func startPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
 		ctx.ClientBuilder.ClientOrDie("policy-controller"),
 		ctx.InformerFactory.Auth().V1().Policies(),
 		ctx.InformerFactory.Auth().V1().Rules(),
+		ctx.Enforcer,
 		policySyncPeriod,
 		v1.PolicyFinalize,
 	)
 
 	go ctrl.Run(concurrentPolicySyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startLocalIdentityController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "policies"}] {
+		return nil, false, nil
+	}
+
+	ctrl := localidentity.NewController(
+		ctx.ClientBuilder.ClientOrDie("localidentity-controller"),
+		ctx.InformerFactory.Auth().V1().LocalIdentities(),
+		ctx.InformerFactory.Auth().V1().Rules(),
+		ctx.Enforcer,
+		localIdentitySyncPeriod,
+		v1.LocalIdentityFinalize,
+	)
+
+	go ctrl.Run(concurrentLocalIdentitySyncs, ctx.Stop)
 
 	return nil, true, nil
 }

@@ -47,8 +47,18 @@ type LocalIdentityList struct {
 	Items []LocalIdentity
 }
 
+// FinalizerName is the name identifying a finalizer during object lifecycle.
+type FinalizerName string
+
+const (
+	// LocalIdentityFinalize is an internal finalizer values to LocalIdentity.
+	LocalIdentityFinalize FinalizerName = "localidentity"
+)
+
 // LocalIdentitySpec is a description of an identity.
 type LocalIdentitySpec struct {
+	Finalizers []FinalizerName
+
 	Username         string
 	DisplayName      string
 	Email            string
@@ -60,10 +70,19 @@ type LocalIdentitySpec struct {
 	Extra            map[string]string
 }
 
+// LocalIdentityPhase defines the phase of LocalIdentity construct.
+type LocalIdentityPhase string
+
+const (
+	// LocalIdentityDeleting means the localidentity is undergoing graceful termination.
+	LocalIdentityDeleting LocalIdentityPhase = "Deleting"
+)
+
 // LocalIdentityStatus is a description of an identity status.
 type LocalIdentityStatus struct {
 	Locked bool
 
+	Phase LocalIdentityPhase
 	// The last time the local identity was updated.
 	// +optional
 	LastUpdateTime metav1.Time
@@ -182,21 +201,18 @@ type APISigningKeyList struct {
 	Items []APISigningKey
 }
 
-// ProjectPhase defines the phase of project constructor.
+// ProjectPhase defines the phase of policy constructor.
 type PolicyPhase string
 
 const (
 	// PolicyActive indicates the policy is active.
 	PolicyActive PolicyPhase = "Active"
-	// ProjectTerminating means the project is undergoing graceful termination.
+	// PolicyTerminating means the policy is undergoing graceful termination.
 	PolicyTerminating PolicyPhase = "Terminating"
 )
 
-// FinalizerName is the name identifying a finalizer during project lifecycle.
-type FinalizerName string
-
 const (
-	// ProjectFinalize is an internal finalizer values to Project.
+	// PolicyFinalize is an internal finalizer values to Policy.
 	PolicyFinalize FinalizerName = "policy"
 )
 
@@ -241,6 +257,7 @@ type PolicySpec struct {
 	Finalizers []FinalizerName
 
 	TenantID    string
+	Category    string
 	DisplayName string
 	// Creator
 	Username    string

@@ -53,8 +53,15 @@ type LocalIdentityList struct {
 	Items []LocalIdentity `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
+const (
+	// LocalIdentityFinalize is an internal finalizer values to LocalIdentity.
+	LocalIdentityFinalize FinalizerName = "localidentity"
+)
+
 // LocalIdentitySpec is a description of an identity.
 type LocalIdentitySpec struct {
+	Finalizers []FinalizerName `json:"finalizers,omitempty"`
+
 	Username         string `json:"username" protobuf:"bytes,7,opt,name=name"`
 	DisplayName      string `json:"displayName" protobuf:"bytes,8,opt,name=displayName"`
 	Email            string `json:"email" protobuf:"bytes,9,opt,name=email"`
@@ -69,8 +76,18 @@ type LocalIdentitySpec struct {
 	Extra map[string]string `json:"extra,omitempty" protobuf:"bytes,3,rep,name=extra"`
 }
 
+// LocalIdentityPhase defines the phase of LocalIdentity construct.
+type LocalIdentityPhase string
+
+const (
+	// LocalIdentityDeleting means the localidentity is undergoing graceful termination.
+	LocalIdentityDeleting LocalIdentityPhase = "Deleting"
+)
+
 // LocalIdentityStatus is a description of an identity status.
 type LocalIdentityStatus struct {
+	Phase LocalIdentityPhase `json:"phase,omitempty"`
+
 	// +optional
 	Locked bool `json:"locked,omitempty" protobuf:"varint,1,opt,name=locked"`
 
@@ -267,11 +284,13 @@ type PolicySpec struct {
 	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,8,rep,name=finalizers,casttype=FinalizerName"`
 
 	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	Category    string `json:"category" protobuf:"bytes,9,opt,name=category"`
 	DisplayName string `json:"displayName" protobuf:"bytes,7,opt,name=displayName"`
 	Username    string `json:"username" protobuf:"bytes,2,opt,name=username"`
 	// +optional
-	Description string    `json:"description" protobuf:"bytes,3,opt,name=description"`
-	Statement   Statement `json:"statement" protobuf:"bytes,5,rep,name=statement"`
+	Description string `json:"description" protobuf:"bytes,3,opt,name=description"`
+
+	Statement Statement `json:"statement" protobuf:"bytes,5,rep,name=statement"`
 	// +optional
 	Conditions []byte `json:"conditions,omitempty" protobuf:"bytes,6,rep,name=conditions"`
 }

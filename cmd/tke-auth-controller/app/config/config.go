@@ -29,7 +29,6 @@ import (
 	"tkestack.io/tke/cmd/tke-auth-controller/app/options"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
-	"tkestack.io/tke/pkg/util/log"
 )
 
 // Config is the running configuration structure of the TKE controller manager.
@@ -44,7 +43,7 @@ type Config struct {
 	LeaderElectionClient *versionedclientset.Clientset
 	// the rest config for the auth apiserver
 	AuthAPIServerClientConfig *restclient.Config
-	Component                     controlleroptions.ComponentConfiguration
+	Component                 controlleroptions.ComponentConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -61,15 +60,13 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 
 	// shallow copy, do not modify the apiServerClientConfig.Timeout.
 	config := *authAPIServerClientConfig
-	log.Info("sasaas", log.String("xxx", config.Host))
 	config.Timeout = opts.Component.LeaderElection.RenewDeadline
 	leaderElectionClient := versionedclientset.NewForConfigOrDie(restclient.AddUserAgent(&config, "leader-election"))
 
-
 	controllerManagerConfig := &Config{
-		ServerName:                    serverName,
-		LeaderElectionClient:          leaderElectionClient,
-		AuthAPIServerClientConfig:  authAPIServerClientConfig,
+		ServerName:                serverName,
+		LeaderElectionClient:      leaderElectionClient,
+		AuthAPIServerClientConfig: authAPIServerClientConfig,
 		Authorization: apiserver.AuthorizationInfo{
 			Authorizer: authorizerfactory.NewAlwaysAllowAuthorizer(),
 		},

@@ -251,6 +251,8 @@ message PolicySpec {
 
   optional string tenantID = 1;
 
+  optional string category = 9;
+
   optional string displayName = 7;
 
   optional string username = 2;

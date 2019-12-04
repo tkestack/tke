@@ -84,6 +84,7 @@ func AddFieldLabelConversionsForPolicy(scheme *runtime.Scheme) error {
 			switch label {
 			case "spec.tenantID",
 				"spec.username",
+				"spec.category",
 				"metadata.name":
 				return label, value, nil
 			default:
