@@ -78,6 +78,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Generic.ApplyFlags()...)
 	errs = append(errs, o.Authentication.ApplyFlags()...)
 	errs = append(errs, o.Authorization.ApplyFlags()...)
+	errs = append(errs, o.Provider.ApplyFlags()...)
 
 	return errs
 }
