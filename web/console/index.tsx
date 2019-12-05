@@ -276,7 +276,12 @@ Entry.register({
      */
     blank: {
       title: t('暂无权限'),
-      container: <BlankPage />
+      container: (
+        <Wrapper platformType={PlatformTypeEnum.Manager} sideBar={false}>
+          <ForbiddentDialog />
+          <BlankPage />
+        </Wrapper>
+      )
     }
   }
 });
