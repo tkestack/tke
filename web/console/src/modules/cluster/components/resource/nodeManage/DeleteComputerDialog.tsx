@@ -4,7 +4,7 @@ import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflo
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
-import { WorkflowDialog, TablePanelColumnProps, GridTable, FormPanel } from '../../../../common/components';
+import { WorkflowDialog, TablePanelColumnProps, GridTable, FormPanel, Clip } from '../../../../common/components';
 import { CreateResource, Resource } from '../../../models';
 import { router } from '../../../router';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -110,29 +110,37 @@ export class DeleteComputerDialog extends React.Component<RootProps, {}> {
               </div>
             </div>
           }
-          <Justify
-            left={
-              <FormPanel.Switch
-                text={'清理节点数据'}
-                value={isOpenDownloadButton}
-                onChange={() => {
-                  this.setState({ isOpenDownloadButton: !isOpenDownloadButton });
+          <Text parent="p" className="tea-mt-1n">
+            <Text>{t('如需清理节点上的数据，您可以通过以下脚本进行手动清理，')}</Text>
+            <Text theme="danger">{t('数据清理后不可恢复，如节点存在混用情况，请谨慎执行。')}</Text>
+          </Text>
+          <div className="rich-textarea hide-number">
+            <Clip target={'#certificationAuthority'} className="copy-btn">
+              {t('复制')}
+            </Clip>
+            <a
+              href="javascript:void(0)"
+              onClick={e => downloadCrt(clearNodeSH, `clear${Date.now()}.sh`)}
+              className="copy-btn"
+              style={{ right: '50px' }}
+            >
+              {t('下载')}
+            </a>
+            <div className="rich-content" contentEditable={false}>
+              <p
+                className="rich-text"
+                id="certificationAuthority"
+                style={{
+                  width: '432px',
+                  whiteSpace: 'pre-wrap',
+                  overflow: 'auto',
+                  height: '300px'
                 }}
-              ></FormPanel.Switch>
-            }
-            right={
-              isOpenDownloadButton && (
-                <Button type="link" onClick={e => downloadCrt(clearNodeSH, `clear${Date.now()}.sh`)}>
-                  {t('下载脚本')}
-                </Button>
-              )
-            }
-          />
-          {isOpenDownloadButton && (
-            <FormPanel.InlineText parent="p" theme="danger">
-              {t('注:清除数据不可恢复，请确认')}
-            </FormPanel.InlineText>
-          )}
+              >
+                {clearNodeSH}
+              </p>
+            </div>
+          </div>
         </div>
       </WorkflowDialog>
     );
