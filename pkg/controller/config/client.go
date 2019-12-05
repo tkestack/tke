@@ -26,16 +26,26 @@ import (
 )
 
 // BuildClientConfig to build the rest config by given options.
-func BuildClientConfig(opts *options.APIServerClientOptions) (*restclient.Config, error) {
+func BuildClientConfig(opts *options.APIServerClientOptions) (cfg *restclient.Config, ok bool, err error) {
+	if opts.Required {
+		if opts.Server == "" && opts.ServerClientConfig == "" {
+			err = fmt.Errorf("either %s or %s should be specified",
+				options.FlagAPIClientServer(opts.Name),
+				options.FlagAPIClientServerClientConfig(opts.Name))
+			return
+		}
+	}
 	if opts.Server == "" && opts.ServerClientConfig == "" {
-		return nil, fmt.Errorf("either --api-server or --api-server-client-config should be specified")
+		return
 	}
-	apiServerClientConfig, err := clientcmd.BuildConfigFromFlags(opts.Server, opts.ServerClientConfig)
+
+	cfg, err = clientcmd.BuildConfigFromFlags(opts.Server, opts.ServerClientConfig)
 	if err != nil {
-		return nil, err
+		return
 	}
-	apiServerClientConfig.ContentConfig.ContentType = opts.ContentType
-	apiServerClientConfig.QPS = opts.QPS
-	apiServerClientConfig.Burst = int(opts.Burst)
-	return apiServerClientConfig, nil
+	cfg.ContentConfig.ContentType = opts.ContentType
+	cfg.QPS = opts.QPS
+	cfg.Burst = int(opts.Burst)
+	ok = true
+	return
 }

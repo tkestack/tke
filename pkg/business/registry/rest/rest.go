@@ -96,15 +96,17 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
 
-		imageNamespaceREST := imagenamespacestorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)
-		storageMap["imagenamespaces"] = imageNamespaceREST.ImageNamespace
-		storageMap["imagenamespaces/status"] = imageNamespaceREST.Status
-		storageMap["imagenamespaces/finalize"] = imageNamespaceREST.Finalize
+		if s.RegistryClient != nil {
+			imageNamespaceREST := imagenamespacestorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)
+			storageMap["imagenamespaces"] = imageNamespaceREST.ImageNamespace
+			storageMap["imagenamespaces/status"] = imageNamespaceREST.Status
+			storageMap["imagenamespaces/finalize"] = imageNamespaceREST.Finalize
 
-		chartGroupREST := chartgroupstorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)
-		storageMap["chartgroups"] = chartGroupREST.ChartGroup
-		storageMap["chartgroups/status"] = chartGroupREST.Status
-		storageMap["chartgroups/finalize"] = chartGroupREST.Finalize
+			chartGroupREST := chartgroupstorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)
+			storageMap["chartgroups"] = chartGroupREST.ChartGroup
+			storageMap["chartgroups/status"] = chartGroupREST.Status
+			storageMap["chartgroups/finalize"] = chartGroupREST.Finalize
+		}
 	}
 
 	return storageMap

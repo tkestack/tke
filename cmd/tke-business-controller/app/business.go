@@ -80,7 +80,11 @@ func startProjectController(ctx ControllerContext) (http.Handler, bool, error) {
 }
 
 func startImageNamespaceController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: businessv1.GroupName, Version: "v1", Resource: "imagenamespaces"}] {
+	if ctx.RegistryClient == nil {
+		return nil, false, nil
+	}
+
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: "v1", Resource: "imagenamespaces"}] {
 		return nil, false, nil
 	}
 
@@ -98,6 +102,10 @@ func startImageNamespaceController(ctx ControllerContext) (http.Handler, bool, e
 }
 
 func startChartGroupController(ctx ControllerContext) (http.Handler, bool, error) {
+	if ctx.RegistryClient == nil {
+		return nil, false, nil
+	}
+
 	if !ctx.AvailableResources[schema.GroupVersionResource{Group: businessv1.GroupName, Version: "v1", Resource: "chartgroups"}] {
 		return nil, false, nil
 	}

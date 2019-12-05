@@ -112,33 +112,40 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 
 	// client config for platform apiserver
-	platformAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)
+	platformAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)
 	if err != nil {
 		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("failed to initialize client config of platform API server")
 	}
 	platformClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(platformAPIServerClientConfig, "tke-business-api"))
 	if err != nil {
 		return nil, err
 	}
 
-	// client config for registry apiserver
-	registryAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.RegistryAPIClient)
-	if err != nil {
-		return nil, err
-	}
-	registryClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(registryAPIServerClientConfig, "tke-business-api"))
-	if err != nil {
-		return nil, err
-	}
-
-	return &Config{
+	cfg := &Config{
 		ServerName:                     serverName,
 		GenericAPIServerConfig:         genericAPIServerConfig,
 		VersionedSharedInformerFactory: versionedInformers,
 		StorageFactory:                 storageFactory,
 		PlatformClient:                 platformClient.PlatformV1(),
-		RegistryClient:                 registryClient.RegistryV1(),
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 		FeatureOptions:                 opts.FeatureOptions,
-	}, nil
+	}
+
+	// client config for registry apiserver
+	registryAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.RegistryAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if ok && registryAPIServerClientConfig != nil {
+		registryClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(registryAPIServerClientConfig, "tke-business-api"))
+		if err != nil {
+			return nil, err
+		}
+		cfg.RegistryClient = registryClient.RegistryV1()
+	}
+
+	return cfg, nil
 }

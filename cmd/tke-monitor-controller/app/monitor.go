@@ -28,6 +28,9 @@ import (
 )
 
 func startMetricController(ctx ControllerContext) (http.Handler, bool, error) {
+	if ctx.BusinessClient == nil {
+		return nil, false, nil
+	}
 	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "metrics"}] {
 		return nil, false, nil
 	}

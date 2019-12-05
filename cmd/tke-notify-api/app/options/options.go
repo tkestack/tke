@@ -50,7 +50,7 @@ func NewOptions(serverName string) *Options {
 		Generic:           apiserveroptions.NewGenericOptions(),
 		Authentication:    apiserveroptions.NewAuthenticationWithAPIOptions(),
 		Authorization:     apiserveroptions.NewAuthorizationOptions(),
-		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform"),
+		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
 	}
 }
 
