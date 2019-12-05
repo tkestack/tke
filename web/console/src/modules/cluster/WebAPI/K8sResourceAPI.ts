@@ -147,7 +147,8 @@ export async function fetchResourceList(
   resourceInfo: ResourceInfo,
   isClearData: boolean = false,
   k8sQueryObj: any = {},
-  isNeedDes: boolean = false
+  isNeedDes: boolean = false,
+  isNeedSpecific: boolean = true
 ) {
   let { filter, search } = query,
     { namespace, clusterId, regionId, specificName, meshId } = filter;
@@ -158,9 +159,21 @@ export async function fetchResourceList(
     let k8sUrl = '';
     // 如果有搜索字段的话
     if (search) {
-      k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: search, clusterId, meshId });
+      k8sUrl = reduceK8sRestfulPath({
+        resourceInfo,
+        namespace,
+        specificName: isNeedSpecific ? search : '',
+        clusterId,
+        meshId
+      });
     } else {
-      k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName, clusterId, meshId });
+      k8sUrl = reduceK8sRestfulPath({
+        resourceInfo,
+        namespace,
+        specificName: isNeedSpecific ? specificName : '',
+        clusterId,
+        meshId
+      });
     }
 
     // 这里是去拼接，是否需要在k8s url后面拼接一些queryString

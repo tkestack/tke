@@ -36,7 +36,7 @@ const TempReducer = combineReducers({
   labelEdition: reduceToPayload(ActionType.UpdateLabelEdition, {
     id: uuid(),
     labels: [],
-    deleteLabels: [],
+    originLabel: {},
     computerName: ''
   }),
 

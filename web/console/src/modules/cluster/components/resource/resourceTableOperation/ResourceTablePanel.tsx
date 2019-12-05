@@ -104,8 +104,6 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 展示普通的text */
   private _reduceText(showData: any, fieldInfo: DisplayFiledProps, resource: Resource, clipId: string) {
-    let { resourceName } = this.props.subRoot;
-
     let showContent;
     if (fieldInfo.isLink) {
       if (fieldInfo.isClip) {
@@ -133,37 +131,53 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         );
       } else {
         showContent = (
-          <div>
-            <a
-              className="text-overflow"
-              title={showData + ''}
-              href="javascript:;"
-              onClick={e => {
-                this._handleClickForNavigate(resource);
-              }}
-            >
-              {showData}
-            </a>
-          </div>
+          <Bubble
+            content={
+              <Text parent="p" nowrap={false}>
+                {showData}
+              </Text>
+            }
+          >
+            <Text overflow>
+              <a
+                href="javascript:;"
+                onClick={e => {
+                  this._handleClickForNavigate(resource);
+                }}
+              >
+                {showData}
+              </a>
+            </Text>
+          </Bubble>
         );
       }
     } else {
       if (fieldInfo.isClip) {
         showContent = (
-          <div>
-            <span id={`${resourceName}${clipId}`} className="text-overflow" title={showData + ''}>
+          <Bubble
+            content={
+              <Text parent="p" nowrap={false}>
+                {showData}
+              </Text>
+            }
+          >
+            <Text overflow id={clipId}>
               {showData}
-            </span>
-            <Clip target={`#${resourceName}${clipId}`} />
-          </div>
+            </Text>
+            <Clip target={`#${clipId}`} />
+          </Bubble>
         );
       } else {
         showContent = (
-          <div>
-            <span className="text-overflow" title={showData + ''}>
-              {showData}
-            </span>
-          </div>
+          <Bubble
+            content={
+              <Text parent="p" nowrap={false}>
+                {showData}
+              </Text>
+            }
+          >
+            <Text overflow>{showData}</Text>
+          </Bubble>
         );
       }
     }

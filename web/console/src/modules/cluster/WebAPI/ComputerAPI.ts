@@ -19,21 +19,19 @@ export async function updateComputerLabel(computerLabelEdition: ComputerLabelEdi
   try {
     let resourceInfo = resourceConfig().node;
     let url = `/${resourceInfo.basicEntry}/${resourceInfo.version}/nodes/${computerLabelEdition[0].computerName}`;
-    // 构建更新ingress 转发配置的json格式
-    let jsonData = {
-      metadata: {
-        labels: computerLabelEdition[0].labels.reduce((prev, next) => {
-          return Object.assign({}, prev, {
-            [next.key]: next.value
-          });
-        }, {})
-      }
-    };
-    computerLabelEdition[0].deleteLabels.forEach(deleteLabel => {
-      if (Object.keys(jsonData.metadata.labels).indexOf(deleteLabel) === -1) {
-        jsonData.metadata.labels[deleteLabel] = null;
+    let labels = computerLabelEdition[0].labels.reduce((prev, next) => {
+      return Object.assign({}, prev, {
+        [next.key]: next.value
+      });
+    }, {});
+    Object.keys(computerLabelEdition[0].originLabel).forEach(key => {
+      if (labels[key] === undefined) {
+        labels[key] = null;
       }
     });
+    let jsonData = {
+      metadata: { labels }
+    };
     // 去除当中不需要的数据
     jsonData = JSON.parse(JSON.stringify(jsonData));
     let params: RequestParams = {
@@ -97,11 +95,6 @@ export async function updateComputerTaints(computerTaintEdition: ComputerTaintEd
         }))
       }
     };
-    // computerLabelEdition[0].deleteLabels.forEach(deleteLabel => {
-    //   if (Object.keys(jsonData.metadata.labels).indexOf(deleteLabel) === -1) {
-    //     jsonData.metadata.labels[deleteLabel] = null;
-    //   }
-    // });
     // 去除当中不需要的数据
     jsonData = JSON.parse(JSON.stringify(jsonData));
     let params: RequestParams = {
