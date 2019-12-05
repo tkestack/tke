@@ -50,8 +50,8 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var versionMap = map[string]Components{
 	LatestVersion: {
-		GPUManager:        containerregistry.Image{Name: "gpu-manager", Tag: "v1.0.0"},
-		GPUQuotaAdmission: containerregistry.Image{Name: "gpu-quota-admission", Tag: "v1.0.0"},
+		GPUManager:        containerregistry.Image{Name: "gpu-manager", Tag: "1.0.3"},
+		GPUQuotaAdmission: containerregistry.Image{Name: "gpu-admission", Tag: "1.0.0"},
 		Busybox:           containerregistry.Image{Name: "busybox", Tag: "1.31.0"},
 	},
 }
