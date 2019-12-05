@@ -1,0 +1,22 @@
+# GitHub code owners
+# See https://help.github.com/articles/about-codeowners/
+#
+# KEEP THIS FILE SORTED. Order is important. Last match takes precedence.
+
+* @choujimmy
+/api/ @choujimmy
+/build/ @QianChenglong
+/docs/ @interstallers
+/hack/ @perfey-he
+/pkg/auth/ @yadzhang
+/pkg/business/ @defydahui
+/pkg/monitor/ @kevinfeng
+/pkg/notify/ @kevinfeng
+/pkg/registry/ @choujimmy
+/pkg/platform/ @QianChenglong
+/pkg/gateway/ @choujimmy
+/web/console/ @Yacent
+/web/installer/ @Tim-Ju
+go.mod @choujimmy
+go.sum @choujimmy
+
