@@ -45,7 +45,7 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		Debug:             apiserveroptions.NewDebugOptions(),
 		SecureServing:     apiserveroptions.NewSecureServingOptions(serverName, 9445),
 		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
-		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform"),
+		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
 		Registry:          apiserveroptions.NewRegistryOptions(),
 		Provider:          provideroptions.NewOptions(),
 		FeatureOptions:    NewFeatureOptions(),

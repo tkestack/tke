@@ -41,7 +41,7 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		Debug:           apiserveroptions.NewDebugOptions(),
 		SecureServing:   apiserveroptions.NewSecureServingOptions(serverName, 9459),
 		Component:       controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
-		NotifyAPIClient: controlleroptions.NewAPIServerClientOptions("notify"),
+		NotifyAPIClient: controlleroptions.NewAPIServerClientOptions("notify", true),
 	}
 }
 

@@ -51,8 +51,8 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		Debug:             apiserveroptions.NewDebugOptions(),
 		SecureServing:     apiserveroptions.NewSecureServingOptions(serverName, 9456),
 		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
-		MonitorAPIClient:  controlleroptions.NewAPIServerClientOptions("monitor"),
-		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business"),
+		MonitorAPIClient:  controlleroptions.NewAPIServerClientOptions("monitor", true),
+		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", false),
 	}
 }
 
