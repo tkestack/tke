@@ -38,6 +38,6 @@ export { DialogState, DialogNameEnum } from './DialogState';
 export { CreateIC, ICComponter, LabelsKeyValue } from './CreateIC';
 export { CreateResource, MergeType } from '../../common/models';
 
-export { LbcfEdit, LbcfBGJSONYaml, LbcfLBJSONYaml } from './lbcfEdit';
+export { LbcfEdit, LbcfBGJSONYaml, LbcfLBJSONYaml } from './LbcfEdit';
 export { DetailResourceOption } from './DetailResourceOption';
 export { LbcfResource, BackendGroup, BackendRecord } from './Lbcf';
