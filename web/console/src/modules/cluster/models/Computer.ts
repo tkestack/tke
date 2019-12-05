@@ -249,7 +249,7 @@ export interface ComputerLabel extends Identifiable {
 export interface ComputerLabelEdition extends Identifiable {
   labels?: ComputerLabel[];
 
-  deleteLabels?: string[];
+  originLabel?: Object;
 
   computerName?: string;
 }

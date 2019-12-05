@@ -73,7 +73,7 @@ export class ModifyClusterNameDialog extends React.Component<RootProps, ModifyCl
 
     const perform = () => {
       this.validateName();
-      if (this._validateName(this.state.name)) {
+      if (this._validateName(this.state.name).status !== 2) {
         const createResource: CreateResource[] = [
           {
             id: uuid(),
@@ -99,7 +99,7 @@ export class ModifyClusterNameDialog extends React.Component<RootProps, ModifyCl
     return (
       <Modal visible={true} caption={t('编辑集群名称')} onClose={cancel} disableEscape={true}>
         <Modal.Body>
-          <FormPanel>
+          <FormPanel isNeedCard={false}>
             <FormPanel.Item text label={t('原名称')}>
               {oldName}
             </FormPanel.Item>

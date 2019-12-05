@@ -17,7 +17,7 @@ export { WorkflowDialog } from './workflowdialog';
 export { ErrorGuide, ErrorTip } from './errortip';
 export { StepItem, StepTab, StepTabProps, StepTabBody, StepTabBodyProps, Step, StepProps } from './StepTab';
 export { RegionBar, RegionBarProps } from './regionbar';
-export { Network, NetworkProps, VpcNetwork } from './Network';
+export { Network, NetworkProps, VpcNetwork } from './network';
 export { SidePanel, SidePanelProps } from './sidepanel';
 export * from './logviewer';
 export { TagSearchBox, TagSearchBoxProps } from './TagSearchBox';
