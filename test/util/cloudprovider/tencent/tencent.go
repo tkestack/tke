@@ -20,6 +20,7 @@ package tencent
 
 import (
 	"os"
+	"path"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -30,8 +31,16 @@ import (
 	"tkestack.io/tke/test/util/cloudprovider"
 )
 
+const (
+	envFile = "tencent.env"
+)
+
 func init() {
-	godotenv.Load() // for local dev
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	godotenv.Load(path.Join(home, envFile), envFile) // for local dev
 }
 
 func NewTencentProvider() cloudprovider.Provider {
