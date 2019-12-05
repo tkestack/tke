@@ -1547,6 +1547,7 @@ func (t *TKE) installTKEBusinessAPI() error {
 		"Username":                   t.Para.Config.Auth.TKEAuth.Username,
 		"SyncProjectsWithNamespaces": t.Config.SyncProjectsWithNamespaces,
 		"EnableAuth":                 t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry":             t.Para.Config.Registry.TKERegistry != nil,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1570,8 +1571,9 @@ func (t *TKE) installTKEBusinessAPI() error {
 func (t *TKE) installTKEBusinessController() error {
 	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-business-controller/*.yaml",
 		map[string]interface{}{
-			"Replicas": t.Config.Replicas,
-			"Image":    images.Get().TKEBusinessController.FullName(),
+			"Replicas":       t.Config.Replicas,
+			"Image":          images.Get().TKEBusinessController.FullName(),
+			"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
 		})
 	if err != nil {
 		return err
@@ -1650,8 +1652,9 @@ func (t *TKE) installTKEMonitorAPI() error {
 
 func (t *TKE) installTKEMonitorController() error {
 	params := map[string]interface{}{
-		"Replicas": t.Config.Replicas,
-		"Image":    images.Get().TKEMonitorController.FullName(),
+		"Replicas":       t.Config.Replicas,
+		"Image":          images.Get().TKEMonitorController.FullName(),
+		"EnableBusiness": t.Para.Config.Business != nil,
 	}
 	if t.Para.Config.Monitor != nil {
 		if t.Para.Config.Monitor.ESMonitor != nil {

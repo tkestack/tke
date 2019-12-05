@@ -131,9 +131,11 @@ data:
       api_server = "https://tke-platform-api"
       api_server_client_config = "/app/conf/tke-platform-config.yaml"
 
+{{- if .EnableRegistry }}
       [client.registry]
       api_server = "https://tke-registry-api"
       api_server_client_config = "/app/conf/tke-registry-config.yaml"
+{{- end }}
 
     [features]
       initial_administrator_tenant = "{{ .TenantID }}"
@@ -180,6 +182,7 @@ data:
           user: admin-cert
         name: tke
 
+{{- if .EnableRegistry }}
   tke-registry-config.yaml: |
     apiVersion: v1
     kind: Config
@@ -199,3 +202,4 @@ data:
           cluster: tke
           user: admin-cert
         name: tke
+{{- end }}
