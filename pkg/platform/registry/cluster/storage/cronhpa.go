@@ -39,6 +39,10 @@ import (
 	"tkestack.io/tke/pkg/platform/util"
 )
 
+const (
+	cronHPAGroupName = "extensions.tkestack.io"
+)
+
 // CronHPAREST implements proxy CronHPA request to cluster of user.
 type CronHPAREST struct {
 	rest.Storage
@@ -98,8 +102,7 @@ func (h *cronHPAProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 	loc := *h.location
 	loc.RawQuery = req.URL.RawQuery
 
-	// todo: Change the apigroup here once the integration pipeline configuration is complete using the tapp in the tkestack group
-	prefix := "/apis/gs.io/v1"
+	prefix := fmt.Sprintf("/apis/%s/v1", cronHPAGroupName)
 
 	if len(h.namespace) == 0 && len(h.name) == 0 {
 		loc.Path = fmt.Sprintf("%s/cronhpas", prefix)
