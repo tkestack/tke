@@ -400,15 +400,18 @@ export const workflowActions = {
           { deletePodFlow } = subRoot.resourceDetailState;
 
         if (isSuccessWorkflow(deletePodFlow)) {
+          dispatch(resourceDetailActions.pod.podSelect([]));
           dispatch(workflowActions.deletePod.reset());
-          dispatch(
-            resourceDetailActions.pod.applyFilter({
-              namespace: route.queries['np'],
-              regionId: +route.queries['rid'],
-              clusterId: route.queries['clusterId'],
-              specificName: route.queries['resourceIns']
-            })
-          );
+          setTimeout(() => {
+            dispatch(
+              resourceDetailActions.pod.poll({
+                namespace: route.queries['np'],
+                regionId: +route.queries['rid'],
+                clusterId: route.queries['clusterId'],
+                specificName: route.queries['resourceIns']
+              })
+            );
+          }, 1000);
         }
       }
     }

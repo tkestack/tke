@@ -150,7 +150,8 @@ const restActions = {
           computerName,
           labels: labelArray.map(label => {
             return Object.assign({}, label, { id: uuid(), v_key: initValidator, v_value: initValidator });
-          })
+          }),
+          originLabel: labels
         })
       });
     };
@@ -180,16 +181,12 @@ const restActions = {
     return async (dispatch, getState: GetState) => {
       let { labelEdition } = getState().subRoot.computerState;
       let labels = cloneDeep(labelEdition.labels),
-        deleteLabels: string[] = cloneDeep(labelEdition.deleteLabels),
         eIndex = labels.findIndex(e => e.id === Id);
 
-      let deleteLabel = labels.splice(eIndex, 1);
-      if (deleteLabels.indexOf(deleteLabel[0].key) === -1) {
-        deleteLabels.push(deleteLabel[0].key);
-      }
+      labels.splice(eIndex, 1);
       dispatch({
         type: ActionType.UpdateLabelEdition,
-        payload: Object.assign({}, labelEdition, { labels, deleteLabels })
+        payload: Object.assign({}, labelEdition, { labels })
       });
     };
   },
