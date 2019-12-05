@@ -67,7 +67,7 @@ export class KubectlDialog extends React.Component<RootProps, any> {
                 </Clip>
                 <a
                   href="javascript:void(0)"
-                  onClick={e => downloadCrt(clusterInfo.status.credential.caCert)}
+                  onClick={e => downloadCrt(clustercredential.caCert ? window.atob(clustercredential.caCert) : '')}
                   className="copy-btn"
                   style={{ right: '50px' }}
                 >

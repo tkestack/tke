@@ -1,4 +1,4 @@
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
+import { extend, ReduxAction, RecordSet } from '@tencent/qcloud-lib';
 import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 import * as ActionType from '../constants/ActionType';
@@ -33,7 +33,7 @@ const fetchPodActions = generateFetcherActionCreator({
 
     let isInNodeManager = IsInNodeManageDetail(urlParams['type']);
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
-
+    let response: RecordSet<any>;
     /**
      * workload里面拉取pods，因为workload集成了子资源，所以直接拉取workload的pods资源，即调用fetchExtraResourceList
      * 但，node详情里面，需要通过fieldSelector当中的
@@ -62,13 +62,15 @@ const fetchPodActions = generateFetcherActionCreator({
         }
       };
       k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-      let response = await WebAPI.fetchResourceList(podQuery, podResourceInfo, isClearData, k8sQueryObj);
-      return response;
+      response = await WebAPI.fetchResourceList(podQuery, podResourceInfo, isClearData, k8sQueryObj, false, false);
     } else {
       // 这里是workload里面的拉取pod列表的逻辑
-      let response = await WebAPI.fetchExtraResourceList(podQuery, resourceInfo, isClearData, 'pods');
-      return response;
+      response = await WebAPI.fetchExtraResourceList(podQuery, resourceInfo, isClearData, 'pods');
     }
+    // 原因为 Evicted的pod没有必要再进行展示，直接进行过滤
+    response.records = response.records.filter(item => item.status.reason !== 'Evicted');
+    response.recordCount = response.records.length;
+    return response;
   },
   finish: async (dispatch, getState: GetState) => {
     let { route, subRoot } = getState(),
