@@ -86,11 +86,11 @@ function build_installer() {
     cp -v $installer_dir/$INSTALLER $OUTPUT_DIR
 
     echo "build tke-installer success! OUTPUT => $OUTPUT_DIR/$INSTALLER"
-    sha256sum $OUTPUT_DIR/$INSTALLER > $OUTPUT_DIR/$INSTALLER.sha256
+    (cd $OUTPUT_DIR && sha256sum $INSTALLER > $INSTALLER.sha256)
 
     if [[ "${BUILDER}" == "tke" ]]; then
       coscmd upload $installer_dir/$INSTALLER $INSTALLER
-      coscmd upload $installer_dir/$INSTALLER.sha256 $INSTALLER.sha256
+      coscmd upload $OUTPUT_DIR/$INSTALLER.sha256 $INSTALLER.sha256
     fi
 
     rm -rf $installer_dir
