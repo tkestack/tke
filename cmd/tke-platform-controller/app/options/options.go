@@ -75,6 +75,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Component.ApplyFlags()...)
 	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
 	errs = append(errs, o.Registry.ApplyFlags()...)
+	errs = append(errs, o.Provider.ApplyFlags()...)
 	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
 
 	return errs
