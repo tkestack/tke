@@ -86,6 +86,7 @@ type Config struct {
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 
 	DexServer          *dexserver.Server
+	DexStorage         dexstorage.Storage
 	CasbinEnforcer     *casbin.SyncedEnforcer
 	Registry           *registry.Registry
 	TokenAuthn         *authenticator.TokenAuthenticator
@@ -202,6 +203,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		StorageFactory:                 storageFactory,
 		VersionedSharedInformerFactory: versionedInformers,
 		DexServer:                      dexServer,
+		DexStorage:                     dexConfig.Storage,
 		CasbinEnforcer:                 enforcer,
 		Registry:                       r,
 		TokenAuthn:                     tokenAuth,

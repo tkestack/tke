@@ -95,10 +95,16 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" {
 		policy.Spec.TenantID = tenantID
-	}
-
-	if username != "" {
+		policy.Spec.Type = auth.PolicyCustom
 		policy.Spec.Username = username
+	} else {
+		if policy.Spec.Type == "" {
+			policy.Spec.Type = auth.PolicyCustom
+		}
+
+		if policy.Spec.Username == "" {
+			policy.Spec.Username = "admin"
+		}
 	}
 
 	if policy.Name == "" && policy.GenerateName == "" {
@@ -169,7 +175,10 @@ func MatchPolicy(label labels.Selector, field fields.Selector) storage.Selection
 		IndexFields: []string{
 			"spec.tenantID",
 			"spec.username",
+			"spec.policyName",
 			"spec.category",
+			"spec.type",
+			"spec.displayName",
 		},
 	}
 }
@@ -178,9 +187,11 @@ func MatchPolicy(label labels.Selector, field fields.Selector) storage.Selection
 func ToSelectableFields(policy *auth.Policy) fields.Set {
 	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&policy.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID": policy.Spec.TenantID,
-		"spec.username": policy.Spec.Username,
-		"spec.category": policy.Spec.Category,
+		"spec.tenantID":    policy.Spec.TenantID,
+		"spec.username":    policy.Spec.Username,
+		"spec.category":    policy.Spec.Category,
+		"spec.type": string(policy.Spec.Type),
+		"spec.policyName": policy.Spec.PolicyName,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }

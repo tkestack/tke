@@ -30,6 +30,8 @@ type Interface interface {
 	APIKeys() APIKeyInformer
 	// APISigningKeys returns a APISigningKeyInformer.
 	APISigningKeys() APISigningKeyInformer
+	// Categories returns a CategoryInformer.
+	Categories() CategoryInformer
 	// ConfigMaps returns a ConfigMapInformer.
 	ConfigMaps() ConfigMapInformer
 	// LocalIdentities returns a LocalIdentityInformer.
@@ -59,6 +61,11 @@ func (v *version) APIKeys() APIKeyInformer {
 // APISigningKeys returns a APISigningKeyInformer.
 func (v *version) APISigningKeys() APISigningKeyInformer {
 	return &aPISigningKeyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// Categories returns a CategoryInformer.
+func (v *version) Categories() CategoryInformer {
+	return &categoryInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // ConfigMaps returns a ConfigMapInformer.

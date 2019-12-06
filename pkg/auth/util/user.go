@@ -20,6 +20,7 @@ package util
 
 import (
 	"fmt"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -32,7 +33,6 @@ func GetLocalIdentity(authClient authinternalclient.AuthInterface, tenantID, use
 	tenantUserSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
 		fields.OneTermEqualSelector("spec.username", username))
-	fields.AndSelectors()
 
 	localIdentityList, err := authClient.LocalIdentities().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {

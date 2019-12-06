@@ -30,6 +30,7 @@ type AuthV1Interface interface {
 	RESTClient() rest.Interface
 	APIKeysGetter
 	APISigningKeysGetter
+	CategoriesGetter
 	ConfigMapsGetter
 	LocalIdentitiesGetter
 	PoliciesGetter
@@ -47,6 +48,10 @@ func (c *AuthV1Client) APIKeys() APIKeyInterface {
 
 func (c *AuthV1Client) APISigningKeys() APISigningKeyInterface {
 	return newAPISigningKeys(c)
+}
+
+func (c *AuthV1Client) Categories() CategoryInterface {
+	return newCategories(c)
 }
 
 func (c *AuthV1Client) ConfigMaps() ConfigMapInterface {

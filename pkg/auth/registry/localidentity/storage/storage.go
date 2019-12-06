@@ -21,8 +21,11 @@ package storage
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/util/dryrun"
+	"k8s.io/klog"
+	"sync"
 	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/auth/util"
 
@@ -33,6 +36,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	storageerr "k8s.io/apiserver/pkg/storage/errors"
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -169,7 +173,79 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
 		return nil, apierrors.NewMethodNotSupported(auth.Resource("localIdentities"), "delete collection")
 	}
-	return r.Store.DeleteCollection(ctx, deleteValidation, options, listOptions)
+
+	if listOptions == nil {
+		listOptions = &metainternal.ListOptions{}
+	} else {
+		listOptions = listOptions.DeepCopy()
+	}
+
+	listObj, err := r.Store.List(ctx, listOptions)
+	if err != nil {
+		return nil, err
+	}
+	items, err := meta.ExtractList(listObj)
+	if err != nil {
+		return nil, err
+	}
+
+	// Spawn a number of goroutines, so that we can issue requests to storage
+	// in parallel to speed up deletion.
+	// TODO: Make this proportional to the number of items to delete, up to
+	// DeleteCollectionWorkers (it doesn't make much sense to spawn 16
+	// workers to delete 10 items).
+	workersNumber := r.Store.DeleteCollectionWorkers
+	if workersNumber < 1 {
+		workersNumber = 1
+	}
+	wg := sync.WaitGroup{}
+	toProcess := make(chan int, 2*workersNumber)
+	errs := make(chan error, workersNumber+1)
+
+	go func() {
+		defer utilruntime.HandleCrash(func(panicReason interface{}) {
+			errs <- fmt.Errorf("DeleteCollection distributor panicked: %v", panicReason)
+		})
+		for i := 0; i < len(items); i++ {
+			toProcess <- i
+		}
+		close(toProcess)
+	}()
+
+	wg.Add(workersNumber)
+	for i := 0; i < workersNumber; i++ {
+		go func() {
+			// panics don't cross goroutine boundaries
+			defer utilruntime.HandleCrash(func(panicReason interface{}) {
+				errs <- fmt.Errorf("DeleteCollection goroutine panicked: %v", panicReason)
+			})
+			defer wg.Done()
+
+			for index := range toProcess {
+				accessor, err := meta.Accessor(items[index])
+				if err != nil {
+					errs <- err
+					return
+				}
+
+				tmpOpt := options
+				tmpOpt.Preconditions = nil
+
+				if _, _, err := r.Delete(ctx, accessor.GetName(), deleteValidation, tmpOpt); err != nil && !apierrors.IsNotFound(err) {
+					klog.V(4).Infof("Delete %s in DeleteCollection failed: %v", accessor.GetName(), err)
+					errs <- err
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
+	select {
+	case err := <-errs:
+		return nil, err
+	default:
+		return listObj, nil
+	}
 }
 
 // Get finds a resource in the storage by name and returns it.
@@ -201,7 +277,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	if err != nil {
 		return nil, false, err
 	}
-	policy := object.(*auth.LocalIdentity)
+	localIdentity := object.(*auth.LocalIdentity)
 
 	// Ensure we have a UID precondition
 	if options == nil {
@@ -211,18 +287,18 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		options.Preconditions = &metav1.Preconditions{}
 	}
 	if options.Preconditions.UID == nil {
-		options.Preconditions.UID = &policy.UID
-	} else if *options.Preconditions.UID != policy.UID {
+		options.Preconditions.UID = &localIdentity.UID
+	} else if *options.Preconditions.UID != localIdentity.UID {
 		err = apierrors.NewConflict(
 			auth.Resource("localidentities"),
 			name,
-			fmt.Errorf("precondition failed: UID in precondition: %v, UID in object meta: %v", *options.Preconditions.UID, policy.UID),
+			fmt.Errorf("precondition failed: UID in precondition: %v, UID in object meta: %v", *options.Preconditions.UID, localIdentity.UID),
 		)
 		return nil, false, err
 	}
 
 	// upon first request to delete, we switch the phase to start policy termination
-	if policy.DeletionTimestamp.IsZero() {
+	if localIdentity.DeletionTimestamp.IsZero() {
 		key, err := r.Store.KeyFunc(ctx, name)
 		if err != nil {
 			return nil, false, err
@@ -298,8 +374,8 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	}
 
 	// prior to final deletion, we must ensure that finalizers is empty
-	if len(policy.Spec.Finalizers) != 0 {
-		err = apierrors.NewConflict(auth.Resource("localidentities"), policy.Name, fmt.Errorf("the system is ensuring all content is removed from this policy.  Upon completion, this policy will automatically be purged by the system"))
+	if len(localIdentity.Spec.Finalizers) != 0 {
+		err = apierrors.NewConflict(auth.Resource("localidentities"), localIdentity.Name, fmt.Errorf("the system is ensuring all content is removed from this policy.  Upon completion, this policy will automatically be purged by the system"))
 		return nil, false, err
 	}
 	return r.Store.Delete(ctx, name, deleteValidation, options)

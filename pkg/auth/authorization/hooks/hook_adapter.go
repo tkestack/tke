@@ -16,12 +16,13 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package enforcer
+package hooks
 
 import (
+	"time"
+
 	"github.com/casbin/casbin/v2"
 	"k8s.io/client-go/tools/cache"
-	"time"
 	"tkestack.io/tke/pkg/auth/util/adapter"
 	"tkestack.io/tke/pkg/util/log"
 
@@ -43,9 +44,9 @@ type adapterHookHandler struct {
 // NewAdapterHookHandler creates a new adapterHookHandler object.
 func NewAdapterHookHandler(authClient versionedclientset.Interface, enforcer *casbin.SyncedEnforcer, versionedInformers versionedinformers.SharedInformerFactory) genericapiserver.PostStartHookProvider {
 	return &adapterHookHandler{
-		authClient: authClient,
-		enforcer: enforcer,
-		ruleInformer:versionedInformers.Auth().V1().Rules(),
+		authClient:   authClient,
+		enforcer:     enforcer,
+		ruleInformer: versionedInformers.Auth().V1().Rules(),
 	}
 }
 

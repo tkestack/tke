@@ -201,6 +201,49 @@ type APISigningKeyList struct {
 	Items []APISigningKey
 }
 
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Category defines a category of actions for policy.
+type Category struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	Spec CategorySpec
+}
+
+type CategorySpec struct {
+	// CategoryName identifies action category
+	CategoryName string
+	// DisplayName used to display category name
+	DisplayName string
+	// +optional
+	Description string
+	// Actions represents a series of actions work on the policy category
+	Actions []Action
+}
+
+// Action defines a action verb for authorization.
+type Action struct {
+	// Name represents user access review request verb.
+	Name string
+	// Description describes the action.
+	Description string
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// CategoryList is the whole list of policy Category.
+type CategoryList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+
+	// List of category.
+	Items []Category
+}
+
 // ProjectPhase defines the phase of policy constructor.
 type PolicyPhase string
 
@@ -252,13 +295,22 @@ const (
 	Deny Effect = "deny"
 )
 
+// PolicyType defines the policy is default or created by user.
+type PolicyType string
+
+const (
+	PolicyCustom  PolicyType = "custom"
+	PolicyDefault PolicyType = "default"
+)
+
 // PolicySpec is a description of a policy.
 type PolicySpec struct {
 	Finalizers []FinalizerName
 
+	PolicyName string
 	TenantID    string
 	Category    string
-	DisplayName string
+	Type        PolicyType
 	// Creator
 	Username    string
 	Description string

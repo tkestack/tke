@@ -272,7 +272,7 @@ func (d *policiedResourcesDeleter) deleteAllContent(policy *v1.Policy) error {
 }
 
 func deleteRelatedRules(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
-	log.Debug("Policy controller - deleteRelatedRules", log.String("policyName", policy.ObjectMeta.Name))
+	log.Info("Policy controller - deleteRelatedRules", log.String("policyName", policy.ObjectMeta.Name))
 	_, err := deleter.enforcer.DeleteRole(policy.Name)
 	return err
 }

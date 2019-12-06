@@ -16,11 +16,16 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package apisigningkey
+package category
 
 import (
 	"context"
+	"fmt"
 
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/storage"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -53,7 +58,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {}
 
-// NamespaceScoped is false for api signing key.
+// NamespaceScoped is false for category.
 func (Strategy) NamespaceScoped() bool {
 	return false
 }
@@ -61,15 +66,20 @@ func (Strategy) NamespaceScoped() bool {
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+	category, _ := obj.(*auth.Category)
+	if category.Name == "" && category.GenerateName == "" {
+		category.GenerateName = "cat-"
+	}
 }
 
 // Validate validates a new api signing key.
 func (Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" {
-		return field.ErrorList{field.Forbidden(field.NewPath(""), "Please contact admin to create api sign key")}
+		return field.ErrorList{field.Forbidden(field.NewPath(""), "Please contact admin to create category")}
 	}
-	return ValidateSigningKey(obj.(*auth.APISigningKey))
+
+	return ValidateCategory(obj.(*auth.Category))
 }
 
 // AllowCreateOnUpdate is false for api signing key.
@@ -88,11 +98,41 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 func (Strategy) Canonicalize(obj runtime.Object) {
 }
 
+// GetAttrs returns labels and fields of a given object for filtering purposes.
+func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
+	category, ok := obj.(*auth.Category)
+	if !ok {
+		return nil, nil, fmt.Errorf("not a policy")
+	}
+	return labels.Set(category.ObjectMeta.Labels), ToSelectableFields(category), nil
+}
+
+// MatchPolicy returns a generic matcher for a given label and field selector.
+func MatchPolicy(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
+	return storage.SelectionPredicate{
+		Label:    label,
+		Field:    field,
+		GetAttrs: GetAttrs,
+		IndexFields: []string{
+			"spec.categoryName",
+		},
+	}
+}
+
+// ToSelectableFields returns a field set that represents the object
+func ToSelectableFields(category *auth.Category) fields.Set {
+	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&category.ObjectMeta, false)
+	specificFieldsSet := fields.Set{
+		"spec.categoryName": category.Spec.CategoryName,
+	}
+	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
+}
+
 // ValidateUpdate is the default update validation for a api signing key.
 func (Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" {
-		return field.ErrorList{field.Forbidden(field.NewPath(""), "Please contact admin to update api sign key")}
+		return field.ErrorList{field.Forbidden(field.NewPath(""), "Please contact admin to update category")}
 	}
-	return ValidateSigningKeyUpdate(obj.(*auth.APISigningKey), old.(*auth.APISigningKey))
+	return ValidateCategoryUpdate(obj.(*auth.Category), old.(*auth.Category))
 }

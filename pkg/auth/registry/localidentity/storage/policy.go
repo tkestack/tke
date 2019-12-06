@@ -37,7 +37,7 @@ import (
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
-// PolicyREST implements the REST endpoint.
+// PolicyREST implements the REST endpoint, list policies bound to the user.
 type PolicyREST struct {
 	authClient authinternalclient.AuthInterface
 	enforcer   *casbin.SyncedEnforcer
@@ -80,13 +80,13 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 	var policyList = &auth.PolicyList{}
 	for _, id := range policyIDS {
 		pol, err := r.authClient.Policies().Get(id, metav1.GetOptions{})
-		if err != nil && apierrors.IsNotFound(err){
-			log.Error("Get pol failed",log.String("policy", id), log.Err(err))
+		if err != nil && apierrors.IsNotFound(err) {
+			log.Error("Get pol failed", log.String("policy", id), log.Err(err))
 			return nil, err
 		}
 
 		if err != nil {
-			log.Warn("Pol has been deleted, but till in casbin",log.String("policy", id))
+			log.Warn("Pol has been deleted, but till in casbin", log.String("policy", id))
 			continue
 		}
 

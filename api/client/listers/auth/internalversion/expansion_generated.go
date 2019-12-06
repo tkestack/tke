@@ -28,6 +28,10 @@ type APIKeyListerExpansion interface{}
 // APISigningKeyLister.
 type APISigningKeyListerExpansion interface{}
 
+// CategoryListerExpansion allows custom methods to be added to
+// CategoryLister.
+type CategoryListerExpansion interface{}
+
 // ConfigMapListerExpansion allows custom methods to be added to
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}

@@ -129,11 +129,49 @@ message APISigningKeyList {
   repeated APISigningKey items = 2;
 }
 
+// Action defines a action verb for authorization.
+message Action {
+  // Name represents user access review request verb.
+  optional string name = 1;
+
+  // Description describes the action.
+  optional string description = 2;
+}
+
 // Binding references the objects a policy applies to, but does not contain it.
 message Binding {
   // Subjects holds references to the objects the policy applies to.
   // +optional
   repeated Subject subject = 1;
+}
+
+// Category defines a category of actions for policy.
+message Category {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  optional CategorySpec spec = 2;
+}
+
+// CategoryList is the whole list of policy Category.
+message CategoryList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of category.
+  repeated Category items = 2;
+}
+
+message CategorySpec {
+  // CategoryName identifies action category
+  optional string categoryName = 1;
+
+  // DisplayName used to display category name
+  optional string displayName = 2;
+
+  // +optional
+  optional string description = 3;
+
+  // Actions represents a series of actions work on the policy category
+  repeated Action actions = 4;
 }
 
 // ConfigMap holds configuration data for tke to consume.
@@ -192,6 +230,8 @@ message LocalIdentityList {
 
 // LocalIdentitySpec is a description of an identity.
 message LocalIdentitySpec {
+  repeated string finalizers = 11;
+
   optional string name = 7;
 
   optional string displayName = 8;
@@ -215,6 +255,8 @@ message LocalIdentitySpec {
 
 // LocalIdentityStatus is a description of an identity status.
 message LocalIdentityStatus {
+  optional string phase = 3;
+
   // +optional
   optional bool locked = 1;
 
@@ -249,11 +291,13 @@ message PolicyList {
 message PolicySpec {
   repeated string finalizers = 8;
 
+  optional string policyName = 7;
+
   optional string tenantID = 1;
 
   optional string category = 9;
 
-  optional string displayName = 7;
+  optional string type = 10;
 
   optional string username = 2;
 

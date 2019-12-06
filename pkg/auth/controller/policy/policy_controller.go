@@ -207,7 +207,7 @@ func (c *Controller) syncItem(key string) error {
 	policy, err := c.policyLister.Get(name)
 	switch {
 	case errors.IsNotFound(err):
-		log.Infof("Policy has been deleted %v", key)
+		log.Infof("policy has been deleted %v", key)
 		err = c.processDeletion(key)
 	case err != nil:
 		log.Warn("Unable to retrieve policy from store", log.String("policy name", key), log.Err(err))

@@ -109,6 +109,16 @@ func (APISigningKeyList) SwaggerDoc() map[string]string {
 	return map_APISigningKeyList
 }
 
+var map_Action = map[string]string{
+	"":            "Action defines a action verb for authorization.",
+	"name":        "Name represents user access review request verb.",
+	"description": "Description describes the action.",
+}
+
+func (Action) SwaggerDoc() map[string]string {
+	return map_Action
+}
+
 var map_Binding = map[string]string{
 	"":         "Binding references the objects a policy applies to, but does not contain it.",
 	"subjects": "Subjects holds references to the objects the policy applies to.",
@@ -116,6 +126,33 @@ var map_Binding = map[string]string{
 
 func (Binding) SwaggerDoc() map[string]string {
 	return map_Binding
+}
+
+var map_Category = map[string]string{
+	"": "Category defines a category of actions for policy.",
+}
+
+func (Category) SwaggerDoc() map[string]string {
+	return map_Category
+}
+
+var map_CategoryList = map[string]string{
+	"":      "CategoryList is the whole list of policy Category.",
+	"items": "List of category.",
+}
+
+func (CategoryList) SwaggerDoc() map[string]string {
+	return map_CategoryList
+}
+
+var map_CategorySpec = map[string]string{
+	"categoryName": "CategoryName identifies action category",
+	"displayName":  "DisplayName used to display category name",
+	"actions":      "Actions represents a series of actions work on the policy category",
+}
+
+func (CategorySpec) SwaggerDoc() map[string]string {
+	return map_CategorySpec
 }
 
 var map_ConfigMap = map[string]string{

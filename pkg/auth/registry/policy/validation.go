@@ -21,13 +21,11 @@ package policy
 import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/auth"
-	"tkestack.io/tke/pkg/auth/util"
-	"tkestack.io/tke/pkg/util/validation"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/auth/util"
 )
 
 // ValidatePolicyName is a ValidateNameFunc for names that must be a DNS
@@ -38,14 +36,20 @@ var ValidatePolicyName = apiMachineryValidation.NameIsDNSLabel
 func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&policy.ObjectMeta, false, ValidatePolicyName, field.NewPath("metadata"))
 
-	fldSpecPath := field.NewPath("spec")
-	if err := validation.IsDisplayName(policy.Spec.DisplayName); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("displayName"), policy.Spec.DisplayName, err.Error()))
-	}
+	//fldSpecPath := field.NewPath("spec")
+	//if err := validation.IsDisplayName(policy.Spec.PolicyName); err != nil {
+	//	allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("policyName"), policy.Spec.PolicyName, err.Error()))
+	//}
 
-	if policy.Spec.Category == "" {
-		allErrs = append(allErrs, field.Required(fldSpecPath.Child("category"), policy.Spec.Category))
-	}
+	//if policy.Spec.Type == "" {
+	//	allErrs = append(allErrs, field.Required(fldSpecPath.Child("type"), "must specify type"))
+	//} else if policy.Spec.Type != auth.PolicyCustom && policy.Spec.Type != auth.PolicyDefault {
+	//	allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("type"), policy.Spec.Type, "must specify one of: `custom` or `default`"))
+	//}
+	//
+	//if policy.Spec.Category == "" {
+	//	allErrs = append(allErrs, field.Required(fldSpecPath.Child("category"), policy.Spec.Category))
+	//}
 
 	fldStmtPath := field.NewPath("spec", "statement")
 	if len(policy.Spec.Statement.Actions) == 0 {
@@ -113,5 +117,6 @@ func ValidatePolicyUpdate(policy *auth.Policy, old *auth.Policy, authClient auth
 	if policy.Spec.TenantID != old.Spec.TenantID {
 		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("tenantID"), policy.Spec.TenantID, "disallowed change the tenant"))
 	}
+
 	return allErrs
 }

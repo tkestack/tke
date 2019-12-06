@@ -24,6 +24,8 @@ type APIKeyExpansion interface{}
 
 type APISigningKeyExpansion interface{}
 
+type CategoryExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type LocalIdentityExpansion interface{}

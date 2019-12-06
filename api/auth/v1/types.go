@@ -60,7 +60,7 @@ const (
 
 // LocalIdentitySpec is a description of an identity.
 type LocalIdentitySpec struct {
-	Finalizers []FinalizerName `json:"finalizers,omitempty"`
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,11,rep,name=finalizers,casttype=FinalizerName"`
 
 	Username         string `json:"username" protobuf:"bytes,7,opt,name=name"`
 	DisplayName      string `json:"displayName" protobuf:"bytes,8,opt,name=displayName"`
@@ -86,7 +86,7 @@ const (
 
 // LocalIdentityStatus is a description of an identity status.
 type LocalIdentityStatus struct {
-	Phase LocalIdentityPhase `json:"phase,omitempty"`
+	Phase LocalIdentityPhase `json:"phase,omitempty" protobuf:"bytes,3,opt,name=phase,casttype=LocalIdentityPhase"`
 
 	// +optional
 	Locked bool `json:"locked,omitempty" protobuf:"varint,1,opt,name=locked"`
@@ -220,6 +220,49 @@ type APISigningKeyList struct {
 	Items []APISigningKey `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Category defines a category of actions for policy.
+type Category struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	Spec CategorySpec `protobuf:"bytes,2,opt,name=spec"`
+}
+
+type CategorySpec struct {
+	// CategoryName identifies action category
+	CategoryName string `json:"categoryName" protobuf:"bytes,1,opt,name=categoryName"`
+	// DisplayName used to display category name
+	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
+	// +optional
+	Description string `json:"description" protobuf:"bytes,3,opt,name=description"`
+	// Actions represents a series of actions work on the policy category
+	Actions []Action `json:"actions" protobuf:"bytes,4,rep,name=actions"`
+}
+
+// Action defines a action verb for authorization.
+type Action struct {
+	// Name represents user access review request verb.
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
+	// Description describes the action.
+	Description string `json:"description" protobuf:"bytes,2,opt,name=description"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// CategoryList is the whole list of policy Category.
+type CategoryList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of category.
+	Items []Category `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
 // ProjectPhase defines the phase of project constructor.
 type PolicyPhase string
 
@@ -279,14 +322,23 @@ const (
 	Deny Effect = "deny"
 )
 
+// PolicyType defines the policy is default or created by user.
+type PolicyType string
+
+const (
+	PolicyCustom  PolicyType = "custom"
+	PolicyDefault PolicyType = "default"
+)
+
 // PolicySpec is a description of a policy.
 type PolicySpec struct {
 	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,8,rep,name=finalizers,casttype=FinalizerName"`
 
-	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
-	Category    string `json:"category" protobuf:"bytes,9,opt,name=category"`
-	DisplayName string `json:"displayName" protobuf:"bytes,7,opt,name=displayName"`
-	Username    string `json:"username" protobuf:"bytes,2,opt,name=username"`
+	PolicyName string     `json:"policyName" protobuf:"bytes,7,opt,name=policyName"`
+	TenantID   string     `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	Category   string     `json:"category" protobuf:"bytes,9,opt,name=category"`
+	Type       PolicyType `json:"type" protobuf:"varint,10,opt,name=type,casttype=PolicyType"`
+	Username   string     `json:"username" protobuf:"bytes,2,opt,name=username"`
 	// +optional
 	Description string `json:"description" protobuf:"bytes,3,opt,name=description"`
 

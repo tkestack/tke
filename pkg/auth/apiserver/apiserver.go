@@ -22,6 +22,9 @@ import (
 	"context"
 	"fmt"
 
+	"tkestack.io/tke/pkg/auth/authorization/hooks"
+
+	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/emicklei/go-restful"
 	"k8s.io/apiserver/pkg/server/mux"
 	"tkestack.io/tke/pkg/auth/route"
@@ -65,6 +68,7 @@ type ExtraConfig struct {
 
 	OIDCExternalAddress string
 	DexServer           *dexserver.Server
+	DexStorage          dexstorage.Storage
 	CasbinEnforcer      *casbin.SyncedEnforcer
 	Registry            *registry.Registry
 	TokenAuthn          *authenticator.TokenAuthenticator
@@ -207,9 +211,11 @@ func (c completedConfig) registerHooks(s *genericapiserver.GenericAPIServer) []g
 	identityHook := authenticator.NewAdminIdentityHookHandler(authClient, c.ExtraConfig.TenantID, c.ExtraConfig.TenantAdmin, c.ExtraConfig.TenantAdminSecret)
 
 	authVersionedClient := versionedclientset.NewForConfigOrDie(s.LoopbackClientConfig)
-	adapterHook := enforcer.NewAdapterHookHandler(authVersionedClient, c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.VersionedInformers)
+	adapterHook := hooks.NewAdapterHookHandler(authVersionedClient, c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.VersionedInformers)
 
-	return []genericapiserver.PostStartHookProvider{authnHook, apiSigningKeyHook, identityHook, adapterHook}
+	policyHook := hooks.NewPolicyHookHandler(authClient, c.ExtraConfig.DexStorage, c.ExtraConfig.PolicyFile, c.ExtraConfig.CategoryFile)
+
+	return []genericapiserver.PostStartHookProvider{authnHook, apiSigningKeyHook, identityHook, adapterHook, policyHook}
 }
 
 // installCasbinPreStopHook is used to register preStop hook to stop casbin enforcer sync.

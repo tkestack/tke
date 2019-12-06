@@ -38,6 +38,10 @@ func (c *FakeAuth) APISigningKeys() internalversion.APISigningKeyInterface {
 	return &FakeAPISigningKeys{c}
 }
 
+func (c *FakeAuth) Categories() internalversion.CategoryInterface {
+	return &FakeCategories{c}
+}
+
 func (c *FakeAuth) ConfigMaps() internalversion.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }

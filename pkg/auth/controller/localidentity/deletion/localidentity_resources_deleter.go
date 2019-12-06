@@ -20,6 +20,7 @@ package deletion
 
 import (
 	"fmt"
+
 	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/casbin/casbin/v2"
@@ -247,7 +248,7 @@ type deleteResourceFunc func(deleter *loalIdentitiedResourcesDeleter, localIdent
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteRelatedRules,
-	//deleteApikeys,
+	deleteApikeys,
 }
 
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
@@ -277,4 +278,8 @@ func deleteRelatedRules(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 	log.Debug("LocalIdentity controller - deleteRelatedRules", log.String("localIdentityName", localIdentity.ObjectMeta.Name))
 	_, err := deleter.enforcer.DeleteRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
 	return err
+}
+
+func deleteApikeys(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
+	return nil
 }
