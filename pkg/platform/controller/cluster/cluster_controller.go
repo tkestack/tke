@@ -279,8 +279,8 @@ func (c *Controller) handlePhase(key string, cachedCluster *cachedCluster, clust
 	case platformv1.ClusterInitializing:
 		err = c.doInitializing(cluster)
 	case platformv1.ClusterRunning:
-		c.ensureHealthCheck(key, cluster)
 		err = c.doUpdate(cluster)
+		c.ensureHealthCheck(key, cluster) // after update to avoid version conflict
 		log.Info("update cluster", log.String("clusterName", cluster.Name), log.Err(err))
 	case platformv1.ClusterFailed:
 		c.ensureHealthCheck(key, cluster)
