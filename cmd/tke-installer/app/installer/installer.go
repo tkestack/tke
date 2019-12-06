@@ -1397,7 +1397,7 @@ func (t *TKE) installKeepalived() error {
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDaemonset(t.globalClient, t.namespace, "tke-gateway")
+		ok, err := apiclient.CheckDaemonset(t.globalClient, t.namespace, "keepalived")
 		if err != nil {
 			return false, nil
 		}
@@ -1782,7 +1782,7 @@ func (t *TKE) installTKERegistryAPI() error {
 }
 
 func (t *TKE) preparePushImagesToTKERegistry() error {
-	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain()}
+	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain(), File: "hosts"}
 	err := localHosts.Set(t.servers[0])
 	if err != nil {
 		return err
