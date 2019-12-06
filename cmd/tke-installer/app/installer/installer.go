@@ -1902,18 +1902,6 @@ func (t *TKE) importResource() error {
 		return err
 	}
 
-	_, err = client.PlatformV1().ClusterCredentials().Get(t.Cluster.ClusterCredential.Name, metav1.GetOptions{})
-	if err == nil {
-		err := client.PlatformV1().ClusterCredentials().Delete(t.Cluster.ClusterCredential.Name, &metav1.DeleteOptions{})
-		if err != nil {
-			return err
-		}
-	}
-	_, err = client.PlatformV1().ClusterCredentials().Create(&t.Cluster.ClusterCredential)
-	if err != nil {
-		return err
-	}
-
 	_, err = client.PlatformV1().Clusters().Get(t.Cluster.Name, metav1.GetOptions{})
 	if err == nil {
 		err := client.PlatformV1().Clusters().Delete(t.Cluster.Name, &metav1.DeleteOptions{})
@@ -1922,6 +1910,18 @@ func (t *TKE) importResource() error {
 		}
 	}
 	_, err = client.PlatformV1().Clusters().Create(&t.Cluster.Cluster)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.PlatformV1().ClusterCredentials().Get(t.Cluster.ClusterCredential.Name, metav1.GetOptions{})
+	if err == nil {
+		err := client.PlatformV1().ClusterCredentials().Delete(t.Cluster.ClusterCredential.Name, &metav1.DeleteOptions{})
+		if err != nil {
+			return err
+		}
+	}
+	_, err = client.PlatformV1().ClusterCredentials().Create(&t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}

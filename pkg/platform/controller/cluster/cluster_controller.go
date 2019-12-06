@@ -279,7 +279,13 @@ func (c *Controller) handlePhase(key string, cachedCluster *cachedCluster, clust
 	case platformv1.ClusterInitializing:
 		err = c.doInitializing(cluster)
 	case platformv1.ClusterRunning:
-		err = c.doUpdate(cluster)
+		// first get cluster credential to ensure it exited when such as global import, missing credential momently
+		// cause health check fail in period
+		credential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
+		if err != nil {
+			return err
+		}
+		err = c.doUpdate(cluster, credential)
 		c.ensureHealthCheck(key, cluster) // after update to avoid version conflict
 		log.Info("update cluster", log.String("clusterName", cluster.Name), log.Err(err))
 	case platformv1.ClusterFailed:
@@ -410,11 +416,7 @@ func (c *Controller) doInitializing(cluster *platformv1.Cluster) error {
 	return nil
 }
 
-func (c *Controller) doUpdate(cluster *platformv1.Cluster) error {
-	clusterCredential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
-	if err != nil {
-		return err
-	}
+func (c *Controller) doUpdate(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) error {
 	switch cluster.Spec.Type {
 	case platformv1.ClusterImported:
 		log.Warn("Imported cluster don's support update", log.String("clusterName", cluster.Name))
@@ -426,7 +428,7 @@ func (c *Controller) doUpdate(cluster *platformv1.Cluster) error {
 		}
 		args := clusterprovider.Cluster{
 			Cluster:           *cluster,
-			ClusterCredential: *clusterCredential,
+			ClusterCredential: *credential,
 		}
 		resp, err := clusterProvider.OnUpdate(args)
 		if err != nil {
