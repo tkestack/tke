@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"sort"
+	"sync"
 
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -29,8 +30,10 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/util"
 )
@@ -55,6 +58,28 @@ func (r *EventREST) New() runtime.Object {
 	return &corev1.EventList{}
 }
 
+type eventsFinder struct {
+	wg             sync.WaitGroup
+	mutex          sync.Mutex
+	namespaceName  string
+	platformClient platforminternalclient.PlatformInterface
+	client         kubernetes.Clientset
+	ctx            context.Context
+	events         util.EventSlice
+	errors         []error
+}
+
+func newEventsFinder(namespaceName string, ctx context.Context, client kubernetes.Clientset, platformClient platforminternalclient.PlatformInterface) *eventsFinder {
+	return &eventsFinder{
+		platformClient: platformClient,
+		ctx:            ctx,
+		client:         client,
+		namespaceName:  namespaceName,
+		events:         nil,
+		errors:         make([]error, 0),
+	}
+}
+
 // Get retrieves the object from the storage. It is required to support Patch.
 func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	client, err := util.ClientSet(ctx, r.platformClient)
@@ -67,28 +92,24 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
+	ef := newEventsFinder(namespaceName, ctx, *client, r.platformClient)
+
 	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("deployments/events"), name)
 	}
 
-	selector := fields.AndSelectors(
+	deploymentSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("involvedObject.uid", string(deployment.UID)),
 		fields.OneTermEqualSelector("involvedObject.name", deployment.Name),
 		fields.OneTermEqualSelector("involvedObject.namespace", deployment.Namespace),
 		fields.OneTermEqualSelector("involvedObject.kind", "Deployment"))
-	listOptions := metav1.ListOptions{
-		FieldSelector: selector.String(),
-	}
-	deploymentEvents, err := client.CoreV1().Events(namespaceName).List(listOptions)
-	if err != nil {
-		return nil, err
+	deploymentListOptions := metav1.ListOptions{
+		FieldSelector: deploymentSelector.String(),
 	}
 
-	var events util.EventSlice
-	for _, deploymentEvent := range deploymentEvents.Items {
-		events = append(events, deploymentEvent)
-	}
+	ef.wg.Add(1)
+	go ef.getEvents(deploymentListOptions)
 
 	rsSelector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
 	if err != nil {
@@ -102,6 +123,21 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	}
 
 	for _, rs := range rsList.Items {
+		// Skip replicaSets with same labels but owned by other deployments
+		var ownedByDeployment bool
+		ownedByDeployment = true
+		if rs.ObjectMeta.OwnerReferences != nil {
+			for _, references := range rs.ObjectMeta.OwnerReferences {
+				if (references.Kind == "Deployment") && (references.Name != name) {
+					ownedByDeployment = false
+					break
+				}
+			}
+		}
+		if !ownedByDeployment {
+			continue
+		}
+
 		rsEventsSelector := fields.AndSelectors(
 			fields.OneTermEqualSelector("involvedObject.uid", string(rs.UID)),
 			fields.OneTermEqualSelector("involvedObject.name", rs.Name),
@@ -110,14 +146,8 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		rsEventsListOptions := metav1.ListOptions{
 			FieldSelector: rsEventsSelector.String(),
 		}
-		rsEvents, err := client.CoreV1().Events(namespaceName).List(rsEventsListOptions)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, rsEvent := range rsEvents.Items {
-			events = append(events, rsEvent)
-		}
+		ef.wg.Add(1)
+		go ef.getEvents(rsEventsListOptions)
 
 		for _, references := range rs.ObjectMeta.OwnerReferences {
 			if (references.Kind == "Deployment") && (references.Name == name) {
@@ -132,7 +162,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 				}
 				for _, pod := range podListByRS.Items {
 					for _, podReferences := range pod.ObjectMeta.OwnerReferences {
-						if (podReferences.Kind == "ReplicaSet") || (podReferences.Name == rs.Name) {
+						if (podReferences.Kind == "ReplicaSet") && (podReferences.Name == rs.Name) {
 							podEventsSelector := fields.AndSelectors(
 								fields.OneTermEqualSelector("involvedObject.uid", string(pod.UID)),
 								fields.OneTermEqualSelector("involvedObject.name", pod.Name),
@@ -141,14 +171,8 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 							podEventsListOptions := metav1.ListOptions{
 								FieldSelector: podEventsSelector.String(),
 							}
-							podEvents, err := client.CoreV1().Events(namespaceName).List(podEventsListOptions)
-							if err != nil {
-								return nil, err
-							}
-
-							for _, podEvent := range podEvents.Items {
-								events = append(events, podEvent)
-							}
+							ef.wg.Add(1)
+							go ef.getEvents(podEventsListOptions)
 						}
 					}
 				}
@@ -156,9 +180,35 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		}
 	}
 
-	sort.Sort(events)
+	ef.wg.Wait()
+	if len(ef.errors) > 0 {
+		return nil, utilerrors.NewAggregate(ef.errors)
+	}
+
+	sort.Sort(ef.events)
 
 	return &corev1.EventList{
-		Items: events,
+		Items: ef.events,
 	}, nil
+}
+
+func (ef *eventsFinder) getEvents(listOptions metav1.ListOptions) {
+	defer ef.wg.Done()
+
+	events, err := ef.client.CoreV1().Events(ef.namespaceName).List(listOptions)
+	if err != nil {
+		ef.mutex.Lock()
+		ef.errors = append(ef.errors, err)
+		ef.mutex.Unlock()
+		return
+	}
+	if len(events.Items) == 0 {
+		return
+	}
+
+	ef.mutex.Lock()
+	for _, event := range events.Items {
+		ef.events = append(ef.events, event)
+	}
+	ef.mutex.Unlock()
 }
