@@ -48,6 +48,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, notifyClient *noti
 		NewFunc:                  func() runtime.Object { return &notify.Template{} },
 		NewListFunc:              func() runtime.Object { return &notify.TemplateList{} },
 		DefaultQualifiedResource: notify.Resource("templates"),
+		PredicateFunc:            templatestrategy.MatchTemplate,
 		ReturnDeletedObject:      true,
 
 		CreateStrategy: strategy,
@@ -57,6 +58,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, notifyClient *noti
 	}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
+		AttrFunc:    templatestrategy.GetAttrs,
 	}
 
 	if err := store.CompleteWithOptions(options); err != nil {
