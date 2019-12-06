@@ -31,9 +31,9 @@ import (
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/auth/apiserver"
 
-	casbinlog "github.com/casbin/casbin/log"
-	casbinutil "github.com/casbin/casbin/util"
 	"github.com/casbin/casbin/v2"
+	casbinlog "github.com/casbin/casbin/v2/log"
+	casbinutil "github.com/casbin/casbin/v2/util"
 	"github.com/coreos/etcd/clientv3"
 	dexserver "github.com/dexidp/dex/server"
 	dexstorage "github.com/dexidp/dex/storage"

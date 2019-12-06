@@ -34,7 +34,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/apiserver/handler"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
-	"tkestack.io/tke/pkg/auth"
+	authapiserver "tkestack.io/tke/pkg/auth/apiserver"
 	"tkestack.io/tke/pkg/gateway"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 	gatewayconfigvalidation "tkestack.io/tke/pkg/gateway/apis/config/validation"
@@ -86,7 +86,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	var ignoreAuthPathPrefixes []string
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, distribution.IgnoredAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, chartmuseum.IgnoredAuthPathPrefixes()...)
-	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, auth.IgnoreAuthPathPrefixes()...)
+	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, authapiserver.IgnoreAuthPathPrefixes()...)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes)
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableDiscovery = false

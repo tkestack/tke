@@ -19,7 +19,6 @@ FROM BASE_IMAGE
 RUN echo "hosts: files dns" >> /etc/nsswitch.conf
 
 WORKDIR /app
-ADD tke-auth /app/bin/
-COPY web/ /app/web/auth
+ADD tke-auth-controller /app/bin/
 
-ENTRYPOINT ["/app/bin/tke-auth"]
+ENTRYPOINT ["/app/bin/tke-auth-controller"]
