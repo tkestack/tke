@@ -1892,20 +1892,12 @@ func (t *TKE) importResource() error {
 		if err != nil {
 			return false, nil
 		}
+		_, err = client.PlatformV1().ClusterCredentials().List(metav1.ListOptions{})
+		if err != nil {
+			return false, nil
+		}
 		return true, nil
 	})
-	if err != nil {
-		return err
-	}
-
-	_, err = client.PlatformV1().Clusters().Get(t.Cluster.Name, metav1.GetOptions{})
-	if err == nil {
-		err := client.PlatformV1().Clusters().Delete(t.Cluster.Name, &metav1.DeleteOptions{})
-		if err != nil {
-			return err
-		}
-	}
-	_, err = client.PlatformV1().Clusters().Create(&t.Cluster.Cluster)
 	if err != nil {
 		return err
 	}
@@ -1918,6 +1910,18 @@ func (t *TKE) importResource() error {
 		}
 	}
 	_, err = client.PlatformV1().ClusterCredentials().Create(&t.Cluster.ClusterCredential)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.PlatformV1().Clusters().Get(t.Cluster.Name, metav1.GetOptions{})
+	if err == nil {
+		err := client.PlatformV1().Clusters().Delete(t.Cluster.Name, &metav1.DeleteOptions{})
+		if err != nil {
+			return err
+		}
+	}
+	_, err = client.PlatformV1().Clusters().Create(&t.Cluster.Cluster)
 	if err != nil {
 		return err
 	}
