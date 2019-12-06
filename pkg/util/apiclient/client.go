@@ -120,6 +120,9 @@ func CheckDaemonset(client kubernetes.Interface, namespace string, name string) 
 	if err != nil {
 		return false, err
 	}
+	if daemonSet.Status.NumberReady == 0 {
+		return false, err
+	}
 	if daemonSet.Status.DesiredNumberScheduled != daemonSet.Status.NumberReady {
 		return false, errors.New("daemonSet.Status.DesiredNumberScheduled != daemonSet.Status.NumberReady")
 	}
