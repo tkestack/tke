@@ -36,6 +36,7 @@ import (
 	groupstorage "tkestack.io/tke/pkg/auth/registry/group/storage"
 	localidentitystorage "tkestack.io/tke/pkg/auth/registry/localidentity/storage"
 	policystorage "tkestack.io/tke/pkg/auth/registry/policy/storage"
+	rolestorage "tkestack.io/tke/pkg/auth/registry/role/storage"
 	rulestorage "tkestack.io/tke/pkg/auth/registry/rule/storage"
 
 	"tkestack.io/tke/pkg/auth/util/sign"
@@ -76,10 +77,11 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
 
-		localIdentityRest := localidentitystorage.NewStorage(restOptionsGetter, authClient, s.PolicyEnforcer, s.PrivilegedUsername)
+		localIdentityRest := localidentitystorage.NewStorage(restOptionsGetter, authClient, s.PolicyEnforcer.Enforcer, s.PrivilegedUsername)
 		storageMap["localidentities"] = localIdentityRest.LocalIdentity
 		storageMap["localidentities/status"] = localIdentityRest.Status
 		storageMap["localidentities/policies"] = localIdentityRest.Policy
+		storageMap["localidentities/roles"] = localIdentityRest.Role
 		storageMap["localidentities/groups"] = localIdentityRest.Group
 
 		storageMap["localidentities/finalize"] = localIdentityRest.Finalize
@@ -104,15 +106,24 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["policies/binding"] = policyRest.Binding
 		storageMap["policies/unbinding"] = policyRest.Unbinding
 
+		ruleRest := rulestorage.NewStorage(restOptionsGetter)
+		storageMap["rules"] = ruleRest.Rule
+
+		roleRest := rolestorage.NewStorage(restOptionsGetter, s.PolicyEnforcer.Enforcer, authClient, s.PrivilegedUsername)
+		storageMap["roles"] = roleRest.Role
+		storageMap["roles/finalize"] = roleRest.Finalize
+		storageMap["roles/status"] = roleRest.Status
+		storageMap["roles/binding"] = roleRest.Binding
+		storageMap["roles/unbinding"] = roleRest.Unbinding
+		storageMap["roles/policybinding"] = roleRest.PolicyBinding
+		storageMap["roles/policyunbinding"] = roleRest.PolicyUnbinding
+
 		groupRest := groupstorage.NewStorage(restOptionsGetter, s.PolicyEnforcer, authClient, s.PrivilegedUsername)
 		storageMap["groups"] = groupRest.Group
 		storageMap["groups/finalize"] = groupRest.Finalize
 		storageMap["groups/status"] = groupRest.Status
 		storageMap["groups/binding"] = groupRest.Binding
 		storageMap["groups/unbinding"] = groupRest.Unbinding
-
-		ruleRest := rulestorage.NewStorage(restOptionsGetter)
-		storageMap["rules"] = ruleRest.Rule
 	}
 
 	return storageMap

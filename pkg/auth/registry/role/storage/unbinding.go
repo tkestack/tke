@@ -20,9 +20,6 @@ package storage
 
 import (
 	"context"
-	"tkestack.io/tke/pkg/auth/util"
-
-	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,25 +30,25 @@ import (
 
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/util/log"
 )
 
-// BindingREST implements the REST endpoint.
-type BindingREST struct {
+// UnbindingREST implements the REST endpoint.
+type UnbindingREST struct {
 	*registry.Store
 
 	authClient authinternalclient.AuthInterface
-	//enforcer    *casbin.SyncedEnforcer
 }
 
-var _ = rest.Creater(&BindingREST{})
+var _ = rest.Creater(&UnbindingREST{})
 
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
-func (r *BindingREST) New() runtime.Object {
+func (r *UnbindingREST) New() runtime.Object {
 	return &auth.Binding{}
 }
 
-func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
@@ -64,17 +61,16 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	if err != nil {
 		return nil, err
 	}
-	policy := polObj.(*auth.Policy)
-
-	for _, sub := range bind.Subjects {
-		if sub.Name != "" {
-			if !util.InSubjects(sub, policy.Status.Subjects) {
-				policy.Status.Subjects = append(policy.Status.Subjects, sub)
-			}
+	role := polObj.(*auth.Role)
+	var remained []auth.Subject
+	for _, sub := range role.Status.Subjects {
+		if !inSubjects(sub, bind.Subjects) {
+			remained = append(remained, sub)
 		}
 	}
 
-	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("subjects", policy.Status.Subjects))
+	role.Status.Subjects = remained
 
-	return r.authClient.Policies().UpdateStatus(policy)
+	log.Info("role members", log.String("role", role.Name), log.Any("members", role.Status.Subjects))
+	return r.authClient.Roles().UpdateStatus(role)
 }

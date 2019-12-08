@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package group
+package role
 
 import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,21 +29,36 @@ import (
 	"tkestack.io/tke/pkg/util/validation"
 )
 
-// ValidateGroupName is a ValidateNameFunc for names that must be a DNS
+// ValidateRoleName is a ValidateNameFunc for names that must be a DNS
 // subdomain.
-var ValidateGroupName = apiMachineryValidation.NameIsDNSLabel
+var ValidateRoleName = apiMachineryValidation.NameIsDNSLabel
 
-// ValidateGroup tests if required fields in the group are set.
-func ValidateGroup(group *auth.Group, authClient authinternalclient.AuthInterface) field.ErrorList {
-	allErrs := apiMachineryValidation.ValidateObjectMeta(&group.ObjectMeta, false, ValidateGroupName, field.NewPath("metadata"))
+// ValidateRole tests if required fields in the role are set.
+func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) field.ErrorList {
+	allErrs := apiMachineryValidation.ValidateObjectMeta(&role.ObjectMeta, false, ValidateRoleName, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
-	if err := validation.IsDisplayName(group.Spec.DisplayName); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("displayName"), group.Spec.DisplayName, err.Error()))
+	if err := validation.IsDisplayName(role.Spec.DisplayName); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("displayName"), role.Spec.DisplayName, err.Error()))
+	}
+
+	for _, pid := range role.Spec.Policies {
+		pol, err := authClient.Policies().Get(pid, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.NotFound(fldSpecPath.Child("policies"), pid))
+			} else {
+				allErrs = append(allErrs, field.InternalError(fldSpecPath.Child("policies"), err))
+			}
+		} else {
+			if pol.Spec.TenantID != role.Spec.TenantID {
+				allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("policies"), pid, "related policy must be in the same tenant"))
+			}
+		}
 	}
 
 	fldStatPath := field.NewPath("status")
-	for i, subj := range group.Status.Subjects {
+	for i, subj := range role.Status.Subjects {
 		if subj.ID == "" && subj.Name == "" {
 			allErrs = append(allErrs, field.Required(fldStatPath.Child("subjects"), "must specify id or name"))
 			continue
@@ -60,20 +75,20 @@ func ValidateGroup(group *auth.Group, authClient authinternalclient.AuthInterfac
 				}
 			} else {
 				if val.Spec.TenantID != val.Spec.TenantID {
-					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("subjects"), subj.ID, "must in the same tenant with the group"))
+					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("subjects"), subj.ID, "must in the same tenant with the role"))
 				} else {
-					group.Status.Subjects[i].Name = val.Spec.Username
+					role.Status.Subjects[i].Name = val.Spec.Username
 				}
 			}
 		} else {
-			localIdentity, err := util.GetLocalIdentity(authClient, group.Spec.TenantID, subj.Name)
+			localIdentity, err := util.GetLocalIdentity(authClient, role.Spec.TenantID, subj.Name)
 			if err != nil && apierrors.IsNotFound(err) {
 				continue
 			}
 			if err != nil {
 				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
 			} else {
-				group.Status.Subjects[i].ID = localIdentity.Name
+				role.Status.Subjects[i].ID = localIdentity.Name
 			}
 		}
 	}
@@ -81,15 +96,15 @@ func ValidateGroup(group *auth.Group, authClient authinternalclient.AuthInterfac
 	return allErrs
 }
 
-// ValidateGroupUpdate tests if required fields in the group are set during
+// ValidateRoleUpdate tests if required fields in the role are set during
 // an update.
-func ValidateGroupUpdate(group *auth.Group, old *auth.Group, authClient authinternalclient.AuthInterface) field.ErrorList {
-	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&group.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateGroup(group, authClient)...)
+func ValidateRoleUpdate(role *auth.Role, old *auth.Role, authClient authinternalclient.AuthInterface) field.ErrorList {
+	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&role.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
+	allErrs = append(allErrs, ValidateRole(role, authClient)...)
 
 	fldSpecPath := field.NewPath("spec")
-	if group.Spec.TenantID != old.Spec.TenantID {
-		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("tenantID"), group.Spec.TenantID, "disallowed change the tenant"))
+	if role.Spec.TenantID != old.Spec.TenantID {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("tenantID"), role.Spec.TenantID, "disallowed change the tenant"))
 	}
 
 	return allErrs

@@ -58,6 +58,10 @@ func (c *FakeAuth) Policies() internalversion.PolicyInterface {
 	return &FakePolicies{c}
 }
 
+func (c *FakeAuth) Roles() internalversion.RoleInterface {
+	return &FakeRoles{c}
+}
+
 func (c *FakeAuth) Rules() internalversion.RuleInterface {
 	return &FakeRules{c}
 }

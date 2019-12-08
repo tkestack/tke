@@ -23,6 +23,7 @@ import (
 	"time"
 	"tkestack.io/tke/pkg/auth/controller/group"
 	"tkestack.io/tke/pkg/auth/controller/localidentity"
+	"tkestack.io/tke/pkg/auth/controller/role"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	v1 "tkestack.io/tke/api/auth/v1"
@@ -38,6 +39,9 @@ const (
 
 	groupSyncPeriod         = 5 * time.Minute
 	groupLocalIdentitySyncs = 10
+
+	roleSyncPeriod         = 5 * time.Minute
+	roleLocalIdentitySyncs = 10
 )
 
 func startPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -90,6 +94,25 @@ func startGroupController(ctx ControllerContext) (http.Handler, bool, error) {
 		ctx.Enforcer,
 		groupSyncPeriod,
 		v1.GroupFinalize,
+	)
+
+	go ctrl.Run(groupLocalIdentitySyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startRoleController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "roles"}] {
+		return nil, false, nil
+	}
+
+	ctrl := role.NewController(
+		ctx.ClientBuilder.ClientOrDie("role-controller"),
+		ctx.InformerFactory.Auth().V1().Roles(),
+		ctx.InformerFactory.Auth().V1().Rules(),
+		ctx.Enforcer,
+		roleSyncPeriod,
+		v1.RoleFinalize,
 	)
 
 	go ctrl.Run(groupLocalIdentitySyncs, ctx.Stop)

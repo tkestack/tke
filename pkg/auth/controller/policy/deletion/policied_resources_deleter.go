@@ -20,6 +20,7 @@ package deletion
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -246,6 +247,7 @@ type deleteResourceFunc func(deleter *policiedResourcesDeleter, policy *v1.Polic
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteRelatedRules,
+	detachRelatedRoles,
 }
 
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
@@ -275,4 +277,42 @@ func deleteRelatedRules(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 	log.Info("Policy controller - deleteRelatedRules", log.String("policyName", policy.ObjectMeta.Name))
 	_, err := deleter.enforcer.DeleteRole(policy.Name)
 	return err
+}
+
+func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
+	log.Info("Policy controller - deleteRelatedRules", log.String("policyName", policy.ObjectMeta.Name))
+
+	roles, err := deleter.enforcer.GetRolesForUser(policy.ObjectMeta.Name)
+
+	var errs []error
+
+	unbinding := []string{policy.ObjectMeta.Name}
+	pol := &v1.Role{}
+	for _, role := range roles {
+		switch {
+		case strings.HasPrefix(role, "rol-"):
+			err = deleter.authClient.RESTClient().Post().
+				Resource("roles").
+				Name(role).
+				SubResource("policyunbinding").
+				Body(&unbinding).
+				Do().Into(pol)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					continue
+				}
+				log.Error("Unbind policy from role failed", log.String("policy", policy.ObjectMeta.Name),
+					log.String("role", role), log.Err(err))
+				errs = append(errs, err)
+			}
+		default:
+			log.Error("Unknown role name for policy, remove it", log.String("policy", policy.ObjectMeta.Name), log.String("role", role))
+			_, err = deleter.enforcer.DeleteRoleForUser(policy.ObjectMeta.Name, role)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
 }

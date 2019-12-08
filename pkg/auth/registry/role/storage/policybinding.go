@@ -20,7 +20,7 @@ package storage
 
 import (
 	"context"
-	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util"
 
 	"tkestack.io/tke/pkg/util/log"
 
@@ -35,23 +35,22 @@ import (
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
-// BindingREST implements the REST endpoint.
-type BindingREST struct {
+// PolicyBindingREST implements the REST endpoint.
+type PolicyBindingREST struct {
 	*registry.Store
 
 	authClient authinternalclient.AuthInterface
-	//enforcer    *casbin.SyncedEnforcer
 }
 
-var _ = rest.Creater(&BindingREST{})
+var _ = rest.Creater(&PolicyBindingREST{})
 
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
-func (r *BindingREST) New() runtime.Object {
-	return &auth.Binding{}
+func (r *PolicyBindingREST) New() runtime.Object {
+	return &auth.PolicyBinding{}
 }
 
-func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (r *PolicyBindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
@@ -59,22 +58,20 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 
 	log.Info("requestinfo", log.Any("requestInfo", requestInfo))
 
-	bind := obj.(*auth.Binding)
+	bind := obj.(*auth.PolicyBinding)
 	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	policy := polObj.(*auth.Policy)
+	role := polObj.(*auth.Role)
 
-	for _, sub := range bind.Subjects {
-		if sub.Name != "" {
-			if !util.InSubjects(sub, policy.Status.Subjects) {
-				policy.Status.Subjects = append(policy.Status.Subjects, sub)
-			}
+	for _, pid := range bind.Policies {
+		if !util.InStringSlice(role.Spec.Policies, pid) {
+			role.Spec.Policies = append(role.Spec.Policies, pid)
 		}
 	}
 
-	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("subjects", policy.Status.Subjects))
+	log.Info("role policies", log.String("role", role.Name), log.Any("policies", role.Spec.Policies))
 
-	return r.authClient.Policies().UpdateStatus(policy)
+	return r.authClient.Roles().Update(role)
 }

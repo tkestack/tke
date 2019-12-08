@@ -138,7 +138,7 @@ message Action {
   optional string description = 2;
 }
 
-// Binding references the objects a policy applies to, but does not contain it.
+// Binding is used to bind or unbind the subjects to or from the policy,role or group.
 message Binding {
   // Subjects holds references to the objects the policy applies to.
   // +optional
@@ -321,6 +321,13 @@ message Policy {
   optional PolicyStatus status = 3;
 }
 
+// PolicyBinding references the request to bind or unbind policies to the role.
+message PolicyBinding {
+  // Policies holds the policies will bind or unbind to the role.
+  // +optional
+  repeated string policies = 1;
+}
+
 // PolicyList is the whole list of all policies.
 message PolicyList {
   // +optional
@@ -360,6 +367,50 @@ message PolicyStatus {
 
   // +optional
   // Subjects represents the objects the policy applies to.
+  repeated Subject subjects = 2;
+}
+
+// Role is a collection with multiple policies.
+message Role {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of role document in this set.
+  optional RoleSpec spec = 2;
+
+  // +optional
+  optional RoleStatus status = 3;
+}
+
+// RoleList is the whole list of policy.
+message RoleList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of rules.
+  repeated Role items = 2;
+}
+
+// RoleSpec is a description of role.
+message RoleSpec {
+  repeated string finalizers = 1;
+
+  optional string displayName = 2;
+
+  optional string tenantID = 3;
+
+  // Creator
+  optional string username = 4;
+
+  optional string description = 5;
+
+  repeated string policies = 6;
+}
+
+// RoleStatus represents information about the status of a role.
+message RoleStatus {
+  // +optional
+  optional string phase = 1;
+
+  // Subjects represents the members of the group.
   repeated Subject subjects = 2;
 }
 

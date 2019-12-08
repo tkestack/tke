@@ -253,7 +253,7 @@ func (c *Controller) handleSubjects(key string, group *v1.Group) error {
 	if len(removed) > 0 {
 		for _, remove := range removed {
 			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(group.Spec.TenantID, remove), group.Name); err != nil {
-				log.Errorf("Bind group to user failed", log.String("group", group.Name), log.String("user", remove), log.Err(err))
+				log.Errorf("Unbind group to user failed", log.String("group", group.Name), log.String("user", remove), log.Err(err))
 				errs = append(errs, err)
 			}
 		}

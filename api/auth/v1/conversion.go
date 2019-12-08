@@ -32,6 +32,7 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		AddFieldLabelConversionsForRule,
 		AddFieldLabelConversionsForCategory,
 		AddFieldLabelConversionsForGroup,
+		AddFieldLabelConversionsForRole,
 	}
 	for _, f := range funcs {
 		if err := f(scheme); err != nil {
@@ -143,6 +144,24 @@ func AddFieldLabelConversionsForCategory(scheme *runtime.Scheme) error {
 // representation.
 func AddFieldLabelConversionsForGroup(scheme *runtime.Scheme) error {
 	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Group"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.displayName",
+				"spec.tenantID",
+				"spec.username",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForRole adds a conversion function to convert
+// field selectors of Role from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForRole(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Role"),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.displayName",

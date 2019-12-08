@@ -40,6 +40,8 @@ type Interface interface {
 	LocalIdentities() LocalIdentityInformer
 	// Policies returns a PolicyInformer.
 	Policies() PolicyInformer
+	// Roles returns a RoleInformer.
+	Roles() RoleInformer
 	// Rules returns a RuleInformer.
 	Rules() RuleInformer
 }
@@ -88,6 +90,11 @@ func (v *version) LocalIdentities() LocalIdentityInformer {
 // Policies returns a PolicyInformer.
 func (v *version) Policies() PolicyInformer {
 	return &policyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// Roles returns a RoleInformer.
+func (v *version) Roles() RoleInformer {
+	return &roleInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // Rules returns a RuleInformer.

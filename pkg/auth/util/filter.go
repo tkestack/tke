@@ -52,7 +52,7 @@ func FilterAPIKey(ctx context.Context, apiKey *auth.APIKey) error {
 	return nil
 }
 
-// FilterPolicy is used to filter policies that do not belong to the tenant.
+// FilterPolicy is used to filter policy that do not belong to the tenant.
 func FilterPolicy(ctx context.Context, policy *auth.Policy) error {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
@@ -60,6 +60,18 @@ func FilterPolicy(ctx context.Context, policy *auth.Policy) error {
 	}
 	if policy.Spec.TenantID != tenantID {
 		return errors.NewNotFound(v1.Resource("policy"), policy.ObjectMeta.Name)
+	}
+	return nil
+}
+
+// FilterRole is used to filter role that do not belong to the tenant.
+func FilterRole(ctx context.Context, role *auth.Role) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if role.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("role"), role.ObjectMeta.Name)
 	}
 	return nil
 }

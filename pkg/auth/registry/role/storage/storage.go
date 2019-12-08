@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/casbin/casbin/v2"
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -40,32 +41,33 @@ import (
 
 	"tkestack.io/tke/api/auth"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
-	"tkestack.io/tke/pkg/auth/registry/group"
+	"tkestack.io/tke/pkg/auth/registry/role"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
-// Storage includes storage for groups and all sub resources.
+// Storage includes storage for roles and all sub resources.
 type Storage struct {
-	Group *REST
+	Role *REST
 
-	Status    *StatusREST
-	Finalize  *FinalizeREST
-	Binding   *BindingREST
-	Unbinding *UnbindingREST
+	Status          *StatusREST
+	Finalize        *FinalizeREST
+	Binding         *BindingREST
+	Unbinding       *UnbindingREST
+	PolicyBinding   *PolicyBindingREST
+	PolicyUnbinding *PolicyUnbindingREST
 }
 
-// NewStorage returns a Storage object that will work against groups.
-func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
-	strategy := group.NewStrategy(enforcer, authClient)
+// NewStorage returns a Storage object that will work against roles.
+func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
+	strategy := role.NewStrategy(enforcer, authClient)
 	store := &registry.Store{
-		NewFunc:                  func() runtime.Object { return &auth.Group{} },
-		NewListFunc:              func() runtime.Object { return &auth.GroupList{} },
-		DefaultQualifiedResource: auth.Resource("groups"),
-		PredicateFunc:            group.MatchGroup,
+		NewFunc:                  func() runtime.Object { return &auth.Role{} },
+		NewListFunc:              func() runtime.Object { return &auth.RoleList{} },
+		DefaultQualifiedResource: auth.Resource("roles"),
+		PredicateFunc:            role.MatchRole,
 
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
@@ -73,53 +75,55 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyE
 	}
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
-		AttrFunc:    group.GetAttrs,
+		AttrFunc:    role.GetAttrs,
 	}
 
 	if err := store.CompleteWithOptions(options); err != nil {
-		log.Panic("Failed to create group etcd rest storage", log.Err(err))
+		log.Panic("Failed to create role etcd rest storage", log.Err(err))
 	}
 
 	statusStore := *store
-	statusStore.UpdateStrategy = group.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = group.NewStatusStrategy(strategy)
+	statusStore.UpdateStrategy = role.NewStatusStrategy(strategy)
+	statusStore.ExportStrategy = role.NewStatusStrategy(strategy)
 
 	finalizeStore := *store
-	finalizeStore.UpdateStrategy = group.NewFinalizerStrategy(strategy)
-	finalizeStore.ExportStrategy = group.NewFinalizerStrategy(strategy)
+	finalizeStore.UpdateStrategy = role.NewFinalizerStrategy(strategy)
+	finalizeStore.ExportStrategy = role.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		Group:     &REST{store, privilegedUsername},
-		Status:    &StatusREST{&statusStore},
-		Finalize:  &FinalizeREST{&finalizeStore},
-		Binding:   &BindingREST{store, authClient},
-		Unbinding: &UnbindingREST{store, authClient},
+		Role:            &REST{store, privilegedUsername},
+		Status:          &StatusREST{&statusStore},
+		Finalize:        &FinalizeREST{&finalizeStore},
+		Binding:         &BindingREST{store, authClient},
+		Unbinding:       &UnbindingREST{store, authClient},
+		PolicyBinding:   &PolicyBindingREST{store, authClient},
+		PolicyUnbinding: &PolicyUnbindingREST{store, authClient},
 	}
 }
 
-// ValidateGetObjectAndTenantID validate name and tenantID, if success return Group
+// ValidateGetObjectAndTenantID validate name and tenantID, if success return Role
 func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := store.Get(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	o := obj.(*auth.Group)
-	if err := util.FilterGroup(ctx, o); err != nil {
+	o := obj.(*auth.Role)
+	if err := util.FilterRole(ctx, o); err != nil {
 		return nil, err
 	}
 	return o, nil
 }
 
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return Group
+// ValidateExportObjectAndTenantID validate name and tenantID, if success return Role
 func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
 	obj, err := store.Export(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	o := obj.(*auth.Group)
-	if err := util.FilterGroup(ctx, o); err != nil {
+	o := obj.(*auth.Role)
+	if err := util.FilterRole(ctx, o); err != nil {
 		return nil, err
 	}
 
@@ -135,7 +139,7 @@ type REST struct {
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
-	return []string{"grp"}
+	return []string{"rol"}
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -148,7 +152,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
 	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, apierrors.NewMethodNotSupported(auth.Resource("groups"), "delete collection")
+		return nil, apierrors.NewMethodNotSupported(auth.Resource("roles"), "delete collection")
 	}
 
 	if listOptions == nil {
@@ -247,13 +251,13 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 	return r.Store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
-// Delete enforces life-cycle rules for group termination
+// Delete enforces life-cycle rules for role termination
 func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	object, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
 	}
-	group := object.(*auth.Group)
+	role := object.(*auth.Role)
 
 	// Ensure we have a UID precondition
 	if options == nil {
@@ -263,18 +267,18 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		options.Preconditions = &metav1.Preconditions{}
 	}
 	if options.Preconditions.UID == nil {
-		options.Preconditions.UID = &group.UID
-	} else if *options.Preconditions.UID != group.UID {
+		options.Preconditions.UID = &role.UID
+	} else if *options.Preconditions.UID != role.UID {
 		err = apierrors.NewConflict(
-			auth.Resource("groups"),
+			auth.Resource("roles"),
 			name,
-			fmt.Errorf("precondition failed: UID in precondition: %v, UID in object meta: %v", *options.Preconditions.UID, group.UID),
+			fmt.Errorf("precondition failed: UID in precondition: %v, UID in object meta: %v", *options.Preconditions.UID, role.UID),
 		)
 		return nil, false, err
 	}
 
-	// upon first request to delete, we switch the phase to start group termination
-	if group.DeletionTimestamp.IsZero() {
+	// upon first request to delete, we switch the phase to start role termination
+	if role.DeletionTimestamp.IsZero() {
 		key, err := r.Store.KeyFunc(ctx, name)
 		if err != nil {
 			return nil, false, err
@@ -286,27 +290,27 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		err = r.Store.Storage.GuaranteedUpdate(
 			ctx, key, out, false, &preconditions,
 			storage.SimpleUpdate(func(existing runtime.Object) (runtime.Object, error) {
-				existingGroup, ok := existing.(*auth.Group)
+				existingRole, ok := existing.(*auth.Role)
 				if !ok {
 					// wrong type
-					return nil, fmt.Errorf("expected *auth.Group, got %v", existing)
+					return nil, fmt.Errorf("expected *auth.Role, got %v", existing)
 				}
-				if err := deleteValidation(ctx, existingGroup); err != nil {
+				if err := deleteValidation(ctx, existingRole); err != nil {
 					return nil, err
 				}
 				// Set the deletion timestamp if needed
-				if existingGroup.DeletionTimestamp.IsZero() {
+				if existingRole.DeletionTimestamp.IsZero() {
 					now := metav1.Now()
-					existingGroup.DeletionTimestamp = &now
+					existingRole.DeletionTimestamp = &now
 				}
-				// Set the group phase to terminating, if needed
-				if existingGroup.Status.Phase != auth.GroupTerminating {
-					existingGroup.Status.Phase = auth.GroupTerminating
+				// Set the role phase to terminating, if needed
+				if existingRole.Status.Phase != auth.RoleTerminating {
+					existingRole.Status.Phase = auth.RoleTerminating
 				}
 
 				// the current finalizers which are on namespace
 				currentFinalizers := map[string]bool{}
-				for _, f := range existingGroup.Finalizers {
+				for _, f := range existingRole.Finalizers {
 					currentFinalizers[f] = true
 				}
 				// the finalizers we should ensure on rule
@@ -330,16 +334,16 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 					for f := range currentFinalizers {
 						newFinalizers = append(newFinalizers, f)
 					}
-					existingGroup.Finalizers = newFinalizers
+					existingRole.Finalizers = newFinalizers
 				}
-				return existingGroup, nil
+				return existingRole, nil
 			}),
 			dryrun.IsDryRun(options.DryRun),
 		)
 
 		if err != nil {
-			err = storageerr.InterpretGetError(err, auth.Resource("groups"), name)
-			err = storageerr.InterpretUpdateError(err, auth.Resource("groups"), name)
+			err = storageerr.InterpretGetError(err, auth.Resource("roles"), name)
+			err = storageerr.InterpretUpdateError(err, auth.Resource("roles"), name)
 			if _, ok := err.(*apierrors.StatusError); !ok {
 				err = apierrors.NewInternalError(err)
 			}
@@ -350,8 +354,8 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	}
 
 	// prior to final deletion, we must ensure that finalizers is empty
-	if len(group.Spec.Finalizers) != 0 {
-		err = apierrors.NewConflict(auth.Resource("groups"), group.Name, fmt.Errorf("the system is ensuring all content is removed from this group.  Upon completion, this group will automatically be purged by the system"))
+	if len(role.Spec.Finalizers) != 0 {
+		err = apierrors.NewConflict(auth.Resource("roles"), role.Name, fmt.Errorf("the system is ensuring all content is removed from this role.  Upon completion, this role will automatically be purged by the system"))
 		return nil, false, err
 	}
 	return r.Store.Delete(ctx, name, deleteValidation, options)
@@ -396,7 +400,7 @@ func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.Updat
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
-// FinalizeREST implements the REST endpoint for finalizing a group.
+// FinalizeREST implements the REST endpoint for finalizing a role.
 type FinalizeREST struct {
 	store *registry.Store
 }

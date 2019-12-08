@@ -34,4 +34,6 @@ type LocalIdentityExpansion interface{}
 
 type PolicyExpansion interface{}
 
+type RoleExpansion interface{}
+
 type RuleExpansion interface{}

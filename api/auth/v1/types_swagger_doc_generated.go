@@ -120,7 +120,7 @@ func (Action) SwaggerDoc() map[string]string {
 }
 
 var map_Binding = map[string]string{
-	"":         "Binding references the objects a policy applies to, but does not contain it.",
+	"":         "Binding is used to bind or unbind the subjects to or from the policy,role or group.",
 	"subjects": "Subjects holds references to the objects the policy applies to.",
 }
 
@@ -255,6 +255,15 @@ func (Policy) SwaggerDoc() map[string]string {
 	return map_Policy
 }
 
+var map_PolicyBinding = map[string]string{
+	"":         "PolicyBinding references the request to bind or unbind policies to the role.",
+	"policies": "Policies holds the policies will bind or unbind to the role.",
+}
+
+func (PolicyBinding) SwaggerDoc() map[string]string {
+	return map_PolicyBinding
+}
+
 var map_PolicyList = map[string]string{
 	"":      "PolicyList is the whole list of all policies.",
 	"items": "List of policies.",
@@ -279,6 +288,42 @@ var map_PolicyStatus = map[string]string{
 
 func (PolicyStatus) SwaggerDoc() map[string]string {
 	return map_PolicyStatus
+}
+
+var map_Role = map[string]string{
+	"":     "Role is a collection with multiple policies.",
+	"spec": "Spec defines the desired identities of role document in this set.",
+}
+
+func (Role) SwaggerDoc() map[string]string {
+	return map_Role
+}
+
+var map_RoleList = map[string]string{
+	"":      "RoleList is the whole list of policy.",
+	"items": "List of rules.",
+}
+
+func (RoleList) SwaggerDoc() map[string]string {
+	return map_RoleList
+}
+
+var map_RoleSpec = map[string]string{
+	"":         "RoleSpec is a description of role.",
+	"username": "Creator",
+}
+
+func (RoleSpec) SwaggerDoc() map[string]string {
+	return map_RoleSpec
+}
+
+var map_RoleStatus = map[string]string{
+	"":         "RoleStatus represents information about the status of a role.",
+	"Subjects": "Subjects represents the members of the group.",
+}
+
+func (RoleStatus) SwaggerDoc() map[string]string {
+	return map_RoleStatus
 }
 
 var map_Rule = map[string]string{

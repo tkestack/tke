@@ -327,8 +327,22 @@ func deleteRelatedRules(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 				errs = append(errs, err)
 			}
 		case strings.HasPrefix(role, "rol-"):
-			fallthrough
+			err = deleter.authClient.RESTClient().Post().
+				Resource("roles").
+				Name(role).
+				SubResource("unbinding").
+				Body(&binding).
+				Do().Into(pol)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					continue
+				}
+				log.Error("Unbind group for user failed", log.String("user", localIdentity.Spec.Username),
+					log.String("group", role), log.Err(err))
+				errs = append(errs, err)
+			}
 		default:
+			log.Error("Unknown role name for user, remove it", log.String("user", localIdentity.Spec.Username), log.String("role", role))
 			_, err = deleter.enforcer.DeleteRoleForUser(subj, role)
 			if err != nil {
 				errs = append(errs, err)

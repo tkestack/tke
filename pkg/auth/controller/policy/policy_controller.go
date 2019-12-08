@@ -312,7 +312,7 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 	if len(removed) > 0 {
 		for _, remove := range removed {
 			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(policy.Spec.TenantID, remove), policy.Name); err != nil {
-				log.Errorf("Bind policy to user failed", log.String("policy", policy.Name), log.String("user", remove), log.Err(err))
+				log.Errorf("Unbind policy to user failed", log.String("policy", policy.Name), log.String("user", remove), log.Err(err))
 				errs = append(errs, err)
 			}
 		}

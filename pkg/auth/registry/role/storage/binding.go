@@ -20,7 +20,6 @@ package storage
 
 import (
 	"context"
-	"tkestack.io/tke/pkg/auth/util"
 
 	"tkestack.io/tke/pkg/util/log"
 
@@ -40,7 +39,6 @@ type BindingREST struct {
 	*registry.Store
 
 	authClient authinternalclient.AuthInterface
-	//enforcer    *casbin.SyncedEnforcer
 }
 
 var _ = rest.Creater(&BindingREST{})
@@ -64,17 +62,26 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	if err != nil {
 		return nil, err
 	}
-	policy := polObj.(*auth.Policy)
+	role := polObj.(*auth.Role)
 
 	for _, sub := range bind.Subjects {
 		if sub.Name != "" {
-			if !util.InSubjects(sub, policy.Status.Subjects) {
-				policy.Status.Subjects = append(policy.Status.Subjects, sub)
+			if !inSubjects(sub, role.Status.Subjects) {
+				role.Status.Subjects = append(role.Status.Subjects, sub)
 			}
 		}
 	}
 
-	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("subjects", policy.Status.Subjects))
+	log.Info("role members", log.String("role", role.Name), log.Any("members", role.Status.Subjects))
 
-	return r.authClient.Policies().UpdateStatus(policy)
+	return r.authClient.Roles().UpdateStatus(role)
+}
+
+func inSubjects(subject auth.Subject, slice []auth.Subject) bool {
+	for _, s := range slice {
+		if subject.Name == s.Name {
+			return true
+		}
+	}
+	return false
 }

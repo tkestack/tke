@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"tkestack.io/tke/pkg/util/log"
 
@@ -66,7 +67,7 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 
 	for _, sub := range bind.Subjects {
 		if sub.Name != "" {
-			if !inSubjects(sub, group.Status.Subjects) {
+			if !util.InSubjects(sub, group.Status.Subjects) {
 				group.Status.Subjects = append(group.Status.Subjects, sub)
 			}
 		}
@@ -75,13 +76,4 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	log.Info("group members", log.String("group", group.Name), log.Any("members", group.Status.Subjects))
 
 	return r.authClient.Groups().UpdateStatus(group)
-}
-
-func inSubjects(subject auth.Subject, slice []auth.Subject) bool {
-	for _, s := range slice {
-		if subject.Name == s.Name {
-			return true
-		}
-	}
-	return false
 }

@@ -21,12 +21,12 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/util/dryrun"
 	"k8s.io/klog"
 	"sync"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/auth/util"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -51,12 +51,13 @@ type Storage struct {
 	LocalIdentity *REST
 	Status        *StatusREST
 	Policy        *PolicyREST
+	Role          *RoleREST
 	Group         *GroupREST
 	Finalize      *FinalizeREST
 }
 
 // NewStorage returns a Storage object that will work against identify.
-func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, policyEnforcer *enforcer.PolicyEnforcer, privilegedUsername string) *Storage {
+func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, privilegedUsername string) *Storage {
 	strategy := localidentity.NewStrategy(authClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.LocalIdentity{} },
@@ -91,8 +92,9 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 	return &Storage{
 		LocalIdentity: &REST{store, privilegedUsername},
 		Status:        &StatusREST{&statusStore},
-		Policy:        &PolicyREST{store, authClient, policyEnforcer.Enforcer},
-		Group:         &GroupREST{store, authClient, policyEnforcer.Enforcer},
+		Policy:        &PolicyREST{store, authClient, enforcer},
+		Role:          &RoleREST{store, authClient, enforcer},
+		Group:         &GroupREST{store, authClient, enforcer},
 		Finalize:      &FinalizeREST{&finalizeStore},
 	}
 }

@@ -16,11 +16,13 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package group
+package role
 
 import (
 	"context"
 	"fmt"
+	"github.com/casbin/casbin/v2"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,25 +33,24 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/util/log"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
-// Strategy implements verification logic for group.
+// Strategy implements verification logic for role.
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	enforcer   *enforcer.PolicyEnforcer
+	enforcer   *casbin.SyncedEnforcer
 	authClient authinternalclient.AuthInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
-// creating and updating group objects.
-func NewStrategy(enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface) *Strategy {
+// creating and updating role objects.
+func NewStrategy(enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface) *Strategy {
 	return &Strategy{
 		ObjectTyper:   auth.Scheme,
 		NameGenerator: namesutil.Generator,
@@ -58,8 +59,8 @@ func NewStrategy(enforcer *enforcer.PolicyEnforcer, authClient authinternalclien
 	}
 }
 
-// DefaultGarbageCollectionGroup returns the default garbage collection behavior.
-func (Strategy) DefaultGarbageCollectionGroup(ctx context.Context) rest.GarbageCollectionPolicy {
+// DefaultGarbageCollectionRole returns the default garbage collection behavior.
+func (Strategy) DefaultGarbageCollectionRole(ctx context.Context) rest.GarbageCollectionPolicy {
 	return rest.Unsupported
 }
 
@@ -68,12 +69,12 @@ func (Strategy) DefaultGarbageCollectionGroup(ctx context.Context) rest.GarbageC
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
-		oldGroup := old.(*auth.Group)
-		group, _ := obj.(*auth.Group)
-		if oldGroup.Spec.TenantID != tenantID {
-			log.Panic("Unauthorized update group information", log.String("oldTenantID", oldGroup.Spec.TenantID), log.String("newTenantID", group.Spec.TenantID), log.String("userTenantID", tenantID))
+		oldRole := old.(*auth.Role)
+		role, _ := obj.(*auth.Role)
+		if oldRole.Spec.TenantID != tenantID {
+			log.Panic("Unauthorized update role information", log.String("oldTenantID", oldRole.Spec.TenantID), log.String("newTenantID", role.Spec.TenantID), log.String("userTenantID", tenantID))
 		}
-		group.Spec.TenantID = tenantID
+		role.Spec.TenantID = tenantID
 	}
 }
 
@@ -90,28 +91,28 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	group, _ := obj.(*auth.Group)
+	role, _ := obj.(*auth.Role)
 	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" {
-		group.Spec.TenantID = tenantID
+		role.Spec.TenantID = tenantID
 	}
 
-	group.Spec.Username = username
+	role.Spec.Username = username
 
-	if group.Name == "" && group.GenerateName == "" {
-		group.GenerateName = "grp-"
+	if role.Name == "" && role.GenerateName == "" {
+		role.GenerateName = "rol-"
 	}
 
-	group.Spec.Finalizers = []auth.FinalizerName{
-		auth.GroupFinalize,
+	role.Spec.Finalizers = []auth.FinalizerName{
+		auth.RoleFinalize,
 	}
 
-	group.Status.Phase = auth.GroupActive
+	role.Status.Phase = auth.RoleActive
 }
 
-// Validate validates a new group.
+// Validate validates a new role.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateGroup(obj.(*auth.Group), s.authClient)
+	return ValidateRole(obj.(*auth.Role), s.authClient)
 }
 
 // AllowCreateOnUpdate is false for policies.
@@ -130,22 +131,22 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 func (Strategy) Canonicalize(obj runtime.Object) {
 }
 
-// ValidateUpdate is the default update validation for an end group.
+// ValidateUpdate is the default update validation for an end role.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateGroupUpdate(obj.(*auth.Group), old.(*auth.Group), s.authClient)
+	return ValidateRoleUpdate(obj.(*auth.Role), old.(*auth.Role), s.authClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	group, ok := obj.(*auth.Group)
+	role, ok := obj.(*auth.Role)
 	if !ok {
-		return nil, nil, fmt.Errorf("not a group")
+		return nil, nil, fmt.Errorf("not a role")
 	}
-	return labels.Set(group.ObjectMeta.Labels), ToSelectableFields(group), nil
+	return labels.Set(role.ObjectMeta.Labels), ToSelectableFields(role), nil
 }
 
-// MatchGroup returns a generic matcher for a given label and field selector.
-func MatchGroup(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
+// MatchRole returns a generic matcher for a given label and field selector.
+func MatchRole(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{
 		Label:    label,
 		Field:    field,
@@ -159,12 +160,12 @@ func MatchGroup(label labels.Selector, field fields.Selector) storage.SelectionP
 }
 
 // ToSelectableFields returns a field set that represents the object
-func ToSelectableFields(group *auth.Group) fields.Set {
-	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&group.ObjectMeta, false)
+func ToSelectableFields(role *auth.Role) fields.Set {
+	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&role.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID":    group.Spec.TenantID,
-		"spec.username":    group.Spec.Username,
-		"spec.displayName": group.Spec.DisplayName,
+		"spec.tenantID":    role.Spec.TenantID,
+		"spec.username":    role.Spec.Username,
+		"spec.displayName": role.Spec.DisplayName,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
@@ -186,16 +187,16 @@ func NewStatusStrategy(strategy *Strategy) *StatusStrategy {
 // sort order-insensitive list fields, etc.  This should not remove fields
 // whose presence would be considered a validation error.
 func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	newGroup := obj.(*auth.Group)
-	oldGroup := old.(*auth.Group)
-	newGroup.Spec = oldGroup.Spec
+	newRole := obj.(*auth.Role)
+	oldRole := old.(*auth.Role)
+	newRole.Spec = oldRole.Spec
 }
 
 // ValidateUpdate is invoked after default fields in the object have been
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateGroupUpdate(obj.(*auth.Group), old.(*auth.Group), s.authClient)
+	return ValidateRoleUpdate(obj.(*auth.Role), old.(*auth.Role), s.authClient)
 }
 
 // FinalizeStrategy implements finalizer logic for Machine.
@@ -215,14 +216,14 @@ func NewFinalizerStrategy(strategy *Strategy) *FinalizeStrategy {
 // sort order-insensitive list fields, etc.  This should not remove fields
 // whose presence would be considered a validation error.
 func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	newGroup := obj.(*auth.Group)
-	oldGroup := old.(*auth.Group)
-	newGroup.Status = oldGroup.Status
+	newRole := obj.(*auth.Role)
+	oldRole := old.(*auth.Role)
+	newRole.Status = oldRole.Status
 }
 
 // ValidateUpdate is invoked after default fields in the object have been
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateGroupUpdate(obj.(*auth.Group), old.(*auth.Group), s.authClient)
+	return ValidateRoleUpdate(obj.(*auth.Role), old.(*auth.Role), s.authClient)
 }

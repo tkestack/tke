@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,7 +65,7 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 	group := polObj.(*auth.Group)
 	var remained []auth.Subject
 	for _, sub := range group.Status.Subjects {
-		if !inSubjects(sub, bind.Subjects) {
+		if !util.InSubjects(sub, bind.Subjects) {
 			remained = append(remained, sub)
 		}
 	}

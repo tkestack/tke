@@ -58,6 +58,10 @@ func (c *FakeAuthV1) Policies() v1.PolicyInterface {
 	return &FakePolicies{c}
 }
 
+func (c *FakeAuthV1) Roles() v1.RoleInterface {
+	return &FakeRoles{c}
+}
+
 func (c *FakeAuthV1) Rules() v1.RuleInterface {
 	return &FakeRules{c}
 }

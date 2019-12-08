@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"tkestack.io/tke/pkg/util/log"
 
@@ -65,7 +66,7 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 	policy := polObj.(*auth.Policy)
 	var remained []auth.Subject
 	for _, sub := range policy.Status.Subjects {
-		if !inSubjects(sub, bind.Subjects) {
+		if !util.InSubjects(sub, bind.Subjects) {
 			remained = append(remained, sub)
 		}
 	}

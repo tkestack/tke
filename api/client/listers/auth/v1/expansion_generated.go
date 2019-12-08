@@ -48,6 +48,10 @@ type LocalIdentityListerExpansion interface{}
 // PolicyLister.
 type PolicyListerExpansion interface{}
 
+// RoleListerExpansion allows custom methods to be added to
+// RoleLister.
+type RoleListerExpansion interface{}
+
 // RuleListerExpansion allows custom methods to be added to
 // RuleLister.
 type RuleListerExpansion interface{}

@@ -57,8 +57,11 @@ const (
 	// PolicyFinalize is an internal finalizer values to Policy.
 	PolicyFinalize FinalizerName = "policy"
 
-	// PolicyFinalize is an internal finalizer values to Policy.
+	// PolicyFinalize is an internal finalizer values to Group.
 	GroupFinalize FinalizerName = "group"
+
+	// RoleFinalize is an internal finalizer values to Role.
+	RoleFinalize FinalizerName = "role"
 )
 
 // LocalIdentitySpec is a description of an identity.
@@ -406,6 +409,76 @@ type Binding struct {
 type Subject struct {
 	ID   string
 	Name string
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Role is a collection with multiple policies.
+type Role struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of role document in this set.
+	Spec RoleSpec
+
+	// +optional
+	Status RoleStatus
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// RoleList is the whole list of policy.
+type RoleList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of rules.
+	Items []Role
+}
+
+// RolePhase defines the phase of role constructor.
+type RolePhase string
+
+const (
+	RoleActive RolePhase = "Active"
+	// RoleTerminating means the role is undergoing graceful termination.
+	RoleTerminating RolePhase = "Terminating"
+)
+
+// RoleSpec is a description of role.
+type RoleSpec struct {
+	Finalizers []FinalizerName
+
+	DisplayName string
+	TenantID    string
+
+	//Creator
+	Username    string
+	Description string
+
+	Policies []string
+}
+
+// RoleStatus represents information about the status of a role.
+type RoleStatus struct {
+	// +optional
+	Phase RolePhase
+
+	// Subjects represents the members of the group.
+	Subjects []Subject
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PolicyBinding references the request to bind or unbind policies to the role.
+type PolicyBinding struct {
+	metav1.TypeMeta
+
+	// Policies holds the policies will bind or unbind to the role.
+	// +optional
+	Policies []string
 }
 
 // +genclient

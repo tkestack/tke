@@ -62,8 +62,11 @@ const (
 	// PolicyFinalize is an internal finalizer values to Policy.
 	PolicyFinalize FinalizerName = "policy"
 
-	// PolicyFinalize is an internal finalizer values to Policy.
+	// GroupFinalize is an internal finalizer values to Group.
 	GroupFinalize FinalizerName = "group"
+
+	// RoleFinalize is an internal finalizer values to Role.
+	RoleFinalize FinalizerName = "role"
 )
 
 // LocalIdentitySpec is a description of an identity.
@@ -423,7 +426,7 @@ type RuleSpec struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Binding references the objects a policy applies to, but does not contain it.
+// Binding is used to bind or unbind the subjects to or from the policy,role or group.
 type Binding struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -436,6 +439,76 @@ type Binding struct {
 type Subject struct {
 	ID   string `json:"id" protobuf:"bytes,1,opt,name=id"`
 	Name string `json:"name" protobuf:"bytes,2,opt,name=name"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Role is a collection with multiple policies.
+type Role struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of role document in this set.
+	Spec RoleSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+
+	// +optional
+	Status RoleStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// RoleList is the whole list of policy.
+type RoleList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of rules.
+	Items []Role `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// RolePhase defines the phase of role constructor.
+type RolePhase string
+
+const (
+	RoleActive RolePhase = "Active"
+	// RoleTerminating means the role is undergoing graceful termination.
+	RoleTerminating RolePhase = "Terminating"
+)
+
+// RoleSpec is a description of role.
+type RoleSpec struct {
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+
+	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
+	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
+
+	//Creator
+	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`
+	Description string `json:"description" protobuf:"bytes,5,opt,name=description"`
+
+	Policies []string `json:"policies" protobuf:"bytes,6,rep,name=policies"`
+}
+
+// RoleStatus represents information about the status of a role.
+type RoleStatus struct {
+	// +optional
+	Phase RolePhase `protobuf:"bytes,1,opt,name=phase,casttype=RolePhase"`
+
+	// Subjects represents the members of the group.
+	Subjects []Subject `protobuf:"bytes,2,rep,name=subjects"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PolicyBinding references the request to bind or unbind policies to the role.
+type PolicyBinding struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Policies holds the policies will bind or unbind to the role.
+	// +optional
+	Policies []string `json:"policies" protobuf:"bytes,1,rep,name=policies"`
 }
 
 // +genclient
