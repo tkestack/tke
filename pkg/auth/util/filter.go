@@ -63,3 +63,15 @@ func FilterPolicy(ctx context.Context, policy *auth.Policy) error {
 	}
 	return nil
 }
+
+// FilterGroup is used to filter group that do not belong to the tenant.
+func FilterGroup(ctx context.Context, group *auth.Group) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if group.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("group"), group.ObjectMeta.Name)
+	}
+	return nil
+}

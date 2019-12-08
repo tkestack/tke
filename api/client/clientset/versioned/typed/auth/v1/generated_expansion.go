@@ -28,6 +28,8 @@ type CategoryExpansion interface{}
 
 type ConfigMapExpansion interface{}
 
+type GroupExpansion interface{}
+
 type LocalIdentityExpansion interface{}
 
 type PolicyExpansion interface{}

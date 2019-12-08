@@ -63,7 +63,7 @@ type ProjectSpec struct {
 	// +optional
 	DisplayName string
 
-	// Members represents the user list of project.
+	// Subjects represents the user list of project.
 	Members []string
 	// +optional
 	ParentProjectName string

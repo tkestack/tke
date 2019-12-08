@@ -202,7 +202,7 @@ func (d *policyHookHandler) loadPolicy(tenantID string) error {
 	for _, pol := range policyList {
 		policySelector := fields.AndSelectors(
 			fields.OneTermEqualSelector("spec.tenantID", tenantID),
-			fields.OneTermEqualSelector("spec.policyName", pol.Spec.PolicyName),
+			fields.OneTermEqualSelector("spec.displayName", pol.Spec.DisplayName),
 			fields.OneTermEqualSelector("spec.type", string(auth.PolicyDefault)),
 		)
 

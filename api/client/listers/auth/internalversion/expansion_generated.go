@@ -36,6 +36,10 @@ type CategoryListerExpansion interface{}
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}
 
+// GroupListerExpansion allows custom methods to be added to
+// GroupLister.
+type GroupListerExpansion interface{}
+
 // LocalIdentityListerExpansion allows custom methods to be added to
 // LocalIdentityLister.
 type LocalIdentityListerExpansion interface{}

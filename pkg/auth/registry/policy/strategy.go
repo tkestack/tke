@@ -175,7 +175,7 @@ func MatchPolicy(label labels.Selector, field fields.Selector) storage.Selection
 		IndexFields: []string{
 			"spec.tenantID",
 			"spec.username",
-			"spec.policyName",
+			"spec.displayName",
 			"spec.category",
 			"spec.type",
 			"spec.displayName",
@@ -190,8 +190,8 @@ func ToSelectableFields(policy *auth.Policy) fields.Set {
 		"spec.tenantID":    policy.Spec.TenantID,
 		"spec.username":    policy.Spec.Username,
 		"spec.category":    policy.Spec.Category,
-		"spec.type": string(policy.Spec.Type),
-		"spec.policyName": policy.Spec.PolicyName,
+		"spec.type":        string(policy.Spec.Type),
+		"spec.displayName": policy.Spec.DisplayName,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }

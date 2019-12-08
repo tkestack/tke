@@ -26,6 +26,7 @@ import (
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/validation"
 )
 
 // ValidatePolicyName is a ValidateNameFunc for names that must be a DNS
@@ -36,20 +37,20 @@ var ValidatePolicyName = apiMachineryValidation.NameIsDNSLabel
 func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&policy.ObjectMeta, false, ValidatePolicyName, field.NewPath("metadata"))
 
-	//fldSpecPath := field.NewPath("spec")
-	//if err := validation.IsDisplayName(policy.Spec.PolicyName); err != nil {
-	//	allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("policyName"), policy.Spec.PolicyName, err.Error()))
-	//}
+	fldSpecPath := field.NewPath("spec")
+	if err := validation.IsDisplayName(policy.Spec.DisplayName); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("displayName"), policy.Spec.DisplayName, err.Error()))
+	}
 
-	//if policy.Spec.Type == "" {
-	//	allErrs = append(allErrs, field.Required(fldSpecPath.Child("type"), "must specify type"))
-	//} else if policy.Spec.Type != auth.PolicyCustom && policy.Spec.Type != auth.PolicyDefault {
-	//	allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("type"), policy.Spec.Type, "must specify one of: `custom` or `default`"))
-	//}
-	//
-	//if policy.Spec.Category == "" {
-	//	allErrs = append(allErrs, field.Required(fldSpecPath.Child("category"), policy.Spec.Category))
-	//}
+	if policy.Spec.Type == "" {
+		allErrs = append(allErrs, field.Required(fldSpecPath.Child("type"), "must specify type"))
+	} else if policy.Spec.Type != auth.PolicyCustom && policy.Spec.Type != auth.PolicyDefault {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("type"), policy.Spec.Type, "must specify one of: `custom` or `default`"))
+	}
+
+	if policy.Spec.Category == "" {
+		allErrs = append(allErrs, field.Required(fldSpecPath.Child("category"), policy.Spec.Category))
+	}
 
 	fldStmtPath := field.NewPath("spec", "statement")
 	if len(policy.Spec.Statement.Actions) == 0 {
@@ -85,9 +86,9 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 					}
 				} else {
 					if val.Spec.TenantID != val.Spec.TenantID {
-						allErrs = append(allErrs, field.Invalid(fldStmtPath.Child("subjects"), subj.ID, "must in the same tenant with the policy"))
+						allErrs = append(allErrs, field.Invalid(fldStatPath.Child("subjects"), subj.ID, "must in the same tenant with the policy"))
 					} else {
-						policy.Status.Subjects[i].Name = val.Name
+						policy.Status.Subjects[i].Name = val.Spec.Username
 					}
 				}
 			} else {

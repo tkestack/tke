@@ -53,3 +53,13 @@ func UserKey(tenantID string, name string) string {
 func UserPrefix(tenantID string) string {
 	return fmt.Sprintf("%s::", tenantID)
 }
+
+func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string) (auth.GroupList, error) {
+	groupList := auth.GroupList{}
+	err := authClient.RESTClient().Get().
+		Resource("localidentities").
+		Name(userID).
+		SubResource("groups").Do().Into(&groupList)
+
+	return groupList, err
+}

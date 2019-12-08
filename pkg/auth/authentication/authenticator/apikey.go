@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"tkestack.io/tke/pkg/auth/util"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -81,6 +82,21 @@ func (h *APIKeyAuthenticator) AuthenticateToken(ctx context.Context, token strin
 	}
 
 	info := &user.DefaultInfo{Name: tokenInfo.UserName}
+
+	localIdentity, err := util.GetLocalIdentity(h.authClient, tokenInfo.TenantID, info.Name)
+	if err != nil {
+		log.Error("Get localIdentity failed", log.String("localIdentity", info.Name), log.Err(err))
+		return nil, false, err
+	}
+
+	info.UID = localIdentity.ObjectMeta.Name
+	groups, err := util.GetGroupsForUser(h.authClient, localIdentity.ObjectMeta.Name)
+	if err == nil {
+		for _, g := range groups.Items {
+			info.Groups = append(info.Groups, g.ObjectMeta.Name)
+		}
+	}
+
 	info.Extra = map[string][]string{}
 	info.Extra[genericoidc.TenantIDKey] = []string{tokenInfo.TenantID}
 	info.Extra["expireAt"] = []string{time.Unix(tokenInfo.ExpiresAt, 0).String()}

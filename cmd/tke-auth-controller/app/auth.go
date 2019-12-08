@@ -21,6 +21,7 @@ package app
 import (
 	"net/http"
 	"time"
+	"tkestack.io/tke/pkg/auth/controller/group"
 	"tkestack.io/tke/pkg/auth/controller/localidentity"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,6 +35,9 @@ const (
 
 	localIdentitySyncPeriod      = 5 * time.Minute
 	concurrentLocalIdentitySyncs = 10
+
+	groupSyncPeriod         = 5 * time.Minute
+	groupLocalIdentitySyncs = 10
 )
 
 func startPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -56,7 +60,7 @@ func startPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
 }
 
 func startLocalIdentityController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "policies"}] {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "localidentities"}] {
 		return nil, false, nil
 	}
 
@@ -70,6 +74,25 @@ func startLocalIdentityController(ctx ControllerContext) (http.Handler, bool, er
 	)
 
 	go ctrl.Run(concurrentLocalIdentitySyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startGroupController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "groups"}] {
+		return nil, false, nil
+	}
+
+	ctrl := group.NewController(
+		ctx.ClientBuilder.ClientOrDie("group-controller"),
+		ctx.InformerFactory.Auth().V1().Groups(),
+		ctx.InformerFactory.Auth().V1().Rules(),
+		ctx.Enforcer,
+		groupSyncPeriod,
+		v1.GroupFinalize,
+	)
+
+	go ctrl.Run(groupLocalIdentitySyncs, ctx.Stop)
 
 	return nil, true, nil
 }

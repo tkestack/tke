@@ -59,7 +59,6 @@ const (
 // Controller is responsible for performing actions dependent upon a policy phase.
 type Controller struct {
 	client             clientset.Interface
-	cache              *policyCache
 	queue              workqueue.RateLimitingInterface
 	policyLister       authv1lister.PolicyLister
 	policyListerSynced cache.InformerSynced
@@ -75,7 +74,6 @@ func NewController(client clientset.Interface, policyInformer authv1informer.Pol
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
 		client:                   client,
-		cache:                    &policyCache{policyMap: make(map[string]*cachedPolicy)},
 		queue:                    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
 		enforcer:                 enforcer,
 		policyedResourcesDeleter: deletion.NewPoliciedResourcesDeleter(client.AuthV1().Policies(), client.AuthV1(), enforcer, finalizerToken, true),
@@ -203,20 +201,17 @@ func (c *Controller) syncItem(key string) error {
 		return err
 	}
 
-	var cachedPolicy *cachedPolicy
 	policy, err := c.policyLister.Get(name)
 	switch {
 	case errors.IsNotFound(err):
 		log.Infof("policy has been deleted %v", key)
-		err = c.processDeletion(key)
+		return nil
 	case err != nil:
 		log.Warn("Unable to retrieve policy from store", log.String("policy name", key), log.Err(err))
 	default:
 		if policy.Status.Phase == v1.PolicyActive {
-			cachedPolicy = c.cache.getOrCreate(key)
-			err = c.processUpdate(cachedPolicy, policy, key)
+			err = c.processUpdate(policy, key)
 		} else if policy.Status.Phase == v1.PolicyTerminating {
-			_ = c.processDeletion(key)
 			err = c.policyedResourcesDeleter.Delete(key)
 		}
 
@@ -225,30 +220,20 @@ func (c *Controller) syncItem(key string) error {
 	return err
 }
 
-func (c *Controller) processUpdate(cachedPolicy *cachedPolicy, policy *v1.Policy, key string) error {
-	if cachedPolicy.state != nil {
-		// exist and the policy  name changed
-		if cachedPolicy.state.UID != policy.UID {
-			if err := c.processDelete(cachedPolicy, key); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Controller) processUpdate(policy *v1.Policy, key string) error {
+
 	// start update policy if needed
-	err := c.handlePhase(key, cachedPolicy, policy)
+	err := c.handlePhase(key, policy)
 	if err != nil {
 		return err
 	}
-	cachedPolicy.state = policy
-	// Always update the cache upon success.
-	c.cache.set(key, cachedPolicy)
 	return nil
 }
 
-func (c *Controller) handlePhase(key string, cachedPolicy *cachedPolicy, policy *v1.Policy) error {
+func (c *Controller) handlePhase(key string, policy *v1.Policy) error {
 
 	var errs []error
-	err := c.handleSpec(key, cachedPolicy, policy)
+	err := c.handleSpec(key, policy)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -261,7 +246,7 @@ func (c *Controller) handlePhase(key string, cachedPolicy *cachedPolicy, policy 
 	return utilerrors.NewAggregate(errs)
 }
 
-func (c *Controller) handleSpec(key string, cachedPolicy *cachedPolicy, policy *v1.Policy) error {
+func (c *Controller) handleSpec(key string, policy *v1.Policy) error {
 	existedRule := c.enforcer.GetFilteredPolicy(0, key)
 
 	var outPolicy = &auth.Policy{}
@@ -334,24 +319,4 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 	}
 
 	return utilerrors.NewAggregate(errs)
-}
-
-func (c *Controller) processDeletion(key string) error {
-	cachedPol, ok := c.cache.get(key)
-	if !ok {
-		log.Debug("Policy not in cache even though the watcher thought it was. Ignoring the deletion", log.String("name", key))
-		return nil
-	}
-	return c.processDelete(cachedPol, key)
-}
-
-func (c *Controller) processDelete(cachedNamespace *cachedPolicy, key string) error {
-	log.Info("Policy will be dropped", log.String("name", key))
-
-	if c.cache.Exist(key) {
-		log.Info("Delete the policy cache", log.String("name", key))
-		c.cache.delete(key)
-	}
-
-	return nil
 }

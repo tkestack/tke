@@ -227,8 +227,8 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 }
 
 // Get finds a resource in the storage by name and returns it.
-func (r *REST) Get(ctx context.Context, policyName string, options *metav1.GetOptions) (runtime.Object, error) {
-	return ValidateGetObjectAndTenantID(ctx, r.Store, policyName, options)
+func (r *REST) Get(ctx context.Context, displayName string, options *metav1.GetOptions) (runtime.Object, error) {
+	return ValidateGetObjectAndTenantID(ctx, r.Store, displayName, options)
 }
 
 // Export an object.  Fields that are not user specified are stripped out

@@ -21,11 +21,14 @@ package authenticator
 import (
 	"context"
 	"time"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/coreos/go-oidc"
 	"github.com/pkg/errors"
 	genericauthenticator "k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/user"
+
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	oidcclaims "tkestack.io/tke/pkg/auth/authentication/oidc/claims"
 	"tkestack.io/tke/pkg/util/log"
@@ -34,11 +37,13 @@ import (
 // TokenAuthenticator provides a function to verify token.
 type TokenAuthenticator struct {
 	idTokenVerifier *oidc.IDTokenVerifier
+
+	authClient authinternalclient.AuthInterface
 }
 
 // NewTokenAuthenticator creates new TokenAuthenticator object.
-func NewTokenAuthenticator() *TokenAuthenticator {
-	return &TokenAuthenticator{}
+func NewTokenAuthenticator(authClient authinternalclient.AuthInterface) *TokenAuthenticator {
+	return &TokenAuthenticator{authClient: authClient}
 }
 
 // AuthenticateToken verifies oidc token and returns user info.
@@ -65,7 +70,23 @@ func (h *TokenAuthenticator) AuthenticateToken(ctx context.Context, token string
 	}
 
 	info := &user.DefaultInfo{Name: claims.Name}
-	info.Groups = claims.Groups
+
+	localIdentity, err := util.GetLocalIdentity(h.authClient, claims.FederatedIDClaims.ConnectorID, info.Name)
+	if err != nil {
+		log.Error("Get localIdentity failed", log.String("localIdentity", info.Name), log.Err(err))
+		return nil, false, err
+	}
+
+	info.UID = localIdentity.ObjectMeta.Name
+	groups, err := util.GetGroupsForUser(h.authClient, localIdentity.ObjectMeta.Name)
+	if err != nil {
+		info.Groups = claims.Groups
+	} else {
+		for _, g := range groups.Items {
+			info.Groups = append(info.Groups, g.ObjectMeta.Name)
+		}
+	}
+
 	info.Extra = map[string][]string{}
 	info.Extra[genericoidc.TenantIDKey] = []string{claims.FederatedIDClaims.ConnectorID}
 	info.Extra["expireAt"] = []string{time.Unix(claims.Expiry, 0).String()}

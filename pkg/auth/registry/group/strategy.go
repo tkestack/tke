@@ -4,25 +4,24 @@
  *
  * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * Licensed under the Apache License, Version 2.0 (the “License”); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
  * License at
  *
  * https://opensource.org/licenses/Apache-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
 
-package localidentity
+package group
 
 import (
 	"context"
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,50 +31,54 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
-	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/util/log"
 
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
-// Strategy implements verification logic for oidc identity.
+// Strategy implements verification logic for group.
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
+	enforcer   *enforcer.PolicyEnforcer
 	authClient authinternalclient.AuthInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
-// creating and updating identity objects.
-func NewStrategy(authClient authinternalclient.AuthInterface) *Strategy {
-	return &Strategy{auth.Scheme, namesutil.Generator, authClient}
+// creating and updating group objects.
+func NewStrategy(enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface) *Strategy {
+	return &Strategy{
+		ObjectTyper:   auth.Scheme,
+		NameGenerator: namesutil.Generator,
+		enforcer:      enforcer,
+		authClient:    authClient,
+	}
 }
 
-// DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
-func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.GarbageCollectionPolicy {
+// DefaultGarbageCollectionGroup returns the default garbage collection behavior.
+func (Strategy) DefaultGarbageCollectionGroup(ctx context.Context) rest.GarbageCollectionPolicy {
 	return rest.Unsupported
 }
 
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	oldLocalIdentity := old.(*auth.LocalIdentity)
-	localIdentity, _ := obj.(*auth.LocalIdentity)
-
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
-		if oldLocalIdentity.Spec.TenantID != tenantID {
-			log.Panic("Unauthorized update local identity information", log.String("oldTenantID", oldLocalIdentity.Spec.TenantID), log.String("newTenantID", localIdentity.Spec.TenantID), log.String("userTenantID", tenantID))
+		oldGroup := old.(*auth.Group)
+		group, _ := obj.(*auth.Group)
+		if oldGroup.Spec.TenantID != tenantID {
+			log.Panic("Unauthorized update group information", log.String("oldTenantID", oldGroup.Spec.TenantID), log.String("newTenantID", group.Spec.TenantID), log.String("userTenantID", tenantID))
 		}
-		localIdentity.Spec.TenantID = tenantID
+		group.Spec.TenantID = tenantID
 	}
-
-	localIdentity.Status.LastUpdateTime = metav1.Now()
 }
 
-// NamespaceScoped is false for identities.
+// NamespaceScoped is false for policies.
 func (Strategy) NamespaceScoped() bool {
 	return false
 }
@@ -88,27 +91,31 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	localIdentity, _ := obj.(*auth.LocalIdentity)
-
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if len(tenantID) != 0 {
-		localIdentity.Spec.TenantID = tenantID
-	}
-	if localIdentity.Name == "" && localIdentity.GenerateName == "" {
-		localIdentity.GenerateName = "usr-"
+	group, _ := obj.(*auth.Group)
+	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID != "" {
+		group.Spec.TenantID = tenantID
 	}
 
-	localIdentity.Spec.Finalizers = []auth.FinalizerName{
-		auth.LocalIdentityFinalize,
+	group.Spec.Username = username
+
+	if group.Name == "" && group.GenerateName == "" {
+		group.GenerateName = "grp-"
 	}
+
+	group.Spec.Finalizers = []auth.FinalizerName{
+		auth.GroupFinalize,
+	}
+
+	group.Status.Phase = auth.GroupActive
 }
 
-// Validate validates a new identity.
+// Validate validates a new group.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateLocalIdentity(s.authClient, obj.(*auth.LocalIdentity), false)
+	return ValidateGroup(obj.(*auth.Group), s.authClient)
 }
 
-// AllowCreateOnUpdate is false for identities.
+// AllowCreateOnUpdate is false for policies.
 func (Strategy) AllowCreateOnUpdate() bool {
 	return false
 }
@@ -124,41 +131,22 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 func (Strategy) Canonicalize(obj runtime.Object) {
 }
 
-// ValidateUpdate is the default update validation for an identity.
+// ValidateUpdate is the default update validation for an end group.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLocalIdentityUpdate(s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
+	return ValidateGroupUpdate(obj.(*auth.Group), old.(*auth.Group), s.authClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	localIdentity, ok := obj.(*auth.LocalIdentity)
+	group, ok := obj.(*auth.Group)
 	if !ok {
-		return nil, nil, fmt.Errorf("not a localIdentity")
+		return nil, nil, fmt.Errorf("not a group")
 	}
-	return labels.Set(localIdentity.ObjectMeta.Labels), ToSelectableFields(localIdentity), nil
+	return labels.Set(group.ObjectMeta.Labels), ToSelectableFields(group), nil
 }
 
-// Decorator is intended for
-// removing hashed password for identity or list of identities on returned from the
-// underlying storage, since they cannot be watched.
-func Decorator(obj runtime.Object) error {
-	if localIdentity, ok := obj.(*auth.LocalIdentity); ok {
-		localIdentity.Spec.HashedPassword = ""
-		return nil
-	}
-
-	if localIdentityList, ok := obj.(*auth.LocalIdentityList); ok {
-		for i := range localIdentityList.Items {
-			localIdentityList.Items[i].Spec.HashedPassword = ""
-		}
-		return nil
-	}
-
-	return fmt.Errorf("unknown type")
-}
-
-// MatchLocalIdentity returns a generic matcher for a given label and field selector.
-func MatchLocalIdentity(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
+// MatchGroup returns a generic matcher for a given label and field selector.
+func MatchGroup(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{
 		Label:    label,
 		Field:    field,
@@ -166,21 +154,23 @@ func MatchLocalIdentity(label labels.Selector, field fields.Selector) storage.Se
 		IndexFields: []string{
 			"spec.tenantID",
 			"spec.username",
+			"spec.displayName",
 		},
 	}
 }
 
 // ToSelectableFields returns a field set that represents the object
-func ToSelectableFields(localIdentity *auth.LocalIdentity) fields.Set {
-	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&localIdentity.ObjectMeta, false)
+func ToSelectableFields(group *auth.Group) fields.Set {
+	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&group.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID": localIdentity.Spec.TenantID,
-		"spec.username": localIdentity.Spec.Username,
+		"spec.tenantID":    group.Spec.TenantID,
+		"spec.username":    group.Spec.Username,
+		"spec.displayName": group.Spec.DisplayName,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
 
-// StatusStrategy implements verification logic for status of Registry.
+// StatusStrategy implements verification logic for status of Machine.
 type StatusStrategy struct {
 	*Strategy
 }
@@ -197,17 +187,16 @@ func NewStatusStrategy(strategy *Strategy) *StatusStrategy {
 // sort order-insensitive list fields, etc.  This should not remove fields
 // whose presence would be considered a validation error.
 func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	newLocalIdentity := obj.(*auth.LocalIdentity)
-	oldLocalIdentity := old.(*auth.LocalIdentity)
-	newLocalIdentity.Spec = oldLocalIdentity.Spec
-	newLocalIdentity.Status.LastUpdateTime = metav1.Now()
+	newGroup := obj.(*auth.Group)
+	oldGroup := old.(*auth.Group)
+	newGroup.Spec = oldGroup.Spec
 }
 
 // ValidateUpdate is invoked after default fields in the object have been
 // filled in before the object is persisted.  This method should not mutate
 // the object.
-func (StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return field.ErrorList{}
+func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateGroupUpdate(obj.(*auth.Group), old.(*auth.Group), s.authClient)
 }
 
 // FinalizeStrategy implements finalizer logic for Machine.
@@ -227,14 +216,14 @@ func NewFinalizerStrategy(strategy *Strategy) *FinalizeStrategy {
 // sort order-insensitive list fields, etc.  This should not remove fields
 // whose presence would be considered a validation error.
 func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	newPolicy := obj.(*auth.LocalIdentity)
-	oldPolicy := old.(*auth.LocalIdentity)
-	newPolicy.Status = oldPolicy.Status
+	newGroup := obj.(*auth.Group)
+	oldGroup := old.(*auth.Group)
+	newGroup.Status = oldGroup.Status
 }
 
 // ValidateUpdate is invoked after default fields in the object have been
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLocalIdentityUpdate(s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
+	return ValidateGroupUpdate(obj.(*auth.Group), old.(*auth.Group), s.authClient)
 }

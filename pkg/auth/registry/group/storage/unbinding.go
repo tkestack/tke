@@ -21,8 +21,6 @@ package storage
 import (
 	"context"
 
-	"tkestack.io/tke/pkg/util/log"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,25 +30,25 @@ import (
 
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/util/log"
 )
 
-// BindingREST implements the REST endpoint.
-type BindingREST struct {
+// UnbindingREST implements the REST endpoint.
+type UnbindingREST struct {
 	*registry.Store
 
 	authClient authinternalclient.AuthInterface
-	//enforcer    *casbin.SyncedEnforcer
 }
 
-var _ = rest.Creater(&BindingREST{})
+var _ = rest.Creater(&UnbindingREST{})
 
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
-func (r *BindingREST) New() runtime.Object {
+func (r *UnbindingREST) New() runtime.Object {
 	return &auth.Binding{}
 }
 
-func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
@@ -63,26 +61,16 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	if err != nil {
 		return nil, err
 	}
-	policy := polObj.(*auth.Policy)
-
-	for _, sub := range bind.Subjects {
-		if sub.Name != "" {
-			if !inSubjects(sub, policy.Status.Subjects) {
-				policy.Status.Subjects = append(policy.Status.Subjects, sub)
-			}
+	group := polObj.(*auth.Group)
+	var remained []auth.Subject
+	for _, sub := range group.Status.Subjects {
+		if !inSubjects(sub, bind.Subjects) {
+			remained = append(remained, sub)
 		}
 	}
 
-	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("subjects", policy.Status.Subjects))
+	group.Status.Subjects = remained
 
-	return r.authClient.Policies().UpdateStatus(policy)
-}
-
-func inSubjects(subject auth.Subject, slice []auth.Subject) bool {
-	for _, s := range slice {
-		if subject.Name == s.Name {
-			return true
-		}
-	}
-	return false
+	log.Info("group members", log.String("group", group.Name), log.Any("members", group.Status.Subjects))
+	return r.authClient.Groups().UpdateStatus(group)
 }

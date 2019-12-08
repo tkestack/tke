@@ -39,7 +39,7 @@ func (APIKey) SwaggerDoc() map[string]string {
 }
 
 var map_APIKeyList = map[string]string{
-	"":      "LocalIdentityList is the whole list of all identities.",
+	"":      "APIKeyList is the whole list of all identities.",
 	"items": "List of api keys.",
 }
 
@@ -146,6 +146,7 @@ func (CategoryList) SwaggerDoc() map[string]string {
 }
 
 var map_CategorySpec = map[string]string{
+	"":             "CategorySpec is a description of category.",
 	"categoryName": "CategoryName identifies action category",
 	"displayName":  "DisplayName used to display category name",
 	"actions":      "Actions represents a series of actions work on the policy category",
@@ -172,6 +173,42 @@ var map_ConfigMapList = map[string]string{
 
 func (ConfigMapList) SwaggerDoc() map[string]string {
 	return map_ConfigMapList
+}
+
+var map_Group = map[string]string{
+	"":     "Group represents a group of users.",
+	"spec": "Spec defines the desired identities of group document in this set.",
+}
+
+func (Group) SwaggerDoc() map[string]string {
+	return map_Group
+}
+
+var map_GroupList = map[string]string{
+	"":      "GroupList is the whole list of all groups.",
+	"items": "List of rules.",
+}
+
+func (GroupList) SwaggerDoc() map[string]string {
+	return map_GroupList
+}
+
+var map_GroupSpec = map[string]string{
+	"":         "GroupSpec is a description of group.",
+	"username": "Creator",
+}
+
+func (GroupSpec) SwaggerDoc() map[string]string {
+	return map_GroupSpec
+}
+
+var map_GroupStatus = map[string]string{
+	"":         "GroupStatus represents information about the status of a group.",
+	"subjects": "Subjects represents the members of the group.",
+}
+
+func (GroupStatus) SwaggerDoc() map[string]string {
+	return map_GroupStatus
 }
 
 var map_LocalIdentity = map[string]string{
@@ -254,7 +291,7 @@ func (Rule) SwaggerDoc() map[string]string {
 }
 
 var map_RuleList = map[string]string{
-	"":      "RuleList is the whole list of all policies.",
+	"":      "RuleList is the whole list of all rules.",
 	"items": "List of rules.",
 }
 
@@ -263,7 +300,7 @@ func (RuleList) SwaggerDoc() map[string]string {
 }
 
 var map_RuleSpec = map[string]string{
-	"": "RuleSpec is a description of a policy.",
+	"": "RuleSpec is a description of a rule.",
 }
 
 func (RuleSpec) SwaggerDoc() map[string]string {

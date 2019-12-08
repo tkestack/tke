@@ -4,14 +4,14 @@
  *
  * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * Licensed under the Apache License, Version 2.0 (the “License”); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
  * License at
  *
  * https://opensource.org/licenses/Apache-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
@@ -21,15 +21,10 @@ package storage
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/apiserver/pkg/util/dryrun"
-	"k8s.io/klog"
 	"sync"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
-	"tkestack.io/tke/pkg/auth/util"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,141 +32,123 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/storage"
 	storageerr "k8s.io/apiserver/pkg/storage/errors"
-	"tkestack.io/tke/api/auth"
-	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"k8s.io/apiserver/pkg/util/dryrun"
+	"k8s.io/klog"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+
+	"tkestack.io/tke/api/auth"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
-	"tkestack.io/tke/pkg/auth/registry/localidentity"
+	"tkestack.io/tke/pkg/auth/authorization/enforcer"
+	"tkestack.io/tke/pkg/auth/registry/group"
+	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
+
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
-// Storage includes storage for identities and all sub resources.
+// Storage includes storage for groups and all sub resources.
 type Storage struct {
-	LocalIdentity *REST
-	Status        *StatusREST
-	Policy        *PolicyREST
-	Group         *GroupREST
-	Finalize      *FinalizeREST
+	Group *REST
+
+	Status    *StatusREST
+	Finalize  *FinalizeREST
+	Binding   *BindingREST
+	Unbinding *UnbindingREST
 }
 
-// NewStorage returns a Storage object that will work against identify.
-func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, policyEnforcer *enforcer.PolicyEnforcer, privilegedUsername string) *Storage {
-	strategy := localidentity.NewStrategy(authClient)
+// NewStorage returns a Storage object that will work against groups.
+func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
+	strategy := group.NewStrategy(enforcer, authClient)
 	store := &registry.Store{
-		NewFunc:                  func() runtime.Object { return &auth.LocalIdentity{} },
-		NewListFunc:              func() runtime.Object { return &auth.LocalIdentityList{} },
-		DefaultQualifiedResource: auth.Resource("localidentities"),
-		ReturnDeletedObject:      true,
+		NewFunc:                  func() runtime.Object { return &auth.Group{} },
+		NewListFunc:              func() runtime.Object { return &auth.GroupList{} },
+		DefaultQualifiedResource: auth.Resource("groups"),
+		PredicateFunc:            group.MatchGroup,
 
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
-		ExportStrategy: strategy,
-
-		PredicateFunc: localidentity.MatchLocalIdentity,
 	}
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
-		AttrFunc:    localidentity.GetAttrs,
+		AttrFunc:    group.GetAttrs,
 	}
 
 	if err := store.CompleteWithOptions(options); err != nil {
-		log.Panic("Failed to create local identity etcd rest storage", log.Err(err))
+		log.Panic("Failed to create group etcd rest storage", log.Err(err))
 	}
 
 	statusStore := *store
-	statusStore.UpdateStrategy = localidentity.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = localidentity.NewStatusStrategy(strategy)
+	statusStore.UpdateStrategy = group.NewStatusStrategy(strategy)
+	statusStore.ExportStrategy = group.NewStatusStrategy(strategy)
 
 	finalizeStore := *store
-	finalizeStore.UpdateStrategy = localidentity.NewFinalizerStrategy(strategy)
-	finalizeStore.ExportStrategy = localidentity.NewFinalizerStrategy(strategy)
+	finalizeStore.UpdateStrategy = group.NewFinalizerStrategy(strategy)
+	finalizeStore.ExportStrategy = group.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		LocalIdentity: &REST{store, privilegedUsername},
-		Status:        &StatusREST{&statusStore},
-		Policy:        &PolicyREST{store, authClient, policyEnforcer.Enforcer},
-		Group:         &GroupREST{store, authClient, policyEnforcer.Enforcer},
-		Finalize:      &FinalizeREST{&finalizeStore},
+		Group:     &REST{store, privilegedUsername},
+		Status:    &StatusREST{&statusStore},
+		Finalize:  &FinalizeREST{&finalizeStore},
+		Binding:   &BindingREST{store, authClient},
+		Unbinding: &UnbindingREST{store, authClient},
 	}
 }
 
-// ValidateGetObjectAndTenantID validate name and tenantID, if success return Project
+// ValidateGetObjectAndTenantID validate name and tenantID, if success return Group
 func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := store.Get(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	o := obj.(*auth.LocalIdentity)
-	if err := util.FilterLocalIdentity(ctx, o); err != nil {
+	o := obj.(*auth.Group)
+	if err := util.FilterGroup(ctx, o); err != nil {
 		return nil, err
 	}
-
-	o.Spec.HashedPassword = ""
 	return o, nil
 }
 
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return Project
+// ValidateExportObjectAndTenantID validate name and tenantID, if success return Group
 func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
 	obj, err := store.Export(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	o := obj.(*auth.LocalIdentity)
-	if err := util.FilterLocalIdentity(ctx, o); err != nil {
+	o := obj.(*auth.Group)
+	if err := util.FilterGroup(ctx, o); err != nil {
 		return nil, err
 	}
 
 	return o, nil
 }
 
-// ValidateListObject validate if list by admin, if true not return hashed password.
-func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, options *metainternal.ListOptions) (runtime.Object, error) {
-	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
-	obj, err := store.List(ctx, wrappedOptions)
-	if err != nil {
-		return obj, err
-	}
-
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if tenantID == "" {
-		return obj, err
-	}
-
-	identityList := obj.(*auth.LocalIdentityList)
-	for i := range identityList.Items {
-		identityList.Items[i].Spec.HashedPassword = ""
-	}
-
-	return identityList, nil
-}
-
-// REST implements a RESTStorage for identities against etcd.
+// REST implements a RESTStorage for clusters against etcd.
 type REST struct {
 	*registry.Store
+
 	privilegedUsername string
 }
 
-var _ rest.ShortNamesProvider = &REST{}
-
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
-	return []string{"usr"}
+	return []string{"pol"}
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	return ValidateListObjectAndTenantID(ctx, r.Store, options)
+	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
+	return r.Store.List(ctx, wrappedOptions)
 }
 
 // DeleteCollection selects all resources in the storage matching given 'listOptions'
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
 	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, apierrors.NewMethodNotSupported(auth.Resource("localIdentities"), "delete collection")
+		return nil, apierrors.NewMethodNotSupported(auth.Resource("groups"), "delete collection")
 	}
 
 	if listOptions == nil {
@@ -249,8 +226,8 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 }
 
 // Get finds a resource in the storage by name and returns it.
-func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
+func (r *REST) Get(ctx context.Context, displayName string, options *metav1.GetOptions) (runtime.Object, error) {
+	return ValidateGetObjectAndTenantID(ctx, r.Store, displayName, options)
 }
 
 // Export an object.  Fields that are not user specified are stripped out
@@ -267,17 +244,16 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 	if err != nil {
 		return nil, false, err
 	}
-
 	return r.Store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
-// Delete enforces life-cycle rules for localIdentity termination
+// Delete enforces life-cycle rules for group termination
 func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	object, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
 	}
-	localIdentity := object.(*auth.LocalIdentity)
+	group := object.(*auth.Group)
 
 	// Ensure we have a UID precondition
 	if options == nil {
@@ -287,18 +263,18 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		options.Preconditions = &metav1.Preconditions{}
 	}
 	if options.Preconditions.UID == nil {
-		options.Preconditions.UID = &localIdentity.UID
-	} else if *options.Preconditions.UID != localIdentity.UID {
+		options.Preconditions.UID = &group.UID
+	} else if *options.Preconditions.UID != group.UID {
 		err = apierrors.NewConflict(
-			auth.Resource("localidentities"),
+			auth.Resource("groups"),
 			name,
-			fmt.Errorf("precondition failed: UID in precondition: %v, UID in object meta: %v", *options.Preconditions.UID, localIdentity.UID),
+			fmt.Errorf("precondition failed: UID in precondition: %v, UID in object meta: %v", *options.Preconditions.UID, group.UID),
 		)
 		return nil, false, err
 	}
 
-	// upon first request to delete, we switch the phase to start policy termination
-	if localIdentity.DeletionTimestamp.IsZero() {
+	// upon first request to delete, we switch the phase to start group termination
+	if group.DeletionTimestamp.IsZero() {
 		key, err := r.Store.KeyFunc(ctx, name)
 		if err != nil {
 			return nil, false, err
@@ -310,27 +286,27 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		err = r.Store.Storage.GuaranteedUpdate(
 			ctx, key, out, false, &preconditions,
 			storage.SimpleUpdate(func(existing runtime.Object) (runtime.Object, error) {
-				existingLocalIdentity, ok := existing.(*auth.LocalIdentity)
+				existingGroup, ok := existing.(*auth.Group)
 				if !ok {
 					// wrong type
-					return nil, fmt.Errorf("expected *auth.LocalIdentity, got %v", existing)
+					return nil, fmt.Errorf("expected *auth.Group, got %v", existing)
 				}
-				if err := deleteValidation(ctx, existingLocalIdentity); err != nil {
+				if err := deleteValidation(ctx, existingGroup); err != nil {
 					return nil, err
 				}
 				// Set the deletion timestamp if needed
-				if existingLocalIdentity.DeletionTimestamp.IsZero() {
+				if existingGroup.DeletionTimestamp.IsZero() {
 					now := metav1.Now()
-					existingLocalIdentity.DeletionTimestamp = &now
+					existingGroup.DeletionTimestamp = &now
 				}
-				// Set the policy phase to terminating, if needed
-				if existingLocalIdentity.Status.Phase != auth.LocalIdentityDeleting {
-					existingLocalIdentity.Status.Phase = auth.LocalIdentityDeleting
+				// Set the group phase to terminating, if needed
+				if existingGroup.Status.Phase != auth.GroupTerminating {
+					existingGroup.Status.Phase = auth.GroupTerminating
 				}
 
 				// the current finalizers which are on namespace
 				currentFinalizers := map[string]bool{}
-				for _, f := range existingLocalIdentity.Finalizers {
+				for _, f := range existingGroup.Finalizers {
 					currentFinalizers[f] = true
 				}
 				// the finalizers we should ensure on rule
@@ -354,16 +330,16 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 					for f := range currentFinalizers {
 						newFinalizers = append(newFinalizers, f)
 					}
-					existingLocalIdentity.Finalizers = newFinalizers
+					existingGroup.Finalizers = newFinalizers
 				}
-				return existingLocalIdentity, nil
+				return existingGroup, nil
 			}),
 			dryrun.IsDryRun(options.DryRun),
 		)
 
 		if err != nil {
-			err = storageerr.InterpretGetError(err, auth.Resource("localidentities"), name)
-			err = storageerr.InterpretUpdateError(err, auth.Resource("localidentities"), name)
+			err = storageerr.InterpretGetError(err, auth.Resource("groups"), name)
+			err = storageerr.InterpretUpdateError(err, auth.Resource("groups"), name)
 			if _, ok := err.(*apierrors.StatusError); !ok {
 				err = apierrors.NewInternalError(err)
 			}
@@ -374,19 +350,20 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	}
 
 	// prior to final deletion, we must ensure that finalizers is empty
-	if len(localIdentity.Spec.Finalizers) != 0 {
-		err = apierrors.NewConflict(auth.Resource("localidentities"), localIdentity.Name, fmt.Errorf("the system is ensuring all content is removed from this policy.  Upon completion, this policy will automatically be purged by the system"))
+	if len(group.Spec.Finalizers) != 0 {
+		err = apierrors.NewConflict(auth.Resource("groups"), group.Name, fmt.Errorf("the system is ensuring all content is removed from this group.  Upon completion, this group will automatically be purged by the system"))
 		return nil, false, err
 	}
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 
-// StatusREST implements the REST endpoint for changing the status of a replication controller
+// StatusREST implements the REST endpoint for changing the status of a
+// replication controller.
 type StatusREST struct {
 	store *registry.Store
 }
 
-// StatusREST implements Patcher
+// StatusREST implements Patcher.
 var _ = rest.Patcher(&StatusREST{})
 
 // New returns an empty object that can be used with Create and Update after
@@ -410,10 +387,16 @@ func (r *StatusREST) Export(ctx context.Context, name string, options metav1.Exp
 func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
 	// subresources should never allow create on update.
+	_, err := ValidateGetObjectAndTenantID(ctx, r.store, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+
+	log.Info("update status")
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
-// FinalizeREST implements the REST endpoint for finalizing a policy.
+// FinalizeREST implements the REST endpoint for finalizing a group.
 type FinalizeREST struct {
 	store *registry.Store
 }

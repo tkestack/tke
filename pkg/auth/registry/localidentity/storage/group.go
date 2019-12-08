@@ -38,23 +38,23 @@ import (
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
-// PolicyREST implements the REST endpoint, list policies bound to the user.
-type PolicyREST struct {
+// GroupREST implements the REST endpoint, list policies bound to the user.
+type GroupREST struct {
 	*registry.Store
 
 	authClient authinternalclient.AuthInterface
 	enforcer   *casbin.SyncedEnforcer
 }
 
-var _ = rest.Lister(&PolicyREST{})
+var _ = rest.Lister(&GroupREST{})
 
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
-func (r *PolicyREST) NewList() runtime.Object {
-	return &auth.PolicyList{}
+func (r *GroupREST) NewList() runtime.Object {
+	return &auth.GroupList{}
 }
 
-func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
@@ -73,28 +73,28 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 		return nil, apierrors.NewInternalError(err)
 	}
 
-	var policyIDS []string
+	var groupIDs []string
 	for _, r := range roles {
-		if strings.HasPrefix(r, "pol-") {
-			policyIDS = append(policyIDS, r)
+		if strings.HasPrefix(r, "grp-") {
+			groupIDs = append(groupIDs, r)
 		}
 	}
 
-	var policyList = &auth.PolicyList{}
-	for _, id := range policyIDS {
-		pol, err := r.authClient.Policies().Get(id, metav1.GetOptions{})
+	var groupList = &auth.GroupList{}
+	for _, id := range groupIDs {
+		grp, err := r.authClient.Groups().Get(id, metav1.GetOptions{})
 		if err != nil && apierrors.IsNotFound(err) {
-			log.Error("Get pol failed", log.String("policy", id), log.Err(err))
+			log.Error("Get group failed", log.String("group", id), log.Err(err))
 			return nil, err
 		}
 
 		if err != nil {
-			log.Warn("Pol has been deleted, but till in casbin", log.String("policy", id))
+			log.Warn("group has been deleted, but till in casbin", log.String("group", id))
 			continue
 		}
 
-		policyList.Items = append(policyList.Items, *pol)
+		groupList.Items = append(groupList.Items, *grp)
 	}
 
-	return policyList, nil
+	return groupList, nil
 }

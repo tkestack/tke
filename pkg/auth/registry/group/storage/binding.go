@@ -39,7 +39,6 @@ type BindingREST struct {
 	*registry.Store
 
 	authClient authinternalclient.AuthInterface
-	//enforcer    *casbin.SyncedEnforcer
 }
 
 var _ = rest.Creater(&BindingREST{})
@@ -63,19 +62,19 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	if err != nil {
 		return nil, err
 	}
-	policy := polObj.(*auth.Policy)
+	group := polObj.(*auth.Group)
 
 	for _, sub := range bind.Subjects {
 		if sub.Name != "" {
-			if !inSubjects(sub, policy.Status.Subjects) {
-				policy.Status.Subjects = append(policy.Status.Subjects, sub)
+			if !inSubjects(sub, group.Status.Subjects) {
+				group.Status.Subjects = append(group.Status.Subjects, sub)
 			}
 		}
 	}
 
-	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("subjects", policy.Status.Subjects))
+	log.Info("group members", log.String("group", group.Name), log.Any("members", group.Status.Subjects))
 
-	return r.authClient.Policies().UpdateStatus(policy)
+	return r.authClient.Groups().UpdateStatus(group)
 }
 
 func inSubjects(subject auth.Subject, slice []auth.Subject) bool {

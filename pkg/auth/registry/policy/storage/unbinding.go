@@ -72,7 +72,6 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 
 	policy.Status.Subjects = remained
 
-	log.Info("policies", log.Any("subjects", policy.Status.Subjects))
+	log.Info("unbind policy subjects", log.String("policy", policy.Name), log.Any("subjects", policy.Status.Subjects))
 	return r.authClient.Policies().UpdateStatus(policy)
 }
-

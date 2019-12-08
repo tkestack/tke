@@ -53,9 +53,17 @@ type LocalIdentityList struct {
 	Items []LocalIdentity `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
+type FinalizerName string
+
 const (
 	// LocalIdentityFinalize is an internal finalizer values to LocalIdentity.
 	LocalIdentityFinalize FinalizerName = "localidentity"
+
+	// PolicyFinalize is an internal finalizer values to Policy.
+	PolicyFinalize FinalizerName = "policy"
+
+	// PolicyFinalize is an internal finalizer values to Policy.
+	GroupFinalize FinalizerName = "group"
 )
 
 // LocalIdentitySpec is a description of an identity.
@@ -115,7 +123,7 @@ type APIKey struct {
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// LocalIdentityList is the whole list of all identities.
+// APIKeyList is the whole list of all identities.
 type APIKeyList struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
@@ -232,6 +240,7 @@ type Category struct {
 	Spec CategorySpec `protobuf:"bytes,2,opt,name=spec"`
 }
 
+// CategorySpec is a description of category.
 type CategorySpec struct {
 	// CategoryName identifies action category
 	CategoryName string `json:"categoryName" protobuf:"bytes,1,opt,name=categoryName"`
@@ -263,22 +272,14 @@ type CategoryList struct {
 	Items []Category `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
-// ProjectPhase defines the phase of project constructor.
+// PolicyPhase defines the phase of policy constructor.
 type PolicyPhase string
 
 const (
 	// PolicyActive indicates the policy is active.
 	PolicyActive PolicyPhase = "Active"
-	// ProjectTerminating means the project is undergoing graceful termination.
+	// PolicyTerminating means the policy is undergoing graceful termination.
 	PolicyTerminating PolicyPhase = "Terminating"
-)
-
-// FinalizerName is the name identifying a finalizer during project lifecycle.
-type FinalizerName string
-
-const (
-	// ProjectFinalize is an internal finalizer values to Project.
-	PolicyFinalize FinalizerName = "policy"
 )
 
 // +genclient
@@ -334,11 +335,11 @@ const (
 type PolicySpec struct {
 	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,8,rep,name=finalizers,casttype=FinalizerName"`
 
-	PolicyName string     `json:"policyName" protobuf:"bytes,7,opt,name=policyName"`
-	TenantID   string     `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
-	Category   string     `json:"category" protobuf:"bytes,9,opt,name=category"`
-	Type       PolicyType `json:"type" protobuf:"varint,10,opt,name=type,casttype=PolicyType"`
-	Username   string     `json:"username" protobuf:"bytes,2,opt,name=username"`
+	DisplayName string     `json:"displayName" protobuf:"bytes,7,opt,name=displayName"`
+	TenantID    string     `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	Category    string     `json:"category" protobuf:"bytes,9,opt,name=category"`
+	Type        PolicyType `json:"type" protobuf:"varint,10,opt,name=type,casttype=PolicyType"`
+	Username    string     `json:"username" protobuf:"bytes,2,opt,name=username"`
 	// +optional
 	Description string `json:"description" protobuf:"bytes,3,opt,name=description"`
 
@@ -399,7 +400,7 @@ type Rule struct {
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// RuleList is the whole list of all policies.
+// RuleList is the whole list of all rules.
 type RuleList struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
@@ -408,7 +409,7 @@ type RuleList struct {
 	Items []Rule `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
-// RuleSpec is a description of a policy.
+// RuleSpec is a description of a rule.
 type RuleSpec struct {
 	PType string `json:"ptype" protobuf:"bytes,1,opt,name=ptype"`
 	V0    string `json:"v0" protobuf:"bytes,2,opt,name=v0"`
@@ -435,6 +436,63 @@ type Binding struct {
 type Subject struct {
 	ID   string `json:"id" protobuf:"bytes,1,opt,name=id"`
 	Name string `json:"name" protobuf:"bytes,2,opt,name=name"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Group represents a group of users.
+type Group struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of group document in this set.
+	Spec GroupSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+
+	// +optional
+	Status GroupStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// GroupList is the whole list of all groups.
+type GroupList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of rules.
+	Items []Group `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// GroupPhase defines the phase of group constructor.
+type GroupPhase string
+
+const (
+	GroupActive GroupPhase = "Active"
+	// GroupTerminating means the group is undergoing graceful termination.
+	GroupTerminating GroupPhase = "Terminating"
+)
+
+// GroupSpec is a description of group.
+type GroupSpec struct {
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+
+	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
+	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
+
+	//Creator
+	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`
+	Description string `json:"description" protobuf:"bytes,5,opt,name=description"`
+}
+
+// GroupStatus represents information about the status of a group.
+type GroupStatus struct {
+	// +optional
+	Phase GroupPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=GroupPhase"`
+
+	// Subjects represents the members of the group.
+	Subjects []Subject `json:"subjects" protobuf:"bytes,2,rep,name=subjects"`
 }
 
 // +genclient

@@ -503,6 +503,7 @@ func (a *Authenticator) AuthenticateToken(ctx context.Context, token string) (*a
 	if err != nil {
 		return nil, false, fmt.Errorf("oidc: verify token: %v", err)
 	}
+
 	var c claims
 	if err := idToken.Claims(&c); err != nil {
 		return nil, false, fmt.Errorf("oidc: parse claims: %v", err)
@@ -512,6 +513,7 @@ func (a *Authenticator) AuthenticateToken(ctx context.Context, token string) (*a
 			return nil, false, fmt.Errorf("oidc: could not expand distributed claims: %v", err)
 		}
 	}
+	log.Info("calims", log.Any("claims", c))
 
 	var username string
 	if err := c.unmarshalClaim(a.usernameClaim, &username); err != nil {

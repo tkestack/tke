@@ -20,7 +20,6 @@ package route
 
 import (
 	"net/http"
-
 	"tkestack.io/tke/pkg/auth/handler/authn"
 
 	//"tkestack.io/tke/pkg/auth/types"

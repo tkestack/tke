@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/fields"
 	authapi "tkestack.io/tke/api/auth"
@@ -125,7 +126,12 @@ func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scop
 
 	ident.UserID = localIdentity.ObjectMeta.Name
 	ident.Username = localIdentity.Spec.Username
-	ident.Groups = localIdentity.Spec.Groups
+	groups, err := util.GetGroupsForUser(authClient, localIdentity.ObjectMeta.Name)
+	if err == nil {
+		for _, g := range groups.Items {
+			ident.Groups = append(ident.Groups, g.ObjectMeta.Name)
+		}
+	}
 
 	ident.Email = localIdentity.Spec.Email
 

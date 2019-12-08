@@ -46,6 +46,10 @@ func (c *FakeAuth) ConfigMaps() internalversion.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }
 
+func (c *FakeAuth) Groups() internalversion.GroupInterface {
+	return &FakeGroups{c}
+}
+
 func (c *FakeAuth) LocalIdentities() internalversion.LocalIdentityInterface {
 	return &FakeLocalIdentities{c}
 }

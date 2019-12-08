@@ -20,7 +20,8 @@ package deletion
 
 import (
 	"fmt"
-
+	"k8s.io/apimachinery/pkg/fields"
+	"strings"
 	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/casbin/casbin/v2"
@@ -119,17 +120,21 @@ func (d *loalIdentitiedResourcesDeleter) Delete(localIdentityName string) error 
 		return nil
 	}
 
+	log.Info("1")
 	// Delete the localIdentity if it is already finalized.
+	log.Infof("localIdentity: %+v", localIdentity)
 	if d.deleteLocalIdentityWhenDone && finalized(localIdentity) {
 		return d.deleteLocalIdentity(localIdentity)
 	}
 
+	log.Info("2")
 	// there may still be content for us to remove
 	err = d.deleteAllContent(localIdentity)
 	if err != nil {
 		return err
 	}
 
+	log.Info("3")
 	// we have removed content, so mark it finalized by us
 	localIdentity, err = d.retryOnConflictError(localIdentity, d.finalizeLocalIdentity)
 	if err != nil {
@@ -276,10 +281,68 @@ func (d *loalIdentitiedResourcesDeleter) deleteAllContent(localIdentity *v1.Loca
 
 func deleteRelatedRules(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
 	log.Debug("LocalIdentity controller - deleteRelatedRules", log.String("localIdentityName", localIdentity.ObjectMeta.Name))
-	_, err := deleter.enforcer.DeleteRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
-	return err
+
+	subj := util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username)
+	roles, err := deleter.enforcer.GetRolesForUser(subj)
+	if err != nil {
+		return err
+	}
+
+	binding := v1.Binding{}
+	binding.Subjects = append(binding.Subjects, v1.Subject{Name: localIdentity.Spec.Username})
+
+	log.Info("Try removing policy for user", log.String("user", localIdentity.Spec.Username), log.Strings("policies", roles))
+	var errs []error
+	pol := &v1.Policy{}
+	for _, role := range roles {
+		switch {
+		case strings.HasPrefix(role, "pol-"):
+			err = deleter.authClient.RESTClient().Post().
+				Resource("policies").
+				Name(role).
+				SubResource("unbinding").
+				Body(&binding).
+				Do().Into(pol)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					continue
+				}
+				log.Error("Unbind policy for user failed", log.String("user", localIdentity.Spec.Username),
+					log.String("policy", role), log.Err(err))
+				errs = append(errs, err)
+			}
+		case strings.HasPrefix(role, "grp-"):
+			err = deleter.authClient.RESTClient().Post().
+				Resource("groups").
+				Name(role).
+				SubResource("unbinding").
+				Body(&binding).
+				Do().Into(pol)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					continue
+				}
+				log.Error("Unbind group for user failed", log.String("user", localIdentity.Spec.Username),
+					log.String("group", role), log.Err(err))
+				errs = append(errs, err)
+			}
+		case strings.HasPrefix(role, "rol-"):
+			fallthrough
+		default:
+			_, err = deleter.enforcer.DeleteRoleForUser(subj, role)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
 }
 
 func deleteApikeys(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
-	return nil
+	policySelector := fields.AndSelectors(
+		fields.OneTermEqualSelector("spec.tenantID", localIdentity.Spec.TenantID),
+		fields.OneTermEqualSelector("spec.username", localIdentity.Spec.Username))
+
+	return deleter.authClient.APIKeys().DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: policySelector.String()})
 }

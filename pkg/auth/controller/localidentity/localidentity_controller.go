@@ -200,6 +200,7 @@ func (c *Controller) syncItem(key string) error {
 	switch {
 	case errors.IsNotFound(err):
 		log.Infof("LocalIdentity has been deleted %v", key)
+		return nil
 	case err != nil:
 		log.Warn("Unable to retrieve localIdentity from store", log.String("localIdentity name", key), log.Err(err))
 	default:

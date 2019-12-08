@@ -154,7 +154,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	tokenAuth := authenticator.NewTokenAuthenticator()
+	authClient := authinternalclient.NewForConfigOrDie(genericAPIServerConfig.LoopbackClientConfig)
+	tokenAuth := authenticator.NewTokenAuthenticator(authClient)
 	if err := setupAuthentication(genericAPIServerConfig, opts.Authentication, tokenAuth); err != nil {
 		return nil, err
 	}
@@ -175,7 +176,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	authClient := authinternalclient.NewForConfigOrDie(genericAPIServerConfig.LoopbackClientConfig)
 	apiKeyAuth, err := authenticator.NewAPIKeyAuthenticator(authClient)
 	if err != nil {
 		return nil, err

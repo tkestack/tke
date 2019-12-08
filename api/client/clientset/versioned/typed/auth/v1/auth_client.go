@@ -32,6 +32,7 @@ type AuthV1Interface interface {
 	APISigningKeysGetter
 	CategoriesGetter
 	ConfigMapsGetter
+	GroupsGetter
 	LocalIdentitiesGetter
 	PoliciesGetter
 	RulesGetter
@@ -56,6 +57,10 @@ func (c *AuthV1Client) Categories() CategoryInterface {
 
 func (c *AuthV1Client) ConfigMaps() ConfigMapInterface {
 	return newConfigMaps(c)
+}
+
+func (c *AuthV1Client) Groups() GroupInterface {
+	return newGroups(c)
 }
 
 func (c *AuthV1Client) LocalIdentities() LocalIdentityInterface {

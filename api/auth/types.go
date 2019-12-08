@@ -53,6 +53,12 @@ type FinalizerName string
 const (
 	// LocalIdentityFinalize is an internal finalizer values to LocalIdentity.
 	LocalIdentityFinalize FinalizerName = "localidentity"
+
+	// PolicyFinalize is an internal finalizer values to Policy.
+	PolicyFinalize FinalizerName = "policy"
+
+	// PolicyFinalize is an internal finalizer values to Policy.
+	GroupFinalize FinalizerName = "group"
 )
 
 // LocalIdentitySpec is a description of an identity.
@@ -107,7 +113,7 @@ type APIKey struct {
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// LocalIdentityList is the whole list of all identities.
+// APIKeyList is the whole list of all identities.
 type APIKeyList struct {
 	metav1.TypeMeta
 	metav1.ListMeta
@@ -244,7 +250,7 @@ type CategoryList struct {
 	Items []Category
 }
 
-// ProjectPhase defines the phase of policy constructor.
+// PolicyPhase defines the phase of policy constructor.
 type PolicyPhase string
 
 const (
@@ -252,11 +258,6 @@ const (
 	PolicyActive PolicyPhase = "Active"
 	// PolicyTerminating means the policy is undergoing graceful termination.
 	PolicyTerminating PolicyPhase = "Terminating"
-)
-
-const (
-	// PolicyFinalize is an internal finalizer values to Policy.
-	PolicyFinalize FinalizerName = "policy"
 )
 
 // +genclient
@@ -307,7 +308,7 @@ const (
 type PolicySpec struct {
 	Finalizers []FinalizerName
 
-	PolicyName string
+	DisplayName string
 	TenantID    string
 	Category    string
 	Type        PolicyType
@@ -370,7 +371,7 @@ type Rule struct {
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// RuleList is the whole list of all policies.
+// RuleList is the whole list of all rules.
 type RuleList struct {
 	metav1.TypeMeta
 	metav1.ListMeta
@@ -378,7 +379,7 @@ type RuleList struct {
 	Items []Rule
 }
 
-// RuleSpec is a description of a policy.
+// RuleSpec is a description of a rule.
 type RuleSpec struct {
 	PType string `json:"ptype"`
 	V0    string `json:"v0"`
@@ -405,6 +406,63 @@ type Binding struct {
 type Subject struct {
 	ID   string
 	Name string
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Group represents a group of users.
+type Group struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of group document in this set.
+	Spec GroupSpec
+
+	// +optional
+	Status GroupStatus
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// GroupList is the whole list of all groups.
+type GroupList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of rules.
+	Items []Group
+}
+
+// GroupPhase defines the phase of group constructor.
+type GroupPhase string
+
+const (
+	GroupActive GroupPhase = "Active"
+	// GroupTerminating means the group is undergoing graceful termination.
+	GroupTerminating GroupPhase = "Terminating"
+)
+
+// GroupSpec is a description of group.
+type GroupSpec struct {
+	Finalizers []FinalizerName
+
+	DisplayName string
+	TenantID    string
+
+	//Creator
+	Username    string
+	Description string
+}
+
+// GroupStatus represents information about the status of a group.
+type GroupStatus struct {
+	// +optional
+	Phase GroupPhase
+
+	// Subjects represents the members of the group.
+	Subjects []Subject
 }
 
 // +genclient
