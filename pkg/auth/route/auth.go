@@ -20,9 +20,8 @@ package route
 
 import (
 	"net/http"
+	authapi "tkestack.io/tke/api/auth/v1"
 	"tkestack.io/tke/pkg/auth/handler/authn"
-
-	//"tkestack.io/tke/pkg/auth/types"
 
 	"github.com/emicklei/go-restful"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,33 +46,33 @@ func RegisterAuthRoute(container *restful.Container, authnHandler *authn.Handler
 		Returns(http.StatusUnauthorized, "Unauthorized", v1.Status{}).
 		Returns(http.StatusBadRequest, "BadRequest", v1.Status{}).
 		To(authnHandler.AuthenticateToken))
-	//
-	//ws.Route(ws.
-	//	POST("/authz").
-	//	Doc("receive a subject access review request and determine the subject access.").
-	//	Operation("getAuthz").
-	//	Reads(types.SubjectAccessReview{}).
-	//	Returns(http.StatusOK, "Ok", types.SubjectAccessReview{}).
-	//	Returns(http.StatusBadRequest, "BadRequest", v1.Status{}).
-	//	To(authzHandler.Authorize))
-	//
-	//ws.Route(ws.
-	//	POST("/restauthz").
-	//	Doc("receive a subject access review request like k8s and determine the subject access.").
-	//	Operation("getHttpAuthz").
-	//	Reads(types.SubjectAccessReview{}).
-	//	Returns(http.StatusOK, "Ok", types.SubjectAccessReview{}).
-	//	Returns(http.StatusBadRequest, "BadRequest", v1.Status{}).
-	//	To(authzHandler.RestAuthorize))
-	//
-	//ws.Route(ws.
-	//	POST("/batchauthz").
-	//	Doc("receive multiple subject access reviews request and return determine results.").
-	//	Operation("getBatchAuthz").
-	//	Reads(types.SubjectAccessReview{}).
-	//	Returns(http.StatusOK, "Ok", types.SubjectAccessReview{}).
-	//	Returns(http.StatusBadRequest, "BadRequest", v1.Status{}).
-	//	To(authzHandler.BatchAuthorize))
+
+	ws.Route(ws.
+		POST("/authz").
+		Doc("receive a subject access review request and determine the subject access.").
+		Operation("getAuthz").
+		Reads(authapi.SubjectAccessReview{}).
+		Returns(http.StatusOK, "Ok", authapi.SubjectAccessReview{}).
+		Returns(http.StatusBadRequest, "BadRequest", v1.Status{}).
+		To(authzHandler.Authorize))
+
+	ws.Route(ws.
+		POST("/restauthz").
+		Doc("receive a subject access review request like k8s and determine the subject access.").
+		Operation("getHttpAuthz").
+		Reads(authapi.SubjectAccessReview{}).
+		Returns(http.StatusOK, "Ok", authapi.SubjectAccessReview{}).
+		Returns(http.StatusBadRequest, "BadRequest", v1.Status{}).
+		To(authzHandler.RestAuthorize))
+
+	ws.Route(ws.
+		POST("/batchauthz").
+		Doc("receive multiple subject access reviews request and return determine results.").
+		Operation("getBatchAuthz").
+		Reads(authapi.SubjectAccessReview{}).
+		Returns(http.StatusOK, "Ok", authapi.SubjectAccessReview{}).
+		Returns(http.StatusBadRequest, "BadRequest", v1.Status{}).
+		To(authzHandler.BatchAuthorize))
 
 	container.Add(ws)
 }

@@ -119,6 +119,20 @@ func (Action) SwaggerDoc() map[string]string {
 	return map_Action
 }
 
+var map_AllowedStatus = map[string]string{
+	"":                "AllowedStatus includes the resource access request and response.",
+	"resource":        "Resource is the resource of request",
+	"web":             "Verb is the verb of request",
+	"allowed":         "Allowed is required. True if the action would be allowed, false otherwise.",
+	"denied":          "Denied is optional. True if the action would be denied, otherwise false. If both allowed is false and denied is false, then the authorizer has no opinion on whether to authorize the action. Denied may not be true if Allowed is true.",
+	"reason":          "Reason is optional.  It indicates why a request was allowed or denied.",
+	"evaluationError": "EvaluationError is an indication that some error occurred during the authorization check. It is entirely possible to get an error and be able to continue determine authorization status in spite of it. For instance, RBAC can be missing a role, but enough roles are still present and bound to reason about the request.",
+}
+
+func (AllowedStatus) SwaggerDoc() map[string]string {
+	return map_AllowedStatus
+}
+
 var map_Binding = map[string]string{
 	"":         "Binding is used to bind or unbind the subjects to or from the policy,role or group.",
 	"subjects": "Subjects holds references to the objects the policy applies to.",
@@ -246,6 +260,16 @@ func (LocalIdentityStatus) SwaggerDoc() map[string]string {
 	return map_LocalIdentityStatus
 }
 
+var map_NonResourceAttributes = map[string]string{
+	"":     "NonResourceAttributes includes the authorization attributes available for non-resource requests to the Authorizer interface",
+	"path": "Path is the URL path of the request",
+	"verb": "Verb is the standard HTTP verb",
+}
+
+func (NonResourceAttributes) SwaggerDoc() map[string]string {
+	return map_NonResourceAttributes
+}
+
 var map_Policy = map[string]string{
 	"":     "Policy represents a policy document for access control.",
 	"spec": "Spec defines the desired identities of policy document in this set.",
@@ -288,6 +312,21 @@ var map_PolicyStatus = map[string]string{
 
 func (PolicyStatus) SwaggerDoc() map[string]string {
 	return map_PolicyStatus
+}
+
+var map_ResourceAttributes = map[string]string{
+	"":            "ResourceAttributes includes the authorization attributes available for resource requests to the Authorizer interface",
+	"namespace":   "Namespace is the namespace of the action being requested.  Currently, there is no distinction between no namespace and all namespaces \"\" (empty) is defaulted for LocalSubjectAccessReviews \"\" (empty) is empty for cluster-scoped resources \"\" (empty) means \"all\" for namespace scoped resources from a SubjectAccessReview or SelfSubjectAccessReview",
+	"verb":        "Verb is a kubernetes resource API verb, like: get, list, watch, create, update, delete, proxy.  \"*\" means all.",
+	"group":       "Group is the API Group of the Resource.  \"*\" means all.",
+	"version":     "Version is the API Version of the Resource.  \"*\" means all.",
+	"resource":    "Resource is one of the existing resource types.  \"*\" means all.",
+	"subresource": "Subresource is one of the existing resource types.  \"\" means none.",
+	"name":        "Name is the name of the resource being requested for a \"get\" or deleted for a \"delete\". \"\" (empty) means all.",
+}
+
+func (ResourceAttributes) SwaggerDoc() map[string]string {
+	return map_ResourceAttributes
 }
 
 var map_Role = map[string]string{
@@ -367,6 +406,44 @@ var map_Subject = map[string]string{
 
 func (Subject) SwaggerDoc() map[string]string {
 	return map_Subject
+}
+
+var map_SubjectAccessReview = map[string]string{
+	"":       "SubjectAccessReview checks whether or not a user or group can perform an action.  Not filling in a spec.namespace means \"in all namespaces\".",
+	"spec":   "Spec holds information about the request being evaluated",
+	"status": "Status is filled in by the server and indicates whether the request is allowed or not",
+}
+
+func (SubjectAccessReview) SwaggerDoc() map[string]string {
+	return map_SubjectAccessReview
+}
+
+var map_SubjectAccessReviewSpec = map[string]string{
+	"":                       "SubjectAccessReviewSpec is a description of the access request.  Exactly one of ResourceAttributes and NonResourceAttributes must be set",
+	"resourceAttributes":     "ResourceAttributes describes information for a resource access request",
+	"resourceAttributesList": "ResourceAttributesList describes information for multi resource access request.",
+	"nonResourceAttributes":  "NonResourceAttributes describes information for a non-resource access request",
+	"user":                   "User is the user you're testing for. If you specify \"User\" but not \"Groups\", then is it interpreted as \"What if User were not a member of any groups",
+	"groups":                 "Groups is the groups you're testing for.",
+	"extra":                  "Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer it needs a reflection here.",
+	"uid":                    "UID information about the requesting user.",
+}
+
+func (SubjectAccessReviewSpec) SwaggerDoc() map[string]string {
+	return map_SubjectAccessReviewSpec
+}
+
+var map_SubjectAccessReviewStatus = map[string]string{
+	"":                "SubjectAccessReviewStatus represents the current state of a SubjectAccessReview.",
+	"allowed":         "Allowed is required. True if the action would be allowed, false otherwise.",
+	"denied":          "Denied is optional. True if the action would be denied, otherwise false. If both allowed is false and denied is false, then the authorizer has no opinion on whether to authorize the action. Denied may not be true if Allowed is true.",
+	"reason":          "Reason is optional.  It indicates why a request was allowed or denied.",
+	"evaluationError": "EvaluationError is an indication that some error occurred during the authorization check. It is entirely possible to get an error and be able to continue determine authorization status in spite of it. For instance, RBAC can be missing a role, but enough roles are still present and bound to reason about the request.",
+	"allowedList":     "AllowedList is the allowed response for batch authorization request.",
+}
+
+func (SubjectAccessReviewStatus) SwaggerDoc() map[string]string {
+	return map_SubjectAccessReviewStatus
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE

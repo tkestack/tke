@@ -36,7 +36,6 @@ import (
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/auth/registry/apikey"
 	"tkestack.io/tke/pkg/auth/util"
-	"tkestack.io/tke/pkg/auth/util/sign"
 	"tkestack.io/tke/pkg/util/log"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -51,7 +50,7 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against identify.
-func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, keySigner sign.KeySigner, privilegedUsername string) *Storage {
+func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, keySigner util.KeySigner, privilegedUsername string) *Storage {
 	strategy := apikey.NewStrategy(keySigner, privilegedUsername)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.APIKey{} },
@@ -126,8 +125,8 @@ func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, o
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
 
 	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if tenantID != ""{
-		wrappedOptions.FieldSelector = fields.AndSelectors(wrappedOptions.FieldSelector,  fields.OneTermEqualSelector("spec.username", username))
+	if tenantID != "" {
+		wrappedOptions.FieldSelector = fields.AndSelectors(wrappedOptions.FieldSelector, fields.OneTermEqualSelector("spec.username", username))
 	}
 
 	obj, err := store.List(ctx, wrappedOptions)
@@ -142,7 +141,7 @@ func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, o
 type REST struct {
 	*registry.Store
 
-	keySigner          sign.KeySigner
+	keySigner          util.KeySigner
 	privilegedUsername string
 }
 
@@ -214,7 +213,6 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		}
 		return r.Store.Delete(ctx, name, deleteValidation, options)
 	}
-
 
 	return nil, false, apierrors.NewInternalError(err)
 }

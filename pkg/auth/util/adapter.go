@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package adapter
+package util
 
 import (
 	"fmt"
@@ -66,7 +66,7 @@ func (a *RestAdapter) LoadPolicy(model model.Model) error {
 	if err != nil {
 		return fmt.Errorf("list all rules failed: %v", err)
 	}
-	log.Info("List rules", log.Int("rules", len(rules)))
+	log.Debug("List rules", log.Int("rules", len(rules)))
 
 	for _, rule := range rules {
 		a.loadPolicy(rule, model)

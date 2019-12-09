@@ -22,6 +22,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"io"
+	"tkestack.io/tke/pkg/auth/util"
 
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
@@ -29,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/api/auth"
-	"tkestack.io/tke/pkg/auth/util/sign"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/pkiutil"
 
@@ -50,7 +50,7 @@ func NewAPISigningKeyHookHandler(authClient authinternalclient.AuthInterface) ge
 
 func (d *apiSigningKeysHookHandler) PostStartHook() (string, server.PostStartHookFunc, error) {
 	return "generate-default-api-signing-keys", func(context server.PostStartHookContext) error {
-		_, err := d.authClient.APISigningKeys().Get(sign.DefaultAPISigningKey, metav1.GetOptions{})
+		_, err := d.authClient.APISigningKeys().Get(util.DefaultAPISigningKey, metav1.GetOptions{})
 		if errors.IsNotFound(err) {
 			privateKey, pubKey, err := generateKey()
 			if err != nil {
@@ -59,7 +59,7 @@ func (d *apiSigningKeysHookHandler) PostStartHook() (string, server.PostStartHoo
 
 			signingKey := &auth.APISigningKey{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: sign.DefaultAPISigningKey,
+					Name: util.DefaultAPISigningKey,
 				},
 				SigningKey:    privateKey,
 				SigningKeyPub: pubKey,

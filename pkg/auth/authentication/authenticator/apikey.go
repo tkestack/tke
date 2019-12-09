@@ -31,19 +31,18 @@ import (
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
-	"tkestack.io/tke/pkg/auth/util/sign"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 // APIKeyAuthenticator provides a function to generate and verify jwt-format api key.
 type APIKeyAuthenticator struct {
 	authClient authinternalclient.AuthInterface
-	keySigner  sign.KeySigner
+	keySigner  util.KeySigner
 }
 
 // NewAPIKeyAuthenticator creates new APIKeyAuthenticator object.
 func NewAPIKeyAuthenticator(authClient authinternalclient.AuthInterface) (*APIKeyAuthenticator, error) {
-	keySigner := sign.NewGenericKeySigner(authClient)
+	keySigner := util.NewGenericKeySigner(authClient)
 	apiKeyAuth := &APIKeyAuthenticator{authClient, keySigner}
 	return apiKeyAuth, nil
 }

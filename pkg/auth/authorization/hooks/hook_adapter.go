@@ -20,10 +20,10 @@ package hooks
 
 import (
 	"time"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/client-go/tools/cache"
-	"tkestack.io/tke/pkg/auth/util/adapter"
 	"tkestack.io/tke/pkg/util/log"
 
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -57,7 +57,7 @@ func (d *adapterHookHandler) PostStartHook() (string, genericapiserver.PostStart
 		if ok := cache.WaitForCacheSync(context.StopCh, d.ruleInformer.Informer().HasSynced); !ok {
 			log.Error("Failed to wait for project caches to sync")
 		}
-		adpt := adapter.NewAdapter(d.authClient.AuthV1().Rules(), d.ruleInformer.Lister())
+		adpt := util.NewAdapter(d.authClient.AuthV1().Rules(), d.ruleInformer.Lister())
 		d.enforcer.SetAdapter(adpt)
 		d.enforcer.StartAutoLoadPolicy(2 * time.Second)
 		return nil

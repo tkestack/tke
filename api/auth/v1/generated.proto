@@ -138,6 +138,33 @@ message Action {
   optional string description = 2;
 }
 
+// AllowedStatus includes the resource access request and response.
+// +k8s:openapi-gen=true
+message AllowedStatus {
+  // Resource is the resource of request
+  optional string resource = 1;
+
+  // Verb is the verb of request
+  optional string web = 2;
+
+  // Allowed is required. True if the action would be allowed, false otherwise.
+  optional bool allowed = 3;
+
+  // Denied is optional. True if the action would be denied, otherwise
+  // false. If both allowed is false and denied is false, then the
+  // authorizer has no opinion on whether to authorize the action. Denied
+  // may not be true if Allowed is true.
+  optional bool denied = 4;
+
+  // Reason is optional.  It indicates why a request was allowed or denied.
+  optional string reason = 5;
+
+  // EvaluationError is an indication that some error occurred during the authorization check.
+  // It is entirely possible to get an error and be able to continue determine authorization status in spite of it.
+  // For instance, RBAC can be missing a role, but enough roles are still present and bound to reason about the request.
+  optional string evaluationError = 6;
+}
+
 // Binding is used to bind or unbind the subjects to or from the policy,role or group.
 message Binding {
   // Subjects holds references to the objects the policy applies to.
@@ -204,6 +231,15 @@ message ConfigMapList {
 
   // Items is the list of ConfigMaps.
   repeated ConfigMap items = 2;
+}
+
+// ExtraValue masks the value so protobuf can generate
+// +protobuf.nullable=true
+// +protobuf.options.(gogoproto.goproto_stringer)=false
+message ExtraValue {
+  // items, if empty, will result in an empty slice
+
+  repeated string items = 1;
 }
 
 // Group represents a group of users.
@@ -308,6 +344,17 @@ message LocalIdentityStatus {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastUpdateTime = 2;
 }
 
+// NonResourceAttributes includes the authorization attributes available for non-resource requests to the Authorizer interface
+message NonResourceAttributes {
+  // Path is the URL path of the request
+  // +optional
+  optional string path = 1;
+
+  // Verb is the standard HTTP verb
+  // +optional
+  optional string verb = 2;
+}
+
 // Policy represents a policy document for access control.
 message Policy {
   // +optional
@@ -368,6 +415,40 @@ message PolicyStatus {
   // +optional
   // Subjects represents the objects the policy applies to.
   repeated Subject subjects = 2;
+}
+
+// ResourceAttributes includes the authorization attributes available for resource requests to the Authorizer interface
+message ResourceAttributes {
+  // Namespace is the namespace of the action being requested.  Currently, there is no distinction between no namespace and all namespaces
+  // "" (empty) is defaulted for LocalSubjectAccessReviews
+  // "" (empty) is empty for cluster-scoped resources
+  // "" (empty) means "all" for namespace scoped resources from a SubjectAccessReview or SelfSubjectAccessReview
+  // +optional
+  optional string namespace = 1;
+
+  // Verb is a kubernetes resource API verb, like: get, list, watch, create, update, delete, proxy.  "*" means all.
+  // +optional
+  optional string verb = 2;
+
+  // Group is the API Group of the Resource.  "*" means all.
+  // +optional
+  optional string group = 3;
+
+  // Version is the API Version of the Resource.  "*" means all.
+  // +optional
+  optional string version = 4;
+
+  // Resource is one of the existing resource types.  "*" means all.
+  // +optional
+  optional string resource = 5;
+
+  // Subresource is one of the existing resource types.  "" means none.
+  // +optional
+  optional string subresource = 6;
+
+  // Name is the name of the resource being requested for a "get" or deleted for a "delete". "" (empty) means all.
+  // +optional
+  optional string name = 7;
 }
 
 // Role is a collection with multiple policies.
@@ -466,5 +547,74 @@ message Subject {
   optional string id = 1;
 
   optional string name = 2;
+}
+
+// SubjectAccessReview checks whether or not a user or group can perform an action.  Not filling in a
+// spec.namespace means "in all namespaces".
+message SubjectAccessReview {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec holds information about the request being evaluated
+  optional SubjectAccessReviewSpec spec = 2;
+
+  // Status is filled in by the server and indicates whether the request is allowed or not
+  optional SubjectAccessReviewStatus status = 3;
+}
+
+// SubjectAccessReviewSpec is a description of the access request.  Exactly one of ResourceAttributes
+// and NonResourceAttributes must be set
+message SubjectAccessReviewSpec {
+  // ResourceAttributes describes information for a resource access request
+  optional ResourceAttributes resourceAttributes = 7;
+
+  // ResourceAttributesList describes information for multi resource access request.
+  repeated ResourceAttributes resourceAttributesList = 8;
+
+  // NonResourceAttributes describes information for a non-resource access request
+  optional NonResourceAttributes nonResourceAttributes = 9;
+
+  // User is the user you're testing for.
+  // If you specify "User" but not "Groups", then is it interpreted as "What if User were not a member of any groups
+  // +optional
+  optional string user = 3;
+
+  // Groups is the groups you're testing for.
+  // +optional
+  repeated string groups = 4;
+
+  // Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer
+  // it needs a reflection here.
+  // +optional
+  map<string, ExtraValue> extra = 5;
+
+  // UID information about the requesting user.
+  // +optional
+  optional string uid = 6;
+}
+
+// SubjectAccessReviewStatus represents the current state of a SubjectAccessReview.
+message SubjectAccessReviewStatus {
+  // Allowed is required. True if the action would be allowed, false otherwise.
+  optional bool allowed = 1;
+
+  // Denied is optional. True if the action would be denied, otherwise
+  // false. If both allowed is false and denied is false, then the
+  // authorizer has no opinion on whether to authorize the action. Denied
+  // may not be true if Allowed is true.
+  // +optional
+  optional bool denied = 4;
+
+  // Reason is optional.  It indicates why a request was allowed or denied.
+  // +optional
+  optional string reason = 2;
+
+  // EvaluationError is an indication that some error occurred during the authorization check.
+  // It is entirely possible to get an error and be able to continue determine authorization status in spite of it.
+  // For instance, RBAC can be missing a role, but enough roles are still present and bound to reason about the request.
+  // +optional
+  optional string evaluationError = 3;
+
+  // AllowedList is the allowed response for batch authorization request.
+  repeated AllowedStatus allowedList = 5;
 }
 

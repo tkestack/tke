@@ -21,11 +21,11 @@ package util
 import (
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"tkestack.io/tke/pkg/auth/types"
+	"tkestack.io/tke/api/auth"
 )
 
 // ResourceAttributesFrom combines the API object information and the user.Info from the context to build a full authorizer.AttributesRecord for resource access.
-func ResourceAttributesFrom(user user.Info, in types.ResourceAttributes) authorizer.AttributesRecord {
+func ResourceAttributesFrom(user user.Info, in auth.ResourceAttributes) authorizer.AttributesRecord {
 	return authorizer.AttributesRecord{
 		User:            user,
 		Verb:            in.Verb,
@@ -41,7 +41,7 @@ func ResourceAttributesFrom(user user.Info, in types.ResourceAttributes) authori
 
 // NonResourceAttributesFrom combines the API object information and the user.Info from the context to build a full authorizer.AttributesRecord for non resource access.
 // Tke-auth considers non-resource path as the resource field.
-func NonResourceAttributesFrom(user user.Info, in types.NonResourceAttributes) authorizer.AttributesRecord {
+func NonResourceAttributesFrom(user user.Info, in auth.NonResourceAttributes) authorizer.AttributesRecord {
 	return authorizer.AttributesRecord{
 		User:            user,
 		ResourceRequest: false,
@@ -51,11 +51,11 @@ func NonResourceAttributesFrom(user user.Info, in types.NonResourceAttributes) a
 }
 
 // AuthorizationAttributesFrom takes a spec and returns the proper authz attributes to check it.
-func AuthorizationAttributesFrom(spec types.SubjectAccessReviewSpec) authorizer.AttributesRecord {
+func AuthorizationAttributesFrom(spec auth.SubjectAccessReviewSpec) authorizer.AttributesRecord {
 	userToCheck := &user.DefaultInfo{
 		Name:  spec.User,
 		UID:   spec.UID,
-		Extra: spec.Extra,
+		Extra: convertToUserInfoExtra(spec.Extra),
 	}
 
 	var authorizationAttributes authorizer.AttributesRecord
@@ -69,11 +69,11 @@ func AuthorizationAttributesFrom(spec types.SubjectAccessReviewSpec) authorizer.
 }
 
 // AuthorizationAttributesListFrom takes a spec and returns the proper authz attribute list to check it.
-func AuthorizationAttributesListFrom(spec types.SubjectAccessReviewSpec) []authorizer.AttributesRecord {
+func AuthorizationAttributesListFrom(spec auth.SubjectAccessReviewSpec) []authorizer.AttributesRecord {
 	userToCheck := &user.DefaultInfo{
 		Name:  spec.User,
 		UID:   spec.UID,
-		Extra: spec.Extra,
+		Extra: convertToUserInfoExtra(spec.Extra),
 	}
 
 	var authorizationAttributesList []authorizer.AttributesRecord
@@ -83,4 +83,16 @@ func AuthorizationAttributesListFrom(spec types.SubjectAccessReviewSpec) []autho
 	}
 
 	return authorizationAttributesList
+}
+
+func convertToUserInfoExtra(extra map[string]auth.ExtraValue) map[string][]string {
+	if extra == nil {
+		return nil
+	}
+	ret := map[string][]string{}
+	for k, v := range extra {
+		ret[k] = []string(v)
+	}
+
+	return ret
 }

@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"tkestack.io/tke/pkg/auth/util"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,7 +29,6 @@ import (
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/auth/registry/apikey"
 
-	"tkestack.io/tke/pkg/auth/util/sign"
 	"tkestack.io/tke/pkg/util/log"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -37,7 +37,7 @@ import (
 // PasswordREST implements the REST endpoint.
 type PasswordREST struct {
 	apiKeyStore *registry.Store
-	keySigner   sign.KeySigner
+	keySigner   util.KeySigner
 
 	authClient authinternalclient.AuthInterface
 }

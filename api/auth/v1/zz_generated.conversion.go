@@ -127,6 +127,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*AllowedStatus)(nil), (*auth.AllowedStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AllowedStatus_To_auth_AllowedStatus(a.(*AllowedStatus), b.(*auth.AllowedStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.AllowedStatus)(nil), (*AllowedStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_AllowedStatus_To_v1_AllowedStatus(a.(*auth.AllowedStatus), b.(*AllowedStatus), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*Binding)(nil), (*auth.Binding)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_Binding_To_auth_Binding(a.(*Binding), b.(*auth.Binding), scope)
 	}); err != nil {
@@ -267,6 +277,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*NonResourceAttributes)(nil), (*auth.NonResourceAttributes)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_NonResourceAttributes_To_auth_NonResourceAttributes(a.(*NonResourceAttributes), b.(*auth.NonResourceAttributes), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.NonResourceAttributes)(nil), (*NonResourceAttributes)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_NonResourceAttributes_To_v1_NonResourceAttributes(a.(*auth.NonResourceAttributes), b.(*NonResourceAttributes), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*Policy)(nil), (*auth.Policy)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_Policy_To_auth_Policy(a.(*Policy), b.(*auth.Policy), scope)
 	}); err != nil {
@@ -314,6 +334,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*auth.PolicyStatus)(nil), (*PolicyStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_auth_PolicyStatus_To_v1_PolicyStatus(a.(*auth.PolicyStatus), b.(*PolicyStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ResourceAttributes)(nil), (*auth.ResourceAttributes)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ResourceAttributes_To_auth_ResourceAttributes(a.(*ResourceAttributes), b.(*auth.ResourceAttributes), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ResourceAttributes)(nil), (*ResourceAttributes)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ResourceAttributes_To_v1_ResourceAttributes(a.(*auth.ResourceAttributes), b.(*ResourceAttributes), scope)
 	}); err != nil {
 		return err
 	}
@@ -404,6 +434,36 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*auth.Subject)(nil), (*Subject)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_auth_Subject_To_v1_Subject(a.(*auth.Subject), b.(*Subject), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*SubjectAccessReview)(nil), (*auth.SubjectAccessReview)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_SubjectAccessReview_To_auth_SubjectAccessReview(a.(*SubjectAccessReview), b.(*auth.SubjectAccessReview), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.SubjectAccessReview)(nil), (*SubjectAccessReview)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_SubjectAccessReview_To_v1_SubjectAccessReview(a.(*auth.SubjectAccessReview), b.(*SubjectAccessReview), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*SubjectAccessReviewSpec)(nil), (*auth.SubjectAccessReviewSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_SubjectAccessReviewSpec_To_auth_SubjectAccessReviewSpec(a.(*SubjectAccessReviewSpec), b.(*auth.SubjectAccessReviewSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.SubjectAccessReviewSpec)(nil), (*SubjectAccessReviewSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_SubjectAccessReviewSpec_To_v1_SubjectAccessReviewSpec(a.(*auth.SubjectAccessReviewSpec), b.(*SubjectAccessReviewSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*SubjectAccessReviewStatus)(nil), (*auth.SubjectAccessReviewStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_SubjectAccessReviewStatus_To_auth_SubjectAccessReviewStatus(a.(*SubjectAccessReviewStatus), b.(*auth.SubjectAccessReviewStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.SubjectAccessReviewStatus)(nil), (*SubjectAccessReviewStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus(a.(*auth.SubjectAccessReviewStatus), b.(*SubjectAccessReviewStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -630,6 +690,36 @@ func autoConvert_auth_Action_To_v1_Action(in *auth.Action, out *Action, s conver
 // Convert_auth_Action_To_v1_Action is an autogenerated conversion function.
 func Convert_auth_Action_To_v1_Action(in *auth.Action, out *Action, s conversion.Scope) error {
 	return autoConvert_auth_Action_To_v1_Action(in, out, s)
+}
+
+func autoConvert_v1_AllowedStatus_To_auth_AllowedStatus(in *AllowedStatus, out *auth.AllowedStatus, s conversion.Scope) error {
+	out.Resource = in.Resource
+	out.Verb = in.Verb
+	out.Allowed = in.Allowed
+	out.Denied = in.Denied
+	out.Reason = in.Reason
+	out.EvaluationError = in.EvaluationError
+	return nil
+}
+
+// Convert_v1_AllowedStatus_To_auth_AllowedStatus is an autogenerated conversion function.
+func Convert_v1_AllowedStatus_To_auth_AllowedStatus(in *AllowedStatus, out *auth.AllowedStatus, s conversion.Scope) error {
+	return autoConvert_v1_AllowedStatus_To_auth_AllowedStatus(in, out, s)
+}
+
+func autoConvert_auth_AllowedStatus_To_v1_AllowedStatus(in *auth.AllowedStatus, out *AllowedStatus, s conversion.Scope) error {
+	out.Resource = in.Resource
+	out.Verb = in.Verb
+	out.Allowed = in.Allowed
+	out.Denied = in.Denied
+	out.Reason = in.Reason
+	out.EvaluationError = in.EvaluationError
+	return nil
+}
+
+// Convert_auth_AllowedStatus_To_v1_AllowedStatus is an autogenerated conversion function.
+func Convert_auth_AllowedStatus_To_v1_AllowedStatus(in *auth.AllowedStatus, out *AllowedStatus, s conversion.Scope) error {
+	return autoConvert_auth_AllowedStatus_To_v1_AllowedStatus(in, out, s)
 }
 
 func autoConvert_v1_Binding_To_auth_Binding(in *Binding, out *auth.Binding, s conversion.Scope) error {
@@ -1012,6 +1102,28 @@ func Convert_auth_LocalIdentityStatus_To_v1_LocalIdentityStatus(in *auth.LocalId
 	return autoConvert_auth_LocalIdentityStatus_To_v1_LocalIdentityStatus(in, out, s)
 }
 
+func autoConvert_v1_NonResourceAttributes_To_auth_NonResourceAttributes(in *NonResourceAttributes, out *auth.NonResourceAttributes, s conversion.Scope) error {
+	out.Path = in.Path
+	out.Verb = in.Verb
+	return nil
+}
+
+// Convert_v1_NonResourceAttributes_To_auth_NonResourceAttributes is an autogenerated conversion function.
+func Convert_v1_NonResourceAttributes_To_auth_NonResourceAttributes(in *NonResourceAttributes, out *auth.NonResourceAttributes, s conversion.Scope) error {
+	return autoConvert_v1_NonResourceAttributes_To_auth_NonResourceAttributes(in, out, s)
+}
+
+func autoConvert_auth_NonResourceAttributes_To_v1_NonResourceAttributes(in *auth.NonResourceAttributes, out *NonResourceAttributes, s conversion.Scope) error {
+	out.Path = in.Path
+	out.Verb = in.Verb
+	return nil
+}
+
+// Convert_auth_NonResourceAttributes_To_v1_NonResourceAttributes is an autogenerated conversion function.
+func Convert_auth_NonResourceAttributes_To_v1_NonResourceAttributes(in *auth.NonResourceAttributes, out *NonResourceAttributes, s conversion.Scope) error {
+	return autoConvert_auth_NonResourceAttributes_To_v1_NonResourceAttributes(in, out, s)
+}
+
 func autoConvert_v1_Policy_To_auth_Policy(in *Policy, out *auth.Policy, s conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1_PolicySpec_To_auth_PolicySpec(&in.Spec, &out.Spec, s); err != nil {
@@ -1146,6 +1258,38 @@ func autoConvert_auth_PolicyStatus_To_v1_PolicyStatus(in *auth.PolicyStatus, out
 // Convert_auth_PolicyStatus_To_v1_PolicyStatus is an autogenerated conversion function.
 func Convert_auth_PolicyStatus_To_v1_PolicyStatus(in *auth.PolicyStatus, out *PolicyStatus, s conversion.Scope) error {
 	return autoConvert_auth_PolicyStatus_To_v1_PolicyStatus(in, out, s)
+}
+
+func autoConvert_v1_ResourceAttributes_To_auth_ResourceAttributes(in *ResourceAttributes, out *auth.ResourceAttributes, s conversion.Scope) error {
+	out.Namespace = in.Namespace
+	out.Verb = in.Verb
+	out.Group = in.Group
+	out.Version = in.Version
+	out.Resource = in.Resource
+	out.Subresource = in.Subresource
+	out.Name = in.Name
+	return nil
+}
+
+// Convert_v1_ResourceAttributes_To_auth_ResourceAttributes is an autogenerated conversion function.
+func Convert_v1_ResourceAttributes_To_auth_ResourceAttributes(in *ResourceAttributes, out *auth.ResourceAttributes, s conversion.Scope) error {
+	return autoConvert_v1_ResourceAttributes_To_auth_ResourceAttributes(in, out, s)
+}
+
+func autoConvert_auth_ResourceAttributes_To_v1_ResourceAttributes(in *auth.ResourceAttributes, out *ResourceAttributes, s conversion.Scope) error {
+	out.Namespace = in.Namespace
+	out.Verb = in.Verb
+	out.Group = in.Group
+	out.Version = in.Version
+	out.Resource = in.Resource
+	out.Subresource = in.Subresource
+	out.Name = in.Name
+	return nil
+}
+
+// Convert_auth_ResourceAttributes_To_v1_ResourceAttributes is an autogenerated conversion function.
+func Convert_auth_ResourceAttributes_To_v1_ResourceAttributes(in *auth.ResourceAttributes, out *ResourceAttributes, s conversion.Scope) error {
+	return autoConvert_auth_ResourceAttributes_To_v1_ResourceAttributes(in, out, s)
 }
 
 func autoConvert_v1_Role_To_auth_Role(in *Role, out *auth.Role, s conversion.Scope) error {
@@ -1380,4 +1524,96 @@ func autoConvert_auth_Subject_To_v1_Subject(in *auth.Subject, out *Subject, s co
 // Convert_auth_Subject_To_v1_Subject is an autogenerated conversion function.
 func Convert_auth_Subject_To_v1_Subject(in *auth.Subject, out *Subject, s conversion.Scope) error {
 	return autoConvert_auth_Subject_To_v1_Subject(in, out, s)
+}
+
+func autoConvert_v1_SubjectAccessReview_To_auth_SubjectAccessReview(in *SubjectAccessReview, out *auth.SubjectAccessReview, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_SubjectAccessReviewSpec_To_auth_SubjectAccessReviewSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1_SubjectAccessReviewStatus_To_auth_SubjectAccessReviewStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_SubjectAccessReview_To_auth_SubjectAccessReview is an autogenerated conversion function.
+func Convert_v1_SubjectAccessReview_To_auth_SubjectAccessReview(in *SubjectAccessReview, out *auth.SubjectAccessReview, s conversion.Scope) error {
+	return autoConvert_v1_SubjectAccessReview_To_auth_SubjectAccessReview(in, out, s)
+}
+
+func autoConvert_auth_SubjectAccessReview_To_v1_SubjectAccessReview(in *auth.SubjectAccessReview, out *SubjectAccessReview, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_auth_SubjectAccessReviewSpec_To_v1_SubjectAccessReviewSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_auth_SubjectAccessReview_To_v1_SubjectAccessReview is an autogenerated conversion function.
+func Convert_auth_SubjectAccessReview_To_v1_SubjectAccessReview(in *auth.SubjectAccessReview, out *SubjectAccessReview, s conversion.Scope) error {
+	return autoConvert_auth_SubjectAccessReview_To_v1_SubjectAccessReview(in, out, s)
+}
+
+func autoConvert_v1_SubjectAccessReviewSpec_To_auth_SubjectAccessReviewSpec(in *SubjectAccessReviewSpec, out *auth.SubjectAccessReviewSpec, s conversion.Scope) error {
+	out.ResourceAttributes = (*auth.ResourceAttributes)(unsafe.Pointer(in.ResourceAttributes))
+	out.ResourceAttributesList = *(*[]*auth.ResourceAttributes)(unsafe.Pointer(&in.ResourceAttributesList))
+	out.NonResourceAttributes = (*auth.NonResourceAttributes)(unsafe.Pointer(in.NonResourceAttributes))
+	out.User = in.User
+	out.Groups = *(*[]string)(unsafe.Pointer(&in.Groups))
+	out.Extra = *(*map[string]auth.ExtraValue)(unsafe.Pointer(&in.Extra))
+	out.UID = in.UID
+	return nil
+}
+
+// Convert_v1_SubjectAccessReviewSpec_To_auth_SubjectAccessReviewSpec is an autogenerated conversion function.
+func Convert_v1_SubjectAccessReviewSpec_To_auth_SubjectAccessReviewSpec(in *SubjectAccessReviewSpec, out *auth.SubjectAccessReviewSpec, s conversion.Scope) error {
+	return autoConvert_v1_SubjectAccessReviewSpec_To_auth_SubjectAccessReviewSpec(in, out, s)
+}
+
+func autoConvert_auth_SubjectAccessReviewSpec_To_v1_SubjectAccessReviewSpec(in *auth.SubjectAccessReviewSpec, out *SubjectAccessReviewSpec, s conversion.Scope) error {
+	out.ResourceAttributes = (*ResourceAttributes)(unsafe.Pointer(in.ResourceAttributes))
+	out.ResourceAttributesList = *(*[]*ResourceAttributes)(unsafe.Pointer(&in.ResourceAttributesList))
+	out.NonResourceAttributes = (*NonResourceAttributes)(unsafe.Pointer(in.NonResourceAttributes))
+	out.User = in.User
+	out.Groups = *(*[]string)(unsafe.Pointer(&in.Groups))
+	out.Extra = *(*map[string]ExtraValue)(unsafe.Pointer(&in.Extra))
+	out.UID = in.UID
+	return nil
+}
+
+// Convert_auth_SubjectAccessReviewSpec_To_v1_SubjectAccessReviewSpec is an autogenerated conversion function.
+func Convert_auth_SubjectAccessReviewSpec_To_v1_SubjectAccessReviewSpec(in *auth.SubjectAccessReviewSpec, out *SubjectAccessReviewSpec, s conversion.Scope) error {
+	return autoConvert_auth_SubjectAccessReviewSpec_To_v1_SubjectAccessReviewSpec(in, out, s)
+}
+
+func autoConvert_v1_SubjectAccessReviewStatus_To_auth_SubjectAccessReviewStatus(in *SubjectAccessReviewStatus, out *auth.SubjectAccessReviewStatus, s conversion.Scope) error {
+	out.Allowed = in.Allowed
+	out.Denied = in.Denied
+	out.Reason = in.Reason
+	out.EvaluationError = in.EvaluationError
+	out.AllowedList = *(*[]*auth.AllowedStatus)(unsafe.Pointer(&in.AllowedList))
+	return nil
+}
+
+// Convert_v1_SubjectAccessReviewStatus_To_auth_SubjectAccessReviewStatus is an autogenerated conversion function.
+func Convert_v1_SubjectAccessReviewStatus_To_auth_SubjectAccessReviewStatus(in *SubjectAccessReviewStatus, out *auth.SubjectAccessReviewStatus, s conversion.Scope) error {
+	return autoConvert_v1_SubjectAccessReviewStatus_To_auth_SubjectAccessReviewStatus(in, out, s)
+}
+
+func autoConvert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus(in *auth.SubjectAccessReviewStatus, out *SubjectAccessReviewStatus, s conversion.Scope) error {
+	out.Allowed = in.Allowed
+	out.Denied = in.Denied
+	out.Reason = in.Reason
+	out.EvaluationError = in.EvaluationError
+	out.AllowedList = *(*[]*AllowedStatus)(unsafe.Pointer(&in.AllowedList))
+	return nil
+}
+
+// Convert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus is an autogenerated conversion function.
+func Convert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus(in *auth.SubjectAccessReviewStatus, out *SubjectAccessReviewStatus, s conversion.Scope) error {
+	return autoConvert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus(in, out, s)
 }

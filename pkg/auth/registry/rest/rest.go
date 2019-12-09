@@ -38,8 +38,7 @@ import (
 	policystorage "tkestack.io/tke/pkg/auth/registry/policy/storage"
 	rolestorage "tkestack.io/tke/pkg/auth/registry/role/storage"
 	rulestorage "tkestack.io/tke/pkg/auth/registry/rule/storage"
-
-	"tkestack.io/tke/pkg/auth/util/sign"
+	"tkestack.io/tke/pkg/auth/util"
 )
 
 // StorageProvider is a REST type for core resources storage that implement
@@ -86,7 +85,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		storageMap["localidentities/finalize"] = localIdentityRest.Finalize
 
-		keySigner := sign.NewGenericKeySigner(authClient)
+		keySigner := util.NewGenericKeySigner(authClient)
 		apiKeyRest := apikeystorage.NewStorage(restOptionsGetter, authClient, keySigner, s.PrivilegedUsername)
 		storageMap["apikeys"] = apiKeyRest.APIKey
 		storageMap["apikeys/password"] = apiKeyRest.Password

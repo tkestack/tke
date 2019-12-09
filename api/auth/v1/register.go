@@ -65,6 +65,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Binding{},
 		&Role{},
 		&RoleList{},
+		&SubjectAccessReview{},
 		&PolicyBinding{},
 		&Group{},
 		&GroupList{},

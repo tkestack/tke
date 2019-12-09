@@ -34,7 +34,7 @@ import (
 	"tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-auth-controller/app/config"
-	adapter2 "tkestack.io/tke/pkg/auth/util/adapter"
+	util2 "tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/controller/util"
 )
@@ -115,7 +115,7 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		return ControllerContext{}, err
 	}
 
-	adpt := adapter2.NewAdapter(client.AuthV1().Rules(), sharedInformers.Auth().V1().Rules().Lister())
+	adpt := util2.NewAdapter(client.AuthV1().Rules(), sharedInformers.Auth().V1().Rules().Lister())
 	m, err := model.NewModelFromString(auth.DefaultRuleModel)
 	if err != nil {
 		return ControllerContext{}, fmt.Errorf("failed to new casbin model: %v", err)

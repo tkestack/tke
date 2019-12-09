@@ -21,6 +21,7 @@ package apikey
 import (
 	"context"
 	"fmt"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -32,8 +33,6 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/auth/util/sign"
-
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
@@ -42,13 +41,13 @@ type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	keySigner          sign.KeySigner
+	keySigner          util.KeySigner
 	privilegedUsername string
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating project objects.
-func NewStrategy(keySigner sign.KeySigner, privilegedUsername string) *Strategy {
+func NewStrategy(keySigner util.KeySigner, privilegedUsername string) *Strategy {
 	return &Strategy{auth.Scheme, namesutil.Generator, keySigner, privilegedUsername}
 }
 
