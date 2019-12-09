@@ -1791,7 +1791,8 @@ func (t *TKE) preparePushImagesToTKERegistry() error {
 
 	dir := path.Join(dockerCertsDir, t.Para.Config.Registry.Domain())
 	_ = os.MkdirAll(dir, 0777)
-	err = ioutil.WriteFile(path.Join(dir, "ca.crt"), t.Cluster.ClusterCredential.CACert, 0644)
+	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
+	err = ioutil.WriteFile(path.Join(dir, "ca.crt"), caCert, 0644)
 	if err != nil {
 		return err
 	}
