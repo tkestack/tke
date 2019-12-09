@@ -24,7 +24,6 @@ import (
 	"github.com/dexidp/dex/server"
 	"github.com/dexidp/dex/storage"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"tkestack.io/tke/pkg/auth/authentication/tenant"
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/validation"
@@ -33,12 +32,11 @@ import (
 // Service is responsible for performing OIDC idp crud actions onto the storage backend.
 type Service struct {
 	dexStorage storage.Storage
-	helper     *tenant.Helper
 }
 
 // NewIdentidyProviderService create a new idp service object
-func NewIdentidyProviderService(store storage.Storage, helper *tenant.Helper) *Service {
-	return &Service{dexStorage: store, helper: helper}
+func NewIdentidyProviderService(store storage.Storage) *Service {
+	return &Service{dexStorage: store}
 }
 
 // CreateIdentityProvier creates a new OIDC idp and returns it.
@@ -46,20 +44,6 @@ func (s *Service) CreateIdentityProvier(idpCreate *types.IdentityProvider) (*typ
 	err := s.dexStorage.CreateConnector(toDexConnector(idpCreate))
 	if err != nil {
 		return nil, err
-	}
-
-	// create tenant admin
-	err = s.helper.CreateAdmin(idpCreate.ID)
-	if err != nil {
-		_ = s.DeleteIdentityProvider(idpCreate.ID)
-		return nil, fmt.Errorf("init tenant resource failed: %v", err)
-	}
-
-	// create predefine policies and categories
-	err = s.helper.LoadResource(idpCreate.ID)
-	if err != nil {
-		_ = s.DeleteIdentityProvider(idpCreate.ID)
-		return nil, fmt.Errorf("init tenant resource failed: %v", err)
 	}
 
 	return idpCreate, nil

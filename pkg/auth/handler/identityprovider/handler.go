@@ -21,7 +21,6 @@ package identityprovider
 import (
 	"net/http"
 
-	"tkestack.io/tke/pkg/auth/authentication/tenant"
 
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/auth/util"
@@ -42,9 +41,8 @@ type Handler struct {
 }
 
 // NewHandler creates new OAuth2 identity provider handler object.
-func NewHandler(dexStorage storage.Storage, helper *tenant.Helper) *Handler {
-	helper.LoadResourceAllTenant()
-	return &Handler{NewIdentidyProviderService(dexStorage, helper)}
+func NewHandler(dexStorage storage.Storage) *Handler {
+	return &Handler{NewIdentidyProviderService(dexStorage)}
 }
 
 // Create create a new OIDC identity provider and returns it.

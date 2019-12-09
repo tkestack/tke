@@ -40,7 +40,6 @@ import (
 
 	"tkestack.io/tke/api/auth"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/auth/registry/group"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -59,8 +58,8 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against groups.
-func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
-	strategy := group.NewStrategy(enforcer, authClient)
+func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
+	strategy := group.NewStrategy(authClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.Group{} },
 		NewListFunc:              func() runtime.Object { return &auth.GroupList{} },

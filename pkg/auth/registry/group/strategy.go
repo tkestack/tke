@@ -31,7 +31,6 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/util/log"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -43,17 +42,15 @@ type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	enforcer   *enforcer.PolicyEnforcer
 	authClient authinternalclient.AuthInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating group objects.
-func NewStrategy(enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface) *Strategy {
+func NewStrategy(authClient authinternalclient.AuthInterface) *Strategy {
 	return &Strategy{
 		ObjectTyper:   auth.Scheme,
 		NameGenerator: namesutil.Generator,
-		enforcer:      enforcer,
 		authClient:    authClient,
 	}
 }

@@ -19,6 +19,7 @@
 package rest
 
 import (
+	"github.com/casbin/casbin/v2"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericserver "k8s.io/apiserver/pkg/server"
@@ -28,7 +29,6 @@ import (
 	v1 "tkestack.io/tke/api/auth/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/storage"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	apikeystorage "tkestack.io/tke/pkg/auth/registry/apikey/storage"
 	apisignstorage "tkestack.io/tke/pkg/auth/registry/apisigningkey/storage"
 	categorystorage "tkestack.io/tke/pkg/auth/registry/category/storage"
@@ -45,7 +45,7 @@ import (
 // RestStorageProvider interface
 type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
-	PolicyEnforcer       *enforcer.PolicyEnforcer
+	Enforcer       *casbin.SyncedEnforcer
 	PrivilegedUsername   string
 }
 
@@ -76,7 +76,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
 
-		localIdentityRest := localidentitystorage.NewStorage(restOptionsGetter, authClient, s.PolicyEnforcer.Enforcer, s.PrivilegedUsername)
+		localIdentityRest := localidentitystorage.NewStorage(restOptionsGetter, authClient, s.Enforcer, s.PrivilegedUsername)
 		storageMap["localidentities"] = localIdentityRest.LocalIdentity
 		storageMap["localidentities/status"] = localIdentityRest.Status
 		storageMap["localidentities/policies"] = localIdentityRest.Policy
@@ -98,7 +98,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		categoryRest := categorystorage.NewStorage(restOptionsGetter)
 		storageMap["categories"] = categoryRest
 
-		policyRest := policystorage.NewStorage(restOptionsGetter, s.PolicyEnforcer, authClient, s.PrivilegedUsername)
+		policyRest := policystorage.NewStorage(restOptionsGetter, s.Enforcer, authClient, s.PrivilegedUsername)
 		storageMap["policies"] = policyRest.Policy
 		storageMap["policies/finalize"] = policyRest.Finalize
 		storageMap["policies/status"] = policyRest.Status
@@ -108,7 +108,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		ruleRest := rulestorage.NewStorage(restOptionsGetter)
 		storageMap["rules"] = ruleRest.Rule
 
-		roleRest := rolestorage.NewStorage(restOptionsGetter, s.PolicyEnforcer.Enforcer, authClient, s.PrivilegedUsername)
+		roleRest := rolestorage.NewStorage(restOptionsGetter, s.Enforcer, authClient, s.PrivilegedUsername)
 		storageMap["roles"] = roleRest.Role
 		storageMap["roles/finalize"] = roleRest.Finalize
 		storageMap["roles/status"] = roleRest.Status
@@ -117,7 +117,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["roles/policybinding"] = roleRest.PolicyBinding
 		storageMap["roles/policyunbinding"] = roleRest.PolicyUnbinding
 
-		groupRest := groupstorage.NewStorage(restOptionsGetter, s.PolicyEnforcer, authClient, s.PrivilegedUsername)
+		groupRest := groupstorage.NewStorage(restOptionsGetter, authClient, s.PrivilegedUsername)
 		storageMap["groups"] = groupRest.Group
 		storageMap["groups/finalize"] = groupRest.Finalize
 		storageMap["groups/status"] = groupRest.Status

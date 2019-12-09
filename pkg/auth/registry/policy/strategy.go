@@ -21,6 +21,8 @@ package policy
 import (
 	"context"
 	"fmt"
+	"github.com/casbin/casbin/v2"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -32,7 +34,6 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/util/log"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -44,13 +45,13 @@ type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	enforcer   *enforcer.PolicyEnforcer
+	enforcer   *casbin.SyncedEnforcer
 	authClient authinternalclient.AuthInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating policy objects.
-func NewStrategy(enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface) *Strategy {
+func NewStrategy(enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface) *Strategy {
 	return &Strategy{
 		ObjectTyper:   auth.Scheme,
 		NameGenerator: namesutil.Generator,
@@ -123,7 +124,13 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 func (s *Strategy) AfterCreate(obj runtime.Object) error {
 	policy, _ := obj.(*auth.Policy)
 	if err := func() error {
-		return s.enforcer.AddPolicy(policy)
+		rules := util.ConvertPolicyToRuleArray(policy)
+		for _, rule := range rules {
+			if _, err := s.enforcer.AddPolicy(rule); err != nil {
+				log.Error("Add rule to policy failed", log.Any("policy", policy.Name), log.Strings("rule", rule), log.Err(err))
+			}
+		}
+		return nil
 	}(); err != nil {
 		return fmt.Errorf("failed to create policy '%s', for '%s'", policy.Name, err)
 	}

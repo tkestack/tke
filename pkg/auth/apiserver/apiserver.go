@@ -29,8 +29,6 @@ import (
 	"k8s.io/apiserver/pkg/server/mux"
 	"tkestack.io/tke/pkg/auth/route"
 
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
-
 	"github.com/casbin/casbin/v2"
 	dexserver "github.com/dexidp/dex/server"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -45,7 +43,6 @@ import (
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
 	authnhandler "tkestack.io/tke/pkg/auth/handler/authn"
 	authzhandler "tkestack.io/tke/pkg/auth/handler/authz"
-	"tkestack.io/tke/pkg/auth/registry"
 	authrest "tkestack.io/tke/pkg/auth/registry/rest"
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/util/log"
@@ -70,7 +67,6 @@ type ExtraConfig struct {
 	DexServer           *dexserver.Server
 	DexStorage          dexstorage.Storage
 	CasbinEnforcer      *casbin.SyncedEnforcer
-	Registry            *registry.Registry
 	TokenAuthn          *authenticator.TokenAuthenticator
 	APIKeyAuthn         *authenticator.APIKeyAuthenticator
 	Authorizer          authorizer.Authorizer
@@ -133,13 +129,11 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		GenericAPIServer: s,
 	}
 
-	policyEnforcer := enforcer.NewPolicyEnforcer(c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.Registry)
-
 	// The order here is preserved in discovery.
 	restStorageProviders := []storage.RESTStorageProvider{
 		&authrest.StorageProvider{
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
-			PolicyEnforcer:       policyEnforcer,
+			Enforcer:       c.ExtraConfig.CasbinEnforcer,
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
 		},
 	}

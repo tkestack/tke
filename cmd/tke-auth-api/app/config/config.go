@@ -65,7 +65,6 @@ import (
 	"tkestack.io/tke/pkg/auth/authorization/aggregation"
 	casbinlogger "tkestack.io/tke/pkg/auth/logger"
 
-	"tkestack.io/tke/pkg/auth/registry"
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -88,7 +87,6 @@ type Config struct {
 	DexServer          *dexserver.Server
 	DexStorage         dexstorage.Storage
 	CasbinEnforcer     *casbin.SyncedEnforcer
-	Registry           *registry.Registry
 	TokenAuthn         *authenticator.TokenAuthenticator
 	APIKeyAuthn        *authenticator.APIKeyAuthenticator
 	Authorizer         authorizer.Authorizer
@@ -144,11 +142,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 	versionedInformers := versionedinformers.NewSharedInformerFactory(clientgoExternalClient, 10*time.Minute)
 
-	etcdClient, err := setupETCDClient(opts.ETCD)
-	if err != nil {
-		return nil, err
-	}
-
 	enforcer, err := setupCasbinEnforcer(opts.Authorization)
 	if err != nil {
 		return nil, err
@@ -171,22 +164,17 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	r, err := registry.NewRegistry(etcdClient, dexConfig.Storage)
-	if err != nil {
-		return nil, err
-	}
-
 	apiKeyAuth, err := authenticator.NewAPIKeyAuthenticator(authClient)
 	if err != nil {
 		return nil, err
 	}
 
-	err = setupDefaultConnectorConfig(authClient, r, opts.Auth)
+	err = setupDefaultConnectorConfig(authClient, dexConfig.Storage, opts.Auth)
 	if err != nil {
 		return nil, err
 	}
 
-	err = setupDefaultClient(r, opts.Auth)
+	err = setupDefaultClient(dexConfig.Storage, opts.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +193,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		DexServer:                      dexServer,
 		DexStorage:                     dexConfig.Storage,
 		CasbinEnforcer:                 enforcer,
-		Registry:                       r,
 		TokenAuthn:                     tokenAuth,
 		APIKeyAuthn:                    apiKeyAuth,
 		Authorizer:                     aggregateAuthz,
@@ -344,13 +331,13 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 	return enforcer, nil
 }
 
-func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, r *registry.Registry, auth *options.AuthOptions) error {
+func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, store dexstorage.Storage, auth *options.AuthOptions) error {
 	// create dex local identity provider for tke connector.
 	dexserver.ConnectorsConfig[local.TkeConnectorType] = func() dexserver.ConnectorConfig {
 		return new(local.Config)
 	}
 
-	conns, err := r.DexStorage().ListConnectors()
+	conns, err := store.ListConnectors()
 	if err != nil {
 		return err
 	}
@@ -368,7 +355,7 @@ func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, r 
 			return err
 		}
 		// if no connectors, create a default connector
-		if err = r.DexStorage().CreateConnector(*tkeConn); err != nil {
+		if err = store.CreateConnector(*tkeConn); err != nil {
 			return err
 		}
 	}
@@ -377,8 +364,8 @@ func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, r 
 	return nil
 }
 
-func setupDefaultClient(r *registry.Registry, auth *options.AuthOptions) error {
-	clis, err := r.DexStorage().ListClients()
+func setupDefaultClient(store dexstorage.Storage, auth *options.AuthOptions) error {
+	clis, err := store.ListClients()
 	if err != nil {
 		return err
 	}
@@ -399,7 +386,7 @@ func setupDefaultClient(r *registry.Registry, auth *options.AuthOptions) error {
 		}
 
 		// Create a default connector
-		if err = r.DexStorage().CreateClient(cli); err != nil {
+		if err = store.CreateClient(cli); err != nil {
 			return err
 		}
 	}

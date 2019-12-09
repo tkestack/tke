@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/casbin/casbin/v2"
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -40,7 +41,6 @@ import (
 
 	"tkestack.io/tke/api/auth"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
-	"tkestack.io/tke/pkg/auth/authorization/enforcer"
 	"tkestack.io/tke/pkg/auth/registry/policy"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -59,7 +59,7 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against policies.
-func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *enforcer.PolicyEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
+func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
 	strategy := policy.NewStrategy(enforcer, authClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.Policy{} },
