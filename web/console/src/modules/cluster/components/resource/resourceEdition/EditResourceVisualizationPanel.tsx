@@ -765,7 +765,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         maxReplicas: +maxReplicas,
         metrics: metricsInfo,
         scaleTargetRef: {
-          apiVersion: isTapp ? 'tke.cloud.tencent.com/v1' : ResourceInfo.group + '/' + ResourceInfo.version,
+          apiVersion: isTapp ? 'apps.tkestack.io/v1' : ResourceInfo.group + '/' + ResourceInfo.version,
           kind: ResourceInfo.headTitle,
           name: workloadName
         }

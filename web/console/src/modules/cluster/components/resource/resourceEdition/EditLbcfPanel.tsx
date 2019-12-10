@@ -16,10 +16,7 @@ import { LbcfConfig, LbcfArgsConfig, k8sVersionList } from '../../../constants/C
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditLbcfPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions, route } = this.props;
@@ -211,7 +208,7 @@ export class EditLbcfPanel extends React.Component<RootProps, {}> {
       } = lbcfEdit;
       let jsonData: LbcfLBJSONYaml = {
         kind: 'LoadBalancer',
-        apiVersion: 'lbcf.tke.cloud.tencent.com/v1beta1', //(resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
+        apiVersion: 'lbcf.tkestack.io/v1beta1', //(resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
         metadata: {
           name: name,
           namespace: namespace
