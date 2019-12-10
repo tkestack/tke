@@ -21,6 +21,7 @@ set -o nounset
 set -o pipefail
 
 REGISTRY_PREFIX=${REGISTRY_PREFIX:-tkestack}
+BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
 INSTALLER=tke-installer-x86_64-$VERSION.run
 PROVIDER_RES_VERSION=v1.14.6-1

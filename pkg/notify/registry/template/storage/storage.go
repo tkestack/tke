@@ -48,6 +48,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, notifyClient *noti
 		NewFunc:                  func() runtime.Object { return &notify.Template{} },
 		NewListFunc:              func() runtime.Object { return &notify.TemplateList{} },
 		DefaultQualifiedResource: notify.Resource("templates"),
+		PredicateFunc:            templatestrategy.MatchTemplate,
 		ReturnDeletedObject:      true,
 
 		CreateStrategy: strategy,
@@ -57,6 +58,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, notifyClient *noti
 	}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
+		AttrFunc:    templatestrategy.GetAttrs,
 	}
 
 	if err := store.CompleteWithOptions(options); err != nil {
@@ -75,11 +77,11 @@ func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, na
 		return nil, err
 	}
 
-	receiverGroup := obj.(*notify.Template)
-	if err := util.FilterTemplate(ctx, receiverGroup); err != nil {
+	template := obj.(*notify.Template)
+	if err := util.FilterTemplate(ctx, template); err != nil {
 		return nil, err
 	}
-	return receiverGroup, nil
+	return template, nil
 }
 
 // ValidateExportObjectAndTenantID validate name and tenantID, if success return Template
@@ -89,11 +91,11 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 		return nil, err
 	}
 
-	receiverGroup := obj.(*notify.Template)
-	if err := util.FilterTemplate(ctx, receiverGroup); err != nil {
+	template := obj.(*notify.Template)
+	if err := util.FilterTemplate(ctx, template); err != nil {
 		return nil, err
 	}
-	return receiverGroup, nil
+	return template, nil
 }
 
 // REST implements a RESTStorage for templates against etcd.

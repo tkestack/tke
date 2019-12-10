@@ -20,9 +20,15 @@ package template
 
 import (
 	"context"
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	notifyinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/notify/internalversion"
 	"tkestack.io/tke/api/notify"
@@ -112,4 +118,35 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 // ValidateUpdate is the default update validation for an end template.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return ValidateTemplateUpdate(obj.(*notify.Template), old.(*notify.Template), s.notifyClient)
+}
+
+// GetAttrs returns labels and fields of a given object for filtering purposes.
+func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
+	template, ok := obj.(*notify.Template)
+	if !ok {
+		return nil, nil, fmt.Errorf("not a template")
+	}
+	return labels.Set(template.ObjectMeta.Labels), ToSelectableFields(template), nil
+}
+
+// MatchTemplate returns a generic matcher for a given label and field selector.
+func MatchTemplate(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
+	return storage.SelectionPredicate{
+		Label:    label,
+		Field:    field,
+		GetAttrs: GetAttrs,
+		IndexFields: []string{
+			"spec.tenantID",
+			"metadata.name",
+		},
+	}
+}
+
+// ToSelectableFields returns a field set that represents the object
+func ToSelectableFields(template *notify.Template) fields.Set {
+	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&template.ObjectMeta, false)
+	specificFieldsSet := fields.Set{
+		"spec.tenantID": template.Spec.TenantID,
+	}
+	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }

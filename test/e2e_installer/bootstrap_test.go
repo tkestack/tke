@@ -42,7 +42,6 @@ var _ = Describe("bootstrap", func() {
 	var nodes []cloudprovider.Instance
 	var nodesSSH []ssh.Interface
 	var provider cloudprovider.Provider
-	needDelete := false
 
 	BeforeEach(func() {
 		var err error
@@ -72,7 +71,7 @@ var _ = Describe("bootstrap", func() {
 	})
 
 	AfterEach(func() {
-		if !needDelete {
+		if os.Getenv("NEED_DELETE") == "" {
 			return
 		}
 		var instanceIDs []*string
@@ -146,6 +145,5 @@ var _ = Describe("bootstrap", func() {
 			}
 		})
 		Expect(err).To(BeNil())
-		needDelete = true
 	})
 })

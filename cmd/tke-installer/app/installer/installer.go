@@ -82,6 +82,7 @@ const (
 	dataDir        = "data"
 	clusterFile    = dataDir + "/tke.json"
 	clusterLogFile = dataDir + "/tke.log"
+	dockerCertsDir = "/etc/docker/certs.d"
 
 	hooksDir             = "hooks"
 	preInstallHook       = hooksDir + "/pre-install"
@@ -1397,7 +1398,7 @@ func (t *TKE) installKeepalived() error {
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDaemonset(t.globalClient, t.namespace, "tke-gateway")
+		ok, err := apiclient.CheckDaemonset(t.globalClient, t.namespace, "keepalived")
 		if err != nil {
 			return false, nil
 		}
@@ -1782,8 +1783,16 @@ func (t *TKE) installTKERegistryAPI() error {
 }
 
 func (t *TKE) preparePushImagesToTKERegistry() error {
-	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain()}
+	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain(), File: "hosts"}
 	err := localHosts.Set(t.servers[0])
+	if err != nil {
+		return err
+	}
+
+	dir := path.Join(dockerCertsDir, t.Para.Config.Registry.Domain())
+	_ = os.MkdirAll(dir, 0777)
+	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
+	err = ioutil.WriteFile(path.Join(dir, "ca.crt"), caCert, 0644)
 	if err != nil {
 		return err
 	}
@@ -1889,6 +1898,10 @@ func (t *TKE) importResource() error {
 	// ensure api ready
 	err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
 		_, err = client.PlatformV1().Clusters().List(metav1.ListOptions{})
+		if err != nil {
+			return false, nil
+		}
+		_, err = client.PlatformV1().ClusterCredentials().List(metav1.ListOptions{})
 		if err != nil {
 			return false, nil
 		}

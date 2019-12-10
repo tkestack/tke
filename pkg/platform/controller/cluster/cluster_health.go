@@ -110,29 +110,6 @@ func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
 		return err
 	}
 
-	res, err := c.caclClusterResource(kubeClient)
-	if err != nil {
-		cluster.Status.Phase = v1.ClusterFailed
-		cluster.Status.Message = err.Error()
-		cluster.Status.Reason = reasonHealthCheckFail
-		now := metav1.Now()
-		c.addOrUpdateCondition(cluster, v1.ClusterCondition{
-			Type:               conditionTypeHealthCheck,
-			Status:             v1.ConditionFalse,
-			Message:            err.Error(),
-			Reason:             reasonHealthCheckFail,
-			LastTransitionTime: now,
-			LastProbeTime:      now,
-		})
-		if err1 := c.persistUpdate(cluster); err1 != nil {
-			log.Warn("Update cluster status failed", log.String("clusterName", cluster.Name), log.Err(err1))
-			return err1
-		}
-		log.Warn("Failed to build the cluster client", log.String("clusterName", cluster.Name), log.Err(err))
-		return err
-	}
-	cluster.Status.Resource = *res
-
 	_, err = kubeClient.CoreV1().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
 		cluster.Status.Phase = v1.ClusterFailed
