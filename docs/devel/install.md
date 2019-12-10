@@ -33,55 +33,53 @@ TKEStack is tested on the following operating system:
 
 First Log in to your Linux host and install tke-installer via this command:
 
-    version=10fd8a9 wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
+    version=v1.0.0 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
 
+> Note: this command can be found at [TKEStack Release](https://github.com/tkestack/tke/releases)
+>
 > Note: tke-installer is about 3GB, contains all resources required by the installation, TKEStack will be installed offline, behind a firewall or behind a proxy.
 
 
 ## Starting the installation
 
 Open your browser to http://`INSTALLER-NODE-IP`:8080/index.html, the Web GUI will guide you to initialize and install the TKEStack.
-
-1. Read the software license, start the installation
   
-   ![Architecture Of TKE](../images/install/Picture1.png)
-  
-2. Set the account information and HA VIP
+1. Set the account information and HA VIP
   
    ![Architecture Of TKE](../images/install/Picture2.png)
   
-3. Configure the global cluster, set cluster's nic, GPU type and container network, specify the master node information，advance option enable you to set customized parameters
+2. Configure the global cluster, set cluster's nic, GPU type and container network, specify the master node information，advance option enable you to set customized parameters
 
    ![Architecture Of TKE](../images/install/Picture3.png)
   
-4. Set authentication information
+3. Set authentication information
 
    ![Architecture Of TKE](../images/install/Picture4.png)
   
-5. Specify the image registry, TKEStack will deploy a local registry by default
+4. Specify the image registry, TKEStack will deploy a local registry by default
 
    ![Architecture Of TKE](../images/install/Picture5.png)
   
-6. Business setting，default is on
+5. Business setting，default is on
 
    ![Architecture Of TKE](../images/install/Picture6.png)
   
-7. Monitor settings，TKE will install an influxDB as the monitor data's storage, or specify the influxDB address and ES address, or disable the monitor
+6. Monitor settings，TKE will install an influxDB as the monitor data's storage, or specify the influxDB address and ES address, or disable the monitor
   
    ![Architecture Of TKE](../images/install/Picture7.png)
   
-8. Console settings, if enabled, specify the console page's address and certificate
+7. Console settings, if enabled, specify the console page's address and certificate
   
    ![Architecture Of TKE](../images/install/Picture8.png)
   
-9. Preview all the configuration, if no problem, click `install` to start, next page will show the install logs in real time
+8. Preview all the configuration, if no problem, click `install` to start, next page will show the install logs in real time
    
    ![Architecture Of TKE](../images/install/Picture9.png)
    
 
 ## Using TKEStack
 
-After the installation is completed, you will receive a `===>install teasl [Success]` message, click the `Guidance` button to check the TKEStack console address, open a browser to access.
+After the installation is completed, you will receive a `===>install task [Success]` message, click the `Guidance` button to check the TKEStack console address, open a browser to access.
    
    ![Architecture Of TKE](../images/install/Picture10.png)
 
