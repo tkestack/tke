@@ -103,17 +103,17 @@ const (
 
 // ClusterResource is the REST layer to the Cluster domain
 type TKE struct {
-	Config  *config.Config           `json:"config"`
-	Para    *CreateClusterPara       `json:"para"`
-	Cluster *clusterprovider.Cluster `json:"cluster"`
-	Step    int                      `json:"step"`
+	Config   *config.Config           `json:"config"`
+	Para     *CreateClusterPara       `json:"para"`
+	Cluster  *clusterprovider.Cluster `json:"cluster"`
+	Progress *ClusterProgress         `json:"progress"`
+	Step     int                      `json:"step"`
 
 	log              *stdlog.Logger
 	steps            []handler
 	clusterProviders *sync.Map
 	strategy         *clusterstrategy.Strategy
 	clusterProvider  clusterprovider.Provider
-	process          *ClusterProgress
 	isFromRestore    bool
 
 	globalClient kubernetes.Interface
@@ -277,7 +277,7 @@ type Keepalived struct {
 // ClusterProgress use for findClusterProgress
 type ClusterProgress struct {
 	Status     ClusterProgressStatus `json:"status"`
-	Data       string                `json:"data"`
+	Data       string                `json:"-"`
 	URL        string                `json:"url,omitempty"`
 	Username   string                `json:"username,omitempty"`
 	Password   []byte                `json:"password,omitempty"`
@@ -334,8 +334,8 @@ func NewTKE(config *config.Config) *TKE {
 	}
 
 	c.clusterProviders = new(sync.Map)
-	c.process = new(ClusterProgress)
-	c.process.Status = StatusUnknown
+	c.Progress = new(ClusterProgress)
+	c.Progress.Status = StatusUnknown
 
 	return c
 }
@@ -932,7 +932,7 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 		if err != nil {
 			return errors.NewInternalError(err)
 		}
-		t.process.Data = string(data)
+		t.Progress.Data = string(data)
 
 		return nil
 	}()
@@ -940,7 +940,7 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 	if apiStatus != nil {
 		response.WriteHeaderAndJson(int(apiStatus.Status().Code), apiStatus.Status(), restful.MIME_JSON)
 	} else {
-		response.WriteEntity(t.process)
+		response.WriteEntity(t.Progress)
 	}
 }
 
@@ -952,7 +952,7 @@ func (t *TKE) do() {
 
 	if t.Step == 0 {
 		t.log.Print("===>starting install task")
-		t.process.Status = StatusDoing
+		t.Progress.Status = StatusDoing
 	}
 
 	if t.runAfterClusterReady() {
@@ -964,7 +964,7 @@ func (t *TKE) do() {
 		start := time.Now()
 		err := t.steps[t.Step].Func()
 		if err != nil {
-			t.process.Status = StatusFailed
+			t.Progress.Status = StatusFailed
 			t.log.Printf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
 			return
 		}
@@ -974,7 +974,7 @@ func (t *TKE) do() {
 		t.backup()
 	}
 
-	t.process.Status = StatusSuccess
+	t.Progress.Status = StatusSuccess
 	if t.Para.Config.Gateway != nil {
 		var host string
 		if t.Para.Config.Gateway.Domain != "" {
@@ -984,30 +984,30 @@ func (t *TKE) do() {
 		} else {
 			host = t.Para.Cluster.Spec.Machines[0].IP
 		}
-		t.process.URL = fmt.Sprintf("http://%s", host)
+		t.Progress.URL = fmt.Sprintf("http://%s", host)
 
-		t.process.Username = t.Para.Config.Basic.Username
-		t.process.Password = t.Para.Config.Basic.Password
+		t.Progress.Username = t.Para.Config.Basic.Username
+		t.Progress.Password = t.Para.Config.Basic.Password
 
 		if t.Para.Config.Gateway.Cert.SelfSignedCert != nil {
-			t.process.CACert, _ = ioutil.ReadFile(constants.CACrtFile)
+			t.Progress.CACert, _ = ioutil.ReadFile(constants.CACrtFile)
 		}
 
 		if t.Para.Config.Gateway.Domain != "" {
-			t.process.Hosts = append(t.process.Hosts, t.Para.Config.Gateway.Domain)
+			t.Progress.Hosts = append(t.Progress.Hosts, t.Para.Config.Gateway.Domain)
 		}
 
 		cfg, _ := t.getKubeconfig()
-		t.process.Kubeconfig, _ = runtime.Encode(clientcmdlatest.Codec, cfg)
+		t.Progress.Kubeconfig, _ = runtime.Encode(clientcmdlatest.Codec, cfg)
 	}
 
 	if t.Para.Config.Registry.TKERegistry != nil {
-		t.process.Hosts = append(t.process.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
+		t.Progress.Hosts = append(t.Progress.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
 	}
 
-	t.process.Servers = t.servers
+	t.Progress.Servers = t.servers
 	if t.Para.Config.HA != nil {
-		t.process.Servers = append(t.process.Servers, t.Para.Config.HA.VIP())
+		t.Progress.Servers = append(t.Progress.Servers, t.Para.Config.HA.VIP())
 	}
 	t.log.Printf("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
 }
