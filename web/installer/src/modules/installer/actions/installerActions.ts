@@ -26,7 +26,7 @@ const fetchClusterActions = generateFetcherActionCreator({
       case 'Doing':
       case 'Success':
       case 'Failed':
-        dispatch(restActions.stepNext('step10'));
+        dispatch(restActions.stepNext('step9'));
         break;
       default:
         dispatch(restActions.stepNext('step1'));
@@ -55,7 +55,7 @@ const workflowActions = {
         let { createCluster } = getState();
         if (isSuccessWorkflow(createCluster)) {
           dispatch(installerActions.createCluster.reset());
-          dispatch(installerActions.stepNext('step10'));
+          dispatch(installerActions.stepNext('step9'));
           dispatch(installerActions.poll());
         }
       }
