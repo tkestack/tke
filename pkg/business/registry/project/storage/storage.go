@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+
 	"tkestack.io/tke/pkg/apiserver/authentication"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -69,6 +70,8 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 		DeleteStrategy: strategy,
 		AfterDelete:    strategy.AfterDelete,
 		ExportStrategy: strategy,
+
+		ShouldDeleteDuringUpdate: shouldDeleteDuringUpdate,
 	}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
@@ -349,4 +352,13 @@ func (r *FinalizeREST) Update(ctx context.Context, name string, objInfo rest.Upd
 		return nil, false, err
 	}
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
+}
+
+func shouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {
+	project, ok := obj.(*business.Project)
+	if !ok {
+		log.Errorf("unexpected object, key:%s", key)
+		return false
+	}
+	return len(project.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
 }
