@@ -180,7 +180,7 @@ export const validatorActions = {
   },
 
   _validateClusterAllocationRatio(value: number) {
-    let reg = /^\d+(\.\d{1,3})?$/,
+    let reg = /^\d+(\.\d{1,2})?$/,
       status = 0,
       message = '';
 

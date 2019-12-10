@@ -9,18 +9,28 @@ import { AlarmPolicyMetrics } from '../constants/Config';
 import { workloadActions } from './workloadActions';
 import { validatorActions } from './validatorActions';
 import { resourceActions } from '../../notify/actions/resourceActions';
-// import { groupActions } from './groupActions';
 import { initValidator } from '../../common/models';
 import { userActions } from '../../uam/actions/userActions';
 import { createListAction } from '@tencent/redux-list';
-// import { namespaceActions } from '../../cluster/actions/namespaceActions';
 
 type GetState = () => RootState;
 
 const _alarmPolicyActions = createListAction<AlarmPolicy, AlarmPolicyFilter>({
   actionName: 'AlarmPolicy',
-  fetcher: async query => {
+  fetcher: async (query, getstate: GetState) => {
     const response = await WebAPI.fetchAlarmPolicy(query);
+
+    //业务侧中过滤只有这个namepace下的AlarmPolicy
+    /// #if project
+    response.records = response.records.filter(
+      item =>
+        item.alarmObjetcsType === 'part' &&
+        item.alarmObjectNamespace === getstate().namespaceSelection &&
+        item.alarmPolicyType === 'pod'
+    );
+    response.recordCount = response.records.length;
+    /// #endif
+
     return response;
   },
   getRecord: (getState: GetState) => {
@@ -28,7 +38,7 @@ const _alarmPolicyActions = createListAction<AlarmPolicy, AlarmPolicyFilter>({
   },
   onFinish: (record, dispatch, getState: GetState) => {
     let { sub } = router.resolve(getState().route);
-    if (sub === 'detail') {
+    if (sub !== '') {
       dispatch(alarmPolicyActions.initAlarmPolicyData());
     }
   }
@@ -117,6 +127,7 @@ const editActions = {
       dispatch(resourceActions.template.fetch());
       dispatch(resourceActions.receiverGroup.fetch());
       if (mode === 'create') {
+        /// #if tke
         dispatch(alarmPolicyActions.inputAlarmPolicyType('cluster'));
         dispatch(
           namespaceActions.applyFilter({
@@ -125,6 +136,10 @@ const editActions = {
             default: true
           })
         );
+        /// #endif
+        /// #if project
+        dispatch(alarmPolicyActions.inputAlarmPolicyType('pod'));
+        /// #endif
       } else if (mode === 'update' || mode === 'copy') {
         let alarmPolicyId = route.queries['alarmPolicyId'];
         let finder = alarmPolicy.list.data.records.find(item => item.id === alarmPolicyId);
@@ -135,6 +150,7 @@ const editActions = {
           })
         );
         //初始化workload列表不使用初始值
+        /// #if tke
         if (mode === 'update' && finder.alarmPolicyType === 'pod' && finder.alarmObjetcsType === 'part') {
           namespaceActions.applyFilter({
             regionId: route.queries['rid'],
@@ -150,6 +166,7 @@ const editActions = {
             })
           );
         }
+        /// #endif
 
         if (mode === 'update') {
           dispatch(alarmPolicyActions.initAlarmPolicyEditionForUpdate(finder));

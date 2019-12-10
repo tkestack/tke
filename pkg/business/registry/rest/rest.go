@@ -95,10 +95,12 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
 
-		imageNamespaceREST := imagenamespacestorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)
-		storageMap["imagenamespaces"] = imageNamespaceREST.ImageNamespace
-		storageMap["imagenamespaces/status"] = imageNamespaceREST.Status
-		storageMap["imagenamespaces/finalize"] = imageNamespaceREST.Finalize
+		if s.RegistryClient != nil {
+			imageNamespaceREST := imagenamespacestorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)
+			storageMap["imagenamespaces"] = imageNamespaceREST.ImageNamespace
+			storageMap["imagenamespaces/status"] = imageNamespaceREST.Status
+			storageMap["imagenamespaces/finalize"] = imageNamespaceREST.Finalize
+		}
 	}
 
 	return storageMap

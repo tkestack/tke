@@ -58,19 +58,20 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
 
-	platformAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)
+	platformAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)
 	if err != nil {
 		return nil, err
 	}
+	if !ok {
+		return nil, fmt.Errorf("failed to initialize client config of platform API server")
+	}
 
-	businessAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
+	businessAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
 	if err != nil {
 		return nil, err
 	}
-
-	registryAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.RegistryAPIClient)
-	if err != nil {
-		return nil, err
+	if !ok {
+		return nil, fmt.Errorf("failed to initialize client config of business API server")
 	}
 
 	// shallow copy, do not modify the apiServerClientConfig.Timeout.
@@ -83,13 +84,20 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		LeaderElectionClient:          leaderElectionClient,
 		PlatformAPIServerClientConfig: platformAPIServerClientConfig,
 		BusinessAPIServerClientConfig: businessAPIServerClientConfig,
-		RegistryAPIServerClientConfig: registryAPIServerClientConfig,
 		Authorization: apiserver.AuthorizationInfo{
 			Authorizer: authorizerfactory.NewAlwaysAllowAuthorizer(),
 		},
 		Authentication: apiserver.AuthenticationInfo{
 			Authenticator: anonymous.NewAuthenticator(),
 		},
+	}
+
+	registryAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.RegistryAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if ok && registryAPIServerClientConfig != nil {
+		controllerManagerConfig.RegistryAPIServerClientConfig = registryAPIServerClientConfig
 	}
 
 	if err := opts.Component.ApplyTo(&controllerManagerConfig.Component); err != nil {

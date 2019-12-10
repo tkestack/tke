@@ -11,14 +11,12 @@ export class AlarmPolicySubpageHeaderPanel extends React.Component<RootProps, {}
 
   componentDidMount() {
     // 根据 queries 来判断在update或者 detail当中显示信息
-    let { regionList, actions, route } = this.props;
-    // if (regionList.data.recordCount === 0) {
-    //   actions.region.fetch();
-    // } else {
-    //初始化数据
-    actions.cluster.applyFilter({ regionId: +route.queries['rid'] });
-    actions.alarmPolicy.initAlarmPolicyData();
-    // }
+    let { cluster, actions, route } = this.props;
+    if (cluster.list.data.recordCount === 0) {
+      actions.cluster.applyFilter({ regionId: 1 });
+    } else {
+      actions.alarmPolicy.initAlarmPolicyData();
+    }
   }
 
   // componentWillReceiveProps(nextProps) {}

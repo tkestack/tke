@@ -11,7 +11,10 @@ export const AlarmObjectsType = {
   ],
   pod: [
     { value: 'part', text: t('按工作负载选择'), tip: t('（包括后续新增加Pod）') },
+    /// #if tke
     { value: 'all', text: t('全部选择'), tip: t('（包括后续新增加Pod）') }
+    /// #endif
+
     // {
     //   value: 'k8sLabel',
     //   text: '按 Kubernetes Label 选择',
@@ -68,7 +71,10 @@ export const AlarmPolicyMetricsEvaluatorType = [
 ];
 
 //阈值
-export const AlarmPolicyMetricsEvaluatorValue = [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }];
+export const AlarmPolicyMetricsEvaluatorValue = [
+  { text: 'True', value: 'true' },
+  { text: 'False', value: 'false' }
+];
 
 //持续周期
 export const AlarmPolicyMetricsContinuePeriod = [

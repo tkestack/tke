@@ -130,12 +130,12 @@ func (p *Provider) EnsureSysctl(c *Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]
 
-		_, err := s.CombinedOutput(setFileContent(sysctlFile, "net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
+		_, err := s.CombinedOutput(setFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
 
-		_, err = s.CombinedOutput(setFileContent(sysctlFile, "net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
+		_, err = s.CombinedOutput(setFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -161,7 +161,7 @@ func (p *Provider) EnsureDisableSwap(c *Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]
 
-		_, err := s.CombinedOutput("swapoff -a && sed 's/^[^#]*swap/#&/' /etc/fstab")
+		_, err := s.CombinedOutput("swapoff -a && sed -i 's/^[^#]*swap/#&/' /etc/fstab")
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -334,6 +334,7 @@ func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 		NodeCIDRMaskSize:      c.Status.NodeCIDRMaskSize,
 		ClusterCIDR:           c.Spec.ClusterCIDR,
 		ServiceClusterIPRange: c.Status.ServiceCIDR,
+		CertSANs:              c.Spec.PublicAlternativeNames,
 
 		APIServerExtraArgs:         c.Spec.APIServerExtraArgs,
 		ControllerManagerExtraArgs: c.Spec.ControllerManagerExtraArgs,

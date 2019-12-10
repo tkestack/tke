@@ -67,7 +67,7 @@ const (
 	svcLBCFHealthCheckPort = 11029
 	svcLBCFHealthCheckPath = "/healthz"
 
-	lbcfAPIGroup   = "lbcf.tke.cloud.tencent.com"
+	lbcfAPIGroup   = "lbcf.tkestack.io"
 	lbcfAPIVersion = "v1beta1"
 
 	crdLoadBalancerDriver = "loadbalancerdrivers"
@@ -628,7 +628,7 @@ func validatingWebhook() *v1beta1.ValidatingWebhookConfiguration {
 		},
 		Webhooks: []v1beta1.ValidatingWebhook{
 			{
-				Name: "driver.lbcf.tke.cloud.tencent.com",
+				Name: "driver.lbcf.tkestack.io",
 				Rules: []v1beta1.RuleWithOperations{
 					{
 						Rule: v1beta1.Rule{
@@ -654,7 +654,7 @@ func validatingWebhook() *v1beta1.ValidatingWebhookConfiguration {
 				FailurePolicy: &failPolicy,
 			},
 			{
-				Name: "lb.lbcf.tke.cloud.tencent.com",
+				Name: "lb.lbcf.tkestack.io",
 				Rules: []v1beta1.RuleWithOperations{
 					{
 						Rule: v1beta1.Rule{
@@ -679,7 +679,7 @@ func validatingWebhook() *v1beta1.ValidatingWebhookConfiguration {
 				FailurePolicy: &failPolicy,
 			},
 			{
-				Name: "backendgroup.lbcf.tke.cloud.tencent.com",
+				Name: "backendgroup.lbcf.tkestack.io",
 				Rules: []v1beta1.RuleWithOperations{
 					{
 						Rule: v1beta1.Rule{
@@ -715,7 +715,7 @@ func mutatingWebhook() *v1beta1.MutatingWebhookConfiguration {
 		},
 		Webhooks: []v1beta1.MutatingWebhook{
 			{
-				Name: "lb.lbcf.tke.cloud.tencent.com",
+				Name: "lb.lbcf.tkestack.io",
 				Rules: []v1beta1.RuleWithOperations{
 					{
 						Rule: v1beta1.Rule{
@@ -739,7 +739,7 @@ func mutatingWebhook() *v1beta1.MutatingWebhookConfiguration {
 				FailurePolicy: &failPolicy,
 			},
 			{
-				Name: "driver.lbcf.tke.cloud.tencent.com",
+				Name: "driver.lbcf.tkestack.io",
 				Rules: []v1beta1.RuleWithOperations{
 					{
 						Rule: v1beta1.Rule{
@@ -763,7 +763,7 @@ func mutatingWebhook() *v1beta1.MutatingWebhookConfiguration {
 				FailurePolicy: &failPolicy,
 			},
 			{
-				Name: "backendgroup.lbcf.tke.cloud.tencent.com",
+				Name: "backendgroup.lbcf.tkestack.io",
 				Rules: []v1beta1.RuleWithOperations{
 					{
 						Rule: v1beta1.Rule{
@@ -795,7 +795,7 @@ func crds() []*extensionsv1.CustomResourceDefinition {
 	return []*extensionsv1.CustomResourceDefinition{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "loadbalancerdrivers.lbcf.tke.cloud.tencent.com",
+				Name: "loadbalancerdrivers.lbcf.tkestack.io",
 			},
 			Spec: extensionsv1.CustomResourceDefinitionSpec{
 				Group: lbcfAPIGroup,
@@ -814,7 +814,7 @@ func crds() []*extensionsv1.CustomResourceDefinition {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "loadbalancers.lbcf.tke.cloud.tencent.com",
+				Name: "loadbalancers.lbcf.tkestack.io",
 			},
 			Spec: extensionsv1.CustomResourceDefinitionSpec{
 				Group: lbcfAPIGroup,
@@ -833,7 +833,7 @@ func crds() []*extensionsv1.CustomResourceDefinition {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "backendgroups.lbcf.tke.cloud.tencent.com",
+				Name: "backendgroups.lbcf.tkestack.io",
 			},
 			Spec: extensionsv1.CustomResourceDefinitionSpec{
 				Group: lbcfAPIGroup,
@@ -852,7 +852,7 @@ func crds() []*extensionsv1.CustomResourceDefinition {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "backendrecords.lbcf.tke.cloud.tencent.com",
+				Name: "backendrecords.lbcf.tkestack.io",
 			},
 			Spec: extensionsv1.CustomResourceDefinitionSpec{
 				Group: lbcfAPIGroup,
@@ -873,7 +873,7 @@ func crds() []*extensionsv1.CustomResourceDefinition {
 }
 
 var selectorForLBCF = metav1.LabelSelector{
-	MatchLabels: map[string]string{"lbcf.tke.cloud.tencent.com/component": svcLBCFHealthCheckName},
+	MatchLabels: map[string]string{"lbcf.tkestack.io/component": svcLBCFHealthCheckName},
 }
 
 func deployment(version string) *appsv1.Deployment {
@@ -887,7 +887,7 @@ func deployment(version string) *appsv1.Deployment {
 			Selector: &selectorForLBCF,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"lbcf.tke.cloud.tencent.com/component": svcLBCFHealthCheckName},
+					Labels: map[string]string{"lbcf.tkestack.io/component": svcLBCFHealthCheckName},
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: svcLBCFHealthCheckName,
@@ -1046,7 +1046,7 @@ func service() *corev1.Service {
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{
-				"lbcf.tke.cloud.tencent.com/component": svcLBCFHealthCheckName,
+				"lbcf.tkestack.io/component": svcLBCFHealthCheckName,
 			},
 			Ports: []corev1.ServicePort{
 				{

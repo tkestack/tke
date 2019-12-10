@@ -132,7 +132,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep2(editState: EditState) {
+  _validateStep1(editState: EditState) {
     let result =
       validateActions._validateUsername(editState.username).status === 1 &&
       validateActions._validatePassword(editState.password).status === 1 &&
@@ -143,7 +143,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep2(editState: EditState) {
+  validateStep1(editState: EditState) {
     return dispatch => {
       const v_username = validateActions._validateUsername(editState.username),
         v_password = validateActions._validatePassword(editState.password),
@@ -349,7 +349,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep3(editState: EditState) {
+  _validateStep2(editState: EditState) {
     let result =
       validateActions._validateNetworkDevice(editState.networkDevice).status === 1 &&
       validateActions._validateAllMachines(editState.machines);
@@ -357,7 +357,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep3(editState: EditState) {
+  validateStep2(editState: EditState) {
     return dispatch => {
       const v_networkDevice = validateActions._validateNetworkDevice(editState.networkDevice);
 
@@ -477,7 +477,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep4(editState: EditState) {
+  _validateStep3(editState: EditState) {
     let result =
       validateActions._validateIssueUrl(editState.issueURL, editState.authType).status === 1 &&
       validateActions._validateClientID(editState.clientID, editState.authType).status === 1 &&
@@ -486,7 +486,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep4(editState: EditState) {
+  validateStep3(editState: EditState) {
     return dispatch => {
       const v_issueURL = validateActions._validateIssueUrl(editState.issueURL, editState.authType),
         v_clientID = validateActions._validateClientID(editState.clientID, editState.authType),
@@ -658,7 +658,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep5(editState: EditState) {
+  _validateStep4(editState: EditState) {
     let result =
       validateActions._validateRepoSuffix(editState.repoSuffix, editState.repoType).status === 1 &&
       validateActions._validateRepoAddress(editState.repoAddress, editState.repoType).status === 1 &&
@@ -669,7 +669,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep5(editState: EditState) {
+  validateStep4(editState: EditState) {
     return dispatch => {
       const v_repoSuffix = validateActions._validateRepoSuffix(editState.repoSuffix, editState.repoType),
         v_repoAddress = validateActions._validateRepoAddress(editState.repoAddress, editState.repoType),
@@ -851,7 +851,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep7(editState: EditState) {
+  _validateStep6(editState: EditState) {
     let result =
       validateActions._validateESUrl(editState.esUrl, editState.monitorType).status === 1 &&
       validateActions._validateESUsername(editState.esUsername, editState.monitorType).status === 1 &&
@@ -863,7 +863,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep7(editState: EditState) {
+  validateStep6(editState: EditState) {
     return dispatch => {
       const v_esUrl = validateActions._validateESUrl(editState.esUrl, editState.monitorType),
         v_esUsername = validateActions._validateESUsername(editState.esUsername, editState.monitorType),
@@ -979,7 +979,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep8(editState?: EditState) {
+  _validateStep7(editState?: EditState) {
     const result =
       validateActions._validateCertificate(editState.certificate, editState.openConsole, editState.certType).status ===
         1 &&
@@ -988,7 +988,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep8(editState?: EditState) {
+  validateStep7(editState?: EditState) {
     return dispatch => {
       const v_certificate = validateActions._validateCertificate(
           editState.certificate,

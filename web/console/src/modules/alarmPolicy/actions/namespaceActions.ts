@@ -38,4 +38,16 @@ const queryNamespaceActions = generateQueryActionCreator({
   bindFetcher: fetchNamespaceActions
 });
 
-export const namespaceActions = extend(fetchNamespaceActions, queryNamespaceActions);
+//占位
+const restActions = {
+  selectNamespace: (namespace: string) => {
+    return async (dispatch, getState: GetState) => {
+      dispatch({
+        type: ActionType.SelectNamespace,
+        payload: namespace
+      });
+    };
+  }
+};
+
+export const namespaceActions = extend(fetchNamespaceActions, queryNamespaceActions, restActions);

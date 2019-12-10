@@ -71,9 +71,11 @@ data:
       api_server = "https://tke-business-api"
       api_server_client_config = "/app/conf/tke-business-config.yaml"
 
+{{- if .EnableRegistry }}
       [client.registry]
       api_server = "https://tke-registry-api"
       api_server_client_config = "/app/conf/tke-registry-config.yaml"
+{{- end }}
 
   tke-platform-config.yaml: |
     apiVersion: v1
@@ -115,6 +117,7 @@ data:
           user: admin-cert
         name: tke
 
+{{- if .EnableRegistry }}
   tke-registry-config.yaml: |
     apiVersion: v1
     kind: Config
@@ -134,3 +137,4 @@ data:
           cluster: tke
           user: admin-cert
         name: tke
+{{- end }}

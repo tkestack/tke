@@ -111,9 +111,12 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 
 	// client config for platform apiserver
-	platformAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)
+	platformAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)
 	if err != nil {
 		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("failed to initialize client config of platform API server")
 	}
 	platformClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(platformAPIServerClientConfig, "tke-notify-api"))
 	if err != nil {

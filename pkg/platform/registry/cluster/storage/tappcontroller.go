@@ -53,6 +53,8 @@ const (
 	Pods Action = "pods"
 	// Events is an action that lists events
 	Events Action = "events"
+
+	tappGroupName = "apps.tkestack.io"
 )
 
 // TappControllerREST implements proxy tapp controller request to cluster of user.
@@ -124,8 +126,7 @@ func (h *tappControllerProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.
 	loc := *h.location
 	loc.RawQuery = req.URL.RawQuery
 
-	// todo: Change the apigroup here once the integration pipeline configuration is complete using the tapp in the tkestack group
-	prefix := "/apis/tke.cloud.tencent.com/v1"
+	prefix := fmt.Sprintf("/apis/%s/v1", tappGroupName)
 
 	if len(h.action) != 0 {
 		h.serveAction(w, req)
@@ -271,8 +272,7 @@ func getTapp(cluster *platform.Cluster, credential *platform.ClusterCredential, 
 	if err != nil {
 		return nil, err
 	}
-	// todo: Change the apigroup here once the integration pipeline configuration is complete using the tapp in the tkestack group
-	tappResource := schema.GroupVersionResource{Group: "tke.cloud.tencent.com", Version: "v1", Resource: "tapps"}
+	tappResource := schema.GroupVersionResource{Group: tappGroupName, Version: "v1", Resource: "tapps"}
 	content, err := dynamicclient.Resource(tappResource).Namespace(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err

@@ -62,14 +62,12 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
 
-	monitorAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.MonitorAPIClient)
+	monitorAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.MonitorAPIClient)
 	if err != nil {
 		return nil, err
 	}
-
-	businessAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
-	if err != nil {
-		return nil, err
+	if !ok {
+		return nil, fmt.Errorf("failed to initialize client config of monitor API server")
 	}
 
 	// shallow copy, do not modify the apiServerClientConfig.Timeout.
@@ -99,10 +97,9 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 
 	controllerManagerConfig := &Config{
-		ServerName:                    serverName,
-		LeaderElectionClient:          leaderElectionClient,
-		MonitorAPIServerClientConfig:  monitorAPIServerClientConfig,
-		BusinessAPIServerClientConfig: businessAPIServerClientConfig,
+		ServerName:                   serverName,
+		LeaderElectionClient:         leaderElectionClient,
+		MonitorAPIServerClientConfig: monitorAPIServerClientConfig,
 		Authorization: apiserver.AuthorizationInfo{
 			Authorizer: authorizerfactory.NewAlwaysAllowAuthorizer(),
 		},
@@ -110,6 +107,14 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 			Authenticator: anonymous.NewAuthenticator(),
 		},
 		MonitorConfig: monitorConfig,
+	}
+
+	businessAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if ok && businessAPIServerClientConfig != nil {
+		controllerManagerConfig.BusinessAPIServerClientConfig = businessAPIServerClientConfig
 	}
 
 	if err := opts.Component.ApplyTo(&controllerManagerConfig.Component); err != nil {

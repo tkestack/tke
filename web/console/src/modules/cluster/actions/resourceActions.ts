@@ -96,7 +96,7 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
     gameBGList.records.forEach(backgroup => {
       if (backgroup.spec.lbName === item.metadata.name) {
         let backendRecords = gameBRList.records.filter(
-          records => records.metadata.labels['lbcf.tke.cloud.tencent.com/backend-group'] === backgroup.metadata.name
+          records => records.metadata.labels['lbcf.tkestack.io/backend-group'] === backgroup.metadata.name
         );
         try {
           backGroups.push({

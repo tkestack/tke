@@ -72,7 +72,6 @@ type ControllerContext struct {
 	ControllerStartInterval time.Duration
 
 	PlatformClient platformv1.PlatformV1Interface
-
 	RegistryClient registryv1.RegistryV1Interface
 }
 
@@ -86,11 +85,6 @@ func (c ControllerContext) IsControllerEnabled(name string) bool {
 // the shared-informers client and token controller.
 func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.ClientBuilder, stop <-chan struct{}) (ControllerContext, error) {
 	platformClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.PlatformAPIServerClientConfig, "tke-business-controller"))
-	if err != nil {
-		return ControllerContext{}, fmt.Errorf("failed to create the platform client: %v", err)
-	}
-
-	registryClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.RegistryAPIServerClientConfig, "tke-business-controller"))
 	if err != nil {
 		return ControllerContext{}, fmt.Errorf("failed to create the platform client: %v", err)
 	}
@@ -128,7 +122,15 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
 
 		PlatformClient: platformClient.PlatformV1(),
-		RegistryClient: registryClient.RegistryV1(),
 	}
+
+	if cfg.RegistryAPIServerClientConfig != nil {
+		registryClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.RegistryAPIServerClientConfig, "tke-business-controller"))
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to create the registry client: %v", err)
+		}
+		ctx.RegistryClient = registryClient.RegistryV1()
+	}
+
 	return ctx, nil
 }

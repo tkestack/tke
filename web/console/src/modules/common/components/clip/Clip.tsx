@@ -44,14 +44,15 @@ export class Clip extends React.Component<ClipProps, {}> {
   }
 
   componentDidMount() {
-    let clipboard = new Clipboard('.copy-trigger');
-
-    clipboard.on('success', e => {
-      tips.success(t('复制成功'), 1000);
-      e.clearSelection();
-    });
-    clipboard.on('error', e => {
-      tips.error(t('复制失败'), 1000);
-    });
+    if (!window['paas_is_init_clipboard']) {
+      window['paas_is_init_clipboard'] = new Clipboard('.copy-trigger');
+      window['paas_is_init_clipboard'].on('success', e => {
+        tips.success(t('复制成功'), 1000);
+        e.clearSelection();
+      });
+      window['paas_is_init_clipboard'].on('error', e => {
+        tips.error(t('复制失败'), 1000);
+      });
+    }
   }
 }

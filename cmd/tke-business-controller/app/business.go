@@ -76,6 +76,10 @@ func startProjectController(ctx ControllerContext) (http.Handler, bool, error) {
 }
 
 func startImageNamespaceController(ctx ControllerContext) (http.Handler, bool, error) {
+	if ctx.RegistryClient == nil {
+		return nil, false, nil
+	}
+
 	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: "v1", Resource: "imagenamespaces"}] {
 		return nil, false, nil
 	}

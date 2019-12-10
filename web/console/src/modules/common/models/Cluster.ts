@@ -56,22 +56,22 @@ interface ClusterSpec {
 
 interface ClusterStatus {
   /** 集群的地址相关信息 */
-  addresses: ClusterAddress[];
+  addresses?: ClusterAddress[];
 
   /** 集群当前的状态 */
-  conditions: ClusterCondition[];
+  conditions?: ClusterCondition[];
 
   /** 集群的相关凭证 */
-  credential: {
+  credential?: {
     caCert: string;
     token: string;
   };
 
   /** 当前的状态 */
-  phase: string;
+  phase?: string;
 
   /** 资源的相关配置 request limit */
-  resource: {
+  resource?: {
     /** 可分配 */
     allocatable: StatusResource;
 
@@ -83,7 +83,7 @@ interface ClusterStatus {
   };
 
   /** 集群的版本 */
-  version: string;
+  version?: string;
 }
 
 interface StatusResource {

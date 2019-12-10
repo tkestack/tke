@@ -3,6 +3,12 @@ import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
 import * as ActionType from '../constants/ActionType';
 import { initValidator } from '../../common/models/Validation';
 
+let initAlarmPolicyType = 'cluster';
+let initAlarmObjectsType = 'all';
+/// #if project
+initAlarmPolicyType = 'pod';
+initAlarmObjectsType = 'part';
+/// #endif
 const TempReducer = combineReducers({
   alarmPolicyId: reduceToPayload(ActionType.InputAlarmPolicyId, ''),
 
@@ -15,7 +21,7 @@ const TempReducer = combineReducers({
   v_alarmPolicyDescription: reduceToPayload(ActionType.ValidateAlarmPolicyDescription, initValidator),
 
   /**策略对象类型 */
-  alarmPolicyType: reduceToPayload(ActionType.InputAlarmPolicyType, 'cluster'),
+  alarmPolicyType: reduceToPayload(ActionType.InputAlarmPolicyType, initAlarmPolicyType),
 
   v_alarmPolicyType: reduceToPayload(ActionType.ValidateAlarmPolicyType, initValidator),
 
@@ -28,7 +34,7 @@ const TempReducer = combineReducers({
 
   v_alarmObjects: reduceToPayload(ActionType.ValidateAlarmPolicyObjects, initValidator),
 
-  alarmObjectsType: reduceToPayload(ActionType.InputAlarmPolicyObjectsType, 'all'),
+  alarmObjectsType: reduceToPayload(ActionType.InputAlarmPolicyObjectsType, initAlarmObjectsType),
 
   alarmObjectNamespace: reduceToPayload(ActionType.InputAlarmWorkLoadNameSpace, ''),
 

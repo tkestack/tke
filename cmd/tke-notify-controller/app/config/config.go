@@ -53,9 +53,12 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
 
-	notifyAPIServerClientConfig, err := controllerconfig.BuildClientConfig(opts.NotifyAPIClient)
+	notifyAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.NotifyAPIClient)
 	if err != nil {
 		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("failed to initialize client config of notify API server")
 	}
 
 	// shallow copy, do not modify the apiServerClientConfig.Timeout.

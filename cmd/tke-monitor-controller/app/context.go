@@ -83,11 +83,6 @@ func (c ControllerContext) IsControllerEnabled(name string) bool {
 // controllers such as the cloud provider and clientBuilder. rootClientBuilder is only used for
 // the shared-informers client and token controller.
 func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.ClientBuilder, stop <-chan struct{}) (ControllerContext, error) {
-	client, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.BusinessAPIServerClientConfig, "tke-monitor-controller"))
-	if err != nil {
-		return ControllerContext{}, fmt.Errorf("failed to create the business client: %v", err)
-	}
-
 	versionedClient := rootClientBuilder.ClientOrDie("shared-informers")
 	sharedInformers := versionedinformers.NewSharedInformerFactory(versionedClient, controller.ResyncPeriod(&cfg.Component)())
 
@@ -120,8 +115,16 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
 
-		BusinessClient: client.BusinessV1(),
-		MonitorConfig:  cfg.MonitorConfig,
+		MonitorConfig: cfg.MonitorConfig,
 	}
+
+	if cfg.BusinessAPIServerClientConfig != nil {
+		businessClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.BusinessAPIServerClientConfig, "tke-monitor-controller"))
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to create the business client: %v", err)
+		}
+		ctx.BusinessClient = businessClient.BusinessV1()
+	}
+
 	return ctx, nil
 }

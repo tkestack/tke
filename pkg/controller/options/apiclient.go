@@ -25,6 +25,9 @@ import (
 )
 
 // APIServerClientOptions holds the platform apiserver client options.
+// If it is not required, the parameter verification will not determine whether
+// the address of the apiserver or the configuration file address has been
+// specified.
 type APIServerClientOptions struct {
 	Server             string
 	ServerClientConfig string
@@ -32,7 +35,8 @@ type APIServerClientOptions struct {
 	QPS                float32
 	Burst              int32
 
-	name string
+	Name     string
+	Required bool
 
 	flagAPIClientContentType        string
 	flagAPIClientQPS                string
@@ -50,20 +54,21 @@ type APIServerClientOptions struct {
 }
 
 // NewAPIServerClientOptions creates the default APIServerClientOptions object.
-func NewAPIServerClientOptions(name string) *APIServerClientOptions {
+func NewAPIServerClientOptions(name string, required bool) *APIServerClientOptions {
 	return &APIServerClientOptions{
 		ContentType: "application/vnd.kubernetes.protobuf",
 		QPS:         20.0,
 		Burst:       30,
 
-		name: name,
+		Name:     name,
+		Required: required,
 
 		flagAPIClientContentType:        fmt.Sprintf("%s-api-content-type", name),
 		flagAPIClientQPS:                fmt.Sprintf("%s-api-qps", name),
 		flagAPIClientTimeout:            fmt.Sprintf("%s-api-timeout", name),
 		flagAPIClientBurst:              fmt.Sprintf("%s-api-burst", name),
-		flagAPIClientServer:             fmt.Sprintf("%s-api-server", name),
-		flagAPIClientServerClientConfig: fmt.Sprintf("%s-api-server-client-config", name),
+		flagAPIClientServer:             FlagAPIClientServer(name),
+		flagAPIClientServerClientConfig: FlagAPIClientServerClientConfig(name),
 
 		configAPIClientContentType:        fmt.Sprintf("client.%s.api_content_type", name),
 		configAPIClientQPS:                fmt.Sprintf("client.%s.api_qps", name),
@@ -74,26 +79,26 @@ func NewAPIServerClientOptions(name string) *APIServerClientOptions {
 	}
 }
 
-// AddFlags adds flags related to debugging for controller manager to the specified FlagSet.
+// AddFlags adds flags related to debugging for API client to the specified FlagSet.
 func (o *APIServerClientOptions) AddFlags(fs *pflag.FlagSet) {
 	if o == nil {
 		return
 	}
 
 	fs.String(o.flagAPIClientServer, o.Server,
-		"The address of the "+o.name+" apiserver (overrides any value in "+o.flagAPIClientServerClientConfig+").")
+		"The address of the "+o.Name+" apiserver (overrides any value in "+o.flagAPIClientServerClientConfig+").")
 	_ = viper.BindPFlag(o.configAPIClientServer, fs.Lookup(o.flagAPIClientServer))
 	fs.String(o.flagAPIClientServerClientConfig, o.ServerClientConfig,
-		"Path to config file with authorization and "+o.name+" apiserver location information.")
+		"Path to config file with authorization and "+o.Name+" apiserver location information.")
 	_ = viper.BindPFlag(o.configAPIClientServerClientConfig, fs.Lookup(o.flagAPIClientServerClientConfig))
 	fs.String(o.flagAPIClientContentType, o.ContentType,
-		"Content type of requests sent to "+o.name+" apiserver.")
+		"Content type of requests sent to "+o.Name+" apiserver.")
 	_ = viper.BindPFlag(o.configAPIClientContentType, fs.Lookup(o.flagAPIClientContentType))
 	fs.Float32(o.flagAPIClientQPS, o.QPS,
-		"QPS to use while talking with "+o.name+" apiserver.")
+		"QPS to use while talking with "+o.Name+" apiserver.")
 	_ = viper.BindPFlag(o.configAPIClientQPS, fs.Lookup(o.flagAPIClientQPS))
 	fs.Int32(o.flagAPIClientBurst, o.Burst,
-		"Burst to use while talking with "+o.name+" apiserver.")
+		"Burst to use while talking with "+o.Name+" apiserver.")
 	_ = viper.BindPFlag(o.configAPIClientBurst, fs.Lookup(o.flagAPIClientBurst))
 }
 
@@ -108,5 +113,22 @@ func (o *APIServerClientOptions) ApplyFlags() []error {
 	o.QPS = float32(viper.GetFloat64(o.configAPIClientQPS))
 	o.ContentType = viper.GetString(o.configAPIClientContentType)
 
+	if o.Required {
+		if o.ServerClientConfig == "" && o.Server == "" {
+			errs = append(errs, fmt.Errorf("must specify either `%s` or `%s`", FlagAPIClientServer(o.Name), FlagAPIClientServerClientConfig(o.Name)))
+		}
+	}
+
 	return errs
+}
+
+// FlagAPIClientServer returns API client server flag by given name.
+func FlagAPIClientServer(name string) string {
+	return fmt.Sprintf("%s-api-server", name)
+}
+
+// FlagAPIClientServerClientConfig returns API client server config flag by
+// given name.
+func FlagAPIClientServerClientConfig(name string) string {
+	return fmt.Sprintf("%s-api-server-client-config", name)
 }

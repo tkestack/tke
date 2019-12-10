@@ -108,15 +108,15 @@ lint:
 test:
 	@$(MAKE) go.test
 
-## quick-release: Quick release tke
-.PHONY: quick-release
-quick-release:
-	build/docker/tools/tke-installer/build.sh -q
-
 ## release: Release tke
 .PHONY: release
 release:
-	build/docker/tools/tke-installer/build.sh
+	build/docker/tools/tke-installer/release.sh
+
+## release-test: test release
+.PHONY: release
+release-test:
+	go test -timeout=60m tkestack.io/tke/test/e2e_installer
 
 ## help: Show this help info.
 .PHONY: help

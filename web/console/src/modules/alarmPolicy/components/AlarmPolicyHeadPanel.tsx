@@ -30,31 +30,10 @@ export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
         left={
           <div style={{ lineHeight: '28px' }}>
             <h2 style={{ float: 'left' }}>{t('告警设置')}</h2>
-            {/* <div className="tc-15-dropdown" style={{ marginLeft: '20px', display: 'inline-block', minWidth: '30px' }}>
-              {t('地域')}
-            </div>
-            <RegionBar
-              recordData={regionList}
-              value={regionSelection.value}
-              onSelect={item => actions.region.select(item.value)}
-              mode="cardMenu"
-            /> */}
             <div className="tc-15-dropdown" style={{ marginLeft: '20px', display: 'inline-block', minWidth: '30px' }}>
               {t('集群')}
             </div>
             <FormPanelSelect {...selectProps} />
-            {/* <SelectList
-              recordData={clusterList}
-              value={clusterSelection ? clusterSelection.clusterId : ''}
-              valueField="clusterId"
-              textFields={['clusterId', 'clusterName']}
-              textFormat={`\${clusterId} (\${clusterName})`}
-              mode="dropdown"
-              tipPosition="top"
-              align="start"
-              style={{ display: 'inline-block', border: '1px solid #ddd', height: '28px' }}
-              onSelect={actions.cluster.selectCluster}
-            /> */}
           </div>
         }
       />

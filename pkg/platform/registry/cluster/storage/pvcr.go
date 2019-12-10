@@ -98,8 +98,7 @@ func (h *pvcrProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	loc := *h.location
 	loc.RawQuery = req.URL.RawQuery
 
-	// todo: Change the apigroup here once the integration pipeline configuration is complete using the tapp in the tkestack group
-	prefix := "/apis/storage.tke.cloud.tencent.com/v1"
+	prefix := "/apis/storage.tkestack.io/v1"
 
 	if len(h.namespace) == 0 && len(h.name) == 0 {
 		loc.Path = fmt.Sprintf("%s/persistentvolumeclaimruntimes", prefix)

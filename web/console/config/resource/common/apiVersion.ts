@@ -202,7 +202,7 @@ const k8sApiVersionFor18: ApiVersion = {
     headTitle: 'CronJob'
   },
   tapp: {
-    group: 'tke.cloud.tencent.com',
+    group: 'apps.tkestack.io',
     version: 'v1',
     basicEntry: 'apis',
     headTitle: 'TApp'

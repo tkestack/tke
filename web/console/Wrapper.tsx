@@ -208,6 +208,9 @@ const businessCommonRouterConfig: RouterConfig[] = [
 interface ConsoleWrapperProps {
   /** 平台侧业务侧 */
   platformType: PlatformTypeEnum;
+
+  /** 是否需要侧边导航栏 */
+  sideBar?: boolean;
 }
 
 interface UserInfo {
@@ -435,17 +438,19 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
   render() {
     let query = window.location.search;
     let finalContent: React.ReactNode;
+
     if (isEmpty(this.state.consoleApiMap)) {
       finalContent = <noscript />;
     } else {
+      let { sideBar = true } = this.props;
       finalContent = (
         <React.Fragment>
           {this._renderTopBar(query)}
 
           <div className="qc-animation-empty container container-tke2-cluster" id="tkestack" style={{ left: 0 }}>
-            {this._renderSideBar(query)}
+            {sideBar && this._renderSideBar(query)}
 
-            <div id="appArea" className="main">
+            <div id="appArea" className="main" style={sideBar ? {} : { left: 0 }}>
               {this.props.children}
             </div>
           </div>
