@@ -334,6 +334,7 @@ func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 		NodeCIDRMaskSize:      c.Status.NodeCIDRMaskSize,
 		ClusterCIDR:           c.Spec.ClusterCIDR,
 		ServiceClusterIPRange: c.Status.ServiceCIDR,
+		CertSANs:              c.Spec.PublicAlternativeNames,
 
 		APIServerExtraArgs:         c.Spec.APIServerExtraArgs,
 		ControllerManagerExtraArgs: c.Spec.ControllerManagerExtraArgs,

@@ -748,12 +748,23 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 		cluster.Spec.NetworkDevice = "eth0"
 	}
 
-	if config.HA != nil && config.HA.ThirdPartyHA != nil {
-		cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
-			Type: platformv1.AddressAdvertise,
-			Host: config.HA.VIP(),
-			Port: 6443,
-		})
+	if config.HA != nil {
+		if t.Para.Config.HA.TKEHA != nil {
+			cluster.Spec.PublicAlternativeNames = append(cluster.Spec.PublicAlternativeNames, t.Para.Config.HA.TKEHA.VIP)
+			cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
+				Type: platformv1.AddressAdvertise,
+				Host: t.Para.Config.HA.TKEHA.VIP,
+				Port: 6443,
+			})
+		}
+		if t.Para.Config.HA.ThirdPartyHA != nil {
+			cluster.Spec.PublicAlternativeNames = append(cluster.Spec.PublicAlternativeNames, t.Para.Config.HA.ThirdPartyHA.VIP)
+			cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
+				Type: platformv1.AddressAdvertise,
+				Host: t.Para.Config.HA.ThirdPartyHA.VIP,
+				Port: 6443,
+			})
+		}
 	}
 }
 

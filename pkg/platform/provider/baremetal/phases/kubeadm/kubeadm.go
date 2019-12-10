@@ -97,6 +97,7 @@ type InitOption struct {
 	NodeCIDRMaskSize      int32
 	ClusterCIDR           string
 	ServiceClusterIPRange string
+	CertSANs              []string
 
 	APIServerExtraArgs         map[string]string
 	ControllerManagerExtraArgs map[string]string
