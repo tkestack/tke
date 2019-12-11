@@ -45,7 +45,7 @@ import (
 // RestStorageProvider interface
 type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
-	Enforcer       *casbin.SyncedEnforcer
+	Enforcer             *casbin.SyncedEnforcer
 	PrivilegedUsername   string
 }
 
@@ -78,6 +78,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		localIdentityRest := localidentitystorage.NewStorage(restOptionsGetter, authClient, s.Enforcer, s.PrivilegedUsername)
 		storageMap["localidentities"] = localIdentityRest.LocalIdentity
+		storageMap["localidentities/password"] = localIdentityRest.Password
 		storageMap["localidentities/status"] = localIdentityRest.Status
 		storageMap["localidentities/policies"] = localIdentityRest.Policy
 		storageMap["localidentities/roles"] = localIdentityRest.Role

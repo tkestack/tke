@@ -20,12 +20,14 @@ package localidentity
 
 import (
 	"fmt"
+
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/validation"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -115,7 +117,34 @@ func ValidateLocalIdentityUpdate(authClient authinternalclient.AuthInterface, lo
 		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("username"), localIdentity.Spec.Username, "disallowed change the username"))
 	}
 
+	if localIdentity.Spec.HashedPassword == "" {
+		localIdentity.Spec.HashedPassword = oldLocalIdentity.Spec.HashedPassword
+	}
+
 	return allErrs
+}
+
+// ValidateLocalIdentityPasswordUpdate tests if required fields in the passwordReq are set
+// during an update.
+func ValidateLocalIdentityPasswordUpdate(localIdentity *auth.LocalIdentity, passwordReq *auth.PasswordReq) error {
+	err := util.VerifyDecodedPassword(passwordReq.OriginalPassword, localIdentity.Spec.HashedPassword)
+	if err != nil {
+		log.Error("Invalid original password", log.String("original password", passwordReq.OriginalPassword), log.Err(err))
+		return fmt.Errorf("verify original password failed: %v", err)
+	}
+
+	log.Info("local", log.Any("password", localIdentity.Spec.HashedPassword))
+	if passwordReq.HashedPassword == "" {
+		return fmt.Errorf("must specify hashedPassword")
+	}
+
+	if bcrypted, err := util.BcryptPassword(passwordReq.HashedPassword); err != nil {
+		return fmt.Errorf("bcrypt password failed: %v", err)
+	} else {
+		localIdentity.Spec.HashedPassword = bcrypted
+	}
+
+	return nil
 }
 
 func localIdentityExists(authClient authinternalclient.AuthInterface, tenantID, username string) (bool, error) {

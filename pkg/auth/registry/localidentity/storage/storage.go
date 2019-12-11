@@ -21,12 +21,13 @@ package storage
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/util/dryrun"
 	"k8s.io/klog"
-	"sync"
 	"tkestack.io/tke/pkg/auth/util"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -49,6 +50,7 @@ import (
 // Storage includes storage for identities and all sub resources.
 type Storage struct {
 	LocalIdentity *REST
+	Password      *PasswordREST
 	Status        *StatusREST
 	Policy        *PolicyREST
 	Role          *RoleREST
@@ -91,6 +93,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 
 	return &Storage{
 		LocalIdentity: &REST{store, privilegedUsername},
+		Password:      &PasswordREST{store, authClient},
 		Status:        &StatusREST{&statusStore},
 		Policy:        &PolicyREST{store, authClient, enforcer},
 		Role:          &RoleREST{store, authClient, enforcer},
@@ -110,8 +113,6 @@ func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, na
 	if err := util.FilterLocalIdentity(ctx, o); err != nil {
 		return nil, err
 	}
-
-	o.Spec.HashedPassword = ""
 	return o, nil
 }
 

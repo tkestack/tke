@@ -24,17 +24,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"tkestack.io/tke/pkg/auth/util"
 
-	"k8s.io/apimachinery/pkg/fields"
-	authapi "tkestack.io/tke/api/auth"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/dexidp/dex/connector"
 	dexlog "github.com/dexidp/dex/pkg/log"
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/util/log"
@@ -97,7 +95,7 @@ func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scop
 	}
 
 	log.Debug("Check user login", log.String("tenantID", p.tenantID), log.String("username", username), log.String("password", password))
-	localIdentity, err := p.getLocalIdentity(p.tenantID, username)
+	localIdentity, err := util.GetLocalIdentity(authClient, p.tenantID, username)
 	if err != nil {
 		log.Error("Get user failed", log.String("user", username), log.Err(err))
 		return ident, false, nil
@@ -146,9 +144,9 @@ func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scop
 
 func (p *localIdentityProvider) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
 	// If the user has been deleted, the refresh token will be rejected.
-	ident, err := p.getLocalIdentity(p.tenantID, identity.Username)
+	ident, err := util.GetLocalIdentity(p.authClient, p.tenantID, identity.Username)
 	if err != nil {
-		if err == dexstorage.ErrNotFound {
+		if apierrors.IsNotFound(err) {
 			return connector.Identity{}, errors.New("user not found")
 		}
 		return connector.Identity{}, fmt.Errorf("get user faild: %v", err)
@@ -160,21 +158,4 @@ func (p *localIdentityProvider) Refresh(ctx context.Context, s connector.Scopes,
 	}
 
 	return identity, nil
-}
-
-func (p *localIdentityProvider) getLocalIdentity(tenantID, userName string) (authapi.LocalIdentity, error) {
-	tenantUserSelector := fields.AndSelectors(
-		fields.OneTermEqualSelector("spec.tenantID", tenantID),
-		fields.OneTermEqualSelector("spec.username", userName))
-
-	localIdentityList, err := p.authClient.LocalIdentities().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
-	if err != nil {
-		return authapi.LocalIdentity{}, err
-	}
-
-	if len(localIdentityList.Items) == 0 {
-		return authapi.LocalIdentity{}, err
-	}
-
-	return localIdentityList.Items[0], nil
 }

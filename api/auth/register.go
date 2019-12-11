@@ -62,6 +62,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&LocalIdentity{},
 		&LocalIdentityList{},
+		&PasswordReq{},
 		&APIKey{},
 		&APIKeyList{},
 		&APIKeyReq{},

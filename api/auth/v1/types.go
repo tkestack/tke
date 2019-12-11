@@ -20,6 +20,7 @@ package v1
 
 import (
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -74,12 +75,11 @@ const (
 type LocalIdentitySpec struct {
 	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,11,rep,name=finalizers,casttype=FinalizerName"`
 
-	Username         string `json:"username" protobuf:"bytes,7,opt,name=name"`
-	DisplayName      string `json:"displayName" protobuf:"bytes,8,opt,name=displayName"`
-	Email            string `json:"email" protobuf:"bytes,9,opt,name=email"`
-	PhoneNumber      string `json:"phoneNumber" protobuf:"bytes,10,opt,name=phone"`
-	HashedPassword   string `json:"hashedPassword,omitempty" protobuf:"bytes,4,opt,name=hashedPassword"`
-	OriginalPassword string `json:"originalPassword,omitempty" protobuf:"bytes,5,opt,name=originalPassword"`
+	Username       string `json:"username" protobuf:"bytes,7,opt,name=name"`
+	DisplayName    string `json:"displayName" protobuf:"bytes,8,opt,name=displayName"`
+	Email          string `json:"email" protobuf:"bytes,9,opt,name=email"`
+	PhoneNumber    string `json:"phoneNumber" protobuf:"bytes,10,opt,name=phone"`
+	HashedPassword string `json:"hashedPassword,omitempty" protobuf:"bytes,4,opt,name=hashedPassword"`
 	// +optional
 	TenantID string `json:"tenantID,omitempty" protobuf:"bytes,2,opt,name=tenantID"`
 
@@ -106,6 +106,16 @@ type LocalIdentityStatus struct {
 	// The last time the local identity was updated.
 	// +optional
 	LastUpdateTime metav1.Time `protobuf:"bytes,2,opt,name=lastUpdateTime"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PasswordReq contains info to update password for a localIdentity
+type PasswordReq struct {
+	metav1.TypeMeta `json:",inline"`
+
+	HashedPassword   string `json:"hashedPassword,omitempty" protobuf:"bytes,1,opt,name=hashedPassword"`
+	OriginalPassword string `json:"originalPassword,omitempty" protobuf:"bytes,2,opt,name=originalPassword"`
 }
 
 // +genclient

@@ -36,6 +36,8 @@ func FilterLocalIdentity(ctx context.Context, localIdentity *auth.LocalIdentity)
 	if localIdentity.Spec.TenantID != tenantID {
 		return errors.NewNotFound(v1.Resource("localIdentity"), localIdentity.ObjectMeta.Name)
 	}
+
+	localIdentity.Spec.HashedPassword = ""
 	return nil
 }
 

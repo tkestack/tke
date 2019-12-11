@@ -68,15 +68,14 @@ const (
 type LocalIdentitySpec struct {
 	Finalizers []FinalizerName
 
-	Username         string
-	DisplayName      string
-	Email            string
-	PhoneNumber      string
-	HashedPassword   string
-	OriginalPassword string
-	TenantID         string
-	Groups           []string
-	Extra            map[string]string
+	Username       string
+	DisplayName    string
+	Email          string
+	PhoneNumber    string
+	HashedPassword string
+	TenantID       string
+	Groups         []string
+	Extra          map[string]string
 }
 
 // LocalIdentityPhase defines the phase of LocalIdentity construct.
@@ -95,6 +94,16 @@ type LocalIdentityStatus struct {
 	// The last time the local identity was updated.
 	// +optional
 	LastUpdateTime metav1.Time
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PasswordReq contains info to update password for a localIdentity
+type PasswordReq struct {
+	metav1.TypeMeta
+
+	HashedPassword   string
+	OriginalPassword string
 }
 
 // +genclient

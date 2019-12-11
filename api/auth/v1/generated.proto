@@ -321,8 +321,6 @@ message LocalIdentitySpec {
 
   optional string hashedPassword = 4;
 
-  optional string originalPassword = 5;
-
   // +optional
   optional string tenantID = 2;
 
@@ -353,6 +351,13 @@ message NonResourceAttributes {
   // Verb is the standard HTTP verb
   // +optional
   optional string verb = 2;
+}
+
+// PasswordReq contains info to update password for a localIdentity
+message PasswordReq {
+  optional string hashedPassword = 1;
+
+  optional string originalPassword = 2;
 }
 
 // Policy represents a policy document for access control.

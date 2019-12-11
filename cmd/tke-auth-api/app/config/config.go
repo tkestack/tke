@@ -72,8 +72,6 @@ import (
 const (
 	license = "Apache 2.0"
 	title   = "Tencent Kubernetes Engine Auth"
-
-	policyRulesPrefix = "policy-rules"
 )
 
 // Config is the running configuration structure of the TKE controller manager.

@@ -270,6 +270,14 @@ func (NonResourceAttributes) SwaggerDoc() map[string]string {
 	return map_NonResourceAttributes
 }
 
+var map_PasswordReq = map[string]string{
+	"": "PasswordReq contains info to update password for a localIdentity",
+}
+
+func (PasswordReq) SwaggerDoc() map[string]string {
+	return map_PasswordReq
+}
+
 var map_Policy = map[string]string{
 	"":     "Policy represents a policy document for access control.",
 	"spec": "Spec defines the desired identities of policy document in this set.",

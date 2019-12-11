@@ -45,7 +45,11 @@ func BcryptPassword(password string) (string, error) {
 
 // VerifyDecodedPassword verifies password.
 func VerifyDecodedPassword(decodedPasswd string, bcryptedPasswd string) error {
-	if len(decodedPasswd) == 0 {
+	if decodedPasswd == "" && bcryptedPasswd == "" {
+		return nil
+	}
+
+	if decodedPasswd == "" {
 		return fmt.Errorf("input original password is empty")
 	}
 	decodedBytes, err := base64.StdEncoding.DecodeString(decodedPasswd)
