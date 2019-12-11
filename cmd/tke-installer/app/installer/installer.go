@@ -1773,6 +1773,7 @@ func (t *TKE) installTKERegistryAPI() error {
 		"AdminUsername": t.Para.Config.Registry.TKERegistry.Username,
 		"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
 		"EnableAuth":    t.Para.Config.Auth.TKEAuth != nil,
+		"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID

@@ -165,6 +165,7 @@ data:
       adminUsername: "{{ .AdminUsername }}"
       httpSecret: "{{ .AdminPassword }}"
     defaultTenant: default
+    domainSuffix: "{{ .DomainSuffix }}"
 
   tke-auth-webhook.yaml: |
     apiVersion: v1
