@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 
 	"tkestack.io/tke/pkg/apiserver/authentication"
@@ -60,6 +61,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		UpdateStrategy:           strategy,
 		DeleteStrategy:           strategy,
 		ExportStrategy:           strategy,
+		Decorator:                apikey.Decorator,
 
 		PredicateFunc: apikey.MatchAPIKey,
 	}

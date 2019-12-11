@@ -24,7 +24,6 @@ import (
 
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 
@@ -114,18 +113,15 @@ func validateAPIKeyExpire(expire metav1.Duration) error {
 
 // ValidateAPIKeyReq tests if required fields in the signing key are set.
 func ValidateAPIKeyReq(apiKeyReq *auth.APIKeyReq) error {
-	allErrs := field.ErrorList{}
-
 	if apiKeyReq.Expire.Duration == 0 {
 		apiKeyReq.Expire = defaultAPIKeyTimeout
 	}
 
-	fldPath := field.NewPath("")
 	if err := validateAPIKeyExpire(apiKeyReq.Expire); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("expire"), apiKeyReq.Expire, err.Error()))
+		return err
 	}
 
-	return allErrs.ToAggregate()
+	return nil
 }
 
 // ValidateAPIkeyPassword tests if required fields in the signing key are set.
@@ -140,24 +136,15 @@ func ValidateAPIkeyPassword(apiKeyPass *auth.APIKeyReqPassword, authClient authi
 	if err := validateAPIKeyExpire(apiKeyPass.Expire); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("expire"), apiKeyPass.Expire, err.Error()))
 	}
-	tenantUserSelector := fields.AndSelectors(
-		fields.OneTermEqualSelector("spec.tenantID", apiKeyPass.TenantID),
-		fields.OneTermEqualSelector("spec.username", apiKeyPass.Username))
 
-	localIdentityList, err := authClient.LocalIdentities().List(metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	localIdentity, err := util.GetLocalIdentity(authClient, apiKeyPass.TenantID, apiKeyPass.Username)
 	if err != nil {
-		allErrs = append(allErrs, field.InternalError(fldPath.Child("username"), err))
-	} else if len(localIdentityList.Items) == 0 {
-		allErrs = append(allErrs, field.NotFound(fldPath.Child("username"), apiKeyPass.Username))
+		log.Error("Get localidentity failed", log.String("localIdentity", apiKeyPass.Username), log.Err(err))
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("username"), apiKeyPass.Username, err.Error()))
 	} else {
-		if len(localIdentityList.Items) > 1 {
-			log.Warn("More than one local identity have the same name", log.String("tenantID", apiKeyPass.TenantID), log.String("userName", apiKeyPass.Username))
-		}
-
-		localIdentity := localIdentityList.Items[0]
 		if err := util.VerifyDecodedPassword(apiKeyPass.Password, localIdentity.Spec.HashedPassword); err != nil {
 			log.Error("Invalid password", log.ByteString("input password", []byte(apiKeyPass.Password)), log.String("store password", localIdentity.Spec.HashedPassword), log.Err(err))
-			allErrs = append(allErrs, field.InternalError(fldPath.Child("password"), err))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("password"), apiKeyPass.Password, err.Error()))
 		}
 	}
 

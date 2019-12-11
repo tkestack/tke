@@ -616,6 +616,7 @@ func Convert_auth_APIKeySpec_To_v1_APIKeySpec(in *auth.APIKeySpec, out *APIKeySp
 
 func autoConvert_v1_APIKeyStatus_To_auth_APIKeyStatus(in *APIKeyStatus, out *auth.APIKeyStatus, s conversion.Scope) error {
 	out.Disabled = in.Disabled
+	out.Expired = in.Expired
 	return nil
 }
 
@@ -626,6 +627,7 @@ func Convert_v1_APIKeyStatus_To_auth_APIKeyStatus(in *APIKeyStatus, out *auth.AP
 
 func autoConvert_auth_APIKeyStatus_To_v1_APIKeyStatus(in *auth.APIKeyStatus, out *APIKeyStatus, s conversion.Scope) error {
 	out.Disabled = in.Disabled
+	out.Expired = in.Expired
 	return nil
 }
 

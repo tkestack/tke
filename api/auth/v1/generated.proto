@@ -106,6 +106,9 @@ message APIKeyStatus {
   // Disabled represents whether the apikey has been disabled.
   // +optional
   optional bool disabled = 1;
+
+  // Expired represents whether the apikey has been expired.
+  optional bool expired = 2;
 }
 
 // APISigningKey hold encryption and signing key.

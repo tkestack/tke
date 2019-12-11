@@ -20,18 +20,17 @@ package storage
 
 import (
 	"context"
-	"tkestack.io/tke/pkg/auth/util"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"tkestack.io/tke/api/auth"
-	"tkestack.io/tke/pkg/auth/registry/apikey"
-
-	"tkestack.io/tke/pkg/util/log"
-
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/auth/registry/apikey"
+	"tkestack.io/tke/pkg/auth/util"
 )
 
 // PasswordREST implements the REST endpoint.
@@ -54,15 +53,12 @@ func (r *PasswordREST) Create(ctx context.Context, obj runtime.Object, createVal
 
 	apikeyReq := obj.(*auth.APIKeyReqPassword)
 
-	var err error
 	if err := apikey.ValidateAPIkeyPassword(apikeyReq, r.authClient); err != nil {
-		log.Error("Password request for apikey failed", log.Err(err))
-		return nil, err
+		return nil, apierrors.NewBadRequest(err.Error())
 	}
 	apiKey, err := r.keySigner.Generate(apikeyReq.Username, apikeyReq.TenantID, apikeyReq.Expire.Duration)
 	if err != nil {
-		log.Error("Generate apikey failed", log.String("tenantID", apikeyReq.TenantID), log.String("userName", apikeyReq.Username), log.Err(err))
-		return nil, err
+		return nil, apierrors.NewBadRequest(err.Error())
 	}
 
 	return r.apiKeyStore.Create(ctx, apiKey, createValidation, options)

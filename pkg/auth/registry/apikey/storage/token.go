@@ -20,17 +20,18 @@ package storage
 
 import (
 	"context"
+
 	"tkestack.io/tke/pkg/auth/util"
 
 	"tkestack.io/tke/pkg/auth/registry/apikey"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/util/log"
 )
 
 // TokenREST implements the REST endpoint.
@@ -53,18 +54,12 @@ func (r *TokenREST) Create(ctx context.Context, obj runtime.Object, createValida
 	apikeyReq := obj.(*auth.APIKeyReq)
 	var err error
 	if err := apikey.ValidateAPIKeyReq(apikeyReq); err != nil {
-		log.Errorf("Token request for apikey failed", log.Err(err))
-		return nil, err
+		return nil, apierrors.NewBadRequest(err.Error())
 	}
 
 	apiKey, err := r.keySigner.Generate(userName, tenantID, apikeyReq.Expire.Duration)
 	if err != nil {
-		log.Error("Generate apikey failed", log.String("tenantID", tenantID), log.String("userName", userName), log.Err(err))
-		return nil, err
-	}
-
-	if apiKey.Name == "" && apiKey.GenerateName == "" {
-		apiKey.GenerateName = "apk"
+		return nil, apierrors.NewBadRequest(err.Error())
 	}
 
 	return r.apiKeyStore.Create(ctx, apiKey, createValidation, options)

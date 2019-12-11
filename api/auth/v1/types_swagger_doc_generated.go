@@ -86,6 +86,7 @@ func (APIKeySpec) SwaggerDoc() map[string]string {
 var map_APIKeyStatus = map[string]string{
 	"":         "APIKeyStatus is a description of an api key status.",
 	"disabled": "Disabled represents whether the apikey has been disabled.",
+	"expired":  "Expired represents whether the apikey has been expired.",
 }
 
 func (APIKeyStatus) SwaggerDoc() map[string]string {

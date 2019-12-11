@@ -138,25 +138,6 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	return labels.Set(localIdentity.ObjectMeta.Labels), ToSelectableFields(localIdentity), nil
 }
 
-// Decorator is intended for
-// removing hashed password for identity or list of identities on returned from the
-// underlying storage, since they cannot be watched.
-func Decorator(obj runtime.Object) error {
-	if localIdentity, ok := obj.(*auth.LocalIdentity); ok {
-		localIdentity.Spec.HashedPassword = ""
-		return nil
-	}
-
-	if localIdentityList, ok := obj.(*auth.LocalIdentityList); ok {
-		for i := range localIdentityList.Items {
-			localIdentityList.Items[i].Spec.HashedPassword = ""
-		}
-		return nil
-	}
-
-	return fmt.Errorf("unknown type")
-}
-
 // MatchLocalIdentity returns a generic matcher for a given label and field selector.
 func MatchLocalIdentity(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{

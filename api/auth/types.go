@@ -158,6 +158,8 @@ type APIKeySpec struct {
 type APIKeyStatus struct {
 	// Disabled represents whether the apikey has been disabled.
 	Disabled bool `json:"disabled"`
+	// Expired represents whether the apikey has been expired.
+	Expired bool `json:"expired"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

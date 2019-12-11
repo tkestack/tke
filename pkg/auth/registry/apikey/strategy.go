@@ -21,8 +21,8 @@ package apikey
 import (
 	"context"
 	"fmt"
-	"tkestack.io/tke/pkg/auth/util"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,8 +31,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
+
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/auth/util"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
@@ -101,6 +103,34 @@ func (Strategy) AllowCreateOnUpdate() bool {
 	return false
 }
 
+// Decorator is intended for
+// removing hashed password for identity or list of identities on returned from the
+// underlying storage, since they cannot be watched.
+func Decorator(obj runtime.Object) error {
+	now := metav1.Now()
+	if apiKey, ok := obj.(*auth.APIKey); ok {
+		if apiKey.Spec.ExpireAt.Before(&now) {
+			apiKey.Status.Expired = true
+		} else {
+			apiKey.Status.Expired = false
+		}
+		return nil
+	}
+
+	if apiKeyList, ok := obj.(*auth.APIKeyList); ok {
+		for i := range apiKeyList.Items {
+			if apiKeyList.Items[i].Spec.ExpireAt.Before(&now) {
+				apiKeyList.Items[i].Status.Expired = true
+			} else {
+				apiKeyList.Items[i].Status.Expired = false
+			}
+		}
+		return nil
+	}
+
+	return fmt.Errorf("unknown type")
+}
+
 // AllowUnconditionalUpdate returns true if the object can be updated
 // unconditionally (irrespective of the latest resource version), when there is
 // no resource version specified in the object.
@@ -167,6 +197,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 	newAPIKey := obj.(*auth.APIKey)
 	oldAPIKey := old.(*auth.APIKey)
 	newAPIKey.Spec = oldAPIKey.Spec
+	newAPIKey.Status.Expired = oldAPIKey.Status.Expired
 }
 
 // ValidateUpdate is invoked after default fields in the object have been

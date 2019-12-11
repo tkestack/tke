@@ -173,6 +173,8 @@ type APIKeyStatus struct {
 	// Disabled represents whether the apikey has been disabled.
 	// +optional
 	Disabled bool `json:"disabled" protobuf:"varint,1,opt,name=disabled"`
+	// Expired represents whether the apikey has been expired.
+	Expired bool `json:"expired" protobuf:"varint,2,opt,name=expired"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
