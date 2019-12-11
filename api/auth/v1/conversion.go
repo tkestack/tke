@@ -129,7 +129,6 @@ func AddFieldLabelConversionsForCategory(scheme *runtime.Scheme) error {
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.username",
-				"spec.tenantID",
 				"spec.categoryName",
 				"metadata.name":
 				return label, value, nil

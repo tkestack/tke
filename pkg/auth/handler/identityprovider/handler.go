@@ -21,7 +21,6 @@ package identityprovider
 import (
 	"net/http"
 
-
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/etcd"
@@ -31,7 +30,7 @@ import (
 	"github.com/dexidp/dex/storage"
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 )
 

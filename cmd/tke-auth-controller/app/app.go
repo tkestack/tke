@@ -19,10 +19,10 @@
 package app
 
 import (
+	commonapiserver "k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/cmd/tke-auth-controller/app/config"
 	"tkestack.io/tke/cmd/tke-auth-controller/app/options"
 	"tkestack.io/tke/pkg/app"
-	commonapiserver "k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/pkg/util/log"
 )
 

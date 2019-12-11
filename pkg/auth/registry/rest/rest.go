@@ -96,7 +96,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		apiSignRest := apisignstorage.NewStorage(restOptionsGetter)
 		storageMap["apisigningkeys"] = apiSignRest
 
-		categoryRest := categorystorage.NewStorage(restOptionsGetter)
+		categoryRest := categorystorage.NewStorage(restOptionsGetter, authClient)
 		storageMap["categories"] = categoryRest
 
 		policyRest := policystorage.NewStorage(restOptionsGetter, s.Enforcer, authClient, s.PrivilegedUsername)

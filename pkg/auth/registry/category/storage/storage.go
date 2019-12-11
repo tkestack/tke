@@ -19,10 +19,20 @@
 package storage
 
 import (
+	"context"
+	"fmt"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/fields"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/registry/rest"
+
 	"tkestack.io/tke/api/auth"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/auth/registry/category"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -33,7 +43,7 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against signing key.
-func NewStorage(optsGetter generic.RESTOptionsGetter) *Storage {
+func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface) *Storage {
 	strategy := category.NewStrategy()
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.Category{} },
@@ -53,12 +63,35 @@ func NewStorage(optsGetter generic.RESTOptionsGetter) *Storage {
 		log.Panic("Failed to create category etcd rest storage", log.Err(err))
 	}
 
-	return &Storage{
-		&REST{store},
-	}
+	return &Storage{&REST{store, authClient}}
 }
 
 // REST implements a RESTStorage for signing keys against etcd.
 type REST struct {
 	*registry.Store
+
+	authClient authinternalclient.AuthInterface
+}
+
+func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+
+	cat := obj.(*auth.Category)
+
+	categorySelector := fields.AndSelectors(
+		fields.OneTermEqualSelector("spec.categoryName", cat.Spec.CategoryName))
+
+	categoryList, err := r.authClient.Categories().List(metav1.ListOptions{FieldSelector: categorySelector.String()})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(categoryList.Items) != 0 {
+		return nil, apierrors.NewConflict(
+			auth.Resource("categories"),
+			cat.Spec.CategoryName,
+			fmt.Errorf("categoryName must be different"),
+		)
+	}
+
+	return r.Store.Create(ctx, obj, createValidation, options)
 }

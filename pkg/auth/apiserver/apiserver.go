@@ -133,7 +133,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	restStorageProviders := []storage.RESTStorageProvider{
 		&authrest.StorageProvider{
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
-			Enforcer:       c.ExtraConfig.CasbinEnforcer,
+			Enforcer:             c.ExtraConfig.CasbinEnforcer,
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
 		},
 	}
