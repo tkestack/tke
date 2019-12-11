@@ -110,10 +110,10 @@ type TKE struct {
 
 	log              *stdlog.Logger
 	steps            []handler
+	progress         *ClusterProgress
 	clusterProviders *sync.Map
 	strategy         *clusterstrategy.Strategy
 	clusterProvider  clusterprovider.Provider
-	process          *ClusterProgress
 	isFromRestore    bool
 
 	globalClient kubernetes.Interface
@@ -312,6 +312,9 @@ func NewTKE(config *config.Config) *TKE {
 	c.Config = config
 	c.Para = new(CreateClusterPara)
 	c.Cluster = new(clusterprovider.Cluster)
+	c.progress = new(ClusterProgress)
+	c.progress.Status = StatusUnknown
+	c.clusterProviders = new(sync.Map)
 
 	_ = os.MkdirAll(path.Dir(clusterLogFile), 0755)
 	f, err := os.OpenFile(clusterLogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0744)
@@ -330,12 +333,9 @@ func NewTKE(config *config.Config) *TKE {
 			}
 			log.Infof("load tke data success")
 			c.isFromRestore = true
+			c.progress.Status = StatusDoing
 		}
 	}
-
-	c.clusterProviders = new(sync.Map)
-	c.process = new(ClusterProgress)
-	c.process.Status = StatusUnknown
 
 	return c
 }
@@ -748,12 +748,23 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 		cluster.Spec.NetworkDevice = "eth0"
 	}
 
-	if config.HA != nil && config.HA.ThirdPartyHA != nil {
-		cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
-			Type: platformv1.AddressAdvertise,
-			Host: config.HA.VIP(),
-			Port: 6443,
-		})
+	if config.HA != nil {
+		if t.Para.Config.HA.TKEHA != nil {
+			cluster.Spec.PublicAlternativeNames = append(cluster.Spec.PublicAlternativeNames, t.Para.Config.HA.TKEHA.VIP)
+			cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
+				Type: platformv1.AddressAdvertise,
+				Host: t.Para.Config.HA.TKEHA.VIP,
+				Port: 6443,
+			})
+		}
+		if t.Para.Config.HA.ThirdPartyHA != nil {
+			cluster.Spec.PublicAlternativeNames = append(cluster.Spec.PublicAlternativeNames, t.Para.Config.HA.ThirdPartyHA.VIP)
+			cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
+				Type: platformv1.AddressAdvertise,
+				Host: t.Para.Config.HA.ThirdPartyHA.VIP,
+				Port: 6443,
+			})
+		}
 	}
 }
 
@@ -921,7 +932,7 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 		if err != nil {
 			return errors.NewInternalError(err)
 		}
-		t.process.Data = string(data)
+		t.progress.Data = string(data)
 
 		return nil
 	}()
@@ -929,7 +940,7 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 	if apiStatus != nil {
 		response.WriteHeaderAndJson(int(apiStatus.Status().Code), apiStatus.Status(), restful.MIME_JSON)
 	} else {
-		response.WriteEntity(t.process)
+		response.WriteEntity(t.progress)
 	}
 }
 
@@ -941,7 +952,7 @@ func (t *TKE) do() {
 
 	if t.Step == 0 {
 		t.log.Print("===>starting install task")
-		t.process.Status = StatusDoing
+		t.progress.Status = StatusDoing
 	}
 
 	if t.runAfterClusterReady() {
@@ -953,7 +964,7 @@ func (t *TKE) do() {
 		start := time.Now()
 		err := t.steps[t.Step].Func()
 		if err != nil {
-			t.process.Status = StatusFailed
+			t.progress.Status = StatusFailed
 			t.log.Printf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
 			return
 		}
@@ -963,7 +974,7 @@ func (t *TKE) do() {
 		t.backup()
 	}
 
-	t.process.Status = StatusSuccess
+	t.progress.Status = StatusSuccess
 	if t.Para.Config.Gateway != nil {
 		var host string
 		if t.Para.Config.Gateway.Domain != "" {
@@ -973,30 +984,30 @@ func (t *TKE) do() {
 		} else {
 			host = t.Para.Cluster.Spec.Machines[0].IP
 		}
-		t.process.URL = fmt.Sprintf("http://%s", host)
+		t.progress.URL = fmt.Sprintf("http://%s", host)
 
-		t.process.Username = t.Para.Config.Basic.Username
-		t.process.Password = t.Para.Config.Basic.Password
+		t.progress.Username = t.Para.Config.Basic.Username
+		t.progress.Password = t.Para.Config.Basic.Password
 
 		if t.Para.Config.Gateway.Cert.SelfSignedCert != nil {
-			t.process.CACert, _ = ioutil.ReadFile(constants.CACrtFile)
+			t.progress.CACert, _ = ioutil.ReadFile(constants.CACrtFile)
 		}
 
 		if t.Para.Config.Gateway.Domain != "" {
-			t.process.Hosts = append(t.process.Hosts, t.Para.Config.Gateway.Domain)
+			t.progress.Hosts = append(t.progress.Hosts, t.Para.Config.Gateway.Domain)
 		}
 
 		cfg, _ := t.getKubeconfig()
-		t.process.Kubeconfig, _ = runtime.Encode(clientcmdlatest.Codec, cfg)
+		t.progress.Kubeconfig, _ = runtime.Encode(clientcmdlatest.Codec, cfg)
 	}
 
 	if t.Para.Config.Registry.TKERegistry != nil {
-		t.process.Hosts = append(t.process.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
+		t.progress.Hosts = append(t.progress.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
 	}
 
-	t.process.Servers = t.servers
+	t.progress.Servers = t.servers
 	if t.Para.Config.HA != nil {
-		t.process.Servers = append(t.process.Servers, t.Para.Config.HA.VIP())
+		t.progress.Servers = append(t.progress.Servers, t.Para.Config.HA.VIP())
 	}
 	t.log.Printf("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
 }
@@ -1762,6 +1773,7 @@ func (t *TKE) installTKERegistryAPI() error {
 		"AdminUsername": t.Para.Config.Registry.TKERegistry.Username,
 		"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
 		"EnableAuth":    t.Para.Config.Auth.TKEAuth != nil,
+		"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1791,7 +1803,8 @@ func (t *TKE) preparePushImagesToTKERegistry() error {
 
 	dir := path.Join(dockerCertsDir, t.Para.Config.Registry.Domain())
 	_ = os.MkdirAll(dir, 0777)
-	err = ioutil.WriteFile(path.Join(dir, "ca.crt"), t.Cluster.ClusterCredential.CACert, 0644)
+	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
+	err = ioutil.WriteFile(path.Join(dir, "ca.crt"), caCert, 0644)
 	if err != nil {
 		return err
 	}
