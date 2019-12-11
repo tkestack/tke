@@ -6,7 +6,7 @@ The tke-installer tool contains all resources required by the installation, prov
 
 ## Architecture
 
-![](../devel/images/TKEStackHighLevelArchitecture@2x.png)
+![](../../images/TKEStackHighLevelArchitecture@2x.png)
 
 * Installer -  the tke-installer tool is on this node, provide a Web GUI to guide customer installing global cluster
 * Global -  a k8s cluster which is used to deploy TKEStack console and components
