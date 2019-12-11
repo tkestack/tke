@@ -10,54 +10,82 @@ export class Step4 extends React.Component<RootProps> {
     return step === 'step4' ? (
       <section>
         <Form>
-          <Form.Item label="认证方式">
+          <Form.Item label="镜像仓库类型">
             <Segment
-              value={editState.authType}
+              value={editState.repoType}
               options={[
                 { text: 'TKE提供', value: 'tke' },
-                { text: 'OIDC认证', value: 'oidc' }
+                { text: '第三方仓库', value: 'thirdParty' }
               ]}
-              onChange={value => actions.installer.updateEdit({ authType: value })}
+              onChange={value => actions.installer.updateEdit({ repoType: value })}
             />
             <div className="tea-form__help-text">
-              {editState.authType === 'tke' ? '使用TKE提供的用户认证功能' : '接入已有的OIDC认证'}
+              {editState.repoType === 'tke'
+                ? 'TKE将根据设置的信息安装镜像仓库服务'
+                : 'TKE将不会安装镜像仓库服务，使用您提供的镜像仓库作为默认镜像仓库服务'}
             </div>
-            {editState.authType === 'oidc' ? (
+            {editState.repoType === 'tke' ? (
               <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
                 <Form>
                   <Form.Item
-                    label="IssueUrl"
+                    label="域名后缀"
                     required
-                    status={getValidateStatus(editState.v_issueURL)}
-                    message={editState.v_issueURL.message}
+                    status={getValidateStatus(editState.v_repoSuffix)}
+                    message={editState.v_repoSuffix.message}
                   >
                     <Input
-                      value={editState.issueURL}
-                      onChange={value => actions.installer.updateEdit({ issueURL: value })}
+                      value={editState.repoSuffix}
+                      onChange={value => actions.installer.updateEdit({ repoSuffix: value })}
+                    />
+                  </Form.Item>
+                </Form>
+              </div>
+            ) : editState.repoType === 'thirdParty' ? (
+              <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
+                <Form>
+                  <Form.Item
+                    label="仓库地址"
+                    required
+                    status={getValidateStatus(editState.v_repoAddress)}
+                    message={editState.v_repoAddress.message}
+                  >
+                    <Input
+                      value={editState.repoAddress}
+                      onChange={value => actions.installer.updateEdit({ repoAddress: value })}
                     />
                   </Form.Item>
                   <Form.Item
-                    label="ClientID"
+                    label="命名空间"
                     required
-                    status={getValidateStatus(editState.v_clientID)}
-                    message={editState.v_clientID.message}
+                    status={getValidateStatus(editState.v_repoNamespace)}
+                    message={editState.v_repoNamespace.message}
                   >
                     <Input
-                      value={editState.clientID}
-                      onChange={value => actions.installer.updateEdit({ clientID: value })}
+                      value={editState.repoNamespace}
+                      onChange={value => actions.installer.updateEdit({ repoNamespace: value })}
                     />
                   </Form.Item>
                   <Form.Item
-                    label="CA证书"
+                    label="用户名"
                     required
-                    status={getValidateStatus(editState.v_caCert)}
-                    message={editState.v_caCert.message}
+                    status={getValidateStatus(editState.v_repoUser)}
+                    message={editState.v_repoUser.message}
                   >
                     <Input
-                      multiline
-                      style={{ width: '400px' }}
-                      value={editState.caCert}
-                      onChange={value => actions.installer.updateEdit({ caCert: value })}
+                      value={editState.repoUser}
+                      onChange={value => actions.installer.updateEdit({ repoUser: value })}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="密码"
+                    required
+                    status={getValidateStatus(editState.v_repoPassword)}
+                    message={editState.v_repoPassword.message}
+                  >
+                    <Input
+                      type="password"
+                      value={editState.repoPassword}
+                      onChange={value => actions.installer.updateEdit({ repoPassword: value })}
                     />
                   </Form.Item>
                 </Form>

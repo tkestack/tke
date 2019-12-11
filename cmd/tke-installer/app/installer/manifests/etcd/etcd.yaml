@@ -5,6 +5,7 @@ metadata:
   name: etcd
   namespace: tke
 spec:
+  clusterIP: None
   ports:
     - name: https
       port: 2379
