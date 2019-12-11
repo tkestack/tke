@@ -25,6 +25,7 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -40,7 +41,6 @@ type BindingREST struct {
 	*registry.Store
 
 	authClient authinternalclient.AuthInterface
-	//enforcer    *casbin.SyncedEnforcer
 }
 
 var _ = rest.Creater(&BindingREST{})
@@ -77,4 +77,48 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("subjects", policy.Status.Subjects))
 
 	return r.authClient.Policies().UpdateStatus(policy)
+}
+
+// List selects resources in the storage which match to the selector. 'options' can be nil.
+func (r *BindingREST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return nil, errors.NewBadRequest("unable to get request info from context")
+	}
+
+	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	policy := polObj.(*auth.Policy)
+
+	localIdentityList := &auth.LocalIdentityList{}
+	for _, subj := range policy.Status.Subjects {
+		var localIdentity *auth.LocalIdentity
+		if subj.ID != "" {
+			localIdentity, err = r.authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
+			if err != nil {
+				log.Error("Get localIdentity failed", log.String("id", subj.ID), log.Err(err))
+				localIdentity = constructLocalIdentity(subj.ID, subj.Name)
+			}
+		} else {
+			localIdentity = constructLocalIdentity(subj.ID, subj.Name)
+		}
+
+		localIdentity.Spec.HashedPassword = ""
+		localIdentityList.Items = append(localIdentityList.Items, *localIdentity)
+	}
+
+	return localIdentityList, nil
+}
+
+func constructLocalIdentity(userID, username string) *auth.LocalIdentity {
+	return &auth.LocalIdentity{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: userID,
+		},
+		Spec: auth.LocalIdentitySpec{
+			Username: username,
+		},
+	}
 }
