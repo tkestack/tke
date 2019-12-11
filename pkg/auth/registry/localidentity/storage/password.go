@@ -22,12 +22,12 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -37,8 +37,8 @@ import (
 
 // PasswordREST implements the REST endpoint.
 type PasswordREST struct {
-	*registry.Store
-	authClient authinternalclient.AuthInterface
+	localIdentityStore *registry.Store
+	authClient         authinternalclient.AuthInterface
 }
 
 var _ = rest.Creater(&PasswordREST{})
@@ -49,7 +49,7 @@ func (r *PasswordREST) New() runtime.Object {
 	return &auth.PasswordReq{}
 }
 
-// Create used to update password of the
+// Create used to update password of the local identity.
 func (r *PasswordREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
@@ -58,10 +58,11 @@ func (r *PasswordREST) Create(ctx context.Context, obj runtime.Object, createVal
 
 	userID := requestInfo.Name
 
-	localIdentity, err := r.authClient.LocalIdentities().Get(userID, metav1.GetOptions{})
+	obj, err := r.localIdentityStore.Get(ctx, userID, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
+	localIdentity := obj.(*auth.LocalIdentity)
 
 	passwordReq := obj.(*auth.PasswordReq)
 
@@ -70,6 +71,6 @@ func (r *PasswordREST) Create(ctx context.Context, obj runtime.Object, createVal
 		return nil, apierrors.NewBadRequest(err.Error())
 	}
 
-	objUpdated, _, err := r.Store.Update(ctx, userID, rest.DefaultUpdatedObjectInfo(localIdentity), rest.ValidateAllObjectFunc, rest.ValidateAllObjectUpdateFunc, false, &metav1.UpdateOptions{})
+	objUpdated, _, err := r.localIdentityStore.Update(ctx, userID, rest.DefaultUpdatedObjectInfo(localIdentity), rest.ValidateAllObjectFunc, rest.ValidateAllObjectUpdateFunc, false, &metav1.UpdateOptions{})
 	return objUpdated, err
 }

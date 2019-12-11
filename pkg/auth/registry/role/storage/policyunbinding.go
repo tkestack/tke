@@ -37,7 +37,7 @@ import (
 
 // PolicyUnbindingREST implements the REST endpoint.
 type PolicyUnbindingREST struct {
-	*registry.Store
+	roleStore *registry.Store
 
 	authClient authinternalclient.AuthInterface
 }
@@ -56,10 +56,8 @@ func (r *PolicyUnbindingREST) Create(ctx context.Context, obj runtime.Object, cr
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	log.Info("requestinfo", log.Any("requestInfo", requestInfo))
-
 	bind := obj.(*auth.PolicyBinding)
-	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	polObj, err := r.roleStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

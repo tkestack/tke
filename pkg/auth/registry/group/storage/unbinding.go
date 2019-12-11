@@ -36,7 +36,7 @@ import (
 
 // UnbindingREST implements the REST endpoint.
 type UnbindingREST struct {
-	*registry.Store
+	groupStore *registry.Store
 
 	authClient authinternalclient.AuthInterface
 }
@@ -55,10 +55,8 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	log.Info("requestinfo", log.Any("requestInfo", requestInfo))
-
 	bind := obj.(*auth.Binding)
-	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	polObj, err := r.groupStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

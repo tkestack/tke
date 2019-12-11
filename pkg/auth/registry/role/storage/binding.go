@@ -21,9 +21,12 @@ package storage
 import (
 	"context"
 
+	"tkestack.io/tke/pkg/auth/util"
+
 	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -36,7 +39,7 @@ import (
 
 // BindingREST implements the REST endpoint.
 type BindingREST struct {
-	*registry.Store
+	roleStore *registry.Store
 
 	authClient authinternalclient.AuthInterface
 }
@@ -49,16 +52,19 @@ func (r *BindingREST) New() runtime.Object {
 	return &auth.Binding{}
 }
 
+// NewList returns an empty object that can be used with the List call.
+func (r *BindingREST) NewList() runtime.Object {
+	return &auth.LocalIdentityList{}
+}
+
 func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	log.Info("requestinfo", log.Any("requestInfo", requestInfo))
-
 	bind := obj.(*auth.Binding)
-	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	polObj, err := r.roleStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +72,7 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 
 	for _, sub := range bind.Subjects {
 		if sub.Name != "" {
-			if !inSubjects(sub, role.Status.Subjects) {
+			if !util.InSubjects(sub, role.Status.Subjects) {
 				role.Status.Subjects = append(role.Status.Subjects, sub)
 			}
 		}
@@ -77,11 +83,46 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	return r.authClient.Roles().UpdateStatus(role)
 }
 
-func inSubjects(subject auth.Subject, slice []auth.Subject) bool {
-	for _, s := range slice {
-		if subject.Name == s.Name {
-			return true
-		}
+// List selects resources in the storage which match to the selector. 'options' can be nil.
+func (r *BindingREST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
-	return false
+
+	rolObj, err := r.roleStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	role := rolObj.(*auth.Role)
+
+	localIdentityList := &auth.LocalIdentityList{}
+	for _, subj := range role.Status.Subjects {
+		var localIdentity *auth.LocalIdentity
+		if subj.ID != "" {
+			localIdentity, err = r.authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
+			if err != nil {
+				log.Error("Get localIdentity failed", log.String("id", subj.ID), log.Err(err))
+				localIdentity = constructLocalIdentity(subj.ID, subj.Name)
+			}
+		} else {
+			localIdentity = constructLocalIdentity(subj.ID, subj.Name)
+		}
+
+		localIdentity.Spec.HashedPassword = ""
+		localIdentityList.Items = append(localIdentityList.Items, *localIdentity)
+	}
+
+	return localIdentityList, nil
+}
+
+func constructLocalIdentity(userID, username string) *auth.LocalIdentity {
+	return &auth.LocalIdentity{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: userID,
+		},
+		Spec: auth.LocalIdentitySpec{
+			Username: username,
+		},
+	}
 }

@@ -40,18 +40,22 @@ import (
 
 // RoleREST implements the REST endpoint, list policies bound to the user.
 type RoleREST struct {
-	*registry.Store
-
-	authClient authinternalclient.AuthInterface
-	enforcer   *casbin.SyncedEnforcer
+	localIdentityStore *registry.Store
+	authClient         authinternalclient.AuthInterface
+	enforcer           *casbin.SyncedEnforcer
 }
 
 var _ = rest.Lister(&RoleREST{})
 
-// New returns an empty object that can be used with Create after request data
-// has been put into it.
+// NewList returns an empty object that can be used with the List call.
 func (r *RoleREST) NewList() runtime.Object {
 	return &auth.RoleList{}
+}
+
+// New returns an empty object that can be used with Create after request data
+// has been put into it.
+func (r *RoleREST) New() runtime.Object {
+	return &auth.Role{}
 }
 
 func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
@@ -62,10 +66,11 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 
 	userID := requestInfo.Name
 
-	localIdentity, err := r.authClient.LocalIdentities().Get(userID, metav1.GetOptions{})
+	obj, err := r.localIdentityStore.Get(ctx, userID, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
+	localIdentity := obj.(*auth.LocalIdentity)
 
 	roles, err := r.enforcer.GetRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
 	if err != nil {

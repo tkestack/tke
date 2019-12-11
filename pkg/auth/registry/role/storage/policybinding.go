@@ -20,11 +20,13 @@ package storage
 
 import (
 	"context"
+
 	"tkestack.io/tke/pkg/util"
 
 	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -37,7 +39,7 @@ import (
 
 // PolicyBindingREST implements the REST endpoint.
 type PolicyBindingREST struct {
-	*registry.Store
+	roleStore *registry.Store
 
 	authClient authinternalclient.AuthInterface
 }
@@ -50,16 +52,19 @@ func (r *PolicyBindingREST) New() runtime.Object {
 	return &auth.PolicyBinding{}
 }
 
+// NewList returns an empty object that can be used with the List call.
+func (r *PolicyBindingREST) NewList() runtime.Object {
+	return &auth.PolicyList{}
+}
+
 func (r *PolicyBindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	log.Info("requestinfo", log.Any("requestInfo", requestInfo))
-
 	bind := obj.(*auth.PolicyBinding)
-	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	polObj, err := r.roleStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -74,4 +79,29 @@ func (r *PolicyBindingREST) Create(ctx context.Context, obj runtime.Object, crea
 	log.Info("role policies", log.String("role", role.Name), log.Any("policies", role.Spec.Policies))
 
 	return r.authClient.Roles().Update(role)
+}
+
+// List selects resources in the storage which match to the selector. 'options' can be nil.
+func (r *PolicyBindingREST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return nil, errors.NewBadRequest("unable to get request info from context")
+	}
+
+	rolObj, err := r.roleStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	role := rolObj.(*auth.Role)
+
+	policyList := &auth.PolicyList{}
+	for _, id := range role.Spec.Policies {
+		if pol, err := r.authClient.Policies().Get(id, metav1.GetOptions{}); err != nil {
+			log.Error("Get policy failed", log.String("id", id), log.Err(err))
+		} else {
+			policyList.Items = append(policyList.Items, *pol)
+		}
+	}
+
+	return policyList, nil
 }

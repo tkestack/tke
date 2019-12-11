@@ -38,7 +38,7 @@ import (
 
 // BindingREST implements the REST endpoint.
 type BindingREST struct {
-	*registry.Store
+	policyStore *registry.Store
 
 	authClient authinternalclient.AuthInterface
 }
@@ -51,16 +51,19 @@ func (r *BindingREST) New() runtime.Object {
 	return &auth.Binding{}
 }
 
+// NewList returns an empty object that can be used with the List call.
+func (r *BindingREST) NewList() runtime.Object {
+	return &auth.LocalIdentityList{}
+}
+
 func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	log.Info("requestinfo", log.Any("requestInfo", requestInfo))
-
 	bind := obj.(*auth.Binding)
-	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	polObj, err := r.policyStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +89,7 @@ func (r *BindingREST) List(ctx context.Context, options *metainternal.ListOption
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	polObj, err := r.policyStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

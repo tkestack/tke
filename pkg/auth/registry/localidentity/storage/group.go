@@ -40,20 +40,25 @@ import (
 
 // GroupREST implements the REST endpoint, list policies bound to the user.
 type GroupREST struct {
-	*registry.Store
-
-	authClient authinternalclient.AuthInterface
-	enforcer   *casbin.SyncedEnforcer
+	localIdentityStore *registry.Store
+	authClient         authinternalclient.AuthInterface
+	enforcer           *casbin.SyncedEnforcer
 }
 
 var _ = rest.Lister(&GroupREST{})
 
-// New returns an empty object that can be used with Create after request data
-// has been put into it.
+// NewList returns an empty object that can be used with the List call.
 func (r *GroupREST) NewList() runtime.Object {
 	return &auth.GroupList{}
 }
 
+// New returns an empty object that can be used with Create and Update after
+// request data has been put into it.
+func (r *GroupREST) New() runtime.Object {
+	return &auth.Group{}
+}
+
+// List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
@@ -62,10 +67,11 @@ func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListO
 
 	userID := requestInfo.Name
 
-	localIdentity, err := r.authClient.LocalIdentities().Get(userID, metav1.GetOptions{})
+	obj, err := r.localIdentityStore.Get(ctx, userID, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
+	localIdentity := obj.(*auth.LocalIdentity)
 
 	roles, err := r.enforcer.GetRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
 	if err != nil {

@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +36,7 @@ import (
 
 // UnbindingREST implements the REST endpoint.
 type UnbindingREST struct {
-	*registry.Store
+	roleStore *registry.Store
 
 	authClient authinternalclient.AuthInterface
 }
@@ -54,17 +55,15 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	log.Info("requestinfo", log.Any("requestInfo", requestInfo))
-
 	bind := obj.(*auth.Binding)
-	polObj, err := r.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
+	polObj, err := r.roleStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	role := polObj.(*auth.Role)
 	var remained []auth.Subject
 	for _, sub := range role.Status.Subjects {
-		if !inSubjects(sub, bind.Subjects) {
+		if !util.InSubjects(sub, bind.Subjects) {
 			remained = append(remained, sub)
 		}
 	}
