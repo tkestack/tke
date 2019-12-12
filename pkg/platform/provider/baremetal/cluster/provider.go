@@ -207,6 +207,9 @@ func (p *Provider) PreCreate(user clusterprovider.UserInfo, cluster platform.Clu
 	if cluster.Spec.Version == "" {
 		cluster.Spec.Version = versions.List()[0]
 	}
+	if cluster.Spec.ClusterCIDR == "" {
+		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
+	}
 	if cluster.Spec.Features.IPVS == nil {
 		cluster.Spec.Features.IPVS = pointer.ToBool(false)
 	}
