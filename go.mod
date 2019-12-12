@@ -107,6 +107,7 @@ require (
 
 require (
 	github.com/golang/glog v0.0.0
+	github.com/gorilla/context v1.1.1 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0

@@ -30,6 +30,8 @@ import (
 // Public to allow building arbitrary schemes.
 // All generated defaulters are covering - they call all nested defaulters.
 func RegisterDefaults(scheme *runtime.Scheme) error {
+	scheme.AddTypeDefaultingFunc(&ChartGroup{}, func(obj interface{}) { SetObjectDefaults_ChartGroup(obj.(*ChartGroup)) })
+	scheme.AddTypeDefaultingFunc(&ChartGroupList{}, func(obj interface{}) { SetObjectDefaults_ChartGroupList(obj.(*ChartGroupList)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMap{}, func(obj interface{}) { SetObjectDefaults_ConfigMap(obj.(*ConfigMap)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMapList{}, func(obj interface{}) { SetObjectDefaults_ConfigMapList(obj.(*ConfigMapList)) })
 	scheme.AddTypeDefaultingFunc(&ImageNamespace{}, func(obj interface{}) { SetObjectDefaults_ImageNamespace(obj.(*ImageNamespace)) })
@@ -39,6 +41,17 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&Project{}, func(obj interface{}) { SetObjectDefaults_Project(obj.(*Project)) })
 	scheme.AddTypeDefaultingFunc(&ProjectList{}, func(obj interface{}) { SetObjectDefaults_ProjectList(obj.(*ProjectList)) })
 	return nil
+}
+
+func SetObjectDefaults_ChartGroup(in *ChartGroup) {
+	SetDefaults_ChartGroupStatus(&in.Status)
+}
+
+func SetObjectDefaults_ChartGroupList(in *ChartGroupList) {
+	for i := range in.Items {
+		a := &in.Items[i]
+		SetObjectDefaults_ChartGroup(a)
+	}
 }
 
 func SetObjectDefaults_ConfigMap(in *ConfigMap) {

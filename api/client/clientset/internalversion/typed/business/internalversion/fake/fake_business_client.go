@@ -30,6 +30,10 @@ type FakeBusiness struct {
 	*testing.Fake
 }
 
+func (c *FakeBusiness) ChartGroups(namespace string) internalversion.ChartGroupInterface {
+	return &FakeChartGroups{c, namespace}
+}
+
 func (c *FakeBusiness) ConfigMaps() internalversion.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }
