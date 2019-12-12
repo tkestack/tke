@@ -204,6 +204,9 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 }
 
 func (p *Provider) PreCreate(user clusterprovider.UserInfo, cluster platform.Cluster) (platform.Cluster, error) {
+	if cluster.Spec.Version == "" {
+		cluster.Spec.Version = versions.List()[0]
+	}
 	if cluster.Spec.Features.IPVS == nil {
 		cluster.Spec.Features.IPVS = pointer.ToBool(false)
 	}
