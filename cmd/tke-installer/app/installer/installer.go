@@ -528,6 +528,10 @@ func (t *TKE) initSteps() {
 				Name: "Push images to registry",
 				Func: t.pushImages,
 			},
+			{
+				Name: "Set global cluster hosts",
+				Func: t.setGlobalClusterHosts,
+			},
 		}...)
 	}
 
@@ -2024,6 +2028,37 @@ func (t *TKE) getKubeconfig() (*api.Config, error) {
 		t.Cluster.ClusterCredential.CACert,
 		*t.Cluster.ClusterCredential.Token,
 	), nil
+}
+
+func (t *TKE) setGlobalClusterHosts() error {
+	domains := []string{
+		t.Para.Config.Registry.Domain(),
+		t.Cluster.Spec.TenantID + "." + t.Para.Config.Registry.Domain(),
+	}
+
+	for _, machine := range t.Cluster.Spec.Machines {
+		sshConfig := &ssh.Config{
+			User:       machine.Username,
+			Host:       machine.IP,
+			Port:       int(machine.Port),
+			Password:   string(machine.Password),
+			PrivateKey: machine.PrivateKey,
+			PassPhrase: machine.PassPhrase,
+		}
+		s, err := ssh.New(sshConfig)
+		if err != nil {
+			return err
+		}
+		for _, one := range domains {
+			remoteHosts := hosts.RemoteHosts{Host: one, SSH: s}
+			err := remoteHosts.Set(t.Cluster.Spec.Machines[0].IP)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (t *TKE) writeKubeconfig() error {
