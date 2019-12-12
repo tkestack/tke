@@ -27,6 +27,7 @@ import (
 
 type BusinessInterface interface {
 	RESTClient() rest.Interface
+	ChartGroupsGetter
 	ConfigMapsGetter
 	ImageNamespacesGetter
 	NamespacesGetter
@@ -38,6 +39,10 @@ type BusinessInterface interface {
 // BusinessClient is used to interact with features provided by the business.tkestack.io group.
 type BusinessClient struct {
 	restClient rest.Interface
+}
+
+func (c *BusinessClient) ChartGroups(namespace string) ChartGroupInterface {
+	return newChartGroups(c, namespace)
 }
 
 func (c *BusinessClient) ConfigMaps() ConfigMapInterface {

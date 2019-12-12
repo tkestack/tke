@@ -59,6 +59,8 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=business.tkestack.io, Version=v1
+	case v1.SchemeGroupVersion.WithResource("chartgroups"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().ChartGroups().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("configmaps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().ConfigMaps().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("imagenamespaces"):

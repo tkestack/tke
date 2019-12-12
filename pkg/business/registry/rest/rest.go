@@ -25,12 +25,13 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
 	"tkestack.io/tke/api/business"
-	v1 "tkestack.io/tke/api/business/v1"
+	businessv1 "tkestack.io/tke/api/business/v1"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/cmd/tke-business-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	chartgroupstorage "tkestack.io/tke/pkg/business/registry/chartgroup/storage"
 	configmapstorage "tkestack.io/tke/pkg/business/registry/configmap/storage"
 	imagenamespacestorage "tkestack.io/tke/pkg/business/registry/imagenamespace/storage"
 	namespacestorage "tkestack.io/tke/pkg/business/registry/namespace/storage"
@@ -56,8 +57,8 @@ var _ storage.RESTStorageProvider = &StorageProvider{}
 func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (genericserver.APIGroupInfo, bool) {
 	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(business.GroupName, business.Scheme, business.ParameterCodec, business.Codecs)
 
-	if apiResourceConfigSource.VersionEnabled(v1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[v1.SchemeGroupVersion.Version] =
+	if apiResourceConfigSource.VersionEnabled(businessv1.SchemeGroupVersion) {
+		apiGroupInfo.VersionedResourcesStorageMap[businessv1.SchemeGroupVersion.Version] =
 			s.v1Storage(apiResourceConfigSource, restOptionsGetter, s.LoopbackClientConfig, s.Features)
 	}
 
@@ -98,6 +99,11 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["imagenamespaces"] = imageNamespaceREST.ImageNamespace
 		storageMap["imagenamespaces/status"] = imageNamespaceREST.Status
 		storageMap["imagenamespaces/finalize"] = imageNamespaceREST.Finalize
+
+		chartGroupREST := chartgroupstorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)
+		storageMap["chartgroups"] = chartGroupREST.ChartGroup
+		storageMap["chartgroups/status"] = chartGroupREST.Status
+		storageMap["chartgroups/finalize"] = chartGroupREST.Finalize
 	}
 
 	return storageMap

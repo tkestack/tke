@@ -76,6 +76,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&ImageNamespace{},
 		&ImageNamespaceList{},
+
+		&ChartGroup{},
+		&ChartGroupList{},
 	)
 	return nil
 }
