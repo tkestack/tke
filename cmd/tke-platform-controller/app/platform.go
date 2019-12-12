@@ -259,6 +259,10 @@ func startLogCollectorController(ctx ControllerContext) (http.Handler, bool, err
 }
 
 func startPrometheusController(ctx ControllerContext) (http.Handler, bool, error) {
+	if ctx.RemoteType == "" || len(ctx.RemoteAddresses) == 0 {
+		return nil, false, nil
+	}
+
 	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "prometheuses"}] {
 		return nil, false, nil
 	}

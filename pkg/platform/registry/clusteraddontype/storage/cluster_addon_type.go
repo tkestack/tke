@@ -101,6 +101,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 	}
 	i := 0
 	for k, v := range clusteraddontype.Types {
+		// todo: filter prometheus addon without storage configuration
 		l.Items[i] = platform.ClusterAddonType{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: strings.ToLower(string(k)),
