@@ -63,6 +63,8 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, businessClient *bu
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
+
+		ShouldDeleteDuringUpdate: shouldDeleteDuringUpdate,
 	}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
@@ -358,4 +360,13 @@ func (r *FinalizeREST) Update(ctx context.Context, name string, objInfo rest.Upd
 		return nil, false, err
 	}
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
+}
+
+func shouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {
+	ns, ok := obj.(*business.ImageNamespace)
+	if !ok {
+		log.Errorf("unexpected object, key:%s", key)
+		return false
+	}
+	return len(ns.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
 }
