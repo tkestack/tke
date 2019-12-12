@@ -104,6 +104,9 @@ func (p *Provider) Validate(m platform.Machine) (field.ErrorList, error) {
 	if m.Spec.IP == "" {
 		allErrs = append(allErrs, field.Required(sPath.Child("ip"), ""))
 	} else {
+		if m.Spec.Username != "root" {
+			allErrs = append(allErrs, field.Invalid(sPath.Child("username"), m.Spec.Username, "must be root"))
+		}
 		if m.Spec.Password == nil && m.Spec.PrivateKey == nil {
 			allErrs = append(allErrs, field.Required(sPath.Child("password"), "password or privateKey at least one"))
 		}

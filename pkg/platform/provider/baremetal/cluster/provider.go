@@ -167,6 +167,9 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 				} else {
 					ips.Insert(machine.IP)
 
+					if machine.Username != "root" {
+						allErrs = append(allErrs, field.Invalid(idxPath.Child("username"), c.Spec.Machines[i].Username, "must be root"))
+					}
 					if machine.Password == nil && machine.PrivateKey == nil {
 						allErrs = append(allErrs, field.Required(idxPath.Child("password"), "password or privateKey at least one"))
 					}
