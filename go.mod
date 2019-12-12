@@ -62,11 +62,14 @@ require (
 	github.com/influxdata/influxdb1-client v0.0.0-20190402204710-8ff2fc3824fc
 	github.com/jinzhu/configor v1.1.1
 	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
+	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.7
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/moul/http2curl v1.0.0 // indirect
+	github.com/onsi/ginkgo v1.8.0
+	github.com/onsi/gomega v1.5.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/parnurzeal/gorequest v0.2.15
@@ -84,6 +87,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
+	github.com/tencentcloud/tencentcloud-sdk-go v3.0.108+incompatible
 	github.com/thoas/go-funk v0.4.0
 	github.com/ugorji/go v1.1.7 // indirect
 	go.uber.org/zap v1.10.0
@@ -100,6 +104,7 @@ require (
 	gopkg.in/yaml.v2 v2.2.4
 	gotest.tools v2.2.0+incompatible
 	helm.sh/chartmuseum v0.9.0
+	k8s.io/helm v2.14.1+incompatible
 	k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
 	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
 )
@@ -107,11 +112,7 @@ require (
 require (
 	github.com/chartmuseum/storage v0.5.0
 	github.com/golang/glog v0.0.0
-	github.com/joho/godotenv v1.3.0
-	github.com/onsi/ginkgo v1.8.0
-	github.com/onsi/gomega v1.5.0
 	github.com/sirupsen/logrus v1.4.2
-	github.com/tencentcloud/tencentcloud-sdk-go v3.0.108+incompatible
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0
@@ -122,3 +123,5 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/kube-aggregator v0.0.0
 )
+
+exclude github.com/NetEase-Object-Storage/nos-golang-sdk v0.0.0
