@@ -52,6 +52,8 @@ import (
 
 const (
 	contextName = "tke"
+	clientQPS   = 100
+	clientBurst = 200
 )
 
 // ClientSetByCluster returns the backend kubernetes clientSet by given cluster object
@@ -436,6 +438,8 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
 	}
+	restConfig.QPS = clientQPS
+	restConfig.Burst = clientBurst
 	return kubernetes.NewForConfig(restConfig)
 }
 
