@@ -56,7 +56,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.9.5 // indirect
 	github.com/hashicorp/go-hclog v0.8.0
-	github.com/hashicorp/go-plugin v0.0.0-20181212150838-f444068e8f5a
+	github.com/hashicorp/go-plugin v0.0.0-20181212150838-f444068e8f5a // indirect
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/howeyc/fsnotify v0.9.0
 	github.com/influxdata/influxdb1-client v0.0.0-20190402204710-8ff2fc3824fc
@@ -107,7 +107,11 @@ require (
 require (
 	github.com/chartmuseum/storage v0.5.0
 	github.com/golang/glog v0.0.0
+	github.com/joho/godotenv v1.3.0
+	github.com/onsi/ginkgo v1.8.0
+	github.com/onsi/gomega v1.5.0
 	github.com/sirupsen/logrus v1.4.2
+	github.com/tencentcloud/tencentcloud-sdk-go v3.0.108+incompatible
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0
