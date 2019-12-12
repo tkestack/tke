@@ -28,6 +28,7 @@ import (
 
 type BusinessV1Interface interface {
 	RESTClient() rest.Interface
+	ChartGroupsGetter
 	ConfigMapsGetter
 	ImageNamespacesGetter
 	NamespacesGetter
@@ -39,6 +40,10 @@ type BusinessV1Interface interface {
 // BusinessV1Client is used to interact with features provided by the business.tkestack.io group.
 type BusinessV1Client struct {
 	restClient rest.Interface
+}
+
+func (c *BusinessV1Client) ChartGroups(namespace string) ChartGroupInterface {
+	return newChartGroups(c, namespace)
 }
 
 func (c *BusinessV1Client) ConfigMaps() ConfigMapInterface {

@@ -64,6 +64,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&ImageNamespace{},
 		&ImageNamespaceList{},
+
+		&ChartGroup{},
+		&ChartGroupList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

@@ -1,22 +1,3 @@
-## Prerequisites
-
-The hardware requirements for nodes mostly depend on your workloads, the minimum to run the global cluster node is:
-
-* Hardware
-  * **8 CPU**
-  * **16 GB** of Memory
-
-* Limit
-  * **The machine which run installer can't be used to create global cluster!** After installation, you can use it to create a cluster or add nodes. 
-
-> Note: Installer node need extra 20GB disk to store images and temporary files.
-
-TKEStack is tested on the following operating system:
-
-* Operating Systems
-  * Ubuntu 16.04 (64-bit)
-  * CentOS Linux 7.5 (64-bit)
-
 # Install TKEStack
 
 The easiest way to get started with TKEStack is via tke-installer.
@@ -30,6 +11,23 @@ The tke-installer tool contains all resources required by the installation, prov
 * Installer -  the tke-installer tool is on this node, provide a Web GUI to guide customer installing global cluster
 * Global -  a k8s cluster which is used to deploy TKEStack console and components
 * Cluster -  customer cluster, it can be created or imported through TKEStack console
+
+## Prerequisites
+
+The hardware requirements for nodes mostly depend on your workloads, the minimum to run the global cluster node is:
+
+* Hardware
+  * 8 vCPU
+  * 16 GB of Memory
+
+> Note: Installer node need extra 20GB disk to store images and temporary files.
+
+TKEStack is tested on the following operating system:
+
+* Operating Systems
+  * Ubuntu 16.04 (64-bit)
+  * CentOS Linux 7.5 (64-bit)
+
 
 ## Installing tke-installer
 

@@ -49,3 +49,21 @@ func SetDefaults_RepositoryStatus(obj *RepositoryStatus) {
 		obj.Tags = make([]RepositoryTag, 0)
 	}
 }
+
+func SetDefaults_ChartGroupSpec(obj *ChartGroupSpec) {
+	if obj.Visibility == "" {
+		obj.Visibility = VisibilityPrivate
+	}
+}
+
+func SetDefaults_ChartSpec(obj *ChartSpec) {
+	if obj.Visibility == "" {
+		obj.Visibility = VisibilityPrivate
+	}
+}
+
+func SetDefaults_ChartStatus(obj *ChartStatus) {
+	if obj.Versions == nil {
+		obj.Versions = make([]ChartVersion, 0)
+	}
+}

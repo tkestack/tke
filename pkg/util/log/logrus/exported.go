@@ -281,3 +281,10 @@ func Fatalln(args ...interface{}) {
 		logger.Fatalln(args)
 	}
 }
+
+// SetLevel sets the standard logger level.
+func SetLevel(level Level) {
+	if logger != nil {
+		logger.SetLevel(level)
+	}
+}

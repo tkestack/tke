@@ -23,7 +23,8 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	v1 "tkestack.io/tke/api/business/v1"
+	businessv1 "tkestack.io/tke/api/business/v1"
+	"tkestack.io/tke/pkg/business/controller/chartgroup"
 	"tkestack.io/tke/pkg/business/controller/imagenamespace"
 	"tkestack.io/tke/pkg/business/controller/namespace"
 	"tkestack.io/tke/pkg/business/controller/project"
@@ -38,10 +39,13 @@ const (
 
 	imageNamespaceSyncPeriod      = 30 * time.Second
 	concurrentImageNamespaceSyncs = 10
+
+	chartGroupSyncPeriod      = 30 * time.Second
+	concurrentChartGroupSyncs = 10
 )
 
 func startNamespaceController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: "v1", Resource: "namespaces"}] {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: businessv1.GroupName, Version: "v1", Resource: "namespaces"}] {
 		return nil, false, nil
 	}
 
@@ -50,7 +54,7 @@ func startNamespaceController(ctx ControllerContext) (http.Handler, bool, error)
 		ctx.ClientBuilder.ClientOrDie("namespace-controller"),
 		ctx.InformerFactory.Business().V1().Namespaces(),
 		namespaceSyncPeriod,
-		v1.NamespaceFinalize,
+		businessv1.NamespaceFinalize,
 	)
 
 	go ctrl.Run(concurrentNamespaceSyncs, ctx.Stop)
@@ -59,7 +63,7 @@ func startNamespaceController(ctx ControllerContext) (http.Handler, bool, error)
 }
 
 func startProjectController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: "v1", Resource: "projects"}] {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: businessv1.GroupName, Version: "v1", Resource: "projects"}] {
 		return nil, false, nil
 	}
 
@@ -67,7 +71,7 @@ func startProjectController(ctx ControllerContext) (http.Handler, bool, error) {
 		ctx.ClientBuilder.ClientOrDie("project-controller"),
 		ctx.InformerFactory.Business().V1().Projects(),
 		projectSyncPeriod,
-		v1.ProjectFinalize,
+		businessv1.ProjectFinalize,
 	)
 
 	go ctrl.Run(concurrentProjectSyncs, ctx.Stop)
@@ -89,10 +93,32 @@ func startImageNamespaceController(ctx ControllerContext) (http.Handler, bool, e
 		ctx.ClientBuilder.ClientOrDie("imagenamespace-controller"),
 		ctx.InformerFactory.Business().V1().ImageNamespaces(),
 		imageNamespaceSyncPeriod,
-		v1.ImageNamespaceFinalize,
+		businessv1.ImageNamespaceFinalize,
 	)
 
 	go ctrl.Run(concurrentImageNamespaceSyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startChartGroupController(ctx ControllerContext) (http.Handler, bool, error) {
+	if ctx.RegistryClient == nil {
+		return nil, false, nil
+	}
+
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: businessv1.GroupName, Version: "v1", Resource: "chartgroups"}] {
+		return nil, false, nil
+	}
+
+	ctrl := chartgroup.NewController(
+		ctx.RegistryClient,
+		ctx.ClientBuilder.ClientOrDie("chartgroup-controller"),
+		ctx.InformerFactory.Business().V1().ChartGroups(),
+		chartGroupSyncPeriod,
+		businessv1.ChartGroupFinalize,
+	)
+
+	go ctrl.Run(concurrentChartGroupSyncs, ctx.Stop)
 
 	return nil, true, nil
 }

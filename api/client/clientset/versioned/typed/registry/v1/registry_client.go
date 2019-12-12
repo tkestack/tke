@@ -28,6 +28,8 @@ import (
 
 type RegistryV1Interface interface {
 	RESTClient() rest.Interface
+	ChartsGetter
+	ChartGroupsGetter
 	ConfigMapsGetter
 	NamespacesGetter
 	RepositoriesGetter
@@ -36,6 +38,14 @@ type RegistryV1Interface interface {
 // RegistryV1Client is used to interact with features provided by the registry.tkestack.io group.
 type RegistryV1Client struct {
 	restClient rest.Interface
+}
+
+func (c *RegistryV1Client) Charts(namespace string) ChartInterface {
+	return newCharts(c, namespace)
+}
+
+func (c *RegistryV1Client) ChartGroups() ChartGroupInterface {
+	return newChartGroups(c)
 }
 
 func (c *RegistryV1Client) ConfigMaps() ConfigMapInterface {

@@ -23,18 +23,18 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"tkestack.io/tke/api/business"
-	v1 "tkestack.io/tke/api/business/v1"
+	businessv1 "tkestack.io/tke/api/business/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
-// FilterNamespace is used to filter projects that do not belong to the tenant.
+// FilterNamespace is used to filter namespaces that do not belong to the tenant.
 func FilterNamespace(ctx context.Context, namespace *business.Namespace) error {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
 	if namespace.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("namespace"), namespace.ObjectMeta.Name)
+		return errors.NewNotFound(businessv1.Resource("namespace"), namespace.ObjectMeta.Name)
 	}
 	return nil
 }
@@ -46,31 +46,43 @@ func FilterProject(ctx context.Context, project *business.Project) error {
 		return nil
 	}
 	if project.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("project"), project.ObjectMeta.Name)
+		return errors.NewNotFound(businessv1.Resource("project"), project.ObjectMeta.Name)
 	}
 	return nil
 }
 
-// FilterPlatform is used to filter projects that do not belong to the tenant.
+// FilterPlatform is used to filter platforms that do not belong to the tenant.
 func FilterPlatform(ctx context.Context, platform *business.Platform) error {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
 	if platform.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("platform"), platform.ObjectMeta.Name)
+		return errors.NewNotFound(businessv1.Resource("platform"), platform.ObjectMeta.Name)
 	}
 	return nil
 }
 
-// FilterImageNamespace is used to filter projects that do not belong to the tenant.
-func FilterImageNamespace(ctx context.Context, namespace *business.ImageNamespace) error {
+// FilterImageNamespace is used to filter imageNamespaces that do not belong to the tenant.
+func FilterImageNamespace(ctx context.Context, imageNamespace *business.ImageNamespace) error {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
-	if namespace.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("namespace"), namespace.ObjectMeta.Name)
+	if imageNamespace.Spec.TenantID != tenantID {
+		return errors.NewNotFound(businessv1.Resource("imagenamespace"), imageNamespace.ObjectMeta.Name)
+	}
+	return nil
+}
+
+// FilterChartGroup is used to filter chartGroups that do not belong to the tenant.
+func FilterChartGroup(ctx context.Context, chartGroup *business.ChartGroup) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if chartGroup.Spec.TenantID != tenantID {
+		return errors.NewNotFound(businessv1.Resource("chartgroup"), chartGroup.ObjectMeta.Name)
 	}
 	return nil
 }

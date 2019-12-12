@@ -82,10 +82,11 @@ func init() {
 	legacyregistry.MustRegister(authenticatedAttemptsCounter)
 }
 
-// WithAuthentication creates an http handler that tries to authenticate the given request as a user, and then
-// stores any such user found onto the provided context for the request. If authentication fails or returns an error
-// the failed handler is used. On success, "Authorization" header is removed from the request and handler
-// is invoked to serve the request.
+// WithAuthentication creates an http handler that tries to authenticate the
+// given request as a user, and then stores any such user found onto the
+// provided context for the request. If authentication fails or returns an error
+// the failed handler is used. On success, "Authorization" header is removed
+// from the request and handler is invoked to serve the request.
 func WithAuthentication(handler http.Handler, auth authenticator.Request, failed http.Handler, apiAuds authenticator.Audiences, ignorePathPrefixes []string) http.Handler {
 	if auth == nil {
 		log.Warnf("Authentication is disabled")

@@ -114,7 +114,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end repository.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRepositoryUpdate(obj.(*registry.Repository), old.(*registry.Repository), s.registryClient)
+	return ValidateRepositoryUpdate(obj.(*registry.Repository), old.(*registry.Repository))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -168,7 +168,7 @@ func NewStatusStrategy(strategy *Strategy) *StatusStrategy {
 // the object.  For example: remove fields that are not to be persisted,
 // sort order-insensitive list fields, etc.  This should not remove fields
 // whose presence would be considered a validation error.
-func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+func (StatusStrategy) PrepareForUpdate(_ context.Context, obj, old runtime.Object) {
 	newRepository := obj.(*registry.Repository)
 	oldRepository := old.(*registry.Repository)
 	newRepository.Spec = oldRepository.Spec
@@ -177,6 +177,6 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // ValidateUpdate is invoked after default fields in the object have been
 // filled in before the object is persisted.  This method should not mutate
 // the object.
-func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRepositoryUpdate(obj.(*registry.Repository), old.(*registry.Repository), s.registryClient)
+func (s *StatusStrategy) ValidateUpdate(_ context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateRepositoryUpdate(obj.(*registry.Repository), old.(*registry.Repository))
 }

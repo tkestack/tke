@@ -32,7 +32,7 @@ import (
 // subdomain.
 var ValidateRepositoryName = apimachineryvalidation.NameIsDNSLabel
 
-// ValidateRepository tests if required fields in the message are set.
+// ValidateRepository tests if required fields in the repository are set.
 func ValidateRepository(repository *registry.Repository, registryClient *registryinternalclient.RegistryClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&repository.ObjectMeta, true, ValidateRepositoryName, field.NewPath("metadata"))
 
@@ -79,7 +79,7 @@ func ValidateRepository(repository *registry.Repository, registryClient *registr
 
 // ValidateRepositoryUpdate tests if required fields in the repository are set
 // during an update.
-func ValidateRepositoryUpdate(repository *registry.Repository, old *registry.Repository, registryClient *registryinternalclient.RegistryClient) field.ErrorList {
+func ValidateRepositoryUpdate(repository *registry.Repository, old *registry.Repository) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&repository.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 
 	if repository.Spec.TenantID != old.Spec.TenantID {

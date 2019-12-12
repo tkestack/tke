@@ -51,7 +51,7 @@ func NewStrategy(registryClient *registryinternalclient.RegistryClient) *Strateg
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
-func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.GarbageCollectionPolicy {
+func (Strategy) DefaultGarbageCollectionPolicy(context.Context) rest.GarbageCollectionPolicy {
 	return rest.Unsupported
 }
 
@@ -75,7 +75,7 @@ func (Strategy) NamespaceScoped() bool {
 }
 
 // Export strips fields that can not be set by the user.
-func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) error {
+func (Strategy) Export(context.Context, runtime.Object, bool) error {
 	return nil
 }
 
@@ -92,7 +92,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 }
 
 // Validate validates a new namespace.
-func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+func (s *Strategy) Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 	return ValidateNamespace(obj.(*registry.Namespace), s.registryClient)
 }
 
@@ -109,12 +109,12 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 }
 
 // Canonicalize normalizes the object after validation.
-func (Strategy) Canonicalize(obj runtime.Object) {
+func (Strategy) Canonicalize(runtime.Object) {
 }
 
 // ValidateUpdate is the default update validation for an end namespace.
-func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateNamespaceUpdate(obj.(*registry.Namespace), old.(*registry.Namespace), s.registryClient)
+func (s *Strategy) ValidateUpdate(_ context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateNamespaceUpdate(obj.(*registry.Namespace), old.(*registry.Namespace))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -123,7 +123,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a namespace")
 	}
-	return labels.Set(namespace.ObjectMeta.Labels), ToSelectableFields(namespace), nil
+	return namespace.ObjectMeta.Labels, ToSelectableFields(namespace), nil
 }
 
 // MatchNamespace returns a generic matcher for a given label and field selector.
@@ -150,7 +150,7 @@ func ToSelectableFields(namespace *registry.Namespace) fields.Set {
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
 
-// StatusStrategy implements verification logic for status of Machine.
+// StatusStrategy implements verification logic for status of Namespace.
 type StatusStrategy struct {
 	*Strategy
 }
@@ -166,7 +166,7 @@ func NewStatusStrategy(strategy *Strategy) *StatusStrategy {
 // the object.  For example: remove fields that are not to be persisted,
 // sort order-insensitive list fields, etc.  This should not remove fields
 // whose presence would be considered a validation error.
-func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+func (StatusStrategy) PrepareForUpdate(_ context.Context, obj, old runtime.Object) {
 	newNamespace := obj.(*registry.Namespace)
 	oldNamespace := old.(*registry.Namespace)
 	newNamespace.Spec = oldNamespace.Spec
@@ -175,6 +175,6 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // ValidateUpdate is invoked after default fields in the object have been
 // filled in before the object is persisted.  This method should not mutate
 // the object.
-func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateNamespaceUpdate(obj.(*registry.Namespace), old.(*registry.Namespace), s.registryClient)
+func (s *StatusStrategy) ValidateUpdate(_ context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateNamespaceUpdate(obj.(*registry.Namespace), old.(*registry.Namespace))
 }

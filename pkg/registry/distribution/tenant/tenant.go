@@ -29,6 +29,8 @@ import (
 
 const CrossTenantNamespace = "library"
 
+// WithTenant adds an interceptor to the original http request handle and
+// converts the request for docker distribution to multi-tenant mode.
 func WithTenant(handler http.Handler, pathPrefix, domainSuffix, defaultTenant string) http.Handler {
 	router := v2.Router()
 	return &tenant{handler, router, pathPrefix, domainSuffix, defaultTenant}

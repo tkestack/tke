@@ -25,11 +25,14 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
+// BuildDistributionContext create a background context with logger for
+// distribution and returns it.
 func BuildDistributionContext() context.Context {
 	ctx := context.Background()
 	return BuildRequestContext(ctx)
 }
 
+// BuildRequestContext create a new context with logger by given context.
 func BuildRequestContext(ctx context.Context) context.Context {
 	logger := logrus.NewLogger(log.ZapLogger())
 	return dcontext.WithLogger(ctx, logger.WithField("system", "distribution"))

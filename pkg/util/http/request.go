@@ -23,6 +23,7 @@ import (
 	"net/http"
 )
 
+// DomainFromRequest returns the host by given http request.
 func DomainFromRequest(req *http.Request) string {
 	host, _, err := net.SplitHostPort(req.Host)
 	if err != nil {

@@ -20,6 +20,8 @@
 
 package v1
 
+type ChartGroupExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type ImageNamespaceExpansion interface{}

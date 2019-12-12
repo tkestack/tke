@@ -20,6 +20,10 @@
 
 package internalversion
 
+type ChartExpansion interface{}
+
+type ChartGroupExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type NamespaceExpansion interface{}
