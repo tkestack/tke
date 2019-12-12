@@ -20,28 +20,14 @@ package tencent
 
 import (
 	"os"
-	"path"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	cvm "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm/v20170312"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"tkestack.io/tke/test/util/cloudprovider"
 )
-
-const (
-	envFile = "tencent.env"
-)
-
-func init() {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-	godotenv.Load(path.Join(home, envFile), envFile) // for local dev
-}
 
 func NewTencentProvider() cloudprovider.Provider {
 	p := &provider{}

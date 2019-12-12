@@ -1,4 +1,4 @@
-package e2e_installer_test
+package cluster_test
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	_ "tkestack.io/tke/test/util/env"
 )
 
-func TestE2EInstaller(t *testing.T) {
+func TestCluster(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "E2EInstaller Suite")
+	RunSpecs(t, "Cluster Suite")
 }

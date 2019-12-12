@@ -16,19 +16,23 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package tencent
+package env
 
 import (
-	"fmt"
-	"testing"
+	"os"
+	"path"
 
-	_ "tkestack.io/tke/test/util/env"
+	"github.com/joho/godotenv"
 )
 
-func TestCreateInstance(t *testing.T) {
-	fmt.Println(NewTencentProvider().CreateInstances(3))
-}
+const (
+	envFile = "tke.env"
+)
 
-func TestDeleteInstance(t *testing.T) {
-	//NewTencentProvider().DeleteInstances("")
+func init() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	godotenv.Load(path.Join(home, envFile), envFile) // for local dev
 }
