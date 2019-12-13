@@ -14,10 +14,8 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-VERSION = 2.0.16-r0
+VERSION = v1.16.3-1
 REGISTRY_PREFIX ?= tkestack
-
-TEMP_DIR:=$(shell mktemp -d)
 
 .PHONY:
 all: code-generator
@@ -25,10 +23,6 @@ all: code-generator
 .PHONY:
 code-generator:
 	@echo "===========> Building $@ $(VERSION) docker image"
-	@$(DOCKER) build --pull -t $(REGISTRY_PREFIX)/$@:$(VERSION) -f ./Dockerfile $(ROOT_DIR)/build/docker/tools/code-generator
-
-	@echo "===========> Building $@ $(VERSION) docker image"
-	docker build --pull -t $(REGISTRY_PREFIX)/$@:$(VERSION) -f ./Dockerfile ${TEMP_DIR}
+	docker build --pull -t $(REGISTRY_PREFIX)/$@:$(VERSION) -f ./Dockerfile .
 	@echo "===========> Pushing $@ $(VERSION) image to $(REGISTRY_PREFIX)"
 	docker push $(REGISTRY_PREFIX)/$@:$(VERSION)
-	rm -rf "${TEMP_DIR}"

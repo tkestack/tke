@@ -20,21 +20,17 @@ K8S_APIMACHINERY_DIR = $(shell go list -f '{{ .Dir }}' -m k8s.io/apimachinery)
 K8S_API_DIR = $(shell go list -f '{{ .Dir }}' -m k8s.io/api)
 # set the gogo protobuf package dir
 GOGO_PROTOBUF_DIR = $(shell go list -f '{{ .Dir }}' -m github.com/gogo/protobuf)
+# set the code generator image version
+CODE_GENERATOR_VERSION := v1.16.3-1
 
 .PHONY: gen.run
-gen.run: gen.clean gen.generator gen.api gen.openapi gen.gateway gen.registry gen.monitor
+gen.run: gen.clean gen.api gen.openapi gen.gateway gen.registry gen.monitor
 
 # ==============================================================================
 # Generator
 
-.PHONY: gen.generator
-gen.generator:
-	@echo "===========> Building code generator $(VERSION) docker image"
-	@$(DOCKER) build --pull -t $(REGISTRY_PREFIX)/code-generator:$(VERSION) -f $(ROOT_DIR)/build/docker/tools/code-generator/Dockerfile $(ROOT_DIR)/build/docker/tools/code-generator
-
 .PHONY: gen.api
 gen.api:
-	$(eval CODE_GENERATOR_VERSION := $(shell $(DOCKER) images --filter 'reference=$(REGISTRY_PREFIX)/code-generator' |sed 's/[ ][ ]*/,/g' |cut -d ',' -f 2 |sed -n '2p'))
 	@$(DOCKER) run --rm \
 		-v $(ROOT_DIR):/go/src/$(ROOT_PACKAGE) \
 	 	$(REGISTRY_PREFIX)/code-generator:$(CODE_GENERATOR_VERSION) \
@@ -47,7 +43,6 @@ gen.api:
 
 .PHONY: gen.gateway
 gen.gateway:
-	$(eval CODE_GENERATOR_VERSION := $(shell $(DOCKER) images --filter 'reference=$(REGISTRY_PREFIX)/code-generator' |sed 's/[ ][ ]*/,/g' |cut -d ',' -f 2 |sed -n '2p'))
 	@$(DOCKER) run --rm \
 		-v $(ROOT_DIR):/go/src/$(ROOT_PACKAGE) \
 	 	$(REGISTRY_PREFIX)/code-generator:$(CODE_GENERATOR_VERSION) \
@@ -60,7 +55,6 @@ gen.gateway:
 
 .PHONY: gen.registry
 gen.registry:
-	$(eval CODE_GENERATOR_VERSION := $(shell $(DOCKER) images --filter 'reference=$(REGISTRY_PREFIX)/code-generator' |sed 's/[ ][ ]*/,/g' |cut -d ',' -f 2 |sed -n '2p'))
 	@$(DOCKER) run --rm \
 		-v $(ROOT_DIR):/go/src/$(ROOT_PACKAGE) \
 	 	$(REGISTRY_PREFIX)/code-generator:$(CODE_GENERATOR_VERSION) \
@@ -73,7 +67,6 @@ gen.registry:
 
 .PHONY: gen.monitor
 gen.monitor:
-	$(eval CODE_GENERATOR_VERSION := $(shell $(DOCKER) images --filter 'reference=$(REGISTRY_PREFIX)/code-generator' |sed 's/[ ][ ]*/,/g' |cut -d ',' -f 2 |sed -n '2p'))
 	@$(DOCKER) run --rm \
 		-v $(ROOT_DIR):/go/src/$(ROOT_PACKAGE) \
 	 	$(REGISTRY_PREFIX)/code-generator:$(CODE_GENERATOR_VERSION) \
@@ -86,7 +79,6 @@ gen.monitor:
 
 .PHONY: gen.openapi
 gen.openapi:
-	$(eval CODE_GENERATOR_VERSION := $(shell $(DOCKER) images --filter 'reference=$(REGISTRY_PREFIX)/code-generator' |sed 's/[ ][ ]*/,/g' |cut -d ',' -f 2 |sed -n '2p'))
 	@$(DOCKER) run --rm \
     	-v $(ROOT_DIR):/go/src/$(ROOT_PACKAGE) \
 		-v $(K8S_APIMACHINERY_DIR):/go/src/k8s.io/apimachinery \
