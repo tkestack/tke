@@ -85,6 +85,7 @@ var _ = Describe("cluster lifecycle", func() {
 				Version:     "1.14.6",
 				ClusterCIDR: "10.244.0.0/16",
 				Type:        platformv1.ClusterBaremetal,
+				Features:    platformv1.ClusterFeature{EnableMasterSchedule: true},
 			}}
 		for _, one := range masterNodes {
 			cluster.Spec.Machines = append(cluster.Spec.Machines, platformv1.ClusterMachine{

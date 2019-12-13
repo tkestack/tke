@@ -1475,6 +1475,7 @@ func autoConvert_v1_ClusterFeature_To_platform_ClusterFeature(in *ClusterFeature
 	out.PublicLB = (*bool)(unsafe.Pointer(in.PublicLB))
 	out.InternalLB = (*bool)(unsafe.Pointer(in.InternalLB))
 	out.GPUType = (*platform.GPUType)(unsafe.Pointer(in.GPUType))
+	out.EnableMasterSchedule = in.EnableMasterSchedule
 	return nil
 }
 
@@ -1488,6 +1489,7 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 	out.PublicLB = (*bool)(unsafe.Pointer(in.PublicLB))
 	out.InternalLB = (*bool)(unsafe.Pointer(in.InternalLB))
 	out.GPUType = (*GPUType)(unsafe.Pointer(in.GPUType))
+	out.EnableMasterSchedule = in.EnableMasterSchedule
 	return nil
 }
 

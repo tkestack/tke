@@ -751,6 +751,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 	if cluster.Spec.NetworkDevice == "" {
 		cluster.Spec.NetworkDevice = "eth0"
 	}
+	cluster.Spec.Features.EnableMasterSchedule = true
 
 	if config.HA != nil {
 		if t.Para.Config.HA.TKEHA != nil {

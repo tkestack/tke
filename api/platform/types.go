@@ -327,6 +327,8 @@ type ClusterFeature struct {
 	InternalLB *bool
 	// +optional
 	GPUType *GPUType
+	// +optional
+	EnableMasterSchedule bool
 }
 
 // ClusterProperty records the attribute information of the cluster.

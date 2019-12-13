@@ -517,9 +517,7 @@ func (p *Provider) EnsureMarkControlPlane(c *Cluster) error {
 	}
 
 	option := &markcontrolplane.Option{}
-	if c.Name == "global" {
-		log.Info("don't set taints because this special cluster is resvered for TKE bootstrap.")
-	} else {
+	if c.Spec.Features.EnableMasterSchedule == false {
 		option.Taints = []corev1.Taint{
 			{
 				Key:    "node-role.kubernetes.io/master",

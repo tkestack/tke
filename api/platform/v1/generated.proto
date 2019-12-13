@@ -325,6 +325,9 @@ message ClusterFeature {
 
   // +optional
   optional string gpuType = 4;
+
+  // +optional
+  optional bool enableMasterSchedule = 5;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.

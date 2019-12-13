@@ -330,6 +330,8 @@ type ClusterFeature struct {
 	InternalLB *bool `json:"internalLB,omitempty" protobuf:"varint,3,opt,name=internalLB"`
 	// +optional
 	GPUType *GPUType `json:"gpuType,omitempty" protobuf:"bytes,4,opt,name=gpuType"`
+	// +optional
+	EnableMasterSchedule bool `json:"enableMasterSchedule,omitempty" protobuf:"bytes,5,opt,name=enableMasterSchedule"`
 }
 
 // ClusterProperty records the attribute information of the cluster.
