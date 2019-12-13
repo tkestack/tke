@@ -52,6 +52,7 @@ require (
 	github.com/golang/glog v0.0.0
 	github.com/golang/snappy v0.0.1
 	github.com/google/gofuzz v1.0.0
+	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/handlers v1.4.2 // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/gosuri/uitable v0.0.0-20160404203958-36ee7e946282
