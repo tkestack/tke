@@ -46,42 +46,42 @@ Open your browser to http://`INSTALLER-NODE-IP`:8080/index.html, the Web GUI wil
   
 1. Set the account information and HA VIP
   
-   ![](images/step-1.png)
+   ![](../../images/step-1.png)
   
 2. Configure the global cluster, set cluster's nic, GPU type and container network, specify the master node information，advance option enable you to set customized parameters
 
-   ![](images/step-2.png)
+   ![](../../images/step-2.png)
   
 3. Set authentication information
 
-   ![](images/step-3.png)
+   ![](../../images/step-3.png)
   
 4. Specify the image registry, TKEStack will deploy a local registry by default
 
-   ![](images/step-4.png)
+   ![](../../images/step-4.png)
   
 5. Business setting，default is on
 
-   ![](images/step-5.png)
+   ![](../../images/step-5.png)
   
 6. Monitor settings，TKE will install an influxDB as the monitor data's storage, or specify the influxDB address and ES address, or disable the monitor
   
-   ![](images/step-6.png)
+   ![](../../images/step-6.png)
   
 7. Console settings, if enabled, specify the console page's address and certificate
   
-   ![](images/step-7.png)
+   ![](../../images/step-7.png)
   
 8. Preview all the configuration, if no problem, click `install` to start, next page will show the install logs in real time
    
-   ![](images/step-8.png)
+   ![](../../images/step-8.png)
    
 
 ## Using TKEStack
 
 After the installation is completed, you will receive a `===>install task [Success]` message, click the `Guidance` button to check the TKEStack console address, open a browser to access.
    
-   ![](images/step-9.png)
+   ![](../../images/step-9.png)
 
 The login username and password are specified in previous installation step:
 
