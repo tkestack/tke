@@ -820,7 +820,7 @@ func (t *TKE) ValidateConfig(config Config) *errors.StatusError {
 	if config.Registry.TKERegistry != nil {
 		dnsNames = append(dnsNames, config.Registry.TKERegistry.Domain, "*."+config.Registry.TKERegistry.Domain)
 	}
-	if config.Gateway.Cert.ThirdPartyCert != nil {
+	if config.Gateway != nil && config.Gateway.Cert.ThirdPartyCert != nil {
 		statusError := t.ValidateCertAndKey(config.Gateway.Cert.ThirdPartyCert.Certificate,
 			config.Gateway.Cert.ThirdPartyCert.PrivateKey, dnsNames)
 		if statusError != nil {
