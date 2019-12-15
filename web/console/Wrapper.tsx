@@ -398,7 +398,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           this.props.platformType === PlatformTypeEnum.Business
         ) {
           location.href = location.origin + '/tkestack';
-        } else if (userType === UserType.other) {
+        } else if (userType === UserType.other && window.location.pathname.indexOf('tkestack/blank') === -1) {
           window.location.pathname = 'tkestack/blank';
         }
       }

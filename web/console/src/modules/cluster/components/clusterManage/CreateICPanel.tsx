@@ -232,7 +232,9 @@ export class CreateICPanel extends React.Component<RootProps, State> {
               minMaskCode="14"
               maxMaskCode={'24'}
               value={cidr}
-              onChange={value => actions.createIC.setCidr(value, maxClusterServiceNum, maxNodePodNum)}
+              onChange={(cidr, maxNodePodNum, maxClusterServiceNum) =>
+                actions.createIC.setCidr(cidr, maxClusterServiceNum, maxNodePodNum)
+              }
             />
 
             <FormPanel.Item>
