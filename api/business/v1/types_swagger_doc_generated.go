@@ -229,7 +229,7 @@ func (ProjectList) SwaggerDoc() map[string]string {
 var map_ProjectSpec = map[string]string{
 	"":                  "ProjectSpec is a description of a project.",
 	"finalizers":        "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
-	"members":           "Subjects represents the user list of project.",
+	"members":           "Users represents the user list of project.",
 	"parentProjectName": "ParentProjectName indicates the superior project name of this service.",
 	"clusters":          "Clusters represents clusters that can be used and the resource limits of each cluster.",
 }

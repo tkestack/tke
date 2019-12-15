@@ -135,8 +135,9 @@ func (AllowedStatus) SwaggerDoc() map[string]string {
 }
 
 var map_Binding = map[string]string{
-	"":         "Binding is used to bind or unbind the subjects to or from the policy,role or group.",
-	"subjects": "Subjects holds references to the objects the policy applies to.",
+	"":       "Binding is used to bind or unbind the subjects to or from the policy,role or group.",
+	"users":  "Users holds references to the objects the policy applies to.",
+	"groups": "Groups holds references to the groups the policy applies to.",
 }
 
 func (Binding) SwaggerDoc() map[string]string {
@@ -218,8 +219,8 @@ func (GroupSpec) SwaggerDoc() map[string]string {
 }
 
 var map_GroupStatus = map[string]string{
-	"":         "GroupStatus represents information about the status of a group.",
-	"subjects": "Subjects represents the members of the group.",
+	"":      "GroupStatus represents information about the status of a group.",
+	"users": "Users represents the members of the group.",
 }
 
 func (GroupStatus) SwaggerDoc() map[string]string {
@@ -315,8 +316,9 @@ func (PolicySpec) SwaggerDoc() map[string]string {
 }
 
 var map_PolicyStatus = map[string]string{
-	"":         "PolicyStatus represents information about the status of a policy.",
-	"subjects": "Subjects represents the objects the policy applies to.",
+	"":       "PolicyStatus represents information about the status of a policy.",
+	"users":  "Users represents the users the policy applies to.",
+	"Groups": "Groups represents the groups the policy applies to.",
 }
 
 func (PolicyStatus) SwaggerDoc() map[string]string {
@@ -366,8 +368,9 @@ func (RoleSpec) SwaggerDoc() map[string]string {
 }
 
 var map_RoleStatus = map[string]string{
-	"":         "RoleStatus represents information about the status of a role.",
-	"Subjects": "Subjects represents the members of the group.",
+	"":       "RoleStatus represents information about the status of a role.",
+	"Users":  "Users represents the users the role applies to.",
+	"Groups": "Groups represents the groups the role applies to.",
 }
 
 func (RoleStatus) SwaggerDoc() map[string]string {

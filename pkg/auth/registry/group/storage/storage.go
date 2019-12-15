@@ -55,6 +55,8 @@ type Storage struct {
 	Finalize  *FinalizeREST
 	Binding   *BindingREST
 	Unbinding *UnbindingREST
+
+	User *UserREST
 }
 
 // NewStorage returns a Storage object that will work against groups.
@@ -93,6 +95,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		Finalize:  &FinalizeREST{&finalizeStore},
 		Binding:   &BindingREST{store, authClient},
 		Unbinding: &UnbindingREST{store, authClient},
+		User:      &UserREST{store, authClient},
 	}
 }
 

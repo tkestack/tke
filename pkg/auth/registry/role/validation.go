@@ -58,9 +58,9 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 	}
 
 	fldStatPath := field.NewPath("status")
-	for i, subj := range role.Status.Subjects {
+	for i, subj := range role.Status.Users {
 		if subj.ID == "" && subj.Name == "" {
-			allErrs = append(allErrs, field.Required(fldStatPath.Child("subjects"), "must specify id or name"))
+			allErrs = append(allErrs, field.Required(fldStatPath.Child("users"), "must specify id or name"))
 			continue
 		}
 
@@ -69,15 +69,15 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 			val, err := authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldStatPath.Child("subjects"), subj.ID))
+					allErrs = append(allErrs, field.NotFound(fldStatPath.Child("users"), subj.ID))
 				} else {
-					allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
+					allErrs = append(allErrs, field.InternalError(fldStatPath.Child("users"), err))
 				}
 			} else {
-				if val.Spec.TenantID != val.Spec.TenantID {
-					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("subjects"), subj.ID, "must in the same tenant with the role"))
+				if val.Spec.TenantID != role.Spec.TenantID {
+					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("users"), subj.ID, "must in the same tenant with the role"))
 				} else {
-					role.Status.Subjects[i].Name = val.Spec.Username
+					role.Status.Users[i].Name = val.Spec.Username
 				}
 			}
 		} else {
@@ -86,9 +86,31 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 				continue
 			}
 			if err != nil {
-				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
+				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("users"), err))
 			} else {
-				role.Status.Subjects[i].ID = localIdentity.Name
+				role.Status.Users[i].ID = localIdentity.Name
+			}
+		}
+	}
+
+	for i, subj := range role.Status.Groups {
+		if subj.ID == "" {
+			allErrs = append(allErrs, field.Required(fldStatPath.Child("groups"), "must specify id or name"))
+			continue
+		}
+
+		val, err := authClient.Groups().Get(subj.ID, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.NotFound(fldStatPath.Child("groups"), subj.ID))
+			} else {
+				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("groups"), err))
+			}
+		} else {
+			if val.Spec.TenantID != role.Spec.TenantID {
+				allErrs = append(allErrs, field.Invalid(fldStatPath.Child("groups"), subj.ID, "must in the same tenant with the role"))
+			} else {
+				role.Status.Groups[i].Name = val.Spec.DisplayName
 			}
 		}
 	}

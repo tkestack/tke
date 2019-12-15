@@ -51,7 +51,7 @@ func UserKey(tenantID string, name string) string {
 }
 
 func UserPrefix(tenantID string) string {
-	return fmt.Sprintf("%s::", tenantID)
+	return fmt.Sprintf("%s::user::", tenantID)
 }
 
 func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string) (auth.GroupList, error) {

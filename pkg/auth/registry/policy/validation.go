@@ -68,9 +68,9 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 	}
 
 	fldStatPath := field.NewPath("status")
-	for i, subj := range policy.Status.Subjects {
+	for i, subj := range policy.Status.Users {
 		if subj.ID == "" && subj.Name == "" {
-			allErrs = append(allErrs, field.Required(fldStatPath.Child("subjects"), "must specify id or name"))
+			allErrs = append(allErrs, field.Required(fldStatPath.Child("users"), "must specify id or name"))
 			continue
 		}
 
@@ -79,15 +79,15 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 			val, err := authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldStatPath.Child("subjects"), subj.ID))
+					allErrs = append(allErrs, field.NotFound(fldStatPath.Child("users"), subj.ID))
 				} else {
-					allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
+					allErrs = append(allErrs, field.InternalError(fldStatPath.Child("users"), err))
 				}
 			} else {
-				if val.Spec.TenantID != val.Spec.TenantID {
-					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("subjects"), subj.ID, "must in the same tenant with the policy"))
+				if val.Spec.TenantID != policy.Spec.TenantID {
+					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("users"), subj.ID, "must in the same tenant with the policy"))
 				} else {
-					policy.Status.Subjects[i].Name = val.Spec.Username
+					policy.Status.Users[i].Name = val.Spec.Username
 				}
 			}
 		} else {
@@ -96,9 +96,31 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 				continue
 			}
 			if err != nil {
-				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
+				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("users"), err))
 			} else {
-				policy.Status.Subjects[i].ID = localIdentity.Name
+				policy.Status.Users[i].ID = localIdentity.Name
+			}
+		}
+	}
+
+	for i, subj := range policy.Status.Groups {
+		if subj.ID == "" {
+			allErrs = append(allErrs, field.Required(fldStatPath.Child("groups"), "must specify id or name"))
+			continue
+		}
+
+		val, err := authClient.Groups().Get(subj.ID, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.NotFound(fldStatPath.Child("groups"), subj.ID))
+			} else {
+				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("groups"), err))
+			}
+		} else {
+			if val.Spec.TenantID != policy.Spec.TenantID {
+				allErrs = append(allErrs, field.Invalid(fldStatPath.Child("groups"), subj.ID, "must in the same tenant with the policy"))
+			} else {
+				policy.Status.Groups[i].Name = val.Spec.DisplayName
 			}
 		}
 	}

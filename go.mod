@@ -79,7 +79,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/openzipkin/zipkin-go v0.2.2 // indirect
 	github.com/parnurzeal/gorequest v0.2.15
-	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/sftp v1.10.0
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
@@ -109,7 +108,6 @@ require (
 	gopkg.in/go-playground/validator.v9 v9.28.0
 	gopkg.in/square/go-jose.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.2.4
-	gotest.tools v2.2.0+incompatible
 	helm.sh/chartmuseum v0.10.0
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0

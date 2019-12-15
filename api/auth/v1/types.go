@@ -377,8 +377,11 @@ type PolicyStatus struct {
 	// +optional
 	Phase PolicyPhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=PolicyPhase"`
 	// +optional
-	// Subjects represents the objects the policy applies to.
-	Subjects []Subject `json:"subjects" protobuf:"bytes,2,rep,name=subjects"`
+	// Users represents the users the policy applies to.
+	Users []Subject `json:"users" protobuf:"bytes,2,rep,name=users"`
+
+	// Groups represents the groups the policy applies to.
+	Groups []Subject `protobuf:"bytes,3,rep,name=groups"`
 }
 
 const (
@@ -443,9 +446,13 @@ type RuleSpec struct {
 type Binding struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Subjects holds references to the objects the policy applies to.
+	// Users holds references to the objects the policy applies to.
 	// +optional
-	Subjects []Subject `json:"subjects" protobuf:"bytes,1,rep,name=subject"`
+	Users []Subject `json:"users, omitempty" protobuf:"bytes,1,rep,name=users"`
+
+	// Groups holds references to the groups the policy applies to.
+	// +optional
+	Groups []Subject `json:"groups,omitempty" protobuf:"bytes,2,rep,name=groups"`
 }
 
 // Subject references a user can specify by id or name.
@@ -509,8 +516,12 @@ type RoleStatus struct {
 	// +optional
 	Phase RolePhase `protobuf:"bytes,1,opt,name=phase,casttype=RolePhase"`
 
-	// Subjects represents the members of the group.
-	Subjects []Subject `protobuf:"bytes,2,rep,name=subjects"`
+	// Users represents the users the role applies to.
+	Users []Subject `protobuf:"bytes,2,rep,name=users"`
+
+	// +optional
+	// Groups represents the groups the role applies to.
+	Groups []Subject `protobuf:"bytes,3,rep,name=groups"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -577,8 +588,8 @@ type GroupStatus struct {
 	// +optional
 	Phase GroupPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=GroupPhase"`
 
-	// Subjects represents the members of the group.
-	Subjects []Subject `json:"subjects" protobuf:"bytes,2,rep,name=subjects"`
+	// Users represents the members of the group.
+	Users []Subject `json:"users" protobuf:"bytes,2,rep,name=users"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -735,7 +735,8 @@ func Convert_auth_AllowedStatus_To_v1_AllowedStatus(in *auth.AllowedStatus, out 
 }
 
 func autoConvert_v1_Binding_To_auth_Binding(in *Binding, out *auth.Binding, s conversion.Scope) error {
-	out.Subjects = *(*[]auth.Subject)(unsafe.Pointer(&in.Subjects))
+	out.Users = *(*[]auth.Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]auth.Subject)(unsafe.Pointer(&in.Groups))
 	return nil
 }
 
@@ -745,7 +746,8 @@ func Convert_v1_Binding_To_auth_Binding(in *Binding, out *auth.Binding, s conver
 }
 
 func autoConvert_auth_Binding_To_v1_Binding(in *auth.Binding, out *Binding, s conversion.Scope) error {
-	out.Subjects = *(*[]Subject)(unsafe.Pointer(&in.Subjects))
+	out.Users = *(*[]Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]Subject)(unsafe.Pointer(&in.Groups))
 	return nil
 }
 
@@ -958,7 +960,7 @@ func Convert_auth_GroupSpec_To_v1_GroupSpec(in *auth.GroupSpec, out *GroupSpec, 
 
 func autoConvert_v1_GroupStatus_To_auth_GroupStatus(in *GroupStatus, out *auth.GroupStatus, s conversion.Scope) error {
 	out.Phase = auth.GroupPhase(in.Phase)
-	out.Subjects = *(*[]auth.Subject)(unsafe.Pointer(&in.Subjects))
+	out.Users = *(*[]auth.Subject)(unsafe.Pointer(&in.Users))
 	return nil
 }
 
@@ -969,7 +971,7 @@ func Convert_v1_GroupStatus_To_auth_GroupStatus(in *GroupStatus, out *auth.Group
 
 func autoConvert_auth_GroupStatus_To_v1_GroupStatus(in *auth.GroupStatus, out *GroupStatus, s conversion.Scope) error {
 	out.Phase = GroupPhase(in.Phase)
-	out.Subjects = *(*[]Subject)(unsafe.Pointer(&in.Subjects))
+	out.Users = *(*[]Subject)(unsafe.Pointer(&in.Users))
 	return nil
 }
 
@@ -1272,7 +1274,8 @@ func Convert_auth_PolicySpec_To_v1_PolicySpec(in *auth.PolicySpec, out *PolicySp
 
 func autoConvert_v1_PolicyStatus_To_auth_PolicyStatus(in *PolicyStatus, out *auth.PolicyStatus, s conversion.Scope) error {
 	out.Phase = auth.PolicyPhase(in.Phase)
-	out.Subjects = *(*[]auth.Subject)(unsafe.Pointer(&in.Subjects))
+	out.Users = *(*[]auth.Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]auth.Subject)(unsafe.Pointer(&in.Groups))
 	return nil
 }
 
@@ -1283,7 +1286,8 @@ func Convert_v1_PolicyStatus_To_auth_PolicyStatus(in *PolicyStatus, out *auth.Po
 
 func autoConvert_auth_PolicyStatus_To_v1_PolicyStatus(in *auth.PolicyStatus, out *PolicyStatus, s conversion.Scope) error {
 	out.Phase = PolicyPhase(in.Phase)
-	out.Subjects = *(*[]Subject)(unsafe.Pointer(&in.Subjects))
+	out.Users = *(*[]Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]Subject)(unsafe.Pointer(&in.Groups))
 	return nil
 }
 
@@ -1410,7 +1414,8 @@ func Convert_auth_RoleSpec_To_v1_RoleSpec(in *auth.RoleSpec, out *RoleSpec, s co
 
 func autoConvert_v1_RoleStatus_To_auth_RoleStatus(in *RoleStatus, out *auth.RoleStatus, s conversion.Scope) error {
 	out.Phase = auth.RolePhase(in.Phase)
-	out.Subjects = *(*[]auth.Subject)(unsafe.Pointer(&in.Subjects))
+	out.Users = *(*[]auth.Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]auth.Subject)(unsafe.Pointer(&in.Groups))
 	return nil
 }
 
@@ -1421,7 +1426,8 @@ func Convert_v1_RoleStatus_To_auth_RoleStatus(in *RoleStatus, out *auth.RoleStat
 
 func autoConvert_auth_RoleStatus_To_v1_RoleStatus(in *auth.RoleStatus, out *RoleStatus, s conversion.Scope) error {
 	out.Phase = RolePhase(in.Phase)
-	out.Subjects = *(*[]Subject)(unsafe.Pointer(&in.Subjects))
+	out.Users = *(*[]Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]Subject)(unsafe.Pointer(&in.Groups))
 	return nil
 }
 

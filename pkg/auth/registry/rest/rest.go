@@ -105,6 +105,8 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["policies/status"] = policyRest.Status
 		storageMap["policies/binding"] = policyRest.Binding
 		storageMap["policies/unbinding"] = policyRest.Unbinding
+		storageMap["policies/users"] = policyRest.User
+		storageMap["policies/groups"] = policyRest.Group
 
 		ruleRest := rulestorage.NewStorage(restOptionsGetter)
 		storageMap["rules"] = ruleRest.Rule
@@ -117,6 +119,8 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["roles/unbinding"] = roleRest.Unbinding
 		storageMap["roles/policybinding"] = roleRest.PolicyBinding
 		storageMap["roles/policyunbinding"] = roleRest.PolicyUnbinding
+		storageMap["roles/users"] = roleRest.User
+		storageMap["roles/groups"] = roleRest.Group
 
 		groupRest := groupstorage.NewStorage(restOptionsGetter, authClient, s.PrivilegedUsername)
 		storageMap["groups"] = groupRest.Group
@@ -124,6 +128,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["groups/status"] = groupRest.Status
 		storageMap["groups/binding"] = groupRest.Binding
 		storageMap["groups/unbinding"] = groupRest.Unbinding
+		storageMap["groups/users"] = groupRest.User
 	}
 
 	return storageMap

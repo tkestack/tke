@@ -234,7 +234,7 @@ func (c *Controller) handleSubjects(key string, group *v1.Group) error {
 	}
 
 	var expectedMembers []string
-	for _, subj := range group.Status.Subjects {
+	for _, subj := range group.Status.Users {
 		expectedMembers = append(expectedMembers, subj.Name)
 	}
 

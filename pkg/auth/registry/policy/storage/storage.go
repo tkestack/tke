@@ -56,6 +56,9 @@ type Storage struct {
 	Finalize  *FinalizeREST
 	Binding   *BindingREST
 	Unbinding *UnbindingREST
+
+	User  *UserREST
+	Group *GroupREST
 }
 
 // NewStorage returns a Storage object that will work against policies.
@@ -95,6 +98,8 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *casbin.SyncedEnf
 		Finalize:  &FinalizeREST{&finalizeStore},
 		Binding:   &BindingREST{store, authClient},
 		Unbinding: &UnbindingREST{store, authClient},
+		User:      &UserREST{store, authClient},
+		Group:     &GroupREST{store, authClient},
 	}
 }
 

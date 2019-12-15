@@ -347,8 +347,12 @@ type PolicyStatus struct {
 	Phase PolicyPhase
 
 	// +optional
-	// Subjects represents the objects the policy applies to.
-	Subjects []Subject
+	// Users represents the users the policy applies to.
+	Users []Subject
+
+	// +optional
+	// Groups represents the groups the policy applies to.
+	Groups []Subject
 }
 
 const (
@@ -411,9 +415,13 @@ type RuleSpec struct {
 type Binding struct {
 	metav1.TypeMeta
 
-	// Subjects holds references to the objects the policy applies to.
+	// Users holds references to the objects the policy applies to.
 	// +optional
-	Subjects []Subject
+	Users []Subject
+
+	// Groups holds references to the groups the policy applies to.
+	// +optional
+	Groups []Subject
 }
 
 // Subject references a user can specify by id or name.
@@ -477,8 +485,12 @@ type RoleStatus struct {
 	// +optional
 	Phase RolePhase
 
-	// Subjects represents the members of the group.
-	Subjects []Subject
+	// Users represents the users of the applies to.
+	Users []Subject
+
+	// +optional
+	// Groups represents the groups the policy applies to.
+	Groups []Subject
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -545,8 +557,8 @@ type GroupStatus struct {
 	// +optional
 	Phase GroupPhase
 
-	// Subjects represents the members of the group.
-	Subjects []Subject
+	// Users represents the members of the group.
+	Users []Subject
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

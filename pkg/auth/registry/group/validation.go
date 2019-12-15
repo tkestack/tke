@@ -43,9 +43,9 @@ func ValidateGroup(group *auth.Group, authClient authinternalclient.AuthInterfac
 	}
 
 	fldStatPath := field.NewPath("status")
-	for i, subj := range group.Status.Subjects {
+	for i, subj := range group.Status.Users {
 		if subj.ID == "" && subj.Name == "" {
-			allErrs = append(allErrs, field.Required(fldStatPath.Child("subjects"), "must specify id or name"))
+			allErrs = append(allErrs, field.Required(fldStatPath.Child("users"), "must specify id or name"))
 			continue
 		}
 
@@ -54,15 +54,15 @@ func ValidateGroup(group *auth.Group, authClient authinternalclient.AuthInterfac
 			val, err := authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldStatPath.Child("subjects"), subj.ID))
+					allErrs = append(allErrs, field.NotFound(fldStatPath.Child("users"), subj.ID))
 				} else {
-					allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
+					allErrs = append(allErrs, field.InternalError(fldStatPath.Child("users"), err))
 				}
 			} else {
-				if val.Spec.TenantID != val.Spec.TenantID {
-					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("subjects"), subj.ID, "must in the same tenant with the group"))
+				if val.Spec.TenantID != group.Spec.TenantID {
+					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("users"), subj.ID, "must in the same tenant with the group"))
 				} else {
-					group.Status.Subjects[i].Name = val.Spec.Username
+					group.Status.Users[i].Name = val.Spec.Username
 				}
 			}
 		} else {
@@ -73,7 +73,7 @@ func ValidateGroup(group *auth.Group, authClient authinternalclient.AuthInterfac
 			if err != nil {
 				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
 			} else {
-				group.Status.Subjects[i].ID = localIdentity.Name
+				group.Status.Users[i].ID = localIdentity.Name
 			}
 		}
 	}

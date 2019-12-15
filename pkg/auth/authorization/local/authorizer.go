@@ -21,12 +21,12 @@ package local
 import (
 	"context"
 	"fmt"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/filter"
-	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -72,10 +72,10 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	perms, _ := a.enforcer.GetImplicitPermissionsForUser(fmt.Sprintf("%s%s-%s", types.UserPrefix, tenantID, subject))
+	perms, _ := a.enforcer.GetImplicitPermissionsForUser(util.UserKey(tenantID, subject))
 
 	log.Debug("Authorize get user perms", log.Any("user perm", perms))
-	allow, err := a.enforcer.Enforce(fmt.Sprintf("%s%s-%s", types.UserPrefix, tenantID, subject), resource, action)
+	allow, err := a.enforcer.Enforce(fmt.Sprintf(util.UserKey(tenantID, subject)), resource, action)
 	if err != nil {
 		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
 		return authorizer.DecisionDeny, "", err

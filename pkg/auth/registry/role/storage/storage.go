@@ -58,6 +58,8 @@ type Storage struct {
 	Unbinding       *UnbindingREST
 	PolicyBinding   *PolicyBindingREST
 	PolicyUnbinding *PolicyUnbindingREST
+	User            *UserREST
+	Group           *GroupREST
 }
 
 // NewStorage returns a Storage object that will work against roles.
@@ -98,6 +100,8 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *casbin.SyncedEnf
 		Unbinding:       &UnbindingREST{store, authClient},
 		PolicyBinding:   &PolicyBindingREST{store, authClient},
 		PolicyUnbinding: &PolicyUnbindingREST{store, authClient},
+		User:            &UserREST{store, authClient},
+		Group:           &GroupREST{store, authClient},
 	}
 }
 

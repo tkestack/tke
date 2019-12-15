@@ -285,25 +285,25 @@ func (c *Controller) handleSpec(key string, role *v1.Role) error {
 func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 	rules := c.enforcer.GetFilteredGroupingPolicy(1, role.Name)
 	log.Debugf("Get grouping rules for role: %s, %v", role.Name, rules)
-	var existSubj []string
+	var existUsers []string
 	for _, rule := range rules {
 		if strings.HasPrefix(rule[0], authutil.UserPrefix(role.Spec.TenantID)) {
-			existSubj = append(existSubj, strings.TrimPrefix(rule[0], authutil.UserPrefix(role.Spec.TenantID)))
+			existUsers = append(existUsers, strings.TrimPrefix(rule[0], authutil.UserPrefix(role.Spec.TenantID)))
 		}
 	}
 
-	var expectedSubj []string
-	for _, subj := range role.Status.Subjects {
-		expectedSubj = append(expectedSubj, subj.Name)
+	var expectedUsers []string
+	for _, subj := range role.Status.Users {
+		expectedUsers = append(expectedUsers, subj.Name)
 	}
 
 	var errs []error
-	added, removed := util.DiffStringSlice(existSubj, expectedSubj)
+	added, removed := util.DiffStringSlice(existUsers, expectedUsers)
 	log.Info("Handle role subjects changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
 	if len(added) > 0 {
 		for _, add := range added {
 			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(role.Spec.TenantID, add), role.Name); err != nil {
-				log.Errorf("Bind role to user failed", log.String("role", role.Name), log.String("user", add), log.Err(err))
+				log.Errorf("Bind user to role failed", log.String("role", role.Name), log.String("user", add), log.Err(err))
 				errs = append(errs, err)
 			}
 		}
@@ -312,7 +312,39 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 	if len(removed) > 0 {
 		for _, remove := range removed {
 			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(role.Spec.TenantID, remove), role.Name); err != nil {
-				log.Errorf("Unbind role to user failed", log.String("role", role.Name), log.String("user", remove), log.Err(err))
+				log.Errorf("Unbind user to role failed", log.String("role", role.Name), log.String("user", remove), log.Err(err))
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	var existGroups []string
+	for _, rule := range rules {
+		if strings.HasPrefix(rule[0], "grp-") {
+			existGroups = append(existGroups, rule[0])
+		}
+	}
+
+	var expectedGroups []string
+	for _, subj := range role.Status.Groups {
+		expectedGroups = append(expectedGroups, subj.ID)
+	}
+
+	added, removed = util.DiffStringSlice(existGroups, expectedGroups)
+	log.Info("Handle role groups changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
+	if len(added) > 0 {
+		for _, add := range added {
+			if _, err := c.enforcer.AddRoleForUser(add, role.Name); err != nil {
+				log.Errorf("Bind groups to role failed", log.String("role", role.Name), log.String("group", add), log.Err(err))
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	if len(removed) > 0 {
+		for _, remove := range removed {
+			if _, err := c.enforcer.DeleteRoleForUser(remove, role.Name); err != nil {
+				log.Errorf("Unbind group to role failed", log.String("role", role.Name), log.String("group", remove), log.Err(err))
 				errs = append(errs, err)
 			}
 		}

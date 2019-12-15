@@ -20,63 +20,77 @@ package storage
 
 import (
 	"context"
-	"tkestack.io/tke/pkg/auth/util"
-
-	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/util/log"
 )
 
-// BindingREST implements the REST endpoint.
-type BindingREST struct {
+// UserREST implements the REST endpoint.
+type UserREST struct {
 	policyStore *registry.Store
 
 	authClient authinternalclient.AuthInterface
 }
 
-var _ = rest.Creater(&BindingREST{})
-
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
-func (r *BindingREST) New() runtime.Object {
+func (r *UserREST) New() runtime.Object {
 	return &auth.Binding{}
 }
 
-func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+// NewList returns an empty object that can be used with the List call.
+func (r *UserREST) NewList() runtime.Object {
+	return &auth.LocalIdentityList{}
+}
+
+// List selects resources in the storage which match to the selector. 'options' can be nil.
+func (r *UserREST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	bind := obj.(*auth.Binding)
-	log.Info("bind", log.Any("bind", bind))
 	polObj, err := r.policyStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	policy := polObj.(*auth.Policy)
 
-	for _, sub := range bind.Users {
-		if !util.InSubjectsByName(sub, policy.Status.Users) {
-			policy.Status.Users = append(policy.Status.Users, sub)
+	localIdentityList := &auth.LocalIdentityList{}
+	for _, subj := range policy.Status.Users {
+		var localIdentity *auth.LocalIdentity
+		if subj.ID != "" {
+			localIdentity, err = r.authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
+			if err != nil {
+				log.Error("Get localIdentity failed", log.String("id", subj.ID), log.Err(err))
+				localIdentity = constructLocalIdentity(subj.ID, subj.Name)
+			}
+		} else {
+			localIdentity = constructLocalIdentity(subj.ID, subj.Name)
 		}
+
+		localIdentity.Spec.HashedPassword = ""
+		localIdentityList.Items = append(localIdentityList.Items, *localIdentity)
 	}
 
-	for _, sub := range bind.Groups {
-		if !util.InSubjects(sub, policy.Status.Groups) {
-			policy.Status.Groups = append(policy.Status.Groups, sub)
-		}
+	return localIdentityList, nil
+}
+
+func constructLocalIdentity(userID, username string) *auth.LocalIdentity {
+	return &auth.LocalIdentity{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: userID,
+		},
+		Spec: auth.LocalIdentitySpec{
+			Username: username,
+		},
 	}
-
-	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("users", policy.Status.Users), log.Any("groups", policy.Status.Groups))
-
-	return r.authClient.Policies().UpdateStatus(policy)
 }

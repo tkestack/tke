@@ -26,7 +26,6 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -52,11 +51,6 @@ func (r *BindingREST) New() runtime.Object {
 	return &auth.Binding{}
 }
 
-// NewList returns an empty object that can be used with the List call.
-func (r *BindingREST) NewList() runtime.Object {
-	return &auth.LocalIdentityList{}
-}
-
 func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
@@ -70,59 +64,19 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	}
 	role := polObj.(*auth.Role)
 
-	for _, sub := range bind.Subjects {
-		if sub.Name != "" {
-			if !util.InSubjects(sub, role.Status.Subjects) {
-				role.Status.Subjects = append(role.Status.Subjects, sub)
-			}
+	for _, sub := range bind.Users {
+		if !util.InSubjectsByName(sub, role.Status.Users) {
+			role.Status.Users = append(role.Status.Users, sub)
 		}
 	}
 
-	log.Info("role members", log.String("role", role.Name), log.Any("members", role.Status.Subjects))
+	for _, sub := range bind.Groups {
+		if !util.InSubjects(sub, role.Status.Groups) {
+			role.Status.Groups = append(role.Status.Groups, sub)
+		}
+	}
+
+	log.Info("role members", log.String("role", role.Name), log.Any("users", role.Status.Users), log.Any("groups", role.Status.Groups))
 
 	return r.authClient.Roles().UpdateStatus(role)
-}
-
-// List selects resources in the storage which match to the selector. 'options' can be nil.
-func (r *BindingREST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return nil, errors.NewBadRequest("unable to get request info from context")
-	}
-
-	rolObj, err := r.roleStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	role := rolObj.(*auth.Role)
-
-	localIdentityList := &auth.LocalIdentityList{}
-	for _, subj := range role.Status.Subjects {
-		var localIdentity *auth.LocalIdentity
-		if subj.ID != "" {
-			localIdentity, err = r.authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
-			if err != nil {
-				log.Error("Get localIdentity failed", log.String("id", subj.ID), log.Err(err))
-				localIdentity = constructLocalIdentity(subj.ID, subj.Name)
-			}
-		} else {
-			localIdentity = constructLocalIdentity(subj.ID, subj.Name)
-		}
-
-		localIdentity.Spec.HashedPassword = ""
-		localIdentityList.Items = append(localIdentityList.Items, *localIdentity)
-	}
-
-	return localIdentityList, nil
-}
-
-func constructLocalIdentity(userID, username string) *auth.LocalIdentity {
-	return &auth.LocalIdentity{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: userID,
-		},
-		Spec: auth.LocalIdentitySpec{
-			Username: username,
-		},
-	}
 }

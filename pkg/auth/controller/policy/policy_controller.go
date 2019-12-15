@@ -293,7 +293,7 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 	}
 
 	var expectedSubj []string
-	for _, subj := range policy.Status.Subjects {
+	for _, subj := range policy.Status.Users {
 		expectedSubj = append(expectedSubj, subj.Name)
 	}
 
@@ -303,7 +303,7 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 	if len(added) > 0 {
 		for _, add := range added {
 			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(policy.Spec.TenantID, add), policy.Name); err != nil {
-				log.Errorf("Bind policy to user failed", log.String("policy", policy.Name), log.String("user", add), log.Err(err))
+				log.Errorf("Bind user to policy failed", log.String("policy", policy.Name), log.String("user", add), log.Err(err))
 				errs = append(errs, err)
 			}
 		}
@@ -312,7 +312,39 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 	if len(removed) > 0 {
 		for _, remove := range removed {
 			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(policy.Spec.TenantID, remove), policy.Name); err != nil {
-				log.Errorf("Unbind policy to user failed", log.String("policy", policy.Name), log.String("user", remove), log.Err(err))
+				log.Errorf("Unbind user to policy failed", log.String("policy", policy.Name), log.String("user", remove), log.Err(err))
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	var existGroups []string
+	for _, rule := range rules {
+		if strings.HasPrefix(rule[0], "grp-") {
+			existGroups = append(existGroups, rule[0])
+		}
+	}
+
+	var expectedGroups []string
+	for _, subj := range policy.Status.Groups {
+		expectedGroups = append(expectedGroups, subj.ID)
+	}
+
+	added, removed = util.DiffStringSlice(existGroups, expectedGroups)
+	log.Info("Handle policy groups changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
+	if len(added) > 0 {
+		for _, add := range added {
+			if _, err := c.enforcer.AddRoleForUser(add, policy.Name); err != nil {
+				log.Errorf("Bind groups to policy failed", log.String("policy", policy.Name), log.String("group", add), log.Err(err))
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	if len(removed) > 0 {
+		for _, remove := range removed {
+			if _, err := c.enforcer.DeleteRoleForUser(remove, policy.Name); err != nil {
+				log.Errorf("Unbind group to policy failed", log.String("policy", policy.Name), log.String("group", remove), log.Err(err))
 				errs = append(errs, err)
 			}
 		}

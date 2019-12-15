@@ -63,7 +63,7 @@ type ProjectSpec struct {
 	// +optional
 	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,3,opt,name=displayName"`
 
-	// Subjects represents the user list of project.
+	// Users represents the user list of project.
 	Members []string `json:"members" protobuf:"bytes,4,rep,name=members"`
 
 	// ParentProjectName indicates the superior project name of this service.

@@ -289,7 +289,7 @@ func deleteRelatedRules(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 	}
 
 	binding := v1.Binding{}
-	binding.Subjects = append(binding.Subjects, v1.Subject{Name: localIdentity.Spec.Username})
+	binding.Users = append(binding.Users, v1.Subject{Name: localIdentity.Spec.Username})
 
 	log.Info("Try removing policy for user", log.String("user", localIdentity.Spec.Username), log.Strings("policies", roles))
 	var errs []error

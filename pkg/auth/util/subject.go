@@ -20,10 +20,22 @@ package util
 
 import "tkestack.io/tke/api/auth"
 
+func InSubjectsByName(subject auth.Subject, slice []auth.Subject) bool {
+	for _, s := range slice {
+		if subject.Name == s.Name || subject.ID == s.ID {
+			return true
+		}
+	}
+	return false
+}
+
 func InSubjects(subject auth.Subject, slice []auth.Subject) bool {
 	for _, s := range slice {
-		if subject.Name == s.Name {
-			return true
+		if subject.ID != "" {
+			if subject.ID == s.ID {
+				return true
+			}
+			return false
 		}
 	}
 	return false
