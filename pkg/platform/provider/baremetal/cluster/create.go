@@ -517,7 +517,7 @@ func (p *Provider) EnsureMarkControlPlane(c *Cluster) error {
 	}
 
 	option := &markcontrolplane.Option{}
-	if c.Spec.Features.EnableMasterSchedule == false {
+	if !c.Spec.Features.EnableMasterSchedule {
 		option.Taints = []corev1.Taint{
 			{
 				Key:    "node-role.kubernetes.io/master",

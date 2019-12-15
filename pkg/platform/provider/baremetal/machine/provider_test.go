@@ -41,7 +41,8 @@ func TestMachine_Create(t *testing.T) {
 	}
 
 	p := new(Provider)
-	_ = p.Init("conf/config.yaml")
+	// todo: fix it
+	// _ = p.Init("conf/config.yaml")
 
 	var machine v1.Machine
 	data, err := ioutil.ReadFile(machineData)
