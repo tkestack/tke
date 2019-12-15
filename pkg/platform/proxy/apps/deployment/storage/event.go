@@ -69,7 +69,7 @@ type eventsFinder struct {
 	errors         []error
 }
 
-func newEventsFinder(namespaceName string, ctx context.Context, client kubernetes.Clientset, platformClient platforminternalclient.PlatformInterface) *eventsFinder {
+func newEventsFinder(ctx context.Context, namespaceName string, client kubernetes.Clientset, platformClient platforminternalclient.PlatformInterface) *eventsFinder {
 	return &eventsFinder{
 		platformClient: platformClient,
 		ctx:            ctx,
@@ -92,7 +92,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	ef := newEventsFinder(namespaceName, ctx, *client, r.platformClient)
+	ef := newEventsFinder(ctx, namespaceName, *client, r.platformClient)
 
 	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(name, *options)
 	if err != nil {
