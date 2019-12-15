@@ -77,7 +77,6 @@ require (
 	github.com/openzipkin/zipkin-go v0.2.2 // indirect
 	github.com/parnurzeal/gorequest v0.2.15
 	github.com/pborman/uuid v1.2.0
-	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/sftp v1.10.0
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
