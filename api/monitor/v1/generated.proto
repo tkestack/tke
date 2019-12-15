@@ -72,6 +72,15 @@ message Metric {
   optional string jsonResult = 3;
 }
 
+// MetricList is the whole list of all metrics.
+message MetricList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of metrics
+  repeated Metric items = 2;
+}
+
 message MetricQuery {
   optional string table = 1;
 

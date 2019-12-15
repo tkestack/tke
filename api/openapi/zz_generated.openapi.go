@@ -737,6 +737,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/monitor/v1.ConfigMap":                                    schema_tke_api_monitor_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/monitor/v1.ConfigMapList":                                schema_tke_api_monitor_v1_ConfigMapList(ref),
 		"tkestack.io/tke/api/monitor/v1.Metric":                                       schema_tke_api_monitor_v1_Metric(ref),
+		"tkestack.io/tke/api/monitor/v1.MetricList":                                   schema_tke_api_monitor_v1_MetricList(ref),
 		"tkestack.io/tke/api/monitor/v1.MetricQuery":                                  schema_tke_api_monitor_v1_MetricQuery(ref),
 		"tkestack.io/tke/api/monitor/v1.MetricQueryCondition":                         schema_tke_api_monitor_v1_MetricQueryCondition(ref),
 		"tkestack.io/tke/api/notify/v1.Channel":                                       schema_tke_api_notify_v1_Channel(ref),
@@ -34914,6 +34915,54 @@ func schema_tke_api_monitor_v1_Metric(ref common.ReferenceCallback) common.OpenA
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/monitor/v1.MetricQuery"},
+	}
+}
+
+func schema_tke_api_monitor_v1_MetricList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "MetricList is the whole list of all metrics.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of metrics",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/monitor/v1.Metric"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/monitor/v1.Metric"},
 	}
 }
 

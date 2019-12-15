@@ -22,6 +22,7 @@ import (
 	"context"
 	jsoniter "github.com/json-iterator/go"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
@@ -71,6 +72,11 @@ func (r *REST) New() runtime.Object {
 	return &monitor.Metric{}
 }
 
+// NewList returns an empty object that can be used with the List call.
+func (r *REST) NewList() runtime.Object {
+	return &monitor.MetricList{}
+}
+
 // Create creates a new version of a resource.
 func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	metric, ok := obj.(*monitor.Metric)
@@ -89,4 +95,16 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 		Query:      metric.Query,
 		JSONResult: jsonResult,
 	}, nil
+}
+
+// List selects resources in the storage which match to the selector. 'options' can be nil.
+func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
+	return &monitor.MetricList{
+		Items: make([]monitor.Metric, 0),
+	}, nil
+}
+
+// Get finds a resource in the storage by name and returns it.
+func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return nil, errors.NewNotFound(monitor.Resource("metric"), name)
 }

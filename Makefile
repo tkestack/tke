@@ -114,7 +114,7 @@ release:
 	build/docker/tools/tke-installer/release.sh
 
 ## release-test: test release
-.PHONY: release
+.PHONY: release-test
 release-test:
 	go test -timeout=60m tkestack.io/tke/test/e2e_installer
 

@@ -39,6 +39,19 @@ type Metric struct {
 	JSONResult string `json:"jsonResult,omitempty" protobuf:"bytes,3,opt,name=jsonResult"`
 }
 
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// MetricList is the whole list of all metrics.
+type MetricList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of metrics
+	Items []Metric `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
 type MetricQuery struct {
 	Table string `json:"table" protobuf:"bytes,1,opt,name=table"`
 	// +optional
