@@ -26,9 +26,15 @@ type APISigningKeyExpansion interface{}
 
 type CategoryExpansion interface{}
 
+type ClientExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type GroupExpansion interface{}
+
+type IdentityProviderExpansion interface{}
+
+type LocalGroupExpansion interface{}
 
 type LocalIdentityExpansion interface{}
 
@@ -37,3 +43,5 @@ type PolicyExpansion interface{}
 type RoleExpansion interface{}
 
 type RuleExpansion interface{}
+
+type UserExpansion interface{}

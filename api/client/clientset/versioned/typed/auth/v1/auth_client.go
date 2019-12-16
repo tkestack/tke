@@ -31,12 +31,16 @@ type AuthV1Interface interface {
 	APIKeysGetter
 	APISigningKeysGetter
 	CategoriesGetter
+	ClientsGetter
 	ConfigMapsGetter
 	GroupsGetter
+	IdentityProvidersGetter
+	LocalGroupsGetter
 	LocalIdentitiesGetter
 	PoliciesGetter
 	RolesGetter
 	RulesGetter
+	UsersGetter
 }
 
 // AuthV1Client is used to interact with features provided by the auth.tkestack.io group.
@@ -56,12 +60,24 @@ func (c *AuthV1Client) Categories() CategoryInterface {
 	return newCategories(c)
 }
 
+func (c *AuthV1Client) Clients() ClientInterface {
+	return newClients(c)
+}
+
 func (c *AuthV1Client) ConfigMaps() ConfigMapInterface {
 	return newConfigMaps(c)
 }
 
 func (c *AuthV1Client) Groups() GroupInterface {
 	return newGroups(c)
+}
+
+func (c *AuthV1Client) IdentityProviders() IdentityProviderInterface {
+	return newIdentityProviders(c)
+}
+
+func (c *AuthV1Client) LocalGroups() LocalGroupInterface {
+	return newLocalGroups(c)
 }
 
 func (c *AuthV1Client) LocalIdentities() LocalIdentityInterface {
@@ -78,6 +94,10 @@ func (c *AuthV1Client) Roles() RoleInterface {
 
 func (c *AuthV1Client) Rules() RuleInterface {
 	return newRules(c)
+}
+
+func (c *AuthV1Client) Users() UserInterface {
+	return newUsers(c)
 }
 
 // NewForConfig creates a new AuthV1Client for the given config.

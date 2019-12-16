@@ -26,13 +26,16 @@ import (
 
 func addConversionFuncs(scheme *runtime.Scheme) error {
 	funcs := []func(scheme *runtime.Scheme) error{
-		AddFieldLabelConversionsForLocalIdentify,
+		AddFieldLabelConversionsForLocalIdentity,
 		AddFieldLabelConversionsForAPIKey,
 		AddFieldLabelConversionsForPolicy,
 		AddFieldLabelConversionsForRule,
 		AddFieldLabelConversionsForCategory,
-		AddFieldLabelConversionsForGroup,
+		AddFieldLabelConversionsForLocalGroup,
 		AddFieldLabelConversionsForRole,
+		AddFieldLabelConversionsForUser,
+		AddFieldLabelConversionsForGroup,
+		AddFieldLabelConversionsForIdentityProvider,
 	}
 	for _, f := range funcs {
 		if err := f(scheme); err != nil {
@@ -43,10 +46,10 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 	return nil
 }
 
-// AddFieldLabelConversionsForLocalIdentify adds a conversion function to convert
+// AddFieldLabelConversionsForLocalIdentity adds a conversion function to convert
 // field selectors of LocalIdentify from the given version to internal version
 // representation.
-func AddFieldLabelConversionsForLocalIdentify(scheme *runtime.Scheme) error {
+func AddFieldLabelConversionsForLocalIdentity(scheme *runtime.Scheme) error {
 	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("LocalIdentity"),
 		func(label, value string) (string, string, error) {
 			switch label {
@@ -129,7 +132,6 @@ func AddFieldLabelConversionsForCategory(scheme *runtime.Scheme) error {
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.username",
-				"spec.categoryName",
 				"metadata.name":
 				return label, value, nil
 			default:
@@ -138,11 +140,28 @@ func AddFieldLabelConversionsForCategory(scheme *runtime.Scheme) error {
 		})
 }
 
-// AddFieldLabelConversionsForGroup adds a conversion function to convert
-// field selectors of Group from the given version to internal version
+// AddFieldLabelConversionsForIdentityProvider adds a conversion function to convert
+// field selectors of IdentityProvider from the given version to internal version
 // representation.
-func AddFieldLabelConversionsForGroup(scheme *runtime.Scheme) error {
-	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Group"),
+func AddFieldLabelConversionsForIdentityProvider(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("IdentityProvider"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.type",
+				"spec.name",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForLocalGroup adds a conversion function to convert
+// field selectors of LocalGroup from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForLocalGroup(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("LocalGroup"),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.displayName",
@@ -167,6 +186,36 @@ func AddFieldLabelConversionsForRole(scheme *runtime.Scheme) error {
 				"spec.tenantID",
 				"spec.username",
 				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForUser adds a conversion function to convert
+// field selectors of User from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForUser(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("User"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "keyword":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForGroup adds a conversion function to convert
+// field selectors of IdentityProvider from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForGroup(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("IdentityProvider"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "keyword":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported: %s", label)

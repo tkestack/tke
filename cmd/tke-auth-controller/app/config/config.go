@@ -20,11 +20,12 @@ package config
 
 import (
 	"fmt"
+	"net"
+
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	apiserver "k8s.io/apiserver/pkg/server"
 	restclient "k8s.io/client-go/rest"
-	"net"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	"tkestack.io/tke/cmd/tke-auth-controller/app/options"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
@@ -43,7 +44,12 @@ type Config struct {
 	LeaderElectionClient *versionedclientset.Clientset
 	// the rest config for the auth apiserver
 	AuthAPIServerClientConfig *restclient.Config
-	Component                 controlleroptions.ComponentConfiguration
+
+	PolicyPath        string
+	CategoryPath      string
+	TenantAdmin       string
+	TenantAdminSecret string
+	Component         controlleroptions.ComponentConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -77,6 +83,10 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		Authentication: apiserver.AuthenticationInfo{
 			Authenticator: anonymous.NewAuthenticator(),
 		},
+		PolicyPath:        opts.FeatureOptions.PolicyPath,
+		CategoryPath:      opts.FeatureOptions.CategoryPath,
+		TenantAdmin:       opts.FeatureOptions.TenantAdmin,
+		TenantAdminSecret: opts.FeatureOptions.TenantAdminSecret,
 	}
 
 	if err := opts.Component.ApplyTo(&controllerManagerConfig.Component); err != nil {

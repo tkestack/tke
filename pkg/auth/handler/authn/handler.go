@@ -28,11 +28,10 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
-	"tkestack.io/tke/pkg/auth/types"
-	"tkestack.io/tke/pkg/util/log"
-
 	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
+
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // Handler handle token authentication http request.
@@ -56,7 +55,8 @@ func (h *Handler) AuthenticateToken(request *restful.Request, response *restful.
 
 	authResp, valid, err := h.tokenAuthenticator.AuthenticateToken(context.Background(), tokenReview.Spec.Token)
 	if !valid || err != nil {
-		responsewriters.WriteRawJSON(http.StatusUnauthorized, unauthenticatedResponse(), response.ResponseWriter)
+		tokenReview.Status = v1.TokenReviewStatus{Authenticated: false}
+		responsewriters.WriteRawJSON(http.StatusUnauthorized, tokenReview, response.ResponseWriter)
 		return
 	}
 
@@ -79,14 +79,4 @@ func (h *Handler) AuthenticateToken(request *restful.Request, response *restful.
 	}
 
 	responsewriters.WriteRawJSON(http.StatusOK, tokenResponse, response.ResponseWriter)
-}
-
-func unauthenticatedResponse() *types.TokenReviewResponse {
-	return &types.TokenReviewResponse{
-		APIVersion: types.TokenReviewAPIVersion,
-		Kind:       types.TokenReviewKind,
-		Status: types.TokenReviewStatus{
-			Authenticated: false,
-		},
-	}
 }

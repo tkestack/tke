@@ -48,7 +48,7 @@ func (r *GroupREST) New() runtime.Object {
 
 // NewList returns an empty object that can be used with the List call.
 func (r *GroupREST) NewList() runtime.Object {
-	return &auth.GroupList{}
+	return &auth.LocalGroupList{}
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -64,11 +64,11 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 	}
 	role := rolObj.(*auth.Role)
 
-	groupList := &auth.GroupList{}
+	groupList := &auth.LocalGroupList{}
 	for _, subj := range role.Status.Groups {
-		var group *auth.Group
+		var group *auth.LocalGroup
 		if subj.ID != "" {
-			group, err = r.authClient.Groups().Get(subj.ID, metav1.GetOptions{})
+			group, err = r.authClient.LocalGroups().Get(subj.ID, metav1.GetOptions{})
 			if err != nil {
 				log.Error("Get group failed", log.String("id", subj.ID), log.Err(err))
 				group = constructgroup(subj.ID, subj.Name)
@@ -83,14 +83,13 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 	return groupList, nil
 }
 
-func constructgroup(userID, groupName string) *auth.Group {
-	return &auth.Group{
+func constructgroup(userID, groupName string) *auth.LocalGroup {
+	return &auth.LocalGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: userID,
 		},
-		Spec: auth.GroupSpec{
+		Spec: auth.LocalGroupSpec{
 			Username: groupName,
 		},
 	}
 }
-

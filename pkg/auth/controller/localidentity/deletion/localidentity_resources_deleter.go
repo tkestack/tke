@@ -311,7 +311,7 @@ func deleteRelatedRules(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 					log.String("policy", role), log.Err(err))
 				errs = append(errs, err)
 			}
-		case strings.HasPrefix(role, "grp-"):
+		case strings.HasPrefix(role, util.GroupPrefix(localIdentity.Spec.TenantID)):
 			err = deleter.authClient.RESTClient().Post().
 				Resource("groups").
 				Name(role).

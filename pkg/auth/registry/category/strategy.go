@@ -25,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/storage"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -102,29 +101,15 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	category, ok := obj.(*auth.Category)
 	if !ok {
-		return nil, nil, fmt.Errorf("not a policy")
+		return nil, nil, fmt.Errorf("not a category")
 	}
 	return labels.Set(category.ObjectMeta.Labels), ToSelectableFields(category), nil
-}
-
-// MatchPolicy returns a generic matcher for a given label and field selector.
-func MatchPolicy(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
-	return storage.SelectionPredicate{
-		Label:    label,
-		Field:    field,
-		GetAttrs: GetAttrs,
-		IndexFields: []string{
-			"spec.categoryName",
-		},
-	}
 }
 
 // ToSelectableFields returns a field set that represents the object
 func ToSelectableFields(category *auth.Category) fields.Set {
 	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&category.ObjectMeta, false)
-	specificFieldsSet := fields.Set{
-		"spec.categoryName": category.Spec.CategoryName,
-	}
+	specificFieldsSet := fields.Set{}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
 

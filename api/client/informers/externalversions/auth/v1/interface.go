@@ -32,10 +32,16 @@ type Interface interface {
 	APISigningKeys() APISigningKeyInformer
 	// Categories returns a CategoryInformer.
 	Categories() CategoryInformer
+	// Clients returns a ClientInformer.
+	Clients() ClientInformer
 	// ConfigMaps returns a ConfigMapInformer.
 	ConfigMaps() ConfigMapInformer
 	// Groups returns a GroupInformer.
 	Groups() GroupInformer
+	// IdentityProviders returns a IdentityProviderInformer.
+	IdentityProviders() IdentityProviderInformer
+	// LocalGroups returns a LocalGroupInformer.
+	LocalGroups() LocalGroupInformer
 	// LocalIdentities returns a LocalIdentityInformer.
 	LocalIdentities() LocalIdentityInformer
 	// Policies returns a PolicyInformer.
@@ -44,6 +50,8 @@ type Interface interface {
 	Roles() RoleInformer
 	// Rules returns a RuleInformer.
 	Rules() RuleInformer
+	// Users returns a UserInformer.
+	Users() UserInformer
 }
 
 type version struct {
@@ -72,6 +80,11 @@ func (v *version) Categories() CategoryInformer {
 	return &categoryInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
+// Clients returns a ClientInformer.
+func (v *version) Clients() ClientInformer {
+	return &clientInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
 // ConfigMaps returns a ConfigMapInformer.
 func (v *version) ConfigMaps() ConfigMapInformer {
 	return &configMapInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
@@ -80,6 +93,16 @@ func (v *version) ConfigMaps() ConfigMapInformer {
 // Groups returns a GroupInformer.
 func (v *version) Groups() GroupInformer {
 	return &groupInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// IdentityProviders returns a IdentityProviderInformer.
+func (v *version) IdentityProviders() IdentityProviderInformer {
+	return &identityProviderInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// LocalGroups returns a LocalGroupInformer.
+func (v *version) LocalGroups() LocalGroupInformer {
+	return &localGroupInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // LocalIdentities returns a LocalIdentityInformer.
@@ -100,4 +123,9 @@ func (v *version) Roles() RoleInformer {
 // Rules returns a RuleInformer.
 func (v *version) Rules() RuleInformer {
 	return &ruleInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// Users returns a UserInformer.
+func (v *version) Users() UserInformer {
+	return &userInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

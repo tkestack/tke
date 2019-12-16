@@ -320,8 +320,8 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 
 	var existGroups []string
 	for _, rule := range rules {
-		if strings.HasPrefix(rule[0], "grp-") {
-			existGroups = append(existGroups, rule[0])
+		if strings.HasPrefix(rule[0], authutil.GroupPrefix(role.Spec.TenantID)) {
+			existGroups = append(existGroups, strings.TrimPrefix(rule[0], authutil.GroupPrefix(role.Spec.TenantID)))
 		}
 	}
 
@@ -334,7 +334,7 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 	log.Info("Handle role groups changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(add, role.Name); err != nil {
+			if _, err := c.enforcer.AddRoleForUser(authutil.GroupKey(role.Spec.TenantID, add), role.Name); err != nil {
 				log.Errorf("Bind groups to role failed", log.String("role", role.Name), log.String("group", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -343,7 +343,7 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(remove, role.Name); err != nil {
+			if _, err := c.enforcer.DeleteRoleForUser(authutil.GroupKey(role.Spec.TenantID, remove), role.Name); err != nil {
 				log.Errorf("Unbind group to role failed", log.String("role", role.Name), log.String("group", remove), log.Err(err))
 				errs = append(errs, err)
 			}

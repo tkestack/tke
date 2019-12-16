@@ -66,10 +66,16 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().APISigningKeys().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("categories"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Categories().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("clients"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Clients().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("configmaps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().ConfigMaps().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("groups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Groups().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("identityproviders"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().IdentityProviders().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("localgroups"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().LocalGroups().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("localidentities"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().LocalIdentities().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("policies"):
@@ -78,6 +84,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Roles().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("rules"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Rules().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("users"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Users().Informer()}, nil
 
 		// Group=business.tkestack.io, Version=v1
 	case businessv1.SchemeGroupVersion.WithResource("chartgroups"):

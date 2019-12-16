@@ -21,13 +21,13 @@ package apiserver
 import (
 	"context"
 	"fmt"
-
-	"tkestack.io/tke/pkg/auth/authorization/hooks"
+	"net/http"
+	"tkestack.io/tke/api/auth"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
 
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/emicklei/go-restful"
 	"k8s.io/apiserver/pkg/server/mux"
-	"tkestack.io/tke/pkg/auth/route"
 
 	"github.com/casbin/casbin/v2"
 	dexserver "github.com/dexidp/dex/server"
@@ -35,16 +35,19 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
+
 	authv1 "tkestack.io/tke/api/auth/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
+	"tkestack.io/tke/pkg/auth/authorization/hooks"
 	authnhandler "tkestack.io/tke/pkg/auth/handler/authn"
 	authzhandler "tkestack.io/tke/pkg/auth/handler/authz"
 	authrest "tkestack.io/tke/pkg/auth/registry/rest"
-	"tkestack.io/tke/pkg/auth/types"
+	"tkestack.io/tke/pkg/auth/route"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -64,7 +67,7 @@ type ExtraConfig struct {
 	VersionedInformers      versionedinformers.SharedInformerFactory
 
 	OIDCExternalAddress string
-	DexServer           *dexserver.Server
+	DexConfig           *dexserver.Config
 	DexStorage          dexstorage.Storage
 	CasbinEnforcer      *casbin.SyncedEnforcer
 	TokenAuthn          *authenticator.TokenAuthenticator
@@ -119,11 +122,13 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		return nil, err
 	}
 
-	hooks := c.registerHooks(s)
+	dexHandler := identityprovider.DexHander{}
+
+	hooks := c.registerHooks(&dexHandler, s)
 	installHooks(s, hooks)
 	installCasbinPreStopHook(s, c.ExtraConfig.CasbinEnforcer)
 
-	c.registerRoute(s.Handler.GoRestfulContainer, s.Handler.NonGoRestfulMux)
+	c.registerRoute(&dexHandler, s.Handler.GoRestfulContainer, s.Handler.NonGoRestfulMux)
 
 	m := &APIServer{
 		GenericAPIServer: s,
@@ -134,6 +139,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		&authrest.StorageProvider{
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
 			Enforcer:             c.ExtraConfig.CasbinEnforcer,
+			DexStorage:           c.ExtraConfig.DexStorage,
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
 		},
 	}
@@ -188,8 +194,8 @@ func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
 }
 
 // registerRoute is used to register routes with the api server of project.
-func (c completedConfig) registerRoute(container *restful.Container, mux *mux.PathRecorderMux) {
-	route.RegisterOIDCRoute(mux, c.ExtraConfig.DexServer)
+func (c completedConfig) registerRoute(dexHandler http.Handler, container *restful.Container, mux *mux.PathRecorderMux) {
+	mux.HandlePrefix("/"+auth.IssuerName+"/", dexHandler)
 
 	token := authnhandler.NewHandler(c.ExtraConfig.TokenAuthn, c.ExtraConfig.APIKeyAuthn)
 	authz := authzhandler.NewHandler(c.ExtraConfig.Authorizer)
@@ -197,19 +203,26 @@ func (c completedConfig) registerRoute(container *restful.Container, mux *mux.Pa
 }
 
 // registerHooks is used to register postStart hook to create authn provider with local oidc server.
-func (c completedConfig) registerHooks(s *genericapiserver.GenericAPIServer) []genericapiserver.PostStartHookProvider {
+func (c completedConfig) registerHooks(dexHandler *identityprovider.DexHander, s *genericapiserver.GenericAPIServer) []genericapiserver.PostStartHookProvider {
+
 	authClient := authinternalclient.NewForConfigOrDie(s.LoopbackClientConfig)
 
-	authnHook := authenticator.NewAuthnHookHandler(context.Background(), c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, types.IssuerName), c.ExtraConfig.TokenAuthn)
+	dexHook := identityprovider.NewDexHookHandler(context.Background(), c.ExtraConfig.DexConfig, c.ExtraConfig.DexStorage, dexHandler,
+		c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, auth.IssuerName), c.ExtraConfig.TokenAuthn)
+
+
+	//authnHook := authenticator.NewAuthnHookHandler(context.Background(), c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, types.IssuerName), c.ExtraConfig.TokenAuthn)
 	apiSigningKeyHook := authenticator.NewAPISigningKeyHookHandler(authClient)
 	identityHook := authenticator.NewAdminIdentityHookHandler(authClient, c.ExtraConfig.TenantID, c.ExtraConfig.TenantAdmin, c.ExtraConfig.TenantAdminSecret)
 
+	idpHook := local.NewLocalHookHandler(authClient, c.ExtraConfig.VersionedInformers)
+
 	authVersionedClient := versionedclientset.NewForConfigOrDie(s.LoopbackClientConfig)
+
 	adapterHook := hooks.NewAdapterHookHandler(authVersionedClient, c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.VersionedInformers)
+	///policyHook := hooks.NewPolicyHookHandler(authClient, c.ExtraConfig.DexStorage, c.ExtraConfig.PolicyFile, c.ExtraConfig.CategoryFile)
 
-	policyHook := hooks.NewPolicyHookHandler(authClient, c.ExtraConfig.DexStorage, c.ExtraConfig.PolicyFile, c.ExtraConfig.CategoryFile)
-
-	return []genericapiserver.PostStartHookProvider{authnHook, apiSigningKeyHook, identityHook, adapterHook, policyHook}
+	return []genericapiserver.PostStartHookProvider{dexHook, apiSigningKeyHook, identityHook, idpHook, adapterHook}
 }
 
 // installCasbinPreStopHook is used to register preStop hook to stop casbin enforcer sync.

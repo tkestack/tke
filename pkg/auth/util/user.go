@@ -20,6 +20,7 @@ package util
 
 import (
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,8 +55,16 @@ func UserPrefix(tenantID string) string {
 	return fmt.Sprintf("%s::user::", tenantID)
 }
 
-func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string) (auth.GroupList, error) {
-	groupList := auth.GroupList{}
+func GroupKey(tenantID string, name string) string {
+	return fmt.Sprintf("%s%s", GroupPrefix(tenantID), name)
+}
+
+func GroupPrefix(tenantID string) string {
+	return fmt.Sprintf("%s::group::", tenantID)
+}
+
+func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string) (auth.LocalGroupList, error) {
+	groupList := auth.LocalGroupList{}
 	err := authClient.RESTClient().Get().
 		Resource("localidentities").
 		Name(userID).
@@ -63,3 +72,17 @@ func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string
 
 	return groupList, err
 }
+
+func ParseTenantAndName(str string) (string, string) {
+	parts := strings.Split(str, "::")
+	if len(parts) > 1 {
+		return parts[0], parts[1]
+	}
+
+	return "", str
+}
+
+func CombineTenantAndName(tenantID, name string) string {
+	return fmt.Sprintf("%s::%s", tenantID, name)
+}
+

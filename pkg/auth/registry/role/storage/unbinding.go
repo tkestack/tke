@@ -61,23 +61,23 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, err
 	}
 	role := polObj.(*auth.Role)
-	var remained []auth.Subject
+	remainedUsers := make([]auth.Subject, 0)
 	for _, sub := range role.Status.Users {
-		if !util.InSubjectsByName(sub, bind.Users) {
-			remained = append(remained, sub)
+		if !util.InSubjects(sub, bind.Users) {
+			remainedUsers = append(remainedUsers, sub)
 		}
 	}
 
-	role.Status.Users = remained
+	role.Status.Users = remainedUsers
 
+	remainedGroups := make([]auth.Subject, 0)
 	for _, sub := range role.Status.Groups {
 		if !util.InSubjects(sub, bind.Groups) {
-			remained = append(remained, sub)
+			remainedGroups = append(remainedGroups, sub)
 		}
 	}
 
-	role.Status.Groups = remained
-
+	role.Status.Groups = remainedGroups
 	log.Info("unbind role subjects", log.String("role", role.Name), log.Any("users", role.Status.Users), log.Any("groups", role.Status.Groups))
 	return r.authClient.Roles().UpdateStatus(role)
 }

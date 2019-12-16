@@ -155,7 +155,6 @@ func (d *roledResourcesDeleter) deleteRole(role *v1.Role) error {
 	if len(uid) > 0 {
 		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	log.Info("role", log.Any("role", role))
 	err := d.roleClient.Delete(role.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))

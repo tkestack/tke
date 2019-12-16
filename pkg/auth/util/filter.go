@@ -79,7 +79,7 @@ func FilterRole(ctx context.Context, role *auth.Role) error {
 }
 
 // FilterGroup is used to filter group that do not belong to the tenant.
-func FilterGroup(ctx context.Context, group *auth.Group) error {
+func FilterGroup(ctx context.Context, group *auth.LocalGroup) error {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil

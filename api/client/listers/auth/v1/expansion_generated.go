@@ -32,6 +32,10 @@ type APISigningKeyListerExpansion interface{}
 // CategoryLister.
 type CategoryListerExpansion interface{}
 
+// ClientListerExpansion allows custom methods to be added to
+// ClientLister.
+type ClientListerExpansion interface{}
+
 // ConfigMapListerExpansion allows custom methods to be added to
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}
@@ -39,6 +43,14 @@ type ConfigMapListerExpansion interface{}
 // GroupListerExpansion allows custom methods to be added to
 // GroupLister.
 type GroupListerExpansion interface{}
+
+// IdentityProviderListerExpansion allows custom methods to be added to
+// IdentityProviderLister.
+type IdentityProviderListerExpansion interface{}
+
+// LocalGroupListerExpansion allows custom methods to be added to
+// LocalGroupLister.
+type LocalGroupListerExpansion interface{}
 
 // LocalIdentityListerExpansion allows custom methods to be added to
 // LocalIdentityLister.
@@ -55,3 +67,7 @@ type RoleListerExpansion interface{}
 // RuleListerExpansion allows custom methods to be added to
 // RuleLister.
 type RuleListerExpansion interface{}
+
+// UserListerExpansion allows custom methods to be added to
+// UserLister.
+type UserListerExpansion interface{}

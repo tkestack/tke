@@ -30,7 +30,7 @@ const GroupName = "auth.tkestack.io"
 // Version is the version name use in this package.
 const Version = "v1"
 
-// SchemeGroupVersion is group version used to register these objects
+// SchemeGroupVersion is group version used to register these objects.
 var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: Version}
 
 var (
@@ -68,8 +68,16 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&RoleList{},
 		&SubjectAccessReview{},
 		&PolicyBinding{},
+		&LocalGroup{},
+		&LocalGroupList{},
+		&User{},
+		&UserList{},
 		&Group{},
 		&GroupList{},
+		&IdentityProvider{},
+		&IdentityProviderList{},
+		&Client{},
+		&ClientList{},
 
 		&ConfigMap{},
 		&ConfigMapList{},

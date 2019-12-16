@@ -22,6 +22,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// KeywordQueryTag is a field tag to query object that contains the keyword.
+	KeywordQueryTag string = "keyword"
+
+	// QueryLimitTag is a field tag to query a maximum number of objects for a list call.
+	QueryLimitTag string = "limit"
+
+	// IssuerName is the name of issuer location.
+	IssuerName = "oidc"
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -57,8 +68,8 @@ const (
 	// PolicyFinalize is an internal finalizer values to Policy.
 	PolicyFinalize FinalizerName = "policy"
 
-	// PolicyFinalize is an internal finalizer values to Group.
-	GroupFinalize FinalizerName = "group"
+	// PolicyFinalize is an internal finalizer values to LocalGroup.
+	LocalGroupFinalize FinalizerName = "localgroup"
 
 	// RoleFinalize is an internal finalizer values to Role.
 	RoleFinalize FinalizerName = "role"
@@ -104,6 +115,130 @@ type PasswordReq struct {
 
 	HashedPassword   string
 	OriginalPassword string
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// LocalGroup represents a group of users.
+type LocalGroup struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of group document in this set.
+	Spec LocalGroupSpec
+
+	// +optional
+	Status LocalGroupStatus
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// LocalGroupList is the whole list of all groups.
+type LocalGroupList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of localgroup.
+	Items []LocalGroup
+}
+
+// GroupPhase defines the phase of group constructor.
+type GroupPhase string
+
+const (
+	GroupActive GroupPhase = "Active"
+	// GroupTerminating means the group is undergoing graceful termination.
+	GroupTerminating GroupPhase = "Terminating"
+)
+
+// LocalGroupSpec is a description of group.
+type LocalGroupSpec struct {
+	Finalizers []FinalizerName
+
+	DisplayName string
+	TenantID    string
+
+	//Creator
+	Username    string
+	Description string
+}
+
+// LocalGroupStatus represents information about the status of a group.
+type LocalGroupStatus struct {
+	// +optional
+	Phase GroupPhase
+
+	// Users represents the members of the group.
+	Users []Subject
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// User is an object that contains the metadata about identify about tke local idp or third-party idp.
+type User struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+	// Spec defines the desired identities of identity in this set.
+	Spec UserSpec
+}
+
+// UserSpec is a description of an user.
+type UserSpec struct {
+	ID string
+
+	//Name must be unique in the same tenant.
+	Name        string
+	DisplayName string
+	Email       string
+	PhoneNumber string
+	TenantID    string
+	Extra       map[string]string
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UserList is the whole list of all users.
+type UserList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of User.
+	Items []User
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Group is an object that contains the metadata about identify about tke local idp or third-party idp.
+type Group struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+	// Spec defines the desired identities of group in this set.
+	Spec GroupSpec
+}
+
+// GroupSpec is a description of an Group.
+type GroupSpec struct {
+	ID          string
+	DisplayName string
+	TenantID    string
+	Description string
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// GroupList is the whole list of all groups.
+type GroupList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of group.
+	Items []Group
 }
 
 // +genclient
@@ -234,8 +369,6 @@ type Category struct {
 }
 
 type CategorySpec struct {
-	// CategoryName identifies action category
-	CategoryName string
 	// DisplayName used to display category name
 	DisplayName string
 	// +optional
@@ -504,63 +637,6 @@ type PolicyBinding struct {
 	Policies []string
 }
 
-// +genclient
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// Group represents a group of users.
-type Group struct {
-	metav1.TypeMeta
-	metav1.ObjectMeta
-
-	// Spec defines the desired identities of group document in this set.
-	Spec GroupSpec
-
-	// +optional
-	Status GroupStatus
-}
-
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// GroupList is the whole list of all groups.
-type GroupList struct {
-	metav1.TypeMeta
-	metav1.ListMeta
-	// List of rules.
-	Items []Group
-}
-
-// GroupPhase defines the phase of group constructor.
-type GroupPhase string
-
-const (
-	GroupActive GroupPhase = "Active"
-	// GroupTerminating means the group is undergoing graceful termination.
-	GroupTerminating GroupPhase = "Terminating"
-)
-
-// GroupSpec is a description of group.
-type GroupSpec struct {
-	Finalizers []FinalizerName
-
-	DisplayName string
-	TenantID    string
-
-	//Creator
-	Username    string
-	Description string
-}
-
-// GroupStatus represents information about the status of a group.
-type GroupStatus struct {
-	// +optional
-	Phase GroupPhase
-
-	// Users represents the members of the group.
-	Users []Subject
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // SubjectAccessReview checks whether or not a user or group can perform an action.  Not filling in a
@@ -674,6 +750,79 @@ type AllowedStatus struct {
 	// It is entirely possible to get an error and be able to continue determine authorization status in spite of it.
 	// For instance, RBAC can be missing a role, but enough roles are still present and bound to reason about the request.
 	EvaluationError string
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// IdentityProvider is an object that contains the metadata about identify
+// provider used to login to TKE.
+type IdentityProvider struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of identity provider in this set.
+	Spec IdentityProviderSpec
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// IdentityProviderList is the whole list of all identity providers.
+type IdentityProviderList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of identity providers.
+	Items []IdentityProvider
+}
+
+// IdentityProviderSpec is a description of an identity provider.
+type IdentityProviderSpec struct {
+	// The Name of the connector that is used when displaying it to the end user.
+	Name string
+	// The type of the connector. E.g. 'oidc' or 'ldap'
+	Type string
+	// Config holds all the configuration information specific to the connector type. Since there
+	// no generic struct we can use for this purpose, it is stored as a json string.
+	Config string
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Client represents an OAuth2 client.
+type Client struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of identity provider in this set.
+	Spec ClientSpec
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClientList is the whole list of OAuth2 client.
+type ClientList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of identity providers.
+	Items []Client
+}
+
+// ClientSpec is a description of an client.
+type ClientSpec struct {
+	ID           string
+	Secret       string
+	RedirectUris []string
+	// TrustedPeers are a list of peers which can issue tokens on this client's behalf using the dynamic "oauth2:server:client_id:(client_id)" scope.
+	TrustedPeers []string
+	// Public clients must use either use a redirectURL 127.0.0.1:X or "urn:ietf:wg:oauth:2.0:oob".
+	Public  bool
+	Name    string
+	LogoURL string
 }
 
 // +genclient

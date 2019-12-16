@@ -36,7 +36,7 @@ import (
 
 // TokenAuthenticator provides a function to verify token.
 type TokenAuthenticator struct {
-	idTokenVerifier *oidc.IDTokenVerifier
+	IDTokenVerifier *oidc.IDTokenVerifier
 
 	authClient authinternalclient.AuthInterface
 }
@@ -53,11 +53,11 @@ func (h *TokenAuthenticator) AuthenticateToken(ctx context.Context, token string
 		log.Debug("Finish verifying oidc bearer token", log.String("token", token), log.Duration("processTime", time.Since(startTime)))
 	}()
 
-	if h.idTokenVerifier == nil {
+	if h.IDTokenVerifier == nil {
 		return nil, false, errors.New("Authenticator not initialized")
 	}
 
-	idToken, err := h.idTokenVerifier.Verify(ctx, token)
+	idToken, err := h.IDTokenVerifier.Verify(ctx, token)
 	if err != nil {
 		log.Error("Failed to verify the oidc bearer token", log.String("token", token), log.Err(err))
 		return nil, false, err

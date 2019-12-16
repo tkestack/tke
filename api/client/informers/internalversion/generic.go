@@ -66,10 +66,16 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().APISigningKeys().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("categories"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Categories().Informer()}, nil
+	case auth.SchemeGroupVersion.WithResource("clients"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Clients().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("configmaps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().ConfigMaps().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("groups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Groups().Informer()}, nil
+	case auth.SchemeGroupVersion.WithResource("identityproviders"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().IdentityProviders().Informer()}, nil
+	case auth.SchemeGroupVersion.WithResource("localgroups"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().LocalGroups().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("localidentities"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().LocalIdentities().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("policies"):
@@ -78,6 +84,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Roles().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("rules"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Rules().Informer()}, nil
+	case auth.SchemeGroupVersion.WithResource("users"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Users().Informer()}, nil
 
 		// Group=business.tkestack.io, Version=internalVersion
 	case business.SchemeGroupVersion.WithResource("chartgroups"):

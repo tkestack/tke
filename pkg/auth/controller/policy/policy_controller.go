@@ -320,8 +320,8 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 
 	var existGroups []string
 	for _, rule := range rules {
-		if strings.HasPrefix(rule[0], "grp-") {
-			existGroups = append(existGroups, rule[0])
+		if strings.HasPrefix(rule[0], authutil.GroupPrefix(policy.Spec.TenantID)) {
+			existGroups = append(existGroups, strings.TrimPrefix(rule[0], authutil.GroupPrefix(policy.Spec.TenantID)))
 		}
 	}
 
@@ -334,7 +334,7 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 	log.Info("Handle policy groups changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(add, policy.Name); err != nil {
+			if _, err := c.enforcer.AddRoleForUser(authutil.GroupKey(policy.Spec.TenantID, add), policy.Name); err != nil {
 				log.Errorf("Bind groups to policy failed", log.String("policy", policy.Name), log.String("group", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -343,7 +343,7 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(remove, policy.Name); err != nil {
+			if _, err := c.enforcer.DeleteRoleForUser(authutil.GroupKey(policy.Spec.TenantID, remove), policy.Name); err != nil {
 				log.Errorf("Unbind group to policy failed", log.String("policy", policy.Name), log.String("group", remove), log.Err(err))
 				errs = append(errs, err)
 			}

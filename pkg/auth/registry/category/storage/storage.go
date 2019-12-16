@@ -20,11 +20,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/fields"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -74,24 +69,5 @@ type REST struct {
 }
 
 func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-
-	cat := obj.(*auth.Category)
-
-	categorySelector := fields.AndSelectors(
-		fields.OneTermEqualSelector("spec.categoryName", cat.Spec.CategoryName))
-
-	categoryList, err := r.authClient.Categories().List(metav1.ListOptions{FieldSelector: categorySelector.String()})
-	if err != nil {
-		return nil, err
-	}
-
-	if len(categoryList.Items) != 0 {
-		return nil, apierrors.NewConflict(
-			auth.Resource("categories"),
-			cat.Spec.CategoryName,
-			fmt.Errorf("categoryName must be different"),
-		)
-	}
-
 	return r.Store.Create(ctx, obj, createValidation, options)
 }

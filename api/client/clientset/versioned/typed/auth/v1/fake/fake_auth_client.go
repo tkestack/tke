@@ -42,12 +42,24 @@ func (c *FakeAuthV1) Categories() v1.CategoryInterface {
 	return &FakeCategories{c}
 }
 
+func (c *FakeAuthV1) Clients() v1.ClientInterface {
+	return &FakeClients{c}
+}
+
 func (c *FakeAuthV1) ConfigMaps() v1.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }
 
 func (c *FakeAuthV1) Groups() v1.GroupInterface {
 	return &FakeGroups{c}
+}
+
+func (c *FakeAuthV1) IdentityProviders() v1.IdentityProviderInterface {
+	return &FakeIdentityProviders{c}
+}
+
+func (c *FakeAuthV1) LocalGroups() v1.LocalGroupInterface {
+	return &FakeLocalGroups{c}
 }
 
 func (c *FakeAuthV1) LocalIdentities() v1.LocalIdentityInterface {
@@ -64,6 +76,10 @@ func (c *FakeAuthV1) Roles() v1.RoleInterface {
 
 func (c *FakeAuthV1) Rules() v1.RuleInterface {
 	return &FakeRules{c}
+}
+
+func (c *FakeAuthV1) Users() v1.UserInterface {
+	return &FakeUsers{c}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

@@ -25,17 +25,16 @@ import (
 	"reflect"
 	"time"
 
-	"k8s.io/apimachinery/pkg/fields"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	"tkestack.io/tke/api/auth"
-	"tkestack.io/tke/pkg/util/log"
-
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/howeyc/fsnotify"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+
+	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
@@ -155,33 +154,27 @@ func (d *policyHookHandler) loadCategory() error {
 	}
 
 	var errs []error
-
-	for _, cat := range categoryList {
-		categorySelector := fields.OneTermEqualSelector("spec.categoryName", cat.Spec.CategoryName)
-
-		result, err := d.authClient.Categories().List(metav1.ListOptions{FieldSelector: categorySelector.String()})
-		if err != nil {
-			return err
-		}
-
-		if len(result.Items) > 0 {
-			exists := result.Items[0]
-			if !reflect.DeepEqual(exists.Spec, cat.Spec) {
-				exists.Spec = cat.Spec
-				_, err = d.authClient.Categories().Update(&exists)
-
-				if err != nil {
-					errs = append(errs, err)
-				}
-			}
-		} else {
-			_, err = d.authClient.Categories().Create(cat)
-
-			if err != nil {
-				errs = append(errs, err)
-			}
-		}
-	}
+	//
+	//for _, cat := range categoryList {
+	//
+	//	if len(result.Items) > 0 {
+	//		exists := result.Items[0]
+	//		if !reflect.DeepEqual(exists.Spec, cat.Spec) {
+	//			exists.Spec = cat.Spec
+	//			_, err = d.authClient.Categories().Update(&exists)
+	//
+	//			if err != nil {
+	//				errs = append(errs, err)
+	//			}
+	//		}
+	//	} else {
+	//		_, err = d.authClient.Categories().Create(cat)
+	//
+	//		if err != nil {
+	//			errs = append(errs, err)
+	//		}
+	//	}
+	//}
 
 	return utilerrors.NewAggregate(errs)
 }

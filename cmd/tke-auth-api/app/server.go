@@ -57,7 +57,7 @@ func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 			APIResourceConfigSource: cfg.StorageFactory.APIResourceConfigSource,
 			OIDCExternalAddress:     cfg.OIDCExternalAddress,
 			CasbinEnforcer:          cfg.CasbinEnforcer,
-			DexServer:               cfg.DexServer,
+			DexConfig:               cfg.DexConfig,
 			DexStorage:              cfg.DexStorage,
 			TokenAuthn:              cfg.TokenAuthn,
 			APIKeyAuthn:             cfg.APIKeyAuthn,

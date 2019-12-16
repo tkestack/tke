@@ -1,4 +1,5 @@
 /*
+/*
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
@@ -14,7 +15,7 @@
  * distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
- */
+*/
 
 package deletion
 
@@ -40,13 +41,13 @@ type GroupedResourcesDeleterInterface interface {
 // NewGroupedResourcesDeleter to create the groupedResourcesDeleter that
 // implement the GroupedResourcesDeleterInterface by given client and
 // configure.
-func NewGroupedResourcesDeleter(pilicyClient v1clientset.GroupInterface,
+func NewGroupedResourcesDeleter(groupClient v1clientset.LocalGroupInterface,
 	authClient v1clientset.AuthV1Interface,
 	enforcer *casbin.SyncedEnforcer,
 	finalizerToken v1.FinalizerName,
 	deleteGroupWhenDone bool) GroupedResourcesDeleterInterface {
 	d := &groupedResourcesDeleter{
-		groupClient:         pilicyClient,
+		groupClient:         groupClient,
 		authClient:          authClient,
 		enforcer:            enforcer,
 		finalizerToken:      finalizerToken,
@@ -60,7 +61,7 @@ var _ GroupedResourcesDeleterInterface = &groupedResourcesDeleter{}
 // groupedResourcesDeleter is used to delete all resources in a given group.
 type groupedResourcesDeleter struct {
 	// Client to manipulate the group.
-	groupClient v1clientset.GroupInterface
+	groupClient v1clientset.LocalGroupInterface
 	authClient  v1clientset.AuthV1Interface
 
 	enforcer *casbin.SyncedEnforcer
@@ -149,7 +150,7 @@ func (d *groupedResourcesDeleter) Delete(groupName string) error {
 }
 
 // Deletes the given group.
-func (d *groupedResourcesDeleter) deleteGroup(group *v1.Group) error {
+func (d *groupedResourcesDeleter) deleteGroup(group *v1.LocalGroup) error {
 	var opts *metav1.DeleteOptions
 	uid := group.UID
 	if len(uid) > 0 {
@@ -165,12 +166,12 @@ func (d *groupedResourcesDeleter) deleteGroup(group *v1.Group) error {
 }
 
 // updateGroupFunc is a function that makes an update to a group
-type updateGroupFunc func(group *v1.Group) (*v1.Group, error)
+type updateGroupFunc func(group *v1.LocalGroup) (*v1.LocalGroup, error)
 
 // retryOnConflictError retries the specified fn if there was a conflict error
 // it will return an error if the UID for an object changes across retry operations.
 // TODO RetryOnConflict should be a generic concept in client code
-func (d *groupedResourcesDeleter) retryOnConflictError(group *v1.Group, fn updateGroupFunc) (result *v1.Group, err error) {
+func (d *groupedResourcesDeleter) retryOnConflictError(group *v1.LocalGroup, fn updateGroupFunc) (result *v1.LocalGroup, err error) {
 	latestGroup := group
 	for {
 		result, err = fn(latestGroup)
@@ -192,11 +193,11 @@ func (d *groupedResourcesDeleter) retryOnConflictError(group *v1.Group, fn updat
 }
 
 // updateGroupStatusFunc will verify that the status of the group is correct
-func (d *groupedResourcesDeleter) updateGroupStatusFunc(group *v1.Group) (*v1.Group, error) {
+func (d *groupedResourcesDeleter) updateGroupStatusFunc(group *v1.LocalGroup) (*v1.LocalGroup, error) {
 	if group.DeletionTimestamp.IsZero() || group.Status.Phase == v1.GroupTerminating {
 		return group, nil
 	}
-	newGroup := v1.Group{}
+	newGroup := v1.LocalGroup{}
 	newGroup.ObjectMeta = group.ObjectMeta
 	newGroup.Status = group.Status
 	newGroup.Status.Phase = v1.GroupTerminating
@@ -204,13 +205,13 @@ func (d *groupedResourcesDeleter) updateGroupStatusFunc(group *v1.Group) (*v1.Gr
 }
 
 // finalized returns true if the group.Spec.Finalizers is an empty list
-func finalized(group *v1.Group) bool {
+func finalized(group *v1.LocalGroup) bool {
 	return len(group.Spec.Finalizers) == 0
 }
 
 // finalizeGroup removes the specified finalizerToken and finalizes the group
-func (d *groupedResourcesDeleter) finalizeGroup(group *v1.Group) (*v1.Group, error) {
-	groupFinalize := v1.Group{}
+func (d *groupedResourcesDeleter) finalizeGroup(group *v1.LocalGroup) (*v1.LocalGroup, error) {
+	groupFinalize := v1.LocalGroup{}
 	groupFinalize.ObjectMeta = group.ObjectMeta
 	groupFinalize.Spec = group.Spec
 	finalizerSet := sets.NewString()
@@ -224,9 +225,9 @@ func (d *groupedResourcesDeleter) finalizeGroup(group *v1.Group) (*v1.Group, err
 		groupFinalize.Spec.Finalizers = append(groupFinalize.Spec.Finalizers, v1.FinalizerName(value))
 	}
 
-	group = &v1.Group{}
+	group = &v1.LocalGroup{}
 	err := d.authClient.RESTClient().Put().
-		Resource("groups").
+		Resource("localgroups").
 		Name(groupFinalize.Name).
 		SubResource("finalize").
 		Body(&groupFinalize).
@@ -242,7 +243,7 @@ func (d *groupedResourcesDeleter) finalizeGroup(group *v1.Group) (*v1.Group, err
 	return group, err
 }
 
-type deleteResourceFunc func(deleter *groupedResourcesDeleter, group *v1.Group) error
+type deleteResourceFunc func(deleter *groupedResourcesDeleter, group *v1.LocalGroup) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteRelatedRules,
@@ -251,8 +252,8 @@ var deleteResourceFuncs = []deleteResourceFunc{
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
-func (d *groupedResourcesDeleter) deleteAllContent(group *v1.Group) error {
-	log.Debug("Group controller - deleteAllContent", log.String("groupName", group.ObjectMeta.Name))
+func (d *groupedResourcesDeleter) deleteAllContent(group *v1.LocalGroup) error {
+	log.Debug("LocalGroup controller - deleteAllContent", log.String("groupName", group.ObjectMeta.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
@@ -267,12 +268,12 @@ func (d *groupedResourcesDeleter) deleteAllContent(group *v1.Group) error {
 		return utilerrors.NewAggregate(errs)
 	}
 
-	log.Debug("Group controller - deletedAllContent", log.String("groupName", group.ObjectMeta.Name))
+	log.Debug("LocalGroup controller - deletedAllContent", log.String("groupName", group.ObjectMeta.Name))
 	return nil
 }
 
-func deleteRelatedRules(deleter *groupedResourcesDeleter, group *v1.Group) error {
-	log.Info("Group controller - deleteRelatedRules", log.String("groupName", group.ObjectMeta.Name))
+func deleteRelatedRules(deleter *groupedResourcesDeleter, group *v1.LocalGroup) error {
+	log.Info("LocalGroup controller - deleteRelatedRules", log.String("groupName", group.ObjectMeta.Name))
 	_, err := deleter.enforcer.DeleteRole(group.Name)
 	return err
 }

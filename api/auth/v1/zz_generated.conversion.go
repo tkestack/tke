@@ -177,6 +177,36 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*Client)(nil), (*auth.Client)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_Client_To_auth_Client(a.(*Client), b.(*auth.Client), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.Client)(nil), (*Client)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_Client_To_v1_Client(a.(*auth.Client), b.(*Client), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClientList)(nil), (*auth.ClientList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ClientList_To_auth_ClientList(a.(*ClientList), b.(*auth.ClientList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ClientList)(nil), (*ClientList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ClientList_To_v1_ClientList(a.(*auth.ClientList), b.(*ClientList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClientSpec)(nil), (*auth.ClientSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ClientSpec_To_auth_ClientSpec(a.(*ClientSpec), b.(*auth.ClientSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ClientSpec)(nil), (*ClientSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ClientSpec_To_v1_ClientSpec(a.(*auth.ClientSpec), b.(*ClientSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*ConfigMap)(nil), (*auth.ConfigMap)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_ConfigMap_To_auth_ConfigMap(a.(*ConfigMap), b.(*auth.ConfigMap), scope)
 	}); err != nil {
@@ -227,13 +257,73 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*GroupStatus)(nil), (*auth.GroupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_GroupStatus_To_auth_GroupStatus(a.(*GroupStatus), b.(*auth.GroupStatus), scope)
+	if err := s.AddGeneratedConversionFunc((*IdentityProvider)(nil), (*auth.IdentityProvider)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_IdentityProvider_To_auth_IdentityProvider(a.(*IdentityProvider), b.(*auth.IdentityProvider), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*auth.GroupStatus)(nil), (*GroupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_auth_GroupStatus_To_v1_GroupStatus(a.(*auth.GroupStatus), b.(*GroupStatus), scope)
+	if err := s.AddGeneratedConversionFunc((*auth.IdentityProvider)(nil), (*IdentityProvider)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_IdentityProvider_To_v1_IdentityProvider(a.(*auth.IdentityProvider), b.(*IdentityProvider), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*IdentityProviderList)(nil), (*auth.IdentityProviderList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_IdentityProviderList_To_auth_IdentityProviderList(a.(*IdentityProviderList), b.(*auth.IdentityProviderList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.IdentityProviderList)(nil), (*IdentityProviderList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_IdentityProviderList_To_v1_IdentityProviderList(a.(*auth.IdentityProviderList), b.(*IdentityProviderList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*IdentityProviderSpec)(nil), (*auth.IdentityProviderSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_IdentityProviderSpec_To_auth_IdentityProviderSpec(a.(*IdentityProviderSpec), b.(*auth.IdentityProviderSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.IdentityProviderSpec)(nil), (*IdentityProviderSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_IdentityProviderSpec_To_v1_IdentityProviderSpec(a.(*auth.IdentityProviderSpec), b.(*IdentityProviderSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*LocalGroup)(nil), (*auth.LocalGroup)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_LocalGroup_To_auth_LocalGroup(a.(*LocalGroup), b.(*auth.LocalGroup), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.LocalGroup)(nil), (*LocalGroup)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_LocalGroup_To_v1_LocalGroup(a.(*auth.LocalGroup), b.(*LocalGroup), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*LocalGroupList)(nil), (*auth.LocalGroupList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_LocalGroupList_To_auth_LocalGroupList(a.(*LocalGroupList), b.(*auth.LocalGroupList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.LocalGroupList)(nil), (*LocalGroupList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_LocalGroupList_To_v1_LocalGroupList(a.(*auth.LocalGroupList), b.(*LocalGroupList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*LocalGroupSpec)(nil), (*auth.LocalGroupSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_LocalGroupSpec_To_auth_LocalGroupSpec(a.(*LocalGroupSpec), b.(*auth.LocalGroupSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.LocalGroupSpec)(nil), (*LocalGroupSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_LocalGroupSpec_To_v1_LocalGroupSpec(a.(*auth.LocalGroupSpec), b.(*LocalGroupSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*LocalGroupStatus)(nil), (*auth.LocalGroupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_LocalGroupStatus_To_auth_LocalGroupStatus(a.(*LocalGroupStatus), b.(*auth.LocalGroupStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.LocalGroupStatus)(nil), (*LocalGroupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_LocalGroupStatus_To_v1_LocalGroupStatus(a.(*auth.LocalGroupStatus), b.(*LocalGroupStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -474,6 +564,36 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*auth.SubjectAccessReviewStatus)(nil), (*SubjectAccessReviewStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus(a.(*auth.SubjectAccessReviewStatus), b.(*SubjectAccessReviewStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*User)(nil), (*auth.User)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_User_To_auth_User(a.(*User), b.(*auth.User), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.User)(nil), (*User)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_User_To_v1_User(a.(*auth.User), b.(*User), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*UserList)(nil), (*auth.UserList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_UserList_To_auth_UserList(a.(*UserList), b.(*auth.UserList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.UserList)(nil), (*UserList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_UserList_To_v1_UserList(a.(*auth.UserList), b.(*UserList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*UserSpec)(nil), (*auth.UserSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_UserSpec_To_auth_UserSpec(a.(*UserSpec), b.(*auth.UserSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.UserSpec)(nil), (*UserSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_UserSpec_To_v1_UserSpec(a.(*auth.UserSpec), b.(*UserSpec), scope)
 	}); err != nil {
 		return err
 	}
@@ -805,7 +925,6 @@ func Convert_auth_CategoryList_To_v1_CategoryList(in *auth.CategoryList, out *Ca
 }
 
 func autoConvert_v1_CategorySpec_To_auth_CategorySpec(in *CategorySpec, out *auth.CategorySpec, s conversion.Scope) error {
-	out.CategoryName = in.CategoryName
 	out.DisplayName = in.DisplayName
 	out.Description = in.Description
 	out.Actions = *(*[]auth.Action)(unsafe.Pointer(&in.Actions))
@@ -818,7 +937,6 @@ func Convert_v1_CategorySpec_To_auth_CategorySpec(in *CategorySpec, out *auth.Ca
 }
 
 func autoConvert_auth_CategorySpec_To_v1_CategorySpec(in *auth.CategorySpec, out *CategorySpec, s conversion.Scope) error {
-	out.CategoryName = in.CategoryName
 	out.DisplayName = in.DisplayName
 	out.Description = in.Description
 	out.Actions = *(*[]Action)(unsafe.Pointer(&in.Actions))
@@ -828,6 +946,86 @@ func autoConvert_auth_CategorySpec_To_v1_CategorySpec(in *auth.CategorySpec, out
 // Convert_auth_CategorySpec_To_v1_CategorySpec is an autogenerated conversion function.
 func Convert_auth_CategorySpec_To_v1_CategorySpec(in *auth.CategorySpec, out *CategorySpec, s conversion.Scope) error {
 	return autoConvert_auth_CategorySpec_To_v1_CategorySpec(in, out, s)
+}
+
+func autoConvert_v1_Client_To_auth_Client(in *Client, out *auth.Client, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_ClientSpec_To_auth_ClientSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_Client_To_auth_Client is an autogenerated conversion function.
+func Convert_v1_Client_To_auth_Client(in *Client, out *auth.Client, s conversion.Scope) error {
+	return autoConvert_v1_Client_To_auth_Client(in, out, s)
+}
+
+func autoConvert_auth_Client_To_v1_Client(in *auth.Client, out *Client, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_auth_ClientSpec_To_v1_ClientSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_auth_Client_To_v1_Client is an autogenerated conversion function.
+func Convert_auth_Client_To_v1_Client(in *auth.Client, out *Client, s conversion.Scope) error {
+	return autoConvert_auth_Client_To_v1_Client(in, out, s)
+}
+
+func autoConvert_v1_ClientList_To_auth_ClientList(in *ClientList, out *auth.ClientList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]auth.Client)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_ClientList_To_auth_ClientList is an autogenerated conversion function.
+func Convert_v1_ClientList_To_auth_ClientList(in *ClientList, out *auth.ClientList, s conversion.Scope) error {
+	return autoConvert_v1_ClientList_To_auth_ClientList(in, out, s)
+}
+
+func autoConvert_auth_ClientList_To_v1_ClientList(in *auth.ClientList, out *ClientList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]Client)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_auth_ClientList_To_v1_ClientList is an autogenerated conversion function.
+func Convert_auth_ClientList_To_v1_ClientList(in *auth.ClientList, out *ClientList, s conversion.Scope) error {
+	return autoConvert_auth_ClientList_To_v1_ClientList(in, out, s)
+}
+
+func autoConvert_v1_ClientSpec_To_auth_ClientSpec(in *ClientSpec, out *auth.ClientSpec, s conversion.Scope) error {
+	out.ID = in.ID
+	out.Secret = in.Secret
+	out.RedirectUris = *(*[]string)(unsafe.Pointer(&in.RedirectUris))
+	out.TrustedPeers = *(*[]string)(unsafe.Pointer(&in.TrustedPeers))
+	out.Public = in.Public
+	out.Name = in.Name
+	out.LogoURL = in.LogoURL
+	return nil
+}
+
+// Convert_v1_ClientSpec_To_auth_ClientSpec is an autogenerated conversion function.
+func Convert_v1_ClientSpec_To_auth_ClientSpec(in *ClientSpec, out *auth.ClientSpec, s conversion.Scope) error {
+	return autoConvert_v1_ClientSpec_To_auth_ClientSpec(in, out, s)
+}
+
+func autoConvert_auth_ClientSpec_To_v1_ClientSpec(in *auth.ClientSpec, out *ClientSpec, s conversion.Scope) error {
+	out.ID = in.ID
+	out.Secret = in.Secret
+	out.RedirectUris = *(*[]string)(unsafe.Pointer(&in.RedirectUris))
+	out.TrustedPeers = *(*[]string)(unsafe.Pointer(&in.TrustedPeers))
+	out.Public = in.Public
+	out.Name = in.Name
+	out.LogoURL = in.LogoURL
+	return nil
+}
+
+// Convert_auth_ClientSpec_To_v1_ClientSpec is an autogenerated conversion function.
+func Convert_auth_ClientSpec_To_v1_ClientSpec(in *auth.ClientSpec, out *ClientSpec, s conversion.Scope) error {
+	return autoConvert_auth_ClientSpec_To_v1_ClientSpec(in, out, s)
 }
 
 func autoConvert_v1_ConfigMap_To_auth_ConfigMap(in *ConfigMap, out *auth.ConfigMap, s conversion.Scope) error {
@@ -881,9 +1079,6 @@ func autoConvert_v1_Group_To_auth_Group(in *Group, out *auth.Group, s conversion
 	if err := Convert_v1_GroupSpec_To_auth_GroupSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
 	}
-	if err := Convert_v1_GroupStatus_To_auth_GroupStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -895,9 +1090,6 @@ func Convert_v1_Group_To_auth_Group(in *Group, out *auth.Group, s conversion.Sco
 func autoConvert_auth_Group_To_v1_Group(in *auth.Group, out *Group, s conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_auth_GroupSpec_To_v1_GroupSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_auth_GroupStatus_To_v1_GroupStatus(&in.Status, &out.Status, s); err != nil {
 		return err
 	}
 	return nil
@@ -931,10 +1123,9 @@ func Convert_auth_GroupList_To_v1_GroupList(in *auth.GroupList, out *GroupList, 
 }
 
 func autoConvert_v1_GroupSpec_To_auth_GroupSpec(in *GroupSpec, out *auth.GroupSpec, s conversion.Scope) error {
-	out.Finalizers = *(*[]auth.FinalizerName)(unsafe.Pointer(&in.Finalizers))
+	out.ID = in.ID
 	out.DisplayName = in.DisplayName
 	out.TenantID = in.TenantID
-	out.Username = in.Username
 	out.Description = in.Description
 	return nil
 }
@@ -945,10 +1136,9 @@ func Convert_v1_GroupSpec_To_auth_GroupSpec(in *GroupSpec, out *auth.GroupSpec, 
 }
 
 func autoConvert_auth_GroupSpec_To_v1_GroupSpec(in *auth.GroupSpec, out *GroupSpec, s conversion.Scope) error {
-	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
+	out.ID = in.ID
 	out.DisplayName = in.DisplayName
 	out.TenantID = in.TenantID
-	out.Username = in.Username
 	out.Description = in.Description
 	return nil
 }
@@ -958,26 +1148,180 @@ func Convert_auth_GroupSpec_To_v1_GroupSpec(in *auth.GroupSpec, out *GroupSpec, 
 	return autoConvert_auth_GroupSpec_To_v1_GroupSpec(in, out, s)
 }
 
-func autoConvert_v1_GroupStatus_To_auth_GroupStatus(in *GroupStatus, out *auth.GroupStatus, s conversion.Scope) error {
+func autoConvert_v1_IdentityProvider_To_auth_IdentityProvider(in *IdentityProvider, out *auth.IdentityProvider, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_IdentityProviderSpec_To_auth_IdentityProviderSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_IdentityProvider_To_auth_IdentityProvider is an autogenerated conversion function.
+func Convert_v1_IdentityProvider_To_auth_IdentityProvider(in *IdentityProvider, out *auth.IdentityProvider, s conversion.Scope) error {
+	return autoConvert_v1_IdentityProvider_To_auth_IdentityProvider(in, out, s)
+}
+
+func autoConvert_auth_IdentityProvider_To_v1_IdentityProvider(in *auth.IdentityProvider, out *IdentityProvider, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_auth_IdentityProviderSpec_To_v1_IdentityProviderSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_auth_IdentityProvider_To_v1_IdentityProvider is an autogenerated conversion function.
+func Convert_auth_IdentityProvider_To_v1_IdentityProvider(in *auth.IdentityProvider, out *IdentityProvider, s conversion.Scope) error {
+	return autoConvert_auth_IdentityProvider_To_v1_IdentityProvider(in, out, s)
+}
+
+func autoConvert_v1_IdentityProviderList_To_auth_IdentityProviderList(in *IdentityProviderList, out *auth.IdentityProviderList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]auth.IdentityProvider)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_IdentityProviderList_To_auth_IdentityProviderList is an autogenerated conversion function.
+func Convert_v1_IdentityProviderList_To_auth_IdentityProviderList(in *IdentityProviderList, out *auth.IdentityProviderList, s conversion.Scope) error {
+	return autoConvert_v1_IdentityProviderList_To_auth_IdentityProviderList(in, out, s)
+}
+
+func autoConvert_auth_IdentityProviderList_To_v1_IdentityProviderList(in *auth.IdentityProviderList, out *IdentityProviderList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]IdentityProvider)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_auth_IdentityProviderList_To_v1_IdentityProviderList is an autogenerated conversion function.
+func Convert_auth_IdentityProviderList_To_v1_IdentityProviderList(in *auth.IdentityProviderList, out *IdentityProviderList, s conversion.Scope) error {
+	return autoConvert_auth_IdentityProviderList_To_v1_IdentityProviderList(in, out, s)
+}
+
+func autoConvert_v1_IdentityProviderSpec_To_auth_IdentityProviderSpec(in *IdentityProviderSpec, out *auth.IdentityProviderSpec, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Type = in.Type
+	out.Config = in.Config
+	return nil
+}
+
+// Convert_v1_IdentityProviderSpec_To_auth_IdentityProviderSpec is an autogenerated conversion function.
+func Convert_v1_IdentityProviderSpec_To_auth_IdentityProviderSpec(in *IdentityProviderSpec, out *auth.IdentityProviderSpec, s conversion.Scope) error {
+	return autoConvert_v1_IdentityProviderSpec_To_auth_IdentityProviderSpec(in, out, s)
+}
+
+func autoConvert_auth_IdentityProviderSpec_To_v1_IdentityProviderSpec(in *auth.IdentityProviderSpec, out *IdentityProviderSpec, s conversion.Scope) error {
+	out.Name = in.Name
+	out.Type = in.Type
+	out.Config = in.Config
+	return nil
+}
+
+// Convert_auth_IdentityProviderSpec_To_v1_IdentityProviderSpec is an autogenerated conversion function.
+func Convert_auth_IdentityProviderSpec_To_v1_IdentityProviderSpec(in *auth.IdentityProviderSpec, out *IdentityProviderSpec, s conversion.Scope) error {
+	return autoConvert_auth_IdentityProviderSpec_To_v1_IdentityProviderSpec(in, out, s)
+}
+
+func autoConvert_v1_LocalGroup_To_auth_LocalGroup(in *LocalGroup, out *auth.LocalGroup, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_LocalGroupSpec_To_auth_LocalGroupSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1_LocalGroupStatus_To_auth_LocalGroupStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_LocalGroup_To_auth_LocalGroup is an autogenerated conversion function.
+func Convert_v1_LocalGroup_To_auth_LocalGroup(in *LocalGroup, out *auth.LocalGroup, s conversion.Scope) error {
+	return autoConvert_v1_LocalGroup_To_auth_LocalGroup(in, out, s)
+}
+
+func autoConvert_auth_LocalGroup_To_v1_LocalGroup(in *auth.LocalGroup, out *LocalGroup, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_auth_LocalGroupSpec_To_v1_LocalGroupSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_auth_LocalGroupStatus_To_v1_LocalGroupStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_auth_LocalGroup_To_v1_LocalGroup is an autogenerated conversion function.
+func Convert_auth_LocalGroup_To_v1_LocalGroup(in *auth.LocalGroup, out *LocalGroup, s conversion.Scope) error {
+	return autoConvert_auth_LocalGroup_To_v1_LocalGroup(in, out, s)
+}
+
+func autoConvert_v1_LocalGroupList_To_auth_LocalGroupList(in *LocalGroupList, out *auth.LocalGroupList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]auth.LocalGroup)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_LocalGroupList_To_auth_LocalGroupList is an autogenerated conversion function.
+func Convert_v1_LocalGroupList_To_auth_LocalGroupList(in *LocalGroupList, out *auth.LocalGroupList, s conversion.Scope) error {
+	return autoConvert_v1_LocalGroupList_To_auth_LocalGroupList(in, out, s)
+}
+
+func autoConvert_auth_LocalGroupList_To_v1_LocalGroupList(in *auth.LocalGroupList, out *LocalGroupList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]LocalGroup)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_auth_LocalGroupList_To_v1_LocalGroupList is an autogenerated conversion function.
+func Convert_auth_LocalGroupList_To_v1_LocalGroupList(in *auth.LocalGroupList, out *LocalGroupList, s conversion.Scope) error {
+	return autoConvert_auth_LocalGroupList_To_v1_LocalGroupList(in, out, s)
+}
+
+func autoConvert_v1_LocalGroupSpec_To_auth_LocalGroupSpec(in *LocalGroupSpec, out *auth.LocalGroupSpec, s conversion.Scope) error {
+	out.Finalizers = *(*[]auth.FinalizerName)(unsafe.Pointer(&in.Finalizers))
+	out.DisplayName = in.DisplayName
+	out.TenantID = in.TenantID
+	out.Username = in.Username
+	out.Description = in.Description
+	return nil
+}
+
+// Convert_v1_LocalGroupSpec_To_auth_LocalGroupSpec is an autogenerated conversion function.
+func Convert_v1_LocalGroupSpec_To_auth_LocalGroupSpec(in *LocalGroupSpec, out *auth.LocalGroupSpec, s conversion.Scope) error {
+	return autoConvert_v1_LocalGroupSpec_To_auth_LocalGroupSpec(in, out, s)
+}
+
+func autoConvert_auth_LocalGroupSpec_To_v1_LocalGroupSpec(in *auth.LocalGroupSpec, out *LocalGroupSpec, s conversion.Scope) error {
+	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
+	out.DisplayName = in.DisplayName
+	out.TenantID = in.TenantID
+	out.Username = in.Username
+	out.Description = in.Description
+	return nil
+}
+
+// Convert_auth_LocalGroupSpec_To_v1_LocalGroupSpec is an autogenerated conversion function.
+func Convert_auth_LocalGroupSpec_To_v1_LocalGroupSpec(in *auth.LocalGroupSpec, out *LocalGroupSpec, s conversion.Scope) error {
+	return autoConvert_auth_LocalGroupSpec_To_v1_LocalGroupSpec(in, out, s)
+}
+
+func autoConvert_v1_LocalGroupStatus_To_auth_LocalGroupStatus(in *LocalGroupStatus, out *auth.LocalGroupStatus, s conversion.Scope) error {
 	out.Phase = auth.GroupPhase(in.Phase)
 	out.Users = *(*[]auth.Subject)(unsafe.Pointer(&in.Users))
 	return nil
 }
 
-// Convert_v1_GroupStatus_To_auth_GroupStatus is an autogenerated conversion function.
-func Convert_v1_GroupStatus_To_auth_GroupStatus(in *GroupStatus, out *auth.GroupStatus, s conversion.Scope) error {
-	return autoConvert_v1_GroupStatus_To_auth_GroupStatus(in, out, s)
+// Convert_v1_LocalGroupStatus_To_auth_LocalGroupStatus is an autogenerated conversion function.
+func Convert_v1_LocalGroupStatus_To_auth_LocalGroupStatus(in *LocalGroupStatus, out *auth.LocalGroupStatus, s conversion.Scope) error {
+	return autoConvert_v1_LocalGroupStatus_To_auth_LocalGroupStatus(in, out, s)
 }
 
-func autoConvert_auth_GroupStatus_To_v1_GroupStatus(in *auth.GroupStatus, out *GroupStatus, s conversion.Scope) error {
+func autoConvert_auth_LocalGroupStatus_To_v1_LocalGroupStatus(in *auth.LocalGroupStatus, out *LocalGroupStatus, s conversion.Scope) error {
 	out.Phase = GroupPhase(in.Phase)
 	out.Users = *(*[]Subject)(unsafe.Pointer(&in.Users))
 	return nil
 }
 
-// Convert_auth_GroupStatus_To_v1_GroupStatus is an autogenerated conversion function.
-func Convert_auth_GroupStatus_To_v1_GroupStatus(in *auth.GroupStatus, out *GroupStatus, s conversion.Scope) error {
-	return autoConvert_auth_GroupStatus_To_v1_GroupStatus(in, out, s)
+// Convert_auth_LocalGroupStatus_To_v1_LocalGroupStatus is an autogenerated conversion function.
+func Convert_auth_LocalGroupStatus_To_v1_LocalGroupStatus(in *auth.LocalGroupStatus, out *LocalGroupStatus, s conversion.Scope) error {
+	return autoConvert_auth_LocalGroupStatus_To_v1_LocalGroupStatus(in, out, s)
 }
 
 func autoConvert_v1_LocalIdentity_To_auth_LocalIdentity(in *LocalIdentity, out *auth.LocalIdentity, s conversion.Scope) error {
@@ -1654,4 +1998,84 @@ func autoConvert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus(
 // Convert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus is an autogenerated conversion function.
 func Convert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus(in *auth.SubjectAccessReviewStatus, out *SubjectAccessReviewStatus, s conversion.Scope) error {
 	return autoConvert_auth_SubjectAccessReviewStatus_To_v1_SubjectAccessReviewStatus(in, out, s)
+}
+
+func autoConvert_v1_User_To_auth_User(in *User, out *auth.User, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_UserSpec_To_auth_UserSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_User_To_auth_User is an autogenerated conversion function.
+func Convert_v1_User_To_auth_User(in *User, out *auth.User, s conversion.Scope) error {
+	return autoConvert_v1_User_To_auth_User(in, out, s)
+}
+
+func autoConvert_auth_User_To_v1_User(in *auth.User, out *User, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_auth_UserSpec_To_v1_UserSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_auth_User_To_v1_User is an autogenerated conversion function.
+func Convert_auth_User_To_v1_User(in *auth.User, out *User, s conversion.Scope) error {
+	return autoConvert_auth_User_To_v1_User(in, out, s)
+}
+
+func autoConvert_v1_UserList_To_auth_UserList(in *UserList, out *auth.UserList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]auth.User)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_UserList_To_auth_UserList is an autogenerated conversion function.
+func Convert_v1_UserList_To_auth_UserList(in *UserList, out *auth.UserList, s conversion.Scope) error {
+	return autoConvert_v1_UserList_To_auth_UserList(in, out, s)
+}
+
+func autoConvert_auth_UserList_To_v1_UserList(in *auth.UserList, out *UserList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]User)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_auth_UserList_To_v1_UserList is an autogenerated conversion function.
+func Convert_auth_UserList_To_v1_UserList(in *auth.UserList, out *UserList, s conversion.Scope) error {
+	return autoConvert_auth_UserList_To_v1_UserList(in, out, s)
+}
+
+func autoConvert_v1_UserSpec_To_auth_UserSpec(in *UserSpec, out *auth.UserSpec, s conversion.Scope) error {
+	out.ID = in.ID
+	out.Name = in.Name
+	out.DisplayName = in.DisplayName
+	out.Email = in.Email
+	out.PhoneNumber = in.PhoneNumber
+	out.TenantID = in.TenantID
+	out.Extra = *(*map[string]string)(unsafe.Pointer(&in.Extra))
+	return nil
+}
+
+// Convert_v1_UserSpec_To_auth_UserSpec is an autogenerated conversion function.
+func Convert_v1_UserSpec_To_auth_UserSpec(in *UserSpec, out *auth.UserSpec, s conversion.Scope) error {
+	return autoConvert_v1_UserSpec_To_auth_UserSpec(in, out, s)
+}
+
+func autoConvert_auth_UserSpec_To_v1_UserSpec(in *auth.UserSpec, out *UserSpec, s conversion.Scope) error {
+	out.ID = in.ID
+	out.Name = in.Name
+	out.DisplayName = in.DisplayName
+	out.Email = in.Email
+	out.PhoneNumber = in.PhoneNumber
+	out.TenantID = in.TenantID
+	out.Extra = *(*map[string]string)(unsafe.Pointer(&in.Extra))
+	return nil
+}
+
+// Convert_auth_UserSpec_To_v1_UserSpec is an autogenerated conversion function.
+func Convert_auth_UserSpec_To_v1_UserSpec(in *auth.UserSpec, out *UserSpec, s conversion.Scope) error {
+	return autoConvert_auth_UserSpec_To_v1_UserSpec(in, out, s)
 }

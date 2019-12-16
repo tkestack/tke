@@ -62,22 +62,24 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, err
 	}
 	policy := polObj.(*auth.Policy)
-	var remained []auth.Subject
+	remainedUsers := make([]auth.Subject, 0)
 	for _, sub := range policy.Status.Users {
-		if !util.InSubjectsByName(sub, bind.Users) {
-			remained = append(remained, sub)
+		if !util.InSubjects(sub, bind.Users) {
+			remainedUsers = append(remainedUsers, sub)
 		}
 	}
 
-	policy.Status.Users = remained
+	policy.Status.Users = remainedUsers
 
+	remainedGroups := make([]auth.Subject, 0)
 	for _, sub := range policy.Status.Groups {
 		if !util.InSubjects(sub, bind.Groups) {
-			remained = append(remained, sub)
+			log.Info("1", log.Any("sub", sub), log.Any("groups", bind.Groups))
+			remainedGroups = append(remainedGroups, sub)
 		}
 	}
 
-	policy.Status.Groups = remained
+	policy.Status.Groups = remainedGroups
 
 	log.Info("unbind policy subjects", log.String("policy", policy.Name), log.Any("users", policy.Status.Users), log.Any("groups", policy.Status.Groups))
 	return r.authClient.Policies().UpdateStatus(policy)

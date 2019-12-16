@@ -20,6 +20,7 @@ package rest
 
 import (
 	"github.com/casbin/casbin/v2"
+	dexstorage "github.com/dexidp/dex/storage"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericserver "k8s.io/apiserver/pkg/server"
@@ -32,12 +33,17 @@ import (
 	apikeystorage "tkestack.io/tke/pkg/auth/registry/apikey/storage"
 	apisignstorage "tkestack.io/tke/pkg/auth/registry/apisigningkey/storage"
 	categorystorage "tkestack.io/tke/pkg/auth/registry/category/storage"
+	clistorage "tkestack.io/tke/pkg/auth/registry/client/storage"
 	configmapstorage "tkestack.io/tke/pkg/auth/registry/configmap/storage"
 	groupstorage "tkestack.io/tke/pkg/auth/registry/group/storage"
+	idpstorage "tkestack.io/tke/pkg/auth/registry/identityprovider/storage"
+
+	localgroupstorage "tkestack.io/tke/pkg/auth/registry/localgroup/storage"
 	localidentitystorage "tkestack.io/tke/pkg/auth/registry/localidentity/storage"
 	policystorage "tkestack.io/tke/pkg/auth/registry/policy/storage"
 	rolestorage "tkestack.io/tke/pkg/auth/registry/role/storage"
 	rulestorage "tkestack.io/tke/pkg/auth/registry/rule/storage"
+	userstorage "tkestack.io/tke/pkg/auth/registry/user/storage"
 	"tkestack.io/tke/pkg/auth/util"
 )
 
@@ -46,6 +52,7 @@ import (
 type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
 	Enforcer             *casbin.SyncedEnforcer
+	DexStorage           dexstorage.Storage
 	PrivilegedUsername   string
 }
 
@@ -122,13 +129,25 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["roles/users"] = roleRest.User
 		storageMap["roles/groups"] = roleRest.Group
 
-		groupRest := groupstorage.NewStorage(restOptionsGetter, authClient, s.PrivilegedUsername)
+		localGroupRest := localgroupstorage.NewStorage(restOptionsGetter, authClient, s.PrivilegedUsername)
+		storageMap["localgroups"] = localGroupRest.Group
+		storageMap["localgroups/finalize"] = localGroupRest.Finalize
+		storageMap["localgroups/status"] = localGroupRest.Status
+		storageMap["localgroups/binding"] = localGroupRest.Binding
+		storageMap["localgroups/unbinding"] = localGroupRest.Unbinding
+		storageMap["localgroups/users"] = localGroupRest.User
+
+		userRest := userstorage.NewStorage(restOptionsGetter)
+		storageMap["users"] = userRest.User
+
+		groupRest := groupstorage.NewStorage(restOptionsGetter)
 		storageMap["groups"] = groupRest.Group
-		storageMap["groups/finalize"] = groupRest.Finalize
-		storageMap["groups/status"] = groupRest.Status
-		storageMap["groups/binding"] = groupRest.Binding
-		storageMap["groups/unbinding"] = groupRest.Unbinding
-		storageMap["groups/users"] = groupRest.User
+
+		idpRest := idpstorage.NewStorage(restOptionsGetter, authClient)
+		storageMap["identityproviders"] = idpRest
+
+		cliRest := clistorage.NewStorage(restOptionsGetter, s.DexStorage)
+		storageMap["clients"] = cliRest.Client
 	}
 
 	return storageMap

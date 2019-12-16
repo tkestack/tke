@@ -66,7 +66,7 @@ func (a *RestAdapter) LoadPolicy(model model.Model) error {
 	if err != nil {
 		return fmt.Errorf("list all rules failed: %v", err)
 	}
-	log.Debug("List rules", log.Int("rules", len(rules)))
+	log.Info("List rules", log.Int("rules", len(rules)))
 
 	for _, rule := range rules {
 		a.loadPolicy(rule, model)
@@ -203,12 +203,9 @@ func (a *RestAdapter) AddPolicy(sec string, ptype string, line []string) error {
 // Part of the Auto-Save feature.
 func (a *RestAdapter) RemovePolicy(sec string, ptype string, line []string) error {
 	rule := ConvertRule(ptype, line)
-	log.Info("RemovePolicy", log.String("rule", rule.Name))
 	filter := a.constructRemoveSelector(rule)
 
 	return a.removeFilteredPolicy(filter)
-
-	//return a.ruleClient.Delete(rule.Name, &metav1.DeleteOptions{})
 }
 
 func (a *RestAdapter) constructRemoveSelector(rule authv1.Rule) string {

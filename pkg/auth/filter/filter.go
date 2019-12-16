@@ -135,9 +135,6 @@ func UnprotectedAuthorized(attributes authorizer.Attributes) authorizer.Decision
 	return authorizer.DecisionNoOpinion
 }
 
-// specialUpdateResources contains resources which update verb may be considered as add, verb will be add
-var specialVerbUpdateResources = sets.NewString("roles", "policies")
-
 // specialSubResources contains resources which get verb use get instead of list
 var specialSubResources = sets.NewString("status", "log", "finalize")
 
@@ -182,9 +179,6 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 			resourceType = resourceTypeSingle
 		}
 	case "update":
-		if len(subResource) != 0 && specialVerbUpdateResources.Has(resourceType) {
-			verb = "add"
-		}
 		resourceType = resourceTypeSingle
 	case "patch":
 		verb = "update"

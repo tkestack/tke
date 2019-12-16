@@ -80,8 +80,16 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&RoleList{},
 		&PolicyBinding{},
 		&SubjectAccessReview{},
+		&LocalGroup{},
+		&LocalGroupList{},
+		&User{},
+		&UserList{},
 		&Group{},
 		&GroupList{},
+		&IdentityProvider{},
+		&IdentityProviderList{},
+		&Client{},
+		&ClientList{},
 
 		&ConfigMap{},
 		&ConfigMapList{})

@@ -76,6 +76,11 @@ type ControllerContext struct {
 	ResyncPeriod            func() time.Duration
 	ControllerStartInterval time.Duration
 
+	PolicyPath string
+	CategoryPath string
+	TenantAdmin       string
+	TenantAdminSecret string
+
 	AuthClient v1.AuthV1Interface
 }
 
@@ -137,6 +142,10 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		InformersStarted:        make(chan struct{}),
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
+		PolicyPath: cfg.PolicyPath,
+		CategoryPath: cfg.CategoryPath,
+		TenantAdmin: cfg.TenantAdmin,
+		TenantAdminSecret: cfg.TenantAdminSecret,
 
 		AuthClient: client.AuthV1(),
 	}

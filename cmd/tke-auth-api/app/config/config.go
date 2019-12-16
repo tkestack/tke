@@ -19,20 +19,15 @@
 package config
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/casbin/casbin/v2/model"
-
-	authapi "tkestack.io/tke/api/auth"
-	"tkestack.io/tke/pkg/apiserver/storage"
-	"tkestack.io/tke/pkg/auth/apiserver"
+	dexutil "tkestack.io/tke/pkg/auth/util/dex"
 
 	"github.com/casbin/casbin/v2"
 	casbinlog "github.com/casbin/casbin/v2/log"
+	"github.com/casbin/casbin/v2/model"
 	casbinutil "github.com/casbin/casbin/v2/util"
 	"github.com/coreos/etcd/clientv3"
 	dexserver "github.com/dexidp/dex/server"
@@ -49,6 +44,8 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
+
+	authapi "tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
@@ -59,19 +56,20 @@ import (
 	"tkestack.io/tke/pkg/apiserver/handler"
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
+	"tkestack.io/tke/pkg/apiserver/storage"
 	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
+	"tkestack.io/tke/pkg/auth/apiserver"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
 	"tkestack.io/tke/pkg/auth/authorization/aggregation"
-	casbinlogger "tkestack.io/tke/pkg/auth/logger"
-
-	"tkestack.io/tke/pkg/auth/types"
+	casbinlogger "tkestack.io/tke/pkg/auth/util/logger"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
 	license = "Apache 2.0"
-	title   = "Tencent Kubernetes Engine Auth"
+	title   = "Tencent Kubernetes Engine Auth API"
 )
 
 // Config is the running configuration structure of the TKE controller manager.
@@ -82,7 +80,7 @@ type Config struct {
 	VersionedSharedInformerFactory versionedinformers.SharedInformerFactory
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 
-	DexServer          *dexserver.Server
+	DexConfig          *dexserver.Config
 	DexStorage         dexstorage.Storage
 	CasbinEnforcer     *casbin.SyncedEnforcer
 	TokenAuthn         *authenticator.TokenAuthenticator
@@ -157,7 +155,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 	setupAuthorization(genericAPIServerConfig, aggregateAuthz)
 
-	dexConfig, err := setupDexConfig(opts.ETCD, opts.Auth.AssetsPath, opts.Auth.IDTokenTimeout, opts.Generic.ExternalHost, opts.Generic.ExternalPort)
+	dexConfig, err := setupDexConfig(opts.ETCD, authClient, opts.Auth.AssetsPath, opts.Auth.IDTokenTimeout, opts.Generic.ExternalHost, opts.Generic.ExternalPort)
 	if err != nil {
 		return nil, err
 	}
@@ -167,17 +165,12 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	err = setupDefaultConnectorConfig(authClient, dexConfig.Storage, opts.Auth)
+	err = setupDefaultConnectorConfig(authClient, versionedInformers, dexConfig.Storage, opts.Auth)
 	if err != nil {
 		return nil, err
 	}
 
 	err = setupDefaultClient(dexConfig.Storage, opts.Auth)
-	if err != nil {
-		return nil, err
-	}
-
-	dexServer, err := dexserver.NewServer(context.Background(), *dexConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +181,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		GenericAPIServerConfig:         genericAPIServerConfig,
 		StorageFactory:                 storageFactory,
 		VersionedSharedInformerFactory: versionedInformers,
-		DexServer:                      dexServer,
+		DexConfig:                      dexConfig,
 		DexStorage:                     dexConfig.Storage,
 		CasbinEnforcer:                 enforcer,
 		TokenAuthn:                     tokenAuth,
@@ -246,7 +239,7 @@ func setupETCDClient(etcdOpts *storageoptions.ETCDStorageOptions) (*clientv3.Cli
 	return client, nil
 }
 
-func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, templatePath string, tokenTimeout time.Duration, host string, port int) (*dexserver.Config, error) {
+func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, authClient authinternalclient.AuthInterface, templatePath string, tokenTimeout time.Duration, host string, port int) (*dexserver.Config, error) {
 	logger := logrus.NewLogger(log.ZapLogger())
 	issuer := issuer(host, port)
 	namespace := etcdOpts.Prefix
@@ -263,7 +256,8 @@ func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, templatePath st
 		},
 	}
 
-	store, err := opts.Open(logger)
+	wrapOpts := dexutil.NewWrapEtcdStorage(opts, authClient)
+	store, err := wrapOpts.Open(logger)
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +287,7 @@ func issuer(advertiseAddress string, advertisePort int) string {
 	if advertisePort != 443 {
 		port = fmt.Sprintf(":%d", advertisePort)
 	}
-	return fmt.Sprintf("%s://%s%s/%s", scheme, advertiseAddress, port, types.IssuerName)
+	return fmt.Sprintf("%s://%s%s/%s", scheme, advertiseAddress, port, authapi.IssuerName)
 }
 
 func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*casbin.SyncedEnforcer, error) {
@@ -329,36 +323,41 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 	return enforcer, nil
 }
 
-func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, store dexstorage.Storage, auth *options.AuthOptions) error {
+func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, versionInformers versionedinformers.SharedInformerFactory, store dexstorage.Storage, auth *options.AuthOptions) error {
 	// create dex local identity provider for tke connector.
 	dexserver.ConnectorsConfig[local.TkeConnectorType] = func() dexserver.ConnectorConfig {
-		return new(local.Config)
+		return new(local.DefaultIdentityProvdier)
 	}
-
-	conns, err := store.ListConnectors()
-	if err != nil {
-		return err
-	}
-
-	exists := false
-	for _, conn := range conns {
-		if conn.ID == auth.InitTenantID {
-			exists = true
-			continue
-		}
-	}
-	if !exists {
-		tkeConn, err := local.NewLocalConnector(auth.InitTenantID)
-		if err != nil {
-			return err
-		}
-		// if no connectors, create a default connector
-		if err = store.CreateConnector(*tkeConn); err != nil {
-			return err
-		}
-	}
-
 	local.SetupRestClient(authClient)
+
+	if _, ok := identityprovider.IdentityProvidersStore[auth.InitTenantID]; !ok {
+		defaultIDP := local.NewDefaultIdentityProvider(auth.InitTenantID, versionInformers)
+		identityprovider.IdentityProvidersStore[auth.InitTenantID] = defaultIDP
+	}
+
+	//// Ensure all identity providers defined exists in dex.
+	//for tenantID, idp := range identityprovider.IdentityProvidersStore {
+	//	conn, err := idp.Connector()
+	//	if err != nil {
+	//		log.Errorf("Get connector for tenant failed", log.String("tenantID", tenantID), log.Err(err))
+	//		continue
+	//	}
+	//
+	//	if err = store.CreateConnector(*conn); err != nil && err != dexstorage.ErrAlreadyExists {
+	//		log.Errorf("Create connector for tenant failed", log.String("tenantID", tenantID), log.Any("connector", *conn), log.Err(err))
+	//	}
+	//}
+	//
+	//// Ensure there is at least one connector available for dex
+	//conns, err := store.ListConnectors()
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if len(conns) == 0 {
+	//	return fmt.Errorf("create connectors failed")
+	//}
+
 	return nil
 }
 

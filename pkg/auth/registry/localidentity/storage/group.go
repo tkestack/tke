@@ -49,13 +49,13 @@ var _ = rest.Lister(&GroupREST{})
 
 // NewList returns an empty object that can be used with the List call.
 func (r *GroupREST) NewList() runtime.Object {
-	return &auth.GroupList{}
+	return &auth.LocalGroupList{}
 }
 
 // New returns an empty object that can be used with Create and Update after
 // request data has been put into it.
 func (r *GroupREST) New() runtime.Object {
-	return &auth.Group{}
+	return &auth.LocalGroup{}
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -81,14 +81,14 @@ func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListO
 
 	var groupIDs []string
 	for _, r := range roles {
-		if strings.HasPrefix(r, "grp-") {
-			groupIDs = append(groupIDs, r)
+		if strings.HasPrefix(r, util.GroupPrefix(localIdentity.Spec.TenantID)) {
+			groupIDs = append(groupIDs, strings.TrimPrefix(r, util.GroupPrefix(localIdentity.Spec.TenantID)))
 		}
 	}
 
-	var groupList = &auth.GroupList{}
+	var groupList = &auth.LocalGroupList{}
 	for _, id := range groupIDs {
-		grp, err := r.authClient.Groups().Get(id, metav1.GetOptions{})
+		grp, err := r.authClient.LocalGroups().Get(id, metav1.GetOptions{})
 		if err != nil && apierrors.IsNotFound(err) {
 			log.Error("Get group failed", log.String("group", id), log.Err(err))
 			return nil, err

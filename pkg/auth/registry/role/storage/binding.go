@@ -65,7 +65,7 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	role := polObj.(*auth.Role)
 
 	for _, sub := range bind.Users {
-		if !util.InSubjectsByName(sub, role.Status.Users) {
+		if !util.InSubjects(sub, role.Status.Users) {
 			role.Status.Users = append(role.Status.Users, sub)
 		}
 	}

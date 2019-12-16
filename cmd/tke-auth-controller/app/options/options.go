@@ -32,6 +32,8 @@ type Options struct {
 	SecureServing *apiserveroptions.SecureServingOptions
 	Component     *controlleroptions.ComponentOptions
 	AuthAPIClient *controlleroptions.APIServerClientOptions
+
+	FeatureOptions *FeatureOptions
 }
 
 // NewOptions creates a new Options with a default config.
@@ -42,6 +44,7 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		SecureServing: apiserveroptions.NewSecureServingOptions(serverName, 9456),
 		Component:     controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
 		AuthAPIClient: controlleroptions.NewAPIServerClientOptions("auth", true),
+		FeatureOptions: NewFeatureOptions(),
 	}
 }
 
@@ -52,6 +55,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.SecureServing.AddFlags(fs)
 	o.Component.AddFlags(fs)
 	o.AuthAPIClient.AddFlags(fs)
+	o.FeatureOptions.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -64,6 +68,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.SecureServing.ApplyFlags()...)
 	errs = append(errs, o.Component.ApplyFlags()...)
 	errs = append(errs, o.AuthAPIClient.ApplyFlags()...)
+	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
 
 	return errs
 }

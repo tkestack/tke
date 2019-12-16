@@ -24,6 +24,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// KeywordQueryTag is a field tag to query object that contains the keyword.
+	KeywordQueryTag string = "keyword"
+
+	// QueryLimitTag is a field tag to query a maximum number of objects for a list call.
+	QueryLimitTag string = "limit"
+
+	// IssuerName is the name of issuer location.
+	IssuerName = "oidc"
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -116,6 +127,130 @@ type PasswordReq struct {
 
 	HashedPassword   string `json:"hashedPassword,omitempty" protobuf:"bytes,1,opt,name=hashedPassword"`
 	OriginalPassword string `json:"originalPassword,omitempty" protobuf:"bytes,2,opt,name=originalPassword"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// LocalGroup represents a group of users.
+type LocalGroup struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of group document in this set.
+	Spec LocalGroupSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+
+	// +optional
+	Status LocalGroupStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// LocalGroupList is the whole list of all groups.
+type LocalGroupList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of LocalGroup.
+	Items []LocalGroup `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// GroupPhase defines the phase of group constructor.
+type GroupPhase string
+
+const (
+	GroupActive GroupPhase = "Active"
+	// GroupTerminating means the group is undergoing graceful termination.
+	GroupTerminating GroupPhase = "Terminating"
+)
+
+// LocalGroupSpec is a description of group.
+type LocalGroupSpec struct {
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+
+	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
+	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
+
+	//Creator
+	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`
+	Description string `json:"description" protobuf:"bytes,5,opt,name=description"`
+}
+
+// LocalGroupStatus represents information about the status of a group.
+type LocalGroupStatus struct {
+	// +optional
+	Phase GroupPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=GroupPhase"`
+
+	// Users represents the members of the group.
+	Users []Subject `json:"users" protobuf:"bytes,2,rep,name=users"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// User is an object that contains the metadata about identify about tke local idp or third-party idp.
+type User struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// Spec defines the desired identities of identity in this set.
+	Spec UserSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+}
+
+// UserSpec is a description of an user.
+type UserSpec struct {
+	ID string `json:"id" protobuf:"bytes,1,opt,name=id"`
+
+	//Name must be unique in the same tenant.
+	Name        string            `json:"name" protobuf:"bytes,2,opt,name=name"`
+	DisplayName string            `json:"displayName,omitempty" protobuf:"bytes,3,opt,name=displayName"`
+	Email       string            `json:"email,omitempty" protobuf:"bytes,4,opt,name=email"`
+	PhoneNumber string            `json:"phoneNumber,omitempty" protobuf:"bytes,5,opt,name=phoneNumber"`
+	TenantID    string            `json:"tenantID,omitempty" protobuf:"bytes,6,opt,name=tenantID"`
+	Extra       map[string]string `json:"extra,omitempty" protobuf:"bytes,7,rep,name=extra"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UserList is the whole list of all users.
+type UserList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of User.
+	Items []User `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Group is an object that contains the metadata about identify about tke local idp or third-party idp.
+type Group struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// Spec defines the desired identities of group in this set.
+	Spec GroupSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+}
+
+// GroupSpec is a description of an Group.
+type GroupSpec struct {
+	ID          string `json:"id" protobuf:"bytes,1,opt,name=id"`
+	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
+	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
+	Description string `json:"description" protobuf:"bytes,4,opt,name=description"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// GroupList is the whole list of all groups.
+type GroupList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of Group.
+	Items []Group `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 // +genclient
@@ -258,8 +393,6 @@ type Category struct {
 
 // CategorySpec is a description of category.
 type CategorySpec struct {
-	// CategoryName identifies action category
-	CategoryName string `json:"categoryName" protobuf:"bytes,1,opt,name=categoryName"`
 	// DisplayName used to display category name
 	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
 	// +optional
@@ -380,8 +513,9 @@ type PolicyStatus struct {
 	// Users represents the users the policy applies to.
 	Users []Subject `json:"users" protobuf:"bytes,2,rep,name=users"`
 
+	// +optional
 	// Groups represents the groups the policy applies to.
-	Groups []Subject `protobuf:"bytes,3,rep,name=groups"`
+	Groups []Subject `json:"groups" protobuf:"bytes,3,rep,name=groups"`
 }
 
 const (
@@ -514,14 +648,15 @@ type RoleSpec struct {
 // RoleStatus represents information about the status of a role.
 type RoleStatus struct {
 	// +optional
-	Phase RolePhase `protobuf:"bytes,1,opt,name=phase,casttype=RolePhase"`
+	Phase RolePhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=RolePhase"`
 
+	// +optional
 	// Users represents the users the role applies to.
-	Users []Subject `protobuf:"bytes,2,rep,name=users"`
+	Users []Subject `json:"users" protobuf:"bytes,2,rep,name=users"`
 
 	// +optional
 	// Groups represents the groups the role applies to.
-	Groups []Subject `protobuf:"bytes,3,rep,name=groups"`
+	Groups []Subject `json:"groups" protobuf:"bytes,3,rep,name=groups"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -533,63 +668,6 @@ type PolicyBinding struct {
 	// Policies holds the policies will bind or unbind to the role.
 	// +optional
 	Policies []string `json:"policies" protobuf:"bytes,1,rep,name=policies"`
-}
-
-// +genclient
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// Group represents a group of users.
-type Group struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-
-	// Spec defines the desired identities of group document in this set.
-	Spec GroupSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
-
-	// +optional
-	Status GroupStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
-}
-
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// GroupList is the whole list of all groups.
-type GroupList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-	// List of rules.
-	Items []Group `json:"items" protobuf:"bytes,2,rep,name=items"`
-}
-
-// GroupPhase defines the phase of group constructor.
-type GroupPhase string
-
-const (
-	GroupActive GroupPhase = "Active"
-	// GroupTerminating means the group is undergoing graceful termination.
-	GroupTerminating GroupPhase = "Terminating"
-)
-
-// GroupSpec is a description of group.
-type GroupSpec struct {
-	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
-
-	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
-	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
-
-	//Creator
-	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`
-	Description string `json:"description" protobuf:"bytes,5,opt,name=description"`
-}
-
-// GroupStatus represents information about the status of a group.
-type GroupStatus struct {
-	// +optional
-	Phase GroupPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=GroupPhase"`
-
-	// Users represents the members of the group.
-	Users []Subject `json:"users" protobuf:"bytes,2,rep,name=users"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -726,6 +804,84 @@ type AllowedStatus struct {
 	// It is entirely possible to get an error and be able to continue determine authorization status in spite of it.
 	// For instance, RBAC can be missing a role, but enough roles are still present and bound to reason about the request.
 	EvaluationError string `json:"evaluationError,omitempty" protobuf:"bytes,6,opt,name=evaluationError"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// IdentityProvider is an object that contains the metadata about identify
+// provider used to login to TKE.
+type IdentityProvider struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of identity provider in this set.
+	Spec IdentityProviderSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// IdentityProviderList is the whole list of all identity providers.
+type IdentityProviderList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of identity providers.
+	Items []IdentityProvider `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// IdentityProviderSpec is a description of an identity provider.
+type IdentityProviderSpec struct {
+	// The Name of the connector that is used when displaying it to the end user.
+	Name string `json:"name" protobuf:"bytes,2,opt,name=name"`
+	// The type of the connector. E.g. 'oidc' or 'ldap'
+	Type string `json:"type" protobuf:"bytes,3,opt,name=type"`
+	// Config holds all the configuration information specific to the connector type. Since there
+	// no generic struct we can use for this purpose, it is stored as a json string.
+	Config string `json:"config" protobuf:"bytes,4,opt,name=config"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Client represents an OAuth2 client.
+type Client struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of identity provider in this set.
+	Spec ClientSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClientList is the whole list of OAuth2 client.
+type ClientList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of identity providers.
+	Items []Client `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// ClientSpec is a description of an client.
+type ClientSpec struct {
+	ID           string   `json:"id,omitempty" protobuf:"bytes,1,opt,name=id"`
+	Secret       string   `json:"secret,omitempty" protobuf:"bytes,2,opt,name=secret"`
+	RedirectUris []string `json:"redirect_uris,omitempty" protobuf:"bytes,3,rep,name=redirect_uris,json=redirectUris"`
+	// TrustedPeers are a list of peers which can issue tokens on this client's behalf using the dynamic "oauth2:server:client_id:(client_id)" scope.
+	TrustedPeers []string `json:"trusted_peers,omitempty" protobuf:"bytes,4,rep,name=trusted_peers,json=trustedPeers"`
+	// Public clients must use either use a redirectURL 127.0.0.1:X or "urn:ietf:wg:oauth:2.0:oob".
+	Public  bool   `json:"public,omitempty" protobuf:"varint,5,opt,name=public"`
+	Name    string `json:"name,omitempty" protobuf:"bytes,6,opt,name=name"`
+	LogoURL string `json:"logo_url,omitempty" protobuf:"bytes,7,opt,name=logo_url,json=logoUrl"`
 }
 
 // +genclient

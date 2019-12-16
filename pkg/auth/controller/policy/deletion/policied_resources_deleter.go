@@ -156,7 +156,6 @@ func (d *policiedResourcesDeleter) deletePolicy(policy *v1.Policy) error {
 	if len(uid) > 0 {
 		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	log.Info("policy", log.Any("policy", policy))
 	err := d.policyClient.Delete(policy.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))

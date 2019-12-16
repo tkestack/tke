@@ -21,6 +21,7 @@ package app
 import (
 	"net/http"
 	"time"
+	"tkestack.io/tke/pkg/auth/controller/config"
 	"tkestack.io/tke/pkg/auth/controller/group"
 	"tkestack.io/tke/pkg/auth/controller/localidentity"
 	"tkestack.io/tke/pkg/auth/controller/role"
@@ -37,11 +38,14 @@ const (
 	localIdentitySyncPeriod      = 5 * time.Minute
 	concurrentLocalIdentitySyncs = 10
 
-	groupSyncPeriod         = 5 * time.Minute
-	groupLocalIdentitySyncs = 10
+	groupSyncPeriod      = 5 * time.Minute
+	concurrentGroupSyncs = 10
 
-	roleSyncPeriod         = 5 * time.Minute
-	roleLocalIdentitySyncs = 10
+	roleSyncPeriod      = 5 * time.Minute
+	concurrentRoleSyncs = 10
+
+	idpSyncPeriod      = 5 * time.Minute
+	concurrentIDPSyncs = 5
 )
 
 func startPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -83,20 +87,20 @@ func startLocalIdentityController(ctx ControllerContext) (http.Handler, bool, er
 }
 
 func startGroupController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "groups"}] {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "localgroups"}] {
 		return nil, false, nil
 	}
 
 	ctrl := group.NewController(
 		ctx.ClientBuilder.ClientOrDie("group-controller"),
-		ctx.InformerFactory.Auth().V1().Groups(),
+		ctx.InformerFactory.Auth().V1().LocalGroups(),
 		ctx.InformerFactory.Auth().V1().Rules(),
 		ctx.Enforcer,
 		groupSyncPeriod,
 		v1.GroupFinalize,
 	)
 
-	go ctrl.Run(groupLocalIdentitySyncs, ctx.Stop)
+	go ctrl.Run(concurrentGroupSyncs, ctx.Stop)
 
 	return nil, true, nil
 }
@@ -115,7 +119,35 @@ func startRoleController(ctx ControllerContext) (http.Handler, bool, error) {
 		v1.RoleFinalize,
 	)
 
-	go ctrl.Run(groupLocalIdentitySyncs, ctx.Stop)
+	go ctrl.Run(concurrentRoleSyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startConfigController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "categories"}] {
+		return nil, false, nil
+	}
+
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "policies"}] {
+		return nil, false, nil
+	}
+
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "identityproviders"}] {
+		return nil, false, nil
+	}
+
+	ctrl := config.NewController(
+		ctx.ClientBuilder.ClientOrDie("config-controller"),
+		ctx.InformerFactory.Auth().V1().IdentityProviders(),
+		idpSyncPeriod,
+		ctx.PolicyPath,
+		ctx.CategoryPath,
+		ctx.TenantAdmin,
+		ctx.TenantAdminSecret,
+	)
+
+	go ctrl.Run(concurrentIDPSyncs, ctx.Stop)
 
 	return nil, true, nil
 }

@@ -59,7 +59,7 @@ const (
 type Controller struct {
 	client            clientset.Interface
 	queue             workqueue.RateLimitingInterface
-	groupLister       authv1lister.GroupLister
+	groupLister       authv1lister.LocalGroupLister
 	groupListerSynced cache.InformerSynced
 	ruleLister        authv1lister.RuleLister
 	ruleListerSynced  cache.InformerSynced
@@ -69,13 +69,13 @@ type Controller struct {
 }
 
 // NewController creates a new group object.
-func NewController(client clientset.Interface, groupInformer authv1informer.GroupInformer, ruleInformer authv1informer.RuleInformer, enforcer *casbin.SyncedEnforcer, resyncPeriod time.Duration, finalizerToken v1.FinalizerName) *Controller {
+func NewController(client clientset.Interface, groupInformer authv1informer.LocalGroupInformer, ruleInformer authv1informer.RuleInformer, enforcer *casbin.SyncedEnforcer, resyncPeriod time.Duration, finalizerToken v1.FinalizerName) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
 		client:                  client,
 		queue:                   workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
 		enforcer:                enforcer,
-		groupedResourcesDeleter: deletion.NewGroupedResourcesDeleter(client.AuthV1().Groups(), client.AuthV1(), enforcer, finalizerToken, true),
+		groupedResourcesDeleter: deletion.NewGroupedResourcesDeleter(client.AuthV1().LocalGroups(), client.AuthV1(), enforcer, finalizerToken, true),
 	}
 
 	if client != nil && client.AuthV1().RESTClient().GetRateLimiter() != nil {
@@ -86,8 +86,8 @@ func NewController(client clientset.Interface, groupInformer authv1informer.Grou
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: controller.enqueue,
 			UpdateFunc: func(oldObj, newObj interface{}) {
-				old, ok1 := oldObj.(*v1.Group)
-				cur, ok2 := newObj.(*v1.Group)
+				old, ok1 := oldObj.(*v1.LocalGroup)
+				cur, ok2 := newObj.(*v1.LocalGroup)
 				if ok1 && ok2 && controller.needsUpdate(old, cur) {
 					log.Info("Update enqueue")
 					controller.enqueue(newObj)
@@ -116,7 +116,7 @@ func (c *Controller) enqueue(obj interface{}) {
 	c.queue.AddAfter(key, groupDeletionGracePeriod)
 }
 
-func (c *Controller) needsUpdate(old *v1.Group, new *v1.Group) bool {
+func (c *Controller) needsUpdate(old *v1.LocalGroup, new *v1.LocalGroup) bool {
 	if old.UID != new.UID {
 		return true
 	}
@@ -219,12 +219,12 @@ func (c *Controller) syncItem(key string) error {
 	return err
 }
 
-func (c *Controller) processUpdate(group *v1.Group, key string) error {
+func (c *Controller) processUpdate(group *v1.LocalGroup, key string) error {
 	return c.handleSubjects(key, group)
 }
 
-func (c *Controller) handleSubjects(key string, group *v1.Group) error {
-	rules := c.enforcer.GetFilteredGroupingPolicy(1, group.Name)
+func (c *Controller) handleSubjects(key string, group *v1.LocalGroup) error {
+	rules := c.enforcer.GetFilteredGroupingPolicy(1, authutil.GroupPrefix(group.Spec.TenantID))
 	log.Debugf("Get grouping rules for group: %s, %v", group.Name, rules)
 	var existMembers []string
 	for _, rule := range rules {
@@ -243,7 +243,7 @@ func (c *Controller) handleSubjects(key string, group *v1.Group) error {
 	log.Info("Handle group subjects changed", log.String("group", key), log.Strings("added", added), log.Strings("removed", removed))
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(group.Spec.TenantID, add), group.Name); err != nil {
+			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(group.Spec.TenantID, add), authutil.GroupKey(group.Spec.TenantID, group.Name)); err != nil {
 				log.Errorf("Bind group to user failed", log.String("group", group.Name), log.String("user", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -252,7 +252,7 @@ func (c *Controller) handleSubjects(key string, group *v1.Group) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(group.Spec.TenantID, remove), group.Name); err != nil {
+			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(group.Spec.TenantID, remove), authutil.GroupKey(group.Spec.TenantID, group.Name)); err != nil {
 				log.Errorf("Unbind group to user failed", log.String("group", group.Name), log.String("user", remove), log.Err(err))
 				errs = append(errs, err)
 			}

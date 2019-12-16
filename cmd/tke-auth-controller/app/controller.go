@@ -52,6 +52,7 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers["localidentity"] = startLocalIdentityController
 	controllers["groups"] = startGroupController
 	controllers["roles"] = startRoleController
+	controllers["configs"] = startConfigController
 	return controllers
 }
 

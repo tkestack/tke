@@ -26,6 +26,7 @@ import (
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/validation"
 )
 
@@ -69,36 +70,27 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 
 	fldStatPath := field.NewPath("status")
 	for i, subj := range policy.Status.Users {
-		if subj.ID == "" && subj.Name == "" {
-			allErrs = append(allErrs, field.Required(fldStatPath.Child("users"), "must specify id or name"))
+		if subj.ID == "" {
+			allErrs = append(allErrs, field.Required(fldStatPath.Child("users"), "must specify subject id "))
 			continue
 		}
 
-		// if specify id, ensure name
-		if subj.ID != "" {
-			val, err := authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldStatPath.Child("users"), subj.ID))
-				} else {
-					allErrs = append(allErrs, field.InternalError(fldStatPath.Child("users"), err))
+		val, err := authClient.Users().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				log.Warn("user not found", log.String("tenant", policy.Spec.TenantID), log.String("id", subj.ID))
+				if subj.Name == "" {
+					// if user not found in idp, use id as name
+					policy.Status.Users[i].Name = subj.ID
 				}
 			} else {
-				if val.Spec.TenantID != policy.Spec.TenantID {
-					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("users"), subj.ID, "must in the same tenant with the policy"))
-				} else {
-					policy.Status.Users[i].Name = val.Spec.Username
-				}
+				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("users"), err))
 			}
 		} else {
-			localIdentity, err := util.GetLocalIdentity(authClient, policy.Spec.TenantID, subj.Name)
-			if err != nil && apierrors.IsNotFound(err) {
-				continue
-			}
-			if err != nil {
-				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("users"), err))
+			if val.Spec.TenantID != policy.Spec.TenantID {
+				allErrs = append(allErrs, field.Invalid(fldStatPath.Child("users"), subj.ID, "must in the same tenant with the policy"))
 			} else {
-				policy.Status.Users[i].ID = localIdentity.Name
+				policy.Status.Users[i].Name = val.Spec.Name
 			}
 		}
 	}
@@ -109,10 +101,10 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 			continue
 		}
 
-		val, err := authClient.Groups().Get(subj.ID, metav1.GetOptions{})
+		val, err := authClient.Groups().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				allErrs = append(allErrs, field.NotFound(fldStatPath.Child("groups"), subj.ID))
+				log.Warn("group not found", log.String("tenant", policy.Spec.TenantID), log.String("id", subj.ID))
 			} else {
 				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("groups"), err))
 			}

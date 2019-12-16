@@ -65,7 +65,7 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	policy := polObj.(*auth.Policy)
 
 	for _, sub := range bind.Users {
-		if !util.InSubjectsByName(sub, policy.Status.Users) {
+		if !util.InSubjects(sub, policy.Status.Users) {
 			policy.Status.Users = append(policy.Status.Users, sub)
 		}
 	}

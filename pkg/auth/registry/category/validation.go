@@ -30,12 +30,8 @@ func ValidateCategory(category *auth.Category) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&category.ObjectMeta, false, apiMachineryValidation.NameIsDNSSubdomain, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
-	if category.Spec.CategoryName == "" {
-		allErrs = append(allErrs, field.Required(fldSpecPath.Child("categoryName"), "must specify categoryName"))
-	} else {
-		if err := validation.IsDNS1123Name(category.Spec.CategoryName); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("categoryName"), category.Spec.CategoryName, err.Error()))
-		}
+	if err := validation.IsDNS1123Name(category.Name); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("categoryName"), category.Name, err.Error()))
 	}
 
 	if category.Spec.DisplayName == "" {
@@ -65,8 +61,8 @@ func ValidateCategoryUpdate(category *auth.Category, oldCategory *auth.Category)
 
 	fldSpecPath := field.NewPath("spec")
 
-	if category.Spec.CategoryName != oldCategory.Spec.CategoryName {
-		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("categoryName"), category.Spec.CategoryName, "disallowed change the categoryName"))
+	if category.Name != oldCategory.Name {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("categoryName"), category.Name, "disallowed change the categoryName"))
 	}
 
 	return allErrs
