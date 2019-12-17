@@ -235,9 +235,9 @@ func (c *Controller) createIfNeeded(key string, cachedItem *gmCachedItem, holder
 	case v1.AddonPhaseRunning:
 		c.health.Set(holder)
 
-		//If phase transits from pending to running, at the same time, we update spec version.
-		//In this situation, the controller will ignore this update which is unexpected. So we
-		//retrieve a fresh daemonset, and compare the version.
+		// If phase transits from pending to running, at the same time, we update spec version.
+		// In this situation, the controller will ignore this update which is unexpected. So we
+		// retrieve a fresh daemonset, and compare the version.
 		needUpgrade, err := c.operator.DiffDaemonSet(holder)
 		if err != nil {
 			return err
@@ -278,6 +278,11 @@ func (c *Controller) delete(item *gmCachedItem, key string) error {
 
 	log.Info(fmt.Sprintf("Delete service of GPUManager %s", key))
 	if err := c.operator.DeleteService(item.holder.Spec.ClusterName); err != nil {
+		return err
+	}
+
+	log.Info(fmt.Sprintf("Delete service metric of GPUManager %s", key))
+	if err := c.operator.DeleteServiceMetric(item.holder.Spec.ClusterName); err != nil {
 		return err
 	}
 
