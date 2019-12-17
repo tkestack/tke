@@ -111,4 +111,4 @@ endif
 .PHONY: go.test
 go.test: go.test.verify
 	@echo "===========> Run unit test"
-	$(GO) test -count=1 -timeout=10m -short -v ./... 2>&1 | tee >(go-junit-report --set-exit-code >$(OUTPUT_DIR)/report.xml)
+	$(GO) test -count=1 -timeout=10m -short -v `go list ./...|grep -v tkestack.io/tke/test` 2>&1 | tee >(go-junit-report --set-exit-code >$(OUTPUT_DIR)/report.xml)
