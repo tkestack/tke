@@ -59,6 +59,6 @@ export const RootReducer = combineReducers({
 
   dockerRegistryUrl: generateFetcherReducer({
     actionType: ActionType.FetchDockerRegUrl,
-    initialData: ''
+    initialData: Default_D_URL
   })
 });
