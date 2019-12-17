@@ -60,7 +60,7 @@ export function SelectICComputerPanel({
   let [role, setRole] = React.useState(computer ? computer.role : computerRoleList[0].value);
   let [labels, setLabels] = React.useState(computer ? computer.labels : []);
   let [authType, setAuthType] = React.useState(computer ? computer.authType : authTypeList[0].value);
-  let [username, setUserName] = React.useState(computer ? computer.username : '');
+  let [username, setUserName] = React.useState(computer ? computer.username : 'root');
   let [password, setPassword] = React.useState(computer ? computer.password : '');
   let [privateKey, setPrivateKey] = React.useState(computer ? computer.privateKey : '');
   let [passPhrase, setPassPhrase] = React.useState(computer ? computer.passPhrase : '');
@@ -85,7 +85,7 @@ export function SelectICComputerPanel({
   );
   let canSave = v_ipList.status === 1 && labelsIsValid;
   if (authType === 'password') {
-    canSave = canSave && v_username.status === 1 && v_password.status === 1;
+    canSave = canSave && v_username.status !== 2 && v_password.status === 1;
   } else {
     canSave = canSave && v_privateKey.status === 1;
   }
@@ -157,7 +157,7 @@ export function SelectICComputerPanel({
               setPrivateKey('');
             } else {
               setPassword('');
-              setUserName('');
+              // setUserName('');
             }
           }}
         />
@@ -166,8 +166,9 @@ export function SelectICComputerPanel({
         label={t('用户名')}
         input={{
           value: username,
-          onChange: setUserName,
-          onBlur: () => setV_username(validateValue(username, rules.username))
+          disabled: true
+          // onChange: setUserName,
+          // onBlur: () => setV_username(validateValue(username, rules.username))
         }}
         validator={v_username}
       />
