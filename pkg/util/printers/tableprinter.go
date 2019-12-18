@@ -70,11 +70,9 @@ func printHeader(columnNames []string, w io.Writer) error {
 
 // PrintObj prints the obj in a human-friendly format according to the type of the obj.
 func (h *HumanReadablePrinter) PrintObj(obj runtime.Object, output io.Writer) error {
-	w, found := output.(*tabwriter.Writer)
+	_, found := output.(*tabwriter.Writer)
 	if !found {
-		w = GetNewTabWriter(output)
-		output = w
-		defer w.Flush()
+		output = GetNewTabWriter(output)
 	}
 
 	// Case 1: Parameter "obj" is a table from server; print it.
