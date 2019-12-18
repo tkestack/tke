@@ -312,7 +312,7 @@ export async function deleteImage(images: Image[]) {
 
 export async function fetchDockerRegUrl() {
   let _localUrl = localStorage.getItem('_registry_url');
-  if (_localUrl) {
+  if (_localUrl && !/^https:\/\/.*/.test(_localUrl)) {
     return _localUrl;
   } else {
     let paramsInfo: RequestParams = {
@@ -327,7 +327,7 @@ export async function fetchDockerRegUrl() {
     let info = await reduceNetworkRequest(paramsInfo);
     let sysInfo = await reduceNetworkRequest(paramsSysInfo);
     try {
-      let url = 'https://';
+      let url = '';
       if (info.code === 0) {
         url += info.data.extra.tenantid[0];
       } else if (sysInfo.code === 0) {
@@ -350,7 +350,7 @@ export async function fetchDockerRegUrl() {
       }
       return url;
     } catch (e) {
-      return 'https://default.registry.com';
+      return Default_D_URL;
     }
   }
 }

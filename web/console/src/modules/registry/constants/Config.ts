@@ -24,4 +24,4 @@ export const InitImage = {
   visibility: 'Public'
 };
 
-export const Default_D_URL = 'https://registry.tkestack.com';
+export const Default_D_URL = 'registry.tkestack.com';
