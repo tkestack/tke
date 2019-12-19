@@ -40063,6 +40063,13 @@ func schema_tke_api_platform_v1_PrometheusSpec(ref common.ReferenceCallback) com
 							Ref:         ref("tkestack.io/tke/api/platform/v1.PrometheusRemoteAddr"),
 						},
 					},
+					"notifyWebhook": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address \"https://[notify-api-address]/webhook\" will be used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "clusterName"},
 			},
