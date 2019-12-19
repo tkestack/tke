@@ -712,6 +712,9 @@ type PrometheusSpec struct {
 	SubVersion map[string]string `json:"subVersion,omitempty" protobuf:"bytes,4,opt,name=subVersion"`
 	// RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.
 	RemoteAddress PrometheusRemoteAddr `json:"remoteAddress,omitempty" protobuf:"bytes,5,opt,name=remoteAddress"`
+	// +optional
+	// NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
+	NotifyWebhook string `json:"notifyWebhook,omitempty" protobuf:"bytes,6,opt,name=notifyWebhook"`
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.

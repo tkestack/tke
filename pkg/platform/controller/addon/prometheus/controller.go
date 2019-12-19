@@ -635,8 +635,16 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 
 	extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
 
+	// get notify webhook address
+	var webhookAddr string
+	if prometheus.Spec.NotifyWebhook != "" {
+		webhookAddr = prometheus.Spec.NotifyWebhook
+	} else {
+		webhookAddr = c.notifyAPIAddress + "/webhook"
+	}
+
 	// secret for alertmanager
-	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(c.notifyAPIAddress)); err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(webhookAddr)); err != nil {
 		return err
 	}
 
@@ -1276,8 +1284,7 @@ var selectorForAlertManager = metav1.LabelSelector{
 	MatchLabels: map[string]string{"alertmanager": alertManagerCRDName, "app": "alertmanager"},
 }
 
-func createSecretForAlertmanager(notifyAPI string) *corev1.Secret {
-	webhookAddr := notifyAPI + "/webhook"
+func createSecretForAlertmanager(webhookAddr string) *corev1.Secret {
 	config := configForAlertManager(webhookAddr)
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
