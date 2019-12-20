@@ -53,7 +53,7 @@ const (
 	// PathPrefix defines the path prefix for accessing the chartmuseum server.
 	PathPrefix = "/chart/"
 	// MaxUploadSize defines max size of post body (in bytes).
-	MaxUploadSize = 20 * 1024 * 1024
+	MaxUploadSize = 20 * 1024 * 1024 * 1024
 )
 
 // IgnoredAuthPathPrefixes returns a list of path prefixes that does not need to
