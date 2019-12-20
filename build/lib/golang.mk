@@ -52,7 +52,7 @@ ifeq ($(origin GOBIN), undefined)
 endif
 
 PLATFORMS ?= darwin_amd64 windows_amd64 linux_amd64
-COMMANDS ?= $(wildcard ${ROOT_DIR}/cmd/*)
+COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*))
 BINS ?= $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
 
 ifeq (${COMMANDS},)
