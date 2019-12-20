@@ -1,449 +1,843 @@
-# Running Locally
+# How to run TKE locally
+This guide will walk you through deploying the full TKE stack on you local machine and allow you to play with the core components. It is highly recommended if you want to develop TKE and contribute regularly.
 
-**Table of Contents**
+## Table of Contents
 
-- [Requirements](#requirements)
-    - [OS](#os)
-    - [Docker](#docker)
-    - [etcd](#etcd)
-    - [Go](#go)
-    - [Node.js and NPM](#nodejs-and-npm)
-- [Clone the repository](#clone-the-repository)
-- [Build the binary](#build-the-binary)
-- [Make self-signed certificate](#make-self-signed-certificate)
-- [Running on the machine](#running-on-the-machine)
-    - [Create static token auth file](#create-static-token-auth-file)
-    - [tke-auth](#tke-auth)
-    - [tke-platform-api](#tke-platform-api)
-    - [tke-platform-controller](#tke-platform-controller)
-    - [tke-business-api](#tke-business-api)
-    - [tke-business-controller](#tke-business-controller)
-    - [tke-gateway](#tke-gateway)
-- [Open UI console](#open-ui-console)
+- [Prerequisites](#prerequisites)
+  - [OS Requirements](#os-requirements)
+  - [Docker](#docker)
+  - [etcd](#etcd)
+  - [Go](#go)
+  - [Node.js and NPM](#node-js-and-npm)
+- [Building TKE Components](#building-tke-components)
+- [Create Self-signed Certificates](#create-self-signed-certificates)
+- [Create Static Token](#create-static-token)
+- [Bootstrap TKE Core Components](#bootstrap-tke-core-components)
+  - [tke-auth](#tke-auth)
+  - [tke-platform-api](#tke-platform-api)
+  - [tke-platform-controller](#tke-platform-controller)
+  - [tke-registry-api(Optional)](#tke-registry-apioptional)
+  - [tke-business-api(Optional)](#tke-business-apioptional)
+  - [tke-business-controller(Optional)](#tke-business-controlleroptional)
+  - [tke-monitor-api(Optional)](#tke-monitor-apioptional)
+  - [tke-monitor-controller(Optional)](#tke-monitor-controlleroptional)
+  - [tke-notify-api(Optional)](#tke-notify-apioptional)
+  - [tke-notify-controller(Optional)](#tke-notify-controlleroptional)
+  - [tke-gateway](#tke-gateway)
+- [Access TKE Web UI](#access-tke-web-ui)
+- [FAQ](#faq)
 
-## Requirements
+## Prerequisites
 
-### OS
-
-TKE support running on `linux`, `Windows` or `macOS` system.
+### OS Requirements
+TKE supports running on `Linux`, `Windows` or `macOS` operating systems.
 
 ### Docker
+TKE requires [Docker](https://docs.docker.com/installation/#installation) version 1.12+ to
+run its underlying services as docker containers. Ensure the Docker daemon is working by running `docker ps` and check its version by running `docker --version`.
 
-At least [Docker](https://docs.docker.com/installation/#installation) 1.12+. 
-Ensure the Docker daemon is running and can be contacted (try `docker ps`).  
-In order for the TKE component to work properly locally, the underlying services
- it depends on will run as a docker container.
-
-Docker, using one of the following configurations:
-  * **macOS** You can either use Docker for Mac or docker-machine. See 
-  installation instructions [here](https://docs.docker.com/docker-for-mac/).
-  * **Linux with local Docker**  Install Docker according to the 
-  [instructions](https://docs.docker.com/installation/#installation) for your OS.
+To install Docker,
+  * **macOS:** Use either "Docker for Mac" or “docker-machine”. See instructions [here](https://docs.docker.com/docker-for-mac/).
+  * **Linux:**  Find instructions to install Docker for your Linux OS [here](https://docs.docker.com/installation/#installation).
 
 ### etcd
 
-[etcd](https://github.com/coreos/etcd/releases) is a backend persistent non-sql 
-database that TKE requires for almost all components.
+[etcd](https://github.com/coreos/etcd/releases) is a persistent non-sql
+database. TKE services share a running etcd as backend.
 
-If etcd is not installed on the machine, in addition to the installation of the 
-package management tool corresponding to the OS.
-  * **macOS** You can use the following command to install and start the etcd 
-  service.
-  
+To install etcd,
+  * **macOS:** Install and start etcd as a local service
   ```sh
-  $ brew install etcd
-  $ brew services start etcd
+  brew install etcd
+  brew services start etcd
   ```
 
-  * **Linux** You can use docker to start a single-node etcd to run in the 
-  [official documentation of etcd](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/container.md#running-a-single-node-etcd-1).
+  * **Linux:** Run a single node etcd using docker. See instructions [here](https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/container.md#running-a-single-node-etcd-1).
 
 ### Go
 
-You need [go](https://golang.org/doc/install) in your path 
-(see [here](development.md#go) for supported versions), please make sure it is 
-installed and in your ``$PATH``.
+TKE is written in [Go](https://golang.org). See supported version [here](development.md#go).
 
-If you use the macOS system, you can use the following command to install:
+To install go,
+- For macOS users,
+  ```sh
+  brew install go
+  ```
+- For other users, see instructions [here](https://golang.org/doc/install).
 
-```sh
-$ brew install go
-```
+To configure go,
 
-Make sure that the `tkestack.io` domain name is added to the `GOPRIVATE` and 
-`GONOPROXY` environment variables after you have an eligible go version. If not, 
-you can simply execute the following command:
-
-```sh
-$ go env -w GOPRIVATE="tkestack.io"
-$ go env -w GONOPROXY="tkestack.io"
-```
+- Make sure your `$GOPATH`, `$GORROT` and `$PATH` are configured correctly
+- Add `tkestack.io` to your Go env as below.
+  ```sh
+  go env -w GOPRIVATE="tkestack.io"
+  go env -w GONOPROXY="tkestack.io"
+  ```
 
 ### Node.js and NPM
 
-You need a Node.js and NPM (see [here](development.md#nodejs) for supported 
-versions) execution environment, please [set one up](https://nodejs.org/en/download/package-manager/).
+TKE requires Node.js and NPM. See [here](development.md#nodejs) for supported
+versions.
 
-If you use the macOS system, you can use the following command to install:
+- For macOS users,
+  ```sh
+  brew install nodejs
+  ```
+- For other users, see instructions
+ [here](https://nodejs.org/en/download/package-manager/).
 
-```sh
-$ brew install nodejs
-```
+## Building TKE Components
+TKE contains 11 core components, a dependency list generator and a customized installer. For detail see [here](/cmd/README.md).
 
-## Clone the repository
+- Clone TKE Repository
 
-In order to run TKE you must have the code on the local machine. Cloning this 
-repository is sufficient.
+  ```
+  git clone --depth=1 https://github.com/tkestack/tke.git
+  ```
 
-```$ git clone --depth=1 https://github.com/tkestack/tke.git```
+  `--depth=1` parameter is optional and will ensure a smaller download.
 
-The `--depth=1` parameter is optional and will ensure a smaller download.
+- Build binaries
 
-In the subsequent documentation, you assume that all operations are performed in 
-the code root path, so you need to switch the working path to the directory 
-first.
+  Once all the dependencies and requirements have been installed and configured,
+  you can start compiling TKE on your local machine. Make sure to run it at the TKE root path.
+  ```sh
+  cd tke
+  make build
+  ```
 
-```sh
-$ cd tke
-```
-
-## Build the binary
-
-Once all the dependencies and requirements have been installed and configured, 
-you can execute `make build` in the root of the code to compile all the 
-components of TKE. 
-
-After the compilation is complete, you can get all the binary executables in 
+  After the compilation is complete, you can get all the binary executables in
 the `_output/${host_os}/${host_arch}` directory.
 
-## Make self-signed certificate
+## Create Self-signed Certificates
 
-For security reasons, all service components of tke do not support the insecure 
-HTTP protocol. In order to enable SSL, you need to make a self-signed root 
-certificate, a server certificate.
+For security reasons, all TKE core components don't support insecure
+HTTP protocol. To enable SSL, you need to make a self-signed root
+certificate and a server certificate.
 
-To generate the certificate used to develop the test, it is highly recommended 
-to use the [mkcert](https://github.com/FiloSottile/mkcert) tool, which 
-simplifies the process and configuration of certificate generation. See 
-[here](https://github.com/FiloSottile/mkcert#installation) for installation.
+It is highly recommended to use the [mkcert](https://github.com/FiloSottile/mkcert) to
+generate certificates for developing and testing TKE, which simplifies the process to create certificates.
+see [here](https://github.com/FiloSottile/mkcert#installation) for installation guide.
+
+To create cert using `mkcert`,
 
 ```sh
-$ mkdir -p _debug/certificates
-$ cd _debug/certificates
-$ # Make a CA and install it to local trusted certificate store.
-$ mkcert -install
-$ # Make server certificate.
-$ mkcert localhost 127.0.0.1 ::1
+cd tke
+mkdir -p _debug/certificates
+cd _debug/certificates
+# Make a CA and install it to local trusted certificate store.
+mkcert -install
+# Make server certificate.
+mkcert localhost 127.0.0.1 ::1
 ```
 
-Then, you can get:
+You can find your certificates at
 
 ```
-.
+_debug/certificates/
 ├── localhost+2-key.pem
 └── localhost+2.pem
 
 0 directories, 2 files
 ```
 
-## Running on the machine
-
-### Create static token auth file
-
-First you need to create a directory `_debug` to hold all the configuration files.
+## Create Static Token
+Create a static token to authenticate all TKE API services.
 
 ```
-$ mkdir -p _debug
-```
+cd tke
+mkdir -p _debug
+touch _debug/token.csv
+echo 'token,admin,1,"administrator"' > _debug/token.csv
+  ```
 
-Then you need to create a static token authentication file to provide static 
-token authentication for all API type services.
+## Bootstrap TKE Core Components
+This section will walk you through how to bootstrap TKE on your local machine.
 
-***_debug/token.csv***
+TKE contains 11 core components. For detail see [here](/tke/cmd/README.md). In order for all the
+services to run properly, please make sure to follow the guide below to bootstrap them in order.
+You could skip the optional components if it is not needed.
 
-```csv
-token,admin,1,"administrator"
-```
+For your convenient,
+- Run the following command in the TKE root directory
+- Export `${host_os}` and `${host_arch}` to your environment variables according to your
+ machine. You can find it in your `tke/_output/${host_os}/${host_arch}` path.
+- Export `${root_store}` to reference the path of your root certificate created by mkcert in the
+previous step. For macOS, the path is usually /Users/${username}/Library/Application Support/mkcert.
 
 ### tke-auth
 
-Generate the configuration files needed to run the `tke-auth` component.
+- Create `_debug/auth.json`
 
-***_debug/auth.json***
+  <details>
+  <summary>Click to show sample confi </summary>
+  <br>
 
-```json
-{
-  "secure_serving": {
-    "tls_cert_file": "_debug/certificates/localhost+2.pem",
-    "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
-  },
-  "etcd": {
-    "servers": ["http://127.0.0.1:2379"]
-  },
-  "generic": {
-    "external_hostname": "localhost",
-    "external_port": 9451
-  },
-  "auth": {
-    "assets_path": "./pkg/auth/web",
-    "tenant_admin": "admin",
-    "tenant_admin_secret": "secret",
-    "init_client_id": "client",
-    "init_client_secret": "secret",
-    "init_client_redirect_uris": [
-      "http://localhost:9442/callback",
-      "http://127.0.0.1:9442/callback",
-      "https://localhost:9441/callback",
-      "https://127.0.0.1:9441/callback"
-    ]
+  **_debug/auth.json**
+  ```json
+  {
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "etcd": {
+      "servers": ["http://127.0.0.1:2379"]
+    },
+    "generic": {
+      "external_hostname": "localhost",
+      "external_port": 9451
+    },
+    "auth": {
+      "assets_path": "./pkg/auth/web",
+      "tenant_admin": "admin",
+      "tenant_admin_secret": "secret",
+      "init_client_id": "client",
+      "init_client_secret": "secret",
+      "init_client_redirect_uris": [
+        "http://localhost:9442/callback",
+        "http://127.0.0.1:9442/callback",
+        "https://localhost:9441/callback",
+        "https://127.0.0.1:9441/callback"
+      ]
+    }
   }
-}
-```
+  ```
+  </details>
 
-Running it:
 
-```sh
-$ _output/${host_os}/${host_arch}/tke-auth -C _debug/auth.json
-```
+- Run `tke-auth`
+
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-auth -C _debug/auth.json
+  ```
 
 ### tke-platform-api
 
-Generate the configuration files needed to run the `tke-platform-api` component.
+- Create `_debug/platform-api.json`
 
-***_debug/platform-api.json***
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
 
-```json
-{
-  "authentication": {
-    "oidc": {
-      "client_id": "client",
-      "issuer_url": "https://localhost:9451/oidc",
-      "ca_file": "${root_store}/mkcert/rootCA.pem",
-      "username_prefix": "-",
-      "username_claim": "name",
-      "tenantid_claim": "federated_claims"
+  ***_debug/platform-api.json***
+
+  ```json
+  {
+    "authentication": {
+      "oidc": {
+        "client_id": "client",
+        "issuer_url": "https://localhost:9451/oidc",
+        "ca_file": "${root_store}/mkcert/rootCA.pem",
+        "username_prefix": "-",
+        "username_claim": "name",
+        "tenantid_claim": "federated_claims"
+      },
+      "token_auth_file": "_debug/token.csv"
     },
-    "token_auth_file": "_debug/token.csv"
-  },
-  "secure_serving": {
-    "tls_cert_file": "_debug/certificates/localhost+2.pem",
-    "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
-  },
-  "etcd": {
-    "servers": ["http://127.0.0.1:2379"]
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "etcd": {
+      "servers": ["http://127.0.0.1:2379"]
+    }
   }
-}
-```
+  ```
+  </details>
 
-> The path represented by `${root_store}` is the storage path of the root 
-> certificate created by using the `mkcert` tool. 
-> If it is the `macOS` operating system, the path is generally 
-> `/Users/${username}/Library/Application Support/mkcert`.
 
-Running it:
+- Run `tke-platform-api`
 
-```sh
-$ _output/${host_os}/${host_arch}/tke-platform-api -C _debug/platform-api.json
-```
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-platform-api -C _debug/platform-api.json
+  ```
 
 ### tke-platform-controller
 
-Generate the configuration files needed to run the `tke-platform-controller` 
-component.
+- Create `_debug/platform-api-client-config.yaml`
 
-***_debug/platform-api-client-config.yaml***
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
 
-```yaml
-apiVersion: v1
-kind: Config
-clusters:
-  - name: tke
-    cluster:
-      certificate-authority: ${root_store}/mkcert/rootCA.pem
-      server: https://127.0.0.1:9443
-users:
-  - name: admin
-    user:
-      token: token
-current-context: tke
-contexts:
-  - context:
-      cluster: tke
-      user: admin
-    name: tke
-```
+  ***_debug/platform-api-client-config.yaml***
 
-***_debug/platform-controller.json***
+  ```yaml
+  apiVersion: v1
+  kind: Config
+  clusters:
+    - name: tke
+      cluster:
+        certificate-authority: ${root_store}/mkcert/rootCA.pem
+        server: https://127.0.0.1:9443
+  users:
+    - name: admin
+      user:
+        token: token
+  current-context: tke
+  contexts:
+    - context:
+        cluster: tke
+        user: admin
+      name: tke
+  ````
+  </details>
 
-```json
-{
-  "secure_serving": {
-    "tls_cert_file": "_debug/certificates/localhost+2.pem",
-    "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
-  },
-  "client": {
-    "platform": {
-      "api_server_client_config": "_debug/platform-api-client-config.yaml"
-    }
-  }
-}
-```
 
-Running it:
+- Create `_debug/platform-controller.json`
 
-```sh
-$ _output/${host_os}/${host_arch}/tke-platform-controller -C _debug/platform-controller.json
-```
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
 
-### tke-business-api
+  ***_debug/platform-controller.json***
 
-Generate the configuration files needed to run the `tke-business-api` 
-component.
-
-***_debug/business-api.json***
-
-```json
-{
-  "authentication": {
-    "oidc": {
-      "client_id": "client",
-      "issuer_url": "https://localhost:9451/oidc",
-      "ca_file": "${root_store}/mkcert/rootCA.pem",
-      "username_prefix": "-",
-      "username_claim": "name",
-      "tenantid_claim": "federated_claims"
+  ```json
+  {
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
     },
-    "token_auth_file": "_debug/token.csv"
-  },
-  "secure_serving": {
-    "tls_cert_file": "_debug/certificates/localhost+2.pem",
-    "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
-  },
-  "etcd": {
-    "servers": ["http://127.0.0.1:2379"]
-  },
-  "client": {
-    "platform": {
-      "api_server_client_config": "_debug/platform-api-client-config.yaml"
+    "client": {
+      "platform": {
+        "api_server_client_config": "_debug/platform-api-client-config.yaml"
+      }
     }
   }
-}
-```
+  ```
+  </details>
 
-Running it:
 
-```sh
-$ _output/${host_os}/${host_arch}/tke-business-api -C _debug/business-api.json
-```
+- Run `tke-platform-controller`
 
-### tke-business-controller
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-platform-controller -C _debug/platform-controller.json
+  ```
 
-Generate the configuration files needed to run the `tke-business-controller` 
-component.
+### tke-registry-api(Optional)
 
-***_debug/business-api-client-config.yaml***
+- Create `_debug/registry-api.json`
 
-```yaml
-apiVersion: v1
-kind: Config
-clusters:
-  - name: tke
-    cluster:
-      certificate-authority: ${root_store}/mkcert/rootCA.pem
-      server: https://127.0.0.1:9447
-users:
-  - name: admin
-    user:
-      token: token
-current-context: tke
-contexts:
-  - context:
-      cluster: tke
-      user: admin
-    name: tke
-```
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
 
-***_debug/business-controller.json***
+  ***_debug/registry-api.json***
 
-```json
-{
-  "secure_serving": {
-    "tls_cert_file": "_debug/certificates/localhost+2.pem",
-    "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
-  },
-  "client": {
-    "platform": {
-      "api_server_client_config": "_debug/platform-api-client-config.yaml"
+  ```json
+  {
+    "authentication": {
+      "oidc": {
+        "client_id": "client",
+        "issuer_url": "https://localhost:9451/oidc",
+        "ca_file": "${root_store}/mkcert/rootCA.pem",
+        "token_review_path": "/auth/authn",
+        "username_prefix": "-",
+        "username_claim": "name",
+        "tenantid_claim": "federated_claims"
+      },
+      "requestheader": {
+        "username_headers": "X-Remote-User",
+        "group_headers": "X-Remote-Groups",
+        "extra_headers_prefix": "X-Remote-Extra-",
+        "client_ca_file": "${root_store}/mkcert/rootCA.pem"
+      },
+      "token_auth_file": "_debug/token.csv"
     },
-    "business": {
-      "api_server_client_config": "_debug/business-api-client-config.yaml"
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "etcd": {
+      "servers": [
+        "http://127.0.0.1:2379"
+      ]
+    },
+    "registry_config": "_debug/registry-config.yaml"
+  }
+  ```
+  </details>
+
+
+- Create `registry-config.yaml`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***registry-config.yaml***
+
+  ```yaml
+  apiVersion: registry.config.tkestack.io/v1
+  kind: RegistryConfiguration
+  storage:
+    fileSystem:
+      rootDirectory: _debug/registry
+  security:
+    tokenPrivateKeyFile: keys/private_key.pem
+    tokenPublicKeyFile: keys/public.crt
+    adminPassword: secret
+    adminUsername: admin
+    httpSecret: secret
+  defaultTenant: default
+  ```
+  </details>
+
+
+- Run `tke-registry-api`
+
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-registry-api -C _debug/registry-api.json
+  ```
+
+### tke-business-api(Optional)
+
+- Create `_debug/business-api.json`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/business-api.json***
+
+  ```json
+  {
+    "authentication": {
+      "oidc": {
+        "client_id": "client",
+        "issuer_url": "https://localhost:9451/oidc",
+        "ca_file": "${root_store}/mkcert/rootCA.pem",
+        "username_prefix": "-",
+        "username_claim": "name",
+        "tenantid_claim": "federated_claims"
+      },
+      "token_auth_file": "_debug/token.csv"
+    },
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "etcd": {
+      "servers": ["http://127.0.0.1:2379"]
+    },
+    "client": {
+      "platform": {
+        "api_server_client_config": "_debug/platform-api-client-config.yaml"
+      }
     }
   }
-}
-```
+  ```
+  </details>
 
-Running it:
 
-```sh
-$ _output/${host_os}/${host_arch}/tke-business-controller -C _debug/business-controller.json
-```
+- Run `tke-business-api`
+
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-business-api -C _debug/business-api.json
+  ```
+
+### tke-business-controller(Optional)
+
+- Create `_debug/business-api-client-config.yaml`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/business-api-client-config.yaml***
+
+  ```yaml
+  apiVersion: v1
+  kind: Config
+  clusters:
+    - name: tke
+      cluster:
+        certificate-authority: ${root_store}/mkcert/rootCA.pem
+        server: https://127.0.0.1:9447
+  users:
+    - name: admin
+      user:
+        token: token
+  current-context: tke
+  contexts:
+    - context:
+        cluster: tke
+        user: admin
+      name: tke
+  ```
+  </details>
+
+
+- Create `_debug/business-controller.json`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/business-controller.json***
+
+  ```json
+  {
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "client": {
+      "platform": {
+        "api_server_client_config": "_debug/platform-api-client-config.yaml"
+      },
+      "business": {
+        "api_server_client_config": "_debug/business-api-client-config.yaml"
+      }
+    }
+  }
+  ```
+  </details>
+
+
+- Run `tke-business-controller`
+
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-business-controller -C _debug/business-controller.json
+  ```
+
+### tke-monitor-api(Optional)
+
+- Run influxDB docker container
+
+  `tke-monitor-controller` requires a influxDB with database name "projects" as backend to store the monitoring data.
+
+  ```
+  sudo docker volume create influxdb
+  sudo docker run -d -p 8086:8086  --volume=influxdb:/var/lib/influxdb  --name influxdb influxdb:latest
+  curl -XPOST 'http://localhost:8086/query' --data-urlencode 'q=CREATE DATABASE "projects"'
+  ```
+
+- Create `_debug/monitor-config.yaml`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/monitor-config.yaml***
+
+  ```yaml
+  apiVersion: monitor.config.tkestack.io/v1
+  kind: MonitorConfiguration
+  storage:
+    influxDB:
+      servers:
+        - address: http://localhost:8086
+  ```
+  </details>
+
+
+- Cerate `_debug/monitor-api-client-config.yaml`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/monitor-api-client-config.yaml***
+
+  ```yaml
+  apiVersion: v1
+  kind: Config
+  clusters:
+    - name: tke
+      cluster:
+        certificate-authority: ${root_store}/mkcert/rootCA.pem
+        server: https://127.0.0.1:9455
+  users:
+    - name: admin
+      user:
+        token: token
+  current-context: tke
+  contexts:
+    - context:
+        cluster: tke
+        user: admin
+      name: tke
+
+  ```
+  </details>
+
+
+- Cerate `_debug/monitor-api.json`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/monitor-api.json***
+
+  ```json
+  {
+    "authentication": {
+      "oidc": {
+        "client_id": "client",
+        "issuer_url": "https://localhost:9451/oidc",
+        "ca_file": "${root_store}/mkcert/rootCA.pem",
+        "username_prefix": "-",
+        "username_claim": "name",
+        "tenantid_claim": "federated_claims"
+      },
+      "token_auth_file": "_debug/token.csv"
+    },
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "etcd": {
+      "servers": ["http://127.0.0.1:2379"]
+    },
+    "client": {
+      "platform": {
+        "api_server_client_config": "_debug/platform-api-client-config.yaml"
+      }
+    },
+    "monitor_config": "_debug/monitor-config.yaml"
+  }
+
+  ```
+  </details>
+
+
+- Run `tke-monitor-api`
+
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-monitor-api -C _debug/monitor-api.json
+  ```
+
+### tke-monitor-controller(Optional)
+
+- Cerate `_debug/monitor-controller.json`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/monitor-controller.json***
+
+  Delete the business block if you didn't enable the TKE Business Service previously.
+
+  ```json
+  {
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "client": {
+      "monitor": {
+        "api_server_client_config": "_debug/monitor-api-client-config.yaml"
+      },
+      "business": {
+        "api_server_client_config": "_debug/business-api-client-config.yaml"
+      }
+    },
+    "monitor_config": "_debug/monitor-config.yaml"
+  }
+
+  ```
+  </details>
+
+
+- Run `tke-monitor-controller`
+
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-monitor-controller -C _debug/monitor-controller.json
+  ```
+
+### tke-notify-api(Optional)
+
+- Create `_debug/notify-api.json`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/notify-api.json***
+
+  ```json
+  {
+    "authentication": {
+      "oidc": {
+        "client_id": "client",
+        "issuer_url": "https://localhost:9451/oidc",
+        "ca_file": "${root_store}/mkcert/rootCA.pem",
+        "username_prefix": "-",
+        "username_claim": "name",
+        "tenantid_claim": "federated_claims"
+      },
+      "requestheader": {
+        "username_headers": "X-Remote-User",
+        "group_headers": "X-Remote-Groups",
+        "extra_headers_prefix": "X-Remote-Extra-",
+        "client_ca_file": "${root_store}/mkcert/rootCA.pem"
+      },
+      "token_auth_file": "_debug/token.csv"
+    },
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "etcd": {
+      "servers": ["http://127.0.0.1:2379"]
+    },
+    "client": {
+      "platform": {
+        "api_server_client_config": "_debug/platform-api-client-config.yaml"
+      }
+    }
+  }
+
+  ```
+  </details>
+
+
+### tke-notify-controller(Optional)
+
+- Cerate `_debug/notify-controller.json`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/notify-controller.json***
+
+  ```json
+  {
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "client": {
+      "notify": {
+        "api_server_client_config": "_debug/platform-api-client-config.yaml"
+      }
+    }
+  }
+
+  ```
+  </details>
+
+
+- Run `tke-notify-api`
+
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-notify-api -C _debug/notify-api.json
+  ```
 
 ### tke-gateway
 
-Generate the configuration files needed to run the `tke-gateway` component.
+- Cerate `_debug/gateway-config.yaml`
 
-***_debug/gateway-config.yaml***
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
 
-```yaml
-apiVersion: gateway.config.tkestack.io/v1
-kind: GatewayConfiguration
-components:
-  platform:
-    address: https://127.0.0.1:9443
-    passthrough:
-      caFile: ${root_store}/mkcert/rootCA.pem
-  business:
-    address: https://127.0.0.1:9447
-    passthrough:
-      caFile: ${root_store}/mkcert/rootCA.pem
-```
+  ***_debug/gateway-config.yaml***
 
-***_debug/gateway.json***
+  Depending on what TKE optional services you have started, uncomment the corresponding code to allow tke-gateway to discover optional services.
 
-```json
-{
-  "authentication": {
-    "oidc": {
-      "client_secret": "secret",
-      "client_id": "client",
-      "issuer_url": "https://localhost:9451/oidc",
-      "ca_file": "${root_store}/mkcert/rootCA.pem",
-      "username_prefix": "-",
-      "username_claim": "name",
-      "tenantid_claim": "federated_claims"
-    }
-  },
-  "secure_serving": {
-    "tls_cert_file": "_debug/certificates/localhost+2.pem",
-    "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
-  },
-  "gateway_config": "_debug/gateway-config.yaml"
-}
-```
+  ```yaml
+  apiVersion: gateway.config.tkestack.io/v1
+  kind: GatewayConfiguration
+  components:
+    auth:
+      address: https://127.0.0.1:9451
+      passthrough:
+        caFile: ${root_store}/mkcert/rootCA.pem
+    platform:
+      address: https://127.0.0.1:9443
+      passthrough:
+        caFile: ${root_store}/mkcert/rootCA.pem
+    ### Optional Services ###
+    # TKE Registry
+    # registry:
+    #   address: https://127.0.0.1:9453
+    #   passthrough:
+    #     caFile: ${root_store}/mkcert/rootCA.pem
+    # TKE Business
+    # business:
+    #   address: https://127.0.0.1:9447
+    #   frontProxy:
+    #     caFile: ${root_store}/mkcert/rootCA.pem
+    #     clientCertFile: certificates/localhost+2-client.pem
+    #     clientKeyFile: certificates/localhost+2-client-key.pem
+    # TKE Monitor
+    # monitor:
+    #   address: https://127.0.0.1:9455
+    #   passthrough:
+    #     caFile: ${root_store}/mkcert/rootCA.pem
+    # TKE Notify
+    # notify:
+    #   address: https://127.0.0.1:9457
+    #   passthrough:
+    #         caFile: ${root_store}/mkcert/rootCA.pem
 
-Running it:
+  ```
+  </details>
 
-```sh
-$ _output/${host_os}/${host_arch}/tke-gateway -C _debug/gateway.json
-```
 
-## Open UI console
+- Cerate `_debug/gateway.json`
 
-Once all the components are working, you can open a browser to access:
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/gateway.json***
+
+  ```json
+  {
+    "authentication": {
+      "oidc": {
+        "client_secret": "secret",
+        "client_id": "client",
+        "issuer_url": "https://localhost:9451/oidc",
+        "ca_file": "${root_store}/mkcert/rootCA.pem",
+        "username_prefix": "-",
+        "username_claim": "name",
+        "tenantid_claim": "federated_claims"
+      }
+    },
+    "secure_serving": {
+      "tls_cert_file": "_debug/certificates/localhost+2.pem",
+      "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+    },
+    "gateway_config": "_debug/gateway-config.yaml"
+  }
+  ```
+  </details>
+
+
+- Run `tke-gateway`
+
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-gateway -C _debug/gateway.json
+  ```
+
+## Access TKE Web UI
+
+Once all the TKE services are up and running, you can access TKE Web UI from your browser:
   * [http://localhost:9442](http://localhost:9442)
   * [https://localhost:9441](https://localhost:9441)
 
-The login username and password are specified in the launch configuration of 
-the previous `tke-auth` component:
-  * ***Username***: admin
-  * ***Password***: secret
+The username and password are specified in the launch configuration of
+the `tke-auth` component:
+  * ***Username:*** admin
+  * ***Password:*** secret
+
+## FAQ
+**> Question:** How do I get the `DEBUG` log?
+
+**Answer:** By default, all the core components have `INFO` level log. You can add the following block to your json config to enable `DEBUG` log.
+```
+"log": {
+  "level": "debug"
+}
+```
+
+**> Question:** How do I find the config options of TKE services?
+
+**Answer:** Instead of using `-C` to pass the configuration file to run TKE services, you can simply use `-h` to get a full list of options.
