@@ -24,6 +24,7 @@ replace (
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/Azure/go-autorest v13.3.0+incompatible // indirect
+	github.com/aws/aws-sdk-go v1.20.18
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
