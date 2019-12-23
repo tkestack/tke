@@ -15,12 +15,6 @@ replace (
 	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20191016112429-9587704a8ad4
 )
 
-replace (
-	github.com/golang/glog => ./pkg/util/log/glog
-	github.com/sirupsen/logrus => ./pkg/util/log/logrus
-	k8s.io/klog => ./pkg/util/log/klog
-)
-
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/Azure/go-autorest v13.3.0+incompatible // indirect
@@ -50,7 +44,7 @@ require (
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/gogo/protobuf v1.2.2-0.20190730201129-28a6bbf47e48
-	github.com/golang/glog v0.0.0
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/snappy v0.0.1
 	github.com/google/gofuzz v1.0.0
 	github.com/gorilla/handlers v1.4.2 // indirect

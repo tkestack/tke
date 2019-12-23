@@ -21,8 +21,8 @@ package context
 import (
 	"context"
 	dcontext "github.com/docker/distribution/context"
-	"github.com/sirupsen/logrus"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/log/distribution"
 )
 
 // BuildDistributionContext create a background context with logger for
@@ -34,6 +34,6 @@ func BuildDistributionContext() context.Context {
 
 // BuildRequestContext create a new context with logger by given context.
 func BuildRequestContext(ctx context.Context) context.Context {
-	logger := logrus.NewLogger(log.ZapLogger())
-	return dcontext.WithLogger(ctx, logger.WithField("system", "distribution"))
+	logger := distribution.NewLogger(log.ZapLogger())
+	return dcontext.WithLogger(ctx, logger)
 }

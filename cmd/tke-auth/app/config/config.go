@@ -21,12 +21,6 @@ package config
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"regexp"
-	"strings"
-	"time"
-	"tkestack.io/tke/pkg/auth"
-
 	"github.com/casbin/casbin"
 	casbinlog "github.com/casbin/casbin/log"
 	casbinutil "github.com/casbin/casbin/util"
@@ -36,7 +30,6 @@ import (
 	"github.com/dexidp/dex/storage/etcd"
 	"github.com/go-openapi/spec"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 	genericauthenticator "k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/group"
 	"k8s.io/apiserver/pkg/authentication/request/bearertoken"
@@ -45,6 +38,10 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/healthz"
+	"net/http"
+	"regexp"
+	"strings"
+	"time"
 	"tkestack.io/tke/cmd/tke-auth/app/options"
 	"tkestack.io/tke/pkg/apiserver"
 	"tkestack.io/tke/pkg/apiserver/authentication"
@@ -53,6 +50,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
+	"tkestack.io/tke/pkg/auth"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
 	"tkestack.io/tke/pkg/auth/authorization/aggregation"
@@ -62,6 +60,7 @@ import (
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/util/adapter"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/log/dex"
 )
 
 const (
@@ -238,7 +237,6 @@ func setupETCDClient(genericAPIServerConfig *genericapiserver.Config, etcdOpts *
 }
 
 func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, templatePath string, tokenTimeout time.Duration, host string, port int) (*dexserver.Config, error) {
-	logger := logrus.NewLogger(log.ZapLogger())
 	issuer := issuer(host, port)
 	namespace := etcdOpts.Prefix
 	if !strings.HasSuffix(namespace, "/") {
@@ -254,6 +252,7 @@ func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, templatePath st
 		},
 	}
 
+	logger := dex.NewLogger(log.ZapLogger())
 	store, err := opts.Open(logger)
 	if err != nil {
 		return nil, err

@@ -16,195 +16,167 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package logrus
+package distribution
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
+	logruslogger "tkestack.io/tke/pkg/util/log/logrus"
 )
 
-// Entry is the final or intermediate Logrus logging entry.
-type Entry struct {
-	logger *zap.Logger
-	Logger *Logger
-	// Level the log entry was logged at: Trace, Debug, Info, Warn, Error, Fatal or Panic
-	// This field will be set on entry firing and the value will be equal to the one in Logger struct field.
-	Level Level
-	// Message passed to Trace, Debug, Info, Warn, Error, Fatal or Panic
-	Message string
+// Logger is a logger which compatible to logrus/std log/prometheus.
+// it implements Print() Println() Printf() Dbug() Debugln() Debugf() Info() Infoln() Infof() Warn() Warnln() Warnf()
+// Error() Errorln() Errorf() Fatal() Fataln() Fatalf() Panic() Panicln() Panicf() With() WithField() WithFields()
+type Logger struct {
+	logger       *zap.Logger
+	logrusLogger *logrus.Logger
+}
+
+// NewLogger create the field logger object by giving zap logger.
+func NewLogger(logger *zap.Logger) *Logger {
+	return &Logger{
+		logger:       logger,
+		logrusLogger: logruslogger.NewLogger(logger),
+	}
 }
 
 // Print logs a message at level Print on the compatibleLogger.
-func (l *Entry) Print(args ...interface{}) {
+func (l *Logger) Print(args ...interface{}) {
 	l.logger.Info(fmt.Sprint(args...))
 }
 
 // Println logs a message at level Print on the compatibleLogger.
-func (l *Entry) Println(args ...interface{}) {
+func (l *Logger) Println(args ...interface{}) {
 	l.logger.Info(fmt.Sprint(args...))
 }
 
 // Printf logs a message at level Print on the compatibleLogger.
-func (l *Entry) Printf(format string, args ...interface{}) {
+func (l *Logger) Printf(format string, args ...interface{}) {
 	l.logger.Info(fmt.Sprintf(format, args...))
 }
 
 // Trace logs a message at level Trace on the compatibleLogger.
-func (l *Entry) Trace(args ...interface{}) {
+func (l *Logger) Trace(args ...interface{}) {
 	l.logger.Debug(fmt.Sprint(args...))
 }
 
 // Traceln logs a message at level Trace on the compatibleLogger.
-func (l *Entry) Traceln(args ...interface{}) {
+func (l *Logger) Traceln(args ...interface{}) {
 	l.logger.Debug(fmt.Sprint(args...))
 }
 
 // Tracef logs a message at level Trace on the compatibleLogger.
-func (l *Entry) Tracef(format string, args ...interface{}) {
+func (l *Logger) Tracef(format string, args ...interface{}) {
 	l.logger.Debug(fmt.Sprintf(format, args...))
 }
 
 // Debug logs a message at level Debug on the compatibleLogger.
-func (l *Entry) Debug(args ...interface{}) {
+func (l *Logger) Debug(args ...interface{}) {
 	l.logger.Debug(fmt.Sprint(args...))
 }
 
 // Debugln logs a message at level Debug on the compatibleLogger.
-func (l *Entry) Debugln(args ...interface{}) {
+func (l *Logger) Debugln(args ...interface{}) {
 	l.logger.Debug(fmt.Sprint(args...))
 }
 
 // Debugf logs a message at level Debug on the compatibleLogger.
-func (l *Entry) Debugf(format string, args ...interface{}) {
+func (l *Logger) Debugf(format string, args ...interface{}) {
 	l.logger.Debug(fmt.Sprintf(format, args...))
 }
 
 // Info logs a message at level Info on the compatibleLogger.
-func (l *Entry) Info(args ...interface{}) {
+func (l *Logger) Info(args ...interface{}) {
 	l.logger.Info(fmt.Sprint(args...))
 }
 
 // Infoln logs a message at level Info on the compatibleLogger.
-func (l *Entry) Infoln(args ...interface{}) {
+func (l *Logger) Infoln(args ...interface{}) {
 	l.logger.Info(fmt.Sprint(args...))
 }
 
 // Infof logs a message at level Info on the compatibleLogger.
-func (l *Entry) Infof(format string, args ...interface{}) {
+func (l *Logger) Infof(format string, args ...interface{}) {
 	l.logger.Info(fmt.Sprintf(format, args...))
 }
 
 // Warn logs a message at level Warn on the compatibleLogger.
-func (l *Entry) Warn(args ...interface{}) {
+func (l *Logger) Warn(args ...interface{}) {
 	l.logger.Warn(fmt.Sprint(args...))
 }
 
 // Warnln logs a message at level Warn on the compatibleLogger.
-func (l *Entry) Warnln(args ...interface{}) {
+func (l *Logger) Warnln(args ...interface{}) {
 	l.logger.Warn(fmt.Sprint(args...))
 }
 
 // Warnf logs a message at level Warn on the compatibleLogger.
-func (l *Entry) Warnf(format string, args ...interface{}) {
+func (l *Logger) Warnf(format string, args ...interface{}) {
 	l.logger.Warn(fmt.Sprintf(format, args...))
 }
 
 // Warning logs a message at level Warn on the compatibleLogger.
-func (l *Entry) Warning(args ...interface{}) {
+func (l *Logger) Warning(args ...interface{}) {
 	l.logger.Warn(fmt.Sprint(args...))
 }
 
 // Warningln logs a message at level Warning on the compatibleLogger.
-func (l *Entry) Warningln(args ...interface{}) {
+func (l *Logger) Warningln(args ...interface{}) {
 	l.logger.Warn(fmt.Sprint(args...))
 }
 
 // Warningf logs a message at level Warning on the compatibleLogger.
-func (l *Entry) Warningf(format string, args ...interface{}) {
+func (l *Logger) Warningf(format string, args ...interface{}) {
 	l.logger.Warn(fmt.Sprintf(format, args...))
 }
 
 // Error logs a message at level Error on the compatibleLogger.
-func (l *Entry) Error(args ...interface{}) {
+func (l *Logger) Error(args ...interface{}) {
 	l.logger.Error(fmt.Sprint(args...))
 }
 
 // Errorln logs a message at level Error on the compatibleLogger.
-func (l *Entry) Errorln(args ...interface{}) {
+func (l *Logger) Errorln(args ...interface{}) {
 	l.logger.Error(fmt.Sprint(args...))
 }
 
 // Errorf logs a message at level Error on the compatibleLogger.
-func (l *Entry) Errorf(format string, args ...interface{}) {
+func (l *Logger) Errorf(format string, args ...interface{}) {
 	l.logger.Error(fmt.Sprintf(format, args...))
 }
 
 // Fatal logs a message at level Fatal on the compatibleLogger.
-func (l *Entry) Fatal(args ...interface{}) {
+func (l *Logger) Fatal(args ...interface{}) {
 	l.logger.Fatal(fmt.Sprint(args...))
 }
 
 // Fatalln logs a message at level Fatal on the compatibleLogger.
-func (l *Entry) Fatalln(args ...interface{}) {
+func (l *Logger) Fatalln(args ...interface{}) {
 	l.logger.Fatal(fmt.Sprint(args...))
 }
 
 // Fatalf logs a message at level Fatal on the compatibleLogger.
-func (l *Entry) Fatalf(format string, args ...interface{}) {
+func (l *Logger) Fatalf(format string, args ...interface{}) {
 	l.logger.Fatal(fmt.Sprintf(format, args...))
 }
 
 // Panic logs a message at level Painc on the compatibleLogger.
-func (l *Entry) Panic(args ...interface{}) {
+func (l *Logger) Panic(args ...interface{}) {
 	l.logger.Panic(fmt.Sprint(args...))
 }
 
 // Panicln logs a message at level Painc on the compatibleLogger.
-func (l *Entry) Panicln(args ...interface{}) {
+func (l *Logger) Panicln(args ...interface{}) {
 	l.logger.Panic(fmt.Sprint(args...))
 }
 
 // Panicf logs a message at level Painc on the compatibleLogger.
-func (l *Entry) Panicf(format string, args ...interface{}) {
+func (l *Logger) Panicf(format string, args ...interface{}) {
 	l.logger.Panic(fmt.Sprintf(format, args...))
 }
 
 // WithError return a logger with an error field.
-func (l *Entry) WithError(err error) *Entry {
-	return &Entry{
-		logger:  l.logger.With(zap.Error(err)),
-		Logger:  l.Logger,
-		Level:   l.Level,
-		Message: l.Message,
-	}
-}
-
-// WithField return a logger with an extra field.
-func (l *Entry) WithField(key string, value interface{}) *Entry {
-	return &Entry{
-		logger:  l.logger.With(zap.Any(key, value)),
-		Logger:  l.Logger,
-		Level:   l.Level,
-		Message: l.Message,
-	}
-}
-
-// WithFields return a logger with extra fields.
-func (l *Entry) WithFields(fields Fields) *Entry {
-	if len(fields) == 0 {
-		return l
-	}
-	i := 0
-	var clog *Entry
-	for k, v := range fields {
-		if i == 0 {
-			clog = l.WithField(k, v)
-		} else {
-			if clog != nil {
-				clog = clog.WithField(k, v)
-			}
-		}
-		i++
-	}
-	return clog
+func (l *Logger) WithError(err error) *logrus.Entry {
+	return logrus.NewEntry(l.logrusLogger).WithError(err)
 }

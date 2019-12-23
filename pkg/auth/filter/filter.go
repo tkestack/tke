@@ -29,7 +29,6 @@ import (
 	genericfilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/klog"
 	"net/http"
 	"strings"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
@@ -53,7 +52,7 @@ const (
 // WithTKEAuthorization passes all tke-auth authorized requests on to handler, and returns a forbidden error otherwise.
 func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runtime.NegotiatedSerializer, ignoreAuthPathPrefixes []string) http.Handler {
 	if a == nil {
-		klog.Warningf("TKE Authorization is disabled")
+		log.Warn("TKE Authorization is disabled")
 		return handler
 	}
 	allIgnorePathPrefixes := commonapiserverfilter.MakeAllIgnoreAuthPathPrefixes(ignoreAuthPathPrefixes)
