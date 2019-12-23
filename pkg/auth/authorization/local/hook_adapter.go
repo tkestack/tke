@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package hooks
+package local
 
 import (
 	"time"
@@ -36,30 +36,33 @@ import (
 type adapterHookHandler struct {
 	authClient versionedclientset.Interface
 
-	enforcer *casbin.SyncedEnforcer
-
-	ruleInformer authv1informer.RuleInformer
+	enforcer       *casbin.SyncedEnforcer
+	ruleInformer   authv1informer.RuleInformer
+	reloadInterval time.Duration
 }
 
 // NewAdapterHookHandler creates a new adapterHookHandler object.
-func NewAdapterHookHandler(authClient versionedclientset.Interface, enforcer *casbin.SyncedEnforcer, versionedInformers versionedinformers.SharedInformerFactory) genericapiserver.PostStartHookProvider {
+func NewAdapterHookHandler(authClient versionedclientset.Interface, enforcer *casbin.SyncedEnforcer, versionedInformers versionedinformers.SharedInformerFactory, reloadInterval time.Duration) genericapiserver.PostStartHookProvider {
 	return &adapterHookHandler{
-		authClient:   authClient,
-		enforcer:     enforcer,
-		ruleInformer: versionedInformers.Auth().V1().Rules(),
+		authClient:     authClient,
+		enforcer:       enforcer,
+		reloadInterval: reloadInterval,
+		ruleInformer:   versionedInformers.Auth().V1().Rules(),
 	}
 }
 
 func (d *adapterHookHandler) PostStartHook() (string, genericapiserver.PostStartHookFunc, error) {
 	return "create-casbin-adapter", func(context genericapiserver.PostStartHookContext) error {
-
+		log.Info("start create casbin server")
 		go d.ruleInformer.Informer().Run(context.StopCh)
 		if ok := cache.WaitForCacheSync(context.StopCh, d.ruleInformer.Informer().HasSynced); !ok {
 			log.Error("Failed to wait for project caches to sync")
 		}
+
 		adpt := util.NewAdapter(d.authClient.AuthV1().Rules(), d.ruleInformer.Lister())
 		d.enforcer.SetAdapter(adpt)
-		d.enforcer.StartAutoLoadPolicy(2 * time.Second)
+		d.enforcer.StartAutoLoadPolicy(d.reloadInterval)
+		log.Info("finish start create casbin server")
 		return nil
 	}, nil
 }

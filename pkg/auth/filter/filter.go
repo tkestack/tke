@@ -31,6 +31,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"net/http"
 	"strings"
+	"tkestack.io/tke/api/registry"
 	commonapiserverfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/util/log"
@@ -117,7 +118,7 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 }
 
 var (
-	unprotectedVerbSets = sets.NewString("listPortal", "createApikey", "listApikeys", "getApikey", "listApikey", "deleteApikey", "updateApikey", "createApikeyToken")
+	unprotectedVerbSets = sets.NewString("listPortal")
 )
 
 // UnprotectedAuthorized checks a request attribute has privileged to pass authorization.
@@ -146,6 +147,10 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 	resourceType := attr.GetResource()
 	subResource := attr.GetSubresource()
 	resourceName := attr.GetName()
+
+	if resourceType == "namespaces" && attr.GetAPIGroup() == registry.GroupName {
+		resourceType = "registrynamespaces"
+	}
 
 	clusterName := ""
 

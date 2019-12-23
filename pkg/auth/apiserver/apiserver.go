@@ -22,8 +22,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
+	local2 "tkestack.io/tke/pkg/auth/authorization/local"
 
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/emicklei/go-restful"
@@ -43,7 +45,6 @@ import (
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
-	"tkestack.io/tke/pkg/auth/authorization/hooks"
 	authnhandler "tkestack.io/tke/pkg/auth/handler/authn"
 	authzhandler "tkestack.io/tke/pkg/auth/handler/authz"
 	authrest "tkestack.io/tke/pkg/auth/registry/rest"
@@ -73,8 +74,7 @@ type ExtraConfig struct {
 	TokenAuthn          *authenticator.TokenAuthenticator
 	APIKeyAuthn         *authenticator.APIKeyAuthenticator
 	Authorizer          authorizer.Authorizer
-	CategoryFile        string
-	PolicyFile          string
+	CasbinReloadInterval time.Duration
 	TenantID            string
 	TenantAdmin         string
 	TenantAdminSecret   string
@@ -210,8 +210,6 @@ func (c completedConfig) registerHooks(dexHandler *identityprovider.DexHander, s
 	dexHook := identityprovider.NewDexHookHandler(context.Background(), c.ExtraConfig.DexConfig, c.ExtraConfig.DexStorage, dexHandler,
 		c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, auth.IssuerName), c.ExtraConfig.TokenAuthn)
 
-
-	//authnHook := authenticator.NewAuthnHookHandler(context.Background(), c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, types.IssuerName), c.ExtraConfig.TokenAuthn)
 	apiSigningKeyHook := authenticator.NewAPISigningKeyHookHandler(authClient)
 	identityHook := authenticator.NewAdminIdentityHookHandler(authClient, c.ExtraConfig.TenantID, c.ExtraConfig.TenantAdmin, c.ExtraConfig.TenantAdminSecret)
 
@@ -219,8 +217,7 @@ func (c completedConfig) registerHooks(dexHandler *identityprovider.DexHander, s
 
 	authVersionedClient := versionedclientset.NewForConfigOrDie(s.LoopbackClientConfig)
 
-	adapterHook := hooks.NewAdapterHookHandler(authVersionedClient, c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.VersionedInformers)
-	///policyHook := hooks.NewPolicyHookHandler(authClient, c.ExtraConfig.DexStorage, c.ExtraConfig.PolicyFile, c.ExtraConfig.CategoryFile)
+	adapterHook := local2.NewAdapterHookHandler(authVersionedClient, c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.VersionedInformers, c.ExtraConfig.CasbinReloadInterval)
 
 	return []genericapiserver.PostStartHookProvider{dexHook, apiSigningKeyHook, identityHook, idpHook, adapterHook}
 }

@@ -20,34 +20,41 @@ package options
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 const (
-	flagPolicyPath        = "policy-path"
-	flagCategoryPath      = "category-path"
-	flagTenantAdmin       = "tenant-admin"
-	flagTenantAdminSecret = "tenant-admin-secret"
+	flagPolicyPath           = "policy-path"
+	flagCategoryPath         = "category-path"
+	flagTenantAdmin          = "tenant-admin"
+	flagTenantAdminSecret    = "tenant-admin-secret"
+	flagCasbinModelFile      = "casbin-model-file"
+	flagCasbinReLoadInterval = "casbin-reload-interval"
 )
 
 const (
-	configPolicyPath        = "feature.policy_path"
-	configCategoryPath      = "feature.category_path"
-	configTenantAdmin       = "feature.tenant_admin"
-	configTenantAdminSecret = "feature.tenant_admin_secret"
+	configPolicyPath           = "feature.policy_path"
+	configCategoryPath         = "feature.category_path"
+	configTenantAdmin          = "feature.tenant_admin"
+	configTenantAdminSecret    = "feature.tenant_admin_secret"
+	configCasbinModelFile      = "feature.casbin_model_file"
+	configCasbinReloadInterval = "feature.casbin_reload_interval"
 )
 
 type FeatureOptions struct {
-	PolicyPath        string
-	CategoryPath      string
-	TenantAdmin       string
-	TenantAdminSecret string
+	PolicyPath           string
+	CategoryPath         string
+	TenantAdmin          string
+	TenantAdminSecret    string
+	CasbinModelFile      string
+	CasbinReloadInterval time.Duration
 }
 
 func NewFeatureOptions() *FeatureOptions {
-	return &FeatureOptions{}
+	return &FeatureOptions{CasbinReloadInterval: 5*time.Second}
 }
 
 // AddFlags adds flags for console to the specified FlagSet object.
@@ -67,6 +74,14 @@ func (o *FeatureOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.String(flagTenantAdminSecret, o.TenantAdminSecret,
 		"Secret for generate tenant admin login password.")
 	_ = viper.BindPFlag(configTenantAdminSecret, fs.Lookup(flagTenantAdminSecret))
+
+	fs.String(flagCasbinModelFile, o.CasbinModelFile,
+		"Casbin model file used to store ACL model.")
+	_ = viper.BindPFlag(configCasbinModelFile, fs.Lookup(flagCasbinModelFile))
+
+	fs.Duration(flagCasbinReLoadInterval, o.CasbinReloadInterval,
+		"The interval of casbin reload policy from backend storage. Default 5s.")
+	_ = viper.BindPFlag(configCasbinReloadInterval, fs.Lookup(flagCasbinReLoadInterval))
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -79,6 +94,9 @@ func (o *FeatureOptions) ApplyFlags() []error {
 
 	o.TenantAdmin = viper.GetString(configTenantAdmin)
 	o.TenantAdminSecret = viper.GetString(configTenantAdminSecret)
+
+	o.CasbinModelFile = viper.GetString(configCasbinModelFile)
+	o.CasbinReloadInterval = viper.GetDuration(configCasbinReloadInterval)
 
 	if len(o.TenantAdmin) == 0 || len(o.TenantAdminSecret) == 0 {
 		errs = append(errs, fmt.Errorf("%s and %s must be specified", configTenantAdmin, configTenantAdminSecret))

@@ -57,7 +57,6 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	}
 
 	bind := obj.(*auth.Binding)
-	log.Info("bind", log.Any("bind", bind))
 	polObj, err := r.policyStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err

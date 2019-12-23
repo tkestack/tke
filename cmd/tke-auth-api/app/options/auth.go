@@ -29,8 +29,6 @@ import (
 const (
 	flagAuthAssetsPath             = "assets-path"
 	flagAuthIDTokenTimeout         = "id-token-timeout"
-	flagAuthPolicyPath             = "policy-path"
-	flagAuthCategoryPath           = "category-path"
 	flagAuthInitTenantID           = "init-tenant-id"
 	flagAuthTenantAdmin            = "tenant-admin"
 	flagAuthTenantAdminSecret      = "tenant-admin-secret"
@@ -42,8 +40,6 @@ const (
 const (
 	configAuthAssetsPath             = "auth.assets_path"
 	configAuthIDTokenTimeout         = "auth.id_token_timeout"
-	configAuthPolicyPath             = "auth.policy_path"
-	configAuthCategoryPath           = "auth.category_path"
 	configAuthInitTenantID           = "auth.init_tenant_id"
 	configAuthTenantAdmin            = "auth.tenant_admin"
 	configAuthTenantAdminSecret      = "auth.tenant_admin_secret"
@@ -56,8 +52,6 @@ const (
 type AuthOptions struct {
 	AssetsPath             string
 	IDTokenTimeout         time.Duration
-	PolicyFile             string
-	CategoryFile           string
 	InitTenantID           string
 	TenantAdmin            string
 	TenantAdminSecret      string
@@ -84,14 +78,6 @@ func (o *AuthOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.Duration(flagAuthIDTokenTimeout, o.IDTokenTimeout,
 		"An optional field indicating the valid duration of the IDToken the OIDC generated. If blank, default value is 24h")
 	_ = viper.BindPFlag(configAuthIDTokenTimeout, fs.Lookup(flagAuthIDTokenTimeout))
-
-	fs.String(flagAuthPolicyPath, o.PolicyFile,
-		"Path to the predefine policies which will be load to storage when started.")
-	_ = viper.BindPFlag(configAuthPolicyPath, fs.Lookup(flagAuthPolicyPath))
-
-	fs.String(flagAuthCategoryPath, o.CategoryFile,
-		"Path to the category which will be load to storage when started.")
-	_ = viper.BindPFlag(configAuthCategoryPath, fs.Lookup(flagAuthCategoryPath))
 
 	fs.String(flagAuthInitTenantID, o.InitTenantID,
 		"Default tenant id will be created when started.")
@@ -130,9 +116,6 @@ func (o *AuthOptions) ApplyFlags() []error {
 	}
 
 	o.IDTokenTimeout = viper.GetDuration(configAuthIDTokenTimeout)
-
-	o.PolicyFile = viper.GetString(configAuthPolicyPath)
-	o.CategoryFile = viper.GetString(configAuthCategoryPath)
 
 	o.InitTenantID = viper.GetString(configAuthInitTenantID)
 	if len(o.InitTenantID) == 0 {

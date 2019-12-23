@@ -71,10 +71,10 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 	if authorized == authorizer.DecisionAllow {
 		return authorizer.DecisionAllow, "", nil
 	}
-	
+
 	perms, _ := a.enforcer.GetImplicitPermissionsForUser(util.UserKey(tenantID, subject))
 
-	log.Debug("Authorize get user perms", log.Any("user perm", perms))
+	log.Debug("Authorize get user perms", log.String("user", subject), log.Any("user perm", perms))
 	allow, err := a.enforcer.Enforce(fmt.Sprintf(util.UserKey(tenantID, subject)), resource, action)
 	if err != nil {
 		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
@@ -82,7 +82,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 	}
 	if !allow {
 		log.Info("Casbin enforcer: ", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "false"))
-		return authorizer.DecisionDeny, "permission not verify", nil
+		return authorizer.DecisionDeny, fmt.Sprintf("permission for %s on %s not verify", action, resource), nil
 	}
 
 	log.Debug("Casbin enforcer: ", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "true"))

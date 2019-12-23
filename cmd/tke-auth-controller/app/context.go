@@ -76,8 +76,8 @@ type ControllerContext struct {
 	ResyncPeriod            func() time.Duration
 	ControllerStartInterval time.Duration
 
-	PolicyPath string
-	CategoryPath string
+	PolicyPath        string
+	CategoryPath      string
 	TenantAdmin       string
 	TenantAdminSecret string
 
@@ -121,31 +121,40 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 	}
 
 	adpt := util2.NewAdapter(client.AuthV1().Rules(), sharedInformers.Auth().V1().Rules().Lister())
-	m, err := model.NewModelFromString(auth.DefaultRuleModel)
-	if err != nil {
-		return ControllerContext{}, fmt.Errorf("failed to new casbin model: %v", err)
-	}
-	e, err := casbin.NewSyncedEnforcer(m, adpt)
-	if err != nil {
-		return ControllerContext{}, fmt.Errorf("failed to new casbin enforcer: %v", err)
+
+	var enforcer *casbin.SyncedEnforcer
+	if len(cfg.CasbinModelFile) == 0 {
+		m, err := model.NewModelFromString(auth.DefaultRuleModel)
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to new model from default model string: %v", err)
+		}
+		enforcer, err = casbin.NewSyncedEnforcer(m, adpt)
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to new casbin enforcer: %v", err)
+		}
+	} else {
+		enforcer, err = casbin.NewSyncedEnforcer(cfg.CasbinModelFile, adpt)
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to new casbin enforcer from model file: %v", err)
+		}
 	}
 
-	e.StartAutoLoadPolicy(1 * time.Second)
+	enforcer.StartAutoLoadPolicy(cfg.CasbinReloadInterval)
 
 	ctx := ControllerContext{
 		ClientBuilder:           rootClientBuilder,
 		InformerFactory:         sharedInformers,
 		RESTMapper:              restMapper,
 		AvailableResources:      availableResources,
-		Enforcer:                e,
+		Enforcer:                enforcer,
 		Stop:                    stop,
 		InformersStarted:        make(chan struct{}),
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
-		PolicyPath: cfg.PolicyPath,
-		CategoryPath: cfg.CategoryPath,
-		TenantAdmin: cfg.TenantAdmin,
-		TenantAdminSecret: cfg.TenantAdminSecret,
+		PolicyPath:              cfg.PolicyPath,
+		CategoryPath:            cfg.CategoryPath,
+		TenantAdmin:             cfg.TenantAdmin,
+		TenantAdminSecret:       cfg.TenantAdminSecret,
 
 		AuthClient: client.AuthV1(),
 	}

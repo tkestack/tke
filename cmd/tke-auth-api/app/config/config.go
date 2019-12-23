@@ -29,7 +29,6 @@ import (
 	casbinlog "github.com/casbin/casbin/v2/log"
 	"github.com/casbin/casbin/v2/model"
 	casbinutil "github.com/casbin/casbin/v2/util"
-	"github.com/coreos/etcd/clientv3"
 	dexserver "github.com/dexidp/dex/server"
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/dexidp/dex/storage/etcd"
@@ -80,18 +79,17 @@ type Config struct {
 	VersionedSharedInformerFactory versionedinformers.SharedInformerFactory
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 
-	DexConfig          *dexserver.Config
-	DexStorage         dexstorage.Storage
-	CasbinEnforcer     *casbin.SyncedEnforcer
-	TokenAuthn         *authenticator.TokenAuthenticator
-	APIKeyAuthn        *authenticator.APIKeyAuthenticator
-	Authorizer         authorizer.Authorizer
-	PolicyFile         string
-	CategoryFile       string
-	TenantID           string
-	TenantAdmin        string
-	TenantAdminSecret  string
-	PrivilegedUsername string
+	DexConfig            *dexserver.Config
+	DexStorage           dexstorage.Storage
+	CasbinEnforcer       *casbin.SyncedEnforcer
+	TokenAuthn           *authenticator.TokenAuthenticator
+	APIKeyAuthn          *authenticator.APIKeyAuthenticator
+	Authorizer           authorizer.Authorizer
+	CasbinReloadInterval time.Duration
+	TenantID             string
+	TenantAdmin          string
+	TenantAdminSecret    string
+	PrivilegedUsername   string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -187,14 +185,11 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		TokenAuthn:                     tokenAuth,
 		APIKeyAuthn:                    apiKeyAuth,
 		Authorizer:                     aggregateAuthz,
-		CategoryFile:                   opts.Auth.CategoryFile,
-		PolicyFile:                     opts.Auth.PolicyFile,
 		TenantID:                       opts.Auth.InitTenantID,
 		TenantAdmin:                    opts.Auth.TenantAdmin,
 		TenantAdminSecret:              opts.Auth.TenantAdminSecret,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
-		//TODO add config
-		//CasbinReloadInterval:       	opts.Authorization.CasbinReloadInterval
+		CasbinReloadInterval:       	opts.Authorization.CasbinReloadInterval,
 
 	}, nil
 }
@@ -229,14 +224,6 @@ func setupAuthentication(genericAPIServerConfig *genericapiserver.Config, opts *
 
 func setupAuthorization(genericAPIServerConfig *genericapiserver.Config, authorizer authorizer.Authorizer) {
 	genericAPIServerConfig.Authorization.Authorizer = authorizer
-}
-
-func setupETCDClient(etcdOpts *storageoptions.ETCDStorageOptions) (*clientv3.Client, error) {
-	client, err := etcdOpts.NewClient()
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
 }
 
 func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, authClient authinternalclient.AuthInterface, templatePath string, tokenTimeout time.Duration, host string, port int) (*dexserver.Config, error) {
@@ -309,10 +296,6 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 		}
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	if authorizationOptions.Debug {
 		casbinlog.SetLogger(&casbinlogger.WrapLogger{})
 		enforcer.EnableLog(true)
@@ -334,29 +317,6 @@ func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, ve
 		defaultIDP := local.NewDefaultIdentityProvider(auth.InitTenantID, versionInformers)
 		identityprovider.IdentityProvidersStore[auth.InitTenantID] = defaultIDP
 	}
-
-	//// Ensure all identity providers defined exists in dex.
-	//for tenantID, idp := range identityprovider.IdentityProvidersStore {
-	//	conn, err := idp.Connector()
-	//	if err != nil {
-	//		log.Errorf("Get connector for tenant failed", log.String("tenantID", tenantID), log.Err(err))
-	//		continue
-	//	}
-	//
-	//	if err = store.CreateConnector(*conn); err != nil && err != dexstorage.ErrAlreadyExists {
-	//		log.Errorf("Create connector for tenant failed", log.String("tenantID", tenantID), log.Any("connector", *conn), log.Err(err))
-	//	}
-	//}
-	//
-	//// Ensure there is at least one connector available for dex
-	//conns, err := store.ListConnectors()
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//if len(conns) == 0 {
-	//	return fmt.Errorf("create connectors failed")
-	//}
 
 	return nil
 }

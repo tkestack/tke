@@ -88,7 +88,7 @@ func (o *AuthorizationOptions) AddFlags(fs *pflag.FlagSet) {
 	_ = viper.BindPFlag(configCasbinModelFile, fs.Lookup(flagCasbinModelFile))
 
 	fs.Duration(flagCasbinReLoadInterval, o.CasbinReloadInterval,
-		"The interval of casbin reload policy from backend storage. Default 5s.")
+		"The interval of casbin reload policy from backend storage. Default 100ms.")
 	_ = viper.BindPFlag(configCasbinReloadInterval, fs.Lookup(flagCasbinReLoadInterval))
 
 	fs.Bool(flagAuthzDebug, o.Debug,

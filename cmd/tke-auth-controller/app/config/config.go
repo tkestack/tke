@@ -21,6 +21,7 @@ package config
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
@@ -44,12 +45,14 @@ type Config struct {
 	LeaderElectionClient *versionedclientset.Clientset
 	// the rest config for the auth apiserver
 	AuthAPIServerClientConfig *restclient.Config
+	Component                 controlleroptions.ComponentConfiguration
 
-	PolicyPath        string
-	CategoryPath      string
-	TenantAdmin       string
-	TenantAdminSecret string
-	Component         controlleroptions.ComponentConfiguration
+	PolicyPath           string
+	CategoryPath         string
+	TenantAdmin          string
+	TenantAdminSecret    string
+	CasbinModelFile      string
+	CasbinReloadInterval time.Duration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -83,10 +86,12 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		Authentication: apiserver.AuthenticationInfo{
 			Authenticator: anonymous.NewAuthenticator(),
 		},
-		PolicyPath:        opts.FeatureOptions.PolicyPath,
-		CategoryPath:      opts.FeatureOptions.CategoryPath,
-		TenantAdmin:       opts.FeatureOptions.TenantAdmin,
-		TenantAdminSecret: opts.FeatureOptions.TenantAdminSecret,
+		PolicyPath:           opts.FeatureOptions.PolicyPath,
+		CategoryPath:         opts.FeatureOptions.CategoryPath,
+		TenantAdmin:          opts.FeatureOptions.TenantAdmin,
+		TenantAdminSecret:    opts.FeatureOptions.TenantAdminSecret,
+		CasbinModelFile:      opts.FeatureOptions.CasbinModelFile,
+		CasbinReloadInterval: opts.FeatureOptions.CasbinReloadInterval,
 	}
 
 	if err := opts.Component.ApplyTo(&controllerManagerConfig.Component); err != nil {
