@@ -4,6 +4,8 @@ go 1.12
 
 replace k8s.io/client-go => k8s.io/client-go v0.17.0
 
+replace github.com/dexidp/dex => github.com/choujimmy/dex v0.0.0-20191224125158-5641130772f5
+
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/Masterminds/semver v1.4.2 // indirect
