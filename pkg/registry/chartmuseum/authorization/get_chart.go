@@ -21,10 +21,9 @@ package authorization
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"helm.sh/chartmuseum/pkg/repo"
+	// "helm.sh/chartmuseum/pkg/repo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
-	"strings"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/util/log"
@@ -48,11 +47,12 @@ func (a *authorization) getChart(w http.ResponseWriter, req *http.Request) {
 		a.notFound(w)
 		return
 	}
-	chartName, _, ok := ChartNameVersionFromFile(file)
-	if !ok {
-		a.notFound(w)
-		return
-	}
+	// chartName, _, ok := ChartNameVersionFromFile(file)
+	// if !ok {
+	// 	a.notFound(w)
+	// 	return
+	// }
+	chartName := "test"
 	chartObject, err := a.validateGetChart(w, req, tenantID, chartGroupName, chartName)
 	if err != nil {
 		return
@@ -163,23 +163,24 @@ func (a *authorization) afterGetChart(chartObject *registry.Chart) error {
 	return nil
 }
 
-// ChartNameVersionFromFile returns chart name and version from chart filename.
-func ChartNameVersionFromFile(file string) (name, version string, ok bool) {
-	var filename string
-	if strings.HasSuffix(file, fmt.Sprintf(".%s", repo.ChartPackageFileExtension)) {
-		filename = strings.TrimSuffix(file, fmt.Sprintf(".%s", repo.ChartPackageFileExtension))
-	} else if strings.HasSuffix(file, fmt.Sprintf(".%s", repo.ProvenanceFileExtension)) {
-		filename = strings.TrimSuffix(file, fmt.Sprintf(".%s", repo.ProvenanceFileExtension))
-	}
-	if filename == "" {
-		return
-	}
-	i := strings.LastIndex(filename, "-")
-	if i == -1 {
-		return
-	}
-	name = filename[:i]
-	version = filename[i+1:]
-	ok = true
-	return
-}
+//
+// // ChartNameVersionFromFile returns chart name and version from chart filename.
+// func ChartNameVersionFromFile(file string) (name, version string, ok bool) {
+// 	var filename string
+// 	if strings.HasSuffix(file, fmt.Sprintf(".%s", repo.ChartPackageFileExtension)) {
+// 		filename = strings.TrimSuffix(file, fmt.Sprintf(".%s", repo.ChartPackageFileExtension))
+// 	} else if strings.HasSuffix(file, fmt.Sprintf(".%s", repo.ProvenanceFileExtension)) {
+// 		filename = strings.TrimSuffix(file, fmt.Sprintf(".%s", repo.ProvenanceFileExtension))
+// 	}
+// 	if filename == "" {
+// 		return
+// 	}
+// 	i := strings.LastIndex(filename, "-")
+// 	if i == -1 {
+// 		return
+// 	}
+// 	name = filename[:i]
+// 	version = filename[i+1:]
+// 	ok = true
+// 	return
+// }
