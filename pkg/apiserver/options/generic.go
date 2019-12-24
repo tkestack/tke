@@ -131,7 +131,7 @@ func (o *GenericOptions) ApplyFlags() []error {
 // will be set based on the SecureSecureServingOptions.
 func (o *GenericOptions) DefaultAdvertiseAddress(secure *SecureServingOptions) error {
 	if o.AdvertiseAddress == nil || o.AdvertiseAddress.IsUnspecified() {
-		hostIP, err := netutil.ChooseBindAddress(secure.BindAddress)
+		hostIP, err := netutil.ResolveBindAddress(secure.BindAddress)
 		if err != nil {
 			return fmt.Errorf("unable to find suitable network address.error='%v'. Try to set the AdvertiseAddress directly or provide a valid BindAddress to fix this", err)
 		}
@@ -146,13 +146,13 @@ func (o *GenericOptions) DefaultAdvertiseAddress(secure *SecureServingOptions) e
 func (o *GenericOptions) DefaultAdvertiseAddressWithInsecure(secure *SecureServingOptions, insecure *InsecureServingOptions) error {
 	if o.AdvertiseAddress == nil || o.AdvertiseAddress.IsUnspecified() {
 		if secure.BindPort > 0 {
-			hostIP, err := netutil.ChooseBindAddress(secure.BindAddress)
+			hostIP, err := netutil.ResolveBindAddress(secure.BindAddress)
 			if err != nil {
 				return fmt.Errorf("unable to find suitable network address.error='%v'. Try to set the AdvertiseAddress directly or provide a valid secure BindAddress to fix this", err)
 			}
 			o.AdvertiseAddress = hostIP
 		} else if insecure.BindPort > 0 {
-			hostIP, err := netutil.ChooseBindAddress(insecure.BindAddress)
+			hostIP, err := netutil.ResolveBindAddress(insecure.BindAddress)
 			if err != nil {
 				return fmt.Errorf("unable to find suitable network address.error='%v'. Try to set the AdvertiseAddress directly or provide a valid insecure BindAddress to fix this", err)
 			}

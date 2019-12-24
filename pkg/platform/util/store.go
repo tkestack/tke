@@ -91,7 +91,7 @@ func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptio
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
-		SpecificallyVersionedParams(options, metainternalversion.ParameterCodec, v1.SchemeGroupVersion).
+		SpecificallyVersionedParams(options, v1.ParameterCodec, v1.SchemeGroupVersion).
 		Do().
 		Into(result); err != nil {
 		return nil, err
@@ -166,7 +166,7 @@ func (s *Store) Watch(ctx context.Context, options *metainternalversion.ListOpti
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
-		SpecificallyVersionedParams(options, metainternalversion.ParameterCodec, metainternalversion.SchemeGroupVersion).
+		SpecificallyVersionedParams(options, v1.ParameterCodec, metainternalversion.SchemeGroupVersion).
 		Watch()
 }
 
@@ -280,7 +280,7 @@ func (s *Store) DeleteCollection(ctx context.Context, options *v1.DeleteOptions,
 		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
-		SpecificallyVersionedParams(listOptions, metainternalversion.ParameterCodec, metainternalversion.SchemeGroupVersion).
+		SpecificallyVersionedParams(listOptions, v1.ParameterCodec, metainternalversion.SchemeGroupVersion).
 		Body(options).
 		Do()
 

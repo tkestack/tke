@@ -58,7 +58,7 @@ func (h *Handler) Authorize(request *restful.Request, response *restful.Response
 	}
 
 	authorizationAttributes := util.AuthorizationAttributesFrom(accessReview.Spec)
-	decision, reason, evaluationErr := h.authorizer.Authorize(authorizationAttributes)
+	decision, reason, evaluationErr := h.authorizer.Authorize(request.Request.Context(), authorizationAttributes)
 
 	accessReview.Status = types.SubjectAccessReviewStatus{
 		Allowed: decision == authorizer.DecisionAllow,
@@ -89,7 +89,7 @@ func (h *Handler) RestAuthorize(request *restful.Request, response *restful.Resp
 
 	authorizationAttributes := util.AuthorizationAttributesFrom(accessReview.Spec)
 	tkeAttributes := filter.ConvertTKEAttributes(context.Background(), authorizationAttributes)
-	decision, reason, evaluationErr := h.authorizer.Authorize(tkeAttributes)
+	decision, reason, evaluationErr := h.authorizer.Authorize(request.Request.Context(), tkeAttributes)
 	accessReview.Status = types.SubjectAccessReviewStatus{
 		Allowed: decision == authorizer.DecisionAllow,
 		Denied:  decision == authorizer.DecisionDeny,
@@ -120,7 +120,7 @@ func (h *Handler) BatchAuthorize(request *restful.Request, response *restful.Res
 
 	accessReview.Status = types.SubjectAccessReviewStatus{AllowedList: []*types.AllowedResponse{}}
 	for index, resAttr := range accessReview.Spec.ResourceAttributesList {
-		decision, reason, _ := h.authorizer.Authorize(attributesList[index])
+		decision, reason, _ := h.authorizer.Authorize(request.Request.Context(), attributesList[index])
 		accessReview.Status.AllowedList = append(accessReview.Status.AllowedList, &types.AllowedResponse{
 			Resource: resAttr.Resource,
 			Verb:     resAttr.Verb,

@@ -36,6 +36,7 @@ func NewAuthorizer(authorizationOpts *options.AuthorizationOptions, authOpts *op
 
 	if len(authorizationOpts.WebhookConfigFile) != 0 {
 		webhookAuthorizer, err := webhook.New(authorizationOpts.WebhookConfigFile,
+			authorizationOpts.WebhookVersion,
 			authorizationOpts.WebhookCacheAuthorizedTTL,
 			authorizationOpts.WebhookCacheUnauthorizedTTL)
 		if err != nil {

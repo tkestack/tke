@@ -28,6 +28,7 @@ import (
 const (
 	flagAuthzPolicyFile                  = "authorization-policy-file"
 	flagAuthzWebhookConfigFile           = "authorization-webhook-config-file"
+	flagAuthzWebhookVersion              = "authorization-webhook-version"
 	flagAuthzWebhookCacheUnauthorizedTTL = "authorization-webhook-cache-unauthorized-ttl"
 	flagAuthzWebhookCacheAuthorizedTTL   = "authorization-webhook-cache-authorized-ttl"
 	flagAuthzDebug                       = "authorization-debug"
@@ -38,6 +39,7 @@ const (
 const (
 	configAuthzPolicyFile                  = "authorization.policy_file"
 	configAuthzWebhookConfigFile           = "authorization.webhook_config_file"
+	configAuthzWebhookVersion              = "authorization.webhook_version"
 	configAuthzWebhookCacheUnauthorizedTTL = "authorization.webhook_cache_unauthorized_ttl"
 	configAuthzWebhookCacheAuthorizedTTL   = "authorization.webhook_cache_authorized_ttl"
 	configAuthzDebug                       = "authorization.debug"
@@ -52,6 +54,7 @@ type AuthorizationOptions struct {
 	Debug                       bool
 	PolicyFile                  string
 	WebhookConfigFile           string
+	WebhookVersion              string
 	WebhookCacheAuthorizedTTL   time.Duration
 	WebhookCacheUnauthorizedTTL time.Duration
 }
@@ -59,13 +62,17 @@ type AuthorizationOptions struct {
 // NewAuthorizationOptions creates a AuthorizationOptions object with default
 // parameters.
 func NewAuthorizationOptions() *AuthorizationOptions {
-	return &AuthorizationOptions{CasbinReloadInterval: 100 * time.Millisecond}
+	return &AuthorizationOptions{
+		CasbinReloadInterval:        100 * time.Millisecond,
+		WebhookVersion:              "v1beta1",
+		WebhookCacheAuthorizedTTL:   5 * time.Minute,
+		WebhookCacheUnauthorizedTTL: 30 * time.Second,
+	}
 }
 
 // AddFlags adds flags related to authenticate for a specific APIServer to the
 // specified FlagSet
 func (o *AuthorizationOptions) AddFlags(fs *pflag.FlagSet) {
-
 	fs.String(flagAuthzPolicyFile, o.PolicyFile, ""+
 		"File with authorization policy in json line by line format, on the secure port.")
 	_ = viper.BindPFlag(configAuthzPolicyFile, fs.Lookup(flagAuthzPolicyFile))
@@ -74,6 +81,10 @@ func (o *AuthorizationOptions) AddFlags(fs *pflag.FlagSet) {
 		"File with webhook configuration in kubeconfig format. "+
 		"The API server will query the remote service to determine access on the API server's secure port.")
 	_ = viper.BindPFlag(configAuthzWebhookConfigFile, fs.Lookup(flagAuthzWebhookConfigFile))
+
+	fs.String(flagAuthzWebhookVersion, o.WebhookVersion, ""+
+		"The API version of the authorization.k8s.io SubjectAccessReview to send to and expect from the webhook.")
+	_ = viper.BindPFlag(configAuthzWebhookVersion, fs.Lookup(flagAuthzWebhookVersion))
 
 	fs.Duration(flagAuthzWebhookCacheAuthorizedTTL, o.WebhookCacheAuthorizedTTL, ""+
 		"The duration to cache 'authorized' responses from the webhook authorizer.")
@@ -108,6 +119,7 @@ func (o *AuthorizationOptions) ApplyFlags() []error {
 	o.WebhookCacheAuthorizedTTL = viper.GetDuration(configAuthzWebhookCacheAuthorizedTTL)
 	o.WebhookCacheUnauthorizedTTL = viper.GetDuration(configAuthzWebhookCacheUnauthorizedTTL)
 	o.WebhookConfigFile = viper.GetString(configAuthzWebhookConfigFile)
+	o.WebhookVersion = viper.GetString(configAuthzWebhookVersion)
 
 	return errs
 }

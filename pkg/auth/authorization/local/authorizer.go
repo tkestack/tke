@@ -19,6 +19,7 @@
 package local
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/casbin/casbin"
@@ -45,7 +46,7 @@ func NewAuthorizer(enforcer *casbin.SyncedEnforcer, admin string) *Authorizer {
 }
 
 // Authorize to determine the subject access.
-func (a *Authorizer) Authorize(attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	subject := attr.GetUser().GetName()
 	action := attr.GetVerb()
 	resource := attr.GetResource()

@@ -92,7 +92,7 @@ func (r *REST) List(ctx context.Context, options *metaInternalVersion.ListOption
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
-		SpecificallyVersionedParams(options, metaInternalVersion.ParameterCodec, metaInternalVersion.SchemeGroupVersion).
+		SpecificallyVersionedParams(options, metav1.ParameterCodec, metaInternalVersion.SchemeGroupVersion).
 		Do().
 		Into(result); err != nil {
 		return nil, err

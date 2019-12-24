@@ -40,6 +40,7 @@ func buildAuthorizer(o *apiserveroptions.AuthorizationOptions) (authorizer.Autho
 	authorizationConfig := Config{
 		AuthorizationModes:          o.Modes,
 		WebhookConfigFile:           o.WebhookConfigFile,
+		WebhookVersion:              o.WebhookVersion,
 		WebhookCacheAuthorizedTTL:   o.WebhookCacheAuthorizedTTL,
 		WebhookCacheUnauthorizedTTL: o.WebhookCacheUnauthorizedTTL,
 	}

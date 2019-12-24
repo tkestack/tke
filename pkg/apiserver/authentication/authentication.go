@@ -41,13 +41,23 @@ func SetupAuthenticationWithoutAudiences(genericAPIServerConfig *genericapiserve
 		return fmt.Errorf("invalid authentication config: %v", err)
 	}
 	if authenticationOpts.ClientCert != nil {
-		if err = genericAPIServerConfig.Authentication.ApplyClientCert(authenticationOpts.ClientCert.ClientCA, genericAPIServerConfig.SecureServing); err != nil {
+		clientCertificateCAContentProvider, err := authenticationOpts.ClientCert.GetClientCAContentProvider()
+		if err != nil {
+			return fmt.Errorf("unable to load client CA file: %v", err)
+		}
+		if err = genericAPIServerConfig.Authentication.ApplyClientCert(clientCertificateCAContentProvider, genericAPIServerConfig.SecureServing); err != nil {
 			return fmt.Errorf("unable to load client CA file: %v", err)
 		}
 	}
 	if authenticationOpts.RequestHeader != nil {
-		if err = genericAPIServerConfig.Authentication.ApplyClientCert(authenticationOpts.RequestHeader.ClientCAFile, genericAPIServerConfig.SecureServing); err != nil {
-			return fmt.Errorf("unable to load client CA file: %v", err)
+		requestHeaderConfig, err := authenticationOpts.RequestHeader.ToAuthenticationRequestHeaderConfig()
+		if err != nil {
+			return fmt.Errorf("unable to create request header authentication config: %v", err)
+		}
+		if requestHeaderConfig != nil {
+			if err = genericAPIServerConfig.Authentication.ApplyClientCert(requestHeaderConfig.CAContentProvider, genericAPIServerConfig.SecureServing); err != nil {
+				return fmt.Errorf("unable to load client CA file: %v", err)
+			}
 		}
 	}
 	return nil
@@ -85,7 +95,11 @@ func buildAuthenticator(o *options.AuthenticationOptions, apiAudiences []string)
 	}
 
 	if o.RequestHeader != nil {
-		ret.RequestHeaderConfig = o.RequestHeader.ToAuthenticationRequestHeaderConfig()
+		var err error
+		ret.RequestHeaderConfig, err = o.RequestHeader.ToAuthenticationRequestHeaderConfig()
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return ret.New()
