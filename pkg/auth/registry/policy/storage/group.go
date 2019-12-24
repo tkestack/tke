@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -48,7 +49,7 @@ func (r *GroupREST) New() runtime.Object {
 
 // NewList returns an empty object that can be used with the List call.
 func (r *GroupREST) NewList() runtime.Object {
-	return &auth.LocalGroupList{}
+	return &auth.GroupList{}
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -64,11 +65,11 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 	}
 	policy := polObj.(*auth.Policy)
 
-	groupList := &auth.LocalGroupList{}
+	groupList := &auth.GroupList{}
 	for _, subj := range policy.Status.Groups {
-		var group *auth.LocalGroup
+		var group *auth.Group
 		if subj.ID != "" {
-			group, err = r.authClient.LocalGroups().Get(subj.ID, metav1.GetOptions{})
+			group, err = r.authClient.Groups().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				log.Error("Get group failed", log.String("id", subj.ID), log.Err(err))
 				group = constructGroup(subj.ID, subj.Name)
@@ -83,13 +84,13 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 	return groupList, nil
 }
 
-func constructGroup(userID, groupName string) *auth.LocalGroup {
-	return &auth.LocalGroup{
+func constructGroup(groupID, groupName string) *auth.Group {
+	return &auth.Group{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: userID,
+			Name: groupID,
 		},
-		Spec: auth.LocalGroupSpec{
-			Username: groupName,
+		Spec: auth.GroupSpec{
+			DisplayName: groupName,
 		},
 	}
 }

@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -48,7 +49,7 @@ func (r *UserREST) New() runtime.Object {
 
 // NewList returns an empty object that can be used with the List call.
 func (r *UserREST) NewList() runtime.Object {
-	return &auth.LocalIdentityList{}
+	return &auth.UserList{}
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -64,33 +65,32 @@ func (r *UserREST) List(ctx context.Context, options *metainternal.ListOptions) 
 	}
 	policy := polObj.(*auth.Policy)
 
-	localIdentityList := &auth.LocalIdentityList{}
+	userList := &auth.UserList{}
 	for _, subj := range policy.Status.Users {
-		var localIdentity *auth.LocalIdentity
+		var user *auth.User
 		if subj.ID != "" {
-			localIdentity, err = r.authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
+			user, err = r.authClient.Users().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
-				log.Error("Get localIdentity failed", log.String("id", subj.ID), log.Err(err))
-				localIdentity = constructLocalIdentity(subj.ID, subj.Name)
+				log.Error("Get user failed", log.String("id", subj.ID), log.Err(err))
+				user = constructUser(subj.ID, subj.Name)
 			}
 		} else {
-			localIdentity = constructLocalIdentity(subj.ID, subj.Name)
+			user = constructUser(subj.ID, subj.Name)
 		}
 
-		localIdentity.Spec.HashedPassword = ""
-		localIdentityList.Items = append(localIdentityList.Items, *localIdentity)
+		userList.Items = append(userList.Items, *user)
 	}
 
-	return localIdentityList, nil
+	return userList, nil
 }
 
-func constructLocalIdentity(userID, username string) *auth.LocalIdentity {
-	return &auth.LocalIdentity{
+func constructUser(userID, username string) *auth.User {
+	return &auth.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: userID,
 		},
-		Spec: auth.LocalIdentitySpec{
-			Username: username,
+		Spec: auth.UserSpec{
+			Name: username,
 		},
 	}
 }
