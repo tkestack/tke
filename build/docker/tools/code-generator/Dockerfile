@@ -14,12 +14,12 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-FROM golang:1.12.12-alpine3.10
+FROM golang:1.13.5-alpine3.10
 
 RUN apk add --update --no-cache autoconf automake libtool zlib-dev build-base curl git
 
 # Install the protobuf
-ENV PROTOBUF_VERSION 3.10.0
+ENV PROTOBUF_VERSION 3.11.2
 ENV PROTOBUF_URL=https://github.com/protocolbuffers/protobuf/archive/v${PROTOBUF_VERSION}.tar.gz
 RUN curl -L ${PROTOBUF_URL} -o - | tar -xz -C /tmp
 RUN cd /tmp/protobuf-* && \
@@ -32,7 +32,7 @@ RUN cd /tmp && rm -rf protobuf-$PROTOBUF_VERSION \
 ENV GOPATH=/go
 
 # Clone the kubernetes
-ENV KUBERNETES_VERSION 1.16.3
+ENV KUBERNETES_VERSION 1.17.0
 RUN mkdir -p $GOPATH/src/k8s.io \
   && git clone -b v$KUBERNETES_VERSION --single-branch https://github.com/kubernetes/kubernetes.git $GOPATH/src/k8s.io/kubernetes
 RUN apk add --update --no-cache rsync file patch

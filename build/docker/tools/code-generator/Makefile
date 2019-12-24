@@ -14,7 +14,7 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-VERSION = v1.16.3-1
+VERSION = v1.17.0-1
 REGISTRY_PREFIX ?= tkestack
 
 .PHONY:
