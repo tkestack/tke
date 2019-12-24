@@ -42,7 +42,7 @@ To install Docker,
 
 ### etcd
 
-[etcd](https://github.com/coreos/etcd/releases) is a persistent non-sql
+[etcd](https://github.com/etcd-io/etcd/releases) is a persistent non-sql
 database. TKE services share a running etcd as backend.
 
 To install etcd,

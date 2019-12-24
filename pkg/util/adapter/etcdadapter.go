@@ -30,7 +30,7 @@ import (
 
 	"github.com/casbin/casbin/model"
 	"github.com/casbin/casbin/persist"
-	client "github.com/coreos/etcd/clientv3"
+	client "go.etcd.io/etcd/clientv3"
 )
 
 const (

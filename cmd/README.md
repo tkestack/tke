@@ -10,8 +10,8 @@ TKE contains 11 core components belonging to 6 services, a dependency list gener
 To bootstrap properly, TKE core components need to be run in the order as shown below.
 
 - [`tke-auth`](/cmd/tke-auth) provides an oidc server to manage TKE  users.
--  [`tke-platform-api`](/cmd/platform-api) is the most important service of TKE . It listens to and validates requests to TKE platform api then configures its api objects.
--  [`tke-platform-controller`](/cmd/tke-platform-controller) watches the state of the platform api objects through the `tke-platform-api` and configures TKE platform.
+- [`tke-platform-api`](/cmd/platform-api) is the most important service of TKE . It listens to and validates requests to TKE platform api then configures its api objects.
+- [`tke-platform-controller`](/cmd/tke-platform-controller) watches the state of the platform api objects through the `tke-platform-api` and configures TKE platform.
 - [`tke-registry-api`](/cmd/tke-registry-api) enables a build-in registry inside TKE .
 - [`tke-business-api`](/cmd/tke-business-api) enables TKE project management by business labels.
 - [`tke-business-controller`](/cmd/tke-business-controller) watches the state of the business api objects through the `tke-business-api` and configures TKE business resources.

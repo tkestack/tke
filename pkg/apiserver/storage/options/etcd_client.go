@@ -21,12 +21,12 @@ package options
 import (
 	"context"
 	"fmt"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/namespace"
-	"github.com/coreos/etcd/pkg/transport"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3/namespace"
+	"go.etcd.io/etcd/pkg/transport"
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -158,9 +158,9 @@ func (o *ETCDClientOptions) ApplyFlags() []error {
 // NewClient creates the etcd v3 client object and returns it.
 func (o *ETCDClientOptions) NewClient() (*clientv3.Client, error) {
 	tlsInfo := transport.TLSInfo{
-		CertFile: o.CertFile,
-		KeyFile:  o.KeyFile,
-		CAFile:   o.CAFile,
+		CertFile:      o.CertFile,
+		KeyFile:       o.KeyFile,
+		TrustedCAFile: o.CAFile,
 	}
 	tlsConfig, err := tlsInfo.ClientConfig()
 	if err != nil {

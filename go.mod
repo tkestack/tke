@@ -9,18 +9,14 @@ require (
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/aws/aws-sdk-go v1.20.18 // indirect
-	github.com/beevik/etree v1.1.0 // indirect
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/casbin/casbin v1.8.1
-	github.com/coreos/bbolt v1.3.3 // indirect
-	github.com/coreos/etcd v3.3.13+incompatible
 	github.com/coreos/go-oidc v2.1.0+incompatible
-	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/coreos/prometheus-operator v0.34.0
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
-	github.com/dexidp/dex v0.0.0-20190620162747-157c359f3e86
+	github.com/dexidp/dex v0.0.0-20191223120519-789272a0c18f
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -35,13 +31,10 @@ require (
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
-	github.com/gogo/protobuf v1.3.1
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
+	github.com/gogo/protobuf v1.2.2-0.20190730201129-28a6bbf47e48
 	github.com/golang/snappy v0.0.1
 	github.com/google/gofuzz v1.0.0
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
-	github.com/gorilla/handlers v1.4.2 // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/gosuri/uitable v0.0.1
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -53,42 +46,35 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.8
 	github.com/kr/fs v0.1.0 // indirect
-	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
 	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0
-	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
-	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/parnurzeal/gorequest v0.2.15
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/sftp v1.10.0
-	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/alertmanager v0.17.0
 	github.com/prometheus/client_golang v1.2.1
 	github.com/rs/cors v1.6.0
-	github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7 // indirect
 	github.com/segmentio/ksuid v1.0.2
 	github.com/sirupsen/logrus v1.4.2
 	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a // indirect
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.4.0
+	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.4.0
 	github.com/tencentcloud/tencentcloud-sdk-go v3.0.107+incompatible
 	github.com/thoas/go-funk v0.4.0
+	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20191028145041-f83a4685e152
 	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
-	google.golang.org/appengine v1.6.1 // indirect
-	google.golang.org/genproto v0.0.0-20190626174449-989357319d63 // indirect
 	google.golang.org/grpc v1.24.0
-	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.28.0
 	gopkg.in/square/go-jose.v2 v2.3.1

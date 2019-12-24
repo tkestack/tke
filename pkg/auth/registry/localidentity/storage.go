@@ -27,7 +27,7 @@ import (
 	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/util/etcd"
 
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 )
 
 var (

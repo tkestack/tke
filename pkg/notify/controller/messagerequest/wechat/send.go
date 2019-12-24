@@ -25,8 +25,6 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
-
-	"github.com/golang/glog"
 	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -146,7 +144,7 @@ func getToken(channel *v1.ChannelWechat, openID string) (string, error) {
 	var accessToken string
 	if cacheItem, ok := tokenCache.Load(openID); !ok || util.GetCurrentTime()-cacheItem.(*item).accessTimestamp >= cacheItem.(*item).expiresIn {
 		reqURL := getTokenURL + "&appid=" + channel.AppID + "&secret=" + channel.AppSecret
-		glog.Info("get access_token via post request")
+		log.Info("get access_token via post request")
 		resp, err := http.Get(reqURL)
 		if err != nil {
 			return "", err
@@ -170,7 +168,7 @@ func getToken(channel *v1.ChannelWechat, openID string) (string, error) {
 		}
 		tokenCache.Store(openID, newItem)
 	} else {
-		glog.Info("get access_token from cache")
+		log.Info("get access_token from cache")
 		accessToken = cacheItem.(*item).token
 	}
 

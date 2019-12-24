@@ -21,7 +21,7 @@ package apikey
 import (
 	"context"
 	"encoding/json"
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 	"path"
 	"strings"
 	"time"

@@ -19,14 +19,13 @@
 package registry
 
 import (
+	"github.com/dexidp/dex/storage"
+	"go.etcd.io/etcd/clientv3"
 	"tkestack.io/tke/pkg/auth/registry/apikey"
 	"tkestack.io/tke/pkg/auth/registry/category"
 	"tkestack.io/tke/pkg/auth/registry/localidentity"
 	"tkestack.io/tke/pkg/auth/registry/policy"
 	"tkestack.io/tke/pkg/auth/registry/role"
-
-	"github.com/coreos/etcd/clientv3"
-	"github.com/dexidp/dex/storage"
 )
 
 // Registry represents the module of all object operations on backend storage.

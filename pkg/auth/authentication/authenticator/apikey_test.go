@@ -20,20 +20,18 @@ package authenticator
 
 import (
 	"context"
+	"github.com/dgrijalva/jwt-go"
+	"go.etcd.io/etcd/clientv3"
+	"gotest.tools/assert"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
-
-	"k8s.io/apimachinery/pkg/util/sets"
-	"tkestack.io/tke/pkg/auth/types"
-
-	"github.com/coreos/etcd/clientv3"
-	"github.com/dgrijalva/jwt-go"
-	"gotest.tools/assert"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/registry/apikey"
+	"tkestack.io/tke/pkg/auth/types"
 	"tkestack.io/tke/pkg/util/etcd"
 	"tkestack.io/tke/pkg/util/log"
 )

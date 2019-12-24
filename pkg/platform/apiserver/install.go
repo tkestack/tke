@@ -177,6 +177,6 @@ func registerMeta(scheme *runtime.Scheme) error {
 	// Allow delete options to be decoded across all version in this scheme (we may want to be more clever than this)
 	scheme.AddUnversionedTypes(schemaGroupVersion, &metav1.DeleteOptions{})
 	metav1.AddToGroupVersion(scheme, metav1.SchemeGroupVersion)
-	_ = metainternal.AddToScheme(scheme)
+	// _ = metainternal.AddToScheme(scheme)
 	return nil
 }

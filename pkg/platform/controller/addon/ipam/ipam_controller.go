@@ -21,12 +21,6 @@ package ipam
 import (
 	normalerrors "errors"
 	"fmt"
-	"reflect"
-	"time"
-
-	"tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
-
-	"github.com/golang/glog"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -38,11 +32,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	"reflect"
+	"time"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
+	"tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
@@ -269,7 +266,7 @@ func (c *Controller) ipamReinitialize(key string, cachedIPAM *cachedIPAM, ipam *
 			}
 			return true, nil
 		}
-		glog.Errorf("fail to re-install galaxy-ipam %v", err)
+		log.Errorf("fail to re-install galaxy-ipam %v", err)
 		// First, rollback the ipam
 		if err := c.uninstallIPAM(ipam); err != nil {
 			log.Error("Uninstall ipam error.")
@@ -312,7 +309,7 @@ func (c *Controller) createIPAMIfNeeded(key string, cachedIPAM *cachedIPAM, ipam
 			ipam.Status.RetryCount = 0
 			return c.persistUpdate(ipam)
 		}
-		glog.Errorf("fail to create galaxy-ipam %v", err)
+		log.Errorf("fail to create galaxy-ipam %v", err)
 		ipam = ipam.DeepCopy()
 		ipam.Status.Phase = v1.AddonPhaseReinitializing
 		ipam.Status.Reason = err.Error()

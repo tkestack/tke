@@ -26,7 +26,6 @@ import (
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/klog"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -79,7 +78,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	// We always validate the local configuration (command line + config file).
 	// This is the default "last-known-good" config for dynamic config, and must always remain valid.
 	if err := gatewayconfigvalidation.ValidateGatewayConfiguration(gatewayConfig); err != nil {
-		klog.Fatal(err)
+		log.Error("Failed to validate gateway configuration", log.Err(err))
+		return nil, err
 	}
 
 	genericAPIServerConfig := genericapiserver.NewConfig(apiserver.Codecs)

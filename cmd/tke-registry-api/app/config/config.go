@@ -23,7 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	"k8s.io/klog"
 	"path/filepath"
 	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
@@ -87,7 +86,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	// We always validate the local configuration (command line + config file).
 	// This is the default "last-known-good" config for dynamic config, and must always remain valid.
 	if err := registryconfigvalidation.ValidateRegistryConfiguration(registryConfig); err != nil {
-		klog.Fatal(err)
+		log.Error("Failed to validate registry configuration", log.Err(err))
+		return nil, err
 	}
 
 	genericAPIServerConfig := genericapiserver.NewConfig(registry.Codecs)
