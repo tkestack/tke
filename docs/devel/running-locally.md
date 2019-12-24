@@ -13,7 +13,8 @@ This guide will walk you through deploying the full TKE stack on you local machi
 - [Create Self-signed Certificates](#create-self-signed-certificates)
 - [Create Static Token](#create-static-token)
 - [Bootstrap TKE Core Components](#bootstrap-tke-core-components)
-  - [tke-auth](#tke-auth)
+  - [tke-auth-api](#tke-auth-api)
+  - [tke-auth-controller](#tke-auth-controller)
   - [tke-platform-api](#tke-platform-api)
   - [tke-platform-controller](#tke-platform-controller)
   - [tke-registry-api(Optional)](#tke-registry-apioptional)
@@ -165,15 +166,16 @@ For your convenient,
 - Export `${root_store}` to reference the path of your root certificate created by mkcert in the
 previous step. For macOS, the path is usually /Users/${username}/Library/Application Support/mkcert.
 
-### tke-auth
+### tke-auth-api
 
-- Create `_debug/auth.json`
+- Create `_debug/auth-api.json`
 
   <details>
-  <summary>Click to show sample confi </summary>
+  <summary>Click to show sample config </summary>
   <br>
 
-  **_debug/auth.json**
+  **_debug/auth-api.json**
+  
   ```json
   {
     "secure_serving": {
@@ -205,11 +207,71 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
   </details>
 
 
-- Run `tke-auth`
+- Run `tke-auth-api`
 
   ```sh
-  $ _output/${host_os}/${host_arch}/tke-auth -C _debug/auth.json
+  $ _output/${host_os}/${host_arch}/tke-auth-api -C _debug/auth-api.json
   ```
+
+### tke-auth-controller
+
+- Create `_debug/auth-api-client-config.yaml`
+    <details>
+    <summary>Click to view sample config</summary>
+    <br>
+    
+    ***_debug/auth-api-client-config.yaml***
+    
+    ```yaml
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: ${root_store}/mkcert/rootCA.pem
+          server: https://127.0.0.1:9451
+    users:
+      - name: admin
+        user:
+          token: token
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin
+        name: tke
+    ```
+    
+    </details>
+
+- Create `_debug/auth-controller.json`
+
+    <details>
+    <summary>Click to view sample config</summary>
+    <br>
+
+    ***_debug/auth-controller.json***
+
+    ```json
+    {
+      "secure_serving": {
+        "tls_cert_file": "_debug/certificates/localhost+2.pem",
+        "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
+      },
+      "client": {
+        "platform": {
+          "api_server_client_config": "_debug/auth-api-client-config.yaml"
+        }
+      }
+    }
+    ```
+
+    </details>
+- Runn `tke-auth-controller`:
+
+    ```sh
+    $ _output/${host_os}/${host_arch}/tke-auth-controller -C _debug/auth-controller.json
+    ```
 
 ### tke-platform-api
 

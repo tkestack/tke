@@ -36,12 +36,12 @@ const (
 )
 
 const (
-	configPolicyPath           = "feature.policy_path"
-	configCategoryPath         = "feature.category_path"
-	configTenantAdmin          = "feature.tenant_admin"
-	configTenantAdminSecret    = "feature.tenant_admin_secret"
-	configCasbinModelFile      = "feature.casbin_model_file"
-	configCasbinReloadInterval = "feature.casbin_reload_interval"
+	configPolicyPath           = "features.policy_path"
+	configCategoryPath         = "features.category_path"
+	configTenantAdmin          = "features.tenant_admin"
+	configTenantAdminSecret    = "features.tenant_admin_secret"
+	configCasbinModelFile      = "features.casbin_model_file"
+	configCasbinReloadInterval = "features.casbin_reload_interval"
 )
 
 type FeatureOptions struct {

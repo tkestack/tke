@@ -419,8 +419,12 @@ func (t *TKE) initSteps() {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		t.steps = append(t.steps, []handler{
 			{
-				Name: "Install tke-auth",
-				Func: t.installTKEAuth,
+				Name: "Install tke-auth-api",
+				Func: t.installTKEAuthAPI,
+			},
+			{
+				Name: "Install tke-auth-controller",
+				Func: t.installTKEAuthController,
 			},
 		}...)
 	}
@@ -1470,7 +1474,7 @@ func (t *TKE) installETCD() error {
 		})
 }
 
-func (t *TKE) installTKEAuth() error {
+func (t *TKE) installTKEAuthAPI() error {
 	redirectHosts := t.servers
 	redirectHosts = append(redirectHosts, "tke-gateway")
 	if t.Para.Config.Gateway != nil && t.Para.Config.Gateway.Domain != "" {
@@ -1482,20 +1486,41 @@ func (t *TKE) installTKEAuth() error {
 
 	option := map[string]interface{}{
 		"Replicas":         t.Config.Replicas,
-		"Image":            images.Get().TKEAuth.FullName(),
+		"Image":            images.Get().TKEAuthAPI.FullName(),
 		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
 		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
 		"AdminPassword":    string(t.Para.Config.Auth.TKEAuth.Password),
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth/*.yaml", option)
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth-api/*.yaml", option)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth")
+		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth-api")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKEAuthController() error {
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth-controller/*.yaml",
+		map[string]interface{}{
+			"Replicas":      t.Config.Replicas,
+			"Image":         images.Get().TKEAuthController.FullName(),
+			"AdminUsername": t.Para.Config.Auth.TKEAuth.Username,
+			"AdminPassword": string(t.Para.Config.Auth.TKEAuth.Password),
+		})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth-controller")
 		if err != nil {
 			return false, nil
 		}

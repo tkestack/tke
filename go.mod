@@ -29,7 +29,6 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/casbin/casbin v1.9.1 // indirect
 	github.com/casbin/casbin/v2 v2.1.2
 	github.com/chartmuseum/storage v0.5.0
 	github.com/coreos/etcd v3.3.15+incompatible

@@ -20,6 +20,10 @@ package filter
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+	"unicode"
+
 	"github.com/go-openapi/inflect"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,13 +33,12 @@ import (
 	genericfilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"net/http"
-	"strings"
+	"k8s.io/klog"
+
 	"tkestack.io/tke/api/registry"
 	commonapiserverfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/util/log"
-	"unicode"
 )
 
 const (
@@ -52,7 +55,7 @@ const (
 // WithTKEAuthorization passes all tke-auth authorized requests on to handler, and returns a forbidden error otherwise.
 func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runtime.NegotiatedSerializer, ignoreAuthPathPrefixes []string) http.Handler {
 	if a == nil {
-		log.Warn("TKE Authorization is disabled")
+		klog.Warningf("TKE Authorization is disabled")
 		return handler
 	}
 	allIgnorePathPrefixes := commonapiserverfilter.MakeAllIgnoreAuthPathPrefixes(ignoreAuthPathPrefixes)
@@ -94,7 +97,7 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 			log.Debug("Convert to tke tkeAttributes", log.String("user name", tkeAttributes.GetUser().GetName()),
 				log.String("resource", tkeAttributes.GetResource()), log.String("resource", tkeAttributes.GetName()),
 				log.String("verb", tkeAttributes.GetVerb()))
-			authorized, reason, err = a.Authorize(ctx, tkeAttributes)
+			authorized, reason, err = a.Authorize(tkeAttributes)
 		}
 
 		// an authorizer like RBAC could encounter evaluation errors and still allow the request, so authorizer decision is checked before error here.

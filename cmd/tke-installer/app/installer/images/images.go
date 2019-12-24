@@ -36,7 +36,8 @@ type Components struct {
 	ProviderRes containerregistry.Image
 
 	TKEGateway            containerregistry.Image
-	TKEAuth               containerregistry.Image
+	TKEAuthAPI            containerregistry.Image
+	TKEAuthController     containerregistry.Image
 	TKEBusinessAPI        containerregistry.Image
 	TKEBusinessController containerregistry.Image
 	TKEMonitorAPI         containerregistry.Image
@@ -69,7 +70,8 @@ var components = Components{
 
 	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.14.6-1"},
 
-	TKEAuth:               containerregistry.Image{Name: "tke-auth", Tag: Version},
+	TKEAuthAPI:            containerregistry.Image{Name: "tke-auth-api", Tag: Version},
+	TKEAuthController:     containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
 	TKEBusinessAPI:        containerregistry.Image{Name: "tke-business-api", Tag: Version},
 	TKEBusinessController: containerregistry.Image{Name: "tke-business-controller", Tag: Version},
 	TKEGateway:            containerregistry.Image{Name: "tke-gateway", Tag: Version},
