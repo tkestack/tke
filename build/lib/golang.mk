@@ -99,7 +99,7 @@ endif
 .PHONY: go.lint
 go.lint: go.lint.verify
 	@echo "===========> Run golangci to lint source codes"
-	@$(GOBIN)/golangci-lint run $(ROOT_DIR)/...
+	@golangci-lint run $(ROOT_DIR)/...
 
 .PHONY: go.test.verify
 go.test.verify: go.build.verify
