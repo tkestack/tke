@@ -19,13 +19,13 @@
 package identityprovider
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
+	genericrequest "k8s.io/apiserver/pkg/endpoints/request"
 	"tkestack.io/tke/api/auth"
 )
 
@@ -43,12 +43,12 @@ func (t *DexHander) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Inject header and form value for identity provider login use.
 	if strings.HasPrefix(r.URL.String(), fmt.Sprintf("/%s/auth", auth.IssuerName)) {
 		for k, v := range r.Header {
-			r = r.WithContext(context.WithValue(r.Context(), k, v))
+			r = r.WithContext(genericrequest.WithValue(r.Context(), k, v))
 		}
 		err := r.ParseForm()
 		if err == nil {
 			for k, v := range r.Form {
-				r = r.WithContext(context.WithValue(r.Context(), k, v))
+				r = r.WithContext(genericrequest.WithValue(r.Context(), k, v))
 			}
 		}
 	}
