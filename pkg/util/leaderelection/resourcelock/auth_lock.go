@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/auth/v1"
 	authv1client "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
-	"tkestack.io/tke/pkg/util/log"
 )
 
 // BusinessConfigMapLock defines the structure of using configmap resources to implement
@@ -64,8 +63,6 @@ func (cml *AuthConfigMapLock) Create(ler LeaderElectionRecord) error {
 	if err != nil {
 		return err
 	}
-
-	log.Info("xxx", )
 
 	cml.cm, err = cml.Client.ConfigMaps().Create(&v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{

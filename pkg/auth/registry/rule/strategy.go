@@ -56,7 +56,6 @@ func (Strategy) DefaultGarbageCollectionRule(ctx context.Context) rest.GarbageCo
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	return
 }
 
 // NamespaceScoped is false for policies.
@@ -106,7 +105,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a rule")
 	}
-	return labels.Set(rule.ObjectMeta.Labels), ToSelectableFields(rule), nil
+	return rule.ObjectMeta.Labels, ToSelectableFields(rule), nil
 }
 
 // MatchRule returns a generic matcher for a given label and field selector.

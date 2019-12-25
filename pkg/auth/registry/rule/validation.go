@@ -42,8 +42,8 @@ func ValidateRule(rule *auth.Rule) field.ErrorList {
 // ValidateRuleUpdate tests if required fields in the policy are set during
 // an update.
 func ValidateRuleUpdate(rule *auth.Rule, old *auth.Rule) field.ErrorList {
-	//allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&policy.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
+	// allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&policy.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, ValidateRule(rule)...)
-	return nil
+	return allErrs
 }

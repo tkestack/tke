@@ -20,13 +20,11 @@ package util
 
 import (
 	"fmt"
-	"strings"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"strings"
 	"tkestack.io/tke/api/auth"
-
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
@@ -85,4 +83,3 @@ func ParseTenantAndName(str string) (string, string) {
 func CombineTenantAndName(tenantID, name string) string {
 	return fmt.Sprintf("%s::%s", tenantID, name)
 }
-

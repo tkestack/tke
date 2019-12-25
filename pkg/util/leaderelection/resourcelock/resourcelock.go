@@ -20,11 +20,11 @@ package resourcelock
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	monitorv1 "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1"
 	notifyv1 "tkestack.io/tke/api/client/clientset/versioned/typed/notify/v1"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 )
 
 const (

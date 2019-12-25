@@ -96,7 +96,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		}
 	}
 
-	allow, err := a.enforcer.Enforce(fmt.Sprintf(util.UserKey(tenantID, subject)), resource, action)
+	allow, err := a.enforcer.Enforce(util.UserKey(tenantID, subject), resource, action)
 	if err != nil {
 		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
 		return authorizer.DecisionDeny, "", err

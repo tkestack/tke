@@ -35,13 +35,12 @@ type conn struct {
 
 func (c *conn) CreateConnector(connector dexstorage.Connector) error {
 	idp := fromDexConnector(connector)
-	idp, err := c.authClient.IdentityProviders().Create(idp)
+	_, err := c.authClient.IdentityProviders().Create(idp)
 	if err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			return dexstorage.ErrAlreadyExists
-		} else {
-			return err
 		}
+		return err
 	}
 	return nil
 }
@@ -51,9 +50,8 @@ func (c *conn) GetConnector(id string) (conn dexstorage.Connector, err error) {
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return conn, dexstorage.ErrNotFound
-		} else {
-			return conn, err
 		}
+		return conn, err
 	}
 
 	return toDexConnector(idp), nil

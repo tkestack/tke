@@ -308,7 +308,7 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, versionInformers versionedinformers.SharedInformerFactory, store dexstorage.Storage, auth *options.AuthOptions) error {
 	// create dex local identity provider for tke connector.
 	dexserver.ConnectorsConfig[local.TkeConnectorType] = func() dexserver.ConnectorConfig {
-		return new(local.DefaultIdentityProvdier)
+		return new(local.DefaultIdentityProvider)
 	}
 	local.SetupRestClient(authClient)
 

@@ -138,12 +138,11 @@ func ValidateLocalIdentityPasswordUpdate(localIdentity *auth.LocalIdentity, pass
 		return fmt.Errorf("must specify hashedPassword")
 	}
 
-	if bcrypted, err := util.BcryptPassword(passwordReq.HashedPassword); err != nil {
+	bcrypted, err := util.BcryptPassword(passwordReq.HashedPassword)
+	if err != nil {
 		return fmt.Errorf("bcrypt password failed: %v", err)
-	} else {
-		localIdentity.Spec.HashedPassword = bcrypted
 	}
-
+	localIdentity.Spec.HashedPassword = bcrypted
 	return nil
 }
 

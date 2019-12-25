@@ -27,23 +27,22 @@ import (
 
 // Options is the main context object for the TKE controller manager.
 type Options struct {
-	Log           *log.Options
-	Debug         *apiserveroptions.DebugOptions
-	SecureServing *apiserveroptions.SecureServingOptions
-	Component     *controlleroptions.ComponentOptions
-	AuthAPIClient *controlleroptions.APIServerClientOptions
-
+	Log            *log.Options
+	Debug          *apiserveroptions.DebugOptions
+	SecureServing  *apiserveroptions.SecureServingOptions
+	Component      *controlleroptions.ComponentOptions
+	AuthAPIClient  *controlleroptions.APIServerClientOptions
 	FeatureOptions *FeatureOptions
 }
 
 // NewOptions creates a new Options with a default config.
 func NewOptions(serverName string, allControllers []string, disabledByDefaultControllers []string) *Options {
 	return &Options{
-		Log:           log.NewOptions(),
-		Debug:         apiserveroptions.NewDebugOptions(),
-		SecureServing: apiserveroptions.NewSecureServingOptions(serverName, 9458),
-		Component:     controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
-		AuthAPIClient: controlleroptions.NewAPIServerClientOptions("auth", true),
+		Log:            log.NewOptions(),
+		Debug:          apiserveroptions.NewDebugOptions(),
+		SecureServing:  apiserveroptions.NewSecureServingOptions(serverName, 9458),
+		Component:      controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
+		AuthAPIClient:  controlleroptions.NewAPIServerClientOptions("auth", true),
 		FeatureOptions: NewFeatureOptions(),
 	}
 }

@@ -282,6 +282,9 @@ func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 	log.Info("Policy controller - deleteRelatedRules", log.String("policyName", policy.ObjectMeta.Name))
 
 	roles, err := deleter.enforcer.GetRolesForUser(policy.ObjectMeta.Name)
+	if err != nil {
+		return err
+	}
 
 	var errs []error
 

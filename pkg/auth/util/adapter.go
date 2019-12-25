@@ -36,11 +36,6 @@ import (
 	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
 )
 
-const (
-	// placeHolder represent the NULL value in the Casbin Rule.
-	placeHolder = "_"
-)
-
 // RestAdapter is the policy storage adapter for Casbin. With this library, Casbin can load policy
 // from kubernetes rest storage and save policy to it. Rest adapter support the Auto-Save feature for Casbin policy.
 // This means it can support adding a single policy rule to the storage, or removing a single policy
@@ -68,7 +63,7 @@ func (a *RestAdapter) LoadPolicy(model model.Model) error {
 	}
 
 	// Uncomment this line to see when the policy is loaded.
-	//log.Info("List rules", log.Int("rules", len(rules)))
+	// log.Info("List rules", log.Int("rules", len(rules)))
 
 	for _, rule := range rules {
 		a.loadPolicy(rule, model)
@@ -139,44 +134,28 @@ func (a *RestAdapter) destroy() error {
 func ConvertRule(ptype string, line []string) (rule authv1.Rule) {
 	rule = authv1.Rule{}
 	rule.Spec.PType = ptype
-	policys := []string{ptype}
-	length := len(line)
 
 	if len(line) > 0 {
 		rule.Spec.V0 = line[0]
-		policys = append(policys, line[0])
 	}
 	if len(line) > 1 {
 		rule.Spec.V1 = line[1]
-		policys = append(policys, line[1])
 	}
 	if len(line) > 2 {
 		rule.Spec.V2 = line[2]
-		policys = append(policys, line[2])
 	}
 	if len(line) > 3 {
 		rule.Spec.V3 = line[3]
-		policys = append(policys, line[3])
 	}
 	if len(line) > 4 {
 		rule.Spec.V4 = line[4]
-		policys = append(policys, line[4])
 	}
 	if len(line) > 5 {
 		rule.Spec.V5 = line[5]
-		policys = append(policys, line[5])
 	}
-
 	if len(line) > 6 {
 		rule.Spec.V6 = line[6]
-		policys = append(policys, line[6])
 	}
-
-	for i := 0; i < 7-length; i++ {
-		policys = append(policys, placeHolder)
-	}
-
-	//rule.ObjectMeta.Name = strings.Join(policys, "::")
 
 	return rule
 }

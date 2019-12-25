@@ -20,16 +20,11 @@ package identityprovider
 
 import (
 	"context"
-
 	"github.com/dexidp/dex/connector"
 	dexlog "github.com/dexidp/dex/pkg/log"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/dexidp/dex/storage"
-
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
-
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/auth"
 )
 
@@ -44,7 +39,7 @@ type IdentityProvider interface {
 }
 
 // IdentityProvidersStore represents identity providers for every tenantID.
-var IdentityProvidersStore = make(map[string] IdentityProvider)
+var IdentityProvidersStore = make(map[string]IdentityProvider)
 
 // UserGetter is an object that can get the user that match the provided field and label criteria.
 type UserGetter interface {

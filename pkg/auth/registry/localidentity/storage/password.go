@@ -58,11 +58,11 @@ func (r *PasswordREST) Create(ctx context.Context, obj runtime.Object, createVal
 
 	userID := requestInfo.Name
 
-	obj, err := r.localIdentityStore.Get(ctx, userID, &metav1.GetOptions{})
+	localIdentityObj, err := r.localIdentityStore.Get(ctx, userID, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	localIdentity := obj.(*auth.LocalIdentity)
+	localIdentity := localIdentityObj.(*auth.LocalIdentity)
 
 	passwordReq := obj.(*auth.PasswordReq)
 

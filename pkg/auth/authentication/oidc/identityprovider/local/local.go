@@ -58,14 +58,14 @@ var (
 )
 
 // Config holds the configuration parameters for tke local connector login.
-type DefaultIdentityProvdier struct {
+type DefaultIdentityProvider struct {
 	tenantID            string
 	localIdentityLister authv1lister.LocalIdentityLister
 	localGroupLister    authv1lister.LocalGroupLister
 }
 
 func NewDefaultIdentityProvider(tenantID string, versionInformers versionedinformers.SharedInformerFactory) identityprovider.IdentityProvider {
-	return &DefaultIdentityProvdier{
+	return &DefaultIdentityProvider{
 		tenantID:            tenantID,
 		localIdentityLister: versionInformers.Auth().V1().LocalIdentities().Lister(),
 		localGroupLister:    versionInformers.Auth().V1().LocalGroups().Lister(),
@@ -73,7 +73,7 @@ func NewDefaultIdentityProvider(tenantID string, versionInformers versionedinfor
 }
 
 // Open returns a strategy for logging in through TKE
-func (c *DefaultIdentityProvdier) Open(id string, logger dexlog.Logger) (
+func (c *DefaultIdentityProvider) Open(id string, logger dexlog.Logger) (
 	connector.Connector, error) {
 
 	if authClient == nil {
@@ -83,12 +83,12 @@ func (c *DefaultIdentityProvdier) Open(id string, logger dexlog.Logger) (
 	return &localConnector{authClient: authClient, tenantID: id}, nil
 }
 
-func (c *DefaultIdentityProvdier) Connector() (*dexstorage.Connector, error) {
+func (c *DefaultIdentityProvider) Connector() (*dexstorage.Connector, error) {
 	if c.tenantID == "" {
 		return nil, fmt.Errorf("must specify tenantID")
 	}
 
-	bytes, err := json.Marshal(DefaultIdentityProvdier{})
+	bytes, err := json.Marshal(DefaultIdentityProvider{})
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,6 @@ func (c *DefaultIdentityProvdier) Connector() (*dexstorage.Connector, error) {
 		Name:   c.tenantID,
 		Config: bytes,
 	}, nil
-
 }
 
 func SetupRestClient(authInterface authinternalclient.AuthInterface) {
@@ -190,7 +189,7 @@ func (p *localConnector) Refresh(ctx context.Context, s connector.Scopes, identi
 }
 
 // Get is an object that can get the user that match the provided field and label criteria.
-func (c *DefaultIdentityProvdier) GetUser(ctx context.Context, name string, options *metav1.GetOptions) (*auth.User, error) {
+func (c *DefaultIdentityProvider) GetUser(ctx context.Context, name string, options *metav1.GetOptions) (*auth.User, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
@@ -210,7 +209,7 @@ func (c *DefaultIdentityProvdier) GetUser(ctx context.Context, name string, opti
 }
 
 // List is an object that can list users that match the provided field and label criteria.
-func (c *DefaultIdentityProvdier) ListUsers(ctx context.Context, options *metainternal.ListOptions) (*auth.UserList, error) {
+func (c *DefaultIdentityProvider) ListUsers(ctx context.Context, options *metainternal.ListOptions) (*auth.UserList, error) {
 	keyword := ""
 	limit := 50
 	if options.FieldSelector != nil {
@@ -260,7 +259,7 @@ func (c *DefaultIdentityProvdier) ListUsers(ctx context.Context, options *metain
 }
 
 // Get is an object that can get the user that match the provided field and label criteria.
-func (c *DefaultIdentityProvdier) GetGroup(ctx context.Context, name string, options *metav1.GetOptions) (*auth.Group, error) {
+func (c *DefaultIdentityProvider) GetGroup(ctx context.Context, name string, options *metav1.GetOptions) (*auth.Group, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
@@ -280,7 +279,7 @@ func (c *DefaultIdentityProvdier) GetGroup(ctx context.Context, name string, opt
 }
 
 // List is an object that can list users that match the provided field and label criteria.
-func (c *DefaultIdentityProvdier) ListGroups(ctx context.Context, options *metainternal.ListOptions) (*auth.GroupList, error) {
+func (c *DefaultIdentityProvider) ListGroups(ctx context.Context, options *metainternal.ListOptions) (*auth.GroupList, error) {
 	keyword := ""
 	limit := 50
 	if options.FieldSelector != nil {

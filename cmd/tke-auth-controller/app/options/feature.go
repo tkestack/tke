@@ -54,7 +54,9 @@ type FeatureOptions struct {
 }
 
 func NewFeatureOptions() *FeatureOptions {
-	return &FeatureOptions{CasbinReloadInterval: 5*time.Second}
+	return &FeatureOptions{
+		CasbinReloadInterval: 5 * time.Second,
+	}
 }
 
 // AddFlags adds flags for console to the specified FlagSet object.
