@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-func scapeConfigForPrometheus() string {
+func scrapeConfigForPrometheus() string {
 	cfgStr := `
     # Use kubelet_running_pod_count to get kube node labels
     - job_name: 'kubernetes-nodes'
