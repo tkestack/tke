@@ -23,7 +23,7 @@ To bootstrap properly, TKE core components need to be run in the order as shown 
 - [`tke-gateway`](/cmd/tke-gateway) provides a web UI to interact with TKE .
 
 ## Dependency List Generator
-- [`tke-generate-images`](/cmd/tke-generate-images) reads from all the dependencies and generates a list of image dependencies.
+- [`generate-images`](/cmd/generate-images) reads from all the dependencies and generates a list of image dependencies.
 
 ## Installer
 - [`tke-installer`](/cmd/tke-installer) provides an easy way to install and launch your own TKE.
