@@ -1213,7 +1213,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 }
 
 func createSecretForPrometheus() *corev1.Secret {
-	config := scapeConfigForPrometheus()
+	config := scrapeConfigForPrometheus()
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
