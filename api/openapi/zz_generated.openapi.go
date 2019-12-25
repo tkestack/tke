@@ -33377,15 +33377,7 @@ func schema_pkg_apis_meta_v1_GetOptions(ref common.ReferenceCallback) common.Ope
 							Format:      "",
 						},
 					},
-					"expired": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Expired represents whether the apikey has been expired.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"expired"},
 			},
 		},
 	}
