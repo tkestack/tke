@@ -20,5 +20,6 @@ RUN echo "hosts: files dns" >> /etc/nsswitch.conf
 
 WORKDIR /app
 ADD tke-auth-controller /app/bin/
+COPY auth/ /app/auth
 
 ENTRYPOINT ["/app/bin/tke-auth-controller"]
