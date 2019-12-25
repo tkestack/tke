@@ -279,7 +279,7 @@ func deleteRelatedRules(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 }
 
 func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
-	log.Info("Policy controller - deleteRelatedRules", log.String("policyName", policy.ObjectMeta.Name))
+	log.Info("Policy controller - detachRelatedRoles", log.String("policyName", policy.ObjectMeta.Name))
 
 	roles, err := deleter.enforcer.GetRolesForUser(policy.ObjectMeta.Name)
 	if err != nil {
@@ -288,17 +288,17 @@ func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 
 	var errs []error
 
-	unbinding := []string{policy.ObjectMeta.Name}
-	pol := &v1.Role{}
+	unbinding := v1.PolicyBinding{Policies: []string{policy.ObjectMeta.Name}}
 	for _, role := range roles {
 		switch {
 		case strings.HasPrefix(role, "rol-"):
+			rol := &v1.Role{}
 			err = deleter.authClient.RESTClient().Post().
 				Resource("roles").
 				Name(role).
 				SubResource("policyunbinding").
 				Body(&unbinding).
-				Do().Into(pol)
+				Do().Into(rol)
 			if err != nil {
 				if errors.IsNotFound(err) {
 					continue

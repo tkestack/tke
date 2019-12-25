@@ -66,12 +66,14 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 
 	for _, sub := range bind.Users {
 		if !util.InSubjects(sub, role.Status.Users) {
+			sub.Name = ""
 			role.Status.Users = append(role.Status.Users, sub)
 		}
 	}
 
 	for _, sub := range bind.Groups {
 		if !util.InSubjects(sub, role.Status.Groups) {
+			sub.Name = ""
 			role.Status.Groups = append(role.Status.Groups, sub)
 		}
 	}
