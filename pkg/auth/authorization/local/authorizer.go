@@ -22,12 +22,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"tkestack.io/tke/pkg/auth/util"
-
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/filter"
+	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -53,7 +52,7 @@ func NewAuthorizer(enforcer *casbin.SyncedEnforcer, tenantAdmin string, privileg
 }
 
 // Authorize to determine the subject access.
-func (a *Authorizer) Authorize(attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	subject := attr.GetUser().GetName()
 	action := attr.GetVerb()
 	resource := attr.GetResource()

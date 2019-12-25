@@ -96,7 +96,7 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 			log.Debug("Convert to tke tkeAttributes", log.String("user name", tkeAttributes.GetUser().GetName()),
 				log.String("resource", tkeAttributes.GetResource()), log.String("resource", tkeAttributes.GetName()),
 				log.String("verb", tkeAttributes.GetVerb()))
-			authorized, reason, err = a.Authorize(tkeAttributes)
+			authorized, reason, err = a.Authorize(ctx, tkeAttributes)
 		}
 
 		// an authorizer like RBAC could encounter evaluation errors and still allow the request, so authorizer decision is checked before error here.
