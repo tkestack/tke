@@ -25,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
-	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/validation"
 )
 
@@ -33,47 +32,37 @@ import (
 // subdomain.
 var ValidateGroupName = apiMachineryValidation.NameIsDNSLabel
 
-// ValidateGroup tests if required fields in the group are set.
-func ValidateGroup(group *auth.LocalGroup, authClient authinternalclient.AuthInterface) field.ErrorList {
+// ValidateLocalGroup tests if required fields in the group are set.
+func ValidateLocalGroup(group *auth.LocalGroup, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&group.ObjectMeta, false, ValidateGroupName, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
+
 	if err := validation.IsDisplayName(group.Spec.DisplayName); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("displayName"), group.Spec.DisplayName, err.Error()))
 	}
 
-	fldStatPath := field.NewPath("status")
+	fldUserPath := field.NewPath("status", "users")
 	for i, subj := range group.Status.Users {
-		if subj.ID == "" && subj.Name == "" {
-			allErrs = append(allErrs, field.Required(fldStatPath.Child("users"), "must specify id or name"))
+		if subj.ID == "" {
+			allErrs = append(allErrs, field.Required(fldUserPath, "must specify id"))
 			continue
 		}
 
-		// if specify id, ensure name
-		if subj.ID != "" {
+		if subj.Name == "" {
 			val, err := authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldStatPath.Child("users"), subj.ID))
+					allErrs = append(allErrs, field.NotFound(fldUserPath, subj.ID))
 				} else {
-					allErrs = append(allErrs, field.InternalError(fldStatPath.Child("users"), err))
+					allErrs = append(allErrs, field.InternalError(fldUserPath, err))
 				}
 			} else {
 				if val.Spec.TenantID != group.Spec.TenantID {
-					allErrs = append(allErrs, field.Invalid(fldStatPath.Child("users"), subj.ID, "must in the same tenant with the group"))
+					allErrs = append(allErrs, field.Invalid(fldUserPath, subj.ID, "must in the same tenant with the group"))
 				} else {
 					group.Status.Users[i].Name = val.Spec.Username
 				}
-			}
-		} else {
-			localIdentity, err := util.GetLocalIdentity(authClient, group.Spec.TenantID, subj.Name)
-			if err != nil && apierrors.IsNotFound(err) {
-				continue
-			}
-			if err != nil {
-				allErrs = append(allErrs, field.InternalError(fldStatPath.Child("subjects"), err))
-			} else {
-				group.Status.Users[i].ID = localIdentity.Name
 			}
 		}
 	}
@@ -81,11 +70,11 @@ func ValidateGroup(group *auth.LocalGroup, authClient authinternalclient.AuthInt
 	return allErrs
 }
 
-// ValidateGroupUpdate tests if required fields in the group are set during
+// ValidateLocalGroupUpdate tests if required fields in the group are set during
 // an update.
-func ValidateGroupUpdate(group *auth.LocalGroup, old *auth.LocalGroup, authClient authinternalclient.AuthInterface) field.ErrorList {
+func ValidateLocalGroupUpdate(group *auth.LocalGroup, old *auth.LocalGroup, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&group.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateGroup(group, authClient)...)
+	allErrs = append(allErrs, ValidateLocalGroup(group, authClient)...)
 
 	fldSpecPath := field.NewPath("spec")
 	if group.Spec.TenantID != old.Spec.TenantID {

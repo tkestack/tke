@@ -69,14 +69,18 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	oldPolicy, _ := old.(*auth.Policy)
+	policy, _ := obj.(*auth.Policy)
 	if len(tenantID) != 0 {
-		oldPolicy := old.(*auth.Policy)
-		policy, _ := obj.(*auth.Policy)
 		if oldPolicy.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update policy information", log.String("oldTenantID", oldPolicy.Spec.TenantID), log.String("newTenantID", policy.Spec.TenantID), log.String("userTenantID", tenantID))
 		}
 		policy.Spec.TenantID = tenantID
 	}
+
+	// Update binding subjects, use binding api
+	policy.Status.Groups = oldPolicy.Status.Groups
+	policy.Status.Users = oldPolicy.Status.Users
 }
 
 // NamespaceScoped is false for policies.
@@ -116,6 +120,14 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 	policy.Spec.Finalizers = []auth.FinalizerName{
 		auth.PolicyFinalize,
+	}
+
+	for i := range policy.Status.Groups {
+		policy.Status.Groups[i].Name = ""
+	}
+
+	for i := range policy.Status.Users {
+		policy.Status.Users[i].Name = ""
 	}
 }
 

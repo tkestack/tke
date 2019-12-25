@@ -21,9 +21,6 @@ package storage
 import (
 	"context"
 
-	"tkestack.io/tke/pkg/auth/util"
-	"tkestack.io/tke/pkg/util/log"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,6 +30,8 @@ import (
 
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // BindingREST implements the REST endpoint.
@@ -65,6 +64,7 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 
 	for _, sub := range bind.Users {
 		if !util.InSubjects(sub, group.Status.Users) {
+			sub.Name = ""
 			group.Status.Users = append(group.Status.Users, sub)
 		}
 	}

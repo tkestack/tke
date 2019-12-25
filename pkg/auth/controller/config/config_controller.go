@@ -225,8 +225,11 @@ func (c *Controller) syncItem(key string) error {
 
 func (c *Controller) processConfig(idp *v1.IdentityProvider, key string) error {
 	var errs []error
-	if err := c.loadPolicy(idp.Name); err != nil {
-		errs = append(errs, err)
+
+	if c.policyFile != "" {
+		if err := c.loadPolicy(idp.Name); err != nil {
+			errs = append(errs, err)
+		}
 	}
 	if err := c.createAdmin(idp.Name); err != nil {
 		errs = append(errs, err)
@@ -333,6 +336,7 @@ func (c *Controller) loadCategory() error {
 func (c *Controller) loadPolicy(tenantID string) error {
 	log.Info("Handle default policy for tenant", log.String("tenantID", tenantID))
 	var policyList []*v1.Policy
+
 	bytes, err := ioutil.ReadFile(c.policyFile)
 	if err != nil {
 		return err

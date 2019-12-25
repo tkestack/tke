@@ -37,7 +37,7 @@ type localHookHandler struct {
 }
 
 // NewLocalHookHandler creates a new localHookHandler object.
-func NewLocalHookHandler( authClient authinternalclient.AuthInterface, versionedInformers versionedinformers.SharedInformerFactory) genericapiserver.PostStartHookProvider {
+func NewLocalHookHandler(authClient authinternalclient.AuthInterface, versionedInformers versionedinformers.SharedInformerFactory) genericapiserver.PostStartHookProvider {
 	return &localHookHandler{
 		authClient:            authClient,
 		localIdentityInformer: versionedInformers.Auth().V1().LocalIdentities(),

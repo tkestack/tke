@@ -68,14 +68,18 @@ func (Strategy) DefaultGarbageCollectionRole(ctx context.Context) rest.GarbageCo
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	oldRole := old.(*auth.Role)
+	role, _ := obj.(*auth.Role)
 	if len(tenantID) != 0 {
-		oldRole := old.(*auth.Role)
-		role, _ := obj.(*auth.Role)
 		if oldRole.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update role information", log.String("oldTenantID", oldRole.Spec.TenantID), log.String("newTenantID", role.Spec.TenantID), log.String("userTenantID", tenantID))
 		}
 		role.Spec.TenantID = tenantID
 	}
+
+	// Update binding subjects, use binding api
+	role.Status.Groups = oldRole.Status.Groups
+	role.Status.Users = oldRole.Status.Users
 }
 
 // NamespaceScoped is false for policies.
@@ -108,6 +112,14 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	}
 
 	role.Status.Phase = auth.RoleActive
+
+	for i := range role.Status.Groups {
+		role.Status.Groups[i].Name = ""
+	}
+
+	for i := range role.Status.Users {
+		role.Status.Users[i].Name = ""
+	}
 }
 
 // Validate validates a new role.
