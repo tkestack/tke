@@ -73,7 +73,7 @@ func (r *REST) New() runtime.Object {
 
 // NewList returns an empty object that can be used with the List call.
 func (r *REST) NewList() runtime.Object {
-	return  &auth.GroupList{}
+	return &auth.GroupList{}
 }
 
 // Create creates a new version of a resource.
@@ -106,7 +106,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	log.Info("store", log.Any("store",identityprovider.IdentityProvidersStore))
+	log.Info("store", log.Any("store", identityprovider.IdentityProvidersStore))
 	idp, ok := identityprovider.IdentityProvidersStore[tenantID]
 	if !ok {
 		log.Error("Tenant has no related identity providers", log.String("tenantID", tenantID))

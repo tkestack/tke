@@ -88,16 +88,11 @@ func (c *DefaultIdentityProvider) Connector() (*dexstorage.Connector, error) {
 		return nil, fmt.Errorf("must specify tenantID")
 	}
 
-	bytes, err := json.Marshal(DefaultIdentityProvider{})
-	if err != nil {
-		return nil, err
-	}
-
 	return &dexstorage.Connector{
 		Type:   TkeConnectorType,
 		ID:     c.tenantID,
 		Name:   c.tenantID,
-		Config: bytes,
+		Config: []byte("{}"),
 	}, nil
 }
 
@@ -119,8 +114,6 @@ func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, use
 	if len(username) == 0 {
 		return ident, false, nil
 	}
-
-	log.Info("referer", log.Any("value", ctx.Value("Referer")))
 
 	log.Debug("Check user login", log.String("tenantID", p.tenantID), log.String("username", username), log.String("password", password))
 	localIdentity, err := util.GetLocalIdentity(authClient, p.tenantID, username)

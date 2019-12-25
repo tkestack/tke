@@ -52,9 +52,9 @@ import (
 type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
 
-	Enforcer             *casbin.SyncedEnforcer
-	DexStorage           dexstorage.Storage
-	PrivilegedUsername   string
+	Enforcer           *casbin.SyncedEnforcer
+	DexStorage         dexstorage.Storage
+	PrivilegedUsername string
 }
 
 // Implement RESTStorageProvider
