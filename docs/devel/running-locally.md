@@ -175,7 +175,7 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
   <br>
 
   **_debug/auth-api.json**
-  
+
   ```json
   {
     "secure_serving": {
@@ -219,9 +219,9 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
     <details>
     <summary>Click to view sample config</summary>
     <br>
-    
+
     ***_debug/auth-api-client-config.yaml***
-    
+
     ```yaml
     apiVersion: v1
     kind: Config
@@ -241,7 +241,7 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
           user: admin
         name: tke
     ```
-    
+
     </details>
 
 - Create `_debug/auth-controller.json`
@@ -267,7 +267,7 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
     ```
 
     </details>
-- Runn `tke-auth-controller`:
+- Run `tke-auth-controller`:
 
     ```sh
     $ _output/${host_os}/${host_arch}/tke-auth-controller -C _debug/auth-controller.json
@@ -594,7 +594,7 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
   </details>
 
 
-- Cerate `_debug/monitor-api-client-config.yaml`
+- Create `_debug/monitor-api-client-config.yaml`
 
   <details>
   <summary>Click to view sample config</summary>
@@ -625,7 +625,7 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
   </details>
 
 
-- Cerate `_debug/monitor-api.json`
+- Create `_debug/monitor-api.json`
 
   <details>
   <summary>Click to view sample config</summary>
@@ -673,7 +673,7 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
 
 ### tke-monitor-controller(Optional)
 
-- Cerate `_debug/monitor-controller.json`
+- Create `_debug/monitor-controller.json`
 
   <details>
   <summary>Click to view sample config</summary>
@@ -757,9 +757,46 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
   </details>
 
 
+- Run `tke-notify-api`
+
+  ```sh
+  $ _output/${host_os}/${host_arch}/tke-notify-api -C _debug/notify-api.json
+  ```
+
 ### tke-notify-controller(Optional)
 
-- Cerate `_debug/notify-controller.json`
+- Create `_debug/notify-api-client-config.yaml`
+
+  <details>
+  <summary>Click to view sample config</summary>
+  <br>
+
+  ***_debug/notify-api-client-config.yaml***
+
+  ```yaml
+  apiVersion: v1
+  kind: Config
+  clusters:
+    - name: tke
+      cluster:
+        certificate-authority: ${root_store}/mkcert/rootCA.pem
+        server: https://127.0.0.1:9457
+  users:
+    - name: admin
+      user:
+        token: token
+  current-context: tke
+  contexts:
+    - context:
+        cluster: tke
+        user: admin
+      name: tke
+
+  ```
+  </details>
+
+
+- Create `_debug/notify-controller.json`
 
   <details>
   <summary>Click to view sample config</summary>
@@ -775,7 +812,7 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
     },
     "client": {
       "notify": {
-        "api_server_client_config": "_debug/platform-api-client-config.yaml"
+        "api_server_client_config": "_debug/notify-api-client-config.yaml"
       }
     }
   }
@@ -784,15 +821,15 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
   </details>
 
 
-- Run `tke-notify-api`
+- Run `tke-notify-controller`
 
   ```sh
-  $ _output/${host_os}/${host_arch}/tke-notify-api -C _debug/notify-api.json
+  $ _output/${host_os}/${host_arch}/tke-notify-controller -C _debug/notify-controller.json
   ```
 
 ### tke-gateway
 
-- Cerate `_debug/gateway-config.yaml`
+- Create `_debug/gateway-config.yaml`
 
   <details>
   <summary>Click to view sample config</summary>
@@ -842,7 +879,7 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
   </details>
 
 
-- Cerate `_debug/gateway.json`
+- Create `_debug/gateway.json`
 
   <details>
   <summary>Click to view sample config</summary>
