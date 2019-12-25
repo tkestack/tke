@@ -20,7 +20,6 @@ package v1
 
 import (
 	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -103,7 +102,7 @@ type LocalIdentitySpec struct {
 type LocalIdentityPhase string
 
 const (
-	// LocalIdentityDeleting means the localidentity is undergoing graceful termination.
+	// LocalIdentityDeleting means the local identity is undergoing graceful termination.
 	LocalIdentityDeleting LocalIdentityPhase = "Deleting"
 )
 

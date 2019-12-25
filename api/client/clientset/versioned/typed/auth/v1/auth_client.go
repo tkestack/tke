@@ -28,11 +28,76 @@ import (
 
 type AuthV1Interface interface {
 	RESTClient() rest.Interface
+	APIKeysGetter
+	APISigningKeysGetter
+	CategoriesGetter
+	ClientsGetter
+	ConfigMapsGetter
+	GroupsGetter
+	IdentityProvidersGetter
+	LocalGroupsGetter
+	LocalIdentitiesGetter
+	PoliciesGetter
+	RolesGetter
+	RulesGetter
+	UsersGetter
 }
 
 // AuthV1Client is used to interact with features provided by the auth.tkestack.io group.
 type AuthV1Client struct {
 	restClient rest.Interface
+}
+
+func (c *AuthV1Client) APIKeys() APIKeyInterface {
+	return newAPIKeys(c)
+}
+
+func (c *AuthV1Client) APISigningKeys() APISigningKeyInterface {
+	return newAPISigningKeys(c)
+}
+
+func (c *AuthV1Client) Categories() CategoryInterface {
+	return newCategories(c)
+}
+
+func (c *AuthV1Client) Clients() ClientInterface {
+	return newClients(c)
+}
+
+func (c *AuthV1Client) ConfigMaps() ConfigMapInterface {
+	return newConfigMaps(c)
+}
+
+func (c *AuthV1Client) Groups() GroupInterface {
+	return newGroups(c)
+}
+
+func (c *AuthV1Client) IdentityProviders() IdentityProviderInterface {
+	return newIdentityProviders(c)
+}
+
+func (c *AuthV1Client) LocalGroups() LocalGroupInterface {
+	return newLocalGroups(c)
+}
+
+func (c *AuthV1Client) LocalIdentities() LocalIdentityInterface {
+	return newLocalIdentities(c)
+}
+
+func (c *AuthV1Client) Policies() PolicyInterface {
+	return newPolicies(c)
+}
+
+func (c *AuthV1Client) Roles() RoleInterface {
+	return newRoles(c)
+}
+
+func (c *AuthV1Client) Rules() RuleInterface {
+	return newRules(c)
+}
+
+func (c *AuthV1Client) Users() UserInterface {
+	return newUsers(c)
 }
 
 // NewForConfig creates a new AuthV1Client for the given config.

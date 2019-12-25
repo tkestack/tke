@@ -23,10 +23,63 @@ package fake
 import (
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
+	internalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
 type FakeAuth struct {
 	*testing.Fake
+}
+
+func (c *FakeAuth) APIKeys() internalversion.APIKeyInterface {
+	return &FakeAPIKeys{c}
+}
+
+func (c *FakeAuth) APISigningKeys() internalversion.APISigningKeyInterface {
+	return &FakeAPISigningKeys{c}
+}
+
+func (c *FakeAuth) Categories() internalversion.CategoryInterface {
+	return &FakeCategories{c}
+}
+
+func (c *FakeAuth) Clients() internalversion.ClientInterface {
+	return &FakeClients{c}
+}
+
+func (c *FakeAuth) ConfigMaps() internalversion.ConfigMapInterface {
+	return &FakeConfigMaps{c}
+}
+
+func (c *FakeAuth) Groups() internalversion.GroupInterface {
+	return &FakeGroups{c}
+}
+
+func (c *FakeAuth) IdentityProviders() internalversion.IdentityProviderInterface {
+	return &FakeIdentityProviders{c}
+}
+
+func (c *FakeAuth) LocalGroups() internalversion.LocalGroupInterface {
+	return &FakeLocalGroups{c}
+}
+
+func (c *FakeAuth) LocalIdentities() internalversion.LocalIdentityInterface {
+	return &FakeLocalIdentities{c}
+}
+
+func (c *FakeAuth) Policies() internalversion.PolicyInterface {
+	return &FakePolicies{c}
+}
+
+func (c *FakeAuth) Roles() internalversion.RoleInterface {
+	return &FakeRoles{c}
+}
+
+func (c *FakeAuth) Rules() internalversion.RuleInterface {
+	return &FakeRules{c}
+}
+
+func (c *FakeAuth) Users() internalversion.UserInterface {
+	return &FakeUsers{c}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

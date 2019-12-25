@@ -30,6 +30,7 @@ RUN cd /tmp && rm -rf protobuf-$PROTOBUF_VERSION \
     && protoc --version
 
 ENV GOPATH=/go
+ENV GO111MODULE=off
 
 # Clone the kubernetes
 ENV KUBERNETES_VERSION 1.17.0
@@ -58,4 +59,3 @@ ADD openapi.sh /root/
 ADD boilerplate.go.txt /root/
 RUN chmod +x /root/code.sh
 RUN chmod +x /root/openapi.sh
-

@@ -27,11 +27,76 @@ import (
 
 type AuthInterface interface {
 	RESTClient() rest.Interface
+	APIKeysGetter
+	APISigningKeysGetter
+	CategoriesGetter
+	ClientsGetter
+	ConfigMapsGetter
+	GroupsGetter
+	IdentityProvidersGetter
+	LocalGroupsGetter
+	LocalIdentitiesGetter
+	PoliciesGetter
+	RolesGetter
+	RulesGetter
+	UsersGetter
 }
 
 // AuthClient is used to interact with features provided by the auth.tkestack.io group.
 type AuthClient struct {
 	restClient rest.Interface
+}
+
+func (c *AuthClient) APIKeys() APIKeyInterface {
+	return newAPIKeys(c)
+}
+
+func (c *AuthClient) APISigningKeys() APISigningKeyInterface {
+	return newAPISigningKeys(c)
+}
+
+func (c *AuthClient) Categories() CategoryInterface {
+	return newCategories(c)
+}
+
+func (c *AuthClient) Clients() ClientInterface {
+	return newClients(c)
+}
+
+func (c *AuthClient) ConfigMaps() ConfigMapInterface {
+	return newConfigMaps(c)
+}
+
+func (c *AuthClient) Groups() GroupInterface {
+	return newGroups(c)
+}
+
+func (c *AuthClient) IdentityProviders() IdentityProviderInterface {
+	return newIdentityProviders(c)
+}
+
+func (c *AuthClient) LocalGroups() LocalGroupInterface {
+	return newLocalGroups(c)
+}
+
+func (c *AuthClient) LocalIdentities() LocalIdentityInterface {
+	return newLocalIdentities(c)
+}
+
+func (c *AuthClient) Policies() PolicyInterface {
+	return newPolicies(c)
+}
+
+func (c *AuthClient) Roles() RoleInterface {
+	return newRoles(c)
+}
+
+func (c *AuthClient) Rules() RuleInterface {
+	return newRules(c)
+}
+
+func (c *AuthClient) Users() UserInterface {
+	return newUsers(c)
 }
 
 // NewForConfig creates a new AuthClient for the given config.

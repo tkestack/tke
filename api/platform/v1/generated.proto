@@ -1144,6 +1144,10 @@ message PrometheusSpec {
 
   // RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.
   optional PrometheusRemoteAddr remoteAddress = 5;
+
+  // +optional
+  // NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
+  optional string notifyWebhook = 6;
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
