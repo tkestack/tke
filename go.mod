@@ -3,8 +3,11 @@ module tkestack.io/tke
 go 1.12
 
 replace (
+	// wait https://github.com/chartmuseum/storage/pull/34 to be merged
+	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.5.1-0.20191225102245-210f7683d0a6
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
-	github.com/dexidp/dex => github.com/choujimmy/dex v0.0.0-20191224125158-5641130772f5
+	// wait https://github.com/dexidp/dex/pull/1607 to be merged
+	github.com/dexidp/dex => github.com/choujimmy/dex v0.0.0-20191225100859-b1cb4b898bb7
 	k8s.io/client-go => k8s.io/client-go v0.17.0
 )
 
@@ -14,7 +17,7 @@ require (
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
-	github.com/aws/aws-sdk-go v1.20.18
+	github.com/aws/aws-sdk-go v1.25.7
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/casbin/casbin/v2 v2.1.2
