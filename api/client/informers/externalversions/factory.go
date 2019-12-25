@@ -30,7 +30,6 @@ import (
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 	versioned "tkestack.io/tke/api/client/clientset/versioned"
-	auth "tkestack.io/tke/api/client/informers/externalversions/auth"
 	business "tkestack.io/tke/api/client/informers/externalversions/business"
 	internalinterfaces "tkestack.io/tke/api/client/informers/externalversions/internalinterfaces"
 	monitor "tkestack.io/tke/api/client/informers/externalversions/monitor"
@@ -179,16 +178,11 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Auth() auth.Interface
 	Business() business.Interface
 	Monitor() monitor.Interface
 	Notify() notify.Interface
 	Platform() platform.Interface
 	Registry() registry.Interface
-}
-
-func (f *sharedInformerFactory) Auth() auth.Interface {
-	return auth.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Business() business.Interface {

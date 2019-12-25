@@ -160,7 +160,7 @@ type LocalGroupSpec struct {
 	DisplayName string
 	TenantID    string
 
-	//Creator
+	// Username is Creator
 	Username    string
 	Description string
 }
@@ -190,7 +190,7 @@ type User struct {
 type UserSpec struct {
 	ID string
 
-	//Name must be unique in the same tenant.
+	// Name must be unique in the same tenant.
 	Name        string
 	DisplayName string
 	Email       string
@@ -303,7 +303,7 @@ type APIKeyStatus struct {
 type APIKeyReq struct {
 	metav1.TypeMeta
 
-	//Exipre is required, holds the duration of the api key become invalid. By default, 168h(= seven days)
+	// Expire is required, holds the duration of the api key become invalid. By default, 168h(= seven days)
 	Expire metav1.Duration `json:"expire,omitempty"`
 
 	// Description describes api keys usage.
@@ -606,7 +606,7 @@ type RoleSpec struct {
 	DisplayName string
 	TenantID    string
 
-	//Creator
+	// Username is Creator
 	Username    string
 	Description string
 
@@ -730,7 +730,7 @@ type SubjectAccessReviewStatus struct {
 }
 
 // AllowedStatus includes the resource access request and response.
-//+k8s:openapi-gen=true
+// +k8s:openapi-gen=true
 type AllowedStatus struct {
 	// Resource is the resource of request
 	Resource string

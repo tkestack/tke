@@ -310,7 +310,7 @@ message ProjectSpec {
   // +optional
   optional string displayName = 3;
 
-  // Users represents the user list of project.
+  // Members represents the user list of project.
   repeated string members = 4;
 
   // ParentProjectName indicates the superior project name of this service.

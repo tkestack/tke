@@ -49,7 +49,7 @@ func (APIKeyList) SwaggerDoc() map[string]string {
 
 var map_APIKeyReq = map[string]string{
 	"":            "APIKeyReq contains expiration time used to apply the api key.",
-	"expire":      "Exipre is required, holds the duration of the api key become invalid. By default, 168h(= seven days)",
+	"expire":      "Expire is required, holds the duration of the api key become invalid. By default, 168h(= seven days)",
 	"description": "Description describes api keys usage.",
 }
 
@@ -292,8 +292,7 @@ func (LocalGroupList) SwaggerDoc() map[string]string {
 }
 
 var map_LocalGroupSpec = map[string]string{
-	"":         "LocalGroupSpec is a description of group.",
-	"username": "Creator",
+	"": "LocalGroupSpec is a description of group.",
 }
 
 func (LocalGroupSpec) SwaggerDoc() map[string]string {
@@ -442,7 +441,7 @@ func (RoleList) SwaggerDoc() map[string]string {
 
 var map_RoleSpec = map[string]string{
 	"":         "RoleSpec is a description of role.",
-	"username": "Creator",
+	"username": "Username is Creator",
 }
 
 func (RoleSpec) SwaggerDoc() map[string]string {

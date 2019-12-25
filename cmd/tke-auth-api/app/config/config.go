@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 	dexutil "tkestack.io/tke/pkg/auth/util/dex"
+	"tkestack.io/tke/pkg/util/log/dex"
 
 	"github.com/casbin/casbin/v2"
 	casbinlog "github.com/casbin/casbin/v2/log"
@@ -34,7 +35,6 @@ import (
 	"github.com/dexidp/dex/storage/etcd"
 	"github.com/go-openapi/spec"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 	genericauthenticator "k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/group"
 	"k8s.io/apiserver/pkg/authentication/request/bearertoken"
@@ -189,8 +189,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		TenantAdmin:                    opts.Auth.TenantAdmin,
 		TenantAdminSecret:              opts.Auth.TenantAdminSecret,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
-		CasbinReloadInterval:       	opts.Authorization.CasbinReloadInterval,
-
+		CasbinReloadInterval:           opts.Authorization.CasbinReloadInterval,
 	}, nil
 }
 
@@ -227,7 +226,7 @@ func setupAuthorization(genericAPIServerConfig *genericapiserver.Config, authori
 }
 
 func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, authClient authinternalclient.AuthInterface, templatePath string, tokenTimeout time.Duration, host string, port int) (*dexserver.Config, error) {
-	logger := logrus.NewLogger(log.ZapLogger())
+	logger := dex.NewLogger(log.ZapLogger())
 	issuer := issuer(host, port)
 	namespace := etcdOpts.Prefix
 	if !strings.HasSuffix(namespace, "/") {
@@ -356,7 +355,7 @@ func CustomFunctionWrapper(args ...interface{}) (interface{}, error) {
 	key1 := args[0].(string)
 	key2 := args[1].(string)
 
-	return bool(keyMatchCustomFunction(key1, key2)), nil
+	return keyMatchCustomFunction(key1, key2), nil
 }
 
 // keyMatchCustomFunction determines whether key1 matches the pattern of key2 , key2 can contain a * and :*.

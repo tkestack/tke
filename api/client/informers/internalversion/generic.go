@@ -25,7 +25,6 @@ import (
 
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
-	auth "tkestack.io/tke/api/auth"
 	business "tkestack.io/tke/api/business"
 	monitor "tkestack.io/tke/api/monitor"
 	notify "tkestack.io/tke/api/notify"
@@ -59,35 +58,7 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=auth.tkestack.io, Version=internalVersion
-	case auth.SchemeGroupVersion.WithResource("apikeys"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().APIKeys().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("apisigningkeys"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().APISigningKeys().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("categories"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Categories().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("clients"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Clients().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("configmaps"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().ConfigMaps().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("groups"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Groups().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("identityproviders"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().IdentityProviders().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("localgroups"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().LocalGroups().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("localidentities"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().LocalIdentities().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("policies"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Policies().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("roles"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Roles().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("rules"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Rules().Informer()}, nil
-	case auth.SchemeGroupVersion.WithResource("users"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Users().Informer()}, nil
-
-		// Group=business.tkestack.io, Version=internalVersion
+	// Group=business.tkestack.io, Version=internalVersion
 	case business.SchemeGroupVersion.WithResource("chartgroups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().ChartGroups().Informer()}, nil
 	case business.SchemeGroupVersion.WithResource("configmaps"):

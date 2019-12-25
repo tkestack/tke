@@ -19,6 +19,7 @@
 package local
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"tkestack.io/tke/pkg/auth/util"
@@ -29,7 +30,6 @@ import (
 	"tkestack.io/tke/pkg/auth/filter"
 	"tkestack.io/tke/pkg/util/log"
 )
-
 
 var (
 	debugKey = "debug"
@@ -59,7 +59,7 @@ func (a *Authorizer) Authorize(attr authorizer.Attributes) (authorized authorize
 	resource := attr.GetResource()
 	var (
 		tenantID string
-		debug bool
+		debug    bool
 	)
 	extra := attr.GetUser().GetExtra()
 	if len(extra) > 0 {
@@ -70,7 +70,7 @@ func (a *Authorizer) Authorize(attr authorizer.Attributes) (authorized authorize
 		}
 
 		if debugs, ok := extra[debugKey]; ok {
-			if len(debugs) > 0 && debugs[0] == "true"{
+			if len(debugs) > 0 && debugs[0] == "true" {
 				debug = true
 			}
 		}

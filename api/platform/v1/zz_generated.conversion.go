@@ -2958,7 +2958,6 @@ func autoConvert_v1_PrometheusSpec_To_platform_PrometheusSpec(in *PrometheusSpec
 	if err := Convert_v1_PrometheusRemoteAddr_To_platform_PrometheusRemoteAddr(&in.RemoteAddress, &out.RemoteAddress, s); err != nil {
 		return err
 	}
-	out.NotifyWebhook = in.NotifyWebhook
 	return nil
 }
 
@@ -2975,7 +2974,6 @@ func autoConvert_platform_PrometheusSpec_To_v1_PrometheusSpec(in *platform.Prome
 	if err := Convert_platform_PrometheusRemoteAddr_To_v1_PrometheusRemoteAddr(&in.RemoteAddress, &out.RemoteAddress, s); err != nil {
 		return err
 	}
-	out.NotifyWebhook = in.NotifyWebhook
 	return nil
 }
 

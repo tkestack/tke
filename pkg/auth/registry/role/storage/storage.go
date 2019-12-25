@@ -36,7 +36,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	storageerr "k8s.io/apiserver/pkg/storage/errors"
 	"k8s.io/apiserver/pkg/util/dryrun"
-	"k8s.io/klog"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 
 	"tkestack.io/tke/api/auth"
@@ -217,7 +216,7 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 				tmpOpt.Preconditions = nil
 
 				if _, _, err := r.Delete(ctx, accessor.GetName(), deleteValidation, tmpOpt); err != nil && !apierrors.IsNotFound(err) {
-					klog.V(4).Infof("Delete %s in DeleteCollection failed: %v", accessor.GetName(), err)
+					log.Warnf("Delete %s in DeleteCollection failed: %v", accessor.GetName(), err)
 					errs <- err
 					return
 				}

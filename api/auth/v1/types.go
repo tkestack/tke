@@ -172,7 +172,6 @@ type LocalGroupSpec struct {
 	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
 	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
 
-	//Creator
 	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`
 	Description string `json:"description" protobuf:"bytes,5,opt,name=description"`
 }
@@ -202,7 +201,7 @@ type User struct {
 type UserSpec struct {
 	ID string `json:"id" protobuf:"bytes,1,opt,name=id"`
 
-	//Name must be unique in the same tenant.
+	// Name must be unique in the same tenant.
 	Name        string            `json:"name" protobuf:"bytes,2,opt,name=name"`
 	DisplayName string            `json:"displayName,omitempty" protobuf:"bytes,3,opt,name=displayName"`
 	Email       string            `json:"email,omitempty" protobuf:"bytes,4,opt,name=email"`
@@ -318,7 +317,7 @@ type APIKeyStatus struct {
 type APIKeyReq struct {
 	metav1.TypeMeta `json:",inline"`
 
-	//Exipre is required, holds the duration of the api key become invalid. By default, 168h(= seven days)
+	// Expire is required, holds the duration of the api key become invalid. By default, 168h(= seven days)
 	// +optional
 	Expire metav1.Duration `json:"expire,omitempty" protobuf:"bytes,2,opt,name=expire"`
 
@@ -638,7 +637,7 @@ type RoleSpec struct {
 	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
 	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
 
-	//Creator
+	// Username is Creator
 	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`
 	Description string `json:"description" protobuf:"bytes,5,opt,name=description"`
 
@@ -784,7 +783,7 @@ type SubjectAccessReviewStatus struct {
 }
 
 // AllowedStatus includes the resource access request and response.
-//+k8s:openapi-gen=true
+// +k8s:openapi-gen=true
 type AllowedStatus struct {
 	// Resource is the resource of request
 	Resource string `json:"resource" protobuf:"bytes,1,opt,name=resource"`
