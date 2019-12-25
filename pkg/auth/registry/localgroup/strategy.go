@@ -64,14 +64,18 @@ func (Strategy) DefaultGarbageCollectionGroup(ctx context.Context) rest.GarbageC
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	oldGroup := old.(*auth.LocalGroup)
+	group, _ := obj.(*auth.LocalGroup)
+
 	if len(tenantID) != 0 {
-		oldGroup := old.(*auth.LocalGroup)
-		group, _ := obj.(*auth.LocalGroup)
 		if oldGroup.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update group information", log.String("oldTenantID", oldGroup.Spec.TenantID), log.String("newTenantID", group.Spec.TenantID), log.String("userTenantID", tenantID))
 		}
 		group.Spec.TenantID = tenantID
 	}
+
+	// Update bind users, use binding api
+	group.Status.Users = oldGroup.Status.Users
 }
 
 // NamespaceScoped is false for policies.
@@ -103,12 +107,16 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		auth.LocalGroupFinalize,
 	}
 
+	for i := range group.Status.Users {
+		group.Status.Users[i].Name = ""
+	}
+
 	group.Status.Phase = auth.GroupActive
 }
 
 // Validate validates a new group.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateGroup(obj.(*auth.LocalGroup), s.authClient)
+	return ValidateLocalGroup(obj.(*auth.LocalGroup), s.authClient)
 }
 
 // AllowCreateOnUpdate is false for policies.
@@ -129,7 +137,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end group.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateGroupUpdate(obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
+	return ValidateLocalGroupUpdate(obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -192,7 +200,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateGroupUpdate(obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
+	return ValidateLocalGroupUpdate(obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
 }
 
 // FinalizeStrategy implements finalizer logic for Machine.
@@ -221,5 +229,5 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateGroupUpdate(obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
+	return ValidateLocalGroupUpdate(obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
 }

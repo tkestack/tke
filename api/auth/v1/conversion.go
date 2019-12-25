@@ -212,7 +212,7 @@ func AddFieldLabelConversionsForUser(scheme *runtime.Scheme) error {
 // field selectors of IdentityProvider from the given version to internal version
 // representation.
 func AddFieldLabelConversionsForGroup(scheme *runtime.Scheme) error {
-	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("IdentityProvider"),
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Group"),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "keyword":

@@ -53,6 +53,10 @@ func IsDNS1123Name(value string) error {
 // IsDisplayName test whether the given value meets the specification of the
 // display name.
 func IsDisplayName(value string) error {
+	if value == "" {
+		return fmt.Errorf("must be specified")
+	}
+
 	if len(value) > displayNameMaxLength {
 		return fmt.Errorf("length must be less than %d", displayNameMaxLength)
 	}

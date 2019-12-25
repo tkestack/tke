@@ -86,9 +86,9 @@ func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListO
 		}
 	}
 
-	var groupList = &auth.LocalGroupList{}
+	var groupList = &auth.GroupList{}
 	for _, id := range groupIDs {
-		grp, err := r.authClient.LocalGroups().Get(id, metav1.GetOptions{})
+		grp, err := r.authClient.Groups().Get(util.CombineTenantAndName(localIdentity.Spec.TenantID, id), metav1.GetOptions{})
 		if err != nil && apierrors.IsNotFound(err) {
 			log.Error("Get group failed", log.String("group", id), log.Err(err))
 			return nil, err

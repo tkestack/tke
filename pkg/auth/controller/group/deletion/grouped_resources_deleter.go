@@ -21,6 +21,8 @@ package deletion
 
 import (
 	"fmt"
+	"strings"
+	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -246,6 +248,7 @@ func (d *groupedResourcesDeleter) finalizeGroup(group *v1.LocalGroup) (*v1.Local
 type deleteResourceFunc func(deleter *groupedResourcesDeleter, group *v1.LocalGroup) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
+	deleteRelatedRoles,
 	deleteRelatedRules,
 }
 
@@ -272,8 +275,62 @@ func (d *groupedResourcesDeleter) deleteAllContent(group *v1.LocalGroup) error {
 	return nil
 }
 
+func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) error {
+	log.Debug("LocalGroup controller - deleteRelatedRoles", log.String("group", group.ObjectMeta.Name))
+
+	subj := util.GroupKey(group.Spec.TenantID, group.Name)
+	roles, err := deleter.enforcer.GetRolesForUser(subj)
+	if err != nil {
+		return err
+	}
+
+	binding := v1.Binding{}
+	binding.Groups = append(binding.Groups, v1.Subject{ID: group.Name, Name: group.Spec.DisplayName})
+
+	log.Info("Try removing policy for group", log.String("group", group.Name), log.Strings("policies", roles))
+	var errs []error
+	for _, role := range roles {
+		switch {
+		case strings.HasPrefix(role, "pol-"):
+			pol := &v1.Policy{}
+			err = deleter.authClient.RESTClient().Post().
+				Resource("policies").
+				Name(role).
+				SubResource("unbinding").
+				Body(&binding).
+				Do().Into(pol)
+			if err != nil {
+				log.Error("Unbind policy for group failed", log.String("group", group.Name),
+					log.String("policy", role), log.Err(err))
+				errs = append(errs, err)
+			}
+		case strings.HasPrefix(role, "rol-"):
+			rol := &v1.Role{}
+			err = deleter.authClient.RESTClient().Post().
+				Resource("roles").
+				Name(role).
+				SubResource("unbinding").
+				Body(&binding).
+				Do().Into(rol)
+			if err != nil {
+				log.Error("Unbind role for group failed", log.String("group", group.Name),
+					log.String("policy", role), log.Err(err))
+				errs = append(errs, err)
+			}
+		default:
+			log.Error("Unknown role name for group, remove it", log.String("group", group.Name), log.String("role", role))
+			_, err = deleter.enforcer.DeleteRoleForUser(subj, role)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
+}
+
 func deleteRelatedRules(deleter *groupedResourcesDeleter, group *v1.LocalGroup) error {
 	log.Info("LocalGroup controller - deleteRelatedRules", log.String("groupName", group.ObjectMeta.Name))
-	_, err := deleter.enforcer.DeleteRole(group.Name)
+	_, err := deleter.enforcer.DeleteRole(util.GroupKey(group.Spec.TenantID, group.Name))
 	return err
 }
