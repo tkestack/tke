@@ -223,22 +223,19 @@ func (d *roledResourcesDeleter) finalizeRole(role *v1.Role) (*v1.Role, error) {
 		roleFinalize.Spec.Finalizers = append(roleFinalize.Spec.Finalizers, v1.FinalizerName(value))
 	}
 
-	role = &v1.Role{}
+	updated := &v1.Role{}
 	err := d.authClient.RESTClient().Put().
 		Resource("roles").
 		Name(roleFinalize.Name).
 		SubResource("finalize").
 		Body(&roleFinalize).
 		Do().
-		Into(role)
+		Into(updated)
 
 	if err != nil {
-		// it was removed already, so life is good
-		if errors.IsNotFound(err) {
-			return role, nil
-		}
+		return nil, err
 	}
-	return role, err
+	return updated, err
 }
 
 type deleteResourceFunc func(deleter *roledResourcesDeleter, role *v1.Role) error

@@ -93,9 +93,6 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 		tkeAttributes := ConvertTKEAttributes(ctx, attributes)
 		authorized = UnprotectedAuthorized(tkeAttributes)
 		if authorized != authorizer.DecisionAllow {
-			log.Debug("Convert to tke tkeAttributes", log.String("user name", tkeAttributes.GetUser().GetName()),
-				log.String("resource", tkeAttributes.GetResource()), log.String("resource", tkeAttributes.GetName()),
-				log.String("verb", tkeAttributes.GetVerb()))
 			authorized, reason, err = a.Authorize(ctx, tkeAttributes)
 		}
 
@@ -145,7 +142,6 @@ var specialSubResources = sets.NewString("status", "log", "finalize")
 func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) authorizer.Attributes {
 	tkeAttribs := attr.(*authorizer.AttributesRecord)
 
-	log.Debug("Attr parsed by k8s resolver", log.Any("attr", tkeAttribs))
 	resourceType := attr.GetResource()
 	subResource := attr.GetSubresource()
 	resourceName := attr.GetName()
@@ -221,7 +217,6 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 	tkeAttribs.Subresource = subResource
 	tkeAttribs.Name = resourceName
 
-	log.Debug("Convert to tke attributes", log.Any("tke attributes", tkeAttribs))
 	return tkeAttribs
 }
 

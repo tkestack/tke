@@ -20,6 +20,7 @@ package v1
 
 import (
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -75,7 +76,7 @@ const (
 	PolicyFinalize FinalizerName = "policy"
 
 	// GroupFinalize is an internal finalizer values to Group.
-	GroupFinalize FinalizerName = "group"
+	GroupFinalize FinalizerName = "localgroup"
 
 	// RoleFinalize is an internal finalizer values to Role.
 	RoleFinalize FinalizerName = "role"

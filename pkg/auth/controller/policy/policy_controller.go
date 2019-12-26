@@ -259,7 +259,10 @@ func (c *Controller) handleSpec(key string, policy *v1.Policy) error {
 	expectedRule := authutil.ConvertPolicyToRuleArray(outPolicy)
 	added, removed := util.Diff2DStringSlice(existedRule, expectedRule)
 
-	log.Info("Handle policy added and removed", log.String("policy", key), log.Any("added", added), log.Any("removed", removed))
+	if len(added) != 0 || len(removed) != 0 {
+		log.Info("Handle policy added and removed", log.String("policy", key), log.Any("added", added), log.Any("removed", removed))
+	}
+
 	var errs []error
 	if len(added) != 0 {
 		for _, add := range added {
@@ -299,7 +302,9 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 
 	var errs []error
 	added, removed := util.DiffStringSlice(existSubj, expectedSubj)
-	log.Info("Handle policy subjects changed", log.String("policy", key), log.Strings("added", added), log.Strings("removed", removed))
+	if len(added) != 0 || len(removed) != 0 {
+		log.Info("Handle policy users changed", log.String("policy", key), log.Strings("added", added), log.Strings("removed", removed))
+	}
 	if len(added) > 0 {
 		for _, add := range added {
 			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(policy.Spec.TenantID, add), policy.Name); err != nil {
@@ -331,7 +336,9 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 	}
 
 	added, removed = util.DiffStringSlice(existGroups, expectedGroups)
-	log.Info("Handle policy groups changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
+	if len(added) != 0 || len(removed) != 0 {
+		log.Info("Handle policy groups changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
+	}
 	if len(added) > 0 {
 		for _, add := range added {
 			if _, err := c.enforcer.AddRoleForUser(authutil.GroupKey(policy.Spec.TenantID, add), policy.Name); err != nil {

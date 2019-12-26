@@ -224,22 +224,19 @@ func (d *policiedResourcesDeleter) finalizePolicy(policy *v1.Policy) (*v1.Policy
 		policyFinalize.Spec.Finalizers = append(policyFinalize.Spec.Finalizers, v1.FinalizerName(value))
 	}
 
-	policy = &v1.Policy{}
+	updated := &v1.Policy{}
 	err := d.authClient.RESTClient().Put().
 		Resource("policies").
 		Name(policyFinalize.Name).
 		SubResource("finalize").
 		Body(&policyFinalize).
 		Do().
-		Into(policy)
+		Into(updated)
 
 	if err != nil {
-		// it was removed already, so life is good
-		if errors.IsNotFound(err) {
-			return policy, nil
-		}
+		return nil, err
 	}
-	return policy, err
+	return updated, err
 }
 
 type deleteResourceFunc func(deleter *policiedResourcesDeleter, policy *v1.Policy) error

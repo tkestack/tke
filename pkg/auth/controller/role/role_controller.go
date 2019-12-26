@@ -20,6 +20,10 @@ package role
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+	"time"
+
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -27,9 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"reflect"
-	"strings"
-	"time"
 	v1 "tkestack.io/tke/api/auth/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
@@ -245,13 +246,16 @@ func (c *Controller) handlePhase(key string, role *v1.Role) error {
 }
 
 func (c *Controller) handleSpec(key string, role *v1.Role) error {
-	rules := c.enforcer.GetFilteredGroupingPolicy(1, role.Name)
+	rules, err := c.enforcer.GetRolesForUser(role.Name)
+	if err != nil {
+		return err
+	}
 
-	log.Debugf("Get grouping rules for group: %s, %v", role.Name, rules)
+	log.Debugf("Get roles for role: %s, %v", role.Name, rules)
 	var existsPolicies []string
 	for _, rule := range rules {
-		if strings.HasPrefix(rule[0], "pol-") {
-			existsPolicies = append(existsPolicies, rule[0])
+		if strings.HasPrefix(rule, "pol-") {
+			existsPolicies = append(existsPolicies, rule)
 		}
 	}
 
@@ -259,11 +263,14 @@ func (c *Controller) handleSpec(key string, role *v1.Role) error {
 
 	added, removed := util.DiffStringSlice(existsPolicies, expectedPolicies)
 
-	log.Info("Handle role added and removed", log.String("role", key), log.Any("added", added), log.Any("removed", removed))
+	if len(added) != 0 || len(removed) != 0 {
+		log.Info("Handle role added and removed", log.String("role", key), log.Any("added", added), log.Any("removed", removed))
+	}
+
 	var errs []error
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(add, role.Name); err != nil {
+			if _, err := c.enforcer.AddRoleForUser(role.Name, add); err != nil {
 				log.Errorf("Bind policy to role failed", log.String("role", role.Name), log.String("user", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -272,7 +279,7 @@ func (c *Controller) handleSpec(key string, role *v1.Role) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(remove, role.Name); err != nil {
+			if _, err := c.enforcer.DeleteRoleForUser(role.Name, remove); err != nil {
 				log.Errorf("Unbind policy to role failed", log.String("group", role.Name), log.String("user", remove), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -299,7 +306,9 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 
 	var errs []error
 	added, removed := util.DiffStringSlice(existUsers, expectedUsers)
-	log.Info("Handle role subjects changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
+	if len(added) != 0 || len(removed) != 0 {
+		log.Info("Handle role users changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
+	}
 	if len(added) > 0 {
 		for _, add := range added {
 			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(role.Spec.TenantID, add), role.Name); err != nil {
@@ -331,7 +340,9 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 	}
 
 	added, removed = util.DiffStringSlice(existGroups, expectedGroups)
-	log.Info("Handle role groups changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
+	if len(added) != 0 || len(removed) != 0 {
+		log.Info("Handle role groups changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
+	}
 	if len(added) > 0 {
 		for _, add := range added {
 			if _, err := c.enforcer.AddRoleForUser(authutil.GroupKey(role.Spec.TenantID, add), role.Name); err != nil {
