@@ -21,7 +21,9 @@ package policy
 import (
 	"context"
 	"fmt"
+
 	"github.com/casbin/casbin/v2"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/fields"
@@ -213,6 +215,15 @@ func ToSelectableFields(policy *auth.Policy) fields.Set {
 		"spec.displayName": policy.Spec.DisplayName,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
+}
+
+func ShouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {
+	pol, ok := obj.(*auth.Policy)
+	if !ok {
+		log.Errorf("unexpected object, key:%s", key)
+		return false
+	}
+	return len(pol.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
 }
 
 // StatusStrategy implements verification logic for status of Machine.

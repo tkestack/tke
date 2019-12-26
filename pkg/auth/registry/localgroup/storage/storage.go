@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/casbin/casbin/v2"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -54,12 +56,13 @@ type Storage struct {
 	Finalize  *FinalizeREST
 	Binding   *BindingREST
 	Unbinding *UnbindingREST
-
-	User *UserREST
+	Policy    *PolicyREST
+	Role      *RoleREST
+	User      *UserREST
 }
 
 // NewStorage returns a Storage object that will work against groups.
-func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
+func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, privilegedUsername string) *Storage {
 	strategy := localgroup.NewStrategy(authClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.LocalGroup{} },
@@ -70,6 +73,8 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
+
+		ShouldDeleteDuringUpdate: localgroup.ShouldDeleteDuringUpdate,
 	}
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
@@ -94,6 +99,8 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		Finalize:  &FinalizeREST{&finalizeStore},
 		Binding:   &BindingREST{store, authClient},
 		Unbinding: &UnbindingREST{store, authClient},
+		Policy:    &PolicyREST{store, authClient, enforcer},
+		Role:      &RoleREST{store, authClient, enforcer},
 		User:      &UserREST{store, authClient},
 	}
 }
@@ -339,8 +346,8 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		)
 
 		if err != nil {
-			err = storageerr.InterpretGetError(err, auth.Resource("groups"), name)
-			err = storageerr.InterpretUpdateError(err, auth.Resource("groups"), name)
+			err = storageerr.InterpretGetError(err, auth.Resource("localgroups"), name)
+			err = storageerr.InterpretUpdateError(err, auth.Resource("localgroups"), name)
 			if _, ok := err.(*apierrors.StatusError); !ok {
 				err = apierrors.NewInternalError(err)
 			}
@@ -355,6 +362,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		err = apierrors.NewConflict(auth.Resource("groups"), group.Name, fmt.Errorf("the system is ensuring all content is removed from this group.  Upon completion, this group will automatically be purged by the system"))
 		return nil, false, err
 	}
+
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 
@@ -393,7 +401,6 @@ func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.Updat
 		return nil, false, err
 	}
 
-	log.Info("update status")
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 

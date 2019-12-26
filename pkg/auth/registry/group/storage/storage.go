@@ -21,6 +21,8 @@ package storage
 import (
 	"context"
 	"fmt"
+
+	"github.com/casbin/casbin/v2"
 	"tkestack.io/tke/pkg/auth/util"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,6 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"tkestack.io/tke/api/auth"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
 	"tkestack.io/tke/pkg/util/log"
@@ -38,13 +41,17 @@ import (
 
 // Storage includes storage for configmap and all sub resources.
 type Storage struct {
-	Group *REST
+	Group  *REST
+	Policy *PolicyREST
+	Role   *RoleREST
 }
 
 // NewStorage returns a Storage object that will work against configmap.
-func NewStorage(_ genericregistry.RESTOptionsGetter) *Storage {
+func NewStorage(_ genericregistry.RESTOptionsGetter, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer) *Storage {
 	return &Storage{
-		Group: &REST{},
+		Group:  &REST{},
+		Policy: &PolicyREST{&REST{}, authClient, enforcer},
+		Role:   &RoleREST{&REST{}, authClient, enforcer},
 	}
 }
 

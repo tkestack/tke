@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
@@ -159,6 +160,15 @@ func ToSelectableFields(localIdentity *auth.LocalIdentity) fields.Set {
 		"spec.username": localIdentity.Spec.Username,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
+}
+
+func ShouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {
+	localIdentity, ok := obj.(*auth.LocalIdentity)
+	if !ok {
+		log.Errorf("unexpected object, key:%s", key)
+		return false
+	}
+	return len(localIdentity.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
 }
 
 // StatusStrategy implements verification logic for status of Registry.

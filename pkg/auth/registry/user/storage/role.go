@@ -22,8 +22,6 @@ import (
 	"context"
 	"strings"
 
-	"k8s.io/apiserver/pkg/registry/generic/registry"
-
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,27 +37,27 @@ import (
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
-// PolicyREST implements the REST endpoint, list policies bound to the user.
-type PolicyREST struct {
-	localIdentityStore *registry.Store
-	authClient         authinternalclient.AuthInterface
-	enforcer           *casbin.SyncedEnforcer
+// RoleREST implements the REST endpoint, list policies bound to the user.
+type RoleREST struct {
+	userRest   *REST
+	authClient authinternalclient.AuthInterface
+	enforcer   *casbin.SyncedEnforcer
 }
 
-var _ = rest.Lister(&PolicyREST{})
+var _ = rest.Lister(&RoleREST{})
 
 // NewList returns an empty object that can be used with the List call.
-func (r *PolicyREST) NewList() runtime.Object {
-	return &auth.PolicyList{}
+func (r *RoleREST) NewList() runtime.Object {
+	return &auth.RoleList{}
 }
 
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
-func (r *PolicyREST) New() runtime.Object {
-	return &auth.Policy{}
+func (r *RoleREST) New() runtime.Object {
+	return &auth.Role{}
 }
 
-func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
@@ -67,40 +65,40 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 
 	userID := requestInfo.Name
 
-	obj, err := r.localIdentityStore.Get(ctx, userID, &metav1.GetOptions{})
+	obj, err := r.userRest.Get(ctx, userID, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	localIdentity := obj.(*auth.LocalIdentity)
+	user := obj.(*auth.User)
 
-	roles, err := r.enforcer.GetRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
+	roles, err := r.enforcer.GetRolesForUser(util.UserKey(user.Spec.TenantID, user.Spec.Name))
 	if err != nil {
 		log.Error("List roles for user failed from casbin failed", log.String("user", userID), log.Err(err))
 		return nil, apierrors.NewInternalError(err)
 	}
 
-	var policyIDs []string
+	var roleIDs []string
 	for _, r := range roles {
-		if strings.HasPrefix(r, "pol-") {
-			policyIDs = append(policyIDs, r)
+		if strings.HasPrefix(r, "rol-") {
+			roleIDs = append(roleIDs, r)
 		}
 	}
 
-	var policyList = &auth.PolicyList{}
-	for _, id := range policyIDs {
-		pol, err := r.authClient.Policies().Get(id, metav1.GetOptions{})
+	var roleList = &auth.RoleList{}
+	for _, id := range roleIDs {
+		rol, err := r.authClient.Roles().Get(id, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
-			log.Error("Get pol failed", log.String("policy", id), log.Err(err))
+			log.Error("Get pol failed", log.String("role", id), log.Err(err))
 			return nil, err
 		}
 
 		if err != nil {
-			log.Warn("Pol has been deleted, but till in casbin", log.String("policy", id))
+			log.Warn("rol has been deleted, but till in casbin", log.String("role", id))
 			continue
 		}
 
-		policyList.Items = append(policyList.Items, *pol)
+		roleList.Items = append(roleList.Items, *rol)
 	}
 
-	return policyList, nil
+	return roleList, nil
 }

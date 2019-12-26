@@ -22,8 +22,6 @@ import (
 	"context"
 	"strings"
 
-	"k8s.io/apiserver/pkg/registry/generic/registry"
-
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -41,9 +39,9 @@ import (
 
 // PolicyREST implements the REST endpoint, list policies bound to the user.
 type PolicyREST struct {
-	localIdentityStore *registry.Store
-	authClient         authinternalclient.AuthInterface
-	enforcer           *casbin.SyncedEnforcer
+	groupRest  *REST
+	authClient authinternalclient.AuthInterface
+	enforcer   *casbin.SyncedEnforcer
 }
 
 var _ = rest.Lister(&PolicyREST{})
@@ -65,17 +63,17 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	userID := requestInfo.Name
+	groupID := requestInfo.Name
 
-	obj, err := r.localIdentityStore.Get(ctx, userID, &metav1.GetOptions{})
+	obj, err := r.groupRest.Get(ctx, groupID, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	localIdentity := obj.(*auth.LocalIdentity)
+	grp := obj.(*auth.Group)
 
-	roles, err := r.enforcer.GetRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
+	roles, err := r.enforcer.GetRolesForUser(util.GroupKey(grp.Spec.TenantID, grp.Spec.ID))
 	if err != nil {
-		log.Error("List roles for user failed from casbin failed", log.String("user", userID), log.Err(err))
+		log.Error("List roles for group failed from casbin failed", log.String("group", groupID), log.Err(err))
 		return nil, apierrors.NewInternalError(err)
 	}
 

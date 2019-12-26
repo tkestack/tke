@@ -21,11 +21,13 @@ package localgroup
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
@@ -172,6 +174,15 @@ func ToSelectableFields(group *auth.LocalGroup) fields.Set {
 		"spec.displayName": group.Spec.DisplayName,
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
+}
+
+func ShouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {
+	localGroup, ok := obj.(*auth.LocalGroup)
+	if !ok {
+		log.Errorf("unexpected object, key:%s", key)
+		return false
+	}
+	return len(localGroup.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
 }
 
 // StatusStrategy implements verification logic for status of Machine.

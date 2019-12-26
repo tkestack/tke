@@ -21,8 +21,9 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/casbin/casbin/v2"
 	"sync"
+
+	"github.com/casbin/casbin/v2"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -61,7 +62,7 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against policies.
-func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
+func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, privilegedUsername string) *Storage {
 	strategy := policy.NewStrategy(enforcer, authClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.Policy{} },
@@ -73,6 +74,8 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *casbin.SyncedEnf
 		AfterCreate:    strategy.AfterCreate,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
+
+		ShouldDeleteDuringUpdate: policy.ShouldDeleteDuringUpdate,
 	}
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
@@ -397,7 +400,6 @@ func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.Updat
 		return nil, false, err
 	}
 
-	log.Info("update status")
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
