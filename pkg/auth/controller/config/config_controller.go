@@ -125,9 +125,6 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 		log.Error("Failed to wait for identyProvider caches to sync")
 	}
 
-	idps, _ := c.identityProviderLister.List(labels.Everything())
-	log.Info("Cache sync success", log.Any("idps", idps))
-
 	c.stopCh = stopCh
 	if err := c.loadConfig(); err != nil {
 		log.Errorf("Preload config failed", log.Err(err))
@@ -368,7 +365,7 @@ func (c *Controller) loadPolicy(tenantID string) error {
 		if len(result.Items) > 0 {
 			exists := result.Items[0]
 			if !reflect.DeepEqual(exists.Spec, pol.Spec) {
-				log.Info("Update default policy", log.String("id", pol.Name), log.String("displayName", pol.Spec.DisplayName))
+				log.Info("Update default policy", log.String("displayName", pol.Spec.DisplayName))
 				exists.Spec = pol.Spec
 				_, err = c.client.AuthV1().Policies().Update(&exists)
 

@@ -22,6 +22,7 @@ package deletion
 import (
 	"fmt"
 	"strings"
+
 	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/casbin/casbin/v2"
@@ -158,7 +159,7 @@ func (d *groupedResourcesDeleter) deleteGroup(group *v1.LocalGroup) error {
 	if len(uid) > 0 {
 		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	log.Info("group", log.Any("group", group))
+
 	err := d.groupClient.Delete(group.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))
@@ -227,22 +228,19 @@ func (d *groupedResourcesDeleter) finalizeGroup(group *v1.LocalGroup) (*v1.Local
 		groupFinalize.Spec.Finalizers = append(groupFinalize.Spec.Finalizers, v1.FinalizerName(value))
 	}
 
-	group = &v1.LocalGroup{}
+	updated := &v1.LocalGroup{}
 	err := d.authClient.RESTClient().Put().
 		Resource("localgroups").
 		Name(groupFinalize.Name).
 		SubResource("finalize").
 		Body(&groupFinalize).
 		Do().
-		Into(group)
+		Into(updated)
 
 	if err != nil {
-		// it was removed already, so life is good
-		if errors.IsNotFound(err) {
-			return group, nil
-		}
+		return nil, err
 	}
-	return group, err
+	return updated, err
 }
 
 type deleteResourceFunc func(deleter *groupedResourcesDeleter, group *v1.LocalGroup) error

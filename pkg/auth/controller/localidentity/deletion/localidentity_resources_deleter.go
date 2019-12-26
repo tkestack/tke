@@ -20,14 +20,15 @@ package deletion
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"strings"
-	"tkestack.io/tke/api/auth/v1"
+	v1 "tkestack.io/tke/api/auth/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -157,7 +158,6 @@ func (d *loalIdentitiedResourcesDeleter) deleteLocalIdentity(localIdentity *v1.L
 	if len(uid) > 0 {
 		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	log.Info("localIdentity", log.Any("localIdentity", localIdentity))
 	err := d.localIdentityClient.Delete(localIdentity.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))
@@ -226,22 +226,19 @@ func (d *loalIdentitiedResourcesDeleter) finalizeLocalIdentity(localIdentity *v1
 		localIdentityFinalize.Spec.Finalizers = append(localIdentityFinalize.Spec.Finalizers, v1.FinalizerName(value))
 	}
 
-	localIdentity = &v1.LocalIdentity{}
+	updated := &v1.LocalIdentity{}
 	err := d.authClient.RESTClient().Put().
 		Resource("localidentities").
 		Name(localIdentityFinalize.Name).
 		SubResource("finalize").
 		Body(&localIdentityFinalize).
 		Do().
-		Into(localIdentity)
+		Into(updated)
 
 	if err != nil {
-		// it was removed already, so life is good
-		if errors.IsNotFound(err) {
-			return localIdentity, nil
-		}
+		return nil, err
 	}
-	return localIdentity, err
+	return updated, err
 }
 
 type deleteResourceFunc func(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error
@@ -311,7 +308,6 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 				SubResource("unbinding").
 				Body(&binding).
 				Do().Into(grp)
-			log.Info("errr", log.Err(err))
 			if err != nil {
 				log.Error("Unbind group for user failed", log.String("user", localIdentity.Spec.Username),
 					log.String("group", role), log.Err(err))

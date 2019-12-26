@@ -240,7 +240,9 @@ func (c *Controller) handleSubjects(key string, group *v1.LocalGroup) error {
 
 	var errs []error
 	added, removed := util.DiffStringSlice(existMembers, expectedMembers)
-	log.Info("Handle group subjects changed", log.String("group", key), log.Strings("added", added), log.Strings("removed", removed))
+	if len(added) != 0 || len(removed) != 0 {
+		log.Info("Handle group subjects changed", log.String("group", key), log.Strings("added", added), log.Strings("removed", removed))
+	}
 	if len(added) > 0 {
 		for _, add := range added {
 			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(group.Spec.TenantID, add), authutil.GroupKey(group.Spec.TenantID, group.Name)); err != nil {

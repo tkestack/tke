@@ -32,7 +32,6 @@ import (
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/gateway/auth"
 	"tkestack.io/tke/pkg/gateway/token"
-	"tkestack.io/tke/pkg/util/log"
 )
 
 // UserInfo defines a data structure containing user information.
@@ -86,8 +85,6 @@ func handleTokenInfo(oidcAuthenticator *oidc.Authenticator) func(*restful.Reques
 			responsewriters.WriteRawJSON(http.StatusUnauthorized, errors.NewUnauthorized(err.Error()), response.ResponseWriter)
 			return
 		}
-
-		log.Info("TokenID", log.String("id", t.ID))
 		r, authenticated, err := oidcAuthenticator.AuthenticateToken(request.Request.Context(), t.ID)
 		if err != nil {
 			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), response.ResponseWriter)
@@ -97,8 +94,6 @@ func handleTokenInfo(oidcAuthenticator *oidc.Authenticator) func(*restful.Reques
 			responsewriters.WriteRawJSON(http.StatusUnauthorized, errors.NewUnauthorized("invalid token"), response.ResponseWriter)
 			return
 		}
-
-		log.Info("After auth", log.Any("info", r))
 		userInfo := &UserInfo{
 			Name:   r.User.GetName(),
 			UID:    r.User.GetUID(),
