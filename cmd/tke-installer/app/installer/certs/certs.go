@@ -36,7 +36,7 @@ var (
 		"tke-business-api",
 		"tke-notify-api",
 		"tke-auth-api",
-		"tke-console",
+		"tke-gateway",
 		"tke-monitor-api",
 		"tke-registry-api",
 	}
