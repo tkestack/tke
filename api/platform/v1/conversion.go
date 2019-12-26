@@ -37,7 +37,6 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		AddFieldLabelConversionsForVolumeDecorator,
 		AddFieldLabelConversionsForLogCollector,
 		AddFieldLabelConversionsForCronHPA,
-		AddFieldLabelConversionsForPrometheus,
 		AddFieldLabelConversionsForIPAM,
 		AddFieldLabelConversionsForLBCF,
 	}
@@ -270,26 +269,6 @@ func AddFieldLabelConversionsForLogCollector(scheme *runtime.Scheme) error {
 // representation.
 func AddFieldLabelConversionsForCronHPA(scheme *runtime.Scheme) error {
 	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("CronHPA"),
-		func(label, value string) (string, string, error) {
-			switch label {
-			case "spec.tenantID",
-				"spec.clusterName",
-				"spec.version",
-				"status.phase",
-				"status.version",
-				"metadata.name":
-				return label, value, nil
-			default:
-				return "", "", fmt.Errorf("field label not supported: %s", label)
-			}
-		})
-}
-
-// AddFieldLabelConversionsForPrometheus adds a conversion function to convert
-// field selectors of Prometheus from the given version to internal version
-// representation.
-func AddFieldLabelConversionsForPrometheus(scheme *runtime.Scheme) error {
-	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Prometheus"),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.tenantID",
