@@ -21,11 +21,11 @@ package util
 import (
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"tkestack.io/tke/api/auth"
+	authv1 "tkestack.io/tke/api/auth/v1"
 )
 
 // ResourceAttributesFrom combines the API object information and the user.Info from the context to build a full authorizer.AttributesRecord for resource access.
-func ResourceAttributesFrom(user user.Info, in auth.ResourceAttributes) authorizer.AttributesRecord {
+func ResourceAttributesFrom(user user.Info, in authv1.ResourceAttributes) authorizer.AttributesRecord {
 	return authorizer.AttributesRecord{
 		User:            user,
 		Verb:            in.Verb,
@@ -41,7 +41,7 @@ func ResourceAttributesFrom(user user.Info, in auth.ResourceAttributes) authoriz
 
 // NonResourceAttributesFrom combines the API object information and the user.Info from the context to build a full authorizer.AttributesRecord for non resource access.
 // Tke-auth considers non-resource path as the resource field.
-func NonResourceAttributesFrom(user user.Info, in auth.NonResourceAttributes) authorizer.AttributesRecord {
+func NonResourceAttributesFrom(user user.Info, in authv1.NonResourceAttributes) authorizer.AttributesRecord {
 	return authorizer.AttributesRecord{
 		User:            user,
 		ResourceRequest: false,
@@ -51,7 +51,7 @@ func NonResourceAttributesFrom(user user.Info, in auth.NonResourceAttributes) au
 }
 
 // AuthorizationAttributesFrom takes a spec and returns the proper authz attributes to check it.
-func AuthorizationAttributesFrom(spec auth.SubjectAccessReviewSpec) authorizer.AttributesRecord {
+func AuthorizationAttributesFrom(spec authv1.SubjectAccessReviewSpec) authorizer.AttributesRecord {
 	userToCheck := &user.DefaultInfo{
 		Name:  spec.User,
 		UID:   spec.UID,
@@ -69,7 +69,7 @@ func AuthorizationAttributesFrom(spec auth.SubjectAccessReviewSpec) authorizer.A
 }
 
 // AuthorizationAttributesListFrom takes a spec and returns the proper authz attribute list to check it.
-func AuthorizationAttributesListFrom(spec auth.SubjectAccessReviewSpec) []authorizer.AttributesRecord {
+func AuthorizationAttributesListFrom(spec authv1.SubjectAccessReviewSpec) []authorizer.AttributesRecord {
 	userToCheck := &user.DefaultInfo{
 		Name:  spec.User,
 		UID:   spec.UID,
@@ -85,7 +85,7 @@ func AuthorizationAttributesListFrom(spec auth.SubjectAccessReviewSpec) []author
 	return authorizationAttributesList
 }
 
-func convertToUserInfoExtra(extra map[string]auth.ExtraValue) map[string][]string {
+func convertToUserInfoExtra(extra map[string]authv1.ExtraValue) map[string][]string {
 	if extra == nil {
 		return nil
 	}

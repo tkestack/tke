@@ -20,11 +20,11 @@ package util
 
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"tkestack.io/tke/api/auth"
+	authv1 "tkestack.io/tke/api/auth/v1"
 )
 
 // ValidateSubjectAccessReviewSpec validates SubjectAccessReviewSpec resource attributes and user
-func ValidateSubjectAccessReviewSpec(spec auth.SubjectAccessReviewSpec, fldPath *field.Path) field.ErrorList {
+func ValidateSubjectAccessReviewSpec(spec authv1.SubjectAccessReviewSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if spec.ResourceAttributes == nil && spec.NonResourceAttributes == nil && len(spec.ResourceAttributesList) == 0 {
@@ -38,7 +38,7 @@ func ValidateSubjectAccessReviewSpec(spec auth.SubjectAccessReviewSpec, fldPath 
 }
 
 // ValidateSubjectAccessReview validates SubjectAccessReview
-func ValidateSubjectAccessReview(sar *auth.SubjectAccessReview) field.ErrorList {
+func ValidateSubjectAccessReview(sar *authv1.SubjectAccessReview) field.ErrorList {
 	allErrs := ValidateSubjectAccessReviewSpec(sar.Spec, field.NewPath("spec"))
 	return allErrs
 }
