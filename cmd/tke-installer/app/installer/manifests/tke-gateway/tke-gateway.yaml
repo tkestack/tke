@@ -4,6 +4,10 @@ apiVersion: v1
 metadata:
   name: tke-gateway
   namespace: tke
+  annotations:
+    tke.prometheus.io/scrape: "true"
+    prometheus.io/scheme: https
+    prometheus.io/port: "9441"
 spec:
   selector:
     app: tke-gateway
