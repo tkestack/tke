@@ -965,9 +965,10 @@ func servicePrometheus() *corev1.Service {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      PrometheusService,
-			Namespace: metav1.NamespaceSystem,
-			Labels:    map[string]string{"kubernetes.io/name": "Prometheus", "addonmanager.kubernetes.io/mode": "Reconcile", "kubernetes.io/cluster-service": "true"},
+			Name:        PrometheusService,
+			Namespace:   metav1.NamespaceSystem,
+			Labels:      map[string]string{"kubernetes.io/name": "Prometheus", "addonmanager.kubernetes.io/mode": "Reconcile", "kubernetes.io/cluster-service": "true"},
+			Annotations: map[string]string{"prometheus.io/scrape": "true", "prometheus.io/port": "9090"},
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: selectorForPrometheus.MatchLabels,
@@ -1135,7 +1136,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 			PodMetadata: &metav1.ObjectMeta{
 				CreationTimestamp: metav1.Now(), //For validation only: https://github.com/coreos/prometheus-operator/issues/2399
 				Annotations: map[string]string{
-					"prometheus.io/scrape": "true",
+					"prometheus.io/scrape": "false",
 					"prometheus.io/port":   "9090",
 				},
 			},
@@ -1327,7 +1328,7 @@ func createAlertManagerCRD(components images.Components) *monitoringv1.Alertmana
 			PodMetadata: &metav1.ObjectMeta{
 				CreationTimestamp: metav1.Now(), //For validation only: https://github.com/coreos/prometheus-operator/issues/2399
 				Annotations: map[string]string{
-					"prometheus.io/scrape": "true",
+					"prometheus.io/scrape": "false",
 					"prometheus.io/port":   "9093",
 				},
 			},
@@ -1354,7 +1355,7 @@ func createServiceForAlerterManager() *corev1.Service {
 			Name:        AlertManagerService,
 			Namespace:   metav1.NamespaceSystem,
 			Labels:      map[string]string{"kubernetes.io/cluster-service": "true", "addonmanager.kubernetes.io/mode": "Reconcile", "kubernetes.io/name": "Alertmanager"},
-			Annotations: map[string]string{"prometheus.io/scrape": "false"},
+			Annotations: map[string]string{"prometheus.io/scrape": "true", "prometheus.io/port": "9093"},
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: selectorForAlertManager.MatchLabels,
