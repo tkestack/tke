@@ -71,7 +71,8 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 
-		PredicateFunc: localidentity.MatchLocalIdentity,
+		PredicateFunc:            localidentity.MatchLocalIdentity,
+		ShouldDeleteDuringUpdate: localidentity.ShouldDeleteDuringUpdate,
 	}
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,

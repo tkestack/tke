@@ -20,8 +20,9 @@ package storage
 
 import (
 	"context"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"strings"
+
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -78,17 +79,17 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 		return nil, apierrors.NewInternalError(err)
 	}
 
-	var roleIDS []string
+	var roleIDs []string
 	for _, r := range roles {
 		if strings.HasPrefix(r, "rol-") {
-			roleIDS = append(roleIDS, r)
+			roleIDs = append(roleIDs, r)
 		}
 	}
 
 	var roleList = &auth.RoleList{}
-	for _, id := range roleIDS {
+	for _, id := range roleIDs {
 		rol, err := r.authClient.Roles().Get(id, metav1.GetOptions{})
-		if err != nil && apierrors.IsNotFound(err) {
+		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("Get pol failed", log.String("role", id), log.Err(err))
 			return nil, err
 		}

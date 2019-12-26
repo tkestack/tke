@@ -107,7 +107,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		categoryRest := categorystorage.NewStorage(restOptionsGetter, authClient)
 		storageMap["categories"] = categoryRest
 
-		policyRest := policystorage.NewStorage(restOptionsGetter, s.Enforcer, authClient, s.PrivilegedUsername)
+		policyRest := policystorage.NewStorage(restOptionsGetter, authClient, s.Enforcer, s.PrivilegedUsername)
 		storageMap["policies"] = policyRest.Policy
 		storageMap["policies/finalize"] = policyRest.Finalize
 		storageMap["policies/status"] = policyRest.Status
@@ -119,7 +119,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		ruleRest := rulestorage.NewStorage(restOptionsGetter)
 		storageMap["rules"] = ruleRest.Rule
 
-		roleRest := rolestorage.NewStorage(restOptionsGetter, s.Enforcer, authClient, s.PrivilegedUsername)
+		roleRest := rolestorage.NewStorage(restOptionsGetter, authClient, s.Enforcer, s.PrivilegedUsername)
 		storageMap["roles"] = roleRest.Role
 		storageMap["roles/finalize"] = roleRest.Finalize
 		storageMap["roles/status"] = roleRest.Status
@@ -129,20 +129,27 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["roles/policyunbinding"] = roleRest.PolicyUnbinding
 		storageMap["roles/users"] = roleRest.User
 		storageMap["roles/groups"] = roleRest.Group
+		storageMap["roles/policies"] = roleRest.Policy
 
-		localGroupRest := localgroupstorage.NewStorage(restOptionsGetter, authClient, s.PrivilegedUsername)
+		localGroupRest := localgroupstorage.NewStorage(restOptionsGetter, authClient, s.Enforcer, s.PrivilegedUsername)
 		storageMap["localgroups"] = localGroupRest.Group
 		storageMap["localgroups/finalize"] = localGroupRest.Finalize
 		storageMap["localgroups/status"] = localGroupRest.Status
 		storageMap["localgroups/binding"] = localGroupRest.Binding
 		storageMap["localgroups/unbinding"] = localGroupRest.Unbinding
 		storageMap["localgroups/users"] = localGroupRest.User
+		storageMap["localgroups/policies"] = localGroupRest.Policy
+		storageMap["localgroups/roles"] = localGroupRest.Role
 
-		userRest := userstorage.NewStorage(restOptionsGetter)
+		userRest := userstorage.NewStorage(restOptionsGetter, authClient, s.Enforcer)
 		storageMap["users"] = userRest.User
+		storageMap["users/policies"] = userRest.Policy
+		storageMap["users/roles"] = userRest.Role
 
-		groupRest := groupstorage.NewStorage(restOptionsGetter)
+		groupRest := groupstorage.NewStorage(restOptionsGetter, authClient, s.Enforcer)
 		storageMap["groups"] = groupRest.Group
+		storageMap["groups/policies"] = groupRest.Policy
+		storageMap["groups/roles"] = groupRest.Role
 
 		idpRest := idpstorage.NewStorage(restOptionsGetter, authClient)
 		storageMap["identityproviders"] = idpRest

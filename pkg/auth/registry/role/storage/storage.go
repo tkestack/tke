@@ -21,8 +21,9 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/casbin/casbin/v2"
 	"sync"
+
+	"github.com/casbin/casbin/v2"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -59,10 +60,11 @@ type Storage struct {
 	PolicyUnbinding *PolicyUnbindingREST
 	User            *UserREST
 	Group           *GroupREST
+	Policy          *PolicyREST
 }
 
 // NewStorage returns a Storage object that will work against roles.
-func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface, privilegedUsername string) *Storage {
+func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, privilegedUsername string) *Storage {
 	strategy := role.NewStrategy(enforcer, authClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.Role{} },
@@ -73,6 +75,8 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *casbin.SyncedEnf
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
+
+		ShouldDeleteDuringUpdate: role.ShouldDeleteDuringUpdate,
 	}
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
@@ -101,6 +105,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, enforcer *casbin.SyncedEnf
 		PolicyUnbinding: &PolicyUnbindingREST{store, authClient},
 		User:            &UserREST{store, authClient},
 		Group:           &GroupREST{store, authClient},
+		Policy:          &PolicyREST{store, authClient, enforcer},
 	}
 }
 
@@ -399,7 +404,6 @@ func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.Updat
 		return nil, false, err
 	}
 
-	log.Info("update status")
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
