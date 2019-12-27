@@ -131,10 +131,10 @@ export const StrategyActionPanel = () => {
   categoryListRecords &&
     categoryListRecords.forEach(item => {
       options.push({
-        value: item.name,
-        text: item.displayName
+        value: item.metadata.name,
+        text: item.Spec.displayName
       });
-      categoryActions[item.name] = Object.values(item.actions);
+      categoryActions[item.metadata.name] = Object.values(item.Spec.actions);
     });
   const actionList = categoryActions[formParamsValue.selectService] || [];
 
@@ -331,15 +331,19 @@ export const StrategyActionPanel = () => {
     const { action } = actionParamsValue;
     const strategyInfo = {
       id: uuid(),
-      name,
-      service: selectService,
-      description,
-      statement: {
-        effect,
-        action,
-        resource
+      spec: {
+        displayName: name,
+        category: selectService,
+        description,
+        statement: {
+          resources: [resource],
+          effect,
+          actions: action
+        }
       }
     };
+
+    console.log(strategyInfo);
     actions.strategy.addStrategy.start([strategyInfo]);
     actions.strategy.addStrategy.perform();
     setModalVisible(false);

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { TableColumn, Text, Modal, Form, Input, Button } from '@tea/component';
+import { TableColumn, Text, Modal, Form, Input, Button, Icon } from '@tea/component';
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { router } from '../../router';
@@ -33,24 +33,28 @@ export const UserTablePanel = () => {
           <a
             href="javascript:;"
             onClick={e => {
-              // router.navigate({ module: 'user', sub: `${user.uid}` });
-              router.navigate({ module: 'user', sub: `${user.name}` });
+              router.navigate({ module: 'user', sub: `${user.metadata.name}` });
             }}
           >
-            {user.name} / {user.Spec.extra.displayName || '-'}
+            {user.spec.username} / {user.spec.displayName || '-'}
           </a>
+          {user.status.phase === 'Deleting' && (
+            <React.Fragment>
+              <Icon type="loading" />
+            </React.Fragment>
+          )}
         </Text>
       )
     },
     {
       key: 'phone',
       header: t('关联手机'),
-      render: user => <Text>{user.Spec.extra.phoneNumber || '-'}</Text>
+      render: user => <Text>{user.spec.phoneNumber || '-'}</Text>
     },
     {
       key: 'email',
       header: t('关联邮箱'),
-      render: user => <Text>{user.Spec.extra.email || '-'}</Text>
+      render: user => <Text>{user.spec.email || '-'}</Text>
     },
     { key: 'operation', header: t('操作'), render: user => _renderOperationCell(user) }
   ];
@@ -64,10 +68,10 @@ export const UserTablePanel = () => {
     <React.Fragment>
       <TablePanel
         columns={columns}
+        rowDisabled={record => record.status.phase === 'Deleting'}
         model={userList}
         action={actions.user}
         emptyTips={emptyTips}
-        isNeedPagination={true}
         bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
       />
       <Modal
@@ -160,7 +164,7 @@ export const UserTablePanel = () => {
 
   /** 渲染操作按钮 */
   function _renderOperationCell(user: User) {
-    if (user.name.toLowerCase() === 'admin') {
+    if (user.spec.username.toLowerCase() === 'admin') {
       return (
         <LinkButton tipDirection="right" errorTip="管理员不能被删除" disabled>
           <Trans>删除</Trans>
@@ -194,12 +198,12 @@ export const UserTablePanel = () => {
   async function _removeUser(user: User) {
     const yes = await Modal.confirm({
       message: t('确认删除当前所选用户？'),
-      description: t('删除后，用户{{username}}的所有配置将会被清空，且无法恢复', { username: user.name }),
+      description: t('删除后，用户{{username}}的所有配置将会被清空，且无法恢复', { username: user.spec.username }),
       okText: t('删除'),
       cancelText: t('取消')
     });
     if (yes) {
-      actions.user.removeUser.start([user.name]);
+      actions.user.removeUser.start([user.metadata.name]);
       actions.user.removeUser.perform();
     }
   }
@@ -210,10 +214,13 @@ export const UserTablePanel = () => {
       noCache: true,
       data: {
         user: {
-          name: user.name,
-          Spec: {
+          metadata: {
+            name: user.metadata.name,
+            resourceVersion: user.metadata.resourceVersion
+          },
+          spec: Object.assign({}, user.spec, {
             hashedPassword: btoa(password)
-          }
+          })
         }
       }
     });

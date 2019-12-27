@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { TablePanel, LinkButton, emptyTips } from '../../../common/components';
-import { Button, Table, TableColumn, Text, Modal, Transfer, SearchBox, Tooltip } from '@tea/component';
+import { Button, Table, TableColumn, Text, Modal, Transfer, SearchBox, Tooltip, Icon } from '@tea/component';
 import { selectable, removeable } from '@tea/component/table/addons';
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -17,7 +17,7 @@ export const StrategyTablePanel = () => {
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
   const { strategyList, userList, associatedUsersList } = state;
-  const associatedUsersListRecords = associatedUsersList.list.data.records;
+  const associatedUsersListRecords = associatedUsersList.list.data.records.map(item => item.metadata.name);
   const userListRecords = userList.list.data.records;
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -40,16 +40,16 @@ export const StrategyTablePanel = () => {
       key: 'name',
       header: '用户',
       render: user => {
-        if (userMsgsValue.targetKeys.indexOf(user.name) !== -1) {
+        if (userMsgsValue.targetKeys.indexOf(user.metadata.name) !== -1) {
           return (
             <Tooltip title="用户已被关联">
-              {user.name}({user.Spec.extra.displayName})
+              {user.spec.username}({user.spec.displayName})
             </Tooltip>
           );
         }
         return (
           <p>
-            {user.name}({user.Spec.extra.displayName})
+            {user.spec.username}({user.spec.displayName})
           </p>
         );
       }
@@ -64,23 +64,24 @@ export const StrategyTablePanel = () => {
           <a
             href="javascript:;"
             onClick={e => {
-              router.navigate({ module: 'strategy', sub: `${item.id}` });
+              router.navigate({ module: 'strategy', sub: `${item.metadata.name}` });
             }}
           >
-            {item.name}
+            {item.spec.displayName}
           </a>
+          {item.status['phase'] === 'Terminating' && <Icon type="loading" />}
         </Text>
       )
     },
     {
       key: 'description',
       header: t('描述'),
-      render: item => <Text parent="div">{item.description || '-'}</Text>
+      render: item => <Text parent="div">{item.spec.description || '-'}</Text>
     },
     {
       key: 'service',
       header: t('服务类型'),
-      render: item => <Text parent="div">{item.service || '-'}</Text>
+      render: item => <Text parent="div">{item.spec.category || '-'}</Text>
     },
     { key: 'operation', header: t('操作'), render: user => _renderOperationCell(user) }
   ];
@@ -91,6 +92,7 @@ export const StrategyTablePanel = () => {
         columns={columns}
         model={strategyList}
         action={actions.strategy}
+        rowDisabled={record => record.status['phase'] === 'Terminating'}
         emptyTips={emptyTips}
         isNeedPagination={true}
         bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
@@ -115,15 +117,17 @@ export const StrategyTablePanel = () => {
                       userListRecords &&
                       userListRecords.filter(
                         user =>
-                          (user.name.includes(userMsgsValue.inputValue) ||
-                            user.Spec.extra.displayName.includes(userMsgsValue.inputValue)) &&
-                          user.name.toLowerCase() !== 'admin'
+                          (user.metadata.name.includes(userMsgsValue.inputValue) ||
+                            user.spec.displayName.includes(userMsgsValue.inputValue)) &&
+                          user.metadata.name.toLowerCase() !== 'admin'
                       )
                     }
                     rowDisabled={record => {
-                      return userMsgsValue.targetKeys.indexOf(record.name) !== -1;
+                      return userMsgsValue.targetKeys.indexOf(record.metadata.name) !== -1;
                     }}
-                    recordKey="name"
+                    recordKey={record => {
+                      return record.metadata.name;
+                    }}
                     columns={modalColumns}
                     addons={[
                       selectable({
@@ -135,7 +139,7 @@ export const StrategyTablePanel = () => {
                               newKeys.push(item);
                             }
                           });
-                          return setUserMsgsValue({ ...userMsgsValue, newTargetKeys: newKeys });
+                          setUserMsgsValue({ ...userMsgsValue, newTargetKeys: newKeys });
                         },
                         rowSelect: true
                       })
@@ -191,9 +195,11 @@ export const StrategyTablePanel = () => {
   }
   function _setModalVisible(strategy: Strategy) {
     actions.user.applyFilter({ ifAll: true });
-    actions.associateActions.applyFilter({ search: strategy.id + '' });
+    actions.associateActions.applyFilter({ search: strategy.metadata.name + '' });
     setModalVisible(true);
-    setCurrentStrategy(strategy);
+    setCurrentStrategy({
+      id: strategy.metadata.name
+    });
   }
   function _close() {
     setModalVisible(false);
@@ -219,7 +225,7 @@ export const StrategyTablePanel = () => {
       cancelText: t('取消')
     });
     if (yes) {
-      actions.strategy.removeStrategy.start([strategy.id]);
+      actions.strategy.removeStrategy.start([strategy.metadata.name]);
       actions.strategy.removeStrategy.perform();
     }
   }

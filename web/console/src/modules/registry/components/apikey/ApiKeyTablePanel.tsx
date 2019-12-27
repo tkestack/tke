@@ -70,14 +70,14 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
         key: 'name',
         header: t('凭证'),
         render: x => {
-          let _startEight = x.apiKey.substring(0, 8);
-          let _endEight = x.apiKey.substring(Math.max(x.apiKey.length - 8, 0), x.apiKey.length);
+          let _startEight = x.spec.apiKey.substring(0, 8);
+          let _endEight = x.spec.apiKey.substring(Math.max(x.spec.apiKey.length - 8, 0), x.spec.apiKey.length);
           return (
             <React.Fragment>
               <p className="tea-text-overflow" style={{ position: 'relative' }}>
                 {`${_startEight}...${_endEight}`}{' '}
                 <span id={`${_startEight}${_endEight}`} style={{ position: 'absolute', top: -1000 }}>
-                  {x.apiKey}
+                  {x.spec.apiKey}
                 </span>{' '}
                 <Clip target={`#${_startEight}${_endEight}`} />
               </p>
@@ -90,7 +90,7 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
         header: t('描述'),
         render: x => (
           <Text parent="div" overflow>
-            <span className="text">{x.description}</span>
+            <span className="text">{x.spec.description || '-'}</span>
           </Text>
         )
       },
@@ -99,7 +99,7 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
         header: t('创建时间'),
         render: x => (
           <Text parent="div" overflow>
-            <span className="text">{dateFormatter(new Date(x.issue_at), 'YYYY-MM-DD HH:mm:ss')}</span>
+            <span className="text">{dateFormatter(new Date(x.spec.issue_at), 'YYYY-MM-DD HH:mm:ss')}</span>
           </Text>
         )
       },
@@ -108,7 +108,7 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
         header: t('过期时间'),
         render: x => (
           <Text parent="div" overflow>
-            <span className="text">{dateFormatter(new Date(x.expire_at), 'YYYY-MM-DD HH:mm:ss')}</span>
+            <span className="text">{dateFormatter(new Date(x.spec.expire_at), 'YYYY-MM-DD HH:mm:ss')}</span>
           </Text>
         )
       },
@@ -117,8 +117,8 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
         header: t('状态'),
         render: x => (
           <Text parent="div" overflow>
-            <Text theme={x.disabled || x.expired ? 'danger' : 'success'}>
-              {x.expired ? t('已过期') : x.disabled ? t('已禁用') : t('已启用')}
+            <Text theme={x.status.disabled || x.status.expired ? 'danger' : 'success'}>
+              {x.status.expired ? t('已过期') : x.status.disabled ? t('已禁用') : t('已启用')}
             </Text>
           </Text>
         )
@@ -131,12 +131,12 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
           <React.Fragment>
             <Button
               type="link"
-              disabled={key.expired}
+              disabled={key.status.expired}
               onClick={() => {
                 this.props.actions.apiKey.toggleKeyStatus.start([key]);
               }}
             >
-              {key.disabled ? t('启用') : t('禁用')}
+              {key.status.disabled ? t('启用') : t('禁用')}
             </Button>
             <Button
               type="link"
@@ -159,7 +159,6 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
           list: this.props.apiKey.list,
           query: this.props.apiKey.query
         }}
-        isNeedPagination={true}
         actionOptions={this.props.actions.apiKey}
       />
     );
@@ -177,11 +176,11 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
         params={{}}
         confirmMode={
           deleteApiKey.targets
-            ? deleteApiKey.targets[0].expired
+            ? deleteApiKey.targets[0].status.expired
               ? null
               : {
                   label: t('访问凭证'),
-                  value: deleteApiKey.targets ? deleteApiKey.targets[0].apiKey : ''
+                  value: deleteApiKey.targets ? deleteApiKey.targets[0].spec.apiKey : ''
                 }
             : null
         }

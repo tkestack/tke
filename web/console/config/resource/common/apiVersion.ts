@@ -95,6 +95,9 @@ export interface ApiVersion {
   destinationrule?: ResourceApiInfo;
   serviceentry?: ResourceApiInfo;
   controlPlane?: ResourceApiInfo;
+
+  /** 组织资源 */
+  apiKey?: ResourceApiInfo;
 }
 
 interface ResourceApiInfo {
@@ -321,20 +324,28 @@ const k8sApiVersionFor18: ApiVersion = {
     group: authServerVersion.group,
     version: authServerVersion.version,
     basicEntry: authServerVersion.basicUrl,
-    // watchModule: ConsoleModuleEnum.Auth, [todo]
+    watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Localidentities'
   },
   policy: {
     group: authServerVersion.group,
     version: authServerVersion.version,
     basicEntry: authServerVersion.basicUrl,
-    // watchModule: ConsoleModuleEnum.Auth, [todo]
+    watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Policies'
   },
+  apiKey: {
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
+    headTitle: 'Apikeys'
+  },
   category: {
-    group: '',
-    version: 'authv1',
-    basicEntry: 'api',
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Categories'
   },
   machines: {

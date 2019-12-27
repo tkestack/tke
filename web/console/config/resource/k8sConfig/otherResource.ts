@@ -186,6 +186,17 @@ export const category = (k8sVersion: string) => {
   });
 };
 
+/** apikey的配置 */
+export const apiKey = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'apiKey',
+    requestType: {
+      list: 'apikeys'
+    }
+  });
+};
+
 /** helm的配置 */
 export const helm = (k8sVersion: string) => {
   return generateResourceInfo({

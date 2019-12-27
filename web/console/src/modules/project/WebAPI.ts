@@ -439,7 +439,7 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
     let list = response.data;
     userList = list.items
       ? list.items.map(item => {
-          return { id: uuid(), displayName: item.Spec.extra && item.Spec.extra.displayName, name: item.name };
+          return { id: uuid(), displayName: item.spec && item.spec.displayName, name: item.name };
         })
       : [];
   }
