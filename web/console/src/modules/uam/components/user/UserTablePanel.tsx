@@ -164,6 +164,8 @@ export const UserTablePanel = () => {
 
   /** 渲染操作按钮 */
   function _renderOperationCell(user: User) {
+    const isDisable = user.status.phase === 'Deleting';
+
     if (user.spec.username.toLowerCase() === 'admin') {
       return (
         <LinkButton tipDirection="right" errorTip="管理员不能被删除" disabled>
@@ -175,6 +177,7 @@ export const UserTablePanel = () => {
       <React.Fragment>
         <LinkButton
           tipDirection="left"
+          disabled={isDisable}
           onClick={() => {
             setUser(user);
             setPwdModalVisible(true);
@@ -184,6 +187,7 @@ export const UserTablePanel = () => {
         </LinkButton>
 
         <LinkButton
+          disabled={isDisable}
           tipDirection="right"
           onClick={() => {
             _removeUser(user);

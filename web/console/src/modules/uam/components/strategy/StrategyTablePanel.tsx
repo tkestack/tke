@@ -187,7 +187,11 @@ export const StrategyTablePanel = () => {
     return (
       <React.Fragment>
         {strategy.type !== 1 && <LinkButton onClick={() => _removeCategory(strategy)}>删除</LinkButton>}
-        <LinkButton tipDirection="right" onClick={() => _setModalVisible(strategy)}>
+        <LinkButton
+          tipDirection="right"
+          onClick={() => _setModalVisible(strategy)}
+          disabled={strategy.status['phase'] === 'Terminating'}
+        >
           <Trans>关联用户</Trans>
         </LinkButton>
       </React.Fragment>
