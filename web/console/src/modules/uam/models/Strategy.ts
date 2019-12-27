@@ -4,7 +4,7 @@ export interface Strategy extends Identifiable {
     displayName: string;
     category: string;
     description: string;
-    type: string;
+    type?: string;
     statement: {
       resources: string[];
       effect: string;
