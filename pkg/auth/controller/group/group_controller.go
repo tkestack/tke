@@ -208,13 +208,13 @@ func (c *Controller) syncItem(key string) error {
 	case err != nil:
 		log.Warn("Unable to retrieve group from store", log.String("group name", key), log.Err(err))
 	default:
-		if group.Status.Phase == v1.GroupActive {
-			err = c.processUpdate(group, key)
-		} else if group.Status.Phase == v1.GroupTerminating {
+		if group.Status.Phase == v1.GroupTerminating {
 			err = c.groupedResourcesDeleter.Delete(key)
+		} else {
+			err = c.processUpdate(group, key)
 		}
 
-		//log.Info("Handle group", log.Any("group", group))
+		log.Debug("Handle group", log.Any("group", group))
 	}
 	return err
 }

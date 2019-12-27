@@ -209,13 +209,13 @@ func (c *Controller) syncItem(key string) error {
 	case err != nil:
 		log.Warn("Unable to retrieve policy from store", log.String("policy name", key), log.Err(err))
 	default:
-		if policy.Status.Phase == v1.PolicyActive {
-			err = c.processUpdate(policy, key)
-		} else if policy.Status.Phase == v1.PolicyTerminating {
+		if policy.Status.Phase == v1.PolicyTerminating {
 			err = c.policyedResourcesDeleter.Delete(key)
+		} else {
+			err = c.processUpdate(policy, key)
 		}
 
-		//log.Info("Handle policy", log.Any("policy", policy))
+		log.Debug("Handle policy", log.Any("policy", policy))
 	}
 	return err
 }

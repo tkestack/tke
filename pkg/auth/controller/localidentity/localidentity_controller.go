@@ -20,15 +20,16 @@ package localidentity
 
 import (
 	"fmt"
+	"reflect"
+	"time"
+
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"reflect"
-	"time"
-	"tkestack.io/tke/api/auth/v1"
+	v1 "tkestack.io/tke/api/auth/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
 	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
@@ -203,12 +204,12 @@ func (c *Controller) syncItem(key string) error {
 	case err != nil:
 		log.Warn("Unable to retrieve localIdentity from store", log.String("localIdentity name", key), log.Err(err))
 	default:
-		// Only check deleting localIentity for now
+		// Only check deleting localIdentity for now
 		if localIdentity.Status.Phase == v1.LocalIdentityDeleting {
 			err = c.localIdentityedResourcesDeleter.Delete(key)
 		}
 
-		//log.Info("Handle localIdentity", log.Any("localIdentity", localIdentity))
+		log.Debug("Handle localIdentity", log.Any("localIdentity", localIdentity))
 	}
 	return err
 }
