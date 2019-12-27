@@ -20,15 +20,17 @@ package app
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cacheddiscovery "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
-	"net/http"
-	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
-	"tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	businessclientv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	platformclientv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-monitor-controller/app/config"
 	"tkestack.io/tke/pkg/controller"
@@ -70,7 +72,8 @@ type ControllerContext struct {
 	ResyncPeriod            func() time.Duration
 	ControllerStartInterval time.Duration
 
-	BusinessClient v1.BusinessV1Interface
+	BusinessClient businessclientv1.BusinessV1Interface
+	PlatformClient platformclientv1.PlatformV1Interface
 	MonitorConfig  *monitorconfig.MonitorConfiguration
 }
 
@@ -105,6 +108,11 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		return ControllerContext{}, err
 	}
 
+	platformClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.PlatformAPIServerClientConfig, "tke-monitor-controller"))
+	if err != nil {
+		return ControllerContext{}, fmt.Errorf("failed to create the platform client: %v", err)
+	}
+
 	ctx := ControllerContext{
 		ClientBuilder:           rootClientBuilder,
 		InformerFactory:         sharedInformers,
@@ -114,8 +122,8 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		InformersStarted:        make(chan struct{}),
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
-
-		MonitorConfig: cfg.MonitorConfig,
+		PlatformClient:          platformClient.PlatformV1(),
+		MonitorConfig:           cfg.MonitorConfig,
 	}
 
 	if cfg.BusinessAPIServerClientConfig != nil {

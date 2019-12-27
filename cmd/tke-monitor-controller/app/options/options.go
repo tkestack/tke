@@ -38,6 +38,7 @@ type Options struct {
 	SecureServing     *apiserveroptions.SecureServingOptions
 	Component         *controlleroptions.ComponentOptions
 	MonitorAPIClient  *controlleroptions.APIServerClientOptions
+	PlatformAPIClient *controlleroptions.APIServerClientOptions
 	BusinessAPIClient *controlleroptions.APIServerClientOptions
 	// The Registry will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Monitor's current working directory.
@@ -52,6 +53,7 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		SecureServing:     apiserveroptions.NewSecureServingOptions(serverName, 9456),
 		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
 		MonitorAPIClient:  controlleroptions.NewAPIServerClientOptions("monitor", true),
+		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
 		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", false),
 	}
 }
@@ -63,6 +65,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.SecureServing.AddFlags(fs)
 	o.Component.AddFlags(fs)
 	o.MonitorAPIClient.AddFlags(fs)
+	o.PlatformAPIClient.AddFlags(fs)
 	o.BusinessAPIClient.AddFlags(fs)
 
 	fs.String(flagMonitorConfig, o.MonitorConfig,
@@ -80,6 +83,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.SecureServing.ApplyFlags()...)
 	errs = append(errs, o.Component.ApplyFlags()...)
 	errs = append(errs, o.MonitorAPIClient.ApplyFlags()...)
+	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
 	errs = append(errs, o.BusinessAPIClient.ApplyFlags()...)
 
 	o.MonitorConfig = viper.GetString(configMonitorConfig)

@@ -21,13 +21,8 @@ import (
 	"sort"
 
 	"github.com/thoas/go-funk"
-
 	installer "tkestack.io/tke/cmd/tke-installer/app/installer/images"
-
-	baremetal "tkestack.io/tke/pkg/platform/provider/baremetal/images"
-
-	galaxy "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
-
+	monitorconfig "tkestack.io/tke/pkg/monitor/config"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
 	gpumanager "tkestack.io/tke/pkg/platform/controller/addon/gpumanager/images"
 	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
@@ -35,10 +30,11 @@ import (
 	lbcf "tkestack.io/tke/pkg/platform/controller/addon/lbcf/images"
 	logcollector "tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
 	persistentevent "tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
-	prometheus "tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
 	csioperator "tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator/images"
 	volumedecorator "tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
+	baremetal "tkestack.io/tke/pkg/platform/provider/baremetal/images"
+	galaxy "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
 )
 
 func main() {
@@ -56,7 +52,7 @@ func main() {
 		lbcf.List,
 		logcollector.List,
 		persistentevent.List,
-		prometheus.List,
+		monitorconfig.List,
 		csioperator.List,
 		volumedecorator.List,
 		tappcontroller.List,

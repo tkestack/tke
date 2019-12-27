@@ -102,6 +102,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().Projects().Informer()}, nil
 
 		// Group=monitor.tkestack.io, Version=internalVersion
+	case monitor.SchemeGroupVersion.WithResource("collectors"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Monitor().InternalVersion().Collectors().Informer()}, nil
 	case monitor.SchemeGroupVersion.WithResource("configmaps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Monitor().InternalVersion().ConfigMaps().Informer()}, nil
 
@@ -146,8 +148,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().Machines().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("persistentevents"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().PersistentEvents().Informer()}, nil
-	case platform.SchemeGroupVersion.WithResource("prometheuses"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().Prometheuses().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("registries"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().Registries().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("tappcontrollers"):

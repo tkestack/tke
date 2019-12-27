@@ -20,6 +20,8 @@
 
 package v1
 
+type CollectorExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type MetricExpansion interface{}

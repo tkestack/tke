@@ -30,9 +30,23 @@ import (
 // Public to allow building arbitrary schemes.
 // All generated defaulters are covering - they call all nested defaulters.
 func RegisterDefaults(scheme *runtime.Scheme) error {
+	scheme.AddTypeDefaultingFunc(&Collector{}, func(obj interface{}) { SetObjectDefaults_Collector(obj.(*Collector)) })
+	scheme.AddTypeDefaultingFunc(&CollectorList{}, func(obj interface{}) { SetObjectDefaults_CollectorList(obj.(*CollectorList)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMap{}, func(obj interface{}) { SetObjectDefaults_ConfigMap(obj.(*ConfigMap)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMapList{}, func(obj interface{}) { SetObjectDefaults_ConfigMapList(obj.(*ConfigMapList)) })
 	return nil
+}
+
+func SetObjectDefaults_Collector(in *Collector) {
+	SetDefaults_CollectorSpec(&in.Spec)
+	SetDefaults_CollectorStatus(&in.Status)
+}
+
+func SetObjectDefaults_CollectorList(in *CollectorList) {
+	for i := range in.Items {
+		a := &in.Items[i]
+		SetObjectDefaults_Collector(a)
+	}
 }
 
 func SetObjectDefaults_ConfigMap(in *ConfigMap) {

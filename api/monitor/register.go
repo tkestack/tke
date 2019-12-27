@@ -63,6 +63,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Metric{},
 		&MetricList{},
 
+		&Collector{},
+		&CollectorList{},
+
 		&ConfigMap{},
 		&ConfigMapList{})
 	return nil

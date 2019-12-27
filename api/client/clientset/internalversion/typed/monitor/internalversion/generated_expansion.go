@@ -20,6 +20,8 @@
 
 package internalversion
 
+type CollectorExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type MetricExpansion interface{}

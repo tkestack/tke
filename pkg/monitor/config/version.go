@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package images
+package config
 
 import (
 	"fmt"
@@ -66,6 +66,7 @@ var versionMap = map[string]Components{
 	},
 }
 
+// List returns the full name of images used by monitor.
 func List() []string {
 	items := make([]string, 0, len(versionMap))
 	keys := make([]string, 0, len(versionMap))

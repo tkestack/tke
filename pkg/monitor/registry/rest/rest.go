@@ -25,8 +25,9 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
 	"tkestack.io/tke/api/monitor"
-	"tkestack.io/tke/api/monitor/v1"
+	v1 "tkestack.io/tke/api/monitor/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	collectorstorage "tkestack.io/tke/pkg/monitor/registry/collector/storage"
 	configmapstorage "tkestack.io/tke/pkg/monitor/registry/configmap/storage"
 	metricstorage "tkestack.io/tke/pkg/monitor/registry/metric/storage"
 	monitorstorage "tkestack.io/tke/pkg/monitor/storage"
@@ -68,6 +69,10 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		metricREST := metricstorage.NewStorage(restOptionsGetter, s.MetricStorage)
 		storageMap["metrics"] = metricREST.Metric
+
+		collectorREST := collectorstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		storageMap["collectors"] = collectorREST.Collector
+		storageMap["collectors/status"] = collectorREST.Status
 	}
 
 	return storageMap

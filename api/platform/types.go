@@ -138,8 +138,6 @@ type ClusterStatus struct {
 	NodeCIDRMaskSize int32
 	// +optional
 	DNSIP string
-	// +optional
-	RegistryIPs []string
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.
@@ -159,18 +157,8 @@ type ClusterType string
 const (
 	// ClusterImported indicates that the cluster is imported after it is created.
 	ClusterImported ClusterType = "Imported"
-	// ClusterBaremetal represents to create the barematal.
+	// ClusterBaremetal represents to create the baremetal.
 	ClusterBaremetal ClusterType = "Baremetal"
-	// ClusterEKSHosting represents to create the EKS hosting cluster.
-	ClusterEKSHosting ClusterType = "EKSHosting"
-	// ClusterTKEHosting represents the hosting cluster in TKE.
-	ClusterTKEHosting ClusterType = "TKEHosting"
-	// ClusterTKEStandalone represents the standalone cluster in TKE.
-	ClusterTKEStandalone ClusterType = "TKEStandalone"
-	// ClusterTCEHosting represents the hosting cluster in TKE for TCE.
-	ClusterTCEHosting ClusterType = "TCEHosting"
-	// ClusterTCEStandalone represents the standalone cluster in TKE for TCE.
-	ClusterTCEStandalone ClusterType = "TCEStandalone"
 )
 
 // NetworkType defines the network type of cluster.
@@ -374,17 +362,6 @@ type ClusterComponentReplicas struct {
 	Updated   int32
 }
 
-// AddonLevel indicates the level of cluster addon.
-type AddonLevel string
-
-// These are valid level of addon.
-const (
-	// LevelBasic is level for basic of cluster.
-	LevelBasic AddonLevel = "Basic"
-	// LevelEnhance is level for enhance of cluster.
-	LevelEnhance AddonLevel = "Enhance"
-)
-
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:onlyVerbs=list,get
@@ -418,8 +395,6 @@ type ClusterAddonList struct {
 type ClusterAddonSpec struct {
 	// Addon type, one of Helm, PersistentEvent or LogCollector etc.
 	Type string
-	// AddonLevel is level of cluster addon.
-	Level AddonLevel
 	// Version
 	Version string
 }
@@ -448,8 +423,6 @@ type ClusterAddonType struct {
 	metav1.ObjectMeta
 	// Addon type, one of Helm, PersistentEvent or LogCollector etc.
 	Type string
-	// AddonLevel is level of cluster addon.
-	Level AddonLevel
 	// LatestVersion is latest version of the addon.
 	LatestVersion string
 	// Description is desc of the addon.

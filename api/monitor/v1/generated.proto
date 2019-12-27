@@ -29,6 +29,84 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "v1";
 
+// Collector is a monitor component.
+message Collector {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of clusters in this set.
+  // +optional
+  optional CollectorSpec spec = 2;
+
+  // +optional
+  optional CollectorStatus status = 3;
+}
+
+// CollectorList is the whole list of all collectors which owned by a tenant.
+message CollectorList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of Collector
+  repeated Collector items = 2;
+}
+
+// CollectorSpec describes the attributes on a Collector.
+message CollectorSpec {
+  optional string tenantID = 1;
+
+  optional string clusterName = 2;
+
+  // +optional
+  optional string type = 3;
+
+  // Version is the components version.
+  // +optional
+  optional string version = 4;
+
+  // Storage is the remote address for collector when writing/reading outside of cluster.
+  // +optional
+  optional CollectorStorage storage = 5;
+
+  // NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
+  // +optional
+  optional string notifyWebhook = 6;
+}
+
+// CollectorStatus is information about the current status of a Collector.
+message CollectorStatus {
+  // Version is the version of collector.
+  // +optional
+  optional string version = 1;
+
+  // Components is the components version such as node-exporter and alert manager.
+  // +optional
+  map<string, string> components = 2;
+
+  // Phase is the current lifecycle phase of the helm of cluster.
+  // +optional
+  optional string phase = 3;
+
+  // Reason is a brief CamelCase string that describes any failure.
+  // +optional
+  optional string reason = 4;
+
+  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
+  // +optional
+  optional int32 retryCount = 5;
+
+  // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 6;
+}
+
+// CollectorStorage is the remote write/read address for collector.
+message CollectorStorage {
+  repeated string writeAddr = 1;
+
+  repeated string readAddr = 2;
+}
+
 // ConfigMap holds configuration data for tke to consume.
 message ConfigMap {
   // +optional

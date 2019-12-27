@@ -27,6 +27,7 @@ require (
 	github.com/deislabs/oras v0.8.0 // indirect
 	github.com/dexidp/dex v0.0.0-20191223120519-789272a0c18f
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/docker/compose-on-kubernetes v0.4.24 // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7

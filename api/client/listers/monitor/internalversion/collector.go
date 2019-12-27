@@ -24,44 +24,44 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
-	platform "tkestack.io/tke/api/platform"
+	monitor "tkestack.io/tke/api/monitor"
 )
 
-// PrometheusLister helps list Prometheuses.
-type PrometheusLister interface {
-	// List lists all Prometheuses in the indexer.
-	List(selector labels.Selector) (ret []*platform.Prometheus, err error)
-	// Get retrieves the Prometheus from the index for a given name.
-	Get(name string) (*platform.Prometheus, error)
-	PrometheusListerExpansion
+// CollectorLister helps list Collectors.
+type CollectorLister interface {
+	// List lists all Collectors in the indexer.
+	List(selector labels.Selector) (ret []*monitor.Collector, err error)
+	// Get retrieves the Collector from the index for a given name.
+	Get(name string) (*monitor.Collector, error)
+	CollectorListerExpansion
 }
 
-// prometheusLister implements the PrometheusLister interface.
-type prometheusLister struct {
+// collectorLister implements the CollectorLister interface.
+type collectorLister struct {
 	indexer cache.Indexer
 }
 
-// NewPrometheusLister returns a new PrometheusLister.
-func NewPrometheusLister(indexer cache.Indexer) PrometheusLister {
-	return &prometheusLister{indexer: indexer}
+// NewCollectorLister returns a new CollectorLister.
+func NewCollectorLister(indexer cache.Indexer) CollectorLister {
+	return &collectorLister{indexer: indexer}
 }
 
-// List lists all Prometheuses in the indexer.
-func (s *prometheusLister) List(selector labels.Selector) (ret []*platform.Prometheus, err error) {
+// List lists all Collectors in the indexer.
+func (s *collectorLister) List(selector labels.Selector) (ret []*monitor.Collector, err error) {
 	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*platform.Prometheus))
+		ret = append(ret, m.(*monitor.Collector))
 	})
 	return ret, err
 }
 
-// Get retrieves the Prometheus from the index for a given name.
-func (s *prometheusLister) Get(name string) (*platform.Prometheus, error) {
+// Get retrieves the Collector from the index for a given name.
+func (s *collectorLister) Get(name string) (*monitor.Collector, error) {
 	obj, exists, err := s.indexer.GetByKey(name)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		return nil, errors.NewNotFound(platform.Resource("prometheus"), name)
+		return nil, errors.NewNotFound(monitor.Resource("collector"), name)
 	}
-	return obj.(*platform.Prometheus), nil
+	return obj.(*monitor.Collector), nil
 }

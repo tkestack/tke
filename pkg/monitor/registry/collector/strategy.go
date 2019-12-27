@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package prometheus
+package collector
 
 import (
 	"context"
@@ -29,14 +29,14 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
-	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/api/monitor"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
+	"tkestack.io/tke/pkg/monitor/config"
 	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
-// Strategy implements verification logic for prometheus.
+// Strategy implements verification logic for collector.
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
@@ -49,7 +49,7 @@ var _ rest.RESTDeleteStrategy = &Strategy{}
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating namespace set objects.
 func NewStrategy() *Strategy {
-	return &Strategy{platform.Scheme, namesutil.Generator}
+	return &Strategy{monitor.Scheme, namesutil.Generator}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -71,22 +71,18 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	prom, _ := obj.(*platform.Prometheus)
+	collector, _ := obj.(*monitor.Collector)
 
 	if len(tenantID) != 0 {
-		prom.Spec.TenantID = tenantID
+		collector.Spec.TenantID = tenantID
 	}
 
-	if prom.Name == "" && prom.GenerateName == "" {
-		prom.GenerateName = "prom-"
+	if collector.Name == "" && collector.GenerateName == "" {
+		collector.GenerateName = "cl-"
 	}
 
-	if prom.Spec.Version == "" {
-		prom.Spec.Version = images.LatestVersion
-	}
-
-	if prom.Status.Phase == "" {
-		prom.Status.Phase = platform.AddonPhaseInitializing
+	if collector.Spec.Version == "" {
+		collector.Spec.Version = config.LatestVersion
 	}
 }
 
@@ -95,19 +91,19 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
-		oldProm := old.(*platform.Prometheus)
-		prom, _ := obj.(*platform.Prometheus)
-		if oldProm.Spec.TenantID != tenantID {
-			log.Panic("Unauthorized update prometheus information", log.String("oldTenantID", oldProm.Spec.TenantID),
-				log.String("newTenantID", prom.Spec.TenantID), log.String("userTenantID", tenantID))
+		oldCollector := old.(*monitor.Collector)
+		collector, _ := obj.(*monitor.Collector)
+		if oldCollector.Spec.TenantID != tenantID {
+			log.Panic("Unauthorized update collector information", log.String("oldTenantID", oldCollector.Spec.TenantID),
+				log.String("newTenantID", collector.Spec.TenantID), log.String("userTenantID", tenantID))
 		}
-		prom.Spec.TenantID = tenantID
+		collector.Spec.TenantID = tenantID
 	}
 }
 
-// Validate validates a new prometheus.
+// Validate validates a new collector.
 func (Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidatePrometheus(obj.(*platform.Prometheus))
+	return ValidateCollector(obj.(*monitor.Collector))
 }
 
 // AllowCreateOnUpdate is false for persistent events
@@ -128,17 +124,17 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end namespace set.
 func (Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidatePrometheusUpdate(obj.(*platform.Prometheus), old.(*platform.Prometheus))
+	return ValidateCollectorUpdate(obj.(*monitor.Collector), old.(*monitor.Collector))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	prom, _ := obj.(*platform.Prometheus)
-	return labels.Set(prom.ObjectMeta.Labels), ToSelectableFields(prom), nil
+	collector, _ := obj.(*monitor.Collector)
+	return collector.ObjectMeta.Labels, ToSelectableFields(collector), nil
 }
 
-// MatchPrometheus returns a generic matcher for a given label and field selector.
-func MatchPrometheus(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
+// MatchCollector returns a generic matcher for a given label and field selector.
+func MatchCollector(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{
 		Label:    label,
 		Field:    field,
@@ -146,6 +142,7 @@ func MatchPrometheus(label labels.Selector, field fields.Selector) storage.Selec
 		IndexFields: []string{
 			"spec.tenantID",
 			"spec.clusterName",
+			"spec.type",
 			"spec.version",
 			"status.version",
 			"status.phase"},
@@ -153,19 +150,20 @@ func MatchPrometheus(label labels.Selector, field fields.Selector) storage.Selec
 }
 
 // ToSelectableFields returns a field set that represents the object
-func ToSelectableFields(prom *platform.Prometheus) fields.Set {
-	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&prom.ObjectMeta, false)
+func ToSelectableFields(collector *monitor.Collector) fields.Set {
+	objectMetaFieldsSet := generic.ObjectMetaFieldsSet(&collector.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID":    prom.Spec.TenantID,
-		"spec.clusterName": prom.Spec.ClusterName,
-		"spec.version":     prom.Spec.Version,
-		"status.version":   prom.Status.Version,
-		"status.phase":     string(prom.Status.Phase),
+		"spec.tenantID":    collector.Spec.TenantID,
+		"spec.clusterName": collector.Spec.ClusterName,
+		"spec.type":        string(collector.Spec.Type),
+		"spec.version":     collector.Spec.Version,
+		"status.version":   collector.Status.Version,
+		"status.phase":     string(collector.Status.Phase),
 	}
 	return generic.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
 
-// StatusStrategy implements verification logic for status of Prometheus.
+// StatusStrategy implements verification logic for status of Collector.
 type StatusStrategy struct {
 	*Strategy
 }
@@ -182,9 +180,9 @@ func NewStatusStrategy(strategy *Strategy) *StatusStrategy {
 // sort order-insensitive list fields, etc.  This should not remove fields
 // whose presence would be considered a validation error.
 func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	newProm := obj.(*platform.Prometheus)
-	oldProm := old.(*platform.Prometheus)
-	newProm.Spec = oldProm.Spec
+	newCollector := obj.(*monitor.Collector)
+	oldCollector := old.(*monitor.Collector)
+	newCollector.Spec = oldCollector.Spec
 }
 
 // ValidateUpdate is invoked after default fields in the object have been

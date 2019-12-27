@@ -822,6 +822,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/business/v1.ProjectSpec":                                 schema_tke_api_business_v1_ProjectSpec(ref),
 		"tkestack.io/tke/api/business/v1.ProjectStatus":                               schema_tke_api_business_v1_ProjectStatus(ref),
 		"tkestack.io/tke/api/business/v1.UsedQuantity":                                schema_tke_api_business_v1_UsedQuantity(ref),
+		"tkestack.io/tke/api/monitor/v1.Collector":                                    schema_tke_api_monitor_v1_Collector(ref),
+		"tkestack.io/tke/api/monitor/v1.CollectorList":                                schema_tke_api_monitor_v1_CollectorList(ref),
+		"tkestack.io/tke/api/monitor/v1.CollectorSpec":                                schema_tke_api_monitor_v1_CollectorSpec(ref),
+		"tkestack.io/tke/api/monitor/v1.CollectorStatus":                              schema_tke_api_monitor_v1_CollectorStatus(ref),
+		"tkestack.io/tke/api/monitor/v1.CollectorStorage":                             schema_tke_api_monitor_v1_CollectorStorage(ref),
 		"tkestack.io/tke/api/monitor/v1.ConfigMap":                                    schema_tke_api_monitor_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/monitor/v1.ConfigMapList":                                schema_tke_api_monitor_v1_ConfigMapList(ref),
 		"tkestack.io/tke/api/monitor/v1.Metric":                                       schema_tke_api_monitor_v1_Metric(ref),
@@ -928,11 +933,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.PersistentEventList":                         schema_tke_api_platform_v1_PersistentEventList(ref),
 		"tkestack.io/tke/api/platform/v1.PersistentEventSpec":                         schema_tke_api_platform_v1_PersistentEventSpec(ref),
 		"tkestack.io/tke/api/platform/v1.PersistentEventStatus":                       schema_tke_api_platform_v1_PersistentEventStatus(ref),
-		"tkestack.io/tke/api/platform/v1.Prometheus":                                  schema_tke_api_platform_v1_Prometheus(ref),
-		"tkestack.io/tke/api/platform/v1.PrometheusList":                              schema_tke_api_platform_v1_PrometheusList(ref),
-		"tkestack.io/tke/api/platform/v1.PrometheusRemoteAddr":                        schema_tke_api_platform_v1_PrometheusRemoteAddr(ref),
-		"tkestack.io/tke/api/platform/v1.PrometheusSpec":                              schema_tke_api_platform_v1_PrometheusSpec(ref),
-		"tkestack.io/tke/api/platform/v1.PrometheusStatus":                            schema_tke_api_platform_v1_PrometheusStatus(ref),
 		"tkestack.io/tke/api/platform/v1.Registry":                                    schema_tke_api_platform_v1_Registry(ref),
 		"tkestack.io/tke/api/platform/v1.RegistryList":                                schema_tke_api_platform_v1_RegistryList(ref),
 		"tkestack.io/tke/api/platform/v1.RegistrySpec":                                schema_tke_api_platform_v1_RegistrySpec(ref),
@@ -35396,7 +35396,15 @@ func schema_tke_api_auth_v1_APIKeyStatus(ref common.ReferenceCallback) common.Op
 							Format:      "",
 						},
 					},
+					"expired": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Expired represents whether the apikey has been expired.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
+				Required: []string{"expired"},
 			},
 		},
 	}
@@ -38999,6 +39007,256 @@ func schema_tke_api_business_v1_UsedQuantity(ref common.ReferenceCallback) commo
 	}
 }
 
+func schema_tke_api_monitor_v1_Collector(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Collector is a monitor component.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec defines the desired identities of clusters in this set.",
+							Ref:         ref("tkestack.io/tke/api/monitor/v1.CollectorSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/monitor/v1.CollectorStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/monitor/v1.CollectorSpec", "tkestack.io/tke/api/monitor/v1.CollectorStatus"},
+	}
+}
+
+func schema_tke_api_monitor_v1_CollectorList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CollectorList is the whole list of all collectors which owned by a tenant.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of Collector",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/monitor/v1.Collector"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/monitor/v1.Collector"},
+	}
+}
+
+func schema_tke_api_monitor_v1_CollectorSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CollectorSpec describes the attributes on a Collector.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tenantID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"clusterName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Version is the components version.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"storage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Storage is the remote address for collector when writing/reading outside of cluster.",
+							Ref:         ref("tkestack.io/tke/api/monitor/v1.CollectorStorage"),
+						},
+					},
+					"notifyWebhook": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address \"https://[notify-api-address]/webhook\" will be used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"tenantID", "clusterName"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/monitor/v1.CollectorStorage"},
+	}
+}
+
+func schema_tke_api_monitor_v1_CollectorStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CollectorStatus is information about the current status of a Collector.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Version is the version of collector.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"components": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Components is the components version such as node-exporter and alert manager.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Phase is the current lifecycle phase of the helm of cluster.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reason is a brief CamelCase string that describes any failure.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"retryCount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"lastReInitializingTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_monitor_v1_CollectorStorage(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CollectorStorage is the remote write/read address for collector.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"writeAddr": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"readAddr": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_tke_api_monitor_v1_ConfigMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -41012,13 +41270,6 @@ func schema_tke_api_platform_v1_ClusterAddonSpec(ref common.ReferenceCallback) c
 							Format:      "",
 						},
 					},
-					"level": {
-						SchemaProps: spec.SchemaProps{
-							Description: "AddonLevel is level of cluster addon.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"version": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Version",
@@ -41027,7 +41278,7 @@ func schema_tke_api_platform_v1_ClusterAddonSpec(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"type", "level", "version"},
+				Required: []string{"type", "version"},
 			},
 		},
 	}
@@ -41099,13 +41350,6 @@ func schema_tke_api_platform_v1_ClusterAddonType(ref common.ReferenceCallback) c
 							Format:      "",
 						},
 					},
-					"level": {
-						SchemaProps: spec.SchemaProps{
-							Description: "AddonLevel is level of cluster addon.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"latestVersion": {
 						SchemaProps: spec.SchemaProps{
 							Description: "LatestVersion is latest version of the addon.",
@@ -41134,7 +41378,7 @@ func schema_tke_api_platform_v1_ClusterAddonType(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"type", "level", "latestVersion"},
+				Required: []string{"type", "latestVersion"},
 			},
 		},
 		Dependencies: []string{
@@ -42083,19 +42327,6 @@ func schema_tke_api_platform_v1_ClusterStatus(ref common.ReferenceCallback) comm
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
-						},
-					},
-					"registryIPs": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
 						},
 					},
 				},
@@ -44113,263 +44344,6 @@ func schema_tke_api_platform_v1_PersistentEventStatus(ref common.ReferenceCallba
 						SchemaProps: spec.SchemaProps{
 							Description: "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
-	}
-}
-
-func schema_tke_api_platform_v1_Prometheus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Prometheus is a kubernetes package manager.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Spec defines the desired identities of clusters in this set.",
-							Ref:         ref("tkestack.io/tke/api/platform/v1.PrometheusSpec"),
-						},
-					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("tkestack.io/tke/api/platform/v1.PrometheusStatus"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/platform/v1.PrometheusSpec", "tkestack.io/tke/api/platform/v1.PrometheusStatus"},
-	}
-}
-
-func schema_tke_api_platform_v1_PrometheusList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "PrometheusList is the whole list of all prometheus which owned by a tenant.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Description: "List of Prometheuss",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref("tkestack.io/tke/api/platform/v1.Prometheus"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/platform/v1.Prometheus"},
-	}
-}
-
-func schema_tke_api_platform_v1_PrometheusRemoteAddr(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "PrometheusRemoteAddr is the remote write/read address for prometheus",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"writeAddr": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"readAddr": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func schema_tke_api_platform_v1_PrometheusSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "PrometheusSpec describes the attributes on a Prometheus.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"tenantID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"clusterName": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"subVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "SubVersion is the components version such as node-exporter.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"remoteAddress": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.",
-							Ref:         ref("tkestack.io/tke/api/platform/v1.PrometheusRemoteAddr"),
-						},
-					},
-					"notifyWebhook": {
-						SchemaProps: spec.SchemaProps{
-							Description: "NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address \"https://[notify-api-address]/webhook\" will be used.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"tenantID", "clusterName"},
-			},
-		},
-		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.PrometheusRemoteAddr"},
-	}
-}
-
-func schema_tke_api_platform_v1_PrometheusStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "PrometheusStatus is information about the current status of a Prometheus.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"phase": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Phase is the current lifecycle phase of the helm of cluster.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"reason": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Reason is a brief CamelCase string that describes any failure.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"retryCount": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-					"lastReInitializingTimestamp": {
-						SchemaProps: spec.SchemaProps{
-							Description: "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
-						},
-					},
-					"subVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "SubVersion is the components version such as node-exporter.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
 						},
 					},
 				},

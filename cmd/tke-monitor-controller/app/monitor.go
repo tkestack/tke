@@ -19,12 +19,20 @@
 package app
 
 import (
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
-	"tkestack.io/tke/api/monitor/v1"
+	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	v1 "tkestack.io/tke/api/monitor/v1"
+	"tkestack.io/tke/pkg/monitor/controller/collector"
 	"tkestack.io/tke/pkg/monitor/controller/metric"
 	"tkestack.io/tke/pkg/monitor/storage"
 	"tkestack.io/tke/pkg/util/log"
+)
+
+const (
+	collectorEventSyncPeriod = 5 * time.Minute
+	concurrentCollectorSyncs = 10
 )
 
 func startMetricController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -43,6 +51,31 @@ func startMetricController(ctx ControllerContext) (http.Handler, bool, error) {
 	ctrl := metric.NewController(projectStorage)
 
 	go ctrl.Run(ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startCollectorController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: "v1", Resource: "collectors"}] {
+		return nil, false, nil
+	}
+
+	remoteClient, err := storage.NewRemoteClient(&ctx.MonitorConfig.Storage)
+	if err != nil {
+		return nil, false, err
+	}
+
+	ctrl := collector.NewController(
+		ctx.ClientBuilder.ClientOrDie("collector-controller").MonitorV1(),
+		ctx.PlatformClient,
+		ctx.InformerFactory.Monitor().V1().Collectors(),
+		collectorEventSyncPeriod,
+		remoteClient,
+	)
+
+	go func() {
+		_ = ctrl.Run(concurrentCollectorSyncs, ctx.Stop)
+	}()
 
 	return nil, true, nil
 }

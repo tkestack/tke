@@ -20,6 +20,10 @@
 
 package internalversion
 
+// CollectorListerExpansion allows custom methods to be added to
+// CollectorLister.
+type CollectorListerExpansion interface{}
+
 // ConfigMapListerExpansion allows custom methods to be added to
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}

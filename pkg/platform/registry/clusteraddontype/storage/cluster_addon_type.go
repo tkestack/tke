@@ -78,7 +78,6 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 					Name: strings.ToLower(string(k)),
 				},
 				Type:          string(k),
-				Level:         v.Level,
 				LatestVersion: v.LatestVersion,
 			}
 		}
@@ -107,7 +106,6 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 				Name: strings.ToLower(string(k)),
 			},
 			Type:          string(k),
-			Level:         v.Level,
 			LatestVersion: v.LatestVersion,
 			Description:   v.Description,
 		}

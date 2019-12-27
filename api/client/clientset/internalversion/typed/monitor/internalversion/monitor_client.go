@@ -27,6 +27,7 @@ import (
 
 type MonitorInterface interface {
 	RESTClient() rest.Interface
+	CollectorsGetter
 	ConfigMapsGetter
 	MetricsGetter
 }
@@ -34,6 +35,10 @@ type MonitorInterface interface {
 // MonitorClient is used to interact with features provided by the monitor.tkestack.io group.
 type MonitorClient struct {
 	restClient rest.Interface
+}
+
+func (c *MonitorClient) Collectors() CollectorInterface {
+	return newCollectors(c)
 }
 
 func (c *MonitorClient) ConfigMaps() ConfigMapInterface {

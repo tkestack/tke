@@ -122,68 +122,101 @@ type ConfigMapList struct {
 // +genclient:skipVerbs=deleteCollection
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Prometheus is a kubernetes package manager.
-type Prometheus struct {
+// Collector is a monitor component.
+type Collector struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// Spec defines the desired identities of clusters in this set.
 	// +optional
-	Spec PrometheusSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	Spec CollectorSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 	// +optional
-	Status PrometheusStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+	Status CollectorStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// PrometheusList is the whole list of all prometheus which owned by a tenant.
-type PrometheusList struct {
+// CollectorList is the whole list of all collectors which owned by a tenant.
+type CollectorList struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	// List of Prometheus
-	Items []Prometheus `json:"items" protobuf:"bytes,2,rep,name=items"`
+	// List of Collector
+	Items []Collector `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
-// PrometheusSpec describes the attributes on a Prometheus.
-type PrometheusSpec struct {
+// CollectorSpec describes the attributes on a Collector.
+type CollectorSpec struct {
 	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
 	ClusterName string `json:"clusterName" protobuf:"bytes,2,opt,name=clusterName"`
-	Version     string `json:"version,omitempty" protobuf:"bytes,3,opt,name=version"`
-	// SubVersion is the components version such as node-exporter.
-	SubVersion map[string]string `json:"subVersion,omitempty" protobuf:"bytes,4,opt,name=subVersion"`
-	// RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.
-	RemoteAddress PrometheusRemoteAddr `json:"remoteAddress,omitempty" protobuf:"bytes,5,opt,name=remoteAddress"`
 	// +optional
+	Type CollectorType `json:"type,omitempty" protobuf:"bytes,3,opt,name=type"`
+	// Version is the components version.
+	// +optional
+	Version string `json:"version,omitempty" protobuf:"bytes,4,opt,name=version"`
+	// Storage is the remote address for collector when writing/reading outside of cluster.
+	// +optional
+	Storage CollectorStorage `json:"storage,omitempty" protobuf:"bytes,5,opt,name=storage"`
 	// NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
+	// +optional
 	NotifyWebhook string `json:"notifyWebhook,omitempty" protobuf:"bytes,6,opt,name=notifyWebhook"`
 }
 
-// PrometheusStatus is information about the current status of a Prometheus.
-type PrometheusStatus struct {
+// CollectorStatus is information about the current status of a Collector.
+type CollectorStatus struct {
+	// Version is the version of collector.
 	// +optional
 	Version string `json:"version,omitempty" protobuf:"bytes,1,opt,name=version"`
+	// Components is the components version such as node-exporter and alert manager.
+	// +optional
+	Components map[string]string `json:"components,omitempty" protobuf:"bytes,2,rep,name=components"`
 	// Phase is the current lifecycle phase of the helm of cluster.
 	// +optional
-	Phase AddonPhase `json:"phase,omitempty" protobuf:"bytes,2,opt,name=phase"`
+	Phase CollectorPhase `json:"phase,omitempty" protobuf:"bytes,3,opt,name=phase"`
 	// Reason is a brief CamelCase string that describes any failure.
 	// +optional
-	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
+	Reason string `json:"reason,omitempty" protobuf:"bytes,4,opt,name=reason"`
 	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
 	// +optional
-	RetryCount int32 `json:"retryCount" protobuf:"varint,4,name=retryCount"`
+	RetryCount int32 `json:"retryCount" protobuf:"varint,5,name=retryCount"`
 	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
 	// +optional
-	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,5,name=lastReInitializingTimestamp"`
-	// SubVersion is the components version such as node-exporter.
-	SubVersion map[string]string `json:"subVersion,omitempty" protobuf:"bytes,6,opt,name=subVersion"`
+	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,6,name=lastReInitializingTimestamp"`
 }
 
-// PrometheusRemoteAddr is the remote write/read address for prometheus
-type PrometheusRemoteAddr struct {
+// CollectorStorage is the remote write/read address for collector.
+type CollectorStorage struct {
 	WriteAddr []string `json:"writeAddr,omitempty" protobuf:"bytes,1,opt,name=writeAddr"`
 	ReadAddr  []string `json:"readAddr,omitempty" protobuf:"bytes,2,opt,name=readAddr"`
 }
+
+// CollectorPhase defines the phase of collector constructor.
+type CollectorPhase string
+
+const (
+	// CollectorPhaseInitializing means is wait initializing.
+	CollectorPhaseInitializing CollectorPhase = "Initializing"
+	// CollectorPhaseReinitializing means is reinitializing.
+	CollectorPhaseReinitializing CollectorPhase = "Reinitializing"
+	// CollectorPhaseChecking means is wait checking.
+	CollectorPhaseChecking CollectorPhase = "Checking"
+	// CollectorPhaseRunning means is running.
+	CollectorPhaseRunning CollectorPhase = "Running"
+	// CollectorPhaseUpgrading means is upgrading.
+	CollectorPhaseUpgrading CollectorPhase = "Upgrading"
+	// CollectorPhaseFailed means has been failed.
+	CollectorPhaseFailed CollectorPhase = "Failed"
+)
+
+// CollectorType defines the type of collector.
+type CollectorType string
+
+const (
+	// CollectorManaged means the collector managed by TKE.
+	CollectorManaged CollectorType = "Managed"
+	// CollectorImported means the prometheus installed by other.
+	CollectorImportedPrometheus CollectorType = "ImportedPrometheus"
+)

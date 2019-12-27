@@ -19,14 +19,15 @@
 package prometheus
 
 import (
+	"time"
+
 	v1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"time"
+	collectorcontroller "tkestack.io/tke/pkg/monitor/controller/collector"
 	"tkestack.io/tke/pkg/monitor/util"
 	"tkestack.io/tke/pkg/monitor/util/rule"
-	prometheusrule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -36,12 +37,12 @@ func (h *processor) loadRule(clusterName string) (util.GenericRuleOperator, erro
 		return nil, err
 	}
 
-	promRule, err := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
+	promRule, err := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(collectorcontroller.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("Load rule from prometheusRule %s(%s)", clusterName, prometheusrule.PrometheusRuleAlert)
+	log.Infof("Load rule from prometheusRule %s(%s)", clusterName, collectorcontroller.PrometheusRuleAlert)
 	ruleOp := rule.NewGenericRuleOperator(func(rule *v1.Rule) string {
 		return rule.Alert
 	})
@@ -58,10 +59,10 @@ func (h *processor) saveRule(clusterName string, groups []v1.RuleGroup) error {
 		return err
 	}
 
-	log.Infof("Save rule to prometheusRule %s(%s)", clusterName, prometheusrule.PrometheusRuleAlert)
+	log.Infof("Save rule to prometheusRule %s(%s)", clusterName, collectorcontroller.PrometheusRuleAlert)
 
 	return wait.PollImmediate(time.Second, time.Second*5, func() (done bool, err error) {
-		promRule, getErr := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
+		promRule, getErr := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(collectorcontroller.PrometheusRuleAlert, metav1.GetOptions{})
 		if getErr != nil {
 			return false, getErr
 		}

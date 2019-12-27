@@ -20,12 +20,13 @@ package cluster
 
 import (
 	"fmt"
-	apimachineryValidation "k8s.io/apimachinery/pkg/api/validation"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"net"
 	"sync"
 	"time"
+
+	apimachineryValidation "k8s.io/apimachinery/pkg/api/validation"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/provider"
@@ -42,7 +43,6 @@ var clusterServiceNumAvails = []int32{32, 64, 128, 256, 512, 1024, 2048, 4096, 8
 var types = sets.NewString(
 	string(platform.ClusterImported),
 	string(platform.ClusterBaremetal),
-	string(platform.ClusterEKSHosting),
 )
 
 // ValidateCluster tests if required fields in the cluster are set.

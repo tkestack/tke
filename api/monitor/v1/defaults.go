@@ -32,8 +32,14 @@ func SetDefaults_ConfigMap(obj *ConfigMap) {
 	}
 }
 
-func SetDefaults_PrometheusStatus(obj *PrometheusStatus) {
+func SetDefaults_CollectorStatus(obj *CollectorStatus) {
 	if obj.Phase == "" {
-		obj.Phase = AddonPhaseInitializing
+		obj.Phase = CollectorPhaseInitializing
+	}
+}
+
+func SetDefaults_CollectorSpec(obj *CollectorSpec) {
+	if obj.Type == "" {
+		obj.Type = CollectorManaged
 	}
 }

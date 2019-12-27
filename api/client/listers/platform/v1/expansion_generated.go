@@ -72,10 +72,6 @@ type MachineListerExpansion interface{}
 // PersistentEventLister.
 type PersistentEventListerExpansion interface{}
 
-// PrometheusListerExpansion allows custom methods to be added to
-// PrometheusLister.
-type PrometheusListerExpansion interface{}
-
 // RegistryListerExpansion allows custom methods to be added to
 // RegistryLister.
 type RegistryListerExpansion interface{}

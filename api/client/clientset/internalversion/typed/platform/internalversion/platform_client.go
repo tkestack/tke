@@ -41,7 +41,6 @@ type PlatformInterface interface {
 	LogCollectorsGetter
 	MachinesGetter
 	PersistentEventsGetter
-	PrometheusesGetter
 	RegistriesGetter
 	TappControllersGetter
 	VolumeDecoratorsGetter
@@ -106,10 +105,6 @@ func (c *PlatformClient) Machines() MachineInterface {
 
 func (c *PlatformClient) PersistentEvents() PersistentEventInterface {
 	return newPersistentEvents(c)
-}
-
-func (c *PlatformClient) Prometheuses() PrometheusInterface {
-	return newPrometheuses(c)
 }
 
 func (c *PlatformClient) Registries() RegistryInterface {

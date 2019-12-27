@@ -144,9 +144,6 @@ message ClusterAddonSpec {
   // Addon type, one of Helm, PersistentEvent or LogCollector etc.
   optional string type = 1;
 
-  // AddonLevel is level of cluster addon.
-  optional string level = 2;
-
   // Version
   optional string version = 3;
 }
@@ -172,9 +169,6 @@ message ClusterAddonType {
 
   // Addon type, one of Helm, PersistentEvent or LogCollector etc.
   optional string type = 2;
-
-  // AddonLevel is level of cluster addon.
-  optional string level = 3;
 
   // LatestVersion is latest version of the addon.
   optional string latestVersion = 4;
@@ -487,9 +481,6 @@ message ClusterStatus {
 
   // +optional
   optional string dnsIP = 13;
-
-  // +optional
-  repeated string registryIPs = 14;
 }
 
 // ConfigMap holds configuration data for tke to consume.
@@ -1100,79 +1091,6 @@ message PersistentEventStatus {
   // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
-}
-
-// Prometheus is a kubernetes package manager.
-message Prometheus {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-
-  // Spec defines the desired identities of clusters in this set.
-  // +optional
-  optional PrometheusSpec spec = 2;
-
-  // +optional
-  optional PrometheusStatus status = 3;
-}
-
-// PrometheusList is the whole list of all prometheus which owned by a tenant.
-message PrometheusList {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
-
-  // List of Prometheuss
-  repeated Prometheus items = 2;
-}
-
-// PrometheusRemoteAddr is the remote write/read address for prometheus
-message PrometheusRemoteAddr {
-  repeated string writeAddr = 1;
-
-  repeated string readAddr = 2;
-}
-
-// PrometheusSpec describes the attributes on a Prometheus.
-message PrometheusSpec {
-  optional string tenantID = 1;
-
-  optional string clusterName = 2;
-
-  optional string version = 3;
-
-  // SubVersion is the components version such as node-exporter.
-  map<string, string> subVersion = 4;
-
-  // RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.
-  optional PrometheusRemoteAddr remoteAddress = 5;
-
-  // +optional
-  // NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
-  optional string notifyWebhook = 6;
-}
-
-// PrometheusStatus is information about the current status of a Prometheus.
-message PrometheusStatus {
-  // +optional
-  optional string version = 1;
-
-  // Phase is the current lifecycle phase of the helm of cluster.
-  // +optional
-  optional string phase = 2;
-
-  // Reason is a brief CamelCase string that describes any failure.
-  // +optional
-  optional string reason = 3;
-
-  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-  // +optional
-  optional int32 retryCount = 4;
-
-  // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
-
-  // SubVersion is the components version such as node-exporter.
-  map<string, string> subVersion = 6;
 }
 
 // Registry records the third-party image repository information stored by the

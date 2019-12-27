@@ -28,16 +28,15 @@ import (
 	"testing"
 	"time"
 
-	"tkestack.io/tke/pkg/monitor/services/rest"
-	"tkestack.io/tke/pkg/monitor/util"
-	prometheus_rule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
-
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/coreos/prometheus-operator/pkg/client/versioned/fake"
 	"github.com/emicklei/go-restful"
 	"github.com/parnurzeal/gorequest"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	collectorcontroller "tkestack.io/tke/pkg/monitor/controller/collector"
+	"tkestack.io/tke/pkg/monitor/services/rest"
+	"tkestack.io/tke/pkg/monitor/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -138,7 +137,7 @@ func TestProcessor_CreateGet(t *testing.T) {
 	}
 
 	targetAlarmPolicy := &rest.AlarmPolicy{}
-	err = json.Unmarshal([]byte(r.Data), targetAlarmPolicy)
+	err = json.Unmarshal(r.Data, targetAlarmPolicy)
 	if err != nil {
 		t.Errorf("can't decode result, %v", err)
 		return
@@ -204,7 +203,7 @@ func TestProcessor_Update(t *testing.T) {
 	}
 
 	targetAlarmPolicy := &rest.AlarmPolicy{}
-	err = json.Unmarshal([]byte(r.Data), targetAlarmPolicy)
+	err = json.Unmarshal(r.Data, targetAlarmPolicy)
 	if err != nil {
 		t.Errorf("can't decode result, %v", err)
 		return
@@ -311,7 +310,7 @@ func TestProcessor_List(t *testing.T) {
 
 	t.Logf("Validate list policy")
 	targetAlarmPolicies := &rest.AlarmPolicyPagination{}
-	err = json.Unmarshal([]byte(r.Data), targetAlarmPolicies)
+	err = json.Unmarshal(r.Data, targetAlarmPolicies)
 	if err != nil {
 		t.Errorf("can't decode result, %v", err)
 		return
@@ -351,9 +350,9 @@ func createProcessorServer(stopCh chan struct{}) (*fake.Clientset, string, error
 			Kind:       monitoringv1.PrometheusRuleKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      prometheus_rule.PrometheusRuleAlert,
+			Name:      collectorcontroller.PrometheusRuleAlert,
 			Namespace: metav1.NamespaceSystem,
-			Labels:    map[string]string{prometheus_rule.PrometheusService: prometheus_rule.PrometheusCRDName, "role": "alert-rules"},
+			Labels:    map[string]string{collectorcontroller.PrometheusService: collectorcontroller.PrometheusCRDName, "role": "alert-rules"},
 		},
 		Spec: monitoringv1.PrometheusRuleSpec{Groups: []monitoringv1.RuleGroup{}},
 	}

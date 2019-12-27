@@ -58,7 +58,6 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers["csioperator"] = startCSIOperatorController
 	controllers["volumedecorators"] = startVolumeDecoratorController
 	controllers["logcollectors"] = startLogCollectorController
-	controllers["prometheus"] = startPrometheusController
 	controllers["ipam"] = startIPAMController
 	controllers["lbcf"] = startLBCFControllerController
 	return controllers

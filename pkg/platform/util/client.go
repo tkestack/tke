@@ -451,17 +451,11 @@ func ClusterAddress(cluster *platform.Cluster) (string, error) {
 	}
 
 	var address *platform.ClusterAddress
-	if cluster.Spec.Type == platform.ClusterEKSHosting {
-		if len(addrs[platform.AddressInternal]) != 0 {
-			address = &addrs[platform.AddressInternal][rand.Intn(len(addrs[platform.AddressInternal]))]
-		}
+	if len(addrs[platform.AddressAdvertise]) != 0 {
+		address = &addrs[platform.AddressAdvertise][rand.Intn(len(addrs[platform.AddressAdvertise]))]
 	} else {
-		if len(addrs[platform.AddressAdvertise]) != 0 {
-			address = &addrs[platform.AddressAdvertise][rand.Intn(len(addrs[platform.AddressAdvertise]))]
-		} else {
-			if len(addrs[platform.AddressReal]) != 0 {
-				address = &addrs[platform.AddressReal][rand.Intn(len(addrs[platform.AddressReal]))]
-			}
+		if len(addrs[platform.AddressReal]) != 0 {
+			address = &addrs[platform.AddressReal][rand.Intn(len(addrs[platform.AddressReal]))]
 		}
 	}
 

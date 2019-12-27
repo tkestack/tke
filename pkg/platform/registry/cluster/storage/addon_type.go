@@ -20,11 +20,12 @@ package storage
 
 import (
 	"context"
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"strings"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	v1 "tkestack.io/tke/api/platform/v1"
@@ -69,7 +70,6 @@ func (r *AddonTypeREST) Get(ctx context.Context, clusterName string, options *me
 					Name: strings.ToLower(string(k)),
 				},
 				Type:          string(k),
-				Level:         v.Level,
 				LatestVersion: v.LatestVersion,
 				Description:   v.Description,
 			})

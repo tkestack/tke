@@ -179,19 +179,6 @@ func FilterCronHPA(ctx context.Context, cronHPA *platform.CronHPA) error {
 	return nil
 }
 
-// FilterPrometheus is used to filter helm that do not belong
-// to the tenant.
-func FilterPrometheus(ctx context.Context, prom *platform.Prometheus) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if tenantID == "" {
-		return nil
-	}
-	if prom.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("prometheus"), prom.ObjectMeta.Name)
-	}
-	return nil
-}
-
 // FilterIPAM is used to filter ipam that do not belong
 // to the tenant.
 func FilterIPAM(ctx context.Context, ipam *platform.IPAM) error {

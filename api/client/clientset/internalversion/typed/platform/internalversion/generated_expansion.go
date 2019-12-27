@@ -48,8 +48,6 @@ type MachineExpansion interface{}
 
 type PersistentEventExpansion interface{}
 
-type PrometheusExpansion interface{}
-
 type RegistryExpansion interface{}
 
 type TappControllerExpansion interface{}

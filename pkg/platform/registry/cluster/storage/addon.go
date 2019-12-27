@@ -93,7 +93,6 @@ var (
 		volumeDecorator,
 		logCollector,
 		cronHPA,
-		prometheus,
 		lbcf,
 		ipam,
 	}
@@ -135,7 +134,6 @@ func helm(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.Helm),
-			Level:   clusteraddontype.Types[clusteraddontype.Helm].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{
@@ -169,7 +167,6 @@ func persistentEvent(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.PersistentEvent),
-			Level:   clusteraddontype.Types[clusteraddontype.PersistentEvent].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{
@@ -203,7 +200,6 @@ func gpumanager(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.GPUManager),
-			Level:   clusteraddontype.Types[clusteraddontype.GPUManager].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{
@@ -237,7 +233,6 @@ func tappcontroller(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.TappController),
-			Level:   clusteraddontype.Types[clusteraddontype.TappController].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{
@@ -271,7 +266,6 @@ func csiOperator(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.CSIOperator),
-			Level:   clusteraddontype.Types[clusteraddontype.CSIOperator].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{
@@ -305,7 +299,6 @@ func volumeDecorator(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.VolumeDecorator),
-			Level:   clusteraddontype.Types[clusteraddontype.VolumeDecorator].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{
@@ -339,7 +332,6 @@ func logCollector(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.LogCollector),
-			Level:   clusteraddontype.Types[clusteraddontype.LogCollector].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{
@@ -373,41 +365,6 @@ func cronHPA(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.CronHPA),
-			Level:   clusteraddontype.Types[clusteraddontype.CronHPA].Level,
-			Version: l.Items[0].Spec.Version,
-		},
-		Status: platform.ClusterAddonStatus{
-			Version: l.Items[0].Status.Version,
-			Phase:   string(l.Items[0].Status.Phase),
-			Reason:  l.Items[0].Status.Reason,
-		},
-	})
-	a.mutex.Unlock()
-}
-
-func prometheus(a *addonFinder) {
-	defer a.wg.Done()
-	l, err := a.platformClient.Prometheuses().List(metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
-	})
-	if err != nil {
-		a.mutex.Lock()
-		a.errors = append(a.errors, err)
-		a.mutex.Unlock()
-		return
-	}
-	if len(l.Items) == 0 {
-		return
-	}
-	a.mutex.Lock()
-	a.addons = append(a.addons, platform.ClusterAddon{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              l.Items[0].ObjectMeta.Name,
-			CreationTimestamp: l.Items[0].ObjectMeta.CreationTimestamp,
-		},
-		Spec: platform.ClusterAddonSpec{
-			Type:    string(clusteraddontype.Prometheus),
-			Level:   clusteraddontype.Types[clusteraddontype.Prometheus].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{
@@ -441,7 +398,6 @@ func ipam(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.IPAM),
-			Level:   clusteraddontype.Types[clusteraddontype.IPAM].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{
@@ -475,7 +431,6 @@ func lbcf(a *addonFinder) {
 		},
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.LBCF),
-			Level:   clusteraddontype.Types[clusteraddontype.LBCF].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{

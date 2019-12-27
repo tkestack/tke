@@ -29,62 +29,62 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 	clientsetinternalversion "tkestack.io/tke/api/client/clientset/internalversion"
 	internalinterfaces "tkestack.io/tke/api/client/informers/internalversion/internalinterfaces"
-	internalversion "tkestack.io/tke/api/client/listers/platform/internalversion"
-	platform "tkestack.io/tke/api/platform"
+	internalversion "tkestack.io/tke/api/client/listers/monitor/internalversion"
+	monitor "tkestack.io/tke/api/monitor"
 )
 
-// PrometheusInformer provides access to a shared informer and lister for
-// Prometheuses.
-type PrometheusInformer interface {
+// CollectorInformer provides access to a shared informer and lister for
+// Collectors.
+type CollectorInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() internalversion.PrometheusLister
+	Lister() internalversion.CollectorLister
 }
 
-type prometheusInformer struct {
+type collectorInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 }
 
-// NewPrometheusInformer constructs a new informer for Prometheus type.
+// NewCollectorInformer constructs a new informer for Collector type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewPrometheusInformer(client clientsetinternalversion.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredPrometheusInformer(client, resyncPeriod, indexers, nil)
+func NewCollectorInformer(client clientsetinternalversion.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredCollectorInformer(client, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredPrometheusInformer constructs a new informer for Prometheus type.
+// NewFilteredCollectorInformer constructs a new informer for Collector type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredPrometheusInformer(client clientsetinternalversion.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredCollectorInformer(client clientsetinternalversion.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.Platform().Prometheuses().List(options)
+				return client.Monitor().Collectors().List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.Platform().Prometheuses().Watch(options)
+				return client.Monitor().Collectors().Watch(options)
 			},
 		},
-		&platform.Prometheus{},
+		&monitor.Collector{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *prometheusInformer) defaultInformer(client clientsetinternalversion.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredPrometheusInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *collectorInformer) defaultInformer(client clientsetinternalversion.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredCollectorInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *prometheusInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&platform.Prometheus{}, f.defaultInformer)
+func (f *collectorInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&monitor.Collector{}, f.defaultInformer)
 }
 
-func (f *prometheusInformer) Lister() internalversion.PrometheusLister {
-	return internalversion.NewPrometheusLister(f.Informer().GetIndexer())
+func (f *collectorInformer) Lister() internalversion.CollectorLister {
+	return internalversion.NewCollectorLister(f.Informer().GetIndexer())
 }

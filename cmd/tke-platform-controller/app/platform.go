@@ -19,9 +19,10 @@
 package app
 
 import (
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/cronhpa"
 	gm "tkestack.io/tke/pkg/platform/controller/addon/gpumanager"
@@ -30,7 +31,6 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/addon/lbcf"
 	"tkestack.io/tke/pkg/platform/controller/addon/logcollector"
 	"tkestack.io/tke/pkg/platform/controller/addon/persistentevent"
-	"tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 	"tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator"
 	"tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator"
 	"tkestack.io/tke/pkg/platform/controller/addon/tappcontroller"
@@ -48,9 +48,6 @@ const (
 
 	eventSyncPeriod = 5 * time.Minute
 	concurrentSyncs = 10
-
-	promEventSyncPeriod = 5 * time.Minute
-	concurrentPromSyncs = 10
 
 	ipamEventSyncPeriod = 5 * time.Minute
 	concurrentIPAMSyncs = 5
@@ -253,31 +250,6 @@ func startLogCollectorController(ctx ControllerContext) (http.Handler, bool, err
 
 	go func() {
 		_ = ctrl.Run(concurrentSyncs, ctx.Stop)
-	}()
-
-	return nil, true, nil
-}
-
-func startPrometheusController(ctx ControllerContext) (http.Handler, bool, error) {
-	if ctx.RemoteType == "" || len(ctx.RemoteAddresses) == 0 {
-		return nil, false, nil
-	}
-
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "prometheuses"}] {
-		return nil, false, nil
-	}
-
-	ctrl := prometheus.NewController(
-		ctx.ClientBuilder.ClientOrDie("prometheus-controller"),
-		ctx.InformerFactory.Platform().V1().Prometheuses(),
-		promEventSyncPeriod,
-
-		ctx.RemoteAddresses,
-		ctx.RemoteType,
-	)
-
-	go func() {
-		_ = ctrl.Run(concurrentPromSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil

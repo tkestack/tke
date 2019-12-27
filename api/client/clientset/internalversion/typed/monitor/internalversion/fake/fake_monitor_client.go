@@ -30,6 +30,10 @@ type FakeMonitor struct {
 	*testing.Fake
 }
 
+func (c *FakeMonitor) Collectors() internalversion.CollectorInterface {
+	return &FakeCollectors{c}
+}
+
 func (c *FakeMonitor) ConfigMaps() internalversion.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }

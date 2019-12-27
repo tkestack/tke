@@ -16,14 +16,20 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package prometheus
+package collector
 
 import (
 	"fmt"
+	"math/rand"
+	"reflect"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	promopk8sutil "github.com/coreos/prometheus-operator/pkg/k8sutil"
-	influxApi "github.com/influxdata/influxdb1-client/v2"
+	influxapi "github.com/influxdata/influxdb1-client/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -39,20 +45,17 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"math/rand"
-	"reflect"
-	"strings"
-	"sync"
-	"time"
-	clientset "tkestack.io/tke/api/client/clientset/versioned"
-	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
-	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
-	"tkestack.io/tke/api/platform/v1"
+	monitorclientset "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1"
+	platformclientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	monitorv1informer "tkestack.io/tke/api/client/informers/externalversions/monitor/v1"
+	monitorv1lister "tkestack.io/tke/api/client/listers/monitor/v1"
+	v1 "tkestack.io/tke/api/monitor/v1"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	notifyapi "tkestack.io/tke/cmd/tke-notify-api/app"
 	controllerutil "tkestack.io/tke/pkg/controller"
-	esutil "tkestack.io/tke/pkg/monitor/storage/es/client"
+	"tkestack.io/tke/pkg/monitor/config"
+	"tkestack.io/tke/pkg/monitor/storage"
 	monitorutil "tkestack.io/tke/pkg/monitor/util"
-	"tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
 	"tkestack.io/tke/pkg/platform/util"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
@@ -60,11 +63,11 @@ import (
 )
 
 const (
-	prometheusClientRetryCount    = 5
-	prometheusClientRetryInterval = 5 * time.Second
+	collectorClientRetryCount    = 5
+	collectorClientRetryInterval = 5 * time.Second
 
-	prometheusMaxRetryCount = 5
-	prometheusTimeOut       = 5 * time.Minute
+	collectorMaxRetryCount = 5
+	collectorTimeOut       = 5 * time.Minute
 )
 
 const (
@@ -133,109 +136,62 @@ var crdKinds = []monitoringv1.CrdKind{
 	monitoringv1.DefaultCrdKinds.ServiceMonitor,
 }
 
-type influxdbClient struct {
-	address string
-	client  influxApi.Client
-}
-
-// more client will be added, now just influxdb
-type remoteClient struct {
-	influxdb *influxdbClient
-	es       *esutil.Client
-}
-
-// Controller is responsible for performing actions dependent upon a prometheus phase.
+// Controller is responsible for performing actions dependent upon a collector phase.
 type Controller struct {
-	client       clientset.Interface
-	cache        *prometheusCache
-	health       sync.Map
-	checking     sync.Map
-	upgrading    sync.Map
-	queue        workqueue.RateLimitingInterface
-	lister       platformv1lister.PrometheusLister
-	listerSynced cache.InformerSynced
-	stopCh       <-chan struct{}
-	// RemoteAddress for prometheus
-	remoteClients []remoteClient
-	remoteType    string
+	monitorClient  monitorclientset.MonitorV1Interface
+	platformClient platformclientset.PlatformV1Interface
+	cache          *collectorCache
+	health         sync.Map
+	checking       sync.Map
+	upgrading      sync.Map
+	queue          workqueue.RateLimitingInterface
+	lister         monitorv1lister.CollectorLister
+	listerSynced   cache.InformerSynced
+	stopCh         <-chan struct{}
+	// RemoteClient for collector
+	remoteClient *storage.RemoteClient
 	// NotifyApiAddress
 	notifyAPIAddress string
 }
 
 // NewController creates a new Controller object.
-func NewController(client clientset.Interface, prometheusInformer platformv1informer.PrometheusInformer, resyncPeriod time.Duration, remoteAddress []string, remoteType string) *Controller {
+func NewController(monitorClient monitorclientset.MonitorV1Interface, platformClient platformclientset.PlatformV1Interface, collectorInformer monitorv1informer.CollectorInformer, resyncPeriod time.Duration, remoteClient *storage.RemoteClient) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
-		client:     client,
-		cache:      &prometheusCache{prometheusMap: make(map[string]*cachedPrometheus)},
-		queue:      workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "prometheus"),
-		remoteType: remoteType,
+		platformClient: platformClient,
+		monitorClient:  monitorClient,
+		cache:          &collectorCache{collectorMap: make(map[string]*cachedCollector)},
+		queue:          workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "collector"),
+		remoteClient:   remoteClient,
 	}
 
-	if client != nil && client.PlatformV1().RESTClient().GetRateLimiter() != nil {
-		_ = metrics.RegisterMetricAndTrackRateLimiterUsage("prometheus_controller", client.PlatformV1().RESTClient().GetRateLimiter())
+	if monitorClient != nil && monitorClient.RESTClient().GetRateLimiter() != nil {
+		_ = metrics.RegisterMetricAndTrackRateLimiterUsage("collector_controller", monitorClient.RESTClient().GetRateLimiter())
 	}
 
 	// configure the prometheus informer event handlers
-	prometheusInformer.Informer().AddEventHandlerWithResyncPeriod(
+	collectorInformer.Informer().AddEventHandlerWithResyncPeriod(
 		cache.ResourceEventHandlerFuncs{
-			AddFunc: controller.enqueuePrometheus,
+			AddFunc: controller.enqueueCollector,
 			UpdateFunc: func(oldObj, newObj interface{}) {
-				oldPrometheus, ok1 := oldObj.(*v1.Prometheus)
-				curPrometheus, ok2 := newObj.(*v1.Prometheus)
-				if ok1 && ok2 && controller.needsUpdate(oldPrometheus, curPrometheus) {
-					controller.enqueuePrometheus(newObj)
+				oldCollector, ok1 := oldObj.(*v1.Collector)
+				curCollector, ok2 := newObj.(*v1.Collector)
+				if ok1 && ok2 && controller.needsUpdate(oldCollector, curCollector) {
+					controller.enqueueCollector(newObj)
 				}
 			},
-			DeleteFunc: controller.enqueuePrometheus,
+			DeleteFunc: controller.enqueueCollector,
 		},
 		resyncPeriod,
 	)
-	controller.lister = prometheusInformer.Lister()
-	controller.listerSynced = prometheusInformer.Informer().HasSynced
-
-	// construct remote client
-	switch remoteType {
-	case "influxdb":
-		for _, remoteAddr := range remoteAddress {
-			remoteClient := remoteClient{
-				influxdb: &influxdbClient{},
-			}
-			client, err := monitorutil.ParseInfluxdb(remoteAddr)
-			if err != nil {
-				log.Errorf("Parse remote address %s to client failed: %v", remoteAddr, err)
-				remoteClient.influxdb.client = nil
-				remoteClient.influxdb.address = remoteAddr
-			} else {
-				attrs := strings.Split(remoteAddr, "&")
-				remoteClient.influxdb.address = attrs[0]
-				remoteClient.influxdb.client = client
-			}
-			controller.remoteClients = append(controller.remoteClients, remoteClient)
-		}
-	case "elasticsearch":
-		for _, remoteAddr := range remoteAddress {
-			remoteClient := remoteClient{
-				es: &esutil.Client{},
-			}
-			client, err := monitorutil.ParseES(remoteAddr)
-			if err != nil {
-				log.Errorf("Parse remote address %s to client failed: %v", remoteAddr, err)
-				remoteClient.es.URL = remoteAddr
-			} else {
-				remoteClient.es = &client
-			}
-			controller.remoteClients = append(controller.remoteClients, remoteClient)
-		}
-	default:
-		log.Errorf("invalid remote type: %s", remoteType)
-	}
+	controller.lister = collectorInformer.Lister()
+	controller.listerSynced = collectorInformer.Informer().HasSynced
 
 	return controller
 }
 
-// obj could be an *v1.Prometheus, or a DeletionFinalStateUnknown marker item.
-func (c *Controller) enqueuePrometheus(obj interface{}) {
+// obj could be an *v1.Collector, or a DeletionFinalStateUnknown marker item.
+func (c *Controller) enqueueCollector(obj interface{}) {
 	key, err := controllerutil.KeyFunc(obj)
 	if err != nil {
 		log.Error("Couldn't get key for object", log.Any("object", obj), log.Err(err))
@@ -244,38 +200,33 @@ func (c *Controller) enqueuePrometheus(obj interface{}) {
 	c.queue.Add(key)
 }
 
-func (c *Controller) needsUpdate(oldPrometheus *v1.Prometheus, newPrometheus *v1.Prometheus) bool {
-	return !reflect.DeepEqual(oldPrometheus, newPrometheus)
+func (c *Controller) needsUpdate(oldCollector *v1.Collector, newCollector *v1.Collector) bool {
+	return !reflect.DeepEqual(oldCollector, newCollector)
 }
 
 // Run will set up the event handlers for types we are interested in, as well
 // as syncing informer caches and starting workers.
 func (c *Controller) Run(workers int, stopCh <-chan struct{}) error {
 	// Start the informer factories to begin populating the informer caches
-	log.Info("Starting prometheus controller")
-	defer log.Info("Shutting down prometheus controller")
+	log.Info("Starting collector controller")
+	defer log.Info("Shutting down collector controller")
 
-	// Check if database for project existed, if not, just create
-	query := influxApi.Query{
-		Command:  "create database " + monitorutil.ProjectDatabaseName,
-		Database: monitorutil.ProjectDatabaseName,
-	}
-
-	if c.remoteType == "influxdb" {
+	if len(c.remoteClient.InfluxDB) > 0 {
+		// Check if database for project existed, if not, just create
+		query := influxapi.Query{
+			Command:  "create database " + monitorutil.ProjectDatabaseName,
+			Database: monitorutil.ProjectDatabaseName,
+		}
 		// Wait unitl influxdb is OK
 		_ = wait.PollImmediateInfinite(10*time.Second, func() (bool, error) {
-			for _, client := range c.remoteClients {
-				if client.influxdb.client == nil {
-					return false, nil
-				}
-
-				log.Debugf("query sql: %s", query.Command)
-				resp, err := client.influxdb.client.Query(query)
+			for _, client := range c.remoteClient.InfluxDB {
+				log.Debugf("Query sql: %s", query.Command)
+				resp, err := client.Client.Query(query)
 				if err != nil {
-					log.Errorf("Create database %s for %s failed: %v", monitorutil.ProjectDatabaseName, client.influxdb.address, err)
+					log.Errorf("Create database %s for %s failed: %v", monitorutil.ProjectDatabaseName, client.Address, err)
 					return false, nil
 				} else if resp.Error() != nil {
-					log.Errorf("Create database %s for %s failed: %v", monitorutil.ProjectDatabaseName, client.influxdb.address, resp.Error())
+					log.Errorf("Create database %s for %s failed: %v", monitorutil.ProjectDatabaseName, client.Address, resp.Error())
 					return false, nil
 				}
 			}
@@ -314,26 +265,26 @@ func (c *Controller) processNextWorkItem() bool {
 	}
 	defer c.queue.Done(key)
 
-	err := c.syncPrometheus(key.(string))
+	err := c.syncCollector(key.(string))
 	if err == nil {
 		c.queue.Forget(key)
 		return true
 	}
 
-	runtime.HandleError(fmt.Errorf("error processing prometheus %v (will retry): %v", key, err))
+	runtime.HandleError(fmt.Errorf("error processing collector %v (will retry): %v", key, err))
 	c.queue.AddRateLimited(key)
 	return true
 }
 
-// syncPrometheus will sync the Prometheus with the given key if it has had
+// syncCollector will sync the Prometheus with the given key if it has had
 // its expectations fulfilled, meaning it did not expect to see any more of its
 // namespaces created or deleted. This function is not meant to be invoked
 // concurrently with the same key.
-func (c *Controller) syncPrometheus(key string) error {
+func (c *Controller) syncCollector(key string) error {
 	startTime := time.Now()
-	var cachedPrometheus *cachedPrometheus
+	var cachedCollector *cachedCollector
 	defer func() {
-		log.Info("Finished syncing prometheus", log.String("prome", key), log.Duration("processTime", time.Since(startTime)))
+		log.Info("Finished syncing collector", log.String("collectorKey", key), log.Duration("processTime", time.Since(startTime)))
 	}()
 
 	_, name, err := cache.SplitMetaNamespaceKey(key)
@@ -341,64 +292,64 @@ func (c *Controller) syncPrometheus(key string) error {
 		return err
 	}
 
-	// prometheus holds the latest prometheus info from apiserver
-	prometheus, err := c.lister.Get(name)
+	// collector holds the latest collector info from apiserver
+	collector, err := c.lister.Get(name)
 	switch {
 	case errors.IsNotFound(err):
-		log.Info("Prometheus has been deleted. Attempting to cleanup resources", log.String("prome", key))
-		err = c.processPrometheusDeletion(key)
+		log.Info("Collector has been deleted. Attempting to cleanup resources", log.String("collectorKey", key))
+		err = c.processCollectorDeletion(key)
 	case err != nil:
-		log.Warn("Unable to retrieve prometheus from store", log.String("prome", key), log.Err(err))
+		log.Warn("Unable to retrieve collector from store", log.String("collectorKey", key), log.Err(err))
 	default:
-		cachedPrometheus = c.cache.getOrCreate(key)
-		err = c.processPrometheusUpdate(cachedPrometheus, prometheus, key)
+		cachedCollector = c.cache.getOrCreate(key)
+		err = c.processCollectorUpdate(cachedCollector, collector, key)
 	}
 	return err
 }
 
-func (c *Controller) processPrometheusDeletion(key string) error {
-	cachedPrometheus, ok := c.cache.get(key)
+func (c *Controller) processCollectorDeletion(key string) error {
+	cachedCollector, ok := c.cache.get(key)
 	if !ok {
-		log.Error("Prometheus not in cache even though the watcher thought it was. Ignoring the deletion", log.String("prome", key))
+		log.Error("Collector not in cache even though the watcher thought it was. Ignoring the deletion", log.String("collectorKey", key))
 		return nil
 	}
-	return c.processPrometheusDelete(cachedPrometheus, key)
+	return c.processCollectorDelete(cachedCollector, key)
 }
 
-func (c *Controller) processPrometheusDelete(cachedPrometheus *cachedPrometheus, key string) error {
-	log.Info("prometheus will be dropped", log.String("prome", key))
+func (c *Controller) processCollectorDelete(cachedCollector *cachedCollector, key string) error {
+	log.Info("Collector will be dropped", log.String("collectorKey", key))
 
-	prometheus := cachedPrometheus.state
-	err := c.uninstallPrometheus(prometheus, true)
+	collector := cachedCollector.state
+	err := c.uninstallCollector(collector, true)
 	if err != nil {
-		log.Errorf("Prometheus uninstall fail: %v", err)
+		log.Errorf("Collector uninstall fail: %v", err)
 		return err
 	}
 
 	if c.cache.Exist(key) {
-		log.Info("delete the prometheus cache", log.String("prome", key))
+		log.Info("Delete the collector cache", log.String("collectorKey", key))
 		c.cache.delete(key)
 	}
 
 	if _, ok := c.health.Load(key); ok {
-		log.Info("delete the prometheus health cache", log.String("prome", key))
+		log.Info("Delete the collector health cache", log.String("collectorKey", key))
 		c.health.Delete(key)
 	}
 
 	return nil
 }
 
-func (c *Controller) processPrometheusUpdate(cachedPrometheus *cachedPrometheus, prometheus *v1.Prometheus, key string) error {
-	if cachedPrometheus.state != nil {
+func (c *Controller) processCollectorUpdate(cachedCollector *cachedCollector, collector *v1.Collector, key string) error {
+	if cachedCollector.state != nil {
 		// exist and the cluster name changed
-		if cachedPrometheus.state.UID != prometheus.UID {
-			log.Info("Prometheus uid has chenged, just delete!", log.String("prome", key))
-			if err := c.processPrometheusDelete(cachedPrometheus, key); err != nil {
+		if cachedCollector.state.UID != collector.UID {
+			log.Info("Collector uid has changed, just delete", log.String("collectorKey", key))
+			if err := c.processCollectorDelete(cachedCollector, key); err != nil {
 				return err
 			}
 		}
 	}
-	notifyAPIConfigMap, err := c.client.PlatformV1().ConfigMaps().Get(notifyapi.NotifyApiConfigMapName, metav1.GetOptions{})
+	notifyAPIConfigMap, err := c.platformClient.ConfigMaps().Get(notifyapi.NotifyApiConfigMapName, metav1.GetOptions{})
 	if err == nil && notifyAPIConfigMap != nil {
 		if v, ok := notifyAPIConfigMap.Annotations[notifyapi.NotifyAPIAddressKey]; ok {
 			if c.notifyAPIAddress != v {
@@ -406,59 +357,62 @@ func (c *Controller) processPrometheusUpdate(cachedPrometheus *cachedPrometheus,
 			}
 		}
 	}
-	err = c.createPrometheusIfNeeded(key, cachedPrometheus, prometheus)
+	err = c.createCollectorIfNeeded(key, collector)
 	if err != nil {
 		return err
 	}
 
-	cachedPrometheus.state = prometheus
+	cachedCollector.state = collector
 	// Always update the cache upon success.
-	c.cache.set(key, cachedPrometheus)
+	c.cache.set(key, cachedCollector)
 	return nil
 }
 
-func (c *Controller) prometheusReinitialize(key string, cachedPrometheus *cachedPrometheus, prometheus *v1.Prometheus) func() (bool, error) {
+func (c *Controller) collectorReinitialize(key string, collector *v1.Collector) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
-		log.Info("Reinitialize, try to reinstall", log.String("prome", key))
-		c.uninstallPrometheus(prometheus, false)
-		err := c.installPrometheus(prometheus)
+		log.Info("Reinitialize, try to reinstall", log.String("collectorKey", key))
+		if err := c.uninstallCollector(collector, false); err != nil {
+			log.Error("Failed to uninstall collector", log.Err(err))
+			// continue
+		}
+		err := c.installCollector(collector)
 		if err == nil {
-			prometheus = prometheus.DeepCopy()
-			prometheus.Status.Phase = v1.AddonPhaseChecking
-			prometheus.Status.Reason = ""
-			prometheus.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(prometheus)
+			collector = collector.DeepCopy()
+			collector.Status.Phase = v1.CollectorPhaseChecking
+			collector.Status.Reason = ""
+			collector.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
+			err = c.persistUpdate(collector)
 			if err != nil {
 				return true, err
 			}
 			return true, nil
 		}
-		log.Info("Reinitialize, try to uninstall", log.String("prome", key))
-		// First, rollback the prometheus
-		if err := c.uninstallPrometheus(prometheus, false); err != nil {
-			log.Error("Uninstall prometheus error.", log.String("prome", key))
+		log.Info("Reinitialize, try to uninstall", log.String("collectorKey", key))
+		// First, rollback the collector
+		if err := c.uninstallCollector(collector, false); err != nil {
+			log.Error("Uninstall collector error.", log.String("collectorKey", key))
 			return true, err
 		}
-		if prometheus.Status.RetryCount == prometheusMaxRetryCount {
-			log.Error("PrometheusReinitialize exceed max retry, set failed", log.String("prome", key))
-			prometheus = prometheus.DeepCopy()
-			prometheus.Status.Phase = v1.AddonPhaseFailed
-			prometheus.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", prometheusMaxRetryCount)
-			err := c.persistUpdate(prometheus)
+		if collector.Status.RetryCount == collectorMaxRetryCount {
+			log.Error("Collector reinitialize exceed max retry, set failed", log.String("collectorKey", key))
+			collector = collector.DeepCopy()
+			collector.Status.Phase = v1.CollectorPhaseFailed
+			collector.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", collectorMaxRetryCount)
+			err := c.persistUpdate(collector)
 			if err != nil {
-				log.Error("Update prometheus error.")
+				log.Error("Update collector error", log.Err(err))
 				return true, err
 			}
 			return true, nil
 		}
 		// Add the retry count will trigger reinitialize function from the persistent controller again.
-		prometheus = prometheus.DeepCopy()
-		prometheus.Status.Phase = v1.AddonPhaseReinitializing
-		prometheus.Status.Reason = err.Error()
-		prometheus.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-		prometheus.Status.RetryCount++
-		err = c.persistUpdate(prometheus)
+		collector = collector.DeepCopy()
+		collector.Status.Phase = v1.CollectorPhaseReinitializing
+		collector.Status.Reason = err.Error()
+		collector.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
+		collector.Status.RetryCount++
+		err = c.persistUpdate(collector)
 		if err != nil {
 			return true, err
 		}
@@ -466,140 +420,145 @@ func (c *Controller) prometheusReinitialize(key string, cachedPrometheus *cached
 	}
 }
 
-func (c *Controller) createPrometheusIfNeeded(key string, cachedPrometheus *cachedPrometheus, prometheus *v1.Prometheus) error {
-	switch prometheus.Status.Phase {
-	case v1.AddonPhaseInitializing:
-		log.Info("Prometheus will be created", log.String("prome", key))
-		err := c.installPrometheus(prometheus)
+func (c *Controller) createCollectorIfNeeded(key string, collector *v1.Collector) error {
+	switch collector.Status.Phase {
+	case v1.CollectorPhaseInitializing:
+		log.Info("Collector will be created", log.String("collectorKey", key))
+		err := c.installCollector(collector)
 		if err == nil {
-			log.Info("Prometheus created success", log.String("prome", key))
-			prometheus = prometheus.DeepCopy()
-			prometheus.Status.Phase = v1.AddonPhaseChecking
-			prometheus.Status.Reason = ""
-			prometheus.Status.RetryCount = 0
-			return c.persistUpdate(prometheus)
+			log.Info("Collector created success", log.String("collectorKey", key))
+			collector = collector.DeepCopy()
+			collector.Status.Phase = v1.CollectorPhaseChecking
+			collector.Status.Reason = ""
+			collector.Status.RetryCount = 0
+			return c.persistUpdate(collector)
 		}
-		log.Error(fmt.Sprintf("Prometheus created failed: %v", err), log.String("prome", key))
-		prometheus = prometheus.DeepCopy()
-		prometheus.Status.Phase = v1.AddonPhaseReinitializing
-		prometheus.Status.Reason = err.Error()
-		prometheus.Status.RetryCount = 1
-		return c.persistUpdate(prometheus)
-	case v1.AddonPhaseReinitializing:
-		log.Info("Prometheus entry Reinitializing", log.String("prome", key))
-		var interval = time.Since(prometheus.Status.LastReInitializingTimestamp.Time)
+		log.Error(fmt.Sprintf("Collector created failed: %v", err), log.String("collectorKey", key))
+		collector = collector.DeepCopy()
+		collector.Status.Phase = v1.CollectorPhaseReinitializing
+		collector.Status.Reason = err.Error()
+		collector.Status.RetryCount = 1
+		return c.persistUpdate(collector)
+	case v1.CollectorPhaseReinitializing:
+		log.Info("Collector entry Reinitializing", log.String("collectorKey", key))
+		var interval = time.Since(collector.Status.LastReInitializingTimestamp.Time)
 		var waitTime time.Duration
-		if interval >= prometheusTimeOut {
+		if interval >= collectorTimeOut {
 			waitTime = time.Duration(1)
 		} else {
-			waitTime = prometheusTimeOut - interval
+			waitTime = collectorTimeOut - interval
 		}
-		go wait.Poll(waitTime, prometheusTimeOut, c.prometheusReinitialize(key, cachedPrometheus, prometheus))
-	case v1.AddonPhaseChecking:
-		log.Info("Prometheus entry Checking", log.String("prome", key))
+		go func() {
+			_ = wait.Poll(waitTime, collectorTimeOut, c.collectorReinitialize(key, collector))
+		}()
+	case v1.CollectorPhaseChecking:
+		log.Info("Collector entry Checking", log.String("collectorKey", key))
 		if _, ok := c.checking.Load(key); !ok {
-			c.checking.Store(key, prometheus)
+			c.checking.Store(key, collector)
 			initDelay := time.Now().Add(5 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkPrometheusStatus(prometheus, key, initDelay))
+				_ = wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkCollectorStatus(collector, key, initDelay))
 			}()
 		}
-	case v1.AddonPhaseRunning:
-		log.Info("Prometheus entry Running", log.String("prome", key))
-		if needUpgrade(prometheus) {
+	case v1.CollectorPhaseRunning:
+		log.Info("Collector entry Running", log.String("collectorKey", key))
+		if needUpgrade(collector) {
 			c.health.Delete(key)
-			prometheus = prometheus.DeepCopy()
-			prometheus.Status.Phase = v1.AddonPhaseUpgrading
-			prometheus.Status.Reason = ""
-			prometheus.Status.RetryCount = 0
-			return c.persistUpdate(prometheus)
+			collector = collector.DeepCopy()
+			collector.Status.Phase = v1.CollectorPhaseUpgrading
+			collector.Status.Reason = ""
+			collector.Status.RetryCount = 0
+			return c.persistUpdate(collector)
 		}
 
 		if _, ok := c.health.Load(key); !ok {
-			c.health.Store(key, prometheus)
-			go wait.PollImmediateUntil(5*time.Minute, c.watchPrometheusHealth(key), c.stopCh)
+			c.health.Store(key, collector)
+			go func() {
+				_ = wait.PollImmediateUntil(5*time.Minute, c.watchCollectorHealth(key), c.stopCh)
+			}()
 		}
-	case v1.AddonPhaseUpgrading:
-		log.Info("Prometheus entry upgrading", log.String("prome", key))
+	case v1.CollectorPhaseUpgrading:
+		log.Info("Collector entry upgrading", log.String("collectorKey", key))
 		if _, ok := c.upgrading.Load(key); !ok {
-			c.upgrading.Store(key, prometheus)
+			c.upgrading.Store(key, collector)
 			delay := time.Now().Add(5 * time.Minute)
 			go func() {
 				defer c.upgrading.Delete(key)
-				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkPrometheusUpgrade(prometheus, key, delay))
+				_ = wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkCollectorUpgrade(collector, key, delay))
 			}()
 		}
-	case v1.AddonPhaseFailed:
-		log.Info("Prometheus entry fail", log.String("prome", key))
+	case v1.CollectorPhaseFailed:
+		log.Info("Collector entry fail", log.String("collectorKey", key))
 		c.upgrading.Delete(key)
 		c.health.Delete(key)
 
-		// should try check when prometheus recover again
-		log.Info("Prometheus try checking after fail", log.String("prome", key))
+		// should try check when collector recover again
+		log.Info("Collector try checking after fail", log.String("collectorKey", key))
 		if _, ok := c.checking.Load(key); !ok {
-			c.checking.Store(key, prometheus)
+			c.checking.Store(key, collector)
 			delayTime := time.Now().Add(2 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediate(20*time.Second, 1*time.Minute, c.checkPrometheusStatus(prometheus, key, delayTime))
+				_ = wait.PollImmediate(20*time.Second, 1*time.Minute, c.checkCollectorStatus(collector, key, delayTime))
 			}()
 		}
 	}
 	return nil
 }
 
-func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
+func (c *Controller) installCollector(collector *v1.Collector) error {
 	if c.notifyAPIAddress == "" {
 		return fmt.Errorf("empty notify api address, check if notify api exists")
 	}
-	components := images.Get(prometheus.Spec.Version)
-	prometheus.Status.Version = prometheus.Spec.Version
-	if prometheus.Status.SubVersion == nil {
-		prometheus.Status.SubVersion = make(map[string]string)
+
+	components := config.Get(collector.Spec.Version)
+	collector.Status.Version = collector.Spec.Version
+	if collector.Status.Components == nil {
+		collector.Status.Components = make(map[string]string)
 	}
 
-	cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+	cluster, err := c.platformClient.Clusters().Get(collector.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
-	if err != nil {
-		return err
-	}
-
-	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(cluster, c.platformClient)
 	if err != nil {
 		return err
 	}
 
-	mclient, err := util.BuildExternalMonitoringClientSet(cluster, c.client.PlatformV1())
+	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.platformClient)
+	if err != nil {
+		return err
+	}
+
+	mclient, err := util.BuildExternalMonitoringClientSet(cluster, c.platformClient)
 	if err != nil {
 		return err
 	}
 
 	// Set remote write address
 	var remoteWrites []string
-	if c.remoteType == "influxdb" {
+	if len(c.remoteClient.InfluxDB) > 0 {
 		remoteWrites, err = c.initInfluxdb(cluster.Name)
 		if err != nil {
 			return err
 		}
-	} else if c.remoteType == "elasticsearch" {
-		remoteWrites, err = c.initESAdapter(kubeClient, components)
+	} else if len(c.remoteClient.ES) > 0 {
+		remoteWrites, err = c.initESAdapter(kubeClient, &components)
 		if err != nil {
 			return err
 		}
-		prometheus.Status.SubVersion[PrometheusBeatService] = components.PrometheusBeatWorkLoad.Tag
+		collector.Status.Components[PrometheusBeatService] = components.PrometheusBeatWorkLoad.Tag
 	}
 
-	if len(prometheus.Spec.RemoteAddress.WriteAddr) > 0 {
-		remoteWrites = prometheus.Spec.RemoteAddress.WriteAddr
+	if len(collector.Spec.Storage.WriteAddr) > 0 {
+		remoteWrites = collector.Spec.Storage.WriteAddr
 	}
 	// For remote read, just set from spec
 	var remoteReads []string
-	if len(prometheus.Spec.RemoteAddress.ReadAddr) > 0 {
-		remoteReads = prometheus.Spec.RemoteAddress.ReadAddr
+	if len(collector.Spec.Storage.ReadAddr) > 0 {
+		remoteReads = collector.Spec.Storage.ReadAddr
 	}
 
 	for _, crdKind := range crdKinds {
@@ -627,18 +586,18 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 		return err
 	}
 	// Deployment for prometheus-operator
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deployPrometheusOperatorApps(components)); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deployPrometheusOperatorApps(&components)); err != nil {
 		return err
 	}
 
-	prometheus.Status.SubVersion[PrometheusOperatorService] = components.PrometheusOperatorService.Tag
+	collector.Status.Components[PrometheusOperatorService] = components.PrometheusOperatorService.Tag
 
 	extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
 
 	// get notify webhook address
 	var webhookAddr string
-	if prometheus.Spec.NotifyWebhook != "" {
-		webhookAddr = prometheus.Spec.NotifyWebhook
+	if collector.Spec.NotifyWebhook != "" {
+		webhookAddr = collector.Spec.NotifyWebhook
 	} else {
 		webhookAddr = c.notifyAPIAddress + "/webhook"
 	}
@@ -659,14 +618,14 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	}
 
 	// Crd alertmanager instance
-	if _, err := mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Create(createAlertManagerCRD(components)); err != nil {
+	if _, err := mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Create(createAlertManagerCRD(&components)); err != nil {
 		return err
 	}
 
-	prometheus.Status.SubVersion[AlertManagerService] = components.AlertManagerService.Tag
+	collector.Status.Components[AlertManagerService] = components.AlertManagerService.Tag
 
 	// Secret for prometheus-etcd
-	credential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
+	credential, err := util.ClusterCredentialV1(c.platformClient, cluster.Name)
 	if err != nil {
 		return err
 	}
@@ -702,16 +661,16 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 		return err
 	}
 	// Crd prometheus instance
-	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(createPrometheusCRD(components, cluster.Name, remoteWrites, remoteReads, c.remoteType)); err != nil {
+	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(createPrometheusCRD(cluster.Name, remoteWrites, remoteReads, &components, len(c.remoteClient.InfluxDB) > 0)); err != nil {
 		return err
 	}
-	prometheus.Status.SubVersion[PrometheusService] = components.PrometheusService.Tag
+	collector.Status.Components[PrometheusService] = components.PrometheusService.Tag
 
 	// DaemonSet for node-exporter
-	if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(createDaemonSetForNodeExporter(components)); err != nil {
+	if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(createDaemonSetForNodeExporter(&components)); err != nil {
 		return err
 	}
-	prometheus.Status.SubVersion[nodeExporterService] = components.NodeExporterService.Tag
+	collector.Status.Components[nodeExporterService] = components.NodeExporterService.Tag
 
 	// Service for kube-state-metrics
 	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(createServiceForMetrics()); err != nil {
@@ -739,15 +698,15 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	}
 	// Deployment for kube-state-metrics
 	if extensionsAPIGroup {
-		if _, err := kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Create(createExtensionDeploymentForMetrics(components)); err != nil {
+		if _, err := kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Create(createExtensionDeploymentForMetrics(&components)); err != nil {
 			return err
 		}
 	} else {
-		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(createAppsDeploymentForMetrics(components)); err != nil {
+		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(createAppsDeploymentForMetrics(&components)); err != nil {
 			return err
 		}
 	}
-	prometheus.Status.SubVersion[kubeStateService] = components.KubeStateService.Tag
+	collector.Status.Components[kubeStateService] = components.KubeStateService.Tag
 
 	return nil
 }
@@ -870,7 +829,7 @@ func clusterRoleBindingPrometheusOperator() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func deployPrometheusOperatorApps(components images.Components) *appsv1.Deployment {
+func deployPrometheusOperatorApps(component *config.Components) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -917,15 +876,15 @@ func deployPrometheusOperatorApps(components images.Components) *appsv1.Deployme
 					Containers: []corev1.Container{
 						{
 							Name:  prometheusOperatorWorkLoad,
-							Image: components.PrometheusOperatorService.FullName(),
+							Image: component.PrometheusOperatorService.FullName(),
 							Args: []string{
 								"--kubelet-service=kube-system/kubelet",
 								"--logtostderr=true",
-								"--config-reloader-image=" + components.ConfigMapReloadWorkLoad.FullName(),
-								"--prometheus-config-reloader=" + components.PrometheusConfigReloaderWorkload.FullName(),
+								"--config-reloader-image=" + component.ConfigMapReloadWorkLoad.FullName(),
+								"--prometheus-config-reloader=" + component.PrometheusConfigReloaderWorkload.FullName(),
 							},
-							//Command:         []string{"tail", "-f"},
-							//Command: []string{"/bin/sh", "-c", "./prometheus --storage.tsdb.retention=1h --storage.tsdb.path=/data --web.enable-lifecycle --config.file=config/prometheus.yml"},
+							// Command:         []string{"tail", "-f"},
+							// Command: []string{"/bin/sh", "-c", "./prometheus --storage.tsdb.retention=1h --storage.tsdb.path=/data --web.enable-lifecycle --config.file=config/prometheus.yml"},
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: 8080, Protocol: corev1.ProtocolTCP},
 							},
@@ -1051,8 +1010,8 @@ func clusterRoleBindingPrometheus() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func createPrometheusCRD(components images.Components, clusterName string, remoteWrites, remoteReads []string, remoteType string) *monitoringv1.Prometheus {
-	remoteReadSpecs := []monitoringv1.RemoteReadSpec{}
+func createPrometheusCRD(clusterName string, remoteWrites, remoteReads []string, component *config.Components, isInfluxDB bool) *monitoringv1.Prometheus {
+	var remoteReadSpecs []monitoringv1.RemoteReadSpec
 	for _, r := range remoteReads {
 		if r == "nil" {
 			continue
@@ -1062,7 +1021,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 		}
 		remoteReadSpecs = append(remoteReadSpecs, rr)
 	}
-	remoteWriteSpecs := []monitoringv1.RemoteWriteSpec{}
+	var remoteWriteSpecs []monitoringv1.RemoteWriteSpec
 	for _, w := range remoteWrites {
 		if w == "nil" {
 			continue
@@ -1070,7 +1029,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 		rw := monitoringv1.RemoteWriteSpec{
 			URL: w,
 		}
-		if remoteType == "influxdb" {
+		if isInfluxDB {
 			if strings.Contains(w, "db=projects") {
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
@@ -1133,7 +1092,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 		},
 		Spec: monitoringv1.PrometheusSpec{
 			PodMetadata: &metav1.ObjectMeta{
-				CreationTimestamp: metav1.Now(), //For validation only: https://github.com/coreos/prometheus-operator/issues/2399
+				CreationTimestamp: metav1.Now(), // For validation only: https://github.com/coreos/prometheus-operator/issues/2399
 				Annotations: map[string]string{
 					"prometheus.io/scrape": "true",
 					"prometheus.io/port":   "9090",
@@ -1207,13 +1166,13 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 			ServiceMonitorSelector:          &metav1.LabelSelector{},
 			PodMonitorNamespaceSelector:     &metav1.LabelSelector{},
 			PodMonitorSelector:              &metav1.LabelSelector{},
-			Version:                         components.PrometheusService.Tag,
+			Version:                         component.PrometheusService.Tag,
 		},
 	}
 }
 
 func createSecretForPrometheus() *corev1.Secret {
-	config := scrapeConfigForPrometheus()
+	cfg := scrapeConfigForPrometheus()
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1222,12 +1181,12 @@ func createSecretForPrometheus() *corev1.Secret {
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			prometheusConfigName: []byte(config),
+			prometheusConfigName: []byte(cfg),
 		},
 	}
 }
 
-func secretETCDPrometheus(cred *v1.ClusterCredential) *corev1.Secret {
+func secretETCDPrometheus(cred *platformv1.ClusterCredential) *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      prometheusETCDSecret,
@@ -1285,7 +1244,7 @@ var selectorForAlertManager = metav1.LabelSelector{
 }
 
 func createSecretForAlertmanager(webhookAddr string) *corev1.Secret {
-	config := configForAlertManager(webhookAddr)
+	cfg := configForAlertManager(webhookAddr)
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      alertManagerSecret,
@@ -1293,7 +1252,7 @@ func createSecretForAlertmanager(webhookAddr string) *corev1.Secret {
 		},
 		Type: corev1.SecretTypeOpaque,
 		Data: map[string][]byte{
-			"alertmanager.yaml": []byte(config),
+			"alertmanager.yaml": []byte(cfg),
 		},
 	}
 }
@@ -1312,7 +1271,7 @@ func serviceAccountAlertmanager() *corev1.ServiceAccount {
 	}
 }
 
-func createAlertManagerCRD(components images.Components) *monitoringv1.Alertmanager {
+func createAlertManagerCRD(component *config.Components) *monitoringv1.Alertmanager {
 	return &monitoringv1.Alertmanager{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: monitoring.GroupName + "/v1",
@@ -1325,7 +1284,7 @@ func createAlertManagerCRD(components images.Components) *monitoringv1.Alertmana
 		},
 		Spec: monitoringv1.AlertmanagerSpec{
 			PodMetadata: &metav1.ObjectMeta{
-				CreationTimestamp: metav1.Now(), //For validation only: https://github.com/coreos/prometheus-operator/issues/2399
+				CreationTimestamp: metav1.Now(), // For validation only: https://github.com/coreos/prometheus-operator/issues/2399
 				Annotations: map[string]string{
 					"prometheus.io/scrape": "true",
 					"prometheus.io/port":   "9093",
@@ -1339,7 +1298,7 @@ func createAlertManagerCRD(components images.Components) *monitoringv1.Alertmana
 				RunAsUser:    controllerutil.Int64Ptr(1000),
 			},
 			ServiceAccountName: alertManagerServiceAccount,
-			Version:            components.AlertManagerService.Tag,
+			Version:            component.AlertManagerService.Tag,
 		},
 	}
 }
@@ -1370,7 +1329,7 @@ var selectorForNodeExporter = metav1.LabelSelector{
 	MatchLabels: map[string]string{specialLabelName: specialLabelValue, "k8s-app": "node-exporter"},
 }
 
-func createDaemonSetForNodeExporter(components images.Components) *appsv1.DaemonSet {
+func createDaemonSetForNodeExporter(component *config.Components) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -1395,7 +1354,7 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 					Containers: []corev1.Container{
 						{
 							Name:  nodeExporterDaemonSet,
-							Image: components.NodeExporterService.FullName(),
+							Image: component.NodeExporterService.FullName(),
 							Args: []string{
 								"--path.procfs=/host/proc",
 								"--path.sysfs=/host/sys",
@@ -1662,7 +1621,7 @@ func createRoleBingdingForMetrics() *rbacv1.RoleBinding {
 	}
 }
 
-func createExtensionDeploymentForMetrics(components images.Components) *extensionsv1beta1.Deployment {
+func createExtensionDeploymentForMetrics(component *config.Components) *extensionsv1beta1.Deployment {
 	return &extensionsv1beta1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -1685,7 +1644,7 @@ func createExtensionDeploymentForMetrics(components images.Components) *extensio
 					Containers: []corev1.Container{
 						{
 							Name:  kubeStateWorkLoad,
-							Image: components.KubeStateService.FullName(),
+							Image: component.KubeStateService.FullName(),
 							Args: []string{
 								"--port=8080",
 								"--telemetry-port=8081",
@@ -1718,7 +1677,7 @@ func createExtensionDeploymentForMetrics(components images.Components) *extensio
 	}
 }
 
-func createAppsDeploymentForMetrics(components images.Components) *appsv1.Deployment {
+func createAppsDeploymentForMetrics(component *config.Components) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -1741,7 +1700,7 @@ func createAppsDeploymentForMetrics(components images.Components) *appsv1.Deploy
 					Containers: []corev1.Container{
 						{
 							Name:  kubeStateWorkLoad,
-							Image: components.KubeStateService.FullName(),
+							Image: component.KubeStateService.FullName(),
 							Args: []string{
 								"--port=8080",
 								"--telemetry-port=8081",
@@ -1774,28 +1733,28 @@ func createAppsDeploymentForMetrics(components images.Components) *appsv1.Deploy
 	}
 }
 
-func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData bool) error {
+func (c *Controller) uninstallCollector(collector *v1.Collector, dropData bool) error {
 	var err error
 	var errs []error
 
-	cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+	cluster, err := c.platformClient.Clusters().Get(collector.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(cluster, c.platformClient)
 	if err != nil {
 		return err
 	}
 
-	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.client.PlatformV1())
+	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.platformClient)
 	if err != nil {
 		return err
 	}
 
-	mclient, err := util.BuildExternalMonitoringClientSet(cluster, c.client.PlatformV1())
+	mclient, err := util.BuildExternalMonitoringClientSet(cluster, c.platformClient)
 	if err != nil {
 		return err
 	}
@@ -1949,12 +1908,16 @@ func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData boo
 
 	// drop influxdb data, may take long time
 	if dropData {
-		if c.remoteType == "influxdb" {
-			go c.dropInfluxdb(cluster.Name)
+		if len(c.remoteClient.InfluxDB) > 0 {
+			go func() {
+				if err := c.dropInfluxdb(cluster.Name); err != nil {
+					log.Error("Failed to drop influxdb", log.Err(err))
+				}
+			}()
 		}
 	}
 
-	if c.remoteType == "elasticsearch" {
+	if len(c.remoteClient.ES) > 0 {
 		err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(prometheusBeatWorkLoad, &metav1.DeleteOptions{})
 		if err != nil {
 			errs = append(errs, err)
@@ -1980,49 +1943,49 @@ func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData boo
 	return nil
 }
 
-func (c *Controller) watchPrometheusHealth(key string) func() (bool, error) {
+func (c *Controller) watchCollectorHealth(key string) func() (bool, error) {
 	return func() (bool, error) {
-		log.Info("Start check prometheus in cluster health", log.String("prome", key))
+		log.Info("Start check collector in cluster health", log.String("collectorKey", key))
 
-		prometheus, err := c.lister.Get(key)
+		collector, err := c.lister.Get(key)
 		if err != nil {
 			return false, err
 		}
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.platformClient.Clusters().Get(collector.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
 		if err != nil {
 			return false, nil
 		}
-		if _, ok := c.health.Load(prometheus.Name); !ok {
-			log.Info("Prometheus health check over", log.String("prome", key))
+		if _, ok := c.health.Load(collector.Name); !ok {
+			log.Info("Collector health check over", log.String("collectorKey", key))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(cluster, c.platformClient)
 		if err != nil {
 			return false, err
 		}
 		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", PrometheusService, PrometheusServicePort, `/-/healthy`, nil).DoRaw(); err != nil {
-			prometheus = prometheus.DeepCopy()
-			prometheus.Status.Phase = v1.AddonPhaseFailed
-			prometheus.Status.Reason = "Prometheus is not healthy."
-			if err = c.persistUpdate(prometheus); err != nil {
+			collector = collector.DeepCopy()
+			collector.Status.Phase = v1.CollectorPhaseFailed
+			collector.Status.Reason = "Collector is not healthy."
+			if err = c.persistUpdate(collector); err != nil {
 				return false, err
 			}
 			return true, nil
 		}
-		log.Debug("Prometheus health is ok", log.String("prome", key))
+		log.Debug("Collector health is ok", log.String("collectorKey", key))
 		return false, nil
 	}
 }
 
-func (c *Controller) checkPrometheusStatus(prometheus *v1.Prometheus, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) checkCollectorStatus(collector *v1.Collector, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
-		log.Info("Start to check prometheus status", log.String("prome", key))
+		log.Info("Start to check collector status", log.String("collectorKey", key))
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.platformClient.Clusters().Get(collector.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -2030,46 +1993,46 @@ func (c *Controller) checkPrometheusStatus(prometheus *v1.Prometheus, key string
 			return false, nil
 		}
 		if _, ok := c.checking.Load(key); !ok {
-			log.Info("Prometheus status checking over", log.String("prome", key))
+			log.Info("Collector status checking over", log.String("collectorKey", key))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(cluster, c.platformClient)
 		if err != nil {
 			return false, err
 		}
-		prometheus, err := c.lister.Get(key)
+		collector, err := c.lister.Get(key)
 		if err != nil {
 			return false, err
 		}
 
 		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", PrometheusService, PrometheusServicePort, `/-/healthy`, nil).DoRaw(); err != nil {
 			if time.Now().After(initDelay) {
-				prometheus = prometheus.DeepCopy()
-				prometheus.Status.Phase = v1.AddonPhaseFailed
-				prometheus.Status.Reason = "Prometheus is not healthy."
-				if err = c.persistUpdate(prometheus); err != nil {
+				collector = collector.DeepCopy()
+				collector.Status.Phase = v1.CollectorPhaseFailed
+				collector.Status.Reason = "Collector is not healthy."
+				if err = c.persistUpdate(collector); err != nil {
 					return false, err
 				}
 				return true, nil
 			}
-			log.Error("prometheus status has not healthy", log.String("prome", key), log.Err(err))
+			log.Error("collector status has not healthy", log.String("collectorKey", key), log.Err(err))
 			return false, nil
 		}
-		prometheus = prometheus.DeepCopy()
-		prometheus.Status.Phase = v1.AddonPhaseRunning
-		prometheus.Status.Reason = ""
-		if err = c.persistUpdate(prometheus); err != nil {
+		collector = collector.DeepCopy()
+		collector.Status.Phase = v1.CollectorPhaseRunning
+		collector.Status.Reason = ""
+		if err = c.persistUpdate(collector); err != nil {
 			return false, err
 		}
 		return true, nil
 	}
 }
 
-func (c *Controller) checkPrometheusUpgrade(prometheus *v1.Prometheus, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) checkCollectorUpgrade(collector *v1.Collector, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
-		log.Info("Start to upgrade prometheus", log.String("prome", key))
+		log.Info("Start to upgrade collector", log.String("collectorKey", key))
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.platformClient.Clusters().Get(collector.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -2077,46 +2040,46 @@ func (c *Controller) checkPrometheusUpgrade(prometheus *v1.Prometheus, key strin
 			return false, nil
 		}
 		if _, ok := c.upgrading.Load(key); !ok {
-			log.Info("Prometheus upgrade over", log.String("prome", key))
+			log.Info("Collector upgrade over", log.String("collectorKey", key))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(cluster, c.platformClient)
 		if err != nil {
 			return false, err
 		}
-		prometheus, err := c.lister.Get(key)
+		collector, err := c.lister.Get(key)
 		if err != nil {
 			return false, err
 		}
 
-		newComponents := images.Get(prometheus.Spec.Version)
-		for name, version := range prometheus.Status.SubVersion {
+		newComponents := config.Get(collector.Spec.Version)
+		for name, version := range collector.Status.Components {
 			if image := newComponents.Get(name); image != nil {
 				if image.Tag != version {
 					patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"%s"}]`, image.FullName())
 					err = upgradeVersion(kubeClient, name, patch)
 					if err != nil {
 						if time.Now().After(initDelay) {
-							prometheus = prometheus.DeepCopy()
-							prometheus.Status.Phase = v1.AddonPhaseUpgrading
-							prometheus.Status.Reason = fmt.Sprintf("Upgrade timeout, %v", err)
-							if err = c.persistUpdate(prometheus); err != nil {
+							collector = collector.DeepCopy()
+							collector.Status.Phase = v1.CollectorPhaseUpgrading
+							collector.Status.Reason = fmt.Sprintf("Upgrade timeout, %v", err)
+							if err = c.persistUpdate(collector); err != nil {
 								return false, err
 							}
 							return true, nil
 						}
 						return false, nil
 					}
-					prometheus.Status.SubVersion[name] = image.Tag
+					collector.Status.Components[name] = image.Tag
 				}
 			}
 		}
 
-		prometheus = prometheus.DeepCopy()
-		prometheus.Status.Version = prometheus.Spec.Version
-		prometheus.Status.Phase = v1.AddonPhaseChecking
-		prometheus.Status.Reason = ""
-		if err = c.persistUpdate(prometheus); err != nil {
+		collector = collector.DeepCopy()
+		collector.Status.Version = collector.Spec.Version
+		collector.Status.Phase = v1.CollectorPhaseChecking
+		collector.Status.Reason = ""
+		if err = c.persistUpdate(collector); err != nil {
 			return false, err
 		}
 
@@ -2124,26 +2087,13 @@ func (c *Controller) checkPrometheusUpgrade(prometheus *v1.Prometheus, key strin
 	}
 }
 
-func needUpgrade(prom *v1.Prometheus) bool {
-	if prom.Status.SubVersion == nil {
+func needUpgrade(collector *v1.Collector) bool {
+	if collector.Status.Components == nil {
 		log.Errorf("Nil component version when checking upgrade!")
 		return false
 	}
 
-	if prom.Spec.SubVersion != nil {
-		for com, version := range prom.Spec.SubVersion {
-			if _, ok := prom.Status.SubVersion[com]; ok {
-				if version != prom.Status.SubVersion[com] {
-					return true
-				}
-			} else {
-				log.Errorf("Not find %s version when checking upgrade!", com)
-				return false
-			}
-		}
-	}
-
-	if prom.Spec.Version != prom.Status.Version {
+	if collector.Spec.Version != collector.Status.Version {
 		return true
 	}
 
@@ -2170,10 +2120,10 @@ func upgradeVersion(kubeClient *kubernetes.Clientset, workLoad, patch string) er
 	return err
 }
 
-func (c *Controller) persistUpdate(prometheus *v1.Prometheus) error {
+func (c *Controller) persistUpdate(collector *v1.Collector) error {
 	var err error
-	for i := 0; i < prometheusClientRetryCount; i++ {
-		_, err = c.client.PlatformV1().Prometheuses().UpdateStatus(prometheus)
+	for i := 0; i < collectorClientRetryCount; i++ {
+		_, err = c.monitorClient.Collectors().UpdateStatus(collector)
 		if err == nil {
 			return nil
 		}
@@ -2181,14 +2131,14 @@ func (c *Controller) persistUpdate(prometheus *v1.Prometheus) error {
 		// out so that we can process the delete, which we should soon be receiving
 		// if we haven't already.
 		if errors.IsNotFound(err) {
-			log.Info("Not persisting update to prometheus that no longer exists", log.String("prome", prometheus.Name), log.Err(err))
+			log.Info("Not persisting update to collector that no longer exists", log.String("collectorName", collector.Name), log.Err(err))
 			return nil
 		}
 		if errors.IsConflict(err) {
-			return fmt.Errorf("not persisting update to prometheus '%s' that has been changed since we received it: %v", prometheus.Name, err)
+			return fmt.Errorf("not persisting update to collector '%s' that has been changed since we received it: %v", collector.Name, err)
 		}
-		log.Warn(fmt.Sprintf("Failed to persist updated status of prometheus '%s/%s'", prometheus.Name, prometheus.Status.Phase), log.String("prome", prometheus.Name), log.Err(err))
-		time.Sleep(prometheusClientRetryInterval)
+		log.Warn(fmt.Sprintf("Failed to persist updated status of collector '%s/%s'", collector.Name, collector.Status.Phase), log.String("collectorName", collector.Name), log.Err(err))
+		time.Sleep(collectorClientRetryInterval)
 	}
 
 	return err
@@ -2212,7 +2162,7 @@ func (c *Controller) initInfluxdb(dbName string) ([]string, error) {
 
 	// drop users if user already existed
 	cmdUser := fmt.Sprintf("drop user %s", usr)
-	queryUser := influxApi.Query{
+	queryUser := influxapi.Query{
 		Command:  cmdUser,
 		Database: monitorutil.ProjectDatabaseName,
 	}
@@ -2221,24 +2171,24 @@ func (c *Controller) initInfluxdb(dbName string) ([]string, error) {
 	cmdDB := fmt.Sprintf("create database %s; create user %s with password '%s'; grant all on %s to %s; grant write on %s to %s",
 		db, usr, passwd, db, usr, monitorutil.ProjectDatabaseName, usr)
 	log.Debugf("Create influxdb table: %s", cmdDB)
-	queryDB := influxApi.Query{
+	queryDB := influxapi.Query{
 		Command:  cmdDB,
 		Database: monitorutil.ProjectDatabaseName,
 	}
 
 	var queryStr []string
-	for _, client := range c.remoteClients {
-		_, _ = client.influxdb.client.Query(queryUser)
+	for _, client := range c.remoteClient.InfluxDB {
+		_, _ = client.Client.Query(queryUser)
 
-		resp, err := client.influxdb.client.Query(queryDB)
+		resp, err := client.Client.Query(queryDB)
 		if err != nil {
 			return nil, err
 		} else if resp.Error() != nil {
 			return nil, resp.Error()
 		}
 		queryStr = append(queryStr, []string{
-			fmt.Sprintf("%s/api/v1/prom/write?db=%s&u=%s&p=%s", client.influxdb.address, db, usr, passwd),
-			fmt.Sprintf("%s/api/v1/prom/write?db=%s&u=%s&p=%s", client.influxdb.address, monitorutil.ProjectDatabaseName, usr, passwd),
+			fmt.Sprintf("%s/api/v1/prom/write?db=%s&u=%s&p=%s", client.Address, db, usr, passwd),
+			fmt.Sprintf("%s/api/v1/prom/write?db=%s&u=%s&p=%s", client.Address, monitorutil.ProjectDatabaseName, usr, passwd),
 		}...)
 	}
 
@@ -2254,25 +2204,25 @@ func (c *Controller) dropInfluxdb(dbName string) error {
 
 	// drop user and database
 	cmd := fmt.Sprintf("drop user %s; drop database %s", usr, db)
-	query := influxApi.Query{
+	query := influxapi.Query{
 		Command:  cmd,
 		Database: monitorutil.ProjectDatabaseName,
 	}
 
 	// just continue when error
-	for _, client := range c.remoteClients {
-		resp, err := client.influxdb.client.Query(query)
+	for _, client := range c.remoteClient.InfluxDB {
+		resp, err := client.Client.Query(query)
 		if err != nil {
-			log.Errorf("Drop database(%s) for %s err: %v", dbName, client.influxdb.address, err)
+			log.Errorf("Drop database(%s) for %s err: %v", dbName, client.Address, err)
 		} else if resp.Error() != nil {
-			log.Errorf("Drop database(%s) for %s err: %v", dbName, client.influxdb.address, resp.Error())
+			log.Errorf("Drop database(%s) for %s err: %v", dbName, client.Address, resp.Error())
 		}
 	}
 
 	return nil
 }
 
-func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components images.Components) ([]string, error) {
+func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, component *config.Components) ([]string, error) {
 	var (
 		remoteWrites []string
 		hosts        []string
@@ -2286,10 +2236,10 @@ func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components 
 			"k8s-app":        "prometheus-beat",
 		},
 	}
-	for _, client := range c.remoteClients {
-		hosts = append(hosts, client.es.URL)
-		user = client.es.Username
-		password = client.es.Password
+	for _, client := range c.remoteClient.ES {
+		hosts = append(hosts, client.URL)
+		user = client.Username
+		password = client.Password
 	}
 	// create prom-beat service
 	svc := &corev1.Service{
@@ -2352,7 +2302,7 @@ func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components 
 					Containers: []corev1.Container{
 						{
 							Name:  prometheusBeatWorkLoad,
-							Image: components.PrometheusBeatWorkLoad.FullName(),
+							Image: component.PrometheusBeatWorkLoad.FullName(),
 							Args: []string{
 								"-c",
 								"config/prometheusbeat.yml",

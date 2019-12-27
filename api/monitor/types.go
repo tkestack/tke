@@ -122,50 +122,60 @@ type ConfigMapList struct {
 // +genclient:skipVerbs=deleteCollection
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Prometheus is a kubernetes package manager.
-type Prometheus struct {
+// Collector is a monitor component.
+type Collector struct {
 	metav1.TypeMeta
 	// +optional
 	metav1.ObjectMeta
 
 	// Spec defines the desired identities of clusters in this set.
 	// +optional
-	Spec PrometheusSpec
+	Spec CollectorSpec
 	// +optional
-	Status PrometheusStatus
+	Status CollectorStatus
 }
 
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// PrometheusList is the whole list of all prometheus which owned by a tenant.
-type PrometheusList struct {
+// CollectorList is the whole list of all collectors which owned by a tenant.
+type CollectorList struct {
 	metav1.TypeMeta
 	// +optional
 	metav1.ListMeta
 
-	// List of Prometheuss
-	Items []Prometheus
+	// List of Collector
+	Items []Collector
 }
 
-// PrometheusSpec describes the attributes on a Prometheus.
-type PrometheusSpec struct {
-	TenantID      string
-	ClusterName   string
-	Version       string
-	SubVersion    map[string]string
-	RemoteAddress PrometheusRemoteAddr
+// CollectorSpec describes the attributes on a Collector.
+type CollectorSpec struct {
+	TenantID    string
+	ClusterName string
+	// +optional
+	Type CollectorType
+	// Version is the components version.
+	// +optional
+	Version string
+	// Storage is the remote address for collector when writing/reading outside of cluster.
+	// +optional
+	Storage CollectorStorage
+	// NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
 	// +optional
 	NotifyWebhook string
 }
 
-// PrometheusStatus is information about the current status of a Prometheus.
-type PrometheusStatus struct {
+// CollectorStatus is information about the current status of a Collector.
+type CollectorStatus struct {
+	// Version is the version of collector.
 	// +optional
 	Version string
+	// Components is the components version such as node-exporter and alert manager.
+	// +optional
+	Components map[string]string
 	// Phase is the current lifecycle phase of the helm of cluster.
 	// +optional
-	Phase AddonPhase
+	Phase CollectorPhase
 	// Reason is a brief CamelCase string that describes any failure.
 	// +optional
 	Reason string
@@ -175,12 +185,38 @@ type PrometheusStatus struct {
 	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
 	// +optional
 	LastReInitializingTimestamp metav1.Time
-	// SubVersion is the components version such as node-exporter.
-	SubVersion map[string]string
 }
 
-// PrometheusRemoteAddr is the remote write/read address for prometheus
-type PrometheusRemoteAddr struct {
+// CollectorStorage is the remote write/read address for collector.
+type CollectorStorage struct {
 	WriteAddr []string
 	ReadAddr  []string
 }
+
+// CollectorPhase defines the phase of collector constructor.
+type CollectorPhase string
+
+const (
+	// CollectorPhaseInitializing means is wait initializing.
+	CollectorPhaseInitializing CollectorPhase = "Initializing"
+	// CollectorPhaseReinitializing means is reinitializing.
+	CollectorPhaseReinitializing CollectorPhase = "Reinitializing"
+	// CollectorPhaseChecking means is wait checking.
+	CollectorPhaseChecking CollectorPhase = "Checking"
+	// CollectorPhaseRunning means is running.
+	CollectorPhaseRunning CollectorPhase = "Running"
+	// CollectorPhaseUpgrading means is upgrading.
+	CollectorPhaseUpgrading CollectorPhase = "Upgrading"
+	// CollectorPhaseFailed means has been failed.
+	CollectorPhaseFailed CollectorPhase = "Failed"
+)
+
+// CollectorType defines the type of collector.
+type CollectorType string
+
+const (
+	// CollectorManaged means the collector managed by TKE.
+	CollectorManaged CollectorType = "Managed"
+	// CollectorImported means the prometheus installed by other.
+	CollectorImportedPrometheus CollectorType = "ImportedPrometheus"
+)

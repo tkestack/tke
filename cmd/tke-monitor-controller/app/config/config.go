@@ -20,11 +20,12 @@ package config
 
 import (
 	"fmt"
+	"net"
+
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	apiserver "k8s.io/apiserver/pkg/server"
 	restclient "k8s.io/client-go/rest"
-	"net"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	monitorapiconfig "tkestack.io/tke/cmd/tke-monitor-api/app/config"
 	monitorapioptions "tkestack.io/tke/cmd/tke-monitor-api/app/options"
@@ -50,6 +51,7 @@ type Config struct {
 	MonitorAPIServerClientConfig *restclient.Config
 	// the rest config for the business apiserver
 	BusinessAPIServerClientConfig *restclient.Config
+	PlatformAPIServerClientConfig *restclient.Config
 	Component                     controlleroptions.ComponentConfiguration
 	MonitorConfig                 *monitorconfig.MonitorConfiguration
 }
@@ -67,6 +69,14 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 	if !ok {
 		return nil, fmt.Errorf("failed to initialize client config of monitor API server")
+	}
+
+	platformAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("failed to initialize client config of platform API server")
 	}
 
 	// shallow copy, do not modify the apiServerClientConfig.Timeout.
@@ -106,9 +116,11 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		Authentication: apiserver.AuthenticationInfo{
 			Authenticator: anonymous.NewAuthenticator(),
 		},
-		MonitorConfig: monitorConfig,
+		PlatformAPIServerClientConfig: platformAPIServerClientConfig,
+		MonitorConfig:                 monitorConfig,
 	}
 
+	// business client is optional
 	businessAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
 	if err != nil {
 		return nil, err

@@ -51,6 +51,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Metric{},
 		&MetricList{},
 
+		&Collector{},
+		&CollectorList{},
+
 		&ConfigMap{},
 		&ConfigMapList{})
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)

@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,28 +28,29 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"tkestack.io/tke/api/monitor"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
-	"tkestack.io/tke/pkg/platform/registry/prometheus"
-	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/monitor/registry/collector"
+	"tkestack.io/tke/pkg/monitor/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 // Storage includes storage for prometheus and all sub resources.
 type Storage struct {
-	Prometheus *REST
-	Status     *StatusREST
+	Collector *REST
+	Status    *StatusREST
 }
 
 // NewStorage returns a Storage object that will work against prometheus.
 func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername string) *Storage {
-	strategy := prometheus.NewStrategy()
+	strategy := collector.NewStrategy()
 	store := &registry.Store{
-		NewFunc:                  func() runtime.Object { return &platform.Prometheus{} },
-		NewListFunc:              func() runtime.Object { return &platform.PrometheusList{} },
-		DefaultQualifiedResource: platform.Resource("prometheuses"),
-		PredicateFunc:            prometheus.MatchPrometheus,
+		NewFunc:                  func() runtime.Object { return &monitor.Collector{} },
+		NewListFunc:              func() runtime.Object { return &monitor.CollectorList{} },
+		DefaultQualifiedResource: monitor.Resource("collectors"),
+		PredicateFunc:            collector.MatchCollector,
 
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
@@ -57,46 +59,46 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 	}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
-		AttrFunc:    prometheus.GetAttrs,
+		AttrFunc:    collector.GetAttrs,
 	}
 
 	if err := store.CompleteWithOptions(options); err != nil {
-		log.Panic("Failed to create prometheus etcd rest storage", log.Err(err))
+		log.Panic("Failed to create collector etcd rest storage", log.Err(err))
 	}
 
 	statusStore := *store
-	statusStore.UpdateStrategy = prometheus.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = prometheus.NewStatusStrategy(strategy)
+	statusStore.UpdateStrategy = collector.NewStatusStrategy(strategy)
+	statusStore.ExportStrategy = collector.NewStatusStrategy(strategy)
 
 	return &Storage{
-		Prometheus: &REST{store, privilegedUsername},
-		Status:     &StatusREST{&statusStore},
+		Collector: &REST{store, privilegedUsername},
+		Status:    &StatusREST{&statusStore},
 	}
 }
 
-// ValidateGetObjectAndTenantID validate name and tenantID, if success return Prometheus
+// ValidateGetObjectAndTenantID validate name and tenantID, if success return Collector
 func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := store.Get(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	prom := obj.(*platform.Prometheus)
-	if err := util.FilterPrometheus(ctx, prom); err != nil {
+	prom := obj.(*monitor.Collector)
+	if err := util.FilterCollector(ctx, prom); err != nil {
 		return nil, err
 	}
 	return prom, nil
 }
 
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return Prometheus
+// ValidateExportObjectAndTenantID validate name and tenantID, if success return Collector
 func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
 	obj, err := store.Export(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
 
-	prom := obj.(*platform.Prometheus)
-	if err := util.FilterPrometheus(ctx, prom); err != nil {
+	prom := obj.(*monitor.Collector)
+	if err := util.FilterCollector(ctx, prom); err != nil {
 		return nil, err
 	}
 	return prom, nil
@@ -113,7 +115,7 @@ var _ rest.ShortNamesProvider = &REST{}
 // ShortNames implements the ShortNamesProvider interface. Returns a list of
 // short names for a resource.
 func (r *REST) ShortNames() []string {
-	return []string{"prom"}
+	return []string{"cl"}
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.

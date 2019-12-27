@@ -20,8 +20,8 @@ package clusteraddontype
 
 import (
 	"bytes"
-	"tkestack.io/tke/api/platform"
-	"tkestack.io/tke/api/platform/v1"
+
+	v1 "tkestack.io/tke/api/platform/v1"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
 	gpumanager "tkestack.io/tke/pkg/platform/controller/addon/gpumanager/images"
 	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
@@ -29,7 +29,6 @@ import (
 	lbcf "tkestack.io/tke/pkg/platform/controller/addon/lbcf/images"
 	logcollector "tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
 	persistentevent "tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
-	prometheus "tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
 	csioperator "tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator/images"
 	volumedecorator "tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
@@ -58,8 +57,6 @@ const (
 	VolumeDecorator AddonType = "VolumeDecorator"
 	// CronHPA is type for CronHPA
 	CronHPA AddonType = "CronHPA"
-	// Prometheus is type for prometheus addon.
-	Prometheus AddonType = "Prometheus"
 	// Galaxy-IPAM
 	IPAM AddonType = "IPAM"
 	// LBCF is type for LBCF
@@ -69,7 +66,6 @@ const (
 // Info defines the level of addon and the latest version of the package
 // structure.
 type Info struct {
-	Level                  platform.AddonLevel
 	LatestVersion          string
 	Description            string
 	CompatibleClusterTypes []v1.ClusterType
@@ -79,74 +75,46 @@ type Info struct {
 // version number.
 var Types = map[AddonType]Info{
 	Helm: {
-		Level:         platform.LevelEnhance,
 		LatestVersion: helm.LatestVersion,
 		Description:   description("Helm.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
 			v1.ClusterImported,
 			v1.ClusterBaremetal,
-			v1.ClusterEKSHosting,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
 		},
 	},
 	PersistentEvent: {
-		Level:         platform.LevelEnhance,
 		LatestVersion: persistentevent.LatestVersion,
 		Description:   description("PersistentEvent.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
 			v1.ClusterImported,
 			v1.ClusterBaremetal,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
 		},
 	},
 	LogCollector: {
-		Level:         platform.LevelEnhance,
 		LatestVersion: logcollector.LatestVersion,
 		Description:   description("LogCollector.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
 			v1.ClusterImported,
 			v1.ClusterBaremetal,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
 		},
 	},
 	GPUManager: {
-		Level:         platform.LevelBasic,
 		LatestVersion: gpumanager.LatestVersion,
 		Description:   description("GPUManager.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
 			v1.ClusterImported,
 			v1.ClusterBaremetal,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
 		},
 	},
 	TappController: {
-		Level:         platform.LevelEnhance,
 		LatestVersion: tappcontroller.LatestVersion,
 		Description:   description("TappController.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
 			v1.ClusterImported,
 			v1.ClusterBaremetal,
-			v1.ClusterEKSHosting,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
 		},
 	},
 	CSIOperator: {
-		Level:         platform.LevelBasic,
 		LatestVersion: csioperator.LatestVersion,
 		Description:   description("CSIOperator.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
@@ -155,7 +123,6 @@ var Types = map[AddonType]Info{
 		},
 	},
 	VolumeDecorator: {
-		Level:         platform.LevelEnhance,
 		LatestVersion: volumedecorator.LatestVersion,
 		Description:   description("VolumeDecorator.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
@@ -164,30 +131,14 @@ var Types = map[AddonType]Info{
 		},
 	},
 	CronHPA: {
-		Level:         platform.LevelEnhance,
 		LatestVersion: cronhpa.LatestVersion,
 		Description:   description("CronHPA.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-			v1.ClusterEKSHosting,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
-		},
-	},
-	Prometheus: {
-		Level:         platform.LevelBasic,
-		LatestVersion: prometheus.LatestVersion,
-		Description:   description("Prometheus.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
 			v1.ClusterImported,
 			v1.ClusterBaremetal,
 		},
 	},
 	IPAM: {
-		Level:         platform.LevelEnhance,
 		LatestVersion: ipam.LatestVersion,
 		Description:   description("IPAM.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
@@ -196,16 +147,11 @@ var Types = map[AddonType]Info{
 		},
 	},
 	LBCF: {
-		Level:         platform.LevelBasic,
 		LatestVersion: lbcf.LatestVersion,
 		Description:   description("LBCF.md"),
 		CompatibleClusterTypes: []v1.ClusterType{
 			v1.ClusterImported,
 			v1.ClusterBaremetal,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
 		},
 	},
 }

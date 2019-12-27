@@ -22,11 +22,10 @@ import (
 	"reflect"
 	"testing"
 
-	alertmanager_config "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
-
-	alert_config "github.com/prometheus/alertmanager/config"
+	alertconfig "github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	collectorcontroller "tkestack.io/tke/pkg/monitor/controller/collector"
 )
 
 func TestProcessor_Delete(t *testing.T) {
@@ -51,15 +50,15 @@ func TestProcessor_Delete(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	configMap, err := k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(alertmanager_config.AlertManagerConfigMap, metav1.GetOptions{})
+	configMap, err := k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(collectorcontroller.AlertManagerConfigMap, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return
 	}
 
-	targetConfig := &alert_config.Config{}
-	expectConfig := &alert_config.Config{}
-	_ = yaml.Unmarshal([]byte(configMap.Data[alertmanager_config.AlertManagerConfigName]), targetConfig)
+	targetConfig := &alertconfig.Config{}
+	expectConfig := &alertconfig.Config{}
+	_ = yaml.Unmarshal([]byte(configMap.Data[collectorcontroller.AlertManagerConfigName]), targetConfig)
 	_ = yaml.Unmarshal([]byte(exampleAlertConfig), expectConfig)
 
 	expectConfig.Route.Routes = expectConfig.Route.Routes[1:]

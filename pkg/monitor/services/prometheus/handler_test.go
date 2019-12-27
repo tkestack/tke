@@ -24,16 +24,14 @@ import (
 	"time"
 
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
-
-	"tkestack.io/tke/pkg/monitor/services"
-	"tkestack.io/tke/pkg/monitor/util"
-	prometheus_rule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
-	"tkestack.io/tke/pkg/util/log"
-
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/coreos/prometheus-operator/pkg/client/versioned/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	collectorcontroller "tkestack.io/tke/pkg/monitor/controller/collector"
+	"tkestack.io/tke/pkg/monitor/services"
+	"tkestack.io/tke/pkg/monitor/util"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
@@ -74,9 +72,9 @@ func createProcessorServer() (*fake.Clientset, services.RuleProcessor, string, e
 			Kind:       monitoringv1.PrometheusRuleKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      prometheus_rule.PrometheusRuleAlert,
+			Name:      collectorcontroller.PrometheusRuleAlert,
 			Namespace: metav1.NamespaceSystem,
-			Labels:    map[string]string{prometheus_rule.PrometheusService: prometheus_rule.PrometheusCRDName, "role": "alert-rules"},
+			Labels:    map[string]string{collectorcontroller.PrometheusService: collectorcontroller.PrometheusCRDName, "role": "alert-rules"},
 		},
 		Spec: monitoringv1.PrometheusRuleSpec{Groups: []monitoringv1.RuleGroup{}},
 	}

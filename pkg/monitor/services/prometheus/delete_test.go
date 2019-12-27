@@ -22,10 +22,9 @@ import (
 	"reflect"
 	"testing"
 
-	prometheus_rule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
-
 	v1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	collectorcontroller "tkestack.io/tke/pkg/monitor/controller/collector"
 )
 
 func TestProcessor_DeleteGroup(t *testing.T) {
@@ -66,7 +65,7 @@ func TestProcessor_DeleteGroup(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheus_rule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(collectorcontroller.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return
@@ -118,7 +117,7 @@ func TestProcessor_DeleteRule(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheus_rule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(collectorcontroller.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return

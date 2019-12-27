@@ -20,8 +20,9 @@ package metric
 
 import (
 	"fmt"
-	influxclient "github.com/influxdata/influxdb1-client/v2"
 	"time"
+
+	influxclient "github.com/influxdata/influxdb1-client/v2"
 	monitorconfig "tkestack.io/tke/pkg/monitor/apis/config"
 )
 
