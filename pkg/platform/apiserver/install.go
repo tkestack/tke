@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	runtimeutil "k8s.io/apimachinery/pkg/util/runtime"
 	"tkestack.io/tke/api/platform"
+
 	// register project group api scheme for api server.
 	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -157,10 +158,12 @@ func registerMeta(scheme *runtime.Scheme) error {
 	// ListOptions is the onl y options struct which needs conversion (it exposes labels and fields
 	// as selectors for convenience). The other types have only a single representation today.
 	scheme.AddKnownTypes(schemaGroupVersion,
+		&metainternal.ListOptions{},
 		&metav1.GetOptions{},
 		&metav1.ExportOptions{},
 		&metav1.DeleteOptions{},
-		&metav1.ListOptions{},
+		&metav1.CreateOptions{},
+		&metav1.UpdateOptions{},
 	)
 	scheme.AddKnownTypes(schemaGroupVersion,
 		&metav1beta1.Table{},
@@ -175,8 +178,10 @@ func registerMeta(scheme *runtime.Scheme) error {
 		&metav1beta1.PartialObjectMetadataList{},
 	)
 	// Allow delete options to be decoded across all version in this scheme (we may want to be more clever than this)
-	scheme.AddUnversionedTypes(schemaGroupVersion, &metav1.DeleteOptions{})
+	scheme.AddUnversionedTypes(schemaGroupVersion,
+		&metav1.DeleteOptions{},
+		&metav1.CreateOptions{},
+		&metav1.UpdateOptions{})
 	metav1.AddToGroupVersion(scheme, metav1.SchemeGroupVersion)
-	// _ = metainternal.AddToScheme(scheme)
 	return nil
 }
