@@ -20,6 +20,10 @@
 
 package internalversion
 
+// AlarmPolicyListerExpansion allows custom methods to be added to
+// AlarmPolicyLister.
+type AlarmPolicyListerExpansion interface{}
+
 // CollectorListerExpansion allows custom methods to be added to
 // CollectorLister.
 type CollectorListerExpansion interface{}

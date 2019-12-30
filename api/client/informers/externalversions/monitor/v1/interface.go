@@ -26,6 +26,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// AlarmPolicies returns a AlarmPolicyInformer.
+	AlarmPolicies() AlarmPolicyInformer
 	// Collectors returns a CollectorInformer.
 	Collectors() CollectorInformer
 	// ConfigMaps returns a ConfigMapInformer.
@@ -41,6 +43,11 @@ type version struct {
 // New returns a new Interface.
 func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakListOptions internalinterfaces.TweakListOptionsFunc) Interface {
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
+}
+
+// AlarmPolicies returns a AlarmPolicyInformer.
+func (v *version) AlarmPolicies() AlarmPolicyInformer {
+	return &alarmPolicyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // Collectors returns a CollectorInformer.

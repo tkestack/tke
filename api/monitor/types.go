@@ -220,3 +220,143 @@ const (
 	// CollectorImported means the prometheus installed by other.
 	CollectorImportedPrometheus CollectorType = "ImportedPrometheus"
 )
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AlarmPolicy is a policy of alarm system.
+type AlarmPolicy struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of alarm policies in this set.
+	// +optional
+	Spec AlarmPolicySpec
+	// +optional
+	Status AlarmPolicyStatus
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AlarmPolicyList is the whole list of all alarm policies which owned by a tenant.
+type AlarmPolicyList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+
+	// List of alarm policies.
+	Items []AlarmPolicy
+}
+
+// AlarmPolicySpec describes the attributes on an alarm policy.
+type AlarmPolicySpec struct {
+	TenantID    string
+	ClusterName string
+	Type        AlarmPolicyType
+	// +patchMergeKey=metricName
+	// +patchStrategy=merge
+	Metrics          []AlarmMetric
+	Objects          string
+	ObjectsType      AlarmObjectsType
+	StatisticsPeriod int64
+	// +optional
+	Namespace *string
+	// +optional
+	WorkloadType *WorkloadType
+	// +optional
+	// +patchStrategy=merge
+	ReceiverGroups []string
+	// +optional
+	// +patchStrategy=merge
+	Receivers []string
+	// +optional
+	// +patchMergeKey=templateName
+	// +patchStrategy=merge
+	NotifyWays []AlarmNotifyWay
+}
+
+// AlarmPolicyStatus is information about the current status of a AlarmPolicy.
+type AlarmPolicyStatus struct {
+	// +optional
+	Phase AlarmPolicyPhase
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string
+}
+
+// AlarmPolicyType defines the type of alarm policy.
+type AlarmPolicyType string
+
+const (
+	// AlarmPolicyCluster indicates a cluster-wide alarm policy.
+	AlarmPolicyCluster AlarmPolicyType = "Cluster"
+	// AlarmPolicyNode indicates a node-wide alarm policy.
+	AlarmPolicyNode AlarmPolicyType = "Node"
+	// AlarmPolicyPod indicates a pod-wide alarm policy.
+	AlarmPolicyPod AlarmPolicyType = "Pod"
+)
+
+type AlarmObjectsType string
+
+const (
+	AlarmObjectsAll  AlarmObjectsType = "All"
+	AlarmObjectsPart AlarmObjectsType = "Part"
+)
+
+type AlarmMetric struct {
+	Measurement    string
+	MetricName     string
+	ContinuePeriod int64
+	// +optional
+	DisplayName string
+	// +optional
+	Evaluator *AlarmEvaluator
+	// +optional
+	Unit string
+}
+
+type AlarmEvaluator struct {
+	Type  string
+	Value string
+}
+
+type WorkloadType string
+
+const (
+	WorkloadDeployment  WorkloadType = "Deployment"
+	WorkloadDaemonset   WorkloadType = "Daemonset"
+	WorkloadStatefulset WorkloadType = "Statefulset"
+)
+
+type AlarmNotifyWay struct {
+	ChannelName  string
+	TemplateName string
+}
+
+// AlarmPolicyPhase indicates the status of policy alarm in cluster.
+type AlarmPolicyPhase string
+
+// These are valid alarm policy status.
+const (
+	// AlarmPolicyPending indicates that the alarm policy has been declared, when
+	// the alarm policy has not actually been created in the cluster.
+	AlarmPolicyPending AlarmPolicyPhase = "Pending"
+	// AlarmPolicyAvailable indicates the alarm policy is available.
+	AlarmPolicyAvailable AlarmPolicyPhase = "Available"
+	// AlarmPolicyFailed indicates that the alarm policy failed to be created in the
+	// cluster or deleted in the cluster after it has been created.
+	AlarmPolicyFailed AlarmPolicyPhase = "Failed"
+	// AlarmPolicyTerminating means the alarm policy is undergoing graceful
+	// termination.
+	AlarmPolicyTerminating AlarmPolicyPhase = "Terminating"
+)

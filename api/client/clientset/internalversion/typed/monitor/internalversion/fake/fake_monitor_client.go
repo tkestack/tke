@@ -30,6 +30,10 @@ type FakeMonitor struct {
 	*testing.Fake
 }
 
+func (c *FakeMonitor) AlarmPolicies() internalversion.AlarmPolicyInterface {
+	return &FakeAlarmPolicies{c}
+}
+
 func (c *FakeMonitor) Collectors() internalversion.CollectorInterface {
 	return &FakeCollectors{c}
 }

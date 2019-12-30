@@ -43,3 +43,9 @@ func SetDefaults_CollectorSpec(obj *CollectorSpec) {
 		obj.Type = CollectorManaged
 	}
 }
+
+func SetDefaults_AlarmPolicyStatus(obj *AlarmPolicyStatus) {
+	if obj.Phase == "" {
+		obj.Phase = AlarmPolicyPending
+	}
+}

@@ -20,6 +20,8 @@
 
 package internalversion
 
+type AlarmPolicyExpansion interface{}
+
 type CollectorExpansion interface{}
 
 type ConfigMapExpansion interface{}

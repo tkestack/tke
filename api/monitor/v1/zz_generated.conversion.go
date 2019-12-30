@@ -37,6 +37,76 @@ func init() {
 // RegisterConversions adds conversion functions to the given scheme.
 // Public to allow building arbitrary schemes.
 func RegisterConversions(s *runtime.Scheme) error {
+	if err := s.AddGeneratedConversionFunc((*AlarmEvaluator)(nil), (*monitor.AlarmEvaluator)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AlarmEvaluator_To_monitor_AlarmEvaluator(a.(*AlarmEvaluator), b.(*monitor.AlarmEvaluator), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.AlarmEvaluator)(nil), (*AlarmEvaluator)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_AlarmEvaluator_To_v1_AlarmEvaluator(a.(*monitor.AlarmEvaluator), b.(*AlarmEvaluator), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AlarmMetric)(nil), (*monitor.AlarmMetric)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AlarmMetric_To_monitor_AlarmMetric(a.(*AlarmMetric), b.(*monitor.AlarmMetric), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.AlarmMetric)(nil), (*AlarmMetric)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_AlarmMetric_To_v1_AlarmMetric(a.(*monitor.AlarmMetric), b.(*AlarmMetric), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AlarmNotifyWay)(nil), (*monitor.AlarmNotifyWay)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AlarmNotifyWay_To_monitor_AlarmNotifyWay(a.(*AlarmNotifyWay), b.(*monitor.AlarmNotifyWay), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.AlarmNotifyWay)(nil), (*AlarmNotifyWay)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_AlarmNotifyWay_To_v1_AlarmNotifyWay(a.(*monitor.AlarmNotifyWay), b.(*AlarmNotifyWay), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AlarmPolicy)(nil), (*monitor.AlarmPolicy)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AlarmPolicy_To_monitor_AlarmPolicy(a.(*AlarmPolicy), b.(*monitor.AlarmPolicy), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.AlarmPolicy)(nil), (*AlarmPolicy)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_AlarmPolicy_To_v1_AlarmPolicy(a.(*monitor.AlarmPolicy), b.(*AlarmPolicy), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AlarmPolicyList)(nil), (*monitor.AlarmPolicyList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AlarmPolicyList_To_monitor_AlarmPolicyList(a.(*AlarmPolicyList), b.(*monitor.AlarmPolicyList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.AlarmPolicyList)(nil), (*AlarmPolicyList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_AlarmPolicyList_To_v1_AlarmPolicyList(a.(*monitor.AlarmPolicyList), b.(*AlarmPolicyList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AlarmPolicySpec)(nil), (*monitor.AlarmPolicySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AlarmPolicySpec_To_monitor_AlarmPolicySpec(a.(*AlarmPolicySpec), b.(*monitor.AlarmPolicySpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.AlarmPolicySpec)(nil), (*AlarmPolicySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_AlarmPolicySpec_To_v1_AlarmPolicySpec(a.(*monitor.AlarmPolicySpec), b.(*AlarmPolicySpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AlarmPolicyStatus)(nil), (*monitor.AlarmPolicyStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AlarmPolicyStatus_To_monitor_AlarmPolicyStatus(a.(*AlarmPolicyStatus), b.(*monitor.AlarmPolicyStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.AlarmPolicyStatus)(nil), (*AlarmPolicyStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_AlarmPolicyStatus_To_v1_AlarmPolicyStatus(a.(*monitor.AlarmPolicyStatus), b.(*AlarmPolicyStatus), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*Collector)(nil), (*monitor.Collector)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_Collector_To_monitor_Collector(a.(*Collector), b.(*monitor.Collector), scope)
 	}); err != nil {
@@ -148,6 +218,202 @@ func RegisterConversions(s *runtime.Scheme) error {
 		return err
 	}
 	return nil
+}
+
+func autoConvert_v1_AlarmEvaluator_To_monitor_AlarmEvaluator(in *AlarmEvaluator, out *monitor.AlarmEvaluator, s conversion.Scope) error {
+	out.Type = in.Type
+	out.Value = in.Value
+	return nil
+}
+
+// Convert_v1_AlarmEvaluator_To_monitor_AlarmEvaluator is an autogenerated conversion function.
+func Convert_v1_AlarmEvaluator_To_monitor_AlarmEvaluator(in *AlarmEvaluator, out *monitor.AlarmEvaluator, s conversion.Scope) error {
+	return autoConvert_v1_AlarmEvaluator_To_monitor_AlarmEvaluator(in, out, s)
+}
+
+func autoConvert_monitor_AlarmEvaluator_To_v1_AlarmEvaluator(in *monitor.AlarmEvaluator, out *AlarmEvaluator, s conversion.Scope) error {
+	out.Type = in.Type
+	out.Value = in.Value
+	return nil
+}
+
+// Convert_monitor_AlarmEvaluator_To_v1_AlarmEvaluator is an autogenerated conversion function.
+func Convert_monitor_AlarmEvaluator_To_v1_AlarmEvaluator(in *monitor.AlarmEvaluator, out *AlarmEvaluator, s conversion.Scope) error {
+	return autoConvert_monitor_AlarmEvaluator_To_v1_AlarmEvaluator(in, out, s)
+}
+
+func autoConvert_v1_AlarmMetric_To_monitor_AlarmMetric(in *AlarmMetric, out *monitor.AlarmMetric, s conversion.Scope) error {
+	out.Measurement = in.Measurement
+	out.MetricName = in.MetricName
+	out.ContinuePeriod = in.ContinuePeriod
+	out.DisplayName = in.DisplayName
+	out.Evaluator = (*monitor.AlarmEvaluator)(unsafe.Pointer(in.Evaluator))
+	out.Unit = in.Unit
+	return nil
+}
+
+// Convert_v1_AlarmMetric_To_monitor_AlarmMetric is an autogenerated conversion function.
+func Convert_v1_AlarmMetric_To_monitor_AlarmMetric(in *AlarmMetric, out *monitor.AlarmMetric, s conversion.Scope) error {
+	return autoConvert_v1_AlarmMetric_To_monitor_AlarmMetric(in, out, s)
+}
+
+func autoConvert_monitor_AlarmMetric_To_v1_AlarmMetric(in *monitor.AlarmMetric, out *AlarmMetric, s conversion.Scope) error {
+	out.Measurement = in.Measurement
+	out.MetricName = in.MetricName
+	out.ContinuePeriod = in.ContinuePeriod
+	out.DisplayName = in.DisplayName
+	out.Evaluator = (*AlarmEvaluator)(unsafe.Pointer(in.Evaluator))
+	out.Unit = in.Unit
+	return nil
+}
+
+// Convert_monitor_AlarmMetric_To_v1_AlarmMetric is an autogenerated conversion function.
+func Convert_monitor_AlarmMetric_To_v1_AlarmMetric(in *monitor.AlarmMetric, out *AlarmMetric, s conversion.Scope) error {
+	return autoConvert_monitor_AlarmMetric_To_v1_AlarmMetric(in, out, s)
+}
+
+func autoConvert_v1_AlarmNotifyWay_To_monitor_AlarmNotifyWay(in *AlarmNotifyWay, out *monitor.AlarmNotifyWay, s conversion.Scope) error {
+	out.ChannelName = in.ChannelName
+	out.TemplateName = in.TemplateName
+	return nil
+}
+
+// Convert_v1_AlarmNotifyWay_To_monitor_AlarmNotifyWay is an autogenerated conversion function.
+func Convert_v1_AlarmNotifyWay_To_monitor_AlarmNotifyWay(in *AlarmNotifyWay, out *monitor.AlarmNotifyWay, s conversion.Scope) error {
+	return autoConvert_v1_AlarmNotifyWay_To_monitor_AlarmNotifyWay(in, out, s)
+}
+
+func autoConvert_monitor_AlarmNotifyWay_To_v1_AlarmNotifyWay(in *monitor.AlarmNotifyWay, out *AlarmNotifyWay, s conversion.Scope) error {
+	out.ChannelName = in.ChannelName
+	out.TemplateName = in.TemplateName
+	return nil
+}
+
+// Convert_monitor_AlarmNotifyWay_To_v1_AlarmNotifyWay is an autogenerated conversion function.
+func Convert_monitor_AlarmNotifyWay_To_v1_AlarmNotifyWay(in *monitor.AlarmNotifyWay, out *AlarmNotifyWay, s conversion.Scope) error {
+	return autoConvert_monitor_AlarmNotifyWay_To_v1_AlarmNotifyWay(in, out, s)
+}
+
+func autoConvert_v1_AlarmPolicy_To_monitor_AlarmPolicy(in *AlarmPolicy, out *monitor.AlarmPolicy, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_AlarmPolicySpec_To_monitor_AlarmPolicySpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1_AlarmPolicyStatus_To_monitor_AlarmPolicyStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_AlarmPolicy_To_monitor_AlarmPolicy is an autogenerated conversion function.
+func Convert_v1_AlarmPolicy_To_monitor_AlarmPolicy(in *AlarmPolicy, out *monitor.AlarmPolicy, s conversion.Scope) error {
+	return autoConvert_v1_AlarmPolicy_To_monitor_AlarmPolicy(in, out, s)
+}
+
+func autoConvert_monitor_AlarmPolicy_To_v1_AlarmPolicy(in *monitor.AlarmPolicy, out *AlarmPolicy, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_monitor_AlarmPolicySpec_To_v1_AlarmPolicySpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_monitor_AlarmPolicyStatus_To_v1_AlarmPolicyStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_monitor_AlarmPolicy_To_v1_AlarmPolicy is an autogenerated conversion function.
+func Convert_monitor_AlarmPolicy_To_v1_AlarmPolicy(in *monitor.AlarmPolicy, out *AlarmPolicy, s conversion.Scope) error {
+	return autoConvert_monitor_AlarmPolicy_To_v1_AlarmPolicy(in, out, s)
+}
+
+func autoConvert_v1_AlarmPolicyList_To_monitor_AlarmPolicyList(in *AlarmPolicyList, out *monitor.AlarmPolicyList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]monitor.AlarmPolicy)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_AlarmPolicyList_To_monitor_AlarmPolicyList is an autogenerated conversion function.
+func Convert_v1_AlarmPolicyList_To_monitor_AlarmPolicyList(in *AlarmPolicyList, out *monitor.AlarmPolicyList, s conversion.Scope) error {
+	return autoConvert_v1_AlarmPolicyList_To_monitor_AlarmPolicyList(in, out, s)
+}
+
+func autoConvert_monitor_AlarmPolicyList_To_v1_AlarmPolicyList(in *monitor.AlarmPolicyList, out *AlarmPolicyList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]AlarmPolicy)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_monitor_AlarmPolicyList_To_v1_AlarmPolicyList is an autogenerated conversion function.
+func Convert_monitor_AlarmPolicyList_To_v1_AlarmPolicyList(in *monitor.AlarmPolicyList, out *AlarmPolicyList, s conversion.Scope) error {
+	return autoConvert_monitor_AlarmPolicyList_To_v1_AlarmPolicyList(in, out, s)
+}
+
+func autoConvert_v1_AlarmPolicySpec_To_monitor_AlarmPolicySpec(in *AlarmPolicySpec, out *monitor.AlarmPolicySpec, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.ClusterName = in.ClusterName
+	out.Type = monitor.AlarmPolicyType(in.Type)
+	out.Metrics = *(*[]monitor.AlarmMetric)(unsafe.Pointer(&in.Metrics))
+	out.Objects = in.Objects
+	out.ObjectsType = monitor.AlarmObjectsType(in.ObjectsType)
+	out.StatisticsPeriod = in.StatisticsPeriod
+	out.Namespace = (*string)(unsafe.Pointer(in.Namespace))
+	out.WorkloadType = (*monitor.WorkloadType)(unsafe.Pointer(in.WorkloadType))
+	out.ReceiverGroups = *(*[]string)(unsafe.Pointer(&in.ReceiverGroups))
+	out.Receivers = *(*[]string)(unsafe.Pointer(&in.Receivers))
+	out.NotifyWays = *(*[]monitor.AlarmNotifyWay)(unsafe.Pointer(&in.NotifyWays))
+	return nil
+}
+
+// Convert_v1_AlarmPolicySpec_To_monitor_AlarmPolicySpec is an autogenerated conversion function.
+func Convert_v1_AlarmPolicySpec_To_monitor_AlarmPolicySpec(in *AlarmPolicySpec, out *monitor.AlarmPolicySpec, s conversion.Scope) error {
+	return autoConvert_v1_AlarmPolicySpec_To_monitor_AlarmPolicySpec(in, out, s)
+}
+
+func autoConvert_monitor_AlarmPolicySpec_To_v1_AlarmPolicySpec(in *monitor.AlarmPolicySpec, out *AlarmPolicySpec, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.ClusterName = in.ClusterName
+	out.Type = AlarmPolicyType(in.Type)
+	out.Metrics = *(*[]AlarmMetric)(unsafe.Pointer(&in.Metrics))
+	out.Objects = in.Objects
+	out.ObjectsType = AlarmObjectsType(in.ObjectsType)
+	out.StatisticsPeriod = in.StatisticsPeriod
+	out.Namespace = (*string)(unsafe.Pointer(in.Namespace))
+	out.WorkloadType = (*WorkloadType)(unsafe.Pointer(in.WorkloadType))
+	out.ReceiverGroups = *(*[]string)(unsafe.Pointer(&in.ReceiverGroups))
+	out.Receivers = *(*[]string)(unsafe.Pointer(&in.Receivers))
+	out.NotifyWays = *(*[]AlarmNotifyWay)(unsafe.Pointer(&in.NotifyWays))
+	return nil
+}
+
+// Convert_monitor_AlarmPolicySpec_To_v1_AlarmPolicySpec is an autogenerated conversion function.
+func Convert_monitor_AlarmPolicySpec_To_v1_AlarmPolicySpec(in *monitor.AlarmPolicySpec, out *AlarmPolicySpec, s conversion.Scope) error {
+	return autoConvert_monitor_AlarmPolicySpec_To_v1_AlarmPolicySpec(in, out, s)
+}
+
+func autoConvert_v1_AlarmPolicyStatus_To_monitor_AlarmPolicyStatus(in *AlarmPolicyStatus, out *monitor.AlarmPolicyStatus, s conversion.Scope) error {
+	out.Phase = monitor.AlarmPolicyPhase(in.Phase)
+	out.LastTransitionTime = in.LastTransitionTime
+	out.Reason = in.Reason
+	out.Message = in.Message
+	return nil
+}
+
+// Convert_v1_AlarmPolicyStatus_To_monitor_AlarmPolicyStatus is an autogenerated conversion function.
+func Convert_v1_AlarmPolicyStatus_To_monitor_AlarmPolicyStatus(in *AlarmPolicyStatus, out *monitor.AlarmPolicyStatus, s conversion.Scope) error {
+	return autoConvert_v1_AlarmPolicyStatus_To_monitor_AlarmPolicyStatus(in, out, s)
+}
+
+func autoConvert_monitor_AlarmPolicyStatus_To_v1_AlarmPolicyStatus(in *monitor.AlarmPolicyStatus, out *AlarmPolicyStatus, s conversion.Scope) error {
+	out.Phase = AlarmPolicyPhase(in.Phase)
+	out.LastTransitionTime = in.LastTransitionTime
+	out.Reason = in.Reason
+	out.Message = in.Message
+	return nil
+}
+
+// Convert_monitor_AlarmPolicyStatus_To_v1_AlarmPolicyStatus is an autogenerated conversion function.
+func Convert_monitor_AlarmPolicyStatus_To_v1_AlarmPolicyStatus(in *monitor.AlarmPolicyStatus, out *AlarmPolicyStatus, s conversion.Scope) error {
+	return autoConvert_monitor_AlarmPolicyStatus_To_v1_AlarmPolicyStatus(in, out, s)
 }
 
 func autoConvert_v1_Collector_To_monitor_Collector(in *Collector, out *monitor.Collector, s conversion.Scope) error {

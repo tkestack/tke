@@ -66,6 +66,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Collector{},
 		&CollectorList{},
 
+		&AlarmPolicy{},
+		&AlarmPolicyList{},
+
 		&ConfigMap{},
 		&ConfigMapList{})
 	return nil

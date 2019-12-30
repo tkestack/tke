@@ -102,6 +102,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().Projects().Informer()}, nil
 
 		// Group=monitor.tkestack.io, Version=internalVersion
+	case monitor.SchemeGroupVersion.WithResource("alarmpolicies"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Monitor().InternalVersion().AlarmPolicies().Informer()}, nil
 	case monitor.SchemeGroupVersion.WithResource("collectors"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Monitor().InternalVersion().Collectors().Informer()}, nil
 	case monitor.SchemeGroupVersion.WithResource("configmaps"):

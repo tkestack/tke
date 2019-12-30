@@ -29,6 +29,113 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "v1";
 
+message AlarmEvaluator {
+  optional string type = 1;
+
+  optional string value = 2;
+}
+
+message AlarmMetric {
+  optional string measurement = 1;
+
+  optional string metricName = 2;
+
+  optional int64 continuePeriod = 3;
+
+  // +optional
+  optional string displayName = 4;
+
+  // +optional
+  optional AlarmEvaluator evaluator = 5;
+
+  // +optional
+  optional string unit = 6;
+}
+
+message AlarmNotifyWay {
+  optional string channelName = 1;
+
+  optional string templateName = 2;
+}
+
+// AlarmPolicy is a policy of alarm system.
+message AlarmPolicy {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of alarm policies in this set.
+  // +optional
+  optional AlarmPolicySpec spec = 2;
+
+  // +optional
+  optional AlarmPolicyStatus status = 3;
+}
+
+// AlarmPolicyList is the whole list of all alarm policies which owned by a tenant.
+message AlarmPolicyList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of alarm policies.
+  repeated AlarmPolicy items = 2;
+}
+
+// AlarmPolicySpec describes the attributes on an alarm policy.
+message AlarmPolicySpec {
+  optional string tenantID = 1;
+
+  optional string clusterName = 2;
+
+  optional string type = 3;
+
+  // +patchMergeKey=metricName
+  // +patchStrategy=merge
+  repeated AlarmMetric metrics = 4;
+
+  optional string objects = 5;
+
+  optional string objectsType = 6;
+
+  optional int64 statisticsPeriod = 7;
+
+  // +optional
+  optional string namespace = 8;
+
+  // +optional
+  optional string workloadType = 9;
+
+  // +optional
+  // +patchStrategy=merge
+  repeated string receiverGroups = 10;
+
+  // +optional
+  // +patchStrategy=merge
+  repeated string receivers = 11;
+
+  // +optional
+  // +patchMergeKey=templateName
+  // +patchStrategy=merge
+  repeated AlarmNotifyWay notifyWays = 12;
+}
+
+// AlarmPolicyStatus is information about the current status of a AlarmPolicy.
+message AlarmPolicyStatus {
+  // +optional
+  optional string phase = 1;
+
+  // The last time the condition transitioned from one status to another.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 2;
+
+  // The reason for the condition's last transition.
+  // +optional
+  optional string reason = 3;
+
+  // A human readable message indicating details about the transition.
+  // +optional
+  optional string message = 4;
+}
+
 // Collector is a monitor component.
 message Collector {
   // +optional

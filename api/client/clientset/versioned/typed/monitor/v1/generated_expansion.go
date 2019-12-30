@@ -20,6 +20,8 @@
 
 package v1
 
+type AlarmPolicyExpansion interface{}
+
 type CollectorExpansion interface{}
 
 type ConfigMapExpansion interface{}

@@ -220,3 +220,143 @@ const (
 	// CollectorImported means the prometheus installed by other.
 	CollectorImportedPrometheus CollectorType = "ImportedPrometheus"
 )
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AlarmPolicy is a policy of alarm system.
+type AlarmPolicy struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of alarm policies in this set.
+	// +optional
+	Spec AlarmPolicySpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	// +optional
+	Status AlarmPolicyStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AlarmPolicyList is the whole list of all alarm policies which owned by a tenant.
+type AlarmPolicyList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of alarm policies.
+	Items []AlarmPolicy `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// AlarmPolicySpec describes the attributes on an alarm policy.
+type AlarmPolicySpec struct {
+	TenantID    string          `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	ClusterName string          `json:"clusterName" protobuf:"bytes,2,opt,name=clusterName"`
+	Type        AlarmPolicyType `json:"type" protobuf:"bytes,3,opt,name=type"`
+	// +patchMergeKey=metricName
+	// +patchStrategy=merge
+	Metrics          []AlarmMetric    `json:"metrics" protobuf:"bytes,4,rep,name=metrics" patchStrategy:"merge" patchMergeKey:"metricName"`
+	Objects          string           `json:"objects" protobuf:"bytes,5,opt,name=objects"`
+	ObjectsType      AlarmObjectsType `json:"objectsType" protobuf:"bytes,6,opt,name=objectsType"`
+	StatisticsPeriod int64            `json:"statisticsPeriod,omitempty" protobuf:"varint,7,opt,name=statisticsPeriod"`
+	// +optional
+	Namespace *string `json:"namespace,omitempty" protobuf:"bytes,8,opt,name=namespace"`
+	// +optional
+	WorkloadType *WorkloadType `json:"workloadType,omitempty" protobuf:"bytes,9,opt,name=workloadType"`
+	// +optional
+	// +patchStrategy=merge
+	ReceiverGroups []string `json:"receiverGroups,omitempty" protobuf:"bytes,10,opt,name=receiverGroups" patchStrategy:"merge"`
+	// +optional
+	// +patchStrategy=merge
+	Receivers []string `json:"receivers,omitempty" protobuf:"bytes,11,opt,name=receivers" patchStrategy:"merge"`
+	// +optional
+	// +patchMergeKey=templateName
+	// +patchStrategy=merge
+	NotifyWays []AlarmNotifyWay `json:"notifyWays,omitempty" protobuf:"bytes,12,rep,name=notifyWays" patchStrategy:"merge" patchMergeKey:"templateName"`
+}
+
+// AlarmPolicyStatus is information about the current status of a AlarmPolicy.
+type AlarmPolicyStatus struct {
+	// +optional
+	Phase AlarmPolicyPhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=AlarmPolicyPhase"`
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,2,opt,name=lastTransitionTime"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,4,opt,name=message"`
+}
+
+// AlarmPolicyType defines the type of alarm policy.
+type AlarmPolicyType string
+
+const (
+	// AlarmPolicyCluster indicates a cluster-wide alarm policy.
+	AlarmPolicyCluster AlarmPolicyType = "Cluster"
+	// AlarmPolicyNode indicates a node-wide alarm policy.
+	AlarmPolicyNode AlarmPolicyType = "Node"
+	// AlarmPolicyPod indicates a pod-wide alarm policy.
+	AlarmPolicyPod AlarmPolicyType = "Pod"
+)
+
+type AlarmObjectsType string
+
+const (
+	AlarmObjectsAll  AlarmObjectsType = "All"
+	AlarmObjectsPart AlarmObjectsType = "Part"
+)
+
+type AlarmMetric struct {
+	Measurement    string `json:"measurement" protobuf:"bytes,1,opt,name=measurement"`
+	MetricName     string `json:"metricName" protobuf:"bytes,2,opt,name=metricName"`
+	ContinuePeriod int64  `json:"continuePeriod" protobuf:"varint,3,opt,name=continuePeriod"`
+	// +optional
+	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,4,opt,name=displayName"`
+	// +optional
+	Evaluator *AlarmEvaluator `json:"evaluator,omitempty" protobuf:"bytes,5,opt,name=evaluator"`
+	// +optional
+	Unit string `json:"unit,omitempty" protobuf:"bytes,6,opt,name=unit"`
+}
+
+type AlarmEvaluator struct {
+	Type  string `json:"type" protobuf:"bytes,1,opt,name=type"`
+	Value string `json:"value" protobuf:"bytes,2,opt,name=value"`
+}
+
+type WorkloadType string
+
+const (
+	WorkloadDeployment  WorkloadType = "Deployment"
+	WorkloadDaemonset   WorkloadType = "Daemonset"
+	WorkloadStatefulset WorkloadType = "Statefulset"
+)
+
+type AlarmNotifyWay struct {
+	ChannelName  string `json:"channelName" protobuf:"bytes,1,opt,name=channelName"`
+	TemplateName string `json:"templateName" protobuf:"bytes,2,opt,name=templateName"`
+}
+
+// AlarmPolicyPhase indicates the status of policy alarm in cluster.
+type AlarmPolicyPhase string
+
+// These are valid alarm policy status.
+const (
+	// AlarmPolicyPending indicates that the alarm policy has been declared, when
+	// the alarm policy has not actually been created in the cluster.
+	AlarmPolicyPending AlarmPolicyPhase = "Pending"
+	// AlarmPolicyAvailable indicates the alarm policy is available.
+	AlarmPolicyAvailable AlarmPolicyPhase = "Available"
+	// AlarmPolicyFailed indicates that the alarm policy failed to be created in the
+	// cluster or deleted in the cluster after it has been created.
+	AlarmPolicyFailed AlarmPolicyPhase = "Failed"
+	// AlarmPolicyTerminating means the alarm policy is undergoing graceful
+	// termination.
+	AlarmPolicyTerminating AlarmPolicyPhase = "Terminating"
+)

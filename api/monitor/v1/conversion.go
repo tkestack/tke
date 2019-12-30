@@ -27,6 +27,7 @@ import (
 func addConversionFuncs(scheme *runtime.Scheme) error {
 	funcs := []func(scheme *runtime.Scheme) error{
 		AddFieldLabelConversionsForCollector,
+		AddFieldLabelConversionsForAlarmPolicy,
 	}
 	for _, f := range funcs {
 		if err := f(scheme); err != nil {
@@ -49,6 +50,25 @@ func AddFieldLabelConversionsForCollector(scheme *runtime.Scheme) error {
 				"spec.type",
 				"spec.version",
 				"status.version",
+				"status.phase",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForAlarmPolicy adds a conversion function to convert
+// field selectors of AlarmPolicy from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForAlarmPolicy(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("AlarmPolicy"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.tenantID",
+				"spec.clusterName",
+				"spec.type",
 				"status.phase",
 				"metadata.name":
 				return label, value, nil

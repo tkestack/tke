@@ -54,6 +54,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Collector{},
 		&CollectorList{},
 
+		&AlarmPolicy{},
+		&AlarmPolicyList{},
+
 		&ConfigMap{},
 		&ConfigMapList{})
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
