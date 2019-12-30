@@ -62,7 +62,7 @@ func ValidateCluster(clusterProviders *sync.Map, obj *platform.Cluster, platform
 	}
 
 	if obj.Spec.Type == "" {
-		allErrs = append(allErrs, field.Required(field.NewPath("spec", "type"), fmt.Sprintf("availble type are %v", types)))
+		allErrs = append(allErrs, field.Required(field.NewPath("spec", "type"), fmt.Sprintf("available type are %v", types)))
 	} else {
 		if !types.Has(string(obj.Spec.Type)) {
 			allErrs = append(allErrs, field.NotSupported(field.NewPath("spec", "type"), obj.Spec.Type, types.List()))

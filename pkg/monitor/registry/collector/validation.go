@@ -19,7 +19,10 @@
 package collector
 
 import (
+	"fmt"
+
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/monitor"
 )
@@ -28,12 +31,31 @@ import (
 // subdomain.
 var ValidateName = apimachineryvalidation.ValidateNamespaceName
 
+var types = sets.NewString(
+	string(monitor.CollectorImportedPrometheus),
+	string(monitor.CollectorManaged),
+)
+
 // ValidateCollector tests if required fields in the cluster are set.
 func ValidateCollector(collector *monitor.Collector) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&collector.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
 
 	if len(collector.Spec.ClusterName) == 0 {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "clusterName"), "must specify a cluster name"))
+	}
+
+	if collector.Spec.Type == "" {
+		allErrs = append(allErrs, field.Required(field.NewPath("spec", "type"), fmt.Sprintf("available type are %v", types)))
+	} else {
+		if !types.Has(string(collector.Spec.Type)) {
+			allErrs = append(allErrs, field.NotSupported(field.NewPath("spec", "type"), collector.Spec.Type, types.List()))
+		}
+
+		if collector.Spec.Type == monitor.CollectorManaged {
+			if collector.Spec.Version == "" {
+				allErrs = append(allErrs, field.Required(field.NewPath("spec", "version"), "must specify collector version"))
+			}
+		}
 	}
 
 	return allErrs
