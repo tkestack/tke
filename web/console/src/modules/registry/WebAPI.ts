@@ -6,7 +6,7 @@ import { resourceConfig } from '../../../config/resourceConfig';
 import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow } from '../../../helpers';
 import { Method } from '../../../helpers/reduceNetwork';
 import { RequestParams, ResourceInfo } from '../common/models';
-import { APIKEY_URL, REPO_URL, Default_D_URL } from './constants/Config';
+import { REPO_URL, Default_D_URL } from './constants/Config';
 import {
   ApiKey,
   ApiKeyCreation,

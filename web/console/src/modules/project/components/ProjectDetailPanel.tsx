@@ -221,7 +221,7 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
     let parentProjectSelection = projectEdition.parentProject
       ? project.list.data.records.find(item => item.metadata.name === projectEdition.parentProject)
       : null;
-    let clusterName = projectEdition.clusters[currentClusterIndex].name;
+    let clusterName = projectEdition.clusters.length ? projectEdition.clusters[currentClusterIndex].name : '-';
 
     let parentResourceLimits =
       parentProjectSelection && clusterName ? parentProjectSelection.spec.clusters[clusterName].hard : {};
