@@ -439,7 +439,7 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
     let list = response.data;
     userList = list.items
       ? list.items.map(item => {
-          return { id: uuid(), displayName: item.spec && item.spec.displayName, name: item.name };
+          return { id: uuid(), displayName: item.spec && item.spec.displayName, name: item.spec && item.spec.username };
         })
       : [];
   }
@@ -453,7 +453,7 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
 }
 
 /**
- * user列表的查询
+ *
  * @param query 集群列表查询的一些过滤条件
  */
 export async function fetchAdminstratorInfo() {

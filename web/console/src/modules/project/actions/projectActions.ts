@@ -200,10 +200,10 @@ const restActions = {
     // 验证内存限制
     if (name === '') {
       status = 2;
-      message = t('项目名称不能为空');
+      message = t('业务名称不能为空');
     } else if (name.length > 63) {
       status = 2;
-      message = t('项目名称长度不能超过63个字符');
+      message = t('业务名称长度不能超过63个字符');
     } else {
       status = 1;
       message = '';

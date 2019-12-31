@@ -90,7 +90,7 @@ export const restActions = {
           inputOption = log.spec.input.container_log_input;
           if (inputOption.all_namespaces) {
             dispatch(editLogStashActions.selectAllNamespace('selectAll'));
-            //选择了所有容器，则需要帮忙选择指定容器项目,
+            //选择了所有容器，则需要帮忙选择指定容器业务,
             //只有在update的时候才需要去获取resource、
             if (mode === 'update') {
               let containerLogsArr: ContainerLogs[] = cloneDeep(getState().logStashEdit.containerLogs);

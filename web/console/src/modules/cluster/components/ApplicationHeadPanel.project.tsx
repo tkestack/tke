@@ -14,7 +14,7 @@ const mapDispatchToProps = dispatch =>
 export class ApplicationHeadPanel extends React.Component<RootProps, {}> {
   render() {
     let { actions, projectList, projectSelection, cluster } = this.props;
-    /** 渲染项目列表 */
+    /** 渲染业务列表 */
     let projectListOptions = projectList.map((p, index) => ({
       text: p.displayName,
       value: p.name
@@ -22,7 +22,7 @@ export class ApplicationHeadPanel extends React.Component<RootProps, {}> {
     return (
       <div className="manage-area-title secondary-title">
         <h2 style={{ float: 'left' }}>应用</h2>
-        <FormPanel.InlineText>{t('项目：')}</FormPanel.InlineText>
+        <FormPanel.InlineText>{t('业务：')}</FormPanel.InlineText>
         <FormPanel.Select
           options={projectListOptions}
           value={projectSelection}
