@@ -208,13 +208,13 @@ func (c *Controller) syncItem(key string) error {
 	case err != nil:
 		log.Warn("Unable to retrieve role from store", log.String("role name", key), log.Err(err))
 	default:
-		if role.Status.Phase == v1.RoleActive {
-			err = c.processUpdate(role, key)
-		} else if role.Status.Phase == v1.RoleTerminating {
+		if role.Status.Phase == v1.RoleTerminating {
 			err = c.roleedResourcesDeleter.Delete(key)
+		} else {
+			err = c.processUpdate(role, key)
 		}
 
-		//log.Info("Handle role", log.Any("role", role))
+		log.Debug("Handle role", log.Any("role", role))
 	}
 	return err
 }
