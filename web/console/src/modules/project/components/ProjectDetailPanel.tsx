@@ -165,7 +165,7 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
               emptyText: (
                 <StatusTip
                   status="empty"
-                  emptyText={<div className="text-center">{t('该项目没有集群配额限制')}</div>}
+                  emptyText={<div className="text-center">{t('该业务没有集群配额限制')}</div>}
                 />
               )
             })
@@ -230,7 +230,7 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
       editProjecResourceLimit.operationState === OperationState.Done && !isSuccessWorkflow(editProjecResourceLimit);
 
     const cancel = () => {
-      this.setState({ isShowDialog: false });
+      this.setState({ isShowDialog: false, currentClusterIndex: 0 });
       actions.project.clearEdition();
 
       if (editProjecResourceLimit.operationState === OperationState.Done) {

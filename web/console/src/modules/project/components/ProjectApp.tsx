@@ -54,7 +54,7 @@ class ProjectApp extends React.Component<RootProps, {}> {
       return (
         <ContentView>
           <ContentView.Header>
-            <ProjectHeadPanel title={t('项目管理')} />
+            <ProjectHeadPanel title={t('业务管理')} />
           </ContentView.Header>
           <ContentView.Body>
             <ProjectActionPanel />

@@ -39,13 +39,13 @@ interface SelectItem {
 }
 
 export interface SelectListProps extends BaseReactProps {
-  /**当前选中的项目 */
+  /**当前选中的业务 */
   value?: string;
 
-  /**下拉显示的项目列表 */
+  /**下拉显示的业务列表 */
   recordData?: FetcherState<RecordSet<any>>;
 
-  /**下拉显示的项目列表 不带拉取状态*/
+  /**下拉显示的业务列表 不带拉取状态*/
   recordList?: any[];
 
   /**指定value字段 */
@@ -63,7 +63,7 @@ export interface SelectListProps extends BaseReactProps {
   /**名称, 在确定选择提示时使用 */
   name?: string;
 
-  /**当前选中的项目 */
+  /**当前选中的业务 */
   selected?: string | number;
 
   /**下拉选中时触发的事件 */

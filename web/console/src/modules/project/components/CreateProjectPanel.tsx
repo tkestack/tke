@@ -24,10 +24,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class CreateProjectPanel extends React.Component<
   RootProps,
   { currentClusterIndex: number; isShowDialog: boolean }
@@ -225,7 +222,7 @@ export class CreateProjectPanel extends React.Component<
         <CreateProjectResourceLimitPanel
           parentResourceLimits={parentResourceLimits}
           onCancel={() => {
-            this.setState({ isShowDialog: false });
+            this.setState({ isShowDialog: false, currentClusterIndex: 0 });
           }}
           resourceLimits={projectEdition.clusters[currentClusterIndex].resourceLimits}
           onSubmit={requestLimits => {

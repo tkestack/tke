@@ -27,10 +27,7 @@ import { RootProps } from './ProjectApp';
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class NamespaceTablePanel extends React.Component<RootProps, {}> {
   state = {
     isShowDialog: false
@@ -124,7 +121,7 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
     return (
       <GridTable
         columns={columns}
-        emptyTips={<div className="text-center">{t('您选择的该项目的命名空间为空')}</div>}
+        emptyTips={<div className="text-center">{t('您选择的该业务的命名空间为空')}</div>}
         listModel={{
           list: namespace.list,
           query: namespace.query

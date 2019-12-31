@@ -68,7 +68,7 @@ const restActions = {
     };
   },
 
-  /** 选择项目 */
+  /** 选择业务 */
   selectProject: (project: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { route, cluster, projectNamespaceQuery } = getState(),
@@ -109,7 +109,7 @@ const restActions = {
           trigger: 'Done'
         }
       });
-      // //项目不一样集群不一定一样，导致不能取url上面的做默认值
+      // //业务不一样集群不一定一样，导致不能取url上面的做默认值
       // let defaultCluster = result.records[0] ? result.records[0] : null;
 
       // defaultCluster && dispatch(projectNamespaceActions.selectCluster(defaultCluster));
