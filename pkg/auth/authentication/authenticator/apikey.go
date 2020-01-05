@@ -102,5 +102,6 @@ func (h *APIKeyAuthenticator) AuthenticateToken(ctx context.Context, token strin
 	info.Extra["issueAt"] = []string{time.Unix(tokenInfo.IssuedAt, 0).String()}
 	info.Extra["description"] = []string{apiKey.Spec.Description}
 
+	log.Debug("APIkey authenticateToken result", log.Any("user info", info))
 	return &genericauthenticator.Response{User: info}, true, nil
 }

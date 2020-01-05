@@ -21,7 +21,6 @@ package authenticator
 import (
 	"context"
 	"time"
-	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/coreos/go-oidc"
 	"github.com/pkg/errors"
@@ -62,7 +61,6 @@ func (h *TokenAuthenticator) AuthenticateToken(ctx context.Context, token string
 		log.Error("Failed to verify the oidc bearer token", log.String("token", token), log.Err(err))
 		return nil, false, err
 	}
-
 	var claims oidcclaims.IDTokenClaims
 	if err := idToken.Claims(&claims); err != nil {
 		log.Error("Failed to unmarshal the id token", log.Any("idToken", idToken), log.Err(err))
@@ -70,27 +68,12 @@ func (h *TokenAuthenticator) AuthenticateToken(ctx context.Context, token string
 	}
 
 	info := &user.DefaultInfo{Name: claims.Name}
-
-	localIdentity, err := util.GetLocalIdentity(h.authClient, claims.FederatedIDClaims.ConnectorID, info.Name)
-	if err != nil {
-		log.Error("Get localIdentity failed", log.String("localIdentity", info.Name), log.Err(err))
-		return nil, false, err
-	}
-
-	info.UID = localIdentity.ObjectMeta.Name
-	groups, err := util.GetGroupsForUser(h.authClient, localIdentity.ObjectMeta.Name)
-	if err != nil {
-		info.Groups = claims.Groups
-	} else {
-		for _, g := range groups.Items {
-			info.Groups = append(info.Groups, g.ObjectMeta.Name)
-		}
-	}
+	info.Groups = claims.Groups
 
 	info.Extra = map[string][]string{}
 	info.Extra[genericoidc.TenantIDKey] = []string{claims.FederatedIDClaims.ConnectorID}
 	info.Extra["expireAt"] = []string{time.Unix(claims.Expiry, 0).String()}
 	info.Extra["issueAt"] = []string{time.Unix(claims.IssuedAt, 0).String()}
-
+	log.Debug("OIDC authenticateToken result", log.Any("user info", info))
 	return &genericauthenticator.Response{User: info}, true, nil
 }
