@@ -70,7 +70,7 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 	fldUserPath := field.NewPath("status", "users")
 	for i, subj := range policy.Status.Users {
 		if subj.ID == "" {
-			allErrs = append(allErrs, field.Required(fldUserPath, "must specify subject id "))
+			allErrs = append(allErrs, field.Required(fldUserPath, "must specify subject id"))
 			continue
 		}
 
@@ -96,7 +96,7 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 	fldGroupPath := field.NewPath("status", "groups")
 	for i, subj := range policy.Status.Groups {
 		if subj.ID == "" {
-			allErrs = append(allErrs, field.Required(fldGroupPath, "must specify id or name"))
+			allErrs = append(allErrs, field.Required(fldGroupPath, "must specify id"))
 			continue
 		}
 

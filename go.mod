@@ -83,6 +83,7 @@ require (
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/grpc v1.24.0
 	gopkg.in/go-playground/validator.v9 v9.28.0
+	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/square/go-jose.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.2.4
 	helm.sh/chartmuseum v0.11.0

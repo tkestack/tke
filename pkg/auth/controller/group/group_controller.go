@@ -146,6 +146,8 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 		log.Error("Failed to wait for group caches to sync")
 	}
 
+	//TODO sync groups(non-tke-local) for idp into casbin
+
 	for i := 0; i < workers; i++ {
 		go wait.Until(c.worker, time.Second, stopCh)
 	}

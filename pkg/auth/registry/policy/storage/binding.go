@@ -65,7 +65,6 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 
 	for _, sub := range bind.Users {
 		if !util.InSubjects(sub, policy.Status.Users) {
-			sub.Name = ""
 			policy.Status.Users = append(policy.Status.Users, sub)
 		}
 	}

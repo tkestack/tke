@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"time"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
@@ -149,7 +150,6 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 	}
 
 	c.watcher = watcher
-
 	go c.pollReload(stopCh)
 
 	for i := 0; i < workers; i++ {
@@ -228,8 +228,11 @@ func (c *Controller) processConfig(idp *v1.IdentityProvider, key string) error {
 			errs = append(errs, err)
 		}
 	}
-	if err := c.createAdmin(idp.Name); err != nil {
-		errs = append(errs, err)
+
+	if idp.Spec.Type == local.ConnectorType {
+		if err := c.createAdmin(idp.Name); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	return utilerrors.NewAggregate(errs)

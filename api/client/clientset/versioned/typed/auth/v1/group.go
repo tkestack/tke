@@ -41,6 +41,7 @@ type GroupsGetter interface {
 type GroupInterface interface {
 	Create(*v1.Group) (*v1.Group, error)
 	Update(*v1.Group) (*v1.Group, error)
+	UpdateStatus(*v1.Group) (*v1.Group, error)
 	Delete(name string, options *metav1.DeleteOptions) error
 	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
 	Get(name string, options metav1.GetOptions) (*v1.Group, error)
@@ -121,6 +122,21 @@ func (c *groups) Update(group *v1.Group) (result *v1.Group, err error) {
 	err = c.client.Put().
 		Resource("groups").
 		Name(group.Name).
+		Body(group).
+		Do().
+		Into(result)
+	return
+}
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+
+func (c *groups) UpdateStatus(group *v1.Group) (result *v1.Group, err error) {
+	result = &v1.Group{}
+	err = c.client.Put().
+		Resource("groups").
+		Name(group.Name).
+		SubResource("status").
 		Body(group).
 		Do().
 		Into(result)

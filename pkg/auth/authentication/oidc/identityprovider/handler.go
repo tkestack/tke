@@ -34,7 +34,6 @@ type DexHander struct {
 }
 
 func (t *DexHander) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	//TODO inject header and form value to r.context() for third-party idp login.
 	if t.handler == nil {
 		responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(fmt.Errorf("dex oidc server init failed")).Status(), w)
 		return

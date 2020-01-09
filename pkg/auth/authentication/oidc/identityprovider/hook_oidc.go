@@ -71,6 +71,11 @@ func (d *dexHookHandler) PostStartHook() (string, genericapiserver.PostStartHook
 				continue
 			}
 
+			// if conn is nil, not create into dexStorage
+			if conn == nil {
+				continue
+			}
+
 			if err = d.dexStorage.CreateConnector(*conn); err != nil && err != dexstorage.ErrAlreadyExists {
 				log.Error("Create connector for tenant failed", log.String("tenantID", tenantID), log.Any("connector", *conn), log.Err(err))
 			}

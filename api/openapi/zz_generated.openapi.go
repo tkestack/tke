@@ -764,6 +764,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/auth/v1.Group":                                           schema_tke_api_auth_v1_Group(ref),
 		"tkestack.io/tke/api/auth/v1.GroupList":                                       schema_tke_api_auth_v1_GroupList(ref),
 		"tkestack.io/tke/api/auth/v1.GroupSpec":                                       schema_tke_api_auth_v1_GroupSpec(ref),
+		"tkestack.io/tke/api/auth/v1.GroupStatus":                                     schema_tke_api_auth_v1_GroupStatus(ref),
 		"tkestack.io/tke/api/auth/v1.IdentityProvider":                                schema_tke_api_auth_v1_IdentityProvider(ref),
 		"tkestack.io/tke/api/auth/v1.IdentityProviderList":                            schema_tke_api_auth_v1_IdentityProviderList(ref),
 		"tkestack.io/tke/api/auth/v1.IdentityProviderSpec":                            schema_tke_api_auth_v1_IdentityProviderSpec(ref),
@@ -35396,7 +35397,15 @@ func schema_tke_api_auth_v1_APIKeyStatus(ref common.ReferenceCallback) common.Op
 							Format:      "",
 						},
 					},
+					"expired": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Expired represents whether the apikey has been expired.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
+				Required: []string{"expired"},
 			},
 		},
 	}
@@ -36068,11 +36077,17 @@ func schema_tke_api_auth_v1_Group(ref common.ReferenceCallback) common.OpenAPIDe
 							Ref:         ref("tkestack.io/tke/api/auth/v1.GroupSpec"),
 						},
 					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/auth/v1.GroupStatus"),
+						},
+					},
 				},
+				Required: []string{"status"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/auth/v1.GroupSpec"},
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/auth/v1.GroupSpec", "tkestack.io/tke/api/auth/v1.GroupStatus"},
 	}
 }
 
@@ -36128,7 +36143,7 @@ func schema_tke_api_auth_v1_GroupSpec(ref common.ReferenceCallback) common.OpenA
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "GroupSpec is a description of an Group.",
+				Description: "GroupSpec is a description of a Group.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"id": {
@@ -36159,6 +36174,35 @@ func schema_tke_api_auth_v1_GroupSpec(ref common.ReferenceCallback) common.OpenA
 				Required: []string{"id", "displayName", "tenantID", "description"},
 			},
 		},
+	}
+}
+
+func schema_tke_api_auth_v1_GroupStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GroupStatus represents information about the status of a group.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"users": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Users represents the members of the group.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Subject"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"users"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/auth/v1.Subject"},
 	}
 }
 
@@ -36271,6 +36315,20 @@ func schema_tke_api_auth_v1_IdentityProviderSpec(ref common.ReferenceCallback) c
 							Format:      "",
 						},
 					},
+					"admin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The admins means the users is super admin for the idp.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 					"config": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Config holds all the configuration information specific to the connector type. Since there no generic struct we can use for this purpose, it is stored as a json string.",
@@ -36279,7 +36337,7 @@ func schema_tke_api_auth_v1_IdentityProviderSpec(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"name", "type", "config"},
+				Required: []string{"name", "type", "admin", "config"},
 			},
 		},
 	}

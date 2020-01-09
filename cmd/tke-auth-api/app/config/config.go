@@ -147,7 +147,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	aggregateAuthz, err := aggregation.NewAuthorizer(opts.Authorization, opts.Auth, enforcer, opts.Authentication.PrivilegedUsername)
+	aggregateAuthz, err := aggregation.NewAuthorizer(authClient, opts.Authorization, opts.Auth, enforcer, opts.Authentication.PrivilegedUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 
 func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, versionInformers versionedinformers.SharedInformerFactory, store dexstorage.Storage, auth *options.AuthOptions) error {
 	// create dex local identity provider for tke connector.
-	dexserver.ConnectorsConfig[local.TkeConnectorType] = func() dexserver.ConnectorConfig {
+	dexserver.ConnectorsConfig[local.ConnectorType] = func() dexserver.ConnectorConfig {
 		return new(local.DefaultIdentityProvider)
 	}
 	local.SetupRestClient(authClient)

@@ -25,6 +25,7 @@ import (
 	"time"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/ldap"
 	local2 "tkestack.io/tke/pkg/auth/authorization/local"
 
 	dexstorage "github.com/dexidp/dex/storage"
@@ -67,18 +68,18 @@ type ExtraConfig struct {
 	StorageFactory          serverstorage.StorageFactory
 	VersionedInformers      versionedinformers.SharedInformerFactory
 
-	OIDCExternalAddress string
-	DexConfig           *dexserver.Config
-	DexStorage          dexstorage.Storage
-	CasbinEnforcer      *casbin.SyncedEnforcer
-	TokenAuthn          *authenticator.TokenAuthenticator
-	APIKeyAuthn         *authenticator.APIKeyAuthenticator
-	Authorizer          authorizer.Authorizer
+	OIDCExternalAddress  string
+	DexConfig            *dexserver.Config
+	DexStorage           dexstorage.Storage
+	CasbinEnforcer       *casbin.SyncedEnforcer
+	TokenAuthn           *authenticator.TokenAuthenticator
+	APIKeyAuthn          *authenticator.APIKeyAuthenticator
+	Authorizer           authorizer.Authorizer
 	CasbinReloadInterval time.Duration
-	TenantID            string
-	TenantAdmin         string
-	TenantAdminSecret   string
-	PrivilegedUsername  string
+	TenantID             string
+	TenantAdmin          string
+	TenantAdminSecret    string
+	PrivilegedUsername   string
 }
 
 // Config contains the core configuration instance of apiserver and
@@ -211,15 +212,16 @@ func (c completedConfig) registerHooks(dexHandler *identityprovider.DexHander, s
 		c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, auth.IssuerName), c.ExtraConfig.TokenAuthn)
 
 	apiSigningKeyHook := authenticator.NewAPISigningKeyHookHandler(authClient)
+
 	identityHook := authenticator.NewAdminIdentityHookHandler(authClient, c.ExtraConfig.TenantID, c.ExtraConfig.TenantAdmin, c.ExtraConfig.TenantAdminSecret)
 
-	idpHook := local.NewLocalHookHandler(authClient, c.ExtraConfig.VersionedInformers)
+	localIdpHook := local.NewLocalHookHandler(authClient, c.ExtraConfig.VersionedInformers)
+	ldapIdpHook := ldap.NewLdapHookHandler(authClient)
 
 	authVersionedClient := versionedclientset.NewForConfigOrDie(s.LoopbackClientConfig)
-
 	adapterHook := local2.NewAdapterHookHandler(authVersionedClient, c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.VersionedInformers, c.ExtraConfig.CasbinReloadInterval)
 
-	return []genericapiserver.PostStartHookProvider{dexHook, apiSigningKeyHook, identityHook, idpHook, adapterHook}
+	return []genericapiserver.PostStartHookProvider{dexHook, apiSigningKeyHook, identityHook, localIdpHook, ldapIdpHook, adapterHook}
 }
 
 // installCasbinPreStopHook is used to register preStop hook to stop casbin enforcer sync.
