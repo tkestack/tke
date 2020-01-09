@@ -19,31 +19,13 @@
 package project
 
 import (
-	"fmt"
 	businessclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
-	monitorconfig "tkestack.io/tke/pkg/monitor/apis/config"
-	esclient "tkestack.io/tke/pkg/monitor/storage/es/client"
 )
 
-type ES struct {
-	clients        []*esclient.Client
+type Storage struct {
 	businessClient businessclient.BusinessV1Interface
 }
 
-func NewStorage(cfg *monitorconfig.ElasticSearchStorage, businessClient businessclient.BusinessV1Interface) (*ES, error) {
-	var clients []*esclient.Client
-	for _, server := range cfg.Servers {
-		clients = append(clients, &esclient.Client{
-			URL:      server.Address,
-			Username: server.Username,
-			Password: server.Password,
-		})
-	}
-	if len(clients) == 0 {
-		return nil, fmt.Errorf("no available es client")
-	}
-	return &ES{
-		clients:        clients,
-		businessClient: businessClient,
-	}, nil
+func NewStorage(businessClient businessclient.BusinessV1Interface) (*Storage, error) {
+	return &Storage{businessClient: businessClient}, nil
 }

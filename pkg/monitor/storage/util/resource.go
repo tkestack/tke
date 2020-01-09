@@ -50,5 +50,7 @@ func ResourceNameTranslate(rName string) string {
 	} else {
 		res = rName
 	}
-	return strings.ReplaceAll(res, ".", "_")
+	res = strings.ReplaceAll(res, ".", "_")
+	res = strings.ReplaceAll(res, "-", "_")
+	return res
 }
