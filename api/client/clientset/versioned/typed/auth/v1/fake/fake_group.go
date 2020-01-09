@@ -96,6 +96,17 @@ func (c *FakeGroups) Update(group *authv1.Group) (result *authv1.Group, err erro
 	return obj.(*authv1.Group), err
 }
 
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *FakeGroups) UpdateStatus(group *authv1.Group) (*authv1.Group, error) {
+	obj, err := c.Fake.
+		Invokes(testing.NewRootUpdateSubresourceAction(groupsResource, "status", group), &authv1.Group{})
+	if obj == nil {
+		return nil, err
+	}
+	return obj.(*authv1.Group), err
+}
+
 // Delete takes name of the group and deletes it. Returns an error if one occurs.
 func (c *FakeGroups) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.

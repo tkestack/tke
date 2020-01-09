@@ -51,13 +51,13 @@ import (
 )
 
 var (
-	// TkeConnectorType type and id
-	TkeConnectorType = "tke"
+	// ConnectorType type and id
+	ConnectorType = "tke"
 
 	authClient authinternalclient.AuthInterface
 )
 
-// Config holds the configuration parameters for tke local connector login.
+// DefaultIdentityProvider is the default idp for tke local identity login.
 type DefaultIdentityProvider struct {
 	tenantID            string
 	localIdentityLister authv1lister.LocalIdentityLister
@@ -89,7 +89,7 @@ func (c *DefaultIdentityProvider) Connector() (*dexstorage.Connector, error) {
 	}
 
 	return &dexstorage.Connector{
-		Type:   TkeConnectorType,
+		Type:   ConnectorType,
 		ID:     c.tenantID,
 		Name:   c.tenantID,
 		Config: []byte("{}"),
@@ -203,15 +203,7 @@ func (c *DefaultIdentityProvider) GetUser(ctx context.Context, name string, opti
 
 // List is an object that can list users that match the provided field and label criteria.
 func (c *DefaultIdentityProvider) ListUsers(ctx context.Context, options *metainternal.ListOptions) (*auth.UserList, error) {
-	keyword := ""
-	limit := 50
-	if options.FieldSelector != nil {
-		keyword, _ = options.FieldSelector.RequiresExactMatch(auth.KeywordQueryTag)
-		limitStr, _ := options.FieldSelector.RequiresExactMatch(auth.QueryLimitTag)
-		if li, err := strconv.Atoi(limitStr); err == nil && li > 0 {
-			limit = li
-		}
-	}
+	keyword, limit := util.ParseQueryKeywordAndLimit(options)
 
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
@@ -273,15 +265,8 @@ func (c *DefaultIdentityProvider) GetGroup(ctx context.Context, name string, opt
 
 // List is an object that can list users that match the provided field and label criteria.
 func (c *DefaultIdentityProvider) ListGroups(ctx context.Context, options *metainternal.ListOptions) (*auth.GroupList, error) {
-	keyword := ""
-	limit := 50
-	if options.FieldSelector != nil {
-		keyword, _ = options.FieldSelector.RequiresExactMatch(auth.KeywordQueryTag)
-		limitStr, _ := options.FieldSelector.RequiresExactMatch(auth.QueryLimitTag)
-		if li, err := strconv.Atoi(limitStr); err == nil && li > 0 {
-			limit = li
-		}
-	}
+
+	keyword, limit := util.ParseQueryKeywordAndLimit(options)
 
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
@@ -349,7 +334,23 @@ func convertToGroup(localGroup *authv1.LocalGroup) auth.Group {
 			TenantID:    localGroup.Spec.TenantID,
 			Description: localGroup.Spec.TenantID,
 		},
+		Status: auth.GroupStatus{
+			Users: fromV1Subject(localGroup.Status.Users),
+		},
 	}
+}
+
+func fromV1Subject(v1Subjects []authv1.Subject) []auth.Subject {
+	var subjects []auth.Subject
+
+	for _, sub := range v1Subjects {
+		subjects = append(subjects, auth.Subject{
+			ID:   sub.ID,
+			Name: sub.Name,
+		})
+	}
+
+	return subjects
 }
 
 func min(a, b int) int {

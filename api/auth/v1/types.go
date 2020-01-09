@@ -231,14 +231,22 @@ type Group struct {
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 	// Spec defines the desired identities of group in this set.
 	Spec GroupSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+
+	Status GroupStatus `json:"status" protobuf:"bytes,3,opt,name=status"`
 }
 
-// GroupSpec is a description of an Group.
+// GroupSpec is a description of a Group.
 type GroupSpec struct {
 	ID          string `json:"id" protobuf:"bytes,1,opt,name=id"`
 	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
 	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
 	Description string `json:"description" protobuf:"bytes,4,opt,name=description"`
+}
+
+// GroupStatus represents information about the status of a group.
+type GroupStatus struct {
+	// Users represents the members of the group.
+	Users []Subject `json:"users" protobuf:"bytes,2,rep,name=users"`
 }
 
 // +genclient:nonNamespaced
@@ -836,9 +844,11 @@ type IdentityProviderList struct {
 // IdentityProviderSpec is a description of an identity provider.
 type IdentityProviderSpec struct {
 	// The Name of the connector that is used when displaying it to the end user.
-	Name string `json:"name" protobuf:"bytes,2,opt,name=name"`
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
 	// The type of the connector. E.g. 'oidc' or 'ldap'
-	Type string `json:"type" protobuf:"bytes,3,opt,name=type"`
+	Type string `json:"type" protobuf:"bytes,2,opt,name=type"`
+	// The admins means the users is super admin for the idp.
+	Admins []string `json:"admin" protobuf:"bytes,3,opt,name=admins"`
 	// Config holds all the configuration information specific to the connector type. Since there
 	// no generic struct we can use for this purpose, it is stored as a json string.
 	Config string `json:"config" protobuf:"bytes,4,opt,name=config"`

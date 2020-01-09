@@ -22,11 +22,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/casbin/casbin/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/filter"
-	"tkestack.io/tke/pkg/auth/util"
+	authutil "tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -39,15 +44,18 @@ var (
 type Authorizer struct {
 	tenantAdmin        string
 	privilegedUsername string
-	enforcer           *casbin.SyncedEnforcer
+
+	authClient authinternalclient.AuthInterface
+	enforcer   *casbin.SyncedEnforcer
 }
 
 // NewAuthorizer creates a local repository authorizer and returns it.
-func NewAuthorizer(enforcer *casbin.SyncedEnforcer, tenantAdmin string, privilegedUsername string) *Authorizer {
+func NewAuthorizer(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, tenantAdmin string, privilegedUsername string) *Authorizer {
 	return &Authorizer{
-		enforcer:           enforcer,
 		tenantAdmin:        tenantAdmin,
 		privilegedUsername: privilegedUsername,
+		authClient:         authClient,
+		enforcer:           enforcer,
 	}
 }
 
@@ -80,15 +88,28 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		return authorizer.DecisionAllow, "", nil
 	}
 
+	// Second check if user is a admin of the identity provider for tenant.
+	if tenantID != "" {
+		idp, err := a.authClient.IdentityProviders().Get(tenantID, metav1.GetOptions{})
+		if err != nil {
+			log.Error("Get identity provider for tenant failed", log.String("tenant", tenantID), log.Err(err))
+			return authorizer.DecisionDeny, "", err
+		}
+
+		if util.InStringSlice(idp.Spec.Admins, subject) {
+			return authorizer.DecisionAllow, "", nil
+		}
+	}
+
 	authorized = filter.UnprotectedAuthorized(attr)
 	if authorized == authorizer.DecisionAllow {
 		return authorizer.DecisionAllow, "", nil
 	}
 
 	if debug {
-		perms, err := a.enforcer.GetImplicitPermissionsForUser(util.UserKey(tenantID, subject))
+		perms, err := a.enforcer.GetImplicitPermissionsForUser(authutil.UserKey(tenantID, subject))
 		if err != nil {
-			log.Error("Get permissions for user failed", log.String("user", util.UserKey(tenantID, subject)), log.Err(err))
+			log.Error("Get permissions for user failed", log.String("user", authutil.UserKey(tenantID, subject)), log.Err(err))
 		} else {
 			log.Info("Authorize get user perms", log.String("user", subject), log.Any("user perm", perms))
 			data, _ := json.Marshal(perms)
@@ -96,7 +117,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		}
 	}
 
-	allow, err := a.enforcer.Enforce(util.UserKey(tenantID, subject), resource, action)
+	allow, err := a.enforcer.Enforce(authutil.UserKey(tenantID, subject), resource, action)
 	if err != nil {
 		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
 		return authorizer.DecisionDeny, "", err

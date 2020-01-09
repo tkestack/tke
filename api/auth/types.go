@@ -220,6 +220,8 @@ type Group struct {
 	metav1.ObjectMeta
 	// Spec defines the desired identities of group in this set.
 	Spec GroupSpec
+
+	Status GroupStatus
 }
 
 // GroupSpec is a description of an Group.
@@ -228,6 +230,12 @@ type GroupSpec struct {
 	DisplayName string
 	TenantID    string
 	Description string
+}
+
+// GroupStatus represents information about the status of a group.
+type GroupStatus struct {
+	// Users represents the members of the group.
+	Users []Subject
 }
 
 // +genclient:nonNamespaced
@@ -783,6 +791,9 @@ type IdentityProviderSpec struct {
 	Name string
 	// The type of the connector. E.g. 'oidc' or 'ldap'
 	Type string
+
+	// The admins means the users is super admin for the idp.
+	Admins []string
 	// Config holds all the configuration information specific to the connector type. Since there
 	// no generic struct we can use for this purpose, it is stored as a json string.
 	Config string
