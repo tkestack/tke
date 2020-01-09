@@ -308,6 +308,50 @@ func scrapeConfigForPrometheus() string {
         action: keep
       - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
+
+    - job_name: 'tke-project-metrics'
+      scrape_timeout: 60s
+      honor_labels: false
+      scheme: https
+      kubernetes_sd_configs:
+      - role: pod
+      tls_config:
+        insecure_skip_verify: true
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_tke_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: keep
+        regex: tke-monitor-controller.+
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: pod_name
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: node
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (.+)
+      metric_relabel_configs:
+      - source_labels: [ __name__ ]
+        regex: 'project_(.*)'
+        action: keep
+      - regex: "instance|job|pod_name|namespace|scope|subresource"
+        action: labeldrop
 `
 	return cfgStr
 }

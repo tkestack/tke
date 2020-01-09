@@ -20,16 +20,13 @@ package project
 
 import (
 	"fmt"
-	influxclient "github.com/influxdata/influxdb1-client/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	resourceutil "tkestack.io/tke/pkg/monitor/storage/util"
-	"tkestack.io/tke/pkg/monitor/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-func (s *InfluxDB) Collect() {
+func (s *Storage) Collect() {
 	// Maybe should use lister, get projects from cache
 	projectList, err := s.businessClient.Projects().List(metav1.ListOptions{})
 	if err != nil {
@@ -37,26 +34,24 @@ func (s *InfluxDB) Collect() {
 		return
 	}
 
-	bp, _ := influxclient.NewBatchPoints(influxclient.BatchPointsConfig{
-		Database:  util.ProjectDatabaseName,
-		Precision: "us",
-	})
-
-	now := time.Now()
-
 	for _, pro := range projectList.Items {
 		tags := map[string]string{
 			"project_name": pro.Name,
 		}
 		// get capacity resource metrics
+		projectCapacity := businessv1.ResourceList{}
 		for _, clusterHard := range pro.Spec.Clusters {
-			addBatchPoint(bp, tags, now, "project_capacity", clusterHard.Hard)
+			projectCapacity = resourceutil.ResourceAdd(projectCapacity, clusterHard.Hard)
 		}
+		//TODO complete projectCapacity with cluster allocatable resource
+		updateMetrics(tags, "project_capacity", projectCapacity)
 
 		// get capacity resource metrics allocated to all clusters
+		projectCapacityCluster := businessv1.ResourceList{}
 		for _, clusterUsed := range pro.Status.Clusters {
-			addBatchPoint(bp, tags, now, "project_capacity_cluster", clusterUsed.Used)
+			projectCapacityCluster = resourceutil.ResourceAdd(projectCapacityCluster, clusterUsed.Used)
 		}
+		updateMetrics(tags, "project_capacity_cluster", projectCapacityCluster)
 
 		// get allocated resource metrics both for project and each cluster
 		projectAllocated := businessv1.ResourceList{}
@@ -83,53 +78,38 @@ func (s *InfluxDB) Collect() {
 			}
 		}
 
-		addBatchPoint(bp, tags, now, "project_allocated", projectAllocated)
+		updateMetrics(tags, "project_allocated", projectAllocated)
 
 		for c, rList := range projectClusterCapacity {
 			clusterTags := tags
 			clusterTags["cluster_name"] = c
-			addBatchPoint(bp, clusterTags, now, "project_cluster_capacity", rList)
+			updateMetrics(clusterTags, "project_cluster_capacity", rList)
 		}
 		for c, rList := range projectClusterAllocated {
 			clusterTags := tags
 			clusterTags["cluster_name"] = c
-			addBatchPoint(bp, clusterTags, now, "project_cluster_allocated", rList)
+			updateMetrics(clusterTags, "project_cluster_allocated", rList)
 		}
-	}
-	log.Debugf("Writing project metrics: %v", bp.Points())
-
-	for _, db := range s.clients {
-		err = db.Write(bp)
-		if err != nil {
-			log.Errorf("Write project resource metrics failed: %v", err)
-			continue
-		}
-		_ = db.Close()
 	}
 }
 
-func addBatchPoint(bp influxclient.BatchPoints, tags map[string]string, now time.Time, resourcePrefix string, resources businessv1.ResourceList) {
-	newResources := businessv1.ResourceList{}
+func updateMetrics(tags map[string]string, resourcePrefix string, resources businessv1.ResourceList) {
+	fullNameResources := businessv1.ResourceList{}
 	for r, v := range resources {
-		resMetric := fmt.Sprintf("%s_%s", resourcePrefix, resourceutil.ResourceNameTranslate(r))
-		if old, ok := newResources[resMetric]; ok {
+		metricName := fmt.Sprintf("%s_%s", resourcePrefix, resourceutil.ResourceNameTranslate(r))
+		if old, ok := fullNameResources[metricName]; ok {
 			if v.Cmp(old) == 1 {
-				newResources[resMetric] = v
+				fullNameResources[metricName] = v
 			}
 		} else {
-			newResources[resMetric] = v
+			fullNameResources[metricName] = v
 		}
 	}
 
-	for r, v := range newResources {
-		fields := map[string]interface{}{
-			"value": float64(v.MilliValue()) / 1000,
+	for metricName, v := range fullNameResources {
+		log.Infof("metricName: %s, tags: %s", metricName, tags)
+		if metric, ok := projectMetricsMap[metricName]; ok {
+			metric.With(tags).Set(float64(v.MilliValue()) / 1000)
 		}
-		pt, err := influxclient.NewPoint(r, tags, fields, now)
-		if err != nil {
-			log.Errorf("New point failed: %v", err)
-			continue
-		}
-		bp.AddPoint(pt)
 	}
 }

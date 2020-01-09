@@ -24,9 +24,8 @@ import (
 	"tkestack.io/tke/api/monitor"
 	monitorconfig "tkestack.io/tke/pkg/monitor/apis/config"
 	esmetric "tkestack.io/tke/pkg/monitor/storage/es/metric"
-	esproject "tkestack.io/tke/pkg/monitor/storage/es/project"
 	influxdbmetric "tkestack.io/tke/pkg/monitor/storage/influxdb/metric"
-	influxdbproject "tkestack.io/tke/pkg/monitor/storage/influxdb/project"
+	"tkestack.io/tke/pkg/monitor/storage/project"
 	"tkestack.io/tke/pkg/monitor/storage/types"
 )
 
@@ -48,10 +47,5 @@ func NewMetricStorage(storageConfig *monitorconfig.Storage) (MetricStorage, erro
 }
 
 func NewProjectStorage(storageConfig *monitorconfig.Storage, businessClient businessclient.BusinessV1Interface) (ProjectStorage, error) {
-	if storageConfig.InfluxDB != nil {
-		return influxdbproject.NewStorage(storageConfig.InfluxDB, businessClient)
-	} else if storageConfig.ElasticSearch != nil {
-		return esproject.NewStorage(storageConfig.ElasticSearch, businessClient)
-	}
-	return nil, fmt.Errorf("unregistered project data storage type")
+	return project.NewStorage(businessClient)
 }

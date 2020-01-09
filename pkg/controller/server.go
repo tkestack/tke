@@ -19,7 +19,6 @@
 package controller
 
 import (
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -29,6 +28,7 @@ import (
 	"k8s.io/apiserver/pkg/server/mux"
 	"k8s.io/apiserver/pkg/server/routes"
 	componentconfig "k8s.io/component-base/config"
+	"k8s.io/component-base/metrics/legacyregistry"
 	"net/http"
 	goruntime "runtime"
 )
@@ -61,7 +61,7 @@ func NewBaseHandler(c *componentconfig.DebuggingConfiguration, checks ...healthz
 			goruntime.SetBlockProfileRate(1)
 		}
 	}
-	m.Handle("/metrics", promhttp.Handler())
+	m.Handle("/metrics", legacyregistry.Handler())
 
 	return m
 }
