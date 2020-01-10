@@ -36,7 +36,7 @@ func ParseQueryKeywordAndLimit(options *metainternal.ListOptions) (string, int) 
 	if options.FieldSelector != nil {
 		keyword, _ = options.FieldSelector.RequiresExactMatch(auth.KeywordQueryTag)
 		limitStr, _ := options.FieldSelector.RequiresExactMatch(auth.QueryLimitTag)
-		if li, err := strconv.Atoi(limitStr); err == nil && li > 0 {
+		if li, err := strconv.Atoi(limitStr); err == nil && li >= 0 {
 			limit = li
 		}
 	}

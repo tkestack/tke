@@ -26,11 +26,15 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+
+	"tkestack.io/tke/api/auth"
 	v1 "tkestack.io/tke/api/auth/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
@@ -53,6 +57,8 @@ const (
 	groupDeletionGracePeriod = 5 * time.Second
 
 	controllerName = "group-controller"
+
+	groupSyncedPeriod = 1 * time.Minute
 )
 
 // Controller is responsible for performing actions dependent upon a group phase.
@@ -146,7 +152,8 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 		log.Error("Failed to wait for group caches to sync")
 	}
 
-	//TODO sync groups(non-tke-local) for idp into casbin
+	// sync groups(include 3rd party) for identity providers into casbin
+	go c.pollThirdPartyGroup(stopCh)
 
 	for i := 0; i < workers; i++ {
 		go wait.Until(c.worker, time.Second, stopCh)
@@ -222,11 +229,28 @@ func (c *Controller) syncItem(key string) error {
 }
 
 func (c *Controller) processUpdate(group *v1.LocalGroup, key string) error {
-	return c.handleSubjects(key, group)
+	return c.handleSubjects(key, convertToGroup(group))
 }
 
-func (c *Controller) handleSubjects(key string, group *v1.LocalGroup) error {
-	rules := c.enforcer.GetFilteredGroupingPolicy(1, authutil.GroupPrefix(group.Spec.TenantID))
+func convertToGroup(localGroup *v1.LocalGroup) *v1.Group {
+	return &v1.Group{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: localGroup.ObjectMeta.Name,
+		},
+		Spec: v1.GroupSpec{
+			ID:          localGroup.ObjectMeta.Name,
+			DisplayName: localGroup.Spec.DisplayName,
+			TenantID:    localGroup.Spec.TenantID,
+			Description: localGroup.Spec.TenantID,
+		},
+		Status: v1.GroupStatus{
+			Users: localGroup.Status.Users,
+		},
+	}
+}
+
+func (c *Controller) handleSubjects(key string, group *v1.Group) error {
+	rules := c.enforcer.GetFilteredGroupingPolicy(1, authutil.GroupKey(group.Spec.TenantID, key))
 	log.Debugf("Get grouping rules for group: %s, %v", group.Name, rules)
 	var existMembers []string
 	for _, rule := range rules {
@@ -264,4 +288,46 @@ func (c *Controller) handleSubjects(key string, group *v1.LocalGroup) error {
 	}
 
 	return utilerrors.NewAggregate(errs)
+}
+
+// pollThirdPartyGroup syncs groups with members into storage
+func (c *Controller) pollThirdPartyGroup(stopCh <-chan struct{}) {
+	timerC := time.NewTicker(groupSyncedPeriod)
+	for {
+		select {
+		case <-timerC.C:
+			c.resyncGroups()
+		case <-stopCh:
+			timerC.Stop()
+			return
+		}
+	}
+}
+
+func (c *Controller) resyncGroups() {
+	defer log.Info("Finished syncing groups with users")
+
+	idpList, err := c.client.AuthV1().IdentityProviders().List(metav1.ListOptions{})
+	if err != nil {
+		log.Error("List all identity providers failed", log.Err(err))
+		return
+	}
+
+	for _, idp := range idpList.Items {
+		tenantSelector := fields.AndSelectors(
+			fields.OneTermEqualSelector("spec.tenantID", idp.Name),
+			fields.OneTermEqualSelector(auth.QueryLimitTag, "0"),
+		)
+
+		groups, err := c.client.AuthV1().Groups().List(metav1.ListOptions{FieldSelector: tenantSelector.String()})
+		if err != nil {
+			log.Error("List groups for tenant failed", log.String("tenant", idp.Name), log.Err(err))
+			continue
+		}
+		log.Debug("syncing groups for tenantID", log.String("tenant", idp.Name), log.Any("groups", groups))
+		for _, grp := range groups.Items {
+			_ = c.handleSubjects(grp.Name, grp.DeepCopy())
+		}
+	}
+
 }

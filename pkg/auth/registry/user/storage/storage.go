@@ -112,6 +112,13 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		tenantID, _ = options.FieldSelector.RequiresExactMatch("spec.tenantID")
+		if tenantID == "" {
+			return nil, apierrors.NewBadRequest("List groups must specify tenantID")
+		}
+	}
+
 	idp, ok := identityprovider.IdentityProvidersStore[tenantID]
 	if !ok {
 		log.Error("Tenant has no related identity providers", log.String("tenantID", tenantID))

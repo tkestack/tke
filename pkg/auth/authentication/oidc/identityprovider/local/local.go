@@ -295,10 +295,12 @@ func (c *DefaultIdentityProvider) ListGroups(ctx context.Context, options *metai
 		localGroupList = newList
 	}
 
-	items := localGroupList[0:min(len(localGroupList), limit)]
+	if limit > 0 {
+		localGroupList = localGroupList[0:min(len(localGroupList), limit)]
+	}
 
 	groupList := auth.GroupList{}
-	for _, item := range items {
+	for _, item := range localGroupList {
 		group := convertToGroup(item)
 		groupList.Items = append(groupList.Items, group)
 	}
