@@ -184,9 +184,11 @@ func (c *identityProvider) ListUsers(ctx context.Context, options *internalversi
 	userList := auth.UserList{}
 	for _, entry := range ldapUsers {
 		user, err := c.userFromEntry(*entry)
-		if err == nil {
-			userList.Items = append(userList.Items, *user)
+		if err != nil {
+			continue
 		}
+		userList.Items = append(userList.Items, *user)
+
 	}
 
 	return &userList, nil
@@ -234,9 +236,11 @@ func (c *identityProvider) ListGroups(ctx context.Context, options *internalvers
 	groupList := auth.GroupList{}
 	for _, entry := range ldapGroups {
 		grp, err := c.groupFromEntry(*entry)
-		if err == nil {
-			groupList.Items = append(groupList.Items, *grp)
+		if err != nil {
+			continue
 		}
+		groupList.Items = append(groupList.Items, *grp)
+
 	}
 
 	return &groupList, nil
@@ -431,6 +435,7 @@ func (c *identityProvider) groupsEntry(conn *ldap.Conn, keyword string, limit in
 
 	log.Infof("performing ldap search %s %s %s",
 		req.BaseDN, scopeString(req.Scope), req.Filter)
+
 	resp, err := conn.SearchWithPaging(req, uint32(limit))
 	if err != nil {
 		return nil, fmt.Errorf("ldap: search with filter %q failed: %v", req.Filter, err)
@@ -457,7 +462,7 @@ func (c *identityProvider) groupFromEntry(group ldap.Entry) (authGroup *auth.Gro
 		members := getAttrs(group, c.GroupSearch.GroupAttr)
 		for _, dn := range members {
 			name := parseNameFromDN(dn, c.UserSearch.Username)
-			if name == "" {
+			if name != "" {
 				authGroup.Status.Users = append(authGroup.Status.Users, auth.Subject{
 					ID:   dn,
 					Name: name,
