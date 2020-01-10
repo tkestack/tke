@@ -24,6 +24,9 @@ import (
 	utilhttp "tkestack.io/tke/pkg/util/http"
 )
 
+// TenantID according to the host name accessed by the http request, combined
+// with the configured default tenant name and domain name suffix, returns the
+// tenant name accessed by the user.
 func TenantID(req *http.Request, domainSuffix string, defaultTenant string) string {
 	if domainSuffix == "" {
 		return defaultTenant

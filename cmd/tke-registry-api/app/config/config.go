@@ -20,9 +20,9 @@ package config
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	"k8s.io/klog"
 	"path/filepath"
 	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
@@ -33,12 +33,14 @@ import (
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/apiserver/authorization"
 	"tkestack.io/tke/pkg/apiserver/debug"
+	"tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/apiserver/handler"
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	registryconfigvalidation "tkestack.io/tke/pkg/registry/apis/config/validation"
 	"tkestack.io/tke/pkg/registry/apiserver"
+	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/config/configfiles"
 	"tkestack.io/tke/pkg/registry/distribution"
 	utilfs "tkestack.io/tke/pkg/util/filesystem"
@@ -84,11 +86,19 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	// We always validate the local configuration (command line + config file).
 	// This is the default "last-known-good" config for dynamic config, and must always remain valid.
 	if err := registryconfigvalidation.ValidateRegistryConfiguration(registryConfig); err != nil {
-		klog.Fatal(err)
+		log.Error("Failed to validate registry configuration", log.Err(err))
+		return nil, err
 	}
 
 	genericAPIServerConfig := genericapiserver.NewConfig(registry.Codecs)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(distribution.IgnoreAuthPathPrefixes())
+	var ignoredAuthPathPrefixes []string
+	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, distribution.IgnoredAuthPathPrefixes()...)
+	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, chartmuseum.IgnoredAuthPathPrefixes()...)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes)
+	// long running function for distribution and chartmuseum path.
+	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString("watch"), sets.NewString(), ignoredAuthPathPrefixes)
+	// increase default max post payload for distribution and chartmuseum.
+	genericAPIServerConfig.MaxRequestBodyBytes = chartmuseum.MaxUploadSize
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
 

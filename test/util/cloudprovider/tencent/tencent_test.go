@@ -21,10 +21,12 @@ package tencent
 import (
 	"fmt"
 	"testing"
+
+	_ "tkestack.io/tke/test/util/env"
 )
 
 func TestCreateInstance(t *testing.T) {
-	fmt.Println(NewTencentProvider().CreateInstances(2))
+	fmt.Println(NewTencentProvider().CreateInstances(3))
 }
 
 func TestDeleteInstance(t *testing.T) {

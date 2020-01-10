@@ -19,31 +19,29 @@
 package auth
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/docker/distribution/registry/auth/token"
 	"github.com/docker/libtrust"
 	jsoniter "github.com/json-iterator/go"
-	"io/ioutil"
-	"k8s.io/api/authentication/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/authentication/authenticator"
 	restclient "k8s.io/client-go/rest"
 	"net/http"
-	"net/url"
 	"strings"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
-	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
+	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/apikey"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	"tkestack.io/tke/pkg/registry/distribution/tenant"
+	authenticationutil "tkestack.io/tke/pkg/registry/util/authentication"
 	utilregistryrequest "tkestack.io/tke/pkg/registry/util/request"
 	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/transport"
 )
 
+// Path is the authorization server url for distribution.
 const Path = "/registry/auth"
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
+// Options defines the configuration of distribution auth handler.
 type Options struct {
 	SecurityConfig  *registryconfig.Security
 	OIDCIssuerURL   string
@@ -55,17 +53,15 @@ type Options struct {
 }
 
 type handler struct {
-	filterMap            map[string]accessFilter
-	privateKey           libtrust.PrivateKey
-	expiredHours         int64
-	tokenReviewURL       string
-	tokenReviewTransport *http.Transport
-	domainSuffix         string
-	defaultTenant        string
-	adminUsername        string
-	adminPassword        string
+	filterMap     map[string]accessFilter
+	privateKey    libtrust.PrivateKey
+	expiredHours  int64
+	domainSuffix  string
+	defaultTenant string
+	authenticator authenticator.Password
 }
 
+// NewHandler creates a new handler object and returns it.
 func NewHandler(opts *Options) (http.Handler, error) {
 	if opts.SecurityConfig.AdminUsername == "" || opts.SecurityConfig.AdminPassword == "" {
 		log.Warn("System image cannot be managed without setting an administrator password")
@@ -85,13 +81,13 @@ func NewHandler(opts *Options) (http.Handler, error) {
 		return nil, fmt.Errorf("token expired hours must be specify")
 	}
 
-	issuerURL, err := url.Parse(opts.OIDCIssuerURL)
-	if err != nil {
-		return nil, err
-	}
-	issuerURL.Path = opts.TokenReviewPath
-
-	tr, err := transport.NewOneWayTLSTransport(opts.OIDCCAFile, true)
+	at, err := apikey.NewAPIKeyAuthenticator(&apikey.Options{
+		OIDCIssuerURL:   opts.OIDCIssuerURL,
+		OIDCCAFile:      opts.OIDCCAFile,
+		TokenReviewPath: opts.TokenReviewPath,
+		AdminUsername:   opts.SecurityConfig.AdminUsername,
+		AdminPassword:   opts.SecurityConfig.AdminPassword,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -105,14 +101,11 @@ func NewHandler(opts *Options) (http.Handler, error) {
 			},
 			"registry": &registryFilter{},
 		},
-		privateKey:           pk,
-		expiredHours:         *opts.SecurityConfig.TokenExpiredHours,
-		tokenReviewURL:       issuerURL.String(),
-		tokenReviewTransport: tr,
-		domainSuffix:         opts.DomainSuffix,
-		defaultTenant:        opts.DefaultTenant,
-		adminPassword:        opts.SecurityConfig.AdminPassword,
-		adminUsername:        opts.SecurityConfig.AdminUsername,
+		privateKey:    pk,
+		expiredHours:  *opts.SecurityConfig.TokenExpiredHours,
+		domainSuffix:  opts.DomainSuffix,
+		defaultTenant: opts.DefaultTenant,
+		authenticator: at,
 	}, nil
 }
 
@@ -120,7 +113,12 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	scopes := parseScopes(req.URL)
 	log.Debug("Received docker registry authentication request", log.Strings("scopes", scopes))
 
-	username, userTenantID, authenticated := h.userFromRequest(req)
+	var username, userTenantID string
+	user, authenticated := authenticationutil.RequestUser(req, h.authenticator)
+	if user != nil {
+		username = user.GetName()
+		userTenantID = user.TenantID()
+	}
 	requestTenantID := utilregistryrequest.TenantID(req, h.domainSuffix, h.defaultTenant)
 
 	if len(scopes) == 0 {
@@ -168,104 +166,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(bs)
-}
-
-func (h *handler) userFromRequest(r *http.Request) (user, tenantID string, authenticated bool) {
-	username, password, ok := r.BasicAuth()
-	if !ok {
-		log.Warn("Docker login did not carry the http basic authentication credentials when logging in")
-		return
-	}
-	if h.adminPassword != "" &&
-		h.adminUsername != "" &&
-		username == h.adminUsername &&
-		password == h.adminPassword {
-		log.Debug("Docker login as system administrator")
-		user = h.adminUsername
-		tenantID = ""
-		authenticated = true
-		return
-	}
-	if h.tokenReviewURL == "" {
-		log.Warn("Token review url not specify, failed to review token")
-		return
-	}
-	log.Debug("Start review token", log.String("username", username), log.String("tokenReviewURL", h.tokenReviewURL))
-	tokenReviewRequest := &v1.TokenReview{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "TokenReview",
-			APIVersion: v1.SchemeGroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "tke",
-		},
-		Spec: v1.TokenReviewSpec{
-			Token: password,
-		},
-	}
-	bs, err := json.Marshal(tokenReviewRequest)
-	if err != nil {
-		log.Error("Failed to marshal token review request", log.Any("tokenReview", tokenReviewRequest), log.Err(err))
-		return
-	}
-
-	req, err := http.NewRequest(http.MethodPost, h.tokenReviewURL, bytes.NewBuffer(bs))
-	if err != nil {
-		log.Error("Failed to create token review request", log.Err(err))
-		return
-	}
-	req.Header.Add("Content-Type", "application/json")
-	client := &http.Client{
-		Transport: h.tokenReviewTransport,
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Error("Failed to request token review", log.Err(err))
-	}
-
-	defer func() {
-		_ = res.Body.Close()
-	}()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Error("Failed to read response body", log.Err(err))
-		return
-	}
-	if res.StatusCode != http.StatusOK {
-		log.Error("Authentication server returns http status code error when token review",
-			log.Int("statusCode", res.StatusCode),
-			log.ByteString("responseBody", body))
-		return
-	}
-	var tokenReviewResponse v1.TokenReview
-	if err := json.Unmarshal(body, &tokenReviewResponse); err != nil {
-		log.Error("Failed to unmarshal token review response", log.ByteString("body", body), log.Err(err))
-		return
-	}
-	if tokenReviewResponse.Status.Error != "" {
-		log.Error("Authentication server returns error when token review",
-			log.String("error", tokenReviewResponse.Status.Error))
-		return
-	}
-	if !tokenReviewResponse.Status.Authenticated {
-		log.Error("Authentication server returns not authenticated when token review",
-			log.Any("tokenReviewStatus", tokenReviewResponse.Status))
-		return
-	}
-
-	user = tokenReviewResponse.Status.User.Username
-	authenticated = true
-	if len(tokenReviewResponse.Status.User.Extra) > 0 {
-		if t, ok := tokenReviewResponse.Status.User.Extra[genericoidc.TenantIDKey]; ok {
-			if len(t) > 0 {
-				tenantID = t[0]
-			}
-		}
-	}
-	log.Debug("Docker login verifies that the user identity is successful",
-		log.String("username", user),
-		log.String("tenantID", tenantID))
-	return
 }
 
 func (h *handler) resourceActions(scopes []string, requestTenantID string) []*token.ResourceActions {

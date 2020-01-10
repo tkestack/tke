@@ -91,7 +91,7 @@ func schemaAlarmPolicyResponse(ref common.ReferenceCallback) common.OpenAPIDefin
 					},
 					"data": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"interface{}"},
+							Type: []string{"string"},
 							Description: "if request is get, this field will return tkestack.io/tke/pkg/monitor/services/rest.AlarmPolicy;" +
 								"if request is list, this field will return tkestack.io/tke/pkg/monitor/services/rest.AlarmPolicies;",
 						},

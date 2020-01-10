@@ -327,6 +327,8 @@ type ClusterFeature struct {
 	InternalLB *bool
 	// +optional
 	GPUType *GPUType
+	// +optional
+	EnableMasterSchedule bool
 }
 
 // ClusterProperty records the attribute information of the cluster.
@@ -705,6 +707,8 @@ type PrometheusSpec struct {
 	Version       string
 	SubVersion    map[string]string
 	RemoteAddress PrometheusRemoteAddr
+	// +optional
+	NotifyWebhook string
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.

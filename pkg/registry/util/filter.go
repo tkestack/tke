@@ -49,3 +49,27 @@ func FilterRepository(ctx context.Context, repository *registry.Repository) erro
 	}
 	return nil
 }
+
+// FilterChartGroup is used to filter chart groups that do not belong to the tenant.
+func FilterChartGroup(ctx context.Context, chartGroup *registry.ChartGroup) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if chartGroup.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("chartgroups"), chartGroup.ObjectMeta.Name)
+	}
+	return nil
+}
+
+// FilterChart is used to filter charts that do not belong to the tenant.
+func FilterChart(ctx context.Context, chart *registry.Chart) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if chart.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("chart"), chart.ObjectMeta.Name)
+	}
+	return nil
+}

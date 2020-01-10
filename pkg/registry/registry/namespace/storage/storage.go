@@ -104,7 +104,7 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 	return o, nil
 }
 
-// REST implements a RESTStorage for projects against etcd.
+// REST implements a RESTStorage for namespaces against etcd.
 type REST struct {
 	*registry.Store
 	privilegedUsername string
@@ -127,14 +127,14 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
 	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, apierrors.NewMethodNotSupported(registryapi.Resource("projects"), "delete collection")
+		return nil, apierrors.NewMethodNotSupported(registryapi.Resource("namespaces"), "delete collection")
 	}
 	return r.Store.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
 
 // Get finds a resource in the storage by name and returns it.
-func (r *REST) Get(ctx context.Context, projectName string, options *metav1.GetOptions) (runtime.Object, error) {
-	return ValidateGetObjectAndTenantID(ctx, r.Store, projectName, options)
+func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
 }
 
 // Export an object.  Fields that are not user specified are stripped out
@@ -163,8 +163,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 
-// StatusREST implements the REST endpoint for changing the status of a
-// replication controller.
+// StatusREST implements the REST endpoint for changing the status of a namespace.
 type StatusREST struct {
 	store *registry.Store
 }
@@ -193,37 +192,6 @@ func (r *StatusREST) Export(ctx context.Context, name string, options metav1.Exp
 func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
 	// subresources should never allow create on update.
-	_, err := ValidateGetObjectAndTenantID(ctx, r.store, name, &metav1.GetOptions{})
-	if err != nil {
-		return nil, false, err
-	}
-	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
-}
-
-// FinalizeREST implements the REST endpoint for finalizing a project.
-type FinalizeREST struct {
-	store *registry.Store
-}
-
-// New returns an empty object that can be used with Create and Update after
-// request data has been put into it.
-func (r *FinalizeREST) New() runtime.Object {
-	return r.store.New()
-}
-
-// Get retrieves the object from the storage. It is required to support Patch.
-func (r *FinalizeREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
-}
-
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *FinalizeREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
-}
-
-// Update alters the status finalizers subset of an object.
-func (r *FinalizeREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	_, err := ValidateGetObjectAndTenantID(ctx, r.store, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err

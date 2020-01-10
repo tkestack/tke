@@ -22,12 +22,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"k8s.io/api/extensions/v1beta1"
 	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	"k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbac "k8s.io/api/rbac/v1"
@@ -336,14 +337,42 @@ func CreateOrUpdateEndpoints(client clientset.Interface, ep *v1.Endpoints) error
 }
 
 // CreateOrUpdateIngress creates a Ingress if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
-func CreateOrUpdateIngress(client clientset.Interface, ing *v1beta1.Ingress) error {
+func CreateOrUpdateIngress(client clientset.Interface, ing *extensionsv1beta1.Ingress) error {
 	if _, err := client.ExtensionsV1beta1().Ingresses(ing.ObjectMeta.Namespace).Create(ing); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
-			return errors.Wrap(err, "unable to create ing")
+			return errors.Wrap(err, "unable to create ingress")
 		}
 
 		if _, err := client.ExtensionsV1beta1().Ingresses(ing.ObjectMeta.Namespace).Update(ing); err != nil {
-			return errors.Wrap(err, "unable to update ing")
+			return errors.Wrap(err, "unable to update ingress")
+		}
+	}
+	return nil
+}
+
+// CreateOrUpdateJob creates a Job if the target resource doesn't exist. If the resource exists already, this function will update
+func CreateOrUpdateJob(client clientset.Interface, job *batchv1.Job) error {
+	if _, err := client.BatchV1().Jobs(job.ObjectMeta.Namespace).Create(job); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return errors.Wrap(err, "unable to create job")
+		}
+
+		if _, err := client.BatchV1().Jobs(job.ObjectMeta.Namespace).Update(job); err != nil {
+			return errors.Wrap(err, "unable to update job")
+		}
+	}
+	return nil
+}
+
+// CreateOrUpdateCronJob creates a Job if the target resource doesn't exist. If the resource exists already, this function will update
+func CreateOrUpdateCronJob(client clientset.Interface, cronjob *batchv1beta1.CronJob) error {
+	if _, err := client.BatchV1beta1().CronJobs(cronjob.ObjectMeta.Namespace).Create(cronjob); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return errors.Wrap(err, "unable to create cronjob")
+		}
+
+		if _, err := client.BatchV1beta1().CronJobs(cronjob.ObjectMeta.Namespace).Update(cronjob); err != nil {
+			return errors.Wrap(err, "unable to update cronjob")
 		}
 	}
 	return nil

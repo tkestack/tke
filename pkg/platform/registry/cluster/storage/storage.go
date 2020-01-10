@@ -22,7 +22,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"tkestack.io/tke/pkg/apiserver/authentication"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -36,10 +35,13 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/printers"
+	printerstorage "tkestack.io/tke/pkg/util/printers/storage"
 )
 
 // Storage includes storage for clusters and all sub resources.
@@ -79,6 +81,8 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, clusterProviders *
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
+
+		TableConvertor: printerstorage.TableConvertor{TableGenerator: printers.NewTableGenerator().With(AddHandlers)},
 	}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,

@@ -23,7 +23,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/client-go/rest"
-	"k8s.io/klog"
 	"k8s.io/kube-openapi/pkg/common"
 	"path/filepath"
 	"time"
@@ -86,7 +85,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	// We always validate the local configuration (command line + config file).
 	// This is the default "last-known-good" config for dynamic config, and must always remain valid.
 	if err := monitorconfigvalidation.ValidateMonitorConfiguration(monitorConfig); err != nil {
-		klog.Fatal(err)
+		log.Error("Failed to validate monitor configuration", log.Err(err))
+		return nil, err
 	}
 
 	genericAPIServerConfig := genericapiserver.NewConfig(monitor.Codecs)

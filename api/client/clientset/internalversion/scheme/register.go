@@ -25,6 +25,7 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
+	auth "tkestack.io/tke/api/auth/install"
 	business "tkestack.io/tke/api/business/install"
 	monitor "tkestack.io/tke/api/monitor/install"
 	notify "tkestack.io/tke/api/notify/install"
@@ -43,6 +44,7 @@ func init() {
 
 // Install registers the API group and adds types to a scheme
 func Install(scheme *runtime.Scheme) {
+	auth.Install(scheme)
 	business.Install(scheme)
 	monitor.Install(scheme)
 	notify.Install(scheme)

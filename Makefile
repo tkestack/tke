@@ -114,7 +114,7 @@ release:
 	build/docker/tools/tke-installer/release.sh
 
 ## release-test: test release
-.PHONY: release
+.PHONY: release-test
 release-test:
 	go test -timeout=60m tkestack.io/tke/test/e2e_installer
 
@@ -124,5 +124,3 @@ help: Makefile
 	@echo -e "\nUsage: make <TARGETS> <OPTIONS> ...\n\nTargets:"
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo "$$USAGE_OPTIONS"
-
-

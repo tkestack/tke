@@ -30,6 +30,60 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "v1";
 
+// ChartGroup is an chart group.
+message ChartGroup {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of namespaces in this set.
+  // +optional
+  optional ChartGroupSpec spec = 2;
+
+  // +optional
+  optional ChartGroupStatus status = 3;
+}
+
+// ChartGroupList is the whole list of all chart groups which owned by a tenant.
+message ChartGroupList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of namespaces
+  repeated ChartGroup items = 2;
+}
+
+// ChartGroupSpec represents an chart group.
+message ChartGroupSpec {
+  // Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
+  // +optional
+  repeated string finalizers = 1;
+
+  optional string name = 2;
+
+  optional string tenantID = 3;
+
+  // +optional
+  optional string displayName = 4;
+}
+
+// ChartGroupStatus represents information about the status of an chart group.
+message ChartGroupStatus {
+  // +optional
+  optional string phase = 1;
+
+  // The last time the condition transitioned from one status to another.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 2;
+
+  // The reason for the condition's last transition.
+  // +optional
+  optional string reason = 3;
+
+  // A human readable message indicating details about the transition.
+  // +optional
+  optional string message = 4;
+}
+
 // ConfigMap holds configuration data for tke to consume.
 message ConfigMap {
   // +optional
@@ -256,7 +310,7 @@ message ProjectSpec {
   // +optional
   optional string displayName = 3;
 
-  // Members represents the user list of project.
+  // Users represents the user list of project.
   repeated string members = 4;
 
   // ParentProjectName indicates the superior project name of this service.

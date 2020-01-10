@@ -121,6 +121,105 @@ type RepositoryTag struct {
 	TimeCreated metav1.Time
 }
 
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartGroup is a chart container in chartmuseum registry.
+type ChartGroup struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of chart group in this set.
+	// +optional
+	Spec ChartGroupSpec
+	// +optional
+	Status ChartGroupStatus
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartGroupList is the whole list of all chart groups which owned by a tenant.
+type ChartGroupList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+
+	// List of chart groups
+	Items []ChartGroup
+}
+
+// ChartGroupSpec is a description of a chart group.
+type ChartGroupSpec struct {
+	Name     string
+	TenantID string
+	// +optional
+	DisplayName string
+	// +optional
+	Visibility Visibility
+}
+
+// ChartGroupStatus represents information about the status of a chart group.
+type ChartGroupStatus struct {
+	// +optional
+	Locked     *bool
+	ChartCount int32
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Chart is a chart in chart group of chartmuseum registry.
+type Chart struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of chart in this set.
+	// +optional
+	Spec ChartSpec
+	// +optional
+	Status ChartStatus
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartList is the whole list of all charts which owned by a chart group.
+type ChartList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+
+	// List of charts
+	Items []Chart
+}
+
+type ChartSpec struct {
+	Name           string
+	TenantID       string
+	ChartGroupName string
+	// +optional
+	DisplayName string
+	// +optional
+	Visibility Visibility
+}
+
+type ChartStatus struct {
+	// +optional
+	Locked    *bool
+	PullCount int32
+	Versions  []ChartVersion
+}
+
+type ChartVersion struct {
+	Version     string
+	ChartSize   int64
+	TimeCreated metav1.Time
+}
+
 // Visibility defines the visible properties of the repo or namespace.
 type Visibility string
 

@@ -298,7 +298,14 @@ func NewFinalizerStrategy(strategy *Strategy) *FinalizeStrategy {
 func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	newProject := obj.(*business.Project)
 	oldProject := old.(*business.Project)
+
+	childProjects := newProject.Status.CalculatedChildProjects
+	childNamespaces := newProject.Status.CalculatedNamespaces
+
 	newProject.Status = oldProject.Status
+
+	newProject.Status.CalculatedChildProjects = childProjects
+	newProject.Status.CalculatedNamespaces = childNamespaces
 }
 
 // ValidateUpdate is invoked after default fields in the object have been

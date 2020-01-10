@@ -23,73 +23,100 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
+
+	"k8s.io/apimachinery/pkg/labels"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/dexidp/dex/connector"
 	dexlog "github.com/dexidp/dex/pkg/log"
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
-	"strconv"
+
+	"tkestack.io/tke/api/auth"
+	authv1 "tkestack.io/tke/api/auth/v1"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
+	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
-	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
-	"tkestack.io/tke/pkg/auth/registry/localidentity"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
+	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 var (
 	// TkeConnectorType type and id
 	TkeConnectorType = "tke"
+
+	authClient authinternalclient.AuthInterface
 )
 
 // Config holds the configuration parameters for tke local connector login.
-type Config struct {
-	EtcdOpts storageoptions.ETCDClientOptions
+type DefaultIdentityProvider struct {
+	tenantID            string
+	localIdentityLister authv1lister.LocalIdentityLister
+	localGroupLister    authv1lister.LocalGroupLister
+}
+
+func NewDefaultIdentityProvider(tenantID string, versionInformers versionedinformers.SharedInformerFactory) identityprovider.IdentityProvider {
+	return &DefaultIdentityProvider{
+		tenantID:            tenantID,
+		localIdentityLister: versionInformers.Auth().V1().LocalIdentities().Lister(),
+		localGroupLister:    versionInformers.Auth().V1().LocalGroups().Lister(),
+	}
 }
 
 // Open returns a strategy for logging in through TKE
-func (c *Config) Open(id string, logger dexlog.Logger) (
+func (c *DefaultIdentityProvider) Open(id string, logger dexlog.Logger) (
 	connector.Connector, error) {
-	client, err := c.EtcdOpts.NewClient()
-	if err != nil {
-		return nil, err
+
+	if authClient == nil {
+		return nil, fmt.Errorf("kubernetes client config is nil")
 	}
 
-	return &localIdentityProvider{identityStore: localidentity.NewLocalIdentity(client), tenantID: id}, nil
+	return &localConnector{authClient: authClient, tenantID: id}, nil
 }
 
-// NewLocalConnector creates a demo tke connector when there is no connector in backend.
-func NewLocalConnector(etcdOpts *storageoptions.ETCDClientOptions, tenantID string) (*dexstorage.Connector, error) {
-	bytes, err := json.Marshal(Config{
-		*etcdOpts,
-	})
-	if err != nil {
-		return nil, err
+func (c *DefaultIdentityProvider) Connector() (*dexstorage.Connector, error) {
+	if c.tenantID == "" {
+		return nil, fmt.Errorf("must specify tenantID")
 	}
 
 	return &dexstorage.Connector{
 		Type:   TkeConnectorType,
-		ID:     tenantID,
-		Name:   tenantID,
-		Config: bytes,
+		ID:     c.tenantID,
+		Name:   c.tenantID,
+		Config: []byte("{}"),
 	}, nil
 }
 
-type localIdentityProvider struct {
-	tenantID      string
-	identityStore *localidentity.Storage
+func SetupRestClient(authInterface authinternalclient.AuthInterface) {
+	authClient = authInterface
 }
 
-func (p *localIdentityProvider) Prompt() string {
-	return "UserName"
+type localConnector struct {
+	tenantID   string
+	authClient authinternalclient.AuthInterface
 }
 
-func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scopes, username, password string) (connector.Identity, bool, error) {
+func (p *localConnector) Prompt() string {
+	return "Username"
+}
+
+func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, username, password string) (connector.Identity, bool, error) {
 	ident := connector.Identity{}
 	if len(username) == 0 {
 		return ident, false, nil
 	}
 
 	log.Debug("Check user login", log.String("tenantID", p.tenantID), log.String("username", username), log.String("password", password))
-	localIdentity, err := p.identityStore.Get(p.tenantID, username)
+	localIdentity, err := util.GetLocalIdentity(authClient, p.tenantID, username)
 	if err != nil {
 		log.Error("Get user failed", log.String("user", username), log.Err(err))
 		return ident, false, nil
@@ -108,22 +135,24 @@ func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scop
 	extra := map[string]string{
 		oidc.TenantIDKey: localIdentity.Spec.TenantID,
 	}
-	if localIdentity.Status != nil {
-		extra["status"] = strconv.FormatBool(localIdentity.Status.Locked)
-	}
+
+	extra["status"] = strconv.FormatBool(localIdentity.Status.Locked)
 
 	if ident.ConnectorData, err = json.Marshal(extra); err != nil {
 		log.Error("Marshal extra data failed", log.Err(err))
 		return ident, false, nil
 	}
 
-	ident.UserID = localIdentity.UID
-	ident.Username = localIdentity.Name
-	ident.Groups = localIdentity.Spec.Groups
-
-	if email, ok := localIdentity.Spec.Extra["email"]; ok {
-		ident.Email = email
+	ident.UserID = localIdentity.ObjectMeta.Name
+	ident.Username = localIdentity.Spec.Username
+	groups, err := util.GetGroupsForUser(authClient, localIdentity.ObjectMeta.Name)
+	if err == nil {
+		for _, g := range groups.Items {
+			ident.Groups = append(ident.Groups, g.ObjectMeta.Name)
+		}
 	}
+
+	ident.Email = localIdentity.Spec.Email
 
 	if emailVerified, ok := localIdentity.Spec.Extra["emailVerified"]; ok {
 		ident.EmailVerified, _ = strconv.ParseBool(emailVerified)
@@ -134,20 +163,198 @@ func (p *localIdentityProvider) Login(ctx context.Context, scopes connector.Scop
 	return ident, true, nil
 }
 
-func (p *localIdentityProvider) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
+func (p *localConnector) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
 	// If the user has been deleted, the refresh token will be rejected.
-	ident, err := p.identityStore.Get(p.tenantID, identity.Username)
+	ident, err := util.GetLocalIdentity(p.authClient, p.tenantID, identity.Username)
 	if err != nil {
-		if err == dexstorage.ErrNotFound {
+		if apierrors.IsNotFound(err) {
 			return connector.Identity{}, errors.New("user not found")
 		}
 		return connector.Identity{}, fmt.Errorf("get user faild: %v", err)
 	}
 
 	// User removed but a new user with the same name exists.
-	if ident.UID != identity.UserID {
+	if ident.ObjectMeta.Name != identity.UserID {
 		return connector.Identity{}, errors.New("user not found")
 	}
 
 	return identity, nil
+}
+
+// Get is an object that can get the user that match the provided field and label criteria.
+func (c *DefaultIdentityProvider) GetUser(ctx context.Context, name string, options *metav1.GetOptions) (*auth.User, error) {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID != "" && tenantID != c.tenantID {
+		return nil, apierrors.NewBadRequest("must in the same tenant")
+	}
+
+	localIdentity, err := c.localIdentityLister.Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if localIdentity.Spec.TenantID != c.tenantID {
+		return nil, apierrors.NewNotFound(auth.Resource("user"), name)
+	}
+
+	user := convertToUser(localIdentity)
+	return &user, nil
+}
+
+// List is an object that can list users that match the provided field and label criteria.
+func (c *DefaultIdentityProvider) ListUsers(ctx context.Context, options *metainternal.ListOptions) (*auth.UserList, error) {
+	keyword := ""
+	limit := 50
+	if options.FieldSelector != nil {
+		keyword, _ = options.FieldSelector.RequiresExactMatch(auth.KeywordQueryTag)
+		limitStr, _ := options.FieldSelector.RequiresExactMatch(auth.QueryLimitTag)
+		if li, err := strconv.Atoi(limitStr); err == nil && li > 0 {
+			limit = li
+		}
+	}
+
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID != "" && tenantID != c.tenantID {
+		return nil, apierrors.NewBadRequest("must in the same tenant")
+	}
+
+	allList, err := c.localIdentityLister.List(labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+
+	var localIdentityList []*authv1.LocalIdentity
+	for i, item := range allList {
+		if item.Spec.TenantID == c.tenantID {
+			localIdentityList = append(localIdentityList, allList[i])
+		}
+	}
+
+	if keyword != "" {
+		var newList []*authv1.LocalIdentity
+		for i, val := range localIdentityList {
+			if strings.Contains(val.Name, keyword) || strings.Contains(val.Spec.Username, keyword) || strings.Contains(val.Spec.DisplayName, keyword) {
+				newList = append(newList, localIdentityList[i])
+			}
+		}
+		localIdentityList = newList
+	}
+
+	items := localIdentityList[0:min(len(localIdentityList), limit)]
+
+	userList := auth.UserList{}
+	for _, item := range items {
+		user := convertToUser(item)
+		userList.Items = append(userList.Items, user)
+	}
+
+	return &userList, nil
+}
+
+// Get is an object that can get the user that match the provided field and label criteria.
+func (c *DefaultIdentityProvider) GetGroup(ctx context.Context, name string, options *metav1.GetOptions) (*auth.Group, error) {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID != "" && tenantID != c.tenantID {
+		return nil, apierrors.NewBadRequest("must in the same tenant")
+	}
+
+	localGroup, err := c.localGroupLister.Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if localGroup.Spec.TenantID != c.tenantID {
+		return nil, apierrors.NewNotFound(auth.Resource("group"), name)
+	}
+
+	group := convertToGroup(localGroup)
+	return &group, nil
+}
+
+// List is an object that can list users that match the provided field and label criteria.
+func (c *DefaultIdentityProvider) ListGroups(ctx context.Context, options *metainternal.ListOptions) (*auth.GroupList, error) {
+	keyword := ""
+	limit := 50
+	if options.FieldSelector != nil {
+		keyword, _ = options.FieldSelector.RequiresExactMatch(auth.KeywordQueryTag)
+		limitStr, _ := options.FieldSelector.RequiresExactMatch(auth.QueryLimitTag)
+		if li, err := strconv.Atoi(limitStr); err == nil && li > 0 {
+			limit = li
+		}
+	}
+
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID != "" && tenantID != c.tenantID {
+		return nil, apierrors.NewBadRequest("must in the same tenant")
+	}
+
+	allList, err := c.localGroupLister.List(labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+
+	var localGroupList []*authv1.LocalGroup
+	for i, item := range allList {
+		if item.Spec.TenantID == c.tenantID {
+			localGroupList = append(localGroupList, allList[i])
+		}
+	}
+
+	if keyword != "" {
+		var newList []*authv1.LocalGroup
+		for i, val := range localGroupList {
+			if strings.Contains(val.Name, keyword) || strings.Contains(val.Spec.DisplayName, keyword) {
+				newList = append(newList, localGroupList[i])
+			}
+		}
+		localGroupList = newList
+	}
+
+	items := localGroupList[0:min(len(localGroupList), limit)]
+
+	groupList := auth.GroupList{}
+	for _, item := range items {
+		group := convertToGroup(item)
+		groupList.Items = append(groupList.Items, group)
+	}
+
+	return &groupList, nil
+}
+
+func convertToUser(localIdentity *authv1.LocalIdentity) auth.User {
+	return auth.User{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: localIdentity.ObjectMeta.Name,
+		},
+		Spec: auth.UserSpec{
+			ID:          localIdentity.ObjectMeta.Name,
+			Name:        localIdentity.Spec.Username,
+			DisplayName: localIdentity.Spec.DisplayName,
+			Email:       localIdentity.Spec.Email,
+			PhoneNumber: localIdentity.Spec.PhoneNumber,
+			TenantID:    localIdentity.Spec.TenantID,
+			Extra:       localIdentity.Spec.Extra,
+		},
+	}
+}
+
+func convertToGroup(localGroup *authv1.LocalGroup) auth.Group {
+	return auth.Group{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: localGroup.ObjectMeta.Name,
+		},
+		Spec: auth.GroupSpec{
+			ID:          localGroup.ObjectMeta.Name,
+			DisplayName: localGroup.Spec.DisplayName,
+			TenantID:    localGroup.Spec.TenantID,
+			Description: localGroup.Spec.TenantID,
+		},
+	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

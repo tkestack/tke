@@ -325,6 +325,9 @@ message ClusterFeature {
 
   // +optional
   optional string gpuType = 4;
+
+  // +optional
+  optional bool enableMasterSchedule = 5;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.
@@ -1141,6 +1144,10 @@ message PrometheusSpec {
 
   // RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.
   optional PrometheusRemoteAddr remoteAddress = 5;
+
+  // +optional
+  // NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
+  optional string notifyWebhook = 6;
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.

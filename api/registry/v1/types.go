@@ -121,6 +121,105 @@ type RepositoryTag struct {
 	TimeCreated metav1.Time `json:"timeCreated,omitempty" protobuf:"bytes,3,opt,name=timeCreated"`
 }
 
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartGroup is a chart container in chartmuseum registry.
+type ChartGroup struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of chart group in this set.
+	// +optional
+	Spec ChartGroupSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	// +optional
+	Status ChartGroupStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartGroupList is the whole list of all chart groups which owned by a tenant.
+type ChartGroupList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of chart groups
+	Items []ChartGroup `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// ChartGroupSpec is a description of a chart group.
+type ChartGroupSpec struct {
+	Name     string `json:"name" protobuf:"bytes,1,opt,name=name"`
+	TenantID string `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	// +optional
+	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,3,opt,name=displayName"`
+	// +optional
+	Visibility Visibility `json:"visibility,omitempty" protobuf:"bytes,4,opt,name=visibility,casttype=Visibility"`
+}
+
+// ChartGroupStatus represents information about the status of a chart group.
+type ChartGroupStatus struct {
+	// +optional
+	Locked     *bool `json:"locked,omitempty" protobuf:"varint,1,opt,name=locked"`
+	ChartCount int32 `json:"chartCount" protobuf:"varint,2,opt,name=chartCount"`
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Chart is a chart in chart group of chartmuseum registry.
+type Chart struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of chart in this set.
+	// +optional
+	Spec ChartSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	// +optional
+	Status ChartStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartList is the whole list of all charts which owned by a chart group.
+type ChartList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of charts
+	Items []Chart `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+type ChartSpec struct {
+	Name           string `json:"name" protobuf:"bytes,1,opt,name=name"`
+	TenantID       string `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	ChartGroupName string `json:"chartGroupName" protobuf:"bytes,3,opt,name=chartGroupName"`
+	// +optional
+	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,4,opt,name=displayName"`
+	// +optional
+	Visibility Visibility `json:"visibility,omitempty" protobuf:"bytes,5,opt,name=visibility,casttype=Visibility"`
+}
+
+type ChartStatus struct {
+	// +optional
+	Locked    *bool          `json:"locked,omitempty" protobuf:"varint,1,opt,name=locked"`
+	PullCount int32          `json:"pullCount" protobuf:"varint,2,opt,name=pullCount"`
+	Versions  []ChartVersion `json:"versions" protobuf:"bytes,3,rep,name=versions"`
+}
+
+type ChartVersion struct {
+	Version     string      `json:"version" protobuf:"bytes,1,opt,name=version"`
+	ChartSize   int64       `json:"chartSize" protobuf:"varint,2,opt,name=chartSize"`
+	TimeCreated metav1.Time `json:"timeCreated,omitempty" protobuf:"bytes,3,opt,name=timeCreated"`
+}
+
 // Visibility defines the visible properties of the repo or namespace.
 type Visibility string
 

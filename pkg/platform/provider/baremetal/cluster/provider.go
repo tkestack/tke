@@ -167,6 +167,9 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 				} else {
 					ips.Insert(machine.IP)
 
+					if machine.Username != "root" {
+						allErrs = append(allErrs, field.Invalid(idxPath.Child("username"), c.Spec.Machines[i].Username, "must be root"))
+					}
 					if machine.Password == nil && machine.PrivateKey == nil {
 						allErrs = append(allErrs, field.Required(idxPath.Child("password"), "password or privateKey at least one"))
 					}
@@ -204,6 +207,12 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 }
 
 func (p *Provider) PreCreate(user clusterprovider.UserInfo, cluster platform.Cluster) (platform.Cluster, error) {
+	if cluster.Spec.Version == "" {
+		cluster.Spec.Version = versions.List()[0]
+	}
+	if cluster.Spec.ClusterCIDR == "" {
+		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
+	}
 	if cluster.Spec.Features.IPVS == nil {
 		cluster.Spec.Features.IPVS = pointer.ToBool(false)
 	}

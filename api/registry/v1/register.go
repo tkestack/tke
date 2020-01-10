@@ -56,12 +56,18 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&Repository{},
 		&RepositoryList{},
+
+		&ChartGroup{},
+		&ChartGroupList{},
+
+		&Chart{},
+		&ChartList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }
 
-// Resource takes an unqualified resource and returns a Group qualified
+// Resource takes an unqualified resource and returns a LocalGroup qualified
 // GroupResource
 func Resource(resource string) schema.GroupResource {
 	return SchemeGroupVersion.WithResource(resource).GroupResource()

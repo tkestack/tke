@@ -53,16 +53,15 @@ func ValidateProject(project *business.Project, old *business.Project,
 	}
 
 	hardErrs := field.ErrorList{}
-	fldHardPath := fldSpecPath.Child("hard")
-	if len(project.Spec.Clusters) == 0 {
-		allErrs = append(allErrs, field.Invalid(fldHardPath, nil, "must bind at least one cluster"))
-	}
-	for clusterName, clusterHard := range project.Spec.Clusters {
-		for k, v := range clusterHard.Hard {
-			hardErrs = append(hardErrs, validation.ValidateClusterVersioned(clusterGetter, clusterName, project.Spec.TenantID)...)
-			resPath := fldHardPath.Key(clusterName + k)
-			hardErrs = append(hardErrs, resource.ValidateResourceQuotaResourceName(k, resPath)...)
-			hardErrs = append(hardErrs, resource.ValidateResourceQuantityValue(k, v, resPath)...)
+	fldHardPath := fldSpecPath.Child("clusters")
+	if len(project.Spec.Clusters) > 0 {
+		for clusterName, clusterHard := range project.Spec.Clusters {
+			for k, v := range clusterHard.Hard {
+				hardErrs = append(hardErrs, validation.ValidateClusterVersioned(clusterGetter, clusterName, project.Spec.TenantID)...)
+				resPath := fldHardPath.Key(clusterName + k)
+				hardErrs = append(hardErrs, resource.ValidateResourceQuotaResourceName(k, resPath)...)
+				hardErrs = append(hardErrs, resource.ValidateResourceQuantityValue(k, v, resPath)...)
+			}
 		}
 	}
 	if len(hardErrs) != 0 {

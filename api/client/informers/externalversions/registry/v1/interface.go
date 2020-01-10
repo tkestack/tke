@@ -26,6 +26,10 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// Charts returns a ChartInformer.
+	Charts() ChartInformer
+	// ChartGroups returns a ChartGroupInformer.
+	ChartGroups() ChartGroupInformer
 	// ConfigMaps returns a ConfigMapInformer.
 	ConfigMaps() ConfigMapInformer
 	// Namespaces returns a NamespaceInformer.
@@ -43,6 +47,16 @@ type version struct {
 // New returns a new Interface.
 func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakListOptions internalinterfaces.TweakListOptionsFunc) Interface {
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
+}
+
+// Charts returns a ChartInformer.
+func (v *version) Charts() ChartInformer {
+	return &chartInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ChartGroups returns a ChartGroupInformer.
+func (v *version) ChartGroups() ChartGroupInformer {
+	return &chartGroupInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // ConfigMaps returns a ConfigMapInformer.

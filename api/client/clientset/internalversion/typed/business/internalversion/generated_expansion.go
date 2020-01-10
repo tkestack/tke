@@ -20,6 +20,8 @@
 
 package internalversion
 
+type ChartGroupExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type ImageNamespaceExpansion interface{}

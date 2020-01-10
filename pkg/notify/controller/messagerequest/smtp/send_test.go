@@ -21,8 +21,6 @@ package smtp
 import (
 	"testing"
 	"time"
-
-	"github.com/golang/glog"
 	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -53,7 +51,7 @@ func TestSmtpSend(t *testing.T) {
 		Body:   "This is body: {{.body}} ",
 		Header: "Hi, {{.header}}! ",
 	}
-	//send to
+	// send to
 	email := "464813006@qq.com"
 
 	variables := map[string]string{
@@ -67,7 +65,7 @@ func TestSmtpSend(t *testing.T) {
 	log.Debugf("err: %v", err)
 
 	if err != nil {
-		glog.Errorf("error %v", err)
+		log.Errorf("error %v", err)
 		return
 	}
 }

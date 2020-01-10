@@ -28,6 +28,8 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -113,7 +115,30 @@ func init() {
 		}
 		return nil
 	}
-
+	// batch
+	handlers["Job"] = func(client kubernetes.Interface, data []byte) error {
+		obj := new(batchv1.Job)
+		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
+			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
+		}
+		err := CreateOrUpdateJob(client, obj)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	// batchv1beta1
+	handlers["CronJob"] = func(client kubernetes.Interface, data []byte) error {
+		obj := new(batchv1beta1.CronJob)
+		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
+			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
+		}
+		err := CreateOrUpdateCronJob(client, obj)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	// apps
 	handlers["DaemonSet"] = func(client kubernetes.Interface, data []byte) error {
 		obj := new(appsv1.DaemonSet)

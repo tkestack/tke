@@ -39,6 +39,19 @@ type Metric struct {
 	JSONResult string
 }
 
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// MetricList is the whole list of all metrics.
+type MetricList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+
+	// List of metrics
+	Items []Metric
+}
+
 type MetricQuery struct {
 	Table string
 	// +optional

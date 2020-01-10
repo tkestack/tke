@@ -36,6 +36,7 @@ type Config struct {
 	// Options for ModeWebhook
 	// file for Webhook authorization plugin.
 	WebhookConfigFile string
+	WebhookVersion    string
 	// TTL for caching of authorized responses from the webhook server.
 	WebhookCacheAuthorizedTTL time.Duration
 	// TTL for caching of unauthorized responses from the webhook server.
@@ -67,6 +68,7 @@ func (config Config) New() (authorizer.Authorizer, authorizer.RuleResolver, erro
 			ruleResolvers = append(ruleResolvers, alwaysDenyAuthorizer)
 		case modes.ModeWebhook:
 			webhookAuthorizer, err := webhook.New(config.WebhookConfigFile,
+				config.WebhookVersion,
 				config.WebhookCacheAuthorizedTTL,
 				config.WebhookCacheUnauthorizedTTL)
 			if err != nil {

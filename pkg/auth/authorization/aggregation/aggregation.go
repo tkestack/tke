@@ -19,23 +19,24 @@
 package aggregation
 
 import (
-	"github.com/casbin/casbin"
+	"github.com/casbin/casbin/v2"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/union"
 	"k8s.io/apiserver/plugin/pkg/authorizer/webhook"
-	"tkestack.io/tke/cmd/tke-auth/app/options"
+	"tkestack.io/tke/cmd/tke-auth-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/authorization/abac"
 	"tkestack.io/tke/pkg/auth/authorization/local"
 )
 
 // NewAuthorizer creates a authorizer for subject access review and returns it.
-func NewAuthorizer(authorizationOpts *options.AuthorizationOptions, authOpts *options.AuthOptions, enforcer *casbin.SyncedEnforcer) (authorizer.Authorizer, error) {
+func NewAuthorizer(authorizationOpts *options.AuthorizationOptions, authOpts *options.AuthOptions, enforcer *casbin.SyncedEnforcer, privilegedUsername string) (authorizer.Authorizer, error) {
 	var (
 		authorizers []authorizer.Authorizer
 	)
 
 	if len(authorizationOpts.WebhookConfigFile) != 0 {
 		webhookAuthorizer, err := webhook.New(authorizationOpts.WebhookConfigFile,
+			authorizationOpts.WebhookVersion,
 			authorizationOpts.WebhookCacheAuthorizedTTL,
 			authorizationOpts.WebhookCacheUnauthorizedTTL)
 		if err != nil {
@@ -53,7 +54,7 @@ func NewAuthorizer(authorizationOpts *options.AuthorizationOptions, authOpts *op
 		authorizers = append(authorizers, abacAuthorizer)
 	}
 
-	authorizers = append(authorizers, local.NewAuthorizer(enforcer, authOpts.TenantAdmin))
+	authorizers = append(authorizers, local.NewAuthorizer(enforcer, authOpts.TenantAdmin, privilegedUsername))
 
 	return union.New(authorizers...), nil
 }

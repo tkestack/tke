@@ -39,13 +39,17 @@ func BcryptPassword(password string) (string, error) {
 		log.Error("Bcrypt hash password failed", log.Err(err))
 		return "", err
 	}
-	log.Info("password", log.ByteString("pwd", decodedPasswd), log.ByteString("hased", hashed))
+	log.Debug("password", log.ByteString("pwd", decodedPasswd), log.ByteString("hased", hashed))
 	return base64.StdEncoding.EncodeToString(hashed), nil
 }
 
 // VerifyDecodedPassword verifies password.
 func VerifyDecodedPassword(decodedPasswd string, bcryptedPasswd string) error {
-	if len(decodedPasswd) == 0 {
+	if decodedPasswd == "" && bcryptedPasswd == "" {
+		return nil
+	}
+
+	if decodedPasswd == "" {
 		return fmt.Errorf("input original password is empty")
 	}
 	decodedBytes, err := base64.StdEncoding.DecodeString(decodedPasswd)

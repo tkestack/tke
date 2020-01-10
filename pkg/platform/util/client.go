@@ -23,6 +23,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"math/rand"
+	"net"
+	"net/http"
+	"strings"
+	"time"
+
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
 	pkgerrors "github.com/pkg/errors"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -35,11 +41,6 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"math/rand"
-	"net"
-	"net/http"
-	"strings"
-	"time"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
@@ -51,6 +52,8 @@ import (
 
 const (
 	contextName = "tke"
+	clientQPS   = 100
+	clientBurst = 200
 )
 
 // ClientSetByCluster returns the backend kubernetes clientSet by given cluster object
@@ -232,12 +235,12 @@ func GetRestConfig(cluster *platformv1.Cluster, credential *platformv1.ClusterCr
 
 	if credential.CACert == nil {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                "https://" + address,
+			Server:                address,
 			InsecureSkipTLSVerify: true,
 		}
 	} else {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                   "https://" + address,
+			Server:                   address,
 			CertificateAuthorityData: credential.CACert,
 		}
 	}
@@ -402,12 +405,12 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 
 	if credential.CACert == nil {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                "https://" + address,
+			Server:                address,
 			InsecureSkipTLSVerify: true,
 		}
 	} else {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                   "https://" + address,
+			Server:                   address,
 			CertificateAuthorityData: credential.CACert,
 		}
 	}
@@ -435,6 +438,8 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
 	}
+	restConfig.QPS = clientQPS
+	restConfig.Burst = clientBurst
 	return kubernetes.NewForConfig(restConfig)
 }
 
@@ -464,7 +469,7 @@ func ClusterAddress(cluster *platform.Cluster) (string, error) {
 		return "", pkgerrors.New("no valid address for the cluster")
 	}
 
-	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
+	return fmt.Sprintf("https://%s:%d", address.Host, address.Port), nil
 }
 
 // ClusterV1Address returns the cluster address.

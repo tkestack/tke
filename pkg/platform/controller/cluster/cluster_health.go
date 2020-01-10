@@ -24,16 +24,11 @@ import (
 
 	"github.com/blang/semver"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
+	v1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
-	resourceutil "tkestack.io/tke/pkg/util/resource"
-
-	coreV1 "k8s.io/api/core/v1"
-	v1 "tkestack.io/tke/api/platform/v1"
 )
 
 const conditionTypeHealthCheck = "HealthCheck"
@@ -165,86 +160,87 @@ func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
 	return err
 }
 
-// cal the cluster's capacity , allocatable and allocated resource
-func (c *Controller) caclClusterResource(kubeClient *kubernetes.Clientset) (*v1.ClusterResource, error) {
-	// cal the node's capacity and allocatable
-	var cpuCapacity, memoryCapcity, cpuAllocatable, memoryAllocatable, cpuAllocated, memoryAllocated resource.Quantity
-
-	for {
-		nodeList, err := kubeClient.CoreV1().Nodes().List(metav1.ListOptions{Limit: int64(300)})
-		if err != nil {
-			return &v1.ClusterResource{}, err
-		}
-
-		for _, node := range nodeList.Items {
-			for resourceName, capacity := range node.Status.Capacity {
-				if resourceName.String() == string(resourceutil.CPU) {
-					cpuCapacity.Add(capacity)
-				}
-				if resourceName.String() == string(resourceutil.Memory) {
-					memoryCapcity.Add(capacity)
-				}
-			}
-
-			for resourceName, allocatable := range node.Status.Allocatable {
-				if resourceName.String() == string(resourceutil.CPU) {
-					cpuAllocatable.Add(allocatable)
-				}
-				if resourceName.String() == string(resourceutil.Memory) {
-					memoryAllocatable.Add(allocatable)
-				}
-			}
-		}
-
-		if nodeList.Continue == "" {
-			break
-		}
-	}
-
-	// cal the pods's request resource as allocated resource
-	for {
-		podsList, err := kubeClient.CoreV1().Pods("").List(metav1.ListOptions{Limit: int64(500)})
-		if err != nil {
-			return &v1.ClusterResource{}, err
-		}
-
-		for _, pod := range podsList.Items {
-			// same with kubectl skip those pods in failed or succeeded status
-			if pod.Status.Phase == coreV1.PodFailed || pod.Status.Phase == coreV1.PodSucceeded {
-				continue
-			}
-			for _, container := range pod.Spec.Containers {
-				for resourceName, allocated := range container.Resources.Requests {
-					if resourceName.String() == string(resourceutil.CPU) {
-						cpuAllocated.Add(allocated)
-					}
-					if resourceName.String() == string(resourceutil.Memory) {
-						memoryAllocated.Add(allocated)
-					}
-				}
-			}
-		}
-
-		if podsList.Continue == "" {
-			break
-		}
-	}
-	result := &v1.ClusterResource{
-		Capacity: v1.ResourceList{
-			string(resourceutil.CPU):    cpuCapacity,
-			string(resourceutil.Memory): memoryCapcity,
-		},
-		Allocatable: v1.ResourceList{
-			string(resourceutil.CPU):    cpuAllocatable,
-			string(resourceutil.Memory): memoryAllocatable,
-		},
-		Allocated: v1.ResourceList{
-			string(resourceutil.CPU):    cpuAllocated,
-			string(resourceutil.Memory): memoryAllocated,
-		},
-	}
-	return result, nil
-}
+//
+// // cal the cluster's capacity , allocatable and allocated resource
+// func (c *Controller) caclClusterResource(kubeClient *kubernetes.Clientset) (*v1.ClusterResource, error) {
+// 	// cal the node's capacity and allocatable
+// 	var cpuCapacity, memoryCapcity, cpuAllocatable, memoryAllocatable, cpuAllocated, memoryAllocated resource.Quantity
+//
+// 	for {
+// 		nodeList, err := kubeClient.CoreV1().Nodes().List(metav1.ListOptions{Limit: int64(300)})
+// 		if err != nil {
+// 			return &v1.ClusterResource{}, err
+// 		}
+//
+// 		for _, node := range nodeList.Items {
+// 			for resourceName, capacity := range node.Status.Capacity {
+// 				if resourceName.String() == string(resourceutil.CPU) {
+// 					cpuCapacity.Add(capacity)
+// 				}
+// 				if resourceName.String() == string(resourceutil.Memory) {
+// 					memoryCapcity.Add(capacity)
+// 				}
+// 			}
+//
+// 			for resourceName, allocatable := range node.Status.Allocatable {
+// 				if resourceName.String() == string(resourceutil.CPU) {
+// 					cpuAllocatable.Add(allocatable)
+// 				}
+// 				if resourceName.String() == string(resourceutil.Memory) {
+// 					memoryAllocatable.Add(allocatable)
+// 				}
+// 			}
+// 		}
+//
+// 		if nodeList.Continue == "" {
+// 			break
+// 		}
+// 	}
+//
+// 	// cal the pods's request resource as allocated resource
+// 	for {
+// 		podsList, err := kubeClient.CoreV1().Pods("").List(metav1.ListOptions{Limit: int64(500)})
+// 		if err != nil {
+// 			return &v1.ClusterResource{}, err
+// 		}
+//
+// 		for _, pod := range podsList.Items {
+// 			// same with kubectl skip those pods in failed or succeeded status
+// 			if pod.Status.Phase == coreV1.PodFailed || pod.Status.Phase == coreV1.PodSucceeded {
+// 				continue
+// 			}
+// 			for _, container := range pod.Spec.Containers {
+// 				for resourceName, allocated := range container.Resources.Requests {
+// 					if resourceName.String() == string(resourceutil.CPU) {
+// 						cpuAllocated.Add(allocated)
+// 					}
+// 					if resourceName.String() == string(resourceutil.Memory) {
+// 						memoryAllocated.Add(allocated)
+// 					}
+// 				}
+// 			}
+// 		}
+//
+// 		if podsList.Continue == "" {
+// 			break
+// 		}
+// 	}
+// 	result := &v1.ClusterResource{
+// 		Capacity: v1.ResourceList{
+// 			string(resourceutil.CPU):    cpuCapacity,
+// 			string(resourceutil.Memory): memoryCapcity,
+// 		},
+// 		Allocatable: v1.ResourceList{
+// 			string(resourceutil.CPU):    cpuAllocatable,
+// 			string(resourceutil.Memory): memoryAllocatable,
+// 		},
+// 		Allocated: v1.ResourceList{
+// 			string(resourceutil.CPU):    cpuAllocated,
+// 			string(resourceutil.Memory): memoryAllocated,
+// 		},
+// 	}
+// 	return result, nil
+// }
 
 // for PollImmediateUntil, when return true ,an err while exit
 func (c *Controller) watchClusterHealth(clusterName string) func() (bool, error) {

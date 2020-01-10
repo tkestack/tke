@@ -76,3 +76,9 @@ func SetDefaults_ImageNamespaceStatus(obj *ImageNamespaceStatus) {
 		obj.Phase = ImageNamespacePending
 	}
 }
+
+func SetDefaults_ChartGroupStatus(obj *ChartGroupStatus) {
+	if obj.Phase == "" {
+		obj.Phase = ChartGroupPending
+	}
+}

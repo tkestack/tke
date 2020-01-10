@@ -24,6 +24,7 @@ package abac
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -77,7 +78,7 @@ func NewABACAuthorizer(policyFile string) (authorizer.Authorizer, error) {
 }
 
 // Authorize implements authorizer.Authorize
-func (az *abacAuthorizer) Authorize(a authorizer.Attributes) (authorizer.Decision, string, error) {
+func (az *abacAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	az.mutex.RLock()
 	defer az.mutex.RUnlock()
 	for _, p := range az.policyList {

@@ -91,10 +91,11 @@ data:
       [authentication.oidc]
       client_secret = "{{ .OIDCClientSecret }}"
       client_id = "default"
-      issuer_url = "https://tke-auth/oidc"
+      issuer_url = "https://tke-auth-api/oidc"
       ca_file = "/app/certs/ca.crt"
       username_prefix ="-"
       username_claim = "name"
+      groups_claim = "groups"
       tenantid_claim = "federated_claims"
 
     [secure_serving]

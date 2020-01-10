@@ -63,7 +63,7 @@ type ProjectSpec struct {
 	// +optional
 	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,3,opt,name=displayName"`
 
-	// Members represents the user list of project.
+	// Users represents the user list of project.
 	Members []string `json:"members" protobuf:"bytes,4,rep,name=members"`
 
 	// ParentProjectName indicates the superior project name of this service.
@@ -109,6 +109,8 @@ const (
 	NamespaceFinalize FinalizerName = "namespace"
 	// ImageNamespaceFinalize is an internal finalizer values to ImageNamespace.
 	ImageNamespaceFinalize FinalizerName = "imagenamespace"
+	// ChartGroupFinalize is an internal finalizer values to ChartGroup.
+	ChartGroupFinalize FinalizerName = "imagenamespace"
 )
 
 // ResourceList is a set of (resource name, quantity) pairs.
@@ -374,4 +376,77 @@ const (
 	ImageNamespaceFailed ImageNamespacePhase = "Failed"
 	// ImageNamespaceTerminating means the image namespace is undergoing graceful termination.
 	ImageNamespaceTerminating ImageNamespacePhase = "Terminating"
+)
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartGroup is an chart group.
+type ChartGroup struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of namespaces in this set.
+	// +optional
+	Spec ChartGroupSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	// +optional
+	Status ChartGroupStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartGroupList is the whole list of all chart groups which owned by a tenant.
+type ChartGroupList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of namespaces
+	Items []ChartGroup `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// ChartGroupSpec represents an chart group.
+type ChartGroupSpec struct {
+	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
+	// +optional
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	Name       string          `json:"name" protobuf:"bytes,2,opt,name=name"`
+	TenantID   string          `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
+	// +optional
+	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,4,opt,name=displayName"`
+}
+
+// ChartGroupStatus represents information about the status of an chart group.
+type ChartGroupStatus struct {
+	// +optional
+	Phase ChartGroupPhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=ChartGroupPhase"`
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,2,opt,name=lastTransitionTime"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,4,opt,name=message"`
+}
+
+// ChartGroupPhase indicates the phase of chart groups.
+type ChartGroupPhase string
+
+// These are valid phases of chart groups.
+const (
+	// ChartGroupPending indicates that the chart group has been declared,
+	// when the chart group has not actually been created.
+	ChartGroupPending ChartGroupPhase = "Pending"
+	// ChartGroupAvailable indicates the chart group of the project is available.
+	ChartGroupAvailable ChartGroupPhase = "Available"
+	// ChartGroupLocked indicates the chart group of the project is locked.
+	ChartGroupLocked ChartGroupPhase = "Locked"
+	// ChartGroupFailed indicates that the chart group failed to be created or deleted
+	// after it has been created.
+	ChartGroupFailed ChartGroupPhase = "Failed"
+	// ChartGroupTerminating means the chart group is undergoing graceful termination.
+	ChartGroupTerminating ChartGroupPhase = "Terminating"
 )

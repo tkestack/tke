@@ -24,15 +24,14 @@ import (
 
 	"k8s.io/apiserver/pkg/authentication/token/union"
 
-	v1 "k8s.io/api/authentication/v1"
+	authv1 "k8s.io/api/authentication/v1"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
-	"tkestack.io/tke/pkg/auth/types"
-	"tkestack.io/tke/pkg/util/log"
-
 	"k8s.io/apiserver/pkg/authentication/authenticator"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
+
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // Handler handle token authentication http request.
@@ -47,7 +46,7 @@ func NewHandler(authTokenHandlers ...authenticator.Token) *Handler {
 
 // AuthenticateToken handles token authentication http request.
 func (h *Handler) AuthenticateToken(request *restful.Request, response *restful.Response) {
-	tokenReview := &v1.TokenReview{}
+	tokenReview := &authv1.TokenReview{}
 	if err := request.ReadEntity(tokenReview); err != nil {
 		log.Error("read entity failed", log.Err(err))
 		responsewriters.WriteRawJSON(http.StatusBadRequest, errors.NewBadRequest(err.Error()).Status(), response.ResponseWriter)
@@ -56,21 +55,22 @@ func (h *Handler) AuthenticateToken(request *restful.Request, response *restful.
 
 	authResp, valid, err := h.tokenAuthenticator.AuthenticateToken(context.Background(), tokenReview.Spec.Token)
 	if !valid || err != nil {
-		responsewriters.WriteRawJSON(http.StatusUnauthorized, unauthenticatedResponse(), response.ResponseWriter)
+		tokenReview.Status = authv1.TokenReviewStatus{Authenticated: false}
+		responsewriters.WriteRawJSON(http.StatusUnauthorized, tokenReview, response.ResponseWriter)
 		return
 	}
 
-	extra := map[string]v1.ExtraValue{}
+	extra := map[string]authv1.ExtraValue{}
 
 	for key, val := range authResp.User.GetExtra() {
 		extra[key] = val
 	}
-	tokenResponse := &v1.TokenReview{
+	tokenResponse := &authv1.TokenReview{
 		TypeMeta:   tokenReview.TypeMeta,
 		ObjectMeta: tokenReview.ObjectMeta,
-		Status: v1.TokenReviewStatus{
+		Status: authv1.TokenReviewStatus{
 			Authenticated: true,
-			User: v1.UserInfo{
+			User: authv1.UserInfo{
 				Username: authResp.User.GetName(),
 				Groups:   authResp.User.GetGroups(),
 				Extra:    extra,
@@ -79,14 +79,4 @@ func (h *Handler) AuthenticateToken(request *restful.Request, response *restful.
 	}
 
 	responsewriters.WriteRawJSON(http.StatusOK, tokenResponse, response.ResponseWriter)
-}
-
-func unauthenticatedResponse() *types.TokenReviewResponse {
-	return &types.TokenReviewResponse{
-		APIVersion: types.TokenReviewAPIVersion,
-		Kind:       types.TokenReviewKind,
-		Status: types.TokenReviewStatus{
-			Authenticated: false,
-		},
-	}
 }

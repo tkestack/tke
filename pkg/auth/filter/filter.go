@@ -20,6 +20,10 @@ package filter
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+	"unicode"
+
 	"github.com/go-openapi/inflect"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,14 +33,11 @@ import (
 	genericfilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/klog"
-	"net/http"
-	"strings"
-	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
+
+	"tkestack.io/tke/api/registry"
 	commonapiserverfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/util/log"
-	"unicode"
 )
 
 const (
@@ -53,7 +54,7 @@ const (
 // WithTKEAuthorization passes all tke-auth authorized requests on to handler, and returns a forbidden error otherwise.
 func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runtime.NegotiatedSerializer, ignoreAuthPathPrefixes []string) http.Handler {
 	if a == nil {
-		klog.Warningf("TKE Authorization is disabled")
+		log.Warn("TKE Authorization is disabled")
 		return handler
 	}
 	allIgnorePathPrefixes := commonapiserverfilter.MakeAllIgnoreAuthPathPrefixes(ignoreAuthPathPrefixes)
@@ -92,10 +93,7 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 		tkeAttributes := ConvertTKEAttributes(ctx, attributes)
 		authorized = UnprotectedAuthorized(tkeAttributes)
 		if authorized != authorizer.DecisionAllow {
-			log.Debug("Convert to tke tkeAttributes", log.String("user name", tkeAttributes.GetUser().GetName()),
-				log.String("resource", tkeAttributes.GetResource()), log.String("resource", tkeAttributes.GetName()),
-				log.String("verb", tkeAttributes.GetVerb()))
-			authorized, reason, err = a.Authorize(tkeAttributes)
+			authorized, reason, err = a.Authorize(ctx, tkeAttributes)
 		}
 
 		// an authorizer like RBAC could encounter evaluation errors and still allow the request, so authorizer decision is checked before error here.
@@ -119,7 +117,7 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 }
 
 var (
-	unprotectedVerbSets = sets.NewString("listPortal", "createApikey", "listApikey", "updateApikey")
+	unprotectedVerbSets = sets.NewString("listPortal")
 )
 
 // UnprotectedAuthorized checks a request attribute has privileged to pass authorization.
@@ -127,11 +125,6 @@ func UnprotectedAuthorized(attributes authorizer.Attributes) authorizer.Decision
 	info := attributes.GetUser()
 	if info == nil {
 		return authorizer.DecisionNoOpinion
-	}
-	extras := info.GetExtra()
-	tenantID, ok := extras[genericoidc.TenantIDKey]
-	if info.GetName() == "admin" && (!ok || len(tenantID) == 0) {
-		return authorizer.DecisionAllow
 	}
 
 	verb := attributes.GetVerb()
@@ -142,9 +135,6 @@ func UnprotectedAuthorized(attributes authorizer.Attributes) authorizer.Decision
 	return authorizer.DecisionNoOpinion
 }
 
-// specialUpdateResources contains resources which update verb may be considered as add, verb will be add
-var specialVerbUpdateResources = sets.NewString("roles", "policies")
-
 // specialSubResources contains resources which get verb use get instead of list
 var specialSubResources = sets.NewString("status", "log", "finalize")
 
@@ -152,10 +142,13 @@ var specialSubResources = sets.NewString("status", "log", "finalize")
 func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) authorizer.Attributes {
 	tkeAttribs := attr.(*authorizer.AttributesRecord)
 
-	log.Debug("Attr parsed by k8s resolver", log.Any("attr", tkeAttribs))
 	resourceType := attr.GetResource()
 	subResource := attr.GetSubresource()
 	resourceName := attr.GetName()
+
+	if resourceType == "namespaces" && attr.GetAPIGroup() == registry.GroupName {
+		resourceType = "registrynamespaces"
+	}
 
 	clusterName := ""
 
@@ -189,9 +182,6 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 			resourceType = resourceTypeSingle
 		}
 	case "update":
-		if len(subResource) != 0 && specialVerbUpdateResources.Has(resourceType) {
-			verb = "add"
-		}
 		resourceType = resourceTypeSingle
 	case "patch":
 		verb = "update"
@@ -227,7 +217,6 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 	tkeAttribs.Subresource = subResource
 	tkeAttribs.Name = resourceName
 
-	log.Debug("Convert to tke attributes", log.Any("tke attributes", tkeAttribs))
 	return tkeAttribs
 }
 

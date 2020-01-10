@@ -31,6 +31,7 @@ import (
 	"tkestack.io/tke/pkg/gateway/proxy/handler/frontproxy"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/passthrough"
 	platformapiserver "tkestack.io/tke/pkg/platform/apiserver"
+	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -74,10 +75,6 @@ func componentPrefix() map[moduleName][]modulePath {
 		},
 		moduleNameAuth: {
 			modulePath{
-				prefix:    "/api/authv1/",
-				protected: true,
-			},
-			modulePath{
 				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, auth.GroupName),
 				protected: true,
 			},
@@ -99,6 +96,10 @@ func componentPrefix() map[moduleName][]modulePath {
 			},
 			modulePath{
 				prefix:    distribution.APIPrefix,
+				protected: false,
+			},
+			modulePath{
+				prefix:    chartmuseum.PathPrefix,
 				protected: false,
 			},
 			modulePath{

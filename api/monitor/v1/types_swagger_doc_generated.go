@@ -56,4 +56,13 @@ func (Metric) SwaggerDoc() map[string]string {
 	return map_Metric
 }
 
+var map_MetricList = map[string]string{
+	"":      "MetricList is the whole list of all metrics.",
+	"items": "List of metrics",
+}
+
+func (MetricList) SwaggerDoc() map[string]string {
+	return map_MetricList
+}
+
 // AUTO-GENERATED FUNCTIONS END HERE

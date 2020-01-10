@@ -110,8 +110,8 @@ data:
       [authentication.oidc]
 {{- if .EnableAuth }}
       client_id = "default"
-      issuer_url = "https://tke-auth/oidc"
-      external_issuer_url = "https://tke-auth/oidc"
+      issuer_url = "https://tke-auth-api/oidc"
+      external_issuer_url = "https://tke-auth-api/oidc"
       ca_file = "/app/certs/ca.crt"
       username_prefix ="-"
       username_claim = "name"
@@ -165,6 +165,7 @@ data:
       adminUsername: "{{ .AdminUsername }}"
       httpSecret: "{{ .AdminPassword }}"
     defaultTenant: default
+    domainSuffix: "{{ .DomainSuffix }}"
 
   tke-auth-webhook.yaml: |
     apiVersion: v1
@@ -173,7 +174,7 @@ data:
       - name: tke
         cluster:
           certificate-authority: /app/certs/ca.crt
-          server: https://tke-auth/auth/authz
+          server: https://tke-auth-api/auth/authz
     users:
       - name: admin-cert
         user:

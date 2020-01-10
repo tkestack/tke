@@ -59,6 +59,40 @@ var (
 
 // addKnownTypes adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion)
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&LocalIdentity{},
+		&LocalIdentityList{},
+		&PasswordReq{},
+		&APIKey{},
+		&APIKeyList{},
+		&APIKeyReq{},
+		&APIKeyReqPassword{},
+		&APISigningKey{},
+		&APISigningKeyList{},
+		&Category{},
+		&CategoryList{},
+		&Policy{},
+		&PolicyList{},
+		&Rule{},
+		&RuleList{},
+		&Binding{},
+		&Role{},
+		&RoleList{},
+		&PolicyBinding{},
+		&SubjectAccessReview{},
+		&LocalGroup{},
+		&LocalGroupList{},
+		&User{},
+		&UserList{},
+		&Group{},
+		&GroupList{},
+		&IdentityProvider{},
+		&IdentityProviderList{},
+		&Client{},
+		&ClientList{},
+
+		&ConfigMap{},
+		&ConfigMapList{})
+
 	return nil
 }

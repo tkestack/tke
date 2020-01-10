@@ -19,7 +19,7 @@
 #
 
 GO := go
-GO_SUPPORTED_VERSIONS ?= 1.12|1.13
+GO_SUPPORTED_VERSIONS ?= 1.13
 GO_LDFLAGS += -X $(VERSION_PACKAGE).GitVersion=$(VERSION) \
 	-X $(VERSION_PACKAGE).GitCommit=$(GIT_COMMIT) \
 	-X $(VERSION_PACKAGE).GitTreeState=$(GIT_TREE_STATE) \
@@ -52,7 +52,7 @@ ifeq ($(origin GOBIN), undefined)
 endif
 
 PLATFORMS ?= darwin_amd64 windows_amd64 linux_amd64
-COMMANDS ?= $(wildcard ${ROOT_DIR}/cmd/*)
+COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*))
 BINS ?= $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
 
 ifeq (${COMMANDS},)
@@ -99,7 +99,7 @@ endif
 .PHONY: go.lint
 go.lint: go.lint.verify
 	@echo "===========> Run golangci to lint source codes"
-	@$(GOBIN)/golangci-lint run $(ROOT_DIR)/...
+	@golangci-lint run $(ROOT_DIR)/...
 
 .PHONY: go.test.verify
 go.test.verify: go.build.verify
@@ -111,4 +111,4 @@ endif
 .PHONY: go.test
 go.test: go.test.verify
 	@echo "===========> Run unit test"
-	$(GO) test -count=1 -timeout=10m -short -v ./... 2>&1 | tee >(go-junit-report --set-exit-code >$(OUTPUT_DIR)/report.xml)
+	$(GO) test -count=1 -timeout=10m -short -v `go list ./...|grep -v tkestack.io/tke/test` 2>&1 | tee >(go-junit-report --set-exit-code >$(OUTPUT_DIR)/report.xml)

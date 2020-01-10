@@ -103,14 +103,14 @@ const (
 
 // ClusterResource is the REST layer to the Cluster domain
 type TKE struct {
-	Config   *config.Config           `json:"config"`
-	Para     *CreateClusterPara       `json:"para"`
-	Cluster  *clusterprovider.Cluster `json:"cluster"`
-	Progress *ClusterProgress         `json:"progress"`
-	Step     int                      `json:"step"`
+	Config  *config.Config           `json:"config"`
+	Para    *CreateClusterPara       `json:"para"`
+	Cluster *clusterprovider.Cluster `json:"cluster"`
+	Step    int                      `json:"step"`
 
 	log              *stdlog.Logger
 	steps            []handler
+	progress         *ClusterProgress
 	clusterProviders *sync.Map
 	strategy         *clusterstrategy.Strategy
 	clusterProvider  clusterprovider.Provider
@@ -277,7 +277,7 @@ type Keepalived struct {
 // ClusterProgress use for findClusterProgress
 type ClusterProgress struct {
 	Status     ClusterProgressStatus `json:"status"`
-	Data       string                `json:"-"`
+	Data       string                `json:"data"`
 	URL        string                `json:"url,omitempty"`
 	Username   string                `json:"username,omitempty"`
 	Password   []byte                `json:"password,omitempty"`
@@ -312,6 +312,9 @@ func NewTKE(config *config.Config) *TKE {
 	c.Config = config
 	c.Para = new(CreateClusterPara)
 	c.Cluster = new(clusterprovider.Cluster)
+	c.progress = new(ClusterProgress)
+	c.progress.Status = StatusUnknown
+	c.clusterProviders = new(sync.Map)
 
 	_ = os.MkdirAll(path.Dir(clusterLogFile), 0755)
 	f, err := os.OpenFile(clusterLogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0744)
@@ -330,12 +333,9 @@ func NewTKE(config *config.Config) *TKE {
 			}
 			log.Infof("load tke data success")
 			c.isFromRestore = true
+			c.progress.Status = StatusDoing
 		}
 	}
-
-	c.clusterProviders = new(sync.Map)
-	c.Progress = new(ClusterProgress)
-	c.Progress.Status = StatusUnknown
 
 	return c
 }
@@ -419,8 +419,12 @@ func (t *TKE) initSteps() {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		t.steps = append(t.steps, []handler{
 			{
-				Name: "Install tke-auth",
-				Func: t.installTKEAuth,
+				Name: "Install tke-auth-api",
+				Func: t.installTKEAuthAPI,
+			},
+			{
+				Name: "Install tke-auth-controller",
+				Func: t.installTKEAuthController,
 			},
 		}...)
 	}
@@ -527,6 +531,10 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Push images to registry",
 				Func: t.pushImages,
+			},
+			{
+				Name: "Set global cluster hosts",
+				Func: t.setGlobalClusterHosts,
 			},
 		}...)
 	}
@@ -747,6 +755,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 	if cluster.Spec.NetworkDevice == "" {
 		cluster.Spec.NetworkDevice = "eth0"
 	}
+	cluster.Spec.Features.EnableMasterSchedule = true
 
 	if config.HA != nil {
 		if t.Para.Config.HA.TKEHA != nil {
@@ -815,7 +824,7 @@ func (t *TKE) ValidateConfig(config Config) *errors.StatusError {
 	if config.Registry.TKERegistry != nil {
 		dnsNames = append(dnsNames, config.Registry.TKERegistry.Domain, "*."+config.Registry.TKERegistry.Domain)
 	}
-	if config.Gateway.Cert.ThirdPartyCert != nil {
+	if config.Gateway != nil && config.Gateway.Cert.ThirdPartyCert != nil {
 		statusError := t.ValidateCertAndKey(config.Gateway.Cert.ThirdPartyCert.Certificate,
 			config.Gateway.Cert.ThirdPartyCert.PrivateKey, dnsNames)
 		if statusError != nil {
@@ -932,7 +941,7 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 		if err != nil {
 			return errors.NewInternalError(err)
 		}
-		t.Progress.Data = string(data)
+		t.progress.Data = string(data)
 
 		return nil
 	}()
@@ -940,7 +949,7 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 	if apiStatus != nil {
 		response.WriteHeaderAndJson(int(apiStatus.Status().Code), apiStatus.Status(), restful.MIME_JSON)
 	} else {
-		response.WriteEntity(t.Progress)
+		response.WriteEntity(t.progress)
 	}
 }
 
@@ -952,7 +961,7 @@ func (t *TKE) do() {
 
 	if t.Step == 0 {
 		t.log.Print("===>starting install task")
-		t.Progress.Status = StatusDoing
+		t.progress.Status = StatusDoing
 	}
 
 	if t.runAfterClusterReady() {
@@ -964,7 +973,7 @@ func (t *TKE) do() {
 		start := time.Now()
 		err := t.steps[t.Step].Func()
 		if err != nil {
-			t.Progress.Status = StatusFailed
+			t.progress.Status = StatusFailed
 			t.log.Printf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
 			return
 		}
@@ -974,7 +983,7 @@ func (t *TKE) do() {
 		t.backup()
 	}
 
-	t.Progress.Status = StatusSuccess
+	t.progress.Status = StatusSuccess
 	if t.Para.Config.Gateway != nil {
 		var host string
 		if t.Para.Config.Gateway.Domain != "" {
@@ -984,30 +993,30 @@ func (t *TKE) do() {
 		} else {
 			host = t.Para.Cluster.Spec.Machines[0].IP
 		}
-		t.Progress.URL = fmt.Sprintf("http://%s", host)
+		t.progress.URL = fmt.Sprintf("http://%s", host)
 
-		t.Progress.Username = t.Para.Config.Basic.Username
-		t.Progress.Password = t.Para.Config.Basic.Password
+		t.progress.Username = t.Para.Config.Basic.Username
+		t.progress.Password = t.Para.Config.Basic.Password
 
 		if t.Para.Config.Gateway.Cert.SelfSignedCert != nil {
-			t.Progress.CACert, _ = ioutil.ReadFile(constants.CACrtFile)
+			t.progress.CACert, _ = ioutil.ReadFile(constants.CACrtFile)
 		}
 
 		if t.Para.Config.Gateway.Domain != "" {
-			t.Progress.Hosts = append(t.Progress.Hosts, t.Para.Config.Gateway.Domain)
+			t.progress.Hosts = append(t.progress.Hosts, t.Para.Config.Gateway.Domain)
 		}
 
 		cfg, _ := t.getKubeconfig()
-		t.Progress.Kubeconfig, _ = runtime.Encode(clientcmdlatest.Codec, cfg)
+		t.progress.Kubeconfig, _ = runtime.Encode(clientcmdlatest.Codec, cfg)
 	}
 
 	if t.Para.Config.Registry.TKERegistry != nil {
-		t.Progress.Hosts = append(t.Progress.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
+		t.progress.Hosts = append(t.progress.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
 	}
 
-	t.Progress.Servers = t.servers
+	t.progress.Servers = t.servers
 	if t.Para.Config.HA != nil {
-		t.Progress.Servers = append(t.Progress.Servers, t.Para.Config.HA.VIP())
+		t.progress.Servers = append(t.progress.Servers, t.Para.Config.HA.VIP())
 	}
 	t.log.Printf("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
 }
@@ -1465,7 +1474,7 @@ func (t *TKE) installETCD() error {
 		})
 }
 
-func (t *TKE) installTKEAuth() error {
+func (t *TKE) installTKEAuthAPI() error {
 	redirectHosts := t.servers
 	redirectHosts = append(redirectHosts, "tke-gateway")
 	if t.Para.Config.Gateway != nil && t.Para.Config.Gateway.Domain != "" {
@@ -1477,20 +1486,41 @@ func (t *TKE) installTKEAuth() error {
 
 	option := map[string]interface{}{
 		"Replicas":         t.Config.Replicas,
-		"Image":            images.Get().TKEAuth.FullName(),
+		"Image":            images.Get().TKEAuthAPI.FullName(),
 		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
 		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
 		"AdminPassword":    string(t.Para.Config.Auth.TKEAuth.Password),
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth/*.yaml", option)
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth-api/*.yaml", option)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth")
+		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth-api")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKEAuthController() error {
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth-controller/*.yaml",
+		map[string]interface{}{
+			"Replicas":      t.Config.Replicas,
+			"Image":         images.Get().TKEAuthController.FullName(),
+			"AdminUsername": t.Para.Config.Auth.TKEAuth.Username,
+			"AdminPassword": string(t.Para.Config.Auth.TKEAuth.Password),
+		})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth-controller")
 		if err != nil {
 			return false, nil
 		}
@@ -1773,6 +1803,7 @@ func (t *TKE) installTKERegistryAPI() error {
 		"AdminUsername": t.Para.Config.Registry.TKERegistry.Username,
 		"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
 		"EnableAuth":    t.Para.Config.Auth.TKEAuth != nil,
+		"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -2023,6 +2054,37 @@ func (t *TKE) getKubeconfig() (*api.Config, error) {
 		t.Cluster.ClusterCredential.CACert,
 		*t.Cluster.ClusterCredential.Token,
 	), nil
+}
+
+func (t *TKE) setGlobalClusterHosts() error {
+	domains := []string{
+		t.Para.Config.Registry.Domain(),
+		t.Cluster.Spec.TenantID + "." + t.Para.Config.Registry.Domain(),
+	}
+
+	for _, machine := range t.Cluster.Spec.Machines {
+		sshConfig := &ssh.Config{
+			User:       machine.Username,
+			Host:       machine.IP,
+			Port:       int(machine.Port),
+			Password:   string(machine.Password),
+			PrivateKey: machine.PrivateKey,
+			PassPhrase: machine.PassPhrase,
+		}
+		s, err := ssh.New(sshConfig)
+		if err != nil {
+			return err
+		}
+		for _, one := range domains {
+			remoteHosts := hosts.RemoteHosts{Host: one, SSH: s}
+			err := remoteHosts.Set(t.Cluster.Spec.Machines[0].IP)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (t *TKE) writeKubeconfig() error {
