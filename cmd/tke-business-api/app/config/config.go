@@ -27,6 +27,7 @@ import (
 	"k8s.io/client-go/rest"
 	"tkestack.io/tke/api/business"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
@@ -55,6 +56,7 @@ type Config struct {
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 	PlatformClient                 platformversionedclient.PlatformV1Interface
 	RegistryClient                 registryversionedclient.RegistryV1Interface
+	AuthClient                     authversionedclient.AuthV1Interface
 	PrivilegedUsername             string
 	FeatureOptions                 *options.FeatureOptions
 }
@@ -132,6 +134,19 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		PlatformClient:                 platformClient.PlatformV1(),
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 		FeatureOptions:                 opts.FeatureOptions,
+	}
+
+	// client config for auth apiserver
+	authAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.AuthAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if ok && authAPIServerClientConfig != nil {
+		authClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(authAPIServerClientConfig, "tke-business-api"))
+		if err != nil {
+			return nil, err
+		}
+		cfg.AuthClient = authClient.AuthV1()
 	}
 
 	// client config for registry apiserver

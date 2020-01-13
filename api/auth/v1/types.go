@@ -847,8 +847,8 @@ type IdentityProviderSpec struct {
 	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
 	// The type of the connector. E.g. 'oidc' or 'ldap'
 	Type string `json:"type" protobuf:"bytes,2,opt,name=type"`
-	// The admins means the users is super admin for the idp.
-	Admins []string `json:"admin" protobuf:"bytes,3,opt,name=admins"`
+	// The administrators means the users is super admin for the idp.
+	Administrators []string `json:"administrators" protobuf:"bytes,3,opt,name=administrators"`
 	// Config holds all the configuration information specific to the connector type. Since there
 	// no generic struct we can use for this purpose, it is stored as a json string.
 	Config string `json:"config" protobuf:"bytes,4,opt,name=config"`

@@ -793,7 +793,7 @@ type IdentityProviderSpec struct {
 	Type string
 
 	// The admins means the users is super admin for the idp.
-	Admins []string
+	Administrators []string
 	// Config holds all the configuration information specific to the connector type. Since there
 	// no generic struct we can use for this purpose, it is stored as a json string.
 	Config string

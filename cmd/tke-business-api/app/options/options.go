@@ -39,6 +39,7 @@ type Options struct {
 	Authorization     *apiserveroptions.AuthorizationOptions
 	PlatformAPIClient *controlleroptions.APIServerClientOptions
 	RegistryAPIClient *controlleroptions.APIServerClientOptions
+	AuthAPIClient     *controlleroptions.APIServerClientOptions
 	FeatureOptions    *FeatureOptions
 }
 
@@ -54,6 +55,7 @@ func NewOptions(serverName string) *Options {
 		Authorization:     apiserveroptions.NewAuthorizationOptions(),
 		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
 		RegistryAPIClient: controlleroptions.NewAPIServerClientOptions("registry", false),
+		AuthAPIClient:     controlleroptions.NewAPIServerClientOptions("auth", false),
 		FeatureOptions:    NewFeatureOptions(),
 	}
 }
@@ -69,6 +71,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Authorization.AddFlags(fs)
 	o.PlatformAPIClient.AddFlags(fs)
 	o.RegistryAPIClient.AddFlags(fs)
+	o.AuthAPIClient.AddFlags(fs)
 	o.FeatureOptions.AddFlags(fs)
 }
 
@@ -86,6 +89,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Authorization.ApplyFlags()...)
 	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
 	errs = append(errs, o.RegistryAPIClient.ApplyFlags()...)
+	errs = append(errs, o.AuthAPIClient.ApplyFlags()...)
 	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
 
 	return errs

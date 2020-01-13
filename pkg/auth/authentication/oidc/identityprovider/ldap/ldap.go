@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+
 	"tkestack.io/tke/pkg/auth/util"
 
 	dexldap "github.com/dexidp/dex/connector/ldap"
@@ -341,16 +342,13 @@ func (c *identityProvider) userFromEntry(user ldap.Entry) (authUser *auth.User, 
 	// an error rather than continuing.
 	var missing []string
 
-	// Fill the identity struct using the attributes from the user entry.
-	if authUser.Spec.ID = getAttr(user, c.UserSearch.IDAttr); authUser.Spec.ID == "" {
-		missing = append(missing, c.UserSearch.IDAttr)
-	} else {
-		authUser.ObjectMeta.Name = authUser.Spec.ID
-	}
-
 	if c.UserSearch.Username != "" {
 		if authUser.Spec.Name = getAttr(user, c.UserSearch.Username); authUser.Spec.Name == "" {
 			missing = append(missing, c.UserSearch.Username)
+		} else {
+			// ldap id and name is same
+			authUser.Spec.ID = authUser.Spec.Name
+			authUser.ObjectMeta.Name = authUser.Spec.Name
 		}
 	}
 
@@ -433,13 +431,23 @@ func (c *identityProvider) groupsEntry(conn *ldap.Conn, keyword string, limit in
 		},
 	}
 
-	log.Infof("performing ldap search %s %s %s",
-		req.BaseDN, scopeString(req.Scope), req.Filter)
+	log.Infof("performing ldap search %s %s %s %d",
+		req.BaseDN, scopeString(req.Scope), req.Filter, limit)
 
-	resp, err := conn.SearchWithPaging(req, uint32(limit))
-	if err != nil {
-		return nil, fmt.Errorf("ldap: search with filter %q failed: %v", req.Filter, err)
+	var resp *ldap.SearchResult
+	if limit != 0 {
+		resp, err = conn.SearchWithPaging(req, uint32(limit))
+		if err != nil {
+			return nil, fmt.Errorf("ldap: search with filter %q failed: %v", req.Filter, err)
+		}
+	} else {
+		resp, err = conn.Search(req)
+		if err != nil {
+			return nil, fmt.Errorf("ldap: search with filter %q failed: %v", req.Filter, err)
+		}
 	}
+
+	log.Info("resp", log.Any("resp", resp))
 
 	return resp.Entries, nil
 }
@@ -464,7 +472,7 @@ func (c *identityProvider) groupFromEntry(group ldap.Entry) (authGroup *auth.Gro
 			name := parseNameFromDN(dn, c.UserSearch.Username)
 			if name != "" {
 				authGroup.Status.Users = append(authGroup.Status.Users, auth.Subject{
-					ID:   dn,
+					ID:   name,
 					Name: name,
 				})
 			}
@@ -475,6 +483,7 @@ func (c *identityProvider) groupFromEntry(group ldap.Entry) (authGroup *auth.Gro
 		err := fmt.Errorf("ldap: entry %q missing following required attribute(s): %q", group.DN, missing)
 		return nil, err
 	}
+
 	return authGroup, nil
 }
 

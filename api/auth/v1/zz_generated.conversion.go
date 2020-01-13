@@ -1235,7 +1235,7 @@ func Convert_auth_IdentityProviderList_To_v1_IdentityProviderList(in *auth.Ident
 func autoConvert_v1_IdentityProviderSpec_To_auth_IdentityProviderSpec(in *IdentityProviderSpec, out *auth.IdentityProviderSpec, s conversion.Scope) error {
 	out.Name = in.Name
 	out.Type = in.Type
-	out.Admins = *(*[]string)(unsafe.Pointer(&in.Admins))
+	out.Administrators = *(*[]string)(unsafe.Pointer(&in.Administrators))
 	out.Config = in.Config
 	return nil
 }
@@ -1248,7 +1248,7 @@ func Convert_v1_IdentityProviderSpec_To_auth_IdentityProviderSpec(in *IdentityPr
 func autoConvert_auth_IdentityProviderSpec_To_v1_IdentityProviderSpec(in *auth.IdentityProviderSpec, out *IdentityProviderSpec, s conversion.Scope) error {
 	out.Name = in.Name
 	out.Type = in.Type
-	out.Admins = *(*[]string)(unsafe.Pointer(&in.Admins))
+	out.Administrators = *(*[]string)(unsafe.Pointer(&in.Administrators))
 	out.Config = in.Config
 	return nil
 }

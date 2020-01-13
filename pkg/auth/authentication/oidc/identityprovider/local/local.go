@@ -50,10 +50,12 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
-var (
-	// ConnectorType type and id
+const (
+	// Local connectorType type
 	ConnectorType = "tke"
+)
 
+var (
 	authClient authinternalclient.AuthInterface
 )
 

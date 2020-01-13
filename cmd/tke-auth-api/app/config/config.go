@@ -19,17 +19,19 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
-	dexutil "tkestack.io/tke/pkg/auth/util/dex"
-	"tkestack.io/tke/pkg/util/log/dex"
 
 	"github.com/casbin/casbin/v2"
 	casbinlog "github.com/casbin/casbin/v2/log"
 	"github.com/casbin/casbin/v2/model"
 	casbinutil "github.com/casbin/casbin/v2/util"
+	dexldap "github.com/dexidp/dex/connector/ldap"
 	dexserver "github.com/dexidp/dex/server"
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/dexidp/dex/storage/etcd"
@@ -60,10 +62,13 @@ import (
 	"tkestack.io/tke/pkg/auth/apiserver"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/ldap"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
 	"tkestack.io/tke/pkg/auth/authorization/aggregation"
+	dexutil "tkestack.io/tke/pkg/auth/util/dex"
 	casbinlogger "tkestack.io/tke/pkg/auth/util/logger"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/log/dex"
 )
 
 const (
@@ -163,9 +168,25 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	err = setupDefaultConnectorConfig(authClient, versionedInformers, dexConfig.Storage, opts.Auth)
-	if err != nil {
-		return nil, err
+	// create dex local identity provider for tke connector.
+	dexserver.ConnectorsConfig[local.ConnectorType] = func() dexserver.ConnectorConfig {
+		return new(local.DefaultIdentityProvider)
+	}
+	local.SetupRestClient(authClient)
+	log.Info("init tenant type", log.String("type", opts.Auth.InitTenantType))
+	switch opts.Auth.InitTenantType {
+	case local.ConnectorType:
+		err = setupDefaultConnector(versionedInformers, opts.Auth)
+		if err != nil {
+			return nil, err
+		}
+	case ldap.ConnectorType:
+		err = setupLdapConnector(opts.Auth)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		log.Warn("Unknown init tenant type", log.String("type", opts.Auth.InitTenantType))
 	}
 
 	err = setupDefaultClient(dexConfig.Storage, opts.Auth)
@@ -305,16 +326,37 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 	return enforcer, nil
 }
 
-func setupDefaultConnectorConfig(authClient authinternalclient.AuthInterface, versionInformers versionedinformers.SharedInformerFactory, store dexstorage.Storage, auth *options.AuthOptions) error {
-	// create dex local identity provider for tke connector.
-	dexserver.ConnectorsConfig[local.ConnectorType] = func() dexserver.ConnectorConfig {
-		return new(local.DefaultIdentityProvider)
-	}
-	local.SetupRestClient(authClient)
-
+func setupDefaultConnector(versionInformers versionedinformers.SharedInformerFactory, auth *options.AuthOptions) error {
 	if _, ok := identityprovider.IdentityProvidersStore[auth.InitTenantID]; !ok {
 		defaultIDP := local.NewDefaultIdentityProvider(auth.InitTenantID, versionInformers)
 		identityprovider.IdentityProvidersStore[auth.InitTenantID] = defaultIDP
+	}
+
+	return nil
+}
+
+func setupLdapConnector(auth *options.AuthOptions) error {
+	log.Info("setup ldap connector", log.Any("auth", auth))
+	const errFmt = "failed to load Ldap config file %s, error %v"
+	// compute absolute path based on current working dir
+	ldapConfigFile, err := filepath.Abs(auth.LdapConfigFile)
+	if err != nil {
+		return fmt.Errorf(errFmt, ldapConfigFile, err)
+	}
+
+	bytes, err := ioutil.ReadFile(ldapConfigFile)
+	var ldapConfig dexldap.Config
+	if err := json.Unmarshal(bytes, &ldapConfig); err != nil {
+		return fmt.Errorf(errFmt, ldapConfigFile, err)
+	}
+
+	idp, err := ldap.NewLDAPIdentityProvider(ldapConfig, auth.InitTenantID)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := identityprovider.IdentityProvidersStore[auth.InitTenantID]; !ok {
+		identityprovider.IdentityProvidersStore[auth.InitTenantID] = idp
 	}
 
 	return nil
