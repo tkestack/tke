@@ -202,7 +202,7 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 	tkeAttribs.Verb = fmt.Sprintf("%s%s%s", verb, upperFirst(resourceType), upperFirst(subResource))
 	tkeAttribs.Resource = fmt.Sprintf("%s:%s", resourceTypeSingle, resourceName)
 
-	if tkeAttribs.Namespace != "" {
+	if tkeAttribs.Namespace != "" && resourceTypeSingle != "namespace" {
 		tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
 	}
 
@@ -210,7 +210,7 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 		clusterName = filter.ClusterFrom(ctx)
 	}
 
-	if len(clusterName) != 0 {
+	if clusterName != "" && resourceTypeSingle != "cluster" {
 		tkeAttribs.Resource = fmt.Sprintf("cluster:%s/%s", clusterName, tkeAttribs.Resource)
 	}
 

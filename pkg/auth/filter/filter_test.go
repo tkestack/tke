@@ -61,7 +61,20 @@ func TestConvertTKEAttributes(t *testing.T) {
 				Resource: "policy:policy-default-123",
 			},
 		},
-
+		{
+			ctx: contextWithCluster(context.Background()),
+			attr: &authorizer.AttributesRecord{
+				Verb:        "get",
+				Namespace:   "demo",
+				Resource:    "namespaces",
+				Name:        "demo",
+				Subresource: "",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "getNamespace",
+				Resource: fmt.Sprintf("cluster:%s/namespace:demo", clusterName),
+			},
+		},
 		{
 			ctx: contextWithCluster(context.Background()),
 			attr: &authorizer.AttributesRecord{
@@ -73,6 +86,18 @@ func TestConvertTKEAttributes(t *testing.T) {
 			expect: &authorizer.AttributesRecord{
 				Verb:     "listDeployments",
 				Resource: fmt.Sprintf("cluster:%s/namespace:demo/deployment:*", clusterName),
+			},
+		},
+		{
+			ctx: context.Background(),
+			attr: &authorizer.AttributesRecord{
+				Verb:     "get",
+				Resource: "clusters",
+				Name:     "cls-82qkvzgp",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "getCluster",
+				Resource: "cluster:cls-82qkvzgp",
 			},
 		},
 		{
