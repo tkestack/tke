@@ -134,6 +134,7 @@ data:
       ca_file = "/app/certs/ca.crt"
       username_prefix ="-"
       username_claim = "name"
+      groups_claim = "groups"
       tenantid_claim = "federated_claims"
 {{- else }}
       client_id = {{ .OIDCClientID }}

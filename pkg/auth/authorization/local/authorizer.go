@@ -96,7 +96,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 			return authorizer.DecisionDeny, "", err
 		}
 
-		if util.InStringSlice(idp.Spec.Admins, subject) {
+		if util.InStringSlice(idp.Spec.Administrators, subject) {
 			return authorizer.DecisionAllow, "", nil
 		}
 	}

@@ -272,11 +272,11 @@ func (IdentityProviderList) SwaggerDoc() map[string]string {
 }
 
 var map_IdentityProviderSpec = map[string]string{
-	"":       "IdentityProviderSpec is a description of an identity provider.",
-	"name":   "The Name of the connector that is used when displaying it to the end user.",
-	"type":   "The type of the connector. E.g. 'oidc' or 'ldap'",
-	"admin":  "The admins means the users is super admin for the idp.",
-	"config": "Config holds all the configuration information specific to the connector type. Since there no generic struct we can use for this purpose, it is stored as a json string.",
+	"":               "IdentityProviderSpec is a description of an identity provider.",
+	"name":           "The Name of the connector that is used when displaying it to the end user.",
+	"type":           "The type of the connector. E.g. 'oidc' or 'ldap'",
+	"administrators": "The administrators means the users is super admin for the idp.",
+	"config":         "Config holds all the configuration information specific to the connector type. Since there no generic struct we can use for this purpose, it is stored as a json string.",
 }
 
 func (IdentityProviderSpec) SwaggerDoc() map[string]string {

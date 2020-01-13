@@ -201,6 +201,7 @@ func AddFieldLabelConversionsForUser(scheme *runtime.Scheme) error {
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "keyword",
+				"limit",
 				"spec.tenantID":
 				return label, value, nil
 			default:
@@ -217,6 +218,7 @@ func AddFieldLabelConversionsForGroup(scheme *runtime.Scheme) error {
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "keyword",
+				"limit",
 				"spec.tenantID":
 				return label, value, nil
 			default:

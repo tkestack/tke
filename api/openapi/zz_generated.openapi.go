@@ -36315,9 +36315,9 @@ func schema_tke_api_auth_v1_IdentityProviderSpec(ref common.ReferenceCallback) c
 							Format:      "",
 						},
 					},
-					"admin": {
+					"administrators": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The admins means the users is super admin for the idp.",
+							Description: "The administrators means the users is super admin for the idp.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -36337,7 +36337,7 @@ func schema_tke_api_auth_v1_IdentityProviderSpec(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"name", "type", "admin", "config"},
+				Required: []string{"name", "type", "administrators", "config"},
 			},
 		},
 	}
