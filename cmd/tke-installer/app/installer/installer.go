@@ -88,9 +88,9 @@ const (
 	preInstallHook       = hooksDir + "/pre-install"
 	postClusterReadyHook = hooksDir + "/post-cluster-ready"
 	postInstallHook      = hooksDir + "/post-install"
-	postRookInstallHook = hooksDir + "/post-rook-install"
+	postRookInstallHook  = hooksDir + "/post-rook-install"
 
-	RookDateDir  = "/var/lib/rook"
+	RookDateDir = "/var/lib/rook"
 
 	registryDomain             = "docker.io"
 	registryNamespace          = "tkestack"
@@ -139,7 +139,7 @@ type Config struct {
 	Monitor  *Monitor  `json:"monitor,omitempty"`
 	HA       *HA       `json:"ha,omitempty"`
 	Gateway  *Gateway  `json:"gateway,omitempty"`
-	Rook  *Rook  `json:"rook,omitempty"`
+	Rook     *Rook     `json:"rook,omitempty"`
 }
 
 type Basic struct {
@@ -171,8 +171,8 @@ type Registry struct {
 }
 
 type Rook struct {
-	DataPath string `json:"datapath,omitempty"`
-	PoolReplica string `json:"poolReplica,omitempty"`
+	DataPath     string `json:"datapath,omitempty"`
+	PoolReplica  string `json:"poolReplica,omitempty"`
 	InfluxdbSize string `json:"influxdbSize,omitempty"`
 }
 
@@ -1685,7 +1685,7 @@ func (t *TKE) installTKEBusinessController() error {
 
 func (t *TKE) preinstallRook() error {
 	t.log.Printf("Execute pre Rook script")
-	cmd := exec.Command("kubectl","apply","-f","manifests/rook/common.yaml")
+	cmd := exec.Command("kubectl", "apply", "-f", "manifests/rook/common.yaml")
 	cmd.Stdout = t.log.Writer()
 	cmd.Stderr = t.log.Writer()
 	err := cmd.Run()
@@ -1698,13 +1698,13 @@ func (t *TKE) preinstallRook() error {
 func (t *TKE) installRookOperator() error {
 	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/rook/operator.yaml",
 		map[string]interface{}{
-			"CSIImage":    images.Get().CSI.FullName(),
-			"CSIRegistrarImage":    images.Get().CSIRegistrar.FullName(),
-			"CSIProvisionerImage":    images.Get().CSIProvisioner.FullName(),
-			"CSISnapshotterImage":    images.Get().CSISnapshotter.FullName(),
+			"CSIImage":            images.Get().CSI.FullName(),
+			"CSIRegistrarImage":   images.Get().CSIRegistrar.FullName(),
+			"CSIProvisionerImage": images.Get().CSIProvisioner.FullName(),
+			"CSISnapshotterImage": images.Get().CSISnapshotter.FullName(),
 			"CSIAttacherImage":    images.Get().CSIAttacher.FullName(),
-			"CephImage":    images.Get().Ceph.FullName(),
-			"RookImage":    images.Get().Rook.FullName(),
+			"CephImage":           images.Get().Ceph.FullName(),
+			"RookImage":           images.Get().Rook.FullName(),
 		})
 	if err != nil {
 		return err
@@ -1720,8 +1720,8 @@ func (t *TKE) installRookOperator() error {
 
 func (t *TKE) postinstallRook() error {
 	t.log.Printf("Execute Rook hook script %s", postRookInstallHook)
-	params := map[string] string {
-		"DataPath": t.Para.Config.Rook.DataPath,
+	params := map[string]string{
+		"DataPath":    t.Para.Config.Rook.DataPath,
 		"PoolReplica": t.Para.Config.Rook.PoolReplica,
 	}
 	if params["DataPath"] == "" {
@@ -1750,12 +1750,11 @@ func (t *TKE) postinstallRook() error {
 	})
 }
 
-
 func (t *TKE) installInfluxDB() error {
 	params := map[string]interface{}{
-		"Image":    images.Get().InfluxDB.FullName(),
-		"NodeName": t.servers[0],
-		"EnableRook": t.Para.Config.Rook != nil,
+		"Image":        images.Get().InfluxDB.FullName(),
+		"NodeName":     t.servers[0],
+		"EnableRook":   t.Para.Config.Rook != nil,
 		"InfluxdbSize": t.Para.Config.Rook.InfluxdbSize,
 	}
 	if t.Para.Config.Rook != nil && t.Para.Config.Rook.InfluxdbSize == "" {
