@@ -88,6 +88,9 @@ const (
 	preInstallHook       = hooksDir + "/pre-install"
 	postClusterReadyHook = hooksDir + "/post-cluster-ready"
 	postInstallHook      = hooksDir + "/post-install"
+	postRookInstallHook = hooksDir + "/post-rook-install"
+
+	RookDateDir  = "/var/lib/rook"
 
 	registryDomain             = "docker.io"
 	registryNamespace          = "tkestack"
@@ -136,6 +139,7 @@ type Config struct {
 	Monitor  *Monitor  `json:"monitor,omitempty"`
 	HA       *HA       `json:"ha,omitempty"`
 	Gateway  *Gateway  `json:"gateway,omitempty"`
+	Rook  *Rook  `json:"rook,omitempty"`
 }
 
 type Basic struct {
@@ -164,6 +168,12 @@ type OIDCAuth struct {
 type Registry struct {
 	TKERegistry        *TKERegistry        `json:"tke,omitempty"`
 	ThirdPartyRegistry *ThirdPartyRegistry `json:"thirdParty,omitempty"`
+}
+
+type Rook struct {
+	DataPath string `json:"datapath,omitempty"`
+	PoolReplica string `json:"poolReplica,omitempty"`
+	InfluxdbSize string `json:"influxdbSize,omitempty"`
 }
 
 func (r *Registry) UseDevRegistry() bool {
@@ -415,6 +425,27 @@ func (t *TKE) initSteps() {
 			Func: t.installETCD,
 		},
 	}...)
+
+	if t.Para.Config.Rook != nil {
+		t.steps = append(t.steps, []handler{
+			{
+				Name: "Write kubeconfig",
+				Func: t.writeKubeconfig,
+			},
+			{
+				Name: "preInstall Rook",
+				Func: t.preinstallRook,
+			},
+			{
+				Name: "Install Rook Operator",
+				Func: t.installRookOperator,
+			},
+			{
+				Name: "postInstall Rook",
+				Func: t.postinstallRook,
+			},
+		}...)
+	}
 
 	if t.Para.Config.Auth.TKEAuth != nil {
 		t.steps = append(t.steps, []handler{
@@ -1652,12 +1683,86 @@ func (t *TKE) installTKEBusinessController() error {
 	})
 }
 
-func (t *TKE) installInfluxDB() error {
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/influxdb/*.yaml",
+func (t *TKE) preinstallRook() error {
+	t.log.Printf("Execute pre Rook script")
+	cmd := exec.Command("kubectl","apply","-f","manifests/rook/common.yaml")
+	cmd.Stdout = t.log.Writer()
+	cmd.Stderr = t.log.Writer()
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *TKE) installRookOperator() error {
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/rook/operator.yaml",
 		map[string]interface{}{
-			"Image":    images.Get().InfluxDB.FullName(),
-			"NodeName": t.servers[0],
+			"CSIImage":    images.Get().CSI.FullName(),
+			"CSIRegistrarImage":    images.Get().CSIRegistrar.FullName(),
+			"CSIProvisionerImage":    images.Get().CSIProvisioner.FullName(),
+			"CSISnapshotterImage":    images.Get().CSISnapshotter.FullName(),
+			"CSIAttacherImage":    images.Get().CSIAttacher.FullName(),
+			"CephImage":    images.Get().Ceph.FullName(),
+			"RookImage":    images.Get().Rook.FullName(),
 		})
+	if err != nil {
+		return err
+	}
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDaemonset(t.globalClient, "rook-ceph", "rook-discover")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) postinstallRook() error {
+	t.log.Printf("Execute Rook hook script %s", postRookInstallHook)
+	params := map[string] string {
+		"DataPath": t.Para.Config.Rook.DataPath,
+		"PoolReplica": t.Para.Config.Rook.PoolReplica,
+	}
+	if params["DataPath"] == "" {
+		params["DataPath"] = RookDateDir
+	}
+	if params["PoolReplica"] == "" {
+		params["PoolReplica"] = "1"
+	}
+
+	cmd := exec.Command(postRookInstallHook,
+		images.Get().Ceph.FullName(),
+		params["DataPath"],
+		params["PoolReplica"])
+	cmd.Stdout = t.log.Writer()
+	cmd.Stderr = t.log.Writer()
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(t.globalClient, "rook-ceph", "csi-rbdplugin-provisioner")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+
+func (t *TKE) installInfluxDB() error {
+	params := map[string]interface{}{
+		"Image":    images.Get().InfluxDB.FullName(),
+		"NodeName": t.servers[0],
+		"EnableRook": t.Para.Config.Rook != nil,
+		"InfluxdbSize": t.Para.Config.Rook.InfluxdbSize,
+	}
+	if t.Para.Config.Rook != nil && t.Para.Config.Rook.InfluxdbSize == "" {
+		params["InfluxdbSize"] = "10Gi"
+	}
+
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/influxdb/*.yaml", params)
 	if err != nil {
 		return err
 	}
