@@ -33,10 +33,24 @@ spec:
         - name: data
           mountPath: /var/lib/influxdb
           subPath:
-      nodeName: {{ .NodeName }}
       hostNetwork: true
+{{- if .EnableRook }}
+  volumeClaimTemplates:
+  - metadata:
+      creationTimestamp: null
+      name: data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: {{ .InfluxdbSize }}
+      storageClassName: rook-ceph-block
+{{- else }}
+      nodeName: {{ .NodeName }}
       volumes:
       - name: data
         hostPath:
           path: /var/lib/influxdb
           type: DirectoryOrCreate
+{{- end }}
