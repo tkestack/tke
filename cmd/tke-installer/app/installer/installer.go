@@ -1752,13 +1752,16 @@ func (t *TKE) postinstallRook() error {
 
 func (t *TKE) installInfluxDB() error {
 	params := map[string]interface{}{
-		"Image":        images.Get().InfluxDB.FullName(),
-		"NodeName":     t.servers[0],
-		"EnableRook":   t.Para.Config.Rook != nil,
-		"InfluxdbSize": t.Para.Config.Rook.InfluxdbSize,
+		"Image":      images.Get().InfluxDB.FullName(),
+		"NodeName":   t.servers[0],
+		"EnableRook": t.Para.Config.Rook != nil,
 	}
-	if t.Para.Config.Rook != nil && t.Para.Config.Rook.InfluxdbSize == "" {
-		params["InfluxdbSize"] = "10Gi"
+	if t.Para.Config.Rook != nil {
+		if t.Para.Config.Rook.InfluxdbSize == "" {
+			params["InfluxdbSize"] = "10Gi"
+		} else {
+			params["InfluxdbSize"] = t.Para.Config.Rook.InfluxdbSize
+		}
 	}
 
 	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/influxdb/*.yaml", params)
