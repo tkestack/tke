@@ -58,7 +58,6 @@ func (h *TokenAuthenticator) AuthenticateToken(ctx context.Context, token string
 
 	idToken, err := h.IDTokenVerifier.Verify(ctx, token)
 	if err != nil {
-		log.Error("Failed to verify the oidc bearer token", log.String("token", token), log.Err(err))
 		return nil, false, err
 	}
 	var claims oidcclaims.IDTokenClaims
