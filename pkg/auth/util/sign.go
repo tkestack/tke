@@ -157,7 +157,6 @@ func (g genericKeySigner) Verify(apiKey string) (*APIClaims, error) {
 	}
 
 	if err != nil {
-		log.Warn("Verify api key failed", log.String("api key", apiKey), log.Any("result", result), log.Err(err))
 		if ve, ok := err.(*jwt.ValidationError); ok {
 			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
 				return claims, fmt.Errorf("not valid jwt token format")

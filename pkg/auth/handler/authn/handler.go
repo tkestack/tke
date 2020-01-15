@@ -55,6 +55,7 @@ func (h *Handler) AuthenticateToken(request *restful.Request, response *restful.
 
 	authResp, valid, err := h.tokenAuthenticator.AuthenticateToken(context.Background(), tokenReview.Spec.Token)
 	if !valid || err != nil {
+		log.Error("Failed to authenticate token", log.String("token", tokenReview.Spec.Token), log.Bool("valid", valid), log.Err(err))
 		tokenReview.Status = authv1.TokenReviewStatus{Authenticated: false}
 		responsewriters.WriteRawJSON(http.StatusUnauthorized, tokenReview, response.ResponseWriter)
 		return
