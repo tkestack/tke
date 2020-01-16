@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/ldap"
@@ -208,7 +209,7 @@ func (c completedConfig) registerHooks(dexHandler *identityprovider.DexHander, s
 
 	authClient := authinternalclient.NewForConfigOrDie(s.LoopbackClientConfig)
 
-	dexHook := identityprovider.NewDexHookHandler(context.Background(), c.ExtraConfig.DexConfig, c.ExtraConfig.DexStorage, dexHandler,
+	dexHook := identityprovider.NewDexHookHandler(context.Background(), authClient, c.ExtraConfig.DexConfig, c.ExtraConfig.DexStorage, dexHandler,
 		c.ExtraConfig.OIDCExternalAddress, fmt.Sprintf("%s/%s", s.LoopbackClientConfig.Host, auth.IssuerName), c.ExtraConfig.TokenAuthn)
 
 	apiSigningKeyHook := authenticator.NewAPISigningKeyHookHandler(authClient)

@@ -28,7 +28,9 @@ import (
 	dexserver "github.com/dexidp/dex/server"
 	dexstorage "github.com/dexidp/dex/storage"
 	"gopkg.in/square/go-jose.v2"
+	"k8s.io/apimachinery/pkg/api/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
@@ -39,6 +41,7 @@ type dexHookHandler struct {
 	handler    *DexHander
 	dexConfig  *dexserver.Config
 	dexStorage dexstorage.Storage
+	authClient authinternalclient.AuthInterface
 
 	publicAddress   string
 	internalAddress string
@@ -46,12 +49,13 @@ type dexHookHandler struct {
 	ctx             context.Context
 }
 
-func NewDexHookHandler(ctx context.Context, config *dexserver.Config, storage dexstorage.Storage, handler *DexHander,
+func NewDexHookHandler(ctx context.Context, authClient authinternalclient.AuthInterface, config *dexserver.Config, storage dexstorage.Storage, handler *DexHander,
 	publicAddress string, internalAddress string, tokenAuthn *authenticator.TokenAuthenticator) genericapiserver.PostStartHookProvider {
 	return &dexHookHandler{
 		handler:         handler,
 		dexConfig:       config,
 		dexStorage:      storage,
+		authClient:      authClient,
 		publicAddress:   publicAddress,
 		internalAddress: internalAddress,
 		tokenAuthn:      tokenAuthn,
@@ -65,19 +69,19 @@ func (d *dexHookHandler) PostStartHook() (string, genericapiserver.PostStartHook
 		log.Info("start create dex server")
 		// Ensure all identity providers defined exists in dex.
 		for tenantID, idp := range IdentityProvidersStore {
-			conn, err := idp.Connector()
+			idp, err := idp.Store()
 			if err != nil {
 				log.Errorf("Get connector for tenant failed", log.String("tenantID", tenantID), log.Err(err))
 				continue
 			}
 
 			// if conn is nil, not create into dexStorage
-			if conn == nil {
+			if idp == nil {
 				continue
 			}
 
-			if err = d.dexStorage.CreateConnector(*conn); err != nil && err != dexstorage.ErrAlreadyExists {
-				log.Error("Create connector for tenant failed", log.String("tenantID", tenantID), log.Any("connector", *conn), log.Err(err))
+			if _, err := d.authClient.IdentityProviders().Create(idp); err != nil && !errors.IsAlreadyExists(err) {
+				log.Error("Create idp for tenant failed", log.String("tenantID", tenantID), log.Any("idp", *idp), log.Err(err))
 			}
 		}
 

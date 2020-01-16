@@ -20,9 +20,9 @@ package identityprovider
 
 import (
 	"context"
+
 	"github.com/dexidp/dex/connector"
 	dexlog "github.com/dexidp/dex/pkg/log"
-	"github.com/dexidp/dex/storage"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/auth"
@@ -34,8 +34,8 @@ type IdentityProvider interface {
 	// Open is used to open a dex connector instance.
 	Open(id string, logger dexlog.Logger) (connector.Connector, error)
 
-	// Connector generates a new dex connector into storage.
-	Connector() (*storage.Connector, error)
+	// Store generates a identity provider object into storage.
+	Store() (*auth.IdentityProvider, error)
 }
 
 // IdentityProvidersStore represents identity providers for every tenantID.

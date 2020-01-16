@@ -20,10 +20,10 @@ package ldap
 
 import (
 	"encoding/json"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 
 	dexldap "github.com/dexidp/dex/connector/ldap"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -60,7 +60,7 @@ func (d *ldapHookHandler) PostStartHook() (string, genericapiserver.PostStartHoo
 				continue
 			}
 
-			idp, err := NewLDAPIdentityProvider(ldapConfig, conn.Name)
+			idp, err := NewLDAPIdentityProvider(ldapConfig, conn.Spec.Administrators, conn.Name)
 			if err != nil {
 				log.Error("NewLDAPIdentityProvider failed", log.String("idp", conn.Spec.Name), log.Err(err))
 				continue

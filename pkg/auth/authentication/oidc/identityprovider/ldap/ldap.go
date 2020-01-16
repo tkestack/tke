@@ -30,7 +30,6 @@ import (
 	"tkestack.io/tke/pkg/auth/util"
 
 	dexldap "github.com/dexidp/dex/connector/ldap"
-	dexstorage "github.com/dexidp/dex/storage"
 	"gopkg.in/ldap.v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -51,6 +50,8 @@ const (
 type identityProvider struct {
 	dexldap.Config
 
+	administrators []string
+
 	userSearchScope  int
 	groupSearchScope int
 
@@ -59,8 +60,8 @@ type identityProvider struct {
 	tenantID string
 }
 
-// DefaultIdentityProvider is the default idp for tke local identity login.
-func NewLDAPIdentityProvider(c dexldap.Config, tenantID string) (identityprovider.IdentityProvider, error) {
+// NewLDAPIdentityProvider creates a ldap idp for tke login.
+func NewLDAPIdentityProvider(c dexldap.Config, administrators []string, tenantID string) (identityprovider.IdentityProvider, error) {
 	requiredFields := []struct {
 		name string
 		val  string
@@ -122,10 +123,10 @@ func NewLDAPIdentityProvider(c dexldap.Config, tenantID string) (identityprovide
 		return nil, fmt.Errorf("groupSearch.Scope unknown value %q", c.GroupSearch.Scope)
 	}
 
-	return &identityProvider{Config: c, userSearchScope: userSearchScope, groupSearchScope: groupSearchScope, tlsConfig: tlsConfig, tenantID: tenantID}, nil
+	return &identityProvider{Config: c, administrators: administrators, userSearchScope: userSearchScope, groupSearchScope: groupSearchScope, tlsConfig: tlsConfig, tenantID: tenantID}, nil
 }
 
-func (c *identityProvider) Connector() (*dexstorage.Connector, error) {
+func (c *identityProvider) Store() (*auth.IdentityProvider, error) {
 	if c.tenantID == "" {
 		return nil, fmt.Errorf("must specify tenantID")
 	}
@@ -135,11 +136,14 @@ func (c *identityProvider) Connector() (*dexstorage.Connector, error) {
 		return nil, fmt.Errorf("mashal ldap config failed: %+v", err)
 	}
 
-	return &dexstorage.Connector{
-		ID:     c.tenantID,
-		Type:   ConnectorType,
-		Name:   c.tenantID,
-		Config: bytes,
+	return &auth.IdentityProvider{
+		ObjectMeta: v1.ObjectMeta{Name: c.tenantID},
+		Spec: auth.IdentityProviderSpec{
+			Name:           c.tenantID,
+			Type:           ConnectorType,
+			Administrators: c.administrators,
+			Config:         string(bytes),
+		},
 	}, nil
 }
 
