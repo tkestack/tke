@@ -26,17 +26,16 @@ import (
 	"strconv"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/labels"
-
+	"github.com/dexidp/dex/connector"
+	dexlog "github.com/dexidp/dex/pkg/log"
+	dexserver "github.com/dexidp/dex/server"
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/dexidp/dex/connector"
-	dexlog "github.com/dexidp/dex/pkg/log"
-	dexstorage "github.com/dexidp/dex/storage"
-	"github.com/pkg/errors"
-	"golang.org/x/crypto/bcrypt"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"tkestack.io/tke/api/auth"
 	authv1 "tkestack.io/tke/api/auth/v1"
@@ -59,23 +58,33 @@ var (
 	authClient authinternalclient.AuthInterface
 )
 
-// DefaultIdentityProvider is the default idp for tke local identity login.
-type DefaultIdentityProvider struct {
-	tenantID            string
+func init() {
+	// create dex local identity provider for tke connector.
+	dexserver.ConnectorsConfig[ConnectorType] = func() dexserver.ConnectorConfig {
+		return new(identityProvider)
+	}
+}
+
+// identityProvider is the default idp for tke local identity login.
+type identityProvider struct {
+	tenantID       string
+	administrators []string
+
 	localIdentityLister authv1lister.LocalIdentityLister
 	localGroupLister    authv1lister.LocalGroupLister
 }
 
-func NewDefaultIdentityProvider(tenantID string, versionInformers versionedinformers.SharedInformerFactory) identityprovider.IdentityProvider {
-	return &DefaultIdentityProvider{
+func NewDefaultIdentityProvider(tenantID string, administrators []string, versionInformers versionedinformers.SharedInformerFactory) identityprovider.IdentityProvider {
+	return &identityProvider{
 		tenantID:            tenantID,
+		administrators:      administrators,
 		localIdentityLister: versionInformers.Auth().V1().LocalIdentities().Lister(),
 		localGroupLister:    versionInformers.Auth().V1().LocalGroups().Lister(),
 	}
 }
 
 // Open returns a strategy for logging in through TKE
-func (c *DefaultIdentityProvider) Open(id string, logger dexlog.Logger) (
+func (c *identityProvider) Open(id string, logger dexlog.Logger) (
 	connector.Connector, error) {
 
 	if authClient == nil {
@@ -85,17 +94,20 @@ func (c *DefaultIdentityProvider) Open(id string, logger dexlog.Logger) (
 	return &localConnector{authClient: authClient, tenantID: id}, nil
 }
 
-func (c *DefaultIdentityProvider) Connector() (*dexstorage.Connector, error) {
+func (c *identityProvider) Store() (*auth.IdentityProvider, error) {
 	if c.tenantID == "" {
 		return nil, fmt.Errorf("must specify tenantID")
 	}
-
-	return &dexstorage.Connector{
-		Type:   ConnectorType,
-		ID:     c.tenantID,
-		Name:   c.tenantID,
-		Config: []byte("{}"),
+	return &auth.IdentityProvider{
+		ObjectMeta: v1.ObjectMeta{Name: c.tenantID},
+		Spec: auth.IdentityProviderSpec{
+			Name:           c.tenantID,
+			Type:           ConnectorType,
+			Administrators: c.administrators,
+			Config:         "{}",
+		},
 	}, nil
+
 }
 
 func SetupRestClient(authInterface authinternalclient.AuthInterface) {
@@ -184,7 +196,7 @@ func (p *localConnector) Refresh(ctx context.Context, s connector.Scopes, identi
 }
 
 // Get is an object that can get the user that match the provided field and label criteria.
-func (c *DefaultIdentityProvider) GetUser(ctx context.Context, name string, options *metav1.GetOptions) (*auth.User, error) {
+func (c *identityProvider) GetUser(ctx context.Context, name string, options *metav1.GetOptions) (*auth.User, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
@@ -204,7 +216,7 @@ func (c *DefaultIdentityProvider) GetUser(ctx context.Context, name string, opti
 }
 
 // List is an object that can list users that match the provided field and label criteria.
-func (c *DefaultIdentityProvider) ListUsers(ctx context.Context, options *metainternal.ListOptions) (*auth.UserList, error) {
+func (c *identityProvider) ListUsers(ctx context.Context, options *metainternal.ListOptions) (*auth.UserList, error) {
 	keyword, limit := util.ParseQueryKeywordAndLimit(options)
 
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
@@ -246,7 +258,7 @@ func (c *DefaultIdentityProvider) ListUsers(ctx context.Context, options *metain
 }
 
 // Get is an object that can get the user that match the provided field and label criteria.
-func (c *DefaultIdentityProvider) GetGroup(ctx context.Context, name string, options *metav1.GetOptions) (*auth.Group, error) {
+func (c *identityProvider) GetGroup(ctx context.Context, name string, options *metav1.GetOptions) (*auth.Group, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
@@ -266,7 +278,7 @@ func (c *DefaultIdentityProvider) GetGroup(ctx context.Context, name string, opt
 }
 
 // List is an object that can list users that match the provided field and label criteria.
-func (c *DefaultIdentityProvider) ListGroups(ctx context.Context, options *metainternal.ListOptions) (*auth.GroupList, error) {
+func (c *identityProvider) ListGroups(ctx context.Context, options *metainternal.ListOptions) (*auth.GroupList, error) {
 
 	keyword, limit := util.ParseQueryKeywordAndLimit(options)
 

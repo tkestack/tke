@@ -19,14 +19,11 @@
 package dex
 
 import (
-	"encoding/json"
-	dexldap "github.com/dexidp/dex/connector/ldap"
+	"fmt"
+
 	dexstorage "github.com/dexidp/dex/storage"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
-	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/ldap"
-
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
@@ -38,35 +35,7 @@ type conn struct {
 }
 
 func (c *conn) CreateConnector(connector dexstorage.Connector) error {
-	var idp identityprovider.IdentityProvider
-	var err error
-
-	if connector.Type == ldap.ConnectorType {
-		var ldapConfig dexldap.Config
-		if err := json.Unmarshal(connector.Config, &ldapConfig); err != nil {
-			return err
-		}
-
-		idp, err = ldap.NewLDAPIdentityProvider(ldapConfig, connector.ID)
-		if err != nil {
-			return err
-		}
-	}
-
-	identityProvider := fromDexConnector(connector)
-	_, err = c.authClient.IdentityProviders().Create(identityProvider)
-	if err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			return dexstorage.ErrAlreadyExists
-		}
-		return err
-	}
-
-	if connector.Type == ldap.ConnectorType {
-		identityprovider.IdentityProvidersStore[connector.ID] = idp
-	}
-
-	return nil
+	return fmt.Errorf("not support CreateConnector, please use identityproviders api")
 }
 
 func (c *conn) GetConnector(id string) (conn dexstorage.Connector, err error) {

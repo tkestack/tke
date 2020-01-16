@@ -34,7 +34,8 @@ const (
 	flagAuthIDTokenTimeout         = "id-token-timeout"
 	flagAuthInitTenantType         = "init-tenant-type"
 	flagAuthInitTenantID           = "init-tenant-id"
-	flagAuthLDAPConfigFile         = "auth.ldap-config-file"
+	flagAuthInitIDPAdmins          = "init-idp-administrators"
+	flagAuthLDAPConfigFile         = "ldap-config-file"
 	flagAuthTenantAdmin            = "tenant-admin"
 	flagAuthTenantAdminSecret      = "tenant-admin-secret"
 	flagAuthInitClientID           = "init-client-id"
@@ -47,6 +48,7 @@ const (
 	configAuthIDTokenTimeout         = "auth.id_token_timeout"
 	configAuthInitTenantType         = "auth.init_tenant_type"
 	configAuthInitTenantID           = "auth.init_tenant_id"
+	configAuthInitIDPAdmins          = "auth.init_idp_administrators"
 	configAuthLDAPConfigFile         = "auth.ldap_config_file"
 	configAuthTenantAdmin            = "auth.tenant_admin"
 	configAuthTenantAdminSecret      = "auth.tenant_admin_secret"
@@ -61,6 +63,7 @@ type AuthOptions struct {
 	IDTokenTimeout         time.Duration
 	InitTenantType         string
 	InitTenantID           string
+	InitIDPAdmins          []string
 	LdapConfigFile         string
 	TenantAdmin            string
 	TenantAdminSecret      string
@@ -97,16 +100,20 @@ func (o *AuthOptions) AddFlags(fs *pflag.FlagSet) {
 		"Default tenant id will be created when started.")
 	_ = viper.BindPFlag(configAuthInitTenantID, fs.Lookup(flagAuthInitTenantID))
 
+	fs.StringSlice(flagAuthInitIDPAdmins, o.InitIDPAdmins,
+		"Administrators of init identity provider which has supper admin authority.")
+	_ = viper.BindPFlag(configAuthInitIDPAdmins, fs.Lookup(flagAuthInitIDPAdmins))
+
 	fs.String(flagAuthLDAPConfigFile, o.LdapConfigFile,
 		"Config file path for ldap ldap, must specify if init-tenant-type is ldap.")
 	_ = viper.BindPFlag(configAuthLDAPConfigFile, fs.Lookup(flagAuthLDAPConfigFile))
 
 	fs.String(flagAuthTenantAdmin, o.TenantAdmin,
-		"Default tenant admin name will be created when started.")
+		"Default tenant admin name for local tke identity provider will be created when started.")
 	_ = viper.BindPFlag(configAuthTenantAdmin, fs.Lookup(flagAuthTenantAdmin))
 
 	fs.String(flagAuthTenantAdminSecret, o.TenantAdminSecret,
-		"Secret for generate tenant admin login password.")
+		"Password for default tenant admin login.")
 	_ = viper.BindPFlag(configAuthTenantAdminSecret, fs.Lookup(flagAuthTenantAdminSecret))
 
 	fs.String(flagAuthInitClientID, o.InitClientID,
@@ -140,14 +147,15 @@ func (o *AuthOptions) ApplyFlags() []error {
 	if o.InitTenantType == ldap.ConnectorType && o.LdapConfigFile == "" {
 		errs = append(errs, fmt.Errorf("--%s must be specified for ldap type tenant", flagAuthLDAPConfigFile))
 	}
-
 	o.InitTenantID = viper.GetString(configAuthInitTenantID)
 	if len(o.InitTenantID) == 0 {
 		errs = append(errs, fmt.Errorf("--%s must be specified", flagAuthInitTenantID))
 	}
+
+	o.InitIDPAdmins = viper.GetStringSlice(configAuthInitIDPAdmins)
+
 	o.TenantAdmin = viper.GetString(configAuthTenantAdmin)
 	o.TenantAdminSecret = viper.GetString(configAuthTenantAdminSecret)
-
 	if len(o.TenantAdmin) == 0 || len(o.TenantAdminSecret) == 0 {
 		errs = append(errs, fmt.Errorf("--%s and --%s must be specified", flagAuthTenantAdmin, flagAuthTenantAdminSecret))
 	}

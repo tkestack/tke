@@ -168,10 +168,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	// create dex local identity provider for tke connector.
-	dexserver.ConnectorsConfig[local.ConnectorType] = func() dexserver.ConnectorConfig {
-		return new(local.DefaultIdentityProvider)
-	}
 	local.SetupRestClient(authClient)
 	log.Info("init tenant type", log.String("type", opts.Auth.InitTenantType))
 	switch opts.Auth.InitTenantType {
@@ -181,7 +177,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 			return nil, err
 		}
 	case ldap.ConnectorType:
-		err = setupLdapConnector(opts.Auth)
+		err = setupLDAPConnector(opts.Auth)
 		if err != nil {
 			return nil, err
 		}
@@ -327,16 +323,17 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 }
 
 func setupDefaultConnector(versionInformers versionedinformers.SharedInformerFactory, auth *options.AuthOptions) error {
+	log.Info("setup tke local connector", log.Any("tenantID", auth.InitTenantID))
 	if _, ok := identityprovider.IdentityProvidersStore[auth.InitTenantID]; !ok {
-		defaultIDP := local.NewDefaultIdentityProvider(auth.InitTenantID, versionInformers)
+		defaultIDP := local.NewDefaultIdentityProvider(auth.InitTenantID, auth.InitIDPAdmins, versionInformers)
 		identityprovider.IdentityProvidersStore[auth.InitTenantID] = defaultIDP
 	}
 
 	return nil
 }
 
-func setupLdapConnector(auth *options.AuthOptions) error {
-	log.Info("setup ldap connector", log.Any("auth", auth))
+func setupLDAPConnector(auth *options.AuthOptions) error {
+	log.Info("setup ldap connector", log.Any("tenantID", auth.InitTenantID))
 	const errFmt = "failed to load Ldap config file %s, error %v"
 	// compute absolute path based on current working dir
 	ldapConfigFile, err := filepath.Abs(auth.LdapConfigFile)
@@ -350,7 +347,7 @@ func setupLdapConnector(auth *options.AuthOptions) error {
 		return fmt.Errorf(errFmt, ldapConfigFile, err)
 	}
 
-	idp, err := ldap.NewLDAPIdentityProvider(ldapConfig, auth.InitTenantID)
+	idp, err := ldap.NewLDAPIdentityProvider(ldapConfig, auth.InitIDPAdmins, auth.InitTenantID)
 	if err != nil {
 		return err
 	}
