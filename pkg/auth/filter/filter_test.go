@@ -38,9 +38,10 @@ func TestConvertTKEAttributes(t *testing.T) {
 		{
 			ctx: context.Background(),
 			attr: &authorizer.AttributesRecord{
-				Verb:        "list",
-				Resource:    "policies",
-				Subresource: "",
+				Verb:            "list",
+				Resource:        "policies",
+				Subresource:     "",
+				ResourceRequest: true,
 			},
 			expect: &authorizer.AttributesRecord{
 				Verb:     "listPolicies",
@@ -51,10 +52,11 @@ func TestConvertTKEAttributes(t *testing.T) {
 		{
 			ctx: context.Background(),
 			attr: &authorizer.AttributesRecord{
-				Verb:        "get",
-				Resource:    "policies",
-				Name:        "policy-default-123",
-				Subresource: "",
+				Verb:            "get",
+				Resource:        "policies",
+				Name:            "policy-default-123",
+				ResourceRequest: true,
+				Subresource:     "",
 			},
 			expect: &authorizer.AttributesRecord{
 				Verb:     "getPolicy",
@@ -64,11 +66,12 @@ func TestConvertTKEAttributes(t *testing.T) {
 		{
 			ctx: contextWithCluster(context.Background()),
 			attr: &authorizer.AttributesRecord{
-				Verb:        "get",
-				Namespace:   "demo",
-				Resource:    "namespaces",
-				Name:        "demo",
-				Subresource: "",
+				Verb:            "get",
+				Namespace:       "demo",
+				ResourceRequest: true,
+				Resource:        "namespaces",
+				Name:            "demo",
+				Subresource:     "",
 			},
 			expect: &authorizer.AttributesRecord{
 				Verb:     "getNamespace",
@@ -78,10 +81,11 @@ func TestConvertTKEAttributes(t *testing.T) {
 		{
 			ctx: contextWithCluster(context.Background()),
 			attr: &authorizer.AttributesRecord{
-				Verb:        "list",
-				Namespace:   "demo",
-				Resource:    "deployments",
-				Subresource: "",
+				Verb:            "list",
+				Namespace:       "demo",
+				ResourceRequest: true,
+				Resource:        "deployments",
+				Subresource:     "",
 			},
 			expect: &authorizer.AttributesRecord{
 				Verb:     "listDeployments",
@@ -91,9 +95,10 @@ func TestConvertTKEAttributes(t *testing.T) {
 		{
 			ctx: context.Background(),
 			attr: &authorizer.AttributesRecord{
-				Verb:     "get",
-				Resource: "clusters",
-				Name:     "cls-82qkvzgp",
+				Verb:            "get",
+				Resource:        "clusters",
+				ResourceRequest: true,
+				Name:            "cls-82qkvzgp",
 			},
 			expect: &authorizer.AttributesRecord{
 				Verb:     "getCluster",
@@ -103,11 +108,12 @@ func TestConvertTKEAttributes(t *testing.T) {
 		{
 			ctx: context.Background(),
 			attr: &authorizer.AttributesRecord{
-				Verb:        "get",
-				Resource:    "clusters",
-				Name:        "cls-82qkvzgp",
-				Subresource: "alarmpolicies",
-				Path:        "/api/v1/clusters/cls-82qkvzgp/alarmpolicies/test",
+				Verb:            "get",
+				Resource:        "clusters",
+				ResourceRequest: true,
+				Name:            "cls-82qkvzgp",
+				Subresource:     "alarmpolicies",
+				Path:            "/api/v1/clusters/cls-82qkvzgp/alarmpolicies/test",
 			},
 			expect: &authorizer.AttributesRecord{
 				Verb:     "getAlarmpolicy",
@@ -115,17 +121,30 @@ func TestConvertTKEAttributes(t *testing.T) {
 			},
 		},
 		{
-			ctx: context.Background(),
 			attr: &authorizer.AttributesRecord{
-				Verb:        "get",
-				Resource:    "clusters",
-				Name:        "cls-82qkvzgp",
-				Subresource: "alarmpolicies",
-				Path:        "/api/v1/clusters/cls-82qkvzgp/alarmpolicies",
+				Verb:            "get",
+				Resource:        "clusters",
+				ResourceRequest: true,
+				Name:            "cls-82qkvzgp",
+				Subresource:     "alarmpolicies",
+				Path:            "/api/v1/clusters/cls-82qkvzgp/alarmpolicies",
 			},
 			expect: &authorizer.AttributesRecord{
 				Verb:     "listAlarmpolicies",
 				Resource: "cluster:cls-82qkvzgp/alarmpolicy:*",
+			},
+		},
+		{
+			ctx: contextWithCluster(context.Background()),
+			attr: &authorizer.AttributesRecord{
+				Verb:            "list",
+				ResourceRequest: false,
+				Resource:        "/healthz",
+				Path:            "/healthz",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "list",
+				Resource: "cluster:cls-82qkvzgp//healthz",
 			},
 		},
 	}

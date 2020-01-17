@@ -19,7 +19,10 @@
 package local
 
 import (
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
 	"tkestack.io/tke/pkg/util/log"
 
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -32,6 +35,7 @@ import (
 type localHookHandler struct {
 	authClient authinternalclient.AuthInterface
 
+	versionedInformers    versionedinformers.SharedInformerFactory
 	localIdentityInformer authv1informer.LocalIdentityInformer
 	localGroupInformer    authv1informer.LocalGroupInformer
 }
@@ -40,6 +44,7 @@ type localHookHandler struct {
 func NewLocalHookHandler(authClient authinternalclient.AuthInterface, versionedInformers versionedinformers.SharedInformerFactory) genericapiserver.PostStartHookProvider {
 	return &localHookHandler{
 		authClient:            authClient,
+		versionedInformers:    versionedInformers,
 		localIdentityInformer: versionedInformers.Auth().V1().LocalIdentities(),
 		localGroupInformer:    versionedInformers.Auth().V1().LocalGroups(),
 	}
@@ -50,6 +55,26 @@ func (d *localHookHandler) PostStartHook() (string, genericapiserver.PostStartHo
 		if ok := cache.WaitForCacheSync(context.StopCh, d.localIdentityInformer.Informer().HasSynced, d.localGroupInformer.Informer().HasSynced); !ok {
 			log.Error("Failed to wait for local identity and group caches to sync")
 		}
+
+		tenantUserSelector := fields.AndSelectors(
+			fields.OneTermEqualSelector("spec.type", ConnectorType),
+		)
+		conns, err := d.authClient.IdentityProviders().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+		if err != nil {
+			return err
+		}
+
+		for _, conn := range conns.Items {
+			idp, err := NewDefaultIdentityProvider(conn.Name, conn.Spec.Administrators, d.versionedInformers)
+			if err != nil {
+				log.Error("NewDefaultIdentityProvider failed", log.String("idp", conn.Spec.Name), log.Err(err))
+				continue
+			}
+
+			identityprovider.IdentityProvidersStore[conn.Name] = idp
+			log.Info("load local identity provider successfully", log.String("idp", conn.Name))
+		}
+
 		return nil
 	}, nil
 }

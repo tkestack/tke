@@ -74,13 +74,17 @@ type identityProvider struct {
 	localGroupLister    authv1lister.LocalGroupLister
 }
 
-func NewDefaultIdentityProvider(tenantID string, administrators []string, versionInformers versionedinformers.SharedInformerFactory) identityprovider.IdentityProvider {
+func NewDefaultIdentityProvider(tenantID string, administrators []string, versionInformers versionedinformers.SharedInformerFactory) (identityprovider.IdentityProvider, error) {
+	if versionInformers == nil {
+		return nil, fmt.Errorf("versioned informers of local type idp is nil")
+	}
+
 	return &identityProvider{
 		tenantID:            tenantID,
 		administrators:      administrators,
 		localIdentityLister: versionInformers.Auth().V1().LocalIdentities().Lister(),
 		localGroupLister:    versionInformers.Auth().V1().LocalGroups().Lister(),
-	}
+	}, nil
 }
 
 // Open returns a strategy for logging in through TKE
