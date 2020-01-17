@@ -330,8 +330,8 @@ func (c *identityProvider) usersEntry(conn *ldap.Conn, keyword string, limit int
 		req.Attributes = append(req.Attributes, c.UserSearch.PreferredUsernameAttrAttr)
 	}
 
-	log.Infof("performing ldap search %s %s %s",
-		req.BaseDN, scopeString(req.Scope), req.Filter)
+	log.Info("performing ldap user search",
+		log.String("base dn", req.BaseDN), log.String("scope", scopeString(req.Scope)), log.String("filter", req.Filter))
 	resp, err := conn.SearchWithPaging(req, uint32(limit))
 	if err != nil {
 		return nil, fmt.Errorf("ldap: search with filter %q failed: %v", req.Filter, err)
@@ -394,8 +394,8 @@ func (c *identityProvider) groupEntry(conn *ldap.Conn, name string) (user ldap.E
 		},
 	}
 
-	log.Infof("performing ldap search %s %s %s",
-		req.BaseDN, scopeString(req.Scope), req.Filter)
+	log.Info("performing ldap user search",
+		log.String("base dn", req.BaseDN), log.String("scope", scopeString(req.Scope)), log.String("filter", req.Filter))
 	resp, err := conn.Search(req)
 	if err != nil {
 		return ldap.Entry{}, false, fmt.Errorf("ldap: search with filter %q failed: %v", req.Filter, err)
@@ -435,8 +435,8 @@ func (c *identityProvider) groupsEntry(conn *ldap.Conn, keyword string, limit in
 		},
 	}
 
-	log.Infof("performing ldap search %s %s %s %d",
-		req.BaseDN, scopeString(req.Scope), req.Filter, limit)
+	log.Info("performing ldap group search",
+		log.String("base dn", req.BaseDN), log.String("scope", scopeString(req.Scope)), log.String("filter", req.Filter))
 
 	var resp *ldap.SearchResult
 	if limit != 0 {
@@ -450,8 +450,6 @@ func (c *identityProvider) groupsEntry(conn *ldap.Conn, keyword string, limit in
 			return nil, fmt.Errorf("ldap: search with filter %q failed: %v", req.Filter, err)
 		}
 	}
-
-	log.Info("resp", log.Any("resp", resp))
 
 	return resp.Entries, nil
 }

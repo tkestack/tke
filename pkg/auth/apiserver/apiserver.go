@@ -143,6 +143,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 			Enforcer:             c.ExtraConfig.CasbinEnforcer,
 			DexStorage:           c.ExtraConfig.DexStorage,
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
+			VersionedInformers:   c.ExtraConfig.VersionedInformers,
 		},
 	}
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)

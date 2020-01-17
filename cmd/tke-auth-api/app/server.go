@@ -22,6 +22,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/cmd/tke-auth-api/app/config"
 	"tkestack.io/tke/pkg/auth/apiserver"
+	"tkestack.io/tke/pkg/platform/apiserver/filter"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // CreateServerChain creates the auth connected via delegation.
@@ -29,6 +31,10 @@ func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, 
 	apiServerConfig := createAPIServerConfig(cfg)
 	apiServer, err := CreateAPIServer(apiServerConfig, genericapiserver.NewEmptyDelegate())
 	if err != nil {
+		return nil, err
+	}
+
+	if err := registerHandler(apiServer); err != nil {
 		return nil, err
 	}
 
@@ -69,4 +75,16 @@ func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 			PrivilegedUsername:      cfg.PrivilegedUsername,
 		},
 	}
+}
+
+func createFilterChain(apiServer *genericapiserver.GenericAPIServer) {
+	apiServer.Handler.FullHandlerChain = filter.WithCluster(apiServer.Handler.FullHandlerChain)
+	apiServer.Handler.FullHandlerChain = filter.WithRequestBody(apiServer.Handler.FullHandlerChain)
+	apiServer.Handler.FullHandlerChain = filter.WithFuzzyResource(apiServer.Handler.FullHandlerChain)
+}
+
+func registerHandler(apiServer *apiserver.APIServer) error {
+	createFilterChain(apiServer.GenericAPIServer)
+	log.Info("All of http handlers registered", log.Strings("paths", apiServer.GenericAPIServer.Handler.ListedPaths()))
+	return nil
 }

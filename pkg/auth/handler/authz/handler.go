@@ -19,7 +19,6 @@
 package authz
 
 import (
-	"context"
 	"net/http"
 
 	"tkestack.io/tke/pkg/auth/filter"
@@ -30,6 +29,8 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	authv1 "tkestack.io/tke/api/auth/v1"
 	"tkestack.io/tke/pkg/auth/authorization/util"
+	apiserverfilter "tkestack.io/tke/pkg/platform/apiserver/filter"
+
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -88,7 +89,8 @@ func (h *Handler) RestAuthorize(request *restful.Request, response *restful.Resp
 	}
 
 	authorizationAttributes := util.AuthorizationAttributesFrom(accessReview.Spec)
-	tkeAttributes := filter.ConvertTKEAttributes(context.Background(), authorizationAttributes)
+	tkeAttributes := filter.ConvertTKEAttributes(request.Request.Context(), &authorizationAttributes)
+	log.Debug("RestAuthorize accessReview ", log.Any("spec", accessReview.Spec), log.Any("authorizationAttributes", authorizationAttributes), log.Any("tke attribute", tkeAttributes))
 	decision, reason, evaluationErr := h.authorizer.Authorize(request.Request.Context(), tkeAttributes)
 	accessReview.Status = authv1.SubjectAccessReviewStatus{
 		Allowed: decision == authorizer.DecisionAllow,
@@ -98,7 +100,7 @@ func (h *Handler) RestAuthorize(request *restful.Request, response *restful.Resp
 	if evaluationErr != nil {
 		accessReview.Status.EvaluationError = evaluationErr.Error()
 	}
-	log.Info("Receive reset authz request", log.Any("attribute", tkeAttributes), log.Any("response", accessReview.Status))
+	log.Info("Receive rest authz request from k8s apiserver", log.Any("access review", accessReview), log.Any("clusterName", apiserverfilter.ClusterFrom(request.Request.Context())))
 	responsewriters.WriteRawJSON(http.StatusOK, accessReview, response.ResponseWriter)
 }
 

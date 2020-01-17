@@ -193,14 +193,19 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 		resourceType = resourceTypeSingle
 	}
 
-	// if not specify resource name in path, set it to "*" (all)
-	if len(resourceName) == 0 {
-		resourceName = "*"
-	}
+	if tkeAttribs.ResourceRequest {
+		// if not specify resource name in path, set it to "*" (all)
+		if len(resourceName) == 0 {
+			resourceName = "*"
+		}
 
-	// URL forms: GET /users/jack/policies,  parsed into verb: getUserPolicies, resource: users:jack/policies:*
-	tkeAttribs.Verb = fmt.Sprintf("%s%s%s", verb, upperFirst(resourceType), upperFirst(subResource))
-	tkeAttribs.Resource = fmt.Sprintf("%s:%s", resourceTypeSingle, resourceName)
+		// URL forms: GET /users/jack/policies,  parsed into verb: getUserPolicies, resource: users:jack/policies:*
+		tkeAttribs.Verb = fmt.Sprintf("%s%s%s", verb, upperFirst(resourceType), upperFirst(subResource))
+		tkeAttribs.Resource = fmt.Sprintf("%s:%s", resourceTypeSingle, resourceName)
+	} else {
+		tkeAttribs.Verb = verb
+		tkeAttribs.Resource = resourceType
+	}
 
 	if tkeAttribs.Namespace != "" && resourceTypeSingle != "namespace" {
 		tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)

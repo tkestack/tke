@@ -152,8 +152,8 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 		log.Error("Failed to wait for group caches to sync")
 	}
 
-	// sync groups(include 3rd party) for identity providers into casbin
-	go c.pollThirdPartyGroup(stopCh)
+	// sync groups for identity providers into casbin
+	go c.pollGroups(stopCh)
 
 	for i := 0; i < workers; i++ {
 		go wait.Until(c.worker, time.Second, stopCh)
@@ -290,8 +290,8 @@ func (c *Controller) handleSubjects(key string, group *v1.Group) error {
 	return utilerrors.NewAggregate(errs)
 }
 
-// pollThirdPartyGroup syncs groups with members into storage
-func (c *Controller) pollThirdPartyGroup(stopCh <-chan struct{}) {
+// pollGroups syncs groups with members into storage
+func (c *Controller) pollGroups(stopCh <-chan struct{}) {
 	timerC := time.NewTicker(groupSyncedPeriod)
 	for {
 		select {

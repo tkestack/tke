@@ -120,7 +120,6 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 			return nil, apierrors.NewBadRequest("List groups must specify tenantID")
 		}
 	}
-	log.Info("store", log.Any("store", identityprovider.IdentityProvidersStore))
 	idp, ok := identityprovider.IdentityProvidersStore[tenantID]
 	if !ok {
 		log.Error("Tenant has no related identity providers", log.String("tenantID", tenantID))

@@ -29,6 +29,7 @@ import (
 	"tkestack.io/tke/api/auth"
 	v1 "tkestack.io/tke/api/auth/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	apikeystorage "tkestack.io/tke/pkg/auth/registry/apikey/storage"
 	apisignstorage "tkestack.io/tke/pkg/auth/registry/apisigningkey/storage"
@@ -54,6 +55,8 @@ type StorageProvider struct {
 
 	Enforcer           *casbin.SyncedEnforcer
 	DexStorage         dexstorage.Storage
+	VersionedInformers versionedinformers.SharedInformerFactory
+
 	PrivilegedUsername string
 }
 
@@ -151,7 +154,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["groups/policies"] = groupRest.Policy
 		storageMap["groups/roles"] = groupRest.Role
 
-		idpRest := idpstorage.NewStorage(restOptionsGetter, authClient)
+		idpRest := idpstorage.NewStorage(restOptionsGetter, authClient, s.VersionedInformers)
 		storageMap["identityproviders"] = idpRest
 
 		cliRest := clistorage.NewStorage(restOptionsGetter, s.DexStorage)
