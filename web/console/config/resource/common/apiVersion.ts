@@ -38,6 +38,7 @@ export interface ApiVersion {
   ns?: ResourceApiInfo;
   localidentity?: ResourceApiInfo;
   policy?: ResourceApiInfo;
+  user?: ResourceApiInfo;
   category?: ResourceApiInfo;
   machines?: ResourceApiInfo;
   helm?: ResourceApiInfo;
@@ -333,6 +334,13 @@ const k8sApiVersionFor18: ApiVersion = {
     basicEntry: authServerVersion.basicUrl,
     watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Policies'
+  },
+  user: {
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
+    headTitle: 'Users'
   },
   apiKey: {
     group: authServerVersion.group,

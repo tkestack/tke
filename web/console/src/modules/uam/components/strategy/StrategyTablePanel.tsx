@@ -43,13 +43,13 @@ export const StrategyTablePanel = () => {
         if (userMsgsValue.targetKeys.indexOf(user.metadata.name) !== -1) {
           return (
             <Tooltip title="用户已被关联">
-              {user.spec.username}({user.spec.displayName})
+              {user.spec.name}({user.spec.displayName})
             </Tooltip>
           );
         }
         return (
           <p>
-            {user.spec.username}({user.spec.displayName})
+            {user.spec.name}({user.spec.displayName})
           </p>
         );
       }
@@ -117,9 +117,10 @@ export const StrategyTablePanel = () => {
                       userListRecords &&
                       userListRecords.filter(
                         user =>
-                          (user.metadata.name.includes(userMsgsValue.inputValue) ||
-                            user.spec.displayName.includes(userMsgsValue.inputValue)) &&
-                          user.metadata.name.toLowerCase() !== 'admin'
+                          (user.spec.name &&
+                            (user.spec.name.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase()) ||
+                              user.spec.name.toLowerCase() !== 'admin')) ||
+                          user.spec.displayName.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase())
                       )
                     }
                     rowDisabled={record => {
@@ -198,7 +199,7 @@ export const StrategyTablePanel = () => {
     );
   }
   function _setModalVisible(strategy: Strategy) {
-    actions.user.applyFilter({ ifAll: true });
+    actions.user.applyFilter({ ifAll: true, isPolicyUser: true });
     actions.associateActions.applyFilter({ search: strategy.metadata.name + '' });
     setModalVisible(true);
     setCurrentStrategy({

@@ -21,6 +21,7 @@ const tips = seajs.require('tips');
 export async function fetchUserList(query: QueryState<UserFilter>) {
   let users: User[] = [];
   const { search, filter } = query;
+  let { isPolicyUser = false } = filter;
   const queryObj = filter.ifAll
     ? {}
     : {
@@ -28,7 +29,7 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
       };
 
   try {
-    const resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
+    const resourceInfo: ResourceInfo = isPolicyUser ? resourceConfig()['user'] : resourceConfig()['localidentity'];
     const url = reduceK8sRestfulPath({ resourceInfo });
     const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
     const response = await reduceNetworkRequest({

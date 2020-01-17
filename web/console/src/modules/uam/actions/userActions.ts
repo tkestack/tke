@@ -75,7 +75,7 @@ const FFModelUserActions = createListAction<User, UserFilter>({
   onFinish: (record, dispatch: Redux.Dispatch) => {
     if (record.data.recordCount) {
       let isNotNeedPoll =
-        record.data.records.filter(item => item.status['phase'] && item.status['phase'] === 'Deleting').length === 0;
+        record.data.records.filter(item => item.status && item.status['phase'] && item.status['phase'] === 'Deleting').length === 0;
 
       if (isNotNeedPoll) {
         dispatch(FFModelUserActions.clearPolling());

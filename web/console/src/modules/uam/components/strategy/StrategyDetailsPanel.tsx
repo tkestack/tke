@@ -115,13 +115,13 @@ export const StrategyDetailsPanel = () => {
         if (userMsgsValue.targetKeys.indexOf(user.metadata.name) !== -1) {
           return (
             <Tooltip title="用户已被关联">
-              {user.spec.username}({user.spec.displayName})
+              {user.spec.name}({user.spec.displayName})
             </Tooltip>
           );
         }
         return (
           <p>
-            {user.spec.username}({user.spec.displayName})
+            {user.spec.name}({user.spec.displayName})
           </p>
         );
       }
@@ -280,9 +280,10 @@ export const StrategyDetailsPanel = () => {
                           <Table
                             records={userListRecords.filter(user => {
                               return (
-                                (user.metadata.name.includes(userMsgsValue.inputValue) ||
-                                  user.spec.displayName.includes(userMsgsValue.inputValue)) &&
-                                user.metadata.name.toLowerCase() !== 'admin'
+                                (user.spec.name &&
+                                  (user.spec.name.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase()) ||
+                                    user.spec.name.toLowerCase() !== 'admin')) ||
+                                user.spec.displayName.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase())
                               );
                             })}
                             rowDisabled={record => {
@@ -313,7 +314,7 @@ export const StrategyDetailsPanel = () => {
                       rightCell={
                         <Transfer.Cell title={t(`已选择 (${userMsgsValue.newTargetKeys.length}条)`)}>
                           <Table
-                            records={userListRecords.filter(i => userMsgsValue.newTargetKeys.includes(i.name))}
+                            records={userListRecords.filter(i => userMsgsValue.newTargetKeys.includes(i.metadata.name))}
                             recordKey="name"
                             columns={modalColumns}
                             addons={[
@@ -425,7 +426,7 @@ export const StrategyDetailsPanel = () => {
   }
 
   function _setModalVisible() {
-    actions.user.applyFilter({ ifAll: true });
+    actions.user.applyFilter({ ifAll: true, isPolicyUser: true });
     setModalVisible(true);
   }
   function _close() {
