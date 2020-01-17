@@ -898,22 +898,6 @@ func deployPrometheusOperatorApps(components images.Components) *appsv1.Deployme
 							Effect:   corev1.TaintEffectNoSchedule,
 						},
 					},
-					Affinity: &corev1.Affinity{
-						NodeAffinity: &corev1.NodeAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-								NodeSelectorTerms: []corev1.NodeSelectorTerm{
-									{
-										MatchExpressions: []corev1.NodeSelectorRequirement{
-											{
-												Key:      "node-role.kubernetes.io/master",
-												Operator: corev1.NodeSelectorOpExists,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
 					Containers: []corev1.Container{
 						{
 							Name:  prometheusOperatorWorkLoad,
@@ -1177,22 +1161,6 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 					Key:      "node-role.kubernetes.io/master",
 					Operator: corev1.TolerationOpExists,
 					Effect:   corev1.TaintEffectNoSchedule,
-				},
-			},
-			Affinity: &corev1.Affinity{
-				NodeAffinity: &corev1.NodeAffinity{
-					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-						NodeSelectorTerms: []corev1.NodeSelectorTerm{
-							{
-								MatchExpressions: []corev1.NodeSelectorRequirement{
-									{
-										Key:      "node-role.kubernetes.io/master",
-										Operator: corev1.NodeSelectorOpExists,
-									},
-								},
-							},
-						},
-					},
 				},
 			},
 			SecurityContext: &corev1.PodSecurityContext{
@@ -1563,12 +1531,12 @@ func createClusterRoleForMetrics() *rbacv1.ClusterRole {
 			},
 			{
 				APIGroups: []string{"extensions"},
-				Resources: []string{"daemonsets", "deployments", "replicasets"},
+				Resources: []string{"daemonsets", "deployments", "replicasets", "ingresses"},
 				Verbs:     []string{"list", "watch"},
 			},
 			{
 				APIGroups: []string{"apps"},
-				Resources: []string{"statefulsets", "daemonsets", "deployments"},
+				Resources: []string{"statefulsets", "daemonsets", "deployments", "replicasets"},
 				Verbs:     []string{"list", "watch"},
 			},
 			{
@@ -1579,6 +1547,41 @@ func createClusterRoleForMetrics() *rbacv1.ClusterRole {
 			{
 				APIGroups: []string{"autoscaling"},
 				Resources: []string{"horizontalpodautoscalers"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"authentication.k8s.io"},
+				Resources: []string{"tokenreviews"},
+				Verbs:     []string{"create"},
+			},
+			{
+				APIGroups: []string{"authorization.k8s.io"},
+				Resources: []string{"subjectaccessreviews"},
+				Verbs:     []string{"create"},
+			},
+			{
+				APIGroups: []string{"policy"},
+				Resources: []string{"poddisruptionbudgets"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"certificates.k8s.io"},
+				Resources: []string{"certificatesigningrequests"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"storage.k8s.io"},
+				Resources: []string{"storageclasses", "volumeattachments"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"admissionregistration.k8s.io"},
+				Resources: []string{"mutatingwebhookconfigurations", "validatingwebhookconfigurations"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"networking.k8s.io"},
+				Resources: []string{"networkpolicies"},
 				Verbs:     []string{"list", "watch"},
 			},
 		},
