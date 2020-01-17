@@ -20,27 +20,25 @@ const tips = seajs.require('tips');
  */
 export async function fetchUserList(query: QueryState<UserFilter>) {
   let users: User[] = [];
-  let recordCount = 0;
-  const { search, paging, filter } = query;
+  const { search, filter } = query;
+  let { isPolicyUser = false } = filter;
   const queryObj = filter.ifAll
     ? {}
     : {
-        keyword: search || '',
-        page: paging.pageIndex - 1,
-        page_size: paging.pageSize
+        keyword: search || ''
       };
+
   try {
-    const resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
+    const resourceInfo: ResourceInfo = isPolicyUser ? resourceConfig()['user'] : resourceConfig()['localidentity'];
     const url = reduceK8sRestfulPath({ resourceInfo });
     const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
     const response = await reduceNetworkRequest({
-      method: 'GET',
+      method: Method.get,
       url: url + queryString
     });
 
     if (response.data.items) {
       users = response.data.items;
-      recordCount = response.data.total;
     } else {
       users = [];
     }
@@ -48,7 +46,7 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
     tips.error(error.response.data.message, 2000);
   }
   const result: RecordSet<User> = {
-    recordCount,
+    recordCount: users.length,
     records: users
   };
   return result;
@@ -59,7 +57,6 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
  * @param [userInfo] 用户数据, 这里和actions.user.addUser.start([userInfo]);的对应
  */
 export async function addUser([userInfo]) {
-  userInfo.Spec.extra.platformadmin = userInfo.Spec.extra.platformadmin + '';
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
     const url = reduceK8sRestfulPath({ resourceInfo });
@@ -111,13 +108,11 @@ export async function removeUser([name]) {
  * @param [userInfo] 用户数据, 这里和actions.user.addUser.start([userInfo]);的对应
  */
 export async function getUser(name: string) {
-  // userInfo.Spec.extra.platformadmin = userInfo.Spec.extra.platformadmin + '';
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
     const url = reduceK8sRestfulPath({ resourceInfo, specificName: name });
     const response = await reduceNetworkRequest({
       method: 'GET',
-      // url: '/api/v1/localidentities/',
       url
     });
     if (response.code === 0) {
@@ -141,10 +136,9 @@ export async function getUser(name: string) {
 export async function updateUser(user: User) {
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
-    const url = reduceK8sRestfulPath({ resourceInfo, specificName: user.name });
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: user.metadata.name });
     const response = await reduceNetworkRequest({
-      method: 'PUT',
-      // url: '/api/v1/localidentities/',
+      method: Method.put,
       url,
       data: user
     });
@@ -196,7 +190,7 @@ export async function fetchStrategyList(query: QueryState<StrategyFilter>) {
     tips.error(error.response.data.message, 2000);
   }
   const result: RecordSet<Strategy> = {
-    recordCount,
+    recordCount: strategys.length,
     records: strategys
   };
 
@@ -214,7 +208,6 @@ export async function addStrategy([strategy]) {
     const response = await reduceNetworkRequest({
       method: 'POST',
       url,
-      // url: '/api/v1/polices/',
       data: strategy
     });
     if (response.code === 0) {
@@ -265,7 +258,6 @@ export async function getStrategy(id: string) {
     const response = await reduceNetworkRequest({
       method: 'GET',
       url
-      // url: `/api/v1/polices/${strategy.id}`,
     });
     if (response.code === 0) {
       return operationResult(response.data);
@@ -282,18 +274,22 @@ export async function getStrategy(id: string) {
  * 更新策略
  * @param strategy 新的策略
  */
-export async function updateStrategy(strategy: Strategy) {
+export async function updateStrategy(strategy) {
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['policy'];
-    const url = reduceK8sRestfulPath({ resourceInfo, specificName: strategy.id + '' });
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: strategy.metadata.name });
     const response = await reduceNetworkRequest({
       method: 'PUT',
       url,
-      // url: `/api/v1/polices/${strategy.id}`,
       data: {
-        name: strategy.name,
-        description: strategy.description,
-        statement: strategy.statement
+        metadata: {
+          name: strategy.metadata.name,
+          resourceVersion: strategy.metadata.resourceVersion
+        },
+        spec: Object.assign({}, strategy.spec, {
+          description: strategy.description ? strategy.description : strategy.spec.description,
+          statement: strategy.statement ? strategy.statement : strategy.spec.statement
+        })
       }
     });
     if (response.code === 0) {
@@ -312,7 +308,6 @@ export async function updateStrategy(strategy: Strategy) {
  * 获取策略所属的服务列表
  */
 export async function fetchCategoryList() {
-  // buildQueryString(filter)
   let categories: Category[] = [];
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['category'];
@@ -348,12 +343,18 @@ export async function fetchCategoryList() {
 export async function associateUser([{ id, userNames }]) {
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['policy'];
-    const url = reduceK8sRestfulPath({ resourceInfo, specificName: id, extraResource: 'users' });
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: id, extraResource: 'binding' });
     const response = await reduceNetworkRequest({
-      method: 'PUT',
+      method: Method.post,
       url,
       // url: `/api/v1/polices/${id}/users`,
-      data: { userNames: userNames }
+      data: {
+        users: userNames.map(item => {
+          return {
+            id: item
+          };
+        })
+      }
     });
     if (response.code === 0) {
       tips.success(t('添加成功'), 2000);
@@ -380,11 +381,10 @@ export async function fetchStrategyAssociatedUsers(id: string) {
     const response = await reduceNetworkRequest({
       method: 'GET',
       url
-      // url: `/api/v1/polices/${id}/users`
     });
     if (response.code === 0) {
-      if (response.data.userNames) {
-        associatedUsers = response.data.userNames;
+      if (response.data.items) {
+        associatedUsers = response.data.items;
       } else {
         associatedUsers = [];
       }
@@ -403,16 +403,16 @@ export async function fetchStrategyAssociatedUsers(id: string) {
 /** 删除策略关联的用户 */
 export async function removeAssociatedUser([{ id, userNames }]) {
   const data = {
-    id,
-    userNames
+    users: userNames.map(item => ({
+      id: item
+    }))
   };
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['policy'];
-    const url = reduceK8sRestfulPath({ resourceInfo, specificName: id, extraResource: 'users' });
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: id, extraResource: 'unbinding' });
     const response = await reduceNetworkRequest({
-      method: 'DELETE',
+      method: Method.post,
       url,
-      // url: `/api/v1/polices/${id}/users`,
       data
     });
     if (response.code === 0) {

@@ -9,4 +9,7 @@ export interface UserFilter {
   search?: string;
 
   ifAll?: boolean;
+
+  /** 是否只拉取策策略需要绑定的用户 */
+  isPolicyUser?: boolean;
 }

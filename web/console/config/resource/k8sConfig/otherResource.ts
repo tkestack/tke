@@ -175,6 +175,17 @@ export const policy = (k8sVersion: string) => {
   });
 };
 
+/** users的配置 */
+export const user = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'user',
+    requestType: {
+      list: 'users'
+    }
+  });
+};
+
 /** category的配置 */
 export const category = (k8sVersion: string) => {
   return generateResourceInfo({
@@ -182,6 +193,17 @@ export const category = (k8sVersion: string) => {
     resourceName: 'category',
     requestType: {
       list: 'categories'
+    }
+  });
+};
+
+/** apikey的配置 */
+export const apiKey = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'apiKey',
+    requestType: {
+      list: 'apikeys'
     }
   });
 };

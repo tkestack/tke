@@ -1724,7 +1724,7 @@ export const validateWorkloadActions = {
         validateWorkloadActions._validateAllValueFromAlias(container.valueFrom);
     }
 
-    // 校验挂载项目
+    // 校验挂载业务
     let filters = volumes.filter(v => {
       // 判断当前的挂载项是否还存在，是否已经被删除
       return v.name;

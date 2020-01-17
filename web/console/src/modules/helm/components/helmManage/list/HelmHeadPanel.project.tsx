@@ -62,9 +62,9 @@ export class HelmHeadPanel extends React.Component<RootProps, {}> {
         left={
           <React.Fragment>
             <h2>{t('Helm应用')}</h2>
-            <FormPanel.InlineText>{t('项目：')}</FormPanel.InlineText>
+            <FormPanel.InlineText>{t('业务：')}</FormPanel.InlineText>
             <FormPanel.Select
-              label={t('项目')}
+              label={t('业务')}
               options={projectListOptions}
               value={projectSelection}
               onChange={value => {

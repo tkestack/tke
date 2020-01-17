@@ -5,8 +5,8 @@ import { OperationResult } from '@tencent/qcloud-redux-workflow';
 import { resourceConfig } from '../../../config/resourceConfig';
 import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow } from '../../../helpers';
 import { Method } from '../../../helpers/reduceNetwork';
-import { RequestParams } from '../common/models';
-import { APIKEY_URL, REPO_URL, Default_D_URL } from './constants/Config';
+import { RequestParams, ResourceInfo } from '../common/models';
+import { REPO_URL, Default_D_URL } from './constants/Config';
 import {
   ApiKey,
   ApiKeyCreation,
@@ -18,6 +18,7 @@ import {
   ImageCreation,
   ImageFilter
 } from './models';
+import { apiKey } from '@config/resource/k8sConfig';
 
 // 返回标准操作结果
 function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] {
@@ -30,19 +31,21 @@ function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] 
 /** 访问凭证相关 */
 export async function fetchApiKeyList(query: QueryState<ApiKeyFilter>) {
   const { search, paging } = query;
+  let apiKeyResourceInfo: ResourceInfo = resourceConfig()['apiKey'];
+  let url = reduceK8sRestfulPath({
+    resourceInfo: apiKeyResourceInfo
+  });
 
   let params: RequestParams = {
     method: Method.get,
-    url: `${APIKEY_URL}?page=${paging.pageIndex - 1}&page_size=${paging.pageSize}`
+    url
   };
 
   let response = await reduceNetworkRequest(params);
-  let apiKeyList = [],
-    total = 0;
+  let apiKeyList = [];
   try {
     if (response.code === 0) {
       let listItems = response.data;
-      total = listItems.total;
       if (listItems.items) {
         apiKeyList = listItems.items.map((item, index) => {
           return Object.assign({}, item, { id: index });
@@ -60,7 +63,7 @@ export async function fetchApiKeyList(query: QueryState<ApiKeyFilter>) {
   }
 
   const result: RecordSet<ApiKey> = {
-    recordCount: total,
+    recordCount: apiKeyList.length,
     records: apiKeyList
   };
 
@@ -69,6 +72,11 @@ export async function fetchApiKeyList(query: QueryState<ApiKeyFilter>) {
 
 export async function createApiKey(apiKeys: ApiKeyCreation[]) {
   try {
+    let apiKeyResourceInfo: ResourceInfo = resourceConfig()['apiKey'];
+    let url = reduceK8sRestfulPath({
+      resourceInfo: apiKeyResourceInfo
+    });
+
     let apiKey = apiKeys[0];
     /** 构建参数 */
     let requestParams = {
@@ -77,7 +85,7 @@ export async function createApiKey(apiKeys: ApiKeyCreation[]) {
     };
     let params: RequestParams = {
       method: Method.post,
-      url: APIKEY_URL,
+      url: url + '/default/token',
       data: requestParams
     };
     let response = await reduceNetworkRequest(params);
@@ -93,11 +101,15 @@ export async function createApiKey(apiKeys: ApiKeyCreation[]) {
 
 export async function deleteApiKey(apiKeys: ApiKey[]) {
   try {
-    let requestParams = Object.assign({}, apiKeys[0], { deleted: true });
+    let apiKeyResourceInfo: ResourceInfo = resourceConfig()['apiKey'];
+    let url = reduceK8sRestfulPath({
+      resourceInfo: apiKeyResourceInfo,
+      specificName: apiKeys[0].metadata.name
+    });
+
     let params: RequestParams = {
-      method: Method.put,
-      url: APIKEY_URL,
-      data: requestParams
+      method: Method.delete,
+      url
     };
 
     let response = await reduceNetworkRequest(params);
@@ -113,10 +125,20 @@ export async function deleteApiKey(apiKeys: ApiKey[]) {
 
 export async function toggleKeyStatus(apiKeys: ApiKey[]) {
   try {
-    let requestParams = Object.assign({}, apiKeys[0], { disabled: !apiKeys[0].disabled });
+    let apiKeyResourceInfo: ResourceInfo = resourceConfig()['apiKey'];
+    let url = reduceK8sRestfulPath({
+      resourceInfo: apiKeyResourceInfo,
+      specificName: apiKeys[0].metadata.name
+    });
+
+    apiKeys[0].status = Object.assign({}, apiKeys[0].status, {
+      disabled: !apiKeys[0].status.disabled
+    });
+
+    let requestParams = apiKeys[0];
     let params: RequestParams = {
       method: Method.put,
-      url: APIKEY_URL,
+      url: url,
       data: requestParams
     };
 

@@ -63,7 +63,9 @@ import {
   virtualService,
   destinationRule,
   prometheus,
-  logoutConfig
+  logoutConfig,
+  apiKey,
+  user
 } from './resource/k8sConfig';
 import { serviceEntry } from './resource/k8sConfig/serviceEntry';
 import { ResourceInfo } from '../src/modules/common/models';
@@ -154,6 +156,8 @@ export const resourceConfig = (k8sVersion: string = '1.8'): ResourceConfigKey =>
     localidentity: getResourceConfig(localidentity, finalK8sVersion),
     policy: getResourceConfig(policy, finalK8sVersion),
     category: getResourceConfig(category, finalK8sVersion),
+    apiKey: getResourceConfig(apiKey, finalK8sVersion),
+    user: getResourceConfig(user, finalK8sVersion),
     /** =============== 这里是权限相关的 =============== */
 
     /** 告警配置 */

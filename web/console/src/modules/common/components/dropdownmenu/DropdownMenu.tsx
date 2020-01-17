@@ -46,7 +46,7 @@ export interface DropdownMenuProps extends BaseReactProps {
   placeholder?: string | JSX.Element;
 
   /**
-   * 下拉显示的项目列表
+   * 下拉显示的业务列表
    * */
   items?: DropdownMenuItem[];
 }

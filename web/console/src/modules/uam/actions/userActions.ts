@@ -8,7 +8,6 @@ import { User, UserFilter } from '../models/index';
 import { createListAction } from '@tencent/redux-list';
 import { CommonAPI, ResourceFilter, ResourceInfo } from '@src/modules/common';
 import { resourceConfig } from '@config';
-import { AssociatedUserParams } from './associatedActions';
 type GetState = () => RootState;
 
 /**
@@ -34,7 +33,7 @@ const removeUser = generateWorkflowActionCreator<any, void>({
   operationExecutor: WebAPI.removeUser,
   after: {
     [OperationTrigger.Done]: dispatch => {
-      dispatch(FFModelUserActions.applyFilter({}));
+      dispatch(userActions.poll());
     }
   }
 });
@@ -45,7 +44,6 @@ const removeUser = generateWorkflowActionCreator<any, void>({
 const getUser = generateFetcherActionCreator({
   actionType: ActionTypes.GetUser,
   fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
-    // const { id, userNames } = options.data;
     let result = await WebAPI.getUser(options.data.name);
     return result;
   }
@@ -57,7 +55,6 @@ const getUser = generateFetcherActionCreator({
 const updateUser = generateFetcherActionCreator({
   actionType: ActionTypes.UpdateUser,
   fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
-    // const { id, userNames } = options.data;
     let result = await WebAPI.updateUser(options.data.user);
     return result;
   }
@@ -74,6 +71,16 @@ const FFModelUserActions = createListAction<User, UserFilter>({
   },
   getRecord: (getState: GetState) => {
     return getState().userList;
+  },
+  onFinish: (record, dispatch: Redux.Dispatch) => {
+    if (record.data.recordCount) {
+      let isNotNeedPoll =
+        record.data.records.filter(item => item.status && item.status['phase'] && item.status['phase'] === 'Deleting').length === 0;
+
+      if (isNotNeedPoll) {
+        dispatch(FFModelUserActions.clearPolling());
+      }
+    }
   }
 });
 
@@ -107,12 +114,26 @@ const restActions = {
   updateUser,
   strategy: strategyActions,
 
+  /** 轮训操作 */
+  poll: () => {
+    return async (dispatch: Redux.Dispatch) => {
+      dispatch(
+        userActions.polling({
+          filter: {
+            ifAll: true
+          },
+          delayTime: 5000
+        })
+      );
+    };
+  },
+
   /** 初始化集群的版本 */
   getUsersByName: (username: string) => {
     return (dispatch: Redux.Dispatch, getState: GetState) => {
       let filterUsers = [];
       getState().userList.list.data.records.forEach(user => {
-        if (user.name === username || user.Spec.extra.displayName === username) {
+        if (user.spec.username === username || user.spec.displayName === username) {
           filterUsers.push(user);
         }
       });

@@ -62,7 +62,7 @@ const restActions = {
     };
   },
 
-  /** 选择项目 */
+  /** 选择业务 */
   selectProject: (project: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { route } = getState(),

@@ -158,7 +158,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/project
      */
     project: {
-      title: t('项目管理 - TKEStack'),
+      title: t('业务管理 - TKEStack'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />

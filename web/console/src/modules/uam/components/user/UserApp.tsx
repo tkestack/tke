@@ -21,7 +21,7 @@ const mapDispatchToProps = dispatch =>
 export class UserApp extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions } = this.props;
-    actions.user.applyFilter({});
+    actions.user.poll();
   }
   render() {
     let { route } = this.props;

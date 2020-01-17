@@ -1,6 +1,5 @@
 import { initValidator } from '../../common/models/Validation';
 
-export const APIKEY_URL = '/api/authv1/apikey/';
 export const REPO_URL = '/apis/registry.tkestack.io/v1/namespaces/';
 
 export const InitApiKey = {

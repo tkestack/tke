@@ -265,14 +265,12 @@ export const UserActionPanel = () => {
 
     let userInfo: User = {
       id: uuid(),
-      name,
-      Spec: {
+      spec: {
+        username: name,
         hashedPassword: btoa(password),
-        extra: {
-          displayName,
-          email,
-          phoneNumber: phone
-        }
+        displayName,
+        email,
+        phoneNumber: phone
       }
     };
     actions.user.addUser.start([userInfo]);

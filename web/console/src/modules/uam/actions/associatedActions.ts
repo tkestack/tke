@@ -49,7 +49,7 @@ const FFModelAssociatedUsersActions = createListAction<User, UserFilter>({
 /**
  * 删除策略关联的用户
  */
-const removeAssociatedUser = generateWorkflowActionCreator<AssociatedUserParams, void>({
+const removeAssociatedUser = generateWorkflowActionCreator<any, void>({
   actionType: ActionTypes.RemoveAssociatedUser,
   workflowStateLocator: (state: RootState) => state.removeAssociatedUser,
   operationExecutor: WebAPI.removeAssociatedUser,

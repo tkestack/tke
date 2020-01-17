@@ -14,7 +14,7 @@ import { Button, Icon, Text, Bubble } from '@tencent/tea-component';
 
 const routerSea = seajs.require('router');
 
-/**平台管理员,项目成员,游客,未初始化 */
+/**平台管理员,业务成员,游客,未初始化 */
 enum UserType {
   admin = 'admin',
   member = 'member',
@@ -80,7 +80,7 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     url: '/tkestack/project',
-    title: '项目管理',
+    title: '业务管理',
     watchModule: ConsoleModuleEnum.Business
   },
   {
@@ -240,10 +240,10 @@ interface ConsoleWrapperState {
   /** 控制台的api映射 */
   consoleApiMap: ConsoleModuleMapProps;
 
-  /** 该用户是否为平台管理员,项目成员,游客 */
+  /** 该用户是否为平台管理员,业务成员,游客 */
   userType: UserType;
 
-  /**该用户负责的项目 */
+  /**该用户负责的业务 */
   projects: Project[];
 
   /** 是否展示user的下拉框 */
@@ -292,7 +292,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     this.state.userType === UserType.init && (await this.getUserProjectInfo());
   }
 
-  //获取用户信息包括用户项目信息
+  //获取用户信息包括用户业务信息
   async getUserInfo() {
     let infoResourceInfo: ResourceInfo = resourceConfig()['info'];
     let url = reduceK8sRestfulPath({ resourceInfo: infoResourceInfo });
@@ -364,7 +364,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     } catch (error) {}
   }
 
-  //获取用户信息包括用户项目信息
+  //获取用户信息包括用户业务信息
   async getUserProjectInfo() {
     let userResourceInfo: ResourceInfo = resourceConfig().portal;
     let url = reduceK8sRestfulPath({ resourceInfo: userResourceInfo });
