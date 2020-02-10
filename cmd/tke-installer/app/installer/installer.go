@@ -65,6 +65,7 @@ import (
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	baremetalimages "tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
@@ -99,8 +100,6 @@ const (
 	localRegistryPort          = 5000
 	localRegistryContainerName = "tcr"
 	defaultTeantID             = "default"
-
-	k8sVersion = "1.14.6"
 )
 
 // ClusterResource is the REST layer to the Cluster domain
@@ -762,7 +761,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
-	cluster.Spec.Version = k8sVersion
+	cluster.Spec.Version = baremetalimages.K8sVersions[len(baremetalimages.K8sVersions)-1] // use newest version
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}

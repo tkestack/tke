@@ -68,7 +68,7 @@ var components = Components{
 	Keepalived: containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
 	InfluxDB:   containerregistry.Image{Name: "influxdb", Tag: "1.7.6-alpine"},
 
-	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.14.6-1"},
+	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.16.6-1"},
 
 	TKEAuthAPI:            containerregistry.Image{Name: "tke-auth-api", Tag: Version},
 	TKEAuthController:     containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
