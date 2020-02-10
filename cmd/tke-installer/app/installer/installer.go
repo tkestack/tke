@@ -830,8 +830,10 @@ func (t *TKE) ValidateConfig(config Config) *errors.StatusError {
 		}
 	}
 
-	if config.Monitor.InfluxDBMonitor != nil && config.Monitor.ESMonitor != nil {
-		return errors.NewBadRequest("influxdb or es only had one")
+	if config.Monitor != nil {
+		if config.Monitor.InfluxDBMonitor != nil && config.Monitor.ESMonitor != nil {
+			return errors.NewBadRequest("influxdb or es only had one")
+		}
 	}
 
 	var dnsNames []string
