@@ -395,6 +395,10 @@ func (t *TKE) initSteps() {
 			Func: t.createGlobalCluster,
 		},
 		{
+			Name: "Write kubeconfig",
+			Func: t.writeKubeconfig,
+		},
+		{
 			Name: "Execute post deploy hook",
 			Func: t.postClusterReadyHook,
 		},
@@ -540,10 +544,6 @@ func (t *TKE) initSteps() {
 	}
 
 	t.steps = append(t.steps, []handler{
-		{
-			Name: "Write kubeconfig",
-			Func: t.writeKubeconfig,
-		},
 		{
 			Name: "Execute post deploy hook",
 			Func: t.postInstallHook,
