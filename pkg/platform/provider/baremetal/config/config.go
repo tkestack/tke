@@ -70,8 +70,8 @@ type Registry struct {
 	Namespace string
 }
 
-func (r *Registry) UseTKE() bool {
-	return r.Domain != "docker.io"
+func (r *Registry) NeedSetHosts() bool {
+	return r.IP != ""
 }
 
 type Docker struct {

@@ -74,7 +74,7 @@ func (p *Provider) EnsurePreflight(c *Cluster) error {
 }
 
 func (p *Provider) EnsureRegistryHosts(c *Cluster) error {
-	if !c.Registry.UseTKE() {
+	if !c.Registry.NeedSetHosts() {
 		return nil
 	}
 
@@ -255,7 +255,7 @@ func (p *Provider) EnsureNvidiaContainerRuntime(c *Cluster) error {
 
 func (p *Provider) EnsureDocker(c *Cluster) error {
 	insecureRegistries := fmt.Sprintf(`"%s"`, c.Registry.Domain)
-	if c.Config.Registry.UseTKE() {
+	if c.Config.Registry.NeedSetHosts() {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+c.Registry.Domain)
 	}
 	option := &docker.Option{

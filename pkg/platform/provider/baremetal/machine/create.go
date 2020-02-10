@@ -67,7 +67,7 @@ func (p *Provider) EnsurePreflight(m *Machine) error {
 }
 
 func (p *Provider) EnsureRegistryHosts(m *Machine) error {
-	if !m.Registry.UseTKE() {
+	if !m.Registry.NeedSetHosts() {
 		return nil
 	}
 
@@ -170,7 +170,7 @@ func (p *Provider) EnsureKubeconfig(m *Machine) error {
 
 func (p *Provider) EnsureDocker(m *Machine) error {
 	insecureRegistries := fmt.Sprintf(`"%s"`, m.Registry.Domain)
-	if m.Config.Registry.UseTKE() {
+	if m.Config.Registry.NeedSetHosts() {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, m.Spec.TenantID+"."+m.Registry.Domain)
 	}
 
