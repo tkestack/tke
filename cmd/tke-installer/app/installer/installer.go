@@ -35,6 +35,8 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/emicklei/go-restful"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -686,6 +688,21 @@ func (t *TKE) prepare() errors.APIStatus {
 		return errors.NewInternalError(err)
 	}
 	allErrs := t.strategy.Validate(ctx, platformCluster)
+
+	// ensure installer's machine not in target machines
+	installerIP, err := util.GetExternalIP()
+	if err != nil {
+		return errors.NewInternalError(pkgerrors.Wrap(err, "get ip of installer machine error"))
+	}
+	for i, one := range platformCluster.Spec.Machines {
+		if one.IP == installerIP {
+			allErrs = append(allErrs, field.Invalid(
+				field.NewPath("spec", "machines").Index(i).Child("ip"),
+				one.IP,
+				"target machines can't use one which runs installer"))
+			break
+		}
+	}
 	if len(allErrs) > 0 {
 		return errors.NewInvalid(kinds[0].GroupKind(), v1Cluster.GetName(), allErrs)
 	}
