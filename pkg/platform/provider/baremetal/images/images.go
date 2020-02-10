@@ -23,8 +23,8 @@ import (
 	"tkestack.io/tke/pkg/util/containerregistry"
 )
 
-const (
-	k8sVersion = "v1.14.6"
+var (
+	K8sVersions = []string{"v1.14.10", "v1.16.6"}
 )
 
 type Components struct {
@@ -51,11 +51,6 @@ func (c Components) Get(name string) *containerregistry.Image {
 }
 
 var components = Components{
-	KubeAPIServer:         containerregistry.Image{Name: "kube-apiserver", Tag: k8sVersion},
-	KubeControllerManager: containerregistry.Image{Name: "kube-controller-manager", Tag: k8sVersion},
-	KubeScheduler:         containerregistry.Image{Name: "kube-scheduler", Tag: k8sVersion},
-	KubeProxy:             containerregistry.Image{Name: "kube-proxy", Tag: k8sVersion},
-
 	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.3.12"},
 	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.2.6"},
 	Pause:              containerregistry.Image{Name: "pause", Tag: "3.1"},
@@ -64,6 +59,13 @@ var components = Components{
 
 func List() []string {
 	var items []string
+
+	for _, version := range K8sVersions {
+		for _, name := range []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler", "kube-proxy"} {
+			items = append(items, containerregistry.Image{Name: name, Tag: version}.BaseName())
+		}
+	}
+
 	v := reflect.ValueOf(components)
 	for i := 0; i < v.NumField(); i++ {
 		v, _ := v.Field(i).Interface().(containerregistry.Image)

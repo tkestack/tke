@@ -16,10 +16,14 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
+set -o errexit
+set -o nounset
+set -o pipefail
+
 CNI_VERSION=v0.7.5
 DOCKER_VERSION=18.09.9
 KUBEADM_VERSION=v1.15.1
-KUBERNETES_VERSION=v1.14.6
+KUBERNETES_VERSION=(v1.14.10 v1.16.6)
 NVIDIA_DRIVER_VERSION=440.31
 
 cd "$DST_DIR" || exit
@@ -28,7 +32,10 @@ wget https://github.com/containernetworking/plugins/releases/download/$CNI_VERSI
 
 wget https://download.docker.com/linux/static/stable/x86_64/docker-$DOCKER_VERSION.tgz
 
-wget https://dl.k8s.io/$KUBERNETES_VERSION/kubernetes-node-linux-amd64.tar.gz -O kubernetes-node-linux-amd64-$KUBERNETES_VERSION.tar.gz
+for version in "${KUBERNETES_VERSION[@]}"
+do
+  wget https://dl.k8s.io/"$version"/kubernetes-node-linux-amd64.tar.gz -O kubernetes-node-linux-amd64-"$version".tar.gz
+done
 
 wget https://storage.googleapis.com/kubernetes-release/release/$KUBEADM_VERSION/bin/linux/amd64/kubeadm
 chmod +x kubeadm
