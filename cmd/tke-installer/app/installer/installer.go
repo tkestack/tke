@@ -898,6 +898,9 @@ func (t *TKE) initProviderConfig() error {
 
 func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 	apiStatus := func() errors.APIStatus {
+		if t.Para != nil {
+			return errors.NewAlreadyExists(platformv1.Resource("Cluster"), "global")
+		}
 		err := req.ReadEntity(t.Para)
 		if err != nil {
 			return errors.NewBadRequest(err.Error())
