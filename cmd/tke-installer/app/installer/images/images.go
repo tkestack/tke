@@ -33,14 +33,6 @@ type Components struct {
 	Keepalived containerregistry.Image
 	InfluxDB   containerregistry.Image
 
-	CSI            containerregistry.Image
-	CSIRegistrar   containerregistry.Image
-	CSIProvisioner containerregistry.Image
-	CSISnapshotter containerregistry.Image
-	CSIAttacher    containerregistry.Image
-	Ceph           containerregistry.Image
-	Rook           containerregistry.Image
-
 	ProviderRes containerregistry.Image
 
 	TKEGateway            containerregistry.Image
@@ -75,14 +67,6 @@ var components = Components{
 	Busybox:    containerregistry.Image{Name: "busybox", Tag: "1.31.0"},
 	Keepalived: containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
 	InfluxDB:   containerregistry.Image{Name: "influxdb", Tag: "1.7.6-alpine"},
-
-	CSI:            containerregistry.Image{Name: "quay.io/cephcsi/cephcsi", Tag: "v1.2.2"},
-	CSIRegistrar:   containerregistry.Image{Name: "quay.io/k8scsi/csi-node-driver-registrar", Tag: "v1.1.0"},
-	CSIProvisioner: containerregistry.Image{Name: "quay.io/k8scsi/csi-provisioner", Tag: "v1.4.0"},
-	CSISnapshotter: containerregistry.Image{Name: "quay.io/k8scsi/csi-snapshotter", Tag: "v1.2.2"},
-	CSIAttacher:    containerregistry.Image{Name: "quay.io/k8scsi/csi-attacher", Tag: "v1.2.0"},
-	Ceph:           containerregistry.Image{Name: "ceph/ceph", Tag: "v14.2.4-20190917"},
-	Rook:           containerregistry.Image{Name: "rook/ceph", Tag: "v1.1.8"},
 
 	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.14.6-1"},
 
