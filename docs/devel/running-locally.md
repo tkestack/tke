@@ -185,6 +185,9 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
     "etcd": {
       "servers": ["http://127.0.0.1:2379"]
     },
+    "authentication": {
+      "token_auth_file": "_debug/token.csv"
+    },
     "generic": {
       "external_hostname": "localhost",
       "external_port": 9451
@@ -259,10 +262,16 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
         "tls_private_key_file": "_debug/certificates/localhost+2-key.pem"
       },
       "client": {
-        "platform": {
+        "auth": {
           "api_server_client_config": "_debug/auth-api-client-config.yaml"
         }
-      }
+      },
+      "features":{
+        "category_path": "hack/auth/category.json",
+        "policy_path": "hack/auth/policy.json",
+        "tenant_admin": "admin",
+        "tenant_admin_secret": "secret"
+        }
     }
     ```
 
