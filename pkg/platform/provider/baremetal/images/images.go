@@ -28,11 +28,6 @@ var (
 )
 
 type Components struct {
-	KubeAPIServer         containerregistry.Image
-	KubeControllerManager containerregistry.Image
-	KubeScheduler         containerregistry.Image
-	KubeProxy             containerregistry.Image
-
 	ETCD               containerregistry.Image
 	CoreDNS            containerregistry.Image
 	Pause              containerregistry.Image
