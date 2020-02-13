@@ -1890,6 +1890,9 @@ func (t *TKE) registerAPI() error {
 	}
 
 	svcs := []string{"tke-platform-api"}
+	if t.Para.Config.Auth.TKEAuth != nil {
+		svcs = append(svcs, "tke-auth-api")
+	}
 	if t.Para.Config.Business != nil {
 		svcs = append(svcs, "tke-business-api")
 	}
