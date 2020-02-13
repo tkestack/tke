@@ -80,7 +80,7 @@ metadata:
   namespace: tke
 data:
   abac-policy.json: |
-    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:*","namespace":"*", "resource":"*","apiGroup":"*", "group": "*"}}
+    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:*","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
   tke-auth-api.toml: |
     [secure_serving]
     tls_cert_file = "/app/certs/server.crt"
