@@ -42,6 +42,9 @@ export interface LogFilter {
 
   /**命名空间 */
   namespace?: string;
+
+  /** specificName */
+  specificName?: string;
 }
 
 export interface LogOperator {

@@ -10,7 +10,7 @@ import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
-import { Button, Icon, Text, Bubble } from '@tencent/tea-component';
+import { Button, Icon, Text, Bubble, NavMenu, List } from '@tencent/tea-component';
 
 const routerSea = seajs.require('router');
 
@@ -465,51 +465,36 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
    */
   private _renderTopBar(query: string) {
     return (
-      <div className="qc-header-nav" id="topnav">
-        <div className="qc-header-inner">
-          <div className="qc-header-unit qc-header-logo" style={{ width: '45px' }}>
-            <div className="qc-nav-logo">
-              <a className="qc-logo-inner" style={{ borderRight: 'none' }} href="javascript:;" title="TKEStack">
-                <img src="/static/icon/logo.svg" style={{ height: '30px' }} />
-              </a>
-            </div>
-          </div>
-
-          <div className="qc-header-unit qc-header-user">
-            <div
-              className={classnames('qc-nav-user', { 'qc-nav-hover': this.state.isShowUserDropdown })}
-              data-menu-type="user"
-              id="userInfo"
-              onMouseEnter={() => {
-                this.setState({ isShowUserDropdown: true });
-              }}
-              onMouseLeave={() => {
-                this.setState({ isShowUserDropdown: false });
-              }}
+      <NavMenu
+        left={
+          <React.Fragment>
+            <NavMenu.Item type="logo">
+              <img src="/static/icon/logo.svg" style={{ height: '30px' }} alt="logo" />
+            </NavMenu.Item>
+          </React.Fragment>
+        }
+        right={
+          <React.Fragment>
+            <NavMenu.Item
+              type="dropdown"
+              overlay={() => (
+                <List type="option">
+                  <List.Item
+                    onClick={async () => {
+                      await this.userLogout();
+                      location.reload();
+                    }}
+                  >
+                    退出
+                  </List.Item>
+                </List>
+              )}
             >
-              <div className="qc-user-inner">
-                <span className="qc-user-name" data-hot="header.user.center" title={this.state.userInfo.name}>
-                  {this.state.userInfo.name}
-                </span>
-                <i className="qc-nav-arrows" />
-                <div className="qc-user-info qc-user-panel">
-                  <div className="qc-user-panel-inner J-dropdownPanel">
-                    <a
-                      href="javascript:;"
-                      onClick={async () => {
-                        await this.userLogout();
-                        location.reload();
-                      }}
-                    >
-                      退出
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              {this.state.userInfo.name}
+            </NavMenu.Item>
+          </React.Fragment>
+        }
+      />
     );
   }
 

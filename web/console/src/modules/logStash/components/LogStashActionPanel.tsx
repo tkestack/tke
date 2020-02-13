@@ -110,7 +110,6 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
                     if (ifFetchLogList) {
                       actions.log.applyFilter({
                         clusterId: route.queries['clusterId'],
-                        regionId: 19,
                         namespace: value
                       });
                     } else {
