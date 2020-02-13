@@ -246,7 +246,10 @@ export async function modifyClusterName(clusters: CreateResource[]) {
  * @param regionId: number 地域的id
  */
 export async function fetchCreateICK8sVersion() {
-  return [{ text: '1.14.6', value: '1.14.6' }];
+  return [
+    { text: '1.14.10', value: '1.14.10' },
+    { text: '1.16.6', value: '1.16.6' }
+  ];
 }
 
 /**
