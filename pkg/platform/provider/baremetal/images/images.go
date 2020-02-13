@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	K8sVersions = []string{"v1.14.10", "v1.16.6"}
+	K8sVersions = []string{"1.14.10", "1.16.6"}
 )
 
 type Components struct {
@@ -57,7 +57,7 @@ func List() []string {
 
 	for _, version := range K8sVersions {
 		for _, name := range []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler", "kube-proxy"} {
-			items = append(items, containerregistry.Image{Name: name, Tag: version}.BaseName())
+			items = append(items, containerregistry.Image{Name: name, Tag: "v" + version}.BaseName())
 		}
 	}
 
