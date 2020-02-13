@@ -138,7 +138,6 @@ func (s *SSH) Execf(format string, a ...interface{}) (stdout string, stderr stri
 }
 
 func (s *SSH) Exec(cmd string) (stdout string, stderr string, exit int, err error) {
-	log.Infof("[%s] Exec %q", s.addr, cmd)
 	// Setup the config, dial the server, and open a session.
 	config := &ssh.ClientConfig{
 		User:            s.User,
