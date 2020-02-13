@@ -141,7 +141,8 @@ data:
   00-galaxy.conf: |
     {
       "type": "galaxy-sdn",
-      "capabilities": {"portMappings": true}
+      "capabilities": {"portMappings": true},
+      "cniVersion": "0.2.0"
     }
 `
 
