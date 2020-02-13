@@ -117,7 +117,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 	if tenantID == "" {
 		tenantID, _ = options.FieldSelector.RequiresExactMatch("spec.tenantID")
 		if tenantID == "" {
-			return nil, apierrors.NewBadRequest("List groups must specify tenantID")
+			return &auth.UserList{}, nil
 		}
 	}
 	idp, ok := identityprovider.IdentityProvidersStore[tenantID]
