@@ -2150,12 +2150,12 @@ func (t *TKE) execHook(filename string) error {
 }
 
 func (t *TKE) getKubeconfig() (*api.Config, error) {
-	addr, err := platformutil.ClusterV1Address(&t.Cluster.Cluster)
+	host, err := platformutil.ClusterV1Host(&t.Cluster.Cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	return kubeconfig.CreateWithToken(addr,
+	return kubeconfig.CreateWithToken(host,
 		t.Cluster.Name,
 		"admin",
 		t.Cluster.ClusterCredential.CACert,

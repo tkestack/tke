@@ -226,7 +226,7 @@ func BuildTransport(credential *platform.ClusterCredential) (http.RoundTripper, 
 
 // GetRestConfig returns rest config according to cluster
 func GetRestConfig(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (*restclient.Config, error) {
-	address, err := ClusterV1Address(cluster)
+	host, err := ClusterV1Host(cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -235,12 +235,12 @@ func GetRestConfig(cluster *platformv1.Cluster, credential *platformv1.ClusterCr
 
 	if credential.CACert == nil {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                address,
+			Server:                fmt.Sprintf("https://%s", host),
 			InsecureSkipTLSVerify: true,
 		}
 	} else {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                   address,
+			Server:                   fmt.Sprintf("https://%s", host),
 			CertificateAuthorityData: credential.CACert,
 		}
 	}
@@ -396,7 +396,7 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
-	address, err := ClusterAddress(cluster)
+	host, err := ClusterHost(cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -405,12 +405,12 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 
 	if credential.CACert == nil {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                address,
+			Server:                fmt.Sprintf("https://%s", host),
 			InsecureSkipTLSVerify: true,
 		}
 	} else {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                   address,
+			Server:                   fmt.Sprintf("https://%s", host),
 			CertificateAuthorityData: credential.CACert,
 		}
 	}
@@ -443,8 +443,8 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 	return kubernetes.NewForConfig(restConfig)
 }
 
-// ClusterAddress returns the cluster address.
-func ClusterAddress(cluster *platform.Cluster) (string, error) {
+// ClusterHost returns host and port for kube-apiserver of cluster.
+func ClusterHost(cluster *platform.Cluster) (string, error) {
 	addrs := make(map[platform.AddressType][]platform.ClusterAddress)
 	for _, one := range cluster.Status.Addresses {
 		addrs[one.Type] = append(addrs[one.Type], one)
@@ -469,17 +469,17 @@ func ClusterAddress(cluster *platform.Cluster) (string, error) {
 		return "", pkgerrors.New("no valid address for the cluster")
 	}
 
-	return fmt.Sprintf("https://%s:%d", address.Host, address.Port), nil
+	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
 }
 
-// ClusterV1Address returns the cluster address.
-func ClusterV1Address(c *platformv1.Cluster) (string, error) {
+// ClusterV1Host returns host and port for kube-apiserver of versioned cluster resource.
+func ClusterV1Host(c *platformv1.Cluster) (string, error) {
 	var cluster platform.Cluster
 	err := platformv1.Convert_v1_Cluster_To_platform_Cluster(c, &cluster, nil)
 	if err != nil {
 		return "", pkgerrors.Wrap(err, "Convert_v1_Cluster_To_platform_Cluster errror")
 	}
-	return ClusterAddress(&cluster)
+	return ClusterHost(&cluster)
 }
 
 // rootCertPool returns nil if caData is empty.  When passed along, this will mean "use system CAs".
