@@ -229,7 +229,7 @@ export const logcs = (k8sVersion: string) => {
     isRelevantToNamespace: true,
     resourceName: 'logcs',
     requestType: {
-      list: 'logcs',
+      list: 'logcollector',
       addon: true
     }
   });

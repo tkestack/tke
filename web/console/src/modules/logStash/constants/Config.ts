@@ -1,3 +1,9 @@
+/** ========================= start FFRedux的相关配置 ======================== */
+export const FFReduxActionName = {
+  OPENADDON: 'openAddon'
+};
+/** ========================= end FFRedux的相关配置 ======================== */
+
 /** 判断当前集群状态下能否创建日志收集器 */
 export const canCreateLogStash = ['Running', 'Scaling'];
 

@@ -11,6 +11,8 @@ import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
 import { LogStashEditReducer } from './LogStashEditReducer';
 import { Namespace } from 'react-i18next';
 import { LogDaemonset } from '../models/LogDaemonset';
+import { createListReducer } from '@tencent/redux-list';
+import { FFReduxActionName } from '../constants/Config';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
@@ -101,5 +103,7 @@ export const RootReducer = combineReducers({
 
   isFetchDoneSpecificLog: reduceToPayload(ActionType.IsFetchDoneSpecificLog, false),
 
-  logStashEdit: LogStashEditReducer
+  logStashEdit: LogStashEditReducer,
+
+  openAddon: createListReducer(FFReduxActionName.OPENADDON)
 });

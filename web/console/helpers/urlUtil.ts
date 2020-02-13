@@ -137,7 +137,7 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
 
     if (extraResource || resourceInfo['namespaces'] || specificName) {
       let queryArr: string[] = [];
-      resourceInfo.namespaces && queryArr.push(`namespace=${namespace}`);
+      resourceInfo.namespaces && namespace && queryArr.push(`namespace=${namespace}`);
       specificName && queryArr.push(`name=${specificName}`);
       extraResource && queryArr.push(`action=${extraResource}`);
       url += `?${queryArr.join('&')}`;
