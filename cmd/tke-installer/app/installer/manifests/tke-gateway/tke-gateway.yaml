@@ -126,7 +126,7 @@ data:
     components:
 {{- if .EnableAuth }}
       auth:
-        address: https://tke-auth
+        address: https://tke-auth-api
         passthrough:
           caFile: /app/certs/ca.crt
 {{- end }}
