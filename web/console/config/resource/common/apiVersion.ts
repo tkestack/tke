@@ -173,6 +173,35 @@ const k8sApiVersionFor17: ApiVersion = {
   }
 };
 
+/** ================== start 1.14 的apiversion配置 ======================== */
+const k8sApiVersionFor114: ApiVersion = {
+  deployment: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'Deployment'
+  },
+  statefulset: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'StatefulSet'
+  },
+  daemonset: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'DaemonSet'
+  },
+  rs: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'ReplicaSet'
+  }
+};
+/** ================== start 1.14 的apiversion配置 ======================== */
+
 /** 以1.8的为基准，后续有新增再继续更改 */
 const k8sApiVersionFor18: ApiVersion = {
   deployment: {
@@ -677,5 +706,6 @@ const basicApiVersion = Object.assign(
  */
 export const apiVersion: FinalApiVersion = {
   '1.8': basicApiVersion,
-  '1.7': Object.assign({}, basicApiVersion, k8sApiVersionFor17)
+  '1.7': Object.assign({}, basicApiVersion, k8sApiVersionFor17),
+  '1.14': Object.assign({}, basicApiVersion, k8sApiVersionFor114)
 };
