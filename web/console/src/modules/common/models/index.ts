@@ -1,5 +1,5 @@
 export { Link } from './Link';
-export { Region, RegionFilter } from './Region';
+export { Region, RegionFilter } from './region';
 export { initValidator, Validation } from './Validation';
 export {
   ResourceInfo,
