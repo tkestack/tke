@@ -20,6 +20,8 @@ package storage
 
 import (
 	"context"
+
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -28,7 +30,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -64,6 +68,14 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
+	if controllerutil.IsClusterVersionBefore1_9(client) {
+		return listPodByExtensions(client, namespaceName, name, options)
+	}
+
+	return listPodByApps(client, namespaceName, name, options)
+}
+
+func listPodByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("deployments/pods"), name)
@@ -102,6 +114,47 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 			}
 		}
 	}
+	return podList, nil
+}
 
+func listPodByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.AppsV1().Deployments(namespaceName).Get(name, *options)
+	if err != nil {
+		return nil, errors.NewNotFound(appsv1.Resource("deployments/pods"), name)
+	}
+
+	selector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
+	if err != nil {
+		return nil, errors.NewInternalError(err)
+	}
+
+	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
+	rsList, err := client.AppsV1().ReplicaSets(namespaceName).List(listOptions)
+	if err != nil {
+		return nil, errors.NewInternalError(err)
+	}
+
+	// list all of the pod, by deployment labels
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	if err != nil {
+		return nil, errors.NewInternalError(err)
+	}
+
+	podList := &corev1.PodList{
+		Items: make([]corev1.Pod, 0),
+	}
+	for _, rs := range rsList.Items {
+		for _, references := range rs.ObjectMeta.OwnerReferences {
+			if (references.Kind == "Deployment") && (references.Name == name) {
+				for _, value := range podAllList.Items {
+					for _, podReferences := range value.ObjectMeta.OwnerReferences {
+						if (podReferences.Kind == "ReplicaSet") && (podReferences.Name == rs.Name) {
+							podList.Items = append(podList.Items, value)
+						}
+					}
+				}
+			}
+		}
+	}
 	return podList, nil
 }
