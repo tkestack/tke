@@ -1511,7 +1511,6 @@ func (t *TKE) installTKEAuthAPI() error {
 		"Image":            images.Get().TKEAuthAPI.FullName(),
 		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
 		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
-		"AdminPassword":    string(t.Para.Config.Auth.TKEAuth.Password),
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
 	}

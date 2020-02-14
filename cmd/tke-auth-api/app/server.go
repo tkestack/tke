@@ -69,9 +69,6 @@ func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 			APIKeyAuthn:             cfg.APIKeyAuthn,
 			Authorizer:              cfg.Authorizer,
 			CasbinReloadInterval:    cfg.CasbinReloadInterval,
-			TenantID:                cfg.TenantID,
-			TenantAdmin:             cfg.TenantAdmin,
-			TenantAdminSecret:       cfg.TenantAdminSecret,
 			PrivilegedUsername:      cfg.PrivilegedUsername,
 		},
 	}

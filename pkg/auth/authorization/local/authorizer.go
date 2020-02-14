@@ -42,7 +42,6 @@ var (
 // Authorizer implement the authorize interface that use local repository to
 // authorize the subject access review.
 type Authorizer struct {
-	tenantAdmin        string
 	privilegedUsername string
 
 	authClient authinternalclient.AuthInterface
@@ -50,9 +49,8 @@ type Authorizer struct {
 }
 
 // NewAuthorizer creates a local repository authorizer and returns it.
-func NewAuthorizer(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, tenantAdmin string, privilegedUsername string) *Authorizer {
+func NewAuthorizer(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, privilegedUsername string) *Authorizer {
 	return &Authorizer{
-		tenantAdmin:        tenantAdmin,
 		privilegedUsername: privilegedUsername,
 		authClient:         authClient,
 		enforcer:           enforcer,
@@ -83,8 +81,8 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		}
 	}
 
-	// First check if user is tenantAdmin or privileged
-	if subject == a.tenantAdmin || subject == a.privilegedUsername {
+	// First check if user is privileged
+	if subject == a.privilegedUsername {
 		return authorizer.DecisionAllow, "", nil
 	}
 

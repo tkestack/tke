@@ -186,7 +186,8 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
       "servers": ["http://127.0.0.1:2379"]
     },
     "authentication": {
-      "token_auth_file": "_debug/token.csv"
+      "token_auth_file": "_debug/token.csv",
+      "privileged_username": "admin"
     },
     "generic": {
       "external_hostname": "localhost",
@@ -194,8 +195,6 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
     },
     "auth": {
       "assets_path": "./pkg/auth/web",
-      "tenant_admin": "admin",
-      "tenant_admin_secret": "secret",
       "init_client_id": "client",
       "init_client_secret": "secret",
       "init_client_redirect_uris": [
