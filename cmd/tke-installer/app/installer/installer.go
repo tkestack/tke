@@ -726,7 +726,9 @@ func (t *TKE) SetConfigDefault(config *Config) {
 	}
 
 	if config.Registry.TKERegistry != nil {
-		config.Registry.TKERegistry.Domain = "registry.tke.com"
+		if config.Registry.TKERegistry.Domain == "" {
+			config.Registry.TKERegistry.Domain = "registry.tke.com"
+		}
 		config.Registry.TKERegistry.Namespace = "library"
 		config.Registry.TKERegistry.Username = config.Basic.Username
 		config.Registry.TKERegistry.Password = config.Basic.Password
