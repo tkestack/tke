@@ -104,6 +104,7 @@ data:
     [authentication]
     token_auth_file = "/app/certs/token.csv"
     client_ca_file = "/app/certs/ca.crt"
+    privileged_username = "{{ .AdminUsername }}"
 
       [authentication.requestheader]
       client_ca_file = "/app/certs/ca.crt"
@@ -112,8 +113,6 @@ data:
 
     [auth]
     assets_path = "/app/web/auth"
-    tenant_admin = "{{ .AdminUsername }}"
-    tenant_admin_secret = "{{ .AdminPassword }}"
     init_client_id = "{{ .TenantID }}"
     init_client_secret = "{{ .OIDCClientSecret }}"
     init_client_redirect_uris = [

@@ -36,8 +36,6 @@ const (
 	flagAuthInitTenantID           = "init-tenant-id"
 	flagAuthInitIDPAdmins          = "init-idp-administrators"
 	flagAuthLDAPConfigFile         = "ldap-config-file"
-	flagAuthTenantAdmin            = "tenant-admin"
-	flagAuthTenantAdminSecret      = "tenant-admin-secret"
 	flagAuthInitClientID           = "init-client-id"
 	flagAuthInitClientSecret       = "init-client-secret"
 	flagAuthInitClientRedirectUris = "init-client-redirect-uris"
@@ -50,8 +48,6 @@ const (
 	configAuthInitTenantID           = "auth.init_tenant_id"
 	configAuthInitIDPAdmins          = "auth.init_idp_administrators"
 	configAuthLDAPConfigFile         = "auth.ldap_config_file"
-	configAuthTenantAdmin            = "auth.tenant_admin"
-	configAuthTenantAdminSecret      = "auth.tenant_admin_secret"
 	configAuthInitClientID           = "auth.init_client_id"
 	configAuthInitClientSecret       = "auth.init_client_secret"
 	configAuthInitClientRedirectUris = "auth.init_client_redirect_uris"
@@ -65,8 +61,6 @@ type AuthOptions struct {
 	InitTenantID           string
 	InitIDPAdmins          []string
 	LdapConfigFile         string
-	TenantAdmin            string
-	TenantAdminSecret      string
 	InitClientID           string
 	InitClientSecret       string
 	InitClientRedirectUris []string
@@ -108,14 +102,6 @@ func (o *AuthOptions) AddFlags(fs *pflag.FlagSet) {
 		"Config file path for ldap ldap, must specify if init-tenant-type is ldap.")
 	_ = viper.BindPFlag(configAuthLDAPConfigFile, fs.Lookup(flagAuthLDAPConfigFile))
 
-	fs.String(flagAuthTenantAdmin, o.TenantAdmin,
-		"Default tenant admin name for local tke identity provider will be created when started.")
-	_ = viper.BindPFlag(configAuthTenantAdmin, fs.Lookup(flagAuthTenantAdmin))
-
-	fs.String(flagAuthTenantAdminSecret, o.TenantAdminSecret,
-		"Password for default tenant admin login.")
-	_ = viper.BindPFlag(configAuthTenantAdminSecret, fs.Lookup(flagAuthTenantAdminSecret))
-
 	fs.String(flagAuthInitClientID, o.InitClientID,
 		"Default client id will be created when started.")
 	_ = viper.BindPFlag(configAuthInitClientID, fs.Lookup(flagAuthInitClientID))
@@ -153,12 +139,6 @@ func (o *AuthOptions) ApplyFlags() []error {
 	}
 
 	o.InitIDPAdmins = viper.GetStringSlice(configAuthInitIDPAdmins)
-
-	o.TenantAdmin = viper.GetString(configAuthTenantAdmin)
-	o.TenantAdminSecret = viper.GetString(configAuthTenantAdminSecret)
-	if len(o.TenantAdmin) == 0 || len(o.TenantAdminSecret) == 0 {
-		errs = append(errs, fmt.Errorf("--%s and --%s must be specified", flagAuthTenantAdmin, flagAuthTenantAdminSecret))
-	}
 
 	o.InitClientID = viper.GetString(configAuthInitClientID)
 	o.InitClientSecret = viper.GetString(configAuthInitClientSecret)
