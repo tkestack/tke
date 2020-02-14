@@ -881,7 +881,7 @@ func (t *TKE) ValidateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 	return nil
 }
 
-func (t *TKE) initProviderConfig() error {
+func (t *TKE) completeProviderConfigForRegistry() error {
 	c, err := baremetalconfig.New(pluginConfigFile)
 	if err != nil {
 		return err
@@ -1104,10 +1104,13 @@ func (t *TKE) prepareFrontProxyCertificates() error {
 }
 
 func (t *TKE) createGlobalCluster() error {
-	err := t.initProviderConfig()
-	if err != nil {
-		return err
+	if t.Para.Config.Registry.TKERegistry != nil {
+		err := t.completeProviderConfigForRegistry()
+		if err != nil {
+			return err
+		}
 	}
+
 	// do again like platform controller
 	t.completeWithProvider()
 
