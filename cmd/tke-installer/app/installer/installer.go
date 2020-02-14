@@ -889,11 +889,14 @@ func (t *TKE) completeProviderConfigForRegistry() error {
 		return err
 	}
 	c.Registry.Prefix = t.Para.Config.Registry.Prefix()
-	ip, err := util.GetExternalIP()
-	if err != nil {
-		return pkgerrors.Wrap(err, "get external ip error")
+
+	if t.Para.Config.Registry.TKERegistry != nil {
+		ip, err := util.GetExternalIP()
+		if err != nil {
+			return pkgerrors.Wrap(err, "get external ip error")
+		}
+		c.Registry.IP = ip
 	}
-	c.Registry.IP = ip
 
 	return c.Save(pluginConfigFile)
 }
@@ -1106,11 +1109,9 @@ func (t *TKE) prepareFrontProxyCertificates() error {
 }
 
 func (t *TKE) createGlobalCluster() error {
-	if t.Para.Config.Registry.TKERegistry != nil {
-		err := t.completeProviderConfigForRegistry()
-		if err != nil {
-			return err
-		}
+	err := t.completeProviderConfigForRegistry()
+	if err != nil {
+		return err
 	}
 
 	// do again like platform controller
