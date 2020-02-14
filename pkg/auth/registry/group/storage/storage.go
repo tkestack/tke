@@ -20,7 +20,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/casbin/casbin/v2"
 	"tkestack.io/tke/pkg/auth/util"
@@ -117,19 +116,19 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 	if tenantID == "" {
 		tenantID, _ = options.FieldSelector.RequiresExactMatch("spec.tenantID")
 		if tenantID == "" {
-			return nil, apierrors.NewBadRequest("List groups must specify tenantID")
+			return &auth.GroupList{}, nil
 		}
 	}
 	idp, ok := identityprovider.IdentityProvidersStore[tenantID]
 	if !ok {
 		log.Error("Tenant has no related identity providers", log.String("tenantID", tenantID))
-		return nil, apierrors.NewInternalError(fmt.Errorf("tenant %s has no related identity providers", tenantID))
+		return &auth.GroupList{}, nil
 	}
 
 	groupLister, ok := idp.(identityprovider.GroupLister)
 	if !ok {
 		log.Info("tenant %s related idp not implement UserLister interface", log.String("tenantID", tenantID))
-		return nil, apierrors.NewInternalError(fmt.Errorf("tenant must implement UserLister interface"))
+		return &auth.GroupList{}, nil
 	}
 
 	users, err := groupLister.ListGroups(ctx, options)

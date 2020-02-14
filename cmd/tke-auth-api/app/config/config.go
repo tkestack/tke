@@ -91,9 +91,6 @@ type Config struct {
 	APIKeyAuthn          *authenticator.APIKeyAuthenticator
 	Authorizer           authorizer.Authorizer
 	CasbinReloadInterval time.Duration
-	TenantID             string
-	TenantAdmin          string
-	TenantAdminSecret    string
 	PrivilegedUsername   string
 }
 
@@ -202,9 +199,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		TokenAuthn:                     tokenAuth,
 		APIKeyAuthn:                    apiKeyAuth,
 		Authorizer:                     aggregateAuthz,
-		TenantID:                       opts.Auth.InitTenantID,
-		TenantAdmin:                    opts.Auth.TenantAdmin,
-		TenantAdminSecret:              opts.Auth.TenantAdminSecret,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 		CasbinReloadInterval:           opts.Authorization.CasbinReloadInterval,
 	}, nil
@@ -384,7 +378,7 @@ func setupDefaultClient(store dexstorage.Storage, auth *options.AuthOptions) err
 		}
 
 		// Create a default connector
-		if err = store.CreateClient(cli); err != nil {
+		if err = store.CreateClient(cli); err != nil && err != dexstorage.ErrAlreadyExists {
 			return err
 		}
 	}

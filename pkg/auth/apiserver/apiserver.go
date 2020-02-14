@@ -77,9 +77,6 @@ type ExtraConfig struct {
 	APIKeyAuthn          *authenticator.APIKeyAuthenticator
 	Authorizer           authorizer.Authorizer
 	CasbinReloadInterval time.Duration
-	TenantID             string
-	TenantAdmin          string
-	TenantAdminSecret    string
 	PrivilegedUsername   string
 }
 
@@ -215,15 +212,13 @@ func (c completedConfig) registerHooks(dexHandler *identityprovider.DexHander, s
 
 	apiSigningKeyHook := authenticator.NewAPISigningKeyHookHandler(authClient)
 
-	identityHook := authenticator.NewAdminIdentityHookHandler(authClient, c.ExtraConfig.TenantID, c.ExtraConfig.TenantAdmin, c.ExtraConfig.TenantAdminSecret)
-
 	localIdpHook := local.NewLocalHookHandler(authClient, c.ExtraConfig.VersionedInformers)
 	ldapIdpHook := ldap.NewLdapHookHandler(authClient)
 
 	authVersionedClient := versionedclientset.NewForConfigOrDie(s.LoopbackClientConfig)
 	adapterHook := local2.NewAdapterHookHandler(authVersionedClient, c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.VersionedInformers, c.ExtraConfig.CasbinReloadInterval)
 
-	return []genericapiserver.PostStartHookProvider{dexHook, apiSigningKeyHook, identityHook, localIdpHook, ldapIdpHook, adapterHook}
+	return []genericapiserver.PostStartHookProvider{dexHook, apiSigningKeyHook, localIdpHook, ldapIdpHook, adapterHook}
 }
 
 // installCasbinPreStopHook is used to register preStop hook to stop casbin enforcer sync.

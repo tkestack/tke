@@ -55,7 +55,7 @@ func NewAuthorizer(authClient authinternalclient.AuthInterface, authorizationOpt
 		authorizers = append(authorizers, abacAuthorizer)
 	}
 
-	authorizers = append(authorizers, local.NewAuthorizer(authClient, enforcer, authOpts.TenantAdmin, privilegedUsername))
+	authorizers = append(authorizers, local.NewAuthorizer(authClient, enforcer, privilegedUsername))
 
 	return union.New(authorizers...), nil
 }

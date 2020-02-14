@@ -193,63 +193,63 @@ func getVariables(alert Alert) map[string]string {
 
 	alarmPolicyNameValue, ok := labels["alarmPolicyName"]
 	if !ok {
-		log.Errorf("The alarmPolicyName does not exist")
+		log.Infof("The alarmPolicyName does not exist")
 	}
 	alarmPolicyTypeValue, ok := annotations["alarmPolicyType"]
 	if !ok {
-		log.Errorf("The alarmPolicyType does not exist")
+		log.Infof("The alarmPolicyType does not exist")
 	}
 	valueValue, ok := annotations["value"]
 	if !ok {
-		log.Errorf("The value does not exist")
+		log.Infof("The value does not exist")
 	}
 	alertNameValue, ok := labels["alertname"]
 	if !ok {
-		log.Errorf("The alertname does not exist")
+		log.Infof("The alertname does not exist")
 	}
 	clusterIDValue, ok := labels["cluster_id"]
 	if !ok {
-		log.Errorf("The cluster_id does not exist")
+		log.Infof("The cluster_id does not exist")
 	}
 	workloadKindValue, ok := labels["workload_kind"]
 	if !ok {
-		log.Errorf("The workload_kind does not exist")
+		log.Infof("The workload_kind does not exist")
 	}
 	workloadNameValue, ok := labels["workload_name"]
 	if !ok {
-		log.Errorf("The workload_name does not exist")
+		log.Infof("The workload_name does not exist")
 	}
 	namespaceValue, ok := labels["namespace"]
 	if !ok {
-		log.Errorf("The namespace does not exist")
+		log.Infof("The namespace does not exist")
 	}
 	podNameValue, ok := labels["pod_name"]
 	if !ok {
-		log.Errorf("The pod_name does not exist")
+		log.Infof("The pod_name does not exist")
 	}
 	nodeNameValue, ok := labels["node_name"]
 	if !ok {
-		log.Errorf("The node_name does not exist")
+		log.Infof("The node_name does not exist")
 	}
 	nodeRoleValue, ok := labels["node_role"]
 	if !ok {
-		log.Errorf("The node_role does not exist")
+		log.Infof("The node_role does not exist")
 	}
 	unitValue, ok := annotations[unitKey]
 	if !ok {
-		log.Errorf("The unit does not exist")
+		log.Infof("The unit does not exist")
 	}
 	evaluateTypeValue, ok := annotations[evaluateTypeKey]
 	if !ok {
-		log.Errorf("The evaluateType does not exist")
+		log.Infof("The evaluateType does not exist")
 	}
 	evaluateValue, ok := annotations[evaluateValueKey]
 	if !ok {
-		log.Errorf("The evaluateValue does not exist")
+		log.Infof("The evaluateValue does not exist")
 	}
 	metricDisplayNameValue, ok := annotations[metricDisplayNameKey]
 	if !ok {
-		log.Errorf("The metricDisplayName does not exist")
+		log.Infof("The metricDisplayName does not exist")
 	}
 
 	variables[startsAtKey] = processStartTime(alert.StartsAt)

@@ -35,6 +35,8 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	"github.com/emicklei/go-restful"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -63,6 +65,7 @@ import (
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	baremetalimages "tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
@@ -88,9 +91,6 @@ const (
 	preInstallHook       = hooksDir + "/pre-install"
 	postClusterReadyHook = hooksDir + "/post-cluster-ready"
 	postInstallHook      = hooksDir + "/post-install"
-	postRookInstallHook  = hooksDir + "/post-rook-install"
-
-	RookDateDir = "/var/lib/rook"
 
 	registryDomain             = "docker.io"
 	registryNamespace          = "tkestack"
@@ -100,8 +100,6 @@ const (
 	localRegistryPort          = 5000
 	localRegistryContainerName = "tcr"
 	defaultTeantID             = "default"
-
-	k8sVersion = "1.14.6"
 )
 
 // ClusterResource is the REST layer to the Cluster domain
@@ -139,7 +137,6 @@ type Config struct {
 	Monitor  *Monitor  `json:"monitor,omitempty"`
 	HA       *HA       `json:"ha,omitempty"`
 	Gateway  *Gateway  `json:"gateway,omitempty"`
-	Rook     *Rook     `json:"rook,omitempty"`
 }
 
 type Basic struct {
@@ -168,12 +165,6 @@ type OIDCAuth struct {
 type Registry struct {
 	TKERegistry        *TKERegistry        `json:"tke,omitempty"`
 	ThirdPartyRegistry *ThirdPartyRegistry `json:"thirdParty,omitempty"`
-}
-
-type Rook struct {
-	DataPath     string `json:"datapath,omitempty"`
-	PoolReplica  string `json:"poolReplica,omitempty"`
-	InfluxdbSize string `json:"influxdbSize,omitempty"`
 }
 
 func (r *Registry) UseDevRegistry() bool {
@@ -405,6 +396,10 @@ func (t *TKE) initSteps() {
 			Func: t.createGlobalCluster,
 		},
 		{
+			Name: "Write kubeconfig",
+			Func: t.writeKubeconfig,
+		},
+		{
 			Name: "Execute post deploy hook",
 			Func: t.postClusterReadyHook,
 		},
@@ -425,27 +420,6 @@ func (t *TKE) initSteps() {
 			Func: t.installETCD,
 		},
 	}...)
-
-	if t.Para.Config.Rook != nil {
-		t.steps = append(t.steps, []handler{
-			{
-				Name: "Write kubeconfig",
-				Func: t.writeKubeconfig,
-			},
-			{
-				Name: "preInstall Rook",
-				Func: t.preinstallRook,
-			},
-			{
-				Name: "Install Rook Operator",
-				Func: t.installRookOperator,
-			},
-			{
-				Name: "postInstall Rook",
-				Func: t.postinstallRook,
-			},
-		}...)
-	}
 
 	if t.Para.Config.Auth.TKEAuth != nil {
 		t.steps = append(t.steps, []handler{
@@ -571,10 +545,6 @@ func (t *TKE) initSteps() {
 	}
 
 	t.steps = append(t.steps, []handler{
-		{
-			Name: "Write kubeconfig",
-			Func: t.writeKubeconfig,
-		},
 		{
 			Name: "Execute post deploy hook",
 			Func: t.postInstallHook,
@@ -717,6 +687,21 @@ func (t *TKE) prepare() errors.APIStatus {
 		return errors.NewInternalError(err)
 	}
 	allErrs := t.strategy.Validate(ctx, platformCluster)
+
+	// ensure installer's machine not in target machines
+	installerIP, err := util.GetExternalIP()
+	if err != nil {
+		return errors.NewInternalError(pkgerrors.Wrap(err, "get ip of installer machine error"))
+	}
+	for i, one := range platformCluster.Spec.Machines {
+		if one.IP == installerIP {
+			allErrs = append(allErrs, field.Invalid(
+				field.NewPath("spec", "machines").Index(i).Child("ip"),
+				one.IP,
+				"target machines can't use one which runs installer"))
+			break
+		}
+	}
 	if len(allErrs) > 0 {
 		return errors.NewInvalid(kinds[0].GroupKind(), v1Cluster.GetName(), allErrs)
 	}
@@ -741,6 +726,9 @@ func (t *TKE) SetConfigDefault(config *Config) {
 	}
 
 	if config.Registry.TKERegistry != nil {
+		if config.Registry.TKERegistry.Domain == "" {
+			config.Registry.TKERegistry.Domain = "registry.tke.com"
+		}
 		config.Registry.TKERegistry.Namespace = "library"
 		config.Registry.TKERegistry.Username = config.Basic.Username
 		config.Registry.TKERegistry.Password = config.Basic.Password
@@ -776,7 +764,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
-	cluster.Spec.Version = k8sVersion
+	cluster.Spec.Version = baremetalimages.K8sVersions[len(baremetalimages.K8sVersions)-1] // use newest version
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
@@ -844,8 +832,10 @@ func (t *TKE) ValidateConfig(config Config) *errors.StatusError {
 		}
 	}
 
-	if config.Monitor.InfluxDBMonitor != nil && config.Monitor.ESMonitor != nil {
-		return errors.NewBadRequest("influxdb or es only had one")
+	if config.Monitor != nil {
+		if config.Monitor.InfluxDBMonitor != nil && config.Monitor.ESMonitor != nil {
+			return errors.NewBadRequest("influxdb or es only had one")
+		}
 	}
 
 	var dnsNames []string
@@ -893,7 +883,7 @@ func (t *TKE) ValidateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 	return nil
 }
 
-func (t *TKE) initProviderConfig() error {
+func (t *TKE) completeProviderConfigForRegistry() error {
 	c, err := baremetalconfig.New(pluginConfigFile)
 	if err != nil {
 		return err
@@ -910,6 +900,9 @@ func (t *TKE) initProviderConfig() error {
 
 func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 	apiStatus := func() errors.APIStatus {
+		if t.Step != 0 {
+			return errors.NewAlreadyExists(platformv1.Resource("Cluster"), "global")
+		}
 		err := req.ReadEntity(t.Para)
 		if err != nil {
 			return errors.NewBadRequest(err.Error())
@@ -1113,10 +1106,13 @@ func (t *TKE) prepareFrontProxyCertificates() error {
 }
 
 func (t *TKE) createGlobalCluster() error {
-	err := t.initProviderConfig()
-	if err != nil {
-		return err
+	if t.Para.Config.Registry.TKERegistry != nil {
+		err := t.completeProviderConfigForRegistry()
+		if err != nil {
+			return err
+		}
 	}
+
 	// do again like platform controller
 	t.completeWithProvider()
 
@@ -1520,7 +1516,6 @@ func (t *TKE) installTKEAuthAPI() error {
 		"Image":            images.Get().TKEAuthAPI.FullName(),
 		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
 		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
-		"AdminPassword":    string(t.Para.Config.Auth.TKEAuth.Password),
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
 	}
@@ -1683,88 +1678,12 @@ func (t *TKE) installTKEBusinessController() error {
 	})
 }
 
-func (t *TKE) preinstallRook() error {
-	t.log.Printf("Execute pre Rook script")
-	cmd := exec.Command("kubectl", "apply", "-f", "manifests/rook/common.yaml")
-	cmd.Stdout = t.log.Writer()
-	cmd.Stderr = t.log.Writer()
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *TKE) installRookOperator() error {
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/rook/operator.yaml",
-		map[string]interface{}{
-			"CSIImage":            images.Get().CSI.FullName(),
-			"CSIRegistrarImage":   images.Get().CSIRegistrar.FullName(),
-			"CSIProvisionerImage": images.Get().CSIProvisioner.FullName(),
-			"CSISnapshotterImage": images.Get().CSISnapshotter.FullName(),
-			"CSIAttacherImage":    images.Get().CSIAttacher.FullName(),
-			"CephImage":           images.Get().Ceph.FullName(),
-			"RookImage":           images.Get().Rook.FullName(),
-		})
-	if err != nil {
-		return err
-	}
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDaemonset(t.globalClient, "rook-ceph", "rook-discover")
-		if err != nil {
-			return false, nil
-		}
-		return ok, nil
-	})
-}
-
-func (t *TKE) postinstallRook() error {
-	t.log.Printf("Execute Rook hook script %s", postRookInstallHook)
-	params := map[string]string{
-		"DataPath":    t.Para.Config.Rook.DataPath,
-		"PoolReplica": t.Para.Config.Rook.PoolReplica,
-	}
-	if params["DataPath"] == "" {
-		params["DataPath"] = RookDateDir
-	}
-	if params["PoolReplica"] == "" {
-		params["PoolReplica"] = "1"
-	}
-
-	cmd := exec.Command(postRookInstallHook,
-		images.Get().Ceph.FullName(),
-		params["DataPath"],
-		params["PoolReplica"])
-	cmd.Stdout = t.log.Writer()
-	cmd.Stderr = t.log.Writer()
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, "rook-ceph", "csi-rbdplugin-provisioner")
-		if err != nil {
-			return false, nil
-		}
-		return ok, nil
-	})
-}
-
 func (t *TKE) installInfluxDB() error {
-	params := map[string]interface{}{
-		"Image":      images.Get().InfluxDB.FullName(),
-		"NodeName":   t.servers[0],
-		"EnableRook": t.Para.Config.Rook != nil,
-	}
-	if t.Para.Config.Rook != nil {
-		if t.Para.Config.Rook.InfluxdbSize == "" {
-			params["InfluxdbSize"] = "10Gi"
-		} else {
-			params["InfluxdbSize"] = t.Para.Config.Rook.InfluxdbSize
-		}
-	}
-
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/influxdb/*.yaml", params)
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/influxdb/*.yaml",
+		map[string]interface{}{
+			"Image":    images.Get().InfluxDB.FullName(),
+			"NodeName": t.servers[0],
+		})
 	if err != nil {
 		return err
 	}
@@ -1975,6 +1894,9 @@ func (t *TKE) registerAPI() error {
 	}
 
 	svcs := []string{"tke-platform-api"}
+	if t.Para.Config.Auth.TKEAuth != nil {
+		svcs = append(svcs, "tke-auth-api")
+	}
 	if t.Para.Config.Business != nil {
 		svcs = append(svcs, "tke-business-api")
 	}

@@ -65,10 +65,10 @@ data:
     [client]
 
       [client.notify]
-      api_server = "https://tke-platform-api"
-      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+      api_server = "https://tke-notify-api"
+      api_server_client_config = "/app/conf/tke-notify-api-config.yaml"
 
-  tke-platform-config.yaml: |
+  tke-notify-api-config.yaml: |
     apiVersion: v1
     kind: Config
     clusters:

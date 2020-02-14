@@ -19,10 +19,7 @@
 package options
 
 import (
-	"fmt"
-
 	"github.com/spf13/pflag"
-	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -48,11 +45,7 @@ func NewOptions(serverName string) *Options {
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Log.AddFlags(fs)
 
-	ip, err := util.GetExternalIP()
-	if err != nil {
-		panic(err)
-	}
-	o.ListenAddr = fs.String("listen-addr", fmt.Sprintf("%s:8080", ip), "listen addr")
+	o.ListenAddr = fs.String("listen-addr", ":8080", "listen addr")
 	o.NoUI = fs.Bool("no-ui", false, "run without web")
 	o.Config = fs.String("input", "conf/tke.json", "specify input file")
 	o.Force = fs.Bool("force", false, "force run as clean")
