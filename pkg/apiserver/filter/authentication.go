@@ -131,7 +131,7 @@ func WithAuthentication(handler http.Handler, auth authenticator.Request, failed
 		}
 
 		// authorization header is not required anymore in case of a successful authentication.
-		req.Header.Del("Authorization")
+		// req.Header.Del("Authorization")
 
 		req = req.WithContext(genericapirequest.WithUser(req.Context(), resp.User))
 
