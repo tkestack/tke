@@ -24,8 +24,12 @@ REGISTRY_PREFIX=${REGISTRY_PREFIX:-tkestack}
 BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
 INSTALLER=tke-installer-x86_64-$VERSION.run
-PROVIDER_RES_VERSION=v1.16.6-1
+PROVIDER_RES_VERSION=v1.16.6-2
 K8S_VERION=${PROVIDER_RES_VERSION%-*}
+DOCKER_VERSION=18.09.9
+TARGET_OS=linux
+TARGET_ARCH=amd64
+TARGET_PLATFORM=${TARGET_OS}-${TARGET_ARCH}
 OUTPUT_DIR=_output
 DST_DIR=$(mktemp -d)
 #DST_DIR="/var/folders/20/n4jpmhjs0hd9hjxg80yr2nww0000gn/T/tmp.uN71o6ID"
@@ -58,10 +62,10 @@ function prepare_tke_installer() {
 
   ls -l "$DST_DIR"
 
-  curl -L https://storage.googleapis.com/kubernetes-release/release/"$K8S_VERION"/bin/linux/amd64/kubectl -o "$DST_DIR"/bin/kubectl
+  curl -L https://storage.googleapis.com/kubernetes-release/release/"$K8S_VERION"/bin/${TARGET_OS}/${TARGET_ARCH}/kubectl -o "$DST_DIR"/bin/kubectl
   chmod +x "$DST_DIR"/bin/kubectl
 
-  cp -v "$OUTPUT_DIR"/linux/amd64/tke-installer "$DST_DIR"/bin
+  cp -v "$OUTPUT_DIR"/${TARGET_OS}/${TARGET_ARCH}/tke-installer "$DST_DIR"/bin
   cp -rv cmd/tke-installer/app/installer/manifests "$DST_DIR"
   cp -rv cmd/tke-installer/app/installer/hooks "$DST_DIR"
   cp -rv "$SCRIPT_DIR"/certs "$DST_DIR"
@@ -78,7 +82,8 @@ function build_installer() {
     mkdir -p $installer_dir/res
 
     cp -v build/docker/tools/tke-installer/{build.sh,init_installer.sh,install.sh} $installer_dir/
-    cp -v "$DST_DIR"/provider/baremetal/res/docker-18.09.9.tgz $installer_dir/res/docker.tgz
+    cp -v "$DST_DIR"/provider/baremetal/res/${TARGET_PLATFORM}/docker-${TARGET_PLATFORM}-${DOCKER_VERSION}.tar.gz \
+          $installer_dir/res/docker.tgz
     cp -v pkg/platform/provider/baremetal/conf/docker/docker.service $installer_dir/res/
     docker save $REGISTRY_PREFIX/tke-installer:$VERSION | gzip -c > $installer_dir/res/tke-installer.tgz
 
@@ -131,7 +136,7 @@ while getopts "hq" o; do
 done
 shift $((OPTIND-1))
 
-make build BINS="tke-installer" OS=linux ARCH=amd64 VERSION="$VERSION"
+make build BINS="tke-installer" OS=${TARGET_OS} ARCH=${TARGET_ARCH} VERSION="$VERSION"
 
 prepare_baremetal_provider
 prepare_tke_installer
