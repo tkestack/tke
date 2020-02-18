@@ -14,7 +14,7 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-VERSION = v1.16.6-1
+VERSION = v1.16.6-2
 REGISTRY_PREFIX ?= tkestack
 
 TEMP_DIR:=$(shell mktemp -d)
