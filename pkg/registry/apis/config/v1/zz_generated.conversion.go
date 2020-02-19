@@ -283,6 +283,7 @@ func autoConvert_v1_Security_To_config_Security(in *Security, out *config.Securi
 	out.HTTPSecret = in.HTTPSecret
 	out.AdminUsername = in.AdminUsername
 	out.AdminPassword = in.AdminPassword
+	out.EnableAnonymous = (*bool)(unsafe.Pointer(in.EnableAnonymous))
 	return nil
 }
 
@@ -298,6 +299,7 @@ func autoConvert_config_Security_To_v1_Security(in *config.Security, out *Securi
 	out.HTTPSecret = in.HTTPSecret
 	out.AdminUsername = in.AdminUsername
 	out.AdminPassword = in.AdminPassword
+	out.EnableAnonymous = (*bool)(unsafe.Pointer(in.EnableAnonymous))
 	return nil
 }
 

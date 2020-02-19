@@ -20,12 +20,13 @@ package distribution
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/docker/distribution/configuration"
 	"github.com/docker/distribution/registry/handlers"
 	"k8s.io/apiserver/pkg/server/mux"
 	restclient "k8s.io/client-go/rest"
-	"net/http"
-	"time"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	"tkestack.io/tke/pkg/registry/distribution/auth"
 	rcontext "tkestack.io/tke/pkg/registry/distribution/context"
@@ -169,14 +170,16 @@ func buildNotificationsConfiguration(opts *Options) ([]configuration.Endpoint, e
 
 func buildAuthConfiguration(opts *Options) map[string]configuration.Parameters {
 	authConfig := make(map[string]configuration.Parameters)
-	authParams := map[string]interface{}{
-		"issuer":         auth.Issuer,
-		"service":        auth.Service,
-		"scheme":         opts.ExternalScheme,
-		"authpath":       auth.Path,
-		"rootcertbundle": opts.RegistryConfig.Security.TokenPublicKeyFile,
+	if opts.RegistryConfig.Security.EnableAnonymous == nil || !*opts.RegistryConfig.Security.EnableAnonymous {
+		authParams := map[string]interface{}{
+			"issuer":         auth.Issuer,
+			"service":        auth.Service,
+			"scheme":         opts.ExternalScheme,
+			"authpath":       auth.Path,
+			"rootcertbundle": opts.RegistryConfig.Security.TokenPublicKeyFile,
+		}
+		authConfig["tkestack"] = authParams
 	}
-	authConfig["tkestack"] = authParams
 	return authConfig
 }
 
