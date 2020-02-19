@@ -60,6 +60,21 @@ func ValidateMonitorConfiguration(mc *monitorconfig.MonitorConfiguration) error 
 		}
 	}
 
+	if mc.Storage.Thanos != nil {
+		storageCount++
+
+		thanosFld := fld.Child("thanos")
+		if len(mc.Storage.Thanos.Servers) == 0 {
+			allErrors = append(allErrors, field.Required(thanosFld.Child("servers"), ""))
+		} else {
+			for index, v := range mc.Storage.Thanos.Servers {
+				if v.Address == "" {
+					allErrors = append(allErrors, field.Required(thanosFld.Child("servers").Index(index).Child("address"), "must be specify"))
+				}
+			}
+		}
+	}
+
 	if storageCount == 0 {
 		allErrors = append(allErrors, field.Required(fld, "at least 1 storage is required"))
 	} else if storageCount > 1 {

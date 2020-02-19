@@ -138,10 +138,15 @@ type influxdbClient struct {
 	client  influxApi.Client
 }
 
-// more client will be added, now just influxdb
+type thanosClient struct {
+	address string
+}
+
+// more client will be added, now support influxdb, es and thanos
 type remoteClient struct {
 	influxdb *influxdbClient
 	es       *esutil.Client
+	thanos   *thanosClient
 }
 
 // Controller is responsible for performing actions dependent upon a prometheus phase.
@@ -224,6 +229,13 @@ func NewController(client clientset.Interface, prometheusInformer platformv1info
 				remoteClient.es.URL = remoteAddr
 			} else {
 				remoteClient.es = &client
+			}
+			controller.remoteClients = append(controller.remoteClients, remoteClient)
+		}
+	case "thanos":
+		for _, remoteAddr := range remoteAddress {
+			remoteClient := remoteClient{
+				thanos: &thanosClient{address: remoteAddr},
 			}
 			controller.remoteClients = append(controller.remoteClients, remoteClient)
 		}
@@ -580,17 +592,24 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 
 	// Set remote write address
 	var remoteWrites []string
-	if c.remoteType == "influxdb" {
+	switch c.remoteType {
+	case "influxdb":
 		remoteWrites, err = c.initInfluxdb(cluster.Name)
 		if err != nil {
 			return err
 		}
-	} else if c.remoteType == "elasticsearch" {
+	case "elasticsearch":
 		remoteWrites, err = c.initESAdapter(kubeClient, components)
 		if err != nil {
 			return err
 		}
 		prometheus.Status.SubVersion[PrometheusBeatService] = components.PrometheusBeatWorkLoad.Tag
+	case "thanos":
+		remoteWrites, err = c.initThanos()
+		if err != nil {
+			return err
+		}
+	default:
 	}
 
 	if len(prometheus.Spec.RemoteAddress.WriteAddr) > 0 {
@@ -1055,7 +1074,8 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 		rw := monitoringv1.RemoteWriteSpec{
 			URL: w,
 		}
-		if remoteType == "influxdb" {
+		switch remoteType {
+		case "influxdb":
 			if strings.Contains(w, "db=projects") {
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
@@ -1087,7 +1107,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 					BatchSendDeadline: "30s",
 				}
 			}
-		} else {
+		case "elasticsearch":
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
@@ -1102,6 +1122,23 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 				MaxSamplesPerSend: 1000,
 				BatchSendDeadline: "30s",
 			}
+		case "thanos":
+			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
+				{
+					SourceLabels: []string{"__name__"},
+					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Action:       "keep",
+				},
+			}
+			rw.QueueConfig = &monitoringv1.QueueConfig{
+				Capacity:          10000,
+				MinShards:         1000,
+				MaxShards:         1000,
+				MaxSamplesPerSend: 1000,
+				BatchSendDeadline: "30s",
+			}
+		default:
+			log.Warnf("unknown remoteType %s", remoteType)
 		}
 
 		remoteWriteSpecs = append(remoteWriteSpecs, rw)
@@ -2397,5 +2434,14 @@ func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components 
 		return remoteWrites, err
 	}
 	remoteWrites = append(remoteWrites, fmt.Sprintf("http://%s:%d/prometheus", svc.Name, 8080))
+	return remoteWrites, nil
+}
+
+func (c *Controller) initThanos() ([]string, error) {
+	var remoteWrites []string
+	for _, client := range c.remoteClients {
+		remoteWrites = append(remoteWrites, fmt.Sprintf("%s/api/v1/receive", client.thanos.address))
+	}
+
 	return remoteWrites, nil
 }
