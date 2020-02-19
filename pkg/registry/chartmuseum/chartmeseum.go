@@ -21,6 +21,10 @@ package chartmuseum
 import (
 	"crypto/tls"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -38,9 +42,6 @@ import (
 	"helm.sh/chartmuseum/pkg/chartmuseum/server/multitenant"
 	"k8s.io/apiserver/pkg/server/mux"
 	restclient "k8s.io/client-go/rest"
-	"net/http"
-	"net/url"
-	"strings"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	"tkestack.io/tke/pkg/registry/chartmuseum/authentication"
 	"tkestack.io/tke/pkg/registry/chartmuseum/authorization"
@@ -87,25 +88,27 @@ func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 	}
 
 	// add handler chain
-	var chainErr error
 	var handler http.Handler
-	handler, chainErr = authorization.WithAuthorization(multiTenantServer.Router, &authorization.Options{
-		AdminUsername:  opts.RegistryConfig.Security.AdminUsername,
-		ExternalScheme: opts.ExternalScheme,
-		LoopbackConfig: opts.LoopbackClientConfig,
-	})
-	if chainErr != nil {
-		return chainErr
-	}
-	handler, chainErr = authentication.WithAuthentication(handler, &authentication.Options{
-		SecurityConfig:  &opts.RegistryConfig.Security,
-		ExternalScheme:  opts.ExternalScheme,
-		OIDCIssuerURL:   opts.OIDCIssuerURL,
-		OIDCCAFile:      opts.OIDCCAFile,
-		TokenReviewPath: opts.OIDCTokenReviewPath,
-	})
-	if chainErr != nil {
-		return chainErr
+	if opts.RegistryConfig.Security.EnableAnonymous == nil || !*opts.RegistryConfig.Security.EnableAnonymous {
+		var chainErr error
+		handler, chainErr = authorization.WithAuthorization(multiTenantServer.Router, &authorization.Options{
+			AdminUsername:  opts.RegistryConfig.Security.AdminUsername,
+			ExternalScheme: opts.ExternalScheme,
+			LoopbackConfig: opts.LoopbackClientConfig,
+		})
+		if chainErr != nil {
+			return chainErr
+		}
+		handler, chainErr = authentication.WithAuthentication(handler, &authentication.Options{
+			SecurityConfig:  &opts.RegistryConfig.Security,
+			ExternalScheme:  opts.ExternalScheme,
+			OIDCIssuerURL:   opts.OIDCIssuerURL,
+			OIDCCAFile:      opts.OIDCCAFile,
+			TokenReviewPath: opts.OIDCTokenReviewPath,
+		})
+		if chainErr != nil {
+			return chainErr
+		}
 	}
 	handler = tenant.WithTenant(handler, PathPrefix, opts.RegistryConfig.DomainSuffix, opts.RegistryConfig.DefaultTenant)
 	handler = request.WithRequestID(handler)

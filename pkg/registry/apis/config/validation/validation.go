@@ -68,6 +68,14 @@ func ValidateRegistryConfiguration(rc *registryconfig.RegistryConfiguration) err
 	if rc.Security.TokenPublicKeyFile == "" {
 		allErrors = append(allErrors, field.Required(securityFld.Child("tokenPublicKeyFile"), "must be specify"))
 	}
+	if rc.Security.EnableAnonymous == nil || !*rc.Security.EnableAnonymous {
+		if rc.Security.AdminUsername == "" {
+			allErrors = append(allErrors, field.Required(securityFld.Child("adminUsername"), "must be specify"))
+		}
+		if rc.Security.AdminPassword == "" {
+			allErrors = append(allErrors, field.Required(securityFld.Child("adminPassword"), "must be specify"))
+		}
+	}
 
 	if rc.DefaultTenant == "" {
 		allErrors = append(allErrors, field.Required(field.NewPath("defaultTenant"), "must be specify"))
