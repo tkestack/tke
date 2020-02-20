@@ -468,6 +468,11 @@ func crIPAM() *rbacv1.ClusterRole {
 				Resources: []string{"customresourcedefinitions"},
 				Verbs:     []string{"*"},
 			},
+			{
+				APIGroups: []string{"apps.tkestack.io"},
+				Resources: []string{"tapps"},
+				Verbs:     []string{"list", "watch"},
+			},
 		},
 	}
 }
@@ -484,7 +489,7 @@ func deploymentIPAM(version string) *appsv1.Deployment {
 			Namespace: metav1.NamespaceSystem,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: int32Ptr(2),
+			Replicas: int32Ptr(1),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{"app": "galaxy-ipam"},
 			},
