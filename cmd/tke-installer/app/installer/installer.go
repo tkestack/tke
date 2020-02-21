@@ -1885,7 +1885,7 @@ func (t *TKE) preparePushImagesToTKERegistry() error {
 func (t *TKE) registerAPI() error {
 	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
 
-	restConfig, err := platformutil.GetRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
+	restConfig, err := platformutil.GetExternalRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}
@@ -1958,7 +1958,7 @@ func (t *TKE) registerAPI() error {
 }
 
 func (t *TKE) importResource() error {
-	restConfig, err := platformutil.GetRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
+	restConfig, err := platformutil.GetExternalRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}
