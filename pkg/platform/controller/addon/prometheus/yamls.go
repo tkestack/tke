@@ -74,6 +74,12 @@ func scrapeConfigForPrometheus() string {
       - source_labels: [ __name__ ]
         regex: 'container_fs_writes_bytes_total|container_fs_reads_bytes_total|container_fs_writes_total|container_fs_reads_total|container_cpu_usage_seconds_total|container_memory_usage_bytes|container_memory_cache|container_network_receive_bytes_total|container_network_transmit_bytes_total|container_network_receive_packets_total|container_network_transmit_packets_total'
         action: keep
+      - source_labels: [container]
+        action: replace
+        target_label: container_name
+      - source_labels: [pod]
+        action: replace
+        target_label: pod_name
       - regex: (__name__|container_name|pod_name|namespace|cpu|interface|device)
         action: labelkeep
       - source_labels: [pod_name]
@@ -434,7 +440,7 @@ groups:
     expr: sum(kube_node_status_allocatable_gpu_memory * on(node) group_left kube_node_labels {node_role="Node"})
 
   - record: k8s_container_cpu_core_used
-    expr: sum(rate(container_cpu_usage_seconds_total[2m])) by (container_name, namespace, pod_name) * on(namespace, pod_name) group_left(workload_kind, workload_name, node, node_role)  __pod_info2
+    expr: sum(rate(container_cpu_usage_seconds_total[4m])) by (container_name, namespace, pod_name) * on(namespace, pod_name) group_left(workload_kind, workload_name, node, node_role)  __pod_info2
 
   - record: k8s_container_rate_cpu_core_used_request
     expr: k8s_container_cpu_core_used * 100 / on (pod_name,namespace,container_name)  group_left  kube_pod_container_resource_requests{resource="cpu"}
@@ -488,10 +494,10 @@ groups:
     expr: k8s_container_gpu_memory_used * 100 / on(node) group_left() kube_node_status_capacity_gpu_memory
 
   - record: k8s_container_network_receive_bytes_bw
-    expr: sum(rate(container_network_receive_bytes_total[2m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(rate(container_network_receive_bytes_total[4m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_network_transmit_bytes_bw
-    expr: sum(rate(container_network_transmit_bytes_total[2m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(rate(container_network_transmit_bytes_total[4m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_network_receive_bytes
     expr: sum(idelta(container_network_receive_bytes_total[2m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
@@ -500,22 +506,22 @@ groups:
     expr: sum(idelta(container_network_transmit_bytes_total[2m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_network_receive_packets
-    expr: sum(rate(container_network_receive_packets_total[2m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(rate(container_network_receive_packets_total[4m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_network_transmit_packets
-    expr: sum(rate(container_network_transmit_packets_total[2m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(rate(container_network_transmit_packets_total[4m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_fs_read_bytes
-    expr: sum(rate(container_fs_reads_bytes_total[2m])) without(device)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(rate(container_fs_reads_bytes_total[4m])) without(device)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_fs_write_bytes
-    expr: sum(rate(container_fs_writes_bytes_total[2m])) without(device)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(rate(container_fs_writes_bytes_total[4m])) without(device)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_fs_read_times
-    expr: sum(rate(container_fs_reads_total[2m])) without(device)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(rate(container_fs_reads_total[4m])) without(device)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_fs_write_times
-    expr: sum(rate(container_fs_writes_total[2m])) without(device)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(rate(container_fs_writes_total[4m])) without(device)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_pod_cpu_core_used
     expr: sum(k8s_container_cpu_core_used) without (container_name,container_id)
@@ -632,16 +638,16 @@ groups:
     expr: sum(k8s_pod_gpu_memory_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left() kube_node_status_capacity_gpu_memory
 
   - record: k8s_node_fs_write_bytes
-    expr: (sum by (node) (irate(node_disk_bytes_written[2m]))) *on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_bytes_written[4m]))) *on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_fs_read_bytes
-    expr: (sum by (node) (irate(node_disk_bytes_read[2m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_bytes_read[4m])))*on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_fs_write_times
-    expr: (sum by (node) (irate(node_disk_writes_completed[2m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_writes_completed[4m])))*on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_fs_read_times
-    expr: (sum by (node) (irate(node_disk_reads_completed[2m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_reads_completed[4m])))*on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_pod_num
     expr: count(k8s_pod_status_ready) without (pod_name,workload_kind,workload_name,namespace)
