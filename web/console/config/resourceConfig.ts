@@ -65,7 +65,8 @@ import {
   prometheus,
   logoutConfig,
   apiKey,
-  user
+  user,
+  cronhpa
 } from './resource/k8sConfig';
 import { serviceEntry } from './resource/k8sConfig/serviceEntry';
 import { ResourceInfo } from '../src/modules/common/models';
@@ -119,6 +120,7 @@ export const resourceConfig = (k8sVersion: string = '1.8'): ResourceConfigKey =>
     pvc: getResourceConfig(pvc, finalK8sVersion),
     sc: getResourceConfig(sc, finalK8sVersion),
     hpa: getResourceConfig(hpa, finalK8sVersion),
+    cronhpa: getResourceConfig(cronhpa, finalK8sVersion),
     node: getResourceConfig(node, finalK8sVersion),
     masteretcd: getResourceConfig(node, finalK8sVersion),
     pe: getResourceConfig(pe, finalK8sVersion),

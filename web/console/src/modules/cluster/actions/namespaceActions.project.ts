@@ -49,24 +49,16 @@ const queryNamespaceActions = generateQueryActionCreator({
 const restActions = {
   selectNamespace: (namespace: string) => {
     return async (dispatch, getState: GetState) => {
-      let {
-          subRoot,
-          route,
-          cluster: { selection },
-          projectNamespaceList
-        } = getState(),
+      let { subRoot, route, cluster, projectNamespaceList } = getState(),
         urlParams = router.resolve(route),
         { isNeedFetchNamespace, mode } = subRoot;
 
       let finder = projectNamespaceList.data.records.find(item => item.spec.namespace === namespace);
       if (finder) {
-        dispatch(
-          projectNamespaceActions.selectCluster({
-            metadata: { name: finder.spec.clusterName },
-            spec: { dispalyName: '-' },
-            status: {}
-          })
-        );
+        let clusterFinder = cluster.list.data.records.find(item => item.metadata.name === finder.spec.clusterName);
+        if (clusterFinder) {
+          dispatch(projectNamespaceActions.selectCluster(clusterFinder));
+        }
       }
 
       dispatch({

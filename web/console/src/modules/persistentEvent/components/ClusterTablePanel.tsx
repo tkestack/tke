@@ -220,7 +220,7 @@ export class ClusterTablePanel extends React.Component<RootProps, {}> {
   private _handleClickForCluster(cluster: Resource) {
     let { route } = this.props;
     let clusterId = cluster.metadata.name;
-    let navigatePath = `/tke/cluster/sub/list/basic/info?rid=${route.queries['rid']}&clusterId=${clusterId}`;
+    let navigatePath = `/tkestack/cluster/sub/list/basic/info?rid=${route.queries['rid']}&clusterId=${clusterId}`;
 
     // 进行路由的跳转
     routerSea.navigate(navigatePath);

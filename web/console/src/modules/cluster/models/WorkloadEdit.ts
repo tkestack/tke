@@ -101,6 +101,9 @@ export interface WorkloadEdit extends Identifiable {
   /** metrics */
   metrics?: HpaMetrics[];
 
+  /** cronhpa metrics */
+  cronMetrics?: CronMetrics[];
+
   /** 是否同时创建Service */
   isCreateService?: boolean;
 
@@ -190,6 +193,17 @@ export interface HpaMetrics extends Identifiable {
   /** 指标的值 */
   value?: string;
   v_value?: Validation;
+}
+
+/** CronMetrics */
+export interface CronMetrics extends Identifiable {
+  /** crontab */
+  crontab: string;
+  v_crontab: Validation;
+
+  /** targetReplicas */
+  targetReplicas: string;
+  v_targetReplicas: Validation;
 }
 
 /** workload的label的相关配置 */

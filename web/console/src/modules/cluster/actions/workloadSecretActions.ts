@@ -47,7 +47,6 @@ const restActions = {
   initImagePullSecrets: (secretList: Resource[]) => {
     return async (dispatch, getState: GetState) => {
       let imagePullSecrets: ImagePullSecrets[];
-      let finalList = secretList.filter(item => item.type === 'kubernetes.io/dockercfg');
 
       dispatch({
         type: ActionType.ImagePullSecrets,

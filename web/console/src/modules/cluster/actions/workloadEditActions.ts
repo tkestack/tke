@@ -1,6 +1,6 @@
-import { initmatchExpressions, initWorkloadAnnotataions } from './../constants/initState';
+import { initmatchExpressions, initWorkloadAnnotataions, initCronMetrics } from './../constants/initState';
 import { W_UpdateNodeAffinityRule } from './../constants/ActionType';
-import { MatchExpressions } from './../models/WorkloadEdit';
+import { MatchExpressions, CronMetrics } from './../models/WorkloadEdit';
 import { ReduxAction, uuid, extend } from '@tencent/qcloud-lib';
 import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import {
@@ -130,6 +130,55 @@ const hpaRestActions = {
 const hpaActions = extend({}, queryHpaActions, fetchHpaActions, hpaRestActions);
 /** ========== end 更新实例数量，拉取hpa的相关信息 ================= */
 
+/** ============================== start cronhpa的相关操作 ============================== */
+
+const cronHpaActions = {
+  /** 新增metric */
+  addMetric: () => {
+    return async (dispatc: Redux.Dispatch, getState: GetState) => {
+      let metricsArr: CronMetrics[] = cloneDeep(getState().subRoot.workloadEdit.cronMetrics);
+
+      metricsArr.push(Object.assign({}, initCronMetrics, { id: uuid() }));
+      dispatc({
+        type: ActionType.W_UpdateCronMetrics,
+        payload: metricsArr
+      });
+    };
+  },
+
+  /** 删除metric */
+  deleteMetric: (mId: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let metricsArr: HpaMetrics[] = cloneDeep(getState().subRoot.workloadEdit.cronMetrics),
+        mIndex = metricsArr.findIndex(item => item.id === mId);
+      metricsArr.splice(mIndex, 1);
+      dispatch({
+        type: ActionType.W_UpdateCronMetrics,
+        payload: metricsArr
+      });
+    };
+  },
+
+  /** 更新metric */
+  updateMetric: (obj: any, mId: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let metricsArr: HpaMetrics[] = cloneDeep(getState().subRoot.workloadEdit.cronMetrics),
+        mIndex = metricsArr.findIndex(item => item.id === mId),
+        objKeys = Object.keys(obj);
+
+      objKeys.forEach(item => {
+        metricsArr[mIndex][item] = obj[item];
+      });
+
+      dispatch({
+        type: ActionType.W_UpdateCronMetrics,
+        payload: metricsArr
+      });
+    };
+  }
+};
+/** ============================== end cronhpa的相关操作 ============================== */
+
 export const workloadEditActions = {
   /** hpa的相关操作 */
   hpa: hpaActions,
@@ -142,6 +191,9 @@ export const workloadEditActions = {
 
   /** pvc的相关操作 */
   pvc: workloadPvcActions,
+
+  /* cronhpa的相关操作 */
+  cronhpa: cronHpaActions,
 
   /** 更新workload名称 */
   inputWorkloadName: (name: string) => {

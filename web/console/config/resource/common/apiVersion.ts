@@ -30,6 +30,7 @@ export interface ApiVersion {
   pvc?: ResourceApiInfo;
   sc?: ResourceApiInfo;
   hpa?: ResourceApiInfo;
+  cronhpa?: ResourceApiInfo;
   event?: ResourceApiInfo;
   node?: ResourceApiInfo;
   masteretcd?: ResourceApiInfo;
@@ -311,6 +312,12 @@ const k8sApiVersionFor18: ApiVersion = {
     version: 'v2beta1',
     basicEntry: 'apis',
     headTitle: 'HorizontalPodAutoscaler'
+  },
+  cronhpa: {
+    group: 'extensions.tkestack.io',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'CronHPA'
   },
   event: {
     group: '',

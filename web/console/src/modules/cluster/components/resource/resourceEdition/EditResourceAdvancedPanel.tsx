@@ -9,6 +9,7 @@ import { FormItem, FormPanel } from '../../../../common';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Select } from '@tencent/tea-component';
 import { WorkloadNetworkType, WorkloadNetworkTypeEnum, FloatingIPReleasePolicy } from '../../../constants/Config';
+import { EditResourceImagePullSecretsPanel } from './EditResourceImagePullSecretsPanel';
 
 interface EditResourceAdvancedPanelProps extends RootProps {
   /** 是否展示高级设置 */
@@ -18,10 +19,7 @@ interface EditResourceAdvancedPanelProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditResourceAdvancedPanel extends React.Component<EditResourceAdvancedPanelProps, {}> {
   render() {
     let { isOpenAdvanced, subRoot, actions } = this.props,
@@ -32,6 +30,7 @@ export class EditResourceAdvancedPanel extends React.Component<EditResourceAdvan
 
     return isOpenAdvanced ? (
       <React.Fragment>
+        <EditResourceImagePullSecretsPanel />
         <EditResourceNodeAffinityPanel />
         <EditResourceAnnotations />
         <FormItem label={t('网络模式')}>
