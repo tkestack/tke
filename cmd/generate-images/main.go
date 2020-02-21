@@ -48,7 +48,7 @@ func main() {
 	funcs := []func() []string{
 		installer.List,
 
-		baremetal.List,
+		//baremetal.List,
 
 		galaxy.List,
 
@@ -70,10 +70,17 @@ func main() {
 		result = append(result, images...)
 	}
 	result = funk.UniqString(result)
-	sort.Strings(result)
-	for _, one := range result {
+	for _, one := range baremetal.List() {
+		if strings.HasPrefix(one, "nvidia-device-plugin") {
+			fmt.Println(one)
+			continue
+		}
 		for _, arch := range spec.Archs {
 			fmt.Println(strings.ReplaceAll(one, ":", "-"+arch+":"))
 		}
+	}
+	sort.Strings(result)
+	for _, one := range result {
+		fmt.Println(one)
 	}
 }
