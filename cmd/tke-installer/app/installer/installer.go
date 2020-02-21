@@ -37,6 +37,8 @@ import (
 	"sync"
 	"time"
 
+	"tkestack.io/tke/pkg/spec"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/emicklei/go-restful"
@@ -67,7 +69,6 @@ import (
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	baremetalimages "tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
@@ -103,7 +104,7 @@ const (
 )
 
 var (
-	supportedArchs = regexp.MustCompile(`-(amd64|arm64)$`)
+	supportedArchs = regexp.MustCompile(fmt.Sprintf(`-(%s)$`, strings.Join(spec.Archs, "|")))
 
 	registryHTTPCommandFmt = `
 docker run \
@@ -792,7 +793,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
-	cluster.Spec.Version = baremetalimages.K8sVersions[len(baremetalimages.K8sVersions)-1] // use newest version
+	cluster.Spec.Version = spec.K8sVersions[len(spec.K8sVersions)-1] // use newest version
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
