@@ -30,11 +30,6 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
-
-	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
-	galaxyimages "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
-
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	corev1 "k8s.io/api/core/v1"
@@ -42,9 +37,12 @@ import (
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy"
+	galaxyimages "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
@@ -230,7 +228,7 @@ func (p *Provider) EnsureNvidiaDriver(c *Cluster) error {
 		if !gpu.IsEnable(machine.Labels) {
 			continue
 		}
-		err := gpu.InstallNvidiaDriver(c.SSH[machine.IP], &gpu.NvidiaDriverOption{Version: p.config.NvidiaDriver.DefaultVersion})
+		err := gpu.InstallNvidiaDriver(c.SSH[machine.IP], &gpu.NvidiaDriverOption{})
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -244,7 +242,7 @@ func (p *Provider) EnsureNvidiaContainerRuntime(c *Cluster) error {
 		if !gpu.IsEnable(machine.Labels) {
 			continue
 		}
-		err := gpu.InstallNvidiaContainerRuntime(c.SSH[machine.IP], &gpu.NvidiaContainerRuntimeOption{Version: p.config.NvidiaContainerRuntime.DefaultVersion})
+		err := gpu.InstallNvidiaContainerRuntime(c.SSH[machine.IP], &gpu.NvidiaContainerRuntimeOption{})
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -259,7 +257,6 @@ func (p *Provider) EnsureDocker(c *Cluster) error {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+c.Registry.Domain)
 	}
 	option := &docker.Option{
-		Version:            c.Docker.DefaultVersion,
 		InsecureRegistries: insecureRegistries,
 		RegistryDomain:     c.Registry.Domain,
 		ExtraArgs:          c.Spec.DockerExtraArgs,
@@ -477,9 +474,7 @@ func (p *Provider) EnsureKubelet(c *Cluster) error {
 }
 
 func (p *Provider) EnsureCNIPlugins(c *Cluster) error {
-	option := &cniplugins.Option{
-		Version: c.CNIPlugins.DefaultVersion,
-	}
+	option := &cniplugins.Option{}
 	for _, machine := range c.Spec.Machines {
 		err := cniplugins.Install(c.SSH[machine.IP], option)
 		if err != nil {

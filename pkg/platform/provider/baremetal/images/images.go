@@ -20,11 +20,15 @@ import (
 	"reflect"
 	"sort"
 
+	"github.com/thoas/go-funk"
 	"tkestack.io/tke/pkg/util/containerregistry"
 )
 
 var (
-	K8sVersions = []string{"1.14.10", "1.16.6"}
+	K8sVersions      = []string{"1.14.10", "1.16.6"}
+	K8sVersionsWithV = funk.Map(K8sVersions, func(s string) string {
+		return "v" + s
+	}).([]string)
 )
 
 type Components struct {
@@ -55,9 +59,9 @@ var components = Components{
 func List() []string {
 	var items []string
 
-	for _, version := range K8sVersions {
+	for _, version := range K8sVersionsWithV {
 		for _, name := range []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler", "kube-proxy"} {
-			items = append(items, containerregistry.Image{Name: name, Tag: "v" + version}.BaseName())
+			items = append(items, containerregistry.Image{Name: name, Tag: version}.BaseName())
 		}
 	}
 

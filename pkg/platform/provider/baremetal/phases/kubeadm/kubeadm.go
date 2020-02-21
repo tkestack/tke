@@ -21,18 +21,17 @@ package kubeadm
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
 const (
-	defaultVersion     = "v1.15.1"
 	kubeadmConfigFile  = "kubeadm/kubeadm-config.yaml"
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
@@ -52,13 +51,7 @@ const (
 )
 
 func Install(s ssh.Interface) error {
-	basefile := fmt.Sprintf("kubeadm-%s.tar.gz", defaultVersion)
-	srcFile := path.Join(constants.SrcDir, basefile)
-	if _, err := os.Stat(srcFile); err != nil {
-		return err
-	}
-	dstFile := path.Join(constants.DstTmpDir, basefile)
-	err := s.CopyFile(srcFile, dstFile)
+	dstFile, err := res.Kubeadm.CopyToNodeWithDefault(s)
 	if err != nil {
 		return err
 	}

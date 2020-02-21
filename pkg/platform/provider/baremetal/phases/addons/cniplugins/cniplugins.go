@@ -20,25 +20,17 @@ package cniplugins
 
 import (
 	"fmt"
-	"os"
-	"path"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
 type Option struct {
-	Version string
 }
 
 func Install(s ssh.Interface, option *Option) error {
-	basefile := fmt.Sprintf("cni-plugins-amd64-v%s.tgz", option.Version)
-	srcFile := path.Join(constants.SrcDir, basefile)
-	if _, err := os.Stat(srcFile); err != nil {
-		return err
-	}
-	dstFile := path.Join(constants.DstTmpDir, basefile)
-	err := s.CopyFile(srcFile, dstFile)
+	dstFile, err := res.CNIPlugins.CopyToNodeWithDefault(s)
 	if err != nil {
 		return err
 	}
