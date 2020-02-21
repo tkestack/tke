@@ -24,38 +24,39 @@ import (
 	"path/filepath"
 	"strings"
 
+	"tkestack.io/tke/pkg/spec"
+
 	"github.com/thoas/go-funk"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
 var (
 	Docker = Package{
 		Name:     "docker",
-		Versions: []string{"18.09.9"},
+		Versions: spec.DockerVersions,
 	}
 	CNIPlugins = Package{
-		Name:     "docker",
-		Versions: []string{"v0.8.5"},
+		Name:     "cni-plugins",
+		Versions: spec.CNIPluginsVersions,
 	}
 
 	Kubeadm = Package{
 		Name:     "kubeadm",
-		Versions: []string{"v1.15.1"},
+		Versions: spec.KubeadmVersions,
 	}
 	KubernetesNode = Package{
 		Name:     "kubernetes-node",
-		Versions: images.K8sVersionsWithV,
+		Versions: spec.K8sVersionsWithV,
 	}
 	NvidiaDriver = Package{
 		Name:     "NVIDIA",
-		Versions: []string{"440.31"},
+		Versions: spec.NvidiaDriverVersions,
 	}
 	NvidiaContainerRuntime = Package{
 		Name:     "nvidia-container-runtime",
-		Versions: []string{"3.1.4"},
+		Versions: spec.NvidiaContainerRuntimeVersions,
 	}
 )
 

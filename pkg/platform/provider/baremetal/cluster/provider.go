@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
+	"tkestack.io/tke/pkg/spec"
 
 	"github.com/AlekSi/pointer"
 	"github.com/pkg/errors"
@@ -55,7 +55,7 @@ const (
 )
 
 var (
-	versions = sets.NewString(images.K8sVersions...)
+	versions = sets.NewString(spec.K8sVersions...)
 )
 
 type Handler func(*Cluster) error
