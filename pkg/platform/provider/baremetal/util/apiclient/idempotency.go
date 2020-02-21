@@ -21,12 +21,13 @@ package apiclient
 import (
 	"encoding/json"
 	"fmt"
-	"k8s.io/api/extensions/v1beta1"
 	"time"
+
+	"k8s.io/api/networking/v1beta1"
 
 	"github.com/pkg/errors"
 	apps "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	rbac "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -333,12 +334,12 @@ func CreateOrUpdateEndpoints(client clientset.Interface, ep *v1.Endpoints) error
 
 // CreateOrUpdateIngress creates a Ingress if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
 func CreateOrUpdateIngress(client clientset.Interface, ing *v1beta1.Ingress) error {
-	if _, err := client.ExtensionsV1beta1().Ingresses(ing.ObjectMeta.Namespace).Create(ing); err != nil {
+	if _, err := client.NetworkingV1beta1().Ingresses(ing.ObjectMeta.Namespace).Create(ing); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return errors.Wrap(err, "unable to create ing")
 		}
 
-		if _, err := client.ExtensionsV1beta1().Ingresses(ing.ObjectMeta.Namespace).Update(ing); err != nil {
+		if _, err := client.NetworkingV1beta1().Ingresses(ing.ObjectMeta.Namespace).Update(ing); err != nil {
 			return errors.Wrap(err, "unable to update ing")
 		}
 	}

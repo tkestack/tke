@@ -108,6 +108,8 @@ type Security struct {
 	HTTPSecret        string `json:"httpSecret"`
 	AdminUsername     string `json:"adminUsername"`
 	AdminPassword     string `json:"adminPassword"`
+	// +optional
+	EnableAnonymous *bool `json:"enableAnonymous"`
 }
 
 // Redis configures the redis pool available to the registry cache.

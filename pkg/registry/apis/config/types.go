@@ -108,6 +108,8 @@ type Security struct {
 	HTTPSecret        string
 	AdminUsername     string
 	AdminPassword     string
+	// +optional
+	EnableAnonymous *bool
 }
 
 // Redis configures the redis pool available to the registry cache.

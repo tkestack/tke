@@ -43,7 +43,7 @@ spec:
       containers:
       - image: galaxy:1.0.0-alpha
         command: ["/bin/sh"]
-        args: ["-c", "cp -p /etc/cni/net.d/00-galaxy.conf /host/etc/cni/net.d/; cp -p /opt/cni/bin/* /host/opt/cni/bin/; /usr/bin/galaxy --logtostderr=true --v=3"]
+        args: ["-c", "cp -p /etc/galaxy/cni/00-galaxy.conf /etc/cni/net.d/; cp -p /opt/cni/galaxy/bin/galaxy-sdn /opt/cni/galaxy/bin/loopback /opt/cni/bin/; /usr/bin/galaxy --logtostderr=true --v=3"]
         name: galaxy
         resources:
           requests:
@@ -56,18 +56,16 @@ spec:
           mountPath: /var/run/galaxy/
         - name: flannel-run
           mountPath: /run/flannel
-        - name: kube-config
-          mountPath: /host/etc/kubernetes/
         - name: galaxy-log
           mountPath: /data/galaxy/logs
         - name: galaxy-etc
           mountPath: /etc/galaxy
         - name: cni-config
-          mountPath: /host/etc/cni/net.d/
+          mountPath: /etc/cni/net.d/
         - name: cni-bin
-          mountPath: /host/opt/cni/bin
+          mountPath: /opt/cni/bin
         - name: cni-etc
-          mountPath: /etc/cni/net.d
+          mountPath: /etc/galaxy/cni
         - name: cni-state
           mountPath: /var/lib/cni
         - name: docker-sock
@@ -83,9 +81,6 @@ spec:
       - name: flannel-run
         hostPath:
           path: /run/flannel
-      - name: kube-config
-        hostPath:
-          path: /etc/kubernetes/
       - name: cni-bin-dir
         hostPath:
           path: /opt/cni/bin

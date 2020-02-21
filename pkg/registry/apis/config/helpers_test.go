@@ -19,11 +19,12 @@
 package config
 
 import (
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"reflect"
 	"strings"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestRegistryConfigurationPathFields(t *testing.T) {
@@ -141,6 +142,7 @@ var (
 		"Security.HTTPSecret",
 		"Security.AdminUsername",
 		"Security.AdminPassword",
+		"Security.EnableAnonymous",
 		"DomainSuffix",
 		"DefaultTenant",
 		"Storage.FileSystem.MaxThreads",
