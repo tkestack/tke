@@ -73,6 +73,10 @@ export const StrategyDetailsPanel = () => {
       noCache: true,
       data: { id: sub }
     });
+
+    return () => {
+      actions.user.performSearch('');
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -81,7 +85,7 @@ export const StrategyDetailsPanel = () => {
     if (getStrategyData && getStrategyData.target.metadata.name === sub) {
       const showStrategy = getStrategyData.target;
       setStrategy(showStrategy);
-      setBasicParamsValue({ name: showStrategy.metadata.name, description: showStrategy.spec.description });
+      setBasicParamsValue({ name: showStrategy.spec.displayName, description: showStrategy.spec.description });
     }
   }, [getStrategyData, sub]);
 
@@ -273,7 +277,11 @@ export const StrategyDetailsPanel = () => {
                           header={
                             <SearchBox
                               value={userMsgsValue.inputValue}
-                              onChange={value => setUserMsgsValue({ ...userMsgsValue, inputValue: value })}
+                              onChange={value => {
+                                setUserMsgsValue({ ...userMsgsValue, inputValue: value });
+                                // 进行用户的搜索
+                                actions.user.performSearch(value);
+                              }}
                             />
                           }
                         >

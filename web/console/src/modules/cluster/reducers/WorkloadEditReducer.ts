@@ -1,4 +1,4 @@
-import { initAffinityRule } from './../constants/initState';
+import { initAffinityRule, initCronMetrics } from './../constants/initState';
 import { combineReducers } from 'redux';
 import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
@@ -136,6 +136,8 @@ const TempReducer = combineReducers({
   v_maxReplicas: reduceToPayload(ActionType.WV_MaxReplicas, initValidator),
 
   metrics: reduceToPayload(ActionType.W_UpdateMetrics, [initHpaMetrics]),
+
+  cronMetrics: reduceToPayload(ActionType.W_UpdateCronMetrics, [initCronMetrics]),
 
   isCreateService: reduceToPayload(ActionType.W_IsCreateService, true),
 

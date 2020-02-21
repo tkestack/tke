@@ -27,6 +27,10 @@ const workloadTypeList = [
   {
     value: 'job',
     label: 'Job'
+  },
+  {
+    value: 'tapp',
+    label: 'TApp'
   }
 ];
 
@@ -104,6 +108,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
   /** 展示条件筛选的部分 */
   private _renderLogFilterBar() {
     let { subRoot, namespaceList } = this.props,
+      { addons } = subRoot,
       {
         workloadType,
         isAutoRenew,
@@ -117,7 +122,15 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
       } = subRoot.resourceLogOption;
 
     // 展示workloadType的选择列表
-    let workloadTypeOptions = workloadTypeList.map((w, index) => ({
+    let finalWorkloadTypeList = workloadTypeList.filter(item => {
+      if (item.value !== 'tapp') {
+        return true;
+      } else {
+        return addons['TappController'] !== undefined;
+      }
+    });
+
+    let workloadTypeOptions = finalWorkloadTypeList.map((w, index) => ({
       value: w.value,
       text: w.label
     }));

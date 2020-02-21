@@ -24,6 +24,18 @@ export const hpa = (k8sVersion: string) => {
   });
 };
 
+/** cronhpa的相关配置 */
+export const cronhpa = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'cronhpa',
+    requestType: {
+      list: 'cronhpas'
+    },
+    isRelevantToNamespace: true
+  });
+};
+
 /** persistentEvent的相关配置 */
 export const pe = (k8sVersion: string) => {
   return generateResourceInfo({

@@ -72,7 +72,11 @@ export const IsResourceShowLoadingIcon = (resourceName: string, item: Resource) 
       : false;
   } else if (resourceName === 'tapp') {
     /**待定 todo ing */
-    return item.status.replicas === undefined ? true : +item.status.replicas < +item.spec.replicas ? true : false;
+    return item.status.replicas === undefined
+      ? true
+      : +item.status.readyReplicas < +item.status.replicas
+      ? true
+      : false;
   }
   return false;
 };

@@ -7,6 +7,8 @@ import * as ActionTypes from '../constants/ActionTypes';
 import * as WebAPI from '../WebAPI';
 import { RootState, Strategy, StrategyFilter } from '../models';
 import { createListAction } from '@tencent/redux-list';
+import { router } from '../router';
+
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
   noCache: false
@@ -81,6 +83,18 @@ const updateStrategy = generateFetcherActionCreator({
     // const { id, userNames } = options.data;
     let result = await WebAPI.updateStrategy(options.data);
     return result;
+  },
+  finish: (dispatch: Redux.Dispatch, getState: GetState) => {
+    let { route } = getState();
+    let urlParams = router.resolve(route);
+    dispatch(
+      strategyActions.getStrategy.fetch({
+        noCache: true,
+        data: {
+          id: urlParams['sub']
+        }
+      })
+    );
   }
 });
 

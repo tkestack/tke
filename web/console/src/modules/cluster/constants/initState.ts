@@ -19,6 +19,7 @@ import {
   DialogNameEnum
 } from '../models';
 import { uuid } from '@tencent/qcloud-lib';
+import { CronMetrics } from '../models/WorkloadEdit';
 
 /** 创建服务，端口映射的初始值 */
 export const initPortsMap: PortMap = {
@@ -92,6 +93,15 @@ export const initHpaMetrics: HpaMetrics = {
   v_type: initValidator,
   value: '',
   v_value: initValidator
+};
+
+/** 创建workloa的时候，定时调节的初始化值 */
+export const initCronMetrics: CronMetrics = {
+  id: uuid(),
+  crontab: '',
+  v_crontab: initValidator,
+  targetReplicas: '',
+  v_targetReplicas: initValidator
 };
 
 /** 创建 secret */
