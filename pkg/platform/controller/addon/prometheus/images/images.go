@@ -56,7 +56,7 @@ func (c Components) Get(name string) *containerregistry.Image {
 var versionMap = map[string]Components{
 	LatestVersion: {
 		PrometheusService:                containerregistry.Image{Name: "prometheus", Tag: "v2.11.0"},
-		KubeStateService:                 containerregistry.Image{Name: "kube-state-metrics", Tag: "v1.6.0"},
+		KubeStateService:                 containerregistry.Image{Name: "kube-state-metrics", Tag: "v1.9.5"},
 		NodeExporterService:              containerregistry.Image{Name: "node-exporter", Tag: "v0.15.2"},
 		AlertManagerService:              containerregistry.Image{Name: "alertmanager", Tag: "v0.18.0"},
 		ConfigMapReloadWorkLoad:          containerregistry.Image{Name: "configmap-reload", Tag: "v0.1"},
