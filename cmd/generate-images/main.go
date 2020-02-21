@@ -19,6 +19,9 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
+
+	"tkestack.io/tke/pkg/spec"
 
 	"github.com/thoas/go-funk"
 
@@ -69,6 +72,8 @@ func main() {
 	result = funk.UniqString(result)
 	sort.Strings(result)
 	for _, one := range result {
-		fmt.Println(one)
+		for _, arch := range spec.Archs {
+			fmt.Println(strings.ReplaceAll(one, ":", "-"+arch+":"))
+		}
 	}
 }
