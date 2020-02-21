@@ -18,8 +18,8 @@ package gpu
 
 import (
 	"fmt"
-	"os"
-	"path"
+
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/util/ssh"
@@ -29,17 +29,10 @@ import (
 )
 
 type NvidiaDriverOption struct {
-	Version string
 }
 
 func InstallNvidiaDriver(s ssh.Interface, option *NvidiaDriverOption) error {
-	basefile := fmt.Sprintf("NVIDIA-Linux-x86_64-%s.run", option.Version)
-	srcFile := path.Join(constants.SrcDir, basefile)
-	if _, err := os.Stat(srcFile); err != nil {
-		return err
-	}
-	dstFile := path.Join(constants.DstTmpDir, basefile)
-	err := s.CopyFile(srcFile, dstFile)
+	dstFile, err := res.NvidiaDriver.CopyToNodeWithDefault(s)
 	if err != nil {
 		return err
 	}
@@ -60,17 +53,10 @@ func InstallNvidiaDriver(s ssh.Interface, option *NvidiaDriverOption) error {
 }
 
 type NvidiaContainerRuntimeOption struct {
-	Version string
 }
 
 func InstallNvidiaContainerRuntime(s ssh.Interface, option *NvidiaContainerRuntimeOption) error {
-	basefile := fmt.Sprintf("nvidia-container-runtime-%s.tgz", option.Version)
-	srcFile := path.Join(constants.SrcDir, basefile)
-	if _, err := os.Stat(srcFile); err != nil {
-		return err
-	}
-	dstFile := path.Join(constants.DstTmpDir, basefile)
-	err := s.CopyFile(srcFile, dstFile)
+	dstFile, err := res.NvidiaContainerRuntime.CopyToNodeWithDefault(s)
 	if err != nil {
 		return err
 	}

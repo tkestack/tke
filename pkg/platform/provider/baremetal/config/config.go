@@ -45,11 +45,7 @@ func New(filename string) (*Config, error) {
 }
 
 type Config struct {
-	Registry               Registry               `yaml:"registry"`
-	Docker                 Docker                 `yaml:"docker" required:"true"`
-	CNIPlugins             CNIPlugins             `yaml:"cniPlugins" required:"true"`
-	NvidiaDriver           NvidiaDriver           `yaml:"nvidiaDriver" required:"true"`
-	NvidiaContainerRuntime NvidiaContainerRuntime `yaml:"nvidiaContainerRuntime" required:"true"`
+	Registry Registry `yaml:"registry"`
 }
 
 func (c *Config) Save(filename string) error {
@@ -72,20 +68,4 @@ type Registry struct {
 
 func (r *Registry) NeedSetHosts() bool {
 	return r.IP != ""
-}
-
-type Docker struct {
-	DefaultVersion string `yaml:"defaultVersion"`
-}
-
-type CNIPlugins struct {
-	DefaultVersion string `yaml:"defaultVersion"`
-}
-
-type NvidiaDriver struct {
-	DefaultVersion string `yaml:"defaultVersion"`
-}
-
-type NvidiaContainerRuntime struct {
-	DefaultVersion string `yaml:"defaultVersion"`
 }
