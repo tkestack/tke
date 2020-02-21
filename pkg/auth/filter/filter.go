@@ -34,6 +34,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"tkestack.io/tke/api/business"
 	"tkestack.io/tke/api/registry"
 	commonapiserverfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
@@ -207,8 +208,10 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 		tkeAttribs.Resource = resourceType
 	}
 
-	if tkeAttribs.Namespace != "" && resourceTypeSingle != "namespace" {
-		tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
+	if tkeAttribs.Namespace != "" {
+		if (attr.GetAPIGroup() != business.GroupName && resourceTypeSingle != "namespace") || attr.GetAPIGroup() == business.GroupName {
+			tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
+		}
 	}
 
 	if ctx != nil && len(filter.ClusterFrom(ctx)) != 0 {
