@@ -31,9 +31,13 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"tkestack.io/tke/pkg/spec"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -65,7 +69,6 @@ import (
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	baremetalimages "tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
@@ -92,14 +95,40 @@ const (
 	postClusterReadyHook = hooksDir + "/post-cluster-ready"
 	postInstallHook      = hooksDir + "/post-install"
 
-	registryDomain             = "docker.io"
-	registryNamespace          = "tkestack"
-	imagesFile                 = "images.tar.gz"
-	imagesPattern              = registryNamespace + "/*"
-	localRegistryImage         = registryNamespace + "/local-tcr:v1.0.0"
-	localRegistryPort          = 5000
-	localRegistryContainerName = "tcr"
-	defaultTeantID             = "default"
+	registryDomain    = "docker.io"
+	registryNamespace = "tkestack"
+	imagesFile        = "images.tar.gz"
+	imagesPattern     = registryNamespace + "/*"
+
+	defaultTeantID = "default"
+)
+
+var (
+	supportedArchs = regexp.MustCompile(fmt.Sprintf(`-(%s)$`, strings.Join(spec.Archs, "|")))
+
+	registryHTTPCommandFmt = `
+docker run \
+-d \
+--name registry-http \
+--restart always \
+-p 80:5000 \
+-v $(pwd)/registry:/var/lib/registry \
+%s
+`
+
+	registryHTTPSCommandFmt = `
+docker run \
+-d \
+--name registry-https \
+--restart always \
+-p 443:443 \
+-v $(pwd)/registry:/var/lib/registry \
+-v $(pwd)/certs:/certs \
+-e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
+-e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt \
+-e REGISTRY_HTTP_TLS_KEY=/certs/server.key \
+%s
+`
 )
 
 // ClusterResource is the REST layer to the Cluster domain
@@ -764,7 +793,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
-	cluster.Spec.Version = baremetalimages.K8sVersions[len(baremetalimages.K8sVersions)-1] // use newest version
+	cluster.Spec.Version = spec.K8sVersions[len(spec.K8sVersions)-1] // use newest version
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
@@ -1244,18 +1273,27 @@ func (t *TKE) setupLocalRegistry() error {
 }
 
 func (t *TKE) startLocalRegistry() error {
-	cmd := exec.Command("sh", "-c",
-		fmt.Sprintf("docker rm -f %s", localRegistryContainerName),
-	)
+	cmd := exec.Command("sh", "-c", "docker rm -f registry-http registry-https")
+	cmd.Stdout = t.log.Writer()
 	cmd.Run()
 
-	cmd = exec.Command("sh", "-c",
-		fmt.Sprintf("docker run -d -v `pwd`/registry:/var/lib/registry -p 80:%d --restart always --name %s %s",
-			localRegistryPort, localRegistryContainerName, localRegistryImage),
-	)
+	cmd = exec.Command("sh", "-c", "rm -rf ~/.docker/manifests")
+	cmd.Stderr = t.log.Writer()
+	cmd.Run()
+
+	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPCommandFmt, images.Get().Registry.FullName()))
 	cmd.Stdout = t.log.Writer()
 	cmd.Stderr = t.log.Writer()
 	err := cmd.Run()
+	if err != nil {
+		return pkgerrors.Wrap(err, "docker run error")
+	}
+
+	// for docker manifest create which --insecure is not working
+	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPSCommandFmt, images.Get().Registry.FullName()))
+	cmd.Stdout = t.log.Writer()
+	cmd.Stderr = t.log.Writer()
+	err = cmd.Run()
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker run error")
 	}
@@ -2024,6 +2062,7 @@ func (t *TKE) pushImages() error {
 		return pkgerrors.Wrap(err, "docker images error")
 	}
 	tkeImages := strings.Split(strings.TrimSpace(string(out)), "\n")
+	sort.Strings(tkeImages)
 	for i, image := range tkeImages {
 		nameAndTag := strings.Split(image, ":")
 		if len(nameAndTag) != 2 {
@@ -2040,6 +2079,41 @@ func (t *TKE) pushImages() error {
 		err = cmd.Run()
 		if err != nil {
 			return pkgerrors.Wrap(err, "docker push error")
+		}
+
+		matches := supportedArchs.FindStringSubmatch(nameAndTag[0])
+		if matches != nil {
+			arch := matches[1]
+			manifestName := supportedArchs.ReplaceAllString(nameAndTag[0], "")
+
+			cmdString := fmt.Sprintf("docker manifest create -a --insecure %s %s", manifestName, image)
+			cmd = exec.Command("sh", "-c", cmdString)
+			cmd.Stdout = t.log.Writer()
+			cmd.Stderr = t.log.Writer()
+			err = cmd.Run()
+			if err != nil {
+				return pkgerrors.Wrap(err, "docker manifest create error")
+			}
+
+			if arch == "arm64" {
+				cmdString := fmt.Sprintf("docker manifest annotate --variant unknown %s %s", manifestName, image)
+				cmd = exec.Command("sh", "-c", cmdString)
+				cmd.Stdout = t.log.Writer()
+				cmd.Stderr = t.log.Writer()
+				err = cmd.Run()
+				if err != nil {
+					return pkgerrors.Wrap(err, "docker manifest annotate error")
+				}
+			}
+
+			cmdString = fmt.Sprintf("docker manifest push --insecure %s ", manifestName)
+			cmd = exec.Command("sh", "-c", cmdString)
+			cmd.Stdout = t.log.Writer()
+			cmd.Stderr = t.log.Writer()
+			err = cmd.Run()
+			if err != nil {
+				return pkgerrors.Wrap(err, "docker manifest push error")
+			}
 		}
 
 		t.log.Printf("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))

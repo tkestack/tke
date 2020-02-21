@@ -20,11 +20,8 @@ import (
 	"reflect"
 	"sort"
 
+	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/containerregistry"
-)
-
-var (
-	K8sVersions = []string{"1.14.10", "1.16.6"}
 )
 
 type Components struct {
@@ -55,9 +52,9 @@ var components = Components{
 func List() []string {
 	var items []string
 
-	for _, version := range K8sVersions {
+	for _, version := range spec.K8sVersionsWithV {
 		for _, name := range []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler", "kube-proxy"} {
-			items = append(items, containerregistry.Image{Name: name, Tag: "v" + version}.BaseName())
+			items = append(items, containerregistry.Image{Name: name, Tag: version}.BaseName())
 		}
 	}
 

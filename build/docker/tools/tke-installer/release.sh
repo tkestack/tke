@@ -68,6 +68,7 @@ function prepare_tke_installer() {
   cp -v "$OUTPUT_DIR"/${TARGET_OS}/${TARGET_ARCH}/tke-installer "$DST_DIR"/bin
   cp -rv cmd/tke-installer/app/installer/manifests "$DST_DIR"
   cp -rv cmd/tke-installer/app/installer/hooks "$DST_DIR"
+  cp -rv "$SCRIPT_DIR"/certs "$DST_DIR"
 }
 
 function build_installer_image() {
