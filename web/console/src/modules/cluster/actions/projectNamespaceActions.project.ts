@@ -24,8 +24,31 @@ const fetchProjectNamespaceActions = generateFetcherActionCreator({
   fetcher: async (getState: GetState, fetchOptions, dispatch: Redux.Dispatch) => {
     let { route, projectSelection, cluster, projectNamespaceQuery } = getState();
     let response = await WebAPI.fetchProjectNamespaceList(projectNamespaceQuery);
+
     let clusterList = uniq(response.records.map(namespace => namespace.spec.clusterName));
-    dispatch(projectNamespaceActions.initClusterList(clusterList));
+    let resourceInfo = resourceConfig()['cluster'];
+    let clusterResponse = await WebAPI.fetchSpecificResourceList(
+      {
+        filter: {}
+      },
+      resourceInfo,
+      false,
+      true
+    );
+    let clusterListRecord = clusterList.map(item => {
+      let finder = clusterResponse.records.find(i => i.metadata.name === item);
+      if (finder) {
+        return finder;
+      } else {
+        return {
+          metadata: { name: item },
+          spec: { displayName: '-' },
+          status: { version: '1.14.4' }
+        };
+      }
+    });
+
+    dispatch(projectNamespaceActions.initClusterList(clusterListRecord));
     return response;
   },
   finish: async (dispatch: Redux.Dispatch, getState: GetState) => {
@@ -93,15 +116,9 @@ const restActions = {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let result: RecordSet<Cluster> = {
         recordCount: clusterList.length,
-        records: []
+        records: clusterList
       };
-      result.records = clusterList.map(item => {
-        return {
-          metadata: { name: item },
-          spec: { displayName: '-' },
-          status: {}
-        };
-      });
+
       dispatch({
         type: FFReduxActionName.CLUSTER + '_FetchDone',
         payload: {
@@ -109,6 +126,7 @@ const restActions = {
           trigger: 'Done'
         }
       });
+
       // //业务不一样集群不一定一样，导致不能取url上面的做默认值
       // let defaultCluster = result.records[0] ? result.records[0] : null;
 
@@ -121,10 +139,14 @@ const restActions = {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { route } = getState(),
         urlParams = router.resolve(route);
+      dispatch(
+        clusterActions.initClusterVersion(cluster.status && cluster.status.version ? cluster.status.version : '1.14.4')
+      );
       dispatch({
         type: FFReduxActionName.CLUSTER + '_Selection',
         payload: cluster
       });
+
       router.navigate(
         urlParams,
         Object.assign(route.queries, {
