@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/casbin/casbin/v2"
@@ -148,8 +149,25 @@ func (r *REST) ShortNames() []string {
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
+	keyword := util.InterceptKeyword(options)
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
-	return r.Store.List(ctx, wrappedOptions)
+	obj, err := r.Store.List(ctx, wrappedOptions)
+	if err != nil {
+		return obj, err
+	}
+
+	policyList := obj.(*auth.PolicyList)
+	if keyword != "" {
+		var newList []auth.Policy
+		for _, val := range policyList.Items {
+			if val.Name == keyword || strings.Contains(val.Spec.Description, keyword) || strings.Contains(val.Spec.DisplayName, keyword) {
+				newList = append(newList, val)
+			}
+		}
+		policyList.Items = newList
+	}
+
+	return policyList, nil
 }
 
 // DeleteCollection selects all resources in the storage matching given 'listOptions'
