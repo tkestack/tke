@@ -114,7 +114,7 @@ function prepare_images() {
   make build BINS=generate-images VERSION="$VERSION"
 
   $GENERATE_IMAGES_BIN
-  $GENERATE_IMAGES_BIN | sed "s;^;$REGISTRY_PREFIX/;" | xargs -n1 -I{} sh -c "docker pull {} || exit 1"
+  $GENERATE_IMAGES_BIN | sed "s;^;$REGISTRY_PREFIX/;" | xargs -n1 -I{} sh -c "docker pull {} || exit -1"
   $GENERATE_IMAGES_BIN | sed "s;^;$REGISTRY_PREFIX/;" | xargs docker save | gzip -c >"$DST_DIR"/images.tar.gz
 }
 
