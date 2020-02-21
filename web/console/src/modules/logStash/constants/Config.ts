@@ -134,6 +134,10 @@ export const ResourceListMapForContainerLog = [
   {
     name: 'Job',
     value: 'job'
+  },
+  {
+    name: 'TApp',
+    value: 'tapp'
   }
 ];
 

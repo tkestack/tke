@@ -22,10 +22,12 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
   let users: User[] = [];
   const { search, filter } = query;
   let { isPolicyUser = false } = filter;
-  const queryObj = filter.ifAll
+  const queryObj = !search
     ? {}
     : {
-        keyword: search || ''
+        fieldSelector: {
+          keyword: search || ''
+        }
       };
 
   try {
@@ -288,7 +290,8 @@ export async function updateStrategy(strategy) {
         },
         spec: Object.assign({}, strategy.spec, {
           description: strategy.description ? strategy.description : strategy.spec.description,
-          statement: strategy.statement ? strategy.statement : strategy.spec.statement
+          statement: strategy.statement ? strategy.statement : strategy.spec.statement,
+          displayName: strategy.name
         })
       }
     });

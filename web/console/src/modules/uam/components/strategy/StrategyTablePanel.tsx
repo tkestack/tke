@@ -35,6 +35,12 @@ export const StrategyTablePanel = () => {
     }
   }, [associatedUsersListRecords, userMsgsValue]);
 
+  useEffect(() => {
+    return () => {
+      actions.user.performSearch('');
+    };
+  }, []);
+
   const modalColumns = [
     {
       key: 'name',
@@ -108,7 +114,10 @@ export const StrategyTablePanel = () => {
                   header={
                     <SearchBox
                       value={userMsgsValue.inputValue}
-                      onChange={value => setUserMsgsValue({ ...userMsgsValue, inputValue: value })}
+                      onChange={value => {
+                        setUserMsgsValue({ ...userMsgsValue, inputValue: value });
+                        actions.user.performSearch(value);
+                      }}
                     />
                   }
                 >

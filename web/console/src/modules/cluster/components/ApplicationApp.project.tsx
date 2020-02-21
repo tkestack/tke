@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
 import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
+import { RootState, SubRouter } from '../models';
 import { allActions } from '../actions';
-import { MainBodyLayout } from '../../common/layouts';
 import { configStore } from '../stores/RootStore';
 import { router } from '../router';
 import { ResetStoreAction } from '../../../../helpers';
@@ -12,7 +11,8 @@ import { ResourceListPanel } from './resource/ResourceListPanel';
 import { ResourceDetail } from './resource/resourceDetail/ResourceDetail';
 import { EditResourcePanel } from './resource/resourceEdition/EditResourcePanel';
 import { UpdateResourcePanel } from './resource/resourceEdition/UpdateResourcePanel';
-
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { cloneDeep } from '@src/modules/common';
 const store = configStore();
 
 export class ApplicationAppContainer extends React.Component<any, any> {
@@ -30,6 +30,10 @@ export class ApplicationAppContainer extends React.Component<any, any> {
   }
 }
 
+interface ApplicationListPanelState {
+  /** 菜单栏列表 */
+  finalSubRouterList?: SubRouter[];
+}
 export interface RootProps extends RootState {
   actions?: typeof allActions;
 }
@@ -45,10 +49,20 @@ class ApplicationApp extends React.Component<RootProps, {}> {
   }
 }
 
-class ApplicationList extends React.Component<RootProps, {}> {
+class ApplicationList extends React.Component<RootProps, ApplicationListPanelState> {
+  constructor(props, context) {
+    super(props, context);
+    this.state = {
+      finalSubRouterList: []
+    };
+  }
   componentDidMount() {
-    let { actions, route } = this.props,
+    let { actions, route, subRoot } = this.props,
+      { subRouterList } = subRoot,
       urlParams = router.resolve(route);
+
+    // 这里去拉取侧边栏的配置，侧边路由
+    !subRouterList.fetched && actions.subRouter.applyFilter({});
     actions.region.fetch();
     // 这里需要去判断一下当前的resource是否需要进行namespace 路由的更新，参考resourceTabelPanel
     let { resourceName: resource, type: resourceType } = urlParams;
@@ -63,16 +77,71 @@ class ApplicationList extends React.Component<RootProps, {}> {
   componentWillReceiveProps(nextProps: RootProps) {
     let { route, actions, namespaceSelection, subRoot } = nextProps,
       newUrlParam = router.resolve(route),
-      { mode } = subRoot;
+      { mode, subRouterList, addons } = subRoot;
     let newMode = newUrlParam['mode'];
     let oldMode = this.props.subRoot.mode;
 
     if (newMode !== '' && oldMode !== newMode && newMode !== mode) {
       actions.resource.selectMode(newMode);
-      // 这里是判断回退动作，取消动作等的时候
-      newUrlParam['mode'] !== 'list' &&
-        actions.resource.applyFilter({ namespace: namespaceSelection, clusterId: route.queries['clusterId'] });
+      // 这里是判断回退动作，取消动作等的时候，回到list页面，需要重新拉取一下，激活一下轮训的状态等
+      newMode === 'list' &&
+        actions.resource.poll({
+          namespace: namespaceSelection,
+          clusterId: route.queries['clusterId'],
+          regionId: +route.queries['rid']
+        });
     }
+
+    /** =================== 这里是判断二级菜单路由的配置 ====================== */
+    // 判断路由是否拉取完毕
+    if (subRouterList.fetched && this.props.subRoot.subRouterList.fetched !== subRouterList.fetched) {
+      this.setState({
+        finalSubRouterList: subRouterList.data.records
+      });
+    }
+
+    if (Object.keys(addons).length !== 0 && Object.keys(this.props.subRoot.addons).length === 0) {
+      let addonRouterConfig: {
+        [props: string]: { routerIndex: number; routerConfig: { name: string; path: string } };
+      } = {
+        lbcf: {
+          routerIndex: 0,
+          routerConfig: {
+            name: t('负载均衡'),
+            path: 'lbcf'
+          }
+        },
+        tapp: {
+          routerIndex: 0,
+          routerConfig: {
+            name: t('TApp'),
+            path: 'tapp'
+          }
+        }
+      };
+      let newRouterList: SubRouter[] = cloneDeep(this.state.finalSubRouterList);
+      newRouterList.forEach((item, index) => {
+        if (item.path === 'service') {
+          addonRouterConfig['lbcf'].routerIndex = index;
+        } else if (item.path === 'resource') {
+          addonRouterConfig['tapp'].routerIndex = index;
+        }
+      });
+
+      let keys = Object.keys(addons);
+
+      keys.forEach(key => {
+        if (key === 'LBCF') {
+          let lbcfConfig = addonRouterConfig['lbcf'];
+          newRouterList[lbcfConfig.routerIndex].sub.push(lbcfConfig.routerConfig);
+        } else if (key === 'TappController') {
+          let tappConfig = addonRouterConfig['tapp'];
+          newRouterList[tappConfig.routerIndex].sub.push(tappConfig.routerConfig);
+        }
+      });
+      this.setState({ finalSubRouterList: newRouterList });
+    }
+    /** =================== 这里是判断二级菜单路由的配置 ====================== */
   }
 
   render() {
@@ -83,7 +152,7 @@ class ApplicationList extends React.Component<RootProps, {}> {
       return (
         <div className="manage-area manage-area-secondary">
           <ApplicationHeadPanel />
-          <ResourceListPanel subRouterList={subRoot.subRouterList.data.records} />
+          <ResourceListPanel subRouterList={this.state.finalSubRouterList} />
         </div>
       );
     } else if (urlMode === 'detail') {

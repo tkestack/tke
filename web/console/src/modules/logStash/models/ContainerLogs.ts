@@ -38,4 +38,5 @@ export interface WorkloadType<T> {
   daemonset: T[];
   job: T[];
   cronjob: T[];
+  tapp: T[];
 }

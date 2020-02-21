@@ -425,7 +425,7 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
   let { filter, search } = query;
   /** 构建参数 */
   if (search) {
-    url += `?keyword=${search}`;
+    url += `?fieldSelector=keyword=${search}`;
   }
   let method = 'GET';
   let params: RequestParams = {

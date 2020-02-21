@@ -138,7 +138,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
   render() {
     let { actions, subRoot, namespaceList, route, cluster } = this.props,
       urlParams = router.resolve(route),
-      { workloadEdit, modifyResourceFlow, applyResourceFlow, serviceEdit, isNeedExistedLb } = subRoot,
+      { workloadEdit, modifyResourceFlow, applyResourceFlow, serviceEdit, isNeedExistedLb, addons } = subRoot,
       {
         isCreateService,
         v_workloadName,
@@ -193,7 +193,8 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       (applyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(applyResourceFlow));
 
     // 判断是否deployment 或者 statefulset
-    let isDeploymentOrStateful = workloadType === 'deployment' || workloadType === 'statefulset';
+    let isDeploymentOrStateful =
+      workloadType === 'deployment' || workloadType === 'statefulset' || workloadType === 'tapp';
 
     let namespaceOptions = namespaceList.data.records.map(item => ({
       value: item.name,
@@ -203,6 +204,8 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
     let finalResourceTypeList = [];
     ResourceTypeList.forEach(list => {
       if (list.value !== 'tapp' || isCanUseTapp) {
+        finalResourceTypeList.push(list);
+      } else if (list.value === 'tapp' && addons['TappController'] !== undefined) {
         finalResourceTypeList.push(list);
       }
     });
@@ -489,6 +492,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
   }
 
   /** 处理提交请求 */
+  /* eslint-disable */
   private _handleSubmit() {
     let { actions, subRoot, route, region, clusterVersion } = this.props,
       { mode, workloadEdit, serviceEdit } = subRoot;
@@ -521,7 +525,8 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         nodeAbnormalMigratePolicy,
         networkType,
         floatingIPReleasePolicy,
-        oversoldRatio
+        oversoldRatio,
+        cronMetrics
       } = workloadEdit;
 
       // 当前该资源的具体配置
@@ -566,6 +571,9 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
       // 判断当前的实例数量是否为hpa类型
       let isAutoScale = scaleType === 'autoScale';
+
+      // 判断当前的实例数量是否为crontab
+      let isCronHpa = scaleType === 'crontab';
 
       // spec当中的 restartPolicy，job || cronjob的重启策略不能为 always，给用户选择他的重启策略
       let finalRestartPolicy = isCronJobOrCronJob ? restartPolicy : 'Always';
@@ -641,19 +649,29 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
       /**
        * ========================== 此处是同时创建Service ==========================
-       * pre: deployment || statefulset
+       * pre: deployment || statefulset || tapp
        */
       let serviceJsonData =
-        isCreateService && (isDeployment || isStatefulset) ? JSON.stringify(this._reduceServiceData(labelsInfo)) : '';
+        isCreateService && (isDeployment || isStatefulset || isTapp)
+          ? JSON.stringify(this._reduceServiceData(labelsInfo))
+          : '';
 
       /**
        * ========================== 此处是同时创建hpa ==========================
-       * pre: deployement tapp
+       * pre: deployment || statefulset || tapp
        */
-      let hpaJsonData = (isDeployment || isTapp) && isAutoScale ? JSON.stringify(this._reduceHpaData()) : '';
+      let hpaJsonData =
+        (isDeployment || isTapp || isStatefulset) && isAutoScale ? JSON.stringify(this._reduceHpaData()) : '';
+
+      /**
+       *  ========================== 此处是同时创建cronhpa ==========================
+       * pre: deployment || statefulset || tapp
+       */
+      let cronhpaJsonData =
+        (isDeployment || isTapp || isStatefulset) && isCronHpa ? JSON.stringify(this._reduceCronHpaData()) : '';
 
       /** 最终传过去的json的数据 */
-      let finalJSON = serviceJsonData + hpaJsonData + JSON.stringify(jsonData);
+      let finalJSON = serviceJsonData + hpaJsonData + cronhpaJsonData + JSON.stringify(jsonData);
 
       let resource: CreateResource = {
         id: uuid(),
@@ -680,6 +698,29 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
           /**不需要operation 所以传入的值为{},需要传值 */
           differentInterfaceResourceOperation.push({});
         }
+        /** 创建Service */
+        if (serviceJsonData) {
+          resources.push({
+            id: uuid(),
+            resourceInfo: resourceConfig(clusterVersion)['svc'],
+            mode,
+            namespace,
+            clusterId: route.queries['clusterId'],
+            jsonData: serviceJsonData
+          });
+        }
+        /** 创建Cronhpa资源 */
+        if (cronhpaJsonData) {
+          resources.push({
+            id: uuid(),
+            resourceInfo: resourceConfig(clusterVersion)['cronhpa'],
+            mode,
+            namespace,
+            clusterId: route.queries['clusterId'],
+            jsonData: cronhpaJsonData
+          });
+        }
+
         /**创建TAPP资源 */
         resources.push({
           id: uuid(),
@@ -689,11 +730,12 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
           clusterId: route.queries['clusterId'],
           jsonData: JSON.stringify(jsonData)
         });
+
         differentInterfaceResourceOperation.push({});
         actions.workflow.applyDifferentInterfaceResource.start(resources, differentInterfaceResourceOperation);
         actions.workflow.applyDifferentInterfaceResource.perform();
       } else {
-        if ((isCreateService && (isDeployment || isStatefulset)) || (isDeployment && isAutoScale)) {
+        if ((isDeployment || isStatefulset) && (isCreateService || isAutoScale || isCronHpa)) {
           actions.workflow.applyResource.start([resource], region.selection.value);
           actions.workflow.applyResource.perform();
         } else {
@@ -702,6 +744,42 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         }
       }
     }
+  }
+  /* eslint-enable */
+
+  /** 处理cronhpa的相关信息 */
+  private _reduceCronHpaData() {
+    let { subRoot, clusterVersion } = this.props,
+      { cronMetrics, workloadType, workloadName, namespace } = subRoot.workloadEdit;
+
+    let resourceInfo = resourceConfig(clusterVersion)['cronhpa'],
+      ResourceInfo = resourceConfig(clusterVersion)[workloadType];
+
+    let isTapp = workloadType === 'tapp' ? true : false;
+
+    let jsonData = {
+      kind: resourceInfo.headTitle,
+      apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
+      metadata: {
+        name: workloadName,
+        namespace: namespace
+      },
+      spec: {
+        scaleTargetRef: {
+          apiVersion: isTapp ? 'apps.tkestack.io/v1' : ResourceInfo.group + '/' + ResourceInfo.version,
+          kind: ResourceInfo.headTitle,
+          name: workloadName
+        },
+        crons: cronMetrics.map(metric => {
+          return {
+            schedule: metric.crontab,
+            targetReplicas: +metric.targetReplicas
+          };
+        })
+      }
+    };
+
+    return JSON.parse(JSON.stringify(jsonData));
   }
 
   /** 处理hpa的相关信息 */
@@ -714,7 +792,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
     let resourceInfo = resourceConfig(clusterVersion)['hpa'],
       ResourceInfo = resourceConfig(clusterVersion)[workloadType];
 
-    let isTapp = workloadName === 'tapp' ? true : false;
+    let isTapp = workloadType === 'tapp' ? true : false;
     // 处理hpa的metrics
     let metricsInfo: MetricOption[] = metrics.map(item => {
       let tmp: MetricOption;

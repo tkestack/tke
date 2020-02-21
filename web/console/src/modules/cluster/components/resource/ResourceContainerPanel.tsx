@@ -23,10 +23,7 @@ interface ResourceContainerPanelState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceContainerPanel extends React.Component<RootProps, ResourceContainerPanelState> {
   constructor(props, context) {
     super(props, context);

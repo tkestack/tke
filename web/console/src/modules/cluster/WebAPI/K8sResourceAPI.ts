@@ -469,10 +469,13 @@ export async function applyDifferentInterfaceResource(
   try {
     for (let index = 0; index < resources.length; index++) {
       let { mode, resourceIns, clusterId, yamlData, resourceInfo, namespace, jsonData } = resources[index];
-      let extraResource = operations[index].extraResource ? operations[index].extraResource : '';
+      let extraResource = operations[index] && operations[index].extraResource ? operations[index].extraResource : '';
       let url = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, extraResource, clusterId });
       //拼接字符串查询参数
-      let queryUrl = operations[index].query ? reduceK8sQueryString({ k8sQueryObj: operations[index].query }) : '';
+      let queryUrl =
+        operations[index] && operations[index].query
+          ? reduceK8sQueryString({ k8sQueryObj: operations[index].query })
+          : '';
       url = url + queryUrl;
       let method = requestMethodForAction(mode);
       // 这里是独立部署版 和 控制台共用的参数，只有是yamlData的时候才需要userdefinedHeader，如果是jaonData的话，就不需要了
@@ -493,6 +496,8 @@ export async function applyDifferentInterfaceResource(
       allResponses.push(response);
     }
 
+    console.log(allResponses);
+
     //统一处理相应结果
     allResponses.forEach(response => {
       //有一个响应出错
@@ -503,6 +508,7 @@ export async function applyDifferentInterfaceResource(
     //所有的响应都OK的话
     return operationResult(resources);
   } catch (error) {
+    console.log(error);
     return operationResult(resources, reduceNetworkWorkflow(error));
   }
 }

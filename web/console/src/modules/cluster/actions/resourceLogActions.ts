@@ -20,7 +20,6 @@ const fetchWorkloadActions = generateFetcherActionCreator({
       { workloadQuery, workloadType } = subRoot.resourceLogOption;
 
     let workloadResourceInfo = resourceConfig(clusterVersion)[workloadType];
-
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
     let response = await WebAPI.fetchResourceList(workloadQuery, workloadResourceInfo, isClearData);
     return response;

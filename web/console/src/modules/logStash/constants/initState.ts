@@ -19,7 +19,8 @@ export const initWorkloadList = (initData: any) => {
     statefulset: initData,
     daemonset: initData,
     job: initData,
-    cronjob: initData
+    cronjob: initData,
+    tapp: initData
   };
 };
 

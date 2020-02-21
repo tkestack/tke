@@ -31,6 +31,7 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
       { isNeedContainerNum, workloadType, hpaList, volumes } = workloadEdit;
 
     let isHasCbs = false;
+    let isCanUseHpa = workloadType === 'deployment' || workloadType === 'statefulset' || workloadType === 'tapp';
 
     return (
       <FormItem label={t('实例数量')} tips={t('设置服务自动伸缩要求集群版本大于1.7.0')} isShow={isNeedContainerNum}>
@@ -42,9 +43,125 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
         ) : (
           <div className="up-date">
             {this._manualUpdateContainerNum(isHasCbs)}
-            {(workloadType === 'deployment' || workloadType === 'tapp') && this._autoscaleContainerNum(isHasCbs)}
+            {isCanUseHpa && this._autoscaleContainerNum(isHasCbs)}
+            {isCanUseHpa && this._cronhpaContainerNum()}
           </div>
         )}
+      </FormItem>
+    );
+  }
+
+  /** 展示 cronhpa的相关逻辑 */
+  private _cronhpaContainerNum() {
+    let { actions, subRoot } = this.props,
+      { workloadEdit, addons } = subRoot,
+      { scaleType } = workloadEdit;
+
+    // 是否为定时调节的模式
+    let isCron = scaleType === 'crontab';
+
+    let disabled = addons['CronHPA'] === undefined;
+
+    return (
+      <div className="as-sel-box">
+        <Bubble placement="top" content={disabled ? t('当前集群尚未安装CronHPA扩展组件，请联系管理员进行安装') : null}>
+          <label className="form-ctrl-label">
+            <input
+              type="radio"
+              name="as-service-redios"
+              className="tc-15-radio"
+              value="crontab"
+              checked={isCron}
+              disabled={disabled}
+              onChange={e => {
+                actions.editWorkload.updateScaleType(e.target.value);
+              }}
+            />
+            <strong>{t('定时调节')}</strong>
+            <span className="text-label">
+              {t('根据设置的Crontab（Crontab语法格式，例如 "0 23 * * 5"表示每周五23:00）周期性地设置实例数量')}
+            </span>
+          </label>
+        </Bubble>
+
+        {isCron ? <ul className="form-list">{this._renderCronTabList()}</ul> : <noscript />}
+      </div>
+    );
+  }
+
+  /** 展示cronhpa的触发策略 */
+  private _renderCronTabList() {
+    let { actions, subRoot } = this.props,
+      { cronMetrics } = subRoot.workloadEdit;
+
+    // 是否可以删除该触发策略
+    let canDelete = cronMetrics.length > 1 ? true : false;
+
+    return (
+      <FormItem label={t('触发策略')}>
+        <div className="form-unit is-success">
+          {cronMetrics.map((metric, index) => {
+            let mId = metric.id + '';
+
+            return (
+              <div className="code-list" key={index}>
+                <div
+                  className={classnames('form-unit', {
+                    'is-error': metric.v_crontab.status === 2 || metric.v_targetReplicas.status === 2
+                  })}
+                  style={{ display: 'inline-block', marginBottom: '5px' }}
+                >
+                  <Bubble placement="bottom" content={metric.v_crontab.status === 2 ? metric.v_crontab.message : null}>
+                    <input
+                      type="text"
+                      placeholder="Crontab"
+                      className="tc-15-input-text m mr10"
+                      style={{ maxWidth: '120px' }}
+                      value={metric.crontab}
+                      onChange={e => actions.editWorkload.cronhpa.updateMetric({ crontab: e.target.value }, mId)}
+                      onBlur={e => actions.validate.workload.validateCronTab(mId)}
+                    />
+                  </Bubble>
+
+                  <Bubble
+                    placement="bottom"
+                    content={metric.v_targetReplicas.status === 2 ? metric.v_targetReplicas.message : null}
+                  >
+                    <input
+                      type="text"
+                      placeholder="目标实例数"
+                      className="tc-15-input-text m"
+                      style={{ maxWidth: '120px' }}
+                      value={metric.targetReplicas}
+                      onChange={e => actions.editWorkload.cronhpa.updateMetric({ targetReplicas: e.target.value }, mId)}
+                      onBlur={e => actions.validate.workload.validateCronTargetReplicas(mId)}
+                    />
+                  </Bubble>
+
+                  <span className="inline-help-text">
+                    <LinkButton
+                      disabled={!canDelete}
+                      errorTip={t('至少设置一个策略')}
+                      onClick={() => actions.editWorkload.cronhpa.deleteMetric(mId)}
+                    >
+                      <i className="icon-cancel-icon" />
+                    </LinkButton>
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+
+          <div>
+            <LinkButton
+              onClick={() => {
+                actions.editWorkload.cronhpa.addMetric();
+              }}
+            >
+              {t('新增策略')}
+            </LinkButton>
+          </div>
+        </div>
       </FormItem>
     );
   }

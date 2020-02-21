@@ -35,18 +35,8 @@ export interface ResourceListPanelProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceListPanel extends React.Component<ResourceListPanelProps, {}> {
-  componentDidMount() {
-    let { actions, subRoot } = this.props,
-      { subRouterList } = subRoot;
-
-    // 这里去拉取侧边栏的配置，侧边路由
-    !subRouterList.fetched && actions.subRouter.applyFilter({});
-  }
   render() {
     let { subRoot, route, namespaceList, subRouterList } = this.props,
       urlParams = router.resolve(route),
