@@ -69,7 +69,7 @@ function download::nvidia_driver() {
   for version in ${NVIDIA_DRIVER_VERSIONS}; do
     wget "https://us.download.nvidia.cn/XFree86/Linux-x86_64/${version}/NVIDIA-Linux-x86_64-${version}.run" \
       -O "NVIDIA-${platform}-${version}.run"
-    chmod +x "NVIDIA-${platform}-${NVIDIA_DRIVER_VERSION}.run"
+    chmod +x "NVIDIA-${platform}-${version}.run"
   done
 }
 
