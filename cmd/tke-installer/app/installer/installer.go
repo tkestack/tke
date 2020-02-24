@@ -2096,7 +2096,7 @@ func (t *TKE) pushImages() error {
 			}
 
 			if arch == "arm64" {
-				cmdString := fmt.Sprintf("docker manifest annotate --variant unknown %s %s", manifestName, image)
+				cmdString := fmt.Sprintf("docker manifest annotate --arch arm64 --variant unknown %s %s", manifestName, image)
 				cmd = exec.Command("sh", "-c", cmdString)
 				cmd.Stdout = t.log.Writer()
 				cmd.Stderr = t.log.Writer()
