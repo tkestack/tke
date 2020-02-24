@@ -64,11 +64,11 @@ var Version = version.Get().GitVersion
 
 var components = Components{
 	Registry:   containerregistry.Image{Name: "registry", Tag: "2.7.1"},
-	Busybox:    containerregistry.Image{Name: "busybox", Tag: "1.31.0"},
+	Busybox:    containerregistry.Image{Name: "busybox", Tag: "1.31.1"},
 	Keepalived: containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
-	InfluxDB:   containerregistry.Image{Name: "influxdb", Tag: "1.7.6-alpine"},
+	InfluxDB:   containerregistry.Image{Name: "influxdb", Tag: "1.7.9"},
 
-	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.16.6-1"},
+	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.16.6-2"},
 
 	TKEAuthAPI:            containerregistry.Image{Name: "tke-auth-api", Tag: Version},
 	TKEAuthController:     containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
