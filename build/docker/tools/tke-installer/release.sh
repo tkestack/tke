@@ -104,12 +104,6 @@ function build_installer() {
 }
 
 function prepare_images() {
-  if [[ "${BUILDER}" == "tke" ]]; then
-      make push VERSION="$VERSION"
-  else
-      make image VERSION="$VERSION"
-  fi
-
   GENERATE_IMAGES_BIN="$OUTPUT_DIR"/$(go env GOOS)/$(go env GOARCH)/generate-images
   make build BINS=generate-images VERSION="$VERSION"
 
