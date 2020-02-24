@@ -104,7 +104,7 @@ const (
 )
 
 var (
-	supportedArchs = regexp.MustCompile(fmt.Sprintf(`-(%s)$`, strings.Join(spec.Archs, "|")))
+	supportedArchs = regexp.MustCompile(fmt.Sprintf(`-(%s):`, strings.Join(spec.Archs, "|")))
 
 	registryHTTPCommandFmt = `
 docker run \
@@ -2084,7 +2084,7 @@ func (t *TKE) pushImages() error {
 		matches := supportedArchs.FindStringSubmatch(nameAndTag[0])
 		if matches != nil {
 			arch := matches[1]
-			manifestName := supportedArchs.ReplaceAllString(nameAndTag[0], "")
+			manifestName := supportedArchs.ReplaceAllString(image, "")
 
 			cmdString := fmt.Sprintf("docker manifest create -a --insecure %s %s", manifestName, image)
 			cmd = exec.Command("sh", "-c", cmdString)
