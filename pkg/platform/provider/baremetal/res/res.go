@@ -93,7 +93,7 @@ func (p *Package) Resource(arch, version string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	basename := fmt.Sprintf("%s-linux-%s-%s.tar.gz", p.Name, arch, version)
+	basename := fmt.Sprintf("linux-%s/%s-linux-%s-%s.tar.gz", arch, p.Name, arch, version)
 	srcFile := path.Join(constants.SrcDir, basename)
 	if _, err := os.Stat(srcFile); err != nil {
 		return "", err
