@@ -35,8 +35,8 @@ func main() {
 	env = append(env, fmt.Sprintf("DOCKER_VERSIONS=%s", strings.Join(spec.DockerVersions, " ")))
 	env = append(env, fmt.Sprintf("CNI_PLUGINS_VERSIONS=%s", strings.Join(spec.CNIPluginsVersions, " ")))
 	env = append(env, fmt.Sprintf("KUBEADM_VERSIONS=%s", strings.Join(spec.KubeadmVersions, " ")))
-	env = append(env, fmt.Sprintf("NVIADIA_DRIVER_VERSIONS=%s", strings.Join(spec.NvidiaDriverVersions, " ")))
-	env = append(env, fmt.Sprintf("NVIADIA_CONTAINER_RUNTIME_VERSIONS=%s", strings.Join(spec.NvidiaContainerRuntimeVersions, " ")))
+	env = append(env, fmt.Sprintf("NVIDIA_DRIVER_VERSIONS=%s", strings.Join(spec.NvidiaDriverVersions, " ")))
+	env = append(env, fmt.Sprintf("NVIDIA_CONTAINER_RUNTIME_VERSIONS=%s", strings.Join(spec.NvidiaContainerRuntimeVersions, " ")))
 
 	for _, one := range env {
 		fmt.Println(one)
