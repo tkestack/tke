@@ -32,5 +32,4 @@ provider-res: download
 
 .PHONY:
 download:
-	cp nvidia-container-runtime-3.1.4.tgz ${TEMP_DIR}
-	DST_DIR=${TEMP_DIR} ./download.sh
+	go run ../../../../cmd/setup-env "DST_DIR=${TEMP_DIR} ./download.sh"
