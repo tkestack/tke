@@ -22,6 +22,7 @@ import "github.com/thoas/go-funk"
 
 var (
 	Archs            = []string{"amd64", "arm64"}
+	OSs              = []string{"linux"}
 	K8sVersions      = []string{"1.14.10", "1.16.6"}
 	K8sVersionsWithV = funk.Map(K8sVersions, func(s string) string {
 		return "v" + s
