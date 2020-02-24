@@ -20,8 +20,10 @@ package util
 
 import (
 	"strconv"
+	"strings"
 
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/fields"
 
 	"tkestack.io/tke/api/auth"
 )
@@ -42,4 +44,32 @@ func ParseQueryKeywordAndLimit(options *metainternal.ListOptions) (string, int) 
 	}
 
 	return keyword, limit
+}
+
+func InterceptKeyword(options *metainternal.ListOptions) string {
+	keyword := ""
+	found := false
+	if options.FieldSelector != nil {
+		keyword, found = options.FieldSelector.RequiresExactMatch(auth.KeywordQueryTag)
+		if found {
+			removeKeywordFromField(options)
+		}
+	}
+
+	return keyword
+}
+
+func removeKeywordFromField(options *metainternal.ListOptions) {
+	strs := strings.Split(options.FieldSelector.String(), ",")
+	var remain []string
+	for _, str := range strs {
+		s, _ := fields.ParseSelector(str)
+		_, found := s.RequiresExactMatch(auth.KeywordQueryTag)
+		if !found {
+			remain = append(remain, str)
+		}
+	}
+
+	selector, _ := fields.ParseSelector(strings.Join(remain, ","))
+	options.FieldSelector = selector
 }
