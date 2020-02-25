@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -35,6 +36,7 @@ import (
 	"tkestack.io/tke/api/business"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/business/registry/namespace"
@@ -83,7 +85,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, businessClient *bu
 	finalizeStore.ExportStrategy = namespace.NewFinalizeStrategy(strategy)
 
 	return &Storage{
-		Namespace: &REST{store, privilegedUsername},
+		Namespace: &REST{store, platformClient, privilegedUsername},
 		Status:    &StatusREST{&statusStore},
 		Finalize:  &FinalizeREST{&finalizeStore},
 	}
@@ -120,6 +122,7 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 // REST implements a RESTStorage for namespace sets against etcd.
 type REST struct {
 	*registry.Store
+	platformClient     platformversionedclient.PlatformV1Interface
 	privilegedUsername string
 }
 
@@ -142,12 +145,24 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
-	return r.Store.List(ctx, wrappedOptions)
+	obj, err := r.Store.List(ctx, wrappedOptions)
+	if err == nil && obj != nil {
+		if err := r.patchNamespaceList(obj); err != nil {
+			return nil, err
+		}
+	}
+	return obj, err
 }
 
 // Get retrieves the object from the storage. It is required to support Patch.
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
+	obj, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
+	if err == nil && obj != nil {
+		if err := r.patchNamespace(obj, nil); err != nil {
+			return nil, err
+		}
+	}
+	return obj, err
 }
 
 // Export an object.  Fields that are not user specified are stripped out
@@ -359,4 +374,41 @@ func shouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing run
 		return false
 	}
 	return len(ns.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
+}
+
+func (r *REST) patchNamespaceList(obj runtime.Object) error {
+	nl, ok := obj.(*business.NamespaceList)
+	if !ok {
+		return fmt.Errorf("expect *business.NamespaceList, but got %s", reflect.TypeOf(obj))
+	}
+
+	cache := map[string]*platformv1.Cluster{}
+	for idx := range nl.Items {
+		if err := r.patchNamespace(&nl.Items[idx], cache); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *REST) patchNamespace(obj runtime.Object, cache map[string]*platformv1.Cluster) error {
+	ns, ok := obj.(*business.Namespace)
+	if !ok {
+		return fmt.Errorf("expect *business.Namespace, but got %s", reflect.TypeOf(obj))
+	}
+
+	cls, has := cache[ns.Spec.ClusterName]
+	if !has {
+		var err error
+		cls, err = r.platformClient.Clusters().Get(ns.Spec.ClusterName, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		if cache != nil {
+			cache[ns.Spec.ClusterName] = cls
+		}
+	}
+	ns.Spec.ClusterVersion = cls.Status.Version
+	ns.Spec.ClusterDisplayName = cls.Spec.DisplayName
+	return nil
 }
