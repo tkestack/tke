@@ -164,10 +164,12 @@ type NamespaceList struct {
 type NamespaceSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
-	TenantID    string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
-	ClusterName string          `json:"clusterName" protobuf:"bytes,3,opt,name=clusterName"`
-	Namespace   string          `json:"namespace" protobuf:"bytes,4,opt,name=namespace"`
+	Finalizers         []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	TenantID           string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	ClusterName        string          `json:"clusterName" protobuf:"bytes,3,opt,name=clusterName"`
+	ClusterVersion     string          `json:"clusterVersion" protobuf:"bytes,6,opt,name=clusterVersion"`
+	ClusterDisplayName string          `json:"clusterDisplayName" protobuf:"bytes,7,opt,name=clusterDisplayName"`
+	Namespace          string          `json:"namespace" protobuf:"bytes,4,opt,name=namespace"`
 	// Hard represents the total resources of a namespace.
 	// +optional
 	Hard ResourceList `json:"hard,omitempty" protobuf:"bytes,5,rep,name=hard,casttype=ResourceList"`
