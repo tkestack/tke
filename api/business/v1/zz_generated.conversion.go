@@ -616,6 +616,8 @@ func autoConvert_v1_NamespaceSpec_To_business_NamespaceSpec(in *NamespaceSpec, o
 	out.Finalizers = *(*[]business.FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
+	out.ClusterVersion = in.ClusterVersion
+	out.ClusterDisplayName = in.ClusterDisplayName
 	out.Namespace = in.Namespace
 	out.Hard = *(*business.ResourceList)(unsafe.Pointer(&in.Hard))
 	return nil
@@ -630,6 +632,8 @@ func autoConvert_business_NamespaceSpec_To_v1_NamespaceSpec(in *business.Namespa
 	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
+	out.ClusterVersion = in.ClusterVersion
+	out.ClusterDisplayName = in.ClusterDisplayName
 	out.Namespace = in.Namespace
 	out.Hard = *(*ResourceList)(unsafe.Pointer(&in.Hard))
 	return nil
