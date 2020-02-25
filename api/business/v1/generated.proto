@@ -206,6 +206,10 @@ message NamespaceSpec {
 
   optional string clusterName = 3;
 
+  optional string clusterVersion = 6;
+
+  optional string clusterDisplayName = 7;
+
   optional string namespace = 4;
 
   // Hard represents the total resources of a namespace.
