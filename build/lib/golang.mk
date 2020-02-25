@@ -33,25 +33,11 @@ ifeq ($(ROOT_PACKAGE),)
 	$(error the variable ROOT_PACKAGE must be set prior to including golang.mk)
 endif
 
-ifeq ($(origin PLATFORM), undefined)
-	ifeq ($(origin GOOS), undefined)
-		GOOS := $(shell go env GOOS)
-	endif
-	ifeq ($(origin GOARCH), undefined)
-		GOARCH := $(shell go env GOARCH)
-	endif
-	PLATFORM := $(GOOS)_$(GOARCH)
-else
-	GOOS := $(word 1, $(subst _, ,$(PLATFORM)))
-	GOARCH := $(word 2, $(subst _, ,$(PLATFORM)))
-endif
-
 GOPATH := $(shell go env GOPATH)
 ifeq ($(origin GOBIN), undefined)
 	GOBIN := $(GOPATH)/bin
 endif
 
-PLATFORMS ?= darwin_amd64 windows_amd64 linux_amd64
 COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*))
 BINS ?= $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
 
@@ -81,8 +67,8 @@ go.build.%:
 .PHONY: go.build
 go.build: go.build.verify $(addprefix go.build., $(addprefix $(PLATFORM)., $(BINS)))
 
-.PHONY: go.build.all
-go.build.all: go.build.verify $(foreach p,$(PLATFORMS),$(addprefix go.build., $(addprefix $(p)., $(BINS))))
+.PHONY: go.build.multiarch
+go.build.multiarch: go.build.verify $(foreach p,$(PLATFORMS),$(addprefix go.build., $(addprefix $(p)., $(BINS))))
 
 .PHONY: go.clean
 go.clean:
