@@ -2,12 +2,14 @@
 
 **Table of Contents**
 
-- [Requirements](#requirements)
+- [Development Guide](#development-guide)
+  - [Requirements](#requirements)
     - [Go](#go)
-    - [Node.js](#node.js)
-- [Clone source code](#clone-source-code)
-- [Building binary](#building-binary)
-- [Building docker image](#building-docker-image)
+    - [Node.js](#nodejs)
+  - [Clone source code](#clone-source-code)
+  - [Building binary](#building-binary)
+  - [Building docker image](#building-docker-image)
+  - [Releasing docker image](#releasing-docker-image)
 
 This document is the canonical source of truth for things like supported
 toolchain versions for building TKE.
@@ -108,17 +110,17 @@ cd ${working_dir}/tke
 make
 ```
 
-To build binaries for all platforms:
+To build binaries for multiple platforms:
 
 ```sh
-make build.all
+make build.multiarch
 ```
 
 To build a specific os/arch of TKE use the `PLATFORMS` environment variable to
 let the build scripts know you want to build only for os/arch.
 
 ```sh
-make build.all PLATFORMS="linux_amd64 windows_amd64 darwin_amd64"
+make build.multiarch PLATFORMS="linux_amd64 windows_amd64 darwin_amd64"
 ```
 
 ## Building docker image
@@ -146,12 +148,41 @@ make image IMAGES=${package_you_want}
 make image IMAGES="${package_you_want_1} ${package_you_want_2}"
 ```
 
-*Note:* This applies to all top level folders under tke/cmd.
+*Note:* This applies to all top level folders under build/docker 
+(except build/docker/tools).
 
 So for the tke-platform-api, you can run:
 
 ```sh
 make image IMAGES=tke-platform-api
 ```
+
+To build container images for multiple platforms (i.e., linux_amd64 and linux_arm64), type:
+
+```sh
+make image.multiarch
+```
+
+Above command will use experimental features of docker daemon (i.e. docker build --platform). 
+Please refer to [docker build docs](https://docs.docker.com/engine/reference/commandline/build/#--platform) to enable experimental features.
+
+To build a specific os/arch for TKE container images, please use the `PLATFORMS` environment variable to
+let the build scripts know which os/arch you want to build.
+
+```sh
+make image.multiarch PLATFORMS="linux_amd64 linux_arm64"
+```
+
+## Releasing docker image
+
+Below is a quick start on how to push TKE container images to docker hub.
+
+```sh
+make push
+```
+
+TKEStack manages docker images via manifests and manifest lists.
+Please make sure you enable experimental features in the Docker CLI.
+You can find more details in [docker manifest docs](https://docs.docker.com/engine/reference/commandline/manifest/).
 
 For more functions of other components, please see [here](/docs/devel/components.md). To run tke system locally, please see [here](/docs/devel/running-locally.md).
