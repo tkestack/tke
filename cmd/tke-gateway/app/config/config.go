@@ -21,14 +21,15 @@ package config
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"path/filepath"
+	"strings"
+
 	gooidc "github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"net/http"
-	"path/filepath"
-	"strings"
 	"tkestack.io/tke/cmd/tke-gateway/app/options"
 	"tkestack.io/tke/pkg/apiserver"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
@@ -55,6 +56,7 @@ type Config struct {
 	OIDCHTTPClient         *http.Client
 	OIDCAuthenticator      *oidc.Authenticator
 	GatewayConfig          *gatewayconfig.GatewayConfiguration
+	IgnoreAuthPathPrefixes []string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -131,6 +133,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		OIDCHTTPClient:         oidcHTTPClient,
 		OIDCAuthenticator:      oidcAuthenticator,
 		GatewayConfig:          gatewayConfig,
+		IgnoreAuthPathPrefixes: ignoreAuthPathPrefixes,
 	}, nil
 }
 
