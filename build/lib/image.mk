@@ -19,7 +19,7 @@
 #
 
 DOCKER := docker
-DOCKER_SUPPORTED_VERSIONS ?= 17|18|19
+DOCKER_SUPPORTED_VERSIONS ?= 18|19
 
 REGISTRY_PREFIX ?= tkestack
 BASE_IMAGE = alpine:3.10
@@ -52,23 +52,52 @@ endif
 	@echo "===========> Docker version verification passed"
 
 .PHONY: image.build
-image.build: image.verify go.build.verify $(addprefix image.build., $(IMAGES))
+image.build: image.verify go.build.verify $(addprefix image.build., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
 
-.PHONY: image.push
-image.push: image.verify go.build.verify $(addprefix image.push., $(IMAGES))
+.PHONY: image.build.multiarch
+image.build.multiarch: image.verify go.build.verify $(foreach p,$(PLATFORMS),$(addprefix image.build., $(addprefix $(p)., $(IMAGES))))
 
 .PHONY: image.build.%
-image.build.%: go.build.linux_amd64.%
-	@echo "===========> Building $* $(VERSION) docker image"
-	@mkdir -p $(TMP_DIR)/$*
-	@cat $(ROOT_DIR)/build/docker/$*/Dockerfile\
-		| sed "s#BASE_IMAGE#$(BASE_IMAGE)#g" >$(TMP_DIR)/$*/Dockerfile
-	@cp ${OUTPUT_DIR}/linux/amd64/$* $(TMP_DIR)/$*/
-	@DST_DIR=$(TMP_DIR)/$* $(ROOT_DIR)/build/docker/$*/build.sh 2>/dev/null || true
-	@$(DOCKER) build $(_DOCKER_BUILD_EXTRA_ARGS) --pull -t $(REGISTRY_PREFIX)/$*:$(VERSION) $(TMP_DIR)/$*
-	@rm -rf $(TMP_DIR)/$*
+image.build.%: go.build.%
+	$(eval IMAGE := $(COMMAND))
+	$(eval IMAGE_PLAT := $(subst _,/,$(PLATFORM)))
+	@echo "===========> Building docker image $(IMAGE) $(VERSION) for $(IMAGE_PLAT)"
+	@mkdir -p $(TMP_DIR)/$(IMAGE)
+	@cat $(ROOT_DIR)/build/docker/$(IMAGE)/Dockerfile\
+		| sed "s#BASE_IMAGE#$(BASE_IMAGE)#g" >$(TMP_DIR)/$(IMAGE)/Dockerfile
+	@cp $(OUTPUT_DIR)/$(IMAGE_PLAT)/$(IMAGE) $(TMP_DIR)/$(IMAGE)/
+	@DST_DIR=$(TMP_DIR)/$(IMAGE) $(ROOT_DIR)/build/docker/$(IMAGE)/build.sh 2>/dev/null || true
+	$(DOCKER) build --platform $(IMAGE_PLAT) $(_DOCKER_BUILD_EXTRA_ARGS) --pull \
+	-t $(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION) $(TMP_DIR)/$(IMAGE)
+	@rm -rf $(TMP_DIR)/$(IMAGE)
+
+.PHONY: image.push
+image.push: image.verify go.build.verify $(addprefix image.push., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
 
 .PHONY: image.push.%
 image.push.%: image.build.%
-	@echo "===========> Pushing $* $(VERSION) image to $(REGISTRY_PREFIX)"
-	@$(DOCKER) push $(REGISTRY_PREFIX)/$*:$(VERSION)
+	@echo "===========> Pushing image $(IMAGE) $(VERSION) to $(REGISTRY_PREFIX)"
+	$(DOCKER) push $(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION)
+	@$(DOCKER) manifest create --amend $(REGISTRY_PREFIX)/$(IMAGE):$(VERSION) \
+		$(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION)
+	@$(DOCKER) manifest annotate $(REGISTRY_PREFIX)/$(IMAGE):$(VERSION) \
+		$(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION) \
+		--os $(OS) --arch ${ARCH}
+
+.PHONY: image.push.multiarch
+image.push.multiarch: image.verify go.build.verify manifest.remove \
+$(foreach p,$(PLATFORMS),$(addprefix image.push., $(addprefix $(p)., $(IMAGES)))) \
+$(addprefix image.push.manifest., $(IMAGES))
+
+# Docker cli has a bug: https://github.com/docker/cli/issues/954
+# If you find your manifests were not updated,
+# Please manually delete them in $HOME/.docker/manifests/
+# and re-run.
+.PHONY: manifest.remove
+manifest.remove:
+	@rm -rf ${HOME}/.docker/manifests/docker.io_$(REGISTRY_PREFIX)_tke-*
+
+.PHONY: image.push.manifest.%
+image.push.manifest.%:
+	@echo "===========> Pushing manifest $* $(VERSION) to $(REGISTRY_PREFIX) and then remove the local manifest list"
+	@$(DOCKER) manifest push --purge $(REGISTRY_PREFIX)/$*:$(VERSION)
