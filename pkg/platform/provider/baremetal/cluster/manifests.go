@@ -49,7 +49,7 @@ const (
          "managedResources" : [
             {
                "ignoredByScheduler" : true,
-               "name" : "tke.cloud.tencent.com/eni-ip" // Do not change it because some online apps use it.
+               "name" : "tke.cloud.tencent.com/eni-ip"
             }
          ],
          "nodeCacheCapable" : false,
