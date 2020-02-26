@@ -2084,7 +2084,7 @@ func (t *TKE) pushImages() error {
 		matches := supportedArchs.FindStringSubmatch(image)
 		if matches != nil {
 			arch := matches[1]
-			manifestName := supportedArchs.ReplaceAllString(image, "")
+			manifestName := supportedArchs.ReplaceAllString(image, ":")
 
 			cmdString := fmt.Sprintf("docker manifest create -a --insecure %s %s", manifestName, image)
 			cmd = exec.Command("sh", "-c", cmdString)
