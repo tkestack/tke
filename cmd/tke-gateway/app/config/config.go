@@ -56,6 +56,7 @@ type Config struct {
 	OIDCHTTPClient         *http.Client
 	OIDCAuthenticator      *oidc.Authenticator
 	GatewayConfig          *gatewayconfig.GatewayConfiguration
+	HeaderRequest          bool
 	IgnoreAuthPathPrefixes []string
 }
 
@@ -133,6 +134,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		OIDCHTTPClient:         oidcHTTPClient,
 		OIDCAuthenticator:      oidcAuthenticator,
 		GatewayConfig:          gatewayConfig,
+		HeaderRequest:          opts.HeaderRequest,
 		IgnoreAuthPathPrefixes: ignoreAuthPathPrefixes,
 	}, nil
 }
