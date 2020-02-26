@@ -1,4 +1,5 @@
 {
+  "experimental": true,
   "debug": false,
 {{- if .IsGPU }}
   "default-runtime": "nvidia",
