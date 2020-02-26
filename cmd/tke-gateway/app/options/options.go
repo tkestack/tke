@@ -20,17 +20,21 @@ package options
 
 import (
 	"fmt"
+	"net"
+	"os"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"net"
-	"os"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
-	flagGatewayConfig   = "gateway-config"
+	flagHeaderRequest = "header-request"
+	flagGatewayConfig = "gateway-config"
+
+	configHeaderRequest = "header_request"
 	configGatewayConfig = "gateway_config"
 )
 
@@ -44,6 +48,7 @@ type Options struct {
 	// The Gateway will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Gateway's current working directory.
 	GatewayConfig string
+	HeaderRequest bool
 }
 
 // NewOptions creates a new Options with a default config.
@@ -54,6 +59,7 @@ func NewOptions(serverName string) *Options {
 		InsecureServing: apiserveroptions.NewInsecureServingOptions(9442),
 		Generic:         apiserveroptions.NewGenericOptions(),
 		OIDC:            apiserveroptions.NewOIDCWithSecretOptions(),
+		HeaderRequest:   false,
 	}
 }
 
@@ -68,6 +74,10 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	fs.String(flagGatewayConfig, o.GatewayConfig,
 		"The Gateway will load its initial configuration from this file. The path may be absolute or relative; relative paths start at the Gateway's current working directory. Omit this flag to use the built-in default configuration values.")
 	_ = viper.BindPFlag(configGatewayConfig, fs.Lookup(flagGatewayConfig))
+
+	fs.Bool(flagHeaderRequest, o.HeaderRequest,
+		"If enables, gateway will not check cookie for static file and use X-Remote-User header to inspect username.")
+	_ = viper.BindPFlag(configHeaderRequest, fs.Lookup(flagHeaderRequest))
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -82,6 +92,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.OIDC.ApplyFlags()...)
 
 	o.GatewayConfig = viper.GetString(configGatewayConfig)
+	o.HeaderRequest = viper.GetBool(configHeaderRequest)
 
 	return errs
 }
