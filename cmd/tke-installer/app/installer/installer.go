@@ -37,10 +37,6 @@ import (
 	"sync"
 	"time"
 
-	"tkestack.io/tke/pkg/spec"
-
-	"k8s.io/apimachinery/pkg/util/validation/field"
-
 	"github.com/emicklei/go-restful"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -50,6 +46,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -72,6 +70,7 @@ import (
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
@@ -2063,6 +2062,7 @@ func (t *TKE) pushImages() error {
 	}
 	tkeImages := strings.Split(strings.TrimSpace(string(out)), "\n")
 	sort.Strings(tkeImages)
+	tkeImagesSet := sets.NewString(tkeImages...)
 	for i, image := range tkeImages {
 		nameAndTag := strings.Split(image, ":")
 		if len(nameAndTag) != 2 {
@@ -2073,6 +2073,17 @@ func (t *TKE) pushImages() error {
 			continue
 		}
 
+		// ignore image without arch when has image with arch for avoid overwrite manifest when push image without arch
+		archMatches := supportedArchs.FindStringSubmatch(image)
+		if archMatches == nil { // if without arch
+			for _, arch := range spec.Archs {
+				name := fmt.Sprintf("%s-%s:%s", nameAndTag[0], arch, nameAndTag[1])
+				if tkeImagesSet.Has(name) { // check whether has image with any arch
+					continue
+				}
+			}
+		}
+
 		cmd = exec.Command("docker", "push", image)
 		cmd.Stdout = t.log.Writer()
 		cmd.Stderr = t.log.Writer()
@@ -2081,9 +2092,8 @@ func (t *TKE) pushImages() error {
 			return pkgerrors.Wrap(err, "docker push error")
 		}
 
-		matches := supportedArchs.FindStringSubmatch(image)
-		if matches != nil {
-			arch := matches[1]
+		if archMatches != nil {
+			arch := archMatches[1]
 			manifestName := supportedArchs.ReplaceAllString(image, ":")
 
 			cmdString := fmt.Sprintf("docker manifest create -a --insecure %s %s", manifestName, image)
