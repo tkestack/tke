@@ -19,9 +19,10 @@
 package gateway
 
 import (
+	"net/http"
+
 	"golang.org/x/oauth2"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"net/http"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/gateway/api"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
@@ -35,6 +36,7 @@ type ExtraConfig struct {
 	OIDCHttpClient    *http.Client
 	OIDCAuthenticator *oidc.Authenticator
 	GatewayConfig     *gatewayconfig.GatewayConfiguration
+	HeaderRequest     bool
 }
 
 // Config contains the core configuration instance of server and additional
@@ -90,11 +92,16 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		return nil, err
 	}
 
-	if err := api.RegisterRoute(s.Handler.GoRestfulContainer, c.ExtraConfig.GatewayConfig, c.ExtraConfig.OAuthConfig, c.ExtraConfig.OIDCHttpClient, c.ExtraConfig.OIDCAuthenticator); err != nil {
+	if err := api.RegisterRoute(s.Handler.GoRestfulContainer, c.ExtraConfig.GatewayConfig, c.ExtraConfig.OAuthConfig, c.ExtraConfig.OIDCHttpClient, c.ExtraConfig.OIDCAuthenticator, c.ExtraConfig.HeaderRequest); err != nil {
 		return nil, err
 	}
 
-	registerStaticRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.OAuthConfig, c.ExtraConfig.GatewayConfig.DisableOIDCProxy)
+	if !c.ExtraConfig.HeaderRequest {
+		registerStaticRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.OAuthConfig, c.ExtraConfig.GatewayConfig.DisableOIDCProxy)
+	} else {
+		registerStaticRoute(s.Handler.NonGoRestfulMux, nil, c.ExtraConfig.GatewayConfig.DisableOIDCProxy)
+
+	}
 
 	m := &Gateway{
 		GenericAPIServer: s,

@@ -60,6 +60,7 @@ func createGatewayConfig(cfg *config.Config) *gateway.Config {
 			OIDCHttpClient:    cfg.OIDCHTTPClient,
 			OIDCAuthenticator: cfg.OIDCAuthenticator,
 			GatewayConfig:     cfg.GatewayConfig,
+			HeaderRequest:     cfg.HeaderRequest,
 		},
 	}
 }
