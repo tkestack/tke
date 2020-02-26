@@ -46,11 +46,11 @@ import (
 
 func main() {
 	funcs := []func() []string{
-		installer.List,
+		//installer.List,
 
 		//baremetal.List,
 
-		galaxy.List,
+		//galaxy.List,
 
 		cronhpa.List,
 		gpumanager.List,
@@ -70,7 +70,7 @@ func main() {
 		result = append(result, images...)
 	}
 	result = funk.UniqString(result)
-	for _, one := range baremetal.List() {
+	for _, one := range append(baremetal.List(), append(installer.List(), galaxy.List()...)...) {
 		if strings.HasPrefix(one, "nvidia-device-plugin") {
 			fmt.Println(one)
 			continue
