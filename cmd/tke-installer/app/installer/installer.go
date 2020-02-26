@@ -2081,7 +2081,7 @@ func (t *TKE) pushImages() error {
 			return pkgerrors.Wrap(err, "docker push error")
 		}
 
-		matches := supportedArchs.FindStringSubmatch(nameAndTag[0])
+		matches := supportedArchs.FindStringSubmatch(image)
 		if matches != nil {
 			arch := matches[1]
 			manifestName := supportedArchs.ReplaceAllString(image, "")
