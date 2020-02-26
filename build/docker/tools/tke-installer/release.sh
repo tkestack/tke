@@ -96,7 +96,7 @@ function build::installer() {
     (cd $OUTPUT_DIR && sha256sum "$INSTALLER" > "$INSTALLER.sha256")
 
     if [[ "${BUILDER}" == "tke" ]]; then
-      coscmd upload"${installer_dir}/$INSTALLER" "$INSTALLER"
+      coscmd upload "${installer_dir}/$INSTALLER" "$INSTALLER"
       coscmd upload "$OUTPUT_DIR/$INSTALLER.sha256" "$INSTALLER.sha256"
     fi
 
