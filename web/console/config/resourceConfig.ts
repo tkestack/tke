@@ -97,8 +97,8 @@ const getResourceConfig = (resourceFunc: (k8sVersion: string) => ResourceInfo, k
 /** ResourceConfig的返回定义 */
 export type ResourceConfigKey = { [key in keyof ApiVersion]: ResourceInfo };
 
-export const resourceConfig = (k8sVersion: string = '1.8'): ResourceConfigKey => {
-  let finalK8sVersion = ResourceConfigVersionMap(k8sVersion) || '1.8';
+export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey => {
+  let finalK8sVersion = ResourceConfigVersionMap(k8sVersion) || '1.16';
 
   return {
     deployment: getResourceConfig(deployment, finalK8sVersion),

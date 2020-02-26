@@ -29,7 +29,7 @@ export const RootReducer = combineReducers({
   regionSelection: reduceToPayload(ActionType.SelectRegion, { value: 1 }),
 
   cluster: createListReducer<Cluster, ClusterFilter>(FFReduxActionName.CLUSTER),
-  clusterVersion: reduceToPayload(ActionType.InitClusterVersion, '1.8'),
+  clusterVersion: reduceToPayload(ActionType.InitClusterVersion, '1.16'),
 
   /**当前集群命名空间 */
   namespaceList: generateFetcherReducer({
