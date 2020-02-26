@@ -112,7 +112,7 @@ docker run \
 --name registry-http \
 --restart always \
 -p 80:5000 \
--v $(pwd)/registry:/var/lib/registry \
+-v /opt/tke-installer/registry:/var/lib/registry \
 %s
 `
 
@@ -122,8 +122,8 @@ docker run \
 --name registry-https \
 --restart always \
 -p 443:443 \
--v $(pwd)/registry:/var/lib/registry \
--v $(pwd)/certs:/certs \
+-v /opt/tke-installer/registry:/var/lib/registry \
+-v registry-certs:/certs \
 -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
 -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt \
 -e REGISTRY_HTTP_TLS_KEY=/certs/server.key \

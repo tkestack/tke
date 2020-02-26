@@ -32,7 +32,15 @@ VERSION=latest
 
 INSTALL_DIR=/opt/tke-installer
 DATA_DIR=$INSTALL_DIR/data
-OPTIONS="--name tke-installer -d --privileged --net=host -v/etc/hosts:/app/hosts -v/etc/docker:/etc/docker -v/var/run/docker.sock:/var/run/docker.sock -v$DATA_DIR:/app/data -v$INSTALL_DIR/conf:/app/conf"
+OPTIONS="--name tke-installer -d --privileged --net=host
+-v /etc/hosts:/app/hosts
+-v /etc/docker:/etc/docker
+-v dockercfg:/app/.docker/config.json
+-v /var/run/docker.sock:/var/run/docker.sock
+-v $DATA_DIR:/app/data
+-v $INSTALL_DIR/conf:/app/conf
+-v registry-certs:/app/certs
+"
 
 function prefight() {
   echo "Step.1 prefight"
