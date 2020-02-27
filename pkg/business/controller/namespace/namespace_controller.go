@@ -307,7 +307,7 @@ func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, name
 		return err
 	}
 	calculatedNamespaceNames := sets.NewString(project.Status.CalculatedNamespaces...)
-	if !calculatedNamespaceNames.Has(project.ObjectMeta.Name) {
+	if !calculatedNamespaceNames.Has(namespace.ObjectMeta.Name) {
 		project.Status.CalculatedNamespaces = append(project.Status.CalculatedNamespaces, namespace.ObjectMeta.Name)
 		if project.Status.Clusters == nil {
 			project.Status.Clusters = make(v1.ClusterUsed)
