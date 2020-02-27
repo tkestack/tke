@@ -294,9 +294,5 @@ func getVariables(alert Alert) map[string]string {
 }
 
 func processStartTime(t time.Time) string {
-	local, err := time.LoadLocation("Asia/Chongqing")
-	if err != nil {
-		log.Errorf("failed to get local time since %s", err.Error())
-	}
-	return t.In(local).Format("2006-01-02 15:04:05")
+	return t.Format("2006-01-02T15:04:05Z")
 }
