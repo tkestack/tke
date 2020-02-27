@@ -26,6 +26,20 @@ const displayField: DisplayField = {
     headTitle: t('创建时间'),
     noExsitedValue: defaulNotExistedValue
   },
+  hard: {
+    dataField: ['spec.hard'],
+    dataFormat: dataFormatConfig['resourceLimit'],
+    width: '25%',
+    headTitle: t('资源限制'),
+    noExsitedValue: defaulNotExistedValue
+  },
+  used: {
+    dataField: ['status.used'],
+    dataFormat: dataFormatConfig['resourceLimit'],
+    width: '25%',
+    headTitle: t('已使用'),
+    noExsitedValue: defaulNotExistedValue
+  },
   operator: {
     dataField: [''],
     dataFormat: dataFormatConfig['operator'],

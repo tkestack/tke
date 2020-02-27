@@ -25,7 +25,13 @@ const fetchNamespaceActions = generateFetcherActionCreator({
     } = namespaceQuery;
     let namespaceList = [];
     projectNamespaceList.data.records.forEach(item => {
-      namespaceList.push({ id: uuid(), name: item.spec.namespace });
+      namespaceList.push({
+        id: uuid(),
+        name: item.spec.namespace,
+        clusterVersion: item.spec.clusterVersion,
+        clusterId: item.spec.clusterVersion,
+        clusterDisplayName: item.spec.clusterDisplayName
+      });
     });
 
     return { recordCount: namespaceList.length, records: namespaceList };

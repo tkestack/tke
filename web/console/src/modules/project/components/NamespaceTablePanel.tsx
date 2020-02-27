@@ -11,14 +11,8 @@ import { dateFormatter } from '../../../../helpers';
 import { GridTable, LinkButton, ResourceList, TipDialog, WorkflowDialog } from '../../common/components';
 import { DialogBodyLayout } from '../../common/layouts';
 import { allActions } from '../actions';
-import {
-  NamespaceStatus,
-  resourceLimitTypeToText,
-  resourceTypeToUnit,
-  K8SUNIT,
-  valueLabels1024,
-  valueLabels1000
-} from '../constants/Config';
+import { NamespaceStatus, resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
+import { K8SUNIT, valueLabels1024, valueLabels1000 } from '@helper/k8sUnitUtil';
 import { Namespace, NamespaceOperator } from '../models';
 import { router } from '../router';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';

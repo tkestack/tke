@@ -1,19 +1,23 @@
-import * as React from 'react';
-import { TableColumn, Bubble, Text } from '@tea/component';
-import { Resource } from '../../../models';
-import { RootProps } from '../../ClusterApp';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { DisplayFiledProps, OperatorProps } from '../../../../common/models';
-import { Clip, LinkButton, HeadBubble, TablePanel } from '../../../../common/components';
-import { router } from '../../../router';
-import { dateFormatter } from '../../../../../../helpers';
-import { ResourceStatus, ResourceLoadingIcon } from '../../../constants/Config';
 import * as classnames from 'classnames';
-import { isEmpty, includes } from '../../../../common/utils';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
+import { Bubble, TableColumn, Text } from '@tea/component';
 import { selectable } from '@tea/component/table/addons/selectable';
+import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { dateFormatter } from '../../../../../../helpers';
+import { Clip, HeadBubble, LinkButton, TablePanel } from '../../../../common/components';
+import { DisplayFiledProps, OperatorProps } from '../../../../common/models';
+import { includes, isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { ResourceLoadingIcon, ResourceStatus } from '../../../constants/Config';
+import { Resource } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import { resourceLimitTypeToText, resourceTypeToUnit } from '@src/modules/project/constants/Config';
 
 /** 判断resource是否需要展示loading状态
  * @param resourceName: string  资源的名称，如deployment
@@ -628,6 +632,21 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
     );
   }
 
+  private _reduceResourceLimit(showData) {
+    let resourceLimitKeys = showData !== '-' ? Object.keys(showData) : [];
+    let content = resourceLimitKeys.map((item, index) => (
+      <Text parent="p" key={index}>{`${resourceLimitTypeToText[item]}:${
+        resourceTypeToUnit[item] === 'MiB'
+          ? valueLabels1024(showData[item], K8SUNIT.Mi)
+          : valueLabels1000(showData[item], K8SUNIT.unit)
+      }${resourceTypeToUnit[item]}`}</Text>
+    ));
+    return (
+      <Bubble placement="left" content={content}>
+        {content.filter((item, index) => index < 3)}
+      </Bubble>
+    );
+  }
   /** 获取最终展示的数据 */
   private _getFinalData(dataFieldIns, resource: Resource) {
     let result = resource;
@@ -686,6 +705,8 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       content = this._reduceIngressRule_standalone(showData);
     } else if (fieldInfo.dataFormat === 'backendGroups') {
       content = this._reducebackendGroups(showData);
+    } else if (fieldInfo.dataFormat === 'resourceLimit') {
+      content = this._reduceResourceLimit(showData);
     } else {
       content = this._reduceText(showData, fieldInfo, resource, clipId);
     }

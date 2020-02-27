@@ -1,21 +1,21 @@
 import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState, Resource, ResourceFilter } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { ResourceInfo } from '../../common/models';
-import { resourceConfig } from '../../../../config';
-import { namespaceActions } from './namespaceActions';
-import { serviceEditActions } from './serviceEditActions';
-import { workloadEditActions } from './workloadEditActions';
-import { PollEventName, ResourceNeedJudgeLoading } from '../constants/Config';
-import { includes, cloneDeep } from '../../common/utils';
-import { IsResourceShowLoadingIcon } from '../components/resource/resourceTableOperation/ResourceTablePanel';
-import { router } from '../router';
 
+import { resourceConfig } from '../../../../config';
+import { ResourceInfo } from '../../common/models';
+import { cloneDeep, includes } from '../../common/utils';
+import { IsResourceShowLoadingIcon } from '../components/resource/resourceTableOperation/ResourceTablePanel';
+import * as ActionType from '../constants/ActionType';
+import { PollEventName, ResourceNeedJudgeLoading } from '../constants/Config';
+import { Resource, ResourceFilter, RootState } from '../models';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { namespaceActions } from './namespaceActions';
 import { resourceDetailActions } from './resourceDetailActions';
 import { resourceDetailEventActions } from './resourceDetailEventActions';
+import { serviceEditActions } from './serviceEditActions';
+import { workloadEditActions } from './workloadEditActions';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

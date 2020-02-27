@@ -4,6 +4,13 @@ import { Validation } from '../../common/models';
 export interface Namespace extends Identifiable {
   /** 命名空间名称 */
   name: string;
+
+  //业务侧使用
+  clusterVersion?: string;
+
+  clusterId?: string;
+
+  clusterDisplayName?: string;
 }
 
 /** 可视化创建的namespace的相关配置 */
