@@ -332,6 +332,22 @@ type ClusterFeature struct {
 	GPUType *GPUType `json:"gpuType,omitempty" protobuf:"bytes,4,opt,name=gpuType"`
 	// +optional
 	EnableMasterSchedule bool `json:"enableMasterSchedule,omitempty" protobuf:"bytes,5,opt,name=enableMasterSchedule"`
+	// +optional
+	HA *HA `json:"ha,omitempty" protobuf:"bytes,6,opt,name=ha"`
+}
+
+type HA struct {
+	TKEHA        *TKEHA        `json:"tke,omitempty" protobuf:"bytes,1,opt,name=tke"`
+	ThirdPartyHA *ThirdPartyHA `json:"thirdParty,omitempty" protobuf:"bytes,2,opt,name=thirdParty"`
+}
+
+type TKEHA struct {
+	VIP string `json:"vip" protobuf:"bytes,1,name=vip"`
+}
+
+type ThirdPartyHA struct {
+	VIP   string `json:"vip" protobuf:"bytes,1,name=vip"`
+	VPort int32  `json:"vport" protobuf:"bytes,2,name=vport"`
 }
 
 // ClusterProperty records the attribute information of the cluster.

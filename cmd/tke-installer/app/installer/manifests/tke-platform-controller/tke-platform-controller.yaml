@@ -48,6 +48,8 @@ spec:
               mountPath: /app/provider/baremetal/conf/kubeadm/
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
+            - name: keepalived-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/keepalived/
           ports:
             - containerPort: 9445
           livenessProbe:
@@ -88,6 +90,9 @@ spec:
         - name: gpu-manifests-volume
           configMap:
             name: gpu-manifests
+        - name: keepalived-manifests-volume
+          configMap:
+            name: keepalived-manifests
 ---
 kind: ConfigMap
 apiVersion: v1

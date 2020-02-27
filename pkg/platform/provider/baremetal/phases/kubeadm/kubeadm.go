@@ -39,14 +39,19 @@ const (
 --node-name={{.NodeName}} --token={{.BootstrapToken}} \
 --control-plane --certificate-key={{.CertificateKey}} \
 --skip-phases=control-plane-join/mark-control-plane \
---ignore-preflight-errors=ImagePull,Port-10250,FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
 --discovery-token-unsafe-skip-ca-verification
+--ignore-preflight-errors=ImagePull \
+--ignore-preflight-errors=Port-10250 \
+--ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
+--ignore-preflight-errors=DirAvailable--etc-kubernetes-manifests \
 `
 	joinNodeCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
 --node-name={{.NodeName}} \
 --token={{.BootstrapToken}} \
---ignore-preflight-errors=ImagePull,Port-10250,FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
 --discovery-token-unsafe-skip-ca-verification
+--ignore-preflight-errors=ImagePull \
+--ignore-preflight-errors=Port-10250 \
+--ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
 `
 )
 
@@ -142,7 +147,6 @@ func JoinControlePlane(s ssh.Interface, option *JoinControlePlaneOption) error {
 	}
 	stdout, stderr, exit, err := s.Exec(string(cmd))
 	if err != nil || exit != 0 {
-		_, _, _, _ = s.Exec("kubeadm reset -f")
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 	log.Info(stdout)
@@ -157,8 +161,6 @@ type JoinNodeOption struct {
 }
 
 func JoinNode(s ssh.Interface, option *JoinNodeOption) error {
-	_, _, _, _ = s.Exec("kubeadm reset -f")
-
 	cmd, err := util.ParseTemplate(joinNodeCmd, option)
 	if err != nil {
 		return errors.Wrap(err, "parse joinNodeCmd error")
