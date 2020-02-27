@@ -16,7 +16,7 @@
 
 FROM BASE_IMAGE
 
-RUN echo "hosts: files dns" >> /etc/nsswitch.conf && apk add tzdata
+RUN echo "hosts: files dns" >> /etc/nsswitch.conf
 
 WORKDIR /app
 ADD tke-notify-api /app/bin/
