@@ -294,7 +294,10 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 		namespace.Status.Reason = ""
 		namespace.Status.LastTransitionTime = metav1.Now()
 		return c.persistUpdate(namespace)
-	case v1.NamespaceAvailable, v1.NamespaceFailed:
+	case v1.NamespaceAvailable:
+		_ = c.calculateProjectUsed(cachedNamespace, namespace)
+		c.startNamespaceHealthCheck(key)
+	case v1.NamespaceFailed:
 		c.startNamespaceHealthCheck(key)
 	}
 	return nil
