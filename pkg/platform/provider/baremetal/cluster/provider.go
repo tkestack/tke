@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/validation"
+
 	"tkestack.io/tke/pkg/spec"
 
 	"github.com/AlekSi/pointer"
@@ -146,6 +148,25 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 		_, _, err := net.ParseCIDR(c.Spec.ClusterCIDR)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(sPath.Child("clusterCIDR"), c.Spec.ClusterCIDR, fmt.Sprintf("parse CIDR error:%s", err)))
+		}
+	}
+
+	if c.Spec.Features.HA != nil {
+		path := sPath.Child("features").Child("ha")
+		if c.Spec.Features.HA.TKEHA != nil {
+			for _, msg := range validation.IsValidIP(c.Spec.Features.HA.TKEHA.VIP) {
+				allErrs = append(allErrs, field.Invalid(path.Child("tke").Child("vip"), c.Spec.Features.HA.TKEHA.VIP, msg))
+
+			}
+		}
+		if c.Spec.Features.HA.ThirdPartyHA != nil {
+			for _, msg := range validation.IsValidIP(c.Spec.Features.HA.ThirdPartyHA.VIP) {
+				allErrs = append(allErrs, field.Invalid(path.Child("thirdParty").Child("vip"), c.Spec.Features.HA.ThirdPartyHA.VIP, msg))
+
+			}
+			for _, msg := range validation.IsValidPortNum(int(c.Spec.Features.HA.ThirdPartyHA.VPort)) {
+				allErrs = append(allErrs, field.Invalid(path.Child("thirdParty").Child("vport"), c.Spec.Features.HA.ThirdPartyHA.VPort, msg))
+			}
 		}
 	}
 

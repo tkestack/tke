@@ -278,7 +278,8 @@ type TKEHA struct {
 }
 
 type ThirdPartyHA struct {
-	VIP string `json:"vip" validate:"required"`
+	VIP   string `json:"vip" validate:"required"`
+	VPort int32  `json:"vport"`
 }
 
 type Gateway struct {
@@ -534,15 +535,6 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if t.Para.Config.HA != nil && t.Para.Config.HA.TKEHA != nil {
-		t.steps = append(t.steps, []handler{
-			{
-				Name: "Install keepalived",
-				Func: t.installKeepalived,
-			},
-		}...)
-	}
-
 	t.steps = append(t.steps, []handler{
 		{
 			Name: "Register tke api into global cluster",
@@ -778,6 +770,14 @@ func (t *TKE) SetConfigDefault(config *Config) {
 		}
 	}
 
+	if config.HA != nil {
+		if config.HA.ThirdPartyHA != nil {
+			if config.HA.ThirdPartyHA.VPort == 0 {
+				config.HA.ThirdPartyHA.VPort = 6443
+			}
+		}
+	}
+
 }
 func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 	if cluster.APIVersion == "" {
@@ -806,20 +806,17 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 
 	if config.HA != nil {
 		if t.Para.Config.HA.TKEHA != nil {
-			cluster.Spec.PublicAlternativeNames = append(cluster.Spec.PublicAlternativeNames, t.Para.Config.HA.TKEHA.VIP)
-			cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
-				Type: platformv1.AddressAdvertise,
-				Host: t.Para.Config.HA.TKEHA.VIP,
-				Port: 6443,
-			})
+			cluster.Spec.Features.HA = &platformv1.HA{
+				TKEHA: &platformv1.TKEHA{VIP: t.Para.Config.HA.TKEHA.VIP},
+			}
 		}
 		if t.Para.Config.HA.ThirdPartyHA != nil {
-			cluster.Spec.PublicAlternativeNames = append(cluster.Spec.PublicAlternativeNames, t.Para.Config.HA.ThirdPartyHA.VIP)
-			cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
-				Type: platformv1.AddressAdvertise,
-				Host: t.Para.Config.HA.ThirdPartyHA.VIP,
-				Port: 6443,
-			})
+			cluster.Spec.Features.HA = &platformv1.HA{
+				ThirdPartyHA: &platformv1.ThirdPartyHA{
+					VIP:   t.Para.Config.HA.ThirdPartyHA.VIP,
+					VPort: t.Para.Config.HA.ThirdPartyHA.VPort,
+				},
+			}
 		}
 	}
 }
@@ -1454,6 +1451,10 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 			Name: "gpu-manifests",
 			File: baremetalconstants.ManifestsDir + "/gpu/*",
 		},
+		{
+			Name: "keepalived-manifests",
+			File: baremetalconstants.ManifestsDir + "/keepalived/*",
+		},
 	}
 	for _, one := range configMaps {
 		err := apiclient.CreateOrUpdateConfigMapFromFile(t.globalClient,
@@ -1470,32 +1471,6 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 	}
 
 	return nil
-}
-
-func (t *TKE) installKeepalived() error {
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/keepalived/*.yaml",
-		map[string]interface{}{
-			"Image": images.Get().Keepalived.FullName(),
-			"VIP":   t.Para.Config.HA.TKEHA.VIP,
-		})
-	if err != nil {
-		return err
-	}
-
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDaemonset(t.globalClient, t.namespace, "keepalived")
-		if err != nil {
-			return false, nil
-		}
-		if t.Para.Config.HA != nil && t.Para.Config.HA.TKEHA != nil {
-			t.Cluster.Status.Addresses = append(t.Cluster.Status.Addresses, platformv1.ClusterAddress{
-				Type: platformv1.AddressAdvertise,
-				Host: t.Para.Config.HA.TKEHA.VIP,
-				Port: 6443,
-			})
-		}
-		return ok, nil
-	})
 }
 
 func (t *TKE) installTKEGateway() error {

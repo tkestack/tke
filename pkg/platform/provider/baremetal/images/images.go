@@ -29,6 +29,7 @@ type Components struct {
 	CoreDNS            containerregistry.Image
 	Pause              containerregistry.Image
 	NvidiaDevicePlugin containerregistry.Image
+	Keepalived         containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -47,6 +48,7 @@ var components = Components{
 	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.6.7"},
 	Pause:              containerregistry.Image{Name: "pause", Tag: "3.1"},
 	NvidiaDevicePlugin: containerregistry.Image{Name: "nvidia-device-plugin", Tag: "1.0.0-beta4"},
+	Keepalived:         containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
 }
 
 func List() []string {
