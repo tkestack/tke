@@ -99,10 +99,20 @@ image.multiarch:
 push:
 	@$(MAKE) image.push
 
-## push.multiarch: Build docker images for multiple platforms and push manifests to registry.
+## push.multiarch: Build docker images for multiple platforms and push images to registry.
 .PHONY: push.multiarch
 push.multiarch:
 	@$(MAKE) image.push.multiarch
+
+## manifest: Build docker images for linux_amd64 platform and push manifest list to registry.
+.PHONY: manifest
+manifest:
+	@$(MAKE) image.manifest.push
+
+## manifest.multiarch: Build docker images for multiple platforms and push manifest lists to registry.
+.PHONY: manifest.multiarch
+manifest.multiarch:
+	@$(MAKE) image.manifest.push.multiarch
 
 ## deploy: Deploy updated components to development env.
 .PHONY: deploy

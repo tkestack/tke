@@ -163,7 +163,7 @@ To build container images for multiple platforms (i.e., linux_amd64 and linux_ar
 make image.multiarch
 ```
 
-Above command will use experimental features of docker daemon (i.e. docker build --platform). 
+Above all `make image` commands will use experimental features of Docker daemon (i.e. docker build --platform). 
 Please refer to [docker build docs](https://docs.docker.com/engine/reference/commandline/build/#--platform) to enable experimental features.
 
 To build a specific os/arch for TKE container images, please use the `PLATFORMS` environment variable to
@@ -182,7 +182,7 @@ make push
 ```
 
 TKEStack manages docker images via manifests and manifest lists.
-Please make sure you enable experimental features in the Docker CLI.
+Please make sure you enable experimental features in the Docker client.
 You can find more details in [docker manifest docs](https://docs.docker.com/engine/reference/commandline/manifest/).
 
 For more functions of other components, please see [here](/docs/devel/components.md). To run tke system locally, please see [here](/docs/devel/running-locally.md).

@@ -49,13 +49,24 @@ image.verify:
 ifneq ($(shell $(DOCKER) -v | grep -q -E '\bversion ($(DOCKER_SUPPORTED_VERSIONS))\b' && echo 0 || echo 1), 0)
 	$(error unsupported docker version. Please make install one of the following supported version: '$(DOCKER_SUPPORTED_VERSIONS)')
 endif
-	@echo "===========> Docker version verification passed"
+
+.PHONY: image.daemon.verify
+image.daemon.verify:
+ifneq ($(shell $(DOCKER) version | grep -q -E 'Experimental: {5}true' && echo 0 || echo 1), 0)
+	$(error Experimental features of Docker daemon is not enabled. Please add "experimental": true in '/etc/docker/daemon.json' and then restart Docker daemon.)
+endif
+
+.PHONY: image.client.verify
+image.client.verify:
+ifneq ($(shell $(DOCKER) version | grep -q -E 'Experimental: {6}true' && echo 0 || echo 1), 0)
+	$(error Experimental features of Docker client is not enabled. Please add "experimental": "enabled" in '$$HOME/.docker/config.json')
+endif
 
 .PHONY: image.build
-image.build: image.verify go.build.verify $(addprefix image.build., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
+image.build: image.verify image.daemon.verify go.build.verify $(addprefix image.build., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
 
 .PHONY: image.build.multiarch
-image.build.multiarch: image.verify go.build.verify $(foreach p,$(PLATFORMS),$(addprefix image.build., $(addprefix $(p)., $(IMAGES))))
+image.build.multiarch: image.verify image.daemon.verify go.build.verify $(foreach p,$(PLATFORMS),$(addprefix image.build., $(addprefix $(p)., $(IMAGES))))
 
 .PHONY: image.build.%
 image.build.%: go.build.%
@@ -72,32 +83,42 @@ image.build.%: go.build.%
 	@rm -rf $(TMP_DIR)/$(IMAGE)
 
 .PHONY: image.push
-image.push: image.verify go.build.verify $(addprefix image.push., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
+image.push: image.verify image.daemon.verify go.build.verify $(addprefix image.push., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
+
+.PHONY: image.push.multiarch
+image.push.multiarch: image.verify image.daemon.verify go.build.verify $(foreach p,$(PLATFORMS),$(addprefix image.push., $(addprefix $(p)., $(IMAGES)))) 
 
 .PHONY: image.push.%
 image.push.%: image.build.%
 	@echo "===========> Pushing image $(IMAGE) $(VERSION) to $(REGISTRY_PREFIX)"
 	$(DOCKER) push $(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION)
-	@$(DOCKER) manifest create --amend $(REGISTRY_PREFIX)/$(IMAGE):$(VERSION) \
+
+.PHONY: image.manifest.push
+image.manifest.push: image.verify image.daemon.verify image.client.verify go.build.verify \
+$(addprefix image.manifest.push., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
+
+.PHONY: image.manifest.push.%
+image.manifest.push.%: image.push.% image.manifest.remove.%
+	@echo "===========> Pushing manifest $(IMAGE) $(VERSION) to $(REGISTRY_PREFIX) and then remove the local manifest list"
+	@$(DOCKER) manifest create $(REGISTRY_PREFIX)/$(IMAGE):$(VERSION) \
 		$(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION)
 	@$(DOCKER) manifest annotate $(REGISTRY_PREFIX)/$(IMAGE):$(VERSION) \
 		$(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION) \
 		--os $(OS) --arch ${ARCH}
-
-.PHONY: image.push.multiarch
-image.push.multiarch: image.verify go.build.verify manifest.remove \
-$(foreach p,$(PLATFORMS),$(addprefix image.push., $(addprefix $(p)., $(IMAGES)))) \
-$(addprefix image.push.manifest., $(IMAGES))
+	@$(DOCKER) manifest push --purge $(REGISTRY_PREFIX)/$(IMAGE):$(VERSION)
 
 # Docker cli has a bug: https://github.com/docker/cli/issues/954
 # If you find your manifests were not updated,
 # Please manually delete them in $HOME/.docker/manifests/
 # and re-run.
-.PHONY: manifest.remove
-manifest.remove:
-	@rm -rf ${HOME}/.docker/manifests/docker.io_$(REGISTRY_PREFIX)_tke-*
+.PHONY: image.manifest.remove.%
+image.manifest.remove.%:
+	@rm -rf ${HOME}/.docker/manifests/docker.io_$(REGISTRY_PREFIX)_$(IMAGE)-$(VERSION)
 
-.PHONY: image.push.manifest.%
-image.push.manifest.%:
+.PHONY: image.manifest.push.multiarch
+image.manifest.push.multiarch: image.client.verify image.push.multiarch $(addprefix image.manifest.push.multiarch., $(IMAGES))
+
+.PHONY: image.manifest.push.multiarch.%
+image.manifest.push.multiarch.%:
 	@echo "===========> Pushing manifest $* $(VERSION) to $(REGISTRY_PREFIX) and then remove the local manifest list"
-	@$(DOCKER) manifest push --purge $(REGISTRY_PREFIX)/$*:$(VERSION)
+	REGISTRY_PREFIX=$(REGISTRY_PREFIX) PLATFROMS="$(PLATFORMS)" IMAGE=$* VERSION=$(VERSION) $(ROOT_DIR)/build/lib/create-manifest.sh 
