@@ -119,10 +119,10 @@ data:
   galaxy.json: |
     {
       "NetworkConf":[
-        {"type":"tke-route-eni","eni":"eth1","routeTable":1},
-        {"type":"galaxy-flannel", "delegate":{"type":"galaxy-veth"},"subnetFile":"/run/flannel/subnet.env"},
-        {"type":"galaxy-k8s-vlan", "device":"{{ .DeviceName }}", "default_bridge_name": "br0"},
-        {"type": "galaxy-k8s-sriov", "device": "{{ .DeviceName }}", "vf_num": 10}
+        {"name":"tke-route-eni","type":"tke-route-eni","eni":"eth1","routeTable":1},
+        {"name":"galaxy-flannel","type":"galaxy-flannel", "delegate":{"type":"galaxy-veth"},"subnetFile":"/run/flannel/subnet.env"},
+        {"name":"galaxy-k8s-vlan","type":"galaxy-k8s-vlan", "device":"{{ .DeviceName }}", "default_bridge_name": "br0"},
+        {"name":"galaxy-k8s-sriov","type": "galaxy-k8s-sriov", "device": "{{ .DeviceName }}", "vf_num": 10}
       ],
       "DefaultNetworks": ["galaxy-flannel"]
     }
