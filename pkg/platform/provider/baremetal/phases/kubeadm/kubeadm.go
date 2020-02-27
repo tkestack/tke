@@ -39,19 +39,19 @@ const (
 --node-name={{.NodeName}} --token={{.BootstrapToken}} \
 --control-plane --certificate-key={{.CertificateKey}} \
 --skip-phases=control-plane-join/mark-control-plane \
---discovery-token-unsafe-skip-ca-verification
+--discovery-token-unsafe-skip-ca-verification \
 --ignore-preflight-errors=ImagePull \
 --ignore-preflight-errors=Port-10250 \
 --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
---ignore-preflight-errors=DirAvailable--etc-kubernetes-manifests \
+--ignore-preflight-errors=DirAvailable--etc-kubernetes-manifests
 `
 	joinNodeCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
 --node-name={{.NodeName}} \
 --token={{.BootstrapToken}} \
---discovery-token-unsafe-skip-ca-verification
+--discovery-token-unsafe-skip-ca-verification \
 --ignore-preflight-errors=ImagePull \
 --ignore-preflight-errors=Port-10250 \
---ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
+--ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
 `
 )
 
