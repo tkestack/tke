@@ -314,10 +314,12 @@ func deleteNamespaceOnCluster(deleter *namespacedResourcesDeleter, namespace *v1
 	}
 	projectName, ok := ns.ObjectMeta.Labels[util.LabelProjectName]
 	if !ok {
-		return fmt.Errorf("no project label were found on the namespace within the business cluster")
+		log.Infof("no project label were found on the namespace within the business cluster")
+		return nil
 	}
 	if projectName != namespace.ObjectMeta.Namespace {
-		return fmt.Errorf("the namespace in the business cluster currently belongs to another project")
+		log.Infof("the namespace in the business cluster currently belongs to another project")
+		return nil
 	}
 	background := metav1.DeletePropagationBackground
 	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
