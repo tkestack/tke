@@ -12,6 +12,13 @@ const displayField: DisplayField = {
     isLink: true, // 用于判断该值是否为链接
     isClip: true
   },
+  clusterName: {
+    dataField: ['spec.clusterId'],
+    dataFormat: dataFormatConfig['text'],
+    width: '20%',
+    headTitle: t('归属集群'),
+    noExsitedValue: defaulNotExistedValue
+  },
   status: {
     dataField: ['status.phase'],
     dataFormat: dataFormatConfig['status'],

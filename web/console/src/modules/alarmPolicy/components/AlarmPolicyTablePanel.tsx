@@ -180,9 +180,8 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
   private handleCreate() {
     let { route, regionSelection, cluster } = this.props;
     //actions.mode.changeMode("expand");
-    let rid = route.queries['rid'] || regionSelection.value + '',
-      clusterId = route.queries['clusterId'] || (cluster.selection ? cluster.selection.metadata.name : '');
-    router.navigate({ sub: 'create' }, { rid, clusterId });
+    let clusterId = route.queries['clusterId'] || (cluster.selection ? cluster.selection.metadata.name : '');
+    router.navigate({ sub: 'create' }, Object.assign({}, route.queries, { clusterId }));
   }
   private _getAlarmMetricsContent(alarmMetrics: MetricsObject[], alarmPolicy: AlarmPolicy) {
     let len = alarmMetrics.length;

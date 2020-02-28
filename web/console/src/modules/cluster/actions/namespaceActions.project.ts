@@ -27,7 +27,7 @@ const fetchNamespaceActions = generateFetcherActionCreator({
     projectNamespaceList.data.records.forEach(item => {
       namespaceList.push({
         id: uuid(),
-        name: item.spec.namespace,
+        name: item.metadata.name,
         clusterVersion: item.spec.clusterVersion,
         clusterId: item.spec.clusterVersion,
         clusterDisplayName: item.spec.clusterDisplayName
@@ -59,7 +59,7 @@ const restActions = {
         urlParams = router.resolve(route),
         { isNeedFetchNamespace, mode } = subRoot;
 
-      let finder = projectNamespaceList.data.records.find(item => item.spec.namespace === namespace);
+      let finder = projectNamespaceList.data.records.find(item => item.metadata.name === namespace);
       if (finder) {
         let clusterFinder = cluster.list.data.records.find(item => item.metadata.name === finder.spec.clusterName);
         if (clusterFinder) {

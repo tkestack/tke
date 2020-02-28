@@ -91,7 +91,8 @@ export const ResourceConfigVersionMap = (k8sVersion: string) => {
 };
 
 const getResourceConfig = (resourceFunc: (k8sVersion: string) => ResourceInfo, k8sVersion: string) => {
-  return resourceFunc(k8sVersion);
+  let result = resourceFunc(k8sVersion);
+  return Object.assign({}, result, { k8sVersion });
 };
 
 /** ResourceConfig的返回定义 */

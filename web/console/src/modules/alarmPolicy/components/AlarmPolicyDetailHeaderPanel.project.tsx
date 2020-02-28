@@ -7,12 +7,19 @@ export class AlarmPolicyDetailHeaderPanel extends React.Component<RootProps, {}>
   goBack() {
     let { route } = this.props;
     // history.back();
-    router.navigate({}, { clusterId: route.queries['clusterId'] });
+    router.navigate(
+      {},
+      { clusterId: route.queries['clusterId'], projectName: route.queries['projectName'], np: route.queries['np'] }
+    );
   }
 
   componentDidMount() {
-    let { regionList, actions } = this.props;
-    actions.cluster.applyFilter({ regionId: 1 });
+    let { regionList, cluster, actions } = this.props;
+    if (cluster.list.data.recordCount === 0) {
+      actions.projectNamespace.initProjectList();
+    } else {
+      actions.alarmPolicy.initAlarmPolicyData();
+    }
   }
 
   render() {

@@ -22,11 +22,14 @@ const _alarmPolicyActions = createListAction<AlarmPolicy, AlarmPolicyFilter>({
 
     //业务侧中过滤只有这个namepace下的AlarmPolicy
     /// #if project
+    let { namespaceSelection, route } = getstate();
+    let namespace = (getstate().namespaceSelection || route.queries['np'])
+      .split('-')
+      .splice(2)
+      .join('-');
     response.records = response.records.filter(
       item =>
-        item.alarmObjetcsType === 'part' &&
-        item.alarmObjectNamespace === getstate().namespaceSelection &&
-        item.alarmPolicyType === 'pod'
+        item.alarmObjetcsType === 'part' && item.alarmObjectNamespace === namespace && item.alarmPolicyType === 'pod'
     );
     response.recordCount = response.records.length;
     /// #endif
@@ -68,10 +71,7 @@ const editActions = {
         payload: alarmpolicy.alarmPolicyType
       });
 
-      // dispatch(groupActions.selectGroup(alarmpolicy.receiverGroups));
       dispatch(alarmPolicyActions.initAlarmMetricsForUpdate(alarmpolicy.alarmMetrics, alarmpolicy.alarmPolicyType));
-      // dispatch(alarmPolicyActions.inputAlarmShieldTimeStart(alarmpolicy.shieldTimeStart || null));
-      // dispatch(alarmPolicyActions.inputAlarmShieldTimeEnd(alarmpolicy.shieldTimeEnd));
       dispatch(
         alarmPolicyActions.inputAlarmNotifyWays(
           alarmpolicy.notifyWays.map(w => ({
@@ -81,17 +81,6 @@ const editActions = {
           }))
         )
       );
-      // dispatch({
-      //   type: ActionType.InputAlarmNotifyWay,
-      //   payload: alarmpolicy.notifyWay
-      // });
-      // //当告警渠道有电话时初始化
-      // if (alarmpolicy.notifyWay.indexOf('CALL') !== -1) {
-      //   dispatch(alarmPolicyActions.inputAlarmPhoneCircleInterval(alarmpolicy.phoneCircleInterval));
-      //   dispatch(alarmPolicyActions.inputAlarmPhoneArriveNotice(alarmpolicy.phoneNotifyOrder));
-      //   dispatch(alarmPolicyActions.inputAlarmPhoneCircleTimes(alarmpolicy.phoneCircleTimes));
-      //   dispatch(alarmPolicyActions.inputAlarmPhoneInnerInterval(alarmpolicy.phoneInnerInterval));
-      // }
     };
   },
 
@@ -108,10 +97,19 @@ const editActions = {
         dispatch(alarmPolicyActions.inputAlarmPolicyObjectsType(alarmpolicy.alarmObjetcsType));
         //告警对象是workload且选择按工作负载选择初始化
         if (alarmpolicy.alarmObjetcsType === 'part') {
+          let namespace;
+          /// #if project
+          //业务侧的namespace需要做前缀处理
+          namespace = `${alarmpolicy.clusterId}-${alarmpolicy.alarmObjectNamespace}`;
+          /// #endif
+          /// #if tke
+          namespace = alarmpolicy.alarmObjectNamespace;
+          /// #endif
           dispatch({
             type: ActionType.InputAlarmWorkLoadNameSpace,
-            payload: alarmpolicy.alarmObjectNamespace
+            payload: namespace
           });
+
           dispatch(alarmPolicyActions.inputAlarmObjectWorkloadType(alarmpolicy.alarmObjectWorkloadType));
           dispatch(alarmPolicyActions.inputAlarmPolicyObjects(alarmpolicy.alarmObjetcs));
         }
