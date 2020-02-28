@@ -101,6 +101,7 @@ function clean_old_data() {
 
   rm -rf $DATA_DIR || :
   docker rm -f tke-installer || :
+  docker volume prune -f || :
 
   echo "Step.4 clean old data [ok]"
 }
