@@ -1415,10 +1415,7 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 	}
 	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
 		t.Para.Config.Registry.TKERegistry != nil {
-		ip := t.Cluster.Spec.Machines[0].IP
-		if t.Para.Config.HA != nil {
-			ip = t.Para.Config.HA.VIP()
-		}
+		ip := t.Cluster.Spec.Machines[0].IP // registry current only run in first node
 		c.Registry.IP = ip
 	}
 
