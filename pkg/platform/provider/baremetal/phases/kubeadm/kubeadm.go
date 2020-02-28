@@ -167,6 +167,7 @@ func JoinNode(s ssh.Interface, option *JoinNodeOption) error {
 	}
 	stdout, stderr, exit, err := s.Exec(string(cmd))
 	if err != nil || exit != 0 {
+		_, _, _, _ = s.Exec("kubeadm reset -f")
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 	log.Info(stdout)
