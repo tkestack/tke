@@ -19,15 +19,17 @@
 package namespace
 
 import (
+	"reflect"
+	"sync"
+	"time"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
-	"reflect"
-	"sync"
-	"time"
-	"tkestack.io/tke/api/business/v1"
+	v1 "tkestack.io/tke/api/business/v1"
+	cls "tkestack.io/tke/pkg/business/controller/namespace/cluster"
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -114,7 +116,7 @@ func (c *Controller) checkNamespaceHealth(namespace *v1.Namespace) error {
 	if err != nil {
 		return err
 	}
-	message, reason := checkNamespaceOnCluster(kubeClient, namespace)
+	message, reason := cls.CheckNamespaceOnCluster(kubeClient, namespace)
 	if message != "" {
 		namespace.Status.Phase = v1.NamespaceFailed
 		namespace.Status.LastTransitionTime = metav1.Now()
@@ -122,7 +124,7 @@ func (c *Controller) checkNamespaceHealth(namespace *v1.Namespace) error {
 		namespace.Status.Reason = reason
 		return c.persistUpdate(namespace)
 	}
-	message, reason, used := calculateNamespaceUsed(kubeClient, namespace)
+	message, reason, used := cls.CalculateNamespaceUsed(kubeClient, namespace)
 	if message != "" {
 		namespace.Status.Phase = v1.NamespaceFailed
 		namespace.Status.LastTransitionTime = metav1.Now()
@@ -130,11 +132,8 @@ func (c *Controller) checkNamespaceHealth(namespace *v1.Namespace) error {
 		namespace.Status.Reason = reason
 		return c.persistUpdate(namespace)
 	}
-	if namespace.Status.Phase != v1.NamespaceAvailable || !reflect.DeepEqual(namespace.Status.Used, used) {
-		if namespace.Status.Phase != v1.NamespaceAvailable {
-			namespace.Status.LastTransitionTime = metav1.Now()
-		}
-		namespace.Status.Phase = v1.NamespaceAvailable
+	if !reflect.DeepEqual(namespace.Status.Used, used) {
+		log.Infof("%s:%s update used", namespace.Namespace, namespace.Name)
 		namespace.Status.Used = used
 		namespace.Status.Message = ""
 		namespace.Status.Reason = ""

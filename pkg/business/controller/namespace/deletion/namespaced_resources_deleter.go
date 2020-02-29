@@ -28,7 +28,7 @@ import (
 	v1 "tkestack.io/tke/api/business/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	"tkestack.io/tke/pkg/business/util"
+	cls "tkestack.io/tke/pkg/business/controller/namespace/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -241,7 +241,7 @@ type deleteResourceFunc func(deleter *namespacedResourcesDeleter, namespace *v1.
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	recalculateProjectUsed,
-	deleteNamespaceOnCluster,
+	deleteNamespaceFromCluster,
 }
 
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
@@ -302,30 +302,12 @@ func recalculateProjectUsed(deleter *namespacedResourcesDeleter, namespace *v1.N
 	return nil
 }
 
-func deleteNamespaceOnCluster(deleter *namespacedResourcesDeleter, namespace *v1.Namespace) error {
+func deleteNamespaceFromCluster(deleter *namespacedResourcesDeleter, namespace *v1.Namespace) error {
 	kubeClient, err := platformutil.BuildExternalClientSetWithName(deleter.platformClient, namespace.Spec.ClusterName)
 	if err != nil {
 		log.Error("Failed to create the kubernetes client", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 		return err
 	}
-	ns, err := kubeClient.CoreV1().Namespaces().Get(namespace.Spec.Namespace, metav1.GetOptions{})
-	if err != nil && errors.IsNotFound(err) {
-		return nil
-	}
-	projectName, ok := ns.ObjectMeta.Labels[util.LabelProjectName]
-	if !ok {
-		log.Infof("no project label were found on the namespace within the business cluster")
-		return nil
-	}
-	if projectName != namespace.ObjectMeta.Namespace {
-		log.Infof("the namespace in the business cluster currently belongs to another project")
-		return nil
-	}
-	background := metav1.DeletePropagationBackground
-	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-	if err := kubeClient.CoreV1().Namespaces().Delete(namespace.Spec.Namespace, deleteOpt); err != nil {
-		log.Error("Failed to delete the namespace in the business cluster", log.String("clusterName", namespace.Spec.ClusterName), log.String("namespace", namespace.Spec.Namespace), log.Err(err))
-		return err
-	}
-	return nil
+	// ResourceQuota has also gone with namespace.
+	return cls.DeleteNamespaceFromCluster(kubeClient, namespace)
 }
