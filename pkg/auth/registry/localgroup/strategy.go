@@ -33,6 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -77,7 +78,7 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	}
 
 	// Update bind users, use binding api
-	group.Status.Users = oldGroup.Status.Users
+	group.Status.Users = util.RemoveDuplicateSubjects(group.Status.Users)
 }
 
 // NamespaceScoped is false for policies.

@@ -18,7 +18,10 @@
 
 package util
 
-import "tkestack.io/tke/api/auth"
+import (
+	sets "k8s.io/apimachinery/pkg/util/sets"
+	"tkestack.io/tke/api/auth"
+)
 
 func InSubjects(subject auth.Subject, slice []auth.Subject) bool {
 	for _, s := range slice {
@@ -27,4 +30,15 @@ func InSubjects(subject auth.Subject, slice []auth.Subject) bool {
 		}
 	}
 	return false
+}
+
+func RemoveDuplicateSubjects(slice []auth.Subject) []auth.Subject {
+	var ret []auth.Subject
+	idSet := sets.String{}
+	for _, s := range slice {
+		if !idSet.Has(s.ID) {
+			ret = append(ret, s)
+		}
+	}
+	return ret
 }
