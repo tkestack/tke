@@ -1,25 +1,29 @@
 import * as React from 'react';
-import { RootProps } from './AlarmPolicyApp';
-import { router } from '../router';
+
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Icon, Justify } from '@tencent/tea-component';
+
+import { router } from '../router';
+import { RootProps } from './AlarmPolicyApp';
 export class AlarmPolicySubpageHeaderPanel extends React.Component<RootProps, {}> {
   goBack() {
     let { route } = this.props;
     // history.back();
-    router.navigate({}, { clusterId: route.queries['clusterId'] });
+    router.navigate(
+      {},
+      { clusterId: route.queries['clusterId'], projectName: route.queries['projectName'], np: route.queries['np'] }
+    );
   }
 
   componentDidMount() {
     // 根据 queries 来判断在update或者 detail当中显示信息
     let { cluster, actions, route } = this.props;
     if (cluster.list.data.recordCount === 0) {
-      actions.cluster.applyFilter({ regionId: 1 });
+      actions.projectNamespace.initProjectList();
     } else {
       actions.alarmPolicy.initAlarmPolicyData();
     }
   }
-
-  // componentWillReceiveProps(nextProps) {}
 
   render() {
     let { route } = this.props;

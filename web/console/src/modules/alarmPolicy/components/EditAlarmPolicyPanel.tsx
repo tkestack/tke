@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { RootProps } from './AlarmPolicyApp';
 import { SelectList, FormItem, InputField, TipInfo } from '../../common/components';
-import { Button, Bubble, Select, Row, Col } from '@tea/component';
+import { Button, Bubble, Select, Row, Col, ExternalLink } from '@tea/component';
 import { MainBodyLayout, FormLayout } from '../../common/layouts';
 import classNames from 'classnames';
 import { router } from '../router';
@@ -262,23 +262,15 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
                 <FormItem
                   label={t('通知方式')}
                   tips={
-                    <a
-                      href="/ops/notify/create/channel"
-                      onClick={event => {
-                        if (
-                          event.ctrlKey ||
-                          event.shiftKey ||
-                          event.metaKey || // apple
-                          (event.button && event.button === 1) // middle click, >IE9 + everyone else
-                        ) {
-                          return;
-                        }
-                        event.preventDefault();
-                        notifyRouter.navigate({ mode: 'create', resourceName: 'channel', tab: '' }, {});
-                      }}
+                    <ExternalLink
+                      href={
+                        window.location.pathname.indexOf('tkestack-project') !== -1
+                          ? '/tkestack-project/notify/create/channel'
+                          : '/tkestack/notify/create/channel'
+                      }
                     >
                       {t('新建通知渠道')}
-                    </a>
+                    </ExternalLink>
                   }
                 >
                   {alarmPolicyEdition.notifyWays.map((notifyWay, index) => (

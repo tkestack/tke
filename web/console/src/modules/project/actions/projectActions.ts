@@ -3,11 +3,10 @@ import {
   initProjectEdition,
   initProjectResourceLimit,
   resourceLimitTypeList,
-  resourceTypeToUnit,
-  valueLabels1000,
-  K8SUNIT,
-  valueLabels1024
+  resourceTypeToUnit
 } from './../constants/Config';
+
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import { initValidator } from './../../common/models/Validation';
 import { Manager } from './../models/Manager';
 import { extend, deepClone, uuid } from '@tencent/qcloud-lib';

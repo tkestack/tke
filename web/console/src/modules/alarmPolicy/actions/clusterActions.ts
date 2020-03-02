@@ -3,7 +3,7 @@ import { extend } from '@tencent/qcloud-lib';
 import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 import { RootState } from '../models';
-import * as ActionType from '../../cluster/constants/ActionType';
+import * as ActionType from '../constants/ActionType';
 import * as WebAPI from '../../cluster/WebAPI';
 import { setClusterId } from '../../../../helpers';
 import { router } from '../router';
@@ -52,7 +52,9 @@ const restActions = {
         urlParams = router.resolve(route);
       if (cluster) {
         dispatch(FFModelClusterActions.select(cluster));
-        // dispatch(clusterActions.initClusterVersion(selectCluster.k8sVersion));
+
+        dispatch(clusterActions.initClusterVersion(cluster.status.version));
+
         router.navigate(urlParams, Object.assign({}, route.queries, { clusterId: cluster.metadata.name }));
         dispatch(
           alarmPolicyActions.applyFilter({ regionId: +regionSelection.value, clusterId: cluster.metadata.name })
@@ -61,6 +63,19 @@ const restActions = {
         router.navigate(urlParams, Object.assign({}, route.queries, { clusterId: '' }));
         dispatch(alarmPolicyActions.clear());
       }
+    };
+  },
+  /** 初始化集群的版本 */
+  initClusterVersion: (clusterVersion: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let k8sVersion = clusterVersion
+        .split('.')
+        .slice(0, 2)
+        .join('.');
+      dispatch({
+        type: ActionType.InitClusterVersion,
+        payload: k8sVersion
+      });
     };
   }
 };

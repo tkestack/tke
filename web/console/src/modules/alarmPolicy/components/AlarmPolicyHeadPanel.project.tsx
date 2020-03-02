@@ -7,7 +7,7 @@ export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions } = this.props;
 
-    actions.cluster.applyFilter({ regionId: 1 });
+    actions.projectNamespace.initProjectList();
   }
 
   render() {
@@ -18,7 +18,7 @@ export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
       value: p.name
     }));
     let namespaceOptions = namespaceList.data.records.map((p, index) => ({
-      text: `${p.name}(${cluster.selection ? cluster.selection.metadata.name : '-'})`,
+      text: p.name,
       value: p.name
     }));
     return (

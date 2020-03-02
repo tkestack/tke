@@ -12,6 +12,13 @@ const displayField: DisplayField = {
     isLink: true, // 用于判断该值是否为链接
     isClip: true
   },
+  clusterName: {
+    dataField: ['spec.clusterId'],
+    dataFormat: dataFormatConfig['text'],
+    width: '20%',
+    headTitle: t('归属集群'),
+    noExsitedValue: defaulNotExistedValue
+  },
   status: {
     dataField: ['status.phase'],
     dataFormat: dataFormatConfig['status'],
@@ -24,6 +31,20 @@ const displayField: DisplayField = {
     dataFormat: dataFormatConfig['time'],
     width: '25%',
     headTitle: t('创建时间'),
+    noExsitedValue: defaulNotExistedValue
+  },
+  hard: {
+    dataField: ['spec.hard'],
+    dataFormat: dataFormatConfig['resourceLimit'],
+    width: '25%',
+    headTitle: t('资源限制'),
+    noExsitedValue: defaulNotExistedValue
+  },
+  used: {
+    dataField: ['status.used'],
+    dataFormat: dataFormatConfig['resourceLimit'],
+    width: '25%',
+    headTitle: t('已使用'),
     noExsitedValue: defaulNotExistedValue
   },
   operator: {
