@@ -287,7 +287,11 @@ func recalculateParentProjectUsed(deleter *projectedResourcesDeleter, project *b
 			calculatedChildProjectNames.Delete(project.ObjectMeta.Name)
 			parentProject.Status.CalculatedChildProjects = calculatedChildProjectNames.List()
 			if parentProject.Status.Clusters != nil {
-				businessUtil.SubClusterHardFromUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
+				release := project.Spec.Clusters
+				if project.Status.CachedSpecClusters != nil {
+					release = project.Status.CachedSpecClusters
+				}
+				businessUtil.SubClusterHardFromUsed(&parentProject.Status.Clusters, release)
 			}
 			_, err := deleter.businessClient.Projects().Update(parentProject)
 			if err != nil {

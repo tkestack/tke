@@ -38622,6 +38622,19 @@ func schema_tke_api_business_v1_NamespaceStatus(ref common.ReferenceCallback) co
 							},
 						},
 					},
+					"cachedSpecHard": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -39037,11 +39050,24 @@ func schema_tke_api_business_v1_ProjectStatus(ref common.ReferenceCallback) comm
 							},
 						},
 					},
+					"cachedSpecClusters": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/business/v1.HardQuantity"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/business/v1.UsedQuantity"},
+			"tkestack.io/tke/api/business/v1.HardQuantity", "tkestack.io/tke/api/business/v1.UsedQuantity"},
 	}
 }
 
