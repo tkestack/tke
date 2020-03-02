@@ -240,6 +240,9 @@ message NamespaceStatus {
   // Used represents the resources of a namespace that are used.
   // +optional
   map<string, k8s.io.apimachinery.pkg.api.resource.Quantity> used = 6;
+
+  // +optional
+  map<string, k8s.io.apimachinery.pkg.api.resource.Quantity> cachedSpecHard = 7;
 }
 
 // Platform is a platform in TKE.
@@ -343,6 +346,9 @@ message ProjectStatus {
 
   // +optional
   repeated string calculatedNamespaces = 5;
+
+  // +optional
+  map<string, HardQuantity> cachedSpecClusters = 6;
 }
 
 // UsedQuantity is a straightforward wrapper of ResourceList.

@@ -472,6 +472,13 @@ func (in *NamespaceStatus) DeepCopyInto(out *NamespaceStatus) {
 			(*out)[key] = val.DeepCopy()
 		}
 	}
+	if in.CachedSpecHard != nil {
+		in, out := &in.CachedSpecHard, &out.CachedSpecHard
+		*out = make(ResourceList, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val.DeepCopy()
+		}
+	}
 	return
 }
 
@@ -717,6 +724,13 @@ func (in *ProjectStatus) DeepCopyInto(out *ProjectStatus) {
 		in, out := &in.CalculatedNamespaces, &out.CalculatedNamespaces
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.CachedSpecClusters != nil {
+		in, out := &in.CachedSpecClusters, &out.CachedSpecClusters
+		*out = make(ClusterHard, len(*in))
+		for key, val := range *in {
+			(*out)[key] = *val.DeepCopy()
+		}
 	}
 	return
 }

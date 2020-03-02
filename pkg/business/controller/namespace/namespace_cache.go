@@ -34,12 +34,20 @@ type namespaceCache struct {
 	m  map[string]*cachedNamespace
 }
 
-func (s *namespaceCache) getOrCreate(name string) *cachedNamespace {
+func (s *namespaceCache) getOrCreate(name string, self *v1.Namespace) *cachedNamespace {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	namespace, ok := s.m[name]
 	if !ok {
 		namespace = &cachedNamespace{}
+		if self.Status.Phase == v1.NamespaceAvailable {
+			namespace.state = self.DeepCopy()
+			if self.Status.CachedSpecHard != nil {
+				namespace.state.Spec.Hard = self.Status.CachedSpecHard
+			} else {
+				namespace.state.Spec.Hard = self.Spec.Hard
+			}
+		}
 		s.m[name] = namespace
 	}
 	return namespace

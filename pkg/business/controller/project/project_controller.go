@@ -210,7 +210,7 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve project from store", log.String("projectName", key), log.Err(err))
 	default:
 		if project.Status.Phase == v1.ProjectActive {
-			cachedProject = c.cache.getOrCreate(key)
+			cachedProject = c.cache.getOrCreate(key, project)
 			err = c.processUpdate(cachedProject, project, key)
 		} else if project.Status.Phase == v1.ProjectTerminating {
 			log.Info("Project has been terminated. Attempting to cleanup resources", log.String("projectName", key))
@@ -277,9 +277,10 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 				parentProject.Status.Clusters = make(v1.ClusterUsed)
 			}
 			businessUtil.AddClusterHardToUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
-			return c.persistUpdate(parentProject)
-		}
-		if cachedProject.state != nil && !reflect.DeepEqual(cachedProject.state.Spec.Clusters, project.Spec.Clusters) {
+			if err := c.persistUpdate(parentProject); err != nil {
+				return err
+			}
+		} else if cachedProject.state != nil && !reflect.DeepEqual(cachedProject.state.Spec.Clusters, project.Spec.Clusters) {
 			if parentProject.Status.Clusters == nil {
 				parentProject.Status.Clusters = make(v1.ClusterUsed)
 			}
@@ -287,7 +288,12 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 			businessUtil.SubClusterHardFromUsed(&parentProject.Status.Clusters, cachedProject.state.Spec.Clusters)
 			// add new
 			businessUtil.AddClusterHardToUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
-			return c.persistUpdate(parentProject)
+			if err := c.persistUpdate(parentProject); err != nil {
+				return err
+			}
+		}
+		if project != nil && !reflect.DeepEqual(project.Spec.Clusters, project.Status.CachedSpecClusters) {
+			return c.updateCache(project, project.Spec.Clusters)
 		}
 	}
 	return nil
@@ -310,5 +316,33 @@ func (c *Controller) persistUpdate(project *v1.Project) error {
 		log.Warn(fmt.Sprintf("Failed to persist updated status of project %s", project.ObjectMeta.Name), log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 		time.Sleep(clientRetryInterval)
 	}
+	return err
+}
+
+func (c *Controller) updateCache(project *v1.Project, newCache v1.ClusterHard) error {
+	var err error
+	project.Status.CachedSpecClusters = newCache
+	for i := 0; i < clientRetryCount; i++ {
+		_, err = c.client.BusinessV1().Projects().UpdateStatus(project)
+		if err == nil {
+			return nil
+		}
+		if errors.IsNotFound(err) {
+			log.Info(fmt.Sprintf("Not updateCache of non-existed project %s", project.ObjectMeta.Name), log.Err(err))
+			return nil
+		}
+		if errors.IsConflict(err) {
+			newProject, newErr := c.client.BusinessV1().Projects().Get(project.ObjectMeta.Name, metav1.GetOptions{})
+			if newErr == nil {
+				project = newProject
+				project.Status.CachedSpecClusters = newCache
+			} else {
+				log.Warn(fmt.Sprintf("Failed to get project %s", project.ObjectMeta.Name), log.Err(newErr))
+			}
+		}
+		log.Warn(fmt.Sprintf("Failed to updateCache of project %s", project.ObjectMeta.Name), log.Err(err))
+		time.Sleep(clientRetryInterval)
+	}
+	log.Error(fmt.Sprintf("Failed to updateCache of project %s", project.ObjectMeta.Name), log.Err(err))
 	return err
 }

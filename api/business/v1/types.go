@@ -87,6 +87,8 @@ type ProjectStatus struct {
 	CalculatedChildProjects []string `json:"calculatedChildProjects,omitempty" protobuf:"bytes,4,rep,name=calculatedChildProjects"`
 	// +optional
 	CalculatedNamespaces []string `json:"calculatedNamespaces,omitempty" protobuf:"bytes,5,rep,name=calculatedNamespaces"`
+	// +optional
+	CachedSpecClusters ClusterHard `json:"cachedSpecClusters,omitempty" protobuf:"bytes,6,rep,name=cachedSpecClusters,casttype=ClusterHard"`
 }
 
 // ProjectPhase defines the phase of project constructor.
@@ -193,6 +195,8 @@ type NamespaceStatus struct {
 	// Used represents the resources of a namespace that are used.
 	// +optional
 	Used ResourceList `json:"used,omitempty" protobuf:"bytes,6,rep,name=used,casttype=ResourceList"`
+	// +optional
+	CachedSpecHard ResourceList `json:"cachedSpecHard,omitempty" protobuf:"bytes,7,rep,name=cachedSpecHard,casttype=ResourceList"`
 }
 
 // NamespacePhase indicates the status of namespace in project.
