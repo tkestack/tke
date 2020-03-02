@@ -93,6 +93,11 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 		}
 		project.Spec.TenantID = tenantID
 	}
+	if oldProject.Status.CachedSpecClusters != nil {
+		project.Status.CachedSpecClusters = oldProject.Status.CachedSpecClusters
+	} else {
+		project.Status.CachedSpecClusters = oldProject.Spec.Clusters
+	}
 }
 
 // NamespaceScoped is false for projects.

@@ -20,7 +20,8 @@ package project
 
 import (
 	"sync"
-	"tkestack.io/tke/api/business/v1"
+
+	v1 "tkestack.io/tke/api/business/v1"
 )
 
 type cachedProject struct {
@@ -33,12 +34,20 @@ type projectCache struct {
 	m  map[string]*cachedProject
 }
 
-func (s *projectCache) getOrCreate(name string) *cachedProject {
+func (s *projectCache) getOrCreate(name string, self *v1.Project) *cachedProject {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	project, ok := s.m[name]
 	if !ok {
 		project = &cachedProject{}
+		if self.Status.Phase == v1.ProjectActive {
+			project.state = self.DeepCopy()
+			if self.Status.CachedSpecClusters != nil {
+				project.state.Spec.Clusters = self.Status.CachedSpecClusters
+			} else {
+				project.state.Spec.Clusters = self.Spec.Clusters
+			}
+		}
 		s.m[name] = project
 	}
 	return project

@@ -85,6 +85,8 @@ type ProjectStatus struct {
 	CalculatedChildProjects []string
 	// +optional
 	CalculatedNamespaces []string
+	// +optional
+	CachedSpecClusters ClusterHard
 }
 
 // ProjectPhase defines the phase of project constructor.
@@ -191,6 +193,8 @@ type NamespaceStatus struct {
 	// Used represents the resources of a namespace that are used.
 	// +optional
 	Used ResourceList
+	// +optional
+	CachedSpecHard ResourceList
 }
 
 // NamespacePhase indicates the status of namespace in project.
