@@ -1,25 +1,22 @@
 import * as React from 'react';
-import { RootProps } from './ProjectApp';
-import { dateFormatter } from '../../../../helpers';
-import { Text, Modal, Bubble, Icon, TableColumn, Table, StatusTip, Button } from '@tea/component';
-import { WorkflowDialog, FormPanel, FormItem, TablePanel } from '../../common/components';
-import { DialogBodyLayout } from '../../common/layouts';
-import { EditProjectNamePanel } from './EditProjectNamePanel';
-import { EditProjectManagerPanel } from './EditProjectManagerPanel';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import {
-  resourceLimitTypeToText,
-  resourceTypeToUnit,
-  K8SUNIT,
-  valueLabels1000,
-  valueLabels1024
-} from '../constants/Config';
-import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
-import { ProjectResourceLimit } from '../models/Project';
+
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
+import { Bubble, Button, Icon, Modal, StatusTip, Table, TableColumn, Text } from '@tea/component';
 import { deepClone } from '@tencent/qcloud-lib';
+import { isSuccessWorkflow, OperationState } from '@tencent/qcloud-redux-workflow';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { autotip } from '@tencent/tea-component/lib/table/addons';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+
+import { dateFormatter } from '../../../../helpers';
 import { getWorkflowError } from '../../common';
+import { FormItem, FormPanel, TablePanel, WorkflowDialog } from '../../common/components';
+import { DialogBodyLayout } from '../../common/layouts';
+import { resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
+import { ProjectResourceLimit } from '../models/Project';
+import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
+import { EditProjectManagerPanel } from './EditProjectManagerPanel';
+import { EditProjectNamePanel } from './EditProjectNamePanel';
+import { RootProps } from './ProjectApp';
 
 export class ProjectDetailPanel extends React.Component<RootProps, {}> {
   state = {

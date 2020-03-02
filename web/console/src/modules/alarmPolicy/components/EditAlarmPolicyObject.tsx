@@ -79,7 +79,9 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
                     textFormat={`\${name}`}
                     className="tc-15-select m"
                     style={{ marginRight: '5px' }}
-                    onSelect={value => actions.alarmPolicy.selectsWorkLoadNamespace(value)}
+                    onSelect={value => {
+                      actions.namespace.selectNamespace(value);
+                    }}
                     isUnshiftDefaultItem={false}
                   />
                 </FormItem>

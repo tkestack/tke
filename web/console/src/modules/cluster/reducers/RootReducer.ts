@@ -31,7 +31,7 @@ export const RootReducer = combineReducers({
     actionType: ActionType.UpdateClusterToken
   }),
 
-  clusterVersion: reduceToPayload(ActionType.ClusterVersion, '1.12'),
+  clusterVersion: reduceToPayload(ActionType.ClusterVersion, '1.16'),
 
   clusterInfoQuery: generateQueryReducer({
     actionType: ActionType.QueryClusterInfo

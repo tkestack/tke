@@ -42,10 +42,7 @@ const queryNamespaceActions = generateQueryActionCreator({
 const restActions = {
   selectNamespace: (namespace: string) => {
     return async (dispatch, getState: GetState) => {
-      dispatch({
-        type: ActionType.SelectNamespace,
-        payload: namespace
-      });
+      dispatch(alarmPolicyActions.selectsWorkLoadNamespace(namespace));
     };
   }
 };

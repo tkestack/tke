@@ -1,21 +1,20 @@
-import { router } from './../router';
-import {
-  initProjectResourceLimit,
-  initNamespaceEdition,
-  resourceTypeToUnit,
-  valueLabels1000,
-  K8SUNIT,
-  valueLabels1024
-} from './../constants/Config';
-import { extend, deepClone, uuid } from '@tencent/qcloud-lib';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { RootState, Namespace, NamespaceEdition, NamespaceOperator, NamespaceFilter } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { resourceLimitTypeList } from '../constants/Config';
-import { ProjectResourceLimit } from '../models/Project';
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
+import { deepClone, extend, uuid } from '@tencent/qcloud-lib';
+import { generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger } from '@tencent/qcloud-redux-workflow';
 import { createListAction } from '@tencent/redux-list';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import * as ActionType from '../constants/ActionType';
+import {
+  initNamespaceEdition,
+  initProjectResourceLimit,
+  resourceLimitTypeList,
+  resourceTypeToUnit
+} from '../constants/Config';
+import { Namespace, NamespaceEdition, NamespaceFilter, NamespaceOperator, RootState } from '../models';
+import { ProjectResourceLimit } from '../models/Project';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 

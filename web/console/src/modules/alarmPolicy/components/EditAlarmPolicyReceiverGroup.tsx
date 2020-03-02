@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { RootProps } from './AlarmPolicyApp';
 import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { Text } from '@tea/component';
+import { Text, ExternalLink } from '@tea/component';
 import {
   FormItem,
   ResourceSelectorGeneric,
@@ -100,23 +100,15 @@ export class EditAlarmPolicyReceiverGroup extends React.Component<RootProps> {
       <FormItem
         label={t('接收组')}
         tips={
-          <a
-            href="/ops/notify/create/receiverGroup"
-            onClick={event => {
-              if (
-                event.ctrlKey ||
-                event.shiftKey ||
-                event.metaKey || // apple
-                (event.button && event.button === 1) // middle click, >IE9 + everyone else
-              ) {
-                return;
-              }
-              event.preventDefault();
-              router.navigate({ mode: 'create', resourceName: 'receiverGroup', tab: '' }, {});
-            }}
+          <ExternalLink
+            href={
+              window.location.pathname.indexOf('tkestack-project')
+                ? '/tkestack-project/notify/create/receiverGroup'
+                : '/tkestack/notify/create/receiverGroup'
+            }
           >
             {t('新建接收组')}
-          </a>
+          </ExternalLink>
         }
       >
         <div className="form-unit unit-group">

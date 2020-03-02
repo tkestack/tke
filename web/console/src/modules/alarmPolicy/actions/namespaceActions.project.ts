@@ -1,3 +1,4 @@
+import { projectNamespaceActions } from './projectNamespaceActions.project';
 import { clusterActions } from './clusterActions';
 import { extend, uuid } from '@tencent/qcloud-lib';
 import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
@@ -19,14 +20,21 @@ const fetchNamespaceActions = generateFetcherActionCreator({
     // 获取当前的资源的配置
     let namespaceList = [];
     projectNamespaceList.data.records.forEach(item => {
-      namespaceList.push({ id: uuid(), name: item.spec.namespace });
+      namespaceList.push({
+        id: uuid(),
+        name: item.metadata.name,
+        clusterVersion: item.spec.clusterVersion,
+        clusterId: item.spec.clusterVersion,
+        clusterDisplayName: item.spec.clusterDisplayName
+      });
     });
 
     return { recordCount: namespaceList.length, records: namespaceList };
   },
   finish: (dispatch, getState: GetState) => {
     let { namespaceList, route } = getState();
-    let defauleNamespace = (namespaceList.data.recordCount && namespaceList.data.records[0].name) || '';
+    let defauleNamespace =
+      route.queries['np'] || (namespaceList.data.recordCount && namespaceList.data.records[0].name) || '';
     dispatch(namespaceActions.selectNamespace(defauleNamespace));
   }
 });
@@ -54,19 +62,19 @@ const restActions = {
       });
 
       if (namespace) {
-        let finder = projectNamespaceList.data.records.find(item => item.spec.namespace === namespace);
+        let finder = projectNamespaceList.data.records.find(item => item.metadata.name === namespace);
         if (finder) {
           let clusterId = finder.spec.clusterName;
           let clusterFinder = cluster.list.data.records.find(cluster => cluster.metadata.name === clusterId);
           if (clusterFinder) {
-            dispatch(clusterActions.selectCluster(clusterFinder));
+            dispatch(projectNamespaceActions.selectCluster(clusterFinder));
           } else {
             dispatch(
               clusterActions.selectCluster({
                 id: clusterId,
                 metadata: { name: clusterId },
                 spec: { dispalyName: '-' },
-                status: { version: '1.12.4' }
+                status: { version: '1.16.6' }
               })
             );
           }
