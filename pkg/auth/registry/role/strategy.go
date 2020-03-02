@@ -34,10 +34,10 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
-	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/util/log"
-
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
@@ -79,9 +79,8 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 		role.Spec.TenantID = tenantID
 	}
 
-	// Update binding subjects, use binding api
-	role.Status.Groups = oldRole.Status.Groups
-	role.Status.Users = oldRole.Status.Users
+	role.Status.Groups = util.RemoveDuplicateSubjects(role.Status.Groups)
+	role.Status.Users = util.RemoveDuplicateSubjects(role.Status.Users)
 }
 
 // NamespaceScoped is false for policies.

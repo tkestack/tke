@@ -24,7 +24,6 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
-	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -35,10 +34,10 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/auth"
-	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/util/log"
-
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
@@ -80,9 +79,8 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 		policy.Spec.TenantID = tenantID
 	}
 
-	// Update binding subjects, use binding api
-	policy.Status.Groups = oldPolicy.Status.Groups
-	policy.Status.Users = oldPolicy.Status.Users
+	policy.Status.Groups = util.RemoveDuplicateSubjects(policy.Status.Groups)
+	policy.Status.Users = util.RemoveDuplicateSubjects(policy.Status.Users)
 }
 
 // NamespaceScoped is false for policies.
