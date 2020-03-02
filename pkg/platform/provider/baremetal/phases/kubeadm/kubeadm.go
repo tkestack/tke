@@ -21,18 +21,17 @@ package kubeadm
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
 const (
-	defaultVersion     = "v1.15.1"
 	kubeadmConfigFile  = "kubeadm/kubeadm-config.yaml"
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
@@ -40,25 +39,24 @@ const (
 --node-name={{.NodeName}} --token={{.BootstrapToken}} \
 --control-plane --certificate-key={{.CertificateKey}} \
 --skip-phases=control-plane-join/mark-control-plane \
---ignore-preflight-errors=ImagePull,Port-10250,FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
---discovery-token-unsafe-skip-ca-verification
+--discovery-token-unsafe-skip-ca-verification \
+--ignore-preflight-errors=ImagePull \
+--ignore-preflight-errors=Port-10250 \
+--ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
+--ignore-preflight-errors=DirAvailable--etc-kubernetes-manifests
 `
 	joinNodeCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
 --node-name={{.NodeName}} \
 --token={{.BootstrapToken}} \
---ignore-preflight-errors=ImagePull,Port-10250,FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
---discovery-token-unsafe-skip-ca-verification
+--discovery-token-unsafe-skip-ca-verification \
+--ignore-preflight-errors=ImagePull \
+--ignore-preflight-errors=Port-10250 \
+--ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
 `
 )
 
 func Install(s ssh.Interface) error {
-	basefile := fmt.Sprintf("kubeadm-%s.tar.gz", defaultVersion)
-	srcFile := path.Join(constants.SrcDir, basefile)
-	if _, err := os.Stat(srcFile); err != nil {
-		return err
-	}
-	dstFile := path.Join(constants.DstTmpDir, basefile)
-	err := s.CopyFile(srcFile, dstFile)
+	dstFile, err := res.Kubeadm.CopyToNodeWithDefault(s)
 	if err != nil {
 		return err
 	}
@@ -149,7 +147,6 @@ func JoinControlePlane(s ssh.Interface, option *JoinControlePlaneOption) error {
 	}
 	stdout, stderr, exit, err := s.Exec(string(cmd))
 	if err != nil || exit != 0 {
-		_, _, _, _ = s.Exec("kubeadm reset -f")
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 	log.Info(stdout)
@@ -164,14 +161,13 @@ type JoinNodeOption struct {
 }
 
 func JoinNode(s ssh.Interface, option *JoinNodeOption) error {
-	_, _, _, _ = s.Exec("kubeadm reset -f")
-
 	cmd, err := util.ParseTemplate(joinNodeCmd, option)
 	if err != nil {
 		return errors.Wrap(err, "parse joinNodeCmd error")
 	}
 	stdout, stderr, exit, err := s.Exec(string(cmd))
 	if err != nil || exit != 0 {
+		_, _, _, _ = s.Exec("kubeadm reset -f")
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 	log.Info(stdout)

@@ -21,9 +21,10 @@ package kubelet
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 	"strings"
+
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
@@ -37,13 +38,7 @@ type Option struct {
 }
 
 func Install(s ssh.Interface, option *Option) error {
-	basefile := fmt.Sprintf("kubernetes-node-linux-amd64-v%s.tar.gz", option.Version)
-	srcFile := path.Join(constants.SrcDir, basefile)
-	if _, err := os.Stat(srcFile); err != nil {
-		return err
-	}
-	dstFile := path.Join(constants.DstTmpDir, basefile)
-	err := s.CopyFile(srcFile, dstFile)
+	dstFile, err := res.KubernetesNode.CopyToNode(s, option.Version)
 	if err != nil {
 		return err
 	}

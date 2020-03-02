@@ -27,12 +27,14 @@ import (
 
 	gooidc "github.com/coreos/go-oidc"
 	"golang.org/x/oauth2"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/cmd/tke-gateway/app/options"
 	"tkestack.io/tke/pkg/apiserver"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
+	"tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/apiserver/handler"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	authapiserver "tkestack.io/tke/pkg/auth/apiserver"
@@ -91,6 +93,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, chartmuseum.IgnoredAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, authapiserver.IgnoreAuthPathPrefixes()...)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes)
+	genericAPIServerConfig.MaxRequestBodyBytes = chartmuseum.MaxUploadSize
+	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString(), sets.NewString(), []string{"/"})
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableDiscovery = false
 

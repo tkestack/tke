@@ -294,7 +294,10 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 		namespace.Status.Reason = ""
 		namespace.Status.LastTransitionTime = metav1.Now()
 		return c.persistUpdate(namespace)
-	case v1.NamespaceAvailable, v1.NamespaceFailed:
+	case v1.NamespaceAvailable:
+		_ = c.calculateProjectUsed(cachedNamespace, namespace)
+		c.startNamespaceHealthCheck(key)
+	case v1.NamespaceFailed:
 		c.startNamespaceHealthCheck(key)
 	}
 	return nil
@@ -307,7 +310,7 @@ func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, name
 		return err
 	}
 	calculatedNamespaceNames := sets.NewString(project.Status.CalculatedNamespaces...)
-	if !calculatedNamespaceNames.Has(project.ObjectMeta.Name) {
+	if !calculatedNamespaceNames.Has(namespace.ObjectMeta.Name) {
 		project.Status.CalculatedNamespaces = append(project.Status.CalculatedNamespaces, namespace.ObjectMeta.Name)
 		if project.Status.Clusters == nil {
 			project.Status.Clusters = make(v1.ClusterUsed)

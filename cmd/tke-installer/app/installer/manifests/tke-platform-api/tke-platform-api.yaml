@@ -54,6 +54,8 @@ spec:
               mountPath: /app/provider/baremetal/conf/kubeadm/
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
+            - name: keepalived-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/keepalived/
           ports:
             - containerPort: 9443
           readinessProbe:
@@ -101,6 +103,9 @@ spec:
         - name: gpu-manifests-volume
           configMap:
             name: gpu-manifests
+        - name: keepalived-manifests-volume
+          configMap:
+            name: keepalived-manifests
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -150,6 +155,7 @@ data:
       [authentication.requestheader]
       client_ca_file = "/app/certs/ca.crt"
       username_headers = "X-Remote-User"
+      group_headers = "X-Remote-Group"
       extra_headers_prefix = "X-Remote-Extra-"
 
     [authorization]

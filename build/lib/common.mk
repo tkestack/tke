@@ -47,6 +47,28 @@ ifeq (, $(shell git status --porcelain 2>/dev/null))
 endif
 GIT_COMMIT:=$(shell git rev-parse HEAD)
 
+# The OS must be linux when building docker images
+PLATFORMS ?= linux_amd64 linux_arm64
+# The OS can be linux/windows/darwin when building binaries
+# PLATFORMS ?= darwin_amd64 windows_amd64 linux_amd64 linux_arm64
+
+# Set a specific PLATFORM
+ifeq ($(origin PLATFORM), undefined)
+	ifeq ($(origin GOOS), undefined)
+		GOOS := $(shell go env GOOS)
+	endif
+	ifeq ($(origin GOARCH), undefined)
+		GOARCH := $(shell go env GOARCH)
+	endif
+	PLATFORM := $(GOOS)_$(GOARCH)
+	# Use linux_amd64 as the default platform when building images
+	IMAGE_PLAT := linux_amd64
+else
+	GOOS := $(word 1, $(subst _, ,$(PLATFORM)))
+	GOARCH := $(word 2, $(subst _, ,$(PLATFORM)))
+	IMAGE_PLAT := $(PLATFORM)
+endif
+
 COMMA := ,
 SPACE :=
 SPACE +=

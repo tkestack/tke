@@ -896,6 +896,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.GPUManagerList":                              schema_tke_api_platform_v1_GPUManagerList(ref),
 		"tkestack.io/tke/api/platform/v1.GPUManagerSpec":                              schema_tke_api_platform_v1_GPUManagerSpec(ref),
 		"tkestack.io/tke/api/platform/v1.GPUManagerStatus":                            schema_tke_api_platform_v1_GPUManagerStatus(ref),
+		"tkestack.io/tke/api/platform/v1.HA":                                          schema_tke_api_platform_v1_HA(ref),
 		"tkestack.io/tke/api/platform/v1.Helm":                                        schema_tke_api_platform_v1_Helm(ref),
 		"tkestack.io/tke/api/platform/v1.HelmList":                                    schema_tke_api_platform_v1_HelmList(ref),
 		"tkestack.io/tke/api/platform/v1.HelmProxyOptions":                            schema_tke_api_platform_v1_HelmProxyOptions(ref),
@@ -939,11 +940,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.RegistrySpec":                                schema_tke_api_platform_v1_RegistrySpec(ref),
 		"tkestack.io/tke/api/platform/v1.StorageBackEndCLS":                           schema_tke_api_platform_v1_StorageBackEndCLS(ref),
 		"tkestack.io/tke/api/platform/v1.StorageBackEndES":                            schema_tke_api_platform_v1_StorageBackEndES(ref),
+		"tkestack.io/tke/api/platform/v1.TKEHA":                                       schema_tke_api_platform_v1_TKEHA(ref),
 		"tkestack.io/tke/api/platform/v1.TappController":                              schema_tke_api_platform_v1_TappController(ref),
 		"tkestack.io/tke/api/platform/v1.TappControllerList":                          schema_tke_api_platform_v1_TappControllerList(ref),
 		"tkestack.io/tke/api/platform/v1.TappControllerProxyOptions":                  schema_tke_api_platform_v1_TappControllerProxyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.TappControllerSpec":                          schema_tke_api_platform_v1_TappControllerSpec(ref),
 		"tkestack.io/tke/api/platform/v1.TappControllerStatus":                        schema_tke_api_platform_v1_TappControllerStatus(ref),
+		"tkestack.io/tke/api/platform/v1.ThirdPartyHA":                                schema_tke_api_platform_v1_ThirdPartyHA(ref),
 		"tkestack.io/tke/api/platform/v1.VolumeDecorator":                             schema_tke_api_platform_v1_VolumeDecorator(ref),
 		"tkestack.io/tke/api/platform/v1.VolumeDecoratorList":                         schema_tke_api_platform_v1_VolumeDecoratorList(ref),
 		"tkestack.io/tke/api/platform/v1.VolumeDecoratorSpec":                         schema_tke_api_platform_v1_VolumeDecoratorSpec(ref),
@@ -41641,9 +41644,16 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Format: "",
 						},
 					},
+					"ha": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.HA"),
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/platform/v1.HA"},
 	}
 }
 
@@ -42662,6 +42672,30 @@ func schema_tke_api_platform_v1_GPUManagerStatus(ref common.ReferenceCallback) c
 				},
 			},
 		},
+	}
+}
+
+func schema_tke_api_platform_v1_HA(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tke": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.TKEHA"),
+						},
+					},
+					"thirdParty": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.ThirdPartyHA"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/platform/v1.TKEHA", "tkestack.io/tke/api/platform/v1.ThirdPartyHA"},
 	}
 }
 
@@ -44646,6 +44680,25 @@ func schema_tke_api_platform_v1_StorageBackEndES(ref common.ReferenceCallback) c
 	}
 }
 
+func schema_tke_api_platform_v1_TKEHA(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"vip": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"vip"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_platform_v1_TappController(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -44861,6 +44914,31 @@ func schema_tke_api_platform_v1_TappControllerStatus(ref common.ReferenceCallbac
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_platform_v1_ThirdPartyHA(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"vip": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"vport": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+				},
+				Required: []string{"vip", "vport"},
+			},
+		},
 	}
 }
 
