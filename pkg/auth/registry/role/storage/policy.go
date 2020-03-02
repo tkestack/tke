@@ -20,20 +20,18 @@ package storage
 
 import (
 	"context"
-	"strings"
-
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apiserver/pkg/endpoints/request"
-	"tkestack.io/tke/pkg/util/log"
-
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"tkestack.io/tke/pkg/util/log"
+
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
@@ -66,26 +64,15 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 
 	roleID := requestInfo.Name
 
-	_, err := r.roleStore.Get(ctx, roleID, &metav1.GetOptions{})
+	obj, err := r.roleStore.Get(ctx, roleID, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	roles, err := r.enforcer.GetRolesForUser(roleID)
-	if err != nil {
-		log.Error("List roles for user failed from casbin failed", log.String("user", roleID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
-
-	var policyIDs []string
-	for _, r := range roles {
-		if strings.HasPrefix(r, "pol-") {
-			policyIDs = append(policyIDs, r)
-		}
-	}
+	role := obj.(*auth.Role)
 
 	var policyList = &auth.PolicyList{}
-	for _, id := range policyIDs {
+	for _, id := range role.Spec.Policies {
 		pol, err := r.authClient.Policies().Get(id, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("Get pol failed", log.String("policy", id), log.Err(err))
