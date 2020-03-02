@@ -5,8 +5,8 @@ import { OperationResult } from '@tencent/qcloud-redux-workflow';
 import { resourceConfig } from '../../../config/resourceConfig';
 import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow } from '../../../helpers';
 import { Method } from '../../../helpers/reduceNetwork';
-import { RequestParams } from '../common/models';
-import { APIKEY_URL, REPO_URL, Default_D_URL } from './constants/Config';
+import { RequestParams, ResourceInfo } from '../common/models';
+import { CHART_URL, REPO_URL, Default_D_URL } from './constants/Config';
 import {
   ApiKey,
   ApiKeyCreation,
@@ -14,6 +14,11 @@ import {
   Repo,
   RepoCreation,
   RepoFilter,
+  Chart,
+  ChartCreation,
+  ChartFilter,
+  ChartIns,
+  ChartInsFilter,
   Image,
   ImageCreation,
   ImageFilter
@@ -30,19 +35,21 @@ function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] 
 /** 访问凭证相关 */
 export async function fetchApiKeyList(query: QueryState<ApiKeyFilter>) {
   const { search, paging } = query;
+  let apiKeyResourceInfo: ResourceInfo = resourceConfig()['apiKey'];
+  let url = reduceK8sRestfulPath({
+    resourceInfo: apiKeyResourceInfo
+  });
 
   let params: RequestParams = {
     method: Method.get,
-    url: `${APIKEY_URL}?page=${paging.pageIndex - 1}&page_size=${paging.pageSize}`
+    url
   };
 
   let response = await reduceNetworkRequest(params);
-  let apiKeyList = [],
-    total = 0;
+  let apiKeyList = [];
   try {
     if (response.code === 0) {
       let listItems = response.data;
-      total = listItems.total;
       if (listItems.items) {
         apiKeyList = listItems.items.map((item, index) => {
           return Object.assign({}, item, { id: index });
@@ -60,7 +67,7 @@ export async function fetchApiKeyList(query: QueryState<ApiKeyFilter>) {
   }
 
   const result: RecordSet<ApiKey> = {
-    recordCount: total,
+    recordCount: apiKeyList.length,
     records: apiKeyList
   };
 
@@ -69,6 +76,11 @@ export async function fetchApiKeyList(query: QueryState<ApiKeyFilter>) {
 
 export async function createApiKey(apiKeys: ApiKeyCreation[]) {
   try {
+    let apiKeyResourceInfo: ResourceInfo = resourceConfig()['apiKey'];
+    let url = reduceK8sRestfulPath({
+      resourceInfo: apiKeyResourceInfo
+    });
+
     let apiKey = apiKeys[0];
     /** 构建参数 */
     let requestParams = {
@@ -77,7 +89,7 @@ export async function createApiKey(apiKeys: ApiKeyCreation[]) {
     };
     let params: RequestParams = {
       method: Method.post,
-      url: APIKEY_URL,
+      url: url + '/default/token',
       data: requestParams
     };
     let response = await reduceNetworkRequest(params);
@@ -93,11 +105,15 @@ export async function createApiKey(apiKeys: ApiKeyCreation[]) {
 
 export async function deleteApiKey(apiKeys: ApiKey[]) {
   try {
-    let requestParams = Object.assign({}, apiKeys[0], { deleted: true });
+    let apiKeyResourceInfo: ResourceInfo = resourceConfig()['apiKey'];
+    let url = reduceK8sRestfulPath({
+      resourceInfo: apiKeyResourceInfo,
+      specificName: apiKeys[0].metadata.name
+    });
+
     let params: RequestParams = {
-      method: Method.put,
-      url: APIKEY_URL,
-      data: requestParams
+      method: Method.delete,
+      url
     };
 
     let response = await reduceNetworkRequest(params);
@@ -113,10 +129,20 @@ export async function deleteApiKey(apiKeys: ApiKey[]) {
 
 export async function toggleKeyStatus(apiKeys: ApiKey[]) {
   try {
-    let requestParams = Object.assign({}, apiKeys[0], { disabled: !apiKeys[0].disabled });
+    let apiKeyResourceInfo: ResourceInfo = resourceConfig()['apiKey'];
+    let url = reduceK8sRestfulPath({
+      resourceInfo: apiKeyResourceInfo,
+      specificName: apiKeys[0].metadata.name
+    });
+
+    apiKeys[0].status = Object.assign({}, apiKeys[0].status, {
+      disabled: !apiKeys[0].status.disabled
+    });
+
+    let requestParams = apiKeys[0];
     let params: RequestParams = {
       method: Method.put,
-      url: APIKEY_URL,
+      url: url,
       data: requestParams
     };
 
@@ -216,6 +242,132 @@ export async function deleteRepo(repos: Repo[]) {
   } catch (error) {
     throw reduceNetworkWorkflow(error);
   }
+}
+
+/** Chart Group */
+export async function fetchChartList(query: QueryState<ChartFilter>) {
+  let { search, paging } = query;
+
+  let params: RequestParams = {
+    method: Method.get,
+    url: CHART_URL
+  };
+
+  let response = await reduceNetworkRequest(params);
+  let chartList = [],
+    total = 0;
+  try {
+    if (response.code === 0) {
+      let listItems = response.data;
+      if (listItems.items) {
+        chartList = listItems.items.map((item, index) => {
+          return Object.assign({}, item, { id: index });
+        });
+      }
+    }
+  } catch (error) {
+    if (+error.response.status !== 404) {
+      throw error;
+    }
+  }
+
+  if (search) {
+    chartList = chartList.filter(x => x.spec.displayName.includes(query.search));
+  }
+  total = chartList.length;
+
+  const result: RecordSet<Repo> = {
+    recordCount: total,
+    records: chartList
+  };
+
+  return result;
+}
+
+export async function createChart(charts: ChartCreation[]) {
+  try {
+    let chart = charts[0];
+    /** 构建参数 */
+    let requestParams = {
+      apiVersion: 'registry.tkestack.io/v1',
+      kind: 'ChartGroup',
+      spec: {
+        displayName: chart.displayName,
+        name: chart.name,
+        visibility: chart.visibility || 'Public'
+      }
+    };
+    let params: RequestParams = {
+      method: Method.post,
+      url: CHART_URL,
+      data: requestParams
+    };
+    let response = await reduceNetworkRequest(params);
+    if (response.code === 0) {
+      return operationResult(chart);
+    } else {
+      return operationResult(chart, reduceNetworkWorkflow(response));
+    }
+  } catch (error) {
+    throw reduceNetworkWorkflow(error);
+  }
+}
+
+export async function deleteChart(charts: Chart[]) {
+  try {
+    let params: RequestParams = {
+      method: Method.delete,
+      url: CHART_URL + charts[0].metadata.name
+    };
+
+    let response = await reduceNetworkRequest(params);
+    if (response.code === 0) {
+      return operationResult(charts);
+    } else {
+      return operationResult(charts, response);
+    }
+  } catch (error) {
+    throw reduceNetworkWorkflow(error);
+  }
+}
+
+export async function fetchChartInsList(query: QueryState<ChartInsFilter>) {
+  let { search, paging, filter } = query;
+
+  let params: RequestParams = {
+    method: Method.get,
+    url: `${REPO_URL}${filter.chartgroup}/charts`
+  };
+
+  let response = await reduceNetworkRequest(params);
+  let chartList = [],
+    total = 0;
+  try {
+    if (response.code === 0) {
+      let listItems = response.data;
+      if (listItems.items) {
+        chartList = listItems.items.map((item, index) => {
+          return Object.assign({}, item, { id: index });
+        });
+      }
+    }
+  } catch (error) {
+    if (+error.response.status !== 404) {
+      throw error;
+    }
+  }
+
+  if (search) {
+    chartList = chartList.filter(x => x.spec.displayName.includes(query.search));
+  }
+  total = chartList.length;
+
+  const result: RecordSet<ChartIns> = {
+    recordCount: total,
+    records: chartList
+  };
+
+  return result;
 }
 
 /** 镜像相关 */

@@ -10,11 +10,11 @@ import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
-import { Button, Icon, Text, Bubble } from '@tencent/tea-component';
+import { Button, Icon, Text, Bubble, NavMenu, List } from '@tencent/tea-component';
 
 const routerSea = seajs.require('router');
 
-/**平台管理员,项目成员,游客,未初始化 */
+/**平台管理员,业务成员,游客,未初始化 */
 enum UserType {
   admin = 'admin',
   member = 'member',
@@ -38,6 +38,9 @@ export enum ConsoleModuleEnum {
 
   /** 镜像仓库 */
   Registry = 'registry',
+
+  /** Chart */
+  Chart = 'chart',
 
   /** 访问凭证 */
   ApiKey = 'apiKey',
@@ -80,7 +83,7 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     url: '/tkestack/project',
-    title: '项目管理',
+    title: '业务管理',
     watchModule: ConsoleModuleEnum.Business
   },
   {
@@ -90,12 +93,17 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '组织资源',
-    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.ApiKey],
+    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Chart, ConsoleModuleEnum.ApiKey],
     subRouterConfig: [
       {
         url: '/tkestack/registry/repo',
-        title: '仓库管理',
+        title: '镜像仓库管理',
         watchModule: ConsoleModuleEnum.Registry
+      },
+      {
+        url: '/tkestack/registry/chart',
+        title: 'Chart包仓库管理',
+        watchModule: ConsoleModuleEnum.Chart
       },
       {
         url: '/tkestack/registry/apikey',
@@ -240,10 +248,10 @@ interface ConsoleWrapperState {
   /** 控制台的api映射 */
   consoleApiMap: ConsoleModuleMapProps;
 
-  /** 该用户是否为平台管理员,项目成员,游客 */
+  /** 该用户是否为平台管理员,业务成员,游客 */
   userType: UserType;
 
-  /**该用户负责的项目 */
+  /**该用户负责的业务 */
   projects: Project[];
 
   /** 是否展示user的下拉框 */
@@ -292,7 +300,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     this.state.userType === UserType.init && (await this.getUserProjectInfo());
   }
 
-  //获取用户信息包括用户项目信息
+  //获取用户信息包括用户业务信息
   async getUserInfo() {
     let infoResourceInfo: ResourceInfo = resourceConfig()['info'];
     let url = reduceK8sRestfulPath({ resourceInfo: infoResourceInfo });
@@ -364,7 +372,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     } catch (error) {}
   }
 
-  //获取用户信息包括用户项目信息
+  //获取用户信息包括用户业务信息
   async getUserProjectInfo() {
     let userResourceInfo: ResourceInfo = resourceConfig().portal;
     let url = reduceK8sRestfulPath({ resourceInfo: userResourceInfo });
@@ -465,51 +473,36 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
    */
   private _renderTopBar(query: string) {
     return (
-      <div className="qc-header-nav" id="topnav">
-        <div className="qc-header-inner">
-          <div className="qc-header-unit qc-header-logo" style={{ width: '45px' }}>
-            <div className="qc-nav-logo">
-              <a className="qc-logo-inner" style={{ borderRight: 'none' }} href="javascript:;" title="TKEStack">
-                <img src="/static/icon/logo.svg" style={{ height: '30px' }} />
-              </a>
-            </div>
-          </div>
-
-          <div className="qc-header-unit qc-header-user">
-            <div
-              className={classnames('qc-nav-user', { 'qc-nav-hover': this.state.isShowUserDropdown })}
-              data-menu-type="user"
-              id="userInfo"
-              onMouseEnter={() => {
-                this.setState({ isShowUserDropdown: true });
-              }}
-              onMouseLeave={() => {
-                this.setState({ isShowUserDropdown: false });
-              }}
+      <NavMenu
+        left={
+          <React.Fragment>
+            <NavMenu.Item type="logo">
+              <img src="/static/icon/logo.svg" style={{ height: '30px' }} alt="logo" />
+            </NavMenu.Item>
+          </React.Fragment>
+        }
+        right={
+          <React.Fragment>
+            <NavMenu.Item
+              type="dropdown"
+              overlay={() => (
+                <List type="option">
+                  <List.Item
+                    onClick={async () => {
+                      await this.userLogout();
+                      location.reload();
+                    }}
+                  >
+                    退出
+                  </List.Item>
+                </List>
+              )}
             >
-              <div className="qc-user-inner">
-                <span className="qc-user-name" data-hot="header.user.center" title={this.state.userInfo.name}>
-                  {this.state.userInfo.name}
-                </span>
-                <i className="qc-nav-arrows" />
-                <div className="qc-user-info qc-user-panel">
-                  <div className="qc-user-panel-inner J-dropdownPanel">
-                    <a
-                      href="javascript:;"
-                      onClick={async () => {
-                        await this.userLogout();
-                        location.reload();
-                      }}
-                    >
-                      退出
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              {this.state.userInfo.name}
+            </NavMenu.Item>
+          </React.Fragment>
+        }
+      />
     );
   }
 

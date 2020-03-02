@@ -1,7 +1,8 @@
 import { initValidator } from '../../common/models/Validation';
 
-export const APIKEY_URL = '/api/authv1/apikey/';
 export const REPO_URL = '/apis/registry.tkestack.io/v1/namespaces/';
+
+export const CHART_URL = '/apis/registry.tkestack.io/v1/chartgroups/';
 
 export const InitApiKey = {
   description: '',
@@ -11,6 +12,13 @@ export const InitApiKey = {
 };
 
 export const InitRepo = {
+  displayName: '',
+  name: '',
+  v_name: initValidator,
+  visibility: 'Public'
+};
+
+export const InitChart = {
   displayName: '',
   name: '',
   v_name: initValidator,

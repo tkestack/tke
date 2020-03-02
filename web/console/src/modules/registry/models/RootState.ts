@@ -3,6 +3,7 @@ import { FetcherState } from '@tencent/qcloud-redux-fetcher';
 import { ApiKey, ApiKeyFilter, ApiKeyCreation } from './ApiKey';
 import { Repo, RepoFilter, RepoCreation } from './Repo';
 import { Image, ImageFilter, ImageCreation } from './Image';
+import { Chart, ChartFilter, ChartIns, ChartInsFilter, ChartCreation } from './Chart';
 import { RouteState } from '../../../../helpers';
 import { ListModel } from '@tencent/redux-list';
 
@@ -12,6 +13,8 @@ type RepoWorkflow = WorkflowState<Repo, void>;
 type RepoCreateWorkflow = WorkflowState<RepoCreation, void>;
 type ImageWorkflow = WorkflowState<Image, void>;
 type ImageCreateWorkflow = WorkflowState<ImageCreation, void>;
+type ChartWorkflow = WorkflowState<Chart, void>;
+type ChartCreateWorkflow = WorkflowState<ChartCreation, void>;
 
 export interface RootState {
   /** 路由 */
@@ -61,4 +64,19 @@ export interface RootState {
 
   /** docker registry */
   dockerRegistryUrl?: FetcherState<string>;
+
+  /** -------- chart group ----- */
+
+  chart?: ListModel<Chart, ChartFilter>;
+
+  chartIns?: ListModel<ChartIns, ChartInsFilter>;
+
+  /** 创建仓库表单参数 */
+  chartCreation?: ChartCreation;
+
+  /** 创建仓库工作流 */
+  createChart?: ChartCreateWorkflow;
+
+  /** 删除仓库工作流 */
+  deleteChart?: ChartWorkflow;
 }
