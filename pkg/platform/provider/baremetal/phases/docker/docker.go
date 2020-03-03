@@ -21,19 +21,18 @@ package docker
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 	"strings"
 
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util/supervisor"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
 type Option struct {
-	Version            string
 	InsecureRegistries string
 	RegistryDomain     string
 	Options            string
@@ -48,13 +47,7 @@ const (
 func Install(s ssh.Interface, option *Option) error {
 	option.IsGPU = false
 
-	basefile := fmt.Sprintf("docker-%s.tgz", option.Version)
-	srcFile := path.Join(constants.SrcDir, basefile)
-	if _, err := os.Stat(srcFile); err != nil {
-		return err
-	}
-	dstFile := path.Join(constants.DstTmpDir, basefile)
-	err := s.CopyFile(srcFile, dstFile)
+	dstFile, err := res.Docker.CopyToNodeWithDefault(s)
 	if err != nil {
 		return err
 	}

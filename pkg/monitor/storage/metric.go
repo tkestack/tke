@@ -20,12 +20,14 @@ package storage
 
 import (
 	"fmt"
+
 	businessclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	"tkestack.io/tke/api/monitor"
 	monitorconfig "tkestack.io/tke/pkg/monitor/apis/config"
 	esmetric "tkestack.io/tke/pkg/monitor/storage/es/metric"
 	influxdbmetric "tkestack.io/tke/pkg/monitor/storage/influxdb/metric"
 	"tkestack.io/tke/pkg/monitor/storage/project"
+	thanosmetric "tkestack.io/tke/pkg/monitor/storage/thanos/metric"
 	"tkestack.io/tke/pkg/monitor/storage/types"
 )
 
@@ -42,6 +44,8 @@ func NewMetricStorage(storageConfig *monitorconfig.Storage) (MetricStorage, erro
 		return influxdbmetric.NewStorage(storageConfig.InfluxDB)
 	} else if storageConfig.ElasticSearch != nil {
 		return esmetric.NewStorage(storageConfig.ElasticSearch)
+	} else if storageConfig.Thanos != nil {
+		return thanosmetric.NewStorage(storageConfig.Thanos)
 	}
 	return nil, fmt.Errorf("unregistered metric data storage type")
 }

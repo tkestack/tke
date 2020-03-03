@@ -22,30 +22,23 @@ const fetchOptions: FetchOptions = {
 const fetchProjectNamespaceActions = generateFetcherActionCreator({
   actionType: ActionType.FetchProjectNamespace,
   fetcher: async (getState: GetState, fetchOptions, dispatch: Redux.Dispatch) => {
-    let { route, projectSelection, cluster, projectNamespaceQuery } = getState();
+    let { projectNamespaceQuery } = getState();
     let response = await WebAPI.fetchProjectNamespaceList(projectNamespaceQuery);
 
-    let clusterList = uniq(response.records.map(namespace => namespace.spec.clusterName));
-    let resourceInfo = resourceConfig()['cluster'];
-    let clusterResponse = await WebAPI.fetchSpecificResourceList(
-      {
-        filter: {}
-      },
-      resourceInfo,
-      false,
-      true
+    let clusterList = uniq(
+      response.records.map(namespace => ({
+        clusterId: namespace.spec.clusterName,
+        clusterDisplayName: namespace.spec.clusterDisplayName,
+        clusterVersion: namespace.spec.clusterVersion
+      })),
+      'clusterId'
     );
     let clusterListRecord = clusterList.map(item => {
-      let finder = clusterResponse.records.find(i => i.metadata.name === item);
-      if (finder) {
-        return finder;
-      } else {
-        return {
-          metadata: { name: item },
-          spec: { displayName: '-' },
-          status: { version: '1.14.4' }
-        };
-      }
+      return {
+        metadata: { name: item.clusterId },
+        spec: { displayName: item.clusterDisplayName },
+        status: { version: item.clusterVersion }
+      };
     });
 
     dispatch(projectNamespaceActions.initClusterList(clusterListRecord));
@@ -126,11 +119,6 @@ const restActions = {
           trigger: 'Done'
         }
       });
-
-      // //业务不一样集群不一定一样，导致不能取url上面的做默认值
-      // let defaultCluster = result.records[0] ? result.records[0] : null;
-
-      // defaultCluster && dispatch(projectNamespaceActions.selectCluster(defaultCluster));
     };
   },
 

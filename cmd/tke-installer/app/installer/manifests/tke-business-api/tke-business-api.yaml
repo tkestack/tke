@@ -121,6 +121,7 @@ data:
       [authentication.requestheader]
       client_ca_file = "/app/certs/ca.crt"
       username_headers = "X-Remote-User"
+      group_headers = "X-Remote-Group"
       extra_headers_prefix = "X-Remote-Extra-"
 
     [authorization]

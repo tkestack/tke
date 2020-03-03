@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/casbin/casbin/v2"
@@ -133,10 +134,22 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 
 // ValidateListObject validate if list by admin, if true not return hashed password.
 func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, options *metainternal.ListOptions) (runtime.Object, error) {
+	keyword := util.InterceptKeyword(options)
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
 	obj, err := store.List(ctx, wrappedOptions)
 	if err != nil {
 		return obj, err
+	}
+
+	identityList := obj.(*auth.LocalIdentityList)
+	if keyword != "" {
+		var newList []auth.LocalIdentity
+		for _, val := range identityList.Items {
+			if val.Name == keyword || strings.Contains(val.Spec.Username, keyword) || strings.Contains(val.Spec.DisplayName, keyword) {
+				newList = append(newList, val)
+			}
+		}
+		identityList.Items = newList
 	}
 
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
@@ -144,7 +157,6 @@ func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, o
 		return obj, err
 	}
 
-	identityList := obj.(*auth.LocalIdentityList)
 	for i := range identityList.Items {
 		identityList.Items[i].Spec.HashedPassword = ""
 	}

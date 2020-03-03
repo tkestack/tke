@@ -5,14 +5,9 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Row, Col, Bubble, Input, InputAdorment, Select, Button, Alert } from '@tencent/tea-component';
 import { ProjectResourceLimit } from '../models/Project';
 import { uuid, deepClone } from '@tencent/qcloud-lib';
-import {
-  resourceLimitTypeList,
-  resourceTypeToUnit,
-  initProjectResourceLimit,
-  K8SUNIT,
-  valueLabels1024,
-  valueLabels1000
-} from '../constants/Config';
+import { resourceLimitTypeList, resourceTypeToUnit, initProjectResourceLimit } from '../constants/Config';
+
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 interface CreateProjectResourceLimitPanelPorps {
   resourceLimits: ProjectResourceLimit[];
   parentResourceLimits: {

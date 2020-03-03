@@ -7,14 +7,11 @@ export class AlarmPolicyDetailHeaderPanel extends React.Component<RootProps, {}>
   goBack() {
     let { route } = this.props;
     // history.back();
-    router.navigate({}, { rid: route.queries['rid'], clusterId: route.queries['clusterId'] });
+    router.navigate({}, { clusterId: route.queries['clusterId'] });
   }
 
   componentDidMount() {
     let { regionList, actions } = this.props;
-    // if (regionList.data.recordCount === 0) {
-    //   actions.region.fetch();
-    // }
     actions.cluster.applyFilter({ regionId: 1 });
   }
 

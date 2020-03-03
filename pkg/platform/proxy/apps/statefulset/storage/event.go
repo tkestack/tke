@@ -22,7 +22,8 @@ import (
 	"context"
 	"sort"
 
-	appsV1Beta1 "k8s.io/api/apps/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
+	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +32,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -67,9 +70,82 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
+	if controllerutil.IsClusterVersionBefore1_9(client) {
+		return listEventsByAppsBeta(client, namespaceName, name, options)
+	}
+	return listEventsByApps(client, namespaceName, name, options)
+}
+
+func listEventsByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	statefulSet, err := client.AppsV1().StatefulSets(namespaceName).Get(name, *options)
+	if err != nil {
+		return nil, errors.NewNotFound(appsv1.Resource("statefulsets/events"), name)
+	}
+
+	selector := fields.AndSelectors(
+		fields.OneTermEqualSelector("involvedObject.uid", string(statefulSet.UID)),
+		fields.OneTermEqualSelector("involvedObject.name", statefulSet.Name),
+		fields.OneTermEqualSelector("involvedObject.namespace", statefulSet.Namespace),
+		fields.OneTermEqualSelector("involvedObject.kind", "StatefulSet"))
+	listOptions := metav1.ListOptions{
+		FieldSelector: selector.String(),
+	}
+	statefulSetEvents, err := client.CoreV1().Events(namespaceName).List(listOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	var events util.EventSlice
+	for _, statefulSetEvent := range statefulSetEvents.Items {
+		events = append(events, statefulSetEvent)
+	}
+
+	podSelector, err := metav1.LabelSelectorAsSelector(statefulSet.Spec.Selector)
+	if err != nil {
+		return nil, errors.NewInternalError(err)
+	}
+
+	// list all of the pod, by stateful set labels
+	podListOptions := metav1.ListOptions{LabelSelector: podSelector.String()}
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(podListOptions)
+	if err != nil {
+		return nil, errors.NewInternalError(err)
+	}
+
+	for _, pod := range podAllList.Items {
+		for _, podReferences := range pod.ObjectMeta.OwnerReferences {
+			if (podReferences.Kind == "StatefulSet") && (podReferences.Name == statefulSet.Name) {
+				podEventsSelector := fields.AndSelectors(
+					fields.OneTermEqualSelector("involvedObject.uid", string(pod.UID)),
+					fields.OneTermEqualSelector("involvedObject.name", pod.Name),
+					fields.OneTermEqualSelector("involvedObject.namespace", pod.Namespace),
+					fields.OneTermEqualSelector("involvedObject.kind", "Pod"))
+				podEventsListOptions := metav1.ListOptions{
+					FieldSelector: podEventsSelector.String(),
+				}
+				podEvents, err := client.CoreV1().Events(namespaceName).List(podEventsListOptions)
+				if err != nil {
+					return nil, err
+				}
+
+				for _, podEvent := range podEvents.Items {
+					events = append(events, podEvent)
+				}
+			}
+		}
+	}
+
+	sort.Sort(events)
+
+	return &corev1.EventList{
+		Items: events,
+	}, nil
+}
+
+func listEventsByAppsBeta(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	statefulSet, err := client.AppsV1beta1().StatefulSets(namespaceName).Get(name, *options)
 	if err != nil {
-		return nil, errors.NewNotFound(appsV1Beta1.Resource("statefulsets/events"), name)
+		return nil, errors.NewNotFound(appsv1beta1.Resource("statefulsets/events"), name)
 	}
 
 	selector := fields.AndSelectors(

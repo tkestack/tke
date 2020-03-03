@@ -63,8 +63,9 @@ func (r *PolicyUnbindingREST) Create(ctx context.Context, obj runtime.Object, cr
 	}
 	role := polObj.(*auth.Role)
 	var remained []string
-	for _, pid := range bind.Policies {
-		if !util.InStringSlice(role.Spec.Policies, pid) {
+
+	for _, pid := range role.Spec.Policies {
+		if !util.InStringSlice(bind.Policies, pid) {
 			remained = append(remained, pid)
 		}
 	}

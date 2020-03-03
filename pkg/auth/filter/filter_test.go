@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"testing"
 
+	"tkestack.io/tke/api/business"
+
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericrequest "k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -48,7 +50,6 @@ func TestConvertTKEAttributes(t *testing.T) {
 				Resource: "policy:*",
 			},
 		},
-
 		{
 			ctx: context.Background(),
 			attr: &authorizer.AttributesRecord{
@@ -76,6 +77,48 @@ func TestConvertTKEAttributes(t *testing.T) {
 			expect: &authorizer.AttributesRecord{
 				Verb:     "getNamespace",
 				Resource: fmt.Sprintf("cluster:%s/namespace:demo", clusterName),
+			},
+		},
+		{
+			ctx: contextWithCluster(context.Background()),
+			attr: &authorizer.AttributesRecord{
+				Verb:            "get",
+				ResourceRequest: true,
+				Resource:        "namespaces",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "listNamespaces",
+				Resource: fmt.Sprintf("cluster:%s/namespace:*", clusterName),
+			},
+		},
+		{
+			ctx: context.Background(),
+			attr: &authorizer.AttributesRecord{
+				Verb:            "get",
+				Namespace:       "demo",
+				APIGroup:        business.GroupName,
+				ResourceRequest: true,
+				Resource:        "namespaces",
+				Name:            "demo",
+				Subresource:     "",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "getNamespace",
+				Resource: "namespace:demo/namespace:demo",
+			},
+		},
+		{
+			ctx: context.Background(),
+			attr: &authorizer.AttributesRecord{
+				Verb:            "list",
+				Namespace:       "demo",
+				APIGroup:        business.GroupName,
+				ResourceRequest: true,
+				Resource:        "namespaces",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "listNamespaces",
+				Resource: "namespace:demo/namespace:*",
 			},
 		},
 		{

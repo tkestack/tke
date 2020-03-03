@@ -41,9 +41,15 @@ define USAGE_OPTIONS
 
 Options:
   DEBUG        Whether to generate debug symbols. Default is 0.
-  IMAGES       Backend images to make. All by default.
-  PLATFORMS    The platform to build. Default is host platform and arch.
   BINS         The binaries to build. Default is all of cmd.
+               This option is available when using: make build/build.multiarch
+               Example: make build BINS="tke-platform-api tke-platform-controller"
+  IMAGES       Backend images to make. Default is all of cmd starting with tke-.
+               This option is available when using: make image/image.multiarch/push/push.multiarch
+               Example: make image.multiarch IMAGES="tke-platform-api tke-platform-controller"
+  PLATFORMS    The multiple platforms to build. Default is linux_amd64 and linux_arm64.
+               This option is available when using: make build.multiarch/image.multiarch/push.multiarch
+               Example: make image.multiarch IMAGES="tke-platform-api tke-platform-controller" PLATFORMS="linux_amd64 linux_arm64"
   VERSION      The version information compiled into binaries.
                The default is obtained from git.
   V            Set to 1 enable verbose build. Default is 0.
@@ -73,20 +79,40 @@ web:
 build:
 	@$(MAKE) go.build
 
-## build.all: Build source code for all platforms.
-.PHONY: build.all
-build.all:
-	@$(MAKE) go.build.all
+## build.multiarch: Build source code for multiple platforms. See option PLATFORMS.
+.PHONY: build.multiarch
+build.multiarch:
+	@$(MAKE) go.build.multiarch
 
-## image: Build docker images.
+## image: Build docker images for linux_amd64 platform.
 .PHONY: image
 image:
 	@$(MAKE) image.build
 
-## push: Build docker images and push to registry.
+## image.multiarch: Build docker images for multiple platforms. See option PLATFORMS.
+.PHONY: image.multiarch
+image.multiarch:
+	@$(MAKE) image.build.multiarch
+
+## push: Build docker images for linux_amd64 platform and push images to registry.
 .PHONY: push
 push:
 	@$(MAKE) image.push
+
+## push.multiarch: Build docker images for multiple platforms and push images to registry.
+.PHONY: push.multiarch
+push.multiarch:
+	@$(MAKE) image.push.multiarch
+
+## manifest: Build docker images for linux_amd64 platform and push manifest list to registry.
+.PHONY: manifest
+manifest:
+	@$(MAKE) image.manifest.push
+
+## manifest.multiarch: Build docker images for multiple platforms and push manifest lists to registry.
+.PHONY: manifest.multiarch
+manifest.multiarch:
+	@$(MAKE) image.manifest.push.multiarch
 
 ## deploy: Deploy updated components to development env.
 .PHONY: deploy

@@ -22,5 +22,6 @@ export const dataFormatConfig = {
   lbcfBGPort: 'lbcfBGPort',
   backendGroups: 'backendGroups',
   backendRecords: 'backendRecords',
-  forceDeletePod: 'forceDeletePod'
+  forceDeletePod: 'forceDeletePod',
+  resourceLimit: 'resourceLimit'
 };
