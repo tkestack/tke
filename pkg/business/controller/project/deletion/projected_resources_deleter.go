@@ -287,7 +287,7 @@ func recalculateParentProjectUsed(deleter *projectedResourcesDeleter, project *b
 			calculatedChildProjectNames.Delete(project.ObjectMeta.Name)
 			parentProject.Status.CalculatedChildProjects = calculatedChildProjectNames.List()
 			if parentProject.Status.Clusters != nil {
-				release := project.Spec.Clusters
+				release := project.Spec.Clusters // For historic data that has no CachedSpecClusters
 				if project.Status.CachedSpecClusters != nil {
 					release = project.Status.CachedSpecClusters
 				}
