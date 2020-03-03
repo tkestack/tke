@@ -73,7 +73,7 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	}
 	if oldNamespace.Status.CachedSpecHard != nil {
 		namespace.Status.CachedSpecHard = oldNamespace.Status.CachedSpecHard
-	} else {
+	} else { // For historic data that has no CachedSpecHard
 		namespace.Status.CachedSpecHard = oldNamespace.Spec.Hard
 	}
 }

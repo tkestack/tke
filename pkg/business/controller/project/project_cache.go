@@ -44,7 +44,7 @@ func (s *projectCache) getOrCreate(name string, self *v1.Project) *cachedProject
 			project.state = self.DeepCopy()
 			if self.Status.CachedSpecClusters != nil {
 				project.state.Spec.Clusters = self.Status.CachedSpecClusters
-			} else {
+			} else { // For historic data that has no CachedSpecClusters
 				project.state.Spec.Clusters = self.Spec.Clusters
 			}
 		}

@@ -44,7 +44,7 @@ func (s *namespaceCache) getOrCreate(name string, self *v1.Namespace) *cachedNam
 			namespace.state = self.DeepCopy()
 			if self.Status.CachedSpecHard != nil {
 				namespace.state.Spec.Hard = self.Status.CachedSpecHard
-			} else {
+			} else { // For historic data that has no CachedSpecHard
 				namespace.state.Spec.Hard = self.Spec.Hard
 			}
 		}

@@ -282,7 +282,7 @@ func recalculateProjectUsed(deleter *namespacedResourcesDeleter, namespace *v1.N
 		if project.Status.Clusters != nil {
 			clusterUsed, clusterUsedExist := project.Status.Clusters[namespace.Spec.ClusterName]
 			if clusterUsedExist {
-				release := namespace.Spec.Hard
+				release := namespace.Spec.Hard // For historic data that has no CachedSpecHard
 				if namespace.Status.CachedSpecHard != nil {
 					release = namespace.Status.CachedSpecHard
 				}

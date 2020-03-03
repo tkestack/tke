@@ -284,6 +284,7 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 			// Since it's pending now, no need to set v1.NamespaceFailed.
 			return err
 		}
+		// Once project has been updated, try our best update namespace CachedSpecHard.
 		namespace.Status.CachedSpecHard = namespace.Spec.Hard
 		if err := c.ensureNamespaceOnCluster(namespace); err != nil {
 			namespace.Status.Phase = v1.NamespaceFailed
@@ -305,6 +306,7 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 			namespace.Status.LastTransitionTime = metav1.Now()
 			return c.persistUpdate(namespace)
 		}
+		// Once project has been updated, try our best update namespace CachedSpecHard.
 		cachedHard := namespace.Status.CachedSpecHard
 		namespace.Status.CachedSpecHard = namespace.Spec.Hard
 		if err := c.ensureNamespaceOnCluster(namespace); err != nil {
@@ -331,6 +333,8 @@ func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, name
 		return err
 	}
 	calculatedNamespaceNames := sets.NewString(project.Status.CalculatedNamespaces...)
+	// The following "if" clause is supposed to process "Pending" namespaces.
+	// The "else if" is for "Available" namespaces.
 	if !calculatedNamespaceNames.Has(namespace.ObjectMeta.Name) {
 		project.Status.CalculatedNamespaces = append(project.Status.CalculatedNamespaces, namespace.ObjectMeta.Name)
 		if project.Status.Clusters == nil {
