@@ -84,7 +84,7 @@ build:
 build.multiarch:
 	@$(MAKE) go.build.multiarch
 
-## image: Build docker images for linux_amd64 platform.
+## image: Build docker images for host arch.
 .PHONY: image
 image:
 	@$(MAKE) image.build
@@ -94,7 +94,7 @@ image:
 image.multiarch:
 	@$(MAKE) image.build.multiarch
 
-## push: Build docker images for linux_amd64 platform and push images to registry.
+## push: Build docker images for host arch and push images to registry.
 .PHONY: push
 push:
 	@$(MAKE) image.push
@@ -104,7 +104,7 @@ push:
 push.multiarch:
 	@$(MAKE) image.push.multiarch
 
-## manifest: Build docker images for linux_amd64 platform and push manifest list to registry.
+## manifest: Build docker images for host arch and push manifest list to registry.
 .PHONY: manifest
 manifest:
 	@$(MAKE) image.manifest.push
