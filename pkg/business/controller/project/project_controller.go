@@ -292,6 +292,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 				return err
 			}
 		}
+		// Once parentProject has been updated, update project CachedSpecClusters immediately.
 		if project != nil && !reflect.DeepEqual(project.Spec.Clusters, project.Status.CachedSpecClusters) {
 			return c.updateCache(project, project.Spec.Clusters)
 		}

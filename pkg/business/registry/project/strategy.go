@@ -95,7 +95,7 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	}
 	if oldProject.Status.CachedSpecClusters != nil {
 		project.Status.CachedSpecClusters = oldProject.Status.CachedSpecClusters
-	} else {
+	} else { // For historic data that has no CachedSpecClusters
 		project.Status.CachedSpecClusters = oldProject.Spec.Clusters
 	}
 }
