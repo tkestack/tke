@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { RootProps } from './InstallerApp';
 import { Button, Form, Alert } from '@tencent/tea-component';
-import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
+import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
 import { getWorkflowError } from '../../common/utils';
 
 export class Step8 extends React.Component<RootProps> {

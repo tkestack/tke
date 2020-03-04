@@ -1,11 +1,10 @@
 import { isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
+import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { t } from '@tencent/tea-app/lib/i18n';
 import { Bubble, Button, ContentView } from '@tencent/tea-component';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { resourceConfig } from '../../../../../../config';
-import { uuid } from '../../../../../../lib/_util';
 import { getWorkflowError, ResourceInfo, TipInfo } from '../../../../../modules/common';
 import { allActions } from '../../../actions';
 import { CreateResource, ICComponter } from '../../../models';

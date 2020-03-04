@@ -5,7 +5,7 @@ import * as WebAPI from '../WebAPI';
 import { RootState, EditState } from '../models';
 import { initMachine, initArg } from '../reducers/initState';
 import { cloneDeep, isEmpty } from '../../common/utils';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/ff-redux';
+import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
 import { initValidation } from '../../../../helpers/Validator';
 import { Base64 } from 'js-base64';
 import { validateActions } from './validateActions';
