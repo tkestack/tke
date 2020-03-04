@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
+
+import { bindActionCreators, FetchState } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Card, Col, Row, Select } from '@tencent/tea-component';
+
 import { allActions } from '../../../actions';
 import { RootProps } from '../../ClusterApp';
 import { YamlEditorPanel } from '../YamlEditorPanel';
-import { FetchState } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Card, Select, Row, Col } from '@tencent/tea-component';
 
 // 加载中的样式
 const loadingElement: JSX.Element = (

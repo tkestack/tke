@@ -1,29 +1,26 @@
-import * as React from 'react';
-import { RootProps } from './AlarmPolicyApp';
-import { SelectList, FormItem, InputField, TipInfo } from '../../common/components';
-import { Button, Bubble, Select, Row, Col, ExternalLink } from '@tea/component';
-import { MainBodyLayout, FormLayout } from '../../common/layouts';
 import classNames from 'classnames';
-import { router } from '../router';
+import * as React from 'react';
+
+import { Bubble, Button, Col, ExternalLink, Row, Select } from '@tea/component';
+import { isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, InputField, SelectList, TipInfo } from '../../common/components';
+import { FormLayout, MainBodyLayout } from '../../common/layouts';
+import { getWorkflowError } from '../../common/utils';
 import { router as notifyRouter } from '../../notify/router';
+import { validatorActions } from '../actions/validatorActions';
 import {
-  AlarmPolicyType,
-  AlarmPolicyMetricsStatisticsPeriod,
-  AlarmPolicyMetricsEvaluatorType,
-  AlarmPolicyMetricsEvaluatorValue,
-  AlarmPolicyMetricsContinuePeriod,
-  MetricNameMap
+    AlarmPolicyMetricsContinuePeriod, AlarmPolicyMetricsEvaluatorType,
+    AlarmPolicyMetricsEvaluatorValue, AlarmPolicyMetricsStatisticsPeriod, AlarmPolicyType,
+    MetricNameMap
 } from '../constants/Config';
-import { EditAlarmPolicyReceiverGroup } from './EditAlarmPolicyReceiverGroup';
 // import { EditAlarmPolicyReceiverTunnel } from './EditAlarmPolicyReceiverTunnel';
 import { MetricsObjectEdition } from '../models/AlarmPolicy';
-import { uuid } from '@tencent/qcloud-lib';
+import { router } from '../router';
+import { RootProps } from './AlarmPolicyApp';
 import { EditAlarmPolicyObject } from './EditAlarmPolicyObject';
-import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
-import { validatorActions } from '../actions/validatorActions';
-import { getWorkflowError } from '../../common/utils';
-
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { EditAlarmPolicyReceiverGroup } from './EditAlarmPolicyReceiverGroup';
 
 export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {

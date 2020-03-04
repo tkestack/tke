@@ -1,17 +1,20 @@
 import * as React from 'react';
-import { Button, Text } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { MainBodyLayout, FormLayout } from '../../../../common/layouts';
-import { FormItem, InputField, SelectList, TipInfo, LinkButton } from '../../../../common/components';
+
+import { Button, Text } from '@tea/component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import {
+    FormItem, InputField, LinkButton, SelectList, TipInfo
+} from '../../../../common/components';
+import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
 import { getWorkflowError } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { validateCMActions } from '../../../actions/validateCMActions';
 import { CreateResource } from '../../../models';
 import { router } from '../../../router';
-import { validateCMActions } from '../../../actions/validateCMActions';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { RootProps } from '../../ClusterApp';
 
 const ButtonBarStyle = { marginBottom: '5px' };
 

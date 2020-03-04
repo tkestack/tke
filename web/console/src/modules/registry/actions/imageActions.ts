@@ -1,12 +1,9 @@
 import {
-  createFFListActions,
-  generateWorkflowActionCreator,
-  isSuccessWorkflow,
-  OperationTrigger
+    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
 } from '@tencent/ff-redux';
-import { extend } from '@tencent/qcloud-lib';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { t } from '@tencent/tea-app/lib/i18n';
+
 import * as ActionType from '../constants/ActionType';
 import { InitImage } from '../constants/Config';
 import { Image, ImageCreation, ImageFilter, RootState } from '../models';

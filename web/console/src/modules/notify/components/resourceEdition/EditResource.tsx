@@ -1,18 +1,20 @@
 import * as React from 'react';
-import { uuid } from '@tencent/qcloud-lib';
-import { t } from '@tencent/tea-app/lib/i18n';
+
+import { Button } from '@tea/component/button';
 import { Card } from '@tea/component/card';
 import { Form } from '@tea/component/form';
 import { Input } from '@tea/component/input';
-import { Button } from '@tea/component/button';
+import { OperationState, uuid } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { InputNumber, Switch } from '@tencent/tea-component';
+
+import { resourceConfig } from '../../../../../config';
+import { CreateResource, getWorkflowError, TipInfo } from '../../../common';
 import { router } from '../../router';
 import { channelSchema } from '../../schema/channelSchema';
 import { getState, onChange, schemaObjToJSON } from '../../schema/schemaUtil';
-import { resourceConfig } from '../../../../../config';
-import { Text, Switch, InputNumber } from '@tencent/tea-component';
 import { RootProps } from '../NotifyApp';
-import { OperationState } from '@tencent/ff-redux';
-import { CreateResource, TipInfo, getWorkflowError } from '../../../common';
+
 const rc = resourceConfig();
 
 interface Props extends RootProps {

@@ -1,11 +1,8 @@
 import {
-  createFFListActions,
-  generateWorkflowActionCreator,
-  OperationTrigger,
-  FetchOptions,
-  generateFetcherActionCreator
+    createFFListActions, extend, FetchOptions, generateFetcherActionCreator,
+    generateWorkflowActionCreator, OperationTrigger
 } from '@tencent/ff-redux';
-import { extend } from '@tencent/qcloud-lib';
+
 import * as ActionTypes from '../constants/ActionTypes';
 import { RootState, Strategy, StrategyFilter } from '../models';
 import { router } from '../router';

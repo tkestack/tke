@@ -1,18 +1,19 @@
-import * as React from 'react';
-import { Button } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { connect } from 'react-redux';
 import * as classnames from 'classnames';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { MainBodyLayout, FormLayout } from '../../../../common/layouts';
-import { FormItem, InputField, TipInfo } from '../../../../common/components';
-import { getWorkflowError, isEmpty } from '../../../../common/utils';
-import { router } from '../../../router';
-import { validateNamespaceActions } from '../../../actions/validateNamespaceActions';
-import { NamespaceEditJSONYaml, CreateResource, SecretEditJSONYaml } from '../../../models';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Button } from '@tea/component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, InputField, TipInfo } from '../../../../common/components';
+import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
+import { getWorkflowError, isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { validateNamespaceActions } from '../../../actions/validateNamespaceActions';
+import { CreateResource, NamespaceEditJSONYaml, SecretEditJSONYaml } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

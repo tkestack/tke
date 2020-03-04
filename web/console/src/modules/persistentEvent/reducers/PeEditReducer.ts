@@ -1,9 +1,11 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import * as ActionType from '../constants/ActionType';
+import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
 import { initValidator } from '../../common/models/Validation';
+import * as ActionType from '../constants/ActionType';
 
 const TempReducer = combineReducers({
   isOpen: reduceToPayload(ActionType.IsOpenPE, true),

@@ -1,9 +1,10 @@
 import { combineReducers } from 'redux';
+
+import { createFFListReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import { generateWorkflowReducer, createFFListReducer } from '@tencent/ff-redux';
+
 import * as ActionTypes from '../constants/ActionTypes';
 import { router } from '../router';
-import { reduceToPayload } from '@tencent/qcloud-lib';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),

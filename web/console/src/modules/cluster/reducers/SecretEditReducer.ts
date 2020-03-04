@@ -1,11 +1,13 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import { initValidator } from '../../common/models';
-import { initSecretData } from '../constants/initState';
+
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import { Namespace } from '../models';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
+import { initValidator } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
+import { initSecretData } from '../constants/initState';
+import { Namespace } from '../models';
 
 const TempReducer = combineReducers({
   name: reduceToPayload(ActionType.Sec_Name, ''),

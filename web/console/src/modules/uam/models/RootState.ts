@@ -1,9 +1,10 @@
-import { WorkflowState, OperationResult } from '@tencent/ff-redux';
-import { User, UserFilter, Strategy, StrategyFilter, Category } from './index';
-import { RouteState } from '../../../../helpers';
-import { RecordSet } from '@tencent/qcloud-lib';
-import { FFListModel, FetcherState } from '@tencent/ff-redux';
 import { ResourceFilter } from '@src/modules/common';
+import {
+    FetcherState, FFListModel, OperationResult, RecordSet, WorkflowState
+} from '@tencent/ff-redux';
+
+import { RouteState } from '../../../../helpers';
+import { Category, Strategy, StrategyFilter, User, UserFilter } from './index';
 
 type userWorkflow = WorkflowState<User, any>;
 type strategyWorkflow = WorkflowState<Strategy, any>;

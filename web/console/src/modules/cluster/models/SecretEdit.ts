@@ -1,8 +1,8 @@
-import { Identifiable, RecordSet } from '@tencent/qcloud-lib';
+import { FetcherState, Identifiable, QueryState, RecordSet } from '@tencent/ff-redux';
+
 import { Validation } from '../../common/models';
 import { Namespace } from './Namespace';
 import { ResourceFilter } from './ResourceOption';
-import { FetcherState, QueryState } from '@tencent/ff-redux';
 
 export interface SecretEdit extends Identifiable {
   /** secret名称 */

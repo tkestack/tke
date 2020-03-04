@@ -1,15 +1,17 @@
 import * as React from 'react';
-import { RootProps } from './ClusterApp';
-import { Modal, Button, Switch, Alert, Text } from '@tea/component';
-import { Clip } from '../../common/components';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
 import { connect } from 'react-redux';
-import { Cluster } from '../../common/models';
-import { downloadCrt } from '../../../../helpers';
-import { DialogNameEnum } from '../models';
+
+import { Alert, Button, Modal, Switch, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { downloadCrt } from '../../../../helpers';
+import { Clip } from '../../common/components';
+import { Cluster } from '../../common/models';
+import { allActions } from '../actions';
+import { DialogNameEnum } from '../models';
+import { RootProps } from './ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {

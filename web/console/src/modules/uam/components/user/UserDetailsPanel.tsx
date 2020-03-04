@@ -1,15 +1,17 @@
 import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { bindActionCreators, insertCSS } from '@tencent/qcloud-lib';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { dateFormat } from '../../../../../helpers/dateUtil';
-import { router } from '../../router';
-import { allActions } from '../../actions';
-import { Button, Modal, Card, Input, Form, TableColumn } from '@tea/component';
-import { VALIDATE_PHONE_RULE, VALIDATE_EMAIL_RULE, STRATEGY_TYPE } from '../../constants/Config';
-import { Strategy, User } from '../../models';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { emptyTips, LinkButton } from '@src/modules/common';
+import { Button, Card, Form, Input, Modal, TableColumn } from '@tea/component';
 import { TablePanel } from '@tencent/ff-component';
+import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { dateFormat } from '../../../../../helpers/dateUtil';
+import { allActions } from '../../actions';
+import { STRATEGY_TYPE, VALIDATE_EMAIL_RULE, VALIDATE_PHONE_RULE } from '../../constants/Config';
+import { Strategy, User } from '../../models';
+import { router } from '../../router';
 
 const { useState, useEffect, useRef } = React;
 const _isEqual = require('lodash/isEqual');

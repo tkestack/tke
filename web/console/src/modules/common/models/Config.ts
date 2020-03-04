@@ -1,4 +1,4 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
 
 interface Base extends Identifiable {
   /**配置文件Id */

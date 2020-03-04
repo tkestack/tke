@@ -1,17 +1,18 @@
 import * as React from 'react';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { Modal, Button } from '@tea/component';
-import { FetchState } from '@tencent/ff-redux';
-import { RootProps } from '../../ClusterApp';
 import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { FormLayout } from '../../../../common/layouts';
-import { FormItem, ButtonBar } from '../../../../common/components';
-import { ServiceWorkloadList } from '../../../constants/Config';
-import { Selector } from '../../../models';
-import { initSelector } from '../../../constants/initState';
-import { router } from '../../../router';
+
+import { Button, Modal } from '@tea/component';
+import { bindActionCreators, FetchState, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { ButtonBar, FormItem } from '../../../../common/components';
+import { FormLayout } from '../../../../common/layouts';
+import { allActions } from '../../../actions';
+import { ServiceWorkloadList } from '../../../constants/Config';
+import { initSelector } from '../../../constants/initState';
+import { Selector } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
 
 const ButtonBarStyle = { marginBottom: '5px' };
 

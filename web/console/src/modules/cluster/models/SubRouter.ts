@@ -1,4 +1,4 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
 
 export interface SubRouter extends Identifiable, BasicRouter {
   /** 是否有二级导航 */

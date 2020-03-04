@@ -1,17 +1,19 @@
-import * as React from 'react';
-import { Button, Modal, Bubble, Card, Text, ContentView } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { HelmHistory } from '../../../models';
-import { RootProps } from '../../HelmApp';
 import classNames from 'classnames';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, Button, Card, ContentView, Modal, Text } from '@tea/component';
+import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { dateFormatter } from '../../../../../../helpers';
 import { LinkButton } from '../../../../common/components';
 import { DialogBodyLayout } from '../../../../common/layouts';
+import { allActions } from '../../../actions';
 import { helmStatus } from '../../../constants/Config';
-import { dateFormatter } from '../../../../../../helpers';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
+import { HelmHistory } from '../../../models';
+import { RootProps } from '../../HelmApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {

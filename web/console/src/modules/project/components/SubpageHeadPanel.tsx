@@ -1,19 +1,18 @@
 import * as React from 'react';
-import { RootProps } from './ProjectApp';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
 import { connect } from 'react-redux';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Justify, Icon } from '@tencent/tea-component';
+import { Icon, Justify } from '@tencent/tea-component';
+
+import { allActions } from '../actions';
 import { router } from '../router';
+import { RootProps } from './ProjectApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class SubpageHeadPanel extends React.Component<RootProps, {}> {
   render() {
     let { route, project } = this.props,

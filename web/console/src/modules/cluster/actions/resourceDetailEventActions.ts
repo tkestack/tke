@@ -1,5 +1,5 @@
-import { createFFListActions } from '@tencent/ff-redux';
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
+import { createFFListActions, extend, ReduxAction } from '@tencent/ff-redux';
+
 import { resourceConfig } from '../../../../config';
 import { IsInNodeManageDetail } from '../components/resource/resourceDetail/ResourceDetail';
 import * as ActionType from '../constants/ActionType';

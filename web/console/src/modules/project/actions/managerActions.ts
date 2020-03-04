@@ -1,14 +1,11 @@
-import { ProjectEdition } from './../models/Project';
-import { extend } from '@tencent/qcloud-lib';
-import { RootState, Manager, ManagerFilter } from '../models';
-import * as WebAPI from '../WebAPI';
-import * as ActionType from '../constants/ActionType';
 import {
-  generateWorkflowActionCreator,
-  OperationTrigger,
-  isSuccessWorkflow,
-  createFFListActions
+    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
 } from '@tencent/ff-redux';
+
+import * as ActionType from '../constants/ActionType';
+import { Manager, ManagerFilter, RootState } from '../models';
+import { ProjectEdition } from '../models/Project';
+import * as WebAPI from '../WebAPI';
 import { projectActions } from './projectActions';
 
 type GetState = () => RootState;

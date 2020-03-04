@@ -1,24 +1,25 @@
 import * as React from 'react';
+
 import { Button, Icon } from '@tea/component';
-import { OperationState, isSuccessWorkflow, FetchState } from '@tencent/ff-redux';
+import { FetchState, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { resourceConfig, typeMapName } from '../../../../../../config';
 import { TipInfo } from '../../../../common/components';
-import { RootProps } from '../../ClusterApp';
-import { uuid } from '@tencent/qcloud-lib';
-import { typeMapName, resourceConfig } from '../../../../../../config';
-import { MainBodyLayout, FormLayout } from '../../../../common/layouts';
-import { CreateResource } from '../../../models';
+import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
 import { getWorkflowError, isEmpty } from '../../../../common/utils';
+import { CreateResource } from '../../../models';
 import { router } from '../../../router';
-import { SubHeaderPanel } from './SubHeaderPanel';
+import { RootProps } from '../../ClusterApp';
+import { CreateComputerPanel } from '../nodeManage/CreateComputerPanel';
 import { YamlEditorPanel } from '../YamlEditorPanel';
-import { EditServicePanel } from './EditServicePanel';
+import { EditConfigMapPanel } from './EditConfigMapPanel';
+import { EditLbcfPanel } from './EditLbcfPanel';
 import { EditNamespacePanel } from './EditNamespacePanel';
 import { EditResourceVisualizationPanel } from './EditResourceVisualizationPanel';
 import { EditSecretPanel } from './EditSecretPanel';
-import { EditConfigMapPanel } from './EditConfigMapPanel';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { CreateComputerPanel } from '../nodeManage/CreateComputerPanel';
-import { EditLbcfPanel } from './EditLbcfPanel';
+import { EditServicePanel } from './EditServicePanel';
+import { SubHeaderPanel } from './SubHeaderPanel';
 
 interface EditResourcePanelState {
   /** edited data */

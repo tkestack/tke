@@ -1,9 +1,11 @@
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { TableColumn, Text } from '@tencent/tea-component';
 import { stylize } from '@tencent/tea-component/lib/table/addons';
-import * as React from 'react';
-import { connect } from 'react-redux';
+
 import { resourceConfig } from '../../../../../../config';
 import { downloadCrt } from '../../../../../../helpers';
 import { Clip, GridTable, WorkflowDialog } from '../../../../common/components';

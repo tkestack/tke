@@ -1,6 +1,7 @@
-import { extend } from '@tencent/qcloud-lib';
+import { extend } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+
 import { resourceConfig } from '../../../../config';
 import { CommonAPI } from '../../common';
 import { ResourceInfo } from '../../common/models';

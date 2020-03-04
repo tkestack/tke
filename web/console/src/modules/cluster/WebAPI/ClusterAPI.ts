@@ -1,18 +1,14 @@
-import { CreateResource } from './../../common/models/CreateResource';
-import { RecordSet, uuid } from '@tencent/qcloud-lib';
-import { RequestParams, ResourceInfo, ClusterFilter, Cluster } from '../../common/models';
-import {
-  reduceNetworkRequest,
-  Method,
-  reduceK8sRestfulPath,
-  operationResult,
-  reduceNetworkWorkflow,
-  requestMethodForAction
-} from '../../../../helpers';
+import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
+
 import { resourceConfig } from '../../../../config';
-import { CreateIC } from '../models';
+import {
+    Method, operationResult, reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow,
+    requestMethodForAction
+} from '../../../../helpers';
+import { Cluster, ClusterFilter, RequestParams, ResourceInfo } from '../../common/models';
+import { CreateResource } from '../../common/models/CreateResource';
 import { authTypeMapping } from '../constants/Config';
-import { QueryState } from '@tencent/ff-redux';
+import { CreateIC } from '../models';
 
 /**
  * 集群列表的查询

@@ -1,20 +1,18 @@
 import * as React from 'react';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../actions';
-import { RootProps } from './AddonApp';
-import { Clip, LinkButton, Resource } from '../../common';
+
+import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Text, Bubble, Icon } from '@tencent/tea-component';
-import {
-  AddonTypeMap,
-  AddonStatusThemeMap,
-  AddonStatusNameMap,
-  AddonTypeEnum,
-  AddonStatusEnum
-} from '../constants/Config';
+import { Bubble, Icon, Text } from '@tencent/tea-component';
+
 import { dateFormatter } from '../../../../helpers';
-import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
+import { Clip, LinkButton, Resource } from '../../common';
+import { allActions } from '../actions';
+import {
+    AddonStatusEnum, AddonStatusNameMap, AddonStatusThemeMap, AddonTypeEnum, AddonTypeMap
+} from '../constants/Config';
+import { RootProps } from './AddonApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

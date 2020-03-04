@@ -1,15 +1,17 @@
-import { SessionAffinity } from './../constants/Config';
-import { ReduxAction, uuid, extend } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
-import * as WebAPI from '../WebAPI';
-import { RootState, PortMap, Selector, Resource, ServicePorts, CLB } from '../models';
-import { cloneDeep } from '../../common/utils';
-import { initPortsMap, initSelector } from '../constants/initState';
-import { validateServiceActions } from './validateServiceActions';
-import { resourceConfig } from '../../../../config';
+import {
+    extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+
+import { resourceConfig } from '../../../../config';
+import { cloneDeep } from '../../common/utils';
+import * as ActionType from '../constants/ActionType';
+import { SessionAffinity } from '../constants/Config';
+import { initPortsMap, initSelector } from '../constants/initState';
+import { CLB, PortMap, Resource, RootState, Selector, ServicePorts } from '../models';
 import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { validateServiceActions } from './validateServiceActions';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

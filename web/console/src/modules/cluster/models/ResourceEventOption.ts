@@ -1,7 +1,7 @@
-import { ResourceFilter, Resource } from './ResourceOption';
-import { RecordSet } from '@tencent/qcloud-lib';
+import { FetcherState, QueryState, RecordSet } from '@tencent/ff-redux';
+
 import { Event, EventFilter } from './Event';
-import { QueryState, FetcherState } from '@tencent/ff-redux';
+import { Resource, ResourceFilter } from './ResourceOption';
 
 export interface ResourceEventOption {
   /** workloadType */

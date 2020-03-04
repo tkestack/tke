@@ -1,10 +1,13 @@
-import { FormPanel } from '@tencent/ff-component';
-import { isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
-import { bindActionCreators, deepClone } from '@tencent/qcloud-lib';
-import { t } from '@tencent/tea-app/lib/i18n';
-import { Alert, Bubble, Button, Icon, Modal, Text } from '@tencent/tea-component';
 import * as React from 'react';
 import { connect } from 'react-redux';
+
+import { FormPanel } from '@tencent/ff-component';
+import {
+    bindActionCreators, deepClone, isSuccessWorkflow, OperationState
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Alert, Bubble, Button, Icon, Modal, Text } from '@tencent/tea-component';
+
 import { getWorkflowError } from '../../common';
 import { allActions } from '../actions';
 import { projectActions } from '../actions/projectActions';

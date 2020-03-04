@@ -120,7 +120,6 @@ module.exports = {
       '@tencent/qcloud-redux-fetcher': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-fetcher/'),
       '@tencent/qcloud-redux-query': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-query/'),
       '@tencent/qcloud-redux-workflow': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-workflow/'),
-      '@tencent/qcloud-lib': path.resolve(__dirname, '../lib/ff-redux/'),
       // react 和 react-dom 控制台通过全局变量提供，我们不打包
       react: path.resolve(__dirname, './alias/react.js'),
       'react-dom': path.resolve(__dirname, './alias/react-dom.js'),

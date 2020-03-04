@@ -1,7 +1,7 @@
-import { RecordSet, uuid } from '@tencent/qcloud-lib';
-import { SubRouterFilter, SubRouter, CLB } from './models';
+import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
+
 import { subRouterConfig } from '../../../config';
-import { QueryState } from '@tencent/ff-redux';
+import { CLB, SubRouter, SubRouterFilter } from './models';
 
 /** 将各种资源的接口导出 */
 export * from './WebAPI/index';

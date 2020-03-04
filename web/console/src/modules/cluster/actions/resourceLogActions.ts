@@ -1,11 +1,11 @@
-import { extend } from '@tencent/qcloud-lib';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
-import { RootState, ResourceFilter, PodLogFilter } from '../models';
-import * as ActionType from '../constants/ActionType';
-import { resourceConfig } from '../../../../config';
-import * as WebAPI from '../WebAPI';
+import { extend, FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+
+import { resourceConfig } from '../../../../config';
+import * as ActionType from '../constants/ActionType';
 import { PollEventName } from '../constants/Config';
+import { PodLogFilter, ResourceFilter, RootState } from '../models';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

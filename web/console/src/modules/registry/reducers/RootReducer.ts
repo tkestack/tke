@@ -1,7 +1,8 @@
-import { createFFListReducer, generateWorkflowReducer } from '@tencent/ff-redux';
-import { reduceToPayload } from '@tencent/qcloud-lib';
-import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { combineReducers } from 'redux';
+
+import { createFFListReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
+import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
+
 import * as ActionType from '../constants/ActionType';
 import { Default_D_URL, InitApiKey, InitImage, InitRepo } from '../constants/Config';
 import { router } from '../router';

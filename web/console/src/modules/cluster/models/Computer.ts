@@ -1,8 +1,10 @@
+import {
+    FetcherState, FFListModel, Identifiable, QueryState, RecordSet, WorkflowState
+} from '@tencent/ff-redux';
+
 import { CreateResource } from '../../common';
-import { Identifiable, RecordSet, extend } from '@tencent/qcloud-lib';
 import { Validation } from '../../common/models';
-import { ResourceFilter, Resource } from './ResourceOption';
-import { FFListModel, FetcherState, QueryState, WorkflowState } from '@tencent/ff-redux';
+import { Resource, ResourceFilter } from './ResourceOption';
 
 type ComputerWorkflow = WorkflowState<Computer, ComputerOperator>;
 type ComputerLabelWorkflow = WorkflowState<ComputerLabelEdition, ComputerOperator>;

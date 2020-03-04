@@ -1,18 +1,21 @@
-import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow, FetchState } from '@tencent/ff-redux';
-import { Button, Radio, Select } from '@tea/component';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
-import { connect } from 'react-redux';
-import { getWorkflowError } from '../../../../common/utils';
-import { TipInfo, FormItem, InputField, LinkButton } from '../../../../common/components';
-import { MainBodyLayout, FormLayout, FixedFormLayout } from '../../../../common/layouts';
 import * as classnames from 'classnames';
-import { WorkloadEditJSONYaml, CreateResource } from '../../../models';
-import { router } from '../../../router';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Button, Radio, Select } from '@tea/component';
+import {
+    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, InputField, TipInfo } from '../../../../common/components';
+import { FixedFormLayout, FormLayout, MainBodyLayout } from '../../../../common/layouts';
+import { getWorkflowError } from '../../../../common/utils';
+import { allActions } from '../../../actions';
 import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { CreateResource, WorkloadEditJSONYaml } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
 
 /** 加载中的样式 */
 const loadingElement = (

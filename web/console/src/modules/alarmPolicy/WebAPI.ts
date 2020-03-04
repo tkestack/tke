@@ -1,14 +1,16 @@
-import { AlarmPolicyMetrics } from './constants/Config';
-import { Namespace } from './models/Namespace';
-import { reduceNetworkRequest } from './../../../helpers/reduceNetwork';
-import { AlarmPolicyEdition, AlarmPolicyOperator, MetricsObject } from './models/AlarmPolicy';
-import { RecordSet, uuid } from '@tencent/qcloud-lib';
-import { OperationResult, QueryState } from '@tencent/ff-redux';
+import { OperationResult, QueryState, RecordSet, uuid } from '@tencent/ff-redux';
+
+import { resourceConfig } from '../../../config';
 // import * as regionConfig from '../../../config/region';
 import { reduceK8sRestfulPath } from '../../../helpers';
-import { AlarmPolicy, AlarmPolicyFilter, NamespaceFilter, ResourceFilter, Resource } from './models';
+import { reduceNetworkRequest } from '../../../helpers/reduceNetwork';
 import { RequestParams, ResourceInfo } from '../common/models';
-import { resourceConfig } from '../../../config';
+import { AlarmPolicyMetrics } from './constants/Config';
+import {
+    AlarmPolicy, AlarmPolicyFilter, NamespaceFilter, Resource, ResourceFilter
+} from './models';
+import { AlarmPolicyEdition, AlarmPolicyOperator, MetricsObject } from './models/AlarmPolicy';
+import { Namespace } from './models/Namespace';
 
 /** RESTFUL风格的请求方法 */
 const Method = {

@@ -1,23 +1,25 @@
 import * as React from 'react';
-
-import { Button, Switch, Modal, TagSearchBox, Table, Text, Dropdown, List, Select } from '@tea/component';
-// import { TagSearchBox } from '../../../../common/components/tagsearchbox';
-import { bindActionCreators, insertCSS } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { downloadCsv, dateFormatter } from '../../../../../../helpers';
-import { FetchState } from '@tencent/ff-redux';
-import { isEmpty, includes } from '../../../../common/utils';
-import { Resource } from '../../../models';
-import { router } from '../../../router';
-import { ResourceInfo, DisplayFiledProps } from '../../../../common/models';
-import { resourceConfig } from '../../../../../../config';
-import { TellIsNeedFetchNS } from '../ResourceSidebarPanel';
+
+import {
+    Button, Dropdown, List, Modal, Select, Switch, Table, TagSearchBox, Text
+} from '@tea/component';
+// import { TagSearchBox } from '../../../../common/components/tagsearchbox';
+import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
+import { ChartInstancesPanel } from '@tencent/tchart';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Justify } from '@tencent/tea-component/lib/justify';
-import { ChartInstancesPanel } from '@tencent/tchart';
+
+import { resourceConfig } from '../../../../../../config';
+import { dateFormatter, downloadCsv } from '../../../../../../helpers';
+import { DisplayFiledProps, ResourceInfo } from '../../../../common/models';
+import { includes, isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { Resource } from '../../../models';
 import { MonitorPanelProps, resourceMonitorFields } from '../../../models/MonitorPanel';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import { TellIsNeedFetchNS } from '../ResourceSidebarPanel';
 
 interface ResouceActionPanelState {
   /** 是否开启自动刷新 */

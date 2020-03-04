@@ -1,9 +1,11 @@
-import { FormPanel } from '@tencent/ff-component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { t } from '@tencent/tea-app/lib/i18n';
-import { Input } from '@tencent/tea-component';
 import * as React from 'react';
 import { connect } from 'react-redux';
+
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Input } from '@tencent/tea-component';
+
 import { allActions } from '../actions';
 import { RootProps } from './AddonApp';
 

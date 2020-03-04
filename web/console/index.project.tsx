@@ -4,11 +4,10 @@ import ReactDOM from 'react-dom';
 // 国际化工具的初始化
 i18n.init({ translation });
 import * as React from 'react';
-import { Entry } from '@tencent/ff-redux';
+import { Entry, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Application } from './src/modules/cluster/index.project';
 import { Wrapper, PlatformTypeEnum } from './Wrapper';
-import { insertCSS } from '@tencent/qcloud-lib';
 import { Registry } from '@src/modules/registry';
 import { Init_Forbiddent_Config } from '@helper/reduceNetwork';
 import { TipDialog } from '@src/modules/common';

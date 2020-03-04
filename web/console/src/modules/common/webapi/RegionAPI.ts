@@ -1,6 +1,6 @@
-import { RecordSet, uuid } from '@tencent/qcloud-lib';
+import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
+
 import { Region, RegionFilter } from '../models';
-import { QueryState } from '@tencent/ff-redux';
 
 /**获取地域列表 */
 export async function fetchRegionList(query?: QueryState<RegionFilter>) {

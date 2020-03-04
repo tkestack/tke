@@ -1,7 +1,8 @@
-import { Group } from './Group';
-import { Validation } from './../../common/models/Validation';
-import { Identifiable, extend } from '@tencent/qcloud-lib';
+import { extend, Identifiable } from '@tencent/ff-redux';
+
+import { Validation } from '../../common/models/Validation';
 import { Resource } from '../../notify/models';
+import { Group } from './Group';
 
 export interface AlarmPolicy extends Identifiable {
   alarmPolicyId: string;

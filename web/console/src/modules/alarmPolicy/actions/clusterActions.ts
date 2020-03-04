@@ -1,5 +1,5 @@
-import { createFFListActions } from '@tencent/ff-redux';
-import { extend } from '@tencent/qcloud-lib';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
 import { FFReduxActionName } from '../../cluster/constants/Config';
 import * as WebAPI from '../../cluster/WebAPI';
 import { Cluster, ClusterFilter } from '../../common/';

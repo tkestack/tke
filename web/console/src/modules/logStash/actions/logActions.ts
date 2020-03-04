@@ -1,13 +1,17 @@
-import { generateQueryActionCreator, QueryState } from '@tencent/ff-redux';
-import { extend, RecordSet, ReduxAction, uuid } from '@tencent/qcloud-lib';
+import {
+    extend, generateQueryActionCreator, QueryState, RecordSet, ReduxAction, uuid
+} from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
+
 import { resourceConfig } from '../../../../config';
 import { CommonAPI } from '../../common';
 import { ResourceInfo } from '../../common/models';
 import { cloneDeep } from '../../common/utils';
 import * as ActionType from '../constants/ActionType';
 import { inputTypeMap, outputTypeMap } from '../constants/Config';
-import { initContainerFilePath, initContainerInputOption, initMetadata } from '../constants/initState';
+import {
+    initContainerFilePath, initContainerInputOption, initMetadata
+} from '../constants/initState';
 import { ContainerLogs, Log, LogFilter, ResourceFilter, RootState } from '../models';
 import { Resource } from '../models/Resource';
 import { editLogStashActions } from './editLogStashActions';

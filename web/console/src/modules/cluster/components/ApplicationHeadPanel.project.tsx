@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { RootProps } from './ApplicationApp.project';
-
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
 import { connect } from 'react-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { allActions } from '../actions';
+import { RootProps } from './ApplicationApp.project';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

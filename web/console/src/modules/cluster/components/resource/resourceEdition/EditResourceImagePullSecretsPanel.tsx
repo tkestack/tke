@@ -1,15 +1,15 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { LinkButton, FormItem } from '@src/modules/common';
-import { bindActionCreators } from '@tencent/qcloud-lib';
+import { FormItem, LinkButton } from '@src/modules/common';
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Icon, Text } from '@tencent/tea-component';
 
 import { allActions } from '../../../actions';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
-import { FormPanel } from '@tencent/ff-component';
 
 interface WorkloadPodAdvancePanelState {
   /** 是否需要展示高级设置的内容 */

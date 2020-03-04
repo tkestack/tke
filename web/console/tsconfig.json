@@ -35,7 +35,6 @@
       "@tencent/qcloud-redux-fetcher": ["./lib/ff-redux/libs/qcloud-redux-fetcher/"],
       "@tencent/qcloud-redux-query": ["./lib/ff-redux/libs/qcloud-redux-query/"],
       "@tencent/qcloud-redux-workflow'": ["./lib/ff-redux/libs/qcloud-redux-workflow/"],
-      "@tencent/qcloud-lib": ["./lib/ff-redux/"],
     }
   },
   "exclude": ["node_modules", "dist", "build"],

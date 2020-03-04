@@ -1,9 +1,10 @@
-import { RootState, Resource, ResourceFilter } from '../models';
-import { ResourceInfo } from '../../common/models';
-import { resourceConfig } from '../../../../config';
-import * as WebAPI from '../WebAPI';
 import { createFFListActions } from '@tencent/ff-redux';
+
+import { resourceConfig } from '../../../../config';
+import { ResourceInfo } from '../../common/models';
+import { Resource, ResourceFilter, RootState } from '../models';
 import { router } from '../router';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 let rc = resourceConfig();

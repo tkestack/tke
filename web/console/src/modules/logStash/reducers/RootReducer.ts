@@ -1,17 +1,20 @@
-import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet, uuid } from '@tencent/qcloud-lib';
-import { router } from '../router';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import * as ActionType from '../constants/ActionType';
-import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import { Region, Cluster, initValidator, NamespaceFilter } from '../../common/models';
-import { initRegionInfo, initLogDaemonsetStatus } from '../constants/initState';
-import { Log } from '../models';
-import { generateWorkflowReducer, createFFListReducer } from '@tencent/ff-redux';
-import { LogStashEditReducer } from './LogStashEditReducer';
 import { Namespace } from 'react-i18next';
-import { LogDaemonset } from '../models/LogDaemonset';
+import { combineReducers } from 'redux';
+
+import {
+    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload
+} from '@tencent/ff-redux';
+import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
+import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
+import { Cluster, NamespaceFilter, Region } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
 import { FFReduxActionName } from '../constants/Config';
+import { initLogDaemonsetStatus, initRegionInfo } from '../constants/initState';
+import { Log } from '../models';
+import { LogDaemonset } from '../models/LogDaemonset';
+import { router } from '../router';
+import { LogStashEditReducer } from './LogStashEditReducer';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),

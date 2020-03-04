@@ -1,4 +1,5 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
 import { Cluster } from '../../common/models';
 
 export interface Ckafka extends Identifiable {

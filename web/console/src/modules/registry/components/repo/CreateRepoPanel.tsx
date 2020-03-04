@@ -1,12 +1,14 @@
 import * as React from 'react';
 
+import { FormPanel } from '@tencent/ff-component';
 import { OperationState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Button, Card, ContentView, Icon, Input, Justify, Segment, Text } from '@tencent/tea-component';
+import {
+    Button, Card, ContentView, Icon, Input, Justify, Segment, Text
+} from '@tencent/tea-component';
 
 import { router } from '../../router';
 import { RootProps } from '../RegistryApp';
-import { FormPanel } from '@tencent/ff-component';
 
 export class CreateRepoPanel extends React.Component<RootProps, any> {
   render() {

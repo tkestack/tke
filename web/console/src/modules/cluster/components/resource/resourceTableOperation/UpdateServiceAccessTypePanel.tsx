@@ -1,22 +1,25 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow, FetchState } from '@tencent/ff-redux';
-import { Button } from '@tea/component';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
-import { CreateResource, ServicePorts, ServiceEditJSONYaml } from '../../../models';
+
+import { Button } from '@tea/component';
+import {
+    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
+} from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { TipInfo } from '../../../../common/components';
 import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
 import { getWorkflowError, isEmpty } from '../../../../common/utils';
-import { TipInfo } from '../../../../common/components';
-import { EditServiceCommunicationPanel } from '../resourceEdition/EditServiceCommunicationPanel';
-import { EditServicePortMapPanel } from '../resourceEdition/EditServicePortMapPanel';
-import { router } from '../../../router';
+import { allActions } from '../../../actions';
 import { validateServiceActions } from '../../../actions/validateServiceActions';
-import { ServiceTypeMap } from '../resourceEdition/EditServicePanel';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { EditServiceAdvanceSettingPanel } from '../resourceEdition/EditServiceAdvanceSettingPanel';
 import { SessionAffinity } from '../../../constants/Config';
+import { CreateResource, ServiceEditJSONYaml, ServicePorts } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import { EditServiceAdvanceSettingPanel } from '../resourceEdition/EditServiceAdvanceSettingPanel';
+import { EditServiceCommunicationPanel } from '../resourceEdition/EditServiceCommunicationPanel';
+import { ServiceTypeMap } from '../resourceEdition/EditServicePanel';
+import { EditServicePortMapPanel } from '../resourceEdition/EditServicePortMapPanel';
 
 /** 加载中的样式 */
 const loadingElement = (

@@ -1,14 +1,15 @@
 import * as React from 'react';
-import { Transfer } from '@tea/component/transfer';
-import { Table, TableColumn } from '@tea/component/table';
-import { selectable } from '@tea/component/table/addons/selectable';
-import { removeable } from '@tea/component/table/addons/removeable';
+
 import { SearchBox } from '@tea/component/searchbox';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { RecordSet } from '@tencent/qcloud-lib';
-import { scrollable, autotip } from '@tencent/tea-component/lib/table/addons';
-import { StatusTip, LoadingTip } from '@tencent/tea-component';
-import { FFListAction, FFListModel, FetcherState, FetchState } from '@tencent/ff-redux';
+import { Table, TableColumn } from '@tea/component/table';
+import { removeable } from '@tea/component/table/addons/removeable';
+import { selectable } from '@tea/component/table/addons/selectable';
+import { Transfer } from '@tea/component/transfer';
+import { FetcherState, FetchState, FFListAction, FFListModel, RecordSet } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { LoadingTip, StatusTip } from '@tencent/tea-component';
+import { autotip, scrollable } from '@tencent/tea-component/lib/table/addons';
+
 function SourceTable({
   dataSource,
   targetKeys,

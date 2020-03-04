@@ -1,5 +1,5 @@
-import { createFFListActions, FetchOptions, getRegionId } from '@tencent/ff-redux';
-import { extend } from '@tencent/qcloud-lib';
+import { createFFListActions, extend, FetchOptions, getRegionId } from '@tencent/ff-redux';
+
 import { assureRegion, setRegionId } from '../../../../helpers';
 import { Region, RegionFilter } from '../../common';
 import { CommonAPI } from '../../common/webapi';

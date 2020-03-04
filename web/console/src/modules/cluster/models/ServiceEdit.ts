@@ -1,8 +1,8 @@
-import { Identifiable, RecordSet } from '@tencent/qcloud-lib';
+import { FetcherState, Identifiable, QueryState, RecordSet } from '@tencent/ff-redux';
+
 import { Validation } from '../../common/models';
 import { PortMap } from './PortMap';
-import { ResourceFilter, Resource } from './ResourceOption';
-import { FetcherState, QueryState } from '@tencent/ff-redux';
+import { Resource, ResourceFilter } from './ResourceOption';
 
 export interface ServiceEdit extends Identifiable {
   /**

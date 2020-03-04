@@ -1,7 +1,8 @@
-import * as React from 'react';
-import { BaseReactProps } from '@tencent/qcloud-lib';
-import { Bubble } from '@tea/component';
 import * as classnames from 'classnames';
+import * as React from 'react';
+
+import { Bubble } from '@tea/component';
+import { BaseReactProps } from '@tencent/ff-redux';
 
 export interface ListItemProps extends BaseReactProps {
   /**显示的标题文本 */

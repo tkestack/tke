@@ -1,6 +1,7 @@
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
+import { extend, ReduxAction } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+
 import { resourceConfig } from '../../../../config';
 import { cloneDeep } from '../../common/';
 import { NamespaceFilter } from '../../common/models';
@@ -9,6 +10,7 @@ import { ContainerLogs, RootState } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
 import { resourceActions } from './resourceActions';
+
 type GetState = () => RootState;
 
 /** 拉取namesapce列表 */

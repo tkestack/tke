@@ -1,11 +1,14 @@
+import * as classNames from 'classnames';
 /* eslint-disable */
 import * as React from 'react';
-import * as classNames from 'classnames';
-import { OnOuterClick } from '@tencent/qcloud-lib';
-import { Select, SelectRange } from './Select';
 import * as ReactDOM from 'react-dom';
+
 import { Bubble } from '@tea/component';
+import { OnOuterClick } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { Select, SelectRange } from './Select';
+
 export interface TimePickerValue {
   hour: number;
   minute: number;

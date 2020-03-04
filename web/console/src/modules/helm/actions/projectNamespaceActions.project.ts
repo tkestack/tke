@@ -1,14 +1,14 @@
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
-import { extend, RecordSet } from '@tencent/qcloud-lib';
+import { extend, FetchOptions, generateFetcherActionCreator, RecordSet } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+
 import { resourceConfig } from '../../../../config';
 import { Cluster } from '../../common/models';
 import { uniq } from '../../common/utils';
 import * as ActionType from '../constants/ActionType';
+import { FFReduxActionName } from '../constants/Config';
 import { RootState } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
-import { FFReduxActionName } from './../constants/Config';
 import { namespaceActions } from './namespaceActions.project';
 
 type GetState = () => RootState;

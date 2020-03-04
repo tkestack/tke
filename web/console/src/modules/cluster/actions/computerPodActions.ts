@@ -1,12 +1,14 @@
-import { ResourceFilter } from './../models/ResourceOption';
-import { ResourceInfo } from './../../common/models/ResourceInfo';
-import { RecordSet, extend, ReduxAction } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/ff-redux';
+import {
+    extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { Computer, ComputerFilter, RootState } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
+
 import { resourceConfig } from '../../../../config';
+import { ResourceInfo } from '../../common/models/ResourceInfo';
+import * as ActionType from '../constants/ActionType';
+import { Computer, ComputerFilter, RootState } from '../models';
+import { ResourceFilter } from '../models/ResourceOption';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

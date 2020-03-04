@@ -1,12 +1,14 @@
-import { uuid, extend, ReduxAction } from '@tencent/qcloud-lib';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
+import {
+    extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState, ResourceFilter, Resource, ImagePullSecrets } from '../models';
-import * as WebAPI from '../WebAPI';
+
 import { resourceConfig } from '../../../../config/resourceConfig';
-import * as ActionType from '../constants/ActionType';
 import { cloneDeep } from '../../common/utils';
+import * as ActionType from '../constants/ActionType';
 import { initImagePullSecrets } from '../constants/initState';
+import { ImagePullSecrets, Resource, ResourceFilter, RootState } from '../models';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

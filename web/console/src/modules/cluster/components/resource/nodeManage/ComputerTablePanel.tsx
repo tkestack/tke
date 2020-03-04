@@ -1,20 +1,22 @@
 import * as React from 'react';
-import { Modal, Button, Text, Icon } from '@tea/component';
-import { Computer, DialogNameEnum } from '../../../models';
-import { RootProps } from '../../ClusterApp';
-import { Clip, LinkButton } from '../../../../common/components';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { includes } from '../../../../common/utils';
-import { router } from '../../../router';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { Button, Icon, Modal, Text } from '@tea/component';
 import { selectable } from '@tea/component/table/addons/selectable';
+import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Bubble } from '@tencent/tea-component';
-import { SortBy, sortable } from '@tencent/tea-component/lib/table/addons/sortable';
-import { ReduceRequest } from '../resourceDetail/ResourcePodPanel';
+import { sortable, SortBy } from '@tencent/tea-component/lib/table/addons/sortable';
+
 import { dateFormatter } from '../../../../../../helpers';
-import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
+import { Clip, LinkButton } from '../../../../common/components';
+import { includes } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { Computer, DialogNameEnum } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import { ReduceRequest } from '../resourceDetail/ResourcePodPanel';
 
 export const ComputerStatus = {
   Running: 'success',

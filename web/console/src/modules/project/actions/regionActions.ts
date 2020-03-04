@@ -1,8 +1,8 @@
-import { extend } from '@tencent/qcloud-lib';
-import { RootState, Region, RegionFilter } from '../models';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
+import { Region, RegionFilter, RootState } from '../models';
 import * as WebAPI from '../WebAPI';
 import { clusterActions } from './clusterActions';
-import { createFFListActions } from '@tencent/ff-redux';
 
 type GetState = () => RootState;
 

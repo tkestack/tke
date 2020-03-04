@@ -1,9 +1,12 @@
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import { generateWorkflowActionCreator, createFFListActions, OperationTrigger } from '@tencent/ff-redux';
-import { RootState, User, UserFilter } from '../models';
+import {
+    createFFListActions, extend, generateWorkflowActionCreator, OperationTrigger
+} from '@tencent/ff-redux';
+
 import * as ActionTypes from '../constants/ActionTypes';
-import * as WebAPI from '../WebAPI';
+import { RootState, User, UserFilter } from '../models';
 import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+
 type GetState = () => RootState;
 export interface AssociatedUserParams {
   id: string;

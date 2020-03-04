@@ -1,22 +1,24 @@
 import * as React from 'react';
-import { Bubble, Text, Icon, Drawer, Button } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../../actions';
-import { RootProps } from '../ClusterApp';
-import { Clip, LinkButton, TipInfo } from '../../../common/components';
-import { router } from '../../router';
-import { KubectlDialog } from '../KubectlDialog';
-import { Cluster } from '../../../common/models';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { dateFormatter } from '../../../../../helpers';
-import { DialogNameEnum } from '../../models';
-import { ClusterTypeMap } from '../../constants/Config';
-import { MonitorPanelProps, getClusterTables } from '../../models/MonitorPanel';
+
+import { Bubble, Button, Drawer, Icon, Text } from '@tea/component';
+import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { ChartPanel } from '@tencent/tchart';
-import { UpdateClusterTokenDialog } from './UpdateClusterTokenDialog';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { dateFormatter } from '../../../../../helpers';
 import { router as addonRouter } from '../../../addon/router';
-import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
+import { Clip, LinkButton, TipInfo } from '../../../common/components';
+import { Cluster } from '../../../common/models';
+import { allActions } from '../../actions';
+import { ClusterTypeMap } from '../../constants/Config';
+import { DialogNameEnum } from '../../models';
+import { getClusterTables, MonitorPanelProps } from '../../models/MonitorPanel';
+import { router } from '../../router';
+import { RootProps } from '../ClusterApp';
+import { KubectlDialog } from '../KubectlDialog';
+import { UpdateClusterTokenDialog } from './UpdateClusterTokenDialog';
 
 /** 集群的状态颜色的展示 */
 export const ClusterStatus = {

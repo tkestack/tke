@@ -1,10 +1,12 @@
-import { CLB } from './ServiceEdit';
-import { Namespace } from './Namespace';
-import { Identifiable, RecordSet, extend } from '@tencent/qcloud-lib';
-import { Validation, KeyValue } from '../../common/models';
-import { Selector } from '../models';
-import { ResourceFilter, Resource } from './ResourceOption';
 import { string } from 'prop-types';
+
+import { extend, Identifiable, RecordSet } from '@tencent/ff-redux';
+
+import { KeyValue, Validation } from '../../common/models';
+import { Selector } from '../models';
+import { Namespace } from './Namespace';
+import { Resource, ResourceFilter } from './ResourceOption';
+import { CLB } from './ServiceEdit';
 
 export interface LbcfEdit extends Identifiable {
   name?: string;

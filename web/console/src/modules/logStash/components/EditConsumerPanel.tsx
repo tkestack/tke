@@ -1,14 +1,16 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RootProps } from './LogStashApp';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
-import { InputField } from '../../common/components';
-import { consumerModeList, clsRegionMap } from '../constants/Config';
-import { Text, Segment } from '@tencent/tea-component';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { SegmentOption } from '@tencent/tea-component/lib/segment/SegmentOption';
+
 import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Segment, Text } from '@tencent/tea-component';
+import { SegmentOption } from '@tencent/tea-component/lib/segment/SegmentOption';
+
+import { InputField } from '../../common/components';
+import { allActions } from '../actions';
+import { clsRegionMap, consumerModeList } from '../constants/Config';
+import { RootProps } from './LogStashApp';
 
 /** buttonBar的样式 */
 const ButtonBarStyle = { marginBottom: '5px' };

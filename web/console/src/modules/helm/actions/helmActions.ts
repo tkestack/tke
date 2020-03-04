@@ -1,7 +1,8 @@
-import { extend } from '@tencent/qcloud-lib';
+import { extend } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 import { t } from '@tencent/tea-app/lib/i18n';
+
 import * as ActionType from '../constants/ActionType';
 import { ClusterHelmStatus, HelmResource, InstallingStatus, OtherType } from '../constants/Config';
 import { Helm, HelmKeyValue, InstallingHelm, RootState, TencenthubChartVersion } from '../models';

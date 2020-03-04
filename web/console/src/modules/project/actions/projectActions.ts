@@ -1,27 +1,20 @@
-import { ProjectResourceLimit } from './../models/Project';
-import {
-  initProjectEdition,
-  initProjectResourceLimit,
-  resourceLimitTypeList,
-  resourceTypeToUnit
-} from './../constants/Config';
-
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
-import { initValidator } from './../../common/models/Validation';
-import { Manager } from './../models/Manager';
-import { extend, deepClone, uuid } from '@tencent/qcloud-lib';
 import {
-  generateWorkflowActionCreator,
-  OperationTrigger,
-  isSuccessWorkflow,
-  createFFListActions
+    createFFListActions, deepClone, extend, generateWorkflowActionCreator, isSuccessWorkflow,
+    OperationTrigger, uuid
 } from '@tencent/ff-redux';
-import { RootState, Project, ProjectEdition, ProjectFilter } from '../models';
+import { t } from '@tencent/tea-app/lib/i18n';
+
+import { initValidator } from '../../common/models/Validation';
 import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
+import {
+    initProjectEdition, initProjectResourceLimit, resourceTypeToUnit
+} from '../constants/Config';
+import { Project, ProjectEdition, ProjectFilter, RootState } from '../models';
+import { Manager } from '../models/Manager';
+import { ProjectResourceLimit } from '../models/Project';
 import { router } from '../router';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { RequestLimit } from 'src/modules/cluster/models/RequestLimit';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 

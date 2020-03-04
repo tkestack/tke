@@ -1,10 +1,12 @@
 import * as React from 'react';
-import { Identifiable } from '@tencent/qcloud-lib';
+
 import { Table, TableColumn, Text } from '@tea/component';
-import { CodeMirrorEditor } from '../../../common/components';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { stylize } from '@tea/component/table/addons/stylize';
 import { radioable } from '@tea/component/table/addons/radioable';
+import { stylize } from '@tea/component/table/addons/stylize';
+import { Identifiable } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { CodeMirrorEditor } from '../../../common/components';
 
 interface Resource extends Identifiable {
   /**名称 */

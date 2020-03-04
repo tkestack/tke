@@ -1,14 +1,15 @@
-import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { InputNumber, Bubble, ExternalLink } from '@tea/component';
-import { connect } from 'react-redux';
 import * as classnames from 'classnames';
-import { FormItem, LinkButton } from '../../../../common/components';
-import { ContainerMaxNumLimit, HpaMetricsTypeList } from '../../../constants/Config';
-import { FetchState } from '@tencent/ff-redux';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, ExternalLink, InputNumber } from '@tea/component';
+import { bindActionCreators, FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, LinkButton } from '../../../../common/components';
+import { allActions } from '../../../actions';
+import { ContainerMaxNumLimit, HpaMetricsTypeList } from '../../../constants/Config';
+import { RootProps } from '../../ClusterApp';
 
 const metricUnitMap = {
   cpuUtilization: '%',

@@ -1,7 +1,6 @@
-import { RecordSet } from '@tencent/qcloud-lib';
-import { WorkflowState } from '@tencent/ff-redux';
+import { FetcherState, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
+
 import { Helm, HelmHistory, HelmHistoryFilter } from './';
-import { FetcherState, QueryState } from '@tencent/ff-redux';
 
 type HelmWorkflow = WorkflowState<Helm, string>;
 export interface DetailState {

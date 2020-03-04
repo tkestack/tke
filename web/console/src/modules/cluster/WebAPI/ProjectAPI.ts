@@ -1,11 +1,11 @@
-import { resourceConfig } from './../../../../config/resourceConfig';
-import { Namespace, ResourceFilter } from '../models';
-import { ResourceInfo } from './../../common/models/ResourceInfo';
-import { Method, reduceNetworkRequest } from './../../../../helpers/reduceNetwork';
+import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
+
+import { resourceConfig } from '../../../../config/resourceConfig';
 import { reduceK8sRestfulPath } from '../../../../helpers';
+import { Method, reduceNetworkRequest } from '../../../../helpers/reduceNetwork';
 import { RequestParams, Resource } from '../../../modules/common';
-import { uuid, RecordSet } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/ff-redux';
+import { ResourceInfo } from '../../common/models/ResourceInfo';
+import { Namespace, ResourceFilter } from '../models';
 
 //业务控制台api
 

@@ -1,51 +1,45 @@
-import * as React from 'react';
-import { Button, Radio, Select, Text } from '@tea/component';
-import { RootProps } from '../../ClusterApp';
-import { connect } from 'react-redux';
-import { bindActionCreators, uuid, insertCSS } from '@tencent/qcloud-lib';
-import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
-import { allActions } from '../../../actions';
-import { FormItem, InputField, TipInfo } from '../../../../common/components';
-import { MainBodyLayout, FormLayout, FixedFormLayout } from '../../../../common/layouts';
-import { getWorkflowError, isEmpty } from '../../../../common/utils';
-import { ResourceInfo } from '../../../../common/models';
 import * as classnames from 'classnames';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Button, Radio, Select, Text } from '@tea/component';
+import { FormPanel } from '@tencent/ff-component';
 import {
-  ResourceTypeList,
-  RestartPolicyTypeList,
-  affinityType,
-  NodeAbnormalStrategy,
-  WorkloadNetworkTypeEnum
-} from '../../../constants/Config';
-import { router } from '../../../router';
-import {
-  WorkloadEditJSONYaml,
-  VolumeItem,
-  ContainerItem,
-  HealthCheckItem,
-  CreateResource,
-  ServiceEditJSONYaml,
-  HpaEditJSONYaml,
-  MetricOption,
-  Computer,
-  DifferentInterfaceResourceOperation
-} from '../../../models';
+    bindActionCreators, insertCSS, isSuccessWorkflow, OperationState, uuid
+} from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { resourceConfig } from '../../../../../../config/resourceConfig';
+import { FormItem, InputField, TipInfo } from '../../../../common/components';
+import { FixedFormLayout, FormLayout, MainBodyLayout } from '../../../../common/layouts';
+import { ResourceInfo } from '../../../../common/models';
+import { getWorkflowError, isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
+import {
+    affinityType, NodeAbnormalStrategy, ResourceTypeList, RestartPolicyTypeList,
+    WorkloadNetworkTypeEnum
+} from '../../../constants/Config';
+import {
+    Computer, ContainerItem, CreateResource, DifferentInterfaceResourceOperation, HealthCheckItem,
+    HpaEditJSONYaml, MetricOption, ServiceEditJSONYaml, VolumeItem, WorkloadEditJSONYaml
+} from '../../../models';
+import { AffinityRule } from '../../../models/WorkloadEdit';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import { EditResourceAdvancedPanel } from './EditResourceAdvancedPanel';
+import { EditResourceContainerNumPanel } from './EditResourceContainerNumPanel';
+import { EditResourceContainerPanel } from './EditResourceContainerPanel';
 import { EditResourceLabelPanel } from './EditResourceLabelPanel';
 import { EditResourceVolumePanel } from './EditResourceVolumePanel';
-import { ResourceSelectConfigDialog } from './ResourceSelectConfigDialog';
-import { EditResourceContainerPanel } from './EditResourceContainerPanel';
-import { EditResourceContainerNumPanel } from './EditResourceContainerNumPanel';
-import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
-import { EditServiceCommunicationPanel } from './EditServiceCommunicationPanel';
-import { EditServicePortMapPanel } from './EditServicePortMapPanel';
-import { AffinityRule } from '../../../models/WorkloadEdit';
-import { ReduceServiceAnnotations, ReduceServicePorts, ReduceServiceJSONData } from './EditServicePanel';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { EditServiceAdvanceSettingPanel } from './EditServiceAdvanceSettingPanel';
+import { EditServiceCommunicationPanel } from './EditServiceCommunicationPanel';
+import {
+    ReduceServiceAnnotations, ReduceServiceJSONData, ReduceServicePorts
+} from './EditServicePanel';
+import { EditServicePortMapPanel } from './EditServicePortMapPanel';
 import { ResourceEditHostPathDialog } from './ResourceEditHostPathDialog';
-import { EditResourceAdvancedPanel } from './EditResourceAdvancedPanel';
-import { FormPanel } from '@tencent/ff-component';
+import { ResourceSelectConfigDialog } from './ResourceSelectConfigDialog';
 
 /** service YAML当中的type映射 */
 const serviceTypeMap = {

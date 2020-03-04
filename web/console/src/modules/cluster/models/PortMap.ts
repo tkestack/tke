@@ -1,5 +1,6 @@
+import { Identifiable } from '@tencent/ff-redux';
+
 import { Validation } from '../../common/models';
-import { Identifiable } from '@tencent/qcloud-lib';
 
 export interface PortMap extends Identifiable {
   /**

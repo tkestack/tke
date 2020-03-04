@@ -1,21 +1,16 @@
-import { Resource, ResourceFilter } from '@src/modules/common';
-import { OperationResult, QueryState } from '@tencent/ff-redux';
-import { RecordSet, uuid } from '@tencent/qcloud-lib';
-import { t } from '@tencent/tea-app/lib/i18n';
 import * as JsYAML from 'js-yaml';
+
+import { Resource, ResourceFilter } from '@src/modules/common';
+import { OperationResult, QueryState, RecordSet, uuid } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { resourceConfig } from '../../../config';
 import { reduceK8sRestfulPath, reduceNetworkRequest } from '../../../helpers';
 import { RequestParams, ResourceInfo } from '../common/models';
 import { ClusterHelmStatus } from './constants/Config';
 import {
-  Helm,
-  HelmFilter,
-  HelmHistory,
-  HelmKeyValue,
-  InstallingHelm,
-  TencenthubChart,
-  TencenthubChartVersion,
-  TencenthubNamespace
+    Helm, HelmFilter, HelmHistory, HelmKeyValue, InstallingHelm, TencenthubChart,
+    TencenthubChartVersion, TencenthubNamespace
 } from './models';
 
 // 提示

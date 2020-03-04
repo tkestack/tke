@@ -1,13 +1,15 @@
 import * as React from 'react';
-import { Bubble, Table, TableColumn } from '@tea/component';
-import { uuid } from '@tencent/qcloud-lib';
-import { FormItem } from '../../../../common/components';
-import { PortMap } from '../../../models';
-import { ProtocolList } from '../../../constants/Config';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { TablePanelColumnProps } from '@tencent/ff-component';
 
+import { Bubble, Table, TableColumn } from '@tea/component';
 import { stylize } from '@tea/component/table/addons/stylize';
+import { TablePanelColumnProps } from '@tencent/ff-component';
+import { uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem } from '../../../../common/components';
+import { ProtocolList } from '../../../constants/Config';
+import { PortMap } from '../../../models';
+
 interface EditServicePortMapPanelProps {
   /** 添加端口映射的操作 */
   addPortMap: () => void;

@@ -1,15 +1,17 @@
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import {
-  createFFListActions,
-  generateWorkflowActionCreator,
-  isSuccessWorkflow,
-  OperationTrigger
+    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger,
+    uuid
 } from '@tencent/ff-redux';
-import { extend, uuid } from '@tencent/qcloud-lib';
 import { t } from '@tencent/tea-app/lib/i18n';
+
 import * as ActionType from '../constants/ActionType';
-import { initNamespaceEdition, initProjectResourceLimit, resourceTypeToUnit } from '../constants/Config';
-import { Namespace, NamespaceEdition, NamespaceFilter, NamespaceOperator, RootState } from '../models';
+import {
+    initNamespaceEdition, initProjectResourceLimit, resourceTypeToUnit
+} from '../constants/Config';
+import {
+    Namespace, NamespaceEdition, NamespaceFilter, NamespaceOperator, RootState
+} from '../models';
 import { ProjectResourceLimit } from '../models/Project';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';

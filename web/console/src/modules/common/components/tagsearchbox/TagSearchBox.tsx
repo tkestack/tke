@@ -1,9 +1,10 @@
-import * as React from 'react';
 import * as classNames from 'classnames';
-// import { OnOuterClick } from '@tencent/qcloud-lib';
-import { Tag, TagValue } from './Tag';
-import { Input } from './Input';
+import * as React from 'react';
+
 import { AttributeValue } from './AttributeSelect';
+import { Input } from './Input';
+// import { OnOuterClick } from '@tencent/ff-redux';
+import { Tag, TagValue } from './Tag';
 
 export interface TagSearchBoxProps {
   attributes?: Array<AttributeValue>;

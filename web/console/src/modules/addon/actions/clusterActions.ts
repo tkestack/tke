@@ -1,13 +1,13 @@
-import { extend } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { ResourceInfo, Resource, ResourceFilter } from '../../common';
-import { FFReduxActionName, AddonStatusEnum } from '../constants/Config';
-import * as ActionType from '../constants/ActionType';
-import { router } from '../router';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
 import { resourceConfig } from '../../../../config';
-import { addonActions } from './addonActions';
+import { Resource, ResourceFilter, ResourceInfo } from '../../common';
 import { CommonAPI } from '../../common/webapi';
-import { createFFListActions } from '@tencent/ff-redux';
+import * as ActionType from '../constants/ActionType';
+import { AddonStatusEnum, FFReduxActionName } from '../constants/Config';
+import { RootState } from '../models';
+import { router } from '../router';
+import { addonActions } from './addonActions';
 
 type GetState = () => RootState;
 

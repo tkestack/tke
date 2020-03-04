@@ -1,24 +1,17 @@
-import { ProjectResourceLimit } from './models/Project';
-import { Method } from './../../../helpers/reduceNetwork';
-import { resourceConfig } from './../../../config/resourceConfig';
-import { RecordSet, uuid, collectionPaging } from '@tencent/qcloud-lib';
-import { OperationResult, QueryState } from '@tencent/ff-redux';
+import { collectionPaging, OperationResult, QueryState, RecordSet, uuid } from '@tencent/ff-redux';
+
+import { resourceConfig } from '../../../config/resourceConfig';
 import {
-  Project,
-  ProjectFilter,
-  ProjectEdition,
-  Namespace,
-  NamespaceFilter,
-  NamespaceEdition,
-  NamespaceOperator,
-  Cluster,
-  ClusterFilter,
-  ManagerFilter,
-  Manager
-} from './models';
-import { RegionFilter, Region, RequestParams, ResourceInfo } from '../common/models';
-import { reduceNetworkRequest, reduceNetworkWorkflow, reduceK8sRestfulPath } from '../../../helpers';
+    reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow
+} from '../../../helpers';
+import { Method } from '../../../helpers/reduceNetwork';
+import { Region, RegionFilter, RequestParams, ResourceInfo } from '../common/models';
 import { resourceTypeToUnit } from './constants/Config';
+import {
+    Cluster, ClusterFilter, Manager, ManagerFilter, Namespace, NamespaceEdition, NamespaceFilter,
+    NamespaceOperator, Project, ProjectEdition, ProjectFilter
+} from './models';
+import { ProjectResourceLimit } from './models/Project';
 
 // 返回标准操作结果
 function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] {

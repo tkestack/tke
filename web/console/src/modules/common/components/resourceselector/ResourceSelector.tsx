@@ -1,16 +1,12 @@
-import * as React from 'react';
 import * as classnames from 'classnames';
+import * as React from 'react';
+
 import { SearchBox, SearchBoxProps } from '@tea/component';
 import {
-  BaseReactProps,
-  Identifiable,
-  uuid,
-  findById,
-  findChildren,
-  selectionInsert,
-  selectionRemove
-} from '@tencent/qcloud-lib';
+    BaseReactProps, findById, findChildren, Identifiable, selectionInsert, selectionRemove, uuid
+} from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 export interface ResourceSelectorProps<TResource extends Identifiable> extends BaseReactProps {
   /**
    * 要显示的资源列表

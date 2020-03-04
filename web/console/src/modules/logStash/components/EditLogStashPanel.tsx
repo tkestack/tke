@@ -1,11 +1,15 @@
-import { Button, ExternalLink, Segment, Text } from '@tea/component';
-import { isSuccessWorkflow, OperationState, FetchState } from '@tencent/ff-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { SegmentOption } from '@tencent/tea-component/lib/segment/SegmentOption';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { CreateResource } from 'src/modules/cluster/models';
+
+import { Button, ExternalLink, Segment, Text } from '@tea/component';
+import { FormPanel } from '@tencent/ff-component';
+import {
+    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
+} from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { SegmentOption } from '@tencent/tea-component/lib/segment/SegmentOption';
+
 import { resourceConfig } from '../../../../config/resourceConfig';
 import { SelectList, TipInfo } from '../../common/components';
 import { cloneDeep, getWorkflowError } from '../../common/utils';
@@ -13,13 +17,8 @@ import { allActions } from '../actions';
 import { validatorActions } from '../actions/validatorActions';
 import { logModeList } from '../constants/Config';
 import {
-  ContainerLogInput,
-  ContainerLogNamespace,
-  ElasticsearchOutput,
-  HostLogInput,
-  KafkaOutpot,
-  LogStashEditYaml,
-  PodLogInput
+    ContainerLogInput, ContainerLogNamespace, ElasticsearchOutput, HostLogInput, KafkaOutpot,
+    LogStashEditYaml, PodLogInput
 } from '../models/LogStashEdit';
 import { router } from '../router';
 import { EditConsumerPanel } from './EditConsumerPanel';
@@ -28,7 +27,6 @@ import { EditOriginContainerPanel } from './EditOriginContainerPanel';
 import { EditOriginNodePanel } from './EditOriginNodePanel';
 import { isCanCreateLogStash } from './LogStashActionPanel';
 import { RootProps } from './LogStashApp';
-import { FormPanel } from '@tencent/ff-component';
 
 /** 日志采集类型的提示 */
 const logModeTip = {

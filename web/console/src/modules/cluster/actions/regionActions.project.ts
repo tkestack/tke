@@ -1,13 +1,13 @@
-import { extend } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { clusterActions } from './clusterActions';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
 import { assureRegion } from '../../../../helpers';
-import { setRegionId, getRegionId } from '../../../../helpers/appUtil';
-import { router } from '../router';
-import { CommonAPI } from '../../common/webapi';
+import { getRegionId, setRegionId } from '../../../../helpers/appUtil';
 import { Region, RegionFilter } from '../../common';
+import { CommonAPI } from '../../common/webapi';
 import { FFReduxActionName } from '../constants/Config';
-import { createFFListActions } from '@tencent/ff-redux';
+import { RootState } from '../models';
+import { router } from '../router';
+import { clusterActions } from './clusterActions';
 
 type GetState = () => RootState;
 

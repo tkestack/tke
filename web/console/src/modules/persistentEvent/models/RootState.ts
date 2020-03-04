@@ -1,8 +1,8 @@
-import { WorkflowState, FFListModel, FetcherState, QueryState } from '@tencent/ff-redux';
-import { RecordSet } from '@tencent/qcloud-lib';
-import { Region, RegionFilter, ResourceInfo, Resource, ResourceFilter } from '../../common';
+import { FetcherState, FFListModel, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
+
 import { RouteState } from '../../../../helpers';
-import { PeEdit, CreateResource } from './';
+import { Region, RegionFilter, Resource, ResourceFilter, ResourceInfo } from '../../common';
+import { CreateResource, PeEdit } from './';
 
 type PeModifyWorkflow = WorkflowState<CreateResource, number>;
 

@@ -1,11 +1,12 @@
-import * as React from 'react';
-import { FetcherState, FetchState } from '@tencent/ff-redux';
-import { BaseReactProps, RecordSet, insertCSS } from '@tencent/qcloud-lib';
-import { DropdownListItem, DropdownList } from '../dropdown/';
-import { RouteState } from '../../../../../helpers/Router';
 import * as classnames from 'classnames';
+import * as React from 'react';
+
+import { BaseReactProps, FetcherState, FetchState, insertCSS, RecordSet } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { RouteState } from '../../../../../helpers/Router';
 import { Validation } from '../../models';
+import { DropdownList, DropdownListItem } from '../dropdown/';
 
 insertCSS(
   'Downdrop-head',

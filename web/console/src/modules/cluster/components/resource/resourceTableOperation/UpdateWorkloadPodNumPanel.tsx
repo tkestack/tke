@@ -1,19 +1,24 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow, FetchState } from '@tencent/ff-redux';
-import { Button } from '@tea/component';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
-import { getWorkflowError } from '../../../../common/utils';
-import { MainBodyLayout, FormLayout } from '../../../../common/layouts';
-import { FormItem, TipInfo } from '../../../../common/components';
-import { EditResourceContainerNumPanel } from '../resourceEdition/EditResourceContainerNumPanel';
-import { router } from '../../../router';
-import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
-import { HpaEditJSONYaml, WorkloadEditJSONYaml, MetricOption, CreateResource, HpaMetrics } from '../../../models';
+
+import { Button } from '@tea/component';
+import {
+    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { resourceConfig } from '../../../../../../config';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { FormItem, TipInfo } from '../../../../common/components';
+import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
+import { getWorkflowError } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
+import {
+    CreateResource, HpaEditJSONYaml, HpaMetrics, MetricOption, WorkloadEditJSONYaml
+} from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import { EditResourceContainerNumPanel } from '../resourceEdition/EditResourceContainerNumPanel';
 
 /** 加载中的样式 */
 const loadingElement = (

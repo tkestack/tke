@@ -1,6 +1,7 @@
-import * as React from 'react';
 import * as marked from 'marked';
-import { BaseReactProps } from '@tencent/qcloud-lib';
+import * as React from 'react';
+
+import { BaseReactProps } from '@tencent/ff-redux';
 
 // TODO
 // require('highlight.js/styles/atom-one-dark.css');

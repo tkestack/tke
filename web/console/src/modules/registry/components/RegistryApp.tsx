@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
 
-import { bindActionCreators } from '@tencent/qcloud-lib';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { ResetStoreAction } from '../../../../helpers';

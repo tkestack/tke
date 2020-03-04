@@ -1,16 +1,17 @@
-import * as React from 'react';
 import classNames from 'classnames';
-import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
-import { Modal, Button } from '@tea/component';
-import { CreateResource, Validation, initValidator } from '../../../common/models';
-import { RootProps } from '../ClusterApp';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { getWorkflowError, TipInfo } from '../../../../modules/common';
-import { resourceConfig } from '../../../../../config';
-import { uuid, bindActionCreators } from '@tencent/qcloud-lib';
+import * as React from 'react';
 import { connect } from 'react-redux';
-import { allActions } from '../../actions';
+
+import { Button, Modal } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { resourceConfig } from '../../../../../config';
+import { getWorkflowError, TipInfo } from '../../../../modules/common';
+import { CreateResource, initValidator, Validation } from '../../../common/models';
+import { allActions } from '../../actions';
+import { RootProps } from '../ClusterApp';
 
 interface ModifyClusterNameState {
   name: string;

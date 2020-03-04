@@ -1,21 +1,12 @@
-import { Resource } from './../../common/models/Resource';
-import { WorkflowState } from '@tencent/ff-redux';
-import { Region, RegionFilter } from '../../common/models';
-import {
-  Project,
-  ProjectFilter,
-  ProjectEdition,
-  Manager,
-  Namespace,
-  NamespaceFilter,
-  NamespaceEdition,
-  NamespaceOperator,
-  Cluster,
-  ClusterFilter,
-  ManagerFilter
-} from './';
+import { FFListModel, WorkflowState } from '@tencent/ff-redux';
+
 import { RouteState } from '../../../../helpers';
-import { FFListModel } from '@tencent/ff-redux';
+import { Region, RegionFilter } from '../../common/models';
+import { Resource } from '../../common/models/Resource';
+import {
+    Cluster, ClusterFilter, Manager, ManagerFilter, Namespace, NamespaceEdition, NamespaceFilter,
+    NamespaceOperator, Project, ProjectEdition, ProjectFilter
+} from './';
 
 type ProjectWorkflow = WorkflowState<Project, void>;
 type ProjectEditWorkflow = WorkflowState<ProjectEdition, void>;

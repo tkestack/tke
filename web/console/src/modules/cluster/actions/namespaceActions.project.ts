@@ -1,6 +1,6 @@
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
-import { extend, uuid } from '@tencent/qcloud-lib';
+import { extend, FetchOptions, generateFetcherActionCreator, uuid } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+
 import * as ActionType from '../constants/ActionType';
 import { RootState } from '../models';
 import { router } from '../router';

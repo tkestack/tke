@@ -1,11 +1,14 @@
-import { Alert, Button, ContentView, Icon, Justify, Switch, Text } from '@tea/component';
-import { FetchState, isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { t } from '@tencent/tea-app/lib/i18n';
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { InputField } from '../../common/components';
+
+import { Alert, Button, ContentView, Icon, Justify, Switch, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
+import {
+    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
+import { InputField } from '../../common/components';
 import { getWorkflowError } from '../../common/utils';
 import { allActions } from '../actions';
 import { validatorActions } from '../actions/validatorActions';

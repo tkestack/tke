@@ -1,16 +1,12 @@
-import { RecordSet } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/ff-redux';
-import {
-  reduceNetworkRequest,
-  operationResult,
-  reduceK8sRestfulPath,
-  reduceK8sQueryString,
-  Method
-} from '../../../helpers';
-import { User, UserFilter, Strategy, StrategyFilter, Category } from './models';
-import { ResourceInfo, RequestParams } from '../common/models';
-import { resourceConfig } from '../../../config';
+import { QueryState, RecordSet } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { resourceConfig } from '../../../config';
+import {
+    Method, operationResult, reduceK8sQueryString, reduceK8sRestfulPath, reduceNetworkRequest
+} from '../../../helpers';
+import { RequestParams, ResourceInfo } from '../common/models';
+import { Category, Strategy, StrategyFilter, User, UserFilter } from './models';
 
 const tips = seajs.require('tips');
 

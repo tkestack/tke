@@ -1,7 +1,6 @@
-import { alarmPolicyActions } from './alarmPolicyActions';
-import { clusterActions } from './clusterActions';
-import { extend, RecordSet, ReduxAction, uuid } from '@tencent/qcloud-lib';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
+import {
+    extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction, uuid
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
@@ -12,7 +11,8 @@ import * as ActionType from '../constants/ActionType';
 import { RootState } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
-
+import { alarmPolicyActions } from './alarmPolicyActions';
+import { clusterActions } from './clusterActions';
 import { namespaceActions } from './namespaceActions';
 
 type GetState = () => RootState;

@@ -1,34 +1,22 @@
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
-import { extend, ReduxAction, uuid } from '@tencent/qcloud-lib';
+import {
+    extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+
 import { resourceConfig } from '../../../../config';
 import { cloneDeep } from '../../common/utils';
 import * as ActionType from '../constants/ActionType';
 import {
-  initContainer,
-  initEnv,
-  initHpaMetrics,
-  initMount,
-  initValueFrom,
-  initVolume,
-  initWorkloadLabel
+    initContainer, initCronMetrics, initEnv, initHpaMetrics, initmatchExpressions, initMount,
+    initValueFrom, initVolume, initWorkloadAnnotataions, initWorkloadLabel
 } from '../constants/initState';
 import {
-  ContainerItem,
-  EnvItem,
-  HpaMetrics,
-  MetricOption,
-  Resource,
-  ResourceFilter,
-  RootState,
-  ValueFrom,
-  VolumeItem,
-  WorkloadLabel
+    ContainerItem, EnvItem, HpaMetrics, MetricOption, Resource, ResourceFilter, RootState,
+    ValueFrom, VolumeItem, WorkloadLabel
 } from '../models';
+import { CronMetrics, MatchExpressions } from '../models/WorkloadEdit';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
-import { initCronMetrics, initmatchExpressions, initWorkloadAnnotataions } from './../constants/initState';
-import { CronMetrics, MatchExpressions } from './../models/WorkloadEdit';
 import { validateWorkloadActions } from './validateWorkloadActions';
 import { workloadConfigActions } from './workloadConfigActions';
 import { workloadPvcActions } from './workloadPvcActions';

@@ -1,9 +1,10 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload } from '@tencent/qcloud-lib';
-import { generateWorkflowReducer, createFFListReducer } from '@tencent/ff-redux';
-import { router } from '../router';
+
+import { createFFListReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
 import { Resource } from '../models/Resource';
+import { router } from '../router';
 
 interface ResourceFilter {}
 export const RootReducer = combineReducers({

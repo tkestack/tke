@@ -1,8 +1,10 @@
-import * as React from 'react';
-import { BaseReactProps } from '@tencent/qcloud-lib';
-import { Bubble } from '@tea/component';
-import { Rule } from '../../../../../helpers/Validator';
 import * as classnames from 'classnames';
+import * as React from 'react';
+
+import { Bubble } from '@tea/component';
+import { BaseReactProps } from '@tencent/ff-redux';
+
+import { Rule } from '../../../../../helpers/Validator';
 import { Validation } from '../../models';
 
 export interface InputRangeProps extends BaseReactProps {

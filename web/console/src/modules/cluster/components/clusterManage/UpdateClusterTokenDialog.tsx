@@ -1,16 +1,17 @@
 import * as React from 'react';
-import { RootProps } from '../ClusterApp';
-import { Button, Modal, Text, Bubble } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
-import { TipInfo } from '../../../common/components';
-import { getWorkflowError } from '../../../common/utils';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../actions';
 import { connect } from 'react-redux';
 import { CreateResource, Validation } from 'src/modules/common';
-import { resourceConfig } from '../../../../../config';
+
+import { Bubble, Button, Modal, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { resourceConfig } from '../../../../../config';
+import { TipInfo } from '../../../common/components';
+import { getWorkflowError } from '../../../common/utils';
+import { allActions } from '../../actions';
+import { RootProps } from '../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

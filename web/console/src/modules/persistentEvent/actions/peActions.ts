@@ -1,14 +1,14 @@
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import { RootState } from '../models/RootState';
+import { extend, FetchOptions, generateFetcherActionCreator, ReduxAction } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { ResourceInfo, Resource, ResourceFilter } from '../../common/models';
-import { router } from '../router';
-import { peEditActions } from './peEditActions';
-import { PollEventName, isNeedPollPE } from '../constants/Config';
+
+import { Resource, ResourceFilter, ResourceInfo } from '../../common/models';
 import { includes } from '../../common/utils';
 import { CommonAPI } from '../../common/webapi';
+import * as ActionType from '../constants/ActionType';
+import { isNeedPollPE, PollEventName } from '../constants/Config';
+import { RootState } from '../models/RootState';
+import { router } from '../router';
+import { peEditActions } from './peEditActions';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

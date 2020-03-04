@@ -1,10 +1,10 @@
 import * as React from 'react';
 
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
-import { Bubble, Button, Icon, Modal, StatusTip, Table, TableColumn, Text } from '@tea/component';
-import { deepClone } from '@tencent/qcloud-lib';
+import { Bubble, Button, Modal, StatusTip, Table, TableColumn, Text } from '@tea/component';
+import { FormPanel } from '@tencent/ff-component';
 import { isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { t } from '@tencent/tea-app/lib/i18n';
 import { autotip } from '@tencent/tea-component/lib/table/addons';
 
 import { dateFormatter } from '../../../../helpers';
@@ -16,7 +16,6 @@ import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPan
 import { EditProjectManagerPanel } from './EditProjectManagerPanel';
 import { EditProjectNamePanel } from './EditProjectNamePanel';
 import { RootProps } from './ProjectApp';
-import { FormPanel } from '@tencent/ff-component';
 
 export class ProjectDetailPanel extends React.Component<RootProps, {}> {
   state = {

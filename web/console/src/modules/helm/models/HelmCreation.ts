@@ -1,7 +1,9 @@
-import { RecordSet } from '@tencent/qcloud-lib';
+import { FetcherState, FFListModel, RecordSet } from '@tencent/ff-redux';
+
 import { Region, RegionFilter, Resource, ResourceFilter } from '../../common/models';
-import { TencenthubNamespace, TencenthubChart, TencenthubChartVersion, TencenthubChartReadMe } from './';
-import { FFListModel, FetcherState } from '@tencent/ff-redux';
+import {
+    TencenthubChart, TencenthubChartReadMe, TencenthubChartVersion, TencenthubNamespace
+} from './';
 
 export interface HelmKeyValue {
   key?: string;

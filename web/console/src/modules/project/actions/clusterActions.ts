@@ -1,10 +1,7 @@
-import { namespaceActions } from './namespaceActions';
-import { Cluster, ClusterFilter } from './../models';
-import { extend } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
+import { Cluster, ClusterFilter, RootState } from '../models';
 import * as WebAPI from '../WebAPI';
-import { namespace } from 'config/resource/k8sConfig';
-import { createFFListActions } from '@tencent/ff-redux';
 
 type GetState = () => RootState;
 

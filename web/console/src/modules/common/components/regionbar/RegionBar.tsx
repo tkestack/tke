@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { FetcherState, FetchState } from '@tencent/ff-redux';
-import { RecordSet } from '@tencent/qcloud-lib';
+
+import { FetcherState, FetchState, RecordSet } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { ButtonBar, DownMenu } from '../../components';
 import { isEmpty } from '../../utils';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { CardMenuItem, CardMenu } from '../cardMenu';
+import { CardMenu, CardMenuItem } from '../cardMenu';
 
 export interface RegionBarProps {
   /* 列表数据 */

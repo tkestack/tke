@@ -1,20 +1,22 @@
-import * as React from 'react';
-import { Modal, Button, Bubble, Card, Text } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { Helm } from '../../../models';
-import { RootProps } from '../../HelmApp';
 import classNames from 'classnames';
-import { helmStatus, ClusterHelmStatus, HelmResource } from '../../../constants/Config';
-import { TipInfo } from '../../../../common/components/';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, Button, Card, Modal, Text } from '@tea/component';
+import { TablePanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { dateFormatter } from '../../../../../../helpers';
+import { TipInfo } from '../../../../common/components/';
+import { allActions } from '../../../actions';
+import { ClusterHelmStatus, HelmResource, helmStatus } from '../../../constants/Config';
+import { Helm } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../HelmApp';
 import { InstallingHelmContent } from './InstallingDialog';
 import { UpdateHelmDialog } from './UpdateHelmDialog';
 import { UpdateHelmDialogOther } from './UpdateHelmDialogOther';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { router } from '../../../router';
-import { TablePanel } from '@tencent/ff-component';
 
 interface State {
   showSetupHelmDialog?: boolean;

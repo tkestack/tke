@@ -1,17 +1,14 @@
-import { RecordSet, uuid } from '@tencent/qcloud-lib';
-import { RequestParams, Resource, ResourceFilter, ResourceInfo, CreateResource, UserDefinedHeader } from '../models';
-import {
-  reduceK8sRestfulPath,
-  reduceK8sQueryString,
-  Method,
-  reduceNetworkRequest,
-  requestMethodForAction,
-  operationResult,
-  reduceNetworkWorkflow
-} from '../../../../helpers';
+import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { apiServerVersion } from '../../../../config';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { QueryState } from '@tencent/ff-redux';
+import {
+    Method, operationResult, reduceK8sQueryString, reduceK8sRestfulPath, reduceNetworkRequest,
+    reduceNetworkWorkflow, requestMethodForAction
+} from '../../../../helpers';
+import {
+    CreateResource, RequestParams, Resource, ResourceFilter, ResourceInfo, UserDefinedHeader
+} from '../models';
 
 const tips = seajs.require('tips');
 

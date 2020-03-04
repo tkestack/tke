@@ -1,14 +1,18 @@
 import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { LinkButton, emptyTips } from '../../../common/components';
-import { Button, Table, TableColumn, Text, Modal, Transfer, SearchBox, Tooltip, Icon } from '@tea/component';
-import { selectable, removeable } from '@tea/component/table/addons';
-import { bindActionCreators } from '@tencent/qcloud-lib';
+import { useDispatch, useSelector } from 'react-redux';
+
+import {
+    Button, Icon, Modal, SearchBox, Table, TableColumn, Text, Tooltip, Transfer
+} from '@tea/component';
+import { removeable, selectable } from '@tea/component/table/addons';
+import { TablePanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { router } from '../../router';
+
+import { emptyTips, LinkButton } from '../../../common/components';
 import { allActions } from '../../actions';
 import { Strategy } from '../../models';
-import { TablePanel } from '@tencent/ff-component';
+import { router } from '../../router';
 
 const { useState, useEffect } = React;
 const _isEqual = require('lodash/isEqual');

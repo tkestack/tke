@@ -1,15 +1,17 @@
-import { AlarmPolicyEditReducer } from './AlarmPolicyEditReducer';
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
+
+import {
+    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload
+} from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { generateWorkflowReducer } from '@tencent/ff-redux';
-import { router } from '../router';
-import * as ActionType from '../constants/ActionType';
-import { Region, ClusterFilter, Group, Namespace, Resource } from '../models';
-import { Cluster } from '../../common';
-import { createFFListReducer } from '@tencent/ff-redux';
+
 import { FFReduxActionName } from '../../cluster/constants/Config';
+import { Cluster } from '../../common';
+import * as ActionType from '../constants/ActionType';
+import { ClusterFilter, Group, Namespace, Region, Resource } from '../models';
+import { router } from '../router';
+import { AlarmPolicyEditReducer } from './AlarmPolicyEditReducer';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),

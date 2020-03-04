@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Bubble, Drawer, TableColumn, Text, Icon } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { OperationState, WorkflowState } from '@tencent/ff-redux';
+import { Bubble, Drawer, TableColumn, Text } from '@tea/component';
+import { bindActionCreators, OperationState, WorkflowState } from '@tencent/ff-redux';
 import ChartPanel from '@tencent/tchart';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { t } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter } from '../../../../helpers';
 import { projectFields } from '../../cluster/models/MonitorPanel';

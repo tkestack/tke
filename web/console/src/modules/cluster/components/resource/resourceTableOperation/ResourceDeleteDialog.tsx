@@ -1,13 +1,14 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
+
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { WorkflowDialog } from '../../../../common/components';
+import { allActions } from '../../../actions';
 import { CreateResource } from '../../../models';
 import { router } from '../../../router';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { RootProps } from '../../ClusterApp';
 
 const deleteTipsMap = {
   resource: t('该Workload下所有Pods将一并销毁，销毁后不可恢复，请谨慎操作。'),

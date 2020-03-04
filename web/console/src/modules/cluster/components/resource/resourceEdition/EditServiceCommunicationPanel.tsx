@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { insertCSS } from '@tencent/qcloud-lib';
-import { Radio, Bubble } from '@tea/component';
-import { CommunicationTypeList } from '../../../constants/Config';
-import { FormItem } from '../../../../common/components';
+
+import { Bubble, Radio } from '@tea/component';
+import { insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem } from '../../../../common/components';
+import { CommunicationTypeList } from '../../../constants/Config';
 
 insertCSS(
   'EditCommunicationPanel',

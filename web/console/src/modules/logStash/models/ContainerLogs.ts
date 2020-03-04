@@ -1,6 +1,7 @@
-import { Identifiable } from '@tencent/qcloud-lib';
-import { Validation } from '../../common/models';
+import { Identifiable } from '@tencent/ff-redux';
+
 import { Resource } from '../../cluster/models';
+import { Validation } from '../../common/models';
 
 export interface ContainerLogs extends Identifiable {
   /** 当前的namespace */

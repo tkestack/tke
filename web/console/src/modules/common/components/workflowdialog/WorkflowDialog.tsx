@@ -1,12 +1,15 @@
 import * as React from 'react';
-import { Modal, Button } from '@tea/component';
-import { OperationState, WorkflowState, WorkflowActionCreator, isSuccessWorkflow } from '@tencent/ff-redux';
-import { BaseReactProps, Identifiable } from '@tencent/qcloud-lib';
+
+import { Button, Modal } from '@tea/component';
+import {
+    BaseReactProps, isSuccessWorkflow, OperationState, WorkflowActionCreator, WorkflowState
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { getWorkflowError } from '../../utils';
-import { TipInfo } from '../tipinfo';
-import { InputField } from '../inputfield';
 import { FormItem } from '../formitem';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { InputField } from '../inputfield';
+import { TipInfo } from '../tipinfo';
 
 export interface WorkflowDialogProps extends BaseReactProps {
   /**提示框标题 */

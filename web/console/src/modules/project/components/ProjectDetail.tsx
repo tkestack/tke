@@ -1,17 +1,18 @@
 import * as React from 'react';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
 import { connect } from 'react-redux';
-import { Tabs, TabPanel, ContentView } from '@tea/component';
 
-import { RootProps } from './ProjectApp';
-import { MainBodyLayout, FormLayout } from '../../common/layouts';
-import { SubpageHeadPanel } from './SubpageHeadPanel';
+import { ContentView, TabPanel, Tabs } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormLayout, MainBodyLayout } from '../../common/layouts';
+import { allActions } from '../actions';
+import { router } from '../router';
 import { NamespaceActionPanel } from './NamespaceActionPanel';
 import { NamespaceTablePanel } from './NamespaceTablePanel';
+import { RootProps } from './ProjectApp';
 import { ProjectDetailPanel } from './ProjectDetailPanel';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { router } from '../router';
+import { SubpageHeadPanel } from './SubpageHeadPanel';
 
 interface ProjectDetailState {
   /** tabKey */
@@ -21,10 +22,7 @@ interface ProjectDetailState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ProjectDetail extends React.Component<RootProps, ProjectDetailState> {
   constructor(props, context) {
     super(props, context);

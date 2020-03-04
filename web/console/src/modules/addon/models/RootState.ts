@@ -1,9 +1,9 @@
+import { FFListModel, WorkflowState } from '@tencent/ff-redux';
+
 import { RouteState } from '../../../../helpers';
-import { Region, RegionFilter, CreateResource, Resource, ResourceFilter } from '../../common';
+import { CreateResource, Region, RegionFilter, Resource, ResourceFilter } from '../../common';
 import { Addon } from './';
 import { AddonEdit } from './AddonEdit';
-import { WorkflowState } from '@tencent/ff-redux';
-import { FFListModel } from '@tencent/ff-redux';
 
 type ResourceModifyWorkflow = WorkflowState<CreateResource, number>;
 

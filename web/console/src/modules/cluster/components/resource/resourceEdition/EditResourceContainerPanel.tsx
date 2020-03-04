@@ -1,16 +1,18 @@
 import * as React from 'react';
-import { Bubble } from '@tea/component';
-import { bindActionCreators, insertCSS } from '@tencent/qcloud-lib';
-import { RootProps } from '../../ClusterApp';
 import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
+
+import { Bubble } from '@tea/component';
+import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { FormItem } from '../../../../common/components';
+import { isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
 import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
 import { ContainerItem } from '../../../models';
-import { isEmpty } from '../../../../common/utils';
+import { RootProps } from '../../ClusterApp';
 import { EditResourceContainerItem } from './EditResourceContainerItem';
 import { ResourceContainerListItem } from './ResourceContainerListItem';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 insertCSS(
   'EditResourceContainerPanel',
@@ -24,10 +26,7 @@ insertCSS(
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditResourceContainerPanel extends React.Component<RootProps, {}> {
   render() {
     let { subRoot } = this.props,

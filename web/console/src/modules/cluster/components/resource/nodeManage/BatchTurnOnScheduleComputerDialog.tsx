@@ -1,17 +1,18 @@
-import * as React from 'react';
 import * as classnames from 'classnames';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
+import * as React from 'react';
 import { connect } from 'react-redux';
-import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
+
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Button, Text } from '@tencent/tea-component';
+import { Modal } from '@tencent/tea-component/lib/modal/ModalMain';
+
+import { resourceConfig } from '../../../../../../config';
 import { TipInfo } from '../../../../common/components';
 import { getWorkflowError } from '../../../../common/utils';
-import { Computer, CreateResource } from '../../../models';
 import { allActions } from '../../../actions';
-import { resourceConfig } from '../../../../../../config';
-import { Modal } from '@tencent/tea-component/lib/modal/ModalMain';
-import { Button, Text } from '@tencent/tea-component';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Computer, CreateResource } from '../../../models';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

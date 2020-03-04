@@ -1,6 +1,7 @@
-import { RootReducer } from '../reducers/RootReducer';
-import { createStore } from '@tencent/qcloud-lib';
+import { createStore } from '@tencent/ff-redux';
+
 import { generateResetableReducer } from '../../../../helpers';
+import { RootReducer } from '../reducers/RootReducer';
 
 export function configStore() {
   const store = createStore(generateResetableReducer(RootReducer));

@@ -1,11 +1,13 @@
-import { ExternalTrafficPolicy, SessionAffinity } from './../constants/Config';
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import { initValidator } from '../../common/models';
-import { initPortsMap } from '../constants/initState';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
+import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
+import { initValidator } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
+import { ExternalTrafficPolicy, SessionAffinity } from '../constants/Config';
+import { initPortsMap } from '../constants/initState';
 import { Resource } from '../models';
 
 const TempReducer = combineReducers({

@@ -1,18 +1,19 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { getWorkflowError } from '../../common';
 
-import { Bubble, Button, Icon, Modal, Pagination, TableColumn, Text } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { isSuccessWorkflow, OperationState, WorkflowState } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
+import { Bubble, Icon, Modal, TableColumn, Text } from '@tea/component';
+import {
+    bindActionCreators, isSuccessWorkflow, OperationState, WorkflowState
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter } from '../../../../helpers';
-import { GridTable, LinkButton, ResourceList, TipDialog, WorkflowDialog } from '../../common/components';
+import { getWorkflowError } from '../../common';
+import { GridTable, LinkButton, WorkflowDialog } from '../../common/components';
 import { DialogBodyLayout } from '../../common/layouts';
 import { allActions } from '../actions';
 import { NamespaceStatus, resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
-import { K8SUNIT, valueLabels1024, valueLabels1000 } from '@helper/k8sUnitUtil';
 import { Namespace, NamespaceOperator } from '../models';
 import { router } from '../router';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';

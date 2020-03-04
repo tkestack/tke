@@ -1,9 +1,10 @@
-import { FetchState } from '@tencent/ff-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { t } from '@tencent/tea-app/lib/i18n';
-import { Bubble, Button, Justify, Table, Text } from '@tencent/tea-component';
 import * as React from 'react';
 import { connect } from 'react-redux';
+
+import { bindActionCreators, FetchState } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Bubble, Button, Justify, Table, Text } from '@tencent/tea-component';
+
 import { allActions } from '../actions';
 import { router } from '../router';
 import { RootProps } from './AddonApp';

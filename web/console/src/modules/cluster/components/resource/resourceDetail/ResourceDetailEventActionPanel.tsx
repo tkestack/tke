@@ -1,11 +1,13 @@
-import { Switch, Justify, Table, Row, Col, Select } from '@tea/component';
-import { bindActionCreators, insertCSS } from '@tencent/qcloud-lib';
 import * as React from 'react';
 import { connect } from 'react-redux';
+
+import { Col, Justify, Row, Select, Switch, Table } from '@tea/component';
+import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { TipInfo } from '../../../../common/components';
 import { allActions } from '../../../actions';
 import { RootProps } from '../../ClusterApp';
-import { TipInfo } from '../../../../common/components';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 insertCSS(
   'EventActionPanel',
@@ -24,10 +26,7 @@ interface ResouceEventPanelState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceDetailEventActionPanel extends React.Component<RootProps, ResouceEventPanelState> {
   constructor(props, context) {
     super(props, context);

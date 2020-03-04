@@ -1,10 +1,13 @@
 import * as React from 'react';
-import { Modal, Button } from '@tea/component';
+
+import { Button, Modal } from '@tea/component';
 import { FetchState } from '@tencent/ff-redux';
-import { RootProps } from '../../HelmApp';
-import { FormItem, TipInfo } from '../../../../common/components/';
-import { KeyValuesPanel } from '../create/KeyValuesPanel';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, TipInfo } from '../../../../common/components/';
+import { RootProps } from '../../HelmApp';
+import { KeyValuesPanel } from '../create/KeyValuesPanel';
+
 interface Props extends RootProps {
   onCancel?: Function;
 }

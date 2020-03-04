@@ -1,10 +1,10 @@
-import { RecordSet, Identifiable } from '@tencent/qcloud-lib';
+import { FetcherState, Identifiable, QueryState, RecordSet } from '@tencent/ff-redux';
+
 import { Validation } from '../../common/models';
 import { ContainerLogs, MetadataItem } from './';
-import { Resource, ResourceFilter, ResourceTarget, WorkLoadList } from './Resource';
 import { ContainerFilePathItem } from './ContainerFilePathItem';
 import { Pod, PodListFilter } from './pod';
-import { FetcherState, QueryState } from '@tencent/ff-redux';
+import { Resource, ResourceFilter, ResourceTarget, WorkLoadList } from './Resource';
 
 export interface LogStashEdit extends Identifiable {
   /** 采集规则的名称 */

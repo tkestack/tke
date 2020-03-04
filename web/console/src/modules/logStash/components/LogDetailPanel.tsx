@@ -1,14 +1,15 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 
 import { Card, Text } from '@tea/component';
-import { RootProps } from './LogStashApp';
 import { FormPanel } from '@tencent/ff-component';
-import { MetadataItem } from '../models';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
-import { connect } from 'react-redux';
+
 import { dateFormatter } from '../../../../helpers';
+import { allActions } from '../actions';
+import { MetadataItem } from '../models';
+import { RootProps } from './LogStashApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {

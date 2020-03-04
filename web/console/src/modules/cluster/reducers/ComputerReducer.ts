@@ -1,11 +1,14 @@
-import { generateWorkflowReducer, createFFListReducer } from '@tencent/ff-redux';
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet, uuid } from '@tencent/qcloud-lib';
+
+import {
+    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload, uuid
+} from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
 import * as ActionType from '../constants/ActionType';
-import { Computer, ComputerFilter, Resource } from '../models';
 import { FFReduxActionName } from '../constants/Config';
+import { Computer, ComputerFilter, Resource } from '../models';
 
 const TempReducer = combineReducers({
   computer: createFFListReducer<Computer, ComputerFilter>(FFReduxActionName.COMPUTER),

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
-import { extend } from '@tencent/qcloud-lib';
+
+import { extend } from '@tencent/ff-redux';
 
 export interface DatePickerProps extends React.Props<any> {
   /** 选中时间的起始日期 */

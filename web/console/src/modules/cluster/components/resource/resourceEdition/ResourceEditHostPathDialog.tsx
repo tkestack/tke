@@ -1,14 +1,17 @@
 import * as React from 'react';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { Modal, Button } from '@tea/component';
-import { RootProps } from '../../ClusterApp';
 import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { FormLayout } from '../../../../common/layouts';
-import { FormItem, InputField } from '../../../../common/components';
-import { VolumeItem } from '../../../models';
-import { validatorActions } from '../../../actions/validatorActions';
+
+import { Button, Modal } from '@tea/component';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, InputField } from '../../../../common/components';
+import { FormLayout } from '../../../../common/layouts';
+import { allActions } from '../../../actions';
+import { validatorActions } from '../../../actions/validatorActions';
+import { VolumeItem } from '../../../models';
+import { RootProps } from '../../ClusterApp';
+
 /** hostPath检查类型的列表 */
 const HostPathTypeList = {
   NoChecks: {
@@ -48,10 +51,7 @@ const HostPathTypeList = {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceEditHostPathDialog extends React.Component<RootProps, {}> {
   render() {
     let { actions, subRoot } = this.props,

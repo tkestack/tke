@@ -1,13 +1,13 @@
-import { FetchOptions, createFFListActions } from '@tencent/ff-redux';
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import { RootState } from '../models/RootState';
-import { ResourceInfo, ResourceFilter, Resource } from '../../common/models';
+import { createFFListActions, extend, FetchOptions, ReduxAction } from '@tencent/ff-redux';
+
 import { resourceConfig } from '../../../../config';
-import { peActions } from './peActions';
-import { FFReduxActionName } from '../constants/Config';
+import { Resource, ResourceFilter, ResourceInfo } from '../../common/models';
 import { CommonAPI } from '../../common/webapi';
+import * as ActionType from '../constants/ActionType';
+import { FFReduxActionName } from '../constants/Config';
+import { RootState } from '../models/RootState';
 import { router } from '../router';
+import { peActions } from './peActions';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

@@ -1,8 +1,8 @@
-import { ReduxAction } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import { FetchOptions } from '@tencent/ff-redux';
-import { RootState, EsInfo } from '../models';
+import { FetchOptions, ReduxAction } from '@tencent/ff-redux';
+
 import { Resource } from '../../common';
+import * as ActionType from '../constants/ActionType';
+import { EsInfo, RootState } from '../models';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

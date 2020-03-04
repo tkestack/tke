@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { Modal, Button } from '@tea/component';
-import { BaseReactProps } from '@tencent/qcloud-lib';
+import { Button, Modal } from '@tea/component';
+import { BaseReactProps } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 interface TipDialogProps extends BaseReactProps {

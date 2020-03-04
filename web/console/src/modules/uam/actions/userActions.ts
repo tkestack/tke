@@ -1,17 +1,15 @@
 import { resourceConfig } from '@config';
 import { CommonAPI, ResourceFilter, ResourceInfo } from '@src/modules/common';
 import {
-  createFFListActions,
-  FetchOptions,
-  generateFetcherActionCreator,
-  generateWorkflowActionCreator,
-  OperationTrigger
+    createFFListActions, extend, FetchOptions, generateFetcherActionCreator,
+    generateWorkflowActionCreator, OperationTrigger
 } from '@tencent/ff-redux';
-import { extend } from '@tencent/qcloud-lib';
+
 import * as ActionTypes from '../constants/ActionTypes';
 import { RootState, Strategy } from '../models';
 import { User, UserFilter } from '../models/index';
 import * as WebAPI from '../WebAPI';
+
 type GetState = () => RootState;
 
 /**

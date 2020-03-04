@@ -1,8 +1,10 @@
-import { AlarmPolicyEdition } from './../models/AlarmPolicy';
-import { deepClone } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import * as ActionType from '../constants/ActionType';
+import { deepClone } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import * as ActionType from '../constants/ActionType';
+import { RootState } from '../models';
+import { AlarmPolicyEdition } from '../models/AlarmPolicy';
+
 type GetState = () => RootState;
 
 export const validatorActions = {

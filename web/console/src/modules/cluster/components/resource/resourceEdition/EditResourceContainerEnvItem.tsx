@@ -1,14 +1,16 @@
-import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { Bubble } from '@tea/component';
-import { connect } from 'react-redux';
-import { isEmpty } from '../../../../common/utils';
-import { FormItem, LinkButton } from '../../../../common/components';
 import * as classnames from 'classnames';
-import { Resource } from '../../../models';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble } from '@tea/component';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, LinkButton } from '../../../../common/components';
+import { isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { Resource } from '../../../models';
+import { RootProps } from '../../ClusterApp';
 
 /** 创建workload，环境变量，valueFrom的列表 */
 export const valueFromList = [
@@ -35,10 +37,7 @@ interface ContainerEnvItemProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditResourceContainerEnvItem extends React.Component<ContainerEnvItemProps, {}> {
   render() {
     let { actions, cKey, subRoot } = this.props,

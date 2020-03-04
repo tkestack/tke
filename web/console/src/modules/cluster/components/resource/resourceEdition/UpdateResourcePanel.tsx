@@ -1,15 +1,19 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
-import { SubHeaderPanel } from './SubHeaderPanel';
-import { router } from '../../../router';
-import { UpdateServiceAccessTypePanel } from '../resourceTableOperation/UpdateServiceAccessTypePanel';
-import { UpdateWorkloadRegistryPanel } from '../resourceTableOperation/UpdateWorkloadRegistryPanel';
-import { UpdateWorkloadPodNumPanel } from '../resourceTableOperation/UpdateWorkloadPodNumPanel';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { allActions } from '../../../actions';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import {
+    UpdateServiceAccessTypePanel
+} from '../resourceTableOperation/UpdateServiceAccessTypePanel';
+import { UpdateWorkloadPodNumPanel } from '../resourceTableOperation/UpdateWorkloadPodNumPanel';
+import { UpdateWorkloadRegistryPanel } from '../resourceTableOperation/UpdateWorkloadRegistryPanel';
 import { EditLbcfBackGroupPanel } from './EditLbcfBackGroupPanel';
+import { SubHeaderPanel } from './SubHeaderPanel';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

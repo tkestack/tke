@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { insertCSS, BaseReactProps } from '@tencent/qcloud-lib';
-import { LinkButton, Clip } from '../';
-import { Button, Modal } from '@tea/component';
 import * as CodeMirror from 'react-codemirror';
+
+import { Button, Modal } from '@tea/component';
+import { BaseReactProps, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { Clip, LinkButton } from '../';
 
 require('codemirror/mode/yaml/yaml.js');
 require('codemirror/lib/codemirror.css');

@@ -1,6 +1,8 @@
-import { BaseReactProps } from '@tencent/qcloud-lib';
-import { t } from '@tencent/tea-app/lib/i18n';
 import * as React from 'react';
+
+import { BaseReactProps } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { SelectList, SelectListProps } from '../select';
 
 export interface NetworkProps extends BaseReactProps {

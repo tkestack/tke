@@ -1,9 +1,10 @@
-import { Justify, Switch } from '@tea/component';
-import { FetchState } from '@tencent/ff-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { t } from '@tencent/tea-app/lib/i18n';
 import * as React from 'react';
 import { connect } from 'react-redux';
+
+import { Justify, Switch } from '@tea/component';
+import { bindActionCreators, FetchState } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { DetailLayout } from '../../../../common/layouts';
 import { allActions } from '../../../actions';
 import { TailList } from '../../../constants/Config';

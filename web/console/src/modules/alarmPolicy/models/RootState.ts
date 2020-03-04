@@ -1,24 +1,14 @@
-import { GroupFilter } from './Group';
-import { RecordSet } from '@tencent/qcloud-lib';
+import { FetcherState, FFListModel, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
+
 //import { RouteState } from "@tencent/qcloud-nmc";
 import { RouteState } from '../../../../helpers/Router';
-import {
-  Region,
-  RegionFilter,
-  ClusterFilter,
-  AlarmPolicyFilter,
-  AlarmPolicyEdition,
-  AlarmPolicy,
-  Group,
-  Namespace,
-  NamespaceFilter,
-  Resource,
-  ResourceFilter,
-  AlarmPolicyOperator
-} from './';
 import { Cluster } from '../../common';
 import { User, UserFilter } from '../../uam/models';
-import { FFListModel, QueryState, WorkflowState, FetcherState } from '@tencent/ff-redux';
+import {
+    AlarmPolicy, AlarmPolicyEdition, AlarmPolicyFilter, AlarmPolicyOperator, ClusterFilter, Group,
+    Namespace, NamespaceFilter, Region, RegionFilter, Resource, ResourceFilter
+} from './';
+import { GroupFilter } from './Group';
 
 type AlarmPolicyOpWorkflow = WorkflowState<AlarmPolicy, AlarmPolicyOperator>;
 type AlarmPolicyCreateWorkflow = WorkflowState<AlarmPolicyEdition, AlarmPolicyOperator>;

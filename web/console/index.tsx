@@ -3,11 +3,10 @@ import { translation } from '@i18n/translation';
 // 国际化工具的初始化
 i18n.init({ translation });
 import * as React from 'react';
-import { Entry } from '@tencent/ff-redux';
+import { Entry, insertCSS } from '@tencent/ff-redux';
 import { Cluster } from './src/modules/cluster';
 import { Project } from './src/modules/project';
 import { Registry } from './src/modules/registry';
-import { insertCSS } from '@tencent/qcloud-lib';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Wrapper, PlatformTypeEnum } from './Wrapper';
 import { Addon } from './src/modules/addon';

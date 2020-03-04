@@ -1,8 +1,11 @@
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/ff-redux';
-import { router } from '../router';
+import {
+    generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
+} from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
+import { Resource, RootState } from '../models';
+import { router } from '../router';
 import * as WebAPI from '../WebAPI';
-import { RootState, Resource } from '../models';
 import { resourceActions } from './resourceActions';
 
 type GetState = () => RootState;

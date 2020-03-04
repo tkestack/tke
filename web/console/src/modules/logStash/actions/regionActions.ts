@@ -1,7 +1,7 @@
-import { extend } from '@tencent/qcloud-lib';
-import { getRegionId } from '@tencent/ff-redux';
+import { extend, getRegionId } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+
 import { assureRegion, setRegionId } from '../../../../helpers';
 import { CommonAPI } from '../../../modules/common/webapi';
 import * as ActionType from '../constants/ActionType';

@@ -1,9 +1,11 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
+import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
 import * as ActionType from '../constants/ActionType';
-import { Resource, Event } from '../models';
+import { Event, Resource } from '../models';
 
 let defaultNamespace = reduceToPayload(ActionType.E_NamespaceSelection, 'default');
 /// #if tke

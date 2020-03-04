@@ -1,7 +1,7 @@
-import { WorkflowState } from '@tencent/ff-redux';
+import { FFListModel, WorkflowState } from '@tencent/ff-redux';
+
 import { RouteState } from '../../../../helpers/Router';
 import { Resource, ResourceFilter } from './Resource';
-import { FFListModel } from '@tencent/ff-redux';
 
 type ResourceOpWorkflow = WorkflowState<Resource, {}>;
 

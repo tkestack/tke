@@ -1,8 +1,10 @@
-import { Justify } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { t } from '@tencent/tea-app/lib/i18n';
 import * as React from 'react';
 import { connect } from 'react-redux';
+
+import { Justify } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { allActions } from '../../actions';
 import { RootProps } from '../ClusterApp';
 
