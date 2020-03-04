@@ -1,7 +1,7 @@
 import * as React from 'react';
 // import { OnOuterClick, BaseReactProps, RecordSet, uuid } from '@tencent/qcloud-lib';
 import { BaseReactProps, RecordSet, uuid } from '@tencent/qcloud-lib';
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetcherState, FetchState } from '@tencent/ff-redux';
 import * as classnames from 'classnames';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Validation } from '../../models';

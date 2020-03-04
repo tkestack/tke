@@ -4,7 +4,7 @@ import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import { allActions } from '../../actions';
 import { RootProps } from '../ClusterApp';
-import { Clip, LinkButton, TablePanel, TablePanelColumnProps, TipInfo } from '../../../common/components';
+import { Clip, LinkButton, TipInfo } from '../../../common/components';
 import { router } from '../../router';
 import { KubectlDialog } from '../KubectlDialog';
 import { Cluster } from '../../../common/models';
@@ -16,6 +16,7 @@ import { MonitorPanelProps, getClusterTables } from '../../models/MonitorPanel';
 import { ChartPanel } from '@tencent/tchart';
 import { UpdateClusterTokenDialog } from './UpdateClusterTokenDialog';
 import { router as addonRouter } from '../../../addon/router';
+import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
 
 /** 集群的状态颜色的展示 */
 export const ClusterStatus = {

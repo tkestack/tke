@@ -1,16 +1,15 @@
-import { Cluster } from '../../common/models';
-import { FFReduxActionName } from './../constants/Config';
-import { extend, ReduxAction, RecordSet, uuid } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
+import { extend, RecordSet } from '@tencent/qcloud-lib';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
 import { resourceConfig } from '../../../../config';
-import { router } from '../router';
+import { Cluster } from '../../common/models';
 import { uniq } from '../../common/utils';
+import * as ActionType from '../constants/ActionType';
+import { RootState } from '../models';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { FFReduxActionName } from './../constants/Config';
 import { namespaceActions } from './namespaceActions.project';
-import { clusterActions } from './clusterActions';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

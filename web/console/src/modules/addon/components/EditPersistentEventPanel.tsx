@@ -1,20 +1,16 @@
-import * as React from 'react';
+import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators } from '@tencent/qcloud-lib';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Input } from '@tencent/tea-component';
+import * as React from 'react';
 import { connect } from 'react-redux';
 import { allActions } from '../actions';
 import { RootProps } from './AddonApp';
-import { FormPanel, Validation } from '../../common';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Segment, Input, Icon, Select, Button, Text, ExternalLink } from '@tencent/tea-component';
-import { AddonValidator, ValidatorOptions } from './EditAddonPanel';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditPersistentEventPanel extends React.Component<RootProps, any> {
   render() {
     let { editAddon, route, actions } = this.props,

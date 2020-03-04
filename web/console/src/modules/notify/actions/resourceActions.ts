@@ -2,21 +2,21 @@ import { RootState, Resource, ResourceFilter } from '../models';
 import { ResourceInfo } from '../../common/models';
 import { resourceConfig } from '../../../../config';
 import * as WebAPI from '../WebAPI';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 import { router } from '../router';
 
 type GetState = () => RootState;
 let rc = resourceConfig();
 
 export const resourceActions = {
-  channel: createListActionFactory('channel'),
-  template: createListActionFactory('template'),
-  receiver: createListActionFactory('receiver'),
-  receiverGroup: createListActionFactory('receiverGroup')
+  channel: createFFListActionsFactory('channel'),
+  template: createFFListActionsFactory('template'),
+  receiver: createFFListActionsFactory('receiver'),
+  receiverGroup: createFFListActionsFactory('receiverGroup')
 };
 
-function createListActionFactory(resourceName) {
-  return createListAction<Resource, ResourceFilter>({
+function createFFListActionsFactory(resourceName) {
+  return createFFListActions<Resource, ResourceFilter>({
     actionName: resourceName,
     fetcher: async (query, getState: GetState, fetchOptions) => {
       let resourceInfo: ResourceInfo = rc[resourceName];

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { Modal, Button, Alert } from '@tea/component';
 import { RootProps } from './LogStashApp';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';

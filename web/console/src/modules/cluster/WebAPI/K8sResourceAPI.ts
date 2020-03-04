@@ -1,5 +1,4 @@
 import { resourceConfig } from '@config';
-import { QueryState } from '@tencent/qcloud-redux-query';
 import { uuid, RecordSet } from '@tencent/qcloud-lib';
 import { Namespace, ResourceFilter, Resource, DifferentInterfaceResourceOperation } from '../models';
 import { RequestParams, ResourceInfo, UserDefinedHeader, CreateResource, MergeType } from '../../common/models';
@@ -15,6 +14,8 @@ import {
 import { apiServerVersion } from '../../../../config';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { isEmpty } from '../../common';
+import { QueryState } from '@tencent/ff-redux';
+
 // 提示框
 const tips = seajs.require('tips');
 

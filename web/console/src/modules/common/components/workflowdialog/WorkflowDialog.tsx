@@ -1,11 +1,6 @@
 import * as React from 'react';
 import { Modal, Button } from '@tea/component';
-import {
-  OperationState,
-  WorkflowState,
-  WorkflowActionCreator,
-  isSuccessWorkflow
-} from '@tencent/qcloud-redux-workflow';
+import { OperationState, WorkflowState, WorkflowActionCreator, isSuccessWorkflow } from '@tencent/ff-redux';
 import { BaseReactProps, Identifiable } from '@tencent/qcloud-lib';
 import { getWorkflowError } from '../../utils';
 import { TipInfo } from '../tipinfo';

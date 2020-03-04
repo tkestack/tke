@@ -1,31 +1,18 @@
-import * as React from "react";
-import { RootProps } from "./InstallerApp";
-import {
-  Button,
-  Bubble,
-  Switch,
-  Card,
-  Alert,
-  List,
-  Form,
-  Segment,
-  Input
-} from "@tencent/tea-component";
-import { EditingItem } from "./EditingItem";
-import { CIDR } from "./CIDR";
-import { ListItem } from "./ListItem";
-import { Machine } from "../models";
-import { validateActions } from "../actions/validateActions";
-import { getWorkflowError, getValidateStatus } from "../../common/utils";
-import {
-  OperationState,
-  isSuccessWorkflow
-} from "@tencent/qcloud-redux-workflow";
+import * as React from 'react';
+import { RootProps } from './InstallerApp';
+import { Button, Bubble, Switch, Card, Alert, List, Form, Segment, Input } from '@tencent/tea-component';
+import { EditingItem } from './EditingItem';
+import { CIDR } from './CIDR';
+import { ListItem } from './ListItem';
+import { Machine } from '../models';
+import { validateActions } from '../actions/validateActions';
+import { getWorkflowError, getValidateStatus } from '../../common/utils';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 
 export class FormPanel extends React.Component<RootProps> {
   renderMachines(machines: Array<Machine>) {
     return machines.map(m => {
-      return m.status === "editing" ? (
+      return m.status === 'editing' ? (
         <EditingItem {...this.props} id={m.id} />
       ) : (
         <ListItem {...this.props} id={m.id} />
@@ -36,19 +23,12 @@ export class FormPanel extends React.Component<RootProps> {
     const { editState, actions, createCluster } = this.props,
       { machines } = editState;
 
-    const machine = machines.find(m => m.status === "editing");
+    const machine = machines.find(m => m.status === 'editing');
     const canAdd = machine ? validateActions._validateMachine(machine) : true;
-    let failed =
-      createCluster.operationState === OperationState.Done &&
-      !isSuccessWorkflow(createCluster);
+    let failed = createCluster.operationState === OperationState.Done && !isSuccessWorkflow(createCluster);
     return (
-      <div
-        style={{ maxWidth: "1000px", minHeight: "600px", margin: "0 auto" }}
-        className="server-update"
-      >
-        <h2 style={{ margin: "40px 0px", fontWeight: 600 }}>
-          TKE Enterprise 安装初始化
-        </h2>
+      <div style={{ maxWidth: '1000px', minHeight: '600px', margin: '0 auto' }} className="server-update">
+        <h2 style={{ margin: '40px 0px', fontWeight: 600 }}>TKE Enterprise 安装初始化</h2>
         <Card>
           <Card.Body>
             <Alert>
@@ -60,27 +40,25 @@ export class FormPanel extends React.Component<RootProps> {
                 <List.Item>
                   目标机器只支持centos、ubuntu两种，建议内核4.14以上，64位，并拥有8核16G内存100G硬盘以上的可用资源；
                 </List.Item>
-                <List.Item>
-                  目标机器请保证未自行安装docker、kubernetes等组件；
-                </List.Item>
+                <List.Item>目标机器请保证未自行安装docker、kubernetes等组件；</List.Item>
               </List>
             </Alert>
 
             <Form layout="fixed">
               <Form.Item label="目标机器">
                 {this.renderMachines(editState.machines)}
-                <div style={{ width: "100%" }}>
+                <div style={{ width: '100%' }}>
                   <Button
                     type="link"
                     style={{
-                      width: "100%",
-                      border: "1px dashed #ddd",
-                      display: "block",
-                      height: "30px",
-                      lineHeight: "30px",
-                      padding: "0 20px",
-                      boxSizing: "border-box",
-                      textAlign: "center"
+                      width: '100%',
+                      border: '1px dashed #ddd',
+                      display: 'block',
+                      height: '30px',
+                      lineHeight: '30px',
+                      padding: '0 20px',
+                      boxSizing: 'border-box',
+                      textAlign: 'center'
                     }}
                     onClick={() => actions.installer.addMachine()}
                   >
@@ -94,7 +72,7 @@ export class FormPanel extends React.Component<RootProps> {
                     <div className="param-box">
                       <div className="param-bd">
                         <CIDR
-                          parts={["192", "172", "10"]}
+                          parts={['192', '172', '10']}
                           value={editState.cidr}
                           maxNodePodNum={editState.podNumLimit}
                           maxClusterServiceNum={editState.serviceNumLimit}
@@ -117,24 +95,22 @@ export class FormPanel extends React.Component<RootProps> {
               <Form.Item label="镜像仓库">
                 <Segment
                   options={[
-                    { text: "本机仓库", value: "local" },
-                    { text: "远程仓库", value: "remote" }
+                    { text: '本机仓库', value: 'local' },
+                    { text: '远程仓库', value: 'remote' }
                   ]}
                   value={editState.repoType}
-                  onChange={value =>
-                    actions.installer.updateEdit({ repoType: value })
-                  }
+                  onChange={value => actions.installer.updateEdit({ repoType: value })}
                 />
 
-                {editState.repoType === "remote" ? (
+                {editState.repoType === 'remote' ? (
                   <p className="text">
                     使用远程仓库统作为初始镜像仓库，目标机器将从远程仓库拉取TKE依赖docker镜像，须保证目标机器可访问远程仓库。
                   </p>
                 ) : (
                   <p className="text">使用TKE Enterprise 自带的镜像仓库</p>
                 )}
-                {editState.repoType === "remote" ? (
-                  <div className="run-docker-box" style={{ marginTop: "10px" }}>
+                {editState.repoType === 'remote' ? (
+                  <div className="run-docker-box" style={{ marginTop: '10px' }}>
                     <Form>
                       <Form.Item
                         label="访问地址"
@@ -144,9 +120,7 @@ export class FormPanel extends React.Component<RootProps> {
                       >
                         <Input
                           value={editState.repoAddress}
-                          onChange={repoAddress =>
-                            actions.installer.updateEdit({ repoAddress })
-                          }
+                          onChange={repoAddress => actions.installer.updateEdit({ repoAddress })}
                         />
                       </Form.Item>
                       <Form.Item
@@ -157,9 +131,7 @@ export class FormPanel extends React.Component<RootProps> {
                       >
                         <Input
                           value={editState.repoUser}
-                          onChange={repoUser =>
-                            actions.installer.updateEdit({ repoUser })
-                          }
+                          onChange={repoUser => actions.installer.updateEdit({ repoUser })}
                         />
                       </Form.Item>
                       <Form.Item
@@ -171,9 +143,7 @@ export class FormPanel extends React.Component<RootProps> {
                         <Input
                           type="password"
                           value={editState.repoPassword}
-                          onChange={repoPassword =>
-                            actions.installer.updateEdit({ repoPassword })
-                          }
+                          onChange={repoPassword => actions.installer.updateEdit({ repoPassword })}
                         />
                       </Form.Item>
                     </Form>
@@ -188,49 +158,40 @@ export class FormPanel extends React.Component<RootProps> {
                 status={getValidateStatus(editState.v_domain)}
                 message={editState.v_domain.message}
               >
-                <Input
-                  value={editState.domain}
-                  onChange={domain => actions.installer.updateEdit({ domain })}
-                />
+                <Input value={editState.domain} onChange={domain => actions.installer.updateEdit({ domain })} />
               </Form.Item>
               <Form.Item label="是否使用已有证书">
                 <Switch
                   value={editState.isUseCert}
-                  onChange={checked =>
-                    actions.installer.updateEdit({ isUseCert: checked })
-                  }
+                  onChange={checked => actions.installer.updateEdit({ isUseCert: checked })}
                 />
               </Form.Item>
               <Form.Item
                 label="证书(Certificate)"
-                style={{ display: editState.isUseCert ? "table-row" : "none" }}
+                style={{ display: editState.isUseCert ? 'table-row' : 'none' }}
                 required
                 status={getValidateStatus(editState.v_certificate)}
                 message={editState.v_certificate.message}
               >
                 <Input
                   multiline
-                  style={{ width: "400px" }}
+                  style={{ width: '400px' }}
                   value={editState.certificate}
-                  onChange={certificate =>
-                    actions.installer.updateEdit({ certificate })
-                  }
+                  onChange={certificate => actions.installer.updateEdit({ certificate })}
                 />
               </Form.Item>
               <Form.Item
                 label="私钥(PrivateKey)"
-                style={{ display: editState.isUseCert ? "table-row" : "none" }}
+                style={{ display: editState.isUseCert ? 'table-row' : 'none' }}
                 required
                 status={getValidateStatus(editState.v_privateKey)}
                 message={editState.v_privateKey.message}
               >
                 <Input
                   multiline
-                  style={{ width: "400px" }}
+                  style={{ width: '400px' }}
                   value={editState.privateKey}
-                  onChange={privateKey =>
-                    actions.installer.updateEdit({ privateKey })
-                  }
+                  onChange={privateKey => actions.installer.updateEdit({ privateKey })}
                 />
               </Form.Item>
             </Form>
@@ -243,17 +204,9 @@ export class FormPanel extends React.Component<RootProps> {
               >
                 上一步
               </Button>
-              <Bubble
-                content={
-                  !validateActions._validateEdit(editState)
-                    ? "请先完成编辑项"
-                    : ""
-                }
-              >
+              <Bubble content={!validateActions._validateEdit(editState) ? '请先完成编辑项' : ''}>
                 <Button
-                  disabled={
-                    createCluster.operationState === OperationState.Performing
-                  }
+                  disabled={createCluster.operationState === OperationState.Performing}
                   type="primary"
                   onClick={() => {
                     actions.validate.validateEdit(editState);
@@ -263,8 +216,7 @@ export class FormPanel extends React.Component<RootProps> {
                     }
                   }}
                 >
-                  {createCluster.operationState ===
-                  OperationState.Performing ? (
+                  {createCluster.operationState === OperationState.Performing ? (
                     <i className="n-loading-icon" />
                   ) : (
                     <noscript />
@@ -276,9 +228,9 @@ export class FormPanel extends React.Component<RootProps> {
                 <Alert
                   type="error"
                   style={{
-                    display: "inline-block",
-                    marginTop: "10px",
-                    marginBottom: "0px"
+                    display: 'inline-block',
+                    marginTop: '10px',
+                    marginBottom: '0px'
                   }}
                 >
                   {getWorkflowError(createCluster)}

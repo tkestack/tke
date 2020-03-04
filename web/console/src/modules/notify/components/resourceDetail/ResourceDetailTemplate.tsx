@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ResourceDetail } from './ResourceDetail';
-import { FormPanel, LinkButton } from '../../../common/components';
+import { LinkButton } from '../../../common/components';
+import { FormPanel } from '@tencent/ff-component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Text } from '@tencent/tea-component';
 import { router } from '../../router';

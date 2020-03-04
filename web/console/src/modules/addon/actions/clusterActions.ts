@@ -7,12 +7,12 @@ import { router } from '../router';
 import { resourceConfig } from '../../../../config';
 import { addonActions } from './addonActions';
 import { CommonAPI } from '../../common/webapi';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 
 type GetState = () => RootState;
 
 /** ========================== start 已存在的add的相关操作 ========================== */
-const ListAddonActions = createListAction<Resource, ResourceFilter>({
+const ListAddonActions = createFFListActions<Resource, ResourceFilter>({
   actionName: FFReduxActionName.OPENADDON,
   fetcher: async (query, getState: GetState) => {
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];
@@ -83,7 +83,7 @@ const openAddonActions = extend({}, ListAddonActions, addonRestActions);
 /** ========================== end 已存在的add的相关操作 ========================== */
 
 /** 集群列表的Actions */
-const ListClusterActions = createListAction<Resource, ResourceFilter>({
+const ListClusterActions = createFFListActions<Resource, ResourceFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async (query, getState: GetState) => {
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];

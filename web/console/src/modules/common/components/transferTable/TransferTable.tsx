@@ -4,12 +4,11 @@ import { Table, TableColumn } from '@tea/component/table';
 import { selectable } from '@tea/component/table/addons/selectable';
 import { removeable } from '@tea/component/table/addons/removeable';
 import { SearchBox } from '@tea/component/searchbox';
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { RecordSet } from '@tencent/qcloud-lib';
 import { scrollable, autotip } from '@tencent/tea-component/lib/table/addons';
 import { StatusTip, LoadingTip } from '@tencent/tea-component';
-import { ListAction, ListModel } from '@tencent/redux-list';
+import { FFListAction, FFListModel, FetcherState, FetchState } from '@tencent/ff-redux';
 function SourceTable({
   dataSource,
   targetKeys,
@@ -65,9 +64,9 @@ export interface TransferTableProps<TResource> {
   /**列表项配置 */
   columns: TableColumn<TResource>[];
   /**action */
-  action: ListAction;
+  action: FFListAction;
   /**列表 */
-  model: ListModel<TResource>;
+  model: FFListModel<TResource>;
   /**id */
   recordKey: string;
   /**header */

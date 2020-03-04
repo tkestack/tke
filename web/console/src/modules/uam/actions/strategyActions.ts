@@ -1,20 +1,22 @@
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions, FetchState } from '@tencent/qcloud-redux-fetcher';
-import { generateWorkflowActionCreator, OperationResult, OperationTrigger } from '@tencent/qcloud-redux-workflow';
-import { generateQueryActionCreator, QueryState } from '@tencent/qcloud-redux-query';
-import { ComputerFilter } from '../../cluster/models';
+import {
+  createFFListActions,
+  generateWorkflowActionCreator,
+  OperationTrigger,
+  FetchOptions,
+  generateFetcherActionCreator
+} from '@tencent/ff-redux';
+import { extend } from '@tencent/qcloud-lib';
 import * as ActionTypes from '../constants/ActionTypes';
-import * as WebAPI from '../WebAPI';
 import { RootState, Strategy, StrategyFilter } from '../models';
-import { createListAction } from '@tencent/redux-list';
 import { router } from '../router';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
   noCache: false
 };
 
-const FFModelStrategyActions = createListAction<Strategy, StrategyFilter>({
+const FFModelStrategyActions = createFFListActions<Strategy, StrategyFilter>({
   actionName: ActionTypes.StrategyList,
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchStrategyList(query);

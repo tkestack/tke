@@ -1,5 +1,5 @@
 import { Resource } from './../../common/models/Resource';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { WorkflowState } from '@tencent/ff-redux';
 import { Region, RegionFilter } from '../../common/models';
 import {
   Project,
@@ -15,7 +15,7 @@ import {
   ManagerFilter
 } from './';
 import { RouteState } from '../../../../helpers';
-import { ListModel } from '@tencent/redux-list';
+import { FFListModel } from '@tencent/ff-redux';
 
 type ProjectWorkflow = WorkflowState<Project, void>;
 type ProjectEditWorkflow = WorkflowState<ProjectEdition, void>;
@@ -26,7 +26,7 @@ export interface RootState {
   /** 路由 */
   route?: RouteState;
 
-  project?: ListModel<Project, ProjectFilter>;
+  project?: FFListModel<Project, ProjectFilter>;
 
   /** 业务编辑参数 */
   projectEdition?: ProjectEdition;
@@ -46,7 +46,7 @@ export interface RootState {
   /** 删除业务工作流 */
   deleteProject?: ProjectWorkflow;
 
-  namespace?: ListModel<Namespace, NamespaceFilter>;
+  namespace?: FFListModel<Namespace, NamespaceFilter>;
 
   /** Namespace编辑参数 */
   namespaceEdition?: NamespaceEdition;
@@ -61,13 +61,13 @@ export interface RootState {
   deleteNamespace?: NamespaceWorkflow;
 
   /** 地域列表 */
-  region?: ListModel<Region, RegionFilter>;
+  region?: FFListModel<Region, RegionFilter>;
 
   /** 集群列表*/
-  cluster?: ListModel<Cluster, ClusterFilter>;
+  cluster?: FFListModel<Cluster, ClusterFilter>;
 
   /** 负责人列表 */
-  manager?: ListModel<Manager, ManagerFilter>;
+  manager?: FFListModel<Manager, ManagerFilter>;
 
   /** 设置管理员*/
   modifyAdminstrator?: ProjectEditWorkflow;

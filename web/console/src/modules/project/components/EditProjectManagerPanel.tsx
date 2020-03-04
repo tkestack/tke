@@ -1,9 +1,8 @@
+import { t } from '@tencent/tea-app/lib/i18n';
 import * as React from 'react';
-import { RootProps } from './ProjectApp';
-import { TransferTableProps, TransferTable, FormPanel } from '../../common/components';
+import { TransferTable, TransferTableProps } from '../../common/components';
 import { Manager } from '../models';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Form } from '@tencent/tea-component';
+import { RootProps } from './ProjectApp';
 
 interface EditProjectManagerPanelProps extends RootProps {
   rowDisabled?: (record: Manager) => boolean;

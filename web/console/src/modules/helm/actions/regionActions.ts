@@ -5,14 +5,14 @@ import { assureRegion } from '../../../../helpers';
 import { getRegionId } from '../../../../helpers/appUtil';
 import { router } from '../router';
 import { clusterActions } from './clusterActions';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 import { FFReduxActionName } from '../constants/Config';
 import { CommonAPI } from '../../common/webapi';
 
 type GetState = () => RootState;
 
 /** 地域列表的Actions */
-export const regionActions = createListAction<Region, RegionFilter>({
+export const regionActions = createFFListActions<Region, RegionFilter>({
   actionName: FFReduxActionName.REGION,
   fetcher: async query => {
     let response = await CommonAPI.fetchRegionList(query);

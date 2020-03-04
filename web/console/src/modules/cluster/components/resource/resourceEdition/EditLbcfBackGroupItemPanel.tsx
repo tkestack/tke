@@ -4,9 +4,9 @@ import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import { RootProps } from '../../ClusterApp';
 import { allActions } from '../../../actions';
-import { FormPanel } from '../../../../common/components';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { LbcfProtocolList } from '../../../constants/Config';
+import { FormPanel } from '@tencent/ff-component';
 
 interface EditLbcfBackGroupItemPanelProps extends RootProps {
   backGroupId: string;
@@ -16,10 +16,7 @@ interface EditLbcfBackGroupItemPanelProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGroupItemPanelProps, {}> {
   _renderPorts(ports) {
     let { actions, backGroupId, backGroupmode } = this.props;

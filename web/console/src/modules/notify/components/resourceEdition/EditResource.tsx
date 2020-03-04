@@ -11,7 +11,7 @@ import { getState, onChange, schemaObjToJSON } from '../../schema/schemaUtil';
 import { resourceConfig } from '../../../../../config';
 import { Text, Switch, InputNumber } from '@tencent/tea-component';
 import { RootProps } from '../NotifyApp';
-import { OperationState } from '@tencent/qcloud-redux-workflow';
+import { OperationState } from '@tencent/ff-redux';
 import { CreateResource, TipInfo, getWorkflowError } from '../../../common';
 const rc = resourceConfig();
 

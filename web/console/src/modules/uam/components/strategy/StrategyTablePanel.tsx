@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { TablePanel, LinkButton, emptyTips } from '../../../common/components';
+import { LinkButton, emptyTips } from '../../../common/components';
 import { Button, Table, TableColumn, Text, Modal, Transfer, SearchBox, Tooltip, Icon } from '@tea/component';
 import { selectable, removeable } from '@tea/component/table/addons';
 import { bindActionCreators } from '@tencent/qcloud-lib';
@@ -8,6 +8,8 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { router } from '../../router';
 import { allActions } from '../../actions';
 import { Strategy } from '../../models';
+import { TablePanel } from '@tencent/ff-component';
+
 const { useState, useEffect } = React;
 const _isEqual = require('lodash/isEqual');
 

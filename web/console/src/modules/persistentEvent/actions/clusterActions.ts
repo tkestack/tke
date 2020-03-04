@@ -1,11 +1,10 @@
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
+import { FetchOptions, createFFListActions } from '@tencent/ff-redux';
 import { extend, ReduxAction } from '@tencent/qcloud-lib';
 import * as ActionType from '../constants/ActionType';
 import { RootState } from '../models/RootState';
 import { ResourceInfo, ResourceFilter, Resource } from '../../common/models';
 import { resourceConfig } from '../../../../config';
 import { peActions } from './peActions';
-import { createListAction } from '@tencent/redux-list';
 import { FFReduxActionName } from '../constants/Config';
 import { CommonAPI } from '../../common/webapi';
 import { router } from '../router';
@@ -16,7 +15,7 @@ const fetchOptions: FetchOptions = {
 };
 
 /** 集群列表的Actions */
-const ListClusterActions = createListAction<Resource, ResourceFilter>({
+const ListClusterActions = createFFListActions<Resource, ResourceFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async (query, getState: GetState) => {
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];

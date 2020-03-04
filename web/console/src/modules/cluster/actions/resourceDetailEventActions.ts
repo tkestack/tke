@@ -1,19 +1,17 @@
+import { createFFListActions } from '@tencent/ff-redux';
 import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
-import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState, ResourceFilter, Event } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { PollEventName, FFReduxActionName } from '../constants/Config';
-import { router } from '../router';
 import { resourceConfig } from '../../../../config';
 import { IsInNodeManageDetail } from '../components/resource/resourceDetail/ResourceDetail';
-import { createListActionsFactory } from '@tencent/redux-list';
+import * as ActionType from '../constants/ActionType';
+import { FFReduxActionName } from '../constants/Config';
+import { Event, ResourceFilter, RootState } from '../models';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 
 /** 获取事件列表 FFRedux */
-const FFModelEventActions = createListActionsFactory<Event, ResourceFilter>({
+const FFModelEventActions = createFFListActions<Event, ResourceFilter>({
   actionName: FFReduxActionName.DETAILEVENT,
   fetcher: async (query, getState: GetState, fetchOptions) => {
     let { subRoot, route, clusterVersion } = getState(),

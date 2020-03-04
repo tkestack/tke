@@ -7,7 +7,7 @@ import { connect } from 'react-redux';
 import { allActions } from '../../../actions';
 import { RootProps } from '../../ClusterApp';
 import { downloadCsv, dateFormatter } from '../../../../../../helpers';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 import { isEmpty, includes } from '../../../../common/utils';
 import { Resource } from '../../../models';
 import { router } from '../../../router';

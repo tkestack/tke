@@ -1,5 +1,4 @@
 import { RecordSet, uuid } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/qcloud-redux-query';
 import { ResourceFilter, Resource } from './models';
 import { RequestParams, NamespaceFilter, ResourceInfo, Namespace } from '../common/models';
 import {
@@ -14,8 +13,8 @@ import {
 import { tip } from '@tencent/tea-app/lib/bridge';
 import { CreateResource } from '../cluster/models';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { CommonAPI } from '../common';
 import { resourceConfig } from '../../../config';
+import { QueryState } from '@tencent/ff-redux';
 
 /**
  * 校验当前的日志采集器的名称是否正确

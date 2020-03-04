@@ -1,15 +1,14 @@
 import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState, ContainerLogs } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { router } from '../router';
 import { resourceConfig } from '../../../../config';
-import { NamespaceFilter } from '../../common/models';
 import { cloneDeep } from '../../common/';
+import { NamespaceFilter } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
+import { ContainerLogs, RootState } from '../models';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
 import { resourceActions } from './resourceActions';
-import { Dispatch } from 'react';
 type GetState = () => RootState;
 
 /** 拉取namesapce列表 */

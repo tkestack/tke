@@ -1,4 +1,4 @@
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/ff-redux';
 import * as ActionType from '../constants/ActionType';
 import { RootState } from '../models';
 import { CreateResource } from '../../common';

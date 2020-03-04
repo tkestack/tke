@@ -1,9 +1,6 @@
 import { Clustercredential } from './Clustercredential';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
 import { RecordSet } from '@tencent/qcloud-lib';
-import { ListModel } from '@tencent/redux-list';
+import { FFListModel, FetcherState, QueryState, WorkflowState } from '@tencent/ff-redux';
 import { Region, RegionFilter, Cluster, ClusterFilter } from '../../common/models';
 import { SubRootState } from './SubRoot';
 import { Namespace } from './Namespace';
@@ -21,13 +18,13 @@ export interface RootState {
   /** 路由 */
   route?: RouteState;
 
-  region?: ListModel<Region, RegionFilter>;
+  region?: FFListModel<Region, RegionFilter>;
 
   /** 集群的版本 */
   clusterVersion?: string;
 
   /** 集群的相关配置 */
-  cluster?: ListModel<Cluster, ClusterFilter>;
+  cluster?: FFListModel<Cluster, ClusterFilter>;
 
   clustercredential?: Clustercredential;
 

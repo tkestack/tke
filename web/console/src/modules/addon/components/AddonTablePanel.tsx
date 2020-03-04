@@ -3,7 +3,7 @@ import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import { allActions } from '../actions';
 import { RootProps } from './AddonApp';
-import { TablePanelColumnProps, TablePanel, Clip, LinkButton, Resource } from '../../common';
+import { Clip, LinkButton, Resource } from '../../common';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Text, Bubble, Icon } from '@tencent/tea-component';
 import {
@@ -14,7 +14,7 @@ import {
   AddonStatusEnum
 } from '../constants/Config';
 import { dateFormatter } from '../../../../helpers';
-import { router } from '../router';
+import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

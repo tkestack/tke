@@ -3,23 +3,22 @@ import { connect } from 'react-redux';
 import { RootProps } from './LogStashApp';
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import { allActions } from '../actions';
-import { InputField, LinkButton, SelectList, FormPanel } from '../../common/components';
+import { InputField, LinkButton, SelectList } from '../../common/components';
 import classnames from 'classnames';
 import { logModeList, ResourceListMapForPodLog } from '../constants/Config';
 import { Icon, Text } from '@tencent/tea-component';
 import { cloneDeep } from '../../common/utils/cloneDeep';
 import { router } from '../router';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
+import { FormPanel } from '@tencent/ff-component';
+
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditOriginContainerFilePanel extends React.Component<RootProps, {}> {
   render() {
     let { actions, logStashEdit, route, clusterList, logSelection, namespaceList } = this.props,

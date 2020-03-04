@@ -1,13 +1,9 @@
 import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions, FetchState } from '@tencent/qcloud-redux-fetcher';
-import { generateWorkflowActionCreator, OperationResult, OperationTrigger } from '@tencent/qcloud-redux-workflow';
-import { generateQueryActionCreator, QueryState } from '@tencent/qcloud-redux-query';
+import { generateWorkflowActionCreator, createFFListActions, OperationTrigger } from '@tencent/ff-redux';
 import { RootState, User, UserFilter } from '../models';
-import { ComputerFilter } from '../../cluster/models';
 import * as ActionTypes from '../constants/ActionTypes';
 import * as WebAPI from '../WebAPI';
 import { router } from '../router';
-import { createListAction } from '@tencent/redux-list';
 type GetState = () => RootState;
 export interface AssociatedUserParams {
   id: string;
@@ -33,7 +29,7 @@ const associateUser = generateWorkflowActionCreator<AssociatedUserParams, void>(
 /**
  * 获取策略关联的用户
  */
-const FFModelAssociatedUsersActions = createListAction<User, UserFilter>({
+const FFModelAssociatedUsersActions = createFFListActions<User, UserFilter>({
   actionName: ActionTypes.GetStrategyAssociatedUsers,
   fetcher: async (query, getState: GetState) => {
     let { route } = getState();

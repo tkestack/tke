@@ -1,21 +1,16 @@
-import { combineReducers } from 'redux';
-
-import { RecordSet, reduceToPayload } from '@tencent/qcloud-lib';
+import { createFFListReducer, generateWorkflowReducer } from '@tencent/ff-redux';
+import { reduceToPayload } from '@tencent/qcloud-lib';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
-import { createListReducer } from '@tencent/redux-list';
-
-import { initValidator } from '../../common/models/Validation';
+import { combineReducers } from 'redux';
 import * as ActionType from '../constants/ActionType';
-import { InitApiKey, InitRepo, InitImage, Default_D_URL } from '../constants/Config';
+import { Default_D_URL, InitApiKey, InitImage, InitRepo } from '../constants/Config';
 import { router } from '../router';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
 
   /** 访问凭证相关 */
-  apiKey: createListReducer('apiKey'),
+  apiKey: createFFListReducer('apiKey'),
 
   createApiKey: generateWorkflowReducer({
     actionType: ActionType.CreateApiKey
@@ -32,7 +27,7 @@ export const RootReducer = combineReducers({
   }),
 
   /** 镜像仓库相关 */
-  repo: createListReducer('repo'),
+  repo: createFFListReducer('repo'),
 
   createRepo: generateWorkflowReducer({
     actionType: ActionType.CreateRepo
@@ -45,7 +40,7 @@ export const RootReducer = combineReducers({
   }),
 
   /** 镜像相关 */
-  image: createListReducer('image'),
+  image: createFFListReducer('image'),
 
   createImage: generateWorkflowReducer({
     actionType: ActionType.CreateImage

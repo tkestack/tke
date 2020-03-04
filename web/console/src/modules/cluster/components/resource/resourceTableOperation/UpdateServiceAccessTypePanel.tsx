@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow, FetchState } from '@tencent/ff-redux';
 import { Button } from '@tea/component';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { allActions } from '../../../actions';
@@ -13,7 +13,6 @@ import { EditServiceCommunicationPanel } from '../resourceEdition/EditServiceCom
 import { EditServicePortMapPanel } from '../resourceEdition/EditServicePortMapPanel';
 import { router } from '../../../router';
 import { validateServiceActions } from '../../../actions/validateServiceActions';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
 import { ServiceTypeMap } from '../resourceEdition/EditServicePanel';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { EditServiceAdvanceSettingPanel } from '../resourceEdition/EditServiceAdvanceSettingPanel';
@@ -32,10 +31,7 @@ interface UpdateServiceAccessTypePanelState {
 let mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class UpdateServiceAccessTypePanel extends React.Component<RootProps, UpdateServiceAccessTypePanelState> {
   constructor(props, context) {
     super(props, context);

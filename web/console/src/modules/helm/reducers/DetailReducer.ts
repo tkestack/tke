@@ -2,7 +2,7 @@ import { combineReducers } from 'redux';
 import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowReducer } from '@tencent/ff-redux';
 import * as ActionType from '../constants/ActionType';
 import * as initState from './initState';
 import { HelmHistory } from '../models';

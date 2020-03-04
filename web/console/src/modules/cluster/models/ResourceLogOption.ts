@@ -1,6 +1,5 @@
-import { QueryState } from '@tencent/qcloud-redux-query';
 import { ResourceFilter, Resource } from './ResourceOption';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
+import { FetcherState, QueryState } from '@tencent/ff-redux';
 import { RecordSet } from '@tencent/qcloud-lib';
 import { Pod } from './Pod';
 import { PodLogFilter } from './ResourceDetailState';

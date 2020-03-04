@@ -3,20 +3,20 @@ import * as React from 'react';
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import { Bubble, Button, Icon, Modal, StatusTip, Table, TableColumn, Text } from '@tea/component';
 import { deepClone } from '@tencent/qcloud-lib';
-import { isSuccessWorkflow, OperationState } from '@tencent/qcloud-redux-workflow';
+import { isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { autotip } from '@tencent/tea-component/lib/table/addons';
 
 import { dateFormatter } from '../../../../helpers';
 import { getWorkflowError } from '../../common';
-import { FormItem, FormPanel, TablePanel, WorkflowDialog } from '../../common/components';
+import { WorkflowDialog } from '../../common/components';
 import { DialogBodyLayout } from '../../common/layouts';
 import { resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
-import { ProjectResourceLimit } from '../models/Project';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
 import { EditProjectManagerPanel } from './EditProjectManagerPanel';
 import { EditProjectNamePanel } from './EditProjectNamePanel';
 import { RootProps } from './ProjectApp';
+import { FormPanel } from '@tencent/ff-component';
 
 export class ProjectDetailPanel extends React.Component<RootProps, {}> {
   state = {

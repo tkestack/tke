@@ -1,5 +1,5 @@
 import { router } from './../router';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowReducer } from '@tencent/ff-redux';
 import { combineReducers } from 'redux';
 import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
@@ -8,7 +8,7 @@ import * as ActionType from '../constants/ActionType';
 import { Namespace, Resource } from '../models';
 import { SubReducer } from './SubReducer';
 import { FFReduxActionName } from '../constants/Config';
-import { createListReducer } from '@tencent/redux-list';
+import { createFFListReducer } from '@tencent/ff-redux';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
@@ -25,7 +25,7 @@ export const RootReducer = combineReducers({
     }
   }),
 
-  cluster: createListReducer(FFReduxActionName.CLUSTER),
+  cluster: createFFListReducer(FFReduxActionName.CLUSTER),
 
   clusterVersion: reduceToPayload(ActionType.ClusterVersion, '1.16'),
 
@@ -47,7 +47,7 @@ export const RootReducer = combineReducers({
 
   projectSelection: reduceToPayload(ActionType.ProjectSelection, ''),
 
-  region: createListReducer(FFReduxActionName.REGION),
+  region: createFFListReducer(FFReduxActionName.REGION),
 
   subRoot: SubReducer,
 

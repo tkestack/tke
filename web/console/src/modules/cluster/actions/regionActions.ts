@@ -7,12 +7,12 @@ import { router } from '../router';
 import { CommonAPI } from '../../common/webapi';
 import { Region, RegionFilter } from '../../common';
 import { FFReduxActionName } from '../constants/Config';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 
 type GetState = () => RootState;
 
 /** 地域列表的Actions */
-const FFModelRegionActions = createListAction<Region, RegionFilter>({
+const FFModelRegionActions = createFFListActions<Region, RegionFilter>({
   actionName: FFReduxActionName.REGION,
   fetcher: async query => {
     let response = await CommonAPI.fetchRegionList(query);

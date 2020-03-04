@@ -1,16 +1,15 @@
 import * as React from 'react';
 import { Table, TableProps, Card, Pagination } from '@tea/component';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
 import { autotip } from '@tencent/tea-component/lib/table/addons/autotip';
 import { StatusTip } from '@tencent/tea-component/lib/tips';
-import { ListModel, ListAction } from '@tencent/redux-list';
+import { FFListModel, FFListAction, FetchState } from '@tencent/ff-redux';
 
 interface GridTableProps extends TableProps {
   /** 列表的相关配置，包含list、query等 */
-  listModel: ListModel;
+  listModel: FFListModel;
 
   /** fetcher、query相关的action，包含select、selects、clear等 */
-  actionOptions: ListAction;
+  actionOptions: FFListAction;
 
   /** 空列表的相关提示，不传默认为 暂无数据 */
   emptyTips?: React.ReactNode;

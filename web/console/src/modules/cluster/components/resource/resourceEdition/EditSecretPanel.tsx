@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
 import { Button, Table, TableColumn, Bubble } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow, FetchState } from '@tencent/ff-redux';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import * as classnames from 'classnames';
@@ -45,10 +44,7 @@ interface EditSecretPanelState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditSecretPanel extends React.Component<RootProps, EditSecretPanelState> {
   constructor(props, context) {
     super(props, context);
@@ -377,10 +373,7 @@ export class EditSecretPanel extends React.Component<RootProps, EditSecretPanelS
 
 /** secret 内容的展示 key value的形式 */
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 class EditSecretDataForOpaque extends React.Component<RootProps, {}> {
   render() {
     let { actions } = this.props;

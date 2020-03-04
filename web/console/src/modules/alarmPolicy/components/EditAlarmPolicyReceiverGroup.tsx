@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RootProps } from './AlarmPolicyApp';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 import { Text, ExternalLink } from '@tea/component';
 import {
   FormItem,

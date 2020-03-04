@@ -1,22 +1,19 @@
+import { FetchState } from '@tencent/ff-redux';
+import { bindActionCreators } from '@tencent/qcloud-lib';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Bubble, Button, Justify, Table, Text } from '@tencent/tea-component';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { allActions } from '../actions';
-import { RootProps } from './AddonApp';
 import { router } from '../router';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { Table, Justify, Button, SearchBox, Bubble, Text } from '@tencent/tea-component';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { RootProps } from './AddonApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class AddonActionPanel extends React.Component<RootProps, any> {
   render() {
     let { actions, cluster, route, openAddon } = this.props,

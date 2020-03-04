@@ -9,7 +9,7 @@ import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter } from '../../../../../../helpers';
-import { Clip, HeadBubble, LinkButton, TablePanel } from '../../../../common/components';
+import { Clip, HeadBubble, LinkButton } from '../../../../common/components';
 import { DisplayFiledProps, OperatorProps } from '../../../../common/models';
 import { includes, isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
@@ -18,6 +18,7 @@ import { Resource } from '../../../models';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { resourceLimitTypeToText, resourceTypeToUnit } from '@src/modules/project/constants/Config';
+import { TablePanel } from '@tencent/ff-component';
 
 /** 判断resource是否需要展示loading状态
  * @param resourceName: string  资源的名称，如deployment

@@ -3,7 +3,7 @@ import * as classnames from 'classnames';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { TipInfo } from '../../../../common/components';
 import { getWorkflowError } from '../../../../common/utils';
 import { Computer, CreateResource } from '../../../models';

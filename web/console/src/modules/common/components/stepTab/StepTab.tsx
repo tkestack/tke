@@ -3,7 +3,7 @@ import { BaseReactProps, isComponentOfType, slide } from '@tencent/qcloud-lib';
 import { Step } from './Step';
 import * as ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import { Button } from '@tea/component';
-import { WorkflowState, OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { WorkflowState, OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { TipInfo, ErrorGuide, ErrorTip } from '..';
 import { getWorkflowError } from '../../utils';
 import { FormLayout } from '../../layouts';

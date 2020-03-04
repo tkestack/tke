@@ -1,23 +1,19 @@
-import * as classnames from 'classnames';
+import { FormPanel } from '@tencent/ff-component';
+import { isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
+import { bindActionCreators, deepClone } from '@tencent/qcloud-lib';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Alert, Bubble, Button, Icon, Modal, Text } from '@tencent/tea-component';
 import * as React from 'react';
 import { connect } from 'react-redux';
-
-import { bindActionCreators, deepClone } from '@tencent/qcloud-lib';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Bubble, Icon, Select, Text, Button, Alert, Modal } from '@tencent/tea-component';
-
-import { FormItem, FormPanel, InputField, LinkButton } from '../../common/components';
-import { FormLayout } from '../../common/layouts';
+import { getWorkflowError } from '../../common';
 import { allActions } from '../actions';
+import { projectActions } from '../actions/projectActions';
 import { resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
+import { ProjectResourceLimit } from '../models/Project';
+import { router } from '../router';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
 import { EditProjectManagerPanel } from './EditProjectManagerPanel';
 import { RootProps } from './ProjectApp';
-import { getWorkflowError } from '../../common';
-import { router } from '../router';
-import { projectActions } from '../actions/projectActions';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { ProjectResourceLimit } from '../models/Project';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {

@@ -1,7 +1,6 @@
 import { initAllcationRatioEdition } from './../constants/initState';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions, generateFetcherActionCreator, FetchOptions } from '@tencent/ff-redux';
 import { extend, uuid } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 import { RootState, DialogNameEnum } from '../models';
 import * as ActionType from '../constants/ActionType';
@@ -72,7 +71,7 @@ const clusterInfoActions = extend(fetchClusterInfoActions, queryClusterInfoActio
 /** =================================================================================== */
 
 /** 集群列表的Actions */
-const FFModelClusterActions = createListAction<Cluster, ClusterFilter>({
+const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchClusterList(query, query.filter.regionId);

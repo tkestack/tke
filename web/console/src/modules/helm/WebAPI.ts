@@ -1,23 +1,22 @@
-import { ResourceFilter, Resource } from '@src/modules/common';
+import { Resource, ResourceFilter } from '@src/modules/common';
+import { OperationResult, QueryState } from '@tencent/ff-redux';
 import { RecordSet, uuid } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { OperationResult } from '@tencent/qcloud-redux-workflow';
+import { t } from '@tencent/tea-app/lib/i18n';
+import * as JsYAML from 'js-yaml';
+import { resourceConfig } from '../../../config';
+import { reduceK8sRestfulPath, reduceNetworkRequest } from '../../../helpers';
+import { RequestParams, ResourceInfo } from '../common/models';
+import { ClusterHelmStatus } from './constants/Config';
 import {
   Helm,
   HelmFilter,
   HelmHistory,
-  TencenthubChart,
+  HelmKeyValue,
   InstallingHelm,
-  TencenthubNamespace,
+  TencenthubChart,
   TencenthubChartVersion,
-  HelmKeyValue
+  TencenthubNamespace
 } from './models';
-import { RequestParams, ResourceInfo } from '../common/models';
-import { ClusterHelmStatus } from './constants/Config';
-import { reduceNetworkRequest, reduceK8sRestfulPath } from '../../../helpers';
-import * as JsYAML from 'js-yaml';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { resourceConfig } from '../../../config';
 
 // 提示
 const tips = seajs.require('tips');
@@ -418,7 +417,7 @@ export async function ignoreInstallingHelm(params: { helmName: string }, regionI
  * @param query helm列表查询的一些过滤条件
  */
 export async function fetchHelmList(query: QueryState<HelmFilter>, regionId: number = 1, clusterId: string) {
-  let { date, search, filter, paging, sort } = query;
+  let { paging } = query;
 
   let resourceInfo: ResourceInfo = resourceConfig()['cluster'];
   let url = `${reduceK8sRestfulPath({

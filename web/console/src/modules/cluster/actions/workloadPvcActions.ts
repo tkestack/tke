@@ -1,5 +1,5 @@
 import { extend } from '@tencent/qcloud-lib';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
+import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 import { RootState, ResourceFilter, Resource } from '../models';
 import * as WebAPI from '../WebAPI';

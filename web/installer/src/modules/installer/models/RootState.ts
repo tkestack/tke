@@ -1,7 +1,7 @@
 import { Identifiable } from '@tencent/qcloud-lib';
 import { FetcherState } from '@tencent/qcloud-redux-fetcher';
 import { Record, Validation } from '../../common/models';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { WorkflowState } from '@tencent/ff-redux';
 
 type ClusterEditWorkflow = WorkflowState<EditState, void>;
 

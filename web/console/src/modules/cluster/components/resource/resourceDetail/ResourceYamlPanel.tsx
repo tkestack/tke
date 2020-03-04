@@ -4,7 +4,7 @@ import { bindActionCreators } from '@tencent/qcloud-lib';
 import { allActions } from '../../../actions';
 import { RootProps } from '../../ClusterApp';
 import { YamlEditorPanel } from '../YamlEditorPanel';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Card, Select, Row, Col } from '@tencent/tea-component';
 
@@ -19,10 +19,7 @@ const loadingElement: JSX.Element = (
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceYamlPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions, subRoot } = this.props,

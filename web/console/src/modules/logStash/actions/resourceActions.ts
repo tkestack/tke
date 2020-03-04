@@ -1,15 +1,13 @@
 import { extend } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
-import { RootState, CkafkaFilter, CTopicFilter, ResourceFilter, ContainerLogs } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
+import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { ResourceInfo } from '../../common/models';
 import { resourceConfig } from '../../../../config';
-import { editLogStashActions } from './editLogStashActions';
-import { logModeList } from '../constants/Config';
-import { WorkLoadList } from '../models/Resource';
 import { CommonAPI } from '../../../../src/modules/common';
+import { ResourceInfo } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
+import { ContainerLogs, ResourceFilter, RootState } from '../models';
+import { WorkLoadList } from '../models/Resource';
+import { editLogStashActions } from './editLogStashActions';
 
 type GetState = () => RootState;
 

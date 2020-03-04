@@ -1,14 +1,13 @@
 import { combineReducers } from 'redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowReducer, createFFListReducer } from '@tencent/ff-redux';
 import * as ActionTypes from '../constants/ActionTypes';
 import { router } from '../router';
 import { reduceToPayload } from '@tencent/qcloud-lib';
-import { createListReducer } from '@tencent/redux-list';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
-  userList: createListReducer(ActionTypes.UserList),
+  userList: createFFListReducer(ActionTypes.UserList),
   addUserWorkflow: generateWorkflowReducer({
     actionType: ActionTypes.AddUser
   }),
@@ -25,9 +24,9 @@ export const RootReducer = combineReducers({
     initialData: {}
   }),
 
-  userStrategyList: createListReducer(ActionTypes.UserStrategyList),
+  userStrategyList: createFFListReducer(ActionTypes.UserStrategyList),
 
-  strategyList: createListReducer(ActionTypes.StrategyList),
+  strategyList: createFFListReducer(ActionTypes.StrategyList),
   addStrategyWorkflow: generateWorkflowReducer({
     actionType: ActionTypes.AddStrategy
   }),
@@ -47,7 +46,7 @@ export const RootReducer = combineReducers({
     actionType: ActionTypes.GetCategories,
     initialData: {}
   }),
-  associatedUsersList: createListReducer(ActionTypes.GetStrategyAssociatedUsers),
+  associatedUsersList: createFFListReducer(ActionTypes.GetStrategyAssociatedUsers),
   removeAssociatedUser: generateWorkflowReducer({
     actionType: ActionTypes.RemoveAssociatedUser
   }),

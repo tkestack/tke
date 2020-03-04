@@ -1,6 +1,3 @@
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
 import { RecordSet } from '@tencent/qcloud-lib';
 import { ResourceInfo } from '../../common/models';
 import {
@@ -22,6 +19,7 @@ import {
 import { DetailResourceOption } from './DetailResourceOption';
 import { AllocationRatioEdition } from './AllocationRatioEdition';
 import { AddonStatus } from './Addon';
+import { FetcherState, QueryState, WorkflowState } from '@tencent/ff-redux';
 
 type ResourceModifyWorkflow = WorkflowState<CreateResource, number | any>;
 

@@ -1,27 +1,23 @@
-import * as React from 'react';
-import { Button, Switch, Bubble, ExternalLink, ContentView, Justify, Icon, Alert, Text } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { Alert, Button, ContentView, Icon, Justify, Switch, Text } from '@tea/component';
+import { FetchState, isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
+import { t } from '@tencent/tea-app/lib/i18n';
+import * as React from 'react';
 import { connect } from 'react-redux';
-import { RootProps } from './PersistentEventApp';
+import { InputField } from '../../common/components';
+import { FormPanel } from '@tencent/ff-component';
+import { getWorkflowError } from '../../common/utils';
 import { allActions } from '../actions';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { InputField, TipInfo, FormPanel } from '../../common/components';
-import { getWorkflowError, includes } from '../../common/utils';
-import { router } from '../router';
-import { PersistentEventDeleteDialog } from './PersistentEventDeleteDialog';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { validatorActions } from '../actions/validatorActions';
-import { EsInfo, PeEditJSONYaml, CreateResource } from '../models';
-import { Resource } from '../../common';
+import { CreateResource, EsInfo, PeEditJSONYaml } from '../models';
+import { router } from '../router';
+import { RootProps } from './PersistentEventApp';
+import { PersistentEventDeleteDialog } from './PersistentEventDeleteDialog';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditPersistentEventPanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
     let { actions } = this.props;

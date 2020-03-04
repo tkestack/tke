@@ -11,11 +11,11 @@ import { validatorActions } from './validatorActions';
 import { resourceActions } from '../../notify/actions/resourceActions';
 import { initValidator } from '../../common/models';
 import { userActions } from '../../uam/actions/userActions';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 
 type GetState = () => RootState;
 
-const _alarmPolicyActions = createListAction<AlarmPolicy, AlarmPolicyFilter>({
+const _alarmPolicyActions = createFFListActions<AlarmPolicy, AlarmPolicyFilter>({
   actionName: 'AlarmPolicy',
   fetcher: async (query, getstate: GetState) => {
     const response = await WebAPI.fetchAlarmPolicy(query);

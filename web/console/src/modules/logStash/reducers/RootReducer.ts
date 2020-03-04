@@ -7,11 +7,10 @@ import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { Region, Cluster, initValidator, NamespaceFilter } from '../../common/models';
 import { initRegionInfo, initLogDaemonsetStatus } from '../constants/initState';
 import { Log } from '../models';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowReducer, createFFListReducer } from '@tencent/ff-redux';
 import { LogStashEditReducer } from './LogStashEditReducer';
 import { Namespace } from 'react-i18next';
 import { LogDaemonset } from '../models/LogDaemonset';
-import { createListReducer } from '@tencent/redux-list';
 import { FFReduxActionName } from '../constants/Config';
 
 export const RootReducer = combineReducers({
@@ -105,5 +104,5 @@ export const RootReducer = combineReducers({
 
   logStashEdit: LogStashEditReducer,
 
-  openAddon: createListReducer(FFReduxActionName.OPENADDON)
+  openAddon: createFFListReducer(FFReduxActionName.OPENADDON)
 });

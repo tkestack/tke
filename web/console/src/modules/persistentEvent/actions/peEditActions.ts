@@ -1,6 +1,6 @@
 import { ReduxAction } from '@tencent/qcloud-lib';
 import * as ActionType from '../constants/ActionType';
-import { FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import { FetchOptions } from '@tencent/ff-redux';
 import { RootState, EsInfo } from '../models';
 import { Resource } from '../../common';
 

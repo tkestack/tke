@@ -5,17 +5,15 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import { allActions } from '../../../actions/';
-import { FormPanel, WorkflowDialog, cloneDeep, CreateResource, InputField } from '../../../../common';
+import { WorkflowDialog, cloneDeep, CreateResource, InputField } from '../../../../common';
 import { resourceConfig } from '../../../../../../config';
 import * as classnames from 'classnames';
+import { FormPanel } from '@tencent/ff-component';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceGrayUpgradeDialog extends React.Component<RootProps, {}> {
   render() {
     const { actions, region, clusterVersion, route } = this.props;

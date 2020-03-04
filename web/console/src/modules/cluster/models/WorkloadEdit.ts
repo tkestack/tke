@@ -1,9 +1,8 @@
 import { Computer } from './Computer';
 import { Identifiable, RecordSet } from '@tencent/qcloud-lib';
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
 import { Validation } from '../../common/models';
 import { VolumeItem, Resource, ResourceFilter, ConfigItems, ContainerItem } from '../models';
+import { FetcherState, QueryState } from '@tencent/ff-redux';
 
 export interface WorkloadEdit extends Identifiable {
   /** workload name */

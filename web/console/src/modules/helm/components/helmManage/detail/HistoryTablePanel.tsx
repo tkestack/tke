@@ -6,11 +6,12 @@ import { allActions } from '../../../actions';
 import { HelmHistory } from '../../../models';
 import { RootProps } from '../../HelmApp';
 import classNames from 'classnames';
-import { TablePanel, TablePanelColumnProps, LinkButton } from '../../../../common/components';
+import { LinkButton } from '../../../../common/components';
 import { DialogBodyLayout } from '../../../../common/layouts';
 import { helmStatus } from '../../../constants/Config';
 import { dateFormatter } from '../../../../../../helpers';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
@@ -22,10 +23,7 @@ interface State {
   rollbackHistory?: HelmHistory;
 }
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class HistoryTablePanel extends React.Component<RootProps, State> {
   state = {
     showRollbackDialog: false,

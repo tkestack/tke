@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { Modal, Button } from '@tea/component';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 import { RootProps } from '../../ClusterApp';
 import { connect } from 'react-redux';
 import { allActions } from '../../../actions';
@@ -26,10 +26,7 @@ const loadingElement: JSX.Element = (
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditServiceWorkloadDialog extends React.Component<RootProps, {}> {
   render() {
     let { actions, subRoot } = this.props,

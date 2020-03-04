@@ -1,4 +1,4 @@
-import { OperationResult } from '@tencent/qcloud-redux-workflow';
+import { OperationResult } from '@tencent/ff-redux';
 
 // 返回标准操作结果
 export const operationResult = <T>(target: T[] | T, error?: any): OperationResult<T>[] => {

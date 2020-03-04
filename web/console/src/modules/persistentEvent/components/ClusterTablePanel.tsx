@@ -5,12 +5,13 @@ import { connect } from 'react-redux';
 import { allActions } from '../actions';
 import { RootProps } from './PersistentEventApp';
 import { clsRegionMap } from '../../logStash/constants/Config';
-import { Clip, LinkButton, TablePanel, TablePanelColumnProps } from '../../common/components';
+import { Clip, LinkButton } from '../../common/components';
 import { router } from '../router';
 import { peStatus, isNeedPollPE } from '../constants/Config';
 import { includes } from '../../common/utils';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Resource } from '../../common';
+import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
 
 const routerSea = seajs.require('router');
 

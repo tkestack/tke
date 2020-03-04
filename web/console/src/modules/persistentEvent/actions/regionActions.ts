@@ -1,16 +1,12 @@
+import { createFFListActions, FetchOptions, getRegionId } from '@tencent/ff-redux';
 import { extend } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
-import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState } from '../models';
-import * as ActionType from '../constants/ActionType';
-import { getRegionId } from '@tencent/qcloud-nmc';
 import { assureRegion, setRegionId } from '../../../../helpers';
+import { Region, RegionFilter } from '../../common';
+import { CommonAPI } from '../../common/webapi';
+import { FFReduxActionName } from '../constants/Config';
+import { RootState } from '../models';
 import { router } from '../router';
 import { clusterActions } from './clusterActions';
-import { CommonAPI } from '../../common/webapi';
-import { createListAction } from '@tencent/redux-list';
-import { Region, RegionFilter } from '../../common';
-import { FFReduxActionName } from '../constants/Config';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
@@ -18,7 +14,7 @@ const fetchOptions: FetchOptions = {
 };
 
 /** 地域列表的Actions */
-const ListRegionActions = createListAction<Region, RegionFilter>({
+const ListRegionActions = createFFListActions<Region, RegionFilter>({
   actionName: FFReduxActionName.REGION,
   fetcher: async query => {
     let response = await CommonAPI.fetchRegionList(query);

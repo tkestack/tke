@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { OperationState, isSuccessWorkflow, FetchState } from '@tencent/ff-redux';
 import { Button } from '@tea/component';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { allActions } from '../../../actions';
@@ -27,10 +26,7 @@ const loadingElement = (
 let mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class UpdateWorkloadPodNumPanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
     let { actions } = this.props;

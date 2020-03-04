@@ -5,7 +5,7 @@ import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { allActions } from '../actions';
 import { connect } from 'react-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { FormPanel } from '@src/modules/common';
+import { FormPanel } from '@tencent/ff-component';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

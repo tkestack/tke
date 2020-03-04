@@ -1,4 +1,4 @@
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/ff-redux';
 import { router } from '../router';
 import * as ActionType from '../constants/ActionType';
 import * as WebAPI from '../WebAPI';

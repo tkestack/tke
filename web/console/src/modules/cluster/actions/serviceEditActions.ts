@@ -1,7 +1,7 @@
 import { SessionAffinity } from './../constants/Config';
 import { ReduxAction, uuid, extend } from '@tencent/qcloud-lib';
 import * as ActionType from '../constants/ActionType';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
+import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
 import * as WebAPI from '../WebAPI';
 import { RootState, PortMap, Selector, Resource, ServicePorts, CLB } from '../models';
 import { cloneDeep } from '../../common/utils';

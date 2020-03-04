@@ -1,11 +1,8 @@
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { WorkflowState, FFListModel, FetcherState, QueryState } from '@tencent/ff-redux';
 import { RecordSet } from '@tencent/qcloud-lib';
 import { Region, RegionFilter, ResourceInfo, Resource, ResourceFilter } from '../../common';
 import { RouteState } from '../../../../helpers';
 import { PeEdit, CreateResource } from './';
-import { ListModel } from '@tencent/redux-list';
 
 type PeModifyWorkflow = WorkflowState<CreateResource, number>;
 
@@ -14,10 +11,10 @@ export interface RootState {
   route?: RouteState;
 
   /** 地域列表 */
-  region?: ListModel<Region, RegionFilter>;
+  region?: FFListModel<Region, RegionFilter>;
 
   /** 集群列表 */
-  cluster?: ListModel<Resource, ResourceFilter>;
+  cluster?: FFListModel<Resource, ResourceFilter>;
 
   /** PersistentEvent的列表 */
   peList?: FetcherState<RecordSet<Resource>>;

@@ -1,4 +1,4 @@
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
+import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
 import { extend, ReduxAction } from '@tencent/qcloud-lib';
 import * as ActionType from '../constants/ActionType';
 import { RootState } from '../models/RootState';

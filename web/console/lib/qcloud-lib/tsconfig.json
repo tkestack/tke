@@ -1,5 +1,0 @@
-﻿{
-  "compilerOptions": { "module": "commonjs", "target": "es6", "outDir": "dist", "declaration": true },
-  "exclude": ["node_modules", "typings/browser", "typings/browser.d.ts"],
-  "compileOnSave": false
-}

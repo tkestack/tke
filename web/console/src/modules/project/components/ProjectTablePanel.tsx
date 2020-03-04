@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { Bubble, Drawer, TableColumn, Text, Icon } from '@tea/component';
 import { bindActionCreators } from '@tencent/qcloud-lib';
-import { OperationState, WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { OperationState, WorkflowState } from '@tencent/ff-redux';
 import ChartPanel from '@tencent/tchart';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
@@ -25,10 +25,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ProjectTablePanel extends React.Component<RootProps, any> {
   state = {
     monitorPanelProps: undefined,

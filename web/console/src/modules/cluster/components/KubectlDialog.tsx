@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { RootProps } from './ClusterApp';
 import { Modal, Button, Switch, Alert, Text } from '@tea/component';
-import { FormPanel, Clip } from '../../common/components';
+import { Clip } from '../../common/components';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import { allActions } from '../actions';
@@ -9,6 +9,7 @@ import { connect } from 'react-redux';
 import { Cluster } from '../../common/models';
 import { downloadCrt } from '../../../../helpers';
 import { DialogNameEnum } from '../models';
+import { FormPanel } from '@tencent/ff-component';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {

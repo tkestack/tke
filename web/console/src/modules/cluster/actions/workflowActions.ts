@@ -1,11 +1,6 @@
 import { clusterCreationAction } from './clusterCreationAction';
 import { extend } from '@tencent/qcloud-lib';
-import {
-  generateWorkflowActionCreator,
-  isSuccessWorkflow,
-  OperationHooks,
-  OperationTrigger
-} from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowActionCreator, isSuccessWorkflow, OperationHooks, OperationTrigger } from '@tencent/ff-redux';
 import * as ActionType from '../constants/ActionType';
 import { CreateResource, RootState, CreateIC, DifferentInterfaceResourceOperation } from '../models';
 import { router } from '../router';

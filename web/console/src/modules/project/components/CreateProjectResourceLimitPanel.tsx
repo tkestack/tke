@@ -1,13 +1,12 @@
-import * as React from 'react';
-import { RootProps } from './ProjectApp';
-import { InputField, FormPanel, LinkButton } from '../../common/components';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Row, Col, Bubble, Input, InputAdorment, Select, Button, Alert } from '@tencent/tea-component';
-import { ProjectResourceLimit } from '../models/Project';
-import { uuid, deepClone } from '@tencent/qcloud-lib';
-import { resourceLimitTypeList, resourceTypeToUnit, initProjectResourceLimit } from '../constants/Config';
-
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
+import { deepClone, uuid } from '@tencent/qcloud-lib';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Alert, Bubble, Button, Col, Input, InputAdorment, Row, Select } from '@tencent/tea-component';
+import * as React from 'react';
+import { LinkButton } from '../../common/components';
+import { initProjectResourceLimit, resourceLimitTypeList, resourceTypeToUnit } from '../constants/Config';
+import { ProjectResourceLimit } from '../models/Project';
+
 interface CreateProjectResourceLimitPanelPorps {
   resourceLimits: ProjectResourceLimit[];
   parentResourceLimits: {

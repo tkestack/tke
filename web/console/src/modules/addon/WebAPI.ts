@@ -1,4 +1,3 @@
-import { QueryState } from '@tencent/qcloud-redux-query';
 import { ResourceInfo, RequestParams, CreateResource, UserDefinedHeader, Resource, ResourceFilter } from '../common';
 import { apiServerVersion } from '../../../config';
 import {

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { RootProps } from '../../ClusterApp';
 import { Button, Modal, Text, Bubble } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { TipInfo, FormPanel } from '../../../../common/components';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
+import { TipInfo } from '../../../../common/components';
 import { getWorkflowError, isEmpty } from '../../../../common/utils';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
@@ -11,6 +11,8 @@ import { connect } from 'react-redux';
 import { validatorActions } from '../../../actions/validatorActions';
 import { CreateResource } from 'src/modules/common';
 import { resourceConfig } from '../../../../../../config';
+import { FormPanel } from '@tencent/ff-component';
+
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 

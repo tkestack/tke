@@ -1,13 +1,14 @@
 import * as React from 'react';
-import { FormPanel, Clip } from '../../../../common/components';
+import { Clip } from '../../../../common/components';
 import { RootProps } from '../../ClusterApp';
 import { Icon, Text, Button } from '@tencent/tea-component';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 import { Cluster } from '../../../../common';
 import { ClusterStatus } from '../../clusterManage/ClusterTablePanel';
 import { dateFormatter } from '../../../../../../helpers';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { DialogNameEnum } from '../../../models';
+import { FormPanel } from '@tencent/ff-component';
 
 export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> {
   render() {
