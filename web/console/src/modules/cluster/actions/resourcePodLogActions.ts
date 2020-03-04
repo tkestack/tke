@@ -1,5 +1,5 @@
 import { ReduxAction, extend } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import { generateFetcherActionCreator, FetchOptions } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 import { RootState, PodLogFilter } from '../models';
 import * as ActionType from '../constants/ActionType';

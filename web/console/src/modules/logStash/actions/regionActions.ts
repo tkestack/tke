@@ -1,11 +1,11 @@
 import { extend } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
-import { RootState } from '../models';
-import * as ActionType from '../constants/ActionType';
-import { CommonAPI } from '../../../modules/common/webapi';
-import { getRegionId } from '@tencent/qcloud-nmc';
-import { assureRegion, setRegionId } from '../../../../helpers';
+import { getRegionId } from '@tencent/ff-redux';
+import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+import { assureRegion, setRegionId } from '../../../../helpers';
+import { CommonAPI } from '../../../modules/common/webapi';
+import * as ActionType from '../constants/ActionType';
+import { RootState } from '../models';
 import { router } from '../router';
 import { clusterActions } from './clusterActions';
 

@@ -1,5 +1,4 @@
 import { RouteState } from '../../../../helpers/Router';
-import { QueryState } from '@tencent/qcloud-redux-query';
 import {
   RegionFilter,
   Region,
@@ -10,14 +9,13 @@ import {
   Resource,
   ResourceFilter
 } from '../../common/models';
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
 import { RecordSet } from '@tencent/qcloud-lib';
 import { LogFilter, Log } from './LogStatsh';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { WorkflowState } from '@tencent/ff-redux';
 import { LogStashEdit } from './LogStashEdit';
 import { CreateResource } from 'src/modules/cluster/models';
 import { LogDaemonset, LogDaemonSetFliter, LogDaemonSetStatus } from './LogDaemonset';
-import { ListModel } from '@tencent/redux-list';
+import { FFListModel, FetcherState, QueryState } from '@tencent/ff-redux';
 
 type LogOpenDeployWorkflow = WorkflowState<CreateResource, number>;
 type ModifyLogStashWorkflow = WorkflowState<CreateResource, number>;
@@ -93,5 +91,5 @@ export interface RootState {
   isFetchDoneSpecificLog?: boolean;
 
   /** 集群下的addon列表 */
-  openAddon?: ListModel<Resource, ResourceFilter>;
+  openAddon?: FFListModel<Resource, ResourceFilter>;
 }

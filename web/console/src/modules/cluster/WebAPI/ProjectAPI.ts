@@ -5,7 +5,7 @@ import { Method, reduceNetworkRequest } from './../../../../helpers/reduceNetwor
 import { reduceK8sRestfulPath } from '../../../../helpers';
 import { RequestParams, Resource } from '../../../modules/common';
 import { uuid, RecordSet } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/qcloud-redux-query';
+import { QueryState } from '@tencent/ff-redux';
 
 //业务控制台api
 

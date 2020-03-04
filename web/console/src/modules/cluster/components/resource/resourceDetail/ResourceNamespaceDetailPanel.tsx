@@ -1,22 +1,17 @@
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
+import { resourceLimitTypeToText, resourceTypeToUnit } from '@src/modules/project/constants/Config';
+import { Bubble, Text } from '@tea/component';
+import { FetchState } from '@tencent/ff-redux';
+import { bindActionCreators } from '@tencent/qcloud-lib';
+import { t } from '@tencent/tea-app/lib/i18n';
 import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
-
-import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
-import { resourceLimitTypeToText, resourceTypeToUnit } from '@src/modules/project/constants/Config';
-import { Bubble, Table, TableColumn, Text } from '@tea/component';
-import { stylize } from '@tea/component/table/addons/stylize';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-
 import { dateFormatter } from '../../../../../../helpers';
-import { LinkButton, ListItem } from '../../../../common/components';
+import { ListItem } from '../../../../common/components';
 import { DetailLayout } from '../../../../common/layouts';
-import { isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { ResourceStatus } from '../../../constants/Config';
-import { Resource } from '../../../models';
 import { RootProps } from '../../ClusterApp';
 
 const loadingElement: JSX.Element = (

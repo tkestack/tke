@@ -1,7 +1,7 @@
 import { ResourceFilter } from './../models/ResourceOption';
 import { ResourceInfo } from './../../common/models/ResourceInfo';
 import { RecordSet, extend, ReduxAction } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import { generateFetcherActionCreator, FetchOptions } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 import { Computer, ComputerFilter, RootState } from '../models';
 import * as ActionType from '../constants/ActionType';

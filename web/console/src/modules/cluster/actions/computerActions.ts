@@ -3,19 +3,18 @@ import { DialogNameEnum } from './../models';
 import { ComputerLabel, ComputerFilter } from './../models/Computer';
 import { cloneDeep } from './../../common/utils/cloneDeep';
 import { extend, uuid, RecordSet } from '@tencent/qcloud-lib';
-import { FetchOptions } from '@tencent/qcloud-redux-fetcher';
 import { RootState, Computer, Resource } from '../models';
 import * as ActionType from '../constants/ActionType';
 import { initValidator, ResourceInfo } from '../../common/models';
 import { FFReduxActionName } from '../constants/Config';
 import { resourceConfig } from '../../../../config';
 import * as WebAPI from '../WebAPI';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 
 type GetState = () => RootState;
 
 /** 节点列表的actions */
-const FFModelComputerActions = createListAction<Computer, ComputerFilter>({
+const FFModelComputerActions = createFFListActions<Computer, ComputerFilter>({
   actionName: FFReduxActionName.COMPUTER,
   fetcher: async (query, getState: GetState) => {
     let { clusterVersion } = getState();

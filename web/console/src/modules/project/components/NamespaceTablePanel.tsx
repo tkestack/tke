@@ -4,7 +4,7 @@ import { getWorkflowError } from '../../common';
 
 import { Bubble, Button, Icon, Modal, Pagination, TableColumn, Text } from '@tea/component';
 import { bindActionCreators } from '@tencent/qcloud-lib';
-import { isSuccessWorkflow, OperationState, WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { isSuccessWorkflow, OperationState, WorkflowState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter } from '../../../../helpers';

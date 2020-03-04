@@ -1,5 +1,4 @@
 import { CreateResource } from './../../common/models/CreateResource';
-import { QueryState } from '@tencent/qcloud-redux-query';
 import { RecordSet, uuid } from '@tencent/qcloud-lib';
 import { RequestParams, ResourceInfo, ClusterFilter, Cluster } from '../../common/models';
 import {
@@ -13,6 +12,7 @@ import {
 import { resourceConfig } from '../../../../config';
 import { CreateIC } from '../models';
 import { authTypeMapping } from '../constants/Config';
+import { QueryState } from '@tencent/ff-redux';
 
 /**
  * 集群列表的查询

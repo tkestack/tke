@@ -1,6 +1,6 @@
 import { ResourceTable } from './ResourceTable';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { TablePanelColumnProps } from '../../../common/components';
+import { TablePanelColumnProps } from '@tencent/ff-component';
 import { Resource } from '../../../common';
 
 export class ResourceTableReceiver extends ResourceTable {

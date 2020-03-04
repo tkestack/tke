@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button, Text } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import { RootProps } from '../../ClusterApp';
@@ -18,10 +18,7 @@ const ButtonBarStyle = { marginBottom: '5px' };
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditConfigMapPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions, route } = this.props;

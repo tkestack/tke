@@ -5,9 +5,10 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import * as classnames from 'classnames';
 import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
-import { LinkButton, FormPanel } from '../../../../common/components';
+import { LinkButton } from '../../../../common/components';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Justify } from '@tencent/tea-component';
+import { FormPanel } from '@tencent/ff-component';
 
 interface ContainerListItemProps extends RootProps {
   /** 容器的id */
@@ -17,10 +18,7 @@ interface ContainerListItemProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceContainerListItem extends React.Component<ContainerListItemProps, {}> {
   render() {
     let { actions, subRoot, cKey } = this.props,

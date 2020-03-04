@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RootProps } from './PersistentEventApp';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { allActions } from '../actions';
 import { connect } from 'react-redux';
@@ -12,10 +12,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class PersistentEventDeleteDialog extends React.Component<RootProps, {}> {
   render() {
     let { actions, route, peSelection, resourceInfo, deletePeFlow } = this.props;
@@ -51,9 +48,7 @@ export class PersistentEventDeleteDialog extends React.Component<RootProps, {}> 
                   })}
                 </strong>
               </p>
-              <div className="block-help-text text-danger">
-                {t('该资源下所有Pods将一并销毁，请提前备份好数据。')}
-              </div>
+              <div className="block-help-text text-danger">{t('该资源下所有Pods将一并销毁，请提前备份好数据。')}</div>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { Button, Bubble, Select } from '@tea/component';
 import { RootProps } from '../../ClusterApp';
 import { connect } from 'react-redux';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { allActions } from '../../../actions';
 import { MainBodyLayout, FormLayout } from '../../../../common/layouts';
 import { InputField, SelectList, TipInfo, FormItem } from '../../../../common/components';
@@ -137,10 +137,7 @@ interface EditServicePanelState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditServicePanel extends React.Component<RootProps, EditServicePanelState> {
   constructor(props, context) {
     super(props, context);

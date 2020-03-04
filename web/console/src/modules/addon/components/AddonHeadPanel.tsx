@@ -5,19 +5,14 @@ import { allActions } from '../actions';
 import { connect } from 'react-redux';
 import { Justify, Select, Text, Icon } from '@tencent/tea-component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { router } from '../router';
-import { RegionBar } from '../../common/components';
+import { FetchState } from '@tencent/ff-redux';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class AddonHeadPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions } = this.props;

@@ -1,5 +1,4 @@
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
-import { createListReducer } from '@tencent/redux-list';
+import { generateWorkflowReducer, createFFListReducer } from '@tencent/ff-redux';
 import { combineReducers } from 'redux';
 import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
@@ -16,9 +15,9 @@ import { CreateICReducer } from './CreateICReducer';
 export const RootReducer = combineReducers({
   route: router.getReducer(),
 
-  region: createListReducer(FFReduxActionName.REGION),
+  region: createFFListReducer(FFReduxActionName.REGION),
 
-  cluster: createListReducer(FFReduxActionName.CLUSTER),
+  cluster: createFFListReducer(FFReduxActionName.CLUSTER),
 
   clustercredential: reduceToPayload(ActionType.FetchClustercredential, {
     name: '',

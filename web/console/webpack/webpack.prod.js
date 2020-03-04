@@ -115,6 +115,12 @@ module.exports = {
       '@config/*': path.resolve(__dirname, '../config/*'),
       '@src/*': path.resolve(__dirname, '../src/*'),
       '@src': path.resolve(__dirname, '../src'),
+      '@tencent/ff-validator': path.resolve(__dirname, '../util/ff-validator'),
+      '@tencent/ff-redux': path.resolve(__dirname, '../util/ff-redux'),
+      '@tencent/ff-component': path.resolve(__dirname, '../util/ff-component'),
+      '@tencent/qcloud-redux-fetcher': path.resolve(__dirname, '../util/ff-redux/libs/qcloud-redux-fetcher/'),
+      '@tencent/qcloud-redux-query': path.resolve(__dirname, '../util/ff-redux/libs/qcloud-redux-query/'),
+      '@tencent/qcloud-redux-workflow': path.resolve(__dirname, '../util/ff-redux/libs/qcloud-redux-workflow/'),
       // react 和 react-dom 控制台通过全局变量提供，我们不打包
       react: path.resolve(__dirname, './alias/react.js'),
       'react-dom': path.resolve(__dirname, './alias/react-dom.js'),

@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as classnames from 'classnames';
 import { RootProps } from '../../ClusterApp';
 import { TableColumn, Button, Modal, Text } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { TipInfo, GridTable } from '../../../../common/components';
 import { getWorkflowError } from '../../../../common/utils';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';

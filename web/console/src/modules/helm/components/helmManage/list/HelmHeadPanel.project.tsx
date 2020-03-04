@@ -1,14 +1,12 @@
-import * as React from 'react';
-import { RootProps } from '../../HelmApp';
-import { RegionBar, DownMenu, DownMenuItem, FormPanel } from '../../../../common/components';
 import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Justify } from '@tencent/tea-component';
+import * as React from 'react';
 import { connect } from 'react-redux';
-
+import { FormPanel } from '@tencent/ff-component';
+import { allActions } from '../../../actions';
 import { router } from '../../../router';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Justify, Text, Icon, Select } from '@tencent/tea-component';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { RootProps } from '../../HelmApp';
 
 const routerSea = seajs.require('router');
 

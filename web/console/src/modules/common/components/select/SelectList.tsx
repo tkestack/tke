@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetcherState, FetchState } from '@tencent/ff-redux';
 import { BaseReactProps, RecordSet, insertCSS } from '@tencent/qcloud-lib';
 import { DropdownListItem, DropdownList } from '../dropdown/';
 import { RouteState } from '../../../../../helpers/Router';

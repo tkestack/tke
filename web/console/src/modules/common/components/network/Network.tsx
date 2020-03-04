@@ -1,8 +1,7 @@
+import { BaseReactProps } from '@tencent/qcloud-lib';
+import { t } from '@tencent/tea-app/lib/i18n';
 import * as React from 'react';
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
-import { OnOuterClick, BaseReactProps, RecordSet } from '@tencent/qcloud-lib';
 import { SelectList, SelectListProps } from '../select';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 export interface NetworkProps extends BaseReactProps {
   /**VPC列表属性 */

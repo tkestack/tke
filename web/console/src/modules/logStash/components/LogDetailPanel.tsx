@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Card, Text } from '@tea/component';
 import { RootProps } from './LogStashApp';
-import { FormPanel } from '../../common/components';
+import { FormPanel } from '@tencent/ff-component';
 import { MetadataItem } from '../models';
 import { t } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators } from '@tencent/qcloud-lib';
@@ -15,10 +15,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class LogStashDetailPanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
     let { actions } = this.props;

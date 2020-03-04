@@ -19,7 +19,7 @@ import { EditAlarmPolicyReceiverGroup } from './EditAlarmPolicyReceiverGroup';
 import { MetricsObjectEdition } from '../models/AlarmPolicy';
 import { uuid } from '@tencent/qcloud-lib';
 import { EditAlarmPolicyObject } from './EditAlarmPolicyObject';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { validatorActions } from '../actions/validatorActions';
 import { getWorkflowError } from '../../common/utils';
 

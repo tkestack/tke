@@ -5,7 +5,7 @@ import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { allActions } from '../actions';
 import { Log } from '../models';
 import { router } from '../router';
-import { LinkButton, Clip, TablePanelColumnProps, TablePanel } from '../../common/components';
+import { LinkButton, Clip } from '../../common/components';
 import classnames from 'classnames';
 import { collectorStatus, logModeMap } from '../constants/Config';
 import { isCanCreateLogStash } from './LogStashActionPanel';
@@ -14,16 +14,14 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { CreateResource } from 'src/modules/cluster/models';
 import { resourceConfig } from '../../../../config';
 import { dateFormatter } from '../../../../helpers';
+import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class LogStashTablePanel extends React.Component<RootProps, any> {
   render() {
     return <React.Fragment>{this._renderTablePanel()}</React.Fragment>;

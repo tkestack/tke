@@ -6,7 +6,6 @@ import { allActions } from '../../../actions';
 import { Helm } from '../../../models';
 import { RootProps } from '../../HelmApp';
 import classNames from 'classnames';
-import { TablePanel } from '../../../../common/components';
 import { helmStatus, ClusterHelmStatus, HelmResource } from '../../../constants/Config';
 import { TipInfo } from '../../../../common/components/';
 import { dateFormatter } from '../../../../../../helpers';
@@ -15,6 +14,7 @@ import { UpdateHelmDialog } from './UpdateHelmDialog';
 import { UpdateHelmDialogOther } from './UpdateHelmDialogOther';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { router } from '../../../router';
+import { TablePanel } from '@tencent/ff-component';
 
 interface State {
   showSetupHelmDialog?: boolean;

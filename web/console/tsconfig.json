@@ -29,7 +29,13 @@
       "@config": ["./config"],
       "@config/*": ["./config/*"],
       "@src/*": ["./src/*"],
-      "@src": ["./src"]
+      "@src": ["./src"],
+      "@tencent/ff-validator": ["./util/ff-validator"],
+      "@tencent/ff-redux": ["./util/ff-redux"],
+      "@tencent/ff-component": ["./util/ff-component/"],
+      "@tencent/qcloud-redux-fetcher": ["./util/ff-redux/libs/qcloud-redux-fetcher/"],
+      "@tencent/qcloud-redux-query": ["./util/ff-redux/libs/qcloud-redux-query/"],
+      "@tencent/qcloud-redux-workflow'": ["./util/ff-redux/libs/qcloud-redux-workflow/"]
     }
   },
   "exclude": ["node_modules", "dist", "build"],

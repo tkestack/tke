@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import * as classnames from 'classnames';
@@ -17,10 +17,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditNamespacePanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
     let { actions } = this.props;

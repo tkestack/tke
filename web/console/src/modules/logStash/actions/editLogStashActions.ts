@@ -1,4 +1,3 @@
-import { FetchOptions, FetchState } from '@tencent/qcloud-redux-fetcher';
 import * as ActionType from '../constants/ActionType';
 import { uuid, ReduxAction } from '@tencent/qcloud-lib';
 import { RootState, ContainerLogs, MetadataItem, ContainerFilePathItem } from '../models';

@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Bubble, Table, TableColumn } from '@tea/component';
 import { uuid } from '@tencent/qcloud-lib';
-import { FormItem, HeadBubble, InputField, TablePanelColumnProps } from '../../../../common/components';
+import { FormItem } from '../../../../common/components';
 import { PortMap } from '../../../models';
 import { ProtocolList } from '../../../constants/Config';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { TablePanelColumnProps } from '@tencent/ff-component';
 
 import { stylize } from '@tea/component/table/addons/stylize';
 interface EditServicePortMapPanelProps {

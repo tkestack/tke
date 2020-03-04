@@ -4,12 +4,12 @@ import { ResourceInfo, ResourceFilter } from '../../common';
 import { FFReduxActionName } from '../constants/Config';
 import { resourceConfig } from '../../../../config';
 import { CommonAPI } from '../../common/webapi';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 
 type GetState = () => RootState;
 
 /** addon的相关操作 */
-const ListAddonActions = createListAction<Addon, ResourceFilter>({
+const ListAddonActions = createFFListActions<Addon, ResourceFilter>({
   actionName: FFReduxActionName.ADDON,
   fetcher: async (query, getState: GetState) => {
     let { clusterVersion, addon } = getState();

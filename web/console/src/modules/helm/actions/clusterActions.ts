@@ -3,7 +3,7 @@ import { RootState } from '../models';
 import * as ActionType from '../constants/ActionType';
 import { router } from '../router';
 import { helmActions } from './helmActions';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 import { Resource, ResourceFilter, ResourceInfo, CommonAPI } from '../../common';
 import { FFReduxActionName } from '../constants/Config';
 import { resourceConfig } from '../../../../config';
@@ -11,7 +11,7 @@ import { resourceConfig } from '../../../../config';
 type GetState = () => RootState;
 
 /** 集群列表的Actions */
-const ListClusterActions = createListAction<Resource, ResourceFilter>({
+const ListClusterActions = createFFListActions<Resource, ResourceFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async query => {
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];

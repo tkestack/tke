@@ -11,13 +11,13 @@ import { namespaceActions } from './namespaceActions';
 import { editLogStashActions } from './editLogStashActions';
 import { resourceConfig } from '../../../../config';
 import { logDaemonsetActions } from './logDaemonsetActions';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 import { FFReduxActionName } from '../constants/Config';
 
 type GetState = () => RootState;
 
 /** ========================== start 已存在的add的相关操作 ========================== */
-const ListAddonActions = createListAction<Resource, ResourceFilter>({
+const ListAddonActions = createFFListActions<Resource, ResourceFilter>({
   actionName: FFReduxActionName.OPENADDON,
   fetcher: async (query, getState: GetState) => {
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];

@@ -4,7 +4,7 @@ import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import * as ActionType from '../constants/ActionType';
 import { reduceToPayload, uuid, ReduxAction } from '@tencent/qcloud-lib';
 import { initEdit } from './initState';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowReducer } from '@tencent/ff-redux';
 
 export const RootReducer = combineReducers({
   step: reduceToPayload(ActionType.StepNext, 'step1'),

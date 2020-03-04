@@ -1,10 +1,8 @@
-import { reduceK8sQueryString } from './../../../helpers/urlUtil';
 import { ProjectResourceLimit } from './models/Project';
 import { Method } from './../../../helpers/reduceNetwork';
 import { resourceConfig } from './../../../config/resourceConfig';
 import { RecordSet, uuid, collectionPaging } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { OperationResult } from '@tencent/qcloud-redux-workflow';
+import { OperationResult, QueryState } from '@tencent/ff-redux';
 import {
   Project,
   ProjectFilter,
@@ -20,7 +18,7 @@ import {
 } from './models';
 import { RegionFilter, Region, RequestParams, ResourceInfo } from '../common/models';
 import { reduceNetworkRequest, reduceNetworkWorkflow, reduceK8sRestfulPath } from '../../../helpers';
-import { resourceTypeToUnit, resourceLimitTypeList } from './constants/Config';
+import { resourceTypeToUnit } from './constants/Config';
 
 // 返回标准操作结果
 function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] {

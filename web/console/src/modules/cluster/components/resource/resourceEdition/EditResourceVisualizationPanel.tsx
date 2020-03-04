@@ -3,9 +3,9 @@ import { Button, Radio, Select, Text } from '@tea/component';
 import { RootProps } from '../../ClusterApp';
 import { connect } from 'react-redux';
 import { bindActionCreators, uuid, insertCSS } from '@tencent/qcloud-lib';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { allActions } from '../../../actions';
-import { FormItem, InputField, TipInfo, FormPanel } from '../../../../common/components';
+import { FormItem, InputField, TipInfo } from '../../../../common/components';
 import { MainBodyLayout, FormLayout, FixedFormLayout } from '../../../../common/layouts';
 import { getWorkflowError, isEmpty } from '../../../../common/utils';
 import { ResourceInfo } from '../../../../common/models';
@@ -45,6 +45,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { EditServiceAdvanceSettingPanel } from './EditServiceAdvanceSettingPanel';
 import { ResourceEditHostPathDialog } from './ResourceEditHostPathDialog';
 import { EditResourceAdvancedPanel } from './EditResourceAdvancedPanel';
+import { FormPanel } from '@tencent/ff-component';
 
 /** service YAML当中的type映射 */
 const serviceTypeMap = {

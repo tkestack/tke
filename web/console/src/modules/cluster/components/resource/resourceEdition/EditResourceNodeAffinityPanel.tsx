@@ -9,7 +9,7 @@ import { affinityType, affinityRuleOperator } from '../../../constants/Config';
 import { MatchExpressions } from '../../../models/WorkloadEdit';
 import { isEmpty } from '../../../../common/utils';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

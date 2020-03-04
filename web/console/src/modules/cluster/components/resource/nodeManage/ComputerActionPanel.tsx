@@ -6,7 +6,7 @@ import { Button, SearchBox, Bubble, Modal, TabPanel, Table, Text } from '@tea/co
 import { Computer } from '../../../models';
 import { RootProps } from '../../ClusterApp';
 import { downloadCsv, dateFormatter } from '../../../../../../helpers';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 import { MonitorPanelProps, nodeMonitorFields, podMonitorFields } from '../../../models/MonitorPanel';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Justify } from '@tea/component/justify';

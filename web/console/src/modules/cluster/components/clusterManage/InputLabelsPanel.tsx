@@ -1,11 +1,9 @@
+import { FormPanel } from '@tencent/ff-component';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Bubble, Button, Input } from '@tencent/tea-component';
 import * as React from 'react';
-import { ICComponter } from '../../models';
-import { FormPanel, LinkButton, TipInfo } from '../../../common/components';
-import { Justify, Button, Text, Radio, Segment, Input, InputAdorment, Bubble } from '@tencent/tea-component';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { authTypeList, computerRoleList } from '../../constants/Config';
-import { Validation, initValidator } from '../../../common';
-import { validateValue, Rule, RuleTypeEnum } from '../../../common/validate';
+import { initValidator, Validation } from '../../../common';
+import { RuleTypeEnum, validateValue } from '../../../common/validate';
 
 const rules = {
   key: {

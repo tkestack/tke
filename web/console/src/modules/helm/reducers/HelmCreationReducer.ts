@@ -4,12 +4,12 @@ import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { TencenthubNamespace, TencenthubChart, TencenthubChartVersion } from '../models';
 import * as ActionType from '../constants/ActionType';
 import { HelmResource, TencentHubType, OtherType, FFReduxActionName } from '../constants/Config';
-import { createListReducer } from '@tencent/redux-list';
+import { createFFListReducer } from '@tencent/ff-redux';
 
 const TempReducer = combineReducers({
-  region: createListReducer(FFReduxActionName.REGION, 'HelmCreate'),
+  region: createFFListReducer(FFReduxActionName.REGION, 'HelmCreate'),
 
-  cluster: createListReducer(FFReduxActionName.CLUSTER, 'HelmCreate'),
+  cluster: createFFListReducer(FFReduxActionName.CLUSTER, 'HelmCreate'),
 
   name: reduceToPayload(ActionType.C_CreateionName, ''),
 

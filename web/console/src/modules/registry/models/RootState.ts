@@ -1,10 +1,9 @@
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
+import { WorkflowState } from '@tencent/ff-redux';
 import { ApiKey, ApiKeyFilter, ApiKeyCreation } from './ApiKey';
 import { Repo, RepoFilter, RepoCreation } from './Repo';
 import { Image, ImageFilter, ImageCreation } from './Image';
 import { RouteState } from '../../../../helpers';
-import { ListModel } from '@tencent/redux-list';
+import { FFListModel, FetcherState } from '@tencent/ff-redux';
 
 type ApiKeyWorkflow = WorkflowState<ApiKey, void>;
 type ApiKeyCreateWorkflow = WorkflowState<ApiKeyCreation, void>;
@@ -19,7 +18,7 @@ export interface RootState {
 
   /** -------- 访问凭证相关 --------- */
 
-  apiKey?: ListModel<ApiKey, ApiKeyFilter>;
+  apiKey?: FFListModel<ApiKey, ApiKeyFilter>;
 
   /** ApiKey 创建编辑参数 */
   apiKeyCreation?: ApiKeyCreation;
@@ -35,7 +34,7 @@ export interface RootState {
 
   /** --------- 仓库管理相关 --------- */
 
-  repo?: ListModel<Repo, RepoFilter>;
+  repo?: FFListModel<Repo, RepoFilter>;
 
   /** 创建仓库表单参数 */
   repoCreation?: RepoCreation;
@@ -48,7 +47,7 @@ export interface RootState {
 
   /** --------- 镜像相关 --------- */
 
-  image?: ListModel<Image, ImageFilter>;
+  image?: FFListModel<Image, ImageFilter>;
 
   /** 创建仓库表单参数 */
   imageCreation?: ImageCreation;

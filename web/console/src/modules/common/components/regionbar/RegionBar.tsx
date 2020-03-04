@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetcherState, FetchState } from '@tencent/ff-redux';
 import { RecordSet } from '@tencent/qcloud-lib';
 import { ButtonBar, DownMenu } from '../../components';
 import { isEmpty } from '../../utils';

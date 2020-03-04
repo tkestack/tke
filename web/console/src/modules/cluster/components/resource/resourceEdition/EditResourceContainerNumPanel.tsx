@@ -7,7 +7,7 @@ import { connect } from 'react-redux';
 import * as classnames from 'classnames';
 import { FormItem, LinkButton } from '../../../../common/components';
 import { ContainerMaxNumLimit, HpaMetricsTypeList } from '../../../constants/Config';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 const metricUnitMap = {

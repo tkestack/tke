@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Button, Icon } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { OperationState, isSuccessWorkflow, FetchState } from '@tencent/ff-redux';
 import { TipInfo } from '../../../../common/components';
 import { RootProps } from '../../ClusterApp';
 import { uuid } from '@tencent/qcloud-lib';

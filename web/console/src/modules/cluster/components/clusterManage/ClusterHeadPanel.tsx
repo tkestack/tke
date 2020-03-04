@@ -1,22 +1,17 @@
-import * as React from 'react';
-import { RootProps } from '../ClusterApp';
-import { RegionBar } from '../../../common/components';
+import { Justify } from '@tea/component';
 import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../actions';
+import { t } from '@tencent/tea-app/lib/i18n';
+import * as React from 'react';
 import { connect } from 'react-redux';
-import { Button, Text, RegionPanel, RegionOption, RegionSelect, Justify } from '@tea/component';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { allActions } from '../../actions';
+import { RootProps } from '../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ClusterHeadPanel extends React.Component<RootProps, any> {
   componentDidMount() {
     const { actions } = this.props;

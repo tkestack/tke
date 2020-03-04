@@ -8,7 +8,9 @@ import { allActions } from '../../actions';
 import { Button, Modal, Card, Input, Form, TableColumn } from '@tea/component';
 import { VALIDATE_PHONE_RULE, VALIDATE_EMAIL_RULE, STRATEGY_TYPE } from '../../constants/Config';
 import { Strategy, User } from '../../models';
-import { TablePanel, emptyTips, LinkButton } from '@src/modules/common';
+import { emptyTips, LinkButton } from '@src/modules/common';
+import { TablePanel } from '@tencent/ff-component';
+
 const { useState, useEffect, useRef } = React;
 const _isEqual = require('lodash/isEqual');
 

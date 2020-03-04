@@ -10,13 +10,13 @@ import { helmActions } from './helmActions';
 import { TencentHubType, HelmResource, OtherType, FFReduxActionName } from '../constants/Config';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Region, RegionFilter, Resource, ResourceFilter, ResourceInfo } from '../../common/models';
-import { createListActionsFactory, createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 import { CommonAPI } from '../../common/webapi';
 import { resourceConfig } from '../../../../config';
 
 type GetState = () => RootState;
 
-export const regionActions = createListActionsFactory<Region, RegionFilter>({
+export const regionActions = createFFListActions<Region, RegionFilter>({
   id: 'HelmCreate',
   actionName: FFReduxActionName.REGION,
   selectFirst: true,
@@ -44,7 +44,7 @@ export const regionActions = createListActionsFactory<Region, RegionFilter>({
 });
 
 /** 获取集群列表 */
-const ListClusterActions = createListAction<Resource, ResourceFilter>({
+const ListClusterActions = createFFListActions<Resource, ResourceFilter>({
   id: 'HelmCreate',
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async query => {

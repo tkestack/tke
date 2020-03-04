@@ -1,6 +1,5 @@
 import { RecordSet, uuid } from '@tencent/qcloud-lib';
 import { RequestParams, Resource, ResourceFilter, ResourceInfo, CreateResource, UserDefinedHeader } from '../models';
-import { QueryState } from '@tencent/qcloud-redux-query';
 import {
   reduceK8sRestfulPath,
   reduceK8sQueryString,
@@ -12,6 +11,7 @@ import {
 } from '../../../../helpers';
 import { apiServerVersion } from '../../../../config';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { QueryState } from '@tencent/ff-redux';
 
 const tips = seajs.require('tips');
 
@@ -191,9 +191,7 @@ export async function applyResourceIns(resource: CreateResource[], regionId: num
   try {
     let { clusterId, yamlData, jsonData } = resource[0];
 
-    let url = `/${apiServerVersion.basicUrl}/${apiServerVersion.group}/${
-      apiServerVersion.version
-    }/clusters/${clusterId}/apply`;
+    let url = `/${apiServerVersion.basicUrl}/${apiServerVersion.group}/${apiServerVersion.version}/clusters/${clusterId}/apply`;
 
     // 这里是独立部署版 和 控制台共用的参数，只有是yamlData的时候才需要userdefinedHeader，如果是jaonData的话，就不需要了
     let userDefinedHeader: UserDefinedHeader = yamlData

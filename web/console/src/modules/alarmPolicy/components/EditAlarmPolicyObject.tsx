@@ -3,7 +3,7 @@ import { RootProps } from './AlarmPolicyApp';
 import { Radio, Checkbox } from '@tea/component';
 import { AlarmObjectsType, workloadTypeList } from '../constants/Config';
 import { FormItem, SelectList } from '../../common/components';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
   renderPodList() {

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OperationResult } from '@tencent/qcloud-redux-workflow';
+import { OperationResult } from '@tencent/ff-redux';
 import { RequestParams, ResourceInfo } from '../src/modules/common/models';
 import { changeForbiddentConfig } from '../index';
 

@@ -3,11 +3,12 @@ import { connect } from 'react-redux';
 import { RootProps } from './LogStashApp';
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import { allActions } from '../actions';
-import { InputField, SelectList, FormPanel } from '../../common/components';
+import { InputField } from '../../common/components';
 import { consumerModeList, clsRegionMap } from '../constants/Config';
 import { Text, Segment } from '@tencent/tea-component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { SegmentOption } from '@tencent/tea-component/lib/segment/SegmentOption';
+import { FormPanel } from '@tencent/ff-component';
 
 /** buttonBar的样式 */
 const ButtonBarStyle = { marginBottom: '5px' };

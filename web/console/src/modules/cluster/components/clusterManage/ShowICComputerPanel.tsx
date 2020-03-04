@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { ICComponter } from '../../models';
-import { FormPanel } from '../../../common/components';
 import { Justify, Button, Text, Bubble } from '@tencent/tea-component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { FormPanel } from '@tencent/ff-component';
 
 export function ShowICComputerPanel({
   computer,

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
@@ -21,10 +21,7 @@ const deleteTipsMap = {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceDeleteDialog extends React.Component<RootProps, {}> {
   render() {
     let { actions, route, subRoot, namespaceSelection, region } = this.props,

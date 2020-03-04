@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { Button, Text, ContentView, Select, Bubble, Input, List, FormItem, Justify } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { bindActionCreators, uuid, deepClone } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import { RootProps } from '../../ClusterApp';
 import { allActions } from '../../../actions';
-import { TipInfo, FormPanel } from '../../../../common/components';
+import { TipInfo } from '../../../../common/components';
 import { getWorkflowError } from '../../../../common/utils';
 import { CreateResource, LbcfBGJSONYaml, MergeType } from '../../../models';
 import { router } from '../../../router';
@@ -13,6 +13,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { validateLbcfActions } from '../../../../../modules/cluster/actions/validateLbcfActions';
 import { EditLbcfBackGroupItemPanel } from './EditLbcfBackGroupItemPanel';
 import { resourceConfig } from '../../../../../../config';
+import { FormPanel } from '@tencent/ff-component';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

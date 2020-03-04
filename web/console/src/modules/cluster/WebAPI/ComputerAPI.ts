@@ -1,5 +1,4 @@
 import { ComputerOperator, ComputerTaintEdition } from './../models/Computer';
-import { QueryState } from '@tencent/qcloud-redux-query';
 import { ComputerFilter, Computer } from '../models';
 import { RequestParams } from '../../common/models';
 import { reduceNetworkRequest, Method, operationResult, reduceNetworkWorkflow } from '../../../../helpers';
@@ -7,6 +6,8 @@ import { RecordSet } from '@tencent/qcloud-lib';
 import { ComputerLabelEdition } from '../models/Computer';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { resourceConfig } from '../../../../config';
+import { QueryState } from '@tencent/ff-redux';
+
 // 提示框
 const tips = seajs.require('tips');
 

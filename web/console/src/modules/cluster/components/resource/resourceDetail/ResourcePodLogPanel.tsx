@@ -1,16 +1,15 @@
-import * as React from 'react';
+import { Justify, Switch } from '@tea/component';
+import { FetchState } from '@tencent/ff-redux';
 import { bindActionCreators } from '@tencent/qcloud-lib';
-import { Switch, Justify } from '@tea/component';
+import { t } from '@tencent/tea-app/lib/i18n';
+import * as React from 'react';
 import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
 import { DetailLayout } from '../../../../common/layouts';
-import { YamlEditorPanel } from '../YamlEditorPanel';
-import { PodLogFilter } from '../../../models';
+import { allActions } from '../../../actions';
 import { TailList } from '../../../constants/Config';
 import { router } from '../../../router';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { RootProps } from '../../ClusterApp';
+import { YamlEditorPanel } from '../YamlEditorPanel';
 
 // 加载中的样式
 const loadingElement: JSX.Element = (
@@ -23,10 +22,7 @@ const loadingElement: JSX.Element = (
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
   componentWillMount() {
     let { actions, route, subRoot } = this.props,

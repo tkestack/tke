@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { TablePanel, LinkButton, usePrevious, emptyTips } from '../../../common/components';
+import { LinkButton, usePrevious } from '../../../common/components';
 import { bindActionCreators, insertCSS } from '@tencent/qcloud-lib';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { selectable, removeable } from '@tea/component/table/addons';
 import { dateFormat } from '../../../../../helpers/dateUtil';
 import { router } from '../../router';
 import { allActions } from '../../actions';
-import { STRATEGY_TYPE } from '../../constants/Config';
 import {
   Button,
   TableColumn,
@@ -25,6 +24,8 @@ import {
   Tooltip
 } from '@tea/component';
 import { User } from '../../models';
+import { TablePanel } from '@tencent/ff-component';
+
 const { useState, useEffect, useRef } = React;
 const _isEqual = require('lodash/isEqual');
 
@@ -353,7 +354,6 @@ export const StrategyDetailsPanel = () => {
                 columns={columns}
                 model={associatedUsersList}
                 action={actions.strategy}
-                emptyTips={emptyTips}
                 bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
               />
             </TabPanel>

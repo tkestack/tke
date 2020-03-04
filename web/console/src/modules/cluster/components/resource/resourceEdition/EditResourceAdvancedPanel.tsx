@@ -5,11 +5,12 @@ import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import { EditResourceNodeAffinityPanel } from './EditResourceNodeAffinityPanel';
 import { EditResourceAnnotations } from './EditResourceAnnotations';
-import { FormItem, FormPanel } from '../../../../common';
+import { FormItem } from '../../../../common';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Select } from '@tencent/tea-component';
 import { WorkloadNetworkType, WorkloadNetworkTypeEnum, FloatingIPReleasePolicy } from '../../../constants/Config';
 import { EditResourceImagePullSecretsPanel } from './EditResourceImagePullSecretsPanel';
+import { FormPanel } from '@tencent/ff-component';
 
 interface EditResourceAdvancedPanelProps extends RootProps {
   /** 是否展示高级设置 */

@@ -1,5 +1,5 @@
 import { RecordSet } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/qcloud-redux-query';
+import { QueryState } from '@tencent/ff-redux';
 import {
   reduceNetworkRequest,
   operationResult,

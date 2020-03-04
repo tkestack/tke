@@ -4,10 +4,11 @@ import { TableColumn, Text, Modal, Form, Input, Button, Icon } from '@tea/compon
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { router } from '../../router';
-import { TablePanel, LinkButton } from '../../../common/components';
+import { LinkButton } from '../../../common/components';
 import { allActions } from '../../actions';
 import { User } from '../../models';
 import { VALIDATE_PASSWORD_RULE } from '../../constants/Config';
+import { TablePanel } from '@tencent/ff-component';
 
 const { useState, useEffect } = React;
 

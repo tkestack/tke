@@ -1,11 +1,6 @@
 import { AlarmPolicyEdition, AlarmPolicyOperator, AlarmPolicy } from './../models/AlarmPolicy';
 import { RecordSet, extend, ReduxAction } from '@tencent/qcloud-lib';
-import {
-  generateWorkflowActionCreator,
-  OperationHooks,
-  OperationTrigger,
-  isSuccessWorkflow
-} from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowActionCreator, OperationHooks, OperationTrigger, isSuccessWorkflow } from '@tencent/ff-redux';
 import { router } from '../router';
 import * as ActionType from '../constants/ActionType';
 import * as WebAPI from '../WebAPI';

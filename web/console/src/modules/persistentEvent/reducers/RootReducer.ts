@@ -5,17 +5,16 @@ import { generateQueryReducer } from '@tencent/qcloud-redux-query';
 import { router } from '../router';
 import * as ActionType from '../constants/ActionType';
 import { PeEditReducer } from './PeEditReducer';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
-import { createListReducer } from '@tencent/redux-list';
+import { generateWorkflowReducer, createFFListReducer } from '@tencent/ff-redux';
 import { FFReduxActionName } from '../constants/Config';
 import { Resource } from '../../common';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
 
-  region: createListReducer(FFReduxActionName.REGION),
+  region: createFFListReducer(FFReduxActionName.REGION),
 
-  cluster: createListReducer(FFReduxActionName.CLUSTER),
+  cluster: createFFListReducer(FFReduxActionName.CLUSTER),
 
   peList: generateFetcherReducer<RecordSet<Resource>>({
     actionType: ActionType.FetchPeList,

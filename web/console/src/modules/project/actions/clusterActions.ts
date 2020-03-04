@@ -4,12 +4,12 @@ import { extend } from '@tencent/qcloud-lib';
 import { RootState } from '../models';
 import * as WebAPI from '../WebAPI';
 import { namespace } from 'config/resource/k8sConfig';
-import { createListAction } from '@tencent/redux-list';
+import { createFFListActions } from '@tencent/ff-redux';
 
 type GetState = () => RootState;
 
 /** 集群列表的Actions */
-const FFModelClusterActions = createListAction<Cluster, ClusterFilter>({
+const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
   actionName: 'cluster',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchClusterList(query);

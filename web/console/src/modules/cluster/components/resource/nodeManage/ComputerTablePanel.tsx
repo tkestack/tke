@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Modal, Button, Text, Icon } from '@tea/component';
 import { Computer, DialogNameEnum } from '../../../models';
 import { RootProps } from '../../ClusterApp';
-import { Clip, LinkButton, TablePanel, TablePanelColumnProps } from '../../../../common/components';
+import { Clip, LinkButton } from '../../../../common/components';
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
 import { allActions } from '../../../actions';
@@ -14,6 +14,7 @@ import { Bubble } from '@tencent/tea-component';
 import { SortBy, sortable } from '@tencent/tea-component/lib/table/addons/sortable';
 import { ReduceRequest } from '../resourceDetail/ResourcePodPanel';
 import { dateFormatter } from '../../../../../../helpers';
+import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
 
 export const ComputerStatus = {
   Running: 'success',

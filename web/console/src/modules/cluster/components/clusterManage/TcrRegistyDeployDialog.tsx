@@ -2,11 +2,12 @@ import * as React from 'react';
 import { Modal, Button, Text, Select } from '@tea/component';
 import { RootProps } from '../ClusterApp';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { FormPanel, TipInfo, LinkButton, SelectList, Validation, initValidator } from '../../../../modules/common';
+import { TipInfo, LinkButton, SelectList, Validation, initValidator } from '../../../../modules/common';
 import { connect } from 'react-redux';
 import { allActions } from '../../actions';
 import { router } from '../../router';
 import { bindActionCreators } from '@tencent/qcloud-lib';
+import { FormPanel } from '@tencent/ff-component';
 
 interface TcrRegistyDeployState {
   clusterSelection: string; //集群选择

@@ -1,10 +1,9 @@
 import { extend, ReduxAction, RecordSet } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import { generateFetcherActionCreator, FetchOptions } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 import * as ActionType from '../constants/ActionType';
 import * as WebAPI from '../WebAPI';
 import { RootState, ResourceFilter, Pod, PodFilterInNode } from '../models';
-import { resourceConfig } from '../../../../config';
 import { router } from '../router';
 import { PollEventName } from '../constants/Config';
 import { reduceContainerId, IsPodShowLoadingIcon } from '../components/resource/resourceDetail/ResourcePodPanel';

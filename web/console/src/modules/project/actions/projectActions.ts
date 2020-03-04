@@ -10,18 +10,22 @@ import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import { initValidator } from './../../common/models/Validation';
 import { Manager } from './../models/Manager';
 import { extend, deepClone, uuid } from '@tencent/qcloud-lib';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import {
+  generateWorkflowActionCreator,
+  OperationTrigger,
+  isSuccessWorkflow,
+  createFFListActions
+} from '@tencent/ff-redux';
 import { RootState, Project, ProjectEdition, ProjectFilter } from '../models';
 import * as ActionType from '../constants/ActionType';
 import * as WebAPI from '../WebAPI';
 import { router } from '../router';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { createListAction } from '@tencent/redux-list';
 import { RequestLimit } from 'src/modules/cluster/models/RequestLimit';
 
 type GetState = () => RootState;
 
-const FFModelProjectActions = createListAction<Project, ProjectFilter>({
+const FFModelProjectActions = createFFListActions<Project, ProjectFilter>({
   actionName: 'project',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchProjectList(query);

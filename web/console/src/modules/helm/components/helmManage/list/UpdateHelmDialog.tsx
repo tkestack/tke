@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Modal, Button } from '@tea/component';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { FetchState } from '@tencent/ff-redux';
 import { RootProps } from '../../HelmApp';
 import { FormItem, TipInfo } from '../../../../common/components/';
 import { KeyValuesPanel } from '../create/KeyValuesPanel';

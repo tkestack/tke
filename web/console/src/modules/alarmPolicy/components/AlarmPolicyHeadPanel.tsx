@@ -1,8 +1,8 @@
+import { FormPanelSelect, FormPanelSelectProps } from '@tencent/ff-component';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Justify } from '@tencent/tea-component';
 import * as React from 'react';
 import { RootProps } from './AlarmPolicyApp';
-import { RegionBar, FormPanelSelect, FormPanelSelectProps } from '../../common/components';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Justify, Text } from '@tencent/tea-component';
 export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions } = this.props;

@@ -1,7 +1,6 @@
 import { extend, RecordSet, ReduxAction } from '@tencent/qcloud-lib';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
+import { FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-
 import { resourceConfig } from '../../../../config';
 import { ResourceInfo } from '../../common/models';
 import { includes } from '../../common/utils';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RootProps } from '../../ClusterApp';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { OperationState, isSuccessWorkflow, FetchState } from '@tencent/ff-redux';
 import { Button, Radio, Select } from '@tea/component';
 import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { allActions } from '../../../actions';
@@ -9,7 +9,6 @@ import { getWorkflowError } from '../../../../common/utils';
 import { TipInfo, FormItem, InputField, LinkButton } from '../../../../common/components';
 import { MainBodyLayout, FormLayout, FixedFormLayout } from '../../../../common/layouts';
 import * as classnames from 'classnames';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
 import { WorkloadEditJSONYaml, CreateResource } from '../../../models';
 import { router } from '../../../router';
 import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
@@ -75,10 +74,7 @@ interface UpdateWorkloadRegistryPanelState {
 let mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, UpdateWorkloadRegistryPanelState> {
   constructor(props, context) {
     super(props, context);

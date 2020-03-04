@@ -2,7 +2,7 @@ import * as React from 'react';
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import { TableColumn, Bubble, Text, Icon } from '@tea/component';
 import { connect } from 'react-redux';
-import { OperationState } from '@tencent/qcloud-redux-workflow';
+import { OperationState } from '@tencent/ff-redux';
 import { allActions } from '../../../actions';
 import { RootProps } from '../../ClusterApp';
 import { Clip, HeadBubble, LinkButton, GridTable } from '../../../../common/components';

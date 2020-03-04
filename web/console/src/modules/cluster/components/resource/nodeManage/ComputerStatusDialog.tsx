@@ -7,7 +7,7 @@ import { Modal, TableColumn, Text, Bubble, Icon, Button, Table } from '@tencent/
 import { ClusterCondition } from '../../../../common';
 import { dateFormatter } from '../../../../../../helpers';
 import { scrollable } from '@tencent/tea-component/lib/table/addons';
-import { ListModel } from '@tencent/redux-list';
+import { FFListModel } from '@tencent/ff-redux';
 import { Computer, ComputerFilter, DialogNameEnum, DialogState } from '../../../../../modules/cluster/models';
 
 const conditionStatusMap = {
@@ -24,7 +24,7 @@ const conditionStatusType = {
 
 let nodeConditionStaus = ['OutOfDisk', 'MemoryPressure', 'DiskPressure', 'PIDPressure'];
 interface ComputerStatusDialogProps {
-  computer: ListModel<Computer, ComputerFilter>;
+  computer: FFListModel<Computer, ComputerFilter>;
   dialogState: DialogState;
   actions?: typeof allActions;
 }
@@ -32,10 +32,7 @@ interface ComputerStatusDialogProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ComputerStatusDialog extends React.Component<ComputerStatusDialogProps, {}> {
   render() {
     let { computer, dialogState } = this.props;

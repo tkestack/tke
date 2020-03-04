@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { RootProps } from './LogStashApp';
 import { bindActionCreators } from '@tencent/qcloud-lib';
 import { allActions } from '../actions';
-import { FormPanel } from '../../common/components';
 import { originModeList, logModeList } from '../constants/Config';
 import { ListOriginContainerItemPanel } from './ListOriginContainerItemPanel';
 import { EditOriginContainerItemPanel } from './EditOriginContainerItemPanel';
@@ -13,6 +12,7 @@ import classnames from 'classnames';
 import { Bubble, ButtonBar, Segment, SegmentProps } from '@tea/component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { SegmentOption } from '@tencent/tea-component/lib/segment/SegmentOption';
+import { FormPanel } from '@tencent/ff-component';
 
 /** 日志源的相关提示 */
 const originModeTip = {
@@ -48,10 +48,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditOriginContainerPanel extends React.Component<RootProps, any> {
   render() {
     let { actions, logStashEdit, namespaceList } = this.props,
