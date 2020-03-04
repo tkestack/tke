@@ -61,8 +61,8 @@ ifeq ($(origin PLATFORM), undefined)
 		GOARCH := $(shell go env GOARCH)
 	endif
 	PLATFORM := $(GOOS)_$(GOARCH)
-	# Use linux_amd64 as the default platform when building images
-	IMAGE_PLAT := linux_amd64
+	# Use linux as the default OS when building images
+	IMAGE_PLAT := linux_$(GOARCH)
 else
 	GOOS := $(word 1, $(subst _, ,$(PLATFORM)))
 	GOARCH := $(word 2, $(subst _, ,$(PLATFORM)))
