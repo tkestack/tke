@@ -352,7 +352,7 @@ func convertToGroup(localGroup *authv1.LocalGroup) auth.Group {
 			ID:          localGroup.ObjectMeta.Name,
 			DisplayName: localGroup.Spec.DisplayName,
 			TenantID:    localGroup.Spec.TenantID,
-			Description: localGroup.Spec.TenantID,
+			Description: localGroup.Spec.Description,
 		},
 		Status: auth.GroupStatus{
 			Users: fromV1Subject(localGroup.Status.Users),

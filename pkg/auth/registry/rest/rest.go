@@ -116,6 +116,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["policies/status"] = policyRest.Status
 		storageMap["policies/binding"] = policyRest.Binding
 		storageMap["policies/unbinding"] = policyRest.Unbinding
+		storageMap["policies/roles"] = policyRest.Role
 		storageMap["policies/users"] = policyRest.User
 		storageMap["policies/groups"] = policyRest.Group
 
