@@ -1,11 +1,13 @@
 import * as React from 'react';
-import { RootProps } from './AddonApp';
-import { router } from '../router';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../actions';
-import { Justify, Icon } from '@tencent/tea-component';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Icon, Justify } from '@tencent/tea-component';
+
+import { allActions } from '../actions';
+import { router } from '../router';
+import { RootProps } from './AddonApp';
 
 /** 面包屑 扩展组件的类型展示 */
 const addonTypeNameMap = {

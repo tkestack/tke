@@ -1,9 +1,11 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
+import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
 import * as ActionType from '../constants/ActionType';
-import { Resource, Pod } from '../models';
+import { Pod, Resource } from '../models';
 
 const TempReducer = combineReducers({
   workloadType: reduceToPayload(ActionType.L_WorkloadType, 'deployment'),

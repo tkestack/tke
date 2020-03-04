@@ -1,17 +1,19 @@
 import * as React from 'react';
-import { Button, Text, ContentView, Form } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { TipInfo, FormPanel } from '../../../../common/components';
+
+import { Button, ContentView, Form, Text } from '@tea/component';
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { validateLbcfActions } from '../../../../../modules/cluster/actions/validateLbcfActions';
+import { TipInfo } from '../../../../common/components';
 import { getWorkflowError } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { k8sVersionList, LbcfArgsConfig, LbcfConfig } from '../../../constants/Config';
 import { CreateResource, LbcfLBJSONYaml } from '../../../models';
 import { router } from '../../../router';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { validateLbcfActions } from '../../../../../modules/cluster/actions/validateLbcfActions';
-import { LbcfConfig, LbcfArgsConfig, k8sVersionList } from '../../../constants/Config';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

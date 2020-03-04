@@ -1,4 +1,4 @@
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { WorkflowState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 export const getWorkflowError = (workflow: WorkflowState<any, any>) => {

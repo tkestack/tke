@@ -4,11 +4,12 @@ import { Bubble, Button } from '@tea/component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { router as addonRouter } from '../../addon/router';
-import { LinkButton, TablePanel, TablePanelColumnProps, TipInfo } from '../../common/components';
+import { LinkButton, TipInfo } from '../../common/components';
 import { MetricNameMap } from '../constants/Config';
 import { AlarmPolicy, MetricsObject } from '../models/AlarmPolicy';
 import { router } from '../router';
 import { RootProps } from './AlarmPolicyApp';
+import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
 
 export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
   render() {

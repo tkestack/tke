@@ -1,17 +1,17 @@
-import { extend } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
+import { assureRegion, getRegionId, setRegionId } from '../../../../helpers';
 import { Region, RegionFilter } from '../../common';
+import { CommonAPI } from '../../common/webapi';
 import { FFReduxActionName } from '../constants/Config';
-import { getRegionId, assureRegion, setRegionId } from '../../../../helpers';
+import { RootState } from '../models';
 import { router } from '../router';
 import { clusterActions } from './clusterActions';
-import { CommonAPI } from '../../common/webapi';
-import { createListAction } from '@tencent/redux-list';
 
 type GetState = () => RootState;
 
 /** 地域列表的Actions */
-const ListRegionActions = createListAction<Region, RegionFilter>({
+const ListRegionActions = createFFListActions<Region, RegionFilter>({
   actionName: FFReduxActionName.REGION,
   fetcher: async query => {
     let response = await CommonAPI.fetchRegionList(query);

@@ -1,22 +1,17 @@
-import { createListAction } from '@tencent/redux-list';
-import { extend } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
-import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../../cluster/WebAPI';
-import { setClusterId } from '../../../../helpers';
-import { router } from '../router';
-import { TellIsNeedFetchNS, TellIsNotNeedFetchResource } from '../components/resource/ResourceSidebarPanel';
-import { resourceConfig } from '../../../../config';
-import { Cluster, ClusterFilter, ResourceInfo } from '../../common/';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
 import { FFReduxActionName } from '../../cluster/constants/Config';
+import * as WebAPI from '../../cluster/WebAPI';
+import { Cluster, ClusterFilter } from '../../common/';
+import * as ActionType from '../constants/ActionType';
+import { RootState } from '../models';
+import { router } from '../router';
 import { alarmPolicyActions } from './alarmPolicyActions';
 
 type GetState = () => RootState;
 
 /** 集群列表的Actions */
-const FFModelClusterActions = createListAction<Cluster, ClusterFilter>({
+const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchClusterList(query, query.filter.regionId);

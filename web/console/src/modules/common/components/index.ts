@@ -28,8 +28,6 @@ export { CardMenu, CardMenuItem } from './cardMenu';
 export * from './resourceselector';
 export { DateTimePicker } from './datetimepicker';
 export { GridTable } from './gridtable';
-export * from './FormPanel';
-export { TablePanel, TablePanelColumnProps } from './TablePanel';
 export { TransferTable, TransferTableProps } from './transferTable';
 export { emptyTips } from './empty';
 export { usePrevious } from './hooks';

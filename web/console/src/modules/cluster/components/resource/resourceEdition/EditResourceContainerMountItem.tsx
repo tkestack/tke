@@ -1,15 +1,17 @@
+import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { FormItem } from '../../../../common/components';
-import * as classnames from 'classnames';
-import { uniq, isEmpty } from '../../../../common/utils';
-import { VolumeMountModeList } from '../../../constants/Config';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { VolumeItem } from '../../../models';
+
 import { Bubble } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem } from '../../../../common/components';
+import { isEmpty, uniq } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { VolumeMountModeList } from '../../../constants/Config';
+import { VolumeItem } from '../../../models';
+import { RootProps } from '../../ClusterApp';
 
 const filterValidMountVolumes = (volumes: VolumeItem[]) => {
   let validVolumes = volumes.length

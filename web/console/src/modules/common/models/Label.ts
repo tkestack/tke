@@ -1,5 +1,6 @@
-import { Identifiable, uuid } from '@tencent/qcloud-lib';
-import { Validation, initValidator } from './';
+import { Identifiable, uuid } from '@tencent/ff-redux';
+
+import { initValidator, Validation } from './';
 
 export interface Label extends Identifiable {
   /**Lable名称 */

@@ -1,11 +1,14 @@
 /* eslint-disable */
 
-import * as React from 'react';
 import * as classNames from 'classnames';
-import { SingleDatePicker, SingleDatePickerValue, SingleDatePickerRange } from './SingleDatePicker';
-import { TimePicker, TimePickerValue, TimePickerRange } from '../timepicker';
-import { OnOuterClick } from '@tencent/qcloud-lib';
+import * as React from 'react';
+
+import { OnOuterClick } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { TimePicker, TimePickerRange, TimePickerValue } from '../timepicker';
+import { SingleDatePicker, SingleDatePickerRange, SingleDatePickerValue } from './SingleDatePicker';
+
 export interface DateTimePickerTab {
   from: Date | string;
   to: Date | string;

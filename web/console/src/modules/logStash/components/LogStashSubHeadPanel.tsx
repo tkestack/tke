@@ -1,11 +1,13 @@
 import * as React from 'react';
-import { RootProps } from './LogStashApp';
-import { router } from '../router';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
-import { Justify } from '@tencent/tea-component';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
+import { Justify } from '@tencent/tea-component';
+
+import { allActions } from '../actions';
+import { router } from '../router';
+import { RootProps } from './LogStashApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {

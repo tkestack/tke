@@ -1,10 +1,13 @@
 import * as React from 'react';
-import { RootProps } from './AlarmPolicyApp';
-import { Radio, Checkbox } from '@tea/component';
-import { AlarmObjectsType, workloadTypeList } from '../constants/Config';
-import { FormItem, SelectList } from '../../common/components';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+
+import { Checkbox, Radio } from '@tea/component';
+import { FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, SelectList } from '../../common/components';
+import { AlarmObjectsType, workloadTypeList } from '../constants/Config';
+import { RootProps } from './AlarmPolicyApp';
+
 export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
   renderPodList() {
     let Tip = content => {

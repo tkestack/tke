@@ -1,12 +1,10 @@
-import { RecordSet, Identifiable } from '@tencent/qcloud-lib';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
+import { FetcherState, Identifiable, QueryState, RecordSet } from '@tencent/ff-redux';
+
 import { Validation } from '../../common/models';
-import { ContainerLogs, MetadataItem, Ckafka, CkafkaFilter, CTopic, CTopicFilter } from './';
-import { Cls, ClsFilter, ClsTopic, ClsTopicFilter } from './Cls';
-import { Resource, ResourceFilter, ResourceTarget, WorkLoadList } from './Resource';
+import { ContainerLogs, MetadataItem } from './';
 import { ContainerFilePathItem } from './ContainerFilePathItem';
 import { Pod, PodListFilter } from './pod';
+import { Resource, ResourceFilter, ResourceTarget, WorkLoadList } from './Resource';
 
 export interface LogStashEdit extends Identifiable {
   /** 采集规则的名称 */

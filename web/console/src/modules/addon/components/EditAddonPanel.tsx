@@ -1,48 +1,30 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
-import { RootProps } from './AddonApp';
-import { router } from '../router';
+
+import { FormPanel } from '@tencent/ff-component';
 import {
-  FormPanel,
-  ResourceInfo,
-  CreateResource,
-  getWorkflowError,
-  Validation,
-  initValidator,
-  Resource,
-  Markdown
-} from '../../common';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
 import {
-  Icon,
-  Text,
-  Card,
-  Radio,
-  Row,
-  Col,
-  TableColumn,
-  Table,
-  ExternalLink,
-  Button,
-  Alert
+    Alert, Button, Card, Col, Icon, Radio, Row, Table, TableColumn, Text
 } from '@tencent/tea-component';
-import { Addon, AddonEditUniversalJsonYaml, PeEdit, EsInfo, AddonEditPeJsonYaml } from '../models';
-import { stylize, radioable, scrollable } from '@tencent/tea-component/lib/table/addons';
+import { radioable, scrollable, stylize } from '@tencent/tea-component/lib/table/addons';
+
 import { resourceConfig } from '../../../../config';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
 import {
-  ResourceNameMap,
-  AddonNameEnum,
-  AddonNameMapToGenerateName,
-  ClusterTypeEnum,
-  AddonNameMap,
-  AddonTypeEnum
-} from '../constants/Config';
-import { EditPersistentEventPanel } from './EditPersistentEventPanel';
+    CreateResource, getWorkflowError, initValidator, Markdown, Resource, ResourceInfo, Validation
+} from '../../common';
+import { allActions } from '../actions';
 import { validatorActions } from '../actions/validatorActions';
+import {
+    AddonNameEnum, AddonNameMap, AddonNameMapToGenerateName, ResourceNameMap
+} from '../constants/Config';
+import { Addon, AddonEditPeJsonYaml, AddonEditUniversalJsonYaml, EsInfo, PeEdit } from '../models';
+import { router } from '../router';
+import { RootProps } from './AddonApp';
+import { EditPersistentEventPanel } from './EditPersistentEventPanel';
+
 // import { addonRules } from '../constants/ValidateConfig';
 
 /**

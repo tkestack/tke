@@ -1,21 +1,21 @@
-import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { Modal, Button, Alert, Text, Input, Bubble } from '@tea/component';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { connect } from 'react-redux';
-import { allActions } from '../../../actions/';
-import { FormPanel, WorkflowDialog, cloneDeep, CreateResource, InputField } from '../../../../common';
-import { resourceConfig } from '../../../../../../config';
 import * as classnames from 'classnames';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Alert, Bubble, Button, Input, Modal, Text } from '@tea/component';
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { resourceConfig } from '../../../../../../config';
+import { cloneDeep, CreateResource, InputField, WorkflowDialog } from '../../../../common';
+import { allActions } from '../../../actions/';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceGrayUpgradeDialog extends React.Component<RootProps, {}> {
   render() {
     const { actions, region, clusterVersion, route } = this.props;

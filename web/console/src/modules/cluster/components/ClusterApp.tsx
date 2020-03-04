@@ -1,22 +1,24 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { allActions } from '../actions';
-import { configStore } from '../stores/RootStore';
-import { router } from '../router';
+
+import { bindActionCreators } from '@tencent/ff-redux';
+import { Card, ContentView } from '@tencent/tea-component';
+
 import { ResetStoreAction } from '../../../../helpers';
-import { ClusterHeadPanel } from './clusterManage/ClusterHeadPanel';
+import { allActions } from '../actions';
+import { RootState } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
 import { ClusterActionPanel } from './clusterManage/ClusterActionPanel';
-import { ClusterTablePanel } from './clusterManage/ClusterTablePanel';
-import { ResourceContainerPanel } from './resource/ResourceContainerPanel';
-import { ContentView, Card } from '@tencent/tea-component';
 import { ClusterDeleteDialog } from './clusterManage/ClusterDeleteDialog';
+import { ClusterHeadPanel } from './clusterManage/ClusterHeadPanel';
 import { ClusterStatusDialog } from './clusterManage/ClusterStatusDialog';
+import { ClusterTablePanel } from './clusterManage/ClusterTablePanel';
 import { CreateClusterPanel } from './clusterManage/CreateClusterPanel';
 import { CreateICPanel } from './clusterManage/CreateICPanel';
 import { ModifyClusterNameDialog } from './clusterManage/ModifyClusterNameDialog';
 import { TcrRegistyDeployDialog } from './clusterManage/TcrRegistyDeployDialog';
+import { ResourceContainerPanel } from './resource/ResourceContainerPanel';
 
 export const store = configStore();
 

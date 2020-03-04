@@ -1,10 +1,10 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
+
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
+
 import * as ActionType from '../constants/ActionType';
-import * as initState from './initState';
 import { HelmHistory } from '../models';
 
 const TempReducer = combineReducers({

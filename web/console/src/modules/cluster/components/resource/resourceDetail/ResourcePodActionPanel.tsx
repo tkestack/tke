@@ -1,22 +1,26 @@
 import * as React from 'react';
-import { Button, Justify, Modal, TagSearchBox, Table, Bubble } from '@tea/component';
-import { bindActionCreators, insertCSS, uuid } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { router } from '../../../router';
-import { IsInNodeManageDetail } from './ResourceDetail';
-import { PodFilterInNode, CreateResource } from '../../../models';
-import { isEmpty, cloneDeep } from '../../../../common/utils';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { ChartInstancesPanel } from '@tencent/tchart';
-import { MonitorPanelProps, containerMonitorFields, podMonitorFields } from '../../../models/MonitorPanel';
-import { ResourceGrayUpgradeDialog } from './ResourceGrayUpgradeDialog';
 import { IsShowLoginDialog } from 'src/modules/cluster/constants/ActionType';
-import { ResourceTappPodDeleteDialog } from './ResourceTappPodDeleteDialog';
-import { resourceConfig } from '../../../../../../config';
 import { TappGrayUpdateEditItem } from 'src/modules/cluster/models/ResourceDetailState';
+
+import { Bubble, Button, Justify, Modal, Table, TagSearchBox } from '@tea/component';
+import { bindActionCreators, insertCSS, uuid } from '@tencent/ff-redux';
+import { ChartInstancesPanel } from '@tencent/tchart';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { resourceConfig } from '../../../../../../config';
 import { initValidator } from '../../../../../../src/modules/common';
+import { cloneDeep, isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { CreateResource, PodFilterInNode } from '../../../models';
+import {
+    containerMonitorFields, MonitorPanelProps, podMonitorFields
+} from '../../../models/MonitorPanel';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import { IsInNodeManageDetail } from './ResourceDetail';
+import { ResourceGrayUpgradeDialog } from './ResourceGrayUpgradeDialog';
+import { ResourceTappPodDeleteDialog } from './ResourceTappPodDeleteDialog';
 
 /** k8s pod的状态值 */
 const PodPhase = ['Pending', 'Running', 'Succeeded', 'Failed', 'Unknown'];

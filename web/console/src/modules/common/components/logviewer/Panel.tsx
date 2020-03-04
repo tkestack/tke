@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { findDOMNode } from 'react-dom';
-import { BaseReactProps } from '@tencent/qcloud-lib';
+
+import { BaseReactProps } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 export interface SlidePanelProps extends BaseReactProps {

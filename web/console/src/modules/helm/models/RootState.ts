@@ -1,12 +1,9 @@
-import { Namespace } from './Namespace';
-import { ResourceFilter, Resource } from './../../common/models/Resource';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { RecordSet } from '@tencent/qcloud-lib';
-import { Region, RegionFilter } from '../../common/models';
-import { HelmCreation, DetailState, ListState } from './';
+import { FetcherState, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
+
 import { RouteState } from '../../../../helpers';
+import { Resource, ResourceFilter } from '../../common/models/Resource';
+import { DetailState, HelmCreation, ListState } from './';
+import { Namespace } from './Namespace';
 
 export interface RootState {
   /** 路由 */

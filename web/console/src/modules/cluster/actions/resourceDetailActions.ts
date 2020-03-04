@@ -1,12 +1,12 @@
-import { ReduxAction, extend } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
-import { RootState } from '../models';
+import { extend, FetchOptions, generateFetcherActionCreator, ReduxAction } from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
+import { RootState } from '../models';
 import * as WebAPI from '../WebAPI';
 import { resourceDetailEventActions } from './resourceDetailEventActions';
-import { resourceRsActions } from './resourceRsActions';
 import { resourcePodActions } from './resourcePodActions';
 import { resourcePodLogActions } from './resourcePodLogActions';
+import { resourceRsActions } from './resourceRsActions';
 
 const ReduceSecretDataForPsw = (dataInfo: string) => {
   let jsonData = JSON.parse(window.atob(dataInfo)),

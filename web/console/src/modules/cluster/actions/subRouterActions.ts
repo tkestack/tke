@@ -1,8 +1,8 @@
-import { extend } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import { extend, FetchOptions, generateFetcherActionCreator } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState } from '../models';
+
 import * as ActionType from '../constants/ActionType';
+import { RootState } from '../models';
 import * as WebAPI from '../WebAPI';
 import { clusterActions } from './clusterActions';
 

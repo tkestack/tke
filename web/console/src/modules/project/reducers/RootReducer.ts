@@ -1,20 +1,15 @@
-import { initProjectEdition, initNamespaceEdition } from './../constants/Config';
-import { initValidator } from './../../common/models/Validation';
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
-import { Region } from '../../common/models';
-import { Project, Manager, Namespace, Cluster } from '../models';
+
+import { createFFListReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
+import { initNamespaceEdition, initProjectEdition } from '../constants/Config';
 import { router } from '../router';
-import { createListReducer } from '@tencent/redux-list';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
 
-  project: createListReducer('project'),
+  project: createFFListReducer('project'),
 
   projectEdition: reduceToPayload(ActionType.UpdateProjectEdition, initProjectEdition),
 
@@ -38,9 +33,9 @@ export const RootReducer = combineReducers({
     actionType: ActionType.DeleteProject
   }),
 
-  manager: createListReducer('manager'),
+  manager: createFFListReducer('manager'),
 
-  namespace: createListReducer('namespace'),
+  namespace: createFFListReducer('namespace'),
 
   namespaceEdition: reduceToPayload(ActionType.UpdateNamespaceEdition, initNamespaceEdition),
 
@@ -56,9 +51,9 @@ export const RootReducer = combineReducers({
     actionType: ActionType.DeleteNamespace
   }),
 
-  region: createListReducer('region'),
+  region: createFFListReducer('region'),
 
-  cluster: createListReducer('cluster'),
+  cluster: createFFListReducer('cluster'),
 
   /** 设置管理员*/
   modifyAdminstrator: generateWorkflowReducer({

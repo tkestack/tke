@@ -1,7 +1,9 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
+
+import { reduceToPayload } from '@tencent/ff-redux';
+
 import { initValidator } from '../../common';
+import * as ActionType from '../constants/ActionType';
 
 export const PeEditReducer = combineReducers({
   esAddress: reduceToPayload(ActionType.EsAddress, ''),

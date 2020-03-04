@@ -1,15 +1,17 @@
-import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
-import { FormItem, LinkButton, InputField } from '../../../../common/components';
-import { Bubble, Text, ExternalLink, Icon } from '@tea/component';
 import * as classnames from 'classnames';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, ExternalLink, Icon, Text } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, InputField, LinkButton } from '../../../../common/components';
+import { allActions } from '../../../actions';
 import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
 import { VolumeTypeList } from '../../../constants/Config';
 import { VolumeItem } from '../../../models';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { RootProps } from '../../ClusterApp';
 
 const AccessModeNameMap = {
   ReadWriteOnce: t('单机读写')

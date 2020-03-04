@@ -1,14 +1,17 @@
+import classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RootProps } from './LogStashApp';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
-import { LinkButton, FormPanel } from '../../common/components';
-import classnames from 'classnames';
-import { Bubble, Icon } from '@tencent/tea-component';
-import { logModeList } from '../constants/Config';
+
+import { Button, Input, Text } from '@tea/component';
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Text, Input, Button } from '@tea/component';
+import { Bubble, Icon } from '@tencent/tea-component';
+
+import { LinkButton } from '../../common/components';
+import { allActions } from '../actions';
+import { logModeList } from '../constants/Config';
+import { RootProps } from './LogStashApp';
 
 /** 标签编辑的内联样式 */
 const MetadataStyle: React.CSSProperties = { display: 'inline-block' };
@@ -18,10 +21,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditOriginNodePanel extends React.Component<RootProps, any> {
   render() {
     let { actions, logStashEdit } = this.props,

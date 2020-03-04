@@ -1,30 +1,27 @@
-import * as React from 'react';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { Button, Table, TableColumn, Bubble } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { connect } from 'react-redux';
 import * as classnames from 'classnames';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { MainBodyLayout, FormLayout } from '../../../../common/layouts';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, Button, Table, TableColumn } from '@tea/component';
+import { stylize } from '@tea/component/table/addons/stylize';
 import {
-  FormItem,
-  InputField,
-  ButtonBar,
-  TipInfo,
-  ResourceSelectorProps,
-  ResourceSelectorInfoRow,
-  ResourceSelectorGeneric
-} from '../../../../common/components';
-import { router } from '../../../router';
-import { SecretTypeList } from '../../../constants/Config';
-import { getWorkflowError } from '../../../../common/utils';
-import { SecretData, SecretEditJSONYaml, CreateResource, Namespace } from '../../../models';
-import { validateSecretActions } from '../../../actions/validateSecretActinos';
+    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
+} from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
-import { stylize } from '@tea/component/table/addons/stylize';
+import {
+    ButtonBar, FormItem, InputField, ResourceSelectorGeneric, ResourceSelectorInfoRow,
+    ResourceSelectorProps, TipInfo
+} from '../../../../common/components';
+import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
+import { getWorkflowError } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { validateSecretActions } from '../../../actions/validateSecretActinos';
+import { SecretTypeList } from '../../../constants/Config';
+import { CreateResource, Namespace, SecretData, SecretEditJSONYaml } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+
 const secretTypeTip = {
   Opaque: t('适用于保存秘钥证书和配置文件，Value将以base64格式编码'),
   'kubernetes.io/dockercfg': t('用于保存私有Docker Registry的认证信息')
@@ -45,10 +42,7 @@ interface EditSecretPanelState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditSecretPanel extends React.Component<RootProps, EditSecretPanelState> {
   constructor(props, context) {
     super(props, context);
@@ -377,10 +371,7 @@ export class EditSecretPanel extends React.Component<RootProps, EditSecretPanelS
 
 /** secret 内容的展示 key value的形式 */
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 class EditSecretDataForOpaque extends React.Component<RootProps, {}> {
   render() {
     let { actions } = this.props;

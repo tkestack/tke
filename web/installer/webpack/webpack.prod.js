@@ -18,8 +18,7 @@ module.exports = {
   },
 
   module: {
-    rules: [
-      {
+    rules: [{
         test: /\.tsx?$/,
         use: [
           'happypack/loader?id=happyBabel',
@@ -69,7 +68,10 @@ module.exports = {
       '@tea/app/*': path.resolve(__dirname, '../node_modules/@tencent/tea-app/lib/*'),
       '@tea/component': path.resolve(__dirname, '../node_modules/@tencent/tea-component/lib'),
       '@tea/component/*': path.resolve(__dirname, '../node_modules/@tencent/tea-component/lib/*'),
-      '@tencent/qcloud-lib': path.resolve(__dirname, '../node_modules/@tencent/qcloud-lib')
+      '@tencent/qcloud-lib': path.resolve(__dirname, '../lib/qcloud-lib/'),
+      '@tencent/qcloud-redux-fetcher': path.resolve(__dirname, '../lib/qcloud-redux-fetcher/'),
+      '@tencent/qcloud-redux-query': path.resolve(__dirname, '../lib/qcloud-redux-query/'),
+      '@tencent/qcloud-redux-workflow': path.resolve(__dirname, '../lib/qcloud-redux-workflow/')
     }
   },
 

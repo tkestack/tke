@@ -1,20 +1,19 @@
-import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { connect } from 'react-redux';
-import { isEmpty, FormItem, LinkButton } from '../../../../common';
-import { Text, Bubble, Input, Icon } from '@tencent/tea-component';
 import * as classnames from 'classnames';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Bubble, Icon, Input, Text } from '@tencent/tea-component';
+
+import { FormItem, isEmpty, LinkButton } from '../../../../common';
+import { allActions } from '../../../actions';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditResourceAnnotations extends React.Component<RootProps, {}> {
   render() {
     let { subRoot, actions } = this.props,

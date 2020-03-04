@@ -1,15 +1,14 @@
-import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { bindActionCreators, deepClone } from '@tencent/qcloud-lib';
-import { isSuccessWorkflow, OperationState } from '@tencent/qcloud-redux-workflow';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Alert, Bubble, Button, Icon, Modal, Select, Text } from '@tencent/tea-component';
+import { FormPanel } from '@tencent/ff-component';
+import {
+    bindActionCreators, deepClone, isSuccessWorkflow, OperationState
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Alert, Button, Modal } from '@tencent/tea-component';
 
 import { getWorkflowError } from '../../common';
-import { FormItem, FormPanel, InputField, SelectList } from '../../common/components';
-import { FormLayout } from '../../common/layouts';
 import { allActions } from '../actions';
 import { namespaceActions } from '../actions/namespaceActions';
 import { resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
@@ -23,10 +22,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class CreateNamespacePanel extends React.Component<RootProps, {}> {
   state = {
     isShowDialog: false

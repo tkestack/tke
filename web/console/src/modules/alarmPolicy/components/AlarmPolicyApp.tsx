@@ -1,20 +1,22 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { allActions } from '../actions/';
-import { configStore } from '../stores/RootStore';
-import { router } from '../router';
-import { ResetStoreAction } from '../../../../helpers';
-import * as ActionType from '../constants/ActionType';
-import { AlarmPolicyHeadPanel } from './AlarmPolicyHeadPanel';
-import { AlarmPolicyTablePanel } from './AlarmPolicyTablePanel';
-import { EditAlarmPolicyPanel } from './EditAlarmPolicyPanel';
-import { AlarmPolicyDetailPanel } from './AlarmPolicyDetailPanel';
-import { AlarmPolicySubpageHeaderPanel } from './AlarmPolicySubpageHeaderPanel';
-import { DeleteAlarmPolicyDialog } from './DeleteAlarmPolicyDialog';
-import { AlarmPolicyDetailHeaderPanel } from './AlarmPolicyDetailHeaderPanel';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { ContentView } from '@tencent/tea-component';
+
+import { ResetStoreAction } from '../../../../helpers';
+import { allActions } from '../actions/';
+import * as ActionType from '../constants/ActionType';
+import { RootState } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
+import { AlarmPolicyDetailHeaderPanel } from './AlarmPolicyDetailHeaderPanel';
+import { AlarmPolicyDetailPanel } from './AlarmPolicyDetailPanel';
+import { AlarmPolicyHeadPanel } from './AlarmPolicyHeadPanel';
+import { AlarmPolicySubpageHeaderPanel } from './AlarmPolicySubpageHeaderPanel';
+import { AlarmPolicyTablePanel } from './AlarmPolicyTablePanel';
+import { DeleteAlarmPolicyDialog } from './DeleteAlarmPolicyDialog';
+import { EditAlarmPolicyPanel } from './EditAlarmPolicyPanel';
 
 const store = configStore();
 

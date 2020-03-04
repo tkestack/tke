@@ -1,12 +1,14 @@
 import * as React from 'react';
-import { RootProps } from './AddonApp';
-import { router } from '../router';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../actions';
-import { ContentView, Tabs, TabPanel } from '@tencent/tea-component';
-import { AddonDetailHeadPanel } from './AddonDetailHeadPanel';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { ContentView, TabPanel, Tabs } from '@tencent/tea-component';
+
+import { allActions } from '../actions';
+import { router } from '../router';
+import { RootProps } from './AddonApp';
+import { AddonDetailHeadPanel } from './AddonDetailHeadPanel';
 import { AddonDetailPanel } from './AddonDetailPanel';
 
 /** 详情页的tab列表 */
@@ -20,10 +22,7 @@ const tabList: any[] = [
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class AddonDetail extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions, region } = this.props;

@@ -1,19 +1,18 @@
 import * as React from 'react';
-import { SearchBox, Table } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../actions';
-import { RootProps } from './PersistentEventApp';
+
+import { SearchBox, Table } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Justify } from '@tencent/tea-component/lib/justify';
+
+import { allActions } from '../actions';
+import { RootProps } from './PersistentEventApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ClusterActionPanel extends React.Component<RootProps, {}> {
   render() {
     let { actions, cluster } = this.props;

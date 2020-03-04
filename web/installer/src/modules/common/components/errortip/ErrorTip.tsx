@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { BaseReactProps } from '@tencent/qcloud-lib';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { WorkflowState } from '@tencent/ff-redux';
 import { Link } from '../../models';
 import { TipInfo, LinkHref } from '..';
 import { getWorkflowError, getWorkflowErrorCode } from '../../utils';

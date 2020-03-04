@@ -1,20 +1,17 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { ContentView, Button, Segment, Bubble } from '@tencent/tea-component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { router } from '../../../router';
-import { CreateResource, ICComponter } from '../../../models';
 import { connect } from 'react-redux';
+
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Bubble, Button, ContentView } from '@tencent/tea-component';
+
 import { resourceConfig } from '../../../../../../config';
-import { uuid } from '../../../../../../lib/_util';
-import { bindActionCreators } from '@tencent/qcloud-lib';
+import { getWorkflowError, ResourceInfo, TipInfo } from '../../../../../modules/common';
 import { allActions } from '../../../actions';
-import { ResourceInfo, getWorkflowError, TipInfo, FormPanel, InputField } from '../../../../../modules/common';
-import { validateValue, RuleTypeEnum } from '../../../../common/validate';
-import { InputLabelsPanel } from '../../clusterManage/InputLabelsPanel';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { authTypeList } from '../../../../../modules/cluster/constants/Config';
-import { Validation, initValidator } from '../../../../common';
+import { CreateResource, ICComponter } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
 import { SelectICComputerPanel } from '../../clusterManage/SelectICComputerPanel';
 import { ShowICComputerPanel } from '../../clusterManage/ShowICComputerPanel';
 

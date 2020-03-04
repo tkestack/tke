@@ -1,18 +1,20 @@
+import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { InputNumber, Bubble, Justify, Row, Col, Text } from '@tea/component';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import * as classnames from 'classnames';
-import { FormItem, LinkButton, InputField } from '../../../../common/components';
-import { isEmpty } from '../../../../common/utils';
-import { EditResourceContainerMountItem } from './EditResourceContainerMountItem';
-import { EditResourceContainerLimitItem } from './EditResourceContainerLimitItem';
-import { EditResourceContainerEnvItem } from './EditResourceContainerEnvItem';
-import { EditResourceContainerAdvancedPanel } from './EditResourceContainerAdvancedPanel';
-import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
+
+import { Bubble, Col, InputNumber, Justify, Row, Text } from '@tea/component';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, InputField, LinkButton } from '../../../../common/components';
+import { isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
+import { RootProps } from '../../ClusterApp';
+import { EditResourceContainerAdvancedPanel } from './EditResourceContainerAdvancedPanel';
+import { EditResourceContainerEnvItem } from './EditResourceContainerEnvItem';
+import { EditResourceContainerLimitItem } from './EditResourceContainerLimitItem';
+import { EditResourceContainerMountItem } from './EditResourceContainerMountItem';
 
 interface ContainerItemProps extends RootProps {
   /** 容器的id */
@@ -22,10 +24,7 @@ interface ContainerItemProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditResourceContainerItem extends React.Component<ContainerItemProps, {}> {
   render() {
     let { actions, subRoot, cKey, clusterVersion, cluster } = this.props,

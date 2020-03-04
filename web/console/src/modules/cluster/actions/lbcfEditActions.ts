@@ -1,15 +1,18 @@
-import { router } from './../router';
-import { CLB, Selector } from './../models/ServiceEdit';
-import { resourceConfig } from './../../../../config/resourceConfig';
-import { ResourceFilter } from './../models/ResourceOption';
-import { RootState } from '../models';
-import * as WebAPI from '../WebAPI';
-import * as ActionType from '../constants/ActionType';
-import { Namespace } from '../models/Namespace';
-import { deepClone, uuid } from '@tencent/qcloud-lib';
-import { initSelector, initLbcfBGPort, initLbcfBackGroupEdition } from '../constants/initState';
-import { validateLbcfActions } from './validateLbcfActions';
 import { KeyValue } from 'src/modules/common';
+
+import { deepClone, uuid } from '@tencent/ff-redux';
+
+import { resourceConfig } from '../../../../config/resourceConfig';
+import * as ActionType from '../constants/ActionType';
+import { initLbcfBackGroupEdition, initLbcfBGPort, initSelector } from '../constants/initState';
+import { RootState } from '../models';
+import { Namespace } from '../models/Namespace';
+import { ResourceFilter } from '../models/ResourceOption';
+import { CLB, Selector } from '../models/ServiceEdit';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { validateLbcfActions } from './validateLbcfActions';
+
 type GetState = () => RootState;
 
 export const lbcfEditActions = {

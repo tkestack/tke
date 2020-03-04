@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { BaseReactProps, insertCSS } from '@tencent/qcloud-lib';
-import { DropdownList, DropdownListItem } from '../dropdown';
+
+import { BaseReactProps, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { DropdownList, DropdownListItem } from '../dropdown';
 
 /**插入自定义样式覆盖bubble样式 */
 insertCSS(

@@ -1,18 +1,18 @@
-import { initValidator } from './../../common/models/Validation';
-import { extend, deepClone, uuid } from '@tencent/qcloud-lib';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { RootState, Repo, RepoFilter } from '../models';
+import {
+    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import * as ActionType from '../constants/ActionType';
 import { InitRepo } from '../constants/Config';
-import * as WebAPI from '../WebAPI';
-import { router } from '../router';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { createListAction } from '@tencent/redux-list';
+import { Repo, RepoFilter, RootState } from '../models';
 import { RepoCreation } from '../models/Repo';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 
-const FFModelRepoActions = createListAction<Repo, RepoFilter>({
+const FFModelRepoActions = createFFListActions<Repo, RepoFilter>({
   actionName: 'repo',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchRepoList(query);

@@ -1,5 +1,6 @@
-import { Identifiable, uuid } from '@tencent/qcloud-lib';
-import { Validation, initValidator } from '../../common/models';
+import { Identifiable, uuid } from '@tencent/ff-redux';
+
+import { initValidator, Validation } from '../../common/models';
 
 export interface ConfigMapEdit extends Identifiable {
   /** cm的名称 */

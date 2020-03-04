@@ -1,7 +1,9 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
+
+import { reduceToPayload } from '@tencent/ff-redux';
+
 import { initValidator } from '../../common/models/Validation';
+import * as ActionType from '../constants/ActionType';
 
 let initAlarmPolicyType = 'cluster';
 let initAlarmObjectsType = 'all';

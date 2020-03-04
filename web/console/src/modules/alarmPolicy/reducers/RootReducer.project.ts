@@ -1,15 +1,17 @@
-import { AlarmPolicyEditReducer } from './AlarmPolicyEditReducer';
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
+
+import {
+    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload
+} from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
-import { router } from '../router';
-import * as ActionType from '../constants/ActionType';
-import { Region, ClusterFilter, Group, Namespace, Resource } from '../models';
-import { Cluster } from '../../common';
-import { createListReducer } from '@tencent/redux-list';
+
 import { FFReduxActionName } from '../../cluster/constants/Config';
+import { Cluster } from '../../common';
+import * as ActionType from '../constants/ActionType';
+import { ClusterFilter, Group, Namespace, Region, Resource } from '../models';
+import { router } from '../router';
+import { AlarmPolicyEditReducer } from './AlarmPolicyEditReducer';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
@@ -28,7 +30,7 @@ export const RootReducer = combineReducers({
 
   regionSelection: reduceToPayload(ActionType.SelectRegion, { value: 1 }),
 
-  cluster: createListReducer<Cluster, ClusterFilter>(FFReduxActionName.CLUSTER),
+  cluster: createFFListReducer<Cluster, ClusterFilter>(FFReduxActionName.CLUSTER),
   clusterVersion: reduceToPayload(ActionType.InitClusterVersion, '1.16'),
 
   /**当前集群命名空间 */
@@ -56,9 +58,9 @@ export const RootReducer = combineReducers({
     actionType: ActionType.QueryWorkloadList
   }),
 
-  alarmPolicy: createListReducer('AlarmPolicy'),
+  alarmPolicy: createFFListReducer('AlarmPolicy'),
 
-  userList: createListReducer('UserList'),
+  userList: createFFListReducer('UserList'),
 
   /** 当前新建告警 */
   alarmPolicyEdition: AlarmPolicyEditReducer,
@@ -75,10 +77,10 @@ export const RootReducer = combineReducers({
   /**详情 */
   alarmPolicyDetail: reduceToPayload(ActionType.FetchalarmPolicyDetail, {}),
 
-  channel: createListReducer<Resource, ClusterFilter>('channel'),
-  template: createListReducer<Resource, ClusterFilter>('template'),
-  receiver: createListReducer<Resource, ClusterFilter>('receiver'),
-  receiverGroup: createListReducer<Resource, ClusterFilter>('receiverGroup'),
+  channel: createFFListReducer<Resource, ClusterFilter>('channel'),
+  template: createFFListReducer<Resource, ClusterFilter>('template'),
+  receiver: createFFListReducer<Resource, ClusterFilter>('receiver'),
+  receiverGroup: createFFListReducer<Resource, ClusterFilter>('receiverGroup'),
 
   /**
    * 判断是否为国际版

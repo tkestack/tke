@@ -1,15 +1,17 @@
-import { FetchOptions, FetchState } from '@tencent/qcloud-redux-fetcher';
-import * as ActionType from '../constants/ActionType';
-import { uuid, ReduxAction } from '@tencent/qcloud-lib';
-import { RootState, ContainerLogs, MetadataItem, ContainerFilePathItem } from '../models';
+import { ReduxAction, uuid } from '@tencent/ff-redux';
+
+import { initValidator, Namespace } from '../../common/models';
 import { cloneDeep, remove } from '../../common/utils';
-import { validatorActions } from './validatorActions';
-import { initMetadata, initContainerInputOption, initContainerFilePath } from '../constants/initState';
-import { resourceActions } from './resourceActions';
-import { Namespace, initValidator } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
 import { logModeList } from '../constants/Config';
-import { podActions } from './podActions';
+import {
+    initContainerFilePath, initContainerInputOption, initMetadata
+} from '../constants/initState';
+import { ContainerFilePathItem, ContainerLogs, MetadataItem, RootState } from '../models';
 import { ResourceTarget, WorkLoadList } from '../models/Resource';
+import { podActions } from './podActions';
+import { resourceActions } from './resourceActions';
+import { validatorActions } from './validatorActions';
 
 type GetState = () => RootState;
 

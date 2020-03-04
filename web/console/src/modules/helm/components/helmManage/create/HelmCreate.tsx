@@ -1,16 +1,14 @@
-import * as React from 'react';
-import { RootProps } from '../../HelmApp';
-import { router } from '../../../router';
-import { MainBodyLayout, FormLayout } from '../../../../common/layouts';
-import { TipInfo } from '../../../../common/components';
 import { Button } from '@tea/component/button';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { t } from '@tencent/tea-app/lib/i18n';
+import * as React from 'react';
+import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
 import { HelmResource, OtherType } from '../../../constants/Config';
+import { router } from '../../../router';
+import { RootProps } from '../../HelmApp';
 import { BaseInfoPanel } from './BaseInfoPanel';
-import { TencentHubChartPanel } from './TencentHubChartPanel';
-import { OtherChartPanel } from './OtherChartPanel';
 import { KeyValuesPanel } from './KeyValuesPanel';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { OtherChartPanel } from './OtherChartPanel';
+import { TencentHubChartPanel } from './TencentHubChartPanel';
 
 export class HelmCreate extends React.Component<RootProps, {}> {
   componentDidMount() {

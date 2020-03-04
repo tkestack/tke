@@ -1,9 +1,11 @@
-import * as React from 'react';
-import { BaseReactProps } from '@tencent/qcloud-lib';
 import * as d3 from 'd3';
-import { Icon } from '@tea/component/icon';
+import * as React from 'react';
+
 import { Bubble } from '@tea/component/bubble';
+import { Icon } from '@tea/component/icon';
+import { BaseReactProps } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { TransformField } from './bytesTo';
 
 export interface LineChartBrushProps extends BaseReactProps {
@@ -131,7 +133,10 @@ export class LineChartBrush extends React.Component<LineChartBrushProps, LineCha
     const { width, height } = this.props;
     this.brush = d3
       .brushX()
-      .extent([[margin.left, margin.top], [width - margin.right, height - margin.bottom]])
+      .extent([
+        [margin.left, margin.top],
+        [width - margin.right, height - margin.bottom]
+      ])
       .handleSize([2])
       .on('start brush', this.brushMoved)
       .on('end', this.brushEnd);

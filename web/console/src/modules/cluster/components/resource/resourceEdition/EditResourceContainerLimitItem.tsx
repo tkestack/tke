@@ -1,12 +1,14 @@
-import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { Bubble } from '@tea/component';
-import { allActions } from '../../../actions';
-import { connect } from 'react-redux';
-import { FormItem } from '../../../../common/components';
 import * as classnames from 'classnames';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem } from '../../../../common/components';
+import { allActions } from '../../../actions';
+import { RootProps } from '../../ClusterApp';
 
 interface ResourceItemProps extends RootProps {
   cKey: string;
@@ -15,10 +17,7 @@ interface ResourceItemProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditResourceContainerLimitItem extends React.Component<ResourceItemProps, {}> {
   render() {
     let {

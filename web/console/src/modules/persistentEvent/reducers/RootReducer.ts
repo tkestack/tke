@@ -1,21 +1,23 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
+
+import {
+    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload
+} from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { router } from '../router';
-import * as ActionType from '../constants/ActionType';
-import { PeEditReducer } from './PeEditReducer';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
-import { createListReducer } from '@tencent/redux-list';
-import { FFReduxActionName } from '../constants/Config';
+
 import { Resource } from '../../common';
+import * as ActionType from '../constants/ActionType';
+import { FFReduxActionName } from '../constants/Config';
+import { router } from '../router';
+import { PeEditReducer } from './PeEditReducer';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
 
-  region: createListReducer(FFReduxActionName.REGION),
+  region: createFFListReducer(FFReduxActionName.REGION),
 
-  cluster: createListReducer(FFReduxActionName.CLUSTER),
+  cluster: createFFListReducer(FFReduxActionName.CLUSTER),
 
   peList: generateFetcherReducer<RecordSet<Resource>>({
     actionType: ActionType.FetchPeList,

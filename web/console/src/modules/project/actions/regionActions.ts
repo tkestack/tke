@@ -1,12 +1,12 @@
-import { extend } from '@tencent/qcloud-lib';
-import { RootState, Region, RegionFilter } from '../models';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
+import { Region, RegionFilter, RootState } from '../models';
 import * as WebAPI from '../WebAPI';
 import { clusterActions } from './clusterActions';
-import { createListAction } from '@tencent/redux-list';
 
 type GetState = () => RootState;
 
-const FFModelRegionActions = createListAction<Region, RegionFilter>({
+const FFModelRegionActions = createFFListActions<Region, RegionFilter>({
   actionName: 'region',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchRegionList(query);

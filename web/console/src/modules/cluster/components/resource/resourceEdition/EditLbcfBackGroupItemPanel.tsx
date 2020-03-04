@@ -1,12 +1,14 @@
 import * as React from 'react';
-import { Button, Select, Input, List, Bubble, Justify } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { FormPanel } from '../../../../common/components';
+
+import { Bubble, Button, Input, Justify, List, Select } from '@tea/component';
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { allActions } from '../../../actions';
 import { LbcfProtocolList } from '../../../constants/Config';
+import { RootProps } from '../../ClusterApp';
 
 interface EditLbcfBackGroupItemPanelProps extends RootProps {
   backGroupId: string;
@@ -16,10 +18,7 @@ interface EditLbcfBackGroupItemPanelProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGroupItemPanelProps, {}> {
   _renderPorts(ports) {
     let { actions, backGroupId, backGroupmode } = this.props;

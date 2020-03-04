@@ -1,19 +1,21 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { allActions } from '../actions';
-import { configStore } from '../stores/RootStore';
-import { ResetStoreAction } from '../../../../helpers';
-import { router } from '../router';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { ContentView } from '@tencent/tea-component';
-import { AddonHeadPanel } from './AddonHeadPanel';
+
+import { ResetStoreAction } from '../../../../helpers';
+import { allActions } from '../actions';
+import { RootState } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
 import { AddonActionPanel } from './AddonActionPanel';
-import { AddonTablePanel } from './AddonTablePanel';
-import { AddonDetail } from './AddonDetail';
-import { AddonSubpageHeadPanel } from './AddonSubpageHeadPanel';
-import { EditAddonPanel } from './EditAddonPanel';
 import { AddonDeleteDialog } from './AddonDeleteDialog';
+import { AddonDetail } from './AddonDetail';
+import { AddonHeadPanel } from './AddonHeadPanel';
+import { AddonSubpageHeadPanel } from './AddonSubpageHeadPanel';
+import { AddonTablePanel } from './AddonTablePanel';
+import { EditAddonPanel } from './EditAddonPanel';
 
 export const store = configStore();
 

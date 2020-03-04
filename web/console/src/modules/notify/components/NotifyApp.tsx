@@ -1,31 +1,33 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { allActions } from '../actions';
-import { configStore } from '../stores/RootStore';
-import { router } from '../router';
-import { ResetStoreAction } from '../../../../helpers';
-import * as ActionType from '../constants/ActionType';
-import { NotifyHead } from './NotifyHead';
-import { ResourceTable } from './resourceList/ResourceTable';
-import { ResourceHeader } from './resourceDetail/ResourceHeader';
-import { DeleteResourceDialog } from './DeleteResourceDialog';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { ContentView, Icon } from '@tencent/tea-component';
+
 import { notifySubRouter } from '../../../../config/routerConfig';
-import { ResourceSidebar } from './ResourceSidebar';
-import { EditResourceChannel } from './resourceEdition/EditResourceChannel';
+import { ResetStoreAction } from '../../../../helpers';
+import { allActions } from '../actions';
+import * as ActionType from '../constants/ActionType';
+import { RootState } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
+import { DeleteResourceDialog } from './DeleteResourceDialog';
+import { NotifyHead } from './NotifyHead';
 import { ResourceDetail } from './resourceDetail/ResourceDetail';
 import { ResourceDetailChannel } from './resourceDetail/ResourceDetailChannel';
-import { EditResourceTemplate } from './resourceEdition/EditResourceTemplate';
-import { EditResourceReceiver } from './resourceEdition/EditResourceReceiver';
-import { EditResourceReceiverGroup } from './resourceEdition/EditResourceReceiverGroup';
 import { ResourceDetailReceiver } from './resourceDetail/ResourceDetailReceiver';
 import { ResourceDetailReceiverGroup } from './resourceDetail/ResourceDetailReceiverGroup';
 import { ResourceDetailTempalte } from './resourceDetail/ResourceDetailTemplate';
+import { ResourceHeader } from './resourceDetail/ResourceHeader';
+import { EditResourceChannel } from './resourceEdition/EditResourceChannel';
+import { EditResourceReceiver } from './resourceEdition/EditResourceReceiver';
+import { EditResourceReceiverGroup } from './resourceEdition/EditResourceReceiverGroup';
+import { EditResourceTemplate } from './resourceEdition/EditResourceTemplate';
+import { ResourceTable } from './resourceList/ResourceTable';
 import { ResourceTableChannel } from './resourceList/ResourceTableChannel';
-import { ResourceTableTemplate } from './resourceList/ResourceTableTemplate';
 import { ResourceTableReceiver } from './resourceList/ResourceTableReceiver';
+import { ResourceTableTemplate } from './resourceList/ResourceTableTemplate';
+import { ResourceSidebar } from './ResourceSidebar';
 
 const store = configStore();
 

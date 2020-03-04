@@ -1,18 +1,18 @@
-import { extend } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { ResourceInfo, Resource, ResourceFilter } from '../../common';
-import { FFReduxActionName, AddonStatusEnum } from '../constants/Config';
-import * as ActionType from '../constants/ActionType';
-import { router } from '../router';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
 import { resourceConfig } from '../../../../config';
-import { addonActions } from './addonActions';
+import { Resource, ResourceFilter, ResourceInfo } from '../../common';
 import { CommonAPI } from '../../common/webapi';
-import { createListAction } from '@tencent/redux-list';
+import * as ActionType from '../constants/ActionType';
+import { AddonStatusEnum, FFReduxActionName } from '../constants/Config';
+import { RootState } from '../models';
+import { router } from '../router';
+import { addonActions } from './addonActions';
 
 type GetState = () => RootState;
 
 /** ========================== start 已存在的add的相关操作 ========================== */
-const ListAddonActions = createListAction<Resource, ResourceFilter>({
+const ListAddonActions = createFFListActions<Resource, ResourceFilter>({
   actionName: FFReduxActionName.OPENADDON,
   fetcher: async (query, getState: GetState) => {
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];
@@ -83,7 +83,7 @@ const openAddonActions = extend({}, ListAddonActions, addonRestActions);
 /** ========================== end 已存在的add的相关操作 ========================== */
 
 /** 集群列表的Actions */
-const ListClusterActions = createListAction<Resource, ResourceFilter>({
+const ListClusterActions = createFFListActions<Resource, ResourceFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async (query, getState: GetState) => {
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];

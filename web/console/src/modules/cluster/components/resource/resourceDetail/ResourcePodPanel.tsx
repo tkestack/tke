@@ -1,25 +1,26 @@
-import * as React from 'react';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { TableColumn, Bubble, Text, Icon } from '@tea/component';
-import { connect } from 'react-redux';
-import { OperationState } from '@tencent/qcloud-redux-workflow';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { Clip, HeadBubble, LinkButton, GridTable } from '../../../../common/components';
-import { TableLayout } from '../../../../common/layouts';
-import { dateFormatter, RouteState } from '../../../../../../helpers';
-import { router } from '../../../router';
-import { Pod, PodContainer, ResourceFilter } from '../../../models';
 import * as classnames from 'classnames';
-import { ContainerStatusMap } from '../../../constants/Config';
-import { isEmpty } from '../../../../common/utils';
-import { IsInNodeManageDetail } from './ResourceDetail';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, Icon, TableColumn, Text } from '@tea/component';
 import { autotip } from '@tea/component/table/addons/autotip';
-import { stylize } from '@tea/component/table/addons/stylize';
-import { selectable } from '@tea/component/table/addons/selectable';
 import { expandable } from '@tea/component/table/addons/expandable';
+import { selectable } from '@tea/component/table/addons/selectable';
+import { stylize } from '@tea/component/table/addons/stylize';
+import { bindActionCreators, OperationState } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { dateFormatter, RouteState } from '../../../../../../helpers';
+import { Clip, GridTable, HeadBubble, LinkButton } from '../../../../common/components';
+import { TableLayout } from '../../../../common/layouts';
+import { isEmpty } from '../../../../common/utils';
 import { execColumnWidth } from '../../../../common/utils/tea_adapter';
+import { allActions } from '../../../actions';
+import { ContainerStatusMap } from '../../../constants/Config';
+import { Pod, PodContainer, ResourceFilter } from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import { IsInNodeManageDetail } from './ResourceDetail';
 
 /** 获取containerId，去掉前缀 docker:// */
 export function reduceContainerId(containerStatus: any[], containerName: string) {

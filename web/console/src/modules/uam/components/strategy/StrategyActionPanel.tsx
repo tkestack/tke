@@ -1,24 +1,16 @@
 import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { selectable, removeable } from '@tea/component/table/addons';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { allActions } from '../../actions';
-import {
-  Modal,
-  Button,
-  Form,
-  Input,
-  RadioGroup,
-  Radio,
-  Transfer,
-  SearchBox,
-  Table,
-  Justify,
-  Select,
-  Icon
-} from '@tea/component';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { cloneDeep, LinkButton } from '@src/modules/common';
+import {
+    Button, Form, Icon, Input, Justify, Modal, Radio, RadioGroup, SearchBox, Select, Table, Transfer
+} from '@tea/component';
+import { removeable, selectable } from '@tea/component/table/addons';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { allActions } from '../../actions';
+
 const { useState, useEffect } = React;
 // interface StrategyActionPanelState {
 //   name: string;

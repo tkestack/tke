@@ -1,30 +1,21 @@
 import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { TablePanel, LinkButton, usePrevious, emptyTips } from '../../../common/components';
-import { bindActionCreators, insertCSS } from '@tencent/qcloud-lib';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { selectable, removeable } from '@tea/component/table/addons';
-import { dateFormat } from '../../../../../helpers/dateUtil';
-import { router } from '../../router';
-import { allActions } from '../../actions';
-import { STRATEGY_TYPE } from '../../constants/Config';
+import { useDispatch, useSelector } from 'react-redux';
+
 import {
-  Button,
-  TableColumn,
-  Text,
-  Modal,
-  Card,
-  Tabs,
-  TabPanel,
-  CodeEditor,
-  LoadingTip,
-  Input,
-  Transfer,
-  Table,
-  SearchBox,
-  Tooltip
+    Button, Card, CodeEditor, Input, LoadingTip, Modal, SearchBox, Table, TableColumn, TabPanel,
+    Tabs, Text, Tooltip, Transfer
 } from '@tea/component';
+import { removeable, selectable } from '@tea/component/table/addons';
+import { TablePanel } from '@tencent/ff-component';
+import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { dateFormat } from '../../../../../helpers/dateUtil';
+import { LinkButton, usePrevious } from '../../../common/components';
+import { allActions } from '../../actions';
 import { User } from '../../models';
+import { router } from '../../router';
+
 const { useState, useEffect, useRef } = React;
 const _isEqual = require('lodash/isEqual');
 
@@ -353,7 +344,6 @@ export const StrategyDetailsPanel = () => {
                 columns={columns}
                 model={associatedUsersList}
                 action={actions.strategy}
-                emptyTips={emptyTips}
                 bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
               />
             </TabPanel>

@@ -1,24 +1,26 @@
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
-import { createListReducer } from '@tencent/redux-list';
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
+
+import {
+    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload
+} from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import * as ActionType from '../constants/ActionType';
-import { Namespace } from '../models';
+
 import { Cluster } from '../../common/models';
-import { SubReducer } from './SubReducer';
-import { router } from '../router';
+import * as ActionType from '../constants/ActionType';
 import { FFReduxActionName } from '../constants/Config';
-import { initDialogState, initClusterCreationState } from '../constants/initState';
+import { initClusterCreationState, initDialogState } from '../constants/initState';
+import { Namespace } from '../models';
+import { router } from '../router';
 import { CreateICReducer } from './CreateICReducer';
+import { SubReducer } from './SubReducer';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
 
-  region: createListReducer(FFReduxActionName.REGION),
+  region: createFFListReducer(FFReduxActionName.REGION),
 
-  cluster: createListReducer(FFReduxActionName.CLUSTER),
+  cluster: createFFListReducer(FFReduxActionName.CLUSTER),
 
   clustercredential: reduceToPayload(ActionType.FetchClustercredential, {
     name: '',

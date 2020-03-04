@@ -1,12 +1,14 @@
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import { generateFetcherReducer, FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
 import { combineReducers } from 'redux';
+
+import {
+    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload
+} from '@tencent/ff-redux';
+import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
+import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
 import * as ActionType from '../constants/ActionType';
-import { Event, Replicaset, Pod, Resource, ResourceFilter } from '../models';
-import { createListReducer } from '@tencent/redux-list';
 import { FFReduxActionName } from '../constants/Config';
+import { Event, Pod, Replicaset, Resource, ResourceFilter } from '../models';
 
 /** ==== start 日志的相关处理 ============ */
 const logOptionReducer = combineReducers({
@@ -29,7 +31,7 @@ const TempReducer = combineReducers({
     }
   }),
 
-  event: createListReducer<Event, ResourceFilter>(FFReduxActionName.DETAILEVENT),
+  event: createFFListReducer<Event, ResourceFilter>(FFReduxActionName.DETAILEVENT),
 
   rsQuery: generateQueryReducer({
     actionType: ActionType.QueryRsList

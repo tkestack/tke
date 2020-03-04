@@ -1,16 +1,18 @@
 import * as React from 'react';
-import { Button, SearchBox, Justify } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../actions';
-import { RootProps } from './ProjectApp';
-import { WorkflowDialog } from '../../common/components';
-import { CreateProjectPanel } from './CreateProjectPanel';
+
+import { Button, Justify, SearchBox } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { WorkflowDialog } from '../../common/components';
+import { allActions } from '../actions';
 import { projectActions } from '../actions/projectActions';
-import { EditProjectManagerPanel } from './EditProjectManagerPanel';
 import { Manager } from '../models';
 import { router } from '../router';
+import { CreateProjectPanel } from './CreateProjectPanel';
+import { EditProjectManagerPanel } from './EditProjectManagerPanel';
+import { RootProps } from './ProjectApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {

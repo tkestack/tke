@@ -1,7 +1,9 @@
-import * as React from 'react';
-import { BaseReactProps, OnOuterClick, insertCSS } from '@tencent/qcloud-lib';
 import * as classnames from 'classnames';
+import * as React from 'react';
+
+import { BaseReactProps, insertCSS, OnOuterClick } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 /**插入自定义样式覆盖bubble样式 */
 insertCSS(
   'CardMenuCss',

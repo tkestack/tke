@@ -1,15 +1,15 @@
 import * as React from 'react';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { Switch, Card, Icon, Select } from '@tea/component';
+
+import { Card, Icon, Select, Switch } from '@tea/component';
+import { bindActionCreators, FetchState } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem } from '../../../../common/components';
 import { allActions } from '../../../actions';
+import { TailList } from '../../../constants/Config';
 import { RootProps } from '../../ClusterApp';
 import { YamlEditorPanel } from '../YamlEditorPanel';
-import { TailList } from '../../../constants/Config';
-import { DetailLayout } from '../../../../common/layouts';
-import { FormItem } from '../../../../common/components';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 const workloadTypeList = [
   {

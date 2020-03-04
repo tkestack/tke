@@ -1,15 +1,16 @@
-import { ProjectEdition } from './../models/Project';
-import { extend } from '@tencent/qcloud-lib';
-import { RootState, Manager, ManagerFilter } from '../models';
-import * as WebAPI from '../WebAPI';
-import { createListAction } from '@tencent/redux-list';
+import {
+    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
+} from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import { Manager, ManagerFilter, RootState } from '../models';
+import { ProjectEdition } from '../models/Project';
+import * as WebAPI from '../WebAPI';
 import { projectActions } from './projectActions';
 
 type GetState = () => RootState;
 
-const FFModelManagerActions = createListAction<Manager, ManagerFilter>({
+const FFModelManagerActions = createFFListActions<Manager, ManagerFilter>({
   actionName: 'manager',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchUser(query);

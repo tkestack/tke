@@ -1,13 +1,15 @@
-import { extend } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
-import { generateWorkflowActionCreator, OperationResult, OperationTrigger } from '@tencent/qcloud-redux-workflow';
-import { RootState, Strategy, StrategyFilter } from '../models';
-import * as ActionTypes from '../constants/ActionTypes';
-import * as WebAPI from '../WebAPI';
-import { User, UserFilter } from '../models/index';
-import { createListAction } from '@tencent/redux-list';
-import { CommonAPI, ResourceFilter, ResourceInfo } from '@src/modules/common';
 import { resourceConfig } from '@config';
+import { CommonAPI, ResourceFilter, ResourceInfo } from '@src/modules/common';
+import {
+    createFFListActions, extend, FetchOptions, generateFetcherActionCreator,
+    generateWorkflowActionCreator, OperationTrigger
+} from '@tencent/ff-redux';
+
+import * as ActionTypes from '../constants/ActionTypes';
+import { RootState, Strategy } from '../models';
+import { User, UserFilter } from '../models/index';
+import * as WebAPI from '../WebAPI';
+
 type GetState = () => RootState;
 
 /**
@@ -63,7 +65,7 @@ const updateUser = generateFetcherActionCreator({
 /**
  * 用户列表操作
  */
-const FFModelUserActions = createListAction<User, UserFilter>({
+const FFModelUserActions = createFFListActions<User, UserFilter>({
   actionName: ActionTypes.UserList,
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchUserList(query);
@@ -75,7 +77,8 @@ const FFModelUserActions = createListAction<User, UserFilter>({
   onFinish: (record, dispatch: Redux.Dispatch) => {
     if (record.data.recordCount) {
       let isNotNeedPoll =
-        record.data.records.filter(item => item.status && item.status['phase'] && item.status['phase'] === 'Deleting').length === 0;
+        record.data.records.filter(item => item.status && item.status['phase'] && item.status['phase'] === 'Deleting')
+          .length === 0;
 
       if (isNotNeedPoll) {
         dispatch(FFModelUserActions.clearPolling());
@@ -85,7 +88,7 @@ const FFModelUserActions = createListAction<User, UserFilter>({
 });
 
 /* ================================ start 权限列表相关的 ================================ */
-const StrategyListActions = createListAction<Strategy, ResourceFilter>({
+const StrategyListActions = createFFListActions<Strategy, ResourceFilter>({
   actionName: ActionTypes.UserStrategyList,
   fetcher: async (query, getState: GetState) => {
     let resourceInfo: ResourceInfo = resourceConfig()['localidentity'];

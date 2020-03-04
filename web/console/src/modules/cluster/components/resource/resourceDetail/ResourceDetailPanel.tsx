@@ -1,20 +1,23 @@
-import * as React from 'react';
-import { Tabs, TabPanel, Bubble, Table, TableColumn, Text, Card, Button } from '@tea/component';
-import { connect } from 'react-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { DetailLayout } from '../../../../common/layouts';
-import { ListItem, HeadBubble } from '../../../../common/components';
-import { DetailInfoProps, DetailDisplayFieldProps } from '../../../../common/models';
-import { Resource, PortMap, BackendGroup, LbcfResource, BackendRecord, RuleMap } from '../../../models';
-import { dateFormatter } from '../../../../../../helpers';
-import { isEmpty, cloneDeep } from '../../../../common/utils';
-import { ResourceStatus, SessionAffinity, ExternalTrafficPolicy } from '../../../constants/Config';
 import * as classnames from 'classnames';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, Button, Card, Table, TableColumn, TabPanel, Tabs, Text } from '@tea/component';
+import { stylize } from '@tea/component/table/addons/stylize';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
-import { stylize } from '@tea/component/table/addons/stylize';
+import { dateFormatter } from '../../../../../../helpers';
+import { HeadBubble, ListItem } from '../../../../common/components';
+import { DetailLayout } from '../../../../common/layouts';
+import { DetailDisplayFieldProps, DetailInfoProps } from '../../../../common/models';
+import { cloneDeep, isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { ExternalTrafficPolicy, ResourceStatus, SessionAffinity } from '../../../constants/Config';
+import {
+    BackendGroup, BackendRecord, LbcfResource, PortMap, Resource, RuleMap
+} from '../../../models';
+import { RootProps } from '../../ClusterApp';
 
 interface ResourceDetailPanelState {
   /** 当前选择的tab */

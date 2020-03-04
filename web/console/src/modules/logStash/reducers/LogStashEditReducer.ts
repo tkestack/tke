@@ -1,16 +1,18 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
+
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import * as ActionType from '../constants/ActionType';
-import { initValidator, Namespace, NamespaceFilter } from '../../common/models';
-import {
-  initContainerInputOption,
-  initContainerFilePath,
-  initContainerFileWorkloadType,
-  initResourceTarget
-} from '../constants/initState';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { Ckafka, CkafkaFilter, CTopic, CTopicFilter, Cls, ClsTopic, Resource, Pod } from '../models';
+
+import { initValidator, Namespace, NamespaceFilter } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
+import {
+    initContainerFilePath, initContainerFileWorkloadType, initContainerInputOption,
+    initResourceTarget
+} from '../constants/initState';
+import {
+    Ckafka, CkafkaFilter, Cls, ClsTopic, CTopic, CTopicFilter, Pod, Resource
+} from '../models';
 
 const TempReducer = combineReducers({
   logStashName: reduceToPayload(ActionType.LogStashName, ''),

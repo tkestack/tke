@@ -1,17 +1,19 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { allActions } from '../actions';
-import { configStore } from '../stores/RootStore';
-import { router } from '../router';
-import { ResetStoreAction } from '../../../../helpers';
-import { HelmHeadPanel } from './helmManage/list/HelmHeadPanel';
-import { HelmActionPanel } from './helmManage/list/HelmActionPanel';
-import { HelmTablePanel } from './helmManage/list/HelmTablePanel';
-import { HelmDetail } from './helmManage/detail/HelmDetail';
-import { HelmCreate } from './helmManage/create/HelmCreate';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { ContentView } from '@tencent/tea-component';
+
+import { ResetStoreAction } from '../../../../helpers';
+import { allActions } from '../actions';
+import { RootState } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
+import { HelmCreate } from './helmManage/create/HelmCreate';
+import { HelmDetail } from './helmManage/detail/HelmDetail';
+import { HelmActionPanel } from './helmManage/list/HelmActionPanel';
+import { HelmHeadPanel } from './helmManage/list/HelmHeadPanel';
+import { HelmTablePanel } from './helmManage/list/HelmTablePanel';
 
 const store = configStore();
 
@@ -39,10 +41,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 @((router.serve as any)())
 class HelmApp extends React.Component<RootProps, {}> {
   componentDidMount() {

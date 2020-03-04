@@ -1,22 +1,21 @@
-import { clusterCreationAction } from './clusterCreationAction';
-import { extend } from '@tencent/qcloud-lib';
 import {
-  generateWorkflowActionCreator,
-  isSuccessWorkflow,
-  OperationHooks,
-  OperationTrigger
-} from '@tencent/qcloud-redux-workflow';
+    extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationHooks, OperationTrigger
+} from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
-import { CreateResource, RootState, CreateIC, DifferentInterfaceResourceOperation } from '../models';
+import {
+    CreateIC, CreateResource, DifferentInterfaceResourceOperation, RootState
+} from '../models';
+import { AllocationRatioEdition } from '../models/AllocationRatioEdition';
+import { Computer, ComputerLabelEdition, ComputerOperator } from '../models/Computer';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
-import { Computer, ComputerOperator, ComputerLabelEdition } from './../models/Computer';
 import { clusterActions } from './clusterActions';
+import { clusterCreationAction } from './clusterCreationAction';
 import { computerActions } from './computerActions';
+import { createICAction } from './createICAction';
 import { resourceActions } from './resourceActions';
 import { resourceDetailActions } from './resourceDetailActions';
-import { createICAction } from './createICAction';
-import { AllocationRatioEdition } from '../models/AllocationRatioEdition';
 
 type GetState = () => RootState;
 

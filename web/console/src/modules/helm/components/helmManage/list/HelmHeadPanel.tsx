@@ -1,14 +1,13 @@
 import * as React from 'react';
-import { RootProps } from '../../HelmApp';
-import { RegionBar, DownMenu, DownMenuItem } from '../../../../common/components';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
 
+import { bindActionCreators, FetchState } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Icon, Justify, Select, Text } from '@tencent/tea-component';
+
+import { allActions } from '../../../actions';
 import { router } from '../../../router';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Justify, Text, Icon, Select } from '@tencent/tea-component';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+import { RootProps } from '../../HelmApp';
 
 const routerSea = seajs.require('router');
 
@@ -17,10 +16,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class HelmHeadPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     const {

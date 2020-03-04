@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { RootProps } from './AlarmPolicyApp';
-import { LinkButton, FormPanel } from '../../common/components';
+import { LinkButton } from '../../common/components';
 import { MetricsObject, AlarmPolicy } from '../models/AlarmPolicy';
 import { router } from '../router';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { MetricNameMap } from '../constants/Config';
 import { router as notifyRouter } from '../../notify/router';
+import { FormPanel } from '@tencent/ff-component';
 
 export class AlarmPolicyDetailPanel extends React.Component<RootProps, {}> {
   render() {

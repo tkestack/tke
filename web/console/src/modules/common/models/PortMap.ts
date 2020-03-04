@@ -1,5 +1,6 @@
-import { Validation, BaseType } from './';
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
+import { BaseType, Validation } from './';
 
 export interface PortMapItem extends Identifiable {
   /**协议（TCP或UDP）*/

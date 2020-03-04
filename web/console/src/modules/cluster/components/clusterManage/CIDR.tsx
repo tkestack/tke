@@ -2,7 +2,7 @@ import * as React from 'react';
 import { RootProps } from '../ClusterApp';
 import { Bubble, ExternalLink, Icon, Checkbox } from '@tea/component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { FormPanel } from '../../../common/components';
+import { FormPanel } from '@tencent/ff-component';
 
 export interface CIDRProps extends RootProps {
   /**

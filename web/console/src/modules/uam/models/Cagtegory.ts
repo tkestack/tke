@@ -1,4 +1,5 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
 export interface Category extends Identifiable {
   /** value值 */
   name: string;

@@ -1,5 +1,6 @@
-import { Validation, EnvItem, HealthCheck, MountItem } from './';
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
+import { EnvItem, HealthCheck, MountItem, Validation } from './';
 
 export interface ContainerItem extends Identifiable {
   /**状态，用于标识该条数据的编辑状态 */

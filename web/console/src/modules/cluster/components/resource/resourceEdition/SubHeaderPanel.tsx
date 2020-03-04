@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { router } from '../../../router';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { allActions } from '../../../actions';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
 
 interface SubHeaderPanelProps extends RootProps {
   /** 标题名称 */
@@ -14,10 +16,7 @@ interface SubHeaderPanelProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class SubHeaderPanel extends React.Component<SubHeaderPanelProps, {}> {
   render() {
     let { headTitle } = this.props;

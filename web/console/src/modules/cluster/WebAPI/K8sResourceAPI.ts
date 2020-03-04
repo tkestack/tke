@@ -1,20 +1,20 @@
 import { resourceConfig } from '@config';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { uuid, RecordSet } from '@tencent/qcloud-lib';
-import { Namespace, ResourceFilter, Resource, DifferentInterfaceResourceOperation } from '../models';
-import { RequestParams, ResourceInfo, UserDefinedHeader, CreateResource, MergeType } from '../../common/models';
-import {
-  Method,
-  reduceNetworkRequest,
-  operationResult,
-  reduceNetworkWorkflow,
-  requestMethodForAction,
-  reduceK8sQueryString,
-  reduceK8sRestfulPath
-} from '../../../../helpers';
-import { apiServerVersion } from '../../../../config';
+import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { apiServerVersion } from '../../../../config';
+import {
+    Method, operationResult, reduceK8sQueryString, reduceK8sRestfulPath, reduceNetworkRequest,
+    reduceNetworkWorkflow, requestMethodForAction
+} from '../../../../helpers';
 import { isEmpty } from '../../common';
+import {
+    CreateResource, MergeType, RequestParams, ResourceInfo, UserDefinedHeader
+} from '../../common/models';
+import {
+    DifferentInterfaceResourceOperation, Namespace, Resource, ResourceFilter
+} from '../models';
+
 // 提示框
 const tips = seajs.require('tips');
 

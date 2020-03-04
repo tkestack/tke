@@ -1,15 +1,17 @@
 import * as React from 'react';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { Bubble, Text } from '@tea/component';
 import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { DetailLayout } from '../../../../common/layouts';
-import { ListItem, Clip } from '../../../../common/components';
-import { dateFormatter } from '../../../../../../helpers';
-import { ReduceRequest } from './ResourcePodPanel';
-import { Computer } from '../../../models';
+
+import { Bubble, Text } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { dateFormatter } from '../../../../../../helpers';
+import { Clip, ListItem } from '../../../../common/components';
+import { DetailLayout } from '../../../../common/layouts';
+import { allActions } from '../../../actions';
+import { Computer } from '../../../models';
+import { RootProps } from '../../ClusterApp';
+import { ReduceRequest } from './ResourcePodPanel';
 
 const loadingElement: JSX.Element = (
   <div>
@@ -21,10 +23,7 @@ const loadingElement: JSX.Element = (
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
   render() {
     let { subRoot, route } = this.props,

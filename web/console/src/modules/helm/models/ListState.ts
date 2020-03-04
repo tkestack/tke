@@ -1,10 +1,11 @@
-import { RecordSet } from '@tencent/qcloud-lib';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
+import { FetcherState, FFListModel, QueryState, RecordSet } from '@tencent/ff-redux';
+
 import { Region, RegionFilter, Resource, ResourceFilter } from '../../common/models';
-import { ClusterHelmStatus, Helm, HelmFilter, InstallingHelm, InstallingHelmDetail, TencenthubChartVersion } from './';
+import {
+    ClusterHelmStatus, Helm, HelmFilter, InstallingHelm, InstallingHelmDetail,
+    TencenthubChartVersion
+} from './';
 import { HelmKeyValue } from './HelmCreation';
-import { ListModel } from '@tencent/redux-list';
 
 export interface HelmListUpdateValid {
   otherChartUrl?: string;
@@ -13,10 +14,10 @@ export interface HelmListUpdateValid {
 }
 
 export interface ListState {
-  region?: ListModel<Region, RegionFilter>;
+  region?: FFListModel<Region, RegionFilter>;
 
   /** 集群列表 */
-  cluster?: ListModel<Resource, ResourceFilter>;
+  cluster?: FFListModel<Resource, ResourceFilter>;
 
   clusterHelmStatus?: ClusterHelmStatus;
 
