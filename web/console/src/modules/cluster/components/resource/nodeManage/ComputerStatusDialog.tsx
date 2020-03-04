@@ -1,14 +1,17 @@
 import * as React from 'react';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
+
+import { bindActionCreators, FFListModel, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Modal, TableColumn, Text, Bubble, Icon, Button, Table } from '@tencent/tea-component';
-import { ClusterCondition } from '../../../../common';
-import { dateFormatter } from '../../../../../../helpers';
+import { Bubble, Button, Icon, Modal, Table, TableColumn, Text } from '@tencent/tea-component';
 import { scrollable } from '@tencent/tea-component/lib/table/addons';
-import { ListModel } from '@tencent/redux-list';
-import { Computer, ComputerFilter, DialogNameEnum, DialogState } from '../../../../../modules/cluster/models';
+
+import { dateFormatter } from '../../../../../../helpers';
+import {
+    Computer, ComputerFilter, DialogNameEnum, DialogState
+} from '../../../../../modules/cluster/models';
+import { ClusterCondition } from '../../../../common';
+import { allActions } from '../../../actions';
 
 const conditionStatusMap = {
   True: '成功',
@@ -24,7 +27,7 @@ const conditionStatusType = {
 
 let nodeConditionStaus = ['OutOfDisk', 'MemoryPressure', 'DiskPressure', 'PIDPressure'];
 interface ComputerStatusDialogProps {
-  computer: ListModel<Computer, ComputerFilter>;
+  computer: FFListModel<Computer, ComputerFilter>;
   dialogState: DialogState;
   actions?: typeof allActions;
 }
@@ -32,10 +35,7 @@ interface ComputerStatusDialogProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ComputerStatusDialog extends React.Component<ComputerStatusDialogProps, {}> {
   render() {
     let { computer, dialogState } = this.props;

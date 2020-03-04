@@ -1,25 +1,24 @@
 import * as React from 'react';
-import { RootProps } from '../ClusterApp';
-import { ContentView, Form, Button, Card, Justify, Input } from '@tencent/tea-component';
-import { ClusterSubpageHeaderPanel } from './ClusterSubpageHeaderPanel';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { router } from '../../router';
-import { CreateResource } from '../../models';
 import { connect } from 'react-redux';
-import { validateClusterCreationAction } from '../../actions/validateClusterCreationAction';
+
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Button, ContentView } from '@tencent/tea-component';
+
 import { resourceConfig } from '../../../../../config';
-import { uuid } from '../../../../../lib/_util';
-import { bindActionCreators } from '@tencent/qcloud-lib';
+import { getWorkflowError, InputField, ResourceInfo, TipInfo } from '../../../../modules/common';
 import { allActions } from '../../actions';
-import { ResourceInfo, InputField, getWorkflowError, TipInfo, FormPanel } from '../../../../modules/common';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { validateClusterCreationAction } from '../../actions/validateClusterCreationAction';
+import { CreateResource } from '../../models';
+import { router } from '../../router';
+import { RootProps } from '../ClusterApp';
+import { ClusterSubpageHeaderPanel } from './ClusterSubpageHeaderPanel';
+
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class CreateClusterPanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
     let { actions } = this.props;

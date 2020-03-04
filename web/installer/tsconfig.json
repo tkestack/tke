@@ -19,8 +19,11 @@
       "@tea/app/*": ["./node_modules/@tencent/tea-app/lib/*"],
       "@tea/component": ["./node_modules/@tencent/tea-component/lib"],
       "@tea/component/*": ["./node_modules/@tencent/tea-component/lib/*"],
-      "@tencent/qcloud-lib": ["./node_modules/@tencent/qcloud-lib"],
-      "@tencent/qcloud-lib/*": ["./node_modules/@tencent/qcloud-lib/*"]
+      "@tencent/qcloud-lib": ["./lib/qcloud-lib/"],
+      "@tencent/qcloud-lib/*": ["./lib/qcloud-lib/*"],
+      "@tencent/qcloud-redux-fetcher": ["./lib/qcloud-redux-fetcher/"],
+      "@tencent/qcloud-redux-query": ["./lib/qcloud-redux-query/"],
+      "@tencent/qcloud-redux-workflow": ["./lib/qcloud-redux-workflow/"]
     }
   },
   "exclude": ["node_modules", "dist", "build"],

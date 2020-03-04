@@ -1,29 +1,29 @@
-import * as React from 'react';
-import { RootProps } from './LogStashApp';
-import { connect } from 'react-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
-import { Log } from '../models';
-import { router } from '../router';
-import { LinkButton, Clip, TablePanelColumnProps, TablePanel } from '../../common/components';
 import classnames from 'classnames';
-import { collectorStatus, logModeMap } from '../constants/Config';
-import { isCanCreateLogStash } from './LogStashActionPanel';
-import { Text, Bubble } from '@tencent/tea-component';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import * as React from 'react';
+import { connect } from 'react-redux';
 import { CreateResource } from 'src/modules/cluster/models';
+
+import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Bubble, Text } from '@tencent/tea-component';
+
 import { resourceConfig } from '../../../../config';
 import { dateFormatter } from '../../../../helpers';
+import { Clip, LinkButton } from '../../common/components';
+import { allActions } from '../actions';
+import { collectorStatus, logModeMap } from '../constants/Config';
+import { Log } from '../models';
+import { router } from '../router';
+import { isCanCreateLogStash } from './LogStashActionPanel';
+import { RootProps } from './LogStashApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class LogStashTablePanel extends React.Component<RootProps, any> {
   render() {
     return <React.Fragment>{this._renderTablePanel()}</React.Fragment>;

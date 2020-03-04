@@ -1,7 +1,8 @@
-import * as React from 'react';
 import * as classNames from 'classnames';
-import { BaseReactProps, insertCSS } from '@tencent/qcloud-lib';
+import * as React from 'react';
+
 import { Bubble } from '@tea/component';
+import { BaseReactProps, insertCSS } from '@tencent/ff-redux';
 
 /**插入自定义样式覆盖bubble样式 */
 insertCSS(

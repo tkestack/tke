@@ -1,9 +1,11 @@
-import { initLbcfBGPort, initSelector, initLbcfBackGroupEdition } from './../constants/initState';
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
+
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
+
 import { initValidator } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
 import { LbcfConfig } from '../constants/Config';
+import { initLbcfBackGroupEdition, initLbcfBGPort, initSelector } from '../constants/initState';
 
 const TempReducer = combineReducers({
   name: reduceToPayload(ActionType.Gate_Name, ''),

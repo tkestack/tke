@@ -1,18 +1,19 @@
-import { Region, RegionFilter } from '../../common/models';
-import { RootState } from '../models';
-import * as WebAPI from '../WebAPI';
+import { createFFListActions } from '@tencent/ff-redux';
+
 import { assureRegion } from '../../../../helpers';
 import { getRegionId } from '../../../../helpers/appUtil';
-import { router } from '../router';
-import { clusterActions } from './clusterActions';
-import { createListAction } from '@tencent/redux-list';
-import { FFReduxActionName } from '../constants/Config';
+import { Region, RegionFilter } from '../../common/models';
 import { CommonAPI } from '../../common/webapi';
+import { FFReduxActionName } from '../constants/Config';
+import { RootState } from '../models';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { clusterActions } from './clusterActions';
 
 type GetState = () => RootState;
 
 /** 地域列表的Actions */
-export const regionActions = createListAction<Region, RegionFilter>({
+export const regionActions = createFFListActions<Region, RegionFilter>({
   actionName: FFReduxActionName.REGION,
   fetcher: async query => {
     let response = await CommonAPI.fetchRegionList(query);

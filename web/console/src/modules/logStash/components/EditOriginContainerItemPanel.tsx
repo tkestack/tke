@@ -1,17 +1,19 @@
+import classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators, insertCSS } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
-import { ContainerItemProps } from './ListOriginContainerItemPanel';
-import { LinkButton, SelectList, FormPanel } from '../../common/components';
-import classnames from 'classnames';
-import { ContainerLogs, Resource } from '../models';
-import { ResourceListMapForContainerLog } from '../constants/Config';
-import { isCanAddContainerLog } from './EditOriginContainerPanel';
-import { Checkbox, FormItem, Bubble } from '@tencent/tea-component';
-import { cloneDeep } from '../../common/utils';
 
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Bubble, Checkbox, FormItem } from '@tencent/tea-component';
+
+import { LinkButton, SelectList } from '../../common/components';
+import { cloneDeep } from '../../common/utils';
+import { allActions } from '../actions';
+import { ResourceListMapForContainerLog } from '../constants/Config';
+import { ContainerLogs, Resource } from '../models';
+import { isCanAddContainerLog } from './EditOriginContainerPanel';
+import { ContainerItemProps } from './ListOriginContainerItemPanel';
 
 insertCSS(
   'EditOriginContainerItemPanel',
@@ -46,10 +48,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditOriginContainerItemPanel extends React.Component<ContainerItemProps, any> {
   render() {
     let { actions, logStashEdit, cKey, namespaceList } = this.props,

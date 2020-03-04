@@ -1,4 +1,5 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
 export interface User extends Identifiable {
   metadata?: {
     /** 用户的资源id */

@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RootProps } from './LogStashApp';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { SelectList } from '../../common/components';
-import { allActions } from '../actions';
-import { Justify, ExternalLink, Text } from '@tencent/tea-component';
-import { cloneDeep } from '../../common/utils';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { ExternalLink, Justify, Text } from '@tencent/tea-component';
+
+import { SelectList } from '../../common/components';
+import { cloneDeep } from '../../common/utils';
+import { allActions } from '../actions';
+import { RootProps } from './LogStashApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {

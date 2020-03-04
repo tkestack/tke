@@ -1,4 +1,5 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
 import { ResourceFilter } from './ResourceOption';
 
 export interface Event extends Identifiable {

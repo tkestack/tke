@@ -1,21 +1,19 @@
-import { dialogActions } from './dialogActions';
-import { DialogNameEnum } from './../models';
-import { ComputerLabel, ComputerFilter } from './../models/Computer';
-import { cloneDeep } from './../../common/utils/cloneDeep';
-import { extend, uuid, RecordSet } from '@tencent/qcloud-lib';
-import { FetchOptions } from '@tencent/qcloud-redux-fetcher';
-import { RootState, Computer, Resource } from '../models';
-import * as ActionType from '../constants/ActionType';
-import { initValidator, ResourceInfo } from '../../common/models';
-import { FFReduxActionName } from '../constants/Config';
+import { createFFListActions, extend, RecordSet, uuid } from '@tencent/ff-redux';
+
 import { resourceConfig } from '../../../../config';
+import { initValidator, ResourceInfo } from '../../common/models';
+import { cloneDeep } from '../../common/utils/cloneDeep';
+import * as ActionType from '../constants/ActionType';
+import { FFReduxActionName } from '../constants/Config';
+import { Computer, DialogNameEnum, Resource, RootState } from '../models';
+import { ComputerFilter, ComputerLabel } from '../models/Computer';
 import * as WebAPI from '../WebAPI';
-import { createListAction } from '@tencent/redux-list';
+import { dialogActions } from './dialogActions';
 
 type GetState = () => RootState;
 
 /** 节点列表的actions */
-const FFModelComputerActions = createListAction<Computer, ComputerFilter>({
+const FFModelComputerActions = createFFListActions<Computer, ComputerFilter>({
   actionName: FFReduxActionName.COMPUTER,
   fetcher: async (query, getState: GetState) => {
     let { clusterVersion } = getState();

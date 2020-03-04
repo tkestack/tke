@@ -1,14 +1,16 @@
-import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { Switch, Select } from '@tea/component';
-import { connect } from 'react-redux';
-import { FormItem } from '../../../../common/components';
 import * as classnames from 'classnames';
-import { EditResourceContainerHealthCheckPanel } from './EditResourceContainerHealthCheckPanel';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Select, Switch } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem } from '../../../../common/components';
+import { allActions } from '../../../actions';
 import { ImagePullPolicyList } from '../../../constants/Config';
+import { RootProps } from '../../ClusterApp';
+import { EditResourceContainerHealthCheckPanel } from './EditResourceContainerHealthCheckPanel';
 
 interface ContainerAdvancedProps extends RootProps {
   cKey: string;

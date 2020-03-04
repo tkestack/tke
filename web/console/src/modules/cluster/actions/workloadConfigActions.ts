@@ -1,12 +1,13 @@
-import { uuid, extend } from '@tencent/qcloud-lib';
+import { extend, uuid } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState, ResourceFilter, Resource, ConfigItems } from '../models';
-import * as WebAPI from '../WebAPI';
-import { cloneDeep } from '../../common/utils';
-import { initConfigMapItem } from '../constants/initState';
+
 import { resourceConfig } from '../../../../config/resourceConfig';
+import { cloneDeep } from '../../common/utils';
 import * as ActionType from '../constants/ActionType';
+import { initConfigMapItem } from '../constants/initState';
+import { ConfigItems, Resource, ResourceFilter, RootState } from '../models';
+import * as WebAPI from '../WebAPI';
 import { workloadEditActions } from './workloadEditActions';
 
 type GetState = () => RootState;

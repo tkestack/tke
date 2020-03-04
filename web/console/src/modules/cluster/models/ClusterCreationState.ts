@@ -1,5 +1,7 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
 import { Validation } from '../../common/models';
+
 export interface ClusterCreationState extends Identifiable {
   /**链接集群名字 */
   name?: string;

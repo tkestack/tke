@@ -1,8 +1,10 @@
-import * as React from 'react';
 import * as classnames from 'classnames';
-import { OnOuterClick, BaseReactProps, slide, fade } from '@tencent/qcloud-lib';
+import * as React from 'react';
 import * as TransitionGroup from 'react-addons-css-transition-group';
+
+import { BaseReactProps, fade, OnOuterClick, slide } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 export interface DropdownListItem {
   /**
    * 列表项的标识，在同一个列表中不允许重复

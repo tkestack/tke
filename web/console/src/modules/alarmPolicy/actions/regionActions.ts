@@ -1,4 +1,4 @@
-// import { extend } from '@tencent/qcloud-lib';
+// import { extend } from '@tencent/ff-redux';
 // import { router } from '../router';
 // import { getRegionId, setRegionId, assureRegion } from '../../../../helpers';
 // import { RootState, RegionFilter, Region } from '../models';

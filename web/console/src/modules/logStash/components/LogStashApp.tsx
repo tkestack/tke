@@ -1,20 +1,22 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { allActions } from '../actions';
-import { configStore } from '../stores/RootStore';
-import { router } from '../router';
+
+import { bindActionCreators } from '@tencent/ff-redux';
+import { ContentView } from '@tencent/tea-component';
+
 import { ResetStoreAction } from '../../../../helpers';
-import { LogStashHeadPanel } from './LogStashHeadPanel';
+import { allActions } from '../actions';
+import { RootState } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
+import { DeleteLogDialog } from './DeleteLogDialog';
+import { EditLogStashPanel } from './EditLogStashPanel';
+import { LogStashDetailPanel } from './LogDetailPanel';
 import { LogStashActionPanel } from './LogStashActionPanel';
+import { LogStashHeadPanel } from './LogStashHeadPanel';
+import { LogStashSubHeadPanel } from './LogStashSubHeadPanel';
 import { LogStashTablePanel } from './LogStashTablePanel';
 import { OpenLogStashDialog } from './OpenLogStashDialog';
-import { LogStashSubHeadPanel } from './LogStashSubHeadPanel';
-import { EditLogStashPanel } from './EditLogStashPanel';
-import { ContentView } from '@tencent/tea-component';
-import { LogStashDetailPanel } from './LogDetailPanel';
-import { DeleteLogDialog } from './DeleteLogDialog';
 
 const store = configStore();
 
@@ -49,10 +51,7 @@ const mapDispatchToProps = dispatch =>
     { dispatch }
   );
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 @((router.serve as any)())
 class LogStashApp extends React.Component<RootProps, any> {
   render() {

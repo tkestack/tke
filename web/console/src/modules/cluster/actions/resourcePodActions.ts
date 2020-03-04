@@ -1,21 +1,24 @@
-import { extend, ReduxAction, RecordSet } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import {
+    extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { RootState, ResourceFilter, Pod, PodFilterInNode } from '../models';
-import { resourceConfig } from '../../../../config';
-import { router } from '../router';
-import { PollEventName } from '../constants/Config';
-import { reduceContainerId, IsPodShowLoadingIcon } from '../components/resource/resourceDetail/ResourcePodPanel';
-import { resourcePodLogActions } from './resourcePodLogActions';
-import { IsInNodeManageDetail } from '../components/resource/resourceDetail/ResourceDetail';
-import { resourceDetailActions } from './resourceDetailActions';
-import { ResourceInfo } from '../../common/models';
+
 import { apiVersion } from '../../../../config/resource/common';
 import { ResourceConfigVersionMap } from '../../../../config/resourceConfig';
+import { cloneDeep } from '../../../../src/modules/common';
+import { ResourceInfo } from '../../common/models';
+import { IsInNodeManageDetail } from '../components/resource/resourceDetail/ResourceDetail';
+import {
+    IsPodShowLoadingIcon, reduceContainerId
+} from '../components/resource/resourceDetail/ResourcePodPanel';
+import * as ActionType from '../constants/ActionType';
+import { PollEventName } from '../constants/Config';
+import { Pod, PodFilterInNode, ResourceFilter, RootState } from '../models';
 import { TappGrayUpdateEditItem } from '../models/ResourceDetailState';
-import { cloneDeep } from '../../../../src//modules/common';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { resourceDetailActions } from './resourceDetailActions';
+import { resourcePodLogActions } from './resourcePodLogActions';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

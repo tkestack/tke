@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { BaseReactProps } from '@tencent/qcloud-lib';
+
+import { BaseReactProps } from '@tencent/ff-redux';
 
 interface FixedFormLayoutProps extends BaseReactProps {
   /** 是否去掉 ul 的 margin-top */

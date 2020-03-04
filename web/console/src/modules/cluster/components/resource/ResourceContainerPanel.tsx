@@ -1,16 +1,18 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
+
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { cloneDeep, isEmpty } from '../../../common/utils';
 import { allActions } from '../../actions';
+import { SubRouter } from '../../models';
 import { router } from '../../router';
-import { ResourceListPanel } from './ResourceListPanel';
+import { RootProps } from '../ClusterApp';
 import { ResourceDetail } from './resourceDetail/ResourceDetail';
 import { EditResourcePanel } from './resourceEdition/EditResourcePanel';
-import { RootProps } from '../ClusterApp';
 import { UpdateResourcePanel } from './resourceEdition/UpdateResourcePanel';
-import { isEmpty, cloneDeep } from '../../../common/utils';
-import { SubRouter } from '../../models';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { ResourceListPanel } from './ResourceListPanel';
 
 interface ResourceContainerPanelState {
   /** 共享锁 */

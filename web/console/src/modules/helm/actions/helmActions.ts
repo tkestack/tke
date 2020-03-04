@@ -1,14 +1,13 @@
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
+import { extend } from '@tencent/ff-redux';
+import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { t } from '@tencent/tea-app/lib/i18n';
 
 import * as ActionType from '../constants/ActionType';
 import { ClusterHelmStatus, HelmResource, InstallingStatus, OtherType } from '../constants/Config';
 import { Helm, HelmKeyValue, InstallingHelm, RootState, TencenthubChartVersion } from '../models';
 import { HelmListUpdateValid } from '../models/ListState';
 import * as WebAPI from '../WebAPI';
-import { helm } from 'config/resource/k8sConfig';
 
 type GetState = () => RootState;
 

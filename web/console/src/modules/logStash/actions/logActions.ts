@@ -1,18 +1,21 @@
-import { extend, ReduxAction, uuid, RecordSet } from '@tencent/qcloud-lib';
+import {
+    extend, generateQueryActionCreator, QueryState, RecordSet, ReduxAction, uuid
+} from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
-import { generateQueryActionCreator, QueryState } from '@tencent/qcloud-redux-query';
-import * as ActionType from '../constants/ActionType';
-import { RootState, LogFilter, Log, ResourceFilter, ContainerLogs } from '../models';
-import * as WebAPI from '../WebAPI';
-import { Validation, ResourceInfo, initValidator } from '../../common/models';
-import { inputTypeMap, outputTypeMap } from '../constants/Config';
-import { editLogStashActions } from './editLogStashActions';
-import { initContainerInputOption, initContainerFilePath, initMetadata } from '../constants/initState';
-import { cloneDeep } from '../../common/utils';
+
 import { resourceConfig } from '../../../../config';
-import { Resource } from '../models/Resource';
-import { podActions } from './podActions';
 import { CommonAPI } from '../../common';
+import { ResourceInfo } from '../../common/models';
+import { cloneDeep } from '../../common/utils';
+import * as ActionType from '../constants/ActionType';
+import { inputTypeMap, outputTypeMap } from '../constants/Config';
+import {
+    initContainerFilePath, initContainerInputOption, initMetadata
+} from '../constants/initState';
+import { ContainerLogs, Log, LogFilter, ResourceFilter, RootState } from '../models';
+import { Resource } from '../models/Resource';
+import { editLogStashActions } from './editLogStashActions';
+import { podActions } from './podActions';
 import { resourceActions } from './resourceActions';
 
 type GetState = () => RootState;

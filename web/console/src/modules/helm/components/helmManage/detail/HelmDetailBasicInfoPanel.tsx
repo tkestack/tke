@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RootProps } from '../../HelmApp';
-import { FormPanel } from '../../../../common/components';
+import { FormPanel } from '@tencent/ff-component';
 import { dateFormatter } from '../../../../../../helpers';
 import { Switch, Modal, Table, TableColumn, Text, ContentView, Card } from '@tea/component';
 import { HelmResource } from '../../../models';

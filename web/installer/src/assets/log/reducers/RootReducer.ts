@@ -1,5 +1,5 @@
 import { router } from './../router';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
+import { generateWorkflowReducer } from '@tencent/ff-redux';
 import { combineReducers } from 'redux';
 import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';

@@ -1,13 +1,16 @@
-import * as React from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../actions';
-import { RootProps } from '../AlarmPolicyApp';
 // import { BasicRouter } from '../../models';
 import * as classnames from 'classnames';
-import { router } from '../../router';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { bindActionCreators } from '@tencent/ff-redux';
+
 import { ResourceListPanelProps } from '../../../cluster/components/resource/ResourceListPanel';
 import { BasicRouter } from '../../../cluster/models';
+import { allActions } from '../../actions';
+import { router } from '../../router';
+import { RootProps } from '../AlarmPolicyApp';
+
 // import { ResourceListPanelProps } from './ResourceListPanel';
 
 export const TellIsNeedFetchNS = (resourceName: string) => {
@@ -38,10 +41,7 @@ interface ResourceSidebarPanelState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps, ResourceSidebarPanelState> {
   constructor(props: ResourceListPanelProps) {
     super(props);

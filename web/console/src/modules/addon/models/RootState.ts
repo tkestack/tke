@@ -1,9 +1,9 @@
+import { FFListModel, WorkflowState } from '@tencent/ff-redux';
+
 import { RouteState } from '../../../../helpers';
-import { Region, RegionFilter, CreateResource, Resource, ResourceFilter } from '../../common';
+import { CreateResource, Region, RegionFilter, Resource, ResourceFilter } from '../../common';
 import { Addon } from './';
 import { AddonEdit } from './AddonEdit';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { ListModel } from '@tencent/redux-list';
 
 type ResourceModifyWorkflow = WorkflowState<CreateResource, number>;
 
@@ -12,19 +12,19 @@ export interface RootState {
   route?: RouteState;
 
   /** 地域列表 */
-  region?: ListModel<Region, RegionFilter>;
+  region?: FFListModel<Region, RegionFilter>;
 
   /** 集群列表 */
-  cluster?: ListModel<Resource, ResourceFilter>;
+  cluster?: FFListModel<Resource, ResourceFilter>;
 
   /** 集群的版本 */
   clusterVersion?: string;
 
   /** 集群的下的addon列表 */
-  openAddon?: ListModel<Resource, ResourceFilter>;
+  openAddon?: FFListModel<Resource, ResourceFilter>;
 
   /** 所有的add的列表 */
-  addon?: ListModel<Addon, ResourceFilter>;
+  addon?: FFListModel<Addon, ResourceFilter>;
 
   /** 开通addon组件 */
   editAddon?: AddonEdit;

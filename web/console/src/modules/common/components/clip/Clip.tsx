@@ -1,8 +1,10 @@
-import * as React from 'react';
-import { BaseReactProps } from '@tencent/qcloud-lib';
-import { Bubble } from '@tea/component';
 import * as Clipboard from 'clipboard';
+import * as React from 'react';
+
+import { Bubble } from '@tea/component';
+import { BaseReactProps } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 const tips = seajs.require('tips');
 export interface ClipProps extends BaseReactProps {
   /**复制对象 */

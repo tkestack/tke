@@ -1,18 +1,21 @@
-import { initAllcationRatioEdition } from './../constants/initState';
-import { createListAction } from '@tencent/redux-list';
-import { extend, uuid } from '@tencent/qcloud-lib';
-import { generateFetcherActionCreator, FetchOptions } from '@tencent/qcloud-redux-fetcher';
+import {
+    createFFListActions, extend, FetchOptions, generateFetcherActionCreator, uuid
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState, DialogNameEnum } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { router } from '../router';
-import { resourceActions } from './resourceActions';
-import { TellIsNeedFetchNS, TellIsNotNeedFetchResource } from '../components/resource/ResourceSidebarPanel';
+
 import { resourceConfig } from '../../../../config';
 import { Cluster, ClusterFilter, ResourceInfo } from '../../common/';
+import {
+    TellIsNeedFetchNS, TellIsNotNeedFetchResource
+} from '../components/resource/ResourceSidebarPanel';
+import * as ActionType from '../constants/ActionType';
 import { FFReduxActionName } from '../constants/Config';
+import { initAllcationRatioEdition } from '../constants/initState';
+import { DialogNameEnum, RootState } from '../models';
 import { AddonStatus } from '../models/Addon';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { resourceActions } from './resourceActions';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
@@ -72,7 +75,7 @@ const clusterInfoActions = extend(fetchClusterInfoActions, queryClusterInfoActio
 /** =================================================================================== */
 
 /** 集群列表的Actions */
-const FFModelClusterActions = createListAction<Cluster, ClusterFilter>({
+const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchClusterList(query, query.filter.regionId);

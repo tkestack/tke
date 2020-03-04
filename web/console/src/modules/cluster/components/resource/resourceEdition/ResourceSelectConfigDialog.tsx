@@ -1,15 +1,17 @@
-import * as React from 'react';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { Modal, Button, Radio, Bubble } from '@tea/component';
-import { RootProps } from '../../ClusterApp';
-import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { FormLayout } from '../../../../common/layouts';
-import { FormItem } from '../../../../common/components';
 import * as classnames from 'classnames';
-import { Validation, initValidator } from '../../../../common/models';
-import { ConfigItems } from '../../../models';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, Button, Modal, Radio } from '@tea/component';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem } from '../../../../common/components';
+import { FormLayout } from '../../../../common/layouts';
+import { initValidator, Validation } from '../../../../common/models';
+import { allActions } from '../../../actions';
+import { ConfigItems } from '../../../models';
+import { RootProps } from '../../ClusterApp';
 
 /** configMap选项列表 all | optional */
 const configMapKeyTypeList = [
@@ -34,10 +36,7 @@ interface ResourceSelectConfigMapDialogState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceSelectConfigDialog extends React.Component<RootProps, ResourceSelectConfigMapDialogState> {
   constructor(props, context) {
     super(props, context);

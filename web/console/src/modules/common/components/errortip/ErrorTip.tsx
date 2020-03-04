@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { BaseReactProps } from '@tencent/qcloud-lib';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { Link } from '../../models';
-import { TipInfo } from '..';
-import { getWorkflowError, getWorkflowErrorCode } from '../../utils';
+
+import { BaseReactProps, WorkflowState } from '@tencent/ff-redux';
 import { ExternalLink } from '@tencent/tea-component';
+
+import { TipInfo } from '../';
+import { Link } from '../../models';
+import { getWorkflowError, getWorkflowErrorCode } from '../../utils';
 
 export interface ErrorGuide {
   /**链接 */

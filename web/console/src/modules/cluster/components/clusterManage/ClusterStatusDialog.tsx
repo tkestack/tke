@@ -1,14 +1,16 @@
 import * as React from 'react';
-import { RootProps } from '../ClusterApp';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../actions';
 import { connect } from 'react-redux';
+
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Modal, TableColumn, Text, Bubble, Icon, Button, Table } from '@tencent/tea-component';
-import { DialogNameEnum } from '../../models';
-import { ClusterCondition } from '../../../common';
-import { dateFormatter } from '../../../../../helpers';
+import { Bubble, Button, Icon, Modal, Table, TableColumn, Text } from '@tencent/tea-component';
 import { scrollable } from '@tencent/tea-component/lib/table/addons';
+
+import { dateFormatter } from '../../../../../helpers';
+import { ClusterCondition } from '../../../common';
+import { allActions } from '../../actions';
+import { DialogNameEnum } from '../../models';
+import { RootProps } from '../ClusterApp';
 
 const conditionStatusMap = {
   True: '成功',
@@ -25,10 +27,7 @@ const conditionStatusType = {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ClusterStatusDialog extends React.Component<RootProps, {}> {
   render() {
     let { cluster, dialogState } = this.props;

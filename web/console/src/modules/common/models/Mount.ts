@@ -1,5 +1,6 @@
+import { Identifiable } from '@tencent/ff-redux';
+
 import { Validation } from './';
-import { Identifiable } from '@tencent/qcloud-lib';
 
 export interface MountItem extends Identifiable {
   /**数据卷 */

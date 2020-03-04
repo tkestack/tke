@@ -1,13 +1,15 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { allActions } from '../actions';
-import { configStore } from '../stores/RootStore';
-import { router } from '../router';
+
+import { bindActionCreators } from '@tencent/ff-redux';
+
 import { ResetStoreAction } from '../../../../helpers';
-import { UserApp } from './user/UserApp';
+import { allActions } from '../actions';
+import { RootState } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
 import { StrategyApp } from './strategy/StrategyApp';
+import { UserApp } from './user/UserApp';
 
 const store = configStore();
 

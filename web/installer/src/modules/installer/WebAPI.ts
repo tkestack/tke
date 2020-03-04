@@ -1,7 +1,7 @@
 import { Record } from '../common/models';
 import axios from 'axios';
 import { EditState } from './models';
-import { OperationResult } from '@tencent/qcloud-redux-workflow';
+import { OperationResult } from '@tencent/ff-redux';
 import { Base64 } from 'js-base64';
 
 const host = location.host;

@@ -1,9 +1,10 @@
-import { uuid } from '@tencent/qcloud-lib';
-import { ContainerLogs, MetadataItem, ContainerFilePathItem } from '../models';
+import { uuid } from '@tencent/ff-redux';
+
 import { initValidator } from '../../common/models';
-import { ResourceListMapForContainerLog, ResourceListMapForPodLog } from './Config';
-import { ResourceTarget } from '../models/Resource';
+import { ContainerFilePathItem, ContainerLogs, MetadataItem } from '../models';
 import { LogDaemonSetStatus } from '../models/LogDaemonset';
+import { ResourceTarget } from '../models/Resource';
+import { ResourceListMapForContainerLog, ResourceListMapForPodLog } from './Config';
 
 /** 地域的初始化信息 */
 export const initRegionInfo = {

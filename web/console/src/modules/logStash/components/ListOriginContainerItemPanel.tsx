@@ -1,12 +1,15 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RootProps } from './LogStashApp';
-import { bindActionCreators } from '@tencent/qcloud-lib';
+
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { LinkButton } from '../../common/components';
 import { allActions } from '../actions';
-import { LinkButton, FormPanel } from '../../common/components';
 import { ContainerLogs } from '../models';
 import { isCanAddContainerLog } from './EditOriginContainerPanel';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { RootProps } from './LogStashApp';
 
 export interface ContainerItemProps extends RootProps {
   cKey: string;
@@ -17,10 +20,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ListOriginContainerItemPanel extends React.Component<ContainerItemProps, any> {
   render() {
     let { actions, cKey, logStashEdit, namespaceList } = this.props,

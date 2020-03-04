@@ -1,10 +1,10 @@
-import * as React from 'react';
-import { RootProps } from '../../HelmApp';
+import { t } from '@tencent/tea-app/lib/i18n';
 import classNames from 'classnames';
-import { CommonBar, FormItem, FormPanel } from '../../../../common/components';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { helmResourceList, TencentHubType } from '../../../constants/Config';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import * as React from 'react';
+import { CommonBar, FormItem } from '../../../../common/components';
+import { FormPanel } from '@tencent/ff-component';
+import { helmResourceList } from '../../../constants/Config';
+import { RootProps } from '../../HelmApp';
 export class BaseInfoPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions } = this.props;

@@ -1,13 +1,16 @@
-import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import * as classnames from 'classnames';
-import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
-import { LinkButton, FormPanel } from '../../../../common/components';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Justify } from '@tencent/tea-component';
+
+import { LinkButton } from '../../../../common/components';
+import { allActions } from '../../../actions';
+import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
+import { RootProps } from '../../ClusterApp';
 
 interface ContainerListItemProps extends RootProps {
   /** 容器的id */
@@ -17,10 +20,7 @@ interface ContainerListItemProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceContainerListItem extends React.Component<ContainerListItemProps, {}> {
   render() {
     let { actions, subRoot, cKey } = this.props,

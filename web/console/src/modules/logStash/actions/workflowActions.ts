@@ -1,15 +1,17 @@
-import { extend } from '@tencent/qcloud-lib';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { router } from '../router';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { RootState } from '../models';
-import { logActions } from './logActions';
-import { namespaceActions } from './namespaceActions';
 import { CreateResource } from 'src/modules/cluster/models';
-import { log } from 'util';
-import { logDaemonsetActions } from './logDaemonsetActions';
+
+import {
+    extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
+} from '@tencent/ff-redux';
+
 import { CommonAPI } from '../../../../src/modules/common';
+import * as ActionType from '../constants/ActionType';
+import { RootState } from '../models';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { logActions } from './logActions';
+import { logDaemonsetActions } from './logDaemonsetActions';
+import { namespaceActions } from './namespaceActions';
 
 type GetState = () => RootState;
 

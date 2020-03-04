@@ -1,23 +1,22 @@
-import * as React from 'react';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { TableColumn, Pagination, Bubble, Text } from '@tea/component';
-import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { TableLayout } from '../../../../common/layouts';
-import { Event } from '../../../models';
-import { Clip, GridTable } from '../../../../common/components';
-import { dateFormatter } from '../../../../../../helpers';
 import * as classnames from 'classnames';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, Pagination, TableColumn, Text } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { dateFormatter } from '../../../../../../helpers';
+import { Clip, GridTable } from '../../../../common/components';
+import { TableLayout } from '../../../../common/layouts';
+import { allActions } from '../../../actions';
+import { Event } from '../../../models';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceDetailEventTablePanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions } = this.props;

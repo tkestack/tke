@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ResourceDetail } from './ResourceDetail';
-import { FormPanel } from '../../../common/components';
+import { FormPanel } from '@tencent/ff-component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 export class ResourceDetailReceiver extends ResourceDetail {

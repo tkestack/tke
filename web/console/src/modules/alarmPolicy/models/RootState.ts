@@ -1,27 +1,14 @@
-import { GroupFilter } from './Group';
-import { RecordSet } from '@tencent/qcloud-lib';
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { FetcherState, FFListModel, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
+
 //import { RouteState } from "@tencent/qcloud-nmc";
 import { RouteState } from '../../../../helpers/Router';
-import {
-  Region,
-  RegionFilter,
-  ClusterFilter,
-  AlarmPolicyFilter,
-  AlarmPolicyEdition,
-  AlarmPolicy,
-  Group,
-  Namespace,
-  NamespaceFilter,
-  Resource,
-  ResourceFilter,
-  AlarmPolicyOperator
-} from './';
 import { Cluster } from '../../common';
 import { User, UserFilter } from '../../uam/models';
-import { ListModel } from '@tencent/redux-list';
+import {
+    AlarmPolicy, AlarmPolicyEdition, AlarmPolicyFilter, AlarmPolicyOperator, ClusterFilter, Group,
+    Namespace, NamespaceFilter, Region, RegionFilter, Resource, ResourceFilter
+} from './';
+import { GroupFilter } from './Group';
 
 type AlarmPolicyOpWorkflow = WorkflowState<AlarmPolicy, AlarmPolicyOperator>;
 type AlarmPolicyCreateWorkflow = WorkflowState<AlarmPolicyEdition, AlarmPolicyOperator>;
@@ -47,7 +34,7 @@ export interface RootState {
    */
   regionSelection?: Region;
 
-  cluster?: ListModel<Cluster, ClusterFilter>;
+  cluster?: FFListModel<Cluster, ClusterFilter>;
 
   /**当前集群命名空间 */
   namespaceList?: FetcherState<RecordSet<Namespace>>;
@@ -61,9 +48,9 @@ export interface RootState {
 
   clusterVersion?: string;
 
-  alarmPolicy?: ListModel<AlarmPolicy, AlarmPolicyFilter>;
+  alarmPolicy?: FFListModel<AlarmPolicy, AlarmPolicyFilter>;
 
-  userList?: ListModel<User, UserFilter>;
+  userList?: FFListModel<User, UserFilter>;
 
   /** 当前新建告警 */
   alarmPolicyEdition?: AlarmPolicyEdition;
@@ -83,10 +70,10 @@ export interface RootState {
   /**组列表 */
   // groupList?: FetcherState<RecordSet<Group>>;
 
-  channel?: ListModel<Resource, ResourceFilter>;
-  template?: ListModel<Resource, ResourceFilter>;
-  receiver?: ListModel<Resource, ResourceFilter>;
-  receiverGroup?: ListModel<Resource, ResourceFilter>;
+  channel?: FFListModel<Resource, ResourceFilter>;
+  template?: FFListModel<Resource, ResourceFilter>;
+  receiver?: FFListModel<Resource, ResourceFilter>;
+  receiverGroup?: FFListModel<Resource, ResourceFilter>;
 
   groupQuery?: QueryState<GroupFilter>;
 

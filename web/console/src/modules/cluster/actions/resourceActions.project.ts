@@ -1,11 +1,14 @@
-import { extend, RecordSet, ReduxAction } from '@tencent/qcloud-lib';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
+import {
+    extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
 import { ResourceInfo } from '../../common/models';
 import { includes } from '../../common/utils';
-import { IsResourceShowLoadingIcon } from '../components/resource/resourceTableOperation/ResourceTablePanel';
+import {
+    IsResourceShowLoadingIcon
+} from '../components/resource/resourceTableOperation/ResourceTablePanel';
 import * as ActionType from '../constants/ActionType';
 import { PollEventName, ResourceNeedJudgeLoading } from '../constants/Config';
 import { Resource, ResourceFilter, RootState } from '../models';

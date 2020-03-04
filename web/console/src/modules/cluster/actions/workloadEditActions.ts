@@ -1,39 +1,26 @@
-import { initmatchExpressions, initWorkloadAnnotataions, initCronMetrics } from './../constants/initState';
-import { W_UpdateNodeAffinityRule } from './../constants/ActionType';
-import { MatchExpressions, CronMetrics } from './../models/WorkloadEdit';
-import { ReduxAction, uuid, extend } from '@tencent/qcloud-lib';
-import { FetchOptions, generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import {
-  RootState,
-  ContainerItem,
-  EnvItem,
-  WorkloadLabel,
-  Resource,
-  HpaMetrics,
-  ResourceFilter,
-  MetricOption,
-  ValueFrom,
-  VolumeItem
-} from '../models';
-import * as ActionType from '../constants/ActionType';
+    extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid
+} from '@tencent/ff-redux';
+import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+
+import { resourceConfig } from '../../../../config';
 import { cloneDeep } from '../../common/utils';
-import { validateWorkloadActions } from './validateWorkloadActions';
+import * as ActionType from '../constants/ActionType';
 import {
-  initVolume,
-  initEnv,
-  initContainer,
-  initHpaMetrics,
-  initValueFrom,
-  initMount,
-  initWorkloadLabel
+    initContainer, initCronMetrics, initEnv, initHpaMetrics, initmatchExpressions, initMount,
+    initValueFrom, initVolume, initWorkloadAnnotataions, initWorkloadLabel
 } from '../constants/initState';
-import { workloadConfigActions } from './workloadConfigActions';
-import { workloadSecretActions } from './workloadSecretActions';
-import { workloadPvcActions } from './workloadPvcActions';
+import {
+    ContainerItem, EnvItem, HpaMetrics, MetricOption, Resource, ResourceFilter, RootState,
+    ValueFrom, VolumeItem, WorkloadLabel
+} from '../models';
+import { CronMetrics, MatchExpressions } from '../models/WorkloadEdit';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
-import { resourceConfig } from '../../../../config';
-import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
+import { validateWorkloadActions } from './validateWorkloadActions';
+import { workloadConfigActions } from './workloadConfigActions';
+import { workloadPvcActions } from './workloadPvcActions';
+import { workloadSecretActions } from './workloadSecretActions';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {

@@ -1,18 +1,15 @@
-import { Clustercredential } from './Clustercredential';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { RecordSet } from '@tencent/qcloud-lib';
-import { ListModel } from '@tencent/redux-list';
-import { Region, RegionFilter, Cluster, ClusterFilter } from '../../common/models';
-import { SubRootState } from './SubRoot';
-import { Namespace } from './Namespace';
+import { FetcherState, FFListModel, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
+
 import { RouteState } from '../../../../helpers';
-import { Resource, ResourceFilter } from './ResourceOption';
+import { Cluster, ClusterFilter, Region, RegionFilter } from '../../common/models';
 import { CreateResource } from './';
-import { DialogState } from './DialogState';
 import { ClusterCreationState } from './ClusterCreationState';
+import { Clustercredential } from './Clustercredential';
 import { CreateIC } from './CreateIC';
+import { DialogState } from './DialogState';
+import { Namespace } from './Namespace';
+import { Resource, ResourceFilter } from './ResourceOption';
+import { SubRootState } from './SubRoot';
 
 type ResourceModifyFlow = WorkflowState<CreateResource, number>;
 type CreateICFlow = WorkflowState<CreateIC, number>;
@@ -21,13 +18,13 @@ export interface RootState {
   /** 路由 */
   route?: RouteState;
 
-  region?: ListModel<Region, RegionFilter>;
+  region?: FFListModel<Region, RegionFilter>;
 
   /** 集群的版本 */
   clusterVersion?: string;
 
   /** 集群的相关配置 */
-  cluster?: ListModel<Cluster, ClusterFilter>;
+  cluster?: FFListModel<Cluster, ClusterFilter>;
 
   clustercredential?: Clustercredential;
 

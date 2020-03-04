@@ -1,7 +1,8 @@
-import * as React from 'react';
-import { BaseReactProps } from '@tencent/qcloud-lib';
-import { Bubble, Button, Text } from '@tea/component';
 import * as classnames from 'classnames';
+import * as React from 'react';
+
+import { Bubble, Button, Text } from '@tea/component';
+import { BaseReactProps } from '@tencent/ff-redux';
 
 export interface LinkButtonProps extends BaseReactProps {
   /**是否禁用 */

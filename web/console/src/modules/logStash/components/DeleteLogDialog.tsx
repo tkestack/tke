@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { Modal, Button, Alert } from '@tea/component';
-import { RootProps } from './LogStashApp';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
+
+import { Alert, Button, Modal } from '@tea/component';
+import { bindActionCreators, isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { allActions } from '../actions';
+import { RootProps } from './LogStashApp';
 
 const tips = seajs.require('tips');
 

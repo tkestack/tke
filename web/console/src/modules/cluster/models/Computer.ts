@@ -1,11 +1,10 @@
+import {
+    FetcherState, FFListModel, Identifiable, QueryState, RecordSet, WorkflowState
+} from '@tencent/ff-redux';
+
 import { CreateResource } from '../../common';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { Identifiable, RecordSet, extend } from '@tencent/qcloud-lib';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
 import { Validation } from '../../common/models';
-import { ResourceFilter, Resource } from './ResourceOption';
-import { ListModel } from '@tencent/redux-list';
+import { Resource, ResourceFilter } from './ResourceOption';
 
 type ComputerWorkflow = WorkflowState<Computer, ComputerOperator>;
 type ComputerLabelWorkflow = WorkflowState<ComputerLabelEdition, ComputerOperator>;
@@ -35,7 +34,7 @@ export interface ComputerOperator {
 
 export interface ComputerState {
   /** computer的相关配置 */
-  computer: ListModel<Computer, ComputerFilter>;
+  computer: FFListModel<Computer, ComputerFilter>;
 
   /**创建com工作流 */
   createComputerWorkflow?: ResourceModifyFlow;

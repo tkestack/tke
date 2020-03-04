@@ -1,5 +1,7 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload } from '@tencent/qcloud-lib';
+
+import { reduceToPayload } from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
 import { PeEditReducer } from './PeEditReducer';
 

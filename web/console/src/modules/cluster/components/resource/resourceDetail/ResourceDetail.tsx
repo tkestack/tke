@@ -1,29 +1,31 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { Tabs, TabPanel, ContentView } from '@tea/component';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { MainBodyLayout, FormLayout } from '../../../../common/layouts';
+
+import { ContentView, TabPanel, Tabs } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
+
+import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
 import { isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
 import { router } from '../../../router';
-import { ResourceYamlPanel } from './ResourceYamlPanel';
-import { ResourceYamlActionPanel } from './ResourceYamlActionPanel';
-import { ResourceDetailPanel } from './ResourceDetailPanel';
+import { RootProps } from '../../ClusterApp';
 import { ResourceHeaderPanel } from '../ResourceHeaderPanel';
 import { ResourceDetailEventActionPanel } from './ResourceDetailEventActionPanel';
 import { ResourceDetailEventTablePanel } from './ResourceDetailEventTablePanel';
+import { ResourceDetailPanel } from './ResourceDetailPanel';
+import { ResourceGrayUpgradeDialog } from './ResourceGrayUpgradeDialog';
 import { ResourceModifyHistoryPanel } from './ResourceModifyHistoryPanel';
-import { ResourceRollbackDialog } from './ResourceRollbackDialog';
-import { ResourcePodActionPanel } from './ResourcePodActionPanel';
-import { ResourcePodPanel } from './ResourcePodPanel';
-import { ResourcePodDeleteDialog } from './ResourcePodDeleteDialog';
-import { ResourcePodRemoteLoginDialog } from './ResourcePodRemoteLoginDialog';
-import { ResourcePodLogPanel } from './ResourcePodLogPanel';
 import { ResourceNamespaceDetailPanel } from './ResourceNamespaceDetailPanel';
 import { ResourceNodeDetailPanel } from './ResourceNodeDetailPanel';
+import { ResourcePodActionPanel } from './ResourcePodActionPanel';
+import { ResourcePodDeleteDialog } from './ResourcePodDeleteDialog';
+import { ResourcePodLogPanel } from './ResourcePodLogPanel';
+import { ResourcePodPanel } from './ResourcePodPanel';
+import { ResourcePodRemoteLoginDialog } from './ResourcePodRemoteLoginDialog';
+import { ResourceRollbackDialog } from './ResourceRollbackDialog';
 import { ResourceTappPodDeleteDialog } from './ResourceTappPodDeleteDialog';
-import { ResourceGrayUpgradeDialog } from './ResourceGrayUpgradeDialog';
+import { ResourceYamlActionPanel } from './ResourceYamlActionPanel';
+import { ResourceYamlPanel } from './ResourceYamlPanel';
 
 /** 判断当前详情页面是否在节点里面 */
 export const IsInNodeManageDetail = (type: string) => {
@@ -38,10 +40,7 @@ export const IsNeedModifyYaml = (resourceName: string) => {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceDetail extends React.Component<RootProps, {}> {
   componentWillUnmount() {
     let { actions } = this.props;

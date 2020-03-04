@@ -1,19 +1,18 @@
 import * as React from 'react';
-import { Button, Bubble, Justify, Table } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { router } from '../../../router';
+
+import { Bubble, Button, Justify, Table } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { allActions } from '../../../actions';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceYamlActionPanel extends React.Component<RootProps, {}> {
   render() {
     let { route } = this.props,

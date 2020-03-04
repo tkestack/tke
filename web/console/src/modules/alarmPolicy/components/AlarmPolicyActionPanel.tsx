@@ -1,7 +1,7 @@
 // import { connect } from 'react-redux';
 // import { allActions } from '../actions';
 // import * as React from 'react';
-// import { bindActionCreators } from '@tencent/qcloud-lib';
+// import { bindActionCreators } from '@tencent/ff-redux';
 // import { router } from '../router';
 // import { RootProps } from './AlarmPolicyApp';
 // import { Button, SearchBox, Table } from '@tea/component';

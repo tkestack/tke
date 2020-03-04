@@ -1,14 +1,16 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../../models';
+
+import { ContentView } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
+
 import { allActions } from '../../actions';
+import { RootState } from '../../models';
 import { router } from '../../router';
-import { StrategyHeadPanel } from './StrategyHeadPanel';
-import { StrategyTablePanel } from './StrategyTablePanel';
 import { StrategyActionPanel } from './StrategyActionPanel';
 import { StrategyDetailsPanel } from './StrategyDetailsPanel';
-import { ContentView } from '@tea/component';
+import { StrategyHeadPanel } from './StrategyHeadPanel';
+import { StrategyTablePanel } from './StrategyTablePanel';
 
 export interface RootProps extends RootState {
   actions?: typeof allActions;

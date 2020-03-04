@@ -1,7 +1,8 @@
-import { ReduxAction, uuid } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import { RootState, Variable, initVariable } from '../models';
+import { ReduxAction, uuid } from '@tencent/ff-redux';
+
 import { cloneDeep } from '../../common/utils';
+import * as ActionType from '../constants/ActionType';
+import { initVariable, RootState, Variable } from '../models';
 
 type GetState = () => RootState;
 

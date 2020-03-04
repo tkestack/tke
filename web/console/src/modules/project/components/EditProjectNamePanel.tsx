@@ -1,8 +1,7 @@
+import { FormPanel } from '@tencent/ff-component';
+import { t } from '@tencent/tea-app/lib/i18n';
 import * as React from 'react';
 import { RootProps } from './ProjectApp';
-import { FormLayout } from '../../common/layouts';
-import { FormItem, InputField, FormPanel } from '../../common/components';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 export class EditProjectNamePanel extends React.Component<RootProps, {}> {
   render() {

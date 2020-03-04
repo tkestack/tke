@@ -1,24 +1,26 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../actions';
-import { RootProps } from '../ClusterApp';
-import { router } from '../../router';
-import { ResourceActionPanel } from './resourceTableOperation/ResourceActionPanel';
-import { ResourceTablePanel } from './resourceTableOperation/ResourceTablePanel';
-import { ResourceDeleteDialog } from './resourceTableOperation/ResourceDeleteDialog';
-import { ResourceSidebarPanel } from './ResourceSidebarPanel';
-import { ComputerActionPanel } from './nodeManage/ComputerActionPanel';
-import { ComputerTablePanel } from './nodeManage/ComputerTablePanel';
-import { BatchDrainComputerDialog } from './nodeManage/BatchDrainComputerDialog';
-import { ClusterDetailPanel } from './clusterInfomation/ClusterDetail';
-import { ResourceLogPanel } from './resourceTableOperation/ResourceLogPanel';
-import { ResourceEventPanel } from './resourceTableOperation/ResourceEventPanel';
-import { isEmpty } from '../../../common/utils';
-import { UpdateNodeLabelDialog } from './nodeManage/UpdateNodeLabelDialog';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { ContentView, Justify } from '@tencent/tea-component';
+
+import { isEmpty } from '../../../common/utils';
+import { allActions } from '../../actions';
 import { SubRouter } from '../../models';
+import { router } from '../../router';
+import { RootProps } from '../ClusterApp';
+import { ClusterDetailPanel } from './clusterInfomation/ClusterDetail';
+import { BatchDrainComputerDialog } from './nodeManage/BatchDrainComputerDialog';
+import { ComputerActionPanel } from './nodeManage/ComputerActionPanel';
+import { ComputerTablePanel } from './nodeManage/ComputerTablePanel';
+import { UpdateNodeLabelDialog } from './nodeManage/UpdateNodeLabelDialog';
+import { ResourceSidebarPanel } from './ResourceSidebarPanel';
+import { ResourceActionPanel } from './resourceTableOperation/ResourceActionPanel';
+import { ResourceDeleteDialog } from './resourceTableOperation/ResourceDeleteDialog';
+import { ResourceEventPanel } from './resourceTableOperation/ResourceEventPanel';
+import { ResourceLogPanel } from './resourceTableOperation/ResourceLogPanel';
+import { ResourceTablePanel } from './resourceTableOperation/ResourceTablePanel';
 
 const loadingElement: JSX.Element = (
   <div>

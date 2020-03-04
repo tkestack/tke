@@ -1,9 +1,10 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import { initValidator } from '../../common/models';
 
-import { k8sVersionList, GPUTYPE } from '../constants/Config';
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
+
+import { initValidator } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
+import { GPUTYPE, k8sVersionList } from '../constants/Config';
 
 const TempReducer = combineReducers({
   name: reduceToPayload(ActionType.IC_Name, ''),

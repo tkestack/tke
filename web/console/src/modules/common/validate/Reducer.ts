@@ -1,8 +1,10 @@
-import { ValidateSchema } from './Model';
 import { combineReducers, Reducer } from 'redux';
-import { reduceToPayload } from '@tencent/qcloud-lib';
-import { getValidationActionType } from './ActionType';
+
+import { reduceToPayload } from '@tencent/ff-redux';
+
 import { initValidator } from '../models';
+import { getValidationActionType } from './ActionType';
+import { ValidateSchema } from './Model';
 
 /**
  * 获取校验的Reducer，注入到reducer当中

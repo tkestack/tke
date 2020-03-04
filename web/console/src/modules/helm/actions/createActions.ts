@@ -1,22 +1,23 @@
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
+import { createFFListActions, extend, ReduxAction } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
-import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { RootState, TencenthubChart, TencenthubChartVersion, HelmKeyValue, HelmCreationValid } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { router } from '../router';
-import { assureRegion } from '../../../../helpers';
-import { helmActions } from './helmActions';
-import { TencentHubType, HelmResource, OtherType, FFReduxActionName } from '../constants/Config';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Region, RegionFilter, Resource, ResourceFilter, ResourceInfo } from '../../common/models';
-import { createListActionsFactory, createListAction } from '@tencent/redux-list';
-import { CommonAPI } from '../../common/webapi';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { resourceConfig } from '../../../../config';
+import { assureRegion } from '../../../../helpers';
+import { Region, RegionFilter, Resource, ResourceFilter, ResourceInfo } from '../../common/models';
+import { CommonAPI } from '../../common/webapi';
+import * as ActionType from '../constants/ActionType';
+import { FFReduxActionName, HelmResource, OtherType, TencentHubType } from '../constants/Config';
+import {
+    HelmCreationValid, HelmKeyValue, RootState, TencenthubChart, TencenthubChartVersion
+} from '../models';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { helmActions } from './helmActions';
 
 type GetState = () => RootState;
 
-export const regionActions = createListActionsFactory<Region, RegionFilter>({
+export const regionActions = createFFListActions<Region, RegionFilter>({
   id: 'HelmCreate',
   actionName: FFReduxActionName.REGION,
   selectFirst: true,
@@ -44,7 +45,7 @@ export const regionActions = createListActionsFactory<Region, RegionFilter>({
 });
 
 /** 获取集群列表 */
-const ListClusterActions = createListAction<Resource, ResourceFilter>({
+const ListClusterActions = createFFListActions<Resource, ResourceFilter>({
   id: 'HelmCreate',
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async query => {

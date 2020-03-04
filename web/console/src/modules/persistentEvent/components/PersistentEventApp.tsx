@@ -1,17 +1,19 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { allActions } from '../actions';
-import { configStore } from '../stores/RootStore';
-import { router } from '../router';
-import { ResetStoreAction } from '../../../../helpers';
+
+import { bindActionCreators } from '@tencent/ff-redux';
+import { ContentView } from '@tencent/tea-component';
+
 import { resourceConfig } from '../../../../config';
-import { PersistentEventHeadPanel } from './PersistentEventHeadPanel';
+import { ResetStoreAction } from '../../../../helpers';
+import { allActions } from '../actions';
+import { RootState } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
+import { ClusterActionPanel } from './ClusterActionPanel';
 import { ClusterTablePanel } from './ClusterTablePanel';
 import { EditPersistentEventPanel } from './EditPersistentEventPanel';
-import { ClusterActionPanel } from './ClusterActionPanel';
-import { ContentView } from '@tencent/tea-component';
+import { PersistentEventHeadPanel } from './PersistentEventHeadPanel';
 
 const store = configStore();
 export class PersistentEventAppContainer extends React.Component<any, any> {
@@ -38,10 +40,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 @((router.serve as any)())
 class PersistentEventApp extends React.Component<RootProps, {}> {
   componentDidMount() {

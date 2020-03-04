@@ -1,17 +1,16 @@
 import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { bindActionCreators, uuid, insertCSS } from '@tencent/qcloud-lib';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { Button, Form, Icon, Input, Modal, SearchBox, Switch, Table } from '@tea/component';
 import { Justify } from '@tea/component/justify';
+import { bindActionCreators, insertCSS, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { allActions } from '../../actions';
-import { User, UserFilter } from '../../models';
-import { Modal, Button, Form, Input, SearchBox, Switch, Table, Icon } from '@tea/component';
 import {
-  VALIDATE_PASSWORD_RULE,
-  VALIDATE_PHONE_RULE,
-  VALIDATE_EMAIL_RULE,
-  VALIDATE_NAME_RULE
+    VALIDATE_EMAIL_RULE, VALIDATE_NAME_RULE, VALIDATE_PASSWORD_RULE, VALIDATE_PHONE_RULE
 } from '../../constants/Config';
+import { User, UserFilter } from '../../models';
 
 const { useState, useEffect } = React;
 const _isEqual = require('lodash/isEqual');

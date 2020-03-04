@@ -1,8 +1,10 @@
-import { ProjectEdition } from './../models/Project';
-import { initValidator } from './../../common/models/Validation';
+import { uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { uuid } from '@tencent/qcloud-lib';
+
+import { initValidator } from '../../common/models/Validation';
 import { NamespaceEdition } from '../models';
+import { ProjectEdition } from '../models/Project';
+
 export const canNotOperateCluster = {
   clusterStatus: ['Creating', 'Deleting', 'Upgrading', 'Isolated', 'Abnormal']
 };

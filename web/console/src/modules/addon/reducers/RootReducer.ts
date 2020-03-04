@@ -1,24 +1,24 @@
 import { combineReducers } from 'redux';
-import { router } from '../router';
-import { FFReduxActionName } from '../constants/Config';
+
+import { createFFListReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
-import { reduceToPayload } from '@tencent/qcloud-lib';
+import { FFReduxActionName } from '../constants/Config';
+import { router } from '../router';
 import { AddonEditReducer } from './AddonEditReducer';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
-import { createListReducer } from '@tencent/redux-list';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
 
-  region: createListReducer(FFReduxActionName.REGION),
+  region: createFFListReducer(FFReduxActionName.REGION),
 
-  cluster: createListReducer(FFReduxActionName.CLUSTER),
+  cluster: createFFListReducer(FFReduxActionName.CLUSTER),
 
   clusterVersion: reduceToPayload(ActionType.ClusterVersion, '1.16'),
 
-  openAddon: createListReducer(FFReduxActionName.OPENADDON),
+  openAddon: createFFListReducer(FFReduxActionName.OPENADDON),
 
-  addon: createListReducer(FFReduxActionName.ADDON),
+  addon: createFFListReducer(FFReduxActionName.ADDON),
 
   editAddon: AddonEditReducer,
 

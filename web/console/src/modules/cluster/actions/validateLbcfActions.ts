@@ -1,9 +1,10 @@
-import { Selector } from './../models/ServiceEdit';
-import { deepClone } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import { RootState, LbcfEdit } from '../models';
-import { cloneDeep } from '../../common/utils';
+import { deepClone } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { cloneDeep } from '../../common/utils';
+import * as ActionType from '../constants/ActionType';
+import { LbcfEdit, RootState } from '../models';
+import { Selector } from '../models/ServiceEdit';
 
 type GetState = () => RootState;
 

@@ -1,6 +1,8 @@
-import { ProjectResourceLimit } from './Project';
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
 import { Validation } from '../../common/models';
+import { ProjectResourceLimit } from './Project';
+
 export interface Namespace extends Identifiable {
   /** 类型 */
   kind?: string;
