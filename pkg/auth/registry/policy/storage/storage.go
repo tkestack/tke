@@ -58,6 +58,7 @@ type Storage struct {
 	Binding   *BindingREST
 	Unbinding *UnbindingREST
 
+	Role  *RoleREST
 	User  *UserREST
 	Group *GroupREST
 }
@@ -101,6 +102,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		Finalize:  &FinalizeREST{&finalizeStore},
 		Binding:   &BindingREST{store, authClient},
 		Unbinding: &UnbindingREST{store, authClient},
+		Role:      &RoleREST{store, authClient, enforcer},
 		User:      &UserREST{store, authClient},
 		Group:     &GroupREST{store, authClient},
 	}

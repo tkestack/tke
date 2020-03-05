@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -41,9 +40,9 @@ import (
 
 // RoleREST implements the REST endpoint, list policies bound to the user.
 type RoleREST struct {
-	localIdentityStore *registry.Store
-	authClient         authinternalclient.AuthInterface
-	enforcer           *casbin.SyncedEnforcer
+	policyStore *registry.Store
+	authClient  authinternalclient.AuthInterface
+	enforcer    *casbin.SyncedEnforcer
 }
 
 var _ = rest.Lister(&RoleREST{})
@@ -65,17 +64,15 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	userID := requestInfo.Name
-
-	obj, err := r.localIdentityStore.Get(ctx, userID, &metav1.GetOptions{})
+	obj, err := r.policyStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	localIdentity := obj.(*auth.LocalIdentity)
 
-	roles, err := r.enforcer.GetRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
+	policy := obj.(*auth.Policy)
+	roles, err := r.enforcer.GetUsersForRole(policy.Name)
 	if err != nil {
-		log.Error("List roles for user failed from casbin failed", log.String("user", userID), log.Err(err))
+		log.Error("List roles for pol failed from casbin failed", log.String("policy", requestInfo.Name), log.Err(err))
 		return nil, apierrors.NewInternalError(err)
 	}
 
