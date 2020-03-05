@@ -177,6 +177,7 @@ spec:
         args:
         - --ip-masq
         - --kube-subnet-mgr
+        - --iface=$(HOST_IP)
         resources:
           requests:
             cpu: "100m"
@@ -195,6 +196,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         volumeMounts:
         - name: run
           mountPath: /run
