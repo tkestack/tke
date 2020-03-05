@@ -20,8 +20,10 @@ package config
 
 import (
 	"fmt"
+
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"tkestack.io/tke/pkg/controller/options"
 )
 
@@ -39,13 +41,13 @@ func BuildClientConfig(opts *options.APIServerClientOptions) (cfg *restclient.Co
 		return
 	}
 
-	cfg, err = clientcmd.BuildConfigFromFlags(opts.Server, opts.ServerClientConfig)
+	cfg, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: opts.ServerClientConfig},
+		&clientcmd.ConfigOverrides{ClusterInfo: clientcmdapi.Cluster{Server: opts.Server}}).ClientConfig()
 	if err != nil {
 		return
 	}
-	cfg.ContentConfig.ContentType = opts.ContentType
-	cfg.QPS = opts.QPS
-	cfg.Burst = int(opts.Burst)
+	cfg.ContentConfig.ContentType = "application/vnd.kubernetes.protobuf" // for performance
 	ok = true
 	return
 }

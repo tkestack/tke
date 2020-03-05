@@ -20,6 +20,7 @@ package options
 
 import (
 	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -31,24 +32,13 @@ import (
 type APIServerClientOptions struct {
 	Server             string
 	ServerClientConfig string
-	ContentType        string
-	QPS                float32
-	Burst              int32
 
 	Name     string
 	Required bool
 
-	flagAPIClientContentType        string
-	flagAPIClientQPS                string
-	flagAPIClientTimeout            string
-	flagAPIClientBurst              string
 	flagAPIClientServer             string
 	flagAPIClientServerClientConfig string
 
-	configAPIClientContentType        string
-	configAPIClientQPS                string
-	configAPIClientTimeout            string
-	configAPIClientBurst              string
 	configAPIClientServer             string
 	configAPIClientServerClientConfig string
 }
@@ -56,24 +46,12 @@ type APIServerClientOptions struct {
 // NewAPIServerClientOptions creates the default APIServerClientOptions object.
 func NewAPIServerClientOptions(name string, required bool) *APIServerClientOptions {
 	return &APIServerClientOptions{
-		ContentType: "application/vnd.kubernetes.protobuf",
-		QPS:         20.0,
-		Burst:       30,
-
 		Name:     name,
 		Required: required,
 
-		flagAPIClientContentType:        fmt.Sprintf("%s-api-content-type", name),
-		flagAPIClientQPS:                fmt.Sprintf("%s-api-qps", name),
-		flagAPIClientTimeout:            fmt.Sprintf("%s-api-timeout", name),
-		flagAPIClientBurst:              fmt.Sprintf("%s-api-burst", name),
 		flagAPIClientServer:             FlagAPIClientServer(name),
 		flagAPIClientServerClientConfig: FlagAPIClientServerClientConfig(name),
 
-		configAPIClientContentType:        fmt.Sprintf("client.%s.api_content_type", name),
-		configAPIClientQPS:                fmt.Sprintf("client.%s.api_qps", name),
-		configAPIClientTimeout:            fmt.Sprintf("client.%s.api_timeout", name),
-		configAPIClientBurst:              fmt.Sprintf("client.%s.api_burst", name),
 		configAPIClientServer:             fmt.Sprintf("client.%s.api_server", name),
 		configAPIClientServerClientConfig: fmt.Sprintf("client.%s.api_server_client_config", name),
 	}
@@ -91,15 +69,6 @@ func (o *APIServerClientOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.String(o.flagAPIClientServerClientConfig, o.ServerClientConfig,
 		"Path to config file with authorization and "+o.Name+" apiserver location information.")
 	_ = viper.BindPFlag(o.configAPIClientServerClientConfig, fs.Lookup(o.flagAPIClientServerClientConfig))
-	fs.String(o.flagAPIClientContentType, o.ContentType,
-		"Content type of requests sent to "+o.Name+" apiserver.")
-	_ = viper.BindPFlag(o.configAPIClientContentType, fs.Lookup(o.flagAPIClientContentType))
-	fs.Float32(o.flagAPIClientQPS, o.QPS,
-		"QPS to use while talking with "+o.Name+" apiserver.")
-	_ = viper.BindPFlag(o.configAPIClientQPS, fs.Lookup(o.flagAPIClientQPS))
-	fs.Int32(o.flagAPIClientBurst, o.Burst,
-		"Burst to use while talking with "+o.Name+" apiserver.")
-	_ = viper.BindPFlag(o.configAPIClientBurst, fs.Lookup(o.flagAPIClientBurst))
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -109,9 +78,6 @@ func (o *APIServerClientOptions) ApplyFlags() []error {
 
 	o.ServerClientConfig = viper.GetString(o.configAPIClientServerClientConfig)
 	o.Server = viper.GetString(o.configAPIClientServer)
-	o.Burst = viper.GetInt32(o.configAPIClientBurst)
-	o.QPS = float32(viper.GetFloat64(o.configAPIClientQPS))
-	o.ContentType = viper.GetString(o.configAPIClientContentType)
 
 	if o.Required {
 		if o.ServerClientConfig == "" && o.Server == "" {
