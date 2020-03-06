@@ -69,15 +69,6 @@ func Send(channel *v1.ChannelTencentCloudSMS, template *v1.TemplateTencentCloudS
 		return "", "", err
 	}
 
-	if util.SelfdefineURL != "" {
-		selfdefineReqBody := util.SelfdefineBodyInfo{
-			Type: "sms",
-			Body: body,
-		}
-		err = util.RequestToSelfdefine(selfdefineReqBody)
-		return "", body, err
-	}
-
 	reqURL, err := url.Parse(tencentCloudSmsURL)
 	if err != nil {
 		return "", body, err
