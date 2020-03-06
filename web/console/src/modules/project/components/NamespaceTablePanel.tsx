@@ -11,14 +11,8 @@ import { dateFormatter } from '../../../../helpers';
 import { GridTable, LinkButton, ResourceList, TipDialog, WorkflowDialog } from '../../common/components';
 import { DialogBodyLayout } from '../../common/layouts';
 import { allActions } from '../actions';
-import {
-  NamespaceStatus,
-  resourceLimitTypeToText,
-  resourceTypeToUnit,
-  K8SUNIT,
-  valueLabels1024,
-  valueLabels1000
-} from '../constants/Config';
+import { NamespaceStatus, resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
+import { K8SUNIT, valueLabels1024, valueLabels1000 } from '@helper/k8sUnitUtil';
 import { Namespace, NamespaceOperator } from '../models';
 import { router } from '../router';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
@@ -27,10 +21,7 @@ import { RootProps } from './ProjectApp';
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class NamespaceTablePanel extends React.Component<RootProps, {}> {
   state = {
     isShowDialog: false
@@ -124,7 +115,7 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
     return (
       <GridTable
         columns={columns}
-        emptyTips={<div className="text-center">{t('您选择的该项目的命名空间为空')}</div>}
+        emptyTips={<div className="text-center">{t('您选择的该业务的命名空间为空')}</div>}
         listModel={{
           list: namespace.list,
           query: namespace.query

@@ -1,3 +1,4 @@
+import { resourceConfig } from '@config';
 import { QueryState } from '@tencent/qcloud-redux-query';
 import { uuid, RecordSet } from '@tencent/qcloud-lib';
 import { Namespace, ResourceFilter, Resource, DifferentInterfaceResourceOperation } from '../models';
@@ -219,21 +220,7 @@ export async function fetchResourceList(
 
   return result;
 }
-export async function fetchResourceList2({
-  query,
-  resourceInfo,
-  isClearData,
-  k8sQueryObj,
-  isNeedDes
-}: {
-  query: QueryState<ResourceFilter>;
-  resourceInfo: ResourceInfo;
-  isClearData?: boolean;
-  k8sQueryObj?: any;
-  isNeedDes?: boolean;
-}) {
-  return fetchResourceList(query, resourceInfo, isClearData, k8sQueryObj, isNeedDes);
-}
+
 /**
  * 获取具体的某个资源，用于在某个资源下，获取其他资源的途径,
  * @param query:    ResourceFilter 的查询过滤条件
@@ -469,10 +456,13 @@ export async function applyDifferentInterfaceResource(
   try {
     for (let index = 0; index < resources.length; index++) {
       let { mode, resourceIns, clusterId, yamlData, resourceInfo, namespace, jsonData } = resources[index];
-      let extraResource = operations[index].extraResource ? operations[index].extraResource : '';
+      let extraResource = operations[index] && operations[index].extraResource ? operations[index].extraResource : '';
       let url = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, extraResource, clusterId });
       //拼接字符串查询参数
-      let queryUrl = operations[index].query ? reduceK8sQueryString({ k8sQueryObj: operations[index].query }) : '';
+      let queryUrl =
+        operations[index] && operations[index].query
+          ? reduceK8sQueryString({ k8sQueryObj: operations[index].query })
+          : '';
       url = url + queryUrl;
       let method = requestMethodForAction(mode);
       // 这里是独立部署版 和 控制台共用的参数，只有是yamlData的时候才需要userdefinedHeader，如果是jaonData的话，就不需要了
@@ -493,6 +483,8 @@ export async function applyDifferentInterfaceResource(
       allResponses.push(response);
     }
 
+    console.log(allResponses);
+
     //统一处理相应结果
     allResponses.forEach(response => {
       //有一个响应出错
@@ -503,6 +495,7 @@ export async function applyDifferentInterfaceResource(
     //所有的响应都OK的话
     return operationResult(resources);
   } catch (error) {
+    console.log(error);
     return operationResult(resources, reduceNetworkWorkflow(error));
   }
 }
@@ -648,9 +641,19 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
   try {
     let { resourceIns, clusterId, resourceInfo, namespace, jsonData } = resource[0];
 
+    let rsResourceInfo = resourceConfig(resourceInfo.k8sVersion).rs;
+    /// #if project
+    //业务侧ns eg: cls-xxx-ns 需要去除前缀
+    if (resourceInfo.namespaces) {
+      namespace = namespace
+        .split('-')
+        .splice(2)
+        .join('-');
+    }
+    /// #endif
     // 因为回滚需要使用特定的apiVersion，故不用reduceK8sRestful
     let k8sUrl =
-      `/${resourceInfo.basicEntry}/extensions/v1beta1/` +
+      `/${resourceInfo.basicEntry}/${rsResourceInfo.group}/${rsResourceInfo.version}/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
       `${resourceInfo.requestType['list']}/${resourceIns}/rollback`;
     let url = k8sUrl;

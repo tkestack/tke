@@ -20,10 +20,11 @@ package storage
 
 import (
 	"context"
-	appsV1 "k8s.io/api/apps/v1"
-	appsV1Beta1 "k8s.io/api/apps/v1beta1"
-	appsV1Beta2 "k8s.io/api/apps/v1beta2"
-	autoscalingV1API "k8s.io/api/autoscaling/v1"
+
+	appsv1 "k8s.io/api/apps/v1"
+	appsv1beta1 "k8s.io/api/apps/v1beta1"
+	appsv1beta2 "k8s.io/api/apps/v1beta2"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,8 +55,8 @@ type REST struct {
 // NewStorageV1 returns a Storage object that will work against resources.
 func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
 	deploymentStore := &util.Store{
-		NewFunc:        func() runtime.Object { return &appsV1.Deployment{} },
-		NewListFunc:    func() runtime.Object { return &appsV1.DeploymentList{} },
+		NewFunc:        func() runtime.Object { return &appsv1.Deployment{} },
+		NewListFunc:    func() runtime.Object { return &appsv1.DeploymentList{} },
 		Namespaced:     true,
 		PlatformClient: platformClient,
 	}
@@ -85,8 +86,8 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 // NewStorageV1Beta1 returns a Storage object that will work against resources.
 func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
 	deploymentStore := &util.Store{
-		NewFunc:     func() runtime.Object { return &appsV1Beta1.Deployment{} },
-		NewListFunc: func() runtime.Object { return &appsV1Beta1.DeploymentList{} },
+		NewFunc:     func() runtime.Object { return &appsv1beta1.Deployment{} },
+		NewListFunc: func() runtime.Object { return &appsv1beta1.DeploymentList{} },
 		Namespaced:  true,
 
 		PlatformClient: platformClient,
@@ -159,8 +160,8 @@ func NewStorageExtensionsV1Beta1(_ genericregistry.RESTOptionsGetter, platformCl
 // NewStorageV1Beta2 returns a Storage object that will work against resources.
 func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
 	deploymentStore := &util.Store{
-		NewFunc:        func() runtime.Object { return &appsV1Beta2.Deployment{} },
-		NewListFunc:    func() runtime.Object { return &appsV1Beta2.DeploymentList{} },
+		NewFunc:        func() runtime.Object { return &appsv1beta2.Deployment{} },
+		NewListFunc:    func() runtime.Object { return &appsv1beta2.DeploymentList{} },
 		Namespaced:     true,
 		PlatformClient: platformClient,
 	}
@@ -245,18 +246,18 @@ func (r *ScaleREST) GroupVersionKind(containingGV schema.GroupVersion) schema.Gr
 	switch containingGV {
 	case extensionsv1beta1.SchemeGroupVersion:
 		return extensionsv1beta1.SchemeGroupVersion.WithKind("Scale")
-	case appsV1Beta1.SchemeGroupVersion:
-		return appsV1Beta1.SchemeGroupVersion.WithKind("Scale")
-	case appsV1Beta2.SchemeGroupVersion:
-		return appsV1Beta2.SchemeGroupVersion.WithKind("Scale")
+	case appsv1beta1.SchemeGroupVersion:
+		return appsv1beta1.SchemeGroupVersion.WithKind("Scale")
+	case appsv1beta2.SchemeGroupVersion:
+		return appsv1beta2.SchemeGroupVersion.WithKind("Scale")
 	default:
-		return autoscalingV1API.SchemeGroupVersion.WithKind("Scale")
+		return autoscalingv1.SchemeGroupVersion.WithKind("Scale")
 	}
 }
 
 // New creates a new Scale object.
 func (r *ScaleREST) New() runtime.Object {
-	return &autoscalingV1API.Scale{}
+	return &autoscalingv1.Scale{}
 }
 
 // Get finds a resource in the storage by name and returns it.
@@ -266,7 +267,7 @@ func (r *ScaleREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, err
 	}
 
-	result := &autoscalingV1API.Scale{}
+	result := &autoscalingv1.Scale{}
 	if err := client.
 		Get().
 		Context(ctx).
@@ -294,7 +295,7 @@ func (r *ScaleREST) Update(ctx context.Context, name string, objInfo rest.Update
 		return nil, false, errors.NewInternalError(err)
 	}
 
-	result := &autoscalingV1API.Scale{}
+	result := &autoscalingv1.Scale{}
 	if err := client.
 		Put().
 		Context(ctx).

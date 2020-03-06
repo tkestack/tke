@@ -21,7 +21,7 @@ K8S_API_DIR = $(shell go list -f '{{ .Dir }}' -m k8s.io/api)
 # set the gogo protobuf package dir
 GOGO_PROTOBUF_DIR = $(shell go list -f '{{ .Dir }}' -m github.com/gogo/protobuf)
 # set the code generator image version
-CODE_GENERATOR_VERSION := v1.16.3-1
+CODE_GENERATOR_VERSION := v1.17.0-2
 
 .PHONY: gen.run
 gen.run: gen.clean gen.api gen.openapi gen.gateway gen.registry gen.monitor
@@ -39,7 +39,7 @@ gen.api:
 	 	$(ROOT_PACKAGE)/api/client \
 	 	$(ROOT_PACKAGE)/api \
 	 	$(ROOT_PACKAGE)/api \
-	 	"platform:v1 business:v1 notify:v1 registry:v1 monitor:v1"
+	 	"platform:v1 business:v1 notify:v1 registry:v1 monitor:v1 auth:v1"
 
 .PHONY: gen.gateway
 gen.gateway:

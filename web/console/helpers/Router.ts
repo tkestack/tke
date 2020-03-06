@@ -1,4 +1,18 @@
 /**
+ * 判断是否和路由跳转之前的一样
+ * @param prevpath: string  之前的路由
+ * @param currentpath: string 当前的路由
+ */
+const isInSameModule = (prevpath: string, currentpath: string) => {
+  let [prevBusiness, prevModule, ...prevRest] = prevpath.split('/').filter(item => item !== ''),
+    [currentBusiness, currentModule, ...currentRest] = currentpath.split('/').filter(item => item !== '');
+  if (prevModule !== currentModule && prevModule !== undefined) {
+    return false;
+  }
+  return true;
+};
+
+/**
  * router for nmc
  *
  * 1. a state model
@@ -6,7 +20,6 @@
  * 3. an action creator
  * 4. an decorator
  */
-import { Dispatch } from 'redux';
 import * as React from 'react';
 import { appendFunction, ReduxConnectedProps, ReduxAction } from '@tencent/qcloud-lib';
 import { buildQueryString, parseQueryString } from './urlUtil';
@@ -159,7 +172,7 @@ function generateRouterDecorator(rule: string) {
 
     const proto = target.prototype as React.ComponentLifecycle<ReduxConnectedProps, any>;
 
-    proto.componentDidMount = proto.componentDidMount ? appendFunction(proto.componentDidMount, onMount) : onMount;
+    proto.componentWillMount = proto.componentWillMount ? appendFunction(proto.componentWillMount, onMount) : onMount;
     proto.componentWillUnmount = proto.componentWillUnmount
       ? appendFunction(proto.componentWillUnmount, onUnmount)
       : onUnmount;
@@ -172,6 +185,7 @@ const NAMED_PARAM_REGEX = /\(\/:(\w+)\)/g;
 export class Router {
   private paramNames: string[];
 
+  /* eslint-disable */
   constructor(private rule: string, private defaults: { [key: string]: string }) {
     this.paramNames = [];
 
@@ -180,6 +194,7 @@ export class Router {
       return match;
     });
   }
+  /* eslint-enable */
 
   public getReducer() {
     return generateRouterReducer(this.rule);
@@ -224,7 +239,11 @@ export class Router {
     if (url) {
       nmcRouter.navigate(url);
     } else {
-      nmcRouter.navigate(this.buildFragment(params) + buildQueryString(queries));
+      let nextLocationPath = this.buildFragment(params);
+      let prevLocationPath = location.pathname;
+      if (isInSameModule(prevLocationPath, nextLocationPath)) {
+        nmcRouter.navigate(nextLocationPath + buildQueryString(queries));
+      }
     }
   }
 }

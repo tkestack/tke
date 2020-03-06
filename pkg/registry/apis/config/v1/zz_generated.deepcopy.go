@@ -245,6 +245,11 @@ func (in *Security) DeepCopyInto(out *Security) {
 		*out = new(int64)
 		**out = **in
 	}
+	if in.EnableAnonymous != nil {
+		in, out := &in.EnableAnonymous, &out.EnableAnonymous
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

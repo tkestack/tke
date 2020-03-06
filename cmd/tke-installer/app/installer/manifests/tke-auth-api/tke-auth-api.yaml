@@ -1,0 +1,124 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: tke-auth-api
+  namespace: tke
+  annotations:
+    tke.prometheus.io/scrape: "true"
+    prometheus.io/scheme: https
+spec:
+  selector:
+    app: tke-auth-api
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 9451
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-auth-api
+  name: tke-auth-api
+  namespace: tke
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: tke-auth-api
+  template:
+    metadata:
+      labels:
+        app: tke-auth-api
+    spec:
+      containers:
+        - name: tke-auth-api
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-auth-api.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-auth-api-volume
+              mountPath: /app/conf
+          ports:
+            - containerPort: 9451
+          readinessProbe:
+            httpGet:
+              port: 9451
+              path: /healthz/ping
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 9451
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-auth-api-volume
+          configMap:
+            name: tke-auth-api
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-auth-api
+  namespace: tke
+data:
+  abac-policy.json: |
+    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:*","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
+  tke-auth-api.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [etcd]
+    servers = [
+      "https://etcd:2379"
+    ]
+    cafile = "/app/certs/etcd-ca.crt"
+    certfile = "/app/certs/etcd.crt"
+    keyfile = "/app/certs/etcd.key"
+
+    [generic]
+    external_hostname = "tke-auth-api"
+    external_port = 443
+
+    [authorization]
+    policy_file="/app/conf/abac-policy.json"
+
+    [authentication]
+    token_auth_file = "/app/certs/token.csv"
+    client_ca_file = "/app/certs/ca.crt"
+    privileged_username = "{{ .AdminUsername }}"
+
+      [authentication.requestheader]
+      client_ca_file = "/app/certs/ca.crt"
+      username_headers = "X-Remote-User"
+      group_headers = "X-Remote-Group"
+      extra_headers_prefix = "X-Remote-Extra-"
+
+    [auth]
+    assets_path = "/app/web/auth"
+    init_client_id = "{{ .TenantID }}"
+    init_client_secret = "{{ .OIDCClientSecret }}"
+    init_client_redirect_uris = [
+{{- range $element := .RedirectHosts}}
+  {{ printf `      "http://%s/callback",` $element}}
+  {{ printf `      "https://%s/callback",` $element}}
+{{- end}}
+    ]

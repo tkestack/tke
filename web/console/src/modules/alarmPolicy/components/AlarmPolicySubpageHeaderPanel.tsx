@@ -6,7 +6,7 @@ export class AlarmPolicySubpageHeaderPanel extends React.Component<RootProps, {}
   goBack() {
     let { route } = this.props;
     // history.back();
-    router.navigate({}, { rid: route.queries['rid'], clusterId: route.queries['clusterId'] });
+    router.navigate({}, { clusterId: route.queries['clusterId'] });
   }
 
   componentDidMount() {

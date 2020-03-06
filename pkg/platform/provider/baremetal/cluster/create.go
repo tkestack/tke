@@ -30,10 +30,7 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
-
-	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
-	galaxyimages "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
+	"tkestack.io/tke/pkg/util/template"
 
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -42,9 +39,12 @@ import (
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy"
+	galaxyimages "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
@@ -52,6 +52,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/ssh"
 )
 
 const (
@@ -74,7 +75,7 @@ func (p *Provider) EnsurePreflight(c *Cluster) error {
 }
 
 func (p *Provider) EnsureRegistryHosts(c *Cluster) error {
-	if !c.Registry.UseTKE() {
+	if !c.Registry.NeedSetHosts() {
 		return nil
 	}
 
@@ -185,8 +186,18 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 		return errors.Wrap(err, "get DNS IP error")
 	}
 	cluster.Status.DNSIP = dnsIP.String()
+
 	for _, m := range cluster.Spec.Machines {
 		cluster.AddAddress(platformv1.AddressReal, m.IP, 6443)
+	}
+
+	if cluster.Spec.Features.HA != nil {
+		if cluster.Spec.Features.HA.TKEHA != nil {
+			cluster.AddAddress(platformv1.AddressAdvertise, cluster.Spec.Features.HA.TKEHA.VIP, 6443)
+		}
+		if cluster.Spec.Features.HA.ThirdPartyHA != nil {
+			cluster.AddAddress(platformv1.AddressAdvertise, cluster.Spec.Features.HA.ThirdPartyHA.VIP, cluster.Spec.Features.HA.ThirdPartyHA.VPort)
+		}
 	}
 
 	token := ksuid.New().String()
@@ -230,7 +241,7 @@ func (p *Provider) EnsureNvidiaDriver(c *Cluster) error {
 		if !gpu.IsEnable(machine.Labels) {
 			continue
 		}
-		err := gpu.InstallNvidiaDriver(c.SSH[machine.IP], &gpu.NvidiaDriverOption{Version: p.config.NvidiaDriver.DefaultVersion})
+		err := gpu.InstallNvidiaDriver(c.SSH[machine.IP], &gpu.NvidiaDriverOption{})
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -244,7 +255,7 @@ func (p *Provider) EnsureNvidiaContainerRuntime(c *Cluster) error {
 		if !gpu.IsEnable(machine.Labels) {
 			continue
 		}
-		err := gpu.InstallNvidiaContainerRuntime(c.SSH[machine.IP], &gpu.NvidiaContainerRuntimeOption{Version: p.config.NvidiaContainerRuntime.DefaultVersion})
+		err := gpu.InstallNvidiaContainerRuntime(c.SSH[machine.IP], &gpu.NvidiaContainerRuntimeOption{})
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -255,11 +266,10 @@ func (p *Provider) EnsureNvidiaContainerRuntime(c *Cluster) error {
 
 func (p *Provider) EnsureDocker(c *Cluster) error {
 	insecureRegistries := fmt.Sprintf(`"%s"`, c.Registry.Domain)
-	if c.Config.Registry.UseTKE() {
+	if c.Config.Registry.NeedSetHosts() {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+c.Registry.Domain)
 	}
 	option := &docker.Option{
-		Version:            c.Docker.DefaultVersion,
 		InsecureRegistries: insecureRegistries,
 		RegistryDomain:     c.Registry.Domain,
 		ExtraArgs:          c.Spec.DockerExtraArgs,
@@ -304,9 +314,42 @@ func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 		if len(oidcCa) != 0 {
 			err = c.SSH[machine.IP].WriteFile(bytes.NewReader(oidcCa), constants.OIDCCACertFile)
 			if err != nil {
-				return err
+				return errors.Wrap(err, machine.IP)
 			}
 		}
+
+		if c.Spec.Features.HA != nil {
+			if c.Spec.Features.HA.TKEHA != nil {
+				networkInterface := ssh.GetNetworkInterface(c.SSH[machine.IP], machine.IP)
+				if networkInterface == "" {
+					return fmt.Errorf("can't get network interface by %s", machine.IP)
+				}
+
+				data, err := template.ParseFile(constants.ManifestsDir+"keepalived/keepalived.conf", map[string]interface{}{
+					"Interface": networkInterface,
+					"VIP":       c.Spec.Features.HA.TKEHA.VIP,
+				})
+				if err != nil {
+					return errors.Wrap(err, machine.IP)
+				}
+				err = c.SSH[machine.IP].WriteFile(bytes.NewReader(data), constants.KeepavliedConfigFile)
+				if err != nil {
+					return errors.Wrap(err, machine.IP)
+				}
+
+				data, err = template.ParseFile(constants.ManifestsDir+"keepalived/keepalived.yaml", map[string]interface{}{
+					"Image": images.Get().Keepalived.FullName(),
+				})
+				if err != nil {
+					return errors.Wrap(err, machine.IP)
+				}
+				err = c.SSH[machine.IP].WriteFile(bytes.NewReader(data), constants.KeepavlivedManifestFile)
+				if err != nil {
+					return errors.Wrap(err, machine.IP)
+				}
+			}
+		}
+
 	}
 
 	return nil
@@ -318,6 +361,17 @@ func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 	if addr != nil {
 		controlPlaneEndpoint = fmt.Sprintf("%s:%d", addr.Host, addr.Port)
 	}
+
+	certSANs := c.Spec.PublicAlternativeNames
+	if c.Spec.Features.HA != nil {
+		if c.Spec.Features.HA.TKEHA != nil {
+			certSANs = append(certSANs, c.Spec.Features.HA.TKEHA.VIP)
+		}
+		if c.Spec.Features.HA.ThirdPartyHA != nil {
+			certSANs = append(certSANs, c.Spec.Features.HA.ThirdPartyHA.VIP)
+		}
+	}
+
 	return &kubeadm.InitOption{
 		KubeadmConfigFileName: constants.KubeadmConfigFileName,
 		NodeName:              c.Spec.Machines[0].IP,
@@ -334,7 +388,7 @@ func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 		NodeCIDRMaskSize:      c.Status.NodeCIDRMaskSize,
 		ClusterCIDR:           c.Spec.ClusterCIDR,
 		ServiceClusterIPRange: c.Status.ServiceCIDR,
-		CertSANs:              c.Spec.PublicAlternativeNames,
+		CertSANs:              certSANs,
 
 		APIServerExtraArgs:         c.Spec.APIServerExtraArgs,
 		ControllerManagerExtraArgs: c.Spec.ControllerManagerExtraArgs,
@@ -477,9 +531,7 @@ func (p *Provider) EnsureKubelet(c *Cluster) error {
 }
 
 func (p *Provider) EnsureCNIPlugins(c *Cluster) error {
-	option := &cniplugins.Option{
-		Version: c.CNIPlugins.DefaultVersion,
-	}
+	option := &cniplugins.Option{}
 	for _, machine := range c.Spec.Machines {
 		err := cniplugins.Install(c.SSH[machine.IP], option)
 		if err != nil {

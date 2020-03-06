@@ -28,15 +28,15 @@ import (
 )
 
 type Components struct {
-	LocalTCR   containerregistry.Image
-	Busybox    containerregistry.Image
-	Keepalived containerregistry.Image
-	InfluxDB   containerregistry.Image
+	Registry containerregistry.Image
+	Busybox  containerregistry.Image
+	InfluxDB containerregistry.Image
 
 	ProviderRes containerregistry.Image
 
 	TKEGateway            containerregistry.Image
-	TKEAuth               containerregistry.Image
+	TKEAuthAPI            containerregistry.Image
+	TKEAuthController     containerregistry.Image
 	TKEBusinessAPI        containerregistry.Image
 	TKEBusinessController containerregistry.Image
 	TKEMonitorAPI         containerregistry.Image
@@ -62,14 +62,14 @@ func (c Components) Get(name string) *containerregistry.Image {
 var Version = version.Get().GitVersion
 
 var components = Components{
-	LocalTCR:   containerregistry.Image{Name: "local-tcr", Tag: "v1.0.0"},
-	Busybox:    containerregistry.Image{Name: "busybox", Tag: "1.31.0"},
-	Keepalived: containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
-	InfluxDB:   containerregistry.Image{Name: "influxdb", Tag: "1.7.6-alpine"},
+	Registry: containerregistry.Image{Name: "registry", Tag: "2.7.1"},
+	Busybox:  containerregistry.Image{Name: "busybox", Tag: "1.31.1"},
+	InfluxDB: containerregistry.Image{Name: "influxdb", Tag: "1.7.9"},
 
-	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.14.6-1"},
+	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.16.6-2"},
 
-	TKEAuth:               containerregistry.Image{Name: "tke-auth", Tag: Version},
+	TKEAuthAPI:            containerregistry.Image{Name: "tke-auth-api", Tag: Version},
+	TKEAuthController:     containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
 	TKEBusinessAPI:        containerregistry.Image{Name: "tke-business-api", Tag: Version},
 	TKEBusinessController: containerregistry.Image{Name: "tke-business-controller", Tag: Version},
 	TKEGateway:            containerregistry.Image{Name: "tke-gateway", Tag: Version},

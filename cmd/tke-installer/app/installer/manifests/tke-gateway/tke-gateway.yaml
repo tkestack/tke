@@ -4,6 +4,10 @@ apiVersion: v1
 metadata:
   name: tke-gateway
   namespace: tke
+  annotations:
+    tke.prometheus.io/scrape: "true"
+    prometheus.io/scheme: https
+    prometheus.io/port: "9441"
 spec:
   selector:
     app: tke-gateway
@@ -91,10 +95,11 @@ data:
       [authentication.oidc]
       client_secret = "{{ .OIDCClientSecret }}"
       client_id = "default"
-      issuer_url = "https://tke-auth/oidc"
+      issuer_url = "https://tke-auth-api/oidc"
       ca_file = "/app/certs/ca.crt"
       username_prefix ="-"
       username_claim = "name"
+      groups_claim = "groups"
       tenantid_claim = "federated_claims"
 
     [secure_serving]
@@ -121,7 +126,7 @@ data:
     components:
 {{- if .EnableAuth }}
       auth:
-        address: https://tke-auth
+        address: https://tke-auth-api
         passthrough:
           caFile: /app/certs/ca.crt
 {{- end }}

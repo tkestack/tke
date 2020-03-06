@@ -1,5 +1,7 @@
 /** resourceConfig当中所需要定义的字段 */
 export interface ResourceInfo {
+  k8sVersion?: string;
+
   /** resource资源的名称 */
   headTitle?: string;
 

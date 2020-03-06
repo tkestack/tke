@@ -591,7 +591,9 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
                                   })}
                                   href="javascript:;"
                                   onClick={() => {
-                                    this.onNav(subRouter.url);
+                                    if (selectedIndex !== subIndex) {
+                                      this.onNav(subRouter.url);
+                                    }
                                   }}
                                   target="_self"
                                 >
@@ -613,11 +615,13 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
                           })}
                           href="javascript:;"
                           onClick={e => {
-                            // 这里需要区分是否为别的业务，如果是别的业务，是进行业务的跳转
-                            if (this.props.platformType === PlatformTypeEnum.Manager) {
-                              this.onNav(routerIns.url);
-                            } else {
-                              this.onNav(routerIns.url + query);
+                            if (!isSelected) {
+                              // 这里需要区分是否为别的业务，如果是别的业务，是进行业务的跳转
+                              if (this.props.platformType === PlatformTypeEnum.Manager) {
+                                this.onNav(routerIns.url);
+                              } else {
+                                this.onNav(routerIns.url + query);
+                              }
                             }
                           }}
                           target="_self"

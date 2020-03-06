@@ -192,14 +192,18 @@ export class EditResourceNodeAffinityPanel extends React.Component<RootProps, {}
         <Radio.Group
           value={workloadEdit.nodeAffinityType}
           onChange={value => actions.editWorkload.selectNodeSelectType(value)}
-          // theme="ml"
         >
           <Radio style={{ lineHeight: '18px' }} name={affinityType.unset}>
             {t('不使用调度策略')}
           </Radio>
-          <Radio style={{ lineHeight: '18px' }} name={affinityType.node}>
-            {t('指定节点调度')}
-          </Radio>
+          {
+            /// #if tke
+            <Radio style={{ lineHeight: '18px' }} name={affinityType.node}>
+              {t('指定节点调度')}
+            </Radio>
+            /// #endif
+          }
+
           <Radio style={{ lineHeight: '18px' }} name={affinityType.rule}>
             {t('自定义调度规则')}
           </Radio>

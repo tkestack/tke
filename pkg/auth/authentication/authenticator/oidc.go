@@ -26,6 +26,8 @@ import (
 	"github.com/pkg/errors"
 	genericauthenticator "k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/user"
+
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	oidcclaims "tkestack.io/tke/pkg/auth/authentication/oidc/claims"
 	"tkestack.io/tke/pkg/util/log"
@@ -33,12 +35,14 @@ import (
 
 // TokenAuthenticator provides a function to verify token.
 type TokenAuthenticator struct {
-	idTokenVerifier *oidc.IDTokenVerifier
+	IDTokenVerifier *oidc.IDTokenVerifier
+
+	authClient authinternalclient.AuthInterface
 }
 
 // NewTokenAuthenticator creates new TokenAuthenticator object.
-func NewTokenAuthenticator() *TokenAuthenticator {
-	return &TokenAuthenticator{}
+func NewTokenAuthenticator(authClient authinternalclient.AuthInterface) *TokenAuthenticator {
+	return &TokenAuthenticator{authClient: authClient}
 }
 
 // AuthenticateToken verifies oidc token and returns user info.
@@ -48,16 +52,14 @@ func (h *TokenAuthenticator) AuthenticateToken(ctx context.Context, token string
 		log.Debug("Finish verifying oidc bearer token", log.String("token", token), log.Duration("processTime", time.Since(startTime)))
 	}()
 
-	if h.idTokenVerifier == nil {
+	if h.IDTokenVerifier == nil {
 		return nil, false, errors.New("Authenticator not initialized")
 	}
 
-	idToken, err := h.idTokenVerifier.Verify(ctx, token)
+	idToken, err := h.IDTokenVerifier.Verify(ctx, token)
 	if err != nil {
-		log.Error("Failed to verify the oidc bearer token", log.String("token", token), log.Err(err))
 		return nil, false, err
 	}
-
 	var claims oidcclaims.IDTokenClaims
 	if err := idToken.Claims(&claims); err != nil {
 		log.Error("Failed to unmarshal the id token", log.Any("idToken", idToken), log.Err(err))
@@ -66,10 +68,11 @@ func (h *TokenAuthenticator) AuthenticateToken(ctx context.Context, token string
 
 	info := &user.DefaultInfo{Name: claims.Name}
 	info.Groups = claims.Groups
+
 	info.Extra = map[string][]string{}
 	info.Extra[genericoidc.TenantIDKey] = []string{claims.FederatedIDClaims.ConnectorID}
 	info.Extra["expireAt"] = []string{time.Unix(claims.Expiry, 0).String()}
 	info.Extra["issueAt"] = []string{time.Unix(claims.IssuedAt, 0).String()}
-
+	log.Debug("OIDC authenticateToken result", log.Any("user info", info))
 	return &genericauthenticator.Response{User: info}, true, nil
 }

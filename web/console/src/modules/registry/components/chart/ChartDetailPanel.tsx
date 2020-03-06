@@ -26,7 +26,7 @@ export class ChartDetailPanel extends React.Component<RootProps, any> {
                   {t('返回')}
                 </a>
                 <h2>
-                  {t('ChartGroup')} <span>({this.props.route.queries['cg'] || '-'})</span>
+                  {t('ChartGroup')} <span>({this.props.route.queries['cgName'] || '-'})</span>
                 </h2>
               </React.Fragment>
             }

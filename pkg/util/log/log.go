@@ -19,12 +19,10 @@
 package log
 
 import (
-	"github.com/golang/glog"
-	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"k8s.io/klog"
 	"log"
+	"tkestack.io/tke/pkg/util/log/klog"
 )
 
 // InfoLogger represents the ability to log non-error messages, at a particular verbosity.
@@ -216,9 +214,7 @@ func Init(opts *Options) {
 			lvl: zap.InfoLevel,
 		},
 	}
-	glog.Init(l)
-	klog.Init(l)
-	logrus.Init(l)
+	klog.InitLogger(l)
 	zap.RedirectStdLog(l)
 }
 

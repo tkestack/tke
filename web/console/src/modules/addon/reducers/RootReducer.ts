@@ -14,7 +14,7 @@ export const RootReducer = combineReducers({
 
   cluster: createListReducer(FFReduxActionName.CLUSTER),
 
-  clusterVersion: reduceToPayload(ActionType.ClusterVersion, '1.8'),
+  clusterVersion: reduceToPayload(ActionType.ClusterVersion, '1.16'),
 
   openAddon: createListReducer(FFReduxActionName.OPENADDON),
 

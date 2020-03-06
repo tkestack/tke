@@ -138,7 +138,6 @@ func (s *SSH) Execf(format string, a ...interface{}) (stdout string, stderr stri
 }
 
 func (s *SSH) Exec(cmd string) (stdout string, stderr string, exit int, err error) {
-	log.Infof("[%s] Exec %q", s.addr, cmd)
 	// Setup the config, dial the server, and open a session.
 	config := &ssh.ClientConfig{
 		User:            s.User,
@@ -194,7 +193,7 @@ func (s *SSH) CopyFile(src, dst string) error {
 	}
 	hashFile := dst + ".sha256"
 	buffer := new(bytes.Buffer)
-	buffer.WriteString(fmt.Sprintf("%s %s", srcHash, src))
+	buffer.WriteString(fmt.Sprintf("%s %s", srcHash, dst))
 	_ = s.WriteFile(buffer, hashFile)
 	_, err = s.CombinedOutput(fmt.Sprintf("sha256sum --check --status %s", hashFile))
 	if err == nil { // means dst exist and same as src

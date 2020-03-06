@@ -62,7 +62,8 @@ export class ChartGroupTablePanel extends React.Component<RootProps, any> {
               onClick={() => {
                 let urlParams = router.resolve(this.props.route);
                 router.navigate(Object.assign({}, urlParams, { sub: 'chart', mode: 'detail', tab: 'charts' }), {
-                  cg: x.spec.name
+                  cg: x.metadata.name,
+                  cgName: x.spec.name
                 });
               }}
               className="tea-text-overflow"

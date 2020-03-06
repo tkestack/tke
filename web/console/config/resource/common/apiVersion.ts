@@ -30,6 +30,7 @@ export interface ApiVersion {
   pvc?: ResourceApiInfo;
   sc?: ResourceApiInfo;
   hpa?: ResourceApiInfo;
+  cronhpa?: ResourceApiInfo;
   event?: ResourceApiInfo;
   node?: ResourceApiInfo;
   masteretcd?: ResourceApiInfo;
@@ -38,6 +39,7 @@ export interface ApiVersion {
   ns?: ResourceApiInfo;
   localidentity?: ResourceApiInfo;
   policy?: ResourceApiInfo;
+  user?: ResourceApiInfo;
   category?: ResourceApiInfo;
   machines?: ResourceApiInfo;
   helm?: ResourceApiInfo;
@@ -95,6 +97,9 @@ export interface ApiVersion {
   destinationrule?: ResourceApiInfo;
   serviceentry?: ResourceApiInfo;
   controlPlane?: ResourceApiInfo;
+
+  /** 组织资源 */
+  apiKey?: ResourceApiInfo;
 }
 
 interface ResourceApiInfo {
@@ -168,6 +173,35 @@ const k8sApiVersionFor17: ApiVersion = {
     headTitle: 'None'
   }
 };
+
+/** ================== start 1.14 的apiversion配置 ======================== */
+const k8sApiVersionFor114: ApiVersion = {
+  deployment: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'Deployment'
+  },
+  statefulset: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'StatefulSet'
+  },
+  daemonset: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'DaemonSet'
+  },
+  rs: {
+    group: 'apps',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'ReplicaSet'
+  }
+};
+/** ================== start 1.14 的apiversion配置 ======================== */
 
 /** 以1.8的为基准，后续有新增再继续更改 */
 const k8sApiVersionFor18: ApiVersion = {
@@ -279,6 +313,12 @@ const k8sApiVersionFor18: ApiVersion = {
     basicEntry: 'apis',
     headTitle: 'HorizontalPodAutoscaler'
   },
+  cronhpa: {
+    group: 'extensions.tkestack.io',
+    version: 'v1',
+    basicEntry: 'apis',
+    headTitle: 'CronHPA'
+  },
   event: {
     group: '',
     version: 'v1',
@@ -321,20 +361,35 @@ const k8sApiVersionFor18: ApiVersion = {
     group: authServerVersion.group,
     version: authServerVersion.version,
     basicEntry: authServerVersion.basicUrl,
-    // watchModule: ConsoleModuleEnum.Auth, [todo]
+    watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Localidentities'
   },
   policy: {
     group: authServerVersion.group,
     version: authServerVersion.version,
     basicEntry: authServerVersion.basicUrl,
-    // watchModule: ConsoleModuleEnum.Auth, [todo]
+    watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Policies'
   },
+  user: {
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
+    headTitle: 'Users'
+  },
+  apiKey: {
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
+    headTitle: 'Apikeys'
+  },
   category: {
-    group: '',
-    version: 'authv1',
-    basicEntry: 'api',
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Categories'
   },
   machines: {
@@ -658,5 +713,6 @@ const basicApiVersion = Object.assign(
  */
 export const apiVersion: FinalApiVersion = {
   '1.8': basicApiVersion,
-  '1.7': Object.assign({}, basicApiVersion, k8sApiVersionFor17)
+  '1.7': Object.assign({}, basicApiVersion, k8sApiVersionFor17),
+  '1.14': Object.assign({}, basicApiVersion, k8sApiVersionFor114)
 };

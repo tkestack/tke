@@ -22,9 +22,11 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"helm.sh/chartmuseum/pkg/repo"
+	"strings"
+
+	// "helm.sh/chartmuseum/pkg/repo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
-	"strings"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/util/log"

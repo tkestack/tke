@@ -1,6 +1,15 @@
 import { RouteState } from '../../../../helpers/Router';
 import { QueryState } from '@tencent/qcloud-redux-query';
-import { RegionFilter, Region, ClusterFilter, Cluster, Namespace, NamespaceFilter } from '../../common/models';
+import {
+  RegionFilter,
+  Region,
+  ClusterFilter,
+  Cluster,
+  Namespace,
+  NamespaceFilter,
+  Resource,
+  ResourceFilter
+} from '../../common/models';
 import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
 import { RecordSet } from '@tencent/qcloud-lib';
 import { LogFilter, Log } from './LogStatsh';
@@ -8,6 +17,7 @@ import { WorkflowState } from '@tencent/qcloud-redux-workflow';
 import { LogStashEdit } from './LogStashEdit';
 import { CreateResource } from 'src/modules/cluster/models';
 import { LogDaemonset, LogDaemonSetFliter, LogDaemonSetStatus } from './LogDaemonset';
+import { ListModel } from '@tencent/redux-list';
 
 type LogOpenDeployWorkflow = WorkflowState<CreateResource, number>;
 type ModifyLogStashWorkflow = WorkflowState<CreateResource, number>;
@@ -81,4 +91,7 @@ export interface RootState {
 
   /** 是否正在拉取日志采集规则详情 */
   isFetchDoneSpecificLog?: boolean;
+
+  /** 集群下的addon列表 */
+  openAddon?: ListModel<Resource, ResourceFilter>;
 }

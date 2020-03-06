@@ -19,7 +19,6 @@
 package authz
 
 import (
-	"context"
 	"net/http"
 
 	"tkestack.io/tke/pkg/auth/filter"
@@ -28,8 +27,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
+	authv1 "tkestack.io/tke/api/auth/v1"
 	"tkestack.io/tke/pkg/auth/authorization/util"
-	"tkestack.io/tke/pkg/auth/types"
+	apiserverfilter "tkestack.io/tke/pkg/platform/apiserver/filter"
+
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -45,7 +46,7 @@ func NewHandler(authz authorizer.Authorizer) *Handler {
 
 // Authorize receive a subject access review request and determine the subject access.
 func (h *Handler) Authorize(request *restful.Request, response *restful.Response) {
-	accessReview := &types.SubjectAccessReview{}
+	accessReview := &authv1.SubjectAccessReview{}
 	if err := request.ReadEntity(accessReview); err != nil {
 		log.Error("read entity failed", log.Err(err))
 		responsewriters.WriteRawJSON(http.StatusBadRequest, errors.NewBadRequest(err.Error()).Status(), response.ResponseWriter)
@@ -58,9 +59,9 @@ func (h *Handler) Authorize(request *restful.Request, response *restful.Response
 	}
 
 	authorizationAttributes := util.AuthorizationAttributesFrom(accessReview.Spec)
-	decision, reason, evaluationErr := h.authorizer.Authorize(authorizationAttributes)
+	decision, reason, evaluationErr := h.authorizer.Authorize(request.Request.Context(), authorizationAttributes)
 
-	accessReview.Status = types.SubjectAccessReviewStatus{
+	accessReview.Status = authv1.SubjectAccessReviewStatus{
 		Allowed: decision == authorizer.DecisionAllow,
 		Denied:  decision == authorizer.DecisionDeny,
 		Reason:  reason,
@@ -69,13 +70,13 @@ func (h *Handler) Authorize(request *restful.Request, response *restful.Response
 		accessReview.Status.EvaluationError = evaluationErr.Error()
 	}
 
-	log.Debug("Receive authz request", log.Any("attribute", authorizationAttributes), log.Any("response", accessReview.Status))
+	log.Info("Receive authz request and send response", log.Any("access review", accessReview))
 	responsewriters.WriteRawJSON(http.StatusOK, accessReview, response.ResponseWriter)
 }
 
 // RestAuthorize receive a subject access review request and determine the subject access to be compatible with k8s restful attributes.
 func (h *Handler) RestAuthorize(request *restful.Request, response *restful.Response) {
-	accessReview := &types.SubjectAccessReview{}
+	accessReview := &authv1.SubjectAccessReview{}
 	if err := request.ReadEntity(accessReview); err != nil {
 		log.Error("read entity failed", log.Err(err))
 		responsewriters.WriteRawJSON(http.StatusBadRequest, errors.NewBadRequest(err.Error()).Status(), response.ResponseWriter)
@@ -88,9 +89,10 @@ func (h *Handler) RestAuthorize(request *restful.Request, response *restful.Resp
 	}
 
 	authorizationAttributes := util.AuthorizationAttributesFrom(accessReview.Spec)
-	tkeAttributes := filter.ConvertTKEAttributes(context.Background(), authorizationAttributes)
-	decision, reason, evaluationErr := h.authorizer.Authorize(tkeAttributes)
-	accessReview.Status = types.SubjectAccessReviewStatus{
+	tkeAttributes := filter.ConvertTKEAttributes(request.Request.Context(), &authorizationAttributes)
+	log.Debug("RestAuthorize accessReview ", log.Any("spec", accessReview.Spec), log.Any("authorizationAttributes", authorizationAttributes), log.Any("tke attribute", tkeAttributes))
+	decision, reason, evaluationErr := h.authorizer.Authorize(request.Request.Context(), tkeAttributes)
+	accessReview.Status = authv1.SubjectAccessReviewStatus{
 		Allowed: decision == authorizer.DecisionAllow,
 		Denied:  decision == authorizer.DecisionDeny,
 		Reason:  reason,
@@ -98,13 +100,13 @@ func (h *Handler) RestAuthorize(request *restful.Request, response *restful.Resp
 	if evaluationErr != nil {
 		accessReview.Status.EvaluationError = evaluationErr.Error()
 	}
-	log.Info("Receive reset authz request", log.Any("attribute", tkeAttributes), log.Any("response", accessReview.Status))
+	log.Info("Receive rest authz request from k8s apiserver", log.Any("access review", accessReview), log.Any("clusterName", apiserverfilter.ClusterFrom(request.Request.Context())))
 	responsewriters.WriteRawJSON(http.StatusOK, accessReview, response.ResponseWriter)
 }
 
 // BatchAuthorize receive multiple subject access reviews request and return determine results.
 func (h *Handler) BatchAuthorize(request *restful.Request, response *restful.Response) {
-	accessReview := &types.SubjectAccessReview{}
+	accessReview := &authv1.SubjectAccessReview{}
 	if err := request.ReadEntity(accessReview); err != nil {
 		log.Error("read entity failed", log.Err(err))
 		responsewriters.WriteRawJSON(http.StatusBadRequest, errors.NewBadRequest(err.Error()).Status(), response.ResponseWriter)
@@ -118,10 +120,10 @@ func (h *Handler) BatchAuthorize(request *restful.Request, response *restful.Res
 
 	attributesList := util.AuthorizationAttributesListFrom(accessReview.Spec)
 
-	accessReview.Status = types.SubjectAccessReviewStatus{AllowedList: []*types.AllowedResponse{}}
+	accessReview.Status = authv1.SubjectAccessReviewStatus{AllowedList: []*authv1.AllowedStatus{}}
 	for index, resAttr := range accessReview.Spec.ResourceAttributesList {
-		decision, reason, _ := h.authorizer.Authorize(attributesList[index])
-		accessReview.Status.AllowedList = append(accessReview.Status.AllowedList, &types.AllowedResponse{
+		decision, reason, _ := h.authorizer.Authorize(request.Request.Context(), attributesList[index])
+		accessReview.Status.AllowedList = append(accessReview.Status.AllowedList, &authv1.AllowedStatus{
 			Resource: resAttr.Resource,
 			Verb:     resAttr.Verb,
 			Allowed:  decision == authorizer.DecisionAllow,

@@ -43,8 +43,13 @@ spec:
       containers:
       - image: galaxy:1.0.0-alpha
         command: ["/bin/sh"]
-        args: ["-c", "cp -p /etc/cni/net.d/00-galaxy.conf /host/etc/cni/net.d/; cp -p /opt/cni/bin/* /host/opt/cni/bin/; /usr/bin/galaxy --logtostderr=true --v=3"]
+        args: ["-c", "cp -p /etc/galaxy/cni/00-galaxy.conf /etc/cni/net.d/; cp -p /opt/cni/galaxy/bin/galaxy-sdn /opt/cni/galaxy/bin/loopback /opt/cni/bin/; /usr/bin/galaxy --logtostderr=true --v=3"]
         name: galaxy
+        env:
+          - name: MY_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
         resources:
           requests:
             cpu: 100m
@@ -56,18 +61,16 @@ spec:
           mountPath: /var/run/galaxy/
         - name: flannel-run
           mountPath: /run/flannel
-        - name: kube-config
-          mountPath: /host/etc/kubernetes/
         - name: galaxy-log
           mountPath: /data/galaxy/logs
         - name: galaxy-etc
           mountPath: /etc/galaxy
         - name: cni-config
-          mountPath: /host/etc/cni/net.d/
+          mountPath: /etc/cni/net.d/
         - name: cni-bin
-          mountPath: /host/opt/cni/bin
+          mountPath: /opt/cni/bin
         - name: cni-etc
-          mountPath: /etc/cni/net.d
+          mountPath: /etc/galaxy/cni
         - name: cni-state
           mountPath: /var/lib/cni
         - name: docker-sock
@@ -83,9 +86,6 @@ spec:
       - name: flannel-run
         hostPath:
           path: /run/flannel
-      - name: kube-config
-        hostPath:
-          path: /etc/kubernetes/
       - name: cni-bin-dir
         hostPath:
           path: /opt/cni/bin
@@ -124,10 +124,10 @@ data:
   galaxy.json: |
     {
       "NetworkConf":[
-        {"type":"tke-route-eni","eni":"eth1","routeTable":1},
-        {"type":"galaxy-flannel", "delegate":{"type":"galaxy-veth"},"subnetFile":"/run/flannel/subnet.env"},
-        {"type":"galaxy-k8s-vlan", "device":"{{ .DeviceName }}", "default_bridge_name": "br0"},
-        {"type": "galaxy-k8s-sriov", "device": "{{ .DeviceName }}", "vf_num": 10}
+        {"name":"tke-route-eni","type":"tke-route-eni","eni":"eth1","routeTable":1},
+        {"name":"galaxy-flannel","type":"galaxy-flannel", "delegate":{"type":"galaxy-veth"},"subnetFile":"/run/flannel/subnet.env"},
+        {"name":"galaxy-k8s-vlan","type":"galaxy-k8s-vlan", "device":"{{ .DeviceName }}", "default_bridge_name": "br0"},
+        {"name":"galaxy-k8s-sriov","type": "galaxy-k8s-sriov", "device": "{{ .DeviceName }}", "vf_num": 10}
       ],
       "DefaultNetworks": ["galaxy-flannel"]
     }
@@ -141,7 +141,8 @@ data:
   00-galaxy.conf: |
     {
       "type": "galaxy-sdn",
-      "capabilities": {"portMappings": true}
+      "capabilities": {"portMappings": true},
+      "cniVersion": "0.2.0"
     }
 `
 
@@ -150,7 +151,7 @@ data:
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: kube-flannel-ds-amd64
+  name: kube-flannel-ds
   namespace: kube-system
   labels:
     k8s-app: flannel
@@ -164,8 +165,6 @@ spec:
         k8s-app: flannel
     spec:
       hostNetwork: true
-      nodeSelector:
-        beta.kubernetes.io/arch: amd64
       tolerations:
       - operator: Exists
         effect: NoSchedule

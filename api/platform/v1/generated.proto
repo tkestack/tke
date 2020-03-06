@@ -328,6 +328,9 @@ message ClusterFeature {
 
   // +optional
   optional bool enableMasterSchedule = 5;
+
+  // +optional
+  optional HA ha = 6;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.
@@ -630,6 +633,12 @@ message GPUManagerStatus {
   // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
   // +optional
   optional int32 retryCount = 4;
+}
+
+message HA {
+  optional TKEHA tke = 1;
+
+  optional ThirdPartyHA thirdParty = 2;
 }
 
 // Helm is a kubernetes package manager.
@@ -1144,6 +1153,10 @@ message PrometheusSpec {
 
   // RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.
   optional PrometheusRemoteAddr remoteAddress = 5;
+
+  // +optional
+  // NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
+  optional string notifyWebhook = 6;
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
@@ -1231,6 +1244,10 @@ message StorageBackEndES {
   optional string indexName = 4;
 }
 
+message TKEHA {
+  optional string vip = 1;
+}
+
 // TappController is a new kubernetes workload.
 message TappController {
   // +optional
@@ -1291,6 +1308,12 @@ message TappControllerStatus {
   // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
+}
+
+message ThirdPartyHA {
+  optional string vip = 1;
+
+  optional int32 vport = 2;
 }
 
 // VolumeDecorator is a controller to manage PVC information.

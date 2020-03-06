@@ -19,13 +19,13 @@ REGISTRY_PREFIX ?= tkestack
 
 TEMP_DIR:=$(shell mktemp -d)
 
-.PHONY:
-all: code-generator
+.PHONY: all
+all: keepalived
 
-.PHONY:
-code-generator:
+.PHONY: keepalived
+keepalived:
 	@echo "===========> Building $@ $(VERSION) docker image"
-	@$(DOCKER) build --pull -t $(REGISTRY_PREFIX)/$@:$(VERSION) -f ./Dockerfile $(ROOT_DIR)/build/docker/tools/code-generator
+	@$(DOCKER) build --pull -t $(REGISTRY_PREFIX)/$@:$(VERSION) -f ./Dockerfile $(ROOT_DIR)/build/docker/tools/keepalived
 
 	@echo "===========> Building $@ $(VERSION) docker image"
 	docker build --pull -t $(REGISTRY_PREFIX)/$@:$(VERSION) -f ./Dockerfile ${TEMP_DIR}

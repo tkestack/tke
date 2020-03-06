@@ -34,7 +34,7 @@ func CreateServerChain(cfg *config.Config, stopCh <-chan struct{}) (*genericapis
 	}
 
 	if cfg.InsecureServingInfo != nil {
-		chain := handler.BuildHandlerChain(nil)
+		chain := handler.BuildHandlerChain(cfg.IgnoreAuthPathPrefixes)
 		insecureHandlerChain := chain(gatewayServer.GenericAPIServer.UnprotectedHandler(), &gatewayConfig.GenericConfig.Config)
 		if err := cfg.InsecureServingInfo.Serve(insecureHandlerChain, gatewayConfig.GenericConfig.RequestTimeout, stopCh); err != nil {
 			return nil, err
@@ -60,6 +60,7 @@ func createGatewayConfig(cfg *config.Config) *gateway.Config {
 			OIDCHttpClient:    cfg.OIDCHTTPClient,
 			OIDCAuthenticator: cfg.OIDCAuthenticator,
 			GatewayConfig:     cfg.GatewayConfig,
+			HeaderRequest:     cfg.HeaderRequest,
 		},
 	}
 }

@@ -56,6 +56,20 @@ const (
 	clientBurst = 200
 )
 
+func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (dynamic.Interface, error) {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
+		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
+	}
+
+	credential, err := ClusterCredential(platformClient, cluster.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return BuildInternalDynamicClientSet(cluster, credential)
+}
+
 // ClientSetByCluster returns the backend kubernetes clientSet by given cluster object
 func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (*kubernetes.Clientset, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
@@ -224,9 +238,9 @@ func BuildTransport(credential *platform.ClusterCredential) (http.RoundTripper, 
 	return transport, nil
 }
 
-// GetRestConfig returns rest config according to cluster
-func GetRestConfig(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (*restclient.Config, error) {
-	address, err := ClusterV1Address(cluster)
+// GetExternalRestConfig returns rest config according to cluster
+func GetExternalRestConfig(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (*restclient.Config, error) {
+	host, err := ClusterV1Host(cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -235,12 +249,12 @@ func GetRestConfig(cluster *platformv1.Cluster, credential *platformv1.ClusterCr
 
 	if credential.CACert == nil {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                address,
+			Server:                fmt.Sprintf("https://%s", host),
 			InsecureSkipTLSVerify: true,
 		}
 	} else {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                   address,
+			Server:                   fmt.Sprintf("https://%s", host),
 			CertificateAuthorityData: credential.CACert,
 		}
 	}
@@ -266,10 +280,77 @@ func GetRestConfig(cluster *platformv1.Cluster, credential *platformv1.ClusterCr
 	return clientConfig.ClientConfig()
 }
 
+// GetInternalRestConfig returns rest config according to cluster
+func GetInternalRestConfig(cluster *platform.Cluster, credential *platform.ClusterCredential) (*restclient.Config, error) {
+	host, err := ClusterHost(cluster)
+	if err != nil {
+		return nil, err
+	}
+	config := api.NewConfig()
+	config.CurrentContext = contextName
+
+	if credential.CACert == nil {
+		config.Clusters[contextName] = &api.Cluster{
+			Server:                fmt.Sprintf("https://%s", host),
+			InsecureSkipTLSVerify: true,
+		}
+	} else {
+		config.Clusters[contextName] = &api.Cluster{
+			Server:                   fmt.Sprintf("https://%s", host),
+			CertificateAuthorityData: credential.CACert,
+		}
+	}
+
+	if credential.Token != nil {
+		config.AuthInfos[contextName] = &api.AuthInfo{
+			Token: *credential.Token,
+		}
+	} else if credential.ClientCert != nil && credential.ClientKey != nil {
+		config.AuthInfos[contextName] = &api.AuthInfo{
+			ClientCertificateData: credential.ClientCert,
+			ClientKeyData:         credential.ClientKey,
+		}
+	} else {
+		return nil, fmt.Errorf("no credential for the cluster")
+	}
+
+	config.Contexts[contextName] = &api.Context{
+		Cluster:  contextName,
+		AuthInfo: contextName,
+	}
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "5s"}, nil)
+	return clientConfig.ClientConfig()
+}
+
+// BuildInternalDynamicClientSet creates the dynamic clientset of kubernetes by given cluster
+// object and returns it.
+func BuildInternalDynamicClientSet(cluster *platform.Cluster, credential *platform.ClusterCredential) (dynamic.Interface, error) {
+	if cluster.Status.Phase != platform.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
+	}
+
+	if cluster.Status.Locked != nil && *cluster.Status.Locked {
+		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
+	}
+
+	return BuildInternalDynamicClientSetNoStatus(cluster, credential)
+}
+
+// BuildInternalDynamicClientSetNoStatus creates the dynamic clientset of kubernetes by given
+// cluster object and returns it.
+func BuildInternalDynamicClientSetNoStatus(cluster *platform.Cluster, credential *platform.ClusterCredential) (dynamic.Interface, error) {
+	restConfig, err := GetInternalRestConfig(cluster, credential)
+	if err != nil {
+		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
+		return nil, err
+	}
+	return dynamic.NewForConfig(restConfig)
+}
+
 // BuildExternalClientSetNoStatus creates the clientset of kubernetes by given
 // cluster object and returns it.
 func BuildExternalClientSetNoStatus(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (*kubernetes.Clientset, error) {
-	restConfig, err := GetRestConfig(cluster, credential)
+	restConfig, err := GetExternalRestConfig(cluster, credential)
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
@@ -313,7 +394,7 @@ func BuildExternalExtensionClientSetNoStatus(cluster *platformv1.Cluster, client
 	if err != nil {
 		return nil, err
 	}
-	restConfig, err := GetRestConfig(cluster, credential)
+	restConfig, err := GetExternalRestConfig(cluster, credential)
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
@@ -338,7 +419,7 @@ func BuildExternalMonitoringClientSetNoStatus(cluster *platformv1.Cluster, clien
 	if err != nil {
 		return nil, err
 	}
-	restConfig, err := GetRestConfig(cluster, credential)
+	restConfig, err := GetExternalRestConfig(cluster, credential)
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
@@ -373,7 +454,7 @@ func BuildExternalMonitoringClientSetWithName(platformClient platformversionedcl
 // BuildExternalDynamicClientSetNoStatus creates the dynamic clientset of kubernetes by given
 // cluster object and returns it.
 func BuildExternalDynamicClientSetNoStatus(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (dynamic.Interface, error) {
-	restConfig, err := GetRestConfig(cluster, credential)
+	restConfig, err := GetExternalRestConfig(cluster, credential)
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
@@ -396,7 +477,7 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
-	address, err := ClusterAddress(cluster)
+	host, err := ClusterHost(cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -405,12 +486,12 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 
 	if credential.CACert == nil {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                address,
+			Server:                fmt.Sprintf("https://%s", host),
 			InsecureSkipTLSVerify: true,
 		}
 	} else {
 		config.Clusters[contextName] = &api.Cluster{
-			Server:                   address,
+			Server:                   fmt.Sprintf("https://%s", host),
 			CertificateAuthorityData: credential.CACert,
 		}
 	}
@@ -443,8 +524,8 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 	return kubernetes.NewForConfig(restConfig)
 }
 
-// ClusterAddress returns the cluster address.
-func ClusterAddress(cluster *platform.Cluster) (string, error) {
+// ClusterHost returns host and port for kube-apiserver of cluster.
+func ClusterHost(cluster *platform.Cluster) (string, error) {
 	addrs := make(map[platform.AddressType][]platform.ClusterAddress)
 	for _, one := range cluster.Status.Addresses {
 		addrs[one.Type] = append(addrs[one.Type], one)
@@ -469,17 +550,17 @@ func ClusterAddress(cluster *platform.Cluster) (string, error) {
 		return "", pkgerrors.New("no valid address for the cluster")
 	}
 
-	return fmt.Sprintf("https://%s:%d", address.Host, address.Port), nil
+	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
 }
 
-// ClusterV1Address returns the cluster address.
-func ClusterV1Address(c *platformv1.Cluster) (string, error) {
+// ClusterV1Host returns host and port for kube-apiserver of versioned cluster resource.
+func ClusterV1Host(c *platformv1.Cluster) (string, error) {
 	var cluster platform.Cluster
 	err := platformv1.Convert_v1_Cluster_To_platform_Cluster(c, &cluster, nil)
 	if err != nil {
 		return "", pkgerrors.Wrap(err, "Convert_v1_Cluster_To_platform_Cluster errror")
 	}
-	return ClusterAddress(&cluster)
+	return ClusterHost(&cluster)
 }
 
 // rootCertPool returns nil if caData is empty.  When passed along, this will mean "use system CAs".

@@ -5,14 +5,9 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Row, Col, Bubble, Input, InputAdorment, Select, Button, Alert } from '@tencent/tea-component';
 import { ProjectResourceLimit } from '../models/Project';
 import { uuid, deepClone } from '@tencent/qcloud-lib';
-import {
-  resourceLimitTypeList,
-  resourceTypeToUnit,
-  initProjectResourceLimit,
-  K8SUNIT,
-  valueLabels1024,
-  valueLabels1000
-} from '../constants/Config';
+import { resourceLimitTypeList, resourceTypeToUnit, initProjectResourceLimit } from '../constants/Config';
+
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 interface CreateProjectResourceLimitPanelPorps {
   resourceLimits: ProjectResourceLimit[];
   parentResourceLimits: {
@@ -154,7 +149,7 @@ export class CreateProjectResourceLimitPanel extends React.Component<
       message = t('CPU限制最小为0.01');
     } else if (max && +cpu > max) {
       status = 2;
-      message = t('CPU限制不能大于上级项目的CPU限制');
+      message = t('CPU限制不能大于上级业务的CPU限制');
     } else {
       status = 1;
       message = '';
@@ -181,7 +176,7 @@ export class CreateProjectResourceLimitPanel extends React.Component<
       message = t('数值限制最小为1');
     } else if (max && +mem > max) {
       status = 2;
-      message = t('数值限制不能大于上级项目的数值限制');
+      message = t('数值限制不能大于上级业务的数值限制');
     } else {
       status = 1;
       message = '';

@@ -124,14 +124,113 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
             <li>
               <p>
                 <strong>
-                  <Trans>登录</Trans> TKEStack Docker Registry
+                  <Trans>前置条件</Trans>
                 </strong>
               </p>
+            </li>
+            <li>
+              <p>
+                <Trans>
+                  本地安装 Helm 客户端, 更多可查看{' '}
+                  <a href="https://helm.sh/docs/intro/quickstart/" target="_blank">
+                    安装 Helm
+                  </a>
+                  .{' '}
+                </Trans>
+              </p>
               <code>
-                <Clip target="#loginDocker" className="copy-btn">
+                <Clip target="#installHelm" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="loginDocker">{`sudo docker login -u tkestack -p [访问凭证]`}</p>
+                <p id="installHelm">{`$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get > get_helm.sh\n$ sh get_helm.sh`}</p>
+              </code>
+            </li>
+            <li>
+              <p>
+                <Trans>本地 Helm 客户端添加 TKEStack 的 repo.</Trans>
+              </p>
+              <code>
+                <Clip target="#addTkeRepo" className="copy-btn">
+                  <Trans>复制</Trans>
+                </Clip>
+                <p id="addTkeRepo">{`helm repo add ${this.props.route.queries['cg']} ${this.props.dockerRegistryUrl.data}/chart/${this.props.route.queries['cg']} --username tkestack --password [访问凭证] `}</p>
+              </code>
+              <p className="text-weak">
+                <Trans>
+                  获取有效访问凭证信息，请前往
+                  <a
+                    href="javascript:;"
+                    onClick={() => {
+                      let urlParams = router.resolve(this.props.route);
+                      router.navigate(Object.assign({}, urlParams, { sub: 'apikey', mode: '', tab: '' }), {});
+                    }}
+                  >
+                    [访问凭证]
+                  </a>
+                  管理。
+                </Trans>
+              </p>
+            </li>
+            <li>
+              <p>
+                <Trans>安装 helm-push 插件</Trans>
+              </p>
+              <code>
+                <Clip target="#installHelmPush" className="copy-btn">
+                  <Trans>复制</Trans>
+                </Clip>
+                <p id="installHelmPush">{`$ helm plugin install https://github.com/imroc/helm-push`}</p>
+              </code>
+            </li>
+            <li>
+              <p>
+                <strong>
+                  <Trans>上传Helm Chart</Trans>
+                </strong>
+              </p>
+            </li>
+            <li>
+              <p>
+                <Trans>上传文件夹</Trans>
+              </p>
+              <code>
+                <Clip target="#pushHelmDir" className="copy-btn">
+                  <Trans>复制</Trans>
+                </Clip>
+                <p id="pushHelmDir">{`$ helm push ./myapp ${this.props.route.queries['cg']}`}</p>
+              </code>
+            </li>
+            <li>
+              <p>
+                <Trans>上传压缩包</Trans>
+              </p>
+              <code>
+                <Clip target="#pushHelmTar" className="copy-btn">
+                  <Trans>复制</Trans>
+                </Clip>
+                <p id="pushHelmTar">{`$ helm push myapp-1.0.1.tgz ${this.props.route.queries['cg']}`}</p>
+              </code>
+            </li>
+            <li>
+              <p>
+                <Trans>下载最新版本</Trans>
+              </p>
+              <code>
+                <Clip target="#downloadChart" className="copy-btn">
+                  <Trans>复制</Trans>
+                </Clip>
+                <p id="downloadChart">{`$ helm fetch ${this.props.route.queries['cg']}/myapp`}</p>
+              </code>
+            </li>
+            <li>
+              <p>
+                <Trans>下载指定版本</Trans>
+              </p>
+              <code>
+                <Clip target="#downloadSChart" className="copy-btn">
+                  <Trans>复制</Trans>
+                </Clip>
+                <p id="downloadSChart">{`$ helm fetch ${this.props.route.queries['cg']}/myapp --version 1.0.1`}</p>
               </code>
             </li>
           </ul>

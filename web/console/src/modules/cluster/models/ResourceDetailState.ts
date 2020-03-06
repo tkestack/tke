@@ -35,7 +35,7 @@ export interface ResourceDetailState {
   /** pod的列表 */
   podList?: FetcherState<RecordSet<Pod>>;
 
-  /** node详情页内的pod列表的过滤项目 */
+  /** node详情页内的pod列表的过滤业务 */
   podFilterInNode?: PodFilterInNode;
 
   /** container 列表 */

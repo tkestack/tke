@@ -19,37 +19,53 @@
 package local
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 
-	"github.com/casbin/casbin"
+	"github.com/casbin/casbin/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/filter"
-	"tkestack.io/tke/pkg/auth/types"
+	authutil "tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
+)
+
+var (
+	debugKey = "debug"
 )
 
 // Authorizer implement the authorize interface that use local repository to
 // authorize the subject access review.
 type Authorizer struct {
-	admin    string
-	enforcer *casbin.SyncedEnforcer
+	privilegedUsername string
+
+	authClient authinternalclient.AuthInterface
+	enforcer   *casbin.SyncedEnforcer
 }
 
 // NewAuthorizer creates a local repository authorizer and returns it.
-func NewAuthorizer(enforcer *casbin.SyncedEnforcer, admin string) *Authorizer {
+func NewAuthorizer(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, privilegedUsername string) *Authorizer {
 	return &Authorizer{
-		enforcer: enforcer,
-		admin:    admin,
+		privilegedUsername: privilegedUsername,
+		authClient:         authClient,
+		enforcer:           enforcer,
 	}
 }
 
 // Authorize to determine the subject access.
-func (a *Authorizer) Authorize(attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	subject := attr.GetUser().GetName()
 	action := attr.GetVerb()
 	resource := attr.GetResource()
-	var tenantID string
+	var (
+		tenantID string
+		debug    bool
+	)
 	extra := attr.GetUser().GetExtra()
 	if len(extra) > 0 {
 		if tenantIDs, ok := extra[genericoidc.TenantIDKey]; ok {
@@ -57,11 +73,30 @@ func (a *Authorizer) Authorize(attr authorizer.Attributes) (authorized authorize
 				tenantID = tenantIDs[0]
 			}
 		}
+
+		if debugs, ok := extra[debugKey]; ok {
+			if len(debugs) > 0 && debugs[0] == "true" {
+				debug = true
+			}
+		}
 	}
 
-	// First check if user is admin
-	if subject == a.admin {
+	// First check if user is privileged
+	if subject == a.privilegedUsername {
 		return authorizer.DecisionAllow, "", nil
+	}
+
+	// Second check if user is a admin of the identity provider for tenant.
+	if tenantID != "" {
+		idp, err := a.authClient.IdentityProviders().Get(tenantID, metav1.GetOptions{})
+		if err != nil {
+			log.Error("Get identity provider for tenant failed", log.String("tenant", tenantID), log.Err(err))
+			return authorizer.DecisionDeny, "", err
+		}
+
+		if util.InStringSlice(idp.Spec.Administrators, subject) {
+			return authorizer.DecisionAllow, "", nil
+		}
 	}
 
 	authorized = filter.UnprotectedAuthorized(attr)
@@ -69,12 +104,30 @@ func (a *Authorizer) Authorize(attr authorizer.Attributes) (authorized authorize
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	log.Debug("Authorize get user perms", log.Any("user perm", a.enforcer.GetImplicitPermissionsForUser(fmt.Sprintf("%s%s-%s", types.UserPrefix, tenantID, subject))))
-	if !a.enforcer.Enforce(fmt.Sprintf("%s%s-%s", types.UserPrefix, tenantID, subject), resource, action) {
+	if debug {
+		perms, err := a.enforcer.GetImplicitPermissionsForUser(authutil.UserKey(tenantID, subject))
+		if err != nil {
+			log.Error("Get permissions for user failed", log.String("user", authutil.UserKey(tenantID, subject)), log.Err(err))
+		} else {
+			log.Info("Authorize get user perms", log.String("user", subject), log.Any("user perm", perms))
+			data, _ := json.Marshal(perms)
+			reason = string(data)
+		}
+	}
+
+	allow, err := a.enforcer.Enforce(authutil.UserKey(tenantID, subject), resource, action)
+	if err != nil {
+		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
+		return authorizer.DecisionDeny, "", err
+	}
+	if !allow {
 		log.Info("Casbin enforcer: ", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "false"))
-		return authorizer.DecisionDeny, "permission not verify", nil
+		if debug {
+			return authorizer.DecisionDeny, reason, nil
+		}
+		return authorizer.DecisionDeny, fmt.Sprintf("permission for %s on %s not verify", action, resource), nil
 	}
 
 	log.Debug("Casbin enforcer: ", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "true"))
-	return authorizer.DecisionAllow, "", nil
+	return authorizer.DecisionAllow, reason, nil
 }

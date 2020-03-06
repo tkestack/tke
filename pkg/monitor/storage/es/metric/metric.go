@@ -66,11 +66,8 @@ func (s *ES) Query(query *monitor.MetricQuery) (*types.MetricMergedResult, error
 		log.Debug("the EndTime is nil")
 	}
 
-	// get table(index) without date
-	table := query.Table
-	if table == "" {
-		table = defaultIndex
-	}
+	// get table(index) without date, using defaultIndex since we use indexes with the same prefix for now
+	table := defaultIndex
 
 	// get all indices
 	indices, err := s.availableClient.Indices()
@@ -88,7 +85,7 @@ func (s *ES) Query(query *monitor.MetricQuery) (*types.MetricMergedResult, error
 
 	// get orderBy
 	var orderBy string
-	if query.OrderBy == "" {
+	if query.OrderBy == "" || query.OrderBy == "timestamp" {
 		orderBy = "@timestamp"
 		log.Debug("orderBy field is nil")
 	} else {

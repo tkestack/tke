@@ -21,7 +21,7 @@ const mapDispatchToProps = dispatch =>
 export class StrategyApp extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions } = this.props;
-    actions.strategy.applyFilter({});
+    actions.strategy.poll();
   }
   render() {
     let { route } = this.props;

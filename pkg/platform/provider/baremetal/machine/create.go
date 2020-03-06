@@ -29,7 +29,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
@@ -67,7 +66,7 @@ func (p *Provider) EnsurePreflight(m *Machine) error {
 }
 
 func (p *Provider) EnsureRegistryHosts(m *Machine) error {
-	if !m.Registry.UseTKE() {
+	if !m.Registry.NeedSetHosts() {
 		return nil
 	}
 
@@ -170,12 +169,11 @@ func (p *Provider) EnsureKubeconfig(m *Machine) error {
 
 func (p *Provider) EnsureDocker(m *Machine) error {
 	insecureRegistries := fmt.Sprintf(`"%s"`, m.Registry.Domain)
-	if m.Config.Registry.UseTKE() {
+	if m.Config.Registry.NeedSetHosts() {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, m.Spec.TenantID+"."+m.Registry.Domain)
 	}
 
 	option := &docker.Option{
-		Version:            m.Docker.DefaultVersion,
 		InsecureRegistries: insecureRegistries,
 		RegistryDomain:     m.Registry.Domain,
 		IsGPU:              IsGPU(m.Spec.Labels),
@@ -203,9 +201,7 @@ func (p *Provider) EnsureKubelet(m *Machine) error {
 }
 
 func (p *Provider) EnsureCNIPlugins(m *Machine) error {
-	option := &cniplugins.Option{
-		Version: m.CNIPlugins.DefaultVersion,
-	}
+	option := &cniplugins.Option{}
 	err := cniplugins.Install(m, option)
 	if err != nil {
 		return err

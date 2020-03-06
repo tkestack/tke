@@ -744,6 +744,7 @@ var map_PrometheusSpec = map[string]string{
 	"":              "PrometheusSpec describes the attributes on a Prometheus.",
 	"subVersion":    "SubVersion is the components version such as node-exporter.",
 	"remoteAddress": "RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.",
+	"notifyWebhook": "NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address \"https://[notify-api-address]/webhook\" will be used.",
 }
 
 func (PrometheusSpec) SwaggerDoc() map[string]string {

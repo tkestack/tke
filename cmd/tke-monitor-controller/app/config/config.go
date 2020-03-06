@@ -24,7 +24,6 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	apiserver "k8s.io/apiserver/pkg/server"
 	restclient "k8s.io/client-go/rest"
-	"k8s.io/klog"
 	"net"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	monitorapiconfig "tkestack.io/tke/cmd/tke-monitor-api/app/config"
@@ -93,7 +92,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	// We always validate the local configuration (command line + config file).
 	// This is the default "last-known-good" config for dynamic config, and must always remain valid.
 	if err := monitorconfigvalidation.ValidateMonitorConfiguration(monitorConfig); err != nil {
-		klog.Fatal(err)
+		log.Error("Failed to validate monitor configuration", log.Err(err))
+		return nil, err
 	}
 
 	controllerManagerConfig := &Config{

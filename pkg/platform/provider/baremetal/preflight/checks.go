@@ -34,7 +34,7 @@ const (
 	ipv4Forward = "/proc/sys/net/ipv4/ip_forward"
 )
 
-var tools = []string{"sysctl", "swapoff", "sed", "getconf", "netstat", "grep", "id", "uname", "modinfo"}
+var tools = []string{"sysctl", "swapoff", "sed", "getconf", "ss", "grep", "id", "uname", "modinfo", "nc", "ip", "awk"}
 
 func newCommonChecks(s ssh.Interface) []Checker {
 	return []Checker{
@@ -214,7 +214,7 @@ func (poc PortOpenCheck) Name() string {
 func (poc PortOpenCheck) Check() (warnings, errorList []error) {
 	log.Infof("validating availability of port %d", poc.port)
 	errorList = []error{}
-	stdout, _, exit, err := poc.Exec(fmt.Sprintf("netstat -t4ln | grep ':%d'", poc.port))
+	stdout, _, exit, err := poc.Exec(fmt.Sprintf("ss -tl | grep ':%d'", poc.port))
 	if err != nil {
 		errorList = append(errorList, err)
 		return

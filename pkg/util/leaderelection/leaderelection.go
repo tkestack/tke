@@ -173,7 +173,7 @@ func (le *LeaderElector) acquire(ctx context.Context) bool {
 	defer cancel()
 	succeeded := false
 	desc := le.config.Lock.Describe()
-	log.Infof("attempting to acquire leader lease  %v...", desc)
+	log.Infof("attempting to acquire leader lease  %v... %+v", desc, le.config)
 	wait.JitterUntil(func() {
 		succeeded = le.tryAcquireOrRenew()
 		le.maybeReportTransition()

@@ -291,7 +291,7 @@ export const nodeMonitorFields = [
     unit: t('次')
   },
   {
-    expr: 'sum(k8s_node_pod_num)',
+    expr: 'max(k8s_node_pod_num)',
     alias: t('Pod数量'),
     unit: t('个')
   },

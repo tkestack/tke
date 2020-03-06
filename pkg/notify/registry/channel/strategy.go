@@ -88,6 +88,10 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if channel.Name == "" && channel.GenerateName == "" {
 		channel.GenerateName = "chn-"
 	}
+
+	channel.Spec.Finalizers = []notify.FinalizerName{
+		notify.ChannelFinalize,
+	}
 }
 
 // Validate validates a new channel.

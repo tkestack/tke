@@ -7,6 +7,8 @@ import * as ActionTypes from '../constants/ActionTypes';
 import * as WebAPI from '../WebAPI';
 import { RootState, Strategy, StrategyFilter } from '../models';
 import { createListAction } from '@tencent/redux-list';
+import { router } from '../router';
+
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
   noCache: false
@@ -20,6 +22,15 @@ const FFModelStrategyActions = createListAction<Strategy, StrategyFilter>({
   },
   getRecord: (getState: GetState) => {
     return getState().strategyList;
+  },
+  onFinish: (record, dispatch: Redux.Dispatch) => {
+    if (record.data.recordCount) {
+      let isNotNeedPoll = record.data.records.filter(item => item.status['phase'] === 'Terminating').length === 0;
+
+      if (isNotNeedPoll) {
+        dispatch(FFModelStrategyActions.clearPolling());
+      }
+    }
   }
 });
 
@@ -32,7 +43,7 @@ const addStrategy = generateWorkflowActionCreator<Strategy, void>({
   operationExecutor: WebAPI.addStrategy,
   after: {
     [OperationTrigger.Done]: dispatch => {
-      dispatch(FFModelStrategyActions.applyFilter({}));
+      dispatch(strategyActions.poll());
     }
   }
 });
@@ -46,7 +57,7 @@ const removeStrategy = generateWorkflowActionCreator<any, void>({
   operationExecutor: WebAPI.removeStrategy,
   after: {
     [OperationTrigger.Done]: dispatch => {
-      dispatch(FFModelStrategyActions.applyFilter({}));
+      dispatch(strategyActions.poll());
     }
   }
 });
@@ -72,6 +83,18 @@ const updateStrategy = generateFetcherActionCreator({
     // const { id, userNames } = options.data;
     let result = await WebAPI.updateStrategy(options.data);
     return result;
+  },
+  finish: (dispatch: Redux.Dispatch, getState: GetState) => {
+    let { route } = getState();
+    let urlParams = router.resolve(route);
+    dispatch(
+      strategyActions.getStrategy.fetch({
+        noCache: true,
+        data: {
+          id: urlParams['sub']
+        }
+      })
+    );
   }
 });
 
@@ -81,13 +104,22 @@ const updateStrategy = generateFetcherActionCreator({
 const getCategories = generateFetcherActionCreator({
   actionType: ActionTypes.GetCategories,
   fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
-    // const { id, userNames } = options.data;
     let result = await WebAPI.fetchCategoryList();
     return result;
   }
 });
 
 const restActions = {
+  poll: () => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      dispatch(
+        strategyActions.polling({
+          delayTime: 5000
+        })
+      );
+    };
+  },
+
   addStrategy,
   removeStrategy,
   getCategories,

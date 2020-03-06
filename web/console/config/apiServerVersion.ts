@@ -42,10 +42,9 @@ export const notifyServerVersion = {
  * 用户管理、策略管理
  */
 export const authServerVersion = {
-  basicUrl: 'api',
-  group: '',
-  // group: 'auth.tkestack.io', [todo]
-  version: 'authv1'
+  basicUrl: 'apis',
+  group: 'auth.tkestack.io',
+  version: 'v1'
 };
 
 /**

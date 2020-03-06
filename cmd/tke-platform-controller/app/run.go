@@ -96,9 +96,6 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 		resourcelock.Config{
 			Identity: id,
 		})
-	if err != nil {
-		log.Fatalf("error creating lock: %v", err)
-	}
 
 	leaderelection.RunOrDie(ctx, leaderelection.ElectionConfig{
 		Lock:          rl,

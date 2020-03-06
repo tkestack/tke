@@ -35,6 +35,7 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	businessv1informer "tkestack.io/tke/api/client/informers/externalversions/business/v1"
 	businessv1lister "tkestack.io/tke/api/client/listers/business/v1"
+	cls "tkestack.io/tke/pkg/business/controller/namespace/cluster"
 	"tkestack.io/tke/pkg/business/controller/namespace/deletion"
 	businessUtil "tkestack.io/tke/pkg/business/util"
 	controllerutil "tkestack.io/tke/pkg/controller"
@@ -280,11 +281,12 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 	switch namespace.Status.Phase {
 	case v1.NamespacePending:
 		if err := c.calculateProjectUsed(cachedNamespace, namespace); err != nil {
+			// Since it's pending now, no need to set v1.NamespaceFailed.
 			return err
 		}
-		if err := c.createNamespaceOnCluster(namespace); err != nil {
+		if err := c.ensureNamespaceOnCluster(namespace); err != nil {
 			namespace.Status.Phase = v1.NamespaceFailed
-			namespace.Status.Message = "CreateNamespaceOnClusterFailed"
+			namespace.Status.Message = "ensureNamespaceOnCluster failed"
 			namespace.Status.Reason = err.Error()
 			namespace.Status.LastTransitionTime = metav1.Now()
 			return c.persistUpdate(namespace)
@@ -294,7 +296,23 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 		namespace.Status.Reason = ""
 		namespace.Status.LastTransitionTime = metav1.Now()
 		return c.persistUpdate(namespace)
-	case v1.NamespaceAvailable, v1.NamespaceFailed:
+	case v1.NamespaceAvailable:
+		if err := c.calculateProjectUsed(cachedNamespace, namespace); err != nil {
+			namespace.Status.Phase = v1.NamespaceFailed
+			namespace.Status.Message = "calculateProjectUsed failed"
+			namespace.Status.Reason = err.Error()
+			namespace.Status.LastTransitionTime = metav1.Now()
+			return c.persistUpdate(namespace)
+		}
+		if err := c.ensureNamespaceOnCluster(namespace); err != nil {
+			namespace.Status.Phase = v1.NamespaceFailed
+			namespace.Status.Message = "ensureNamespaceOnCluster failed"
+			namespace.Status.Reason = err.Error()
+			namespace.Status.LastTransitionTime = metav1.Now()
+			return c.persistUpdate(namespace)
+		}
+		c.startNamespaceHealthCheck(key)
+	case v1.NamespaceFailed:
 		c.startNamespaceHealthCheck(key)
 	}
 	return nil
@@ -307,7 +325,7 @@ func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, name
 		return err
 	}
 	calculatedNamespaceNames := sets.NewString(project.Status.CalculatedNamespaces...)
-	if !calculatedNamespaceNames.Has(project.ObjectMeta.Name) {
+	if !calculatedNamespaceNames.Has(namespace.ObjectMeta.Name) {
 		project.Status.CalculatedNamespaces = append(project.Status.CalculatedNamespaces, namespace.ObjectMeta.Name)
 		if project.Status.Clusters == nil {
 			project.Status.Clusters = make(v1.ClusterUsed)
@@ -343,16 +361,16 @@ func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, name
 	return nil
 }
 
-func (c *Controller) createNamespaceOnCluster(namespace *v1.Namespace) error {
+func (c *Controller) ensureNamespaceOnCluster(namespace *v1.Namespace) error {
 	kubeClient, err := util.BuildExternalClientSetWithName(c.platformClient, namespace.Spec.ClusterName)
 	if err != nil {
 		log.Error("Failed to create the kubernetes client", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 		return err
 	}
-	if err := createNamespaceOnCluster(kubeClient, namespace); err != nil {
+	if err := cls.EnsureNamespaceOnCluster(kubeClient, namespace); err != nil {
 		return err
 	}
-	return createResourceQuotaOnCluster(kubeClient, namespace)
+	return cls.EnsureResourceQuotaOnCluster(kubeClient, namespace)
 }
 
 func (c *Controller) persistUpdate(namespace *v1.Namespace) error {

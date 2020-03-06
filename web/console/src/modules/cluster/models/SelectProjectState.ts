@@ -1,6 +1,6 @@
 export interface SelectProjectState {
   /**
-   * 新项目
+   * 新业务
    * */
   selectProject?: any;
 }

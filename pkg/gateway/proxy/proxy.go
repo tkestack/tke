@@ -75,10 +75,6 @@ func componentPrefix() map[moduleName][]modulePath {
 		},
 		moduleNameAuth: {
 			modulePath{
-				prefix:    "/api/authv1/",
-				protected: true,
-			},
-			modulePath{
 				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, auth.GroupName),
 				protected: true,
 			},

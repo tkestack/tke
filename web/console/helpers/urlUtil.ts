@@ -118,6 +118,15 @@ interface K8sRestfulPathOptions {
 export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
   let { resourceInfo, namespace = '', specificName = '', extraResource = '', clusterId = '', meshId } = options;
 
+  /// #if project
+  //业务侧ns eg: cls-xxx-ns 需要去除前缀
+  if (namespace) {
+    namespace = namespace
+      .split('-')
+      .splice(2)
+      .join('-');
+  }
+  /// #endif
   let url: string = '';
   let isAddon = resourceInfo.requestType && resourceInfo.requestType.addon ? resourceInfo.requestType.addon : false;
 
@@ -137,7 +146,7 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
 
     if (extraResource || resourceInfo['namespaces'] || specificName) {
       let queryArr: string[] = [];
-      resourceInfo.namespaces && queryArr.push(`namespace=${namespace}`);
+      resourceInfo.namespaces && namespace && queryArr.push(`namespace=${namespace}`);
       specificName && queryArr.push(`name=${specificName}`);
       extraResource && queryArr.push(`action=${extraResource}`);
       url += `?${queryArr.join('&')}`;

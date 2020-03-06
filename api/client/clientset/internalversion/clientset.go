@@ -26,6 +26,7 @@ import (
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
+	authinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	businessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	monitorinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/monitor/internalversion"
 	notifyinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/notify/internalversion"
@@ -35,6 +36,7 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	Auth() authinternalversion.AuthInterface
 	Business() businessinternalversion.BusinessInterface
 	Monitor() monitorinternalversion.MonitorInterface
 	Notify() notifyinternalversion.NotifyInterface
@@ -46,11 +48,17 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
+	auth     *authinternalversion.AuthClient
 	business *businessinternalversion.BusinessClient
 	monitor  *monitorinternalversion.MonitorClient
 	notify   *notifyinternalversion.NotifyClient
 	platform *platforminternalversion.PlatformClient
 	registry *registryinternalversion.RegistryClient
+}
+
+// Auth retrieves the AuthClient
+func (c *Clientset) Auth() authinternalversion.AuthInterface {
+	return c.auth
 }
 
 // Business retrieves the BusinessClient
@@ -99,6 +107,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
+	cs.auth, err = authinternalversion.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.business, err = businessinternalversion.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -131,6 +143,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
+	cs.auth = authinternalversion.NewForConfigOrDie(c)
 	cs.business = businessinternalversion.NewForConfigOrDie(c)
 	cs.monitor = monitorinternalversion.NewForConfigOrDie(c)
 	cs.notify = notifyinternalversion.NewForConfigOrDie(c)
@@ -144,6 +157,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.auth = authinternalversion.New(c)
 	cs.business = businessinternalversion.New(c)
 	cs.monitor = monitorinternalversion.New(c)
 	cs.notify = notifyinternalversion.New(c)

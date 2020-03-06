@@ -28,6 +28,7 @@ const (
 	KubeAPIServerPodManifestFile         = KubeletPodManifestDir + "kube-apiserver.yaml"
 	KubeControllerManagerPodManifestFile = KubeletPodManifestDir + "kube-controller-manager.yaml"
 	KubeSchedulerPodManifestFile         = KubeletPodManifestDir + "kube-scheduler.yaml"
+	KeepavlivedManifestFile              = KubeletPodManifestDir + "keepalived.yaml"
 
 	DstTmpDir  = "/tmp/k8s/"
 	DstBinDir  = "/usr/bin/"
@@ -41,6 +42,8 @@ const (
 	TokenFile = KubernetesDir + "known_tokens.csv"
 
 	KubectlConfigFile = "/root/.kube/config"
+
+	KeepavliedConfigFile = "/etc/keepalived/keepalived.conf"
 
 	OIDCCACertName = "oidc-ca.crt"
 	OIDCCACertFile = CertificatesDir + OIDCCACertName

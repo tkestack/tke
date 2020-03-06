@@ -30,7 +30,7 @@ const GroupName = "auth.tkestack.io"
 // Version is the version name use in this package.
 const Version = "v1"
 
-// SchemeGroupVersion is group version used to register these objects
+// SchemeGroupVersion is group version used to register these objects.
 var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: Version}
 
 var (
@@ -45,9 +45,44 @@ func init() {
 	localSchemeBuilder.Register(addKnownTypes, addConversionFuncs, addDefaultingFuncs)
 }
 
-// Adds the list of known types to the given scheme.
+// addKnownTypes adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion)
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&LocalIdentity{},
+		&LocalIdentityList{},
+		&PasswordReq{},
+		&APIKey{},
+		&APIKeyList{},
+		&APIKeyReq{},
+		&APIKeyReqPassword{},
+		&APISigningKey{},
+		&APISigningKeyList{},
+		&Category{},
+		&CategoryList{},
+		&Policy{},
+		&PolicyList{},
+		&Rule{},
+		&RuleList{},
+		&Binding{},
+		&Role{},
+		&RoleList{},
+		&SubjectAccessReview{},
+		&PolicyBinding{},
+		&LocalGroup{},
+		&LocalGroupList{},
+		&User{},
+		&UserList{},
+		&Group{},
+		&GroupList{},
+		&IdentityProvider{},
+		&IdentityProviderList{},
+		&Client{},
+		&ClientList{},
+
+		&ConfigMap{},
+		&ConfigMapList{},
+	)
+
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }

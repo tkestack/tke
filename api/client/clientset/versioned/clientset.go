@@ -26,6 +26,7 @@ import (
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
+	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	monitorv1 "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1"
 	notifyv1 "tkestack.io/tke/api/client/clientset/versioned/typed/notify/v1"
@@ -35,6 +36,7 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	AuthV1() authv1.AuthV1Interface
 	BusinessV1() businessv1.BusinessV1Interface
 	MonitorV1() monitorv1.MonitorV1Interface
 	NotifyV1() notifyv1.NotifyV1Interface
@@ -46,11 +48,17 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
+	authV1     *authv1.AuthV1Client
 	businessV1 *businessv1.BusinessV1Client
 	monitorV1  *monitorv1.MonitorV1Client
 	notifyV1   *notifyv1.NotifyV1Client
 	platformV1 *platformv1.PlatformV1Client
 	registryV1 *registryv1.RegistryV1Client
+}
+
+// AuthV1 retrieves the AuthV1Client
+func (c *Clientset) AuthV1() authv1.AuthV1Interface {
+	return c.authV1
 }
 
 // BusinessV1 retrieves the BusinessV1Client
@@ -99,6 +107,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
+	cs.authV1, err = authv1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.businessV1, err = businessv1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -131,6 +143,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
+	cs.authV1 = authv1.NewForConfigOrDie(c)
 	cs.businessV1 = businessv1.NewForConfigOrDie(c)
 	cs.monitorV1 = monitorv1.NewForConfigOrDie(c)
 	cs.notifyV1 = notifyv1.NewForConfigOrDie(c)
@@ -144,6 +157,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.authV1 = authv1.New(c)
 	cs.businessV1 = businessv1.New(c)
 	cs.monitorV1 = monitorv1.New(c)
 	cs.notifyV1 = notifyv1.New(c)

@@ -50,6 +50,7 @@ const (
 	evaluateTypeKey      = "evaluateType"
 	evaluateValueKey     = "evaluateValue"
 	metricDisplayNameKey = "metricDisplayName"
+	summaryKey           = "summary"
 )
 
 // Request response struct
@@ -103,6 +104,7 @@ func registerAlarmWebhook(m *mux.PathRecorderMux, loopbackClientConfig *restclie
 			setErrResponse("Alerts is nil", http.StatusBadRequest, w)
 			return
 		}
+		log.Infof("Receive alerts: %+v", notifyInfo.Alerts)
 		for _, alert := range notifyInfo.Alerts {
 			annotations := alert.Annotations
 			notifyWay, ok := annotations["notifyWay"]
@@ -149,6 +151,7 @@ func registerAlarmWebhook(m *mux.PathRecorderMux, loopbackClientConfig *restclie
 					setErrResponse(err.Error(), http.StatusInternalServerError, w)
 					return
 				}
+				log.Infof("messageRequest created: %+v", messageRequest.Spec)
 			}
 		}
 		response := &responseMsg{
@@ -187,69 +190,86 @@ func newMessageRequest(channel string, template string, receivers []string, rece
 }
 
 func getVariables(alert Alert) map[string]string {
+	summary := "[TKEStack alarm]"
 	variables := make(map[string]string)
 	labels := alert.Labels
 	annotations := alert.Annotations
 
-	alarmPolicyNameValue, ok := labels["alarmPolicyName"]
-	if !ok {
-		log.Errorf("The alarmPolicyName does not exist")
-	}
+	summary = fmt.Sprintf("%s%s", summary, processStartTime(alert.StartsAt))
+
 	alarmPolicyTypeValue, ok := annotations["alarmPolicyType"]
-	if !ok {
-		log.Errorf("The alarmPolicyType does not exist")
+	if ok {
+		summary = fmt.Sprintf("%s %s", summary, alarmPolicyTypeValue)
 	}
-	valueValue, ok := annotations["value"]
-	if !ok {
-		log.Errorf("The value does not exist")
-	}
-	alertNameValue, ok := labels["alertname"]
-	if !ok {
-		log.Errorf("The alertname does not exist")
-	}
-	clusterIDValue, ok := labels["cluster_id"]
-	if !ok {
-		log.Errorf("The cluster_id does not exist")
-	}
-	workloadKindValue, ok := labels["workload_kind"]
-	if !ok {
-		log.Errorf("The workload_kind does not exist")
-	}
-	workloadNameValue, ok := labels["workload_name"]
-	if !ok {
-		log.Errorf("The workload_name does not exist")
-	}
-	namespaceValue, ok := labels["namespace"]
-	if !ok {
-		log.Errorf("The namespace does not exist")
-	}
-	podNameValue, ok := labels["pod_name"]
-	if !ok {
-		log.Errorf("The pod_name does not exist")
-	}
-	nodeNameValue, ok := labels["node_name"]
-	if !ok {
-		log.Errorf("The node_name does not exist")
-	}
-	nodeRoleValue, ok := labels["node_role"]
-	if !ok {
-		log.Errorf("The node_role does not exist")
-	}
-	unitValue, ok := annotations[unitKey]
-	if !ok {
-		log.Errorf("The unit does not exist")
-	}
-	evaluateTypeValue, ok := annotations[evaluateTypeKey]
-	if !ok {
-		log.Errorf("The evaluateType does not exist")
-	}
-	evaluateValue, ok := annotations[evaluateValueKey]
-	if !ok {
-		log.Errorf("The evaluateValue does not exist")
-	}
+
 	metricDisplayNameValue, ok := annotations[metricDisplayNameKey]
-	if !ok {
-		log.Errorf("The metricDisplayName does not exist")
+	if ok {
+		summary = fmt.Sprintf("%s %s", summary, metricDisplayNameValue)
+	}
+
+	valueValue, ok := annotations["value"]
+	if ok {
+		summary = fmt.Sprintf("%s %s", summary, valueValue)
+	}
+
+	unitValue, ok := annotations[unitKey]
+	if ok {
+		summary = fmt.Sprintf("%s%s", summary, unitValue)
+	}
+
+	evaluateTypeValue, ok := annotations[evaluateTypeKey]
+	if ok {
+		summary = fmt.Sprintf("%s %s", summary, evaluateTypeValue)
+	}
+
+	evaluateValue, ok := annotations[evaluateValueKey]
+	if ok {
+		summary = fmt.Sprintf("%s %s", summary, evaluateValue)
+	}
+
+	alarmPolicyNameValue, ok := labels["alarmPolicyName"]
+	if ok {
+		summary = fmt.Sprintf("%s, 告警策略名:%s", summary, alarmPolicyNameValue)
+	}
+
+	alertNameValue, ok := labels["alertname"]
+	if ok {
+		summary = fmt.Sprintf("%s, 指标名:%s", summary, alertNameValue)
+	}
+
+	clusterIDValue, ok := labels["cluster_id"]
+	if ok {
+		summary = fmt.Sprintf("%s, 集群ID:%s", summary, clusterIDValue)
+	}
+
+	workloadKindValue, ok := labels["workload_kind"]
+	if ok {
+		summary = fmt.Sprintf("%s, 工作负载类型:%s", summary, workloadKindValue)
+	}
+
+	workloadNameValue, ok := labels["workload_name"]
+	if ok {
+		summary = fmt.Sprintf("%s, 工作负载名称:%s", summary, workloadNameValue)
+	}
+
+	namespaceValue, ok := labels["namespace"]
+	if ok {
+		summary = fmt.Sprintf("%s, 命名空间:%s", summary, namespaceValue)
+	}
+
+	podNameValue, ok := labels["pod_name"]
+	if ok {
+		summary = fmt.Sprintf("%s, POD名称:%s", summary, podNameValue)
+	}
+
+	nodeNameValue, ok := labels["node"]
+	if ok {
+		summary = fmt.Sprintf("%s, 节点名称:%s", summary, nodeNameValue)
+	}
+
+	nodeRoleValue, ok := labels["node_role"]
+	if ok {
+		summary = fmt.Sprintf("%s, 节点类型:%s", summary, nodeRoleValue)
 	}
 
 	variables[startsAtKey] = processStartTime(alert.StartsAt)
@@ -268,10 +288,11 @@ func getVariables(alert Alert) map[string]string {
 	variables[evaluateTypeKey] = evaluateTypeValue
 	variables[evaluateValueKey] = evaluateValue
 	variables[metricDisplayNameKey] = metricDisplayNameValue
+	variables[summaryKey] = summary
 
 	return variables
 }
 
 func processStartTime(t time.Time) string {
-	return t.Format("2006-01-02 15:04:05")
+	return t.Format("2006-01-02T15:04:05Z")
 }

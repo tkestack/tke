@@ -21,8 +21,6 @@ package wechat
 import (
 	"testing"
 	"time"
-
-	"github.com/golang/glog"
 	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -61,7 +59,7 @@ func TestWechatSend(t *testing.T) {
 	log.Debugf("body: %s", body)
 	log.Debugf("err: %v", err)
 	if err != nil || msgID == "" {
-		glog.Error(err)
+		log.Error("error", log.Err(err))
 		return
 	}
 }

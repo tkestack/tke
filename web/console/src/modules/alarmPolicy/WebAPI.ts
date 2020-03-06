@@ -122,7 +122,7 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
     let temp = {
       id: item.AlarmPolicyId || item.AlarmPolicySettings.AlarmPolicyName,
       alarmPolicyId: item.AlarmPolicyId || item.AlarmPolicySettings.AlarmPolicyName,
-      clusterId: item.ClusterInstanceId,
+      clusterId: query.filter.clusterId,
       alarmPolicyName: item.AlarmPolicySettings.AlarmPolicyName,
       alarmPolicyDescription: item.AlarmPolicySettings.AlarmPolicyDescription,
       alarmPolicyType: item.AlarmPolicySettings.AlarmPolicyType,
@@ -215,7 +215,15 @@ function getAlarmPolicyParams(alarmPolicyEdition: AlarmPolicyEdition[], opreator
     }
   };
   if (alarmPolicyEdition[0].alarmObjectsType === 'part') {
+    /// #if project
+    //业务侧的namespace需要做前缀处理
+    alarmPolicyEdition[0].alarmObjectNamespace = alarmPolicyEdition[0].alarmObjectNamespace
+      .split('-')
+      .splice(2)
+      .join('-');
+    /// #endif
     params['Namespace'] = alarmPolicyEdition[0].alarmObjectNamespace;
+
     params['WorkloadType'] = workloadTypeMap[alarmPolicyEdition[0].alarmObjectWorkloadType];
   }
   alarmPolicyEdition[0].alarmMetrics.forEach(item => {
@@ -232,7 +240,6 @@ function getAlarmPolicyParams(alarmPolicyEdition: AlarmPolicyEdition[], opreator
         },
         ContinuePeriod: item.continuePeriod,
         Unit: item.unit
-        // MetricType: item.metricType
       };
       if (item.metricName === 'k8s_pod_mem_no_cache_bytes' || item.metricName === 'k8s_pod_mem_usage_bytes') {
         metrics.Unit = 'B';
@@ -395,80 +402,6 @@ export async function fetchNamespaceList(query: QueryState<NamespaceFilter>, nam
 }
 
 /**
- * Resource列表的查询
- * @param query:    Resource 的查询过滤条件
- * @param resourceInfo:ResourceInfo 资源的相关配置
- * @param isClearData:  是否清空数据
- * @param k8sQueryObj: any  是否有queryString
- */
-export async function fetchResourceList(query: QueryState<ResourceFilter>, resourceInfo: ResourceInfo) {
-  let { filter } = query,
-    { namespace, clusterId, regionId } = filter;
-
-  let resourceList = [];
-
-  let k8sUrl =
-    `/${resourceInfo.basicEntry}/` +
-    (resourceInfo.group ? resourceInfo.group + '/' : '') +
-    `${resourceInfo.version}/` +
-    (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
-    `${resourceInfo.requestType['list']}`;
-
-  let url = k8sUrl;
-
-  // 构建参数
-  let params: RequestParams = {
-    method: Method.get,
-    url,
-    apiParams: {
-      module: 'tke',
-      interfaceName: 'ForwardRequest',
-      regionId: regionId || 1,
-      restParams: {
-        Method: Method.get,
-        Path: url,
-        Version: '2018-05-25'
-      },
-      opts: {
-        tipErr: false
-      }
-    }
-  };
-
-  try {
-    let response = await reduceNetworkRequest(params, clusterId);
-
-    if (response.code === 0) {
-      let listItems = JSON.parse(response.data.ResponseBody);
-      if (listItems.items) {
-        resourceList = listItems.items.map(item => {
-          return Object.assign({}, item, { id: uuid() });
-        });
-      } else {
-        // 这里是拉取某个具体的resource的时候，没有items属性
-        resourceList.push({
-          metadata: listItems.metadata,
-          spec: listItems.spec,
-          status: listItems.status
-        });
-      }
-    }
-  } catch (error) {
-    // 这里是搜索的时候，如果搜索不到的话，会报404的错误，只有在 resourceNotFound的时候，不把错误抛出去
-    if (error.code !== 'ResourceNotFound') {
-      throw error;
-    }
-  }
-
-  const result: RecordSet<Resource> = {
-    recordCount: resourceList.length,
-    records: resourceList
-  };
-
-  return result;
-}
-
-/**
  * 获取资源的具体的 yaml文件
  * @param resourceIns: Resource[]   当前需要请求的具体资源数据
  * @param resourceInfo: ResouceInfo 当前请求数据url的基本配置
@@ -522,4 +455,33 @@ export async function fetchProjectNamespaceList(query: QueryState<ResourceFilter
   };
 
   return result;
+}
+
+export async function fetchPrometheuses() {
+  let resourceInfo: ResourceInfo = resourceConfig().prometheus;
+  let url = reduceK8sRestfulPath({
+    resourceInfo
+  });
+  let params: RequestParams = {
+    method: Method.get,
+    url
+  };
+  let records = [];
+  try {
+    let response = await reduceNetworkRequest(params);
+    if (response.code === 0) {
+      records = response.data.items.map(item => {
+        return Object.assign({}, item, { id: uuid() });
+      });
+    }
+  } catch (error) {
+    // 这里是搜索的时候，如果搜索不到的话，会报404的错误，只有在 resourceNotFound的时候，不把错误抛出去
+    if (error.code !== 'ResourceNotFound') {
+      throw error;
+    }
+  }
+  return {
+    records,
+    recordCount: records.length
+  };
 }

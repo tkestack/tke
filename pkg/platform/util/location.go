@@ -21,9 +21,10 @@ package util
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/fields"
 	"net/http"
 	"net/url"
+
+	"k8s.io/apimachinery/pkg/fields"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
@@ -65,7 +66,7 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
-	address, err := ClusterAddress(cluster)
+	host, err := ClusterHost(cluster)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
@@ -78,7 +79,7 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 	// Otherwise, return the requested scheme and port, and the proxy transport
 	return &url.URL{
 		Scheme: "https",
-		Host:   address,
+		Host:   host,
 		Path:   requestInfo.Path,
 	}, transport, token, nil
 }

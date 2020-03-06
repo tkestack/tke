@@ -26,6 +26,7 @@ import (
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	authv1 "tkestack.io/tke/api/auth/v1"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	monitorv1 "tkestack.io/tke/api/monitor/v1"
 	notifyv1 "tkestack.io/tke/api/notify/v1"
@@ -37,6 +38,7 @@ var scheme = runtime.NewScheme()
 var codecs = serializer.NewCodecFactory(scheme)
 var parameterCodec = runtime.NewParameterCodec(scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
+	authv1.AddToScheme,
 	businessv1.AddToScheme,
 	monitorv1.AddToScheme,
 	notifyv1.AddToScheme,

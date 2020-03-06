@@ -24,6 +24,7 @@ import {
   SearchBox,
   Tooltip
 } from '@tea/component';
+import { User } from '../../models';
 const { useState, useEffect, useRef } = React;
 const _isEqual = require('lodash/isEqual');
 
@@ -48,7 +49,7 @@ export const StrategyDetailsPanel = () => {
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
   const { route, associatedUsersList, userList, getStrategy, updateStrategy } = state;
-  const associatedUsersListRecords = associatedUsersList.list.data.records;
+  const associatedUsersListRecords = associatedUsersList.list.data.records.map(item => item.metadata.name);
   const userListRecords = userList.list.data.records;
   const getStrategyData = getStrategy.data[0];
   const updateStrategyData = updateStrategy.data[0];
@@ -72,15 +73,19 @@ export const StrategyDetailsPanel = () => {
       noCache: true,
       data: { id: sub }
     });
+
+    return () => {
+      actions.user.performSearch('');
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     // 初始化策略详情
-    if (getStrategyData && getStrategyData.target.id === sub) {
+    if (getStrategyData && getStrategyData.target.metadata.name === sub) {
       const showStrategy = getStrategyData.target;
       setStrategy(showStrategy);
-      setBasicParamsValue({ name: showStrategy.name, description: showStrategy.description });
+      setBasicParamsValue({ name: showStrategy.spec.displayName, description: showStrategy.spec.description });
     }
   }, [getStrategyData, sub]);
 
@@ -102,7 +107,8 @@ export const StrategyDetailsPanel = () => {
   }, [associatedUsersListRecords, userMsgsValue]);
 
   const { name, description } = basicParamsValue;
-  const { name: newName = '', description: newDescription = '', email: pEmail = '' } = strategy ? strategy : {};
+  const { name: newName = '' } = strategy ? strategy.metadata : {};
+  const { description: newDescription = '', email: pEmail = '' } = strategy ? strategy.spec : {};
   const isNameError = name.length <= 0 || name.length > 255;
   const enabled = (name !== newName || description !== newDescription) && !isNameError;
   const modalColumns = [
@@ -110,28 +116,28 @@ export const StrategyDetailsPanel = () => {
       key: 'name',
       header: '用户',
       render: user => {
-        if (userMsgsValue.targetKeys.indexOf(user.name) !== -1) {
+        if (userMsgsValue.targetKeys.indexOf(user.metadata.name) !== -1) {
           return (
             <Tooltip title="用户已被关联">
-              {user.name}({user.Spec.extra.displayName})
+              {user.spec.name}({user.spec.displayName})
             </Tooltip>
           );
         }
         return (
           <p>
-            {user.name}({user.Spec.extra.displayName})
+            {user.spec.name}({user.spec.displayName})
           </p>
         );
       }
     }
   ];
-  const columns: TableColumn<string>[] = [
+  const columns: TableColumn<User>[] = [
     {
       key: 'name',
       header: t('关联用户'),
-      render: name => <Text parent="div">{name}</Text>
+      render: record => <Text parent="div">{record.spec.displayName}</Text>
     },
-    { key: 'operation', header: t('操作'), render: name => _renderOperationCell(name) }
+    { key: 'operation', header: t('操作'), render: record => _renderOperationCell(record.metadata.name) }
   ];
   return (
     <React.Fragment>
@@ -152,7 +158,7 @@ export const StrategyDetailsPanel = () => {
             <ul className="item-descr-list">
               <li>
                 <span className="item-descr-tit">策略id</span>
-                <span className="item-descr-txt">{strategy.id}</span>
+                <span className="item-descr-txt">{strategy.metadata.name}</span>
               </li>
               <li>
                 <span className="item-descr-tit">策略名称</span>
@@ -165,7 +171,7 @@ export const StrategyDetailsPanel = () => {
                     }}
                   />
                 ) : (
-                  <span className="item-descr-txt">{strategy.name || '-'}</span>
+                  <span className="item-descr-txt">{strategy.spec.displayName || '-'}</span>
                 )}
                 {editValue.editBasic && isNameError && <p className="is-error">输入不能为空且需要小于256个字符</p>}
               </li>
@@ -178,21 +184,17 @@ export const StrategyDetailsPanel = () => {
                     onChange={value => setBasicParamsValue({ ...basicParamsValue, description: value })}
                   />
                 ) : (
-                  <span className="item-descr-txt">{strategy.description || '-'}</span>
+                  <span className="item-descr-txt">{strategy.spec.description || '-'}</span>
                 )}
               </li>
               <li>
                 <span className="item-descr-tit">策略类型</span>
-                <span className="item-descr-txt">{STRATEGY_TYPE[strategy.type]}</span>
+                <span className="item-descr-txt">{strategy.spec.type}</span>
               </li>
               <li>
                 <span className="item-descr-tit">创建时间</span>
-                <span className="item-descr-txt">{dateFormat(new Date(strategy.createAt), 'yyyy-MM-dd hh:mm:ss')}</span>
-              </li>
-              <li>
-                <span className="item-descr-tit">更新时间</span>
                 <span className="item-descr-txt">
-                  {dateFormat(new Date((strategy && strategy.updateAt) || strategy.updateAt), 'yyyy-MM-dd hh:mm:ss')}
+                  {dateFormat(new Date(strategy.metadata.creationTimestamp), 'yyyy-MM-dd hh:mm:ss')}
                 </span>
               </li>
             </ul>
@@ -275,22 +277,29 @@ export const StrategyDetailsPanel = () => {
                           header={
                             <SearchBox
                               value={userMsgsValue.inputValue}
-                              onChange={value => setUserMsgsValue({ ...userMsgsValue, inputValue: value })}
+                              onChange={value => {
+                                setUserMsgsValue({ ...userMsgsValue, inputValue: value });
+                                // 进行用户的搜索
+                                actions.user.performSearch(value);
+                              }}
                             />
                           }
                         >
                           <Table
                             records={userListRecords.filter(user => {
                               return (
-                                (user.name.includes(userMsgsValue.inputValue) ||
-                                  user.Spec.extra.displayName.includes(userMsgsValue.inputValue)) &&
-                                user.name.toLowerCase() !== 'admin'
+                                (user.spec.name &&
+                                  (user.spec.name.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase()) ||
+                                    user.spec.name.toLowerCase() !== 'admin')) ||
+                                user.spec.displayName.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase())
                               );
                             })}
                             rowDisabled={record => {
-                              return userMsgsValue.targetKeys.indexOf(record.name) !== -1;
+                              return userMsgsValue.targetKeys.indexOf(record.metadata.name) !== -1;
                             }}
-                            recordKey="name"
+                            recordKey={record => {
+                              return record.metadata.name;
+                            }}
                             columns={modalColumns}
                             addons={[
                               selectable({
@@ -302,7 +311,7 @@ export const StrategyDetailsPanel = () => {
                                       newKeys.push(item);
                                     }
                                   });
-                                  return setUserMsgsValue({ ...userMsgsValue, newTargetKeys: newKeys });
+                                  setUserMsgsValue({ ...userMsgsValue, newTargetKeys: newKeys });
                                 },
                                 rowSelect: true
                               })
@@ -313,7 +322,7 @@ export const StrategyDetailsPanel = () => {
                       rightCell={
                         <Transfer.Cell title={t(`已选择 (${userMsgsValue.newTargetKeys.length}条)`)}>
                           <Table
-                            records={userListRecords.filter(i => userMsgsValue.newTargetKeys.includes(i.name))}
+                            records={userListRecords.filter(i => userMsgsValue.newTargetKeys.includes(i.metadata.name))}
                             recordKey="name"
                             columns={modalColumns}
                             addons={[
@@ -400,9 +409,9 @@ export const StrategyDetailsPanel = () => {
 
   function _onReady(instance) {
     editorRef = instance;
-    editorRef.setValue(JSON.stringify(strategy.statement, null, 2));
+    editorRef.setValue(JSON.stringify(strategy.spec.statement, null, 2));
     editorRef.focus();
-    setEditValue({ ...editValue, editorStatement: strategy.statement });
+    setEditValue({ ...editValue, editorStatement: strategy.spec.statement });
     setEditorValue({ ...editorValue, ready: true });
   }
 
@@ -425,14 +434,16 @@ export const StrategyDetailsPanel = () => {
   }
 
   function _setModalVisible() {
-    actions.user.applyFilter({ ifAll: true });
+    actions.user.applyFilter({ ifAll: true, isPolicyUser: true });
     setModalVisible(true);
   }
   function _close() {
     setModalVisible(false);
   }
   function _onSubmit() {
-    actions.associateActions.associateUser.start([{ id: strategy.id, userNames: userMsgsValue.newTargetKeys }]);
+    actions.associateActions.associateUser.start([
+      { id: strategy.metadata.name, userNames: userMsgsValue.newTargetKeys }
+    ]);
     actions.associateActions.associateUser.perform();
     setModalVisible(false);
     setUserMsgsValue({

@@ -21,8 +21,6 @@ package tencentcloudsms
 import (
 	"testing"
 	"time"
-
-	"github.com/golang/glog"
 	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -63,7 +61,7 @@ func TestSmsSend(t *testing.T) {
 	log.Debugf("body: %s", body)
 	log.Debugf("err: %v", err)
 	if err != nil || msgID == "" {
-		glog.Errorf("send sms error: %v", err)
+		log.Errorf("send sms error: %v", err)
 		return
 	}
 }

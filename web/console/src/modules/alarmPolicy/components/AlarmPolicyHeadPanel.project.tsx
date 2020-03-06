@@ -7,7 +7,7 @@ export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions } = this.props;
 
-    actions.cluster.applyFilter({ regionId: 1 });
+    actions.projectNamespace.initProjectList();
   }
 
   render() {
@@ -18,7 +18,7 @@ export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
       value: p.name
     }));
     let namespaceOptions = namespaceList.data.records.map((p, index) => ({
-      text: `${p.name}(${cluster.selection ? cluster.selection.metadata.name : '-'})`,
+      text: p.name,
       value: p.name
     }));
     return (
@@ -28,7 +28,7 @@ export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
             <h2 style={{ float: 'left' }}>{t('告警设置')}</h2>
             <FormPanel.InlineText>{t('项目：')}</FormPanel.InlineText>
             <FormPanel.Select
-              label={t('项目')}
+              label={t('业务')}
               options={projectListOptions}
               value={projectSelection}
               onChange={value => {

@@ -18,7 +18,7 @@ import {
 import { cloneDeep } from '../../common/utils';
 import { workloadEditActions } from './workloadEditActions';
 import { validateServiceActions } from './validateServiceActions';
-import { AffinityRule } from '../models/WorkloadEdit';
+import { AffinityRule, CronMetrics } from '../models/WorkloadEdit';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { TappGrayUpdateEditItem } from '../models/ResourceDetailState';
 
@@ -1724,7 +1724,7 @@ export const validateWorkloadActions = {
         validateWorkloadActions._validateAllValueFromAlias(container.valueFrom);
     }
 
-    // 校验挂载项目
+    // 校验挂载业务
     let filters = volumes.filter(v => {
       // 判断当前的挂载项是否还存在，是否已经被删除
       return v.name;
@@ -1993,6 +1993,71 @@ export const validateWorkloadActions = {
       dispatch({
         type: ActionType.WV_MaxReplicas,
         payload: result
+      });
+    };
+  },
+
+  /** 校验cronHpa的crontab是否正确 */
+  validateCronTab(mId: string) {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let metricArr: CronMetrics[] = cloneDeep(getState().subRoot.workloadEdit.cronMetrics),
+        mIndex = metricArr.findIndex(item => item.id === mId),
+        result = validateWorkloadActions._validateCronSchedule(metricArr[mIndex].crontab);
+
+      metricArr[mIndex]['v_crontab'] = result;
+      dispatch({
+        type: ActionType.W_UpdateCronMetrics,
+        payload: metricArr
+      });
+    };
+  },
+
+  validateAllCronTab() {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      getState().subRoot.workloadEdit.cronMetrics.forEach(item => {
+        dispatch(validateWorkloadActions.validateCronTab(item.id + ''));
+      });
+    };
+  },
+
+  /** 校验cronHpa的目标实例数是否正确 */
+  _validateCronTargetReplicas(replicas: string) {
+    let status = 1,
+      message = '',
+      reg = /\d+/;
+
+    if (!replicas) {
+      status = 2;
+      message = t('目标实例数不能为空');
+    } else if (!reg.test(replicas)) {
+      status = 2;
+      message = t('目标实例数只能为整数');
+    } else if (+replicas < 0) {
+      status = 2;
+      message = t('目标实例数需大于等于0');
+    }
+
+    return { status, message };
+  },
+
+  validateCronTargetReplicas(mId: string) {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let metricArr: CronMetrics[] = cloneDeep(getState().subRoot.workloadEdit.cronMetrics),
+        mIndex = metricArr.findIndex(item => item.id === mId),
+        result = validateWorkloadActions._validateCronTargetReplicas(metricArr[mIndex].targetReplicas);
+
+      metricArr[mIndex]['v_targetReplicas'] = result;
+      dispatch({
+        type: ActionType.W_UpdateCronMetrics,
+        payload: metricArr
+      });
+    };
+  },
+
+  validateAllCronTargetReplicas() {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      getState().subRoot.workloadEdit.cronMetrics.forEach(item => {
+        dispatch(validateWorkloadActions.validateCronTargetReplicas(item.id + ''));
       });
     };
   },

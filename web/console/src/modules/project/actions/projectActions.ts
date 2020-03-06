@@ -3,11 +3,10 @@ import {
   initProjectEdition,
   initProjectResourceLimit,
   resourceLimitTypeList,
-  resourceTypeToUnit,
-  valueLabels1000,
-  K8SUNIT,
-  valueLabels1024
+  resourceTypeToUnit
 } from './../constants/Config';
+
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import { initValidator } from './../../common/models/Validation';
 import { Manager } from './../models/Manager';
 import { extend, deepClone, uuid } from '@tencent/qcloud-lib';
@@ -200,10 +199,10 @@ const restActions = {
     // 验证内存限制
     if (name === '') {
       status = 2;
-      message = t('项目名称不能为空');
+      message = t('业务名称不能为空');
     } else if (name.length > 63) {
       status = 2;
-      message = t('项目名称长度不能超过63个字符');
+      message = t('业务名称长度不能超过63个字符');
     } else {
       status = 1;
       message = '';

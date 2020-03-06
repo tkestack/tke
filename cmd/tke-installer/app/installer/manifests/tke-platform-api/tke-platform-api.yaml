@@ -4,6 +4,9 @@ apiVersion: v1
 metadata:
   name: tke-platform-api
   namespace: tke
+  annotations:
+    tke.prometheus.io/scrape: "true"
+    prometheus.io/scheme: https
 spec:
   selector:
     app: tke-platform-api
@@ -51,6 +54,8 @@ spec:
               mountPath: /app/provider/baremetal/conf/kubeadm/
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
+            - name: keepalived-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/keepalived/
           ports:
             - containerPort: 9443
           readinessProbe:
@@ -98,6 +103,9 @@ spec:
         - name: gpu-manifests-volume
           configMap:
             name: gpu-manifests
+        - name: keepalived-manifests-volume
+          configMap:
+            name: keepalived-manifests
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -129,11 +137,12 @@ data:
       [authentication.oidc]
 {{- if .EnableAuth }}
       client_id = "default"
-      issuer_url = "https://tke-auth/oidc"
-      external_issuer_url = "https://tke-auth/oidc"
+      issuer_url = "https://tke-auth-api/oidc"
+      external_issuer_url = "https://tke-auth-api/oidc"
       ca_file = "/app/certs/ca.crt"
       username_prefix ="-"
       username_claim = "name"
+      groups_claim = "groups"
       tenantid_claim = "federated_claims"
 {{- else }}
       client_id = {{ .OIDCClientID }}
@@ -146,6 +155,7 @@ data:
       [authentication.requestheader]
       client_ca_file = "/app/certs/ca.crt"
       username_headers = "X-Remote-User"
+      group_headers = "X-Remote-Group"
       extra_headers_prefix = "X-Remote-Extra-"
 
     [authorization]
@@ -164,7 +174,7 @@ data:
       - name: tke
         cluster:
           certificate-authority: /app/certs/ca.crt
-          server: https://tke-auth/auth/authz
+          server: https://tke-auth-api/auth/authz
     users:
       - name: admin-cert
         user:

@@ -32,4 +32,6 @@ RUN apk --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/test
 
 ADD . /app
 
+RUN ln -s /app/.docker /root/.docker
+
 ENTRYPOINT ["/app/bin/tke-installer"]

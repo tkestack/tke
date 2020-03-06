@@ -40,7 +40,7 @@ type policySpec struct {
 	// "*" matches all users and support regex match.
 	User string
 
-	// Group is the group this rule applies to.
+	// IdentityProvider is the group this rule applies to.
 	// Either user or group is required to match the request.
 	// "*" matches all groups and support regex match.
 	Group string

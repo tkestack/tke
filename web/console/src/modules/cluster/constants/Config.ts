@@ -81,7 +81,16 @@ export const ResourceLoadingIcon = {
 };
 
 /** 是否需要判断loading状态 */
-export const ResourceNeedJudgeLoading = ['np', 'deployment', 'svc', 'ingress', 'pvc', 'statefulset', 'daemonset'];
+export const ResourceNeedJudgeLoading = [
+  'np',
+  'deployment',
+  'svc',
+  'ingress',
+  'pvc',
+  'statefulset',
+  'daemonset',
+  'tapp'
+];
 
 /** 创建pvc页面的 云盘数据类型的映射  */
 export const DiskTypeName = {
@@ -506,7 +515,7 @@ export const WorkloadNetworkType = [
   },
   {
     value: WorkloadNetworkTypeEnum.FloatingIP,
-    text: t('FloadtingIP（浮动IP）')
+    text: t('FloatingIP（浮动IP）')
   },
   {
     value: WorkloadNetworkTypeEnum.Nat,

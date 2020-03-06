@@ -3,8 +3,6 @@ import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 import * as ActionType from '../constants/ActionType';
 import { RootState } from '../models';
-import * as WebAPI from '../WebAPI';
-import { Validation } from '../../common/models';
 import { resourceConfig } from '../../../../config';
 import { LogDaemonSetFliter } from '../models/LogDaemonset';
 import { CommonAPI, includes } from '../../common';
@@ -30,13 +28,14 @@ const fetchLogDaemonsetActions = generateFetcherActionCreator({
   finish: (dispatch: Redux.Dispatch, getState: GetState) => {
     dispatch(logDaemonsetActions.isOpenLogStash());
     dispatch(logDaemonsetActions.isDaemonsetNormal());
-    let { route, namespaceSelection, isOpenLogStash, isDaemonsetNormal } = getState();
+    let { route, namespaceSelection, isOpenLogStash, isDaemonsetNormal, openAddon } = getState();
     let { clusterId } = route.queries;
     let urlParams = router.resolve(route);
     if (!urlParams['mode']) {
-      if (isOpenLogStash && includes(canFetchLogList, isDaemonsetNormal.phase)) {
+      if (isOpenLogStash && includes(canFetchLogList, isDaemonsetNormal.phase) && namespaceSelection) {
         dispatch(
           logActions.applyFilter({
+            // specificName: openAddon.selection.metadata.name,
             clusterId,
             namespace: namespaceSelection
           })

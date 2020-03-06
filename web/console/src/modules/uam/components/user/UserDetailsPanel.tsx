@@ -7,7 +7,7 @@ import { router } from '../../router';
 import { allActions } from '../../actions';
 import { Button, Modal, Card, Input, Form, TableColumn } from '@tea/component';
 import { VALIDATE_PHONE_RULE, VALIDATE_EMAIL_RULE, STRATEGY_TYPE } from '../../constants/Config';
-import { Strategy } from '../../models';
+import { Strategy, User } from '../../models';
 import { TablePanel, emptyTips, LinkButton } from '@src/modules/common';
 const { useState, useEffect, useRef } = React;
 const _isEqual = require('lodash/isEqual');
@@ -49,9 +49,9 @@ export const UserDetailsPanel = () => {
 
   useEffect(() => {
     // 初始化用户详情
-    if (getUserData && getUserData.target.name === sub) {
-      const showUser = getUserData.target;
-      const { displayName = '', email = '', phoneNumber = '' } = showUser.Spec.extra;
+    if (getUserData && getUserData.target.metadata.name === sub) {
+      const showUser: User = getUserData.target;
+      const { displayName = '', email = '', phoneNumber = '' } = showUser.spec;
       setUser(showUser);
       setBasicParamsValue({ displayName, email, phoneNumber });
     }
@@ -67,9 +67,7 @@ export const UserDetailsPanel = () => {
 
   const { displayName, phoneNumber, email } = basicParamsValue;
   const isNameError = displayName.length <= 0 || displayName.length > 255;
-  const { displayName: pDisplayName = '', phoneNumber: pPhoneNumber = '', email: pEmail = '' } = user
-    ? user.Spec.extra
-    : {};
+  const { displayName: pDisplayName = '', phoneNumber: pPhoneNumber = '', email: pEmail = '' } = user ? user.spec : {};
 
   // 都满足，确定才可用
   const enabled =
@@ -83,19 +81,19 @@ export const UserDetailsPanel = () => {
       key: 'name',
       header: t('策略名'),
       width: '20%',
-      render: x => x.name
+      render: x => x.spec.displayName
     },
     {
       key: 'desp',
       header: t('描述'),
       width: '40%',
-      render: x => x.description
+      render: x => x.spec.description
     },
     {
       key: 'type',
       header: t('类型'),
       width: '20%',
-      render: x => STRATEGY_TYPE[x.type]
+      render: x => x.spec.type
     }
   ];
 
@@ -114,7 +112,7 @@ export const UserDetailsPanel = () => {
             <ul className="item-descr-list">
               <li>
                 <span className="item-descr-tit">用户账号</span>
-                <span className="item-descr-txt">{user.name}</span>
+                <span className="item-descr-txt">{user.spec.username}</span>
               </li>
               <li>
                 <span className="item-descr-tit">用户名称</span>
@@ -130,7 +128,7 @@ export const UserDetailsPanel = () => {
                     {isNameError ? <p className="is-error">输入不能为空且需要小于256个字符</p> : ''}
                   </React.Fragment>
                 ) : (
-                  <span className="item-descr-txt">{user.Spec.extra.displayName}</span>
+                  <span className="item-descr-txt">{user.spec.displayName}</span>
                 )}
               </li>
               <li>
@@ -150,7 +148,7 @@ export const UserDetailsPanel = () => {
                     )}
                   </React.Fragment>
                 ) : (
-                  <span className="item-descr-txt">{user.Spec.extra.phoneNumber || '-'}</span>
+                  <span className="item-descr-txt">{user.spec.phoneNumber || '-'}</span>
                 )}
               </li>
               <li>
@@ -170,16 +168,14 @@ export const UserDetailsPanel = () => {
                     )}
                   </React.Fragment>
                 ) : (
-                  <span className="item-descr-txt">{user.Spec.extra.email || '-'}</span>
+                  <span className="item-descr-txt">{user.spec.email || '-'}</span>
                 )}
               </li>
               <li>
                 <span className="item-descr-tit">创建时间</span>
-                <span className="item-descr-txt">{dateFormat(new Date(user.createAt), 'yyyy-MM-dd hh:mm:ss')}</span>
-              </li>
-              <li>
-                <span className="item-descr-tit">更新时间</span>
-                <span className="item-descr-txt">{dateFormat(new Date(user.updateAt), 'yyyy-MM-dd hh:mm:ss')}</span>
+                <span className="item-descr-txt">
+                  {dateFormat(new Date(user.metadata.creationTimestamp), 'yyyy-MM-dd hh:mm:ss')}
+                </span>
               </li>
             </ul>
           )}
@@ -221,13 +217,15 @@ export const UserDetailsPanel = () => {
       noCache: true,
       data: {
         user: {
-          name: user.name,
-          Spec: {
-            extra: {
-              displayName,
-              phoneNumber,
-              email
-            }
+          metadata: {
+            name: user.metadata.name,
+            resourceVersion: user.metadata.resourceVersion
+          },
+          spec: {
+            username: user.spec.username,
+            displayName,
+            phoneNumber,
+            email
           }
         }
       }

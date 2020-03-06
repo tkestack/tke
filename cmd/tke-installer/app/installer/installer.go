@@ -31,6 +31,8 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -44,6 +46,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -66,6 +70,7 @@ import (
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
@@ -89,16 +94,40 @@ const (
 	postClusterReadyHook = hooksDir + "/post-cluster-ready"
 	postInstallHook      = hooksDir + "/post-install"
 
-	registryDomain             = "docker.io"
-	registryNamespace          = "tkestack"
-	imagesFile                 = "images.tar.gz"
-	imagesPattern              = registryNamespace + "/*"
-	localRegistryImage         = registryNamespace + "/local-tcr:v1.0.0"
-	localRegistryPort          = 5000
-	localRegistryContainerName = "tcr"
-	defaultTeantID             = "default"
+	registryDomain    = "docker.io"
+	registryNamespace = "tkestack"
+	imagesFile        = "images.tar.gz"
+	imagesPattern     = registryNamespace + "/*"
 
-	k8sVersion = "1.14.6"
+	defaultTeantID = "default"
+)
+
+var (
+	supportedArchs = regexp.MustCompile(fmt.Sprintf(`-(%s):`, strings.Join(spec.Archs, "|")))
+
+	registryHTTPCommandFmt = `
+docker run \
+-d \
+--name registry-http \
+--restart always \
+-p 80:5000 \
+-v /opt/tke-installer/registry:/var/lib/registry \
+%s
+`
+
+	registryHTTPSCommandFmt = `
+docker run \
+-d \
+--name registry-https \
+--restart always \
+-p 443:443 \
+-v /opt/tke-installer/registry:/var/lib/registry \
+-v registry-certs:/certs \
+-e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
+-e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt \
+-e REGISTRY_HTTP_TLS_KEY=/certs/server.key \
+%s
+`
 )
 
 // ClusterResource is the REST layer to the Cluster domain
@@ -249,7 +278,8 @@ type TKEHA struct {
 }
 
 type ThirdPartyHA struct {
-	VIP string `json:"vip" validate:"required"`
+	VIP   string `json:"vip" validate:"required"`
+	VPort int32  `json:"vport"`
 }
 
 type Gateway struct {
@@ -395,6 +425,10 @@ func (t *TKE) initSteps() {
 			Func: t.createGlobalCluster,
 		},
 		{
+			Name: "Write kubeconfig",
+			Func: t.writeKubeconfig,
+		},
+		{
 			Name: "Execute post deploy hook",
 			Func: t.postClusterReadyHook,
 		},
@@ -419,8 +453,12 @@ func (t *TKE) initSteps() {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		t.steps = append(t.steps, []handler{
 			{
-				Name: "Install tke-auth",
-				Func: t.installTKEAuth,
+				Name: "Install tke-auth-api",
+				Func: t.installTKEAuthAPI,
+			},
+			{
+				Name: "Install tke-auth-controller",
+				Func: t.installTKEAuthController,
 			},
 		}...)
 	}
@@ -497,15 +535,6 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if t.Para.Config.HA != nil && t.Para.Config.HA.TKEHA != nil {
-		t.steps = append(t.steps, []handler{
-			{
-				Name: "Install keepalived",
-				Func: t.installKeepalived,
-			},
-		}...)
-	}
-
 	t.steps = append(t.steps, []handler{
 		{
 			Name: "Register tke api into global cluster",
@@ -536,10 +565,6 @@ func (t *TKE) initSteps() {
 	}
 
 	t.steps = append(t.steps, []handler{
-		{
-			Name: "Write kubeconfig",
-			Func: t.writeKubeconfig,
-		},
 		{
 			Name: "Execute post deploy hook",
 			Func: t.postInstallHook,
@@ -682,6 +707,21 @@ func (t *TKE) prepare() errors.APIStatus {
 		return errors.NewInternalError(err)
 	}
 	allErrs := t.strategy.Validate(ctx, platformCluster)
+
+	// ensure installer's machine not in target machines
+	installerIP, err := util.GetExternalIP()
+	if err != nil {
+		return errors.NewInternalError(pkgerrors.Wrap(err, "get ip of installer machine error"))
+	}
+	for i, one := range platformCluster.Spec.Machines {
+		if one.IP == installerIP {
+			allErrs = append(allErrs, field.Invalid(
+				field.NewPath("spec", "machines").Index(i).Child("ip"),
+				one.IP,
+				"target machines can't use one which runs installer"))
+			break
+		}
+	}
 	if len(allErrs) > 0 {
 		return errors.NewInvalid(kinds[0].GroupKind(), v1Cluster.GetName(), allErrs)
 	}
@@ -706,6 +746,9 @@ func (t *TKE) SetConfigDefault(config *Config) {
 	}
 
 	if config.Registry.TKERegistry != nil {
+		if config.Registry.TKERegistry.Domain == "" {
+			config.Registry.TKERegistry.Domain = "registry.tke.com"
+		}
 		config.Registry.TKERegistry.Namespace = "library"
 		config.Registry.TKERegistry.Username = config.Basic.Username
 		config.Registry.TKERegistry.Password = config.Basic.Password
@@ -727,6 +770,14 @@ func (t *TKE) SetConfigDefault(config *Config) {
 		}
 	}
 
+	if config.HA != nil {
+		if config.HA.ThirdPartyHA != nil {
+			if config.HA.ThirdPartyHA.VPort == 0 {
+				config.HA.ThirdPartyHA.VPort = 6443
+			}
+		}
+	}
+
 }
 func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 	if cluster.APIVersion == "" {
@@ -741,7 +792,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
-	cluster.Spec.Version = k8sVersion
+	cluster.Spec.Version = spec.K8sVersions[len(spec.K8sVersions)-1] // use newest version
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
@@ -755,20 +806,17 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 
 	if config.HA != nil {
 		if t.Para.Config.HA.TKEHA != nil {
-			cluster.Spec.PublicAlternativeNames = append(cluster.Spec.PublicAlternativeNames, t.Para.Config.HA.TKEHA.VIP)
-			cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
-				Type: platformv1.AddressAdvertise,
-				Host: t.Para.Config.HA.TKEHA.VIP,
-				Port: 6443,
-			})
+			cluster.Spec.Features.HA = &platformv1.HA{
+				TKEHA: &platformv1.TKEHA{VIP: t.Para.Config.HA.TKEHA.VIP},
+			}
 		}
 		if t.Para.Config.HA.ThirdPartyHA != nil {
-			cluster.Spec.PublicAlternativeNames = append(cluster.Spec.PublicAlternativeNames, t.Para.Config.HA.ThirdPartyHA.VIP)
-			cluster.Status.Addresses = append(cluster.Status.Addresses, platformv1.ClusterAddress{
-				Type: platformv1.AddressAdvertise,
-				Host: t.Para.Config.HA.ThirdPartyHA.VIP,
-				Port: 6443,
-			})
+			cluster.Spec.Features.HA = &platformv1.HA{
+				ThirdPartyHA: &platformv1.ThirdPartyHA{
+					VIP:   t.Para.Config.HA.ThirdPartyHA.VIP,
+					VPort: t.Para.Config.HA.ThirdPartyHA.VPort,
+				},
+			}
 		}
 	}
 }
@@ -809,8 +857,10 @@ func (t *TKE) ValidateConfig(config Config) *errors.StatusError {
 		}
 	}
 
-	if config.Monitor.InfluxDBMonitor != nil && config.Monitor.ESMonitor != nil {
-		return errors.NewBadRequest("influxdb or es only had one")
+	if config.Monitor != nil {
+		if config.Monitor.InfluxDBMonitor != nil && config.Monitor.ESMonitor != nil {
+			return errors.NewBadRequest("influxdb or es only had one")
+		}
 	}
 
 	var dnsNames []string
@@ -858,23 +908,29 @@ func (t *TKE) ValidateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 	return nil
 }
 
-func (t *TKE) initProviderConfig() error {
+func (t *TKE) completeProviderConfigForRegistry() error {
 	c, err := baremetalconfig.New(pluginConfigFile)
 	if err != nil {
 		return err
 	}
 	c.Registry.Prefix = t.Para.Config.Registry.Prefix()
-	ip, err := util.GetExternalIP()
-	if err != nil {
-		return pkgerrors.Wrap(err, "get external ip error")
+
+	if t.Para.Config.Registry.TKERegistry != nil {
+		ip, err := util.GetExternalIP()
+		if err != nil {
+			return pkgerrors.Wrap(err, "get external ip error")
+		}
+		c.Registry.IP = ip
 	}
-	c.Registry.IP = ip
 
 	return c.Save(pluginConfigFile)
 }
 
 func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 	apiStatus := func() errors.APIStatus {
+		if t.Step != 0 {
+			return errors.NewAlreadyExists(platformv1.Resource("Cluster"), "global")
+		}
 		err := req.ReadEntity(t.Para)
 		if err != nil {
 			return errors.NewBadRequest(err.Error())
@@ -1078,10 +1134,11 @@ func (t *TKE) prepareFrontProxyCertificates() error {
 }
 
 func (t *TKE) createGlobalCluster() error {
-	err := t.initProviderConfig()
+	err := t.completeProviderConfigForRegistry()
 	if err != nil {
 		return err
 	}
+
 	// do again like platform controller
 	t.completeWithProvider()
 
@@ -1212,18 +1269,27 @@ func (t *TKE) setupLocalRegistry() error {
 }
 
 func (t *TKE) startLocalRegistry() error {
-	cmd := exec.Command("sh", "-c",
-		fmt.Sprintf("docker rm -f %s", localRegistryContainerName),
-	)
+	cmd := exec.Command("sh", "-c", "docker rm -f registry-http registry-https")
+	cmd.Stdout = t.log.Writer()
 	cmd.Run()
 
-	cmd = exec.Command("sh", "-c",
-		fmt.Sprintf("docker run -d -v `pwd`/registry:/var/lib/registry -p 80:%d --restart always --name %s %s",
-			localRegistryPort, localRegistryContainerName, localRegistryImage),
-	)
+	cmd = exec.Command("sh", "-c", "rm -rf ~/.docker/manifests")
+	cmd.Stderr = t.log.Writer()
+	cmd.Run()
+
+	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPCommandFmt, images.Get().Registry.FullName()))
 	cmd.Stdout = t.log.Writer()
 	cmd.Stderr = t.log.Writer()
 	err := cmd.Run()
+	if err != nil {
+		return pkgerrors.Wrap(err, "docker run error")
+	}
+
+	// for docker manifest create which --insecure is not working
+	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPSCommandFmt, images.Get().Registry.FullName()))
+	cmd.Stdout = t.log.Writer()
+	cmd.Stderr = t.log.Writer()
+	err = cmd.Run()
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker run error")
 	}
@@ -1349,10 +1415,7 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 	}
 	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
 		t.Para.Config.Registry.TKERegistry != nil {
-		ip := t.Cluster.Spec.Machines[0].IP
-		if t.Para.Config.HA != nil {
-			ip = t.Para.Config.HA.VIP()
-		}
+		ip := t.Cluster.Spec.Machines[0].IP // registry current only run in first node
 		c.Registry.IP = ip
 	}
 
@@ -1385,6 +1448,10 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 			Name: "gpu-manifests",
 			File: baremetalconstants.ManifestsDir + "/gpu/*",
 		},
+		{
+			Name: "keepalived-manifests",
+			File: baremetalconstants.ManifestsDir + "/keepalived/*",
+		},
 	}
 	for _, one := range configMaps {
 		err := apiclient.CreateOrUpdateConfigMapFromFile(t.globalClient,
@@ -1401,32 +1468,6 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 	}
 
 	return nil
-}
-
-func (t *TKE) installKeepalived() error {
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/keepalived/*.yaml",
-		map[string]interface{}{
-			"Image": images.Get().Keepalived.FullName(),
-			"VIP":   t.Para.Config.HA.TKEHA.VIP,
-		})
-	if err != nil {
-		return err
-	}
-
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDaemonset(t.globalClient, t.namespace, "keepalived")
-		if err != nil {
-			return false, nil
-		}
-		if t.Para.Config.HA != nil && t.Para.Config.HA.TKEHA != nil {
-			t.Cluster.Status.Addresses = append(t.Cluster.Status.Addresses, platformv1.ClusterAddress{
-				Type: platformv1.AddressAdvertise,
-				Host: t.Para.Config.HA.TKEHA.VIP,
-				Port: 6443,
-			})
-		}
-		return ok, nil
-	})
 }
 
 func (t *TKE) installTKEGateway() error {
@@ -1470,7 +1511,7 @@ func (t *TKE) installETCD() error {
 		})
 }
 
-func (t *TKE) installTKEAuth() error {
+func (t *TKE) installTKEAuthAPI() error {
 	redirectHosts := t.servers
 	redirectHosts = append(redirectHosts, "tke-gateway")
 	if t.Para.Config.Gateway != nil && t.Para.Config.Gateway.Domain != "" {
@@ -1482,20 +1523,40 @@ func (t *TKE) installTKEAuth() error {
 
 	option := map[string]interface{}{
 		"Replicas":         t.Config.Replicas,
-		"Image":            images.Get().TKEAuth.FullName(),
+		"Image":            images.Get().TKEAuthAPI.FullName(),
 		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
 		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
-		"AdminPassword":    string(t.Para.Config.Auth.TKEAuth.Password),
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth/*.yaml", option)
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth-api/*.yaml", option)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth")
+		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth-api")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKEAuthController() error {
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth-controller/*.yaml",
+		map[string]interface{}{
+			"Replicas":      t.Config.Replicas,
+			"Image":         images.Get().TKEAuthController.FullName(),
+			"AdminUsername": t.Para.Config.Auth.TKEAuth.Username,
+			"AdminPassword": string(t.Para.Config.Auth.TKEAuth.Password),
+		})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth-controller")
 		if err != nil {
 			return false, nil
 		}
@@ -1833,7 +1894,7 @@ func (t *TKE) preparePushImagesToTKERegistry() error {
 func (t *TKE) registerAPI() error {
 	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
 
-	restConfig, err := platformutil.GetRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
+	restConfig, err := platformutil.GetExternalRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}
@@ -1843,6 +1904,9 @@ func (t *TKE) registerAPI() error {
 	}
 
 	svcs := []string{"tke-platform-api"}
+	if t.Para.Config.Auth.TKEAuth != nil {
+		svcs = append(svcs, "tke-auth-api")
+	}
 	if t.Para.Config.Business != nil {
 		svcs = append(svcs, "tke-business-api")
 	}
@@ -1903,7 +1967,7 @@ func (t *TKE) registerAPI() error {
 }
 
 func (t *TKE) importResource() error {
-	restConfig, err := platformutil.GetRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
+	restConfig, err := platformutil.GetExternalRestConfig(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}
@@ -1969,6 +2033,8 @@ func (t *TKE) pushImages() error {
 		return pkgerrors.Wrap(err, "docker images error")
 	}
 	tkeImages := strings.Split(strings.TrimSpace(string(out)), "\n")
+	sort.Strings(tkeImages)
+	tkeImagesSet := sets.NewString(tkeImages...)
 	for i, image := range tkeImages {
 		nameAndTag := strings.Split(image, ":")
 		if len(nameAndTag) != 2 {
@@ -1979,12 +2045,57 @@ func (t *TKE) pushImages() error {
 			continue
 		}
 
+		// ignore image without arch when has image with arch for avoid overwrite manifest when push image without arch
+		archMatches := supportedArchs.FindStringSubmatch(image)
+		if archMatches == nil { // if without arch
+			for _, arch := range spec.Archs {
+				name := fmt.Sprintf("%s-%s:%s", nameAndTag[0], arch, nameAndTag[1])
+				if tkeImagesSet.Has(name) { // check whether has image with any arch
+					continue
+				}
+			}
+		}
+
 		cmd = exec.Command("docker", "push", image)
 		cmd.Stdout = t.log.Writer()
 		cmd.Stderr = t.log.Writer()
 		err = cmd.Run()
 		if err != nil {
 			return pkgerrors.Wrap(err, "docker push error")
+		}
+
+		if archMatches != nil {
+			arch := archMatches[1]
+			manifestName := supportedArchs.ReplaceAllString(image, ":")
+
+			cmdString := fmt.Sprintf("docker manifest create -a --insecure %s %s", manifestName, image)
+			cmd = exec.Command("sh", "-c", cmdString)
+			cmd.Stdout = t.log.Writer()
+			cmd.Stderr = t.log.Writer()
+			err = cmd.Run()
+			if err != nil {
+				return pkgerrors.Wrap(err, "docker manifest create error")
+			}
+
+			if arch == "arm64" {
+				cmdString := fmt.Sprintf("docker manifest annotate --arch arm64 --variant unknown %s %s", manifestName, image)
+				cmd = exec.Command("sh", "-c", cmdString)
+				cmd.Stdout = t.log.Writer()
+				cmd.Stderr = t.log.Writer()
+				err = cmd.Run()
+				if err != nil {
+					return pkgerrors.Wrap(err, "docker manifest annotate error")
+				}
+			}
+
+			cmdString = fmt.Sprintf("docker manifest push --insecure %s ", manifestName)
+			cmd = exec.Command("sh", "-c", cmdString)
+			cmd.Stdout = t.log.Writer()
+			cmd.Stderr = t.log.Writer()
+			err = cmd.Run()
+			if err != nil {
+				return pkgerrors.Wrap(err, "docker manifest push error")
+			}
 		}
 
 		t.log.Printf("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))
@@ -2018,12 +2129,12 @@ func (t *TKE) execHook(filename string) error {
 }
 
 func (t *TKE) getKubeconfig() (*api.Config, error) {
-	addr, err := platformutil.ClusterV1Address(&t.Cluster.Cluster)
+	host, err := platformutil.ClusterV1Host(&t.Cluster.Cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	return kubeconfig.CreateWithToken(addr,
+	return kubeconfig.CreateWithToken(host,
 		t.Cluster.Name,
 		"admin",
 		t.Cluster.ClusterCredential.CACert,

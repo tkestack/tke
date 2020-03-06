@@ -23,6 +23,7 @@ import {
   ImageCreation,
   ImageFilter
 } from './models';
+import { apiKey } from '@config/resource/k8sConfig';
 
 // 返回标准操作结果
 function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] {

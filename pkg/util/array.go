@@ -69,3 +69,54 @@ func DiffStringSlice(origins []string, updated []string) (added []string, remove
 	}
 	return
 }
+
+// ArrayEquals determines whether two string arrays are identical.
+func ArrayEquals(a []string, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// InStringSlice checks if all elements in the array are strings.
+func In2DStringSlice(slices [][]string, slice []string) bool {
+	if len(slice) == 0 {
+		return false
+	}
+	exist := false
+	for _, s := range slices {
+		if ArrayEquals(s, slice) {
+			exist = true
+			break
+		}
+	}
+	return exist
+}
+
+// DiffStringSlice returns the difference between two given string arrays,
+// including deleted and added elements.
+func Diff2DStringSlice(origins [][]string, updated [][]string) (added [][]string, removed [][]string) {
+	if origins == nil {
+		origins = [][]string{}
+	}
+	if updated == nil {
+		updated = [][]string{}
+	}
+	for _, origin := range origins {
+		if !In2DStringSlice(updated, origin) {
+			removed = append(removed, origin)
+		}
+	}
+	for _, update := range updated {
+		if !In2DStringSlice(origins, update) {
+			added = append(added, update)
+		}
+	}
+	return
+}

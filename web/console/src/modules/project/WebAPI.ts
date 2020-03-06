@@ -420,12 +420,12 @@ export async function deleteNamespace(namespaces: Namespace[], op: NamespaceOper
  * @param query 集群列表查询的一些过滤条件
  */
 export async function fetchUser(query: QueryState<ManagerFilter>) {
-  let localidentityInfo: ResourceInfo = resourceConfig().localidentity;
-  let url = reduceK8sRestfulPath({ resourceInfo: localidentityInfo });
+  let userInfo: ResourceInfo = resourceConfig()['user'];
+  let url = reduceK8sRestfulPath({ resourceInfo: userInfo });
   let { filter, search } = query;
   /** 构建参数 */
   if (search) {
-    url += `?keyword=${search}`;
+    url += `?fieldSelector=keyword=${search}`;
   }
   let method = 'GET';
   let params: RequestParams = {
@@ -439,7 +439,7 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
     let list = response.data;
     userList = list.items
       ? list.items.map(item => {
-          return { id: uuid(), displayName: item.Spec.extra && item.Spec.extra.displayName, name: item.name };
+          return { id: uuid(), displayName: item.spec && item.spec.displayName, name: item.spec && item.spec.name };
         })
       : [];
   }
@@ -453,7 +453,7 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
 }
 
 /**
- * user列表的查询
+ *
  * @param query 集群列表查询的一些过滤条件
  */
 export async function fetchAdminstratorInfo() {

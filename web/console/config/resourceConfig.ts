@@ -63,31 +63,43 @@ import {
   virtualService,
   destinationRule,
   prometheus,
-  logoutConfig
+  logoutConfig,
+  apiKey,
+  user,
+  cronhpa
 } from './resource/k8sConfig';
 import { serviceEntry } from './resource/k8sConfig/serviceEntry';
 import { ResourceInfo } from '../src/modules/common/models';
 import { ApiVersion } from './resource/common';
 
-export const K8sVersionMap = {
-  '1.8': '1.8',
-  '1.10': '1.8'
-};
-
 /** 获取正确的集群版本号 */
 export const ResourceConfigVersionMap = (k8sVersion: string) => {
-  return k8sVersion === '1.7' ? '1.7' : K8sVersionMap[k8sVersion] ? K8sVersionMap[k8sVersion] : '1.8';
+  let finalK8sVersion: string;
+
+  let [marjor, minor] = k8sVersion.split('.');
+  let minorVersion = +minor;
+
+  if (minorVersion >= 8 && minorVersion <= 12) {
+    finalK8sVersion = '1.8';
+  } else if (minorVersion > 12) {
+    finalK8sVersion = '1.14';
+  } else {
+    finalK8sVersion = '1.7';
+  }
+
+  return finalK8sVersion;
 };
 
 const getResourceConfig = (resourceFunc: (k8sVersion: string) => ResourceInfo, k8sVersion: string) => {
-  return resourceFunc(k8sVersion);
+  let result = resourceFunc(k8sVersion);
+  return Object.assign({}, result, { k8sVersion });
 };
 
 /** ResourceConfig的返回定义 */
 export type ResourceConfigKey = { [key in keyof ApiVersion]: ResourceInfo };
 
-export const resourceConfig = (k8sVersion: string = '1.8'): ResourceConfigKey => {
-  let finalK8sVersion = ResourceConfigVersionMap(k8sVersion) || '1.8';
+export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey => {
+  let finalK8sVersion = ResourceConfigVersionMap(k8sVersion) || '1.16';
 
   return {
     deployment: getResourceConfig(deployment, finalK8sVersion),
@@ -109,6 +121,7 @@ export const resourceConfig = (k8sVersion: string = '1.8'): ResourceConfigKey =>
     pvc: getResourceConfig(pvc, finalK8sVersion),
     sc: getResourceConfig(sc, finalK8sVersion),
     hpa: getResourceConfig(hpa, finalK8sVersion),
+    cronhpa: getResourceConfig(cronhpa, finalK8sVersion),
     node: getResourceConfig(node, finalK8sVersion),
     masteretcd: getResourceConfig(node, finalK8sVersion),
     pe: getResourceConfig(pe, finalK8sVersion),
@@ -154,6 +167,8 @@ export const resourceConfig = (k8sVersion: string = '1.8'): ResourceConfigKey =>
     localidentity: getResourceConfig(localidentity, finalK8sVersion),
     policy: getResourceConfig(policy, finalK8sVersion),
     category: getResourceConfig(category, finalK8sVersion),
+    apiKey: getResourceConfig(apiKey, finalK8sVersion),
+    user: getResourceConfig(user, finalK8sVersion),
     /** =============== 这里是权限相关的 =============== */
 
     /** 告警配置 */

@@ -24,6 +24,18 @@ export const hpa = (k8sVersion: string) => {
   });
 };
 
+/** cronhpa的相关配置 */
+export const cronhpa = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'cronhpa',
+    requestType: {
+      list: 'cronhpas'
+    },
+    isRelevantToNamespace: true
+  });
+};
+
 /** persistentEvent的相关配置 */
 export const pe = (k8sVersion: string) => {
   return generateResourceInfo({
@@ -175,6 +187,17 @@ export const policy = (k8sVersion: string) => {
   });
 };
 
+/** users的配置 */
+export const user = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'user',
+    requestType: {
+      list: 'users'
+    }
+  });
+};
+
 /** category的配置 */
 export const category = (k8sVersion: string) => {
   return generateResourceInfo({
@@ -182,6 +205,17 @@ export const category = (k8sVersion: string) => {
     resourceName: 'category',
     requestType: {
       list: 'categories'
+    }
+  });
+};
+
+/** apikey的配置 */
+export const apiKey = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'apiKey',
+    requestType: {
+      list: 'apikeys'
     }
   });
 };
@@ -207,7 +241,7 @@ export const logcs = (k8sVersion: string) => {
     isRelevantToNamespace: true,
     resourceName: 'logcs',
     requestType: {
-      list: 'logcs',
+      list: 'logcollector',
       addon: true
     }
   });

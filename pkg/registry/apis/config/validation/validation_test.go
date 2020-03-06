@@ -19,8 +19,9 @@
 package validation
 
 import (
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"testing"
+
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 )
 
@@ -34,6 +35,8 @@ func TestValidateRegistryConfiguration(t *testing.T) {
 		Security: registryconfig.Security{
 			TokenPrivateKeyFile: "fake_private_key.crt",
 			TokenPublicKeyFile:  "fake_public_key.pem",
+			AdminUsername:       "fake_username",
+			AdminPassword:       "fake_password",
 		},
 		DefaultTenant: "default",
 	}
@@ -52,7 +55,7 @@ func TestValidateRegistryConfiguration(t *testing.T) {
 		},
 		Redis: &registryconfig.Redis{},
 	}
-	const numErrs = 7
+	const numErrs = 9
 	if allErrors := ValidateRegistryConfiguration(errorCase); len(allErrors.(utilerrors.Aggregate).Errors()) != numErrs {
 		t.Errorf("expect %d errors, got %v", numErrs, len(allErrors.(utilerrors.Aggregate).Errors()))
 	}

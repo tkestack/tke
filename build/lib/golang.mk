@@ -19,7 +19,7 @@
 #
 
 GO := go
-GO_SUPPORTED_VERSIONS ?= 1.12|1.13
+GO_SUPPORTED_VERSIONS ?= 1.13
 GO_LDFLAGS += -X $(VERSION_PACKAGE).GitVersion=$(VERSION) \
 	-X $(VERSION_PACKAGE).GitCommit=$(GIT_COMMIT) \
 	-X $(VERSION_PACKAGE).GitTreeState=$(GIT_TREE_STATE) \
@@ -33,26 +33,12 @@ ifeq ($(ROOT_PACKAGE),)
 	$(error the variable ROOT_PACKAGE must be set prior to including golang.mk)
 endif
 
-ifeq ($(origin PLATFORM), undefined)
-	ifeq ($(origin GOOS), undefined)
-		GOOS := $(shell go env GOOS)
-	endif
-	ifeq ($(origin GOARCH), undefined)
-		GOARCH := $(shell go env GOARCH)
-	endif
-	PLATFORM := $(GOOS)_$(GOARCH)
-else
-	GOOS := $(word 1, $(subst _, ,$(PLATFORM)))
-	GOARCH := $(word 2, $(subst _, ,$(PLATFORM)))
-endif
-
 GOPATH := $(shell go env GOPATH)
 ifeq ($(origin GOBIN), undefined)
 	GOBIN := $(GOPATH)/bin
 endif
 
-PLATFORMS ?= darwin_amd64 windows_amd64 linux_amd64
-COMMANDS ?= $(wildcard ${ROOT_DIR}/cmd/*)
+COMMANDS ?= $(filter-out %.md, $(wildcard ${ROOT_DIR}/cmd/*))
 BINS ?= $(foreach cmd,${COMMANDS},$(notdir ${cmd}))
 
 ifeq (${COMMANDS},)
@@ -81,8 +67,8 @@ go.build.%:
 .PHONY: go.build
 go.build: go.build.verify $(addprefix go.build., $(addprefix $(PLATFORM)., $(BINS)))
 
-.PHONY: go.build.all
-go.build.all: go.build.verify $(foreach p,$(PLATFORMS),$(addprefix go.build., $(addprefix $(p)., $(BINS))))
+.PHONY: go.build.multiarch
+go.build.multiarch: go.build.verify $(foreach p,$(PLATFORMS),$(addprefix go.build., $(addprefix $(p)., $(BINS))))
 
 .PHONY: go.clean
 go.clean:
@@ -99,7 +85,7 @@ endif
 .PHONY: go.lint
 go.lint: go.lint.verify
 	@echo "===========> Run golangci to lint source codes"
-	@$(GOBIN)/golangci-lint run $(ROOT_DIR)/...
+	@golangci-lint run $(ROOT_DIR)/...
 
 .PHONY: go.test.verify
 go.test.verify: go.build.verify
@@ -111,4 +97,4 @@ endif
 .PHONY: go.test
 go.test: go.test.verify
 	@echo "===========> Run unit test"
-	$(GO) test -count=1 -timeout=10m -short -v ./... 2>&1 | tee >(go-junit-report --set-exit-code >$(OUTPUT_DIR)/report.xml)
+	$(GO) test -count=1 -timeout=10m -short -v `go list ./...|grep -v tkestack.io/tke/test` 2>&1 | tee >(go-junit-report --set-exit-code >$(OUTPUT_DIR)/report.xml)

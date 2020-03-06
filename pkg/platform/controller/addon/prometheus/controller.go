@@ -138,10 +138,15 @@ type influxdbClient struct {
 	client  influxApi.Client
 }
 
-// more client will be added, now just influxdb
+type thanosClient struct {
+	address string
+}
+
+// more client will be added, now support influxdb, es and thanos
 type remoteClient struct {
 	influxdb *influxdbClient
 	es       *esutil.Client
+	thanos   *thanosClient
 }
 
 // Controller is responsible for performing actions dependent upon a prometheus phase.
@@ -224,6 +229,13 @@ func NewController(client clientset.Interface, prometheusInformer platformv1info
 				remoteClient.es.URL = remoteAddr
 			} else {
 				remoteClient.es = &client
+			}
+			controller.remoteClients = append(controller.remoteClients, remoteClient)
+		}
+	case "thanos":
+		for _, remoteAddr := range remoteAddress {
+			remoteClient := remoteClient{
+				thanos: &thanosClient{address: remoteAddr},
 			}
 			controller.remoteClients = append(controller.remoteClients, remoteClient)
 		}
@@ -580,17 +592,24 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 
 	// Set remote write address
 	var remoteWrites []string
-	if c.remoteType == "influxdb" {
+	switch c.remoteType {
+	case "influxdb":
 		remoteWrites, err = c.initInfluxdb(cluster.Name)
 		if err != nil {
 			return err
 		}
-	} else if c.remoteType == "elasticsearch" {
+	case "elasticsearch":
 		remoteWrites, err = c.initESAdapter(kubeClient, components)
 		if err != nil {
 			return err
 		}
 		prometheus.Status.SubVersion[PrometheusBeatService] = components.PrometheusBeatWorkLoad.Tag
+	case "thanos":
+		remoteWrites, err = c.initThanos()
+		if err != nil {
+			return err
+		}
+	default:
 	}
 
 	if len(prometheus.Spec.RemoteAddress.WriteAddr) > 0 {
@@ -635,8 +654,16 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 
 	extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
 
+	// get notify webhook address
+	var webhookAddr string
+	if prometheus.Spec.NotifyWebhook != "" {
+		webhookAddr = prometheus.Spec.NotifyWebhook
+	} else {
+		webhookAddr = c.notifyAPIAddress + "/webhook"
+	}
+
 	// secret for alertmanager
-	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(c.notifyAPIAddress)); err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(webhookAddr)); err != nil {
 		return err
 	}
 
@@ -890,22 +917,6 @@ func deployPrometheusOperatorApps(components images.Components) *appsv1.Deployme
 							Effect:   corev1.TaintEffectNoSchedule,
 						},
 					},
-					Affinity: &corev1.Affinity{
-						NodeAffinity: &corev1.NodeAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-								NodeSelectorTerms: []corev1.NodeSelectorTerm{
-									{
-										MatchExpressions: []corev1.NodeSelectorRequirement{
-											{
-												Key:      "node-role.kubernetes.io/master",
-												Operator: corev1.NodeSelectorOpExists,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
 					Containers: []corev1.Container{
 						{
 							Name:  prometheusOperatorWorkLoad,
@@ -957,9 +968,10 @@ func servicePrometheus() *corev1.Service {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      PrometheusService,
-			Namespace: metav1.NamespaceSystem,
-			Labels:    map[string]string{"kubernetes.io/name": "Prometheus", "addonmanager.kubernetes.io/mode": "Reconcile", "kubernetes.io/cluster-service": "true"},
+			Name:        PrometheusService,
+			Namespace:   metav1.NamespaceSystem,
+			Labels:      map[string]string{"kubernetes.io/name": "Prometheus", "addonmanager.kubernetes.io/mode": "Reconcile", "kubernetes.io/cluster-service": "true"},
+			Annotations: map[string]string{"prometheus.io/scrape": "true", "prometheus.io/port": "9090"},
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: selectorForPrometheus.MatchLabels,
@@ -1062,7 +1074,8 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 		rw := monitoringv1.RemoteWriteSpec{
 			URL: w,
 		}
-		if remoteType == "influxdb" {
+		switch remoteType {
+		case "influxdb":
 			if strings.Contains(w, "db=projects") {
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
@@ -1094,7 +1107,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 					BatchSendDeadline: "30s",
 				}
 			}
-		} else {
+		case "elasticsearch":
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
@@ -1109,6 +1122,23 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 				MaxSamplesPerSend: 1000,
 				BatchSendDeadline: "30s",
 			}
+		case "thanos":
+			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
+				{
+					SourceLabels: []string{"__name__"},
+					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Action:       "keep",
+				},
+			}
+			rw.QueueConfig = &monitoringv1.QueueConfig{
+				Capacity:          10000,
+				MinShards:         1000,
+				MaxShards:         1000,
+				MaxSamplesPerSend: 1000,
+				BatchSendDeadline: "30s",
+			}
+		default:
+			log.Warnf("unknown remoteType %s", remoteType)
 		}
 
 		remoteWriteSpecs = append(remoteWriteSpecs, rw)
@@ -1127,7 +1157,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 			PodMetadata: &metav1.ObjectMeta{
 				CreationTimestamp: metav1.Now(), //For validation only: https://github.com/coreos/prometheus-operator/issues/2399
 				Annotations: map[string]string{
-					"prometheus.io/scrape": "true",
+					"prometheus.io/scrape": "false",
 					"prometheus.io/port":   "9090",
 				},
 			},
@@ -1170,22 +1200,6 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 					Effect:   corev1.TaintEffectNoSchedule,
 				},
 			},
-			Affinity: &corev1.Affinity{
-				NodeAffinity: &corev1.NodeAffinity{
-					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-						NodeSelectorTerms: []corev1.NodeSelectorTerm{
-							{
-								MatchExpressions: []corev1.NodeSelectorRequirement{
-									{
-										Key:      "node-role.kubernetes.io/master",
-										Operator: corev1.NodeSelectorOpExists,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 			SecurityContext: &corev1.PodSecurityContext{
 				FSGroup:      controllerutil.Int64Ptr(2000),
 				RunAsNonRoot: controllerutil.BoolPtr(true),
@@ -1205,7 +1219,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 }
 
 func createSecretForPrometheus() *corev1.Secret {
-	config := scapeConfigForPrometheus()
+	config := scrapeConfigForPrometheus()
 
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1276,8 +1290,7 @@ var selectorForAlertManager = metav1.LabelSelector{
 	MatchLabels: map[string]string{"alertmanager": alertManagerCRDName, "app": "alertmanager"},
 }
 
-func createSecretForAlertmanager(notifyAPI string) *corev1.Secret {
-	webhookAddr := notifyAPI + "/webhook"
+func createSecretForAlertmanager(webhookAddr string) *corev1.Secret {
 	config := configForAlertManager(webhookAddr)
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1320,7 +1333,7 @@ func createAlertManagerCRD(components images.Components) *monitoringv1.Alertmana
 			PodMetadata: &metav1.ObjectMeta{
 				CreationTimestamp: metav1.Now(), //For validation only: https://github.com/coreos/prometheus-operator/issues/2399
 				Annotations: map[string]string{
-					"prometheus.io/scrape": "true",
+					"prometheus.io/scrape": "false",
 					"prometheus.io/port":   "9093",
 				},
 			},
@@ -1347,7 +1360,7 @@ func createServiceForAlerterManager() *corev1.Service {
 			Name:        AlertManagerService,
 			Namespace:   metav1.NamespaceSystem,
 			Labels:      map[string]string{"kubernetes.io/cluster-service": "true", "addonmanager.kubernetes.io/mode": "Reconcile", "kubernetes.io/name": "Alertmanager"},
-			Annotations: map[string]string{"prometheus.io/scrape": "false"},
+			Annotations: map[string]string{"prometheus.io/scrape": "true", "prometheus.io/port": "9093"},
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: selectorForAlertManager.MatchLabels,
@@ -1555,12 +1568,12 @@ func createClusterRoleForMetrics() *rbacv1.ClusterRole {
 			},
 			{
 				APIGroups: []string{"extensions"},
-				Resources: []string{"daemonsets", "deployments", "replicasets"},
+				Resources: []string{"daemonsets", "deployments", "replicasets", "ingresses"},
 				Verbs:     []string{"list", "watch"},
 			},
 			{
 				APIGroups: []string{"apps"},
-				Resources: []string{"statefulsets", "daemonsets", "deployments"},
+				Resources: []string{"statefulsets", "daemonsets", "deployments", "replicasets"},
 				Verbs:     []string{"list", "watch"},
 			},
 			{
@@ -1571,6 +1584,41 @@ func createClusterRoleForMetrics() *rbacv1.ClusterRole {
 			{
 				APIGroups: []string{"autoscaling"},
 				Resources: []string{"horizontalpodautoscalers"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"authentication.k8s.io"},
+				Resources: []string{"tokenreviews"},
+				Verbs:     []string{"create"},
+			},
+			{
+				APIGroups: []string{"authorization.k8s.io"},
+				Resources: []string{"subjectaccessreviews"},
+				Verbs:     []string{"create"},
+			},
+			{
+				APIGroups: []string{"policy"},
+				Resources: []string{"poddisruptionbudgets"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"certificates.k8s.io"},
+				Resources: []string{"certificatesigningrequests"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"storage.k8s.io"},
+				Resources: []string{"storageclasses", "volumeattachments"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"admissionregistration.k8s.io"},
+				Resources: []string{"mutatingwebhookconfigurations", "validatingwebhookconfigurations"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"networking.k8s.io"},
+				Resources: []string{"networkpolicies"},
 				Verbs:     []string{"list", "watch"},
 			},
 		},
@@ -2386,5 +2434,14 @@ func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components 
 		return remoteWrites, err
 	}
 	remoteWrites = append(remoteWrites, fmt.Sprintf("http://%s:%d/prometheus", svc.Name, 8080))
+	return remoteWrites, nil
+}
+
+func (c *Controller) initThanos() ([]string, error) {
+	var remoteWrites []string
+	for _, client := range c.remoteClients {
+		remoteWrites = append(remoteWrites, fmt.Sprintf("%s/api/v1/receive", client.thanos.address))
+	}
+
 	return remoteWrites, nil
 }

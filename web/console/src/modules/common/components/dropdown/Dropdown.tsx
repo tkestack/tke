@@ -78,12 +78,12 @@ export interface DropdownListProps extends BaseReactProps {
   placeholder?: string | JSX.Element;
 
   /**
-   * 下拉显示的项目列表
+   * 下拉显示的业务列表
    * */
   items?: DropdownListItem[];
 
   /**
-   * 当前选中的项目
+   * 当前选中的业务
    */
   selected?: DropdownListItem;
 

@@ -4,6 +4,9 @@ apiVersion: v1
 metadata:
   name: tke-business-api
   namespace: tke
+  annotations:
+    tke.prometheus.io/scrape: "true"
+    prometheus.io/scheme: https
 spec:
   selector:
     app: tke-business-api
@@ -100,11 +103,12 @@ data:
       [authentication.oidc]
 {{- if .EnableAuth }}
       client_id = "default"
-      issuer_url = "https://tke-auth/oidc"
-      external_issuer_url = "https://tke-auth/oidc"
+      issuer_url = "https://tke-auth-api/oidc"
+      external_issuer_url = "https://tke-auth-api/oidc"
       ca_file = "/app/certs/ca.crt"
       username_prefix ="-"
       username_claim = "name"
+      groups_claim = "groups"
       tenantid_claim = "federated_claims"
 {{- else }}
       client_id = {{ .OIDCClientID }}
@@ -117,6 +121,7 @@ data:
       [authentication.requestheader]
       client_ca_file = "/app/certs/ca.crt"
       username_headers = "X-Remote-User"
+      group_headers = "X-Remote-Group"
       extra_headers_prefix = "X-Remote-Extra-"
 
     [authorization]
@@ -137,6 +142,12 @@ data:
       api_server_client_config = "/app/conf/tke-registry-config.yaml"
 {{- end }}
 
+{{- if .EnableAuth }}
+      [client.auth]
+      api_server = "https://tke-auth-api"
+      api_server_client_config = "/app/conf/tke-auth-config.yaml"
+{{- end }}
+
     [features]
       initial_administrator_tenant = "{{ .TenantID }}"
       initial_administrator_user = "{{ .Username }}"
@@ -149,7 +160,7 @@ data:
       - name: tke
         cluster:
           certificate-authority: /app/certs/ca.crt
-          server: https://tke-auth/auth/authz
+          server: https://tke-auth-api/auth/authz
     users:
       - name: admin-cert
         user:
@@ -191,6 +202,28 @@ data:
         cluster:
           certificate-authority: /app/certs/ca.crt
           server: https://tke-registry-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+{{- end }}
+
+{{- if .EnableAuth }}
+  tke-auth-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-auth-api
     users:
       - name: admin-cert
         user:

@@ -27,7 +27,7 @@ export const RootReducer = combineReducers({
 
   cluster: createListReducer(FFReduxActionName.CLUSTER),
 
-  clusterVersion: reduceToPayload(ActionType.ClusterVersion, '1.8'),
+  clusterVersion: reduceToPayload(ActionType.ClusterVersion, '1.16'),
 
   namespaceList: generateFetcherReducer<RecordSet<Namespace>>({
     actionType: ActionType.FetchNamespaceList,

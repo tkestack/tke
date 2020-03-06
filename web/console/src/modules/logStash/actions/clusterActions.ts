@@ -4,16 +4,55 @@ import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import * as ActionType from '../constants/ActionType';
 import { CommonAPI } from '../../common/webapi';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import { ClusterFilter, Cluster, initValidator } from '../../common/models';
+import { ClusterFilter, Cluster, initValidator, Resource, ResourceFilter, ResourceInfo } from '../../common/models';
 import { router } from '../router';
 import { logActions } from './logActions';
 import { namespaceActions } from './namespaceActions';
 import { editLogStashActions } from './editLogStashActions';
 import { resourceConfig } from '../../../../config';
 import { logDaemonsetActions } from './logDaemonsetActions';
-import { ResourceListMapForContainerLog } from '../constants/Config';
+import { createListAction } from '@tencent/redux-list';
+import { FFReduxActionName } from '../constants/Config';
 
 type GetState = () => RootState;
+
+/** ========================== start 已存在的add的相关操作 ========================== */
+const ListAddonActions = createListAction<Resource, ResourceFilter>({
+  actionName: FFReduxActionName.OPENADDON,
+  fetcher: async (query, getState: GetState) => {
+    let clusterInfo: ResourceInfo = resourceConfig()['cluster'];
+    let response = await CommonAPI.fetchExtraResourceList({
+      query,
+      resourceInfo: clusterInfo,
+      extraResource: 'addons'
+    });
+
+    // 对结果进行排序，保证每次的结果一样，后台是通过promise.all 并行请求的，返回结果顺序不确定
+    response.records = response.records.sort((prev, next) => (prev.spec.type < next.spec.type ? 1 : -1));
+    return response;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().openAddon;
+  },
+  onFinish: (record, dispatch: Redux.Dispatch, getState: GetState) => {
+    let { route } = getState();
+
+    if (record.data.recordCount) {
+      let lcFinder = record.data.records.find(item => item.spec.type === 'LogCollector');
+      if (lcFinder) {
+        dispatch(ListAddonActions.select(lcFinder));
+        // 判断当前集群是否已经开通了集群日志功能，所有页面下都需要去判断当前的集群是否已经开通过logStash的功能,logList列表的获取会在isOpenLogStash后根据该状态选择拉取与否
+        dispatch(
+          logDaemonsetActions.applyFilter({
+            specificName: lcFinder.metadata.name,
+            clusterId: route.queries['clusterId']
+          })
+        );
+      }
+    }
+  }
+});
+/** ========================== end 已存在的add的相关操作 ========================== */
 
 /** 地域下的集群列表 */
 const fetchClusterActions = generateFetcherActionCreator({
@@ -92,11 +131,10 @@ const restActions = {
 
         dispatch(namespaceActions.applyFilter({ clusterId, regionId: +rid }));
 
-        // 判断当前集群是否已经开通了集群日志功能，所有页面下都需要去判断当前的集群是否已经开通过logStash的功能,logList列表的获取会在isOpenLogStash后根据该状态选择拉取与否
+        // 拉取已经开通的addon的列表
         dispatch(
-          logDaemonsetActions.applyFilter({
-            specificName: clusterId,
-            clusterId
+          ListAddonActions.applyFilter({
+            specificName: clusterId
           })
         );
 

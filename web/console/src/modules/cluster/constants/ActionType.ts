@@ -213,6 +213,7 @@ export const WV_MinReplicas = 'WV_MinReplicas';
 export const W_MaxReplicas = 'W_MaxReplicas';
 export const WV_MaxReplicas = 'WV_MaxReplicas';
 export const W_UpdateMetrics = 'W_UpdateMetrics';
+export const W_UpdateCronMetrics = 'W_UpdateCronMetrics';
 export const W_QueryHpaList = 'W_QueryHpaList';
 export const W_FetchHpaList = 'W_FetchHpaList';
 export const W_NodeAbnormalMigratePolicy = 'W_NodeAbnormalMigratePolicy';

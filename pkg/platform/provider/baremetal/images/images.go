@@ -20,23 +20,16 @@ import (
 	"reflect"
 	"sort"
 
+	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/containerregistry"
 )
 
-const (
-	k8sVersion = "v1.14.6"
-)
-
 type Components struct {
-	KubeAPIServer         containerregistry.Image
-	KubeControllerManager containerregistry.Image
-	KubeScheduler         containerregistry.Image
-	KubeProxy             containerregistry.Image
-
 	ETCD               containerregistry.Image
 	CoreDNS            containerregistry.Image
 	Pause              containerregistry.Image
 	NvidiaDevicePlugin containerregistry.Image
+	Keepalived         containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -51,19 +44,22 @@ func (c Components) Get(name string) *containerregistry.Image {
 }
 
 var components = Components{
-	KubeAPIServer:         containerregistry.Image{Name: "kube-apiserver", Tag: k8sVersion},
-	KubeControllerManager: containerregistry.Image{Name: "kube-controller-manager", Tag: k8sVersion},
-	KubeScheduler:         containerregistry.Image{Name: "kube-scheduler", Tag: k8sVersion},
-	KubeProxy:             containerregistry.Image{Name: "kube-proxy", Tag: k8sVersion},
-
-	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.3.12"},
-	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.2.6"},
+	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.3.18"},
+	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.6.7"},
 	Pause:              containerregistry.Image{Name: "pause", Tag: "3.1"},
 	NvidiaDevicePlugin: containerregistry.Image{Name: "nvidia-device-plugin", Tag: "1.0.0-beta4"},
+	Keepalived:         containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
 }
 
 func List() []string {
 	var items []string
+
+	for _, version := range spec.K8sVersionsWithV {
+		for _, name := range []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler", "kube-proxy"} {
+			items = append(items, containerregistry.Image{Name: name, Tag: version}.BaseName())
+		}
+	}
+
 	v := reflect.ValueOf(components)
 	for i := 0; i < v.NumField(); i++ {
 		v, _ := v.Field(i).Interface().(containerregistry.Image)

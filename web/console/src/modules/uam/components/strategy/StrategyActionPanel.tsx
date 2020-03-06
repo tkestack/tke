@@ -15,8 +15,10 @@ import {
   SearchBox,
   Table,
   Justify,
-  Select
+  Select,
+  Icon
 } from '@tea/component';
+import { cloneDeep, LinkButton } from '@src/modules/common';
 const { useState, useEffect } = React;
 // interface StrategyActionPanelState {
 //   name: string;
@@ -82,7 +84,7 @@ export const StrategyActionPanel = () => {
   const [formParamsValue, setFormParamsValue] = useState({
     name: '',
     effect: '',
-    resource: '',
+    resource: [],
     selectService: '',
     description: ''
   });
@@ -94,7 +96,7 @@ export const StrategyActionPanel = () => {
     name: '',
     effect: '',
     action: '',
-    resource: '',
+    resource: [],
     description: ''
   });
 
@@ -113,12 +115,20 @@ export const StrategyActionPanel = () => {
     const { name, effect, resource } = formParamsValue;
     const { action } = actionParamsValue;
     let disabled = false;
-    if (!name || !effect || !action.length || !resource) {
+    if (!name || !effect || !action.length || resource.length === 0) {
       disabled = true;
     }
     Object.keys(messages).forEach(item => {
-      if (messages[item]) {
-        disabled = true;
+      if (Array.isArray(messages[item])) {
+        messages[item].forEach(m => {
+          if (m) {
+            disabled = true;
+          }
+        });
+      } else {
+        if (messages[item]) {
+          disabled = true;
+        }
       }
     });
     setModalBtnDisabled(disabled);
@@ -131,10 +141,10 @@ export const StrategyActionPanel = () => {
   categoryListRecords &&
     categoryListRecords.forEach(item => {
       options.push({
-        value: item.name,
-        text: item.displayName
+        value: item.metadata.name,
+        text: item.Spec.displayName
       });
-      categoryActions[item.name] = Object.values(item.actions);
+      categoryActions[item.metadata.name] = Object.values(item.Spec.actions);
     });
   const actionList = categoryActions[formParamsValue.selectService] || [];
 
@@ -261,28 +271,46 @@ export const StrategyActionPanel = () => {
             <Form.Item
               label={t('资源')}
               required
-              status={messages.resource ? 'error' : formParamsValue.resource ? 'success' : undefined}
-              message={
-                messages.resource
-                  ? t(messages.resource)
-                  : t(
-                      '采用分段式描述方式：key1:val1/key2:val2/*，支持*模糊匹配语法，如cluster:cls-123/deployment:deploy-123/*'
-                    )
-              }
+              message={t(
+                '采用分段式描述方式：key1:val1/key2:val2/*，支持*模糊匹配语法，如cluster:cls-123/deployment:deploy-123/*'
+              )}
             >
-              <Input
-                placeholder={t('eg. cluster:cls-123/deployment:deploy-123/*')}
-                style={{ width: '350px' }}
-                defaultValue={formParamsValue.resource}
-                onChange={value => {
-                  let msg = '';
-                  if (!value) {
-                    msg = '请输入资源名称';
-                  }
-                  setFormParamsValue({ ...formParamsValue, resource: value });
-                  setMessages({ ...messages, resource: msg });
+              {formParamsValue.resource.map((resource, index) => {
+                return (
+                  <div key={index} className="tea-mb-1n">
+                    <Input
+                      placeholder={t('eg. cluster:cls-123/deployment:deploy-123/*')}
+                      style={{ width: '350px' }}
+                      defaultValue={resource}
+                      onChange={value => {
+                        let msg = '';
+                        if (!value) {
+                          msg = '请输入资源名称';
+                        }
+                        let newResource = cloneDeep(formParamsValue.resource);
+                        newResource[index] = value;
+                        let newMessagesResource = cloneDeep(messages.resource);
+                        newMessagesResource[index] = msg;
+                        setFormParamsValue({ ...formParamsValue, resource: newResource });
+                        setMessages({ ...messages, resource: newMessagesResource });
+                      }}
+                    />
+                    {messages.resource[index] ||
+                      (formParamsValue.resource[index] && (
+                        <Icon className="tea-ml-2n" type={messages.resource[index] ? 'error' : 'success'} />
+                      ))}
+                  </div>
+                );
+              })}
+              <LinkButton
+                onClick={() => {
+                  let newResource: any[] = cloneDeep(formParamsValue.resource);
+                  newResource.push('');
+                  setFormParamsValue({ ...formParamsValue, resource: newResource });
                 }}
-              />
+              >
+                新增资源
+              </LinkButton>
             </Form.Item>
             <Form.Item
               label={t('描述')}
@@ -331,20 +359,23 @@ export const StrategyActionPanel = () => {
     const { action } = actionParamsValue;
     const strategyInfo = {
       id: uuid(),
-      name,
-      service: selectService,
-      description,
-      statement: {
-        effect,
-        action,
-        resource
+      spec: {
+        displayName: name,
+        category: selectService,
+        description,
+        statement: {
+          resources: resource,
+          effect,
+          actions: action
+        }
       }
     };
+
     actions.strategy.addStrategy.start([strategyInfo]);
     actions.strategy.addStrategy.perform();
     setModalVisible(false);
     setModalBtnDisabled(true);
-    setFormParamsValue({ name: '', effect: '', resource: '', selectService: '', description: '' });
+    setFormParamsValue({ name: '', effect: '', resource: [], selectService: '', description: '' });
     setActionParamsValue({ filterKeyword: '', action: [] });
   }
 };

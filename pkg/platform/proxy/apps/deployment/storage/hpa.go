@@ -20,6 +20,8 @@ package storage
 
 import (
 	"context"
+
+	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -28,7 +30,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -64,9 +68,39 @@ func (r *HPARest) Get(ctx context.Context, name string, options *metav1.GetOptio
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
+	if controllerutil.IsClusterVersionBefore1_9(client) {
+		return listHPAsByExtensions(client, namespaceName, name, options)
+	}
+	return listHPAsByApps(client, namespaceName, name, options)
+}
+
+func listHPAsByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("deployments/horizontalpodautoscalers"), name)
+	}
+
+	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	hpaList := &autoscalingv1.HorizontalPodAutoscalerList{
+		Items: make([]autoscalingv1.HorizontalPodAutoscaler, 0),
+	}
+	for _, hpa := range hpas.Items {
+		if hpa.Spec.ScaleTargetRef.Name == deployment.ObjectMeta.Name && hpa.Spec.ScaleTargetRef.Kind == "Deployment" {
+			hpaList.Items = append(hpaList.Items, hpa)
+		}
+	}
+
+	return hpaList, nil
+}
+
+func listHPAsByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.AppsV1().Deployments(namespaceName).Get(name, *options)
+	if err != nil {
+		return nil, errors.NewNotFound(appsv1.Resource("deployments/horizontalpodautoscalers"), name)
 	}
 
 	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(metav1.ListOptions{})

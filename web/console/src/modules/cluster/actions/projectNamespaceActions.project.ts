@@ -22,10 +22,26 @@ const fetchOptions: FetchOptions = {
 const fetchProjectNamespaceActions = generateFetcherActionCreator({
   actionType: ActionType.FetchProjectNamespace,
   fetcher: async (getState: GetState, fetchOptions, dispatch: Redux.Dispatch) => {
-    let { route, projectSelection, cluster, projectNamespaceQuery } = getState();
+    let { projectNamespaceQuery } = getState();
     let response = await WebAPI.fetchProjectNamespaceList(projectNamespaceQuery);
-    let clusterList = uniq(response.records.map(namespace => namespace.spec.clusterName));
-    dispatch(projectNamespaceActions.initClusterList(clusterList));
+
+    let clusterList = uniq(
+      response.records.map(namespace => ({
+        clusterId: namespace.spec.clusterName,
+        clusterDisplayName: namespace.spec.clusterDisplayName,
+        clusterVersion: namespace.spec.clusterVersion
+      })),
+      'clusterId'
+    );
+    let clusterListRecord = clusterList.map(item => {
+      return {
+        metadata: { name: item.clusterId },
+        spec: { displayName: item.clusterDisplayName },
+        status: { version: item.clusterVersion }
+      };
+    });
+
+    dispatch(projectNamespaceActions.initClusterList(clusterListRecord));
     return response;
   },
   finish: async (dispatch: Redux.Dispatch, getState: GetState) => {
@@ -68,7 +84,7 @@ const restActions = {
     };
   },
 
-  /** 选择项目 */
+  /** 选择业务 */
   selectProject: (project: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { route, cluster, projectNamespaceQuery } = getState(),
@@ -93,15 +109,9 @@ const restActions = {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let result: RecordSet<Cluster> = {
         recordCount: clusterList.length,
-        records: []
+        records: clusterList
       };
-      result.records = clusterList.map(item => {
-        return {
-          metadata: { name: item },
-          spec: { displayName: '-' },
-          status: {}
-        };
-      });
+
       dispatch({
         type: FFReduxActionName.CLUSTER + '_FetchDone',
         payload: {
@@ -109,10 +119,6 @@ const restActions = {
           trigger: 'Done'
         }
       });
-      // //项目不一样集群不一定一样，导致不能取url上面的做默认值
-      // let defaultCluster = result.records[0] ? result.records[0] : null;
-
-      // defaultCluster && dispatch(projectNamespaceActions.selectCluster(defaultCluster));
     };
   },
 
@@ -121,10 +127,14 @@ const restActions = {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { route } = getState(),
         urlParams = router.resolve(route);
+      dispatch(
+        clusterActions.initClusterVersion(cluster.status && cluster.status.version ? cluster.status.version : '1.14.4')
+      );
       dispatch({
         type: FFReduxActionName.CLUSTER + '_Selection',
         payload: cluster
       });
+
       router.navigate(
         urlParams,
         Object.assign(route.queries, {

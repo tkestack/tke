@@ -33,9 +33,19 @@ type MonitorConfiguration struct {
 
 type Storage struct {
 	// +optional
+	Thanos *ThanosStorage `json:"thanos,omitempty"`
+	// +optional
 	InfluxDB *InfluxDBStorage `json:"influxDB,omitempty"`
 	// +optional
 	ElasticSearch *ElasticSearchStorage `json:"elasticSearch,omitempty"`
+}
+
+type ThanosStorage struct {
+	Servers []ThanosStorageServer `json:"servers"`
+}
+
+type ThanosStorageServer struct {
+	Address string `json:"address"`
 }
 
 type InfluxDBStorage struct {

@@ -19,11 +19,13 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/emicklei/go-restful"
 	"golang.org/x/oauth2"
-	"net/http"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
+	"tkestack.io/tke/pkg/gateway/requestheader"
 )
 
 // GroupName is the api group name for gateway.
@@ -34,8 +36,12 @@ const Version = "v1"
 
 // RegisterRoute is used to register prefix path routing matches for all
 // configured backend components.
-func RegisterRoute(container *restful.Container, cfg *gatewayconfig.GatewayConfiguration, oauthConfig *oauth2.Config, oidcHTTPClient *http.Client, oidcAuthenticator *oidc.Authenticator) error {
-	registerTokenRoute(container, oauthConfig, oidcHTTPClient, oidcAuthenticator, cfg.DisableOIDCProxy)
+func RegisterRoute(container *restful.Container, cfg *gatewayconfig.GatewayConfiguration, oauthConfig *oauth2.Config, oidcHTTPClient *http.Client, oidcAuthenticator *oidc.Authenticator, headerRequest bool) error {
+	if !headerRequest {
+		registerTokenRoute(container, oauthConfig, oidcHTTPClient, oidcAuthenticator, cfg.DisableOIDCProxy)
+	} else {
+		requestheader.RegisterTokenRoute(container)
+	}
 	registerSysInfoRoute(container, cfg)
 	registerLogoutRoute(container)
 	return nil

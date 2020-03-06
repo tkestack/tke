@@ -329,6 +329,22 @@ type ClusterFeature struct {
 	GPUType *GPUType
 	// +optional
 	EnableMasterSchedule bool
+	// +optional
+	HA *HA
+}
+
+type HA struct {
+	TKEHA        *TKEHA
+	ThirdPartyHA *ThirdPartyHA
+}
+
+type TKEHA struct {
+	VIP string
+}
+
+type ThirdPartyHA struct {
+	VIP   string
+	VPort int32
 }
 
 // ClusterProperty records the attribute information of the cluster.
@@ -707,6 +723,8 @@ type PrometheusSpec struct {
 	Version       string
 	SubVersion    map[string]string
 	RemoteAddress PrometheusRemoteAddr
+	// +optional
+	NotifyWebhook string
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
