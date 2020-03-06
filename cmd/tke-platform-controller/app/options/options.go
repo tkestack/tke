@@ -19,11 +19,18 @@
 package options
 
 import (
+	"time"
+
 	"github.com/spf13/pflag"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
 	provideroptions "tkestack.io/tke/pkg/platform/provider/options"
 	"tkestack.io/tke/pkg/util/log"
+)
+
+const (
+	defaultSyncPeriod      = 5 * time.Minute
+	defaultConcurrentSyncs = 10
 )
 
 // Options is the main context object for the TKE controller manager.
@@ -36,6 +43,9 @@ type Options struct {
 	Registry          *apiserveroptions.RegistryOptions
 	Provider          *provideroptions.Options
 	FeatureOptions    *FeatureOptions
+
+	ClusterController *ClusterControllerOptions
+	MachineController *MachineControllerOptions
 }
 
 // NewOptions creates a new Options with a default config.
@@ -49,6 +59,9 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		Registry:          apiserveroptions.NewRegistryOptions(),
 		Provider:          provideroptions.NewOptions(),
 		FeatureOptions:    NewFeatureOptions(),
+
+		ClusterController: NewClusterControllerOptions(),
+		MachineController: NewMachineControllerOptions(),
 	}
 }
 
