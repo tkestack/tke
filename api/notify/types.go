@@ -73,6 +73,8 @@ type ChannelSpec struct {
 	Wechat *ChannelWechat
 	// +optional
 	SMTP *ChannelSMTP
+	// +optional
+	Webhook *ChannelWebhook
 }
 
 // ChannelStatus represents information about the status of a cluster.
@@ -118,6 +120,14 @@ type ChannelSMTP struct {
 	TLS      bool
 	Email    string
 	Password string
+}
+
+// ChannelWebhook indicates a channel configuration for sending notifications
+// to the webhook server.
+type ChannelWebhook struct {
+	URL string
+	// +optional
+	Headers map[string]string
 }
 
 // +genclient
