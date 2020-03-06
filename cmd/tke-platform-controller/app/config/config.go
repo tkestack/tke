@@ -22,6 +22,10 @@ import (
 	"fmt"
 	"net"
 
+	machineconfig "tkestack.io/tke/pkg/platform/controller/machine/config"
+
+	clusterconfig "tkestack.io/tke/pkg/platform/controller/cluster/config"
+
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	apiserver "k8s.io/apiserver/pkg/server"
@@ -48,6 +52,9 @@ type Config struct {
 	Provider                      *providerconfig.Config
 	Component                     controlleroptions.ComponentConfiguration
 	Features                      *options.FeatureOptions
+
+	ClusterController clusterconfig.ClusterControllerConfiguration
+	MachineController machineconfig.MachineControllerConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -98,5 +105,13 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err := opts.Debug.ApplyTo(&controllerManagerConfig.Component.Debugging); err != nil {
 		return nil, err
 	}
+
+	if err := opts.ClusterController.ApplyTo(&controllerManagerConfig.ClusterController); err != nil {
+		return nil, err
+	}
+	if err := opts.MachineController.ApplyTo(&controllerManagerConfig.MachineController); err != nil {
+		return nil, err
+	}
+
 	return controllerManagerConfig, nil
 }
