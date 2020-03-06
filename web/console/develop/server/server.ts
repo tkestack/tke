@@ -36,7 +36,8 @@ function setupWebpackDevelopServer(app: express.Express) {
     stats: { colors: true },
     poll: true,
     quiet: false,
-    reload: true
+    reload: true,
+    writeToDisk: true
   });
 
   let hotMiddleware = require('webpack-hot-middleware')(compiler, { reload: true });

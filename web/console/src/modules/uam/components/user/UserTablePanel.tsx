@@ -70,8 +70,11 @@ export const UserTablePanel = () => {
   return (
     <React.Fragment>
       <TablePanel
+        recordKey={(record) => {
+          return record.metadata.name;
+        }}
         columns={columns}
-        rowDisabled={record => record.status.phase === 'Deleting'}
+        rowDisabled={record => record.status && record.status.phase === 'Deleting'}
         model={userList}
         action={actions.user}
         emptyTips={emptyTips}

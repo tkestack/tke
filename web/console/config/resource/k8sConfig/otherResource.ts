@@ -198,6 +198,39 @@ export const user = (k8sVersion: string) => {
   });
 };
 
+/** roles的配置 */
+export const role = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'role',
+    requestType: {
+      list: 'roles'
+    }
+  });
+};
+
+/** localgroups的配置 */
+export const localgroup = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'localgroup',
+    requestType: {
+      list: 'localgroups'
+    }
+  });
+};
+
+/** groups的配置 */
+export const group = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'group',
+    requestType: {
+      list: 'groups'
+    }
+  });
+};
+
 /** category的配置 */
 export const category = (k8sVersion: string) => {
   return generateResourceInfo({

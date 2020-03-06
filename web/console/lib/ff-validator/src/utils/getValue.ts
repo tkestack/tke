@@ -1,5 +1,5 @@
-import { ValidatorModel, ValidatorStatusEnum } from "../Model";
-import { Validation } from "../Validation";
+import { ValidatorModel, ValidatorStatusEnum } from '../Model';
+import { Validation } from '../Validation';
 
 /**
  * 获得校验结果，以 Validation的形式返回
@@ -20,7 +20,7 @@ export const getValue = (options: {
       finalResult.push(
         specificValidator
           ? specificValidator
-          : { status: ValidatorStatusEnum.Failed, message: "" }
+          : { status: ValidatorStatusEnum.Failed, message: '' }
       );
     });
   } else {
