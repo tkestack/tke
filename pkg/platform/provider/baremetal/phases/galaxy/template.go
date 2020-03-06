@@ -50,6 +50,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
+          - name: DOCKER_HOST
+            value: unix:///host/run/docker.sock
         resources:
           requests:
             cpu: 100m
@@ -74,7 +76,7 @@ spec:
         - name: cni-state
           mountPath: /var/lib/cni
         - name: docker-sock
-          mountPath: /run/docker.sock
+          mountPath: /host/run/
       tolerations:
       - effect: NoSchedule
         operator: Exists
@@ -110,7 +112,7 @@ spec:
         name: cni-etc
       - name: docker-sock
         hostPath:
-          path: /run/docker.sock
+          path: /run/
 `
 
 	//GalaxyCM decoded as galaxy & cni configMap
