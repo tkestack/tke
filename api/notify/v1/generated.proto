@@ -83,6 +83,9 @@ message ChannelSpec {
 
   // +optional
   optional ChannelSMTP smtp = 6;
+
+  // +optional
+  optional ChannelWebhook webhook = 7;
 }
 
 // ChannelStatus represents information about the status of a cluster.
@@ -101,6 +104,15 @@ message ChannelTencentCloudSMS {
 
   // +optional
   optional string extend = 3;
+}
+
+// ChannelWebhook indicates a channel configuration for sending notifications
+// to the webhook server.
+message ChannelWebhook {
+  optional string url = 1;
+
+  // +optional
+  map<string, string> headers = 2;
 }
 
 // ChannelWechat indicates a channel configuration for sending template
