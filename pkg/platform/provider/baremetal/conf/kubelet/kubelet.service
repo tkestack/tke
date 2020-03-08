@@ -3,6 +3,7 @@ Description=kubelet: The Kubernetes Node Agent
 Documentation=https://kubernetes.io/docs/
 
 [Service]
+User=root
 ExecStart=/usr/bin/kubelet
 Restart=always
 StartLimitInterval=0
