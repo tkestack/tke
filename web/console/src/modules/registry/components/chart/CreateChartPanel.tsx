@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { OperationState } from '@tencent/qcloud-redux-workflow';
+import { OperationState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Button, Card, ContentView, Icon, Input, Justify, Segment, Text } from '@tencent/tea-component';
 
-import { FormPanel } from '../../../common/components';
+import { FormPanel } from '@tencent/ff-component';
 import { router } from '../../router';
 import { RootProps } from '../RegistryApp';
 
@@ -56,7 +56,10 @@ export class CreateChartPanel extends React.Component<RootProps, any> {
                 </FormPanel.Item>
                 <FormPanel.Item label={t('权限类型')}>
                   <Segment
-                    options={[{ value: 'Public', text: t('公有') }, { value: 'Private', text: t('私有') }]}
+                    options={[
+                      { value: 'Public', text: t('公有') },
+                      { value: 'Private', text: t('私有') }
+                    ]}
                     value={this.props.chartCreation.visibility}
                     onChange={value => this.props.actions.chart.selectChartVisibility(value)}
                   />

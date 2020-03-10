@@ -1,18 +1,24 @@
 import { initValidator } from './../../common/models/Validation';
-import { extend, deepClone, uuid } from '@tencent/qcloud-lib';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
+import {
+  extend,
+  deepClone,
+  uuid,
+  createFFListActions,
+  generateWorkflowActionCreator,
+  OperationTrigger,
+  isSuccessWorkflow
+} from '@tencent/ff-redux';
 import { RootState, Chart, ChartFilter } from '../models';
 import * as ActionType from '../constants/ActionType';
 import { InitChart } from '../constants/Config';
 import * as WebAPI from '../WebAPI';
 import { router } from '../router';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { createListAction } from '@tencent/redux-list';
 import { ChartCreation } from '../models/Chart';
 
 type GetState = () => RootState;
 
-const FFModelChartActions = createListAction<Chart, ChartFilter>({
+const FFModelChartActions = createFFListActions<Chart, ChartFilter>({
   actionName: 'chart',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchChartList(query);

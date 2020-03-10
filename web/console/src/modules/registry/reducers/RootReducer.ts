@@ -1,7 +1,11 @@
 import { combineReducers } from 'redux';
 
-import { createFFListReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
-import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
+import {
+  createFFListReducer,
+  generateWorkflowReducer,
+  reduceToPayload,
+  generateFetcherReducer
+} from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';
 import { InitApiKey, InitRepo, InitChart, InitImage, Default_D_URL } from '../constants/Config';
@@ -59,9 +63,9 @@ export const RootReducer = combineReducers({
   }),
 
   /** chart group */
-  chart: createListReducer('chart'),
+  chart: createFFListReducer('chart'),
 
-  chartIns: createListReducer('chartIns'),
+  chartIns: createFFListReducer('chartIns'),
 
   createChart: generateWorkflowReducer({
     actionType: ActionType.CreateChart

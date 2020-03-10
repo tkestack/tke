@@ -1,5 +1,4 @@
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
+import { WorkflowState, FetcherState, FFListModel } from '@tencent/ff-redux';
 import { ApiKey, ApiKeyFilter, ApiKeyCreation } from './ApiKey';
 import { Repo, RepoFilter, RepoCreation } from './Repo';
 import { Image, ImageFilter, ImageCreation } from './Image';
@@ -66,9 +65,9 @@ export interface RootState {
 
   /** -------- chart group ----- */
 
-  chart?: ListModel<Chart, ChartFilter>;
+  chart?: FFListModel<Chart, ChartFilter>;
 
-  chartIns?: ListModel<ChartIns, ChartInsFilter>;
+  chartIns?: FFListModel<ChartIns, ChartInsFilter>;
 
   /** 创建仓库表单参数 */
   chartCreation?: ChartCreation;

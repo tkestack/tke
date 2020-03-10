@@ -1,14 +1,13 @@
-import { extend } from '@tencent/qcloud-lib';
+import { extend, createFFListActions } from '@tencent/ff-redux';
 import { RootState, ChartIns, ChartInsFilter } from '../models';
 import * as ActionType from '../constants/ActionType';
 import * as WebAPI from '../WebAPI';
 import { router } from '../router';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { createListAction } from '@tencent/redux-list';
 
 type GetState = () => RootState;
 
-const FFModelChartInsActions = createListAction<ChartIns, ChartInsFilter>({
+const FFModelChartInsActions = createFFListActions<ChartIns, ChartInsFilter>({
   actionName: 'chartIns',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchChartInsList(query);
