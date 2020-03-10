@@ -11,6 +11,10 @@ export const CreateRepo = 'CreateRepo';
 export const UpdateRepoCreation = 'UpdateRepoCreation';
 export const DeleteRepo = 'DeleteRepo';
 
+export const CreateChart = 'CreateChart';
+export const UpdateChartCreation = 'UpdateChartCreation';
+export const DeleteChart = 'DeleteChart';
+
 /** ----- 镜像相关 ----- */
 export const CreateImage = 'CreateImage';
 export const UpdateImageCreation = 'UpdateImageCreation';

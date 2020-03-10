@@ -11,6 +11,7 @@ import { router } from '../router';
 import { configStore } from '../stores/RootStore';
 import { ApiKeyContainer } from './apikey/ApiKeyContainer';
 import { RepoContainer } from './repo/RepoContainer';
+import { ChartContainer } from './chart/ChartContainer';
 
 const store = configStore();
 
@@ -35,7 +36,10 @@ export interface RootProps extends RootState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect(
+  state => state,
+  mapDispatchToProps
+)
 @((router.serve as any)())
 class RegistryApp extends React.Component<RootProps, {}> {
   componentDidMount() {
@@ -50,6 +54,8 @@ class RegistryApp extends React.Component<RootProps, {}> {
       return <ApiKeyContainer {...this.props} />;
     } else if (urlParam['sub'] === 'repo') {
       return <RepoContainer {...this.props} />;
+    } else if (urlParam['sub'] === 'chart') {
+      return <ChartContainer {...this.props} />;
     } else {
       return <RepoContainer {...this.props} />;
     }

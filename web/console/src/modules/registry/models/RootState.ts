@@ -1,9 +1,9 @@
-import { FetcherState, FFListModel, WorkflowState } from '@tencent/ff-redux';
-
+import { WorkflowState, FetcherState, FFListModel } from '@tencent/ff-redux';
+import { ApiKey, ApiKeyFilter, ApiKeyCreation } from './ApiKey';
+import { Repo, RepoFilter, RepoCreation } from './Repo';
+import { Image, ImageFilter, ImageCreation } from './Image';
+import { Chart, ChartFilter, ChartIns, ChartInsFilter, ChartCreation } from './Chart';
 import { RouteState } from '../../../../helpers';
-import { ApiKey, ApiKeyCreation, ApiKeyFilter } from './ApiKey';
-import { Image, ImageCreation, ImageFilter } from './Image';
-import { Repo, RepoCreation, RepoFilter } from './Repo';
 
 type ApiKeyWorkflow = WorkflowState<ApiKey, void>;
 type ApiKeyCreateWorkflow = WorkflowState<ApiKeyCreation, void>;
@@ -11,6 +11,8 @@ type RepoWorkflow = WorkflowState<Repo, void>;
 type RepoCreateWorkflow = WorkflowState<RepoCreation, void>;
 type ImageWorkflow = WorkflowState<Image, void>;
 type ImageCreateWorkflow = WorkflowState<ImageCreation, void>;
+type ChartWorkflow = WorkflowState<Chart, void>;
+type ChartCreateWorkflow = WorkflowState<ChartCreation, void>;
 
 export interface RootState {
   /** 路由 */
@@ -60,4 +62,19 @@ export interface RootState {
 
   /** docker registry */
   dockerRegistryUrl?: FetcherState<string>;
+
+  /** -------- chart group ----- */
+
+  chart?: FFListModel<Chart, ChartFilter>;
+
+  chartIns?: FFListModel<ChartIns, ChartInsFilter>;
+
+  /** 创建仓库表单参数 */
+  chartCreation?: ChartCreation;
+
+  /** 创建仓库工作流 */
+  createChart?: ChartCreateWorkflow;
+
+  /** 删除仓库工作流 */
+  deleteChart?: ChartWorkflow;
 }
