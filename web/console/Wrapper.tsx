@@ -109,6 +109,16 @@ const commonRouterConfig: RouterConfig[] = [
     watchModule: [ConsoleModuleEnum.Auth],
     subRouterConfig: [
       {
+        url: '/tkestack/uam/role',
+        title: '角色管理',
+        watchModule: ConsoleModuleEnum.Auth
+      },
+      {
+        url: '/tkestack/uam/group',
+        title: '用户组管理',
+        watchModule: ConsoleModuleEnum.Auth
+      },
+      {
         url: '/tkestack/uam/user',
         title: '用户管理',
         watchModule: ConsoleModuleEnum.Auth

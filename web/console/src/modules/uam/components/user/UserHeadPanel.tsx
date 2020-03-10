@@ -18,9 +18,7 @@ export const UserHeadPanel = () => {
               <a href="javascript:history.go(-1);">
                 <Icon type="btnback" />
               </a>
-              <span style={{ marginLeft: '10px' }}>
-                <Trans>用户管理</Trans>
-              </span>
+              <span style={{ marginLeft: '10px' }}>{sub}</span>
             </React.Fragment>
           ) : (
             <Trans>用户管理</Trans>

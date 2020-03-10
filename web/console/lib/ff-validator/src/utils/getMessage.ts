@@ -1,4 +1,4 @@
-import { ValidatorModel } from "../Model";
+import { ValidatorModel } from '../Model';
 
 /**
  * 获得校验结果，以 Validation的形式返回

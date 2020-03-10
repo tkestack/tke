@@ -14,15 +14,15 @@ export const cloneDeep = function(item) {
     }
   });
 
-  if (typeof result == "undefined") {
-    if (Object.prototype.toString.call(item) === "[object Array]") {
+  if (typeof result == 'undefined') {
+    if (Object.prototype.toString.call(item) === '[object Array]') {
       result = [];
       item.forEach(function(child, index, array) {
         result[index] = cloneDeep(child);
       });
-    } else if (typeof item == "object") {
+    } else if (typeof item == 'object') {
       // testing that this is DOM
-      if (item.nodeType && typeof item.cloneNode == "function") {
+      if (item.nodeType && typeof item.cloneNode == 'function') {
         var result = item.cloneNode(true);
       } else if (!item.prototype) {
         // check that this is a literal
