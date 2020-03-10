@@ -4,11 +4,7 @@ import { createFFListReducer, generateWorkflowReducer, reduceToPayload } from '@
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 
 import * as ActionType from '../constants/ActionType';
-<<<<<<< HEAD
 import { InitApiKey, InitRepo, InitChart, InitImage, Default_D_URL } from '../constants/Config';
-=======
-import { Default_D_URL, InitApiKey, InitImage, InitRepo } from '../constants/Config';
->>>>>>> upstream/master
 import { router } from '../router';
 
 export const RootReducer = combineReducers({

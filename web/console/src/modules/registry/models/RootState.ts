@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { WorkflowState } from '@tencent/qcloud-redux-workflow';
 import { FetcherState } from '@tencent/qcloud-redux-fetcher';
 import { ApiKey, ApiKeyFilter, ApiKeyCreation } from './ApiKey';
@@ -6,14 +5,6 @@ import { Repo, RepoFilter, RepoCreation } from './Repo';
 import { Image, ImageFilter, ImageCreation } from './Image';
 import { Chart, ChartFilter, ChartIns, ChartInsFilter, ChartCreation } from './Chart';
 import { RouteState } from '../../../../helpers';
-=======
-import { FetcherState, FFListModel, WorkflowState } from '@tencent/ff-redux';
-
-import { RouteState } from '../../../../helpers';
-import { ApiKey, ApiKeyCreation, ApiKeyFilter } from './ApiKey';
-import { Image, ImageCreation, ImageFilter } from './Image';
-import { Repo, RepoCreation, RepoFilter } from './Repo';
->>>>>>> upstream/master
 
 type ApiKeyWorkflow = WorkflowState<ApiKey, void>;
 type ApiKeyCreateWorkflow = WorkflowState<ApiKeyCreation, void>;
