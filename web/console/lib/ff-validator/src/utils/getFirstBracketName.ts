@@ -3,6 +3,6 @@
  * @return string
  */
 export const getBracketName = (keyName: string) => {
-  let bracketIndex = keyName.indexOf("[");
+  let bracketIndex = keyName.indexOf('[');
   return bracketIndex > -1 ? keyName.slice(0, bracketIndex) : keyName;
 };

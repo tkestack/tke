@@ -23,6 +23,7 @@
 /web/installer/node_modules
 /web/.pnp
 /web/.pnp.js
+/web/console/webpack/dist
 
 # Output of backend and frontend
 /_output

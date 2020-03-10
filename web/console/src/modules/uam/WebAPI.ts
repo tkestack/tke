@@ -1,14 +1,103 @@
 import { QueryState, RecordSet } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-
-import { resourceConfig } from '../../../config';
 import {
     Method, operationResult, reduceK8sQueryString, reduceK8sRestfulPath, reduceNetworkRequest
 } from '../../../helpers';
-import { RequestParams, ResourceInfo } from '../common/models';
-import { Category, Strategy, StrategyFilter, User, UserFilter } from './models';
+import {
+  User,
+  UserFilter,
+  Strategy,
+  StrategyFilter,
+  Category,
+  Role,
+  RoleFilter,
+  RoleInfoFilter,
+  RolePlain,
+  RoleAssociation,
+  Group,
+  GroupFilter,
+  GroupInfoFilter,
+  GroupPlain,
+  GroupAssociation,
+  UserPlain,
+  CommonUserFilter,
+  CommonUserAssociation,
+  PolicyInfoFilter,
+  PolicyPlain,
+  PolicyFilter,
+  PolicyAssociation,
+} from './models';
+import { ResourceInfo, RequestParams } from '../common/models';
+import { resourceConfig } from '../../../config';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { METHODS } from 'http';
 
 const tips = seajs.require('tips');
+
+class RequestResult {
+  data: any;
+  error: any;
+}
+const SEND = async (
+  url: string,
+  method: string,
+  bodyData: any,
+  tipErr: boolean = true
+) => {
+  // 构建参数
+  let params: RequestParams = {
+    method: method,
+    url,
+    data: bodyData
+  };
+  let resp = new RequestResult();
+  try {
+    let response = await reduceNetworkRequest(params);
+    if (response.code !== 0) {
+      if (tipErr === true) {
+        tips.error(response.message, 2000);
+      }
+      resp.data = bodyData;
+      resp.error = response.message;
+    } else {
+      if (method !== Method.get) {
+        tips.success('操作成功', 2000);
+      }
+      resp.data = response.data;
+      resp.error = null;
+    }
+    return resp;
+  } catch (error) {
+    if (tipErr === true) {
+      tips.error(error.response.data.message, 2000);
+    }
+    resp.data = bodyData;
+    resp.error = error.response.data.message;
+    return resp;
+  }
+};
+
+const GET = async (url: string, tipErr: boolean = true) => {
+  let response = await SEND(url, Method.get, null, tipErr);
+  return response;
+};
+const DELETE = async (url: string, tipErr: boolean = true) => {
+  let response = await SEND(url, Method.delete, null, tipErr);
+  return response;
+};
+const POST = async (url: string, bodyData: any, tipErr: boolean = true) => {
+  let response = await SEND(url, Method.post, JSON.stringify(bodyData), tipErr);
+  return response;
+};
+
+const PUT = async (url: string, bodyData: any, tipErr: boolean = true) => {
+  let response = await SEND(url, Method.put, JSON.stringify(bodyData), tipErr);
+  return response;
+};
+
+const PATCH = async (url: string, bodyData: any, tipErr: boolean = true) => {
+  let response = await SEND(url, Method.patch, JSON.stringify(bodyData), tipErr);
+  return response;
+};
 
 /**
  * 用户列表的查询
@@ -285,9 +374,9 @@ export async function updateStrategy(strategy) {
           resourceVersion: strategy.metadata.resourceVersion
         },
         spec: Object.assign({}, strategy.spec, {
+          displayName: strategy.name ? strategy.name : strategy.spec.displayName,
           description: strategy.description ? strategy.description : strategy.spec.description,
           statement: strategy.statement ? strategy.statement : strategy.spec.statement,
-          displayName: strategy.name
         })
       }
     });
@@ -424,4 +513,470 @@ export async function removeAssociatedUser([{ id, userNames }]) {
     tips.error(error.response.data.message, 2000);
     return operationResult(data, error.response);
   }
+}
+
+/**
+ * 角色列表的查询
+ * @param query 列表查询条件参数
+ */
+export async function fetchRoleList(query: QueryState<RoleFilter>) {
+  const { keyword, filter } = query;
+  const queryObj = keyword ? {
+    'fieldSelector=spec.displayName': keyword
+  } : {};
+
+  const resourceInfo: ResourceInfo = resourceConfig()['role'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let roles: Role[] = (!rr.error && rr.data.items) ? rr.data.items : [];
+  const result: RecordSet<Role> = {
+    recordCount: roles.length,
+    records: roles
+  };
+  return result;
+}
+
+/**
+ * 角色的查询
+ * @param filter 查询条件参数
+ */
+export async function fetchRole(filter: RoleInfoFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()['role'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
+  let rr: RequestResult = await GET(url);
+  return rr.data;
+}
+
+/**
+ * 增加角色
+ * @param roleInfo
+ */
+export async function addRole([roleInfo]) {
+  const resourceInfo: ResourceInfo = resourceConfig()['role'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  let rr: RequestResult = await POST(url, roleInfo);
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 修改角色
+ * @param roleInfo
+ */
+export async function updateRole([roleInfo]) {
+  const resourceInfo: ResourceInfo = resourceConfig()['role'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: roleInfo.metadata.name });
+  let rr: RequestResult = await PUT(url, roleInfo);
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 删除角色
+ * @param role
+ */
+export async function deleteRole([role]: Role[]) {
+  let resourceInfo: ResourceInfo = resourceConfig()['role'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: role.metadata.name });
+  let rr: RequestResult  = await DELETE(url);
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 角色列表的查询，不参杂其他场景参数
+ * @param query 列表查询条件参数
+ */
+export async function fetchRolePlainList(query: QueryState<RoleFilter>) {
+  const { keyword, filter } = query;
+  const queryObj = keyword ? {
+    'fieldSelector=spec.displayName': keyword
+  } : {};
+
+  const resourceInfo: ResourceInfo = resourceConfig()['role'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let items: RolePlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
+    return {
+      id: i.metadata && i.metadata.name,
+      name: i.metadata && i.metadata.name,
+      displayName: i.spec && i.spec.displayName,
+      description: i.spec && i.spec.description,
+    };
+  }) : [];
+  const result: RecordSet<RolePlain> = {
+    recordCount: items.length,
+    records: items
+  };
+  return result;
+}
+
+/**
+ * 已经绑定的角色列表的查询
+ * @param query 列表查询条件参数
+ */
+export async function fetchRoleAssociatedList(query: QueryState<RoleFilter>) {
+  const { search, filter } = query;
+  const queryObj =  {};
+
+  const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'roles' });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let items: RolePlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
+    return {
+      id: i.metadata && i.metadata.name,
+      name: i.metadata && i.metadata.name,
+      displayName: i.spec && i.spec.displayName,
+      description: i.spec && i.spec.description,
+    };
+  }) : [];
+  const result: RecordSet<RolePlain> = {
+    recordCount: items.length,
+    records: items
+  };
+  return result;
+}
+
+/**
+ * 关联角色
+ * @param param0
+ * @param params
+ */
+export async function associateRole([role]: RoleAssociation[], params: RoleFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'binding' });
+  let rr: RequestResult = await POST(url, { roles: role.addRoles });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 解关联角色
+ * @param param0
+ * @param params
+ */
+export async function disassociateRole([role]: RoleAssociation[], params: RoleFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'unbinding' });
+  let rr: RequestResult = await POST(url, { roles: role.removeRoles });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 用户组列表的查询
+ * @param query 列表查询条件参数
+ */
+export async function fetchGroupList(query: QueryState<GroupFilter>) {
+  const { keyword, filter } = query;
+  const queryObj = keyword ? {
+    'fieldSelector=spec.displayName': keyword
+  } : {};
+
+  const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let groups: Group[] = (!rr.error && rr.data.items) ? rr.data.items : [];
+  const result: RecordSet<Group> = {
+    recordCount: groups.length,
+    records: groups
+  };
+  return result;
+}
+
+/**
+ * 用户组的查询
+ * @param filter 查询条件参数
+ */
+export async function fetchGroup(filter: GroupInfoFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
+  let rr: RequestResult = await GET(url);
+  return rr.data;
+}
+
+/**
+ * 增加用户组
+ * @param groupInfo
+ */
+export async function addGroup([groupInfo]) {
+  const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  let rr: RequestResult = await POST(url, groupInfo);
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 修改用户组
+ * @param groupInfo
+ */
+export async function updateGroup([groupInfo]) {
+  const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: groupInfo.metadata.name });
+  let rr: RequestResult = await PUT(url, groupInfo);
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 删除用户组
+ * @param group
+ */
+export async function deleteGroup([group]: Group[]) {
+  let resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: group.metadata.name });
+  let rr: RequestResult  = await DELETE(url);
+  return operationResult(rr.data, rr.error);
+}
+
+
+/**
+ * 用户组列表的查询，不参杂其他场景参数
+ * @param query 列表查询条件参数
+ */
+export async function fetchGroupPlainList(query: QueryState<GroupFilter>) {
+  const { search, filter } = query;
+  const queryObj =  {
+    'fieldSelector=keyword': search || ''
+  };
+
+  const resourceInfo: ResourceInfo = resourceConfig()['group'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let items: GroupPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
+    return {
+      id: i.metadata && i.metadata.name,
+      name: i.metadata && i.metadata.name,
+      displayName: i.spec && i.spec.displayName,
+      description: i.spec && i.spec.description,
+    };
+  }) : [];
+  const result: RecordSet<GroupPlain> = {
+    recordCount: items.length,
+    records: items
+  };
+  return result;
+}
+
+/**
+ * 已经绑定的用户组列表的查询
+ * @param query 列表查询条件参数
+ */
+export async function fetchGroupAssociatedList(query: QueryState<GroupFilter>) {
+  const { search, filter } = query;
+  const queryObj =  {};
+
+  const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'groups' });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let items: GroupPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
+    return {
+      id: i.metadata && i.metadata.name,
+      name: i.metadata && i.metadata.name,
+      displayName: i.spec && i.spec.displayName,
+      description: i.spec && i.spec.description,
+    };
+  }) : [];
+  const result: RecordSet<GroupPlain> = {
+    recordCount: items.length,
+    records: items
+  };
+  return result;
+}
+
+/**
+ * 关联用户组
+ * @param param0
+ * @param params
+ */
+export async function associateGroup([group]: GroupAssociation[], params: GroupFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'binding' });
+  let rr: RequestResult = await POST(url, { groups: group.addGroups });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 解关联用户组
+ * @param param0
+ * @param params
+ */
+export async function disassociateGroup([group]: GroupAssociation[], params: GroupFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'unbinding' });
+  let rr: RequestResult = await POST(url, { groups: group.removeGroups });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 用户列表的查询，不跟localidentities混用，不参杂其他场景参数，如策略、角色
+ * @param query 列表查询条件参数
+ */
+export async function fetchCommonUserList(query: QueryState<CommonUserFilter>) {
+  const { search, filter } = query;
+  const queryObj =  {
+    'fieldSelector=keyword': search || ''
+  };
+
+  const resourceInfo: ResourceInfo = resourceConfig()['user'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let users: UserPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
+    /** localgroup对应localidentity，role对应user，localidentity的spec.username等同于user的spec.name */
+    return {
+      id: i.metadata && i.metadata.name,
+      name: i.spec && (i.spec.name ? i.spec.name : i.spec.username),
+      displayName: i.spec && i.spec.displayName
+    };
+  }) : [];
+  const result: RecordSet<UserPlain> = {
+    recordCount: users.length,
+    records: users
+  };
+  return result;
+}
+
+/**
+ * 已经绑定的用户列表的查询
+ * @param query 列表查询条件参数
+ */
+export async function fetchCommonUserAssociatedList(query: QueryState<CommonUserFilter>) {
+  const { search, filter } = query;
+  const queryObj =  {};
+
+  const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'users' });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let users: UserPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
+    /** localgroup对应localidentity，role对应user，localidentity的spec.username等同于user的spec.name */
+    return {
+      id: i.metadata && i.metadata.name,
+      name: i.spec && (i.spec.name ? i.spec.name : i.spec.username),
+      displayName: i.spec && i.spec.displayName
+    };
+  }) : [];
+  const result: RecordSet<UserPlain> = {
+    recordCount: users.length,
+    records: users
+  };
+  return result;
+}
+
+/**
+ * 关联用户
+ * @param param0
+ * @param params
+ */
+export async function commonAssociateUser([user]: CommonUserAssociation[], params: CommonUserFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'binding' });
+  let rr: RequestResult = await POST(url, { users: user.addUsers });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 解关联用户
+ * @param param0
+ * @param params
+ */
+export async function commonDisassociateUser([user]: CommonUserAssociation[], params: CommonUserFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'unbinding' });
+  let rr: RequestResult = await POST(url, { users: user.removeUsers });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 用户组的查询
+ * @param filter 查询条件参数
+ */
+export async function fetchPolicy(filter: PolicyInfoFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()['policy'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
+  let rr: RequestResult = await GET(url);
+  return rr.data;
+}
+
+/**
+ * 策略列表的查询，不参杂其他场景参数
+ * @param query 列表查询条件参数
+ */
+export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
+  const { search, filter } = query;
+  const queryObj =  {
+    // 'fieldSelector=keyword': search || ''
+  };
+
+  const resourceInfo: ResourceInfo = resourceConfig()['policy'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let items: PolicyPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
+    return {
+      id: i.metadata && i.metadata.name,
+      name: i.metadata && i.metadata.name,
+      displayName: i.spec && i.spec.displayName,
+      category: i.spec && i.spec.category,
+      description: i.spec && i.spec.description,
+    };
+  }) : [];
+  const result: RecordSet<PolicyPlain> = {
+    recordCount: items.length,
+    records: items
+  };
+  return result;
+}
+
+/**
+ * 已经绑定的策略列表的查询
+ * @param query 列表查询条件参数
+ */
+export async function fetchPolicyAssociatedList(query: QueryState<PolicyFilter>) {
+  const { search, filter } = query;
+  const queryObj =  {};
+
+  const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'policies' });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET(url + queryString);
+  let items: PolicyPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
+    return {
+      id: i.metadata && i.metadata.name,
+      name: i.metadata && i.metadata.name,
+      displayName: i.spec && i.spec.displayName,
+      category: i.spec && i.spec.category,
+      description: i.spec && i.spec.description,
+    };
+  }) : [];
+  const result: RecordSet<PolicyPlain> = {
+    recordCount: items.length,
+    records: items
+  };
+  return result;
+}
+
+/**
+ * 关联策略
+ * @param param0
+ * @param params
+ */
+export async function associatePolicy([policy]: PolicyAssociation[], params: PolicyFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'policybinding' });
+  let rr: RequestResult = await POST(url, { policies: policy.addPolicies.map((p) => { return p.name }) });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 解关联策略
+ * @param param0
+ * @param params
+ */
+export async function disassociatePolicy([policy]: PolicyAssociation[], params: PolicyFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'policyunbinding' });
+  let rr: RequestResult = await POST(url, { policies: policy.removePolicies.map((p) => { return p.name }) });
+  return operationResult(rr.data, rr.error);
 }

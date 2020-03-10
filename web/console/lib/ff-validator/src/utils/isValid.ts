@@ -1,5 +1,5 @@
-import { ValidatorStatusEnum, ValidatorModel } from "../Model";
-import { Validation } from "../Validation";
+import { ValidatorStatusEnum, ValidatorModel } from '../Model';
+import { Validation } from '../Validation';
 
 /**
  * 获得校验结果，以 boolean 的形式返回

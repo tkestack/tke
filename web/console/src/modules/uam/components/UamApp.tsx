@@ -10,6 +10,8 @@ import { router } from '../router';
 import { configStore } from '../stores/RootStore';
 import { StrategyApp } from './strategy/StrategyApp';
 import { UserApp } from './user/UserApp';
+import { RoleApp } from './role/RoleApp';
+import { GroupApp } from './group/GroupApp';
 
 const store = configStore();
 
@@ -42,11 +44,14 @@ class UamApp extends React.Component<RootProps, {}> {
     const { module } = urlParam;
 
     let content: React.ReactNode;
-
     if (module === 'user') {
       content = <UserApp />;
     } else if (module === 'strategy') {
       content = <StrategyApp />;
+    } else if (module === 'role') {
+      content = <RoleApp />;
+    } else if (module === 'group') {
+      content = <GroupApp />;
     } else {
       content = <UserApp />;
     }

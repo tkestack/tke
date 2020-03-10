@@ -11,9 +11,9 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { emptyTips, LinkButton } from '../../../common/components';
 import { allActions } from '../../actions';
-import { Strategy } from '../../models';
 import { router } from '../../router';
-
+import { Strategy, GroupFilter } from '../../models';
+import { GroupAssociateWorkflowDialog } from './associate/GroupAssociateWorkflowDialog';
 const { useState, useEffect } = React;
 const _isEqual = require('lodash/isEqual');
 
@@ -101,6 +101,9 @@ export const StrategyTablePanel = () => {
   return (
     <React.Fragment>
       <TablePanel
+        recordKey={(record) => {
+          return record.metadata.name;
+        }}
         columns={columns}
         model={strategyList}
         action={actions.strategy}
@@ -108,6 +111,11 @@ export const StrategyTablePanel = () => {
         emptyTips={emptyTips}
         isNeedPagination={true}
         bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
+      />
+      <GroupAssociateWorkflowDialog onPostCancel={() => {
+        //取消按钮时，清理编辑状态
+        actions.group.associate.clearGroupAssociation();
+      }}
       />
       <aside>
         <Modal caption={t('关联用户')} size="l" visible={modalVisible} onClose={_close}>
@@ -202,7 +210,6 @@ export const StrategyTablePanel = () => {
   function _renderOperationCell(strategy: Strategy) {
     return (
       <React.Fragment>
-        {strategy.type !== 1 && <LinkButton onClick={() => _removeCategory(strategy)}>删除</LinkButton>}
         <LinkButton
           tipDirection="right"
           onClick={() => _setModalVisible(strategy)}
@@ -210,6 +217,31 @@ export const StrategyTablePanel = () => {
         >
           <Trans>关联用户</Trans>
         </LinkButton>
+        <LinkButton
+          tipDirection="right"
+          disabled={strategy.status['phase'] === 'Terminating'}
+          onClick={(e) => {
+            /** 设置用户组关联场景 */
+            let filter: GroupFilter = {
+              resource: 'policy',
+              resourceID: strategy.metadata.name,
+              /** 关联/解关联回调函数 */
+              callback: () => {
+                actions.strategy.fetch();
+              }
+            };
+            actions.group.associate.setupGroupFilter(filter);
+            /** 拉取关联用户组列表，拉取后自动更新groupAssociation */
+            actions.group.associate.groupAssociatedList.applyFilter(filter);
+            /** 拉取用户组列表 */
+            actions.group.associate.groupList.performSearch('');
+            /** 开始关联用户组工作流 */
+            actions.group.associate.associateGroupWorkflow.start();
+          }}
+        >
+          <Trans>关联用户组</Trans>
+        </LinkButton>
+        {strategy.type !== 1 && <LinkButton onClick={() => _removeCategory(strategy)}>删除</LinkButton>}
       </React.Fragment>
     );
   }
