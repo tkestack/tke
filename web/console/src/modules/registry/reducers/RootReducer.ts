@@ -1,10 +1,14 @@
 import { combineReducers } from 'redux';
 
-import { createFFListReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
-import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
+import {
+  createFFListReducer,
+  generateWorkflowReducer,
+  reduceToPayload,
+  generateFetcherReducer
+} from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';
-import { Default_D_URL, InitApiKey, InitImage, InitRepo } from '../constants/Config';
+import { InitApiKey, InitRepo, InitChart, InitImage, Default_D_URL } from '../constants/Config';
 import { router } from '../router';
 
 export const RootReducer = combineReducers({
@@ -56,5 +60,20 @@ export const RootReducer = combineReducers({
   dockerRegistryUrl: generateFetcherReducer({
     actionType: ActionType.FetchDockerRegUrl,
     initialData: Default_D_URL
+  }),
+
+  /** chart group */
+  chart: createFFListReducer('chart'),
+
+  chartIns: createFFListReducer('chartIns'),
+
+  createChart: generateWorkflowReducer({
+    actionType: ActionType.CreateChart
+  }),
+
+  chartCreation: reduceToPayload(ActionType.UpdateChartCreation, InitChart),
+
+  deleteChart: generateWorkflowReducer({
+    actionType: ActionType.DeleteChart
   })
 });
