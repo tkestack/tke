@@ -1,4 +1,5 @@
-import { ReduxAction } from '@tencent/qcloud-lib';
+import { ReduxAction } from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
 import { RootState } from '../models';
 

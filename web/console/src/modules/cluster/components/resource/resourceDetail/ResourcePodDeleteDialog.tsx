@@ -1,20 +1,19 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
-import { WorkflowDialog } from '../../../../common/components';
-import { CreateResource } from '../../../models';
-import { resourceConfig } from '../../../../../../config';
+
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { resourceConfig } from '../../../../../../config';
+import { WorkflowDialog } from '../../../../common/components';
+import { allActions } from '../../../actions';
+import { CreateResource } from '../../../models';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourcePodDeleteDialog extends React.Component<RootProps, {}> {
   render() {
     let { actions, route, subRoot, region, clusterVersion } = this.props,

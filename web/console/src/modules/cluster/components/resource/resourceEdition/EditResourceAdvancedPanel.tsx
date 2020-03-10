@@ -1,15 +1,20 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { EditResourceNodeAffinityPanel } from './EditResourceNodeAffinityPanel';
-import { EditResourceAnnotations } from './EditResourceAnnotations';
-import { FormItem, FormPanel } from '../../../../common';
+
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Select } from '@tencent/tea-component';
-import { WorkloadNetworkType, WorkloadNetworkTypeEnum, FloatingIPReleasePolicy } from '../../../constants/Config';
+
+import { FormItem } from '../../../../common';
+import { allActions } from '../../../actions';
+import {
+    FloatingIPReleasePolicy, WorkloadNetworkType, WorkloadNetworkTypeEnum
+} from '../../../constants/Config';
+import { RootProps } from '../../ClusterApp';
+import { EditResourceAnnotations } from './EditResourceAnnotations';
 import { EditResourceImagePullSecretsPanel } from './EditResourceImagePullSecretsPanel';
+import { EditResourceNodeAffinityPanel } from './EditResourceNodeAffinityPanel';
 
 interface EditResourceAdvancedPanelProps extends RootProps {
   /** 是否展示高级设置 */

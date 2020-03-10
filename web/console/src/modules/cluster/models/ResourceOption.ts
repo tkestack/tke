@@ -1,6 +1,4 @@
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { Identifiable, RecordSet } from '@tencent/qcloud-lib';
+import { FetcherState, Identifiable, QueryState, RecordSet } from '@tencent/ff-redux';
 
 export interface ResourceOption {
   /** resource的查询 */

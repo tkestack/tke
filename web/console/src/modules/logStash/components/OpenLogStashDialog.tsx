@@ -1,20 +1,19 @@
 import * as React from 'react';
-import { RootProps } from './LogStashApp';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
 import { connect } from 'react-redux';
-import { WorkflowDialog } from '../../common/components';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { CreateResource } from 'src/modules/cluster/models';
+
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { resourceConfig } from '../../../../config';
+import { WorkflowDialog } from '../../common/components';
+import { allActions } from '../actions';
+import { RootProps } from './LogStashApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class OpenLogStashDialog extends React.Component<RootProps, any> {
   render() {
     let { actions, route, authorizeOpenLogFlow, clusterSelection, clusterVersion } = this.props;

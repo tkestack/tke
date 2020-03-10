@@ -1,31 +1,33 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../actions';
-import { RootProps } from '../ClusterApp';
-import { router } from '../../router';
-import { ResourceHeaderPanel } from './ResourceHeaderPanel';
-import { ResourceActionPanel } from './resourceTableOperation/ResourceActionPanel';
-import { ResourceTablePanel } from './resourceTableOperation/ResourceTablePanel';
-import { ResourceDeleteDialog } from './resourceTableOperation/ResourceDeleteDialog';
-import { ResourceSidebarPanel } from './ResourceSidebarPanel';
-import { ComputerActionPanel } from './nodeManage/ComputerActionPanel';
-import { ComputerTablePanel } from './nodeManage/ComputerTablePanel';
-import { BatchDrainComputerDialog } from './nodeManage/BatchDrainComputerDialog';
-import { ClusterDetailPanel } from './clusterInfomation/ClusterDetail';
-import { ResourceLogPanel } from './resourceTableOperation/ResourceLogPanel';
-import { ResourceEventPanel } from './resourceTableOperation/ResourceEventPanel';
-import { isEmpty } from '../../../common/utils';
-import { UpdateNodeLabelDialog } from './nodeManage/UpdateNodeLabelDialog';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { ContentView, Justify, Text, ExternalLink, Alert } from '@tencent/tea-component';
-import { SubRouter } from '../../models';
-import { DeleteComputerDialog } from './nodeManage/DeleteComputerDialog';
 import { TipInfo } from 'src/modules/common';
-import { ComputerStatusDialog } from './nodeManage/ComputerStatusDialog';
-import { BatchUnScheduleComputerDialog } from './nodeManage/BatchUnScheduleComputerDialog';
+
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Alert, ContentView, ExternalLink, Justify, Text } from '@tencent/tea-component';
+
+import { isEmpty } from '../../../common/utils';
+import { allActions } from '../../actions';
+import { SubRouter } from '../../models';
+import { router } from '../../router';
+import { RootProps } from '../ClusterApp';
+import { ClusterDetailPanel } from './clusterInfomation/ClusterDetail';
+import { BatchDrainComputerDialog } from './nodeManage/BatchDrainComputerDialog';
 import { BatchTurnOnScheduleComputerDialog } from './nodeManage/BatchTurnOnScheduleComputerDialog';
+import { BatchUnScheduleComputerDialog } from './nodeManage/BatchUnScheduleComputerDialog';
+import { ComputerActionPanel } from './nodeManage/ComputerActionPanel';
+import { ComputerStatusDialog } from './nodeManage/ComputerStatusDialog';
+import { ComputerTablePanel } from './nodeManage/ComputerTablePanel';
+import { DeleteComputerDialog } from './nodeManage/DeleteComputerDialog';
+import { UpdateNodeLabelDialog } from './nodeManage/UpdateNodeLabelDialog';
 import { UpdateNodeTaintDialog } from './nodeManage/UpdateNodeTaintDialog';
+import { ResourceHeaderPanel } from './ResourceHeaderPanel';
+import { ResourceSidebarPanel } from './ResourceSidebarPanel';
+import { ResourceActionPanel } from './resourceTableOperation/ResourceActionPanel';
+import { ResourceDeleteDialog } from './resourceTableOperation/ResourceDeleteDialog';
+import { ResourceEventPanel } from './resourceTableOperation/ResourceEventPanel';
+import { ResourceLogPanel } from './resourceTableOperation/ResourceLogPanel';
+import { ResourceTablePanel } from './resourceTableOperation/ResourceTablePanel';
 
 const loadingElement: JSX.Element = (
   <div>
@@ -42,10 +44,7 @@ export interface ResourceListPanelProps extends RootProps {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceListPanel extends React.Component<ResourceListPanelProps, {}> {
   render() {
     let { subRoot, route, subRouterList } = this.props,

@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { insertCSS } from '@tencent/qcloud-lib';
-import { RootProps } from '../ClusterApp';
 import { UnControlled as CodeMirror } from 'react-codemirror2';
+
+import { insertCSS } from '@tencent/ff-redux';
+
+import { RootProps } from '../ClusterApp';
 
 // 这里是对editor一些配置
 require('codemirror/mode/yaml/yaml');

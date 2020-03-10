@@ -1,14 +1,16 @@
 import * as React from 'react';
-import { Tabs, TabPanel } from '@tea/component/tabs';
 
+import { TabPanel, Tabs } from '@tea/component/tabs';
+import { insertCSS } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { MainBodyLayout } from '../../../../common/layouts';
+// import { ValueYamlPanel } from './ValueYamlPanel';
+import { router } from '../../../router';
 import { RootProps } from '../../HelmApp';
 import { HelmDetailBasicInfoPanel } from './HelmDetailBasicInfoPanel';
 import { HistoryTablePanel } from './HistoryTablePanel';
-// import { ValueYamlPanel } from './ValueYamlPanel';
-import { router } from '../../../router';
-import { MainBodyLayout } from '../../../../common/layouts';
-import { insertCSS } from '@tencent/qcloud-lib';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 export class HelmDetail extends React.Component<RootProps, {}> {
   componentWillUnmount() {
     this.props.actions.detail.clear();

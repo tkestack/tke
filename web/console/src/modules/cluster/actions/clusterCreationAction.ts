@@ -1,7 +1,8 @@
-import { ReduxAction, uuid, deepClone } from '@tencent/qcloud-lib';
+import { deepClone, ReduxAction, uuid } from '@tencent/ff-redux';
+
 import * as ActionType from '../constants/ActionType';
-import { RootState } from '../models';
 import { initClusterCreationState } from '../constants/initState';
+import { RootState } from '../models';
 
 type GetState = () => RootState;
 

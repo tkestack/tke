@@ -1,13 +1,15 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { FormItem } from '../../../../common/components';
-import { HealthCheckItem } from '../../../models';
-import { HealthCheckMethodList, HttpProtocolTypeList } from '../../../constants/Config';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { ExternalLink } from '@tencent/tea-component';
+
+import { FormItem } from '../../../../common/components';
+import { allActions } from '../../../actions';
+import { HealthCheckMethodList, HttpProtocolTypeList } from '../../../constants/Config';
+import { HealthCheckItem } from '../../../models';
+import { RootProps } from '../../ClusterApp';
 
 interface ContainerHealthCheckPanelProps extends RootProps {
   cKey: string;

@@ -1,24 +1,27 @@
-import * as React from 'react';
-import { Button, Bubble, Select } from '@tea/component';
-import { RootProps } from '../../ClusterApp';
-import { connect } from 'react-redux';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { allActions } from '../../../actions';
-import { MainBodyLayout, FormLayout } from '../../../../common/layouts';
-import { InputField, SelectList, TipInfo, FormItem } from '../../../../common/components';
-import { getWorkflowError, isEmpty } from '../../../../common/utils';
 import * as classnames from 'classnames';
-import { router } from '../../../router';
-import { CreateResource, ServiceEditJSONYaml, ServicePorts, ServiceEdit, PortMap } from '../../../models';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, Button, Select } from '@tea/component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, InputField, SelectList, TipInfo } from '../../../../common/components';
+import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
+import { ResourceInfo } from '../../../../common/models';
+import { getWorkflowError, isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
 import { validateServiceActions } from '../../../actions/validateServiceActions';
+import { SessionAffinity } from '../../../constants/Config';
+import {
+    CreateResource, PortMap, ServiceEdit, ServiceEditJSONYaml, ServicePorts
+} from '../../../models';
+import { router } from '../../../router';
+import { RootProps } from '../../ClusterApp';
+import { EditServiceAdvanceSettingPanel } from './EditServiceAdvanceSettingPanel';
 import { EditServiceCommunicationPanel } from './EditServiceCommunicationPanel';
 import { EditServicePortMapPanel } from './EditServicePortMapPanel';
 import { EditServiceWorkloadDialog } from './EditServiceWorkloadDialog';
-import { ResourceInfo } from '../../../../common/models';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { EditServiceAdvanceSettingPanel } from './EditServiceAdvanceSettingPanel';
-import { SessionAffinity } from '../../../constants/Config';
 
 /** service YAML当中的type映射 */
 export const ServiceTypeMap = {
@@ -137,10 +140,7 @@ interface EditServicePanelState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditServicePanel extends React.Component<RootProps, EditServicePanelState> {
   constructor(props, context) {
     super(props, context);

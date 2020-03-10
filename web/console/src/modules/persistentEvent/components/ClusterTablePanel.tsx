@@ -1,16 +1,19 @@
 import * as React from 'react';
-import { Bubble, Icon } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
 import { connect } from 'react-redux';
-import { allActions } from '../actions';
-import { RootProps } from './PersistentEventApp';
-import { clsRegionMap } from '../../logStash/constants/Config';
-import { Clip, LinkButton, TablePanel, TablePanelColumnProps } from '../../common/components';
-import { router } from '../router';
-import { peStatus, isNeedPollPE } from '../constants/Config';
-import { includes } from '../../common/utils';
+
+import { Bubble, Icon } from '@tea/component';
+import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { Resource } from '../../common';
+import { Clip, LinkButton } from '../../common/components';
+import { includes } from '../../common/utils';
+import { clsRegionMap } from '../../logStash/constants/Config';
+import { allActions } from '../actions';
+import { isNeedPollPE, peStatus } from '../constants/Config';
+import { router } from '../router';
+import { RootProps } from './PersistentEventApp';
 
 const routerSea = seajs.require('router');
 

@@ -1,13 +1,15 @@
 import * as React from 'react';
-import { BaseReactProps, isComponentOfType, slide } from '@tencent/qcloud-lib';
-import { Step } from './Step';
 import * as ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+
 import { Button } from '@tea/component';
-import { WorkflowState, OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { TipInfo, ErrorGuide, ErrorTip } from '..';
-import { getWorkflowError } from '../../utils';
+import {
+    BaseReactProps, isComponentOfType, isSuccessWorkflow, OperationState, slide, WorkflowState
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
+import { ErrorGuide, ErrorTip, TipInfo } from '../';
 import { FormLayout } from '../../layouts';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Step } from './Step';
 
 export interface StepItem {
   /**步骤序号 */

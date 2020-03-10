@@ -1,4 +1,4 @@
-import { Identifiable, RecordSet, extend } from '@tencent/qcloud-lib';
+import { extend, Identifiable, RecordSet } from '@tencent/ff-redux';
 
 export interface LbcfResource extends Identifiable {
   /** metadata */

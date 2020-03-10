@@ -1,21 +1,15 @@
-import { RecordSet, uuid } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { ResourceFilter, Resource } from './models';
-import { RequestParams, NamespaceFilter, ResourceInfo, Namespace } from '../common/models';
-import {
-  reduceNetworkRequest,
-  operationResult,
-  reduceK8sRestfulPath,
-  Method,
-  reduceK8sQueryString,
-  requestMethodForAction,
-  reduceNetworkWorkflow
-} from '../../../helpers';
+import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
 import { tip } from '@tencent/tea-app/lib/bridge';
-import { CreateResource } from '../cluster/models';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { CommonAPI } from '../common';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import { resourceConfig } from '../../../config';
+import {
+    Method, operationResult, reduceK8sQueryString, reduceK8sRestfulPath, reduceNetworkRequest,
+    reduceNetworkWorkflow, requestMethodForAction
+} from '../../../helpers';
+import { CreateResource } from '../cluster/models';
+import { Namespace, NamespaceFilter, RequestParams, ResourceInfo } from '../common/models';
+import { Resource, ResourceFilter } from './models';
 
 /**
  * 校验当前的日志采集器的名称是否正确

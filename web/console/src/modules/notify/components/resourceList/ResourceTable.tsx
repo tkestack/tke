@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { Button, Text } from '@tea/component';
 import { RootProps } from '../NotifyApp';
-import { LinkButton, TablePanel, TablePanelColumnProps } from '../../../common/components';
+import { LinkButton } from '../../../common/components';
 import { router } from '../../router';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Resource } from '../../../common';
 import { resourceConfig } from '../../../../../config';
 import { dateFormatter } from '../../../../../helpers';
+import { TablePanelColumnProps, TablePanel } from '@tencent/ff-component';
+
 const rc = resourceConfig();
 
 interface Props extends RootProps {

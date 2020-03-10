@@ -1,11 +1,12 @@
-import { collectionPaging, RecordSet, uuid } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { OperationResult } from '@tencent/qcloud-redux-workflow';
+import { OperationResult, QueryState, RecordSet } from '@tencent/ff-redux';
 
 import { resourceConfig } from '../../../config/resourceConfig';
-import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow } from '../../../helpers';
+import {
+    reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow
+} from '../../../helpers';
 import { Method } from '../../../helpers/reduceNetwork';
 import { RequestParams, ResourceInfo } from '../common/models';
+<<<<<<< HEAD
 import { CHART_URL, REPO_URL, Default_D_URL } from './constants/Config';
 import {
   ApiKey,
@@ -22,8 +23,13 @@ import {
   Image,
   ImageCreation,
   ImageFilter
+=======
+import { Default_D_URL, REPO_URL } from './constants/Config';
+import {
+    ApiKey, ApiKeyCreation, ApiKeyFilter, Image, ImageCreation, ImageFilter, Repo, RepoCreation,
+    RepoFilter
+>>>>>>> upstream/master
 } from './models';
-import { apiKey } from '@config/resource/k8sConfig';
 
 // 返回标准操作结果
 function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] {

@@ -1,12 +1,15 @@
-import { initAffinityRule, initCronMetrics } from './../constants/initState';
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
+import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import * as ActionType from '../constants/ActionType';
+import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+
 import { initValidator } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
+import {
+    initAffinityRule, initContainer, initCronMetrics, initHpaMetrics, initSpecificLabel
+} from '../constants/initState';
 import { Resource } from '../models';
-import { initContainer, initSpecificLabel, initHpaMetrics } from '../constants/initState';
 
 /** ========= configMap 和 secret 弹窗的相关数据的reducer ======= */
 const TempConfigEditReducer = combineReducers({

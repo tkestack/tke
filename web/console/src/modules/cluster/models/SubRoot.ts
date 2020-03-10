@@ -1,27 +1,14 @@
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { RecordSet } from '@tencent/qcloud-lib';
+import { FetcherState, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
+
 import { ResourceInfo } from '../../common/models';
-import {
-  WorkloadEdit,
-  SecretEdit,
-  ConfigMapEdit,
-  ResourceEventOption,
-  ResourceLogOption,
-  ComputerState,
-  ResourceOption,
-  CreateResource,
-  SubRouter,
-  SubRouterFilter,
-  ResourceDetailState,
-  ServiceEdit,
-  NamespaceEdit,
-  LbcfEdit
-} from './index';
-import { DetailResourceOption } from './DetailResourceOption';
-import { AllocationRatioEdition } from './AllocationRatioEdition';
 import { AddonStatus } from './Addon';
+import { AllocationRatioEdition } from './AllocationRatioEdition';
+import { DetailResourceOption } from './DetailResourceOption';
+import {
+    ComputerState, ConfigMapEdit, CreateResource, LbcfEdit, NamespaceEdit, ResourceDetailState,
+    ResourceEventOption, ResourceLogOption, ResourceOption, SecretEdit, ServiceEdit, SubRouter,
+    SubRouterFilter, WorkloadEdit
+} from './index';
 
 type ResourceModifyWorkflow = WorkflowState<CreateResource, number | any>;
 

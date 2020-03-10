@@ -1,4 +1,4 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
 
 export interface Cluster extends Identifiable {
   /** 集群Id */

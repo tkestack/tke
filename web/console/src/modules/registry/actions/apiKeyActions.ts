@@ -1,18 +1,18 @@
-import { initValidator } from './../../common/models/Validation';
-import { extend, deepClone, uuid } from '@tencent/qcloud-lib';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { RootState, ApiKey, ApiKeyFilter } from '../models';
+import {
+    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import * as ActionType from '../constants/ActionType';
 import { InitApiKey } from '../constants/Config';
-import * as WebAPI from '../WebAPI';
-import { router } from '../router';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { createListAction } from '@tencent/redux-list';
+import { ApiKey, ApiKeyFilter, RootState } from '../models';
 import { ApiKeyCreation } from '../models/ApiKey';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 
-const FFModelApiKeyActions = createListAction<ApiKey, ApiKeyFilter>({
+const FFModelApiKeyActions = createFFListActions<ApiKey, ApiKeyFilter>({
   actionName: 'apiKey',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchApiKeyList(query);

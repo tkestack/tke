@@ -1,4 +1,4 @@
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { WorkflowState } from '@tencent/ff-redux';
 
 export const getWorkflowError = (workflow: WorkflowState<any, any>) => {
   return (

@@ -1,17 +1,16 @@
 import * as React from 'react';
-import { RootProps } from './AlarmPolicyApp';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
-import { Text, ExternalLink } from '@tea/component';
-import {
-  FormItem,
-  ResourceSelectorGeneric,
-  ResourceSelectorProps,
-  ResourceSelectorInfoRow,
-  LinkButton
-} from '../../common/components';
+
+import { ExternalLink, Text } from '@tea/component';
+import { FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import {
+    FormItem, LinkButton, ResourceSelectorGeneric, ResourceSelectorInfoRow, ResourceSelectorProps
+} from '../../common/components';
 import { Resource } from '../../notify/models';
 import { router } from '../../notify/router';
+import { RootProps } from './AlarmPolicyApp';
+
 // 简单显示一个字符串，包含到 title 里的组件
 function WithTitle({ children }: { children?: string }) {
   return <span title={String(children)}>{children}</span>;

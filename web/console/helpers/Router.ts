@@ -21,7 +21,7 @@ const isInSameModule = (prevpath: string, currentpath: string) => {
  * 4. an decorator
  */
 import * as React from 'react';
-import { appendFunction, ReduxConnectedProps, ReduxAction } from '@tencent/qcloud-lib';
+import { appendFunction, ReduxConnectedProps, ReduxAction } from '@tencent/ff-redux';
 import { buildQueryString, parseQueryString } from './urlUtil';
 
 const nmcRouter = seajs.require('router');

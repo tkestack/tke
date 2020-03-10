@@ -1,4 +1,4 @@
-import { deepClone, ReduxAction, uuid } from '@tencent/qcloud-lib';
+import { deepClone, ReduxAction, uuid } from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';
 import { ICComponter, LabelsKeyValue, RootState } from '../models';

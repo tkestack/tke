@@ -1,4 +1,5 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
 export interface Strategy extends Identifiable {
   spec: {
     displayName: string;

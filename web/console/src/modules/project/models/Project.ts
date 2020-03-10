@@ -1,6 +1,8 @@
-import { Manager } from './Manager';
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
+
 import { Validation } from '../../common/models';
+import { Manager } from './Manager';
+
 export interface Project extends Identifiable {
   /** metadata */
   metadata: ProjectMetadata;

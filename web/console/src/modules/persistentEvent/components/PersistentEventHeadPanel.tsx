@@ -1,20 +1,19 @@
 import * as React from 'react';
-import { RootProps } from './PersistentEventApp';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../actions';
 import { connect } from 'react-redux';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Justify } from '@tencent/tea-component';
+
+import { allActions } from '../actions';
+import { RootProps } from './PersistentEventApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class PersistentEventHeadPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions, region, route } = this.props;

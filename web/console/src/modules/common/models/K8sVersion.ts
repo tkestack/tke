@@ -1,4 +1,4 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
 
 export interface K8sVersion extends Identifiable {
   /**版本名称 */

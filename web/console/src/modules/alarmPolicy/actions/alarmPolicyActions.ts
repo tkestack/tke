@@ -1,21 +1,20 @@
-import { namespaceActions } from './namespaceActions';
-import { router } from './../router';
-import { AlarmPolicyType } from './../constants/Config';
-import { extend, deepClone, uuid } from '@tencent/qcloud-lib';
-import { RootState, AlarmPolicy, AlarmPolicyFilter } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { AlarmPolicyMetrics } from '../constants/Config';
-import { workloadActions } from './workloadActions';
-import { validatorActions } from './validatorActions';
-import { resourceActions } from '../../notify/actions/resourceActions';
+import { createFFListActions, deepClone, extend, uuid } from '@tencent/ff-redux';
+
 import { initValidator } from '../../common/models';
+import { resourceActions } from '../../notify/actions/resourceActions';
 import { userActions } from '../../uam/actions/userActions';
-import { createListAction } from '@tencent/redux-list';
+import * as ActionType from '../constants/ActionType';
+import { AlarmPolicyMetrics, AlarmPolicyType } from '../constants/Config';
+import { AlarmPolicy, AlarmPolicyFilter, RootState } from '../models';
+import { router } from '../router';
+import * as WebAPI from '../WebAPI';
+import { namespaceActions } from './namespaceActions';
+import { validatorActions } from './validatorActions';
+import { workloadActions } from './workloadActions';
 
 type GetState = () => RootState;
 
-const _alarmPolicyActions = createListAction<AlarmPolicy, AlarmPolicyFilter>({
+const _alarmPolicyActions = createFFListActions<AlarmPolicy, AlarmPolicyFilter>({
   actionName: 'AlarmPolicy',
   fetcher: async (query, getstate: GetState) => {
     const response = await WebAPI.fetchAlarmPolicy(query);

@@ -1,20 +1,19 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
-import { WorkflowDialog, FormItem, LinkButton, InputField } from '../../../../common/components';
-import { isEmpty } from '../../../../common/utils';
-import { validatorActions } from '../../../actions/validatorActions';
+
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { FormItem, InputField, LinkButton, WorkflowDialog } from '../../../../common/components';
+import { isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { validatorActions } from '../../../actions/validatorActions';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class UpdateNodeLabelDialog extends React.Component<RootProps, {}> {
   render() {
     let { actions, route, subRoot, cluster } = this.props,

@@ -1,14 +1,16 @@
-import { extend } from '@tencent/qcloud-lib';
+import { extend } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import * as ActionType from '../constants/ActionType';
-import { RootState } from '../models';
+
 import { resourceConfig } from '../../../../config';
-import { LogDaemonSetFliter } from '../models/LogDaemonset';
 import { CommonAPI, includes } from '../../common';
-import { logActions } from './logActions';
+import * as ActionType from '../constants/ActionType';
 import { canFetchLogList } from '../constants/Config';
+import { RootState } from '../models';
+import { LogDaemonSetFliter } from '../models/LogDaemonset';
 import { router } from '../router';
+import { logActions } from './logActions';
+
 type GetState = () => RootState;
 
 /** 获取Log采集器的列表的Action */

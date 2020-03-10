@@ -1,5 +1,7 @@
-import { Identifiable } from '@tencent/qcloud-lib';
 import { any } from 'prop-types';
+
+import { Identifiable } from '@tencent/ff-redux';
+
 import { LogStashSpec } from './LogStashEdit';
 
 export interface Log extends Identifiable {

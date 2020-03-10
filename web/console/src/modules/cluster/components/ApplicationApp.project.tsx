@@ -1,18 +1,21 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState, SubRouter } from '../models';
-import { allActions } from '../actions';
-import { configStore } from '../stores/RootStore';
-import { router } from '../router';
+
+import { cloneDeep } from '@src/modules/common';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { ResetStoreAction } from '../../../../helpers';
+import { allActions } from '../actions';
+import { RootState, SubRouter } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
 import { ApplicationHeadPanel } from './ApplicationHeadPanel.project';
-import { ResourceListPanel } from './resource/ResourceListPanel';
 import { ResourceDetail } from './resource/resourceDetail/ResourceDetail';
 import { EditResourcePanel } from './resource/resourceEdition/EditResourcePanel';
 import { UpdateResourcePanel } from './resource/resourceEdition/UpdateResourcePanel';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { cloneDeep } from '@src/modules/common';
+import { ResourceListPanel } from './resource/ResourceListPanel';
+
 const store = configStore();
 
 export class ApplicationAppContainer extends React.Component<any, any> {

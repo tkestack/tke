@@ -1,4 +1,4 @@
-import { Identifiable } from '@tencent/qcloud-lib';
+import { Identifiable } from '@tencent/ff-redux';
 
 export interface ClusterFilter {
   /** 具体名称 */

@@ -1,18 +1,18 @@
-import { initValidator } from './../../common/models/Validation';
-import { extend, deepClone, uuid } from '@tencent/qcloud-lib';
+import {
+    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
+} from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { RootState, Image, ImageFilter, ImageCreation } from '../models';
+import { t } from '@tencent/tea-app/lib/i18n';
+
 import * as ActionType from '../constants/ActionType';
 import { InitImage } from '../constants/Config';
-import * as WebAPI from '../WebAPI';
+import { Image, ImageCreation, ImageFilter, RootState } from '../models';
 import { router } from '../router';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { createListAction } from '@tencent/redux-list';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 
-const FFModelImageActions = createListAction<Image, ImageFilter>({
+const FFModelImageActions = createFFListActions<Image, ImageFilter>({
   actionName: 'image',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchImageList(query);

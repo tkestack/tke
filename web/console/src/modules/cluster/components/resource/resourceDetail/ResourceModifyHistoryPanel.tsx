@@ -1,15 +1,18 @@
-import * as React from 'react';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { TableColumn, Bubble, Text } from '@tea/component';
-import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
-import { RootProps } from '../../ClusterApp';
-import { LinkButton, TipDialog, GridTable } from '../../../../common/components';
-import { Replicaset } from '../../../models';
-import { dateFormatter } from '../../../../../../helpers';
 import * as yaml from 'js-yaml';
-import { YamlEditorPanel } from '../YamlEditorPanel';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, TableColumn, Text } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { dateFormatter } from '../../../../../../helpers';
+import { GridTable, LinkButton, TipDialog } from '../../../../common/components';
+import { allActions } from '../../../actions';
+import { Replicaset } from '../../../models';
+import { RootProps } from '../../ClusterApp';
+import { YamlEditorPanel } from '../YamlEditorPanel';
+
 interface ResourceModifyHistoryPanelState {
   /** 是否展示yaml弹窗 */
   isShowYamlContent?: boolean;

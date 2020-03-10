@@ -1,7 +1,7 @@
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
+import { FFListModel, WorkflowState } from '@tencent/ff-redux';
+
 import { RouteState } from '../../../../helpers/Router';
 import { Resource, ResourceFilter } from './Resource';
-import { ListModel } from '@tencent/redux-list';
 
 type ResourceOpWorkflow = WorkflowState<Resource, {}>;
 
@@ -11,10 +11,10 @@ export interface RootState {
    */
   route?: RouteState;
 
-  channel?: ListModel<Resource, ResourceFilter>;
-  template?: ListModel<Resource, ResourceFilter>;
-  receiver?: ListModel<Resource, ResourceFilter>;
-  receiverGroup?: ListModel<Resource, ResourceFilter>;
+  channel?: FFListModel<Resource, ResourceFilter>;
+  template?: FFListModel<Resource, ResourceFilter>;
+  receiver?: FFListModel<Resource, ResourceFilter>;
+  receiverGroup?: FFListModel<Resource, ResourceFilter>;
   resourceDeleteWorkflow?: ResourceOpWorkflow;
   modifyResourceFlow?: ResourceOpWorkflow;
   /** 是否为国际版 */

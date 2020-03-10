@@ -1,23 +1,24 @@
-import { initAllcationRatioEdition } from './../constants/initState';
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet } from '@tencent/qcloud-lib';
+
+import { generateWorkflowReducer, RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
-import { SubRouter } from '../models';
+
 import * as ActionType from '../constants/ActionType';
+import { initAllcationRatioEdition } from '../constants/initState';
+import { SubRouter } from '../models';
 import { ComputerReducer } from './ComputerReducer';
-import { ResourceReducer } from './ResourceReducer';
-import { ServiceEditReducer } from './ServiceEditReducer';
+import { ConfigMapEditReducer } from './ConfigMapEditReducer';
+import { DetailResourceReducer } from './DetailResourceReducer';
+import { LbcfEditReducer } from './LbcfEditReducer';
 import { NamespaceEditReducer } from './NamespaceEditReducer';
 import { ResourceDetailReducer } from './ResourceDetailReducer';
-import { WorkloadEditReducer } from './WorkloadEditReducer';
-import { ResourceLogReducer } from './ResourceLogReducer';
 import { ResourceEventReducer } from './ResourceEventReducer';
+import { ResourceLogReducer } from './ResourceLogReducer';
+import { ResourceReducer } from './ResourceReducer';
 import { SecretEditReducer } from './SecretEditReducer';
-import { ConfigMapEditReducer } from './ConfigMapEditReducer';
-import { LbcfEditReducer } from './LbcfEditReducer';
-import { DetailResourceReducer } from './DetailResourceReducer';
+import { ServiceEditReducer } from './ServiceEditReducer';
+import { WorkloadEditReducer } from './WorkloadEditReducer';
 
 const TempReducer = combineReducers({
   computerState: ComputerReducer,

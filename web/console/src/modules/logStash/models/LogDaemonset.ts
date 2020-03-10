@@ -1,5 +1,6 @@
-import { Identifiable } from '@tencent/qcloud-lib';
 import { cluster } from 'config/resource/k8sConfig';
+
+import { Identifiable } from '@tencent/ff-redux';
 
 export interface LogDaemonset extends Identifiable {
   /** kind */

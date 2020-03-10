@@ -1,24 +1,11 @@
+import { uuid } from '@tencent/ff-redux';
+
 import { initValidator } from '../../common/models';
 import {
-  PortMap,
-  WorkloadLabel,
-  Selector,
-  ContainerItem,
-  MountItem,
-  HealthCheck,
-  HealthCheckItem,
-  VolumeItem,
-  ConfigItems,
-  LimitItem,
-  EnvItem,
-  SecretData,
-  HpaMetrics,
-  ValueFrom,
-  ImagePullSecrets,
-  DialogState,
-  DialogNameEnum
+    ConfigItems, ContainerItem, DialogNameEnum, DialogState, EnvItem, HealthCheck, HealthCheckItem,
+    HpaMetrics, ImagePullSecrets, LimitItem, MountItem, PortMap, SecretData, Selector, ValueFrom,
+    VolumeItem, WorkloadLabel
 } from '../models';
-import { uuid } from '@tencent/qcloud-lib';
 import { CronMetrics } from '../models/WorkloadEdit';
 
 /** 创建服务，端口映射的初始值 */

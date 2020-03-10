@@ -1,6 +1,7 @@
-import * as React from 'react';
 import * as classnames from 'classnames';
-import { OnOuterClick, BaseReactProps, slide, fade } from '@tencent/qcloud-lib';
+import * as React from 'react';
+
+import { BaseReactProps, fade, OnOuterClick, slide } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 export interface DropdownMenuItem {
@@ -99,9 +100,7 @@ export class DropdownMenu extends React.Component<DropdownMenuProps, DropdownMen
         style={style}
       >
         <a href="javascript:;" className="tc-15-dropdown-link" onClick={this._handleButtonClick.bind(this)}>
-          <span style={{ verticalAlign: 'baseline', lineHeight: '16px', height: '16px' }}>
-            {t('更多')}
-          </span>
+          <span style={{ verticalAlign: 'baseline', lineHeight: '16px', height: '16px' }}>{t('更多')}</span>
           <i className="caret" />
         </a>
         <ul key="menu" className="tc-15-dropdown-menu" role="menu">

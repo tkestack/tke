@@ -1,14 +1,17 @@
 import * as React from 'react';
-import { RootProps } from '../../ClusterApp';
-import { Button, Modal, Text, Bubble } from '@tea/component';
-import { OperationState, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { TipInfo, FormPanel } from '../../../../common/components';
-import { getWorkflowError, isEmpty } from '../../../../common/utils';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { allActions } from '../../../actions';
 import { connect } from 'react-redux';
+
+import { Bubble, Button, Modal, Text } from '@tea/component';
+import { FormPanel } from '@tencent/ff-component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { TipInfo } from '../../../../common/components';
+import { getWorkflowError, isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
 import { validatorActions } from '../../../actions/validatorActions';
+import { RootProps } from '../../ClusterApp';
+
 /**
  * 目前支持的 Taint effect 类型：
 NoSchedule：新的Pod不调度到该Node上，不影响正在运行的Pod

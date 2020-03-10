@@ -1,24 +1,22 @@
 import * as React from 'react';
-import { RootProps } from './LogStashApp';
 import { connect } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { includes } from '../../common/utils';
-import {
-  canCreateLogStash,
-  logModeMap,
-  collectorStatus,
-  canCreateLogStashInLogDaemonset,
-  canFetchLogList
-} from '../constants/Config';
-import { allActions } from '../actions';
-import { Log } from '../models';
-import { downloadCsv, dateFormatter } from '../../../../helpers';
-import { router } from '../router';
-import { Cluster } from '../../common/models';
-import { Bubble, Button, SearchBox, Justify, Table, Text } from '@tencent/tea-component';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Bubble, Button, Justify, SearchBox, Table, Text } from '@tencent/tea-component';
+
+import { dateFormatter, downloadCsv } from '../../../../helpers';
 import { SelectList } from '../../../../src/modules/common';
+import { Cluster } from '../../common/models';
+import { includes } from '../../common/utils';
+import { allActions } from '../actions';
+import {
+    canCreateLogStash, canCreateLogStashInLogDaemonset, canFetchLogList, collectorStatus, logModeMap
+} from '../constants/Config';
+import { Log } from '../models';
 import { LogDaemonSetStatus } from '../models/LogDaemonset';
+import { router } from '../router';
+import { RootProps } from './LogStashApp';
 
 /** 新建日志收集规则按钮的提示内容 */
 export const canCreateTip = {

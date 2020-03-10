@@ -1,16 +1,17 @@
-import * as React from 'react';
-import { bindActionCreators, uuid } from '@tencent/qcloud-lib';
-import { Modal, Button, Table, TableColumn, Bubble } from '@tea/component';
-
-import { RootProps } from '../../ClusterApp';
-import { connect } from 'react-redux';
-import { allActions } from '../../../actions';
 import * as classnames from 'classnames';
-import { PodContainer } from '../../../models';
-import { ContainerStatusMap } from '../../../constants/Config';
+import * as React from 'react';
+import { connect } from 'react-redux';
+
+import { Bubble, Button, Modal, Table, TableColumn } from '@tea/component';
+import { stylize } from '@tea/component/table/addons/stylize';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
-import { stylize } from '@tea/component/table/addons/stylize';
+import { allActions } from '../../../actions';
+import { ContainerStatusMap } from '../../../constants/Config';
+import { PodContainer } from '../../../models';
+import { RootProps } from '../../ClusterApp';
+
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 

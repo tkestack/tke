@@ -1,12 +1,14 @@
-import { ReduxAction } from '@tencent/qcloud-lib';
+import * as JsYAML from 'js-yaml';
 
-import { RootState, Helm } from '../models';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
+import { ReduxAction } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-import * as JsYAML from 'js-yaml';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import * as ActionType from '../constants/ActionType';
+import { Helm, RootState } from '../models';
+import * as WebAPI from '../WebAPI';
+
 type GetState = () => RootState;
 const tips = seajs.require('tips');
 

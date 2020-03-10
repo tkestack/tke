@@ -1,17 +1,17 @@
-import { extend, ReduxAction } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
+import { createFFListActions, extend } from '@tencent/ff-redux';
+
+import { resourceConfig } from '../../../../config';
+import { CommonAPI, Resource, ResourceFilter, ResourceInfo } from '../../common';
 import * as ActionType from '../constants/ActionType';
+import { FFReduxActionName } from '../constants/Config';
+import { RootState } from '../models';
 import { router } from '../router';
 import { helmActions } from './helmActions';
-import { createListAction } from '@tencent/redux-list';
-import { Resource, ResourceFilter, ResourceInfo, CommonAPI } from '../../common';
-import { FFReduxActionName } from '../constants/Config';
-import { resourceConfig } from '../../../../config';
 
 type GetState = () => RootState;
 
 /** 集群列表的Actions */
-const ListClusterActions = createListAction<Resource, ResourceFilter>({
+const ListClusterActions = createFFListActions<Resource, ResourceFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async query => {
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];

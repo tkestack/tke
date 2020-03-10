@@ -1,24 +1,24 @@
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
-import { deepClone, extend, uuid } from '@tencent/qcloud-lib';
-import { generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger } from '@tencent/qcloud-redux-workflow';
-import { createListAction } from '@tencent/redux-list';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import {
+    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger,
+    uuid
+} from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
 
 import * as ActionType from '../constants/ActionType';
 import {
-  initNamespaceEdition,
-  initProjectResourceLimit,
-  resourceLimitTypeList,
-  resourceTypeToUnit
+    initNamespaceEdition, initProjectResourceLimit, resourceTypeToUnit
 } from '../constants/Config';
-import { Namespace, NamespaceEdition, NamespaceFilter, NamespaceOperator, RootState } from '../models';
+import {
+    Namespace, NamespaceEdition, NamespaceFilter, NamespaceOperator, RootState
+} from '../models';
 import { ProjectResourceLimit } from '../models/Project';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 
-const FFModelNamespaceActions = createListAction<Namespace, NamespaceFilter>({
+const FFModelNamespaceActions = createFFListActions<Namespace, NamespaceFilter>({
   actionName: 'namespace',
   fetcher: async (query, getState: GetState) => {
     let response = await WebAPI.fetchNamespaceList(query);

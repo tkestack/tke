@@ -1,20 +1,22 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { RootState } from '../models';
-import { allActions } from '../actions';
-import { MainBodyLayout } from '../../common/layouts';
-import { configStore } from '../stores/RootStore';
-import { router } from '../router';
-import { ResetStoreAction } from '../../../../helpers';
-import { ProjectHeadPanel } from './ProjectHeadPanel';
-import { ProjectActionPanel } from './ProjectActionPanel';
-import { ProjectTablePanel } from './ProjectTablePanel';
-import { ProjectDetail } from './ProjectDetail';
+
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { ContentView } from '@tencent/tea-component';
-import { CreateProjectPanel } from './CreateProjectPanel';
+
+import { ResetStoreAction } from '../../../../helpers';
+import { MainBodyLayout } from '../../common/layouts';
+import { allActions } from '../actions';
+import { RootState } from '../models';
+import { router } from '../router';
+import { configStore } from '../stores/RootStore';
 import { CreateNamespacePanel } from './CreateNamespacePanel';
+import { CreateProjectPanel } from './CreateProjectPanel';
+import { ProjectActionPanel } from './ProjectActionPanel';
+import { ProjectDetail } from './ProjectDetail';
+import { ProjectHeadPanel } from './ProjectHeadPanel';
+import { ProjectTablePanel } from './ProjectTablePanel';
 
 const store = configStore();
 
@@ -40,10 +42,7 @@ export interface RootProps extends RootState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 @((router.serve as any)())
 class ProjectApp extends React.Component<RootProps, {}> {
   render() {

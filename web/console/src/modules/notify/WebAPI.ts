@@ -1,12 +1,14 @@
-import { reduceNetworkRequest } from '../../../helpers/reduceNetwork';
-import { RecordSet } from '@tencent/qcloud-lib';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { OperationResult } from '@tencent/qcloud-redux-workflow';
-import { reduceK8sRestfulPath } from '../../../helpers';
-import { Resource } from './models/Resource';
-import { RequestParams } from '../common/models';
-import { t } from '@tencent/tea-app/lib/i18n';
 import { oc } from 'ts-optchain';
+
+import { OperationResult, QueryState, RecordSet } from '@tencent/ff-redux';
+import {} from '@tencent/qcloud-redux-query';
+import { t } from '@tencent/tea-app/lib/i18n';
+
+import { reduceK8sRestfulPath } from '../../../helpers';
+import { reduceNetworkRequest } from '../../../helpers/reduceNetwork';
+import { RequestParams } from '../common/models';
+import { Resource } from './models/Resource';
+
 /** RESTFUL风格的请求方法 */
 const Method = {
   get: 'GET',

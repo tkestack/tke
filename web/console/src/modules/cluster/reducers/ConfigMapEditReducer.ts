@@ -1,7 +1,9 @@
 import { combineReducers } from 'redux';
-import { reduceToPayload, RecordSet, ReduxAction } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
+
+import { RecordSet, reduceToPayload, ReduxAction } from '@tencent/ff-redux';
+
 import { initValidator } from '../../common/models';
+import * as ActionType from '../constants/ActionType';
 import { initVariable } from '../models';
 
 const TempReducer = combineReducers({

@@ -1,13 +1,16 @@
 import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { TableColumn, Text, Modal, Form, Input, Button, Icon } from '@tea/component';
-import { bindActionCreators } from '@tencent/qcloud-lib';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { Button, Form, Icon, Input, Modal, TableColumn, Text } from '@tea/component';
+import { TablePanel } from '@tencent/ff-component';
+import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { router } from '../../router';
-import { TablePanel, LinkButton } from '../../../common/components';
+
+import { LinkButton } from '../../../common/components';
 import { allActions } from '../../actions';
-import { User } from '../../models';
 import { VALIDATE_PASSWORD_RULE } from '../../constants/Config';
+import { User } from '../../models';
+import { router } from '../../router';
 
 const { useState, useEffect } = React;
 

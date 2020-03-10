@@ -1,15 +1,16 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators, deepClone } from '@tencent/qcloud-lib';
-import { RootProps } from '../../ClusterApp';
-import { allActions } from '../../../actions';
-import { FormItem, LinkButton, InputField } from '../../../../common/components';
-import { Radio, Bubble, ExternalLink } from '@tea/component';
-import { affinityType, affinityRuleOperator } from '../../../constants/Config';
-import { MatchExpressions } from '../../../models/WorkloadEdit';
-import { isEmpty } from '../../../../common/utils';
+
+import { Bubble, ExternalLink, Radio } from '@tea/component';
+import { bindActionCreators, deepClone, FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { FetchState } from '@tencent/qcloud-redux-fetcher';
+
+import { FormItem, InputField, LinkButton } from '../../../../common/components';
+import { isEmpty } from '../../../../common/utils';
+import { allActions } from '../../../actions';
+import { affinityRuleOperator, affinityType } from '../../../constants/Config';
+import { MatchExpressions } from '../../../models/WorkloadEdit';
+import { RootProps } from '../../ClusterApp';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });

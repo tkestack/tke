@@ -1,12 +1,9 @@
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
-import { QueryState } from '@tencent/qcloud-redux-query';
-import { WorkflowState } from '@tencent/qcloud-redux-workflow';
-import { RecordSet } from '@tencent/qcloud-lib';
-import { Event, Replicaset, Pod, Resource, CreateResource, ResourceFilter } from './';
-import { PodFilterInNode } from './Pod';
-import { ContainerItem } from './ContainerItem';
 import { Validation } from 'src/modules/common';
-import { ListModel } from '@tencent/redux-list';
+
+import { FetcherState, FFListModel, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
+
+import { CreateResource, Event, Pod, Replicaset, ResourceFilter } from './';
+import { PodFilterInNode } from './Pod';
 
 type ResourceModifyWorkflow = WorkflowState<CreateResource, number>;
 
@@ -15,7 +12,7 @@ export interface ResourceDetailState {
   yamlList?: FetcherState<RecordSet<string>>;
 
   /** event的 FFRedux 列表 */
-  event?: ListModel<Event, ResourceFilter>;
+  event?: FFListModel<Event, ResourceFilter>;
 
   /** rs修订版本 */
   rsQuery?: QueryState<ResourceFilter>;

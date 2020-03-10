@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { RootProps } from '../NotifyApp';
-import { LinkButton, FormPanel } from '../../../common/components';
+import { LinkButton } from '../../../common/components';
+import { FormPanel } from '@tencent/ff-component';
 import { router } from '../../router';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Icon } from '@tencent/tea-component';

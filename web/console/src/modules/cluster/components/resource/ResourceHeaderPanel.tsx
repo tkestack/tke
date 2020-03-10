@@ -1,15 +1,17 @@
 import * as React from 'react';
-import { RootProps } from '../ClusterApp';
-import { bindActionCreators } from '@tencent/qcloud-lib';
-import { allActions } from '../../actions';
 import { connect } from 'react-redux';
-import { router } from '../../router';
-import { firstRouterNameMap } from '../../../../../config';
+
 import { Button, Justify } from '@tea/component';
+import { bindActionCreators } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { firstRouterNameMap } from '../../../../../config';
 import { apiVersion } from '../../../../../config/resource/common';
 import { ResourceConfigVersionMap } from '../../../../../config/resourceConfig';
+import { allActions } from '../../actions';
+import { router } from '../../router';
+import { RootProps } from '../ClusterApp';
 import { IsInNodeManageDetail } from './resourceDetail/ResourceDetail';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 interface ResourceHeaderPanelState {
   /** 当前的游标，是resourceTablePanel 还是 ResourceDetailPanel */
@@ -19,10 +21,7 @@ interface ResourceHeaderPanelState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class ResourceHeaderPanel extends React.Component<RootProps, ResourceHeaderPanelState> {
   constructor(props: RootProps, context) {
     super(props, context);
