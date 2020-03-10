@@ -142,7 +142,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#installHelm" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="installHelm">{`$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get > get_helm.sh\n$ sh get_helm.sh`}</p>
+                <p id="installHelm">{`$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | sh`}</p>
               </code>
             </li>
             <li>
@@ -153,7 +153,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#addTkeRepo" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="addTkeRepo">{`helm repo add ${this.props.route.queries['cg']} ${this.props.dockerRegistryUrl.data}/chart/${this.props.route.queries['cg']} --username tkestack --password [访问凭证] `}</p>
+                <p id="addTkeRepo">{`helm repo add ${this.props.route.queries['cgName']} ${this.props.dockerRegistryUrl.data}/chart/${this.props.route.queries['cgName']} --username tkestack --password [访问凭证] `}</p>
               </code>
               <p className="text-weak">
                 <Trans>
@@ -179,7 +179,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#installHelmPush" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="installHelmPush">{`$ helm plugin install https://github.com/imroc/helm-push`}</p>
+                <p id="installHelmPush">{`$ helm plugin install https://github.com/chartmuseum/helm-push`}</p>
               </code>
             </li>
             <li>
@@ -197,7 +197,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#pushHelmDir" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushHelmDir">{`$ helm push ./myapp ${this.props.route.queries['cg']}`}</p>
+                <p id="pushHelmDir">{`$ helm push ./myapp ${this.props.route.queries['cgName']}`}</p>
               </code>
             </li>
             <li>
@@ -208,7 +208,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#pushHelmTar" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushHelmTar">{`$ helm push myapp-1.0.1.tgz ${this.props.route.queries['cg']}`}</p>
+                <p id="pushHelmTar">{`$ helm push myapp-1.0.1.tgz ${this.props.route.queries['cgName']}`}</p>
               </code>
             </li>
             <li>
@@ -219,7 +219,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#downloadChart" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="downloadChart">{`$ helm fetch ${this.props.route.queries['cg']}/myapp`}</p>
+                <p id="downloadChart">{`$ helm fetch ${this.props.route.queries['cgName']}/myapp`}</p>
               </code>
             </li>
             <li>
@@ -230,7 +230,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#downloadSChart" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="downloadSChart">{`$ helm fetch ${this.props.route.queries['cg']}/myapp --version 1.0.1`}</p>
+                <p id="downloadSChart">{`$ helm fetch ${this.props.route.queries['cgName']}/myapp --version 1.0.1`}</p>
               </code>
             </li>
           </ul>
