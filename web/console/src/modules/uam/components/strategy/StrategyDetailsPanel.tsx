@@ -15,6 +15,10 @@ import { LinkButton, usePrevious } from '../../../common/components';
 import { allActions } from '../../actions';
 import { User } from '../../models';
 import { router } from '../../router';
+import { GroupActionPanel } from './detail/GroupActionPanel';
+import { GroupTablePanel } from './detail/GroupTablePanel';
+import { RoleActionPanel } from './detail/RoleActionPanel';
+import { RoleTablePanel } from './detail/RoleTablePanel';
 
 const { useState, useEffect, useRef } = React;
 const _isEqual = require('lodash/isEqual');
@@ -32,7 +36,9 @@ insertCSS(
 let editorRef;
 const tabs = [
   { id: 'actions', label: '策略语法' },
-  { id: 'users', label: '关联用户' }
+  { id: 'users', label: '关联用户' },
+  { id: 'groups', label: '关联用户组' },
+  { id: 'roles', label: '已关联角色' }
 ];
 export const StrategyDetailsPanel = () => {
   const state = useSelector(state => state);
@@ -98,7 +104,7 @@ export const StrategyDetailsPanel = () => {
   }, [associatedUsersListRecords, userMsgsValue]);
 
   const { name, description } = basicParamsValue;
-  const { name: newName = '' } = strategy ? strategy.metadata : {};
+  const { displayName: newName = '' } = strategy ? strategy.spec : {};
   const { description: newDescription = '', email: pEmail = '' } = strategy ? strategy.spec : {};
   const isNameError = name.length <= 0 || name.length > 255;
   const enabled = (name !== newName || description !== newDescription) && !isNameError;
@@ -346,6 +352,14 @@ export const StrategyDetailsPanel = () => {
                 action={actions.strategy}
                 bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
               />
+            </TabPanel>
+            <TabPanel id="groups">
+              <GroupActionPanel />
+              <GroupTablePanel />
+            </TabPanel>
+            <TabPanel id="roles">
+              <RoleActionPanel />
+              <RoleTablePanel />
             </TabPanel>
           </Tabs>
         </Card.Body>

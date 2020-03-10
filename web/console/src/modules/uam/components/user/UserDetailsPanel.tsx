@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { emptyTips, LinkButton } from '@src/modules/common';
-import { Button, Card, Form, Input, Modal, TableColumn } from '@tea/component';
+import { Button, Modal, Card, Input, Form, TableColumn, Tabs, TabPanel } from '@tea/component';
 import { TablePanel } from '@tencent/ff-component';
 import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -13,6 +13,10 @@ import { STRATEGY_TYPE, VALIDATE_EMAIL_RULE, VALIDATE_PHONE_RULE } from '../../c
 import { Strategy, User } from '../../models';
 import { router } from '../../router';
 
+import { RoleActionPanel } from './detail/RoleActionPanel';
+import { RoleTablePanel } from './detail/RoleTablePanel';
+import { GroupActionPanel } from './detail/GroupActionPanel';
+import { GroupTablePanel } from './detail/GroupTablePanel';
 const { useState, useEffect, useRef } = React;
 const _isEqual = require('lodash/isEqual');
 
@@ -88,17 +92,23 @@ export const UserDetailsPanel = () => {
       render: x => x.spec.displayName
     },
     {
+      key: 'category',
+      header: t('类型'),
+      width: '20%',
+      render: x => x.spec.category
+    },
+    {
       key: 'desp',
       header: t('描述'),
       width: '40%',
       render: x => x.spec.description
-    },
-    {
-      key: 'type',
-      header: t('类型'),
-      width: '20%',
-      render: x => x.spec.type
     }
+  ];
+
+  const tabs = [
+    { id: 'policies', label: '已关联策略' },
+    { id: 'groups', label: '已关联用户组' },
+    { id: 'roles', label: '已关联角色' },
   ];
 
   return (
@@ -197,14 +207,26 @@ export const UserDetailsPanel = () => {
       </Card>
 
       <Card>
-        <Card.Body title={t('关联策略')}>
-          <TablePanel
-            isNeedCard={false}
-            columns={columns}
-            model={userStrategyList}
-            action={actions.user.strategy}
-            emptyTips={emptyTips}
-          />
+        <Card.Body>
+          <Tabs tabs={tabs}>
+            <TabPanel id="policies">
+              <TablePanel
+                isNeedCard={true}
+                columns={columns}
+                model={userStrategyList}
+                action={actions.user.strategy}
+                emptyTips={emptyTips}
+              />
+            </TabPanel>
+            <TabPanel id="groups">
+              <GroupActionPanel />
+              <GroupTablePanel />
+            </TabPanel>
+            <TabPanel id="roles">
+              <RoleActionPanel />
+              <RoleTablePanel />
+            </TabPanel>
+          </Tabs>
         </Card.Body>
       </Card>
     </React.Fragment>
