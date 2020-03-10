@@ -75,9 +75,11 @@ func scrapeConfigForPrometheus() string {
         regex: 'container_fs_writes_bytes_total|container_fs_reads_bytes_total|container_fs_writes_total|container_fs_reads_total|container_cpu_usage_seconds_total|container_memory_usage_bytes|container_memory_cache|container_network_receive_bytes_total|container_network_transmit_bytes_total|container_network_receive_packets_total|container_network_transmit_packets_total'
         action: keep
       - source_labels: [container]
+        regex: "(.+)"
         action: replace
         target_label: container_name
       - source_labels: [pod]
+        regex: "(.+)"
         action: replace
         target_label: pod_name
       - regex: (__name__|container_name|pod_name|namespace|cpu|interface|device)

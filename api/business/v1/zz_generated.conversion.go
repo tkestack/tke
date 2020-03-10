@@ -651,6 +651,7 @@ func autoConvert_v1_NamespaceStatus_To_business_NamespaceStatus(in *NamespaceSta
 	out.Message = in.Message
 	out.ResourceQuotaName = in.ResourceQuotaName
 	out.Used = *(*business.ResourceList)(unsafe.Pointer(&in.Used))
+	out.CachedSpecHard = *(*business.ResourceList)(unsafe.Pointer(&in.CachedSpecHard))
 	return nil
 }
 
@@ -666,6 +667,7 @@ func autoConvert_business_NamespaceStatus_To_v1_NamespaceStatus(in *business.Nam
 	out.Message = in.Message
 	out.ResourceQuotaName = in.ResourceQuotaName
 	out.Used = *(*ResourceList)(unsafe.Pointer(&in.Used))
+	out.CachedSpecHard = *(*ResourceList)(unsafe.Pointer(&in.CachedSpecHard))
 	return nil
 }
 
@@ -858,6 +860,7 @@ func autoConvert_v1_ProjectStatus_To_business_ProjectStatus(in *ProjectStatus, o
 	out.Clusters = *(*business.ClusterUsed)(unsafe.Pointer(&in.Clusters))
 	out.CalculatedChildProjects = *(*[]string)(unsafe.Pointer(&in.CalculatedChildProjects))
 	out.CalculatedNamespaces = *(*[]string)(unsafe.Pointer(&in.CalculatedNamespaces))
+	out.CachedSpecClusters = *(*business.ClusterHard)(unsafe.Pointer(&in.CachedSpecClusters))
 	return nil
 }
 
@@ -872,6 +875,7 @@ func autoConvert_business_ProjectStatus_To_v1_ProjectStatus(in *business.Project
 	out.Clusters = *(*ClusterUsed)(unsafe.Pointer(&in.Clusters))
 	out.CalculatedChildProjects = *(*[]string)(unsafe.Pointer(&in.CalculatedChildProjects))
 	out.CalculatedNamespaces = *(*[]string)(unsafe.Pointer(&in.CalculatedNamespaces))
+	out.CachedSpecClusters = *(*ClusterHard)(unsafe.Pointer(&in.CachedSpecClusters))
 	return nil
 }
 

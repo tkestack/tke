@@ -77,10 +77,17 @@ func ValidateChannel(channel *notify.Channel) field.ErrorList {
 		}
 	}
 
+	if channel.Spec.Webhook != nil {
+		channelCount++
+		if channel.Spec.Webhook.URL == "" {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec", "webhook", "url"), "must specify url of webhook server"))
+		}
+	}
+
 	if channelCount == 0 {
-		allErrs = append(allErrs, field.Required(field.NewPath("spec"), "must specify one of channel type: `tencentCloudSMS`, `wechat` or `smtp`"))
+		allErrs = append(allErrs, field.Required(field.NewPath("spec"), "must specify one of channel type: `tencentCloudSMS`, `wechat`, `webhook` or `smtp`"))
 	} else if channelCount > 1 {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec"), "may not specify more than 1 channel type: `tencentCloudSMS`, `wechat` or `smtp`"))
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec"), "may not specify more than 1 channel type: `tencentCloudSMS`, `wechat`, `webhook` or `smtp`"))
 	}
 
 	return allErrs

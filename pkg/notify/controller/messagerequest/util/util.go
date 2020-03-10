@@ -25,15 +25,9 @@ import (
 	htmlTemplate "html/template"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"time"
 
 	"tkestack.io/tke/pkg/util/log"
-)
-
-var (
-	//SelfdefineURL is used to post message to a user-defined URL if it's not empty
-	SelfdefineURL string
 )
 
 // Option is used to post request
@@ -44,13 +38,6 @@ type Option struct {
 	Method   string            `json:"method"`
 	Headers  map[string]string `json:"headers"`
 	Body     interface{}       `json:"body"`
-}
-
-// SelfdefineBodyInfo represents the body info to request a user-defined URL
-type SelfdefineBodyInfo struct {
-	Type   string `json:"type"`
-	Header string `json:"header,omitempty"`
-	Body   string `json:"body"`
 }
 
 // Request is used to do a post request
@@ -88,24 +75,6 @@ func Request(options Option) ([]byte, error) {
 		return nil, fmt.Errorf("http get error : url=%v , statusCode=%v", URL, resp.StatusCode)
 	}
 	return ioutil.ReadAll(resp.Body)
-}
-
-// RequestToSelfdefine is used to do a post request to selfdefine URL
-func RequestToSelfdefine(reqBody interface{}) error {
-	reqURL, err := url.Parse(SelfdefineURL)
-	if err != nil {
-		return err
-	}
-	option := Option{
-		Protocol: reqURL.Scheme,
-		Host:     reqURL.Host,
-		Path:     reqURL.Path,
-		Method:   http.MethodPost,
-		Body:     reqBody,
-		Headers:  map[string]string{"Content-Type": "application/json"},
-	}
-	_, err = Request(option)
-	return err
 }
 
 // ParseTemplate is used to get body according to template

@@ -19,7 +19,7 @@
 #
 
 DOCKER := docker
-DOCKER_SUPPORTED_VERSIONS ?= 18|19
+DOCKER_SUPPORTED_API_VERSION ?= 1.32
 
 REGISTRY_PREFIX ?= tkestack
 BASE_IMAGE = alpine:3.10
@@ -46,27 +46,27 @@ endif
 
 .PHONY: image.verify
 image.verify:
-ifneq ($(shell $(DOCKER) -v | grep -q -E '\bversion ($(DOCKER_SUPPORTED_VERSIONS))\b' && echo 0 || echo 1), 0)
-	$(error unsupported docker version. Please make install one of the following supported version: '$(DOCKER_SUPPORTED_VERSIONS)')
-endif
+	$(eval API_VERSION := $(shell $(DOCKER) version | grep -E 'API version: {6}[0-9]' | awk '{print $$3} END { if (NR==0) print 0}' ))
+	$(eval PASS := $(shell echo "$(API_VERSION) > $(DOCKER_SUPPORTED_API_VERSION)" | bc))
+	@if [ $(PASS) -ne 1 ]; then \
+		$(DOCKER) -v ;\
+		echo "Unsupported docker version. Docker API version should be greater than $(DOCKER_SUPPORTED_API_VERSION)"; \
+		exit 1; \
+	fi
 
 .PHONY: image.daemon.verify
 image.daemon.verify:
-ifneq ($(shell $(DOCKER) version | grep -q -E 'Experimental: {5}true' && echo 0 || echo 1), 0)
-	$(error Experimental features of Docker daemon is not enabled. Please add "experimental": true in '/etc/docker/daemon.json' and then restart Docker daemon.)
-endif
-
-.PHONY: image.client.verify
-image.client.verify:
-ifneq ($(shell $(DOCKER) version | grep -q -E 'Experimental: {6}true' && echo 0 || echo 1), 0)
-	$(error Experimental features of Docker client is not enabled. Please add "experimental": "enabled" in '$$HOME/.docker/config.json')
-endif
+	$(eval PASS := $(shell $(DOCKER) version | grep -q -E 'Experimental: {5}true' && echo 1 || echo 0))
+	@if [ $(PASS) -ne 1 ]; then \
+		echo "Experimental features of Docker daemon is not enabled. Please add \"experimental\": true in '/etc/docker/daemon.json' and then restart Docker daemon."; \
+		exit 1; \
+	fi
 
 .PHONY: image.build
-image.build: image.verify image.daemon.verify go.build.verify $(addprefix image.build., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
+image.build: image.verify go.build.verify $(addprefix image.build., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
 
 .PHONY: image.build.multiarch
-image.build.multiarch: image.verify image.daemon.verify go.build.verify $(foreach p,$(PLATFORMS),$(addprefix image.build., $(addprefix $(p)., $(IMAGES))))
+image.build.multiarch: image.verify go.build.verify $(foreach p,$(PLATFORMS),$(addprefix image.build., $(addprefix $(p)., $(IMAGES))))
 
 .PHONY: image.build.%
 image.build.%: go.build.%
@@ -78,15 +78,20 @@ image.build.%: go.build.%
 		| sed "s#BASE_IMAGE#$(BASE_IMAGE)#g" >$(TMP_DIR)/$(IMAGE)/Dockerfile
 	@cp $(OUTPUT_DIR)/$(IMAGE_PLAT)/$(IMAGE) $(TMP_DIR)/$(IMAGE)/
 	@DST_DIR=$(TMP_DIR)/$(IMAGE) $(ROOT_DIR)/build/docker/$(IMAGE)/build.sh 2>/dev/null || true
-	$(DOCKER) build --platform $(IMAGE_PLAT) $(_DOCKER_BUILD_EXTRA_ARGS) --pull \
-	-t $(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION) $(TMP_DIR)/$(IMAGE)
+	$(eval BUILD_SUFFIX := $(_DOCKER_BUILD_EXTRA_ARGS) --pull -t $(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION) $(TMP_DIR)/$(IMAGE))
+	@if [ $(shell $(GO) env GOARCH) != $(ARCH) ] ; then \
+		$(MAKE) image.daemon.verify ;\
+		$(DOCKER) build --platform $(IMAGE_PLAT) $(BUILD_SUFFIX) ; \
+	else \
+		$(DOCKER) build $(BUILD_SUFFIX) ; \
+	fi
 	@rm -rf $(TMP_DIR)/$(IMAGE)
 
 .PHONY: image.push
-image.push: image.verify image.daemon.verify go.build.verify $(addprefix image.push., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
+image.push: image.verify go.build.verify $(addprefix image.push., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
 
 .PHONY: image.push.multiarch
-image.push.multiarch: image.verify image.daemon.verify go.build.verify $(foreach p,$(PLATFORMS),$(addprefix image.push., $(addprefix $(p)., $(IMAGES)))) 
+image.push.multiarch: image.verify go.build.verify $(foreach p,$(PLATFORMS),$(addprefix image.push., $(addprefix $(p)., $(IMAGES)))) 
 
 .PHONY: image.push.%
 image.push.%: image.build.%
@@ -94,7 +99,8 @@ image.push.%: image.build.%
 	$(DOCKER) push $(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION)
 
 .PHONY: image.manifest.push
-image.manifest.push: image.verify image.daemon.verify image.client.verify go.build.verify \
+image.manifest.push: export DOCKER_CLI_EXPERIMENTAL := enabled
+image.manifest.push: image.verify go.build.verify \
 $(addprefix image.manifest.push., $(addprefix $(IMAGE_PLAT)., $(IMAGES)))
 
 .PHONY: image.manifest.push.%
@@ -116,9 +122,10 @@ image.manifest.remove.%:
 	@rm -rf ${HOME}/.docker/manifests/docker.io_$(REGISTRY_PREFIX)_$(IMAGE)-$(VERSION)
 
 .PHONY: image.manifest.push.multiarch
-image.manifest.push.multiarch: image.client.verify image.push.multiarch $(addprefix image.manifest.push.multiarch., $(IMAGES))
+image.manifest.push.multiarch: image.push.multiarch $(addprefix image.manifest.push.multiarch., $(IMAGES))
 
 .PHONY: image.manifest.push.multiarch.%
 image.manifest.push.multiarch.%:
 	@echo "===========> Pushing manifest $* $(VERSION) to $(REGISTRY_PREFIX) and then remove the local manifest list"
-	REGISTRY_PREFIX=$(REGISTRY_PREFIX) PLATFROMS="$(PLATFORMS)" IMAGE=$* VERSION=$(VERSION) $(ROOT_DIR)/build/lib/create-manifest.sh 
+	REGISTRY_PREFIX=$(REGISTRY_PREFIX) PLATFROMS="$(PLATFORMS)" IMAGE=$* VERSION=$(VERSION) DOCKER_CLI_EXPERIMENTAL=enabled \
+	  $(ROOT_DIR)/build/lib/create-manifest.sh 

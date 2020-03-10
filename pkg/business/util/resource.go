@@ -44,7 +44,7 @@ func SubClusterHardFromUsed(used *v1.ClusterUsed, needed v1.ClusterHard) {
 func AddClusterHardToUsed(used *v1.ClusterUsed, delta v1.ClusterHard) {
 	for clusterName, clusterHard := range delta {
 		clusterUsed, clusterUsedExist := (*used)[clusterName]
-		if !clusterUsedExist {
+		if !clusterUsedExist || clusterUsed.Used == nil {
 			clusterUsed = v1.UsedQuantity{
 				Used: make(v1.ResourceList),
 			}

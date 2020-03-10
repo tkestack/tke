@@ -835,6 +835,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/notify/v1.ChannelSpec":                                   schema_tke_api_notify_v1_ChannelSpec(ref),
 		"tkestack.io/tke/api/notify/v1.ChannelStatus":                                 schema_tke_api_notify_v1_ChannelStatus(ref),
 		"tkestack.io/tke/api/notify/v1.ChannelTencentCloudSMS":                        schema_tke_api_notify_v1_ChannelTencentCloudSMS(ref),
+		"tkestack.io/tke/api/notify/v1.ChannelWebhook":                                schema_tke_api_notify_v1_ChannelWebhook(ref),
 		"tkestack.io/tke/api/notify/v1.ChannelWechat":                                 schema_tke_api_notify_v1_ChannelWechat(ref),
 		"tkestack.io/tke/api/notify/v1.ConfigMap":                                     schema_tke_api_notify_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/notify/v1.ConfigMapList":                                 schema_tke_api_notify_v1_ConfigMapList(ref),
@@ -38621,6 +38622,19 @@ func schema_tke_api_business_v1_NamespaceStatus(ref common.ReferenceCallback) co
 							},
 						},
 					},
+					"cachedSpecHard": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -39036,11 +39050,24 @@ func schema_tke_api_business_v1_ProjectStatus(ref common.ReferenceCallback) comm
 							},
 						},
 					},
+					"cachedSpecClusters": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/business/v1.HardQuantity"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/business/v1.UsedQuantity"},
+			"tkestack.io/tke/api/business/v1.HardQuantity", "tkestack.io/tke/api/business/v1.UsedQuantity"},
 	}
 }
 
@@ -39588,12 +39615,17 @@ func schema_tke_api_notify_v1_ChannelSpec(ref common.ReferenceCallback) common.O
 							Ref: ref("tkestack.io/tke/api/notify/v1.ChannelSMTP"),
 						},
 					},
+					"webhook": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/notify/v1.ChannelWebhook"),
+						},
+					},
 				},
 				Required: []string{"tenantID", "displayName"},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/notify/v1.ChannelSMTP", "tkestack.io/tke/api/notify/v1.ChannelTencentCloudSMS", "tkestack.io/tke/api/notify/v1.ChannelWechat"},
+			"tkestack.io/tke/api/notify/v1.ChannelSMTP", "tkestack.io/tke/api/notify/v1.ChannelTencentCloudSMS", "tkestack.io/tke/api/notify/v1.ChannelWebhook", "tkestack.io/tke/api/notify/v1.ChannelWechat"},
 	}
 }
 
@@ -39643,6 +39675,40 @@ func schema_tke_api_notify_v1_ChannelTencentCloudSMS(ref common.ReferenceCallbac
 					},
 				},
 				Required: []string{"appKey", "sdkAppID"},
+			},
+		},
+	}
+}
+
+func schema_tke_api_notify_v1_ChannelWebhook(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ChannelWebhook indicates a channel configuration for sending notifications to the webhook server.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"headers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"url"},
 			},
 		},
 	}
