@@ -247,6 +247,8 @@ const (
 	ReceiverChannelEmail ReceiverChannel = "email"
 	// ReceiverChannelWechatOpenID represents the openid for wechat of receiver.
 	ReceiverChannelWechatOpenID ReceiverChannel = "wechat_openid"
+	// ReceiverChannelWebhook only indicates channel type webhook
+	ReceiverChannelWebhook ReceiverChannel = "webhook"
 )
 
 // ReceiverSpec is a description of a receiver.
@@ -415,6 +417,8 @@ type MessageSpec struct {
 	Body string
 	// +optional
 	ChannelMessageID string
+	// +optional
+	AlarmPolicyName string
 }
 
 // MessageStatus represents information about the status of a message.
