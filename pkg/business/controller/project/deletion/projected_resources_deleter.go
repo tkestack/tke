@@ -45,13 +45,13 @@ func NewProjectedResourcesDeleter(projectClient v1clientset.ProjectInterface,
 	businessClient v1clientset.BusinessV1Interface,
 	finalizerToken businessv1.FinalizerName,
 	deleteProjectWhenDone bool,
-	isRegistryEnabled bool) ProjectedResourcesDeleterInterface {
+	registryEnabled bool) ProjectedResourcesDeleterInterface {
 	d := &projectedResourcesDeleter{
 		projectClient:         projectClient,
 		businessClient:        businessClient,
 		finalizerToken:        finalizerToken,
 		deleteProjectWhenDone: deleteProjectWhenDone,
-		isRegistryEnabled:     isRegistryEnabled,
+		registryEnabled:       registryEnabled,
 	}
 	return d
 }
@@ -68,7 +68,7 @@ type projectedResourcesDeleter struct {
 	finalizerToken businessv1.FinalizerName
 	// Also delete the project when all resources in the project have been deleted.
 	deleteProjectWhenDone bool
-	isRegistryEnabled     bool
+	registryEnabled       bool
 }
 
 // Delete deletes all resources in the given project.
@@ -347,7 +347,7 @@ func deleteNamespaces(deleter *projectedResourcesDeleter, project *businessv1.Pr
 }
 
 func deleteImageNamespaces(deleter *projectedResourcesDeleter, project *businessv1.Project) error {
-	if !deleter.isRegistryEnabled {
+	if !deleter.registryEnabled {
 		return nil
 	}
 	log.Debug("Project controller - deleteImageNamespaces", log.String("projectName", project.ObjectMeta.Name))
@@ -369,7 +369,7 @@ func deleteImageNamespaces(deleter *projectedResourcesDeleter, project *business
 }
 
 func deleteChartGroups(deleter *projectedResourcesDeleter, project *businessv1.Project) error {
-	if !deleter.isRegistryEnabled {
+	if !deleter.registryEnabled {
 		return nil
 	}
 	log.Debug("Project controller - deleteChartGroups", log.String("projectName", project.ObjectMeta.Name))
@@ -432,7 +432,7 @@ func (d *projectedResourcesDeleter) hasAllNamespacesDeleted(project *businessv1.
 }
 
 func (d *projectedResourcesDeleter) hasAllImageNamespacesDeleted(project *businessv1.Project) bool {
-	if !d.isRegistryEnabled {
+	if !d.registryEnabled {
 		return true
 	}
 	imageNamespaceList, err := d.businessClient.ImageNamespaces(project.ObjectMeta.Name).List(metav1.ListOptions{})
@@ -451,7 +451,7 @@ func (d *projectedResourcesDeleter) hasAllImageNamespacesDeleted(project *busine
 }
 
 func (d *projectedResourcesDeleter) hasAllChartGroupsDeleted(project *businessv1.Project) bool {
-	if !d.isRegistryEnabled {
+	if !d.registryEnabled {
 		return true
 	}
 	chartGroupList, err := d.businessClient.ChartGroups(project.ObjectMeta.Name).List(metav1.ListOptions{})

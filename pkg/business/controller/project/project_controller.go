@@ -73,14 +73,14 @@ type Controller struct {
 
 // NewController creates a new Project object.
 func NewController(client clientset.Interface, projectInformer businessv1informer.ProjectInformer,
-	resyncPeriod time.Duration, finalizerToken v1.FinalizerName, isRegistryEnabled bool) *Controller {
+	resyncPeriod time.Duration, finalizerToken v1.FinalizerName, registryEnabled bool) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
 		client: client,
 		cache:  &projectCache{m: make(map[string]*cachedProject)},
 		queue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
 		projectedResourcesDeleter: deletion.NewProjectedResourcesDeleter(client.BusinessV1().Projects(),
-			client.BusinessV1(), finalizerToken, true, isRegistryEnabled),
+			client.BusinessV1(), finalizerToken, true, registryEnabled),
 	}
 
 	if client != nil && client.BusinessV1().RESTClient().GetRateLimiter() != nil {
