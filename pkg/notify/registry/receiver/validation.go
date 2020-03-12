@@ -62,6 +62,7 @@ var standardReceiverChannel = sets.NewString(
 	string(notify.ReceiverChannelEmail),
 	string(notify.ReceiverChannelMobile),
 	string(notify.ReceiverChannelWechatOpenID),
+	string(notify.ReceiverChannelWebhook),
 )
 
 // IsStandardReceiverChannel returns true if the receiver channel is known to

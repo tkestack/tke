@@ -417,6 +417,8 @@ type MessageSpec struct {
 	Body string `json:"body,omitempty" protobuf:"bytes,7,opt,name=body"`
 	// +optional
 	ChannelMessageID string `json:"channelMessageID,omitempty" protobuf:"bytes,8,opt,name=channelMessageID"`
+	// +optional
+	AlarmPolicyName string `json:"alarmPolicyName,omitempty" protobuf:"bytes,9,opt,name=alarmPolicyName"`
 }
 
 // MessageStatus represents information about the status of a message.

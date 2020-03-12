@@ -34,11 +34,7 @@ export class ChartDetailPanel extends React.Component<RootProps, any> {
           ;
         </ContentView.Header>
         <ContentView.Body>
-          {/* <Tabs ceiling animated={false} tabs={[{ id: 'charts', label: t('Chart列表') }]} placement="top">
-            <TabPanel id="charts"> */}
           <ChartTablePanel {...this.props} />
-          {/* </TabPanel>
-          </Tabs> */}
         </ContentView.Body>
       </ContentView>
     );

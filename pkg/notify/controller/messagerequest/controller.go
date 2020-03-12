@@ -295,6 +295,7 @@ type sentMessage struct {
 	header          string
 	body            string
 	messageID       string
+	alarmPolicyName string
 }
 
 func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessages []sentMessage, failedReceiverErrors map[string]string) {
@@ -352,6 +353,10 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 		}
 		receivers = append(receivers, receiver)
 	}
+	var alarmPolicyName string
+	if v, ok := messageRequest.Spec.Variables["alarmPolicyName"]; ok {
+		alarmPolicyName = v
+	}
 	if channel.Spec.Webhook != nil && template.Spec.Text != nil {
 		content, err := webhook.Send(channel.Spec.Webhook, template.Spec.Text, receivers, messageRequest.Spec.Variables)
 		if err != nil {
@@ -363,6 +368,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 			receiverChannel: v1.ReceiverChannelWebhook,
 			identity:        channel.Spec.Webhook.URL,
 			body:            content,
+			alarmPolicyName: alarmPolicyName,
 		})
 		return
 	}
@@ -392,6 +398,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 				username:        receiver.Spec.Username,
 				body:            body,
 				messageID:       messageID,
+				alarmPolicyName: alarmPolicyName,
 			})
 		}
 		if template.Spec.Wechat != nil {
@@ -417,6 +424,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 				identity:        openID,
 				body:            body,
 				messageID:       messageID,
+				alarmPolicyName: alarmPolicyName,
 			})
 		}
 		if template.Spec.Text != nil {
@@ -442,6 +450,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 				identity:        email,
 				header:          header,
 				body:            body,
+				alarmPolicyName: alarmPolicyName,
 			})
 		}
 		if templateCount == 0 {
@@ -455,7 +464,7 @@ func (c *Controller) archiveMessage(messageRequest *v1.MessageRequest, sentMessa
 	for _, sentMessage := range sentMessages {
 		message := &v1.Message{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-%s", messageRequest.ObjectMeta.Name, sentMessage.receiverName),
+				Name: fmt.Sprintf("%s-%s", messageRequest.ObjectMeta.Name, strings.Split(sentMessage.receiverName, ",")[0]),
 			},
 			Spec: v1.MessageSpec{
 				TenantID:         messageRequest.Spec.TenantID,
@@ -466,6 +475,7 @@ func (c *Controller) archiveMessage(messageRequest *v1.MessageRequest, sentMessa
 				Header:           sentMessage.header,
 				Body:             sentMessage.body,
 				ChannelMessageID: sentMessage.messageID,
+				AlarmPolicyName:  sentMessage.alarmPolicyName,
 			},
 			Status: v1.MessageStatus{
 				Phase: v1.MessageUnread,
