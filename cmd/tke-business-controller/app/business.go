@@ -72,6 +72,7 @@ func startProjectController(ctx ControllerContext) (http.Handler, bool, error) {
 		ctx.InformerFactory.Business().V1().Projects(),
 		projectSyncPeriod,
 		businessv1.ProjectFinalize,
+		ctx.RegistryClient != nil,
 	)
 
 	go ctrl.Run(concurrentProjectSyncs, ctx.Stop)
