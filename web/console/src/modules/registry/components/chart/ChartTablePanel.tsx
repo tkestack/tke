@@ -86,10 +86,16 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
         )
       },
       {
-        key: 'settings',
-        header: '操作',
-        width: 100,
-        render: () => '-'
+        key: 'name',
+        header: t('地址'),
+        render: (x: ChartIns) => (
+          <Text parent="div" overflow>
+            <span className="text" id={`_${x.spec.name}`}>
+              {`http://${this.props.dockerRegistryUrl.data}/chart/${this.props.route.queries['cgName']}/${x.spec.name}.tgz`}
+            </span>{' '}
+            <Clip target={`#_${x.spec.name}`} />
+          </Text>
+        )
       }
     ];
 
@@ -153,7 +159,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#addTkeRepo" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="addTkeRepo">{`helm repo add ${this.props.route.queries['cgName']} ${this.props.dockerRegistryUrl.data}/chart/${this.props.route.queries['cgName']} --username tkestack --password [访问凭证] `}</p>
+                <p id="addTkeRepo">{`helm repo add ${this.props.route.queries['cgName']} http://${this.props.dockerRegistryUrl.data}/chart/${this.props.route.queries['cgName']} --username tkestack --password [访问凭证] `}</p>
               </code>
               <p className="text-weak">
                 <Trans>

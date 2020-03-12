@@ -26,7 +26,7 @@ export class ChartDetailPanel extends React.Component<RootProps, any> {
                   {t('返回')}
                 </a>
                 <h2>
-                  {t('ChartGroup')} <span>({this.props.route.queries['cgName'] || '-'})</span>
+                  {t('Chart包列表')} <span>({this.props.route.queries['cgName'] || '-'})</span>
                 </h2>
               </React.Fragment>
             }
@@ -34,11 +34,11 @@ export class ChartDetailPanel extends React.Component<RootProps, any> {
           ;
         </ContentView.Header>
         <ContentView.Body>
-          <Tabs ceiling animated={false} tabs={[{ id: 'charts', label: t('Chart列表') }]} placement="top">
-            <TabPanel id="charts">
-              <ChartTablePanel {...this.props} />
-            </TabPanel>
-          </Tabs>
+          {/* <Tabs ceiling animated={false} tabs={[{ id: 'charts', label: t('Chart列表') }]} placement="top">
+            <TabPanel id="charts"> */}
+          <ChartTablePanel {...this.props} />
+          {/* </TabPanel>
+          </Tabs> */}
         </ContentView.Body>
       </ContentView>
     );
