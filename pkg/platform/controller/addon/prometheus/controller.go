@@ -2398,8 +2398,6 @@ func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components 
 								"-c",
 								"config/prometheusbeat.yml",
 								"-e",
-								"-d",
-								"*",
 							},
 							Command: []string{"./prometheusbeat"},
 							Ports: []corev1.ContainerPort{
