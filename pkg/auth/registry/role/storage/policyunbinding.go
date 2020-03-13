@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"tkestack.io/tke/pkg/util"
 
 	"tkestack.io/tke/pkg/util/log"
@@ -57,6 +58,7 @@ func (r *PolicyUnbindingREST) Create(ctx context.Context, obj runtime.Object, cr
 	}
 
 	bind := obj.(*auth.PolicyBinding)
+
 	polObj, err := r.roleStore.Get(ctx, requestInfo.Name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -71,6 +73,6 @@ func (r *PolicyUnbindingREST) Create(ctx context.Context, obj runtime.Object, cr
 	}
 
 	role.Spec.Policies = remained
-	log.Info("role policies", log.String("role", role.Name), log.Any("policies", role.Spec.Policies))
+	log.Info("PolicyUnbinding: role policies", log.String("role", role.Name), log.Any("policies", role.Spec.Policies))
 	return r.authClient.Roles().Update(role)
 }

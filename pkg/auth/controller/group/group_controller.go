@@ -305,8 +305,6 @@ func (c *Controller) pollGroups(stopCh <-chan struct{}) {
 }
 
 func (c *Controller) resyncGroups() {
-	defer log.Info("Finished syncing groups with users")
-
 	idpList, err := c.client.AuthV1().IdentityProviders().List(metav1.ListOptions{})
 	if err != nil {
 		log.Error("List all identity providers failed", log.Err(err))

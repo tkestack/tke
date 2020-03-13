@@ -242,50 +242,44 @@ func (d *policiedResourcesDeleter) finalizePolicy(policy *v1.Policy) (*v1.Policy
 type deleteResourceFunc func(deleter *policiedResourcesDeleter, policy *v1.Policy) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
-	deleteRelatedRules,
 	detachRelatedRoles,
+	deleteRelatedRules,
 }
 
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
 func (d *policiedResourcesDeleter) deleteAllContent(policy *v1.Policy) error {
-	log.Debug("Policy controller - deleteAllContent", log.String("policyName", policy.ObjectMeta.Name))
+	log.Debug("Policy controller - deleteAllContent", log.String("policyName", policy.Name))
 
-	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
 		err := deleteFunc(d, policy)
 		if err != nil {
-			// If there is an error, hold on to it but proceed with all the remaining resource.
-			errs = append(errs, err)
+			// If there is an error, return directly, in case delete roles failed in next try if rule has been deleted.
+			return err
 		}
 	}
 
-	if len(errs) > 0 {
-		return utilerrors.NewAggregate(errs)
-	}
-
-	log.Debug("Policy controller - deletedAllContent", log.String("policyName", policy.ObjectMeta.Name))
 	return nil
 }
 
 func deleteRelatedRules(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
-	log.Info("Policy controller - deleteRelatedRules", log.String("policyName", policy.ObjectMeta.Name))
+	log.Info("Policy controller - deleteRelatedRules", log.String("policyName", policy.Name))
 	_, err := deleter.enforcer.DeleteRole(policy.Name)
 	return err
 }
 
 func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
-	log.Info("Policy controller - detachRelatedRoles", log.String("policyName", policy.ObjectMeta.Name))
+	log.Info("Policy controller - detachRelatedRoles", log.String("policyName", policy.Name))
 
-	roles, err := deleter.enforcer.GetRolesForUser(policy.ObjectMeta.Name)
+	roles, err := deleter.enforcer.GetUsersForRole(policy.Name)
 	if err != nil {
 		return err
 	}
+	log.Info("Try removing related rules for policy", log.String("policy", policy.Name), log.Strings("rules", roles))
 
 	var errs []error
-
-	unbinding := v1.PolicyBinding{Policies: []string{policy.ObjectMeta.Name}}
+	unbinding := v1.PolicyBinding{Policies: []string{policy.Name}}
 	for _, role := range roles {
 		switch {
 		case strings.HasPrefix(role, "rol-"):
@@ -300,13 +294,13 @@ func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 				if errors.IsNotFound(err) {
 					continue
 				}
-				log.Error("Unbind policy from role failed", log.String("policy", policy.ObjectMeta.Name),
+				log.Error("Unbind policy from role failed", log.String("policy", policy.Name),
 					log.String("role", role), log.Err(err))
 				errs = append(errs, err)
 			}
 		default:
-			log.Error("Unknown role name for policy, remove it", log.String("policy", policy.ObjectMeta.Name), log.String("role", role))
-			_, err = deleter.enforcer.DeleteRoleForUser(policy.ObjectMeta.Name, role)
+			log.Warn("Unknown role name for policy, remove it", log.String("policy", policy.Name), log.String("role", role))
+			_, err = deleter.enforcer.DeleteRoleForUser(role, policy.Name)
 			if err != nil {
 				errs = append(errs, err)
 			}
