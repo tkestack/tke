@@ -252,7 +252,7 @@ var deleteResourceFuncs = []deleteResourceFunc{
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
 func (d *loalIdentitiedResourcesDeleter) deleteAllContent(localIdentity *v1.LocalIdentity) error {
-	log.Debug("LocalIdentity controller - deleteAllContent", log.String("localIdentityName", localIdentity.ObjectMeta.Name))
+	log.Debug("LocalIdentity controller - deleteAllContent", log.String("localIdentityName", localIdentity.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
@@ -267,12 +267,11 @@ func (d *loalIdentitiedResourcesDeleter) deleteAllContent(localIdentity *v1.Loca
 		return utilerrors.NewAggregate(errs)
 	}
 
-	log.Debug("LocalIdentity controller - deletedAllContent", log.String("localIdentityName", localIdentity.ObjectMeta.Name))
 	return nil
 }
 
 func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
-	log.Debug("LocalIdentity controller - deleteRelatedRoles", log.String("localIdentityName", localIdentity.ObjectMeta.Name))
+	log.Debug("LocalIdentity controller - deleteRelatedRoles", log.String("localIdentityName", localIdentity.Name))
 
 	subj := util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username)
 	roles, err := deleter.enforcer.GetRolesForUser(subj)
@@ -280,10 +279,10 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 		return err
 	}
 
+	log.Info("Try removing related rules for user", log.String("user", localIdentity.Spec.Username), log.Strings("rules", roles))
+
 	binding := v1.Binding{}
 	binding.Users = append(binding.Users, v1.Subject{ID: localIdentity.Name, Name: localIdentity.Spec.Username})
-
-	log.Info("Try removing policy for user", log.String("user", localIdentity.Spec.Username), log.Strings("policies", roles))
 	var errs []error
 	for _, role := range roles {
 		switch {

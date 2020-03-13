@@ -26,6 +26,7 @@ import (
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/validation"
 )
 
@@ -67,6 +68,7 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 		allErrs = append(allErrs, field.Invalid(fldStmtPath.Child("effect"), policy.Spec.Statement.Effect, "must specify one of: `allow` or `deny`"))
 	}
 
+	var validUsers []auth.Subject
 	fldUserPath := field.NewPath("status", "users")
 	for i, subj := range policy.Status.Users {
 		if subj.ID == "" {
@@ -78,7 +80,7 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 			val, err := authClient.Users().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldUserPath, subj.ID))
+					log.Warn("user of the policy is not found, will removed it", log.String("policy", policy.Name), log.String("user", subj.Name))
 				} else {
 					allErrs = append(allErrs, field.InternalError(fldUserPath, err))
 				}
@@ -87,12 +89,13 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 					allErrs = append(allErrs, field.Invalid(fldUserPath, subj.ID, "must in the same tenant with the policy"))
 				} else {
 					policy.Status.Users[i].Name = val.Spec.Name
+					validUsers = append(validUsers, policy.Status.Users[i])
 				}
 			}
 		}
-
 	}
 
+	var validGroups []auth.Subject
 	fldGroupPath := field.NewPath("status", "groups")
 	for i, subj := range policy.Status.Groups {
 		if subj.ID == "" {
@@ -104,7 +107,7 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 			val, err := authClient.Groups().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldGroupPath, subj.ID))
+					log.Warn("group of the policy is not found, will removed it", log.String("policy", policy.Name), log.String("group", subj.Name))
 				} else {
 					allErrs = append(allErrs, field.InternalError(fldGroupPath, err))
 				}
@@ -113,10 +116,15 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 					allErrs = append(allErrs, field.Invalid(fldGroupPath, subj.ID, "must in the same tenant with the policy"))
 				} else {
 					policy.Status.Groups[i].Name = val.Spec.DisplayName
+					validGroups = append(validGroups, policy.Status.Groups[i])
 				}
 			}
 		}
+	}
 
+	if len(allErrs) == 0 {
+		policy.Status.Users = validUsers
+		policy.Status.Groups = validGroups
 	}
 
 	return allErrs
