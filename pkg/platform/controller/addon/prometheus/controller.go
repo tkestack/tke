@@ -1189,8 +1189,8 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 					corev1.ResourceMemory: *resource.NewQuantity(128*1024*1024, resource.BinarySI),
 				},
 				Limits: corev1.ResourceList{
-					corev1.ResourceCPU:    *resource.NewMilliQuantity(1000, resource.DecimalSI),
-					corev1.ResourceMemory: *resource.NewQuantity(2*1024*1024*1024, resource.BinarySI),
+					corev1.ResourceCPU:    *resource.NewMilliQuantity(4000, resource.DecimalSI),
+					corev1.ResourceMemory: *resource.NewQuantity(8*1024*1024*1024, resource.BinarySI),
 				},
 			},
 			Tolerations: []corev1.Toleration{
