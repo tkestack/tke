@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/validation"
 )
 
@@ -42,6 +43,7 @@ func ValidateLocalGroup(group *auth.LocalGroup, authClient authinternalclient.Au
 		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("displayName"), group.Spec.DisplayName, err.Error()))
 	}
 
+	var validUsers []auth.Subject
 	fldUserPath := field.NewPath("status", "users")
 	for i, subj := range group.Status.Users {
 		if subj.ID == "" {
@@ -53,7 +55,7 @@ func ValidateLocalGroup(group *auth.LocalGroup, authClient authinternalclient.Au
 			val, err := authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldUserPath, subj.ID))
+					log.Warn("user of the group is not found, will removed it", log.String("group", group.Name), log.String("user", subj.Name))
 				} else {
 					allErrs = append(allErrs, field.InternalError(fldUserPath, err))
 				}
@@ -62,9 +64,15 @@ func ValidateLocalGroup(group *auth.LocalGroup, authClient authinternalclient.Au
 					allErrs = append(allErrs, field.Invalid(fldUserPath, subj.ID, "must in the same tenant with the group"))
 				} else {
 					group.Status.Users[i].Name = val.Spec.Username
+					validUsers = append(validUsers, group.Status.Users[i])
+
 				}
 			}
 		}
+	}
+
+	if len(allErrs) == 0 {
+		group.Status.Users = validUsers
 	}
 
 	return allErrs

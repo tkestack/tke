@@ -254,38 +254,32 @@ var deleteResourceFuncs = []deleteResourceFunc{
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
 func (d *groupedResourcesDeleter) deleteAllContent(group *v1.LocalGroup) error {
-	log.Debug("LocalGroup controller - deleteAllContent", log.String("groupName", group.ObjectMeta.Name))
+	log.Debug("LocalGroup controller - deleteAllContent", log.String("groupName", group.Name))
 
-	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
 		err := deleteFunc(d, group)
 		if err != nil {
-			// If there is an error, hold on to it but proceed with all the remaining resource.
-			errs = append(errs, err)
+			// If there is an error, return directly, in case delete roles failed in next try if rule has been deleted.
+			log.Error("delete content for group failed", log.String("group", group.Name), log.Err(err))
+			return err
 		}
 	}
 
-	if len(errs) > 0 {
-		return utilerrors.NewAggregate(errs)
-	}
-
-	log.Debug("LocalGroup controller - deletedAllContent", log.String("groupName", group.ObjectMeta.Name))
 	return nil
 }
 
 func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) error {
-	log.Debug("LocalGroup controller - deleteRelatedRoles", log.String("group", group.ObjectMeta.Name))
+	log.Debug("LocalGroup controller - deleteRelatedRoles", log.String("group", group.Name))
 
 	subj := util.GroupKey(group.Spec.TenantID, group.Name)
 	roles, err := deleter.enforcer.GetRolesForUser(subj)
 	if err != nil {
 		return err
 	}
+	log.Info("Try removing related rules for group", log.String("group", group.Name), log.Strings("rules", roles))
 
 	binding := v1.Binding{}
 	binding.Groups = append(binding.Groups, v1.Subject{ID: group.Name, Name: group.Spec.DisplayName})
-
-	log.Info("Try removing policy for group", log.String("group", group.Name), log.Strings("policies", roles))
 	var errs []error
 	for _, role := range roles {
 		switch {
@@ -328,7 +322,7 @@ func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) 
 }
 
 func deleteRelatedRules(deleter *groupedResourcesDeleter, group *v1.LocalGroup) error {
-	log.Info("LocalGroup controller - deleteRelatedRules", log.String("groupName", group.ObjectMeta.Name))
+	log.Info("LocalGroup controller - deleteRelatedRules", log.String("groupName", group.Name))
 	_, err := deleter.enforcer.DeleteRole(util.GroupKey(group.Spec.TenantID, group.Name))
 	return err
 }
