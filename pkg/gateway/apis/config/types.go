@@ -67,6 +67,10 @@ type Components struct {
 	// backend service.
 	// +optional
 	LogAgent *Component
+	// audit is used to specify the access information of the `tke-audit-api`
+	// backend service.
+	// +optional
+	Audit *Component
 }
 
 type Component struct {

@@ -39,6 +39,7 @@ type Config struct {
 	Logagent  *Logagent `json:"logagent,omitempty"`
 	HA        *HA       `json:"ha,omitempty"`
 	Gateway   *Gateway  `json:"gateway,omitempty"`
+	Audit     *Audit    `json:"audit,omitempty"`
 	SkipSteps []string  `json:"skipSteps,omitempty"`
 }
 
@@ -68,6 +69,15 @@ type OIDCAuth struct {
 type Registry struct {
 	TKERegistry        *TKERegistry        `json:"tke,omitempty"`
 	ThirdPartyRegistry *ThirdPartyRegistry `json:"thirdParty,omitempty"`
+}
+
+type Audit struct {
+	ElasticSearch *ElasticSearch `json:"elasticSearch,omitempty"`
+}
+
+type ElasticSearch struct {
+	Address     string `json:"address" validate:"required"`
+	ReserveDays int    `json:"reserveDays" validate:"required"`
 }
 
 func (r *Registry) Domain() string {
