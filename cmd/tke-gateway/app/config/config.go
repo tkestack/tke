@@ -37,6 +37,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/apiserver/handler"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
+	audit "tkestack.io/tke/pkg/audit/api"
 	authapiserver "tkestack.io/tke/pkg/auth/apiserver"
 	"tkestack.io/tke/pkg/gateway"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
@@ -92,6 +93,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, distribution.IgnoredAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, chartmuseum.IgnoredAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, authapiserver.IgnoreAuthPathPrefixes()...)
+	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, audit.IgnoredAuthPathPrefixes()...)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes)
 	genericAPIServerConfig.MaxRequestBodyBytes = chartmuseum.MaxUploadSize
 	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString(), sets.NewString(), []string{"/"})

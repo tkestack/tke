@@ -239,6 +239,15 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
+	if t.auditEnabled() {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke audit",
+				Func: t.installTKEAudit,
+			},
+		}...)
+	}
+
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Install tke-platform-api",
@@ -741,8 +750,29 @@ func (t *TKE) completeProviderConfigForRegistry() error {
 		}
 		c.Registry.IP = ip
 	}
+	if t.auditEnabled() {
+		c.Audit.Address = t.determineGatewayHTTPSAddress()
+	}
 
 	return c.Save(constants.ProviderConfigFile)
+}
+
+func (t *TKE) determineGatewayHTTPSAddress() string {
+	var host string
+	if t.Para.Config.Gateway.Domain != "" {
+		host = t.Para.Config.Gateway.Domain
+	} else if t.Para.Config.HA != nil {
+		host = t.Para.Config.HA.VIP()
+	} else {
+		host = t.Para.Cluster.Spec.Machines[0].IP
+	}
+	return fmt.Sprintf("https://%s", host)
+}
+
+func (t *TKE) auditEnabled() bool {
+	return t.Para.Config.Audit != nil &&
+		t.Para.Config.Audit.ElasticSearch != nil &&
+		t.Para.Config.Audit.ElasticSearch.Address != ""
 }
 
 func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
@@ -1224,6 +1254,9 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 		ip := t.Cluster.Spec.Machines[0].IP // registry current only run in first node
 		c.Registry.IP = ip
 	}
+	if t.auditEnabled() {
+		c.Audit.Address = t.determineGatewayHTTPSAddress()
+	}
 
 	err = c.Save(constants.ProviderConfigFile)
 	if err != nil {
@@ -1236,7 +1269,7 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 	}{
 		{
 			Name: "provider-config",
-			File: baremetalconstants.ConfDir + "config.yaml",
+			File: baremetalconstants.ConfDir + "*.yaml",
 		},
 		{
 			Name: "docker",
@@ -1286,6 +1319,7 @@ func (t *TKE) installTKEGateway() error {
 		"EnableMonitor":    t.Para.Config.Monitor != nil,
 		"EnableBusiness":   t.Para.Config.Business != nil,
 		"EnableLogagent":   t.Para.Config.Logagent != nil,
+		"EnableAudit":      t.auditEnabled(),
 	}
 	if t.Para.Config.Registry.TKERegistry != nil {
 		option["RegistryDomainSuffix"] = t.Para.Config.Registry.TKERegistry.Domain
@@ -1428,11 +1462,43 @@ func (t *TKE) installTKEAuthController() error {
 	})
 }
 
-func (t *TKE) installTKEPlatformAPI() error {
+func (t *TKE) installTKEAudit() error {
 	options := map[string]interface{}{
 		"Replicas":   t.Config.Replicas,
-		"Image":      images.Get().TKEPlatformAPI.FullName(),
+		"Image":      images.Get().TKEAudit.FullName(),
 		"EnableAuth": t.Para.Config.Auth.TKEAuth != nil,
+	}
+	if t.Para.Config.Auth.OIDCAuth != nil {
+		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
+		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
+		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
+	}
+
+	if t.Para.Config.Audit.ElasticSearch != nil {
+		options["StorageType"] = "es"
+		options["StorageAddress"] = t.Para.Config.Audit.ElasticSearch.Address
+		options["ReserveDays"] = t.Para.Config.Audit.ElasticSearch.ReserveDays
+	}
+
+	if err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-audit-api/*.yaml", options); err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-audit-api")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKEPlatformAPI() error {
+	options := map[string]interface{}{
+		"Replicas":    t.Config.Replicas,
+		"Image":       images.Get().TKEPlatformAPI.FullName(),
+		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"EnableAudit": t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID

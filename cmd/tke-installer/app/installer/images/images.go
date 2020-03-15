@@ -48,6 +48,7 @@ type Components struct {
 	TKERegistryAPI        containerregistry.Image
 	TKELogagentAPI        containerregistry.Image
 	TKELogagentController containerregistry.Image
+	TKEAudit              containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -84,6 +85,7 @@ var components = Components{
 	TKERegistryAPI:        containerregistry.Image{Name: "tke-registry-api", Tag: Version},
 	TKELogagentAPI:        containerregistry.Image{Name: "tke-logagent-api", Tag: Version},
 	TKELogagentController: containerregistry.Image{Name: "tke-logagent-controller", Tag: Version},
+	TKEAudit:              containerregistry.Image{Name: "tke-audit-api", Tag: Version},
 }
 
 func List() []string {

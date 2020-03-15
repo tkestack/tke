@@ -86,6 +86,7 @@ require (
 	google.golang.org/grpc v1.26.0
 	gopkg.in/go-playground/validator.v9 v9.28.0
 	gopkg.in/ldap.v2 v2.5.1
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.2.5
 	helm.sh/chartmuseum v0.11.0

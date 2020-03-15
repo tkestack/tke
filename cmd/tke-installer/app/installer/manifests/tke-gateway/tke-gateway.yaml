@@ -162,6 +162,13 @@ data:
         passthrough:
           caFile: /app/certs/ca.crt
 {{- end }}
+{{- if .EnableAudit }}
+      audit:
+        address: https://tke-audit-api
+        passthrough:
+          caFile: /app/certs/ca.crt
+{{- end }}
+
 
 {{- if not .SelfSigned }}
   server.crt: |

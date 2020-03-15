@@ -96,6 +96,7 @@ Flags:
 └── provider # cluster provider
     └── baremetal
         ├── conf
+        │   ├── audit-policy.yaml # audit policy config
         │   ├── config.yaml # baremetal cluster provider config
         │   ├── docker
         │   │   ├── daemon.json # docker config for /etc/docker/daemon.json

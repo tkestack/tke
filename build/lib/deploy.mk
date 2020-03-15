@@ -22,7 +22,7 @@ KUBECTL := kubectl
 NAMESPACE ?= tke
 CONTEXT ?= tkestack.dev
 
-DEPLOYS=tke-auth-api tke-auth-controller tke-registry-api tke-platform-api tke-platform-controller tke-business-api tke-business-controller tke-notify-api tke-notify-controller tke-monitor-api tke-monitor-controller tke-gateway
+DEPLOYS=tke-auth-api tke-auth-controller tke-registry-api tke-platform-api tke-platform-controller tke-business-api tke-business-controller tke-notify-api tke-notify-controller tke-monitor-api tke-monitor-controller tke-audit-api tke-gateway
 
 .PHONY: deploy.run.all
 deploy.run.all:
