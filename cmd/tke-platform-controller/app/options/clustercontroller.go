@@ -83,3 +83,11 @@ func (o *ClusterControllerOptions) Validate() []error {
 	errs := []error{}
 	return errs
 }
+
+// ApplyFlags parsing parameters from the command line or configuration file
+// to the options instance.
+func (o *ClusterControllerOptions) ApplyFlags() []error{
+	o.ClusterSyncPeriod = viper.GetDuration(configClusterSyncPeriod)
+	o.ConcurrentClusterSyncs = viper.GetInt(configConcurrentClusterSyncs)
+	return nil
+}
