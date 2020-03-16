@@ -85,6 +85,8 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
 	errs = append(errs, o.Registry.ApplyFlags()...)
 	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
+	errs = append(errs, o.ClusterController.ApplyFlags()...)
+	errs = append(errs, o.MachineController.ApplyFlags()...)
 
 	return errs
 }
