@@ -29,7 +29,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"tkestack.io/tke/api/business"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
-	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/util"
 )
@@ -40,11 +39,10 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against projects.
-func NewStorage(_ genericregistry.RESTOptionsGetter, businessClient *businessinternalclient.BusinessClient, authClient authversionedclient.AuthV1Interface) *Storage {
+func NewStorage(_ genericregistry.RESTOptionsGetter, businessClient *businessinternalclient.BusinessClient) *Storage {
 	return &Storage{
 		Portal: &REST{
 			businessClient: businessClient,
-			authClient:     authClient,
 		},
 	}
 }
@@ -52,7 +50,6 @@ func NewStorage(_ genericregistry.RESTOptionsGetter, businessClient *businessint
 // REST implements a RESTStorage for user setting.
 type REST struct {
 	businessClient *businessinternalclient.BusinessClient
-	authClient     authversionedclient.AuthV1Interface
 }
 
 var _ rest.ShortNamesProvider = &REST{}
@@ -99,17 +96,6 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		if util.InStringSlice(platform.Spec.Administrators, username) {
 			administrator = true
 			break
-		}
-	}
-
-	if !administrator && r.authClient != nil {
-		idp, err := r.authClient.IdentityProviders().Get(tenantID, v1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-
-		if util.InStringSlice(idp.Spec.Administrators, username) {
-			administrator = true
 		}
 	}
 

@@ -34,6 +34,7 @@ type Options struct {
 	PlatformAPIClient *controlleroptions.APIServerClientOptions
 	BusinessAPIClient *controlleroptions.APIServerClientOptions
 	RegistryAPIClient *controlleroptions.APIServerClientOptions
+	AuthAPIClient     *controlleroptions.APIServerClientOptions
 }
 
 // NewOptions creates a new Options with a default config.
@@ -46,6 +47,7 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
 		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", true),
 		RegistryAPIClient: controlleroptions.NewAPIServerClientOptions("registry", false),
+		AuthAPIClient:     controlleroptions.NewAPIServerClientOptions("auth", false),
 	}
 }
 
@@ -58,6 +60,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.PlatformAPIClient.AddFlags(fs)
 	o.BusinessAPIClient.AddFlags(fs)
 	o.RegistryAPIClient.AddFlags(fs)
+	o.AuthAPIClient.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -72,6 +75,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
 	errs = append(errs, o.BusinessAPIClient.ApplyFlags()...)
 	errs = append(errs, o.RegistryAPIClient.ApplyFlags()...)
+	errs = append(errs, o.AuthAPIClient.ApplyFlags()...)
 
 	return errs
 }

@@ -22,6 +22,8 @@ import (
 	"net/http"
 	"time"
 
+	"tkestack.io/tke/pkg/business/controller/platform"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	"tkestack.io/tke/pkg/business/controller/chartgroup"
@@ -42,6 +44,9 @@ const (
 
 	chartGroupSyncPeriod      = 30 * time.Second
 	concurrentChartGroupSyncs = 10
+
+	platformSyncPeriod      = 30 * time.Second
+	concurrentPlatformSyncs = 1
 )
 
 func startNamespaceController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -120,6 +125,27 @@ func startChartGroupController(ctx ControllerContext) (http.Handler, bool, error
 	)
 
 	go ctrl.Run(concurrentChartGroupSyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startPlatformController(ctx ControllerContext) (http.Handler, bool, error) {
+	if ctx.AuthClient == nil {
+		return nil, false, nil
+	}
+
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: businessv1.GroupName, Version: "v1", Resource: "platforms"}] {
+		return nil, false, nil
+	}
+
+	ctrl := platform.NewController(
+		ctx.ClientBuilder.ClientOrDie("platform-controller"),
+		ctx.AuthClient,
+		ctx.InformerFactory.Business().V1().Platforms(),
+		platformSyncPeriod,
+	)
+
+	go ctrl.Run(concurrentPlatformSyncs, ctx.Stop)
 
 	return nil, true, nil
 }

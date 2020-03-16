@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
+	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryv1 "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
@@ -71,6 +72,7 @@ type ControllerContext struct {
 	ResyncPeriod            func() time.Duration
 	ControllerStartInterval time.Duration
 
+	AuthClient     authv1.AuthV1Interface
 	PlatformClient platformv1.PlatformV1Interface
 	RegistryClient registryv1.RegistryV1Interface
 }
@@ -130,6 +132,14 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 			return ControllerContext{}, fmt.Errorf("failed to create the registry client: %v", err)
 		}
 		ctx.RegistryClient = registryClient.RegistryV1()
+	}
+
+	if cfg.AuthAPIServerClientConfig != nil {
+		authClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.AuthAPIServerClientConfig, "tke-business-controller"))
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to create the auth client: %v", err)
+		}
+		ctx.AuthClient = authClient.AuthV1()
 	}
 
 	return ctx, nil
