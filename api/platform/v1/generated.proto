@@ -334,6 +334,12 @@ message ClusterFeature {
 
   // +optional
   repeated string skipConditions = 7;
+
+  // +optional
+  repeated File files = 8;
+
+  // +optional
+  map<string, string> hooks = 9;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.
@@ -587,6 +593,13 @@ message CronHPAStatus {
   // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
+}
+
+message File {
+  optional string src = 1;
+
+  // Only support regular file
+  optional string dst = 2;
 }
 
 // GPUManager is a kind of device plugin for kubelet to help manage GPUs.

@@ -313,6 +313,10 @@ type ClusterFeature struct {
 	HA *HA
 	// +optional
 	SkipConditions []string
+	// +optional
+	Files []File
+	// +optional
+	Hooks map[HookType]string
 }
 
 type HA struct {
@@ -328,6 +332,18 @@ type ThirdPartyHA struct {
 	VIP   string
 	VPort int32
 }
+
+type File struct {
+	Src string // Only support regular file
+	Dst string
+}
+
+type HookType string
+
+const (
+	HookPreInstall  HookType = "PreInstall"
+	HookPostInstall HookType = "PostInstall"
+)
 
 // ClusterProperty records the attribute information of the cluster.
 type ClusterProperty struct {

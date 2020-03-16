@@ -93,6 +93,9 @@ func newProvider() (*Provider, error) {
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
 	p.createHandlers = []Handler{
+		p.EnsureCopyFiles,
+		p.EnsurePreInstallHook,
+
 		p.EnsureRegistryHosts,
 		p.EnsureKernelModule,
 		p.EnsureSysctl,
@@ -130,6 +133,8 @@ func newProvider() (*Provider, error) {
 		p.EnsureMarkControlPlane,
 
 		p.EnsureNvidiaDevicePlugin,
+
+		p.EnsurePostInstallHook,
 	}
 
 	return p, nil
