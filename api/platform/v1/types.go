@@ -314,6 +314,8 @@ type ClusterFeature struct {
 	EnableMasterSchedule bool `json:"enableMasterSchedule,omitempty" protobuf:"bytes,5,opt,name=enableMasterSchedule"`
 	// +optional
 	HA *HA `json:"ha,omitempty" protobuf:"bytes,6,opt,name=ha"`
+	// +optional
+	SkipConditions []string `json:"skipConditions,omitempty" protobuf:"bytes,7,opt,name=skipConditions"`
 }
 
 type HA struct {

@@ -331,6 +331,9 @@ message ClusterFeature {
 
   // +optional
   optional HA ha = 6;
+
+  // +optional
+  repeated string skipConditions = 7;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.

@@ -570,6 +570,11 @@ func (in *ClusterFeature) DeepCopyInto(out *ClusterFeature) {
 		*out = new(HA)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.SkipConditions != nil {
+		in, out := &in.SkipConditions, &out.SkipConditions
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

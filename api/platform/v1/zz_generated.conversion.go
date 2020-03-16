@@ -1507,6 +1507,7 @@ func autoConvert_v1_ClusterFeature_To_platform_ClusterFeature(in *ClusterFeature
 	out.GPUType = (*platform.GPUType)(unsafe.Pointer(in.GPUType))
 	out.EnableMasterSchedule = in.EnableMasterSchedule
 	out.HA = (*platform.HA)(unsafe.Pointer(in.HA))
+	out.SkipConditions = *(*[]string)(unsafe.Pointer(&in.SkipConditions))
 	return nil
 }
 
@@ -1522,6 +1523,7 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 	out.GPUType = (*GPUType)(unsafe.Pointer(in.GPUType))
 	out.EnableMasterSchedule = in.EnableMasterSchedule
 	out.HA = (*HA)(unsafe.Pointer(in.HA))
+	out.SkipConditions = *(*[]string)(unsafe.Pointer(&in.SkipConditions))
 	return nil
 }
 
