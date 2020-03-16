@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/thoas/go-funk"
+
 	"github.com/AlekSi/pointer"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,6 +53,7 @@ const (
 	ReasonFailedProcess     = "FailedProcess"
 	ReasonWaitingProcess    = "WaitingProcess"
 	ReasonSuccessfulProcess = "SuccessfulProcess"
+	ReasonSkipProcess       = "SkipProcess"
 
 	ConditionTypeDone = "EnsureDone"
 )
@@ -317,33 +320,47 @@ func (p *Provider) create(c *Cluster) error {
 		return err
 	}
 
-	f := p.getCreateHandler(condition.Type)
-	if f == nil {
-		return fmt.Errorf("can't get handler by %s", condition.Type)
+	skipConditions := c.Spec.Features.SkipConditions
+	if skipConditions == nil {
+		skipConditions = p.config.Feature.SkipConditions
 	}
-	err = f(c)
 	now := metav1.Now()
-	if err != nil {
-		log.Warn(err.Error())
+	if funk.ContainsString(skipConditions, condition.Type) {
 		c.SetCondition(platformv1.ClusterCondition{
-			Type:          condition.Type,
-			Status:        platformv1.ConditionFalse,
-			LastProbeTime: now,
-			Message:       err.Error(),
-			Reason:        ReasonFailedProcess,
+			Type:               condition.Type,
+			Status:             platformv1.ConditionTrue,
+			LastProbeTime:      now,
+			LastTransitionTime: now,
+			Reason:             ReasonSkipProcess,
 		})
-		c.Status.Reason = ReasonFailedProcess
-		c.Status.Message = err.Error()
-		return nil
-	}
+	} else {
+		f := p.getCreateHandler(condition.Type)
+		if f == nil {
+			return fmt.Errorf("can't get handler by %s", condition.Type)
+		}
+		err = f(c)
+		if err != nil {
+			log.Warn(err.Error())
+			c.SetCondition(platformv1.ClusterCondition{
+				Type:          condition.Type,
+				Status:        platformv1.ConditionFalse,
+				LastProbeTime: now,
+				Message:       err.Error(),
+				Reason:        ReasonFailedProcess,
+			})
+			c.Status.Reason = ReasonFailedProcess
+			c.Status.Message = err.Error()
+			return nil
+		}
 
-	c.SetCondition(platformv1.ClusterCondition{
-		Type:               condition.Type,
-		Status:             platformv1.ConditionTrue,
-		LastProbeTime:      now,
-		LastTransitionTime: now,
-		Reason:             ReasonSuccessfulProcess,
-	})
+		c.SetCondition(platformv1.ClusterCondition{
+			Type:               condition.Type,
+			Status:             platformv1.ConditionTrue,
+			LastProbeTime:      now,
+			LastTransitionTime: now,
+			Reason:             ReasonSuccessfulProcess,
+		})
+	}
 
 	nextConditionType := p.getNextConditionType(condition.Type)
 	if nextConditionType == ConditionTypeDone {

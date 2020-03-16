@@ -311,6 +311,8 @@ type ClusterFeature struct {
 	EnableMasterSchedule bool
 	// +optional
 	HA *HA
+	// +optional
+	SkipConditions []string
 }
 
 type HA struct {
