@@ -75,6 +75,9 @@ func newProvider() (*Provider, error) {
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
 	p.createHandlers = []Handler{
+		p.EnsureCopyFiles,
+		p.EnsurePreInstallHook,
+
 		p.EnsureClean,
 		p.EnsureRegistryHosts,
 		p.EnsureKernelModule,
@@ -92,6 +95,8 @@ func newProvider() (*Provider, error) {
 		p.EnsureKubeconfig,
 		p.EnsureMarkNode,
 		p.EnsureNodeReady,
+
+		p.EnsurePostInstallHook,
 	}
 
 	return p, nil

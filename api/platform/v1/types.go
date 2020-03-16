@@ -316,6 +316,10 @@ type ClusterFeature struct {
 	HA *HA `json:"ha,omitempty" protobuf:"bytes,6,opt,name=ha"`
 	// +optional
 	SkipConditions []string `json:"skipConditions,omitempty" protobuf:"bytes,7,opt,name=skipConditions"`
+	// +optional
+	Files []File `json:"files,omitempty" protobuf:"bytes,8,opt,name=files"`
+	// +optional
+	Hooks map[HookType]string `json:"hooks,omitempty" protobuf:"bytes,9,opt,name=hooks"`
 }
 
 type HA struct {
@@ -331,6 +335,18 @@ type ThirdPartyHA struct {
 	VIP   string `json:"vip" protobuf:"bytes,1,name=vip"`
 	VPort int32  `json:"vport" protobuf:"bytes,2,name=vport"`
 }
+
+type File struct {
+	Src string `json:"src" protobuf:"bytes,1,name=src"` // Only support regular file
+	Dst string `json:"dst" protobuf:"bytes,2,name=dst"`
+}
+
+type HookType string
+
+const (
+	HookPreInstall  HookType = "PreInstall"
+	HookPostInstall HookType = "PostInstall"
+)
 
 // ClusterProperty records the attribute information of the cluster.
 type ClusterProperty struct {

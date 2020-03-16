@@ -20,6 +20,7 @@ package cluster
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/thoas/go-funk"
 	apimachineryValidation "k8s.io/apimachinery/pkg/api/validation"
@@ -54,6 +55,34 @@ func ValidateCluster(obj *platform.Cluster, platformClient platforminternalclien
 				}
 				allErrs = append(allErrs, resp...)
 			}
+		}
+	}
+
+	featuresPath := field.NewPath("spec", "features")
+
+	filePath := featuresPath.Child("hookFiles")
+	hookFiles := make(map[string]bool, len(obj.Spec.Features.Files))
+	for i, file := range obj.Spec.Features.Files {
+		hookFiles[file.Dst] = true
+
+		s, err := os.Stat(file.Src)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(filePath.Index(i).Child("src"), file.Src, err.Error()))
+		} else {
+			if !s.Mode().IsRegular() {
+				allErrs = append(allErrs, field.Invalid(filePath.Index(i).Child("src"), file.Src, "only support regular file"))
+			}
+		}
+	}
+
+	hookPath := featuresPath.Child("hooks")
+	validHooks := []string{string(platform.HookPreInstall), string(platform.HookPostInstall)}
+	for k, v := range obj.Spec.Features.Hooks {
+		if !funk.ContainsString(validHooks, string(k)) {
+			allErrs = append(allErrs, field.Invalid(hookPath.Key(string(k)), v, fmt.Sprintf("valid hook types are: %v", validHooks)))
+		}
+		if _, ok := hookFiles[v]; !ok {
+			allErrs = append(allErrs, field.Invalid(hookPath.Key(string(k)), v, fmt.Sprintf("hook file is not exists in %s", filePath.String())))
 		}
 	}
 
