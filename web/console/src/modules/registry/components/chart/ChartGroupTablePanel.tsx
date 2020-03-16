@@ -18,7 +18,7 @@ export class ChartGroupTablePanel extends React.Component<RootProps, any> {
     return (
       <ContentView>
         <ContentView.Header>
-          <Justify left={<h2>{t('ChartGroup')}</h2>} />;
+          <Justify left={<h2>{t('Chart包命名空间')}</h2>} />;
         </ContentView.Header>
         <ContentView.Body>
           {
@@ -122,7 +122,7 @@ export class ChartGroupTablePanel extends React.Component<RootProps, any> {
     return (
       <GridTable
         columns={columns}
-        emptyTips={<div className="text-center">{t('ChartGroup 列表为空')}</div>}
+        emptyTips={<div className="text-center">{t('Chart包命名空间列表为空')}</div>}
         listModel={{
           list: this.props.chart.list,
           query: this.props.chart.query
@@ -136,7 +136,7 @@ export class ChartGroupTablePanel extends React.Component<RootProps, any> {
     const { actions, deleteChart } = this.props;
     return (
       <WorkflowDialog
-        caption={t('删除 ChartGroup')}
+        caption={t('删除Chart包命名空间')}
         workflow={deleteChart}
         action={actions.chart.deleteChart}
         targets={deleteChart.targets}
@@ -146,12 +146,12 @@ export class ChartGroupTablePanel extends React.Component<RootProps, any> {
         <DialogBodyLayout>
           <p className="til tea-text-overflow">
             <strong className="tip-top">
-              {t('确定要删除 ChartGroup：{{chartName}} 么？', {
+              {t('确定要删除Chart包命名空间：{{chartName}} 么？', {
                 chartName: deleteChart.targets ? deleteChart.targets[0].spec.name : ''
               })}
             </strong>
           </p>
-          <p className="text-danger">{t('删除该 ChartGroup 后，里面的 chart 等数据将永久删除，请谨慎操作。')}</p>
+          <p className="text-danger">{t('删除该Chart包命名空间后，相关数据将永久删除，请谨慎操作。')}</p>
         </DialogBodyLayout>
       </WorkflowDialog>
     );
