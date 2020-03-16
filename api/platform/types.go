@@ -72,7 +72,7 @@ type ClusterSpec struct {
 	Finalizers  []FinalizerName
 	TenantID    string
 	DisplayName string
-	Type        ClusterType
+	Type        string
 	Version     string
 	NetworkType NetworkType
 	// +optional
@@ -151,26 +151,6 @@ const (
 
 	// MachineFinalize is an internal finalizer values to Machine.
 	MachineFinalize FinalizerName = "machine"
-)
-
-// ClusterType defines the type of cluster.
-type ClusterType string
-
-const (
-	// ClusterImported indicates that the cluster is imported after it is created.
-	ClusterImported ClusterType = "Imported"
-	// ClusterBaremetal represents to create the barematal.
-	ClusterBaremetal ClusterType = "Baremetal"
-	// ClusterEKSHosting represents to create the EKS hosting cluster.
-	ClusterEKSHosting ClusterType = "EKSHosting"
-	// ClusterTKEHosting represents the hosting cluster in TKE.
-	ClusterTKEHosting ClusterType = "TKEHosting"
-	// ClusterTKEStandalone represents the standalone cluster in TKE.
-	ClusterTKEStandalone ClusterType = "TKEStandalone"
-	// ClusterTCEHosting represents the hosting cluster in TKE for TCE.
-	ClusterTCEHosting ClusterType = "TCEHosting"
-	// ClusterTCEStandalone represents the standalone cluster in TKE for TCE.
-	ClusterTCEStandalone ClusterType = "TCEStandalone"
 )
 
 // NetworkType defines the network type of cluster.
@@ -470,7 +450,7 @@ type ClusterAddonType struct {
 	LatestVersion string
 	// Description is desc of the addon.
 	Description           string
-	CompatibleClusterType []ClusterType
+	CompatibleClusterType []string
 }
 
 // +genclient:nonNamespaced
@@ -1266,7 +1246,7 @@ type MachineSpec struct {
 	Finalizers  []FinalizerName
 	TenantID    string
 	ClusterName string
-	Type        MachineType
+	Type        string
 	IP          string
 	Port        int32
 	Username    string
@@ -1349,14 +1329,6 @@ const (
 	MachineInternalIP  MachineAddressType = "InternalIP"
 	MachineExternalDNS MachineAddressType = "ExternalDNS"
 	MachineInternalDNS MachineAddressType = "InternalDNS"
-)
-
-// MachineType defines the type of machine
-type MachineType string
-
-const (
-	// BaremetalMachine represents use the baremetal machine to create the machine.
-	BaremetalMachine MachineType = "Baremetal"
 )
 
 // MachineCondition contains details for the current condition of this Machine.

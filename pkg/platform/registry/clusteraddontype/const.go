@@ -20,8 +20,8 @@ package clusteraddontype
 
 import (
 	"bytes"
+
 	"tkestack.io/tke/api/platform"
-	"tkestack.io/tke/api/platform/v1"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
 	gpumanager "tkestack.io/tke/pkg/platform/controller/addon/gpumanager/images"
 	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
@@ -33,6 +33,7 @@ import (
 	csioperator "tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator/images"
 	volumedecorator "tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
+	"tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/registry/clusteraddontype/assets"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -72,141 +73,77 @@ type Info struct {
 	Level                  platform.AddonLevel
 	LatestVersion          string
 	Description            string
-	CompatibleClusterTypes []v1.ClusterType
+	CompatibleClusterTypes []string
 }
 
 // Types defines the type of each plugin and the mapping table of the latest
 // version number.
 var Types = map[AddonType]Info{
 	Helm: {
-		Level:         platform.LevelEnhance,
-		LatestVersion: helm.LatestVersion,
-		Description:   description("Helm.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-			v1.ClusterEKSHosting,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
-		},
+		Level:                  platform.LevelEnhance,
+		LatestVersion:          helm.LatestVersion,
+		Description:            description("Helm.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	PersistentEvent: {
-		Level:         platform.LevelEnhance,
-		LatestVersion: persistentevent.LatestVersion,
-		Description:   description("PersistentEvent.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
-		},
+		Level:                  platform.LevelEnhance,
+		LatestVersion:          persistentevent.LatestVersion,
+		Description:            description("PersistentEvent.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	LogCollector: {
-		Level:         platform.LevelEnhance,
-		LatestVersion: logcollector.LatestVersion,
-		Description:   description("LogCollector.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
-		},
+		Level:                  platform.LevelEnhance,
+		LatestVersion:          logcollector.LatestVersion,
+		Description:            description("LogCollector.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	GPUManager: {
-		Level:         platform.LevelBasic,
-		LatestVersion: gpumanager.LatestVersion,
-		Description:   description("GPUManager.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
-		},
+		Level:                  platform.LevelBasic,
+		LatestVersion:          gpumanager.LatestVersion,
+		Description:            description("GPUManager.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	TappController: {
-		Level:         platform.LevelEnhance,
-		LatestVersion: tappcontroller.LatestVersion,
-		Description:   description("TappController.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-			v1.ClusterEKSHosting,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
-		},
+		Level:                  platform.LevelEnhance,
+		LatestVersion:          tappcontroller.LatestVersion,
+		Description:            description("TappController.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	CSIOperator: {
-		Level:         platform.LevelBasic,
-		LatestVersion: csioperator.LatestVersion,
-		Description:   description("CSIOperator.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-		},
+		Level:                  platform.LevelBasic,
+		LatestVersion:          csioperator.LatestVersion,
+		Description:            description("CSIOperator.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	VolumeDecorator: {
-		Level:         platform.LevelEnhance,
-		LatestVersion: volumedecorator.LatestVersion,
-		Description:   description("VolumeDecorator.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-		},
+		Level:                  platform.LevelEnhance,
+		LatestVersion:          volumedecorator.LatestVersion,
+		Description:            description("VolumeDecorator.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	CronHPA: {
-		Level:         platform.LevelEnhance,
-		LatestVersion: cronhpa.LatestVersion,
-		Description:   description("CronHPA.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-			v1.ClusterEKSHosting,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
-		},
+		Level:                  platform.LevelEnhance,
+		LatestVersion:          cronhpa.LatestVersion,
+		Description:            description("CronHPA.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	Prometheus: {
-		Level:         platform.LevelBasic,
-		LatestVersion: prometheus.LatestVersion,
-		Description:   description("Prometheus.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-		},
+		Level:                  platform.LevelBasic,
+		LatestVersion:          prometheus.LatestVersion,
+		Description:            description("Prometheus.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	IPAM: {
-		Level:         platform.LevelEnhance,
-		LatestVersion: ipam.LatestVersion,
-		Description:   description("IPAM.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-		},
+		Level:                  platform.LevelEnhance,
+		LatestVersion:          ipam.LatestVersion,
+		Description:            description("IPAM.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 	LBCF: {
-		Level:         platform.LevelBasic,
-		LatestVersion: lbcf.LatestVersion,
-		Description:   description("LBCF.md"),
-		CompatibleClusterTypes: []v1.ClusterType{
-			v1.ClusterImported,
-			v1.ClusterBaremetal,
-			v1.ClusterTKEHosting,
-			v1.ClusterTKEStandalone,
-			v1.ClusterTCEHosting,
-			v1.ClusterTCEStandalone,
-		},
+		Level:                  platform.LevelBasic,
+		LatestVersion:          lbcf.LatestVersion,
+		Description:            description("LBCF.md"),
+		CompatibleClusterTypes: cluster.Providers(),
 	},
 }
 

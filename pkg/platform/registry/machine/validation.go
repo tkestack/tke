@@ -20,47 +20,44 @@ package machine
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"math"
 	"net"
-	"sync"
 	"time"
+
+	"github.com/thoas/go-funk"
 
 	apiMachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
-	"tkestack.io/tke/pkg/platform/provider"
+	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	"tkestack.io/tke/pkg/platform/util/validation"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
-var types = sets.NewString(
-	string(platform.BaremetalMachine),
-)
-
 // Validate tests if required fields in the machine are set.
-func Validate(machineProviders *sync.Map, obj *platform.Machine, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
+func Validate(obj *platform.Machine, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	var err error
 	allErrs := apiMachineryvalidation.ValidateObjectMeta(&obj.ObjectMeta, false, apiMachineryvalidation.NameIsDNSLabel, field.NewPath("metadata"))
 
-	// validate Type
+	types := machineprovider.Providers()
 	if obj.Spec.Type == "" {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "type"), "must specify machine type"))
 	} else {
-		if !types.Has(string(obj.Spec.Type)) {
-			allErrs = append(allErrs, field.NotSupported(field.NewPath("spec", "type"), obj.Spec.Type, types.List()))
-		}
-		p, err := provider.LoadMachineProvider(machineProviders, string(obj.Spec.Type))
-		if err != nil {
-			allErrs = append(allErrs, field.InternalError(field.NewPath("spec"), err))
+		if !funk.ContainsString(types, obj.Spec.Type) {
+			allErrs = append(allErrs, field.NotSupported(field.NewPath("spec", "type"), obj.Spec.Type, types))
 		} else {
-			resp, err := p.Validate(*obj)
+			p, err := machineprovider.GetProvider(obj.Spec.Type)
 			if err != nil {
 				allErrs = append(allErrs, field.InternalError(field.NewPath("spec"), err))
+			} else {
+				resp, err := p.Validate(*obj)
+				if err != nil {
+					allErrs = append(allErrs, field.InternalError(field.NewPath("spec"), err))
+				}
+				allErrs = append(allErrs, resp...)
 			}
-			allErrs = append(allErrs, resp...)
 		}
 	}
 
@@ -147,7 +144,7 @@ func Validate(machineProviders *sync.Map, obj *platform.Machine, platformClient 
 
 // ValidateUpdate tests if required fields in the cluster are set during
 // an update.
-func ValidateUpdate(machineProviders *sync.Map, new *platform.Machine, old *platform.Machine) field.ErrorList {
+func ValidateUpdate(new *platform.Machine, old *platform.Machine) field.ErrorList {
 	allErrs := apiMachineryvalidation.ValidateObjectMetaUpdate(&new.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 	allErrs = append(allErrs, validation.ValidateUpdateCluster(new.Spec.ClusterName, old.Spec.ClusterName)...)
 	// allErrs = append(allErrs, Validate(machineProviders, new, platformClient)...)

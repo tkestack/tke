@@ -26,14 +26,11 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/validation"
-
-	"tkestack.io/tke/pkg/spec"
-
 	"github.com/AlekSi/pointer"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -41,12 +38,14 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	"tkestack.io/tke/pkg/spec"
+	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
-const providerName = "baremetal-cluster"
+const providerName = "Baremetal"
 
 const (
 	ReasonFailedProcess     = "FailedProcess"
@@ -57,12 +56,29 @@ const (
 )
 
 var (
-	versions = sets.NewString(spec.K8sVersions...)
+	versions                = sets.NewString(spec.K8sVersions...)
+	nodePodNumAvails        = []int32{16, 32, 64, 128, 256}
+	clusterServiceNumAvails = []int32{32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768}
 )
+
+func init() {
+	p, err := newProvider()
+	if err != nil {
+		panic(err)
+	}
+	clusterprovider.Register(p.Name(), p)
+}
+
+type Provider struct {
+	config         *config.Config
+	createHandlers []Handler
+}
+
+var _ clusterprovider.Provider = &Provider{}
 
 type Handler func(*Cluster) error
 
-func NewProvider() (*Provider, error) {
+func newProvider() (*Provider, error) {
 	p := new(Provider)
 
 	cfg, err := config.New(constants.ConfigFile)
@@ -116,15 +132,12 @@ func NewProvider() (*Provider, error) {
 	return p, nil
 }
 
-type Provider struct {
-	config         *config.Config
-	createHandlers []Handler
-}
-
-var _ clusterprovider.Provider = &Provider{}
-
 func (p *Provider) Name() string {
 	return providerName
+}
+
+func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) (field.ErrorList, error) {
+	return nil, nil
 }
 
 func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
@@ -148,6 +161,18 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 		_, _, err := net.ParseCIDR(c.Spec.ClusterCIDR)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(sPath.Child("clusterCIDR"), c.Spec.ClusterCIDR, fmt.Sprintf("parse CIDR error:%s", err)))
+		}
+	}
+
+	if c.Spec.Properties.MaxNodePodNum != nil {
+		if !util.InInt32Slice(nodePodNumAvails, *c.Spec.Properties.MaxNodePodNum) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "properties", "maxNodePodNum"), *c.Spec.Properties.MaxNodePodNum, fmt.Sprintf("must in values of `%#v`", nodePodNumAvails)))
+		}
+	}
+
+	if c.Spec.Properties.MaxClusterServiceNum != nil {
+		if !util.InInt32Slice(clusterServiceNumAvails, *c.Spec.Properties.MaxClusterServiceNum) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "properties", "maxClusterServiceNum"), *c.Spec.Properties.MaxClusterServiceNum, fmt.Sprintf("must in values of `%#v`", clusterServiceNumAvails)))
 		}
 	}
 
@@ -235,6 +260,12 @@ func (p *Provider) PreCreate(user clusterprovider.UserInfo, cluster platform.Clu
 	}
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
+	}
+	if cluster.Spec.NetworkDevice == "" {
+		cluster.Spec.NetworkDevice = "eth0"
+	}
+	if cluster.Spec.DNSDomain == "" {
+		cluster.Spec.DNSDomain = "cluster.local"
 	}
 	if cluster.Spec.Features.IPVS == nil {
 		cluster.Spec.Features.IPVS = pointer.ToBool(false)

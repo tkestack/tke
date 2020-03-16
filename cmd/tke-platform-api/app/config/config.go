@@ -20,11 +20,11 @@ package config
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apiserver/pkg/server/filters"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/filters"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
@@ -38,7 +38,6 @@ import (
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/platform/apiserver"
-	providerconfig "tkestack.io/tke/pkg/platform/provider/config"
 )
 
 const (
@@ -52,14 +51,12 @@ type Config struct {
 	GenericAPIServerConfig         *genericapiserver.Config
 	VersionedSharedInformerFactory versionedinformers.SharedInformerFactory
 	StorageFactory                 *serverstorage.DefaultStorageFactory
-	Provider                       *providerconfig.Config
 	PrivilegedUsername             string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
 // on a given TKE platform apiserver command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
-	providerConfig := providerconfig.NewConfig()
 	genericAPIServerConfig := genericapiserver.NewConfig(platform.Codecs)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil)
 	genericAPIServerConfig.LongRunningFunc = filters.BasicLongRunningRequestCheck(
@@ -73,9 +70,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 	if err := opts.SecureServing.ApplyTo(&genericAPIServerConfig.SecureServing, &genericAPIServerConfig.LoopbackClientConfig); err != nil {
-		return nil, err
-	}
-	if err := opts.Provider.ApplyTo(providerConfig); err != nil {
 		return nil, err
 	}
 
@@ -121,7 +115,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		GenericAPIServerConfig:         genericAPIServerConfig,
 		VersionedSharedInformerFactory: versionedInformers,
 		StorageFactory:                 storageFactory,
-		Provider:                       providerConfig,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 	}, nil
 }

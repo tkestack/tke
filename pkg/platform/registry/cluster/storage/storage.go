@@ -21,7 +21,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -67,8 +66,8 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against clusters.
-func NewStorage(optsGetter genericregistry.RESTOptionsGetter, clusterProviders *sync.Map, platformClient platforminternalclient.PlatformInterface, host string, privilegedUsername string) *Storage {
-	strategy := clusterstrategy.NewStrategy(clusterProviders, platformClient)
+func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface, host string, privilegedUsername string) *Storage {
+	strategy := clusterstrategy.NewStrategy(platformClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &platform.Cluster{} },
 		NewListFunc:              func() runtime.Object { return &platform.ClusterList{} },

@@ -1264,7 +1264,7 @@ func autoConvert_v1_ClusterAddonType_To_platform_ClusterAddonType(in *ClusterAdd
 	out.Level = platform.AddonLevel(in.Level)
 	out.LatestVersion = in.LatestVersion
 	out.Description = in.Description
-	out.CompatibleClusterType = *(*[]platform.ClusterType)(unsafe.Pointer(&in.CompatibleClusterType))
+	out.CompatibleClusterType = *(*[]string)(unsafe.Pointer(&in.CompatibleClusterType))
 	return nil
 }
 
@@ -1279,7 +1279,7 @@ func autoConvert_platform_ClusterAddonType_To_v1_ClusterAddonType(in *platform.C
 	out.Level = AddonLevel(in.Level)
 	out.LatestVersion = in.LatestVersion
 	out.Description = in.Description
-	out.CompatibleClusterType = *(*[]ClusterType)(unsafe.Pointer(&in.CompatibleClusterType))
+	out.CompatibleClusterType = *(*[]string)(unsafe.Pointer(&in.CompatibleClusterType))
 	return nil
 }
 
@@ -1636,7 +1636,7 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	out.Finalizers = *(*[]platform.FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
 	out.DisplayName = in.DisplayName
-	out.Type = platform.ClusterType(in.Type)
+	out.Type = in.Type
 	out.Version = in.Version
 	out.NetworkType = platform.NetworkType(in.NetworkType)
 	out.NetworkDevice = in.NetworkDevice
@@ -1667,7 +1667,7 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
 	out.DisplayName = in.DisplayName
-	out.Type = ClusterType(in.Type)
+	out.Type = in.Type
 	out.Version = in.Version
 	out.NetworkType = NetworkType(in.NetworkType)
 	out.NetworkDevice = in.NetworkDevice
@@ -2662,7 +2662,7 @@ func autoConvert_v1_MachineSpec_To_platform_MachineSpec(in *MachineSpec, out *pl
 	out.Finalizers = *(*[]platform.FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
-	out.Type = platform.MachineType(in.Type)
+	out.Type = in.Type
 	out.IP = in.IP
 	out.Port = in.Port
 	out.Username = in.Username
@@ -2682,7 +2682,7 @@ func autoConvert_platform_MachineSpec_To_v1_MachineSpec(in *platform.MachineSpec
 	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
-	out.Type = MachineType(in.Type)
+	out.Type = in.Type
 	out.IP = in.IP
 	out.Port = in.Port
 	out.Username = in.Username

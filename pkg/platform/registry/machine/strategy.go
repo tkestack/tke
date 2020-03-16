@@ -21,10 +21,6 @@ package machine
 import (
 	"context"
 	"fmt"
-	"sync"
-
-	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/util"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -34,11 +30,11 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
-	"tkestack.io/tke/pkg/util/log"
-
-	"tkestack.io/tke/api/platform"
-
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/util"
+	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
 
@@ -46,14 +42,13 @@ import (
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
-	machineProviders *sync.Map
-	platformClient   platforminternalclient.PlatformInterface
+	platformClient platforminternalclient.PlatformInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating machine objects.
-func NewStrategy(machineProviders *sync.Map, platformClient platforminternalclient.PlatformInterface) *Strategy {
-	return &Strategy{platform.Scheme, namesutil.Generator, machineProviders, platformClient}
+func NewStrategy(platformClient platforminternalclient.PlatformInterface) *Strategy {
+	return &Strategy{platform.Scheme, namesutil.Generator, platformClient}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -105,7 +100,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new machine
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return Validate(s.machineProviders, obj.(*platform.Machine), s.platformClient)
+	return Validate(obj.(*platform.Machine), s.platformClient)
 }
 
 // AllowCreateOnUpdate is false for machines
@@ -126,7 +121,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end cluster.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateUpdate(s.machineProviders, obj.(*platform.Machine), old.(*platform.Machine))
+	return ValidateUpdate(obj.(*platform.Machine), old.(*platform.Machine))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

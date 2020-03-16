@@ -289,7 +289,7 @@ func (in *ClusterAddonType) DeepCopyInto(out *ClusterAddonType) {
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	if in.CompatibleClusterType != nil {
 		in, out := &in.CompatibleClusterType, &out.CompatibleClusterType
-		*out = make([]ClusterType, len(*in))
+		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
 	return

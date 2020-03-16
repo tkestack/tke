@@ -4,35 +4,29 @@
  *
  * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * Licensed under the Apache License, Version 2.0 (the “License”); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
  * License at
  *
  * https://opensource.org/licenses/Apache-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
 
-package config
+package cluster
 
-import (
-	"sync"
-)
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-// Config defines the configuration of different types of clusters and machine
-// creators.
-type Config struct {
-	ClusterProviders *sync.Map
-	MachineProviders *sync.Map
-}
-
-// NewConfig creates default Config object and returns it.
-func NewConfig() *Config {
-	return &Config{
-		ClusterProviders: new(sync.Map),
-		MachineProviders: new(sync.Map),
+func (p *Provider) EnsureClusterReady(c *Cluster) error {
+	clientset, err := c.Clientset()
+	if err != nil {
+		return err
 	}
+
+	_, err = clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+
+	return err
 }

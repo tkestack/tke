@@ -52,7 +52,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	"sync"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
@@ -82,8 +81,6 @@ type ExtraConfig struct {
 	APIResourceConfigSource serverstorage.APIResourceConfigSource
 	StorageFactory          serverstorage.StorageFactory
 	VersionedInformers      versionedinformers.SharedInformerFactory
-	ClusterProviders        *sync.Map
-	MachineProviders        *sync.Map
 	PrivilegedUsername      string
 }
 
@@ -157,8 +154,6 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		&storagerest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
 
 		&platformrest.StorageProvider{
-			ClusterProviders:     c.ExtraConfig.ClusterProviders,
-			MachineProviders:     c.ExtraConfig.MachineProviders,
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
 		},
