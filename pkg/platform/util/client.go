@@ -347,9 +347,9 @@ func BuildInternalDynamicClientSetNoStatus(cluster *platform.Cluster, credential
 	return dynamic.NewForConfig(restConfig)
 }
 
-// BuildExternalClientSetNoStatus creates the clientset of kubernetes by given
+// BuildVersionedClientSet creates the clientset of kubernetes by given
 // cluster object and returns it.
-func BuildExternalClientSetNoStatus(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (*kubernetes.Clientset, error) {
+func BuildVersionedClientSet(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (*kubernetes.Clientset, error) {
 	restConfig, err := GetExternalRestConfig(cluster, credential)
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
@@ -370,7 +370,7 @@ func BuildExternalClientSet(cluster *platformv1.Cluster, client platformversione
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
 
-	return BuildExternalClientSetNoStatus(cluster, credential)
+	return BuildVersionedClientSet(cluster, credential)
 }
 
 // BuildExternalClientSetWithName creates the clientset of kubernetes by given cluster
@@ -532,17 +532,13 @@ func ClusterHost(cluster *platform.Cluster) (string, error) {
 	}
 
 	var address *platform.ClusterAddress
-	if cluster.Spec.Type == platform.ClusterEKSHosting {
-		if len(addrs[platform.AddressInternal]) != 0 {
-			address = &addrs[platform.AddressInternal][rand.Intn(len(addrs[platform.AddressInternal]))]
-		}
+	if len(addrs[platform.AddressInternal]) != 0 {
+		address = &addrs[platform.AddressInternal][rand.Intn(len(addrs[platform.AddressInternal]))]
+	} else if len(addrs[platform.AddressAdvertise]) != 0 {
+		address = &addrs[platform.AddressAdvertise][rand.Intn(len(addrs[platform.AddressAdvertise]))]
 	} else {
-		if len(addrs[platform.AddressAdvertise]) != 0 {
-			address = &addrs[platform.AddressAdvertise][rand.Intn(len(addrs[platform.AddressAdvertise]))]
-		} else {
-			if len(addrs[platform.AddressReal]) != 0 {
-				address = &addrs[platform.AddressReal][rand.Intn(len(addrs[platform.AddressReal]))]
-			}
+		if len(addrs[platform.AddressReal]) != 0 {
+			address = &addrs[platform.AddressReal][rand.Intn(len(addrs[platform.AddressReal]))]
 		}
 	}
 

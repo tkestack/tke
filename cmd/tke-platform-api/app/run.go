@@ -20,12 +20,16 @@ package app
 
 import (
 	"tkestack.io/tke/cmd/tke-platform-api/app/config"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 // Run runs the specified TKE platform apiserver. This should never exit.
 func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 	log.Info("Starting Tencent Kubernetes Engine Platform API server")
+	log.Infof("Available cluster providers: %v", clusterprovider.Providers())
+	log.Infof("Available machine providers: %v", machineprovider.Providers())
 
 	server, err := CreateServerChain(cfg)
 	if err != nil {

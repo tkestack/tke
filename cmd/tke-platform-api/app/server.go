@@ -61,8 +61,6 @@ func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 			VersionedInformers:      cfg.VersionedSharedInformerFactory,
 			StorageFactory:          cfg.StorageFactory,
 			APIResourceConfigSource: cfg.StorageFactory.APIResourceConfigSource,
-			ClusterProviders:        cfg.Provider.ClusterProviders,
-			MachineProviders:        cfg.Provider.MachineProviders,
 			PrivilegedUsername:      cfg.PrivilegedUsername,
 		},
 	}

@@ -21,7 +21,6 @@ package app
 import (
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -70,8 +69,6 @@ type ControllerContext struct {
 	// with list requests simultaneously.
 	ResyncPeriod            func() time.Duration
 	ControllerStartInterval time.Duration
-	ClusterProviders        *sync.Map
-	MachineProviders        *sync.Map
 
 	// Remote write/read address for prometheus
 	RemoteAddresses []string
@@ -119,8 +116,6 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		InformersStarted:        make(chan struct{}),
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
-		ClusterProviders:        cfg.Provider.ClusterProviders,
-		MachineProviders:        cfg.Provider.MachineProviders,
 		RemoteAddresses:         cfg.Features.MonitorStorageAddresses,
 		RemoteType:              cfg.Features.MonitorStorageType,
 	}

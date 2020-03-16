@@ -64,7 +64,6 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/certs"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
-	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
@@ -652,15 +651,6 @@ func (t *TKE) WebService() *restful.WebService {
 	return ws
 }
 
-func (t *TKE) completeWithProvider() {
-	clusterProvider, err := baremetalcluster.NewProvider()
-	if err != nil {
-		panic(err)
-	}
-	t.clusterProvider = clusterProvider
-	t.clusterProviders.Store(clusterProvider.Name(), clusterProvider)
-}
-
 // Global Filter
 func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	now := time.Now()
@@ -686,8 +676,7 @@ func (t *TKE) prepare() errors.APIStatus {
 	t.SetClusterDefault(&t.Para.Cluster, &t.Para.Config)
 
 	// mock platform api
-	t.completeWithProvider()
-	t.strategy = clusterstrategy.NewStrategy(t.clusterProviders, nil)
+	t.strategy = clusterstrategy.NewStrategy(nil)
 
 	ctx := request.WithUser(context.Background(), &user.DefaultInfo{Name: defaultTeantID})
 
@@ -1140,7 +1129,6 @@ func (t *TKE) createGlobalCluster() error {
 	}
 
 	// do again like platform controller
-	t.completeWithProvider()
 
 	if t.Cluster.ClusterCredential.Name == "" { // set ClusterCredential default value
 		t.Cluster.ClusterCredential = platformv1.ClusterCredential{
@@ -1321,7 +1309,7 @@ func (t *TKE) readOrGenerateString(filename string) string {
 
 func (t *TKE) initDataForDeployTKE() error {
 	var err error
-	t.globalClient, err = platformutil.BuildExternalClientSetNoStatus(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
+	t.globalClient, err = platformutil.BuildVersionedClientSet(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}
