@@ -1658,6 +1658,7 @@ func (t *TKE) installTKEBusinessController() error {
 		map[string]interface{}{
 			"Replicas":       t.Config.Replicas,
 			"Image":          images.Get().TKEBusinessController.FullName(),
+			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
 			"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
 		})
 	if err != nil {

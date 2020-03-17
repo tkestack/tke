@@ -48,7 +48,10 @@ type Config struct {
 	BusinessAPIServerClientConfig *restclient.Config
 	// the rest config for the registry apiserver
 	RegistryAPIServerClientConfig *restclient.Config
-	Component                     controlleroptions.ComponentConfiguration
+	// the rest config for the auth apiserver
+	AuthAPIServerClientConfig *restclient.Config
+
+	Component controlleroptions.ComponentConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -98,6 +101,14 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 	if ok && registryAPIServerClientConfig != nil {
 		controllerManagerConfig.RegistryAPIServerClientConfig = registryAPIServerClientConfig
+	}
+
+	authAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.AuthAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if ok && authAPIServerClientConfig != nil {
+		controllerManagerConfig.AuthAPIServerClientConfig = authAPIServerClientConfig
 	}
 
 	if err := opts.Component.ApplyTo(&controllerManagerConfig.Component); err != nil {
