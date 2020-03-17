@@ -71,6 +71,8 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.PlatformAPIClient.AddFlags(fs)
 	o.Registry.AddFlags(fs)
 	o.FeatureOptions.AddFlags(fs)
+	o.ClusterController.AddFlags(fs)
+	o.MachineController.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
