@@ -121,10 +121,15 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
   /// #if project
   //业务侧ns eg: cls-xxx-ns 需要去除前缀
   if (namespace) {
-    namespace = namespace
-      .split('-')
-      .splice(2)
-      .join('-');
+    namespace = namespace.startsWith('global')
+      ? namespace
+          .split('-')
+          .splice(1)
+          .join('-')
+      : namespace
+          .split('-')
+          .splice(2)
+          .join('-');
   }
   /// #endif
   let url: string = '';
@@ -163,3 +168,22 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
   }
   return url;
 };
+
+export function reduceNs(namesapce) {
+  let newNs = namesapce;
+  /// #if project
+  //业务侧ns eg: cls-xxx-ns 需要去除前缀
+  if (newNs) {
+    newNs = newNs.startsWith('global')
+      ? newNs
+          .split('-')
+          .splice(1)
+          .join('-')
+      : newNs
+          .split('-')
+          .splice(2)
+          .join('-');
+  }
+  /// #endif
+  return newNs;
+}

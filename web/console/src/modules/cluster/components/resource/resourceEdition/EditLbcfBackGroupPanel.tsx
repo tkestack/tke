@@ -1,13 +1,9 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import {
-    Bubble, Button, ContentView, FormItem, Input, Justify, List, Select, Text
-} from '@tea/component';
+import { Bubble, Button, ContentView, FormItem, Input, Justify, List, Select, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
-import {
-    bindActionCreators, deepClone, isSuccessWorkflow, OperationState, uuid
-} from '@tencent/ff-redux';
+import { bindActionCreators, deepClone, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { resourceConfig } from '../../../../../../config';
@@ -19,6 +15,7 @@ import { CreateResource, LbcfBGJSONYaml, MergeType } from '../../../models';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { EditLbcfBackGroupItemPanel } from './EditLbcfBackGroupItemPanel';
+import { reduceNs } from '../../../../../../helpers';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -197,7 +194,7 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
             apiVersion: 'lbcf.tkestack.io/v1beta1', //(resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
             metadata: {
               name: name,
-              namespace: namespace
+              namespace: reduceNs(namespace)
             },
             spec: {
               lbName: resourceIns,
