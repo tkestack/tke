@@ -22,8 +22,6 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/options"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/util/log"
-
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 )
 
 // Config is the running configuration structure of the TKE controller manager.
