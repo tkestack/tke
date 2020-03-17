@@ -2,9 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { Button } from '@tea/component';
-import {
-    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
-} from '@tencent/ff-redux';
+import { bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { resourceConfig } from '../../../../../../config';
@@ -13,12 +11,11 @@ import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
 import { getWorkflowError } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
-import {
-    CreateResource, HpaEditJSONYaml, HpaMetrics, MetricOption, WorkloadEditJSONYaml
-} from '../../../models';
+import { CreateResource, HpaEditJSONYaml, HpaMetrics, MetricOption, WorkloadEditJSONYaml } from '../../../models';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { EditResourceContainerNumPanel } from '../resourceEdition/EditResourceContainerNumPanel';
+import { reduceNs } from '../../../../../../helpers';
 
 /** 加载中的样式 */
 const loadingElement = (
@@ -159,7 +156,7 @@ export class UpdateWorkloadPodNumPanel extends React.Component<RootProps, {}> {
             apiVersion: (hpaResourceInfo.group ? hpaResourceInfo.group + '/' : '') + hpaResourceInfo.version,
             metadata: {
               name: workloadName,
-              namespace,
+              namespace: reduceNs(namespace),
               labels: {
                 'qcloud-app': workloadName
               }
