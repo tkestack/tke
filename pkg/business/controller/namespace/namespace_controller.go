@@ -201,6 +201,7 @@ func (c *Controller) worker() {
 // concurrently with the same key.
 func (c *Controller) syncItem(key string) error {
 	startTime := time.Now()
+	log.Info("Start syncing namespace", log.String("namespace", key))
 	defer func() {
 		log.Info("Finished syncing namespace", log.String("namespace", key), log.Duration("processTime", time.Since(startTime)))
 	}()
