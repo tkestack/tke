@@ -34,7 +34,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/emicklei/go-restful"
@@ -136,13 +135,12 @@ type TKE struct {
 	Cluster *clusterprovider.Cluster `json:"cluster"`
 	Step    int                      `json:"step"`
 
-	log              *stdlog.Logger
-	steps            []handler
-	progress         *ClusterProgress
-	clusterProviders *sync.Map
-	strategy         *clusterstrategy.Strategy
-	clusterProvider  clusterprovider.Provider
-	isFromRestore    bool
+	log             *stdlog.Logger
+	steps           []handler
+	progress        *ClusterProgress
+	strategy        *clusterstrategy.Strategy
+	clusterProvider clusterprovider.Provider
+	isFromRestore   bool
 
 	globalClient kubernetes.Interface
 	servers      []string
@@ -343,7 +341,6 @@ func NewTKE(config *config.Config) *TKE {
 	c.Cluster = new(clusterprovider.Cluster)
 	c.progress = new(ClusterProgress)
 	c.progress.Status = StatusUnknown
-	c.clusterProviders = new(sync.Map)
 
 	_ = os.MkdirAll(path.Dir(clusterLogFile), 0755)
 	f, err := os.OpenFile(clusterLogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0744)
@@ -786,7 +783,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
 	if cluster.Spec.Type == "" {
-		cluster.Spec.Type = platformv1.ClusterBaremetal
+		cluster.Spec.Type = t.clusterProvider.Name()
 	}
 	if cluster.Spec.NetworkDevice == "" {
 		cluster.Spec.NetworkDevice = "eth0"
