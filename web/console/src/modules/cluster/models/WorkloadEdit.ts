@@ -83,6 +83,9 @@ export interface WorkloadEdit extends Identifiable {
   /** 实例的更新类型 */
   scaleType?: string;
 
+  /** 是否开启定时调节 */
+  isOpenCronHpa?: boolean;
+
   /** 容器的数量 */
   containerNum?: string;
 

@@ -108,7 +108,7 @@ export const UserDetailsPanel = () => {
   const tabs = [
     { id: 'policies', label: '已关联策略' },
     { id: 'groups', label: '已关联用户组' },
-    { id: 'roles', label: '已关联角色' },
+    { id: 'roles', label: '已关联角色' }
   ];
 
   return (
