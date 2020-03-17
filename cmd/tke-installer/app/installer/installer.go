@@ -342,6 +342,12 @@ func NewTKE(config *config.Config) *TKE {
 	c.progress = new(ClusterProgress)
 	c.progress.Status = StatusUnknown
 
+	clusterProvider, err := clusterprovider.GetProvider("Baremetal")
+	if err != nil {
+		panic(err)
+	}
+	c.clusterProvider = clusterProvider
+
 	_ = os.MkdirAll(path.Dir(clusterLogFile), 0755)
 	f, err := os.OpenFile(clusterLogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0744)
 	if err != nil {
