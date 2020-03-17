@@ -7,7 +7,11 @@ import { generateQueryReducer } from '@tencent/qcloud-redux-query';
 import { initValidator } from '../../common/models';
 import * as ActionType from '../constants/ActionType';
 import {
-    initAffinityRule, initContainer, initCronMetrics, initHpaMetrics, initSpecificLabel
+  initAffinityRule,
+  initContainer,
+  initCronMetrics,
+  initHpaMetrics,
+  initSpecificLabel
 } from '../constants/initState';
 import { Resource } from '../models';
 
@@ -125,6 +129,8 @@ const TempReducer = combineReducers({
   containers: reduceToPayload(ActionType.W_UpdateContainers, [initContainer]),
 
   scaleType: reduceToPayload(ActionType.W_ChangeScaleType, 'manualScale'),
+
+  isOpenCronHpa: reduceToPayload(ActionType.W_IsOpenCronHpa, false),
 
   containerNum: reduceToPayload(ActionType.W_ContainerNum, '1'),
 

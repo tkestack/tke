@@ -252,9 +252,9 @@ export async function fetchStrategyList(query: QueryState<StrategyFilter>) {
   let recordCount = 0;
   const { search, paging } = query;
   const queryObj = {
-    keyword: search || '',
-    page: paging.pageIndex - 1,
-    page_size: paging.pageSize
+    fieldSelector: {
+      keyword: search || ''
+    }
   };
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['policy'];
