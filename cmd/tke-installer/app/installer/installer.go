@@ -32,6 +32,7 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	goruntime "runtime"
 	"sort"
 	"strings"
 	"time"
@@ -1131,8 +1132,6 @@ func (t *TKE) createGlobalCluster() error {
 		return err
 	}
 
-	// do again like platform controller
-
 	if t.Cluster.ClusterCredential.Name == "" { // set ClusterCredential default value
 		t.Cluster.ClusterCredential = platformv1.ClusterCredential{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1249,6 +1248,11 @@ func (t *TKE) setupLocalRegistry() error {
 	if err != nil {
 		return err
 	}
+	localHosts.File = "/etc/hosts"
+	err = localHosts.Set("127.0.0.1")
+	if err != nil {
+		return err
+	}
 
 	data, err := ioutil.ReadFile("hosts")
 	if err != nil {
@@ -1268,7 +1272,8 @@ func (t *TKE) startLocalRegistry() error {
 	cmd.Stderr = t.log.Writer()
 	cmd.Run()
 
-	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPCommandFmt, images.Get().Registry.FullName()))
+	image := strings.ReplaceAll(images.Get().Registry.FullName(), ":", fmt.Sprintf("-%s:", goruntime.GOARCH))
+	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPCommandFmt, image))
 	cmd.Stdout = t.log.Writer()
 	cmd.Stderr = t.log.Writer()
 	err := cmd.Run()
@@ -1277,7 +1282,7 @@ func (t *TKE) startLocalRegistry() error {
 	}
 
 	// for docker manifest create which --insecure is not working
-	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPSCommandFmt, images.Get().Registry.FullName()))
+	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPSCommandFmt, image))
 	cmd.Stdout = t.log.Writer()
 	cmd.Stderr = t.log.Writer()
 	err = cmd.Run()
@@ -1855,6 +1860,11 @@ func (t *TKE) installTKERegistryAPI() error {
 func (t *TKE) preparePushImagesToTKERegistry() error {
 	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain(), File: "hosts"}
 	err := localHosts.Set(t.servers[0])
+	if err != nil {
+		return err
+	}
+	localHosts.File = "/etc/hosts"
+	err = localHosts.Set(t.servers[0])
 	if err != nil {
 		return err
 	}
