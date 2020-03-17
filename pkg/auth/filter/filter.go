@@ -209,8 +209,15 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 	}
 
 	if tkeAttribs.Namespace != "" {
-		if (attr.GetAPIGroup() != business.GroupName && resourceTypeSingle != "namespace") || attr.GetAPIGroup() == business.GroupName {
-			tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
+		switch attr.GetAPIGroup() {
+		case business.GroupName:
+			tkeAttribs.Resource = fmt.Sprintf("project:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
+		case registry.GroupName:
+			tkeAttribs.Resource = fmt.Sprintf("registrynamespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
+		default:
+			if resourceType != "namespace"{
+				tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
+			}
 		}
 	}
 
