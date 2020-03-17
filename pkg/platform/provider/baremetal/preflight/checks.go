@@ -34,7 +34,7 @@ const (
 	ipv4Forward = "/proc/sys/net/ipv4/ip_forward"
 )
 
-var tools = []string{"sysctl", "swapoff", "sed", "getconf", "ss", "grep", "id", "uname", "modinfo", "nc", "ip", "awk"}
+var tools = []string{"sysctl", "swapoff", "sed", "getconf", "ss", "grep", "id", "uname", "modinfo", "ip", "awk"}
 
 func newCommonChecks(s ssh.Interface) []Checker {
 	return []Checker{
