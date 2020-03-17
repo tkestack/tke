@@ -1,5 +1,4 @@
-import { ValidatorStatusEnum, ValidatorModel } from '../Model';
-import { Validation } from '../Validation';
+import { ValidatorModel, ValidatorStatusEnum } from '../Model';
 
 /**
  * 获得校验结果，以 boolean 的形式返回
@@ -9,8 +8,7 @@ import { Validation } from '../Validation';
 export const isValid = (validatorState: ValidatorModel): boolean => {
   let finalResult = true;
   for (let key in validatorState) {
-    finalResult =
-      finalResult && validatorState[key].status !== ValidatorStatusEnum.Failed;
+    finalResult = finalResult && validatorState[key].status !== ValidatorStatusEnum.Failed;
     if (!finalResult) break;
   }
   return finalResult;

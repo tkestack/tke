@@ -1,18 +1,32 @@
-import {
-    extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid
-} from '@tencent/ff-redux';
+import { extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
 import { cloneDeep } from '../../common/utils';
 import * as ActionType from '../constants/ActionType';
 import {
-    initContainer, initCronMetrics, initEnv, initHpaMetrics, initmatchExpressions, initMount,
-    initValueFrom, initVolume, initWorkloadAnnotataions, initWorkloadLabel
+  initContainer,
+  initCronMetrics,
+  initEnv,
+  initHpaMetrics,
+  initmatchExpressions,
+  initMount,
+  initValueFrom,
+  initVolume,
+  initWorkloadAnnotataions,
+  initWorkloadLabel
 } from '../constants/initState';
 import {
-    ContainerItem, EnvItem, HpaMetrics, MetricOption, Resource, ResourceFilter, RootState,
-    ValueFrom, VolumeItem, WorkloadLabel
+  ContainerItem,
+  EnvItem,
+  HpaMetrics,
+  MetricOption,
+  Resource,
+  ResourceFilter,
+  RootState,
+  ValueFrom,
+  VolumeItem,
+  WorkloadLabel
 } from '../models';
 import { CronMetrics, MatchExpressions } from '../models/WorkloadEdit';
 import { router } from '../router';
@@ -795,6 +809,17 @@ export const workloadEditActions = {
     };
   },
 
+  /** 切换是否开启定时调节 */
+  toggleIsOpenCronHpa: () => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { isOpenCronHpa } = getState().subRoot.workloadEdit;
+      dispatch({
+        type: ActionType.W_IsOpenCronHpa,
+        payload: !isOpenCronHpa
+      });
+    };
+  },
+
   /** 变更实例的数量 */
   updateContainerNum: (num: string): ReduxAction<string> => {
     return {
@@ -1076,11 +1101,15 @@ export const workloadEditActions = {
       let newContainers = [];
 
       newContainers = containers.map(item => {
-        let [registry = '', tag = ''] = item.image.split(':');
+        // 镜像地址如 domain:port/repo/name:tag，
+        let [registry, repo, nameWithTag = ''] = item.image.split('/');
+        let [name, tag = ''] = nameWithTag.split(':');
+
+        let originalRegistryAddress = [registry, repo, name].join('/');
 
         let tmp: ContainerItem = Object.assign({}, initContainer, {
           id: uuid(),
-          registry,
+          registry: originalRegistryAddress,
           tag,
           name: item.name
         });

@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import {
-    Button, Icon, Modal, SearchBox, Table, TableColumn, Text, Tooltip, Transfer
-} from '@tea/component';
+import { Button, Icon, Modal, SearchBox, Table, TableColumn, Text, Tooltip, Transfer } from '@tea/component';
 import { removeable, selectable } from '@tea/component/table/addons';
 import { TablePanel } from '@tencent/ff-component';
 import { bindActionCreators } from '@tencent/ff-redux';
@@ -101,7 +99,7 @@ export const StrategyTablePanel = () => {
   return (
     <React.Fragment>
       <TablePanel
-        recordKey={(record) => {
+        recordKey={record => {
           return record.metadata.name;
         }}
         columns={columns}
@@ -112,10 +110,11 @@ export const StrategyTablePanel = () => {
         isNeedPagination={true}
         bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
       />
-      <GroupAssociateWorkflowDialog onPostCancel={() => {
-        //取消按钮时，清理编辑状态
-        actions.group.associate.clearGroupAssociation();
-      }}
+      <GroupAssociateWorkflowDialog
+        onPostCancel={() => {
+          //取消按钮时，清理编辑状态
+          actions.group.associate.clearGroupAssociation();
+        }}
       />
       <aside>
         <Modal caption={t('关联用户')} size="l" visible={modalVisible} onClose={_close}>
@@ -220,7 +219,7 @@ export const StrategyTablePanel = () => {
         <LinkButton
           tipDirection="right"
           disabled={strategy.status['phase'] === 'Terminating'}
-          onClick={(e) => {
+          onClick={e => {
             /** 设置用户组关联场景 */
             let filter: GroupFilter = {
               resource: 'policy',

@@ -3,9 +3,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { Button, Radio, Select } from '@tea/component';
-import {
-    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
-} from '@tencent/ff-redux';
+import { bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { FormItem, InputField, TipInfo } from '../../../../common/components';
@@ -499,6 +497,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
                   <FormItem label={t('镜像版本（Tag）')} className="tag-mod">
                     <div className="tc-15-autocomplete xl">
                       <input
+                        placeholder={t('不填默认为latest')}
                         type="text"
                         className="tc-15-input-text m"
                         value={container.tag}
