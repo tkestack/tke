@@ -8,6 +8,7 @@ import { WorkflowDialog } from '../../../../common/components';
 import { allActions } from '../../../actions';
 import { CreateResource, RsEditJSONYaml } from '../../../models';
 import { RootProps } from '../../ClusterApp';
+import { reduceNs } from '../../../../../../helpers';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -36,7 +37,7 @@ export class ResourceRollbackDialog extends React.Component<RootProps, {}> {
     let resource: CreateResource = {
       id: uuid(),
       resourceInfo,
-      namespace: route.queries['np'],
+      namespace: reduceNs(route.queries['np']),
       clusterId: route.queries['clusterId'],
       resourceIns,
       jsonData: JSON.stringify(jsonData)

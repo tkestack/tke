@@ -4,9 +4,7 @@ import { connect } from 'react-redux';
 
 import { Button, Radio, Select, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
-import {
-    bindActionCreators, insertCSS, isSuccessWorkflow, OperationState, uuid
-} from '@tencent/ff-redux';
+import { bindActionCreators, insertCSS, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { resourceConfig } from '../../../../../../config/resourceConfig';
@@ -17,12 +15,23 @@ import { getWorkflowError, isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
 import {
-    affinityType, NodeAbnormalStrategy, ResourceTypeList, RestartPolicyTypeList,
-    WorkloadNetworkTypeEnum
+  affinityType,
+  NodeAbnormalStrategy,
+  ResourceTypeList,
+  RestartPolicyTypeList,
+  WorkloadNetworkTypeEnum
 } from '../../../constants/Config';
 import {
-    Computer, ContainerItem, CreateResource, DifferentInterfaceResourceOperation, HealthCheckItem,
-    HpaEditJSONYaml, MetricOption, ServiceEditJSONYaml, VolumeItem, WorkloadEditJSONYaml
+  Computer,
+  ContainerItem,
+  CreateResource,
+  DifferentInterfaceResourceOperation,
+  HealthCheckItem,
+  HpaEditJSONYaml,
+  MetricOption,
+  ServiceEditJSONYaml,
+  VolumeItem,
+  WorkloadEditJSONYaml
 } from '../../../models';
 import { AffinityRule } from '../../../models/WorkloadEdit';
 import { router } from '../../../router';
@@ -34,12 +43,11 @@ import { EditResourceLabelPanel } from './EditResourceLabelPanel';
 import { EditResourceVolumePanel } from './EditResourceVolumePanel';
 import { EditServiceAdvanceSettingPanel } from './EditServiceAdvanceSettingPanel';
 import { EditServiceCommunicationPanel } from './EditServiceCommunicationPanel';
-import {
-    ReduceServiceAnnotations, ReduceServiceJSONData, ReduceServicePorts
-} from './EditServicePanel';
+import { ReduceServiceAnnotations, ReduceServiceJSONData, ReduceServicePorts } from './EditServicePanel';
 import { EditServicePortMapPanel } from './EditServicePortMapPanel';
 import { ResourceEditHostPathDialog } from './ResourceEditHostPathDialog';
 import { ResourceSelectConfigDialog } from './ResourceSelectConfigDialog';
+import { reduceNs } from '../../../../../../helpers';
 
 /** service YAML当中的type映射 */
 const serviceTypeMap = {
@@ -625,7 +633,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         apiVersion: (workloadResourceInfo.group ? workloadResourceInfo.group + '/' : '') + workloadResourceInfo.version,
         metadata: {
           name: workloadName,
-          namespace: namespace,
+          namespace: reduceNs(namespace),
           labels: labelsInfo,
           annotations: isEmpty(annotations) ? undefined : annotations
         },
@@ -757,7 +765,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
       metadata: {
         name: workloadName,
-        namespace: namespace
+        namespace: reduceNs(namespace)
       },
       spec: {
         scaleTargetRef: {
@@ -828,7 +836,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
       metadata: {
         name: workloadName,
-        namespace: namespace,
+        namespace: reduceNs(namespace),
         labels: {
           'qcloud-app': workloadName
         }
