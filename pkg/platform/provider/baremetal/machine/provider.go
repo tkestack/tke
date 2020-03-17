@@ -25,21 +25,22 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/util/containerregistry"
+
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
-	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
-const providerName = "baremetal-machine"
+const providerName = "Baremetal"
 
 const (
 	ReasonFailedProcess     = "FailedProcess"
@@ -49,9 +50,20 @@ const (
 	ConditionTypeDone = "EnsureDone"
 )
 
-type Handler func(*Machine) error
+func init() {
+	p, err := newProvider()
+	if err != nil {
+		panic(err)
+	}
+	machineprovider.Register(p.Name(), p)
+}
 
-func NewProvider() (*Provider, error) {
+type Provider struct {
+	config         *config.Config
+	createHandlers []Handler
+}
+
+func newProvider() (*Provider, error) {
 	p := new(Provider)
 
 	cfg, err := config.New(constants.ConfigFile)
@@ -63,6 +75,9 @@ func NewProvider() (*Provider, error) {
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
 	p.createHandlers = []Handler{
+		p.EnsureCopyFiles,
+		p.EnsurePreInstallHook,
+
 		p.EnsureClean,
 		p.EnsureRegistryHosts,
 		p.EnsureKernelModule,
@@ -80,15 +95,14 @@ func NewProvider() (*Provider, error) {
 		p.EnsureKubeconfig,
 		p.EnsureMarkNode,
 		p.EnsureNodeReady,
+
+		p.EnsurePostInstallHook,
 	}
 
 	return p, nil
 }
 
-type Provider struct {
-	config         *config.Config
-	createHandlers []Handler
-}
+type Handler func(*Machine) error
 
 var _ machineprovider.Provider = &Provider{}
 

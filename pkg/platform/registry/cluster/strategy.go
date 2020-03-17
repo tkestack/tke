@@ -21,7 +21,6 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/jinzhu/copier"
 	"k8s.io/apimachinery/pkg/fields"
@@ -37,7 +36,7 @@ import (
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
-	"tkestack.io/tke/pkg/platform/provider"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
@@ -47,14 +46,13 @@ import (
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
-	clusterProviders *sync.Map
-	platformClient   platforminternalclient.PlatformInterface
+	platformClient platforminternalclient.PlatformInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating cluster objects.
-func NewStrategy(clusterProviders *sync.Map, platformClient platforminternalclient.PlatformInterface) *Strategy {
-	return &Strategy{platform.Scheme, namesutil.Generator, clusterProviders, platformClient}
+func NewStrategy(platformClient platforminternalclient.PlatformInterface) *Strategy {
+	return &Strategy{platform.Scheme, namesutil.Generator, platformClient}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -91,7 +89,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	cluster, _ := obj.(*platform.Cluster)
-	if len(tenantID) != 0 {
+	if tenantID != "" {
 		cluster.Spec.TenantID = tenantID
 	}
 
@@ -103,30 +101,18 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		platform.ClusterFinalize,
 	}
 
-	if cluster.Spec.DNSDomain == "" {
-		cluster.Spec.DNSDomain = "cluster.local"
+	clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return // avoid panic validate will be report error
 	}
-
-	if cluster.Spec.Type == platform.ClusterBaremetal {
-		if cluster.Spec.NetworkDevice == "" {
-			cluster.Spec.NetworkDevice = "eth0"
-		}
+	user, _ := request.UserFrom(ctx)
+	userInfo := filter.ToClusterProviderUser(user)
+	resp, err := clusterProvider.PreCreate(userInfo, *cluster)
+	if err != nil {
+		panic(err)
 	}
-
-	if cluster.Spec.Type != platform.ClusterImported {
-		clusterProvider, err := provider.LoadClusterProvider(s.clusterProviders, string(cluster.Spec.Type))
-		if err != nil {
-			panic(err)
-		}
-		user, _ := request.UserFrom(ctx)
-		userInfo := filter.ToClusterProviderUser(user)
-		resp, err := clusterProvider.PreCreate(userInfo, *cluster)
-		if err != nil {
-			panic(err)
-		}
-		if err := copier.Copy(cluster, resp); err != nil {
-			panic(err)
-		}
+	if err := copier.Copy(cluster, resp); err != nil {
+		panic(err)
 	}
 }
 
@@ -135,16 +121,14 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 func (s *Strategy) AfterCreate(obj runtime.Object) error {
 	cluster, _ := obj.(*platform.Cluster)
 
-	if cluster.Spec.Type != platform.ClusterImported {
-		clusterProvider, err := provider.LoadClusterProvider(s.clusterProviders, string(cluster.Spec.Type))
-		if err != nil {
-			return err
-		}
+	clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return err
+	}
 
-		_, err = clusterProvider.AfterCreate(*cluster)
-		if err != nil {
-			return err
-		}
+	_, err = clusterProvider.AfterCreate(*cluster)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -152,7 +136,7 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 
 // Validate validates a new cluster
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateCluster(s.clusterProviders, obj.(*platform.Cluster), s.platformClient)
+	return ValidateCluster(obj.(*platform.Cluster), s.platformClient)
 }
 
 // AllowCreateOnUpdate is false for clusters
@@ -173,7 +157,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end cluster.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateClusterUpdate(s.clusterProviders, obj.(*platform.Cluster), old.(*platform.Cluster), s.platformClient)
+	return ValidateClusterUpdate(obj.(*platform.Cluster), old.(*platform.Cluster), s.platformClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -201,7 +185,7 @@ func ToSelectableFields(cluster *platform.Cluster) fields.Set {
 	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&cluster.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
 		"spec.tenantID":  cluster.Spec.TenantID,
-		"spec.type":      string(cluster.Spec.Type),
+		"spec.type":      cluster.Spec.Type,
 		"spec.version":   cluster.Spec.Version,
 		"status.locked":  util.BoolPointerToSelectField(cluster.Status.Locked),
 		"status.version": cluster.Status.Version,
@@ -236,7 +220,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateClusterUpdate(s.clusterProviders, obj.(*platform.Cluster), old.(*platform.Cluster), s.platformClient)
+	return ValidateClusterUpdate(obj.(*platform.Cluster), old.(*platform.Cluster), s.platformClient)
 }
 
 // FinalizeStrategy implements finalizer logic for Machine.

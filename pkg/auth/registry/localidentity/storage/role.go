@@ -90,12 +90,12 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 	for _, id := range roleIDs {
 		rol, err := r.authClient.Roles().Get(id, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
-			log.Error("Get pol failed", log.String("role", id), log.Err(err))
+			log.Error("Get role failed", log.String("role", id), log.Err(err))
 			return nil, err
 		}
 
 		if err != nil {
-			log.Warn("rol has been deleted, but till in casbin", log.String("role", id))
+			log.Warn("role has been deleted, but till in casbin", log.String("role", id))
 			continue
 		}
 

@@ -44,16 +44,6 @@ func Send(channel *v1.ChannelSMTP, template *v1.TemplateText, email string, vari
 	}
 	log.Debugf("body: %v", body)
 
-	if util.SelfdefineURL != "" {
-		selfdefineReqBody := util.SelfdefineBodyInfo{
-			Type:   "smtp",
-			Header: header,
-			Body:   body,
-		}
-		err = util.RequestToSelfdefine(selfdefineReqBody)
-		return header, body, err
-	}
-
 	auth := smtp.PlainAuth("", channel.Email, channel.Password, channel.SMTPHost)
 
 	headers := make(map[string]string)

@@ -73,6 +73,8 @@ type ChannelSpec struct {
 	Wechat *ChannelWechat
 	// +optional
 	SMTP *ChannelSMTP
+	// +optional
+	Webhook *ChannelWebhook
 }
 
 // ChannelStatus represents information about the status of a cluster.
@@ -118,6 +120,14 @@ type ChannelSMTP struct {
 	TLS      bool
 	Email    string
 	Password string
+}
+
+// ChannelWebhook indicates a channel configuration for sending notifications
+// to the webhook server.
+type ChannelWebhook struct {
+	URL string
+	// +optional
+	Headers map[string]string
 }
 
 // +genclient
@@ -237,6 +247,8 @@ const (
 	ReceiverChannelEmail ReceiverChannel = "email"
 	// ReceiverChannelWechatOpenID represents the openid for wechat of receiver.
 	ReceiverChannelWechatOpenID ReceiverChannel = "wechat_openid"
+	// ReceiverChannelWebhook only indicates channel type webhook
+	ReceiverChannelWebhook ReceiverChannel = "webhook"
 )
 
 // ReceiverSpec is a description of a receiver.
@@ -405,6 +417,8 @@ type MessageSpec struct {
 	Body string
 	// +optional
 	ChannelMessageID string
+	// +optional
+	AlarmPolicyName string
 }
 
 // MessageStatus represents information about the status of a message.

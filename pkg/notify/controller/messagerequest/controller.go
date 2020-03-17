@@ -21,6 +21,7 @@ package messagerequest
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -37,7 +38,7 @@ import (
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/smtp"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/tencentcloudsms"
-	"tkestack.io/tke/pkg/notify/controller/messagerequest/util"
+	"tkestack.io/tke/pkg/notify/controller/messagerequest/webhook"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/wechat"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
@@ -294,11 +295,12 @@ type sentMessage struct {
 	header          string
 	body            string
 	messageID       string
+	alarmPolicyName string
 }
 
 func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessages []sentMessage, failedReceiverErrors map[string]string) {
 	failedReceiverErrors = make(map[string]string)
-	receivers := sets.NewString()
+	receiversSet := sets.NewString()
 	for _, receiverGroupName := range messageRequest.Spec.ReceiverGroups {
 		if receiverGroupName == "" {
 			continue
@@ -307,40 +309,24 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 			log.Error("Failed to retrieve the specify receiver group", log.String("receiverGroupName", receiverGroupName), log.Err(err))
 		} else {
 			if len(receiverGroup.Spec.Receivers) != 0 {
-				receivers.Insert(receiverGroup.Spec.Receivers...)
+				receiversSet.Insert(receiverGroup.Spec.Receivers...)
 			}
 		}
 	}
 	for _, receiver := range messageRequest.Spec.Receivers {
 		if receiver != "" {
-			receivers.Insert(receiver)
+			receiversSet.Insert(receiver)
 		}
 	}
 
-	if receivers.Len() == 0 {
+	if receiversSet.Len() == 0 {
 		return
-	}
-	selfdefineChannelList, err := c.client.NotifyV1().Channels().List(metav1.ListOptions{LabelSelector: "selfdefine=true"})
-	if err != nil {
-		log.Error("Failed to get selfdefineChannelList", log.Err(err))
-		return
-	}
-	if len(selfdefineChannelList.Items) != 0 {
-		selfdefineURL, ok := selfdefineChannelList.Items[0].ObjectMeta.Annotations["selfdefineURL"]
-		if !ok {
-			log.Error("The selfdefineURL does not exist", log.Err(err))
-			return
-		}
-		util.SelfdefineURL = selfdefineURL
-	} else {
-		log.Warn("The selfdefineChannel does not exist")
-		util.SelfdefineURL = ""
 	}
 
 	channel, err := c.client.NotifyV1().Channels().Get(messageRequest.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get channel object", log.String("channelName", messageRequest.ObjectMeta.Namespace), log.Err(err))
-		for _, receiverName := range receivers.List() {
+		for _, receiverName := range receiversSet.List() {
 			failedReceiverErrors[receiverName] = "Failed to get notification channel information"
 		}
 		return
@@ -348,12 +334,14 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 	template, err := c.client.NotifyV1().Templates(channel.ObjectMeta.Name).Get(messageRequest.Spec.TemplateName, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get template object", log.String("channelName", channel.ObjectMeta.Name), log.String("templateName", messageRequest.Spec.TemplateName), log.Err(err))
-		for _, receiverName := range receivers.List() {
+		for _, receiverName := range receiversSet.List() {
 			failedReceiverErrors[receiverName] = "Failed to get notification template information"
 		}
 		return
 	}
-	for _, receiverName := range receivers.List() {
+
+	receivers := []*v1.Receiver{}
+	for _, receiverName := range receiversSet.List() {
 		receiver, err := c.client.NotifyV1().Receivers().Get(receiverName, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
@@ -363,6 +351,29 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 			}
 			continue
 		}
+		receivers = append(receivers, receiver)
+	}
+	var alarmPolicyName string
+	if v, ok := messageRequest.Spec.Variables["alarmPolicyName"]; ok {
+		alarmPolicyName = v
+	}
+	if channel.Spec.Webhook != nil && template.Spec.Text != nil {
+		content, err := webhook.Send(channel.Spec.Webhook, template.Spec.Text, receivers, messageRequest.Spec.Variables)
+		if err != nil {
+			failedReceiverErrors[strings.Join(receiversSet.List(), ",")] = err.Error()
+			return
+		}
+		sentMessages = append(sentMessages, sentMessage{
+			receiverName:    strings.Join(receiversSet.List(), ","),
+			receiverChannel: v1.ReceiverChannelWebhook,
+			identity:        channel.Spec.Webhook.URL,
+			body:            content,
+			alarmPolicyName: alarmPolicyName,
+		})
+		return
+	}
+	for _, receiver := range receivers {
+		receiverName := receiver.ObjectMeta.Name
 		templateCount := 0
 		if template.Spec.TencentCloudSMS != nil {
 			templateCount++
@@ -387,6 +398,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 				username:        receiver.Spec.Username,
 				body:            body,
 				messageID:       messageID,
+				alarmPolicyName: alarmPolicyName,
 			})
 		}
 		if template.Spec.Wechat != nil {
@@ -412,6 +424,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 				identity:        openID,
 				body:            body,
 				messageID:       messageID,
+				alarmPolicyName: alarmPolicyName,
 			})
 		}
 		if template.Spec.Text != nil {
@@ -437,6 +450,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 				identity:        email,
 				header:          header,
 				body:            body,
+				alarmPolicyName: alarmPolicyName,
 			})
 		}
 		if templateCount == 0 {
@@ -450,7 +464,7 @@ func (c *Controller) archiveMessage(messageRequest *v1.MessageRequest, sentMessa
 	for _, sentMessage := range sentMessages {
 		message := &v1.Message{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-%s", messageRequest.ObjectMeta.Name, sentMessage.receiverName),
+				Name: fmt.Sprintf("%s-%s", messageRequest.ObjectMeta.Name, strings.Split(sentMessage.receiverName, ",")[0]),
 			},
 			Spec: v1.MessageSpec{
 				TenantID:         messageRequest.Spec.TenantID,
@@ -461,6 +475,7 @@ func (c *Controller) archiveMessage(messageRequest *v1.MessageRequest, sentMessa
 				Header:           sentMessage.header,
 				Body:             sentMessage.body,
 				ChannelMessageID: sentMessage.messageID,
+				AlarmPolicyName:  sentMessage.alarmPolicyName,
 			},
 			Status: v1.MessageStatus{
 				Phase: v1.MessageUnread,

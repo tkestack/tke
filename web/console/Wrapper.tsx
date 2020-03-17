@@ -39,6 +39,9 @@ export enum ConsoleModuleEnum {
   /** 镜像仓库 */
   Registry = 'registry',
 
+  /** Chart */
+  Chart = 'chart',
+
   /** 访问凭证 */
   ApiKey = 'apiKey',
 
@@ -90,12 +93,17 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '组织资源',
-    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.ApiKey],
+    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Chart, ConsoleModuleEnum.ApiKey],
     subRouterConfig: [
       {
         url: '/tkestack/registry/repo',
-        title: '仓库管理',
+        title: '镜像仓库管理',
         watchModule: ConsoleModuleEnum.Registry
+      },
+      {
+        url: '/tkestack/registry/chart',
+        title: 'Chart包仓库管理',
+        watchModule: ConsoleModuleEnum.Chart
       },
       {
         url: '/tkestack/registry/apikey',
@@ -108,6 +116,16 @@ const commonRouterConfig: RouterConfig[] = [
     title: '访问管理',
     watchModule: [ConsoleModuleEnum.Auth],
     subRouterConfig: [
+      {
+        url: '/tkestack/uam/role',
+        title: '角色管理',
+        watchModule: ConsoleModuleEnum.Auth
+      },
+      {
+        url: '/tkestack/uam/group',
+        title: '用户组管理',
+        watchModule: ConsoleModuleEnum.Auth
+      },
       {
         url: '/tkestack/uam/user',
         title: '用户管理',

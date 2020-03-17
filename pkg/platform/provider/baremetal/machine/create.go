@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	platformv1 "tkestack.io/tke/api/platform/v1"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -46,6 +48,46 @@ const (
 	sysctlCustomFile = "/etc/sysctl.d/99-tke.conf"
 	moduleFile       = "/etc/modules-load.d/tke.conf"
 )
+
+func (p *Provider) EnsureCopyFiles(m *Machine) error {
+	c := m.Cluster
+	for _, file := range c.Spec.Features.Files {
+		err := m.CopyFile(file.Src, file.Dst)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsurePreInstallHook(m *Machine) error {
+	hook := m.Cluster.Spec.Features.Hooks[platformv1.HookPreInstall]
+	if hook == "" {
+		return nil
+	}
+
+	m.Execf("chmod +x %s", hook)
+	_, stderr, exit, err := m.Exec(hook)
+	if err != nil || exit != 0 {
+		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
+	}
+	return nil
+}
+
+func (p *Provider) EnsurePostInstallHook(m *Machine) error {
+	hook := m.Cluster.Spec.Features.Hooks[platformv1.HookPostInstall]
+	if hook == "" {
+		return nil
+	}
+
+	m.Execf("chmod +x %s", hook)
+	_, stderr, exit, err := m.Exec(hook)
+	if err != nil || exit != 0 {
+		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
+	}
+	return nil
+}
 
 func (p *Provider) EnsureClean(m *Machine) error {
 	_, err := m.CombinedOutput(fmt.Sprintf("rm -rf %s", constants.KubernetesDir))

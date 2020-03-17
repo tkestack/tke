@@ -66,7 +66,10 @@ import {
   logoutConfig,
   apiKey,
   user,
-  cronhpa
+  cronhpa,
+  role,
+  localgroup,
+  group
 } from './resource/k8sConfig';
 import { serviceEntry } from './resource/k8sConfig/serviceEntry';
 import { ResourceInfo } from '../src/modules/common/models';
@@ -169,6 +172,9 @@ export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey =
     category: getResourceConfig(category, finalK8sVersion),
     apiKey: getResourceConfig(apiKey, finalK8sVersion),
     user: getResourceConfig(user, finalK8sVersion),
+    role: getResourceConfig(role, finalK8sVersion),
+    localgroup: getResourceConfig(localgroup, finalK8sVersion),
+    group: getResourceConfig(group, finalK8sVersion),
     /** =============== 这里是权限相关的 =============== */
 
     /** 告警配置 */

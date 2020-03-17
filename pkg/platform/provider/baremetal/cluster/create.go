@@ -61,6 +61,55 @@ const (
 	moduleFile       = "/etc/modules-load.d/tke.conf"
 )
 
+func (p *Provider) EnsureCopyFiles(c *Cluster) error {
+	for _, file := range c.Spec.Features.Files {
+		for _, machine := range c.Spec.Machines {
+			s := c.SSH[machine.IP]
+
+			err := s.CopyFile(file.Src, file.Dst)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsurePreInstallHook(c *Cluster) error {
+	hook := c.Spec.Features.Hooks[platformv1.HookPreInstall]
+	if hook == "" {
+		return nil
+	}
+	for _, machine := range c.Spec.Machines {
+		s := c.SSH[machine.IP]
+
+		s.Execf("chmod +x %s", hook)
+		_, stderr, exit, err := s.Exec(hook)
+		if err != nil || exit != 0 {
+			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
+		}
+	}
+	return nil
+}
+
+func (p *Provider) EnsurePostInstallHook(c *Cluster) error {
+	hook := c.Spec.Features.Hooks[platformv1.HookPostInstall]
+	if hook == "" {
+		return nil
+	}
+	for _, machine := range c.Spec.Machines {
+		s := c.SSH[machine.IP]
+
+		s.Execf("chmod +x %s", hook)
+		_, stderr, exit, err := s.Exec(hook)
+		if err != nil || exit != 0 {
+			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
+		}
+	}
+	return nil
+}
+
 func (p *Provider) EnsurePreflight(c *Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]

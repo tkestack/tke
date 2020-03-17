@@ -1,15 +1,25 @@
 import { OperationResult, QueryState, RecordSet } from '@tencent/ff-redux';
 
 import { resourceConfig } from '../../../config/resourceConfig';
-import {
-    reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow
-} from '../../../helpers';
+import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow } from '../../../helpers';
 import { Method } from '../../../helpers/reduceNetwork';
 import { RequestParams, ResourceInfo } from '../common/models';
-import { Default_D_URL, REPO_URL } from './constants/Config';
+import { CHART_URL, REPO_URL, Default_D_URL } from './constants/Config';
 import {
-    ApiKey, ApiKeyCreation, ApiKeyFilter, Image, ImageCreation, ImageFilter, Repo, RepoCreation,
-    RepoFilter
+  ApiKey,
+  ApiKeyCreation,
+  ApiKeyFilter,
+  Repo,
+  RepoCreation,
+  RepoFilter,
+  Chart,
+  ChartCreation,
+  ChartFilter,
+  ChartIns,
+  ChartInsFilter,
+  Image,
+  ImageCreation,
+  ImageFilter
 } from './models';
 
 // 返回标准操作结果
@@ -230,6 +240,132 @@ export async function deleteRepo(repos: Repo[]) {
   } catch (error) {
     throw reduceNetworkWorkflow(error);
   }
+}
+
+/** Chart Group */
+export async function fetchChartList(query: QueryState<ChartFilter>) {
+  let { search, paging } = query;
+
+  let params: RequestParams = {
+    method: Method.get,
+    url: CHART_URL
+  };
+
+  let response = await reduceNetworkRequest(params);
+  let chartList = [],
+    total = 0;
+  try {
+    if (response.code === 0) {
+      let listItems = response.data;
+      if (listItems.items) {
+        chartList = listItems.items.map((item, index) => {
+          return Object.assign({}, item, { id: index });
+        });
+      }
+    }
+  } catch (error) {
+    if (+error.response.status !== 404) {
+      throw error;
+    }
+  }
+
+  if (search) {
+    chartList = chartList.filter(x => x.spec.displayName.includes(query.search));
+  }
+  total = chartList.length;
+
+  const result: RecordSet<Repo> = {
+    recordCount: total,
+    records: chartList
+  };
+
+  return result;
+}
+
+export async function createChart(charts: ChartCreation[]) {
+  try {
+    let chart = charts[0];
+    /** 构建参数 */
+    let requestParams = {
+      apiVersion: 'registry.tkestack.io/v1',
+      kind: 'ChartGroup',
+      spec: {
+        displayName: chart.displayName,
+        name: chart.name,
+        visibility: chart.visibility || 'Public'
+      }
+    };
+    let params: RequestParams = {
+      method: Method.post,
+      url: CHART_URL,
+      data: requestParams
+    };
+    let response = await reduceNetworkRequest(params);
+    if (response.code === 0) {
+      return operationResult(chart);
+    } else {
+      return operationResult(chart, reduceNetworkWorkflow(response));
+    }
+  } catch (error) {
+    throw reduceNetworkWorkflow(error);
+  }
+}
+
+export async function deleteChart(charts: Chart[]) {
+  try {
+    let params: RequestParams = {
+      method: Method.delete,
+      url: CHART_URL + charts[0].metadata.name
+    };
+
+    let response = await reduceNetworkRequest(params);
+    if (response.code === 0) {
+      return operationResult(charts);
+    } else {
+      return operationResult(charts, response);
+    }
+  } catch (error) {
+    throw reduceNetworkWorkflow(error);
+  }
+}
+
+export async function fetchChartInsList(query: QueryState<ChartInsFilter>) {
+  let { search, paging, filter } = query;
+
+  let params: RequestParams = {
+    method: Method.get,
+    url: `${REPO_URL}${filter.chartgroup}/charts`
+  };
+
+  let response = await reduceNetworkRequest(params);
+  let chartList = [],
+    total = 0;
+  try {
+    if (response.code === 0) {
+      let listItems = response.data;
+      if (listItems.items) {
+        chartList = listItems.items.map((item, index) => {
+          return Object.assign({}, item, { id: index });
+        });
+      }
+    }
+  } catch (error) {
+    if (+error.response.status !== 404) {
+      throw error;
+    }
+  }
+
+  if (search) {
+    chartList = chartList.filter(x => x.spec.displayName.includes(query.search));
+  }
+  total = chartList.length;
+
+  const result: RecordSet<ChartIns> = {
+    recordCount: total,
+    records: chartList
+  };
+
+  return result;
 }
 
 /** 镜像相关 */

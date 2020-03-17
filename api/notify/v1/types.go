@@ -73,6 +73,8 @@ type ChannelSpec struct {
 	Wechat *ChannelWechat `json:"wechat,omitempty" protobuf:"bytes,5,opt,name=wechat"`
 	// +optional
 	SMTP *ChannelSMTP `json:"smtp,omitempty" protobuf:"bytes,6,opt,name=smtp"`
+	// +optional
+	Webhook *ChannelWebhook `json:"webhook,omitempty" protobuf:"bytes,7,opt,name=webhook"`
 }
 
 // ChannelStatus represents information about the status of a cluster.
@@ -118,6 +120,14 @@ type ChannelSMTP struct {
 	TLS      bool   `json:"tls" protobuf:"bytes,3,opt,name=tls"`
 	Email    string `json:"email" protobuf:"bytes,4,opt,name=email"`
 	Password string `json:"password" protobuf:"bytes,5,opt,name=password"`
+}
+
+// ChannelWebhook indicates a channel configuration for sending notifications
+// to the webhook server.
+type ChannelWebhook struct {
+	URL string `json:"url" protobuf:"bytes,1,opt,name=url"`
+	// +optional
+	Headers map[string]string `json:"headers" protobuf:"bytes,2,opt,name=headers"`
 }
 
 // +genclient
@@ -237,6 +247,8 @@ const (
 	ReceiverChannelEmail ReceiverChannel = "email"
 	// ReceiverChannelWechatOpenID represents the openid for wechat of receiver.
 	ReceiverChannelWechatOpenID ReceiverChannel = "wechat_openid"
+	// ReceiverChannelWebhook only indicates channel type webhook
+	ReceiverChannelWebhook ReceiverChannel = "webhook"
 )
 
 // ReceiverSpec is a description of a receiver.
@@ -405,6 +417,8 @@ type MessageSpec struct {
 	Body string `json:"body,omitempty" protobuf:"bytes,7,opt,name=body"`
 	// +optional
 	ChannelMessageID string `json:"channelMessageID,omitempty" protobuf:"bytes,8,opt,name=channelMessageID"`
+	// +optional
+	AlarmPolicyName string `json:"alarmPolicyName,omitempty" protobuf:"bytes,9,opt,name=alarmPolicyName"`
 }
 
 // MessageStatus represents information about the status of a message.

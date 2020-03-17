@@ -5,9 +5,7 @@ import { Button, Text } from '@tea/component';
 import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
-import {
-    FormItem, InputField, LinkButton, SelectList, TipInfo
-} from '../../../../common/components';
+import { FormItem, InputField, LinkButton, SelectList, TipInfo } from '../../../../common/components';
 import { FormLayout, MainBodyLayout } from '../../../../common/layouts';
 import { getWorkflowError } from '../../../../common/utils';
 import { allActions } from '../../../actions';
@@ -15,6 +13,7 @@ import { validateCMActions } from '../../../actions/validateCMActions';
 import { CreateResource } from '../../../models';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
+import { reduceNs } from '../../../../../../helpers';
 
 const ButtonBarStyle = { marginBottom: '5px' };
 
@@ -243,7 +242,7 @@ export class EditConfigMapPanel extends React.Component<RootProps, {}> {
         apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
         metadata: {
           name: name,
-          namespace: namespace
+          namespace: reduceNs(namespace)
         },
         data: cmEdit.variables.reduce((prev, next) => {
           return Object.assign({}, prev, {

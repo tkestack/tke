@@ -81,15 +81,6 @@ func Send(channel *v1.ChannelWechat, template *v1.TemplateWechat, openID string,
 		return "", "", err
 	}
 
-	if util.SelfdefineURL != "" {
-		selfdefineReqBody := util.SelfdefineBodyInfo{
-			Type: "wechat",
-			Body: body,
-		}
-		err = util.RequestToSelfdefine(selfdefineReqBody)
-		return "", body, err
-	}
-
 	accessToken, err := getToken(channel, openID)
 	if err != nil {
 		return "", body, err

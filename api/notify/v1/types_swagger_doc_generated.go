@@ -80,6 +80,14 @@ func (ChannelTencentCloudSMS) SwaggerDoc() map[string]string {
 	return map_ChannelTencentCloudSMS
 }
 
+var map_ChannelWebhook = map[string]string{
+	"": "ChannelWebhook indicates a channel configuration for sending notifications to the webhook server.",
+}
+
+func (ChannelWebhook) SwaggerDoc() map[string]string {
+	return map_ChannelWebhook
+}
+
 var map_ChannelWechat = map[string]string{
 	"":      "ChannelWechat indicates a channel configuration for sending template notifications using WeChat.",
 	"appID": "AppID indicates the unique credentials of the third-party user. See https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140183",

@@ -14,42 +14,31 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
+ASSETS_GENERATOR_VERSION := v1.0.0
+
 .PHONY: asset.build
 asset.build: asset.build.addon asset.build.web.console asset.build.web.installer
 
-.PHONY: asset.verify
-asset.verify:
-ifeq (,$(wildcard $(GOBIN)/staticfiles))
-	@echo "===========> Installing bou.ke staticfiles"
-	@GO111MODULE=off $(GO) get -u bou.ke/staticfiles
-endif
-
 .PHONY: asset.build.addon
-asset.build.addon: asset.verify
+asset.build.addon:
 	@echo "===========> Bundling addon readme assets to application"
-	@mkdir -p $(ROOT_DIR)/hack/addon/readme
-	@mkdir -p $(ROOT_DIR)/pkg/platform/registry/clusteraddontype/assets
-	$(eval ASSETS_DIR := $(shell (cd $(ROOT_DIR); ls -d -1 ./hack/addon/readme 2>/dev/null || echo ../../../hack/addon/readme)))
-	@$(GOBIN)/staticfiles \
-		-o $(ROOT_DIR)/pkg/platform/registry/clusteraddontype/assets/assets.go \
-		$(ASSETS_DIR)/
+	@docker run --rm \
+		-v $(ROOT_DIR)/hack/addon/readme:/src \
+		-v $(ROOT_DIR)/pkg/platform/registry/clusteraddontype/assets:/assets \
+		$(REGISTRY_PREFIX)/assets-generator:$(ASSETS_GENERATOR_VERSION) -o /assets/assets.go /src
 
 .PHONY: asset.build.web.console
-asset.build.web.console: asset.verify
+asset.build.web.console:
 	@echo "===========> Bundling console web assets to application"
-	@mkdir -p $(ROOT_DIR)/web/console/build
-	@mkdir -p $(ROOT_DIR)/pkg/gateway/assets
-	$(eval ASSETS_DIR := $(shell (cd $(ROOT_DIR); ls -d -1 ./web/console/build 2>/dev/null || echo ../../../web/console/build)))
-	@$(GOBIN)/staticfiles \
-		-o $(ROOT_DIR)/pkg/gateway/assets/assets.go \
-		$(ASSETS_DIR)/
+	@docker run --rm \
+		-v $(ROOT_DIR)/web/console/build:/src \
+		-v $(ROOT_DIR)/pkg/gateway/assets:/assets \
+		$(REGISTRY_PREFIX)/assets-generator:$(ASSETS_GENERATOR_VERSION) -o /assets/assets.go /src
 
 .PHONY: asset.build.web.installer
-asset.build.web.installer: asset.verify
+asset.build.web.installer:
 	@echo "===========> Bundling installer web assets to application"
-	@mkdir -p $(ROOT_DIR)/web/installer/build
-	@mkdir -p $(ROOT_DIR)/cmd/tke-installer/assets
-	$(eval ASSETS_DIR := $(shell (cd $(ROOT_DIR); ls -d -1 ./web/installer/build 2>/dev/null || echo ../../../web/installer/build)))
-	@$(GOBIN)/staticfiles \
-		-o $(ROOT_DIR)/cmd/tke-installer/assets/assets.go \
-		$(ASSETS_DIR)/
+	@docker run --rm \
+		-v $(ROOT_DIR)/web/installer/build:/src \
+		-v $(ROOT_DIR)/cmd/tke-installer/assets:/assets \
+		$(REGISTRY_PREFIX)/assets-generator:$(ASSETS_GENERATOR_VERSION) -o /assets/assets.go /src

@@ -19,9 +19,10 @@
 package app
 
 import (
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/cronhpa"
 	gm "tkestack.io/tke/pkg/platform/controller/addon/gpumanager"
@@ -39,10 +40,6 @@ import (
 )
 
 const (
-	clusterSyncPeriod      = 30 * time.Second
-	concurrentClusterSyncs = 10
-	concurrentMachineSyncs = 20
-
 	persistentEventSyncPeriod      = 5 * time.Minute
 	concurrentPersistentEventSyncs = 5
 
@@ -64,13 +61,12 @@ func startClusterController(ctx ControllerContext) (http.Handler, bool, error) {
 	ctrl := clustercontroller.NewController(
 		ctx.ClientBuilder.ClientOrDie("cluster-controller"),
 		ctx.InformerFactory.Platform().V1().Clusters(),
-		clusterSyncPeriod,
+		ctx.Config.ClusterController.ClusterSyncPeriod,
 		platformv1.ClusterFinalize,
-		ctx.ClusterProviders,
 	)
 
 	go func() {
-		_ = ctrl.Run(concurrentClusterSyncs, ctx.Stop)
+		_ = ctrl.Run(ctx.Config.ClusterController.ConcurrentClusterSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil
@@ -84,13 +80,12 @@ func startMachineController(ctx ControllerContext) (http.Handler, bool, error) {
 	ctrl := machine.NewController(
 		ctx.ClientBuilder.ClientOrDie("machine-controller"),
 		ctx.InformerFactory.Platform().V1().Machines(),
-		clusterSyncPeriod,
+		ctx.Config.MachineController.MachineSyncPeriod,
 		platformv1.MachineFinalize,
-		ctx.MachineProviders,
 	)
 
 	go func() {
-		_ = ctrl.Run(concurrentMachineSyncs, ctx.Stop)
+		_ = ctrl.Run(ctx.Config.MachineController.ConcurrentMachineSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil

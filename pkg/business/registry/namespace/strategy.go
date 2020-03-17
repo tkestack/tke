@@ -71,6 +71,11 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 		}
 		namespace.Spec.TenantID = tenantID
 	}
+	if oldNamespace.Status.CachedSpecHard != nil {
+		namespace.Status.CachedSpecHard = oldNamespace.Status.CachedSpecHard
+	} else { // For historic data that has no CachedSpecHard
+		namespace.Status.CachedSpecHard = oldNamespace.Spec.Hard
+	}
 }
 
 // NamespaceScoped is false for namespaces.

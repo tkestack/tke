@@ -13,15 +13,14 @@ import { getWorkflowError, isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { validateServiceActions } from '../../../actions/validateServiceActions';
 import { SessionAffinity } from '../../../constants/Config';
-import {
-    CreateResource, PortMap, ServiceEdit, ServiceEditJSONYaml, ServicePorts
-} from '../../../models';
+import { CreateResource, PortMap, ServiceEdit, ServiceEditJSONYaml, ServicePorts } from '../../../models';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { EditServiceAdvanceSettingPanel } from './EditServiceAdvanceSettingPanel';
 import { EditServiceCommunicationPanel } from './EditServiceCommunicationPanel';
 import { EditServicePortMapPanel } from './EditServicePortMapPanel';
 import { EditServiceWorkloadDialog } from './EditServiceWorkloadDialog';
+import { reduceNs } from '../../../../../../helpers';
 
 /** service YAML当中的type映射 */
 export const ServiceTypeMap = {
@@ -108,7 +107,7 @@ export const ReduceServiceJSONData = (dataObj: {
     apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
     metadata: {
       name: serviceName,
-      namespace: namespace,
+      namespace: reduceNs(namespace),
       annotations: isEmpty(annotations) ? undefined : annotations
     },
     spec: {

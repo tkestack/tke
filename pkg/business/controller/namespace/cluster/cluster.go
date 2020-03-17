@@ -166,8 +166,11 @@ func EnsureResourceQuotaOnCluster(kubeClient *kubernetes.Clientset, namespace *v
 
 func DeleteNamespaceFromCluster(kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
 	ns, err := kubeClient.CoreV1().Namespaces().Get(namespace.Spec.Namespace, metav1.GetOptions{})
-	if err != nil && errors.IsNotFound(err) {
-		return nil
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
 	}
 	projectName, ok := ns.ObjectMeta.Labels[util.LabelProjectName]
 	if !ok {

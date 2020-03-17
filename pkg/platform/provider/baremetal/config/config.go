@@ -46,6 +46,7 @@ func New(filename string) (*Config, error) {
 
 type Config struct {
 	Registry Registry `yaml:"registry"`
+	Feature  Feature  `yaml:"feature"`
 }
 
 func (c *Config) Save(filename string) error {
@@ -68,4 +69,8 @@ type Registry struct {
 
 func (r *Registry) NeedSetHosts() bool {
 	return r.IP != ""
+}
+
+type Feature struct {
+	SkipConditions []string `yaml:"skipConditions"`
 }

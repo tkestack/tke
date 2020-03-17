@@ -30,7 +30,8 @@ import (
 	"tkestack.io/tke/cmd/tke-platform-controller/app/options"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
-	providerconfig "tkestack.io/tke/pkg/platform/provider/config"
+	clusterconfig "tkestack.io/tke/pkg/platform/controller/cluster/config"
+	machineconfig "tkestack.io/tke/pkg/platform/controller/machine/config"
 )
 
 // Config is the running configuration structure of the TKE controller manager.
@@ -45,9 +46,11 @@ type Config struct {
 	LeaderElectionClient *versionedclientset.Clientset
 	// the rest config for the platform apiserver
 	PlatformAPIServerClientConfig *restclient.Config
-	Provider                      *providerconfig.Config
 	Component                     controlleroptions.ComponentConfiguration
 	Features                      *options.FeatureOptions
+
+	ClusterController clusterconfig.ClusterControllerConfiguration
+	MachineController machineconfig.MachineControllerConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -70,16 +73,10 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	config.Timeout = opts.Component.LeaderElection.RenewDeadline
 	leaderElectionClient := versionedclientset.NewForConfigOrDie(restclient.AddUserAgent(&config, "leader-election"))
 
-	providerConfig := providerconfig.NewConfig()
-	if err := opts.Provider.ApplyTo(providerConfig); err != nil {
-		return nil, err
-	}
-
 	controllerManagerConfig := &Config{
 		ServerName:                    serverName,
 		LeaderElectionClient:          leaderElectionClient,
 		PlatformAPIServerClientConfig: platformAPIServerClientConfig,
-		Provider:                      providerConfig,
 		Authorization: apiserver.AuthorizationInfo{
 			Authorizer: authorizerfactory.NewAlwaysAllowAuthorizer(),
 		},
@@ -98,5 +95,13 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err := opts.Debug.ApplyTo(&controllerManagerConfig.Component.Debugging); err != nil {
 		return nil, err
 	}
+
+	if err := opts.ClusterController.ApplyTo(&controllerManagerConfig.ClusterController); err != nil {
+		return nil, err
+	}
+	if err := opts.MachineController.ApplyTo(&controllerManagerConfig.MachineController); err != nil {
+		return nil, err
+	}
+
 	return controllerManagerConfig, nil
 }

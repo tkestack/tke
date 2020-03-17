@@ -219,7 +219,7 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve namespace from store", log.String("projectName", projectName), log.String("namespaceName", namespaceName), log.Err(err))
 	default:
 		if namespace.Status.Phase == v1.NamespacePending || namespace.Status.Phase == v1.NamespaceAvailable || namespace.Status.Phase == v1.NamespaceFailed {
-			cachedNamespace := c.cache.getOrCreate(key)
+			cachedNamespace := c.cache.getOrCreate(key, namespace)
 			err = c.processUpdate(cachedNamespace, namespace, key)
 		} else if namespace.Status.Phase == v1.NamespaceTerminating {
 			log.Info("Namespace has been terminated. Attempting to cleanup resources", log.String("projectName", projectName), log.String("namespaceName", namespaceName))
@@ -284,6 +284,8 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 			// Since it's pending now, no need to set v1.NamespaceFailed.
 			return err
 		}
+		// Once project has been updated, try our best update namespace CachedSpecHard.
+		namespace.Status.CachedSpecHard = namespace.Spec.Hard
 		if err := c.ensureNamespaceOnCluster(namespace); err != nil {
 			namespace.Status.Phase = v1.NamespaceFailed
 			namespace.Status.Message = "ensureNamespaceOnCluster failed"
@@ -304,12 +306,18 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 			namespace.Status.LastTransitionTime = metav1.Now()
 			return c.persistUpdate(namespace)
 		}
+		// Once project has been updated, try our best update namespace CachedSpecHard.
+		cachedHard := namespace.Status.CachedSpecHard
+		namespace.Status.CachedSpecHard = namespace.Spec.Hard
 		if err := c.ensureNamespaceOnCluster(namespace); err != nil {
 			namespace.Status.Phase = v1.NamespaceFailed
 			namespace.Status.Message = "ensureNamespaceOnCluster failed"
 			namespace.Status.Reason = err.Error()
 			namespace.Status.LastTransitionTime = metav1.Now()
 			return c.persistUpdate(namespace)
+		}
+		if !reflect.DeepEqual(namespace.Spec.Hard, cachedHard) {
+			_ = c.persistUpdate(namespace)
 		}
 		c.startNamespaceHealthCheck(key)
 	case v1.NamespaceFailed:
@@ -325,6 +333,8 @@ func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, name
 		return err
 	}
 	calculatedNamespaceNames := sets.NewString(project.Status.CalculatedNamespaces...)
+	// The following "if" clause is supposed to process "Pending" namespaces.
+	// The "else if" is for "Available" namespaces.
 	if !calculatedNamespaceNames.Has(namespace.ObjectMeta.Name) {
 		project.Status.CalculatedNamespaces = append(project.Status.CalculatedNamespaces, namespace.ObjectMeta.Name)
 		if project.Status.Clusters == nil {
@@ -337,8 +347,7 @@ func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, name
 				},
 			})
 		return c.persistUpdateProject(project)
-	}
-	if cachedNamespace.state != nil && !reflect.DeepEqual(cachedNamespace.state.Spec.Hard, namespace.Spec.Hard) {
+	} else if cachedNamespace.state != nil && !reflect.DeepEqual(cachedNamespace.state.Spec.Hard, namespace.Spec.Hard) {
 		if project.Status.Clusters == nil {
 			project.Status.Clusters = make(v1.ClusterUsed)
 		}

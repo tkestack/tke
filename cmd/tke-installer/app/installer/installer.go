@@ -34,7 +34,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/emicklei/go-restful"
@@ -64,7 +63,6 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/certs"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
-	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
@@ -137,13 +135,12 @@ type TKE struct {
 	Cluster *clusterprovider.Cluster `json:"cluster"`
 	Step    int                      `json:"step"`
 
-	log              *stdlog.Logger
-	steps            []handler
-	progress         *ClusterProgress
-	clusterProviders *sync.Map
-	strategy         *clusterstrategy.Strategy
-	clusterProvider  clusterprovider.Provider
-	isFromRestore    bool
+	log             *stdlog.Logger
+	steps           []handler
+	progress        *ClusterProgress
+	strategy        *clusterstrategy.Strategy
+	clusterProvider clusterprovider.Provider
+	isFromRestore   bool
 
 	globalClient kubernetes.Interface
 	servers      []string
@@ -344,7 +341,6 @@ func NewTKE(config *config.Config) *TKE {
 	c.Cluster = new(clusterprovider.Cluster)
 	c.progress = new(ClusterProgress)
 	c.progress.Status = StatusUnknown
-	c.clusterProviders = new(sync.Map)
 
 	_ = os.MkdirAll(path.Dir(clusterLogFile), 0755)
 	f, err := os.OpenFile(clusterLogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0744)
@@ -652,15 +648,6 @@ func (t *TKE) WebService() *restful.WebService {
 	return ws
 }
 
-func (t *TKE) completeWithProvider() {
-	clusterProvider, err := baremetalcluster.NewProvider()
-	if err != nil {
-		panic(err)
-	}
-	t.clusterProvider = clusterProvider
-	t.clusterProviders.Store(clusterProvider.Name(), clusterProvider)
-}
-
 // Global Filter
 func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	now := time.Now()
@@ -686,8 +673,7 @@ func (t *TKE) prepare() errors.APIStatus {
 	t.SetClusterDefault(&t.Para.Cluster, &t.Para.Config)
 
 	// mock platform api
-	t.completeWithProvider()
-	t.strategy = clusterstrategy.NewStrategy(t.clusterProviders, nil)
+	t.strategy = clusterstrategy.NewStrategy(nil)
 
 	ctx := request.WithUser(context.Background(), &user.DefaultInfo{Name: defaultTeantID})
 
@@ -797,7 +783,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
 	if cluster.Spec.Type == "" {
-		cluster.Spec.Type = platformv1.ClusterBaremetal
+		cluster.Spec.Type = t.clusterProvider.Name()
 	}
 	if cluster.Spec.NetworkDevice == "" {
 		cluster.Spec.NetworkDevice = "eth0"
@@ -1140,7 +1126,6 @@ func (t *TKE) createGlobalCluster() error {
 	}
 
 	// do again like platform controller
-	t.completeWithProvider()
 
 	if t.Cluster.ClusterCredential.Name == "" { // set ClusterCredential default value
 		t.Cluster.ClusterCredential = platformv1.ClusterCredential{
@@ -1321,7 +1306,7 @@ func (t *TKE) readOrGenerateString(filename string) string {
 
 func (t *TKE) initDataForDeployTKE() error {
 	var err error
-	t.globalClient, err = platformutil.BuildExternalClientSetNoStatus(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
+	t.globalClient, err = platformutil.BuildVersionedClientSet(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}
@@ -1673,6 +1658,7 @@ func (t *TKE) installTKEBusinessController() error {
 		map[string]interface{}{
 			"Replicas":       t.Config.Replicas,
 			"Image":          images.Get().TKEBusinessController.FullName(),
+			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
 			"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
 		})
 	if err != nil {

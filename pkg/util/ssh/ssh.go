@@ -191,7 +191,7 @@ func (s *SSH) CopyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	hashFile := dst + ".sha256"
+	hashFile := "/tmp" + dst + ".sha256"
 	buffer := new(bytes.Buffer)
 	buffer.WriteString(fmt.Sprintf("%s %s", srcHash, dst))
 	_ = s.WriteFile(buffer, hashFile)

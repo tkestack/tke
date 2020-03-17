@@ -19,13 +19,12 @@
 package rest
 
 import (
-	"k8s.io/api/apps/v1"
+	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
-	"sync"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/storage"
@@ -51,8 +50,6 @@ import (
 // StorageProvider is a REST type for core resources storage that implement
 // RestStorageProvider interface
 type StorageProvider struct {
-	ClusterProviders     *sync.Map
-	MachineProviders     *sync.Map
 	LoopbackClientConfig *restclient.Config
 	PrivilegedUsername   string
 }
@@ -81,7 +78,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 	storageMap := make(map[string]rest.Storage)
 
 	{
-		clusterREST := clusterstorage.NewStorage(restOptionsGetter, s.ClusterProviders, platformClient, loopbackClientConfig.Host, s.PrivilegedUsername)
+		clusterREST := clusterstorage.NewStorage(restOptionsGetter, platformClient, loopbackClientConfig.Host, s.PrivilegedUsername)
 		storageMap["clusters"] = clusterREST.Cluster
 		storageMap["clusters/status"] = clusterREST.Status
 		storageMap["clusters/finalize"] = clusterREST.Finalize
@@ -101,7 +98,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["clusters/lbcfbackendgroups"] = clusterREST.LBCFBackendGroup
 		storageMap["clusters/lbcfbackendrecords"] = clusterREST.LBCFBackendRecord
 
-		machineREST := machinestorage.NewStorage(restOptionsGetter, s.MachineProviders, platformClient, s.PrivilegedUsername)
+		machineREST := machinestorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["machines"] = machineREST.Machine
 		storageMap["machines/status"] = machineREST.Status
 		storageMap["machines/finalize"] = machineREST.Finalize

@@ -19,16 +19,12 @@
 package clustercredential
 
 import (
-	"fmt"
-
-	"github.com/pkg/errors"
-
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
-	"tkestack.io/tke/pkg/platform/util"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 )
 
 // ValidateName is a ValidateNameFunc for names that must be a DNS
@@ -45,37 +41,20 @@ func Validate(obj *platform.ClusterCredential, platformClient platforminternalcl
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("clusterName"), obj.ClusterName, "no such cluster:%s"))
 	} else {
-		if cluster.Spec.Type == platform.ClusterImported {
-			if len(obj.CACert) == 0 {
-				allErrs = append(allErrs, field.Required(field.NewPath("caCert"), "must specify CA root certificate"))
-			}
-
-			if obj.Token == nil && obj.ClientKey == nil && obj.ClientCert == nil {
-				allErrs = append(allErrs, field.Required(field.NewPath(""), "must specify at least one of token or client certificate authentication"))
-			} else {
-				if obj.ClientCert == nil && obj.ClientKey != nil {
-					allErrs = append(allErrs, field.Required(field.NewPath("clientCert"), "must specify both the public and private keys of the client certificate"))
-				}
-
-				if obj.ClientCert != nil && obj.ClientKey == nil {
-					allErrs = append(allErrs, field.Required(field.NewPath("clientKey"), "must specify both the public and private keys of the client certificate"))
-				}
-
-				cluster, err := platformClient.Clusters().Get(obj.ClusterName, metav1.GetOptions{})
-				if err != nil {
-					allErrs = append(allErrs, field.InternalError(field.NewPath("clusterName"), errors.Wrap(err, "can't get cluster")))
-				}
-
-				client, err := util.BuildClientSet(cluster, obj)
-				if err != nil {
-					allErrs = append(allErrs, field.InternalError(field.NewPath(""), err))
-				}
-				_, err = client.CoreV1().Namespaces().List(metav1.ListOptions{})
-				if err != nil {
-					allErrs = append(allErrs, field.Invalid(field.NewPath(""), obj.ClusterName, fmt.Sprintf("invalid credential:%s", err)))
-				}
-			}
+		clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(field.NewPath("spec"), err))
 		}
+
+		args := clusterprovider.InternalCluster{
+			Cluster:           *cluster,
+			ClusterCredential: *obj,
+		}
+		resp, err := clusterProvider.ValidateCredential(args)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(field.NewPath("spec"), err))
+		}
+		allErrs = append(allErrs, resp...)
 	}
 
 	return allErrs
