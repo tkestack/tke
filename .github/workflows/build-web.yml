@@ -4,13 +4,8 @@ on:
   push:
     branches:
       - master
-
-  pull_request:
-    branches:
-      - master
-
-  paths:
-    - 'web/*'
+    paths:
+      - 'web/*'
 
 jobs:
   build:
