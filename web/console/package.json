@@ -8,7 +8,7 @@
   },
   "scripts": {
     "common_pre": "rm -rf node_modules && npm i && npm run unzip_third_party",
-    "unzip_third_party": "unzip -n -d ./node_modules ../../third_party/web_node_modules.zip",
+    "unzip_third_party": "unzip -n -d ./node_modules ../../third_party/fe_node_modules.zip",
     "predev": "npm run common_pre",
     "dev": "cross-env NODE_ENV=development Version=tke node ./develop/index.ts",
     "cp_public": "mkdir -p build && cp -r public/* build",
