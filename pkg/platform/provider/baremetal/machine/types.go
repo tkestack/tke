@@ -22,7 +22,7 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/apiclient"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/ssh"
 
 	"github.com/pkg/errors"
