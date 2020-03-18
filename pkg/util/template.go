@@ -28,7 +28,7 @@ import (
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
-// ParseTemplate validates and parses passed as argument template.
+// ParseString validates and parses passed as argument template.
 func ParseTemplate(strtmpl string, obj interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	tmpl, err := template.New("template").Parse(strtmpl)

@@ -23,10 +23,11 @@ import (
 	"fmt"
 	"path"
 
+	"tkestack.io/tke/pkg/util/template"
+
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
 )
@@ -67,7 +68,7 @@ func Install(s ssh.Interface) error {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 
-	data, err := util.ParseFileTemplate(path.Join(constants.ConfDir, "kubeadm/10-kubeadm.conf"), nil)
+	data, err := template.ParseFile(path.Join(constants.ConfDir, "kubeadm/10-kubeadm.conf"), nil)
 	if err != nil {
 		return err
 	}
@@ -106,7 +107,7 @@ type InitOption struct {
 }
 
 func Init(s ssh.Interface, option *InitOption, extraCmd string) error {
-	configData, err := util.ParseFileTemplate(path.Join(constants.ConfDir, kubeadmConfigFile), option)
+	configData, err := template.ParseFile(path.Join(constants.ConfDir, kubeadmConfigFile), option)
 	if err != nil {
 		return errors.Wrap(err, "parse kubeadm config file error")
 	}
@@ -141,7 +142,7 @@ func JoinControlePlane(s ssh.Interface, option *JoinControlePlaneOption) error {
 		}
 	}
 
-	cmd, err := util.ParseTemplate(joinControlePlaneCmd, option)
+	cmd, err := template.ParseString(joinControlePlaneCmd, option)
 	if err != nil {
 		return errors.Wrap(err, "parse joinControlePlaneCmd error")
 	}
@@ -161,7 +162,7 @@ type JoinNodeOption struct {
 }
 
 func JoinNode(s ssh.Interface, option *JoinNodeOption) error {
-	cmd, err := util.ParseTemplate(joinNodeCmd, option)
+	cmd, err := template.ParseString(joinNodeCmd, option)
 	if err != nil {
 		return errors.Wrap(err, "parse joinNodeCmd error")
 	}
