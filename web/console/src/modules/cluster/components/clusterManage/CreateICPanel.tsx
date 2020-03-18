@@ -230,7 +230,7 @@ export class CreateICPanel extends React.Component<RootProps, State> {
             </FormPanel.Item>
             <CIDR
               parts={['192', '172', '10']}
-              minMaskCode="14"
+              minMaskCode="8"
               maxMaskCode={'24'}
               value={cidr}
               onChange={(cidr, maxNodePodNum, maxClusterServiceNum) =>

@@ -182,6 +182,7 @@ export const W_NetworkType = 'W_NetworkType';
 export const W_FloatingIPReleasePolicy = 'W_FloatingIPReleasePolicy';
 export const W_UpdateContainers = 'W_UpdateContainers';
 export const W_ChangeScaleType = 'W_ChangeScaleType';
+export const W_IsOpenCronHpa = 'W_IsOpenCronHpa';
 export const W_ContainerNum = 'W_ContainerNum';
 export const W_IsAllVolumeIsMounted = 'W_IsAllVolumeIsMounted';
 export const W_IsNeedContainerNum = 'W_IsNeedContainerNum';
