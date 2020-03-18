@@ -77,7 +77,7 @@ func Request(options Option) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
-// ParseTemplate is used to get body according to template
+// ParseString is used to get body according to template
 func ParseTemplate(name string, template string, variables map[string]string) (string, error) {
 	var buffer bytes.Buffer
 	tmplBody := htmlTemplate.Must(htmlTemplate.New(name).Parse(template))

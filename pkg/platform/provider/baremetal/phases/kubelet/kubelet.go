@@ -24,10 +24,11 @@ import (
 	"path"
 	"strings"
 
+	"tkestack.io/tke/pkg/util/template"
+
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util/supervisor"
 	"tkestack.io/tke/pkg/util/ssh"
 )
@@ -58,7 +59,7 @@ func Install(s ssh.Interface, option *Option) error {
 		return err
 	}
 
-	serviceData, err := util.ParseFileTemplate(path.Join(constants.ConfDir, "kubelet/kubelet.service"), nil)
+	serviceData, err := template.ParseFile(path.Join(constants.ConfDir, "kubelet/kubelet.service"), nil)
 	if err != nil {
 		return err
 	}
