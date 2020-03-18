@@ -629,6 +629,7 @@ func (p *Provider) EnsureMarkControlPlane(c *Cluster) error {
 
 	for _, machine := range c.Spec.Machines {
 		option.NodeName = machine.IP
+		option.Labels = machine.Labels
 		err := markcontrolplane.Install(clientset, option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
