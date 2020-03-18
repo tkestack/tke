@@ -1,0 +1,32 @@
+name: build-web
+
+on:
+  push:
+    branches:
+      - master
+
+  pull_request:
+    branches:
+      - master
+
+  paths:
+    - 'web/*'
+
+jobs:
+  build:
+
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - run: |
+        make web
+        make assets
+
+    - name: Commit web
+      run: |
+        git config --global user.name 'QianChenglong'
+        git config --global user.email 'qian_cheng_long@163.com'
+        git commit -am 'build: web'
+        git push
