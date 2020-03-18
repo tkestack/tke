@@ -748,6 +748,12 @@ func (c *Controller) genDeployment(decorator *v1.VolumeDecorator, svInfo *storag
 					ServiceAccountName: svcAccountName,
 					HostNetwork:        true,
 					HostPID:            true,
+					Tolerations: []corev1.Toleration{
+						{
+							Key: "node-role.kubernetes.io/master",
+							Effect: corev1.TaintEffectNoSchedule,
+						},
+					},
 				},
 			},
 		},
