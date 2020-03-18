@@ -45,8 +45,6 @@ const (
 )
 
 func Install(s ssh.Interface, option *Option) error {
-	option.IsGPU = false
-
 	dstFile, err := res.Docker.CopyToNodeWithDefault(s)
 	if err != nil {
 		return err
