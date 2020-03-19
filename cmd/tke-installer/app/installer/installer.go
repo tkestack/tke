@@ -2035,6 +2035,11 @@ func (t *TKE) importResource() error {
 }
 
 func (t *TKE) pushImages() error {
+	err := exec.Command("sh", "-c", "rm -rf /root/.docker/manifests/").Run()
+	if err != nil {
+		return err
+	}
+
 	imagesFilter := fmt.Sprintf("%s/*", t.Para.Config.Registry.Namespace())
 	if t.Para.Config.Registry.Domain() != "docker.io" { // docker images filter ignore docker.io
 		imagesFilter = t.Para.Config.Registry.Domain() + "/" + imagesFilter
