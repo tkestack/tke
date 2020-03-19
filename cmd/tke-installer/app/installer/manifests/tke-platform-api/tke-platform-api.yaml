@@ -164,9 +164,6 @@ data:
     webhook_config_file = "/app/conf/tke-auth-webhook.yaml"
 {{- end }}
 
-    [provider]
-    providers=["Baremetal"]
-
   tke-auth-webhook.yaml: |
     apiVersion: v1
     kind: Config
