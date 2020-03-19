@@ -65,7 +65,7 @@ var (
 )
 
 func init() {
-	p, err := newProvider()
+	p, err := NewProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +81,7 @@ var _ clusterprovider.Provider = &Provider{}
 
 type Handler func(*Cluster) error
 
-func newProvider() (*Provider, error) {
+func NewProvider() (*Provider, error) {
 	p := new(Provider)
 
 	cfg, err := config.New(constants.ConfigFile)
