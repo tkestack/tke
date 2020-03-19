@@ -55,6 +55,9 @@ func markMasterNode(n *corev1.Node, taints []corev1.Taint, labels map[string]str
 	}
 	n.Spec.Taints = taints
 
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	labels[constants.LabelNodeRoleMaster] = ""
 	log.Infof("Marking the node %s as control-plane by adding the label %v \n", n.Name, labels)
 	for k, v := range labels {
