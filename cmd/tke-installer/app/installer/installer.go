@@ -227,7 +227,7 @@ type TKERegistry struct {
 }
 
 type ThirdPartyRegistry struct {
-	Domain    string `json:"domain" validate:"hostname_rfc1123"`
+	Domain    string `json:"domain" validate:"required"`
 	Namespace string `json:"namespace" validate:"required"`
 	Username  string `json:"username" validate:"required"`
 	Password  []byte `json:"password" validate:"required"`
