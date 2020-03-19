@@ -20,9 +20,6 @@ package util
 
 import (
 	"context"
-	"reflect"
-	"strings"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +28,10 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	clientrest "k8s.io/client-go/rest"
+	"reflect"
+	"strings"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
 )
 
@@ -64,6 +64,22 @@ func (s *Store) NamespaceScoped() bool {
 	return s.Namespaced
 }
 
+func listOptions(o *metainternalversion.ListOptions) *v1.ListOptions {
+	if o == nil {
+		return &v1.ListOptions{}
+	}
+	return &v1.ListOptions{
+		LabelSelector:       o.LabelSelector.String(),
+		FieldSelector:       o.FieldSelector.String(),
+		Watch:               o.Watch,
+		AllowWatchBookmarks: o.AllowWatchBookmarks,
+		ResourceVersion:     o.ResourceVersion,
+		TimeoutSeconds:      o.TimeoutSeconds,
+		Limit:               o.Limit,
+		Continue:            o.Continue,
+	}
+}
+
 // List returns a list of items matching labels and field according to the
 // backend kubernetes api server.
 func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
@@ -92,7 +108,7 @@ func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptio
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
-		// SpecificallyVersionedParams(options, metainternalversion.ParameterCodec, v1.SchemeGroupVersion).
+		SpecificallyVersionedParams(options, platform.ParameterCodec, v1.SchemeGroupVersion).
 		Do().
 		Into(result); err != nil {
 		return nil, err
@@ -142,7 +158,7 @@ func (s *Store) Get(ctx context.Context, name string, options *v1.GetOptions) (r
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		Name(name).
-		VersionedParams(options, v1.ParameterCodec).
+		VersionedParams(options, platform.ParameterCodec).
 		Do().
 		Into(result); err != nil {
 		return nil, err
@@ -167,12 +183,12 @@ func (s *Store) Watch(ctx context.Context, options *metainternalversion.ListOpti
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
-		// SpecificallyVersionedParams(options, v1.ParameterCodec, metainternalversion.SchemeGroupVersion).
+		SpecificallyVersionedParams(options, platform.ParameterCodec, v1.SchemeGroupVersion).
 		Watch()
 }
 
 // Create inserts a new item according to the unique key from the object.
-func (s *Store) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *v1.CreateOptions) (runtime.Object, error) {
+func (s *Store) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *v1.CreateOptions) (runtime.Object, error) {
 	client, requestInfo, err := RESTClient(ctx, s.PlatformClient)
 	if err != nil {
 		return nil, err
@@ -191,6 +207,7 @@ func (s *Store) Create(ctx context.Context, obj runtime.Object, createValidation
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
+		VersionedParams(options, platform.ParameterCodec).
 		Body(requestBody.Data).
 		Do().
 		Into(result); err != nil {
@@ -228,6 +245,7 @@ func (s *Store) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
+		VersionedParams(options, platform.ParameterCodec).
 		Name(name).
 		Body(requestBody.Data).
 		Do().
@@ -251,6 +269,7 @@ func (s *Store) Delete(ctx context.Context, name string, deleteValidation rest.V
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
+		VersionedParams(options, platform.ParameterCodec).
 		Name(name).
 		Body(options).
 		Do()
@@ -281,7 +300,7 @@ func (s *Store) DeleteCollection(ctx context.Context, options *v1.DeleteOptions,
 		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
-		// SpecificallyVersionedParams(listOptions, v1.ParameterCodec, metainternalversion.SchemeGroupVersion).
+		SpecificallyVersionedParams(listOptions, platform.ParameterCodec, v1.SchemeGroupVersion).
 		Body(options).
 		Do()
 
