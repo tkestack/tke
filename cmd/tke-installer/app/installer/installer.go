@@ -37,6 +37,8 @@ import (
 	"strings"
 	"time"
 
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+
 	"github.com/emicklei/go-restful"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -655,6 +657,14 @@ func (t *TKE) WebService() *restful.WebService {
 	return ws
 }
 
+func (t *TKE) completeWithProvider() {
+	clusterProvider, err := baremetalcluster.NewProvider()
+	if err != nil {
+		panic(err)
+	}
+	t.clusterProvider = clusterProvider
+}
+
 // Global Filter
 func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	now := time.Now()
@@ -680,6 +690,7 @@ func (t *TKE) prepare() errors.APIStatus {
 	t.SetClusterDefault(&t.Para.Cluster, &t.Para.Config)
 
 	// mock platform api
+	t.completeWithProvider()
 	t.strategy = clusterstrategy.NewStrategy(nil)
 
 	ctx := request.WithUser(context.Background(), &user.DefaultInfo{Name: defaultTeantID})
@@ -1127,10 +1138,12 @@ func (t *TKE) prepareFrontProxyCertificates() error {
 }
 
 func (t *TKE) createGlobalCluster() error {
+	// update provider config and recreate
 	err := t.completeProviderConfigForRegistry()
 	if err != nil {
 		return err
 	}
+	t.completeWithProvider()
 
 	if t.Cluster.ClusterCredential.Name == "" { // set ClusterCredential default value
 		t.Cluster.ClusterCredential = platformv1.ClusterCredential{
