@@ -1604,6 +1604,7 @@ func (t *TKE) installTKEPlatformController() error {
 		"Image":                   images.Get().TKEPlatformController.FullName(),
 		"ProviderResImage":        images.Get().ProviderRes.FullName(),
 		"RegistryDomain":          t.Para.Config.Registry.Domain(),
+		"RegistryNamespace":       t.Para.Config.Registry.Namespace(),
 		"MonitorStorageType":      "",
 		"MonitorStorageAddresses": "",
 	}
