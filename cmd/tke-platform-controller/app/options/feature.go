@@ -60,7 +60,7 @@ func (o *FeatureOptions) ApplyFlags() []error {
 
 	switch o.MonitorStorageType {
 	case "":
-	case "influxdb", "elasticsearch", "es", "influxDB":
+	case "influxdb", "elasticsearch", "es", "influxDB", "thanos":
 		if len(o.MonitorStorageAddresses) == 0 {
 			errs = append(errs, fmt.Errorf("must specify %s server address", o.MonitorStorageType))
 		}

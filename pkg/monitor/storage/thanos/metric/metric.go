@@ -229,6 +229,16 @@ func MergeResult(results model.Matrix, timestamp string, groupByWithoutTimestamp
 		}
 	}
 
+	// get rid of empty values as samples may not fulfill all the time gap
+	for i, v := range values {
+		if v.([]interface{})[0] == nil {
+			continue
+		} else {
+			values = values[i:]
+			break
+		}
+	}
+
 	log.Debugf("columes %v", columns)
 	log.Debugf("values %v", values)
 	return &types.MetricMergedResult{
