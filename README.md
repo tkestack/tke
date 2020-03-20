@@ -1,17 +1,13 @@
 # TKE - Tencent Kubernetes Engine
 
+<img align="right" width="100px" src="https://avatars0.githubusercontent.com/u/57258287?s=200&v=4">
+
 ![TKEStack Logo](https://github.com/tkestack/tke/workflows/build/badge.svg?branch=master)
 ![build-web](https://github.com/tkestack/tke/workflows/build-web/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/tkestack.io/tke)](https://goreportcard.com/report/tkestack.io/tke)
 [![Release](https://img.shields.io/github/release/tkestack/tke.svg?style=flat-square)](https://github.com/tkestack/tke/releases)
 
-<img src="https://avatars0.githubusercontent.com/u/57258287?s=200&v=4" width="100">
-
----
-
 ***TKE*** is an open source project that provides a container management platform built for organizations that deploy containers in production. ***TKE*** makes it easy to run Kubernetes everywhere, meet IT requirements, and empower DevOps teams.
-
----
 
 ## Features
 
