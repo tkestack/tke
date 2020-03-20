@@ -20,10 +20,11 @@ package util
 
 import (
 	"fmt"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"strings"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
@@ -50,7 +51,7 @@ func UserKey(tenantID string, name string) string {
 }
 
 func UserPrefix(tenantID string) string {
-	return fmt.Sprintf("%s::user::", tenantID)
+	return fmt.Sprintf("%s##user##", tenantID)
 }
 
 func GroupKey(tenantID string, name string) string {
@@ -58,7 +59,11 @@ func GroupKey(tenantID string, name string) string {
 }
 
 func GroupPrefix(tenantID string) string {
-	return fmt.Sprintf("%s::group::", tenantID)
+	return fmt.Sprintf("%s##group##", tenantID)
+}
+
+func ProjectPolicyName(projectID string, policyID string) string {
+	return fmt.Sprintf("%s-%s", projectID, policyID)
 }
 
 func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string) (auth.LocalGroupList, error) {
@@ -72,7 +77,7 @@ func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string
 }
 
 func ParseTenantAndName(str string) (string, string) {
-	parts := strings.Split(str, "::")
+	parts := strings.Split(str, "##")
 	if len(parts) > 1 {
 		return parts[0], parts[1]
 	}
@@ -81,5 +86,5 @@ func ParseTenantAndName(str string) (string, string) {
 }
 
 func CombineTenantAndName(tenantID, name string) string {
-	return fmt.Sprintf("%s::%s", tenantID, name)
+	return fmt.Sprintf("%s##%s", tenantID, name)
 }

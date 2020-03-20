@@ -38,6 +38,7 @@ func RemoveDuplicateSubjects(slice []auth.Subject) []auth.Subject {
 	for _, s := range slice {
 		if !idSet.Has(s.ID) {
 			ret = append(ret, s)
+			idSet.Insert(s.ID)
 		}
 	}
 	return ret

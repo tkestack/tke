@@ -20,8 +20,9 @@ package storage
 
 import (
 	"context"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"strings"
+
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -73,11 +74,7 @@ func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListO
 	}
 	localIdentity := obj.(*auth.LocalIdentity)
 
-	roles, err := r.enforcer.GetRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
-	if err != nil {
-		log.Error("List roles for user failed from casbin failed", log.String("user", userID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	roles := r.enforcer.GetRolesForUserInDomain(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), util.DefaultDomain)
 
 	var groupIDs []string
 	for _, r := range roles {

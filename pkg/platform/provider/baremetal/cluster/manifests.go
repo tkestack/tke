@@ -56,7 +56,7 @@ const (
          "urlPrefix" : "http://galaxy-ipam:9040/v1"
       }
    ],
-   "kind" : "Policy"
+   "kind" : "ProjectPolicy"
 }
 `
 

@@ -75,6 +75,9 @@ const (
 	// PolicyFinalize is an internal finalizer values to Policy.
 	PolicyFinalize FinalizerName = "policy"
 
+	// ProjectPolicyFinalize is an internal finalizer values to ProjectPolicyBinding.
+	ProjectPolicyFinalize FinalizerName = "projectpolicybinding"
+
 	// GroupFinalize is an internal finalizer values to Group.
 	GroupFinalize FinalizerName = "localgroup"
 
@@ -174,6 +177,8 @@ type LocalGroupSpec struct {
 
 	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`
 	Description string `json:"description" protobuf:"bytes,5,opt,name=description"`
+
+	Extra map[string]string `json:"extra" protobuf:"bytes,6,rep,name=extra"`
 }
 
 // LocalGroupStatus represents information about the status of a group.
@@ -241,6 +246,8 @@ type GroupSpec struct {
 	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
 	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
 	Description string `json:"description" protobuf:"bytes,4,opt,name=description"`
+
+	Extra map[string]string `json:"extra" protobuf:"bytes,5,rep,name=extra"`
 }
 
 // GroupStatus represents information about the status of a group.
@@ -487,15 +494,24 @@ const (
 	PolicyDefault PolicyType = "default"
 )
 
+// PolicyScope defines the policy is belong to platform or project.
+type PolicyScope string
+
+const (
+	PolicyPlatform PolicyScope = "platform"
+	PolicyProject  PolicyScope = "project"
+)
+
 // PolicySpec is a description of a policy.
 type PolicySpec struct {
 	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,8,rep,name=finalizers,casttype=FinalizerName"`
 
-	DisplayName string     `json:"displayName" protobuf:"bytes,7,opt,name=displayName"`
-	TenantID    string     `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
-	Category    string     `json:"category" protobuf:"bytes,9,opt,name=category"`
-	Type        PolicyType `json:"type" protobuf:"varint,10,opt,name=type,casttype=PolicyType"`
-	Username    string     `json:"username" protobuf:"bytes,2,opt,name=username"`
+	DisplayName string      `json:"displayName" protobuf:"bytes,7,opt,name=displayName"`
+	TenantID    string      `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	Category    string      `json:"category" protobuf:"bytes,9,opt,name=category"`
+	Type        PolicyType  `json:"type" protobuf:"varint,10,opt,name=type,casttype=PolicyType"`
+	Scope       PolicyScope `json:"scope" protobuf:"bytes,11,opt,name=scope,casttype=PolicyScope"`
+	Username    string      `json:"username" protobuf:"bytes,2,opt,name=username"`
 	// +optional
 	Description string `json:"description" protobuf:"bytes,3,opt,name=description"`
 
@@ -523,6 +539,79 @@ type PolicyStatus struct {
 	// +optional
 	// Groups represents the groups the policy applies to.
 	Groups []Subject `json:"groups" protobuf:"bytes,3,rep,name=groups"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectPolicyBinding is a collection of subjects bond to policies in a project scope.
+type ProjectPolicyBinding struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	Spec   ProjectPolicyBindingSpec   `json:"spec" protobuf:"bytes,2,opt,name=spec"`
+	Status ProjectPolicyBindingStatus `protobuf:"bytes,3,opt,name=status"`
+}
+
+// ProjectPolicyBindingSpec defines the desired identities of ProjectPolicyBindingSpec document in this set.
+type ProjectPolicyBindingSpec struct {
+	// Spec defines the desired identities of role document in this set.
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	TenantID   string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	ProjectID  string          `json:"projectID" protobuf:"bytes,3,opt,name=projectID"`
+	PolicyID   string          `json:"policyID" protobuf:"bytes,4,opt,name=policyID"`
+	Users      []Subject       `json:"users" protobuf:"bytes,5,rep,name=users"`
+	Groups     []Subject       `json:"groups" protobuf:"bytes,6,rep,name=groups"`
+}
+
+// BindingPhase defines the phase of ProjectPolicyBinding constructor.
+type BindingPhase string
+
+const (
+	BindingActive BindingPhase = "Active"
+	// RoleTerminating means the role is undergoing graceful termination.
+	BindingTerminating BindingPhase = "Terminating"
+)
+
+// ProjectPolicyBindingStatus represents information about the status of a ProjectPolicyBinding.
+type ProjectPolicyBindingStatus struct {
+	Phase BindingPhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=BindingPhase"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectPolicyBindingList is the whole list of all ProjectPolicyBindings.
+type ProjectPolicyBindingList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of policies.
+	Items []ProjectPolicyBinding `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectPolicyBindingRequest references the request to bind or unbind policies to the role.
+type ProjectPolicyBindingRequest struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Policies holds the policies will bind to the subjects.
+	// +optional
+	Policies []string `json:"policies,omitempty" protobuf:"bytes,1,rep,name=policies"`
+
+	Users  []Subject `json:"users" protobuf:"bytes,2,rep,name=users"`
+	Groups []Subject `json:"groups" protobuf:"bytes,3,rep,name=groups"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Dummy is a empty struct.
+type Dummy struct {
+	metav1.TypeMeta `json:",inline"`
+
+	OwnerProjects  []string `json:"ownerProjects" protobuf:"bytes,1,rep,name=ownerProjects"`
+	MemberProjects []string `json:"memberProjects" protobuf:"bytes,2,rep,name=memberProjects"`
 }
 
 const (
@@ -644,6 +733,8 @@ type RoleSpec struct {
 
 	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
 	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
+
+	ProjectID string `json:"projectID" protobuf:"bytes,7,opt,name=projectID"`
 
 	// Username is Creator
 	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`

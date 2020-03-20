@@ -31,6 +31,7 @@ import (
 	v1 "tkestack.io/tke/api/auth/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/pkg/auth/util"
+	authutil "tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -245,6 +246,7 @@ type deleteResourceFunc func(deleter *loalIdentitiedResourcesDeleter, localIdent
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteRelatedRoles,
+	//TODO delete related project roles
 	deleteApikeys,
 }
 
@@ -273,14 +275,12 @@ func (d *loalIdentitiedResourcesDeleter) deleteAllContent(localIdentity *v1.Loca
 func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
 	log.Debug("LocalIdentity controller - deleteRelatedRoles", log.String("localIdentityName", localIdentity.Name))
 
+	// delete roles for bind to * domain
 	subj := util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username)
-	roles, err := deleter.enforcer.GetRolesForUser(subj)
-	if err != nil {
-		return err
-	}
-
+	roles := deleter.enforcer.GetRolesForUserInDomain(subj, authutil.DefaultDomain)
 	log.Info("Try removing related rules for user", log.String("user", localIdentity.Spec.Username), log.Strings("rules", roles))
 
+	var err error
 	binding := v1.Binding{}
 	binding.Users = append(binding.Users, v1.Subject{ID: localIdentity.Name, Name: localIdentity.Spec.Username})
 	var errs []error
@@ -327,7 +327,7 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 			}
 		default:
 			log.Error("Unknown role name for user, remove it", log.String("user", localIdentity.Spec.Username), log.String("role", role))
-			_, err = deleter.enforcer.DeleteRoleForUser(subj, role)
+			_, err = deleter.enforcer.DeleteRoleForUserInDomain(subj, role, authutil.DefaultDomain)
 			if err != nil {
 				errs = append(errs, err)
 			}

@@ -21,9 +21,11 @@ package app
 import (
 	"net/http"
 	"time"
+
 	"tkestack.io/tke/pkg/auth/controller/config"
 	"tkestack.io/tke/pkg/auth/controller/group"
 	"tkestack.io/tke/pkg/auth/controller/localidentity"
+	"tkestack.io/tke/pkg/auth/controller/projectpolicybinding"
 	"tkestack.io/tke/pkg/auth/controller/role"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -33,16 +35,19 @@ import (
 
 const (
 	policySyncPeriod      = 5 * time.Minute
-	concurrentPolicySyncs = 10
+	concurrentPolicySyncs = 5
+
+	projectPolicySyncPeriod      = 5 * time.Minute
+	concurrentProjectPolicySyncs = 5
 
 	localIdentitySyncPeriod      = 5 * time.Minute
-	concurrentLocalIdentitySyncs = 10
+	concurrentLocalIdentitySyncs = 5
 
 	groupSyncPeriod      = 5 * time.Minute
-	concurrentGroupSyncs = 10
+	concurrentGroupSyncs = 5
 
 	roleSyncPeriod      = 5 * time.Minute
-	concurrentRoleSyncs = 10
+	concurrentRoleSyncs = 5
 
 	idpSyncPeriod      = 5 * time.Minute
 	concurrentIDPSyncs = 5
@@ -63,6 +68,25 @@ func startPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
 	)
 
 	go ctrl.Run(concurrentPolicySyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startProjectPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "policies"}] {
+		return nil, false, nil
+	}
+
+	ctrl := projectpolicybinding.NewController(
+		ctx.ClientBuilder.ClientOrDie("projectpolicy-controller"),
+		ctx.InformerFactory.Auth().V1().ProjectPolicyBindings(),
+		ctx.InformerFactory.Auth().V1().Rules(),
+		ctx.Enforcer,
+		projectPolicySyncPeriod,
+		v1.ProjectPolicyFinalize,
+	)
+
+	go ctrl.Run(concurrentProjectPolicySyncs, ctx.Stop)
 
 	return nil, true, nil
 }

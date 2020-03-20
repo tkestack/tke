@@ -42,6 +42,10 @@ import (
 	localgroupstorage "tkestack.io/tke/pkg/auth/registry/localgroup/storage"
 	localidentitystorage "tkestack.io/tke/pkg/auth/registry/localidentity/storage"
 	policystorage "tkestack.io/tke/pkg/auth/registry/policy/storage"
+	projectpolicybindingtorage "tkestack.io/tke/pkg/auth/registry/projectpolicybinding/storage"
+
+	projectstorage "tkestack.io/tke/pkg/auth/registry/project/storage"
+
 	rolestorage "tkestack.io/tke/pkg/auth/registry/role/storage"
 	rulestorage "tkestack.io/tke/pkg/auth/registry/rule/storage"
 	userstorage "tkestack.io/tke/pkg/auth/registry/user/storage"
@@ -116,9 +120,25 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["policies/status"] = policyRest.Status
 		storageMap["policies/binding"] = policyRest.Binding
 		storageMap["policies/unbinding"] = policyRest.Unbinding
+		storageMap["policies/projectbinding"] = policyRest.ProjectBinding
+		storageMap["policies/projectunbinding"] = policyRest.ProjectUnBinding
 		storageMap["policies/roles"] = policyRest.Role
 		storageMap["policies/users"] = policyRest.User
 		storageMap["policies/groups"] = policyRest.Group
+		storageMap["policies/projectusers"] = policyRest.ProjectUser
+		storageMap["policies/projectgroups"] = policyRest.ProjectGroup
+
+		projectPolicyRest := projectpolicybindingtorage.NewStorage(restOptionsGetter, authClient, s.Enforcer, s.PrivilegedUsername)
+		storageMap["projectpolicybindings"] = projectPolicyRest.ProjectPolicy
+		storageMap["projectpolicybindings/finalize"] = projectPolicyRest.Finalize
+		storageMap["projectpolicybindings/status"] = projectPolicyRest.Status
+
+		projectRest := projectstorage.NewStorage(restOptionsGetter, authClient, s.Enforcer)
+		storageMap["projects"] = projectRest.Project
+		storageMap["projects/users"] = projectRest.User
+		storageMap["projects/policies"] = projectRest.Policy
+		storageMap["projects/binding"] = projectRest.Binding
+		storageMap["projects/unbinding"] = projectRest.UnBinding
 
 		ruleRest := rulestorage.NewStorage(restOptionsGetter)
 		storageMap["rules"] = ruleRest.Rule

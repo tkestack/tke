@@ -87,6 +87,7 @@ func BuildHandlerChain(ignoreAuthPathPrefixes []string) Chain {
 		handler = genericapifilters.WithRequestInfo(handler, c.RequestInfoResolver)
 		handler = apiserverfilter.WithLocal(handler)
 		handler = apiserverfilter.WithRequestID(handler)
+		handler = apiserverfilter.WithProject(handler)
 		handler = genericfilters.WithPanicRecovery(handler)
 		return handler
 	}

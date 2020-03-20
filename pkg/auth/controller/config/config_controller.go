@@ -26,29 +26,28 @@ import (
 	"path/filepath"
 	"reflect"
 	"time"
-	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
-	"tkestack.io/tke/pkg/util/metrics"
-
-	v1 "tkestack.io/tke/api/auth/v1"
-	controllerutil "tkestack.io/tke/pkg/controller"
 
 	"github.com/howeyc/fsnotify"
+	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/workqueue"
+
 	"tkestack.io/tke/api/auth"
+	v1 "tkestack.io/tke/api/auth/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
 	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
+	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/metrics"
 )
 
 const (
@@ -247,7 +246,7 @@ func (c *Controller) pollReload(stopCh <-chan struct{}) {
 		select {
 		case <-timerC:
 			timerC = nil
-			log.Info("Policy config directory changed, loadConfig it")
+			log.Info("ProjectPolicyBinding config directory changed, loadConfig it")
 
 			if err := c.loadConfig(); err != nil {
 				log.Error("Load config failed after changed", log.Err(err))

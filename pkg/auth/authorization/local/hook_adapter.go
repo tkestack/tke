@@ -20,6 +20,8 @@ package local
 
 import (
 	"time"
+
+	domainrolemanager "github.com/dovics/domain-role-manager"
 	"tkestack.io/tke/pkg/auth/util"
 
 	"github.com/casbin/casbin/v2"
@@ -61,6 +63,9 @@ func (d *adapterHookHandler) PostStartHook() (string, genericapiserver.PostStart
 
 		adpt := util.NewAdapter(d.authClient.AuthV1().Rules(), d.ruleInformer.Lister())
 		d.enforcer.SetAdapter(adpt)
+
+		rm := domainrolemanager.NewRoleManager(10)
+		d.enforcer.SetRoleManager(rm)
 		d.enforcer.StartAutoLoadPolicy(d.reloadInterval)
 		log.Info("finish start create casbin server")
 		return nil

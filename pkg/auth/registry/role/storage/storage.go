@@ -155,6 +155,7 @@ func (r *REST) ShortNames() []string {
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	keyword := util.InterceptKeyword(options)
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
+	wrappedOptions = util.PredicateProjectIDListOptions(ctx, wrappedOptions)
 	obj, err := r.Store.List(ctx, wrappedOptions)
 	if err != nil {
 		return obj, err

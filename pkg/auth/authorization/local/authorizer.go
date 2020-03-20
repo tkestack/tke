@@ -23,6 +23,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	filter2 "tkestack.io/tke/pkg/apiserver/filter"
+
 	"github.com/casbin/casbin/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -63,8 +65,9 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 	action := attr.GetVerb()
 	resource := attr.GetResource()
 	var (
-		tenantID string
-		debug    bool
+		tenantID  string
+		projectID string
+		debug     bool
 	)
 	extra := attr.GetUser().GetExtra()
 	if len(extra) > 0 {
@@ -104,10 +107,11 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		return authorizer.DecisionAllow, "", nil
 	}
 
+	projectID = filter2.GetProjectFromGroups(attr.GetUser().GetGroups())
 	if debug {
-		perms, err := a.enforcer.GetImplicitPermissionsForUser(authutil.UserKey(tenantID, subject))
+		perms, err := a.enforcer.GetImplicitPermissionsForUser(authutil.UserKey(tenantID, subject), projectID)
 		if err != nil {
-			log.Error("Get permissions for user failed", log.String("user", authutil.UserKey(tenantID, subject)), log.Err(err))
+			log.Error("Get permissions for user failed", log.String("user", authutil.UserKey(tenantID, subject)), log.String("projectID", projectID), log.Err(err))
 		} else {
 			log.Info("Authorize get user perms", log.String("user", subject), log.Any("user perm", perms))
 			data, _ := json.Marshal(perms)
@@ -115,19 +119,19 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		}
 	}
 
-	allow, err := a.enforcer.Enforce(authutil.UserKey(tenantID, subject), resource, action)
+	allow, err := a.enforcer.Enforce(attr.GetUser().GetName(), projectID, resource, action)
 	if err != nil {
-		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
+		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("projectID", projectID), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
 		return authorizer.DecisionDeny, "", err
 	}
 	if !allow {
-		log.Info("Casbin enforcer: ", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "false"))
+		log.Info("Casbin enforcer: ", log.Any("att", attr), log.String("projectID", projectID), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "false"))
 		if debug {
 			return authorizer.DecisionDeny, reason, nil
 		}
 		return authorizer.DecisionDeny, fmt.Sprintf("permission for %s on %s not verify", action, resource), nil
 	}
 
-	log.Debug("Casbin enforcer: ", log.Any("att", attr), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "true"))
+	log.Debug("Casbin enforcer: ", log.Any("att", attr), log.String("projectID", projectID), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "true"))
 	return authorizer.DecisionAllow, reason, nil
 }

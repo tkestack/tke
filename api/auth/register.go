@@ -76,6 +76,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Rule{},
 		&RuleList{},
 		&Binding{},
+		&ProjectPolicyBindingRequest{},
+		&ProjectPolicyBinding{},
+		&ProjectPolicyBindingList{},
 		&Role{},
 		&RoleList{},
 		&PolicyBinding{},
@@ -91,6 +94,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Client{},
 		&ClientList{},
 
+		&Dummy{},
 		&ConfigMap{},
 		&ConfigMapList{})
 

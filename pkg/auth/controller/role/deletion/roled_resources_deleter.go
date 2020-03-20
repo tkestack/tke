@@ -26,8 +26,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+
 	v1 "tkestack.io/tke/api/auth/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
+	authutil "tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -268,11 +270,13 @@ func (d *roledResourcesDeleter) deleteAllContent(role *v1.Role) error {
 
 func deleteRelatedRules(deleter *roledResourcesDeleter, role *v1.Role) error {
 	log.Info("Role controller - deleteRelatedRules", log.String("roleName", role.Name))
-	users, err := deleter.enforcer.GetUsersForRole(role.Name)
-	if err != nil {
-		return err
+	projectID := authutil.DefaultDomain
+	if role.Spec.ProjectID != "" {
+		projectID = role.Spec.ProjectID
 	}
+
+	users := deleter.enforcer.GetUsersForRoleInDomain(role.Name, projectID)
 	log.Info("Try removing related rules for role", log.String("role", role.Name), log.Strings("rules", users))
-	_, err = deleter.enforcer.DeleteRole(role.Name)
+	_, err := deleter.enforcer.DeleteRole(role.Name)
 	return err
 }

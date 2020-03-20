@@ -54,7 +54,7 @@ const (
 	//   deletion and prevent new objects from being created in the terminating channel
 	// * non-leader etcd servers to observe last-minute object creations in a channel
 	//   so this controller's cleanup can actually clean up all objects
-	groupDeletionGracePeriod = 5 * time.Second
+	groupDeletionGracePeriod = 2 * time.Second
 
 	controllerName = "group-controller"
 
@@ -95,7 +95,7 @@ func NewController(client clientset.Interface, groupInformer authv1informer.Loca
 				old, ok1 := oldObj.(*v1.LocalGroup)
 				cur, ok2 := newObj.(*v1.LocalGroup)
 				if ok1 && ok2 && controller.needsUpdate(old, cur) {
-					log.Info("Update enqueue")
+					log.Info("Update enqueue", log.String("group", cur.Name))
 					controller.enqueue(newObj)
 				}
 			},
@@ -271,7 +271,7 @@ func (c *Controller) handleSubjects(key string, group *v1.Group) error {
 	}
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(group.Spec.TenantID, add), authutil.GroupKey(group.Spec.TenantID, group.Name)); err != nil {
+			if _, err := c.enforcer.AddRoleForUserInDomain(authutil.UserKey(group.Spec.TenantID, add), authutil.GroupKey(group.Spec.TenantID, group.Name), authutil.DefaultDomain); err != nil {
 				log.Errorf("Bind group to user failed", log.String("group", group.Name), log.String("user", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -280,7 +280,7 @@ func (c *Controller) handleSubjects(key string, group *v1.Group) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(group.Spec.TenantID, remove), authutil.GroupKey(group.Spec.TenantID, group.Name)); err != nil {
+			if _, err := c.enforcer.DeleteRoleForUserInDomain(authutil.UserKey(group.Spec.TenantID, remove), authutil.GroupKey(group.Spec.TenantID, group.Name), authutil.DefaultDomain); err != nil {
 				log.Errorf("Unbind group to user failed", log.String("group", group.Name), log.String("user", remove), log.Err(err))
 				errs = append(errs, err)
 			}
