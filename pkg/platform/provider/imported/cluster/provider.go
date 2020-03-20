@@ -20,9 +20,10 @@ package cluster
 
 import (
 	"fmt"
-	"net"
+	"net/http"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -110,6 +111,28 @@ func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) (
 	return allErrs, nil
 }
 
+func dialBySimpleHttp(host string, port int32, timeout time.Duration) (bool, error){
+	client := &http.Client{
+		Timeout: timeout,
+	}
+
+	url := "http://"+host+":"+strconv.Itoa(int(port))
+	fmt.Println(url)
+	request, err := http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		return false, err
+	}
+
+	_, err = client.Do(request)
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 	var allErrs field.ErrorList
 
@@ -123,7 +146,7 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 			if address.Port == 0 {
 				allErrs = append(allErrs, field.Required(field.NewPath("status", "addresses", string(address.Type), "port"), "must specify the port of address"))
 			}
-			_, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", address.Host, address.Port), 5*time.Second)
+			_, err := dialBySimpleHttp(address.Host, address.Port,  5*time.Second)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("status", "addresses"), address, err.Error()))
 			}
