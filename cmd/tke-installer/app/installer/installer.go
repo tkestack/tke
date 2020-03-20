@@ -37,6 +37,8 @@ import (
 	"strings"
 	"time"
 
+	utilnet "tkestack.io/tke/pkg/util/net"
+
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 
 	"github.com/emicklei/go-restful"
@@ -72,7 +74,6 @@ import (
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/spec"
-	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
@@ -712,13 +713,12 @@ func (t *TKE) prepare() errors.APIStatus {
 	}
 	allErrs := t.strategy.Validate(ctx, platformCluster)
 
-	// ensure installer's machine not in target machines
-	installerIP, err := util.GetExternalIP()
-	if err != nil {
-		return errors.NewInternalError(pkgerrors.Wrap(err, "get ip of installer machine error"))
-	}
 	for i, one := range platformCluster.Spec.Machines {
-		if one.IP == installerIP {
+		ok, err := utilnet.InterfaceHasAddr(one.IP)
+		if err != nil {
+			return errors.NewInternalError(err)
+		}
+		if ok {
 			allErrs = append(allErrs, field.Invalid(
 				field.NewPath("spec", "machines").Index(i).Child("ip"),
 				one.IP,
@@ -920,9 +920,9 @@ func (t *TKE) completeProviderConfigForRegistry() error {
 	c.Registry.Prefix = t.Para.Config.Registry.Prefix()
 
 	if t.Para.Config.Registry.TKERegistry != nil {
-		ip, err := util.GetExternalIP()
+		ip, err := utilnet.GetSourceIP(t.Para.Cluster.Spec.Machines[0].IP)
 		if err != nil {
-			return pkgerrors.Wrap(err, "get external ip error")
+			return pkgerrors.Wrap(err, "get ip for registry error")
 		}
 		c.Registry.IP = ip
 	}
