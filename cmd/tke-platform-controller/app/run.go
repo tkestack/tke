@@ -28,6 +28,8 @@ import (
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/cmd/tke-platform-controller/app/config"
 	"tkestack.io/tke/pkg/controller"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	"tkestack.io/tke/pkg/util/leaderelection"
 	"tkestack.io/tke/pkg/util/leaderelection/resourcelock"
 	"tkestack.io/tke/pkg/util/log"
@@ -36,6 +38,8 @@ import (
 // Run runs the specified platform controller manager. This should never exit.
 func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 	log.Info("Starting Tencent Kubernetes Engine platform controller manager")
+	log.Infof("Available cluster providers: %v", clusterprovider.Providers())
+	log.Infof("Available machine providers: %v", machineprovider.Providers())
 
 	// Setup any health checks we will want to use.
 	var checks []healthz.HealthChecker

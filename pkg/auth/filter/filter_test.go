@@ -23,10 +23,11 @@ import (
 	"fmt"
 	"testing"
 
-	"tkestack.io/tke/api/business"
-
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericrequest "k8s.io/apiserver/pkg/endpoints/request"
+
+	"tkestack.io/tke/api/business"
+	"tkestack.io/tke/api/registry"
 )
 
 type testCase struct {
@@ -94,6 +95,33 @@ func TestConvertTKEAttributes(t *testing.T) {
 		{
 			ctx: context.Background(),
 			attr: &authorizer.AttributesRecord{
+				Verb:            "list",
+				APIGroup:        business.GroupName,
+				ResourceRequest: true,
+				Resource:        "projects",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "listProjects",
+				Resource: "project:*",
+			},
+		},
+		{
+			ctx: context.Background(),
+			attr: &authorizer.AttributesRecord{
+				Verb:            "get",
+				APIGroup:        business.GroupName,
+				ResourceRequest: true,
+				Resource:        "projects",
+				Name:            "demo",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "getProject",
+				Resource: "project:demo",
+			},
+		},
+		{
+			ctx: context.Background(),
+			attr: &authorizer.AttributesRecord{
 				Verb:            "get",
 				Namespace:       "demo",
 				APIGroup:        business.GroupName,
@@ -104,7 +132,7 @@ func TestConvertTKEAttributes(t *testing.T) {
 			},
 			expect: &authorizer.AttributesRecord{
 				Verb:     "getNamespace",
-				Resource: "namespace:demo/namespace:demo",
+				Resource: "project:demo/namespace:demo",
 			},
 		},
 		{
@@ -118,7 +146,34 @@ func TestConvertTKEAttributes(t *testing.T) {
 			},
 			expect: &authorizer.AttributesRecord{
 				Verb:     "listNamespaces",
-				Resource: "namespace:demo/namespace:*",
+				Resource: "project:demo/namespace:*",
+			},
+		},
+		{
+			ctx: context.Background(),
+			attr: &authorizer.AttributesRecord{
+				Verb:            "list",
+				APIGroup:        registry.GroupName,
+				ResourceRequest: true,
+				Resource:        "namespaces",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "listRegistrynamespaces",
+				Resource: "registrynamespace:*",
+			},
+		},
+		{
+			ctx: context.Background(),
+			attr: &authorizer.AttributesRecord{
+				Verb:            "list",
+				Namespace:       "demo",
+				APIGroup:        registry.GroupName,
+				ResourceRequest: true,
+				Resource:        "repositories",
+			},
+			expect: &authorizer.AttributesRecord{
+				Verb:     "listRepositories",
+				Resource: "registrynamespace:demo/repository:*",
 			},
 		},
 		{

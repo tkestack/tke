@@ -32,10 +32,14 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	goruntime "runtime"
 	"sort"
 	"strings"
-	"sync"
 	"time"
+
+	utilnet "tkestack.io/tke/pkg/util/net"
+
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 
 	"github.com/emicklei/go-restful"
 	pkgerrors "github.com/pkg/errors"
@@ -64,14 +68,12 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/certs"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
-	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/spec"
-	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
@@ -137,13 +139,12 @@ type TKE struct {
 	Cluster *clusterprovider.Cluster `json:"cluster"`
 	Step    int                      `json:"step"`
 
-	log              *stdlog.Logger
-	steps            []handler
-	progress         *ClusterProgress
-	clusterProviders *sync.Map
-	strategy         *clusterstrategy.Strategy
-	clusterProvider  clusterprovider.Provider
-	isFromRestore    bool
+	log             *stdlog.Logger
+	steps           []handler
+	progress        *ClusterProgress
+	strategy        *clusterstrategy.Strategy
+	clusterProvider clusterprovider.Provider
+	isFromRestore   bool
 
 	globalClient kubernetes.Interface
 	servers      []string
@@ -227,7 +228,7 @@ type TKERegistry struct {
 }
 
 type ThirdPartyRegistry struct {
-	Domain    string `json:"domain" validate:"hostname_rfc1123"`
+	Domain    string `json:"domain" validate:"required"`
 	Namespace string `json:"namespace" validate:"required"`
 	Username  string `json:"username" validate:"required"`
 	Password  []byte `json:"password" validate:"required"`
@@ -344,7 +345,12 @@ func NewTKE(config *config.Config) *TKE {
 	c.Cluster = new(clusterprovider.Cluster)
 	c.progress = new(ClusterProgress)
 	c.progress.Status = StatusUnknown
-	c.clusterProviders = new(sync.Map)
+
+	clusterProvider, err := clusterprovider.GetProvider("Baremetal")
+	if err != nil {
+		panic(err)
+	}
+	c.clusterProvider = clusterProvider
 
 	_ = os.MkdirAll(path.Dir(clusterLogFile), 0755)
 	f, err := os.OpenFile(clusterLogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0744)
@@ -658,7 +664,6 @@ func (t *TKE) completeWithProvider() {
 		panic(err)
 	}
 	t.clusterProvider = clusterProvider
-	t.clusterProviders.Store(clusterProvider.Name(), clusterProvider)
 }
 
 // Global Filter
@@ -687,7 +692,7 @@ func (t *TKE) prepare() errors.APIStatus {
 
 	// mock platform api
 	t.completeWithProvider()
-	t.strategy = clusterstrategy.NewStrategy(t.clusterProviders, nil)
+	t.strategy = clusterstrategy.NewStrategy(nil)
 
 	ctx := request.WithUser(context.Background(), &user.DefaultInfo{Name: defaultTeantID})
 
@@ -708,13 +713,12 @@ func (t *TKE) prepare() errors.APIStatus {
 	}
 	allErrs := t.strategy.Validate(ctx, platformCluster)
 
-	// ensure installer's machine not in target machines
-	installerIP, err := util.GetExternalIP()
-	if err != nil {
-		return errors.NewInternalError(pkgerrors.Wrap(err, "get ip of installer machine error"))
-	}
 	for i, one := range platformCluster.Spec.Machines {
-		if one.IP == installerIP {
+		ok, err := utilnet.InterfaceHasAddr(one.IP)
+		if err != nil {
+			return errors.NewInternalError(err)
+		}
+		if ok {
 			allErrs = append(allErrs, field.Invalid(
 				field.NewPath("spec", "machines").Index(i).Child("ip"),
 				one.IP,
@@ -797,7 +801,7 @@ func (t *TKE) SetClusterDefault(cluster *platformv1.Cluster, config *Config) {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
 	if cluster.Spec.Type == "" {
-		cluster.Spec.Type = platformv1.ClusterBaremetal
+		cluster.Spec.Type = t.clusterProvider.Name()
 	}
 	if cluster.Spec.NetworkDevice == "" {
 		cluster.Spec.NetworkDevice = "eth0"
@@ -916,9 +920,9 @@ func (t *TKE) completeProviderConfigForRegistry() error {
 	c.Registry.Prefix = t.Para.Config.Registry.Prefix()
 
 	if t.Para.Config.Registry.TKERegistry != nil {
-		ip, err := util.GetExternalIP()
+		ip, err := utilnet.GetSourceIP(t.Para.Cluster.Spec.Machines[0].IP)
 		if err != nil {
-			return pkgerrors.Wrap(err, "get external ip error")
+			return pkgerrors.Wrap(err, "get ip for registry error")
 		}
 		c.Registry.IP = ip
 	}
@@ -1134,12 +1138,11 @@ func (t *TKE) prepareFrontProxyCertificates() error {
 }
 
 func (t *TKE) createGlobalCluster() error {
+	// update provider config and recreate
 	err := t.completeProviderConfigForRegistry()
 	if err != nil {
 		return err
 	}
-
-	// do again like platform controller
 	t.completeWithProvider()
 
 	if t.Cluster.ClusterCredential.Name == "" { // set ClusterCredential default value
@@ -1258,6 +1261,11 @@ func (t *TKE) setupLocalRegistry() error {
 	if err != nil {
 		return err
 	}
+	localHosts.File = "/etc/hosts"
+	err = localHosts.Set("127.0.0.1")
+	if err != nil {
+		return err
+	}
 
 	data, err := ioutil.ReadFile("hosts")
 	if err != nil {
@@ -1277,7 +1285,8 @@ func (t *TKE) startLocalRegistry() error {
 	cmd.Stderr = t.log.Writer()
 	cmd.Run()
 
-	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPCommandFmt, images.Get().Registry.FullName()))
+	image := strings.ReplaceAll(images.Get().Registry.FullName(), ":", fmt.Sprintf("-%s:", goruntime.GOARCH))
+	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPCommandFmt, image))
 	cmd.Stdout = t.log.Writer()
 	cmd.Stderr = t.log.Writer()
 	err := cmd.Run()
@@ -1286,7 +1295,7 @@ func (t *TKE) startLocalRegistry() error {
 	}
 
 	// for docker manifest create which --insecure is not working
-	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPSCommandFmt, images.Get().Registry.FullName()))
+	cmd = exec.Command("sh", "-c", fmt.Sprintf(registryHTTPSCommandFmt, image))
 	cmd.Stdout = t.log.Writer()
 	cmd.Stderr = t.log.Writer()
 	err = cmd.Run()
@@ -1321,7 +1330,7 @@ func (t *TKE) readOrGenerateString(filename string) string {
 
 func (t *TKE) initDataForDeployTKE() error {
 	var err error
-	t.globalClient, err = platformutil.BuildExternalClientSetNoStatus(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
+	t.globalClient, err = platformutil.BuildVersionedClientSet(&t.Cluster.Cluster, &t.Cluster.ClusterCredential)
 	if err != nil {
 		return err
 	}
@@ -1673,6 +1682,7 @@ func (t *TKE) installTKEBusinessController() error {
 		map[string]interface{}{
 			"Replicas":       t.Config.Replicas,
 			"Image":          images.Get().TKEBusinessController.FullName(),
+			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
 			"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
 		})
 	if err != nil {
@@ -1866,6 +1876,11 @@ func (t *TKE) preparePushImagesToTKERegistry() error {
 	if err != nil {
 		return err
 	}
+	localHosts.File = "/etc/hosts"
+	err = localHosts.Set(t.servers[0])
+	if err != nil {
+		return err
+	}
 
 	dir := path.Join(dockerCertsDir, t.Para.Config.Registry.Domain())
 	_ = os.MkdirAll(dir, 0777)
@@ -2020,6 +2035,11 @@ func (t *TKE) importResource() error {
 }
 
 func (t *TKE) pushImages() error {
+	err := exec.Command("sh", "-c", "rm -rf /root/.docker/manifests/").Run()
+	if err != nil {
+		return err
+	}
+
 	imagesFilter := fmt.Sprintf("%s/*", t.Para.Config.Registry.Namespace())
 	if t.Para.Config.Registry.Domain() != "docker.io" { // docker images filter ignore docker.io
 		imagesFilter = t.Para.Config.Registry.Domain() + "/" + imagesFilter

@@ -22,10 +22,6 @@ import (
 	"fmt"
 	"net"
 
-	machineconfig "tkestack.io/tke/pkg/platform/controller/machine/config"
-
-	clusterconfig "tkestack.io/tke/pkg/platform/controller/cluster/config"
-
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	apiserver "k8s.io/apiserver/pkg/server"
@@ -34,7 +30,8 @@ import (
 	"tkestack.io/tke/cmd/tke-platform-controller/app/options"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
-	providerconfig "tkestack.io/tke/pkg/platform/provider/config"
+	clusterconfig "tkestack.io/tke/pkg/platform/controller/cluster/config"
+	machineconfig "tkestack.io/tke/pkg/platform/controller/machine/config"
 )
 
 // Config is the running configuration structure of the TKE controller manager.
@@ -49,7 +46,6 @@ type Config struct {
 	LeaderElectionClient *versionedclientset.Clientset
 	// the rest config for the platform apiserver
 	PlatformAPIServerClientConfig *restclient.Config
-	Provider                      *providerconfig.Config
 	Component                     controlleroptions.ComponentConfiguration
 	Features                      *options.FeatureOptions
 
@@ -77,16 +73,10 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	config.Timeout = opts.Component.LeaderElection.RenewDeadline
 	leaderElectionClient := versionedclientset.NewForConfigOrDie(restclient.AddUserAgent(&config, "leader-election"))
 
-	providerConfig := providerconfig.NewConfig()
-	if err := opts.Provider.ApplyTo(providerConfig); err != nil {
-		return nil, err
-	}
-
 	controllerManagerConfig := &Config{
 		ServerName:                    serverName,
 		LeaderElectionClient:          leaderElectionClient,
 		PlatformAPIServerClientConfig: platformAPIServerClientConfig,
-		Provider:                      providerConfig,
 		Authorization: apiserver.AuthorizationInfo{
 			Authorizer: authorizerfactory.NewAlwaysAllowAuthorizer(),
 		},

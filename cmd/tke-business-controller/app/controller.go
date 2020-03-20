@@ -52,6 +52,7 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers["project"] = startProjectController
 	controllers["imagenamespace"] = startImageNamespaceController
 	controllers["chartgroup"] = startChartGroupController
+	controllers["platform"] = startPlatformController
 	return controllers
 }
 

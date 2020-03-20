@@ -76,7 +76,7 @@ type ClusterSpec struct {
 	Finalizers  []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
 	TenantID    string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
 	DisplayName string          `json:"displayName" protobuf:"bytes,3,opt,name=displayName"`
-	Type        ClusterType     `json:"type" protobuf:"bytes,4,opt,name=type,casttype=ClusterType"`
+	Type        string          `json:"type" protobuf:"bytes,4,opt,name=type"`
 	Version     string          `json:"version" protobuf:"bytes,5,opt,name=version"`
 	NetworkType NetworkType     `json:"networkType,omitempty" protobuf:"bytes,6,opt,name=networkType,casttype=NetworkType"`
 	// +optional
@@ -154,26 +154,6 @@ const (
 
 	// MachineFinalize is an internal finalizer values to Machine.
 	MachineFinalize FinalizerName = "machine"
-)
-
-// ClusterType defines the type of cluster.
-type ClusterType string
-
-const (
-	// ClusterImported indicates that the cluster is imported after it is created.
-	ClusterImported ClusterType = "Imported"
-	// ClusterBaremetal represents to create the standalone barematal.
-	ClusterBaremetal ClusterType = "Baremetal"
-	// ClusterEKSHosting represents to create the EKS hosting cluster.
-	ClusterEKSHosting ClusterType = "EKSHosting"
-	// ClusterTKEHosting represents the hosting cluster in TKE.
-	ClusterTKEHosting ClusterType = "TKEHosting"
-	// ClusterTKEStandalone represents the standalone cluster in TKE.
-	ClusterTKEStandalone ClusterType = "TKEStandalone"
-	// ClusterTCEHosting represents the hosting cluster in TKE for TCE.
-	ClusterTCEHosting ClusterType = "TCEHosting"
-	// ClusterTCEStandalone represents the standalone cluster in TKE for TCE.
-	ClusterTCEStandalone ClusterType = "TCEStandalone"
 )
 
 // NetworkType defines the network type of cluster.
@@ -334,6 +314,12 @@ type ClusterFeature struct {
 	EnableMasterSchedule bool `json:"enableMasterSchedule,omitempty" protobuf:"bytes,5,opt,name=enableMasterSchedule"`
 	// +optional
 	HA *HA `json:"ha,omitempty" protobuf:"bytes,6,opt,name=ha"`
+	// +optional
+	SkipConditions []string `json:"skipConditions,omitempty" protobuf:"bytes,7,opt,name=skipConditions"`
+	// +optional
+	Files []File `json:"files,omitempty" protobuf:"bytes,8,opt,name=files"`
+	// +optional
+	Hooks map[HookType]string `json:"hooks,omitempty" protobuf:"bytes,9,opt,name=hooks"`
 }
 
 type HA struct {
@@ -349,6 +335,18 @@ type ThirdPartyHA struct {
 	VIP   string `json:"vip" protobuf:"bytes,1,name=vip"`
 	VPort int32  `json:"vport" protobuf:"bytes,2,name=vport"`
 }
+
+type File struct {
+	Src string `json:"src" protobuf:"bytes,1,name=src"` // Only support regular file
+	Dst string `json:"dst" protobuf:"bytes,2,name=dst"`
+}
+
+type HookType string
+
+const (
+	HookPreInstall  HookType = "PreInstall"
+	HookPostInstall HookType = "PostInstall"
+)
 
 // ClusterProperty records the attribute information of the cluster.
 type ClusterProperty struct {
@@ -472,8 +470,8 @@ type ClusterAddonType struct {
 	// LatestVersion is latest version of the addon.
 	LatestVersion string `json:"latestVersion" protobuf:"bytes,4,opt,name=latestVersion"`
 	// Description is desc of the addon.
-	Description           string        `json:"description,omitempty" protobuf:"bytes,5,opt,name=description"`
-	CompatibleClusterType []ClusterType `json:"compatibleClusterType,omitempty" protobuf:"bytes,6,rep,name=compatibleClusterType,casttype=ClusterType"`
+	Description           string   `json:"description,omitempty" protobuf:"bytes,5,opt,name=description"`
+	CompatibleClusterType []string `json:"compatibleClusterType,omitempty" protobuf:"bytes,6,rep,name=compatibleClusterType"`
 }
 
 // +genclient:nonNamespaced
@@ -1272,7 +1270,7 @@ type MachineSpec struct {
 	Finalizers  []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
 	TenantID    string          `json:"tenantID,omitempty" protobuf:"bytes,2,opt,name=tenantID"`
 	ClusterName string          `json:"clusterName" protobuf:"bytes,3,opt,name=clusterName"`
-	Type        MachineType     `json:"type" protobuf:"bytes,4,opt,name=type,casttype=MachineType"`
+	Type        string          `json:"type" protobuf:"bytes,4,opt,name=type"`
 	IP          string          `json:"ip" protobuf:"bytes,5,opt,name=ip"`
 	Port        int32           `json:"port" protobuf:"varint,6,opt,name=port"`
 	Username    string          `json:"username" protobuf:"bytes,7,opt,name=username"`
@@ -1358,14 +1356,6 @@ const (
 	MachineInternalIP  MachineAddressType = "InternalIP"
 	MachineExternalDNS MachineAddressType = "ExternalDNS"
 	MachineInternalDNS MachineAddressType = "InternalDNS"
-)
-
-// MachineType defines the type of machine
-type MachineType string
-
-const (
-	// BaremetalMachine represents use the baremetal machine to create the machine.
-	BaremetalMachine MachineType = "Baremetal"
 )
 
 // MachineCondition contains details for the current condition of this Machine.

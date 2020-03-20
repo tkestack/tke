@@ -7,21 +7,14 @@ import { Validation } from '../Validation';
  * @param vKey: string | string[]  非必传，如果传入，只返回vKey的校验结果
  * @return Validation[]
  */
-export const getValue = (options: {
-  validatorState: ValidatorModel;
-  vKey?: string | string[];
-}): Validation[] => {
+export const getValue = (options: { validatorState: ValidatorModel; vKey?: string | string[] }): Validation[] => {
   let { validatorState, vKey } = options;
   let finalResult: Validation[] = [];
   if (vKey) {
     let finalVKeys = vKey instanceof Array ? vKey : [vKey];
     finalVKeys.forEach(keyName => {
       let specificValidator = validatorState[keyName];
-      finalResult.push(
-        specificValidator
-          ? specificValidator
-          : { status: ValidatorStatusEnum.Failed, message: '' }
-      );
+      finalResult.push(specificValidator ? specificValidator : { status: ValidatorStatusEnum.Failed, message: '' });
     });
   } else {
     for (let key in validatorState) {

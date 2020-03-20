@@ -136,17 +136,21 @@ export class CIDR extends React.Component<CIDRProps, CIDRState> {
         field5: parts[4]
       });
       let segment = parts[0];
-      if (segment === '192' || segment === '172') {
+      if (segment === '192') {
         this.setState({ field5: parts[4] || '16', minMaskCode: '16' });
+      } else if (segment === '172') {
+        this.setState({ field5: parts[4] || '12', minMaskCode: '12' });
       } else if (IsLikeTen(segment)) {
-        this.setState({ field5: parts[4] || '14', minMaskCode: '14' });
+        this.setState({ field5: parts[4] || '8', minMaskCode: '8' });
       }
       this.handleUpdate(segment, parts[4], cidr);
     } else {
-      if (this.state.field1 === '192' || this.state.field1 === '172') {
+      if (this.state.field1 === '192') {
         this.setState({ field5: '16', minMaskCode: '16' });
+      } else if (this.state.field1 === '172') {
+        this.setState({ field5: '12', minMaskCode: '12' });
       } else if (IsLikeTen(this.state.field1)) {
-        this.setState({ field5: '14', minMaskCode: '14' });
+        this.setState({ field5: '8', minMaskCode: '8' });
       }
     }
   }
@@ -252,11 +256,11 @@ export class CIDR extends React.Component<CIDRProps, CIDRState> {
       this.setState({ field2: '168', field2Range: ['168'], minMaskCode: '16', field5: '16' });
       this.handleUpdate('192', '16', '');
     } else if (value === '172') {
-      this.setState({ field5: '16', minMaskCode: '16' });
-      this.handleUpdate('172', '16', '');
+      this.setState({ field5: '12', minMaskCode: '12' });
+      this.handleUpdate('172', '12', '');
     } else {
-      this.setState({ field5: '14', minMaskCode: '14' });
-      this.handleUpdate(value, '14', '');
+      this.setState({ field5: '8', minMaskCode: '8' });
+      this.handleUpdate(value, '8', '');
     }
   }
 

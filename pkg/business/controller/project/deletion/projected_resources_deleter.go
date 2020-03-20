@@ -44,12 +44,14 @@ type ProjectedResourcesDeleterInterface interface {
 func NewProjectedResourcesDeleter(projectClient v1clientset.ProjectInterface,
 	businessClient v1clientset.BusinessV1Interface,
 	finalizerToken businessv1.FinalizerName,
-	deleteProjectWhenDone bool) ProjectedResourcesDeleterInterface {
+	deleteProjectWhenDone bool,
+	registryEnabled bool) ProjectedResourcesDeleterInterface {
 	d := &projectedResourcesDeleter{
 		projectClient:         projectClient,
 		businessClient:        businessClient,
 		finalizerToken:        finalizerToken,
 		deleteProjectWhenDone: deleteProjectWhenDone,
+		registryEnabled:       registryEnabled,
 	}
 	return d
 }
@@ -66,6 +68,7 @@ type projectedResourcesDeleter struct {
 	finalizerToken businessv1.FinalizerName
 	// Also delete the project when all resources in the project have been deleted.
 	deleteProjectWhenDone bool
+	registryEnabled       bool
 }
 
 // Delete deletes all resources in the given project.
@@ -344,6 +347,9 @@ func deleteNamespaces(deleter *projectedResourcesDeleter, project *businessv1.Pr
 }
 
 func deleteImageNamespaces(deleter *projectedResourcesDeleter, project *businessv1.Project) error {
+	if !deleter.registryEnabled {
+		return nil
+	}
 	log.Debug("Project controller - deleteImageNamespaces", log.String("projectName", project.ObjectMeta.Name))
 
 	imageNamespaceList, err := deleter.businessClient.ImageNamespaces(project.ObjectMeta.Name).List(metav1.ListOptions{})
@@ -363,6 +369,9 @@ func deleteImageNamespaces(deleter *projectedResourcesDeleter, project *business
 }
 
 func deleteChartGroups(deleter *projectedResourcesDeleter, project *businessv1.Project) error {
+	if !deleter.registryEnabled {
+		return nil
+	}
 	log.Debug("Project controller - deleteChartGroups", log.String("projectName", project.ObjectMeta.Name))
 
 	chartGroupList, err := deleter.businessClient.ChartGroups(project.ObjectMeta.Name).List(metav1.ListOptions{})
@@ -423,6 +432,9 @@ func (d *projectedResourcesDeleter) hasAllNamespacesDeleted(project *businessv1.
 }
 
 func (d *projectedResourcesDeleter) hasAllImageNamespacesDeleted(project *businessv1.Project) bool {
+	if !d.registryEnabled {
+		return true
+	}
 	imageNamespaceList, err := d.businessClient.ImageNamespaces(project.ObjectMeta.Name).List(metav1.ListOptions{})
 	if err != nil {
 		log.Error("Project controller - failed to list imageNamespaces", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
@@ -439,6 +451,9 @@ func (d *projectedResourcesDeleter) hasAllImageNamespacesDeleted(project *busine
 }
 
 func (d *projectedResourcesDeleter) hasAllChartGroupsDeleted(project *businessv1.Project) bool {
+	if !d.registryEnabled {
+		return true
+	}
 	chartGroupList, err := d.businessClient.ChartGroups(project.ObjectMeta.Name).List(metav1.ListOptions{})
 	if err != nil {
 		log.Error("Project controller - failed to list chartGroups", log.String("projectName", project.ObjectMeta.Name), log.Err(err))

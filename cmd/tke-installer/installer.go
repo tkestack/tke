@@ -25,6 +25,8 @@ import (
 	"time"
 
 	"tkestack.io/tke/cmd/tke-installer/app"
+
+	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 )
 
 func main() {

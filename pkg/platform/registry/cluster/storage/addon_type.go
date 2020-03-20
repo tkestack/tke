@@ -20,14 +20,15 @@ package storage
 
 import (
 	"context"
+	"strings"
+
+	"github.com/thoas/go-funk"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"strings"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
-	v1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/registry/clusteraddontype"
 	"tkestack.io/tke/pkg/platform/util"
 )
@@ -63,7 +64,7 @@ func (r *AddonTypeREST) Get(ctx context.Context, clusterName string, options *me
 	}
 
 	for k, v := range clusteraddontype.Types {
-		if compatibleClusterType(cluster.Spec.Type, v.CompatibleClusterTypes) {
+		if funk.ContainsString(v.CompatibleClusterTypes, cluster.Spec.Type) {
 			l.Items = append(l.Items, platform.ClusterAddonType{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: strings.ToLower(string(k)),
@@ -76,15 +77,4 @@ func (r *AddonTypeREST) Get(ctx context.Context, clusterName string, options *me
 		}
 	}
 	return l, nil
-}
-
-func compatibleClusterType(clusterType platform.ClusterType, compatibleClusterTypes []v1.ClusterType) bool {
-	exist := false
-	for _, v := range compatibleClusterTypes {
-		if string(clusterType) == string(v) {
-			exist = true
-			break
-		}
-	}
-	return exist
 }

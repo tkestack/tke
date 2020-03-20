@@ -248,7 +248,7 @@ var deleteResourceFuncs = []deleteResourceFunc{
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
 func (d *roledResourcesDeleter) deleteAllContent(role *v1.Role) error {
-	log.Debug("Role controller - deleteAllContent", log.String("roleName", role.ObjectMeta.Name))
+	log.Debug("Role controller - deleteAllContent", log.String("roleName", role.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
@@ -263,12 +263,16 @@ func (d *roledResourcesDeleter) deleteAllContent(role *v1.Role) error {
 		return utilerrors.NewAggregate(errs)
 	}
 
-	log.Debug("Role controller - deletedAllContent", log.String("roleName", role.ObjectMeta.Name))
 	return nil
 }
 
 func deleteRelatedRules(deleter *roledResourcesDeleter, role *v1.Role) error {
-	log.Info("Role controller - deleteRelatedRules", log.String("roleName", role.ObjectMeta.Name))
-	_, err := deleter.enforcer.DeleteRole(role.Name)
+	log.Info("Role controller - deleteRelatedRules", log.String("roleName", role.Name))
+	users, err := deleter.enforcer.GetUsersForRole(role.Name)
+	if err != nil {
+		return err
+	}
+	log.Info("Try removing related rules for role", log.String("role", role.Name), log.Strings("rules", users))
+	_, err = deleter.enforcer.DeleteRole(role.Name)
 	return err
 }

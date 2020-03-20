@@ -63,7 +63,6 @@ func startClusterController(ctx ControllerContext) (http.Handler, bool, error) {
 		ctx.InformerFactory.Platform().V1().Clusters(),
 		ctx.Config.ClusterController.ClusterSyncPeriod,
 		platformv1.ClusterFinalize,
-		ctx.ClusterProviders,
 	)
 
 	go func() {
@@ -83,7 +82,6 @@ func startMachineController(ctx ControllerContext) (http.Handler, bool, error) {
 		ctx.InformerFactory.Platform().V1().Machines(),
 		ctx.Config.MachineController.MachineSyncPeriod,
 		platformv1.MachineFinalize,
-		ctx.MachineProviders,
 	)
 
 	go func() {

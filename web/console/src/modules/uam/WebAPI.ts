@@ -1,6 +1,10 @@
 import { QueryState, RecordSet } from '@tencent/ff-redux';
 import {
-    Method, operationResult, reduceK8sQueryString, reduceK8sRestfulPath, reduceNetworkRequest
+  Method,
+  operationResult,
+  reduceK8sQueryString,
+  reduceK8sRestfulPath,
+  reduceNetworkRequest
 } from '../../../helpers';
 import {
   User,
@@ -24,7 +28,7 @@ import {
   PolicyInfoFilter,
   PolicyPlain,
   PolicyFilter,
-  PolicyAssociation,
+  PolicyAssociation
 } from './models';
 import { ResourceInfo, RequestParams } from '../common/models';
 import { resourceConfig } from '../../../config';
@@ -37,12 +41,7 @@ class RequestResult {
   data: any;
   error: any;
 }
-const SEND = async (
-  url: string,
-  method: string,
-  bodyData: any,
-  tipErr: boolean = true
-) => {
+const SEND = async (url: string, method: string, bodyData: any, tipErr: boolean = true) => {
   // 构建参数
   let params: RequestParams = {
     method: method,
@@ -253,9 +252,9 @@ export async function fetchStrategyList(query: QueryState<StrategyFilter>) {
   let recordCount = 0;
   const { search, paging } = query;
   const queryObj = {
-    keyword: search || '',
-    page: paging.pageIndex - 1,
-    page_size: paging.pageSize
+    fieldSelector: {
+      keyword: search || ''
+    }
   };
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['policy'];
@@ -376,7 +375,7 @@ export async function updateStrategy(strategy) {
         spec: Object.assign({}, strategy.spec, {
           displayName: strategy.name ? strategy.name : strategy.spec.displayName,
           description: strategy.description ? strategy.description : strategy.spec.description,
-          statement: strategy.statement ? strategy.statement : strategy.spec.statement,
+          statement: strategy.statement ? strategy.statement : strategy.spec.statement
         })
       }
     });
@@ -521,15 +520,17 @@ export async function removeAssociatedUser([{ id, userNames }]) {
  */
 export async function fetchRoleList(query: QueryState<RoleFilter>) {
   const { keyword, filter } = query;
-  const queryObj = keyword ? {
-    'fieldSelector=spec.displayName': keyword
-  } : {};
+  const queryObj = keyword
+    ? {
+        'fieldSelector=spec.displayName': keyword
+      }
+    : {};
 
   const resourceInfo: ResourceInfo = resourceConfig()['role'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let roles: Role[] = (!rr.error && rr.data.items) ? rr.data.items : [];
+  let roles: Role[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Role> = {
     recordCount: roles.length,
     records: roles
@@ -577,7 +578,7 @@ export async function updateRole([roleInfo]) {
 export async function deleteRole([role]: Role[]) {
   let resourceInfo: ResourceInfo = resourceConfig()['role'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: role.metadata.name });
-  let rr: RequestResult  = await DELETE(url);
+  let rr: RequestResult = await DELETE(url);
   return operationResult(rr.data, rr.error);
 }
 
@@ -587,22 +588,27 @@ export async function deleteRole([role]: Role[]) {
  */
 export async function fetchRolePlainList(query: QueryState<RoleFilter>) {
   const { keyword, filter } = query;
-  const queryObj = keyword ? {
-    'fieldSelector=spec.displayName': keyword
-  } : {};
+  const queryObj = keyword
+    ? {
+        'fieldSelector=spec.displayName': keyword
+      }
+    : {};
 
   const resourceInfo: ResourceInfo = resourceConfig()['role'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let items: RolePlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
-    return {
-      id: i.metadata && i.metadata.name,
-      name: i.metadata && i.metadata.name,
-      displayName: i.spec && i.spec.displayName,
-      description: i.spec && i.spec.description,
-    };
-  }) : [];
+  let items: RolePlain[] =
+    !rr.error && rr.data.items
+      ? rr.data.items.map(i => {
+          return {
+            id: i.metadata && i.metadata.name,
+            name: i.metadata && i.metadata.name,
+            displayName: i.spec && i.spec.displayName,
+            description: i.spec && i.spec.description
+          };
+        })
+      : [];
   const result: RecordSet<RolePlain> = {
     recordCount: items.length,
     records: items
@@ -616,20 +622,23 @@ export async function fetchRolePlainList(query: QueryState<RoleFilter>) {
  */
 export async function fetchRoleAssociatedList(query: QueryState<RoleFilter>) {
   const { search, filter } = query;
-  const queryObj =  {};
+  const queryObj = {};
 
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'roles' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let items: RolePlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
-    return {
-      id: i.metadata && i.metadata.name,
-      name: i.metadata && i.metadata.name,
-      displayName: i.spec && i.spec.displayName,
-      description: i.spec && i.spec.description,
-    };
-  }) : [];
+  let items: RolePlain[] =
+    !rr.error && rr.data.items
+      ? rr.data.items.map(i => {
+          return {
+            id: i.metadata && i.metadata.name,
+            name: i.metadata && i.metadata.name,
+            displayName: i.spec && i.spec.displayName,
+            description: i.spec && i.spec.description
+          };
+        })
+      : [];
   const result: RecordSet<RolePlain> = {
     recordCount: items.length,
     records: items
@@ -667,15 +676,17 @@ export async function disassociateRole([role]: RoleAssociation[], params: RoleFi
  */
 export async function fetchGroupList(query: QueryState<GroupFilter>) {
   const { keyword, filter } = query;
-  const queryObj = keyword ? {
-    'fieldSelector=spec.displayName': keyword
-  } : {};
+  const queryObj = keyword
+    ? {
+        'fieldSelector=spec.displayName': keyword
+      }
+    : {};
 
   const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let groups: Group[] = (!rr.error && rr.data.items) ? rr.data.items : [];
+  let groups: Group[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Group> = {
     recordCount: groups.length,
     records: groups
@@ -723,10 +734,9 @@ export async function updateGroup([groupInfo]) {
 export async function deleteGroup([group]: Group[]) {
   let resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: group.metadata.name });
-  let rr: RequestResult  = await DELETE(url);
+  let rr: RequestResult = await DELETE(url);
   return operationResult(rr.data, rr.error);
 }
-
 
 /**
  * 用户组列表的查询，不参杂其他场景参数
@@ -734,7 +744,7 @@ export async function deleteGroup([group]: Group[]) {
  */
 export async function fetchGroupPlainList(query: QueryState<GroupFilter>) {
   const { search, filter } = query;
-  const queryObj =  {
+  const queryObj = {
     'fieldSelector=keyword': search || ''
   };
 
@@ -742,14 +752,17 @@ export async function fetchGroupPlainList(query: QueryState<GroupFilter>) {
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let items: GroupPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
-    return {
-      id: i.metadata && i.metadata.name,
-      name: i.metadata && i.metadata.name,
-      displayName: i.spec && i.spec.displayName,
-      description: i.spec && i.spec.description,
-    };
-  }) : [];
+  let items: GroupPlain[] =
+    !rr.error && rr.data.items
+      ? rr.data.items.map(i => {
+          return {
+            id: i.metadata && i.metadata.name,
+            name: i.metadata && i.metadata.name,
+            displayName: i.spec && i.spec.displayName,
+            description: i.spec && i.spec.description
+          };
+        })
+      : [];
   const result: RecordSet<GroupPlain> = {
     recordCount: items.length,
     records: items
@@ -763,20 +776,23 @@ export async function fetchGroupPlainList(query: QueryState<GroupFilter>) {
  */
 export async function fetchGroupAssociatedList(query: QueryState<GroupFilter>) {
   const { search, filter } = query;
-  const queryObj =  {};
+  const queryObj = {};
 
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'groups' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let items: GroupPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
-    return {
-      id: i.metadata && i.metadata.name,
-      name: i.metadata && i.metadata.name,
-      displayName: i.spec && i.spec.displayName,
-      description: i.spec && i.spec.description,
-    };
-  }) : [];
+  let items: GroupPlain[] =
+    !rr.error && rr.data.items
+      ? rr.data.items.map(i => {
+          return {
+            id: i.metadata && i.metadata.name,
+            name: i.metadata && i.metadata.name,
+            displayName: i.spec && i.spec.displayName,
+            description: i.spec && i.spec.description
+          };
+        })
+      : [];
   const result: RecordSet<GroupPlain> = {
     recordCount: items.length,
     records: items
@@ -814,7 +830,7 @@ export async function disassociateGroup([group]: GroupAssociation[], params: Gro
  */
 export async function fetchCommonUserList(query: QueryState<CommonUserFilter>) {
   const { search, filter } = query;
-  const queryObj =  {
+  const queryObj = {
     'fieldSelector=keyword': search || ''
   };
 
@@ -822,14 +838,17 @@ export async function fetchCommonUserList(query: QueryState<CommonUserFilter>) {
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let users: UserPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
-    /** localgroup对应localidentity，role对应user，localidentity的spec.username等同于user的spec.name */
-    return {
-      id: i.metadata && i.metadata.name,
-      name: i.spec && (i.spec.name ? i.spec.name : i.spec.username),
-      displayName: i.spec && i.spec.displayName
-    };
-  }) : [];
+  let users: UserPlain[] =
+    !rr.error && rr.data.items
+      ? rr.data.items.map(i => {
+          /** localgroup对应localidentity，role对应user，localidentity的spec.username等同于user的spec.name */
+          return {
+            id: i.metadata && i.metadata.name,
+            name: i.spec && (i.spec.name ? i.spec.name : i.spec.username),
+            displayName: i.spec && i.spec.displayName
+          };
+        })
+      : [];
   const result: RecordSet<UserPlain> = {
     recordCount: users.length,
     records: users
@@ -843,20 +862,23 @@ export async function fetchCommonUserList(query: QueryState<CommonUserFilter>) {
  */
 export async function fetchCommonUserAssociatedList(query: QueryState<CommonUserFilter>) {
   const { search, filter } = query;
-  const queryObj =  {};
+  const queryObj = {};
 
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'users' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let users: UserPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
-    /** localgroup对应localidentity，role对应user，localidentity的spec.username等同于user的spec.name */
-    return {
-      id: i.metadata && i.metadata.name,
-      name: i.spec && (i.spec.name ? i.spec.name : i.spec.username),
-      displayName: i.spec && i.spec.displayName
-    };
-  }) : [];
+  let users: UserPlain[] =
+    !rr.error && rr.data.items
+      ? rr.data.items.map(i => {
+          /** localgroup对应localidentity，role对应user，localidentity的spec.username等同于user的spec.name */
+          return {
+            id: i.metadata && i.metadata.name,
+            name: i.spec && (i.spec.name ? i.spec.name : i.spec.username),
+            displayName: i.spec && i.spec.displayName
+          };
+        })
+      : [];
   const result: RecordSet<UserPlain> = {
     recordCount: users.length,
     records: users
@@ -905,7 +927,7 @@ export async function fetchPolicy(filter: PolicyInfoFilter) {
  */
 export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
   const { search, filter } = query;
-  const queryObj =  {
+  const queryObj = {
     // 'fieldSelector=keyword': search || ''
   };
 
@@ -913,15 +935,18 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let items: PolicyPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
-    return {
-      id: i.metadata && i.metadata.name,
-      name: i.metadata && i.metadata.name,
-      displayName: i.spec && i.spec.displayName,
-      category: i.spec && i.spec.category,
-      description: i.spec && i.spec.description,
-    };
-  }) : [];
+  let items: PolicyPlain[] =
+    !rr.error && rr.data.items
+      ? rr.data.items.map(i => {
+          return {
+            id: i.metadata && i.metadata.name,
+            name: i.metadata && i.metadata.name,
+            displayName: i.spec && i.spec.displayName,
+            category: i.spec && i.spec.category,
+            description: i.spec && i.spec.description
+          };
+        })
+      : [];
   const result: RecordSet<PolicyPlain> = {
     recordCount: items.length,
     records: items
@@ -935,21 +960,24 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
  */
 export async function fetchPolicyAssociatedList(query: QueryState<PolicyFilter>) {
   const { search, filter } = query;
-  const queryObj =  {};
+  const queryObj = {};
 
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'policies' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
-  let items: PolicyPlain[] = (!rr.error && rr.data.items) ? rr.data.items.map((i) => {
-    return {
-      id: i.metadata && i.metadata.name,
-      name: i.metadata && i.metadata.name,
-      displayName: i.spec && i.spec.displayName,
-      category: i.spec && i.spec.category,
-      description: i.spec && i.spec.description,
-    };
-  }) : [];
+  let items: PolicyPlain[] =
+    !rr.error && rr.data.items
+      ? rr.data.items.map(i => {
+          return {
+            id: i.metadata && i.metadata.name,
+            name: i.metadata && i.metadata.name,
+            displayName: i.spec && i.spec.displayName,
+            category: i.spec && i.spec.category,
+            description: i.spec && i.spec.description
+          };
+        })
+      : [];
   const result: RecordSet<PolicyPlain> = {
     recordCount: items.length,
     records: items
@@ -965,7 +993,11 @@ export async function fetchPolicyAssociatedList(query: QueryState<PolicyFilter>)
 export async function associatePolicy([policy]: PolicyAssociation[], params: PolicyFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'policybinding' });
-  let rr: RequestResult = await POST(url, { policies: policy.addPolicies.map((p) => { return p.name }) });
+  let rr: RequestResult = await POST(url, {
+    policies: policy.addPolicies.map(p => {
+      return p.name;
+    })
+  });
   return operationResult(rr.data, rr.error);
 }
 
@@ -977,6 +1009,10 @@ export async function associatePolicy([policy]: PolicyAssociation[], params: Pol
 export async function disassociatePolicy([policy]: PolicyAssociation[], params: PolicyFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'policyunbinding' });
-  let rr: RequestResult = await POST(url, { policies: policy.removePolicies.map((p) => { return p.name }) });
+  let rr: RequestResult = await POST(url, {
+    policies: policy.removePolicies.map(p => {
+      return p.name;
+    })
+  });
   return operationResult(rr.data, rr.error);
 }

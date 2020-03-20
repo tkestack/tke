@@ -3,14 +3,12 @@ import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { resourceConfig } from '../../../../config';
-import { assureRegion } from '../../../../helpers';
+import { assureRegion, reduceNs } from '../../../../helpers';
 import { Region, RegionFilter, Resource, ResourceFilter, ResourceInfo } from '../../common/models';
 import { CommonAPI } from '../../common/webapi';
 import * as ActionType from '../constants/ActionType';
 import { FFReduxActionName, HelmResource, OtherType, TencentHubType } from '../constants/Config';
-import {
-    HelmCreationValid, HelmKeyValue, RootState, TencenthubChart, TencenthubChartVersion
-} from '../models';
+import { HelmCreationValid, HelmKeyValue, RootState, TencenthubChart, TencenthubChartVersion } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
 import { helmActions } from './helmActions';
@@ -140,7 +138,7 @@ export const createActions = {
           options['password'] = otherPassword;
         }
         /// #if project
-        kvs.push({ key: 'NAMESPACE', value: getState().namespaceSelection });
+        kvs.push({ key: 'NAMESPACE', value: reduceNs(getState().namespaceSelection) });
         /// #endif
         let response = await WebAPI.createHelmByOther(options, region.selection.value, clusterSelection);
       }

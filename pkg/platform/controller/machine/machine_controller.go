@@ -20,6 +20,9 @@ package machine
 
 import (
 	"fmt"
+	"reflect"
+	"time"
+
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,16 +30,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"reflect"
-	"sync"
-	"time"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
-	"tkestack.io/tke/api/platform/v1"
+	v1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/controller/machine/deletion"
-	"tkestack.io/tke/pkg/platform/provider"
+	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
@@ -51,16 +51,14 @@ const (
 
 // Controller is responsible for performing actions dependent upon a machine phase.
 type Controller struct {
-	client           clientset.Interface
-	cache            *machineCache
-	health           *machineHealth
-	queue            workqueue.RateLimitingInterface
-	lister           platformv1lister.MachineLister
-	listerSynced     cache.InformerSynced
-	stopCh           <-chan struct{}
-	machineProviders *sync.Map
-
-	deleter deletion.MachineDeleterInterface
+	client       clientset.Interface
+	cache        *machineCache
+	health       *machineHealth
+	queue        workqueue.RateLimitingInterface
+	lister       platformv1lister.MachineLister
+	listerSynced cache.InformerSynced
+	stopCh       <-chan struct{}
+	deleter      deletion.MachineDeleterInterface
 }
 
 // obj could be an *v1.Machine, or a DeletionFinalStateUnknown marker item.
@@ -94,15 +92,13 @@ func NewController(
 	client clientset.Interface,
 	machineInformer platformv1informer.MachineInformer,
 	resyncPeriod time.Duration,
-	finalizerToken v1.FinalizerName,
-	machineProviders *sync.Map) *Controller {
+	finalizerToken v1.FinalizerName) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
-		client:           client,
-		cache:            &machineCache{m: make(map[string]*cachedMachine)},
-		health:           &machineHealth{m: make(map[string]*v1.Machine)},
-		queue:            workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machine"),
-		machineProviders: machineProviders,
+		client: client,
+		cache:  &machineCache{m: make(map[string]*cachedMachine)},
+		health: &machineHealth{m: make(map[string]*v1.Machine)},
+		queue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machine"),
 		deleter: deletion.NewMachineDeleter(client.PlatformV1().Machines(),
 			client.PlatformV1(),
 			finalizerToken,
@@ -366,7 +362,7 @@ func (c *Controller) doInitializing(machine *v1.Machine) error {
 }
 
 func (c *Controller) onInitialize(machine *v1.Machine) (*v1.Machine, error) {
-	machineProvider, err := provider.LoadMachineProvider(c.machineProviders, string(machine.Spec.Type))
+	machineProvider, err := machineprovider.GetProvider(string(machine.Spec.Type))
 	if err != nil {
 		return nil, err
 	}
