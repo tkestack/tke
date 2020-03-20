@@ -1,6 +1,7 @@
 # TKE - Tencent Kubernetes Engine
 
 ![TKEStack Logo](https://github.com/tkestack/tke/workflows/build/badge.svg?branch=master)
+![build-web](https://github.com/tkestack/tke/workflows/build-web/badge.svg)
 
 <img src="https://avatars0.githubusercontent.com/u/57258287?s=200&v=4" width="100">
 
