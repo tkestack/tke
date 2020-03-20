@@ -252,10 +252,10 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
                 <Clip target="#fetchRegistry" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="fetchRegistry">{`sudo docker pull ${this.props.dockerRegistryUrl.data}/dev/nginx:latest`}</p>
+                <p id="fetchRegistry">{`sudo docker pull ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
               </code>
               <p className="text-weak">
-                <Trans>以拉取 dev 命名空间下名为 nginx 的镜像仓库内版本为 latest 的容器镜像为例</Trans>
+                <Trans>以拉取命名空间下名为 nginx 的镜像仓库内版本为 latest 的容器镜像为例</Trans>
               </p>
             </li>
             <li>
@@ -268,17 +268,17 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
                 <Clip target="#pushRegistry2" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushRegistry2">{`sudo docker tag nginx:latest ${this.props.dockerRegistryUrl.data}/dev/nginx:latest`}</p>
+                <p id="pushRegistry2">{`sudo docker tag nginx:latest ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
               </code>
               <br />
               <code>
                 <Clip target="#pushRegistry3" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushRegistry3">{`sudo docker push ${this.props.dockerRegistryUrl.data}/dev/nginx:latest`}</p>
+                <p id="pushRegistry3">{`sudo docker push ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
               </code>
               <p className="text-weak">
-                <Trans>以推送本地最新版本 nginx 镜像到容器镜像服务内 dev/nginx 镜像仓库为例</Trans>
+                <Trans>以推送本地最新版本 nginx 镜像到容器镜像服务内 [命名空间]/nginx 镜像仓库为例</Trans>
               </p>
             </li>
           </ul>
