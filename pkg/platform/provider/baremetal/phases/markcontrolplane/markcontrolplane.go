@@ -22,18 +22,18 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/apiclient"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 type Option struct {
 	NodeName string
 	Taints   []corev1.Taint
+	Labels   map[string]string
 }
 
 // Install taints the control-plane and sets the control-plane label
 func Install(client clientset.Interface, option *Option) error {
-	log.Infof("Marking the node %s as control-plane by adding the label \"%s=''\"\n", option.NodeName, constants.LabelNodeRoleMaster)
 	if option.Taints != nil && len(option.Taints) > 0 {
 		taintStrs := []string{}
 		for _, taint := range option.Taints {
@@ -43,20 +43,26 @@ func Install(client clientset.Interface, option *Option) error {
 	}
 
 	return apiclient.PatchNode(client, option.NodeName, func(n *corev1.Node) {
-		markMasterNode(n, option.Taints)
+		markMasterNode(n, option.Taints, option.Labels)
 	})
 }
 
-func markMasterNode(n *corev1.Node, taints []corev1.Taint) {
-	n.ObjectMeta.Labels[constants.LabelNodeRoleMaster] = ""
-
+func markMasterNode(n *corev1.Node, taints []corev1.Taint, labels map[string]string) {
 	for _, nt := range n.Spec.Taints {
 		if !taintExists(nt, taints) {
 			taints = append(taints, nt)
 		}
 	}
-
 	n.Spec.Taints = taints
+
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[constants.LabelNodeRoleMaster] = ""
+	log.Infof("Marking the node %s as control-plane by adding the label %v \n", n.Name, labels)
+	for k, v := range labels {
+		n.Labels[k] = v
+	}
 }
 
 func taintExists(taint corev1.Taint, taints []corev1.Taint) bool {

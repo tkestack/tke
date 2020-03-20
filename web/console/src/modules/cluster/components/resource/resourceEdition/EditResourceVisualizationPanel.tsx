@@ -4,9 +4,7 @@ import { connect } from 'react-redux';
 
 import { Button, Radio, Select, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
-import {
-    bindActionCreators, insertCSS, isSuccessWorkflow, OperationState, uuid
-} from '@tencent/ff-redux';
+import { bindActionCreators, insertCSS, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { resourceConfig } from '../../../../../../config/resourceConfig';
@@ -17,12 +15,23 @@ import { getWorkflowError, isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
 import {
-    affinityType, NodeAbnormalStrategy, ResourceTypeList, RestartPolicyTypeList,
-    WorkloadNetworkTypeEnum
+  affinityType,
+  NodeAbnormalStrategy,
+  ResourceTypeList,
+  RestartPolicyTypeList,
+  WorkloadNetworkTypeEnum
 } from '../../../constants/Config';
 import {
-    Computer, ContainerItem, CreateResource, DifferentInterfaceResourceOperation, HealthCheckItem,
-    HpaEditJSONYaml, MetricOption, ServiceEditJSONYaml, VolumeItem, WorkloadEditJSONYaml
+  Computer,
+  ContainerItem,
+  CreateResource,
+  DifferentInterfaceResourceOperation,
+  HealthCheckItem,
+  HpaEditJSONYaml,
+  MetricOption,
+  ServiceEditJSONYaml,
+  VolumeItem,
+  WorkloadEditJSONYaml
 } from '../../../models';
 import { AffinityRule } from '../../../models/WorkloadEdit';
 import { router } from '../../../router';
@@ -34,12 +43,11 @@ import { EditResourceLabelPanel } from './EditResourceLabelPanel';
 import { EditResourceVolumePanel } from './EditResourceVolumePanel';
 import { EditServiceAdvanceSettingPanel } from './EditServiceAdvanceSettingPanel';
 import { EditServiceCommunicationPanel } from './EditServiceCommunicationPanel';
-import {
-    ReduceServiceAnnotations, ReduceServiceJSONData, ReduceServicePorts
-} from './EditServicePanel';
+import { ReduceServiceAnnotations, ReduceServiceJSONData, ReduceServicePorts } from './EditServicePanel';
 import { EditServicePortMapPanel } from './EditServicePortMapPanel';
 import { ResourceEditHostPathDialog } from './ResourceEditHostPathDialog';
 import { ResourceSelectConfigDialog } from './ResourceSelectConfigDialog';
+import { reduceNs } from '../../../../../../helpers';
 
 /** service YAML当中的type映射 */
 const serviceTypeMap = {
@@ -290,7 +298,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
                   <InputField
                     type="text"
                     style={{ width: '340px' }}
-                    placeholder={t('请输入执行策略，如: 0 0 2 1 * command to execute')}
+                    placeholder={t('请输入执行策略，如: 0 0 2 1 *')}
                     tipMode="popup"
                     validator={v_cronSchedule}
                     value={cronSchedule}
@@ -301,7 +309,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
               </FormItem>
               <FormItem label={t('Job设置')} isShow={workloadType === 'job' || workloadType === 'cronjob'}>
                 <FixedFormLayout style={{ width: '310px', paddingTop: '5px' }}>
-                  <FormItem label={t('重复次数')} tips={t('该Job下的Pod需要重复执行次数')}>
+                  <FormItem label={t('重复执行次数')} tips={t('该Job下的Pod需要重复执行次数')}>
                     <InputField
                       type="text"
                       style={{ width: '150px' }}
@@ -521,7 +529,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         networkType,
         floatingIPReleasePolicy,
         oversoldRatio,
-        cronMetrics
+        isOpenCronHpa
       } = workloadEdit;
 
       // 当前该资源的具体配置
@@ -531,7 +539,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       let volumesInfo = this._reduceVolumes(finalVolumes);
 
       // 进行容器的相关数据拼接
-      let containersInfo = this._reduceContainers(containers, volumes, { oversoldRatio });
+      let containersInfo = this._reduceContainers(containers, volumes, { oversoldRatio, networkType });
 
       // 进行容器的labels的数据拼接，默认有一个 qcloud-app: workload的名称，很懂监控等都用qcloud-app的标签
       let labelsInfo = { 'qcloud-app': workloadName };
@@ -566,9 +574,6 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
       // 判断当前的实例数量是否为hpa类型
       let isAutoScale = scaleType === 'autoScale';
-
-      // 判断当前的实例数量是否为crontab
-      let isCronHpa = scaleType === 'crontab';
 
       // spec当中的 restartPolicy，job || cronjob的重启策略不能为 always，给用户选择他的重启策略
       let finalRestartPolicy = isCronJobOrCronJob ? restartPolicy : 'Always';
@@ -606,7 +611,8 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
                 name: item.secretName
               }))
             : undefined,
-          affinity: affinityInfo ? affinityInfo : undefined
+          affinity: affinityInfo ? affinityInfo : undefined,
+          hostNetwork: networkType === WorkloadNetworkTypeEnum.Host ? true : undefined
         }
       };
 
@@ -625,7 +631,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         apiVersion: (workloadResourceInfo.group ? workloadResourceInfo.group + '/' : '') + workloadResourceInfo.version,
         metadata: {
           name: workloadName,
-          namespace: namespace,
+          namespace: reduceNs(namespace),
           labels: labelsInfo,
           annotations: isEmpty(annotations) ? undefined : annotations
         },
@@ -663,7 +669,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
        * pre: deployment || statefulset || tapp
        */
       let cronhpaJsonData =
-        (isDeployment || isTapp || isStatefulset) && isCronHpa ? JSON.stringify(this._reduceCronHpaData()) : '';
+        (isDeployment || isTapp || isStatefulset) && isOpenCronHpa ? JSON.stringify(this._reduceCronHpaData()) : '';
 
       /** 最终传过去的json的数据 */
       let finalJSON = serviceJsonData + hpaJsonData + cronhpaJsonData + JSON.stringify(jsonData);
@@ -730,7 +736,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         actions.workflow.applyDifferentInterfaceResource.start(resources, differentInterfaceResourceOperation);
         actions.workflow.applyDifferentInterfaceResource.perform();
       } else {
-        if ((isDeployment || isStatefulset) && (isCreateService || isAutoScale || isCronHpa)) {
+        if ((isDeployment || isStatefulset) && (isCreateService || isAutoScale || isOpenCronHpa)) {
           actions.workflow.applyResource.start([resource], region.selection.value);
           actions.workflow.applyResource.perform();
         } else {
@@ -757,7 +763,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
       metadata: {
         name: workloadName,
-        namespace: namespace
+        namespace: reduceNs(namespace)
       },
       spec: {
         scaleTargetRef: {
@@ -828,7 +834,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
       metadata: {
         name: workloadName,
-        namespace: namespace,
+        namespace: reduceNs(namespace),
         labels: {
           'qcloud-app': workloadName
         }
@@ -947,7 +953,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
   /** 处理container相关的配置项 */
   private _reduceContainers(containers: ContainerItem[], volumes: VolumeItem[], extraOption?: any) {
     let containersInfo = [];
-    let { oversoldRatio } = extraOption;
+    let { oversoldRatio, networkType } = extraOption;
     containersInfo = containers.map(c => {
       let containerItem = {
         name: c.name,
@@ -981,24 +987,39 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       }
       containerItem['resources'] = {};
       // !!!注意：如果设置了gpu，需要在limits里面设定
-      if (cpuLimit !== '' || memLimit !== '' || +c.gpu > 0 || +c.gpuMem > 0 || +c.gpuCore > 0) {
+      if (
+        cpuLimit !== '' ||
+        memLimit !== '' ||
+        +c.gpu > 0 ||
+        +c.gpuMem > 0 ||
+        +c.gpuCore > 0 ||
+        networkType === WorkloadNetworkTypeEnum.FloatingIP
+      ) {
         containerItem['resources'] = {
           limits: {
             cpu: cpuLimit ? cpuLimit : undefined,
             memory: memLimit ? memLimit + 'Mi' : undefined,
             'nvidia.com/gpu': +c.gpu > 0 ? c.gpu + '' : undefined,
             'tencent.com/vcuda-core': +c.gpuCore ? +c.gpuCore * 100 : undefined,
-            'tencent.com/vcuda-memory': +c.gpuMem ? +c.gpuMem : undefined
+            'tencent.com/vcuda-memory': +c.gpuMem ? +c.gpuMem : undefined,
+            'tke.cloud.tencent.com/eni-ip': networkType === WorkloadNetworkTypeEnum.FloatingIP ? '1' : undefined
           }
         };
       }
-      if (cpuRequest !== '' || memRequest !== '' || +c.gpuMem > 0 || +c.gpuCore > 0) {
+      if (
+        cpuRequest !== '' ||
+        memRequest !== '' ||
+        +c.gpuMem > 0 ||
+        +c.gpuCore > 0 ||
+        networkType === WorkloadNetworkTypeEnum.FloatingIP
+      ) {
         containerItem['resources'] = Object.assign({}, containerItem['resources'], {
           requests: {
             cpu: cpuRequest ? cpuRequest : undefined,
             memory: memRequest ? memRequest + 'Mi' : undefined,
             'tencent.com/vcuda-core': +c.gpuCore ? +c.gpuCore * 100 : undefined,
-            'tencent.com/vcuda-memory': +c.gpuMem ? +c.gpuMem : undefined
+            'tencent.com/vcuda-memory': +c.gpuMem ? +c.gpuMem : undefined,
+            'tke.cloud.tencent.com/eni-ip': networkType === WorkloadNetworkTypeEnum.FloatingIP ? '1' : undefined
           }
         });
       }

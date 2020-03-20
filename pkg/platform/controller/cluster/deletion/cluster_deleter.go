@@ -20,9 +20,8 @@ package deletion
 
 import (
 	"fmt"
-	"sync"
 
-	"tkestack.io/tke/pkg/platform/provider"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,13 +40,11 @@ type ClusterDeleterInterface interface {
 // NewClusterDeleter creates the clusterDeleter object and returns it.
 func NewClusterDeleter(clusterClient v1clientset.ClusterInterface,
 	platformClient v1clientset.PlatformV1Interface,
-	clusterProviders *sync.Map,
 	finalizerToken v1.FinalizerName,
 	deleteClusterWhenDone bool) ClusterDeleterInterface {
 	d := &clusterDeleter{
 		clusterClient:         clusterClient,
 		platformClient:        platformClient,
-		clusterProviders:      clusterProviders,
 		deleteClusterWhenDone: deleteClusterWhenDone,
 		finalizerToken:        finalizerToken,
 	}
@@ -59,9 +56,8 @@ var _ ClusterDeleterInterface = &clusterDeleter{}
 // clusterDeleter is used to delete all resources in a given cluster.
 type clusterDeleter struct {
 	// Client to manipulate the cluster.
-	clusterClient    v1clientset.ClusterInterface
-	platformClient   v1clientset.PlatformV1Interface
-	clusterProviders *sync.Map
+	clusterClient  v1clientset.ClusterInterface
+	platformClient v1clientset.PlatformV1Interface
 	// The finalizer token that should be removed from the cluster
 	// when all resources in that cluster have been deleted.
 	finalizerToken v1.FinalizerName
@@ -321,10 +317,7 @@ func deleteHelm(deleter *clusterDeleter, cluster *v1.Cluster) error {
 func deleteClusterProvider(deleter *clusterDeleter, cluster *v1.Cluster) error {
 	log.Debug("Cluster controller - deleteClusterProvider", log.String("clusterName", cluster.ObjectMeta.Name))
 
-	if cluster.Spec.Type == v1.ClusterImported {
-		return nil
-	}
-	clusterProvider, err := provider.LoadClusterProvider(deleter.clusterProviders, string(cluster.Spec.Type))
+	clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		panic(err)
 	}

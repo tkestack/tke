@@ -27,7 +27,6 @@ import (
 	"tkestack.io/tke/api/business"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
-	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/cmd/tke-business-api/app/options"
@@ -47,7 +46,6 @@ type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
 	PlatformClient       platformversionedclient.PlatformV1Interface
 	RegistryClient       registryversionedclient.RegistryV1Interface
-	AuthClient           authversionedclient.AuthV1Interface
 	PrivilegedUsername   string
 	Features             *options.FeatureOptions
 }
@@ -92,7 +90,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		platformREST := platformstorage.NewStorage(restOptionsGetter, businessClient, s.PrivilegedUsername)
 		storageMap["platforms"] = platformREST.Platform
 
-		portalREST := portalstorage.NewStorage(restOptionsGetter, businessClient, s.AuthClient)
+		portalREST := portalstorage.NewStorage(restOptionsGetter, businessClient)
 		storageMap["portal"] = portalREST.Portal
 
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)

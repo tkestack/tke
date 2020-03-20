@@ -20,6 +20,8 @@ package config
 
 import (
 	"tkestack.io/tke/cmd/tke-installer/app/options"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // Config is the running configuration structure of the TKE controller manager.
@@ -36,6 +38,8 @@ type Config struct {
 // CreateConfigFromOptions creates a running configuration instance based
 // on a given TKE apiserver command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
+	log.Infof("Available cluster providers: %v", clusterprovider.Providers())
+
 	return &Config{
 		ServerName:                 serverName,
 		ListenAddr:                 *opts.ListenAddr,

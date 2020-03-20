@@ -379,7 +379,7 @@ func shouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing run
 func (r *REST) patchNamespaceList(obj runtime.Object) error {
 	nl, ok := obj.(*business.NamespaceList)
 	if !ok {
-		return fmt.Errorf("expect *business.NamespaceList, but got %s", reflect.TypeOf(obj))
+		return fmt.Errorf("patchNamespaceList, expect *business.NamespaceList, but got %s", reflect.TypeOf(obj))
 	}
 
 	cache := map[string]*platformv1.Cluster{}
@@ -394,7 +394,7 @@ func (r *REST) patchNamespaceList(obj runtime.Object) error {
 func (r *REST) patchNamespace(obj runtime.Object, cache map[string]*platformv1.Cluster) error {
 	ns, ok := obj.(*business.Namespace)
 	if !ok {
-		return fmt.Errorf("expect *business.Namespace, but got %s", reflect.TypeOf(obj))
+		return fmt.Errorf("patchNamespace, expect *business.Namespace, but got %s", reflect.TypeOf(obj))
 	}
 
 	cls, has := cache[ns.Spec.ClusterName]
@@ -402,7 +402,8 @@ func (r *REST) patchNamespace(obj runtime.Object, cache map[string]*platformv1.C
 		var err error
 		cls, err = r.platformClient.Clusters().Get(ns.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil {
-			return err
+			log.Errorf("patchNamespace %s: %s", ns.Name, err)
+			return nil
 		}
 		if cache != nil {
 			cache[ns.Spec.ClusterName] = cls

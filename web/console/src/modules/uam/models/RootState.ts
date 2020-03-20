@@ -25,9 +25,7 @@ import {
   PolicyAssociation
 } from './index';
 import { ResourceFilter } from '@src/modules/common';
-import {
-    FetcherState, FFListModel, OperationResult, RecordSet, WorkflowState
-} from '@tencent/ff-redux';
+import { FetcherState, FFListModel, OperationResult, RecordSet, WorkflowState } from '@tencent/ff-redux';
 import { Validation, ValidatorModel } from '@tencent/ff-validator';
 import { RouteState } from '../../../../helpers';
 

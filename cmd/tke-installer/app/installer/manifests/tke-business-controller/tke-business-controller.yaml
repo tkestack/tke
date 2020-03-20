@@ -77,6 +77,12 @@ data:
       api_server_client_config = "/app/conf/tke-registry-config.yaml"
 {{- end }}
 
+{{- if .EnableAuth }}
+      [client.auth]
+      api_server = "https://tke-auth-api"
+      api_server_client_config = "/app/conf/tke-auth-config.yaml"
+{{- end }}
+
   tke-platform-config.yaml: |
     apiVersion: v1
     kind: Config
@@ -126,6 +132,28 @@ data:
         cluster:
           certificate-authority: /app/certs/ca.crt
           server: https://tke-registry-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+{{- end }}
+
+{{- if .EnableAuth }}
+  tke-auth-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-auth-api
     users:
       - name: admin-cert
         user:

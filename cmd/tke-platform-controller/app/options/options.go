@@ -24,7 +24,6 @@ import (
 	"github.com/spf13/pflag"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
-	provideroptions "tkestack.io/tke/pkg/platform/provider/options"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -41,7 +40,6 @@ type Options struct {
 	Component         *controlleroptions.ComponentOptions
 	PlatformAPIClient *controlleroptions.APIServerClientOptions
 	Registry          *apiserveroptions.RegistryOptions
-	Provider          *provideroptions.Options
 	FeatureOptions    *FeatureOptions
 
 	ClusterController *ClusterControllerOptions
@@ -57,7 +55,6 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
 		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
 		Registry:          apiserveroptions.NewRegistryOptions(),
-		Provider:          provideroptions.NewOptions(),
 		FeatureOptions:    NewFeatureOptions(),
 
 		ClusterController: NewClusterControllerOptions(),
@@ -73,8 +70,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Component.AddFlags(fs)
 	o.PlatformAPIClient.AddFlags(fs)
 	o.Registry.AddFlags(fs)
-	o.Provider.AddFlags(fs)
 	o.FeatureOptions.AddFlags(fs)
+	o.ClusterController.AddFlags(fs)
+	o.MachineController.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -88,8 +86,9 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Component.ApplyFlags()...)
 	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
 	errs = append(errs, o.Registry.ApplyFlags()...)
-	errs = append(errs, o.Provider.ApplyFlags()...)
 	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
+	errs = append(errs, o.ClusterController.ApplyFlags()...)
+	errs = append(errs, o.MachineController.ApplyFlags()...)
 
 	return errs
 }

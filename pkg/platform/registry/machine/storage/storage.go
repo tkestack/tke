@@ -21,7 +21,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -52,8 +51,8 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against machines.
-func NewStorage(optsGetter genericregistry.RESTOptionsGetter, machineProviders *sync.Map, platformClient platforminternalclient.PlatformInterface, privilegedUsername string) *Storage {
-	strategy := machine.NewStrategy(machineProviders, platformClient)
+func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface, privilegedUsername string) *Storage {
+	strategy := machine.NewStrategy(platformClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &platform.Machine{} },
 		NewListFunc:              func() runtime.Object { return &platform.MachineList{} },

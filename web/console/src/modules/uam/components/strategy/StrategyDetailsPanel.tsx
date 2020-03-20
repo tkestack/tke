@@ -2,8 +2,20 @@ import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
-    Button, Card, CodeEditor, Input, LoadingTip, Modal, SearchBox, Table, TableColumn, TabPanel,
-    Tabs, Text, Tooltip, Transfer
+  Button,
+  Card,
+  CodeEditor,
+  Input,
+  LoadingTip,
+  Modal,
+  SearchBox,
+  Table,
+  TableColumn,
+  TabPanel,
+  Tabs,
+  Text,
+  Tooltip,
+  Transfer
 } from '@tea/component';
 import { removeable, selectable } from '@tea/component/table/addons';
 import { TablePanel } from '@tencent/ff-component';

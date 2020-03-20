@@ -26,6 +26,7 @@ import (
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/validation"
 )
 
@@ -42,21 +43,25 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("displayName"), role.Spec.DisplayName, err.Error()))
 	}
 
+	var validPolicies []string
 	for _, pid := range role.Spec.Policies {
 		pol, err := authClient.Policies().Get(pid, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				allErrs = append(allErrs, field.NotFound(fldSpecPath.Child("policies"), pid))
+				log.Warn("policy of the role is not found, will removed it", log.String("role", role.Name), log.String("policy", pol.Name))
 			} else {
 				allErrs = append(allErrs, field.InternalError(fldSpecPath.Child("policies"), err))
 			}
 		} else {
 			if pol.Spec.TenantID != role.Spec.TenantID {
 				allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("policies"), pid, "related policy must be in the same tenant"))
+			} else {
+				validPolicies = append(validPolicies, pid)
 			}
 		}
 	}
 
+	var validUsers []auth.Subject
 	fldUserPath := field.NewPath("status", "users")
 	for i, subj := range role.Status.Users {
 		if subj.ID == "" {
@@ -68,7 +73,7 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 			val, err := authClient.Users().Get(util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldUserPath, subj.ID))
+					log.Warn("user of the role is not found, will removed it", log.String("role", role.Name), log.String("user", subj.Name))
 				} else {
 					allErrs = append(allErrs, field.InternalError(fldUserPath, err))
 				}
@@ -77,11 +82,13 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 					allErrs = append(allErrs, field.Invalid(fldUserPath, subj.ID, "must in the same tenant with the role"))
 				} else {
 					role.Status.Users[i].Name = val.Spec.Name
+					validUsers = append(validUsers, role.Status.Users[i])
 				}
 			}
 		}
 	}
 
+	var validGroups []auth.Subject
 	fldGroupPath := field.NewPath("status", "groups")
 	for i, subj := range role.Status.Groups {
 		if subj.ID == "" {
@@ -93,7 +100,7 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 			val, err := authClient.Groups().Get(util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.NotFound(fldGroupPath, subj.ID))
+					log.Warn("group of the role is not found, will removed it", log.String("role", role.Name), log.String("group", subj.Name))
 				} else {
 					allErrs = append(allErrs, field.InternalError(fldGroupPath, err))
 				}
@@ -102,9 +109,16 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 					allErrs = append(allErrs, field.Invalid(fldGroupPath, subj.ID, "must in the same tenant with the role"))
 				} else {
 					role.Status.Groups[i].Name = val.Spec.DisplayName
+					validGroups = append(validGroups, role.Status.Groups[i])
 				}
 			}
 		}
+	}
+
+	if len(allErrs) == 0 {
+		role.Spec.Policies = validPolicies
+		role.Status.Users = validUsers
+		role.Status.Groups = validGroups
 	}
 
 	return allErrs

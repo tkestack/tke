@@ -2,7 +2,7 @@ import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Bubble, ExternalLink, InputNumber } from '@tea/component';
+import { Bubble, Checkbox, InputNumber, Text } from '@tea/component';
 import { bindActionCreators, FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
@@ -28,27 +28,28 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
   render() {
     let { subRoot } = this.props,
       { mode, workloadEdit, resourceOption } = subRoot,
-      { resourceSelection } = resourceOption,
-      { isNeedContainerNum, workloadType, hpaList, volumes } = workloadEdit;
+      { isNeedContainerNum, workloadType, hpaList } = workloadEdit;
 
     let isHasCbs = false;
     let isCanUseHpa = workloadType === 'deployment' || workloadType === 'statefulset' || workloadType === 'tapp';
 
     return (
-      <FormItem label={t('实例数量')} tips={t('设置服务自动伸缩要求集群版本大于1.7.0')} isShow={isNeedContainerNum}>
-        {hpaList.fetchState === FetchState.Fetching && mode === 'update' ? (
-          <div>
-            <i className="n-loading-icon" />
-            &nbsp; <span className="text">{t('加载中...')}</span>
-          </div>
-        ) : (
-          <div className="up-date">
-            {this._manualUpdateContainerNum(isHasCbs)}
-            {isCanUseHpa && this._autoscaleContainerNum(isHasCbs)}
-            {isCanUseHpa && this._cronhpaContainerNum()}
-          </div>
-        )}
-      </FormItem>
+      <>
+        <FormItem label={t('实例数量')} tips={t('设置服务自动伸缩要求集群版本大于1.7.0')} isShow={isNeedContainerNum}>
+          {hpaList.fetchState === FetchState.Fetching && mode === 'update' ? (
+            <div>
+              <i className="n-loading-icon" />
+              &nbsp; <span className="text">{t('加载中...')}</span>
+            </div>
+          ) : (
+            <div className="up-date">
+              {this._manualUpdateContainerNum(isHasCbs)}
+              {isCanUseHpa && this._autoscaleContainerNum(isHasCbs)}
+            </div>
+          )}
+        </FormItem>
+        {mode !== 'update' && isCanUseHpa && this._cronhpaContainerNum()}
+      </>
     );
   }
 
@@ -56,37 +57,30 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
   private _cronhpaContainerNum() {
     let { actions, subRoot } = this.props,
       { workloadEdit, addons } = subRoot,
-      { scaleType } = workloadEdit;
-
-    // 是否为定时调节的模式
-    let isCron = scaleType === 'crontab';
+      { scaleType, isOpenCronHpa } = workloadEdit;
 
     let disabled = addons['CronHPA'] === undefined;
 
     return (
-      <div className="as-sel-box">
-        <Bubble placement="top" content={disabled ? t('当前集群尚未安装CronHPA扩展组件，请联系管理员进行安装') : null}>
-          <label className="form-ctrl-label">
-            <input
-              type="radio"
-              name="as-service-redios"
-              className="tc-15-radio"
-              value="crontab"
-              checked={isCron}
-              disabled={disabled}
-              onChange={e => {
-                actions.editWorkload.updateScaleType(e.target.value);
-              }}
-            />
-            <strong>{t('定时调节')}</strong>
-            <span className="text-label">
-              {t('根据设置的Crontab（Crontab语法格式，例如 "0 23 * * 5"表示每周五23:00）周期性地设置实例数量')}
-            </span>
-          </label>
+      <FormItem label={t('定时调节')}>
+        <Bubble
+          content={disabled ? t('当前集群尚未安装CronHPA扩展组件，请联系管理员进行安装') : null}
+          placement="right"
+        >
+          <Checkbox
+            style={{ marginTop: '5px' }}
+            disabled={disabled}
+            value={isOpenCronHpa}
+            onChange={value => actions.editWorkload.toggleIsOpenCronHpa()}
+          >
+            <span style={{ verticalAlign: '5px' }}>开启</span>
+          </Checkbox>
         </Bubble>
-
-        {isCron ? <ul className="form-list">{this._renderCronTabList()}</ul> : <noscript />}
-      </div>
+        <Text theme="label" parent="p">
+          {t('根据设置的Crontab（Crontab语法格式，例如 "0 23 * * 5"表示每周五23:00）周期性地设置实例数量')}
+        </Text>
+        {isOpenCronHpa ? <ul className="form-list">{this._renderCronTabList()}</ul> : <noscript />}
+      </FormItem>
     );
   }
 

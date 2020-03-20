@@ -1,6 +1,11 @@
 import { combineReducers } from 'redux';
 
-import { createFFListReducer, generateFetcherReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
+import {
+  createFFListReducer,
+  generateFetcherReducer,
+  generateWorkflowReducer,
+  reduceToPayload
+} from '@tencent/ff-redux';
 
 import * as ActionTypes from '../constants/ActionTypes';
 import { router } from '../router';
@@ -17,7 +22,7 @@ import {
   initCommonUserFilterState,
   initPolicyAssociationState,
   initPolicyEditorState,
-  initPolicyFilterState,
+  initPolicyFilterState
 } from '../constants/initState';
 import { createValidatorReducer } from '@tencent/ff-validator';
 import { GroupValidateSchema } from '../constants/GroupValidateConfig';
@@ -145,5 +150,5 @@ export const RootReducer = combineReducers({
     actionType: ActionTypes.DisassociatePolicy
   }),
   policyAssociation: reduceToPayload(ActionTypes.UpdatePolicyAssociation, initPolicyAssociationState),
-  policyFilter: reduceToPayload(ActionTypes.UpdatePolicyFilter, initPolicyFilterState),
+  policyFilter: reduceToPayload(ActionTypes.UpdatePolicyFilter, initPolicyFilterState)
 });

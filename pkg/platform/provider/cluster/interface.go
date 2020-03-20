@@ -44,14 +44,24 @@ type Cluster struct {
 	ClusterCredential v1.ClusterCredential
 }
 
+// InternalCluster wrap internal version cluster and it's credential
+type InternalCluster struct {
+	platform.Cluster
+	ClusterCredential platform.ClusterCredential
+}
+
 // Provider defines a set of response interfaces for specific cluster
 // types in cluster management.
 type Provider interface {
 	Name() string
+
+	ValidateCredential(cluster InternalCluster) (field.ErrorList, error)
+
 	Validate(cluster platform.Cluster) (field.ErrorList, error)
 	PreCreate(user UserInfo, cluster platform.Cluster) (platform.Cluster, error)
 	AfterCreate(cluster platform.Cluster) ([]interface{}, error)
 	ValidateUpdate(cluster platform.Cluster, oldCluster platform.Cluster) (field.ErrorList, error)
+
 	OnInitialize(cluster Cluster) (Cluster, error)
 	OnUpdate(cluster Cluster) (Cluster, error)
 	OnDelete(cluster v1.Cluster) error
