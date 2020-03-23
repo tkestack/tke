@@ -92,6 +92,8 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 					validUsers = append(validUsers, policy.Status.Users[i])
 				}
 			}
+		} else {
+			validUsers = append(validUsers, policy.Status.Users[i])
 		}
 	}
 
@@ -119,6 +121,8 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 					validGroups = append(validGroups, policy.Status.Groups[i])
 				}
 			}
+		} else {
+			validGroups = append(validGroups, policy.Status.Groups[i])
 		}
 	}
 
