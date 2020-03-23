@@ -549,7 +549,7 @@ func (c *Controller) watchCronHPAHealth(key string) func() (bool, error) {
 		if err != nil {
 			return false, nil
 		}
-		if _, ok := c.health.Load(cluster.Name); !ok {
+		if _, ok := c.health.Load(key); !ok {
 			log.Info("Health check over.")
 			return true, nil
 		}
