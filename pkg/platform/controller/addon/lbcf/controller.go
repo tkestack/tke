@@ -533,7 +533,7 @@ func (c *Controller) watchLBCFHealth(key string) func() (bool, error) {
 		if err != nil {
 			return false, nil
 		}
-		if _, ok := c.health.Load(cluster.Name); !ok {
+		if _, ok := c.health.Load(key); !ok {
 			log.Info("health check over.")
 			return true, nil
 		}

@@ -233,7 +233,7 @@ func (c *Controller) createIfNeeded(key string, cachedItem *gmCachedItem, holder
 		log.Info(fmt.Sprintf("GPUManager %s is prepared to install ", key))
 		return c.install(holder)
 	case v1.AddonPhaseRunning:
-		c.health.Set(holder)
+		c.health.Set(key, holder)
 
 		// If phase transits from pending to running, at the same time, we update spec version.
 		// In this situation, the controller will ignore this update which is unexpected. So we
@@ -258,7 +258,7 @@ func (c *Controller) createIfNeeded(key string, cachedItem *gmCachedItem, holder
 		log.Info(fmt.Sprintf("GPUManager %s is error", key))
 		c.health.Del(key)
 	case v1.AddonPhaseUnhealthy:
-		c.health.Set(holder)
+		c.health.Set(key, holder)
 	default:
 		log.Warn(fmt.Sprintf("GPUManager %s got unknown phrase %s", key, holder.Status.Phase))
 	}
