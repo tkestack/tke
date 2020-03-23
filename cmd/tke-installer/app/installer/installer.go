@@ -37,6 +37,7 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/util"
 	utilnet "tkestack.io/tke/pkg/util/net"
 
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
@@ -159,13 +160,14 @@ type CreateClusterPara struct {
 
 // Config is the installer config
 type Config struct {
-	Basic    *Basic    `json:"basic"`
-	Auth     Auth      `json:"auth"`
-	Registry Registry  `json:"registry"`
-	Business *Business `json:"business,omitempty"`
-	Monitor  *Monitor  `json:"monitor,omitempty"`
-	HA       *HA       `json:"ha,omitempty"`
-	Gateway  *Gateway  `json:"gateway,omitempty"`
+	Basic     *Basic    `json:"basic"`
+	Auth      Auth      `json:"auth"`
+	Registry  Registry  `json:"registry"`
+	Business  *Business `json:"business,omitempty"`
+	Monitor   *Monitor  `json:"monitor,omitempty"`
+	HA        *HA       `json:"ha,omitempty"`
+	Gateway   *Gateway  `json:"gateway,omitempty"`
+	SkipSteps []string  `json:"skipSteps,omitempty`
 }
 
 type Basic struct {
@@ -411,7 +413,7 @@ func (t *TKE) initSteps() {
 	if !t.Para.Config.Registry.UseDevRegistry() {
 		t.steps = append(t.steps, []handler{
 			{
-				Name: fmt.Sprintf("Push images to %s/%s", t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace()),
+				Name: "Push images",
 				Func: t.pushImages,
 			},
 		}...)
@@ -576,6 +578,21 @@ func (t *TKE) initSteps() {
 			Func: t.postInstallHook,
 		},
 	}...)
+
+	t.steps = filterSteps(t.steps, t.Para.Config.SkipSteps)
+}
+
+func filterSteps(steps []handler, skips []string) []handler {
+	if len(skips) == 0 {
+		return steps
+	}
+	newSteps := []handler{}
+	for _, step := range steps {
+		if !util.InStringSlice(skips, step.Name) {
+			newSteps = append(newSteps, step)
+		}
+	}
+	return newSteps
 }
 
 func (t *TKE) Run() {
