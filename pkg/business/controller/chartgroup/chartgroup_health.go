@@ -89,7 +89,7 @@ func (c *Controller) watchChartGroupHealth(key string) func() (bool, error) {
 		if err != nil && errors.IsNotFound(err) {
 			log.Error("ChartGroup not found, to exit the health check loop",
 				log.String("projectName", projectName), log.String("chartGroupName", chartGroupName))
-			c.health.Del(chartGroupName)
+			c.health.Del(key)
 			return true, nil
 		}
 		if err != nil {
@@ -101,7 +101,7 @@ func (c *Controller) watchChartGroupHealth(key string) func() (bool, error) {
 		if chartGroup.Status.Phase == businessv1.ChartGroupTerminating || chartGroup.Status.Phase == businessv1.ChartGroupPending {
 			log.Warn("ChartGroup status is terminated, to exit the health check loop",
 				log.String("projectName", projectName), log.String("chartGroupName", chartGroupName))
-			c.health.Del(chartGroupName)
+			c.health.Del(key)
 			return true, nil
 		}
 

@@ -359,12 +359,12 @@ func (c *Controller) createPersistentEventIfNeeded(key string, cachedPersistentE
 		go wait.Poll(waitTime, persistentEventTimeOut, c.persistentEventReinitialize(key, cachedPersistentEvent, persistentEvent))
 	case v1.AddonPhaseChecking:
 		if !c.checking.Exist(key) {
-			c.checking.Set(persistentEvent)
+			c.checking.Set(key, persistentEvent)
 			go wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkDeploymentStatus(persistentEvent, key))
 		}
 	case v1.AddonPhaseRunning:
 		if !c.health.Exist(key) {
-			c.health.Set(persistentEvent)
+			c.health.Set(key, persistentEvent)
 			go wait.PollImmediateUntil(5*time.Minute, c.watchPersistentEventHealth(key), c.stopCh)
 		}
 	case v1.AddonPhaseFailed:
@@ -508,7 +508,7 @@ func (c *Controller) watchPersistentEventHealth(key string) func() (bool, error)
 		if err != nil {
 			return false, nil
 		}
-		if !c.health.Exist(cluster.Name) {
+		if !c.health.Exist(key) {
 			log.Info("health check over.")
 			return true, nil
 		}

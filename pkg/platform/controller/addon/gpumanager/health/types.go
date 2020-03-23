@@ -19,7 +19,7 @@
 package health
 
 import (
-	"tkestack.io/tke/api/platform/v1"
+	v1 "tkestack.io/tke/api/platform/v1"
 )
 
 // Prober is used for probing the GPUManager instance status
@@ -29,7 +29,7 @@ type Prober interface {
 	// Exist tells you whether GPUManager's key is in the prober
 	Exist(key string) bool
 	// Set means sets a prober for the given GPUManager
-	Set(v *v1.GPUManager)
+	Set(key string, v *v1.GPUManager)
 	// DeleteDaemonSet means remove a prober of the given GPUManager's key
 	Del(key string)
 }

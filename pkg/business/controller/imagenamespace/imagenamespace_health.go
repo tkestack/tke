@@ -89,7 +89,7 @@ func (c *Controller) watchImageNamespaceHealth(key string) func() (bool, error) 
 		if err != nil && errors.IsNotFound(err) {
 			log.Error("ImageNamespace not found, to exit the health check loop",
 				log.String("projectName", projectName), log.String("imageNamespaceName", imageNamespaceName))
-			c.health.Del(imageNamespaceName)
+			c.health.Del(key)
 			return true, nil
 		}
 		if err != nil {
@@ -101,7 +101,7 @@ func (c *Controller) watchImageNamespaceHealth(key string) func() (bool, error) 
 		if imageNamespace.Status.Phase == businessv1.ImageNamespaceTerminating || imageNamespace.Status.Phase == businessv1.ImageNamespacePending {
 			log.Warn("ImageNamespace status is terminated, to exit the health check loop",
 				log.String("projectName", projectName), log.String("imageNamespaceName", imageNamespaceName))
-			c.health.Del(imageNamespaceName)
+			c.health.Del(key)
 			return true, nil
 		}
 

@@ -20,6 +20,12 @@ package prometheus
 
 import (
 	"fmt"
+	"math/rand"
+	"reflect"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	promopk8sutil "github.com/coreos/prometheus-operator/pkg/k8sutil"
@@ -39,15 +45,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"math/rand"
-	"reflect"
-	"strings"
-	"sync"
-	"time"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
-	"tkestack.io/tke/api/platform/v1"
+	v1 "tkestack.io/tke/api/platform/v1"
 	notifyapi "tkestack.io/tke/cmd/tke-notify-api/app"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	esutil "tkestack.io/tke/pkg/monitor/storage/es/client"
@@ -2037,7 +2038,7 @@ func (c *Controller) watchPrometheusHealth(key string) func() (bool, error) {
 		if err != nil {
 			return false, nil
 		}
-		if _, ok := c.health.Load(prometheus.Name); !ok {
+		if _, ok := c.health.Load(key); !ok {
 			log.Info("Prometheus health check over", log.String("prome", key))
 			return true, nil
 		}
