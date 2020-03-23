@@ -32,8 +32,9 @@ import (
 )
 
 const (
-	_addNewQuotaErrorInfo  = "Please at first set quota"
-	_clusterLimitErrorInfo = "parent project forbids this project to use cluster"
+	_addNewQuotaErrorInfo   = "Please at first set quota"
+	_removeClusterErrorInfo = "can NOT remove cluster"
+	_clusterLimitErrorInfo  = "parent project forbids this project to use cluster"
 )
 
 // ValidateProjectName is a ValidateNameFunc for names that must be a DNS
@@ -177,7 +178,15 @@ func validateAgainstChildren(project *business.Project, getter validation.Busine
 					field.Invalid(fldHardPath.Child(clusterName), k,
 						fmt.Sprintf("%s '%s' of cluster '%s' for all children projects/namespaces", _addNewQuotaErrorInfo, k, clusterName)))
 			}
+		}
+	}
 
+	for clusterName := range clusterTimes {
+		_, has := project.Spec.Clusters[clusterName]
+		if !has {
+			allErrs = append(allErrs,
+				field.Invalid(fldHardPath.Child(clusterName), "",
+					fmt.Sprintf("%s '%s', for it has been used by children projects/namespaces", _removeClusterErrorInfo, clusterName)))
 		}
 	}
 
