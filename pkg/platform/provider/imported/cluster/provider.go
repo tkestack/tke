@@ -19,6 +19,7 @@
 package cluster
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -114,9 +115,12 @@ func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) (
 func dialBySimpleHttp(host string, port int32, timeout time.Duration) (bool, error){
 	client := &http.Client{
 		Timeout: timeout,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
 	}
 
-	url := "http://"+host+":"+strconv.Itoa(int(port))
+	url := "https://"+host+":"+strconv.Itoa(int(port))
 	fmt.Println(url)
 	request, err := http.NewRequest("GET", url, nil)
 
