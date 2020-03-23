@@ -112,7 +112,7 @@ func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) (
 	return allErrs, nil
 }
 
-func dialBySimpleHttp(host string, port int32, timeout time.Duration) (bool, error){
+func dialBySimpleHttps(host string, port int32, timeout time.Duration) (bool, error){
 	client := &http.Client{
 		Timeout: timeout,
 		Transport: &http.Transport{
@@ -150,7 +150,7 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 			if address.Port == 0 {
 				allErrs = append(allErrs, field.Required(field.NewPath("status", "addresses", string(address.Type), "port"), "must specify the port of address"))
 			}
-			_, err := dialBySimpleHttp(address.Host, address.Port,  5*time.Second)
+			_, err := dialBySimpleHttps(address.Host, address.Port,  5*time.Second)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("status", "addresses"), address, err.Error()))
 			}
