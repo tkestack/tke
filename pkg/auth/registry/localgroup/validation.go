@@ -65,9 +65,10 @@ func ValidateLocalGroup(group *auth.LocalGroup, authClient authinternalclient.Au
 				} else {
 					group.Status.Users[i].Name = val.Spec.Username
 					validUsers = append(validUsers, group.Status.Users[i])
-
 				}
 			}
+		} else {
+			validUsers = append(validUsers, group.Status.Users[i])
 		}
 	}
 

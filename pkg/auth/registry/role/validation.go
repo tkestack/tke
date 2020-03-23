@@ -85,6 +85,8 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 					validUsers = append(validUsers, role.Status.Users[i])
 				}
 			}
+		} else {
+			validUsers = append(validUsers, role.Status.Users[i])
 		}
 	}
 
@@ -112,6 +114,8 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 					validGroups = append(validGroups, role.Status.Groups[i])
 				}
 			}
+		} else {
+			validGroups = append(validGroups, role.Status.Groups[i])
 		}
 	}
 
