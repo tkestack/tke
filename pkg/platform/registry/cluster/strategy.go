@@ -220,7 +220,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateClusterUpdate(obj.(*platform.Cluster), old.(*platform.Cluster), s.platformClient)
+	return field.ErrorList{}
 }
 
 // FinalizeStrategy implements finalizer logic for Machine.
