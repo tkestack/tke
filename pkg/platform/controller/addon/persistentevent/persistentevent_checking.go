@@ -21,7 +21,7 @@ package persistentevent
 import (
 	"sync"
 
-	"tkestack.io/tke/api/platform/v1"
+	v1 "tkestack.io/tke/api/platform/v1"
 )
 
 type persistentEventChecking struct {
@@ -36,10 +36,10 @@ func (s *persistentEventChecking) Exist(key string) bool {
 	return ok
 }
 
-func (s *persistentEventChecking) Set(persistentEvent *v1.PersistentEvent) {
+func (s *persistentEventChecking) Set(key string, persistentEvent *v1.PersistentEvent) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.persistentEventMap[persistentEvent.Name] = persistentEvent
+	s.persistentEventMap[key] = persistentEvent
 }
 
 func (s *persistentEventChecking) Del(key string) {
