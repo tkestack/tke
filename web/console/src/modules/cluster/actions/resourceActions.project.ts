@@ -65,7 +65,8 @@ const listResourceActions = createFFListActions<Resource, ResourceFilter>({
     } else {
       response = await WebAPI.fetchResourceList(ffResourceList.query, {
         resourceInfo,
-        isClearData
+        isClearData,
+        isContinue: true
       });
     }
 
@@ -124,7 +125,8 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
   let gameBRresourceInfo = resourceConfig(clusterVersion).lbcf_br;
   let gameBGList = await WebAPI.fetchResourceList(resourceQuery, {
       resourceInfo: gameBGresourceInfo,
-      isClearData
+      isClearData,
+      isContinue: true
     }),
     gameLBList = await WebAPI.fetchResourceList(resourceQuery, {
       resourceInfo,
