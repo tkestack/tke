@@ -1,12 +1,10 @@
+import { Bubble, Button, Card, PopConfirm, Table, TableColumn, TabPanel, Tabs, Text } from '@tea/component';
+import { stylize } from '@tea/component/table/addons/stylize';
+import { bindActionCreators, OperationState, uuid } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
 import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
-
-import { Bubble, Button, Card, PopConfirm, Table, TableColumn, TabPanel, Tabs, Text } from '@tea/component';
-import { stylize } from '@tea/component/table/addons/stylize';
-import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-
 import { resourceConfig } from '../../../../../../config';
 import { dateFormatter } from '../../../../../../helpers';
 import { HeadBubble, ListItem } from '../../../../common/components';
@@ -39,10 +37,10 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
   render() {
     let { subRoot } = this.props,
       { resourceOption, resourceName } = subRoot,
-      { resourceSelection } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     let istapp = resourceName === 'tapp';
-    let resourceIns = cloneDeep(resourceSelection[0]);
+    let resourceIns = cloneDeep(ffResourceList.selection);
 
     if (istapp && resourceIns) {
       //tapp 需要展示灰度升级的container信息

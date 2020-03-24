@@ -21,7 +21,10 @@ const fetchWorkloadActions = generateFetcherActionCreator({
 
     let workloadResourceInfo = resourceConfig(clusterVersion)[workloadType];
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
-    let response = await WebAPI.fetchResourceList(workloadQuery, workloadResourceInfo, isClearData);
+    let response = await WebAPI.fetchResourceList(workloadQuery, {
+      resourceInfo: workloadResourceInfo,
+      isClearData
+    });
     return response;
   },
   finish: async (dispatch, getState: GetState) => {

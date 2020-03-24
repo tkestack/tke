@@ -2,9 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { Button } from '@tea/component';
-import {
-    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
-} from '@tencent/ff-redux';
+import { bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { TipInfo } from '../../../../common/components';
@@ -44,11 +42,11 @@ export class UpdateServiceAccessTypePanel extends React.Component<RootProps, Upd
   }
   componentDidMount() {
     let { actions, subRoot, route } = this.props,
-      { resourceList } = subRoot.resourceOption;
+      { ffResourceList } = subRoot.resourceOption;
 
     // 这里是从列表页进入的时候，需要去初始化 serviceEdit当中的内容，如果是直接在当前页面刷新的话，会去拉取列表，在fetchResource之后，会初始化
-    if (resourceList.data.recordCount) {
-      let finder = resourceList.data.records.find(item => item.metadata.name === route.queries['resourceIns']);
+    if (ffResourceList.list.data.recordCount) {
+      let finder = ffResourceList.list.data.records.find(item => item.metadata.name === route.queries['resourceIns']);
       finder && actions.editSerivce.initServiceEditForUpdate(finder);
     }
   }
@@ -63,7 +61,7 @@ export class UpdateServiceAccessTypePanel extends React.Component<RootProps, Upd
     let { actions, subRoot, route, cluster } = this.props,
       urlParams = router.resolve(route),
       { updateResourcePart, serviceEdit, resourceOption, isNeedExistedLb } = subRoot,
-      { resourceList, resourceSelection } = resourceOption,
+      { ffResourceList } = resourceOption,
       { isOpenHeadless, communicationType, portsMap } = serviceEdit;
 
     let failed = updateResourcePart.operationState === OperationState.Done && !isSuccessWorkflow(updateResourcePart);
@@ -71,7 +69,7 @@ export class UpdateServiceAccessTypePanel extends React.Component<RootProps, Upd
     return (
       <MainBodyLayout>
         <FormLayout>
-          {resourceList.fetched !== true || resourceList.fetchState === FetchState.Fetching ? (
+          {ffResourceList.list.fetched !== true || ffResourceList.list.fetchState === FetchState.Fetching ? (
             loadingElement
           ) : (
             <div className="param-box server-update add">
@@ -82,7 +80,7 @@ export class UpdateServiceAccessTypePanel extends React.Component<RootProps, Upd
                   isOpenHeadless={isOpenHeadless}
                   toggleHeadlessAction={actions.editSerivce.isOpenHeadless}
                   isDisabledChangeCommunicationType={
-                    resourceSelection[0] && resourceSelection[0].spec.clusterIP === 'None' ? true : false
+                    ffResourceList.selection && ffResourceList.selection.spec.clusterIP === 'None' ? true : false
                   }
                   isDisabledToggleHeadless={true}
                 />
@@ -168,8 +166,7 @@ export class UpdateServiceAccessTypePanel extends React.Component<RootProps, Upd
   /** 处理提交请求 */
   private _handleSubmit() {
     let { actions, subRoot, route } = this.props,
-      { resourceInfo, mode, serviceEdit, resourceOption } = subRoot,
-      { resourceSelection } = resourceOption;
+      { resourceInfo, mode, serviceEdit } = subRoot;
 
     actions.validate.service.validateUpdateServiceAccessEdit();
 

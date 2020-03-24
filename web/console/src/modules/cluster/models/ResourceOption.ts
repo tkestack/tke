@@ -1,14 +1,8 @@
-import { FetcherState, Identifiable, QueryState, RecordSet } from '@tencent/ff-redux';
+import { Identifiable, FFListModel } from '@tencent/ff-redux';
 
 export interface ResourceOption {
-  /** resource的查询 */
-  resourceQuery?: QueryState<ResourceFilter>;
-
-  /** resource的列表 */
-  resourceList?: FetcherState<RecordSet<Resource>>;
-
-  /** resource的选择 */
-  resourceSelection?: Resource[];
+  /** 具体的resource列表 */
+  ffResourceList?: FFListModel<Resource, ResourceFilter>;
 
   /** resource的多选选择 */
   resourceMultipleSelection?: Resource[];
