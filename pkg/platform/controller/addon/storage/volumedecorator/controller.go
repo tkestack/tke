@@ -748,6 +748,12 @@ func (c *Controller) genDeployment(decorator *v1.VolumeDecorator, svInfo *storag
 					ServiceAccountName: svcAccountName,
 					HostNetwork:        true,
 					HostPID:            true,
+					Tolerations: []corev1.Toleration{
+						{
+							Key:    "node-role.kubernetes.io/master",
+							Effect: corev1.TaintEffectNoSchedule,
+						},
+					},
 				},
 			},
 		},
@@ -874,7 +880,7 @@ func (c *Controller) watchDecoratorHealth(key string) func() (bool, error) {
 			return false, nil
 		}
 
-		if _, ok := c.health.Load(cluster.Name); !ok {
+		if _, ok := c.health.Load(key); !ok {
 			log.Info("Health check over.")
 			return true, nil
 		}

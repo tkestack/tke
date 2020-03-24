@@ -23,8 +23,5 @@
     "max-file": "10",
     "max-size": "100m"
   },
-  "registry-mirrors": [
-    "https://{{ .RegistryDomain }}"
-  ],
   "selinux-enabled": false
 }

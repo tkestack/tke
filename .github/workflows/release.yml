@@ -1,0 +1,22 @@
+name: release
+
+on:
+  repository_dispatch:
+    types: [release]
+
+jobs:
+  release:
+
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: azure/docker-login@v1
+        with:
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - run: |
+          VERSION=${{ github.event.client_payload.version }}
+          echo $VERSION

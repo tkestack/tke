@@ -24,10 +24,11 @@ import (
 	"path"
 	"strings"
 
+	"tkestack.io/tke/pkg/util/template"
+
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util/supervisor"
 	"tkestack.io/tke/pkg/util/ssh"
 )
@@ -45,8 +46,6 @@ const (
 )
 
 func Install(s ssh.Interface, option *Option) error {
-	option.IsGPU = false
-
 	dstFile, err := res.Docker.CopyToNodeWithDefault(s)
 	if err != nil {
 		return err
@@ -67,7 +66,7 @@ func Install(s ssh.Interface, option *Option) error {
 		return err
 	}
 
-	data, err := util.ParseFileTemplate(path.Join(constants.ConfDir, "docker/daemon.json"), option)
+	data, err := template.ParseFile(path.Join(constants.ConfDir, "docker/daemon.json"), option)
 	if err != nil {
 		return err
 	}
@@ -76,7 +75,7 @@ func Install(s ssh.Interface, option *Option) error {
 		return errors.Wrapf(err, "write %s error", dockerDaemonFile)
 	}
 
-	data, err = util.ParseFileTemplate(path.Join(constants.ConfDir, "docker/docker.service"), option)
+	data, err = template.ParseFile(path.Join(constants.ConfDir, "docker/docker.service"), option)
 	if err != nil {
 		return err
 	}

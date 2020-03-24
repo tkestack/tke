@@ -37,6 +37,10 @@ import (
 	"strings"
 	"time"
 
+	utilnet "tkestack.io/tke/pkg/util/net"
+
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+
 	"github.com/emicklei/go-restful"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -70,7 +74,6 @@ import (
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/spec"
-	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
@@ -225,7 +228,7 @@ type TKERegistry struct {
 }
 
 type ThirdPartyRegistry struct {
-	Domain    string `json:"domain" validate:"hostname_rfc1123"`
+	Domain    string `json:"domain" validate:"required"`
 	Namespace string `json:"namespace" validate:"required"`
 	Username  string `json:"username" validate:"required"`
 	Password  []byte `json:"password" validate:"required"`
@@ -655,6 +658,14 @@ func (t *TKE) WebService() *restful.WebService {
 	return ws
 }
 
+func (t *TKE) completeWithProvider() {
+	clusterProvider, err := baremetalcluster.NewProvider()
+	if err != nil {
+		panic(err)
+	}
+	t.clusterProvider = clusterProvider
+}
+
 // Global Filter
 func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	now := time.Now()
@@ -680,6 +691,7 @@ func (t *TKE) prepare() errors.APIStatus {
 	t.SetClusterDefault(&t.Para.Cluster, &t.Para.Config)
 
 	// mock platform api
+	t.completeWithProvider()
 	t.strategy = clusterstrategy.NewStrategy(nil)
 
 	ctx := request.WithUser(context.Background(), &user.DefaultInfo{Name: defaultTeantID})
@@ -701,13 +713,12 @@ func (t *TKE) prepare() errors.APIStatus {
 	}
 	allErrs := t.strategy.Validate(ctx, platformCluster)
 
-	// ensure installer's machine not in target machines
-	installerIP, err := util.GetExternalIP()
-	if err != nil {
-		return errors.NewInternalError(pkgerrors.Wrap(err, "get ip of installer machine error"))
-	}
 	for i, one := range platformCluster.Spec.Machines {
-		if one.IP == installerIP {
+		ok, err := utilnet.InterfaceHasAddr(one.IP)
+		if err != nil {
+			return errors.NewInternalError(err)
+		}
+		if ok {
 			allErrs = append(allErrs, field.Invalid(
 				field.NewPath("spec", "machines").Index(i).Child("ip"),
 				one.IP,
@@ -909,9 +920,9 @@ func (t *TKE) completeProviderConfigForRegistry() error {
 	c.Registry.Prefix = t.Para.Config.Registry.Prefix()
 
 	if t.Para.Config.Registry.TKERegistry != nil {
-		ip, err := util.GetExternalIP()
+		ip, err := utilnet.GetSourceIP(t.Para.Cluster.Spec.Machines[0].IP)
 		if err != nil {
-			return pkgerrors.Wrap(err, "get external ip error")
+			return pkgerrors.Wrap(err, "get ip for registry error")
 		}
 		c.Registry.IP = ip
 	}
@@ -1127,10 +1138,12 @@ func (t *TKE) prepareFrontProxyCertificates() error {
 }
 
 func (t *TKE) createGlobalCluster() error {
+	// update provider config and recreate
 	err := t.completeProviderConfigForRegistry()
 	if err != nil {
 		return err
 	}
+	t.completeWithProvider()
 
 	if t.Cluster.ClusterCredential.Name == "" { // set ClusterCredential default value
 		t.Cluster.ClusterCredential = platformv1.ClusterCredential{
@@ -1591,6 +1604,7 @@ func (t *TKE) installTKEPlatformController() error {
 		"Image":                   images.Get().TKEPlatformController.FullName(),
 		"ProviderResImage":        images.Get().ProviderRes.FullName(),
 		"RegistryDomain":          t.Para.Config.Registry.Domain(),
+		"RegistryNamespace":       t.Para.Config.Registry.Namespace(),
 		"MonitorStorageType":      "",
 		"MonitorStorageAddresses": "",
 	}
@@ -2022,6 +2036,11 @@ func (t *TKE) importResource() error {
 }
 
 func (t *TKE) pushImages() error {
+	err := exec.Command("sh", "-c", "rm -rf /root/.docker/manifests/").Run()
+	if err != nil {
+		return err
+	}
+
 	imagesFilter := fmt.Sprintf("%s/*", t.Para.Config.Registry.Namespace())
 	if t.Para.Config.Registry.Domain() != "docker.io" { // docker images filter ignore docker.io
 		imagesFilter = t.Para.Config.Registry.Domain() + "/" + imagesFilter

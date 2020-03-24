@@ -40,23 +40,23 @@ type clusterHealth struct {
 	clusterMap map[string]*v1.Cluster
 }
 
-func (s *clusterHealth) Exist(clusterName string) bool {
+func (s *clusterHealth) Exist(key string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, ok := s.clusterMap[clusterName]
+	_, ok := s.clusterMap[key]
 	return ok
 }
 
-func (s *clusterHealth) Set(cluster *v1.Cluster) {
+func (s *clusterHealth) Set(key string, cluster *v1.Cluster) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.clusterMap[cluster.Name] = cluster
+	s.clusterMap[key] = cluster
 }
 
-func (s *clusterHealth) Del(clusterName string) {
+func (s *clusterHealth) Del(key string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	delete(s.clusterMap, clusterName)
+	delete(s.clusterMap, key)
 }
 
 func (c *Controller) ensureHealthCheck(key string, cluster *v1.Cluster) {
@@ -65,7 +65,7 @@ func (c *Controller) ensureHealthCheck(key string, cluster *v1.Cluster) {
 	}
 
 	log.Info("start health check for cluster", log.String("clusterName", key), log.String("phase", string(cluster.Status.Phase)))
-	c.health.Set(cluster)
+	c.health.Set(key, cluster)
 	go wait.PollImmediateUntil(5*time.Minute, c.watchClusterHealth(cluster.Name), c.stopCh)
 }
 

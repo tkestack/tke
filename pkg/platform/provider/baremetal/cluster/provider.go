@@ -65,7 +65,7 @@ var (
 )
 
 func init() {
-	p, err := newProvider()
+	p, err := NewProvider()
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +81,7 @@ var _ clusterprovider.Provider = &Provider{}
 
 type Handler func(*Cluster) error
 
-func newProvider() (*Provider, error) {
+func NewProvider() (*Provider, error) {
 	p := new(Provider)
 
 	cfg, err := config.New(constants.ConfigFile)
@@ -159,7 +159,7 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 
 	sPath := field.NewPath("spec")
 
-	if !versions.Has(c.Spec.Version) {
+	if c.Status.Phase == platform.ClusterInitializing && !versions.Has(c.Spec.Version) {
 		allErrs = append(allErrs, field.Invalid(sPath.Child("version"), c.Spec.Version, fmt.Sprintf("valid versions are %q", versions)))
 	}
 

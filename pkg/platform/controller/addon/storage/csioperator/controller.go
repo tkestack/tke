@@ -578,6 +578,12 @@ func (c *Controller) genDeployment(components images.Components, svInfo *storage
 				Spec: corev1.PodSpec{
 					PriorityClassName:  "system-cluster-critical",
 					ServiceAccountName: svcAccountName,
+					Tolerations: []corev1.Toleration{
+						{
+							Key:    "node-role.kubernetes.io/master",
+							Effect: corev1.TaintEffectNoSchedule,
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:  deploymentName,
@@ -700,7 +706,7 @@ func (c *Controller) watchCSIOperatorHealth(key string) func() (bool, error) {
 			return false, nil
 		}
 
-		if _, ok := c.health.Load(cluster.Name); !ok {
+		if _, ok := c.health.Load(key); !ok {
 			log.Info("Health check over.")
 			return true, nil
 		}

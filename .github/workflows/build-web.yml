@@ -5,23 +5,23 @@ on:
     branches:
       - master
     paths:
-      - 'web/*'
+      - 'web/**'
 
 jobs:
   build:
 
-    runs-on: self-hosted
+    runs-on: ubuntu-18.04
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - run: |
-        make web
-        make assets
+      - run: |
+          make web
+          make asset
 
-    - name: Commit web
-      run: |
-        git config --global user.name 'QianChenglong'
-        git config --global user.email 'qian_cheng_long@163.com'
-        git commit -am 'build: web'
-        git push
+      - name: Commit web
+        run: |
+          git config --global user.name 'QianChenglong'
+          git config --global user.email 'qian_cheng_long@163.com'
+          git commit -am 'ci: build web'
+          git push

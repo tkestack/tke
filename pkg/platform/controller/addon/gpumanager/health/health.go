@@ -20,13 +20,14 @@ package health
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"sync"
-	"time"
 	gmlister "tkestack.io/tke/api/client/listers/platform/v1"
-	"tkestack.io/tke/api/platform/v1"
+	v1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/gpumanager/operator"
 	"tkestack.io/tke/pkg/platform/controller/addon/gpumanager/utils"
 	"tkestack.io/tke/pkg/util/log"
@@ -58,10 +59,10 @@ func (p *gmProber) Exist(key string) bool {
 	return p.store.Has(key)
 }
 
-func (p *gmProber) Set(v *v1.GPUManager) {
+func (p *gmProber) Set(key string, v *v1.GPUManager) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.store.Insert(v.Name)
+	p.store.Insert(key)
 }
 
 func (p *gmProber) Del(key string) {
