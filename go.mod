@@ -42,6 +42,7 @@ require (
 	github.com/google/gofuzz v1.0.0
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/mux v1.7.3
+	github.com/gorilla/websocket v1.4.0
 	github.com/gosuri/uitable v0.0.1
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-uuid v1.0.1

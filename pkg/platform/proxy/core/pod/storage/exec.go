@@ -21,13 +21,14 @@ package storage
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+
 	corev1api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/proxy"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"net/http"
-	"net/url"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/util"
 )
@@ -75,10 +76,26 @@ func (r *ExecREST) Connect(ctx context.Context, name string, opts runtime.Object
 	if execOpts.Command != nil {
 		params["command"] = execOpts.Command
 	}
-	params.Add("stdin", "true")
-	params.Add("stdout", "true")
-	params.Add("stderr", "true")
-	params.Add("tty", "true")
+	if execOpts.Stdin {
+		params.Add("stdin", "true")
+	} else {
+		params.Add("stdin", "false")
+	}
+	if execOpts.Stdout {
+		params.Add("stdout", "true")
+	} else {
+		params.Add("stdout", "false")
+	}
+	if execOpts.Stderr {
+		params.Add("stderr", "true")
+	} else {
+		params.Add("stderr", "false")
+	}
+	if execOpts.TTY {
+		params.Add("tty", "true")
+	} else {
+		params.Add("tty", "false")
+	}
 
 	location.RawQuery = params.Encode()
 
