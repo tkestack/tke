@@ -26,6 +26,21 @@ export interface LbcfResource extends Identifiable {
 
 export interface BackendGroup {
   name: string;
+
+  pods?: PodBackend;
+
+  service?: ServiceBackend;
+
+  static?: string[];
+
+  status: {
+    backends: number;
+    registeredBackends: number;
+  };
+  backendRecords: BackendRecord[];
+}
+
+export interface PodBackend {
   labels: {
     [props: string]: string;
   };
@@ -33,12 +48,20 @@ export interface BackendGroup {
     portNumber: number;
     protocol: string;
   };
-  status: {
-    backends: number;
-    registeredBackends: number;
-  };
-  backendRecords: BackendRecord[];
+  byName: string[];
 }
+
+export interface ServiceBackend {
+  name: string;
+  port: {
+    portNumber: number;
+    protocol: string;
+  };
+  nodeSelector: {
+    [props: string]: string;
+  };
+}
+
 export interface BackendRecord {
   name: string;
   backendAddr: string;

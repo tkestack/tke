@@ -2,8 +2,12 @@ import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
 
 import { resourceConfig } from '../../../../config';
 import {
-    Method, operationResult, reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow,
-    requestMethodForAction
+  Method,
+  operationResult,
+  reduceK8sRestfulPath,
+  reduceNetworkRequest,
+  reduceNetworkWorkflow,
+  requestMethodForAction
 } from '../../../../helpers';
 import { Cluster, ClusterFilter, RequestParams, ResourceInfo } from '../../common/models';
 import { CreateResource } from '../../common/models/CreateResource';
