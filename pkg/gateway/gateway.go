@@ -20,6 +20,7 @@ package gateway
 
 import (
 	"net/http"
+	"tkestack.io/tke/pkg/gateway/webtty"
 
 	"golang.org/x/oauth2"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -93,6 +94,10 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	}
 
 	if err := api.RegisterRoute(s.Handler.GoRestfulContainer, c.ExtraConfig.GatewayConfig, c.ExtraConfig.OAuthConfig, c.ExtraConfig.OIDCHttpClient, c.ExtraConfig.OIDCAuthenticator, c.ExtraConfig.HeaderRequest); err != nil {
+		return nil, err
+	}
+
+	if err := webtty.RegisterRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.GatewayConfig); err != nil {
 		return nil, err
 	}
 
