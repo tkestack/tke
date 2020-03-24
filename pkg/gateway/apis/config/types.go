@@ -63,6 +63,10 @@ type Components struct {
 	// backend service.
 	// +optional
 	Registry *Component
+	// logagent is used to specify the access information of the `tke-logagent-api`
+	// backend service.
+	// +optional
+	LogAgent *Component
 }
 
 type Component struct {

@@ -24,6 +24,7 @@ import (
 	"k8s.io/apiserver/pkg/server/mux"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/api/business"
+	"tkestack.io/tke/api/logagent"
 	"tkestack.io/tke/api/monitor"
 	"tkestack.io/tke/api/notify"
 	"tkestack.io/tke/api/registry"
@@ -49,6 +50,7 @@ const (
 	moduleNameRegistry moduleName = "registry"
 	moduleNameAuth     moduleName = "auth"
 	moduleNameMonitor  moduleName = "monitor"
+	moduleNameLogagent moduleName = "logagent"
 )
 
 type modulePath struct {
@@ -114,6 +116,12 @@ func componentPrefix() map[moduleName][]modulePath {
 			},
 			modulePath{
 				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, registry.GroupName),
+				protected: true,
+			},
+		},
+		moduleNameLogagent: {
+			modulePath{
+				prefix: fmt.Sprintf("%s/%s/", apiPrefix, logagent.GroupName),
 				protected: true,
 			},
 		},
@@ -208,6 +216,14 @@ func prefixProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gateway
 		if prefixes, ok := componentPrefixMap[moduleNameRegistry]; ok {
 			for _, prefix := range prefixes {
 				pathPrefixProxyMap[prefix] = *cfg.Components.Registry
+			}
+		}
+	}
+
+	if cfg.Components.LogAgent != nil {
+		if prefixes, ok := componentPrefixMap[moduleNameLogagent]; ok {
+			for _, prefix := range prefixes {
+				pathPrefixProxyMap[prefix] = *cfg.Components.LogAgent
 			}
 		}
 	}
