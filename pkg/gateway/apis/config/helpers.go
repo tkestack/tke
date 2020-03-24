@@ -83,5 +83,15 @@ func GatewayConfigurationPathRefs(gc *GatewayConfiguration) []*string {
 			paths = append(paths, &gc.Components.Registry.FrontProxy.ClientKeyFile)
 		}
 	}
+	if gc.Components.LogAgent != nil {
+		if gc.Components.LogAgent.Passthrough != nil {
+			paths = append(paths, &gc.Components.LogAgent.Passthrough.CAFile)
+		}
+		if gc.Components.LogAgent.FrontProxy != nil {
+			paths = append(paths, &gc.Components.LogAgent.FrontProxy.CAFile)
+			paths = append(paths, &gc.Components.LogAgent.FrontProxy.ClientCertFile)
+			paths = append(paths, &gc.Components.LogAgent.FrontProxy.ClientKeyFile)
+		}
+	}
 	return paths
 }

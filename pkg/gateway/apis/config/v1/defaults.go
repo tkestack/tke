@@ -43,6 +43,9 @@ func SetDefaults_GatewayConfiguration(obj *GatewayConfiguration) {
 	if obj.Components.Auth != nil && obj.Components.Auth.FrontProxy != nil {
 		defaultGatewayConfigurationComponent(obj.Components.Auth.FrontProxy)
 	}
+	if obj.Components.LogAgent != nil && obj.Components.LogAgent.FrontProxy != nil {
+		defaultGatewayConfigurationComponent(obj.Components.Auth.FrontProxy)
+	}
 }
 
 func defaultGatewayConfigurationComponent(obj *FrontProxyComponent) {

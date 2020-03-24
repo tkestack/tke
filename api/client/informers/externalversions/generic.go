@@ -27,6 +27,7 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 	v1 "tkestack.io/tke/api/auth/v1"
 	businessv1 "tkestack.io/tke/api/business/v1"
+	logagentv1 "tkestack.io/tke/api/logagent/v1"
 	monitorv1 "tkestack.io/tke/api/monitor/v1"
 	notifyv1 "tkestack.io/tke/api/notify/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -102,6 +103,12 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().Platforms().Informer()}, nil
 	case businessv1.SchemeGroupVersion.WithResource("projects"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().Projects().Informer()}, nil
+
+		// Group=logagent.tkestack.io, Version=v1
+	case logagentv1.SchemeGroupVersion.WithResource("configmaps"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Logagent().V1().ConfigMaps().Informer()}, nil
+	case logagentv1.SchemeGroupVersion.WithResource("logagents"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Logagent().V1().LogAgents().Informer()}, nil
 
 		// Group=monitor.tkestack.io, Version=v1
 	case monitorv1.SchemeGroupVersion.WithResource("configmaps"):
