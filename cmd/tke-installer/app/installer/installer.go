@@ -37,7 +37,6 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/util"
 	utilnet "tkestack.io/tke/pkg/util/net"
 
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
@@ -583,16 +582,9 @@ func (t *TKE) initSteps() {
 }
 
 func filterSteps(steps []handler, skips []string) []handler {
-	if len(skips) == 0 {
-		return steps
-	}
-	newSteps := []handler{}
-	for _, step := range steps {
-		if !util.InStringSlice(skips, step.Name) {
-			newSteps = append(newSteps, step)
-		}
-	}
-	return newSteps
+	return funk.Filter(steps, func(step handler) bool {
+		return !funk.ContainsString(skips, step.Name)
+	}).([]handler)
 }
 
 func (t *TKE) Run() {
