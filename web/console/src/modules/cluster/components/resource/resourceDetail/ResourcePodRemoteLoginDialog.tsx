@@ -69,15 +69,15 @@ export class ResourcePodRemoteLoginDialog extends React.Component<RootProps, {}>
             <div className="sl-editor-name">
               <a
                 href={
-                  loginUrl +
-                  '?clusterId=' +
+                  '/webtty.html?clusterName=' +
                   route.queries['clusterId'] +
-                  '&podId=' +
+                  '&podName=' +
                   podSelection[0].metadata.name +
                   '&containerName=' +
                   (x.name ? x.name : '') +
                   '&namespace=' +
-                  namespace
+                  namespace +
+                  '&command=/bin/bash'
                 }
                 target="_blank"
               >
