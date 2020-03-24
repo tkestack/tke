@@ -30,16 +30,16 @@ export class ResourceNamespaceDetailPanel extends React.Component<RootProps, {}>
   render() {
     let { subRoot } = this.props,
       { resourceOption } = subRoot,
-      { resourceSelection, resourceList } = resourceOption;
+      { ffResourceList } = resourceOption;
 
-    let resourceIns = resourceSelection[0];
+    let resourceIns = ffResourceList.selection;
 
     let statusMap = ResourceStatus['np'];
 
     let isNeedLoading =
-      resourceList.fetched !== true ||
-      resourceList.fetchState === FetchState.Fetching ||
-      resourceSelection.length === 0;
+      ffResourceList.list.fetched !== true ||
+      ffResourceList.list.fetchState === FetchState.Fetching ||
+      ffResourceList.selection;
 
     return isNeedLoading ? (
       loadingElement

@@ -28,15 +28,15 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
         actions,
         route,
         subRoot: {
-          resourceOption: { resourceList }
+          resourceOption: { ffResourceList }
         }
       } = this.props,
       urlParams = router.resolve(route);
     actions.lbcf.selectLbcfNamespace(route.queries['np']);
     let resourceIns = route.queries['resourceIns'];
     // 这里是从列表页进入的时候，需要去初始化 workloadEdit当中的内容，如果是直接在当前页面刷新的话，会去拉取列表，在fetchResource之后，会初始化
-    if (resourceList.data.recordCount && urlParams['tab'] === 'updateBG') {
-      let finder = resourceList.data.records.find(item => item.metadata.name === resourceIns);
+    if (ffResourceList.list.data.recordCount && urlParams['tab'] === 'updateBG') {
+      let finder = ffResourceList.list.data.records.find(item => item.metadata.name === resourceIns);
       finder && actions.lbcf.initGameBGEdition(finder.spec.backGroups);
     }
   }
@@ -172,7 +172,7 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
       {
         resourceInfo,
         lbcfEdit,
-        resourceOption: { resourceList }
+        resourceOption: { ffResourceList }
       } = subRoot;
     actions.validate.lbcf.validateGameBGEdit();
     let { resourceIns } = route.queries,
@@ -237,7 +237,7 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
         actions.workflow.modifyMultiResource.start(resources, region.selection.value);
         actions.workflow.modifyMultiResource.perform();
       } else {
-        let finder = resourceList.data.records.find(item => item.metadata.name === resourceIns);
+        let finder = ffResourceList.list.data.records.find(item => item.metadata.name === resourceIns);
         let labelArray = {};
         finder &&
           finder.spec.backGroups.forEach(backGroup => {

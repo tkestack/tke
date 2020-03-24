@@ -23,7 +23,10 @@ const fetchWorkloadActions = generateFetcherActionCreator({
     let workloadResourceInfo = resourceConfig(clusterVersion)[workloadType];
 
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
-    let response = await WebAPI.fetchResourceList(workloadQuery, workloadResourceInfo, isClearData);
+    let response = await WebAPI.fetchResourceList(workloadQuery, {
+      resourceInfo: workloadResourceInfo,
+      isClearData
+    });
     return response;
   }
 });
@@ -92,7 +95,11 @@ const fetchEventActions = generateFetcherActionCreator({
     };
 
     k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-    let response = await WebAPI.fetchResourceList(eventQuery, eventResourceInfo, isClearData, k8sQueryObj);
+    let response = await WebAPI.fetchResourceList(eventQuery, {
+      resourceInfo: eventResourceInfo,
+      isClearData,
+      k8sQueryObj
+    });
     return response;
   }
 });

@@ -23,10 +23,15 @@ const FFModelComputerActions = createFFListActions<Computer, ComputerFilter>({
       }
     };
     let nodeInfo: ResourceInfo = resourceConfig(clusterVersion)['node'],
-      nodeItems = await WebAPI.fetchResourceList(query, nodeInfo),
+      nodeItems = await WebAPI.fetchResourceList(query, {
+        resourceInfo: nodeInfo
+      }),
       machinesInfo: ResourceInfo = resourceConfig(clusterVersion).machines,
       machineItems = !query.search
-        ? await WebAPI.fetchResourceList(query, machinesInfo, false, k8sQueryObj)
+        ? await WebAPI.fetchResourceList(query, {
+            resourceInfo: machinesInfo,
+            k8sQueryObj
+          })
         : {
             recordCount: 0,
             records: []

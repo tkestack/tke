@@ -1,6 +1,4 @@
-import {
-    extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid
-} from '@tencent/ff-redux';
+import { extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
@@ -8,8 +6,7 @@ import { cloneDeep } from '../../common/utils';
 import * as ActionType from '../constants/ActionType';
 import { SessionAffinity } from '../constants/Config';
 import { initPortsMap, initSelector } from '../constants/initState';
-import { CLB, PortMap, Resource, RootState, Selector, ServicePorts } from '../models';
-import { router } from '../router';
+import { PortMap, Resource, RootState, Selector, ServicePorts } from '../models';
 import * as WebAPI from '../WebAPI';
 import { validateServiceActions } from './validateServiceActions';
 
@@ -28,7 +25,10 @@ const fetchWorkloadActions = generateFetcherActionCreator({
 
     let workloadResourceInfo = resourceConfig(clusterVersion)[workloadType];
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
-    let response = await WebAPI.fetchResourceList(workloadQuery, workloadResourceInfo, isClearData);
+    let response = await WebAPI.fetchResourceList(workloadQuery, {
+      resourceInfo: workloadResourceInfo,
+      isClearData
+    });
     return response;
   },
   finish: async (dispatch, getState: GetState) => {

@@ -28,10 +28,10 @@ export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
   render() {
     let { subRoot, route } = this.props,
       { resourceOption } = subRoot,
-      { resourceSelection } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     // 当前选中的node节点
-    let resourceIns = resourceSelection[0];
+    let resourceIns = ffResourceList.selection;
 
     // 当前的地域
     let regionId = route.queries['rid'];
