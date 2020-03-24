@@ -112,13 +112,12 @@ func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) (
 	return allErrs, nil
 }
 
-func dialBySimpleHttps(host string, port int32, timeout time.Duration) error {
-
+func dialBySimpleHTTPS(host string, port int32, timeout time.Duration) error {
 	client := &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
-				Timeout:   timeout,
+				Timeout: timeout,
 			}).DialContext,
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
@@ -126,7 +125,7 @@ func dialBySimpleHttps(host string, port int32, timeout time.Duration) error {
 
 	url := fmt.Sprintf("https://%s:%d", host, port)
 
-	request, err := http.NewRequest(http.MethodPost, url, nil)
+	request, err := http.NewRequest(http.MethodGet, url, nil)
 
 	if err != nil {
 		return err
@@ -154,7 +153,7 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 			if address.Port == 0 {
 				allErrs = append(allErrs, field.Required(field.NewPath("status", "addresses", string(address.Type), "port"), "must specify the port of address"))
 			}
-			err := dialBySimpleHttps(address.Host, address.Port, 5*time.Second)
+			err := dialBySimpleHTTPS(address.Host, address.Port, 5*time.Second)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("status", "addresses"), address, err.Error()))
 			}
