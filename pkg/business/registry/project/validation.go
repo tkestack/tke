@@ -92,11 +92,6 @@ func ValidateProjectUpdate(project *business.Project, old *business.Project,
 			project.Spec.TenantID, "disallowed change the tenant"))
 	}
 
-	if project.Spec.ParentProjectName != old.Spec.ParentProjectName {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "parentProjectName"),
-			project.Spec.ParentProjectName, "disallowed change the parent project"))
-	}
-
 	fldPath := field.NewPath("status", "used")
 	for clusterName, clusterUsed := range project.Status.Clusters {
 		for k, v := range clusterUsed.Used {

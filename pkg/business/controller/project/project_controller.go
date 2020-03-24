@@ -266,6 +266,30 @@ func (c *Controller) processDelete(cachedProject *cachedProject, key string) err
 }
 
 func (c *Controller) handlePhase(key string, cachedProject *cachedProject, project *v1.Project) error {
+	if cachedProject.state != nil &&
+		cachedProject.state.Spec.ParentProjectName != "" &&
+		cachedProject.state.Spec.ParentProjectName != project.Spec.ParentProjectName {
+		preParentProject, err := c.client.BusinessV1().Projects().Get(cachedProject.state.Spec.ParentProjectName, metav1.GetOptions{})
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				log.Error("Failed to get the previous parent project", log.String("projectName", key),
+					log.String("parentName", cachedProject.state.Spec.ParentProjectName), log.Err(err))
+				return err
+			}
+		} else {
+			calculatedChildProjectNames := sets.NewString(preParentProject.Status.CalculatedChildProjects...)
+			if calculatedChildProjectNames.Has(project.ObjectMeta.Name) {
+				calculatedChildProjectNames.Delete(project.ObjectMeta.Name)
+				preParentProject.Status.CalculatedChildProjects = calculatedChildProjectNames.List()
+				if preParentProject.Status.Clusters != nil {
+					businessUtil.SubClusterHardFromUsed(&preParentProject.Status.Clusters, cachedProject.state.Spec.Clusters)
+				}
+				if err := c.persistUpdate(preParentProject); err != nil && !errors.IsNotFound(err) {
+					return err
+				}
+			}
+		}
+	}
 	if project.Spec.ParentProjectName != "" {
 		parentProject, err := c.client.BusinessV1().Projects().Get(project.Spec.ParentProjectName, metav1.GetOptions{})
 		if err != nil {
