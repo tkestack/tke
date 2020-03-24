@@ -27,7 +27,7 @@ const displayField: DisplayField = {
     noExsitedValue: defaulNotExistedValue
   },
   lb: {
-    dataField: ['status.lbInfo.lbID'],
+    dataField: ['status.lbInfo.loadBalancerID'],
     dataFormat: dataFormatConfig['text'],
     width: '10%',
     headTitle: '负载均衡对象',
@@ -204,8 +204,14 @@ export const lbcf = (k8sVersion: string) => {
       useDetailInfo: true,
       detailInfoList: {
         info: [{ text: '负载均衡', value: 'lbcf' }],
-        yaml: [{ text: '负载均衡', value: 'lbcf' }, { text: '后端负载', value: 'lbcf_bg' }],
-        event: [{ text: '负载均衡', value: 'lbcf' }, { text: '后端记录', value: 'lbcf_br' }]
+        yaml: [
+          { text: '负载均衡', value: 'lbcf' },
+          { text: '后端负载', value: 'lbcf_bg' }
+        ],
+        event: [
+          { text: '负载均衡', value: 'lbcf' },
+          { text: '后端记录', value: 'lbcf_br' }
+        ]
       }
     },
     displayField,

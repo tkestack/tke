@@ -1,21 +1,14 @@
-import {
-  extend,
-  FetchOptions,
-  generateFetcherActionCreator,
-  ReduxAction,
-  createFFListActions
-} from '@tencent/ff-redux';
-import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-
+import { createFFListActions, extend, FetchOptions, ReduxAction } from '@tencent/ff-redux';
 import { resourceConfig } from '../../../../config';
 import { ResourceInfo } from '../../common/models';
 import { includes } from '../../common/utils';
 import { IsResourceShowLoadingIcon } from '../components/resource/resourceTableOperation/ResourceTablePanel';
 import * as ActionType from '../constants/ActionType';
-import { PollEventName, ResourceNeedJudgeLoading, FFReduxActionName } from '../constants/Config';
+import { FFReduxActionName, PollEventName, ResourceNeedJudgeLoading } from '../constants/Config';
 import { Resource, ResourceFilter, RootState } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
+import { lbcfEditActions } from './lbcfEditActions';
 import { namespaceActions } from './namespaceActions';
 import { resourceDetailActions } from './resourceDetailActions';
 import { resourceDetailEventActions } from './resourceDetailEventActions';
@@ -77,6 +70,8 @@ const listResourceActions = createFFListActions<Resource, ResourceFilter>({
         dispatch(workloadEditActions.initWorkloadEditForUpdateRegistry(finder));
       } else if (mode === 'update' && tab === 'modifyPod') {
         dispatch(workloadEditActions.updateContainerNum(finder.spec.replicas));
+      } else if (mode === 'update' && tab === 'updateBG') {
+        dispatch(lbcfEditActions.initGameBGEdition(finder.spec.backGroups));
       }
       /** ============== end 更新的时候，进行一些页面的初始化 =============  */
 
@@ -121,10 +116,8 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
           records => records.metadata.labels['lbcf.tkestack.io/backend-group'] === backgroup.metadata.name
         );
         try {
-          backGroups.push({
+          let backGroup = {
             name: backgroup.metadata.name,
-            labels: backgroup.spec.pods.byLabel.selector,
-            port: backgroup.spec.pods.port,
             status: backgroup.status,
             backendRecords: backendRecords.map(record => {
               return {
@@ -133,7 +126,23 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
                 conditions: record.status && record.status.conditions ? record.status.conditions : []
               };
             })
-          });
+          };
+          if (backgroup.spec.pods) {
+            backGroup['pods'] = {
+              labels: backgroup.spec.pods.byLabel.selector,
+              port: backgroup.spec.pods.port,
+              byName: backgroup.spec.pods.byName
+            };
+          } else if (backgroup.spec.service) {
+            backGroup['service'] = {
+              name: backgroup.spec.service.name,
+              port: backgroup.spec.service.port,
+              nodeSelector: backgroup.spec.service.nodeSelector
+            };
+          } else {
+            backGroup['static'] = backgroup.spec.static;
+          }
+          backGroups.push(backGroup);
         } catch (e) {}
       }
     });
@@ -217,7 +226,7 @@ const restActions = {
   },
 
   /** 修改当前资源的名称 */
-  initDetailResourceName: (resourceName: string) => {
+  initDetailResourceName: (resourceName: string, defaultIns?: string) => {
     return async (dispatch, getState: GetState) => {
       let {
         subRoot: { mode }
@@ -229,7 +238,7 @@ const restActions = {
       // 初始化 detailresourceInfo的信息
       dispatch(resourceActions.initDetailResourceInfo(resourceName));
 
-      mode === 'detail' && dispatch(resourceActions.initDetailResourceList(resourceName));
+      mode === 'detail' && dispatch(resourceActions.initDetailResourceList(resourceName, defaultIns));
     };
   },
 
@@ -247,7 +256,7 @@ const restActions = {
     };
   },
 
-  initDetailResourceList: (rsName?: string) => {
+  initDetailResourceList: (rsName?: string, defaultIns?: string) => {
     return async (dispatch, getState: GetState) => {
       let {
         route,
@@ -280,7 +289,7 @@ const restActions = {
         type: ActionType.InitDetailResourceList,
         payload: list
       });
-      dispatch(resourceActions.selectDetailResouceIns(list.length ? list[0].value : ''));
+      dispatch(resourceActions.selectDetailResouceIns(defaultIns ? defaultIns : list.length ? list[0].value : ''));
     };
   },
 

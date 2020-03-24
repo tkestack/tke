@@ -1,12 +1,11 @@
+import { Bubble, Button, Card, PopConfirm, Table, TableColumn, TabPanel, Tabs, Text } from '@tea/component';
+import { stylize } from '@tea/component/table/addons/stylize';
+import { bindActionCreators, OperationState, uuid } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
 import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
-
-import { Bubble, Button, Card, Table, TableColumn, TabPanel, Tabs, Text } from '@tea/component';
-import { stylize } from '@tea/component/table/addons/stylize';
-import { bindActionCreators, uuid } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-
+import { resourceConfig } from '../../../../../../config';
 import { dateFormatter } from '../../../../../../helpers';
 import { HeadBubble, ListItem } from '../../../../common/components';
 import { DetailLayout } from '../../../../common/layouts';
@@ -14,7 +13,8 @@ import { DetailDisplayFieldProps, DetailInfoProps } from '../../../../common/mod
 import { cloneDeep, isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { ExternalTrafficPolicy, ResourceStatus, SessionAffinity } from '../../../constants/Config';
-import { BackendGroup, BackendRecord, LbcfResource, PortMap, Resource, RuleMap } from '../../../models';
+import { BackendGroup, BackendRecord, CreateResource, LbcfResource, PortMap, Resource, RuleMap } from '../../../models';
+import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 
 interface ResourceDetailPanelState {
@@ -647,17 +647,69 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
     } else if (fieldInfo.dataFormat === 'gameBGPort') {
       showContent = this._reduceGameBackendGroupPort(showData);
     } else if (fieldInfo.dataFormat === 'operator') {
-      //detail页面删除backendGroup 关联GameBackendGroupDeleteDialog
+      let {
+        clusterVersion,
+        namespaceSelection,
+        route,
+        subRoot: {
+          deleteResourceFlow,
+          detailResourceOption: { detailDeleteResourceSelection }
+        }
+      } = this.props;
+      //detail页面删除backendGroup
       showContent = (
-        <Button
-          type={'link'}
-          onClick={() => {
-            actions.resource.selectDetailDeleteResouceIns(showData);
-            actions.workflow.deleteResource.start([]);
-          }}
+        <PopConfirm
+          title="确定要删除后端负载配置？"
+          message="删除后，后端负载配置将不再生效"
+          visible={deleteResourceFlow.operationState !== OperationState.Pending}
+          footer={
+            <>
+              <Button
+                type="link"
+                onClick={() => {
+                  let bgResourceInfo = resourceConfig(clusterVersion).lbcf_bg;
+                  let resourceIns = detailDeleteResourceSelection;
+
+                  let resource: CreateResource = {
+                    id: uuid(),
+                    resourceInfo: bgResourceInfo,
+                    namespace: namespaceSelection,
+                    clusterId: route.queries['clusterId'],
+                    resourceIns
+                  };
+                  actions.workflow.deleteResource.start([resource]);
+                  actions.workflow.deleteResource.perform();
+                }}
+              >
+                删除
+              </Button>
+              <Button
+                type="text"
+                onClick={() => {
+                  if (deleteResourceFlow.operationState === OperationState.Done) {
+                    actions.workflow.deleteResource.reset();
+                  }
+                  if (deleteResourceFlow.operationState === OperationState.Started) {
+                    actions.workflow.deleteResource.cancel();
+                  }
+                }}
+              >
+                取消
+              </Button>
+            </>
+          }
+          placement="top-start"
         >
-          {t('删除')}
-        </Button>
+          <Button
+            type={'link'}
+            onClick={() => {
+              actions.resource.selectDetailDeleteResouceIns(showData);
+              actions.workflow.deleteResource.start([]);
+            }}
+          >
+            {t('删除')}
+          </Button>
+        </PopConfirm>
       );
     } else if (fieldInfo.dataFormat === 'backendRecords') {
       showContent = this._renderbackendRecordsItem(showData);
@@ -1016,7 +1068,7 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
       {
         key: 'backendAddr',
         header: t('backendAddr'),
-        width: '60%',
+        width: '40%',
         render: x => (
           <Bubble content={x.backendAddr} placement={'top'}>
             <Text parent="div" overflow>
@@ -1035,6 +1087,26 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
             <Text parent="div" overflow>
               {registerItem.length ? `Registered:${registerItem[0].status}` : 'Registered:false'}
             </Text>
+          );
+        }
+      },
+      {
+        key: 'operator',
+        width: '20%',
+        header: t('操作'),
+        render: x => {
+          return (
+            <Button
+              type={'link'}
+              onClick={() => {
+                let { route, actions } = this.props;
+                let urlParams = router.resolve(route);
+                actions.resource.initDetailResourceName('lbcf_br', x.name);
+                router.navigate(Object.assign(urlParams, { tab: 'event' }), route.queries);
+              }}
+            >
+              查看事件
+            </Button>
           );
         }
       }
