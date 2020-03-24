@@ -20,7 +20,7 @@ export class ResourceGrayUpgradeDialog extends React.Component<RootProps, {}> {
   render() {
     const { actions, region, clusterVersion, route } = this.props;
     const { updateGrayTappFlow, editTappGrayUpdate } = this.props.subRoot.resourceDetailState;
-    const targetResource = this.props.subRoot.resourceOption.resourceSelection[0];
+    const targetResource = this.props.subRoot.resourceOption.ffResourceList.selection;
     let resourceInfo = resourceConfig(clusterVersion)['tapp'];
     let templates = {};
     let templatePool = {};

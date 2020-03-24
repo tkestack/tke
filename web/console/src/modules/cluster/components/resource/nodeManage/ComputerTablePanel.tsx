@@ -276,12 +276,12 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
    */
   private _handleClickForNavigate(resourceIns: string) {
     let { actions, route, subRoot } = this.props,
-      { resourceList } = subRoot.resourceOption,
+      { ffResourceList } = subRoot.resourceOption,
       urlParams = router.resolve(route);
 
     // 选择当前选择的具体的resource
-    let resourceSelection = resourceList.data.records.find(item => item.metadata.name === resourceIns);
-    actions.resource.selectResource([resourceSelection]);
+    let resourceSelection = ffResourceList.list.data.records.find(item => item.metadata.name === resourceIns);
+    actions.resource.select(resourceSelection);
     // 进行路由的跳转
     router.navigate(
       Object.assign({}, urlParams, { mode: 'detail' }),

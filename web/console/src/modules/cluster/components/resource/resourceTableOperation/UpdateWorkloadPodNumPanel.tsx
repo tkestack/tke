@@ -38,7 +38,7 @@ export class UpdateWorkloadPodNumPanel extends React.Component<RootProps, {}> {
 
   componentDidMount() {
     let { actions, route, subRoot } = this.props,
-      { resourceList } = subRoot.resourceOption;
+      { ffResourceList } = subRoot.resourceOption;
 
     let { np: namespace, rid, clusterId, resourceIns } = route.queries;
 
@@ -51,8 +51,8 @@ export class UpdateWorkloadPodNumPanel extends React.Component<RootProps, {}> {
     });
 
     // 这里是从列表页进入的时候，需要去初始化 workloadEdit当中的内容，如果是直接在当前页面刷新的话，会去拉取列表，在fetchResource之后，会初始化
-    if (resourceList.data.recordCount) {
-      let finder = resourceList.data.records.find(item => item.metadata.name === resourceIns);
+    if (ffResourceList.list.data.recordCount) {
+      let finder = ffResourceList.list.data.records.find(item => item.metadata.name === resourceIns);
       finder && actions.editWorkload.updateContainerNum(finder.spec.replicas);
     }
   }
@@ -61,20 +61,23 @@ export class UpdateWorkloadPodNumPanel extends React.Component<RootProps, {}> {
     let { subRoot, route } = this.props,
       urlParams = router.resolve(route),
       { resourceOption, updateResourcePart } = subRoot,
-      { resourceSelection, resourceList } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     let failed = updateResourcePart.operationState === OperationState.Done && !isSuccessWorkflow(updateResourcePart);
 
     return (
       <MainBodyLayout>
         <FormLayout>
-          {resourceList.fetched !== true || resourceList.fetchState === FetchState.Fetching ? (
+          {ffResourceList.list.fetched !== true || ffResourceList.list.fetchState === FetchState.Fetching ? (
             loadingElement
           ) : (
             <div className="param-box server-update add">
               <ul className="form-list jiqun fixed-layout">
                 <FormItem label={t('当前实例数量')}>
-                  {(resourceSelection[0] && resourceSelection[0].spec && resourceSelection[0].spec.replicas) || 0}
+                  {(ffResourceList.selection &&
+                    ffResourceList.selection.spec &&
+                    ffResourceList.selection.spec.replicas) ||
+                    0}
                 </FormItem>
 
                 <EditResourceContainerNumPanel />

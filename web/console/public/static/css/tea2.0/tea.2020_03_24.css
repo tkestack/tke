@@ -7,6 +7,7 @@ html {
 [class*=tea-],
 [class*=tea-]:after,
 [class*=tea-]:before {
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -173,6 +174,7 @@ button::-moz-focus-inner {
 
 [type=checkbox],
 [type=radio] {
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   padding: 0
 }
@@ -201,23 +203,23 @@ fieldset {
 }
 
 .tea-text {
-  color: #444
+  color: #444 !important
 }
 
 .tea-text-label {
-  color: #888
+  color: #888 !important
 }
 
 .tea-text-weak {
-  color: #bbb
+  color: #bbb !important
 }
 
 .tea-text-strong {
-  color: #000
+  color: #000 !important
 }
 
 .tea-text-primary {
-  color: #006eff
+  color: #006eff !important
 }
 
 .tea-text-success {
@@ -284,6 +286,38 @@ fieldset {
   max-width: 100%
 }
 
+.tea-text-underline {
+  position: relative;
+  display: inline-block
+}
+
+.tea-text-underline:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-bottom: 1px dashed
+}
+
+.tea-text-with-icon {
+  padding-right: 16px;
+  position: relative;
+  min-width: 16px
+}
+
+.tea-text-with-icon .tea-icon {
+  position: absolute;
+  right: 0;
+  visibility: hidden;
+  cursor: pointer
+}
+
+.tea-text-with-icon.is-shown .tea-icon,
+.tea-text-with-icon:hover .tea-icon {
+  visibility: visible
+}
+
 .tea-fz-reset {
   font-size: 12px
 }
@@ -297,19 +331,19 @@ fieldset {
   font-weight: 700
 }
 
-.tea-h1 {
-  font-size: 14px
-}
-
+.tea-h1,
 .tea-h2 {
   font-size: 16px
 }
 
 .tea-h3,
-.tea-h4,
+.tea-h4 {
+  font-size: 14px
+}
+
 .tea-h5,
 .tea-h6 {
-  font-size: 14px
+  font-size: 12px
 }
 
 .tea-align-top {
@@ -363,12 +397,18 @@ fieldset {
 }
 
 .tea-justify-grid {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
   width: 100%;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center
 }
 
 .tea-justify-grid .tea-justify-grid__col {
+  -webkit-box-flex: 1;
+  -ms-flex: auto;
   flex: auto;
   vertical-align: middle;
   text-align: right;
@@ -387,6 +427,10 @@ fieldset {
 
 .tea-justify-grid .tea-justify-grid__col .tea-search--tags {
   width: 100%
+}
+
+.tea-justify-grid .tea-justify-grid__col .tea-form--search.size-l .tea-search {
+  width: 420px
 }
 
 .tea-justify-grid .tea-justify-grid__col--left,
@@ -432,10 +476,14 @@ fieldset {
 }
 
 .tea-justify-grid.tea-justify-grid--start {
+  -webkit-box-align: start;
+  -ms-flex-align: start;
   align-items: flex-start
 }
 
 .tea-justify-grid.tea-justify-grid--end {
+  -webkit-box-align: end;
+  -ms-flex-align: end;
   align-items: flex-end
 }
 
@@ -445,207 +493,211 @@ fieldset {
 }
 
 .tea-ma-1n {
-  margin: 4px
+  margin: 4px !important
 }
 
 .tea-ma-2n {
-  margin: 8px
+  margin: 8px !important
 }
 
 .tea-ma-3n {
-  margin: 12px
+  margin: 12px !important
 }
 
 .tea-ma-4n {
-  margin: 16px
+  margin: 16px !important
 }
 
 .tea-ma-5n {
-  margin: 20px
+  margin: 20px !important
 }
 
 .tea-mt-1n {
-  margin-top: 4px
+  margin-top: 4px !important
 }
 
 .tea-mt-2n {
-  margin-top: 8px
+  margin-top: 8px !important
 }
 
 .tea-mt-3n {
-  margin-top: 12px
+  margin-top: 12px !important
 }
 
 .tea-mt-4n {
-  margin-top: 16px
+  margin-top: 16px !important
 }
 
 .tea-mt-5n {
-  margin-top: 20px
+  margin-top: 20px !important
 }
 
 .tea-mb-1n {
-  margin-bottom: 4px
+  margin-bottom: 4px !important
 }
 
 .tea-mb-2n {
-  margin-bottom: 8px
+  margin-bottom: 8px !important
 }
 
 .tea-mb-3n {
-  margin-bottom: 12px
+  margin-bottom: 12px !important
 }
 
 .tea-mb-4n {
-  margin-bottom: 16px
+  margin-bottom: 16px !important
 }
 
 .tea-mb-5n {
-  margin-bottom: 20px
+  margin-bottom: 20px !important
 }
 
 .tea-mr-1n {
-  margin-right: 4px
+  margin-right: 4px !important
 }
 
 .tea-mr-2n {
-  margin-right: 8px
+  margin-right: 8px !important
 }
 
 .tea-mr-3n {
-  margin-right: 12px
+  margin-right: 12px !important
 }
 
 .tea-mr-4n {
-  margin-right: 16px
+  margin-right: 16px !important
 }
 
 .tea-mr-5n {
-  margin-right: 20px
+  margin-right: 20px !important
 }
 
 .tea-ml-1n {
-  margin-left: 4px
+  margin-left: 4px !important
 }
 
 .tea-ml-2n {
-  margin-left: 8px
+  margin-left: 8px !important
 }
 
 .tea-ml-3n {
-  margin-left: 12px
+  margin-left: 12px !important
 }
 
 .tea-ml-4n {
-  margin-left: 16px
+  margin-left: 16px !important
 }
 
 .tea-ml-5n {
-  margin-left: 20px
+  margin-left: 20px !important
 }
 
 .tea-pa-1n {
-  padding: 4px
+  padding: 4px !important
 }
 
 .tea-pa-2n {
-  padding: 8px
+  padding: 8px !important
 }
 
 .tea-pa-3n {
-  padding: 12px
+  padding: 12px !important
 }
 
 .tea-pa-4n {
-  padding: 16px
+  padding: 16px !important
 }
 
 .tea-pa-5n {
-  padding: 20px
+  padding: 20px !important
 }
 
 .tea-pt-1n {
-  padding-top: 4px
+  padding-top: 4px !important
 }
 
 .tea-pt-2n {
-  padding-top: 8px
+  padding-top: 8px !important
 }
 
 .tea-pt-3n {
-  padding-top: 12px
+  padding-top: 12px !important
 }
 
 .tea-pt-4n {
-  padding-top: 16px
+  padding-top: 16px !important
 }
 
 .tea-pt-5n {
-  padding-top: 20px
+  padding-top: 20px !important
 }
 
 .tea-pb-1n {
-  padding-bottom: 4px
+  padding-bottom: 4px !important
 }
 
 .tea-pb-2n {
-  padding-bottom: 8px
+  padding-bottom: 8px !important
 }
 
 .tea-pb-3n {
-  padding-bottom: 12px
+  padding-bottom: 12px !important
 }
 
 .tea-pb-4n {
-  padding-bottom: 16px
+  padding-bottom: 16px !important
 }
 
 .tea-pb-5n {
-  padding-bottom: 20px
+  padding-bottom: 20px !important
 }
 
 .tea-pl-1n {
-  padding-left: 4px
+  padding-left: 4px !important
 }
 
 .tea-pl-2n {
-  padding-left: 8px
+  padding-left: 8px !important
 }
 
 .tea-pl-3n {
-  padding-left: 12px
+  padding-left: 12px !important
 }
 
 .tea-pl-4n {
-  padding-left: 16px
+  padding-left: 16px !important
 }
 
 .tea-pl-5n {
-  padding-left: 20px
+  padding-left: 20px !important
 }
 
 .tea-pr-1n {
-  padding-right: 4px
+  padding-right: 4px !important
 }
 
 .tea-pr-2n {
-  padding-right: 8px
+  padding-right: 8px !important
 }
 
 .tea-pr-3n {
-  padding-right: 12px
+  padding-right: 12px !important
 }
 
 .tea-pr-4n {
-  padding-right: 16px
+  padding-right: 16px !important
 }
 
 .tea-pr-5n {
-  padding-right: 20px
+  padding-right: 20px !important
 }
 
 .tea-media {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-align: start;
+  -ms-flex-align: start;
   align-items: flex-start
 }
 
@@ -655,27 +707,38 @@ fieldset {
 
 .tea-media__body,
 .tea-media__left {
+  -webkit-box-flex: 1;
+  -ms-flex: auto;
   flex: auto;
   text-align: left
 }
 
 .tea-media__left {
+  -webkit-box-flex: 0;
+  -ms-flex: none;
   flex: none;
   padding-right: 10px
 }
 
 .tea-media--middle .tea-media,
 .tea-media--middle.tea-media {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center
 }
 
 .tea-media--bottom .tea-media,
 .tea-media--bottom.tea-media {
+  -webkit-box-align: end;
+  -ms-flex-align: end;
   align-items: flex-end
 }
 
 .tea-media--reverse .tea-media,
 .tea-media--reverse.tea-media {
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: reverse;
+  -ms-flex-direction: row-reverse;
   flex-direction: row-reverse
 }
 
@@ -687,31 +750,48 @@ fieldset {
   vertical-align: -5px
 }
 
-.tea-action-state .tea-action-state__text,
-.tea-icon {
+.tea-action-state .tea-action-state__text {
   display: inline-block;
   vertical-align: middle
+}
+
+.tea-action-state.tea-action-state--form-align {
+  height: 30px;
+  line-height: 30px;
+  display: inline-block;
+  vertical-align: middle
+}
+
+.tea-bg-layout {
+  background-color: #f2f2f2;
+  padding: 10px
+}
+
+.tea-bg-layout.tea-bg-layout--border {
+  border: 1px solid #ddd
 }
 
 .tea-icon {
   width: 16px;
   height: 16px;
+  display: inline-block;
+  vertical-align: middle;
   background-repeat: no-repeat;
   background-position: inherit;
   font-size: 0
 }
 
 .tea-icon-shopcart {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 25.7% 99.47%;
+  background-position: 42.52% 99.47%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-more {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 0.47000000000000003% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -720,16 +800,7 @@ fieldset {
 }
 
 .tea-icon-folderclose {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 25.7% 70.89999999999999%;
-  background-size: 1437.5% 1281.25%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-icon-folderopen {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 34.11% 70.89999999999999%;
   background-size: 1437.5% 1281.25%;
@@ -737,8 +808,17 @@ fieldset {
   background-repeat: no-repeat
 }
 
+.tea-icon-folderopen {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 42.52% 70.89999999999999%;
+  background-size: 1437.5% 1281.25%;
+  ;
+  background-repeat: no-repeat
+}
+
 .tea-icon-notice {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 8.88% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -747,7 +827,7 @@ fieldset {
 }
 
 .tea-icon-guide {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 59.35% 70.89999999999999%;
   background-size: 1437.5% 1281.25%;
@@ -756,43 +836,43 @@ fieldset {
 }
 
 .tea-icon-consult {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 55.61000000000001% 43.919999999999995%;
+  background-position: 0.47000000000000003% 61.38%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-realname {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 91.12% 29.099999999999998%;
+  background-position: 91.12% 48.15%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-realnamev {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 91.12% 38.62%;
+  background-position: 91.12% 57.67%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-show {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 34.11% 99.47%;
+  background-position: 50.93% 99.47%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-hide {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 74.3% 0.53%;
   background-size: 1437.5% 1281.25%;
@@ -803,30 +883,30 @@ fieldset {
 .tea-icon-records {
   width: 15px;
   height: 16px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   background-position: -57px -18px
 }
 
 .tea-icon-error.size-l {
   width: 32px;
   height: 32px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 34.849999999999994% 2.31%;
+  background-position: 17.68% 21.97%;
   background-size: 718.75% 640.625%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-sales {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   background-position: -57px 0px
 }
 
 .tea-icon-success {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 99.53% 10.05%;
+  background-position: 99.53% 29.099999999999998%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -835,7 +915,7 @@ fieldset {
 .tea-icon-success.size-l {
   width: 32px;
   height: 32px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-size: 718.75% 640.625%;
   ;
@@ -844,9 +924,9 @@ fieldset {
 }
 
 .tea-icon-warning {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 82.71% 0.53%;
+  background-position: 34.11% 80.42%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -855,16 +935,16 @@ fieldset {
 .tea-icon-warning.size-l {
   width: 32px;
   height: 32px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-size: 718.75% 640.625%;
   ;
-  background-position: 17.68% 21.97%;
+  background-position: 17.68% 2.31%;
   background-repeat: no-repeat
 }
 
 .tea-icon-loading {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   -webkit-animation: spin .6s linear infinite;
   animation: spin .6s linear infinite;
@@ -897,42 +977,33 @@ fieldset {
 }
 
 .tea-icon-shutdown {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   background-position: 0px -21px
 }
 
 .tea-icon-running {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   background-position: -18px -21px
 }
 
 .tea-icon-error {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 65.89% 38.62%;
+  background-position: 65.89% 48.15%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-deploy {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   width: 17px;
   height: 17px;
   background-position: -21px 0px
 }
 
 .tea-icon-sort {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 50.93% 99.47%;
-  background-size: 1437.5% 1281.25%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-icon-sortup {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 67.75999999999999% 99.47%;
   background-size: 1437.5% 1281.25%;
@@ -940,10 +1011,19 @@ fieldset {
   background-repeat: no-repeat
 }
 
-.tea-icon-sortdown {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+.tea-icon-sortup {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 42.52% 99.47%;
+  background-position: 84.58% 99.47%;
+  background-size: 1437.5% 1281.25%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-icon-sortdown {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 59.35% 99.47%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -952,14 +1032,14 @@ fieldset {
 .tea-icon-links {
   width: 14px;
   height: 13px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   background-position: -36px -40px
 }
 
 .tea-icon-btnback {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 91.12% 48.15%;
+  background-position: 91.12% 67.2%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -968,22 +1048,22 @@ fieldset {
 .tea-icon-client {
   width: 16px;
   height: 15px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   margin-top: 2px;
   background-position: -18px -40px
 }
 
 .tea-icon-plus {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 74.3% 38.62%;
+  background-position: 82.71% 0.53%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-minus {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 82.71% 67.2%;
   background-size: 1437.5% 1281.25%;
@@ -992,16 +1072,16 @@ fieldset {
 }
 
 .tea-icon-setting {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 17.29% 99.47%;
+  background-position: 34.11% 99.47%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-pencil {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 42.52% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -1010,7 +1090,7 @@ fieldset {
 }
 
 .tea-icon-pencil:hover {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 50.93% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -1019,16 +1099,7 @@ fieldset {
 }
 
 .tea-icon-copy {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 25.7% 61.38%;
-  background-size: 1437.5% 1281.25%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-icon-copy:hover {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 34.11% 61.38%;
   background-size: 1437.5% 1281.25%;
@@ -1036,8 +1107,17 @@ fieldset {
   background-repeat: no-repeat
 }
 
+.tea-icon-copy:hover {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 42.52% 61.38%;
+  background-size: 1437.5% 1281.25%;
+  ;
+  background-repeat: no-repeat
+}
+
 .tea-icon-remind {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 56.13% 24.060000000000002%;
   background-size: 1277.7777777777778% 1138.888888888889%;
@@ -1046,34 +1126,35 @@ fieldset {
 }
 
 .tea-icon-dismiss {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 84.58% 99.47%;
+  background-position: 91.12% 76.72%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-dismiss:hover {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 99.53% 67.2%;
+  background-position: 82.71% 57.67%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
+.is-disabled .tea-icon-dismiss:hover,
 .tea-icon-dismiss.size-s {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 84.58% 99.47%;
+  background-position: 91.12% 76.72%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-phone {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 59.35% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -1082,7 +1163,7 @@ fieldset {
 }
 
 .tea-icon-phonev {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 67.75999999999999% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -1091,25 +1172,25 @@ fieldset {
 }
 
 .tea-icon-wechat {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 91.12% 57.67%;
+  background-position: 74.3% 38.62%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-wechatv {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 50.93% 70.89999999999999%;
+  background-position: 99.53% 86.24000000000001%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-email {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 82.71% 38.62%;
   background-size: 1437.5% 1281.25%;
@@ -1118,7 +1199,7 @@ fieldset {
 }
 
 .tea-icon-emailv {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 82.71% 48.15%;
   background-size: 1437.5% 1281.25%;
@@ -1127,7 +1208,7 @@ fieldset {
 }
 
 .tea-icon-qq {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 91.12% 0.53%;
   background-size: 1437.5% 1281.25%;
@@ -1138,23 +1219,23 @@ fieldset {
 .tea-icon-favorable {
   width: 15px;
   height: 18px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   background-position: -40px 0px
 }
 
 .tea-icon-viewgrid {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 99.53% 19.580000000000002%;
+  background-position: 99.53% 38.62%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-viewlist {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 99.53% 29.099999999999998%;
+  background-position: 99.53% 48.15%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -1163,21 +1244,21 @@ fieldset {
 .tea-icon-alarm {
   width: 15px;
   height: 14px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   background-position: -40px -20px
 }
 
 .tea-icon-monitor {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 65.89% 29.099999999999998%;
+  background-position: 65.89% 38.62%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-download {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 74.3% 29.099999999999998%;
   background-size: 1437.5% 1281.25%;
@@ -1186,9 +1267,9 @@ fieldset {
 }
 
 .tea-icon-filter {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 0.47000000000000003% 70.89999999999999%;
+  background-position: 8.88% 70.89999999999999%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -1197,31 +1278,12 @@ fieldset {
 .tea-icon-try {
   width: 19px;
   height: 19px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   background-position: 0px 0px
 }
 
 .tea-icon-convertip--blue {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 8.88% 61.38%;
-  background-size: 1437.5% 1281.25%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-icon-convertip {
-  cursor: default;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 0.47000000000000003% 61.38%;
-  background-size: 1437.5% 1281.25%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-icon-convertip:hover {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 17.29% 61.38%;
   background-size: 1437.5% 1281.25%;
@@ -1229,14 +1291,33 @@ fieldset {
   background-repeat: no-repeat
 }
 
+.tea-icon-convertip {
+  cursor: default;
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 8.88% 61.38%;
+  background-size: 1437.5% 1281.25%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-icon-convertip:hover {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 25.7% 61.38%;
+  background-size: 1437.5% 1281.25%;
+  ;
+  background-repeat: no-repeat
+}
+
 .tea-icon-new {
   cursor: default;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.png);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.png);
   background-position: 0px -40px
 }
 
 .tea-icon-info {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   cursor: pointer;
   background-position: 76.17% 89.95%;
@@ -1246,25 +1327,25 @@ fieldset {
 }
 
 .tea-icon-close {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 42.52% 80.42%;
+  background-position: 99.53% 10.05%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-close.size-s {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 91.12% 67.2%;
+  background-position: 91.12% 86.24000000000001%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-arrowup {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 34.11% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -1273,7 +1354,7 @@ fieldset {
 }
 
 .tea-icon-arrowdown {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 17.29% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -1282,7 +1363,7 @@ fieldset {
 }
 
 .tea-icon-arrowleft {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 59.35% 80.42%;
   background-size: 1437.5% 1281.25%;
@@ -1291,25 +1372,25 @@ fieldset {
 }
 
 .tea-icon-arrowright {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 91.12% 76.72%;
+  background-position: 0.47000000000000003% 99.47%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-externallink {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 65.89% 57.67%;
+  background-position: 0.47000000000000003% 70.89999999999999%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-refresh {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 17.29% 80.42%;
   background-size: 1437.5% 1281.25%;
@@ -1318,45 +1399,45 @@ fieldset {
 }
 
 .tea-icon-fullscreen {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 42.52% 70.89999999999999%;
+  background-position: 50.93% 70.89999999999999%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-fullscreenquit {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 91.12% 10.05%;
+  background-position: 91.12% 29.099999999999998%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-delete {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 91.12% 86.24000000000001%;
+  background-position: 8.88% 99.47%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-trenddown {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 99.53% 48.15%;
+  background-position: 99.53% 67.2%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-trendup {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 99.53% 57.67%;
+  background-position: 99.53% 76.72%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -1366,7 +1447,7 @@ fieldset {
   width: 24px;
   height: 24px;
   cursor: move;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 33.5% 20.990000000000002%;
   background-size: 958.3333333333334% 854.1666666666666%;
@@ -1375,7 +1456,7 @@ fieldset {
 }
 
 .tea-icon-news {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 74.3% 57.67%;
   background-size: 1437.5% 1281.25%;
@@ -1384,7 +1465,7 @@ fieldset {
 }
 
 .tea-icon-help {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   cursor: pointer;
   background-position: 74.3% 48.15%;
@@ -1394,9 +1475,9 @@ fieldset {
 }
 
 .tea-icon-pending {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 8.88% 99.47%;
+  background-position: 25.7% 99.47%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -1405,18 +1486,18 @@ fieldset {
 .tea-icon-pending.size-l {
   width: 32px;
   height: 32px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 0.51% 2.31%;
+  background-position: 34.849999999999994% 2.31%;
   background-size: 718.75% 640.625%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-infoblue {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 0.47000000000000003% 99.47%;
+  background-position: 17.29% 99.47%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -1425,16 +1506,16 @@ fieldset {
 .tea-icon-infoblue.size-l {
   width: 32px;
   height: 32px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 17.68% 2.31%;
+  background-position: 0.51% 2.31%;
   background-size: 718.75% 640.625%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-lastpage {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 50.93% 80.42%;
   background-size: 1437.5% 1281.25%;
@@ -1443,16 +1524,16 @@ fieldset {
 }
 
 .tea-icon-firstpage {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 17.29% 70.89999999999999%;
+  background-position: 25.7% 70.89999999999999%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-search {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 25.7% 80.42%;
   background-size: 1437.5% 1281.25%;
@@ -1461,25 +1542,16 @@ fieldset {
 }
 
 .tea-icon-transfer {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 99.53% 38.62%;
+  background-position: 99.53% 57.67%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-cur {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 65.89% 0.53%;
-  background-size: 1437.5% 1281.25%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-icon-cur-active {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 65.89% 10.05%;
   background-size: 1437.5% 1281.25%;
@@ -1487,35 +1559,44 @@ fieldset {
   background-repeat: no-repeat
 }
 
-.tea-icon-fold {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+.tea-icon-cur-active {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 82.71% 57.67%;
+  background-position: 65.89% 19.580000000000002%;
+  background-size: 1437.5% 1281.25%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-icon-fold {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 55.61000000000001% 34.39%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-check {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 82.71% 29.099999999999998%;
+  background-position: 82.71% 19.580000000000002%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-check.size-s {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 91.12% 19.580000000000002%;
+  background-position: 42.52% 80.42%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-not {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 0.47000000000000003% 80.42%;
   background-size: 1437.5% 1281.25%;
@@ -1524,7 +1605,7 @@ fieldset {
 }
 
 .tea-icon-not:hover {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 8.88% 80.42%;
   background-size: 1437.5% 1281.25%;
@@ -1533,7 +1614,7 @@ fieldset {
 }
 
 .tea-icon-and {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 74.3% 10.05%;
   background-size: 1437.5% 1281.25%;
@@ -1542,7 +1623,7 @@ fieldset {
 }
 
 .tea-icon-and:hover {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 74.3% 19.580000000000002%;
   background-size: 1437.5% 1281.25%;
@@ -1551,27 +1632,45 @@ fieldset {
 }
 
 .tea-icon-detail {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 65.89% 19.580000000000002%;
+  background-position: 65.89% 29.099999999999998%;
+  background-size: 1437.5% 1281.25%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-icon-qrcode {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 91.12% 10.05%;
+  background-size: 1437.5% 1281.25%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-icon-qrcode:hover {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 91.12% 19.580000000000002%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-database {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 42.52% 61.38%;
+  background-position: 50.93% 61.38%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-icon-datasheet {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 50.93% 61.38%;
+  background-position: 65.89% 0.53%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -1586,25 +1685,7 @@ fieldset {
 }
 
 .tea-flag-Globe {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 21.43% 50.81%;
-  background-size: 1150% 1025%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-flag-China {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 21.43% 38.92%;
-  background-size: 1150% 1025%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-flag-Hongkong {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 31.900000000000002% 50.81%;
   background-size: 1150% 1025%;
@@ -1612,8 +1693,8 @@ fieldset {
   background-repeat: no-repeat
 }
 
-.tea-flag-India {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+.tea-flag-Globe--gray {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 42.38% 50.81%;
   background-size: 1150% 1025%;
@@ -1621,53 +1702,8 @@ fieldset {
   background-repeat: no-repeat
 }
 
-.tea-flag-Korea {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 45.24% 20.54%;
-  background-size: 1150% 1025%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-flag-Thailand {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 56.67% 12.43%;
-  background-size: 1150% 1025%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-flag-Singapore {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 10.95% 38.92%;
-  background-size: 1150% 1025%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-flag-America {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 42.38% 38.92%;
-  background-size: 1150% 1025%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-flag-Canada {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 0.48% 50.81%;
-  background-size: 1150% 1025%;
-  ;
-  background-repeat: no-repeat
-}
-
-.tea-flag-Germany {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+.tea-flag-China {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 10.95% 50.81%;
   background-size: 1150% 1025%;
@@ -1675,19 +1711,91 @@ fieldset {
   background-repeat: no-repeat
 }
 
-.tea-flag-Russia {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+.tea-flag-Hongkong {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 0.48% 38.92%;
+  background-position: 56.67% 12.43%;
+  background-size: 1150% 1025%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-flag-India {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 45.24% 20.54%;
+  background-size: 1150% 1025%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-flag-Korea {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 10.95% 38.92%;
+  background-size: 1150% 1025%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-flag-Thailand {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 42.38% 38.92%;
+  background-size: 1150% 1025%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-flag-Singapore {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 31.900000000000002% 38.92%;
+  background-size: 1150% 1025%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-flag-America {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 0.48% 50.81%;
+  background-size: 1150% 1025%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-flag-Canada {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 56.67% 0.54%;
+  background-size: 1150% 1025%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-flag-Germany {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 21.43% 50.81%;
+  background-size: 1150% 1025%;
+  ;
+  background-repeat: no-repeat
+}
+
+.tea-flag-Russia {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 21.43% 38.92%;
   background-size: 1150% 1025%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-flag-Japan {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 56.67% 0.54%;
+  background-position: 0.48% 38.92%;
   background-size: 1150% 1025%;
   ;
   background-repeat: no-repeat
@@ -1710,6 +1818,7 @@ input[type=file]::-webkit-file-upload-button {
   display: inline-block;
   cursor: pointer;
   outline: 0;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   text-decoration: none;
   font-size: 12px;
@@ -1719,7 +1828,7 @@ input[type=file]::-webkit-file-upload-button {
 
 .tea-btn.is-loading .tea-icon-loading {
   vertical-align: -3px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 82.71% 10.05%;
   background-size: 1437.5% 1281.25%;
@@ -1729,7 +1838,7 @@ input[type=file]::-webkit-file-upload-button {
 
 .tea-btn--weak.is-loading .tea-icon-loading,
 .tea-btn.is-loading.is-disabled .tea-icon-loading {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 67.75999999999999% 80.42%;
   background-size: 1437.5% 1281.25%;
@@ -1741,6 +1850,7 @@ input[type=file]::-webkit-file-upload-button {
   border-color: #0063e5;
   background-color: #0063e5;
   text-decoration: none;
+  -webkit-transition: all .3s ease-in-out;
   transition: all .3s ease-in-out
 }
 
@@ -1751,14 +1861,18 @@ input[type=file]::-webkit-file-upload-button {
 
 .tea-btn:active {
   border-color: #0058cc;
-  background-color: #0058cc;
+  background-color: #0058cc
+}
+
+.tea-btn:active,
+.tea-btn:focus {
+  -webkit-transition: all .3s ease-in-out;
   transition: all .3s ease-in-out
 }
 
 .tea-btn:focus {
   border-color: #006eff;
-  background-color: #006eff;
-  transition: all .3s ease-in-out
+  background-color: #006eff
 }
 
 .tea-btn--pay {
@@ -1905,6 +2019,7 @@ input[type=file]::-webkit-file-upload-button {
   height: inherit;
   line-height: inherit;
   background-color: transparent;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -1932,6 +2047,7 @@ input[type=file]::-webkit-file-upload-button {
 .tea-input,
 .tea-textarea {
   display: inline-block;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   vertical-align: middle;
   height: 30px;
@@ -1941,7 +2057,9 @@ input[type=file]::-webkit-file-upload-button {
   border: 1px solid #ddd;
   border-radius: 0;
   color: #444;
+  -webkit-transition: .2s ease-in-out;
   transition: .2s ease-in-out;
+  -webkit-transition-property: color, background-color, border;
   transition-property: color, background-color, border
 }
 
@@ -2058,13 +2176,16 @@ input[type=file]::-webkit-file-upload-button {
 
 .tea-select {
   display: inline-block;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   vertical-align: middle;
   height: 30px;
   font-size: 12px;
   border: 1px solid #ddd;
   border-radius: 0;
+  -webkit-transition: .2s ease-in-out;
   transition: .2s ease-in-out;
+  -webkit-transition-property: color, background-color, border;
   transition-property: color, background-color, border;
   background: url(assets/image/slice/svg/select-arrow.svg) 100% no-repeat #fff;
   color: #000;
@@ -2092,7 +2213,7 @@ input[type=file]::-webkit-file-upload-button {
 .tea-select[disabled]:hover {
   cursor: not-allowed;
   border-color: #ddd;
-  background-color: #fff;
+  background-color: #f2f2f2;
   color: #bbb
 }
 
@@ -2108,14 +2229,14 @@ input[type=file]::-webkit-file-upload-button {
 .tea-input--search.size-m {
   overflow-x: hidden;
   overflow-y: hidden;
-  white-space: pre-wrap;
   width: 100%;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   resize: none;
   vertical-align: top;
   border-radius: 0;
   background-color: #fff;
-  padding: 0 30px 0 10px;
+  padding: 0 60px 0 10px;
   outline: 0;
   position: absolute;
   top: 0;
@@ -2151,7 +2272,6 @@ input[type=file]::-webkit-file-upload-button {
 }
 
 .tea-select.size-auto-width {
-  min-width: 200px;
   width: auto
 }
 
@@ -2172,6 +2292,7 @@ input[type=file]::-webkit-file-upload-button {
 }
 
 .tea-input-group__text {
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   height: 30px;
   padding-left: 10px;
@@ -2180,7 +2301,9 @@ input[type=file]::-webkit-file-upload-button {
   border: 1px solid #ddd;
   border-radius: 0;
   color: #444;
+  -webkit-transition: .2s ease-in-out;
   transition: .2s ease-in-out;
+  -webkit-transition-property: color, background-color, border;
   transition-property: color, background-color, border;
   background-color: #f2f2f2;
   line-height: 30px;
@@ -2241,11 +2364,11 @@ input[type=radio]:hover {
 
 .tea-radio:checked,
 input[type=radio]:checked {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-color: #006eff;
   border: 1px solid transparent;
-  background-position: 98.61% 75.92%;
+  background-position: 98.61% 94.76%;
   background-size: 1642.8571428571427% 1464.2857142857142%;
   ;
   background-repeat: no-repeat
@@ -2274,11 +2397,11 @@ input[type=radio][disabled]:hover {
 
 .tea-radio[disabled]:checked,
 input[type=radio][disabled]:checked {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-color: #ddd;
   border: 1px solid hsla(0, 0%, 73.3%, .99);
-  background-position: 98.61% 75.92%;
+  background-position: 98.61% 94.76%;
   background-size: 1642.8571428571427% 1464.2857142857142%;
   ;
   background-repeat: no-repeat
@@ -2305,11 +2428,11 @@ input[type=checkbox]:hover {
 
 .tea-checkbox:checked,
 input[type=checkbox]:checked {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-color: #006eff;
   border-color: #006eff;
-  background-position: 98.61% 84.28999999999999%;
+  background-position: 47.69% 10.47%;
   background-size: 1642.8571428571427% 1464.2857142857142%;
   ;
   background-repeat: no-repeat
@@ -2319,10 +2442,10 @@ input[type=checkbox]:checked {
 .tea-checkbox:checked:hover,
 input[type=checkbox]:checked:focus,
 input[type=checkbox]:checked:hover {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-color: #0068f2;
-  background-position: 98.61% 84.28999999999999%;
+  background-position: 47.69% 10.47%;
   background-size: 1642.8571428571427% 1464.2857142857142%;
   ;
   background-repeat: no-repeat
@@ -2339,9 +2462,9 @@ input[type=checkbox][disabled] {
 
 .tea-checkbox[disabled]:checked,
 input[type=checkbox][disabled]:checked {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 98.61% 84.28999999999999%;
+  background-position: 47.69% 10.47%;
   background-size: 1642.8571428571427% 1464.2857142857142%;
   ;
   background-repeat: no-repeat
@@ -2356,11 +2479,11 @@ input[type=checkbox][disabled]:checked:hover {
 
 .tea-checkbox:indeterminate,
 input[type=checkbox]:indeterminate {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-color: #006eff;
   border: 1px solid #006eff;
-  background-position: 98.61% 92.67%;
+  background-position: 47.69% 2.09%;
   background-size: 1642.8571428571427% 1464.2857142857142%;
   ;
   background-repeat: no-repeat
@@ -2373,10 +2496,10 @@ input[type=checkbox]:indeterminate:hover {
 
 .tea-checkbox[disabled]:indeterminate,
 input[type=checkbox][disabled]:indeterminate {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-color: #ddd;
-  background-position: 98.61% 92.67%;
+  background-position: 47.69% 2.09%;
   border: 1px solid #bbb;
   background-size: 1642.8571428571427% 1464.2857142857142%;
   ;
@@ -2384,11 +2507,17 @@ input[type=checkbox][disabled]:indeterminate {
 }
 
 .tea-form-check-group {
-  margin-bottom: -8px
+  margin-bottom: -8px;
+  display: inline-block;
+  vertical-align: middle
 }
 
 .tea-form-check-group .tea-form-check {
   margin-bottom: 8px
+}
+
+.tea-form-check-group+.tea-icon-valid {
+  vertical-align: -3px
 }
 
 .tea-form-check {
@@ -2434,6 +2563,7 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-form-check--table-select {
   max-width: 100%;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -2482,53 +2612,90 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-badge.is-blue {
   background-color: #e5f0ff;
+  border-color: #e5f0ff;
   color: #006eff
 }
 
 .tea-badge.is-blue-dark {
   background-color: #006eff;
+  border-color: #006eff;
   color: #fff
 }
 
 .tea-badge.is-warning {
   background-color: #ffeed5;
+  border-color: #ffeed5;
   color: #ff9d00
 }
 
 .tea-badge.is-warning-dark {
   background-color: #ff9d00;
+  border-color: #ff9d00;
   color: #fff
 }
 
 .tea-badge.is-error {
   background-color: rgba(229, 69, 69, .14);
+  border-color: rgba(229, 69, 69, .14);
   color: #e54545
 }
 
 .tea-badge.is-error-dark {
   background-color: #e54545;
+  border-color: #e54545;
   color: #fff
 }
 
 .tea-badge.is-success {
   background-color: #e9f6ea;
+  border-color: #e9f6ea;
   color: #0abf5b
 }
 
 .tea-badge.is-success-dark {
   background-color: #0abf5b;
+  border-color: #0abf5b;
   color: #fff
 }
 
 .tea-badge.is-neutral {
   background-color: #e5e5e5;
+  border-color: #e5e5e5;
   color: #444
 }
 
+.tea-badge.tea-badge--radius {
+  border-radius: 10px
+}
+
+.tea-badge.tea-badge--dot {
+  width: 6px;
+  height: 6px
+}
+
+.tea-badge.tea-badge--dot,
+.tea-badge.tea-badge--ring {
+  font-size: 0;
+  padding: 0;
+  border-radius: 100%;
+  vertical-align: middle
+}
+
+.tea-badge.tea-badge--ring {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+  border-style: solid;
+  background-color: #fff !important
+}
+
 .tea-grid__row {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
   display: table\9;
   width: 100%;
+  -ms-flex-wrap: wrap;
   flex-wrap: wrap
 }
 
@@ -2538,14 +2705,20 @@ input[type=checkbox][disabled]:indeterminate {
 }
 
 .tea-grid__row.tea-vertical--top {
+  -webkit-box-align: start;
+  -ms-flex-align: start;
   align-items: start
 }
 
 .tea-grid__row.tea-vertical--middle {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center
 }
 
 .tea-grid__row.tea-vertical--bottom {
+  -webkit-box-align: end;
+  -ms-flex-align: end;
   align-items: flex-end
 }
 
@@ -2663,11 +2836,11 @@ input[type=checkbox][disabled]:indeterminate {
   width: 100%
 }
 
-.tea-grid--split-line [class*=tea-grid__col] {
+.tea-grid--split-line>[class*=tea-grid__col] {
   position: relative
 }
 
-.tea-grid--split-line [class*=tea-grid__col]:before {
+.tea-grid--split-line>[class*=tea-grid__col]:before {
   content: "";
   display: inline-block;
   position: absolute;
@@ -2677,13 +2850,16 @@ input[type=checkbox][disabled]:indeterminate {
   border-right: 1px solid #ddd
 }
 
-.tea-grid--split-line [class*=tea-grid__col]:first-child:before {
+.tea-grid--split-line>[class*=tea-grid__col]:first-child:before {
   border-right: 0
 }
 
 .tea-grid {
   margin: -10px;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -ms-flex-wrap: wrap;
   flex-wrap: wrap
 }
 
@@ -2696,14 +2872,20 @@ input[type=checkbox][disabled]:indeterminate {
 }
 
 .tea-grid.tea-vertical--top {
+  -webkit-box-align: start;
+  -ms-flex-align: start;
   align-items: start
 }
 
 .tea-grid.tea-vertical--middle {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center
 }
 
 .tea-grid.tea-vertical--bottom {
+  -webkit-box-align: end;
+  -ms-flex-align: end;
   align-items: flex-end
 }
 
@@ -2726,6 +2908,8 @@ input[type=checkbox][disabled]:indeterminate {
 }
 
 .tea-grid__item {
+  -ms-flex-positive: 1;
+  -webkit-box-flex: 1;
   flex-grow: 1;
   width: 0
 }
@@ -2826,11 +3010,11 @@ input[type=checkbox][disabled]:indeterminate {
   width: 100%
 }
 
-.tea-grid--split-line [class*=tea-grid__item] {
+.tea-grid--split-line>[class*=tea-grid__item] {
   position: relative
 }
 
-.tea-grid--split-line [class*=tea-grid__item]:before {
+.tea-grid--split-line>[class*=tea-grid__item]:before {
   content: "";
   display: inline-block;
   position: absolute;
@@ -2840,15 +3024,17 @@ input[type=checkbox][disabled]:indeterminate {
   border-right: 1px solid #ddd
 }
 
-.tea-grid--split-line [class*=tea-grid__item]:first-child:before {
+.tea-grid--split-line>[class*=tea-grid__item]:first-child:before {
   border-right: 0
 }
 
 .tea-card {
   background-color: #fff;
+  -webkit-box-shadow: 0 2px 3px 0 rgba(0, 0, 0, .2);
   box-shadow: 0 2px 3px 0 rgba(0, 0, 0, .2);
   margin-left: auto;
   margin-right: auto;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -2902,6 +3088,7 @@ input[type=checkbox][disabled]:indeterminate {
 }
 
 .tea-card.tea-card--bordered {
+  -webkit-box-shadow: none;
   box-shadow: none;
   border: 1px solid #ddd
 }
@@ -2986,6 +3173,7 @@ input[type=checkbox][disabled]:indeterminate {
   height: 26px;
   line-height: 26px;
   width: 26px;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   display: inline-block;
   text-align: center;
@@ -3012,6 +3200,7 @@ input[type=checkbox][disabled]:indeterminate {
   border-right: 1px solid #ddd;
   background-color: #fff;
   z-index: 10;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -3020,6 +3209,7 @@ input[type=checkbox][disabled]:indeterminate {
   position: absolute;
   top: 0;
   bottom: 0;
+  -webkit-transition: all .2s cubic-bezier(.4, 0, .2, 1);
   transition: all .2s cubic-bezier(.4, 0, .2, 1)
 }
 
@@ -3057,6 +3247,7 @@ input[type=checkbox][disabled]:indeterminate {
   top: 0;
   bottom: 0;
   overflow: auto;
+  -webkit-transition: all .2s cubic-bezier(.4, 0, .2, 1);
   transition: all .2s cubic-bezier(.4, 0, .2, 1)
 }
 
@@ -3071,9 +3262,12 @@ input[type=checkbox][disabled]:indeterminate {
 }
 
 .tea-layout {
-  display: box;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: vertical;
   -moz-flex-direction: column;
+  -ms-flex-direction: column;
   -o-flex-direction: column;
   flex-direction: column;
   height: 100%
@@ -3086,22 +3280,31 @@ input[type=checkbox][disabled]:indeterminate {
 .tea-layout__content {
   background-color: #f2f2f2;
   overflow-y: auto;
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1
 }
 
 .tea-layout__content .tea-content {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   position: relative;
   left: 0;
-  display: box;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: vertical;
   -moz-flex-direction: column;
+  -ms-flex-direction: column;
   -o-flex-direction: column;
   flex-direction: column;
   height: 100%
 }
 
 .tea-layout__content .tea-content__body {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1
 }
 
@@ -3115,18 +3318,33 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-layout__content-body {
   padding: 20px;
-  position: relative
+  position: relative;
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
+  flex: 1
 }
 
 .tea-layout__content-inner {
-  min-height: 100%;
-  padding-bottom: 77px;
-  box-sizing: border-box
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -moz-flex-direction: column;
+  -ms-flex-direction: column;
+  -o-flex-direction: column;
+  flex-direction: column;
+  height: 100%
 }
 
 .tea-layout__content-body-inner {
   max-width: 1360px;
   margin: 0 auto
+}
+
+.tea-layout__content-body-inner.tea-layout__content-body-inner--full {
+  max-width: 100%
 }
 
 .tea-layout__footer {
@@ -3136,14 +3354,20 @@ input[type=checkbox][disabled]:indeterminate {
 .tea-layout__sidebar {
   position: relative;
   height: 100%;
-  vertical-align: top
+  vertical-align: top;
+  min-width: 63px
 }
 
 .tea-layout__body {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
-  display: box;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: vertical;
   -moz-flex-direction: column;
+  -ms-flex-direction: column;
   -o-flex-direction: column;
   flex-direction: column;
   overflow-y: auto
@@ -3151,7 +3375,10 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-layout__body.has-subsidebar {
   -moz-flex-direction: row;
+  -ms-flex-direction: row;
   -o-flex-direction: row;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
   flex-direction: row
 }
 
@@ -3195,7 +3422,10 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-layout.has-subsidebar {
   -moz-flex-direction: row;
+  -ms-flex-direction: row;
   -o-flex-direction: row;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
   flex-direction: row
 }
 
@@ -3283,6 +3513,7 @@ input[type=checkbox][disabled]:indeterminate {
   height: 18px;
   line-height: 16px;
   text-align: center;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   border: 1px solid #888;
   border-radius: 100%;
@@ -3338,14 +3569,21 @@ input[type=checkbox][disabled]:indeterminate {
   right: 0;
   width: 360px;
   background-color: #fff;
+  -webkit-box-shadow: 0 2px 3px 0 rgba(0, 0, 0, .2);
   box-shadow: 0 2px 3px 0 rgba(0, 0, 0, .2);
-  display: flex
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  z-index: 10
 }
 
 .tea-drawer,
 .tea-drawer--left {
   top: 50px;
   bottom: 0;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
   flex-direction: column
 }
 
@@ -3362,22 +3600,38 @@ input[type=checkbox][disabled]:indeterminate {
   height: 50px;
   padding: 10px 20px;
   border-bottom: 1px solid #ddd;
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 50px;
   flex: 0 0 50px
 }
 
+.tea-drawer__header .tea-justify-grid__col .tea-h3 {
+  line-height: 28px
+}
+
 .tea-drawer__header .tea-justify-grid__col--right {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
+  -webkit-box-pack: end;
+  -ms-flex-pack: end;
   justify-content: flex-end
 }
 
 .tea-drawer__body {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 1 auto;
   flex: 1 1 auto;
   overflow: auto;
   padding: 20px
 }
 
 .tea-drawer__footer {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 50px;
   flex: 0 0 50px;
   height: 50px;
   padding: 10px 20px;
@@ -3391,6 +3645,7 @@ input[type=checkbox][disabled]:indeterminate {
   font-size: 0;
   position: relative;
   background-color: #fff;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   margin-left: auto;
   margin-right: auto
@@ -3405,7 +3660,8 @@ input[type=checkbox][disabled]:indeterminate {
 .tea-pagination__state {
   float: left;
   color: #888;
-  margin-top: 5px
+  margin-top: 5px;
+  margin-bottom: 3px
 }
 
 .tea-pagination__state strong {
@@ -3430,6 +3686,7 @@ input[type=checkbox][disabled]:indeterminate {
   background-color: #fff;
   border: 1px solid #ddd;
   outline: 0;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   z-index: 1;
   vertical-align: middle;
@@ -3637,6 +3894,7 @@ input[type=checkbox][disabled]:indeterminate {
 .tea-tabs__tab:hover:after {
   width: 100%;
   border-bottom-color: #006eff;
+  -webkit-transition: border-color .15s ease-in-out, width .15s ease-in-out, height .15s ease-in-out;
   transition: border-color .15s ease-in-out, width .15s ease-in-out, height .15s ease-in-out
 }
 
@@ -3883,6 +4141,7 @@ input[type=checkbox][disabled]:indeterminate {
   height: 28px;
   background-color: #006eff;
   border: 2px solid #006eff;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   line-height: 24px;
   border-radius: 50%;
@@ -3898,10 +4157,10 @@ input[type=checkbox][disabled]:indeterminate {
   height: 16px;
   left: 4px;
   top: 4px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-color: transparent;
-  background-position: 99.53% 0.53%;
+  background-position: 99.53% 19.580000000000002%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -3931,9 +4190,9 @@ input[type=checkbox][disabled]:indeterminate {
   display: inline-block;
   margin: 0 30px;
   vertical-align: middle;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 76.17% 99.47%;
+  background-position: 99.53% 0.53%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -3986,7 +4245,7 @@ input[type=checkbox][disabled]:indeterminate {
   position: absolute;
   left: 100%;
   top: 50%;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 0.88% 0.49%;
   background-size: 198.27586206896552% 20500%;
@@ -4129,6 +4388,10 @@ input[type=checkbox][disabled]:indeterminate {
   margin-top: 6px
 }
 
+.tea-step.tea-step--wrap-normal .tea-step__title {
+  max-width: none
+}
+
 .tea-step__item.is-current~.tea-step__item {
   color: #bbb
 }
@@ -4186,6 +4449,7 @@ input[type=checkbox][disabled]:indeterminate {
   padding: 20px;
   width: 100%;
   min-width: 100px;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -4202,20 +4466,6 @@ input[type=checkbox][disabled]:indeterminate {
   padding: 0;
   min-width: 140px;
   line-height: 30px
-}
-
-.tea-region__globe {
-  width: 20px;
-  height: 20px;
-  display: inline-block;
-  vertical-align: middle;
-  border-radius: 20px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
-  ;
-  background-position: 31.900000000000002% 38.92%;
-  background-size: 1150% 1025%;
-  ;
-  background-repeat: no-repeat
 }
 
 .tea-region__all {
@@ -4242,7 +4492,7 @@ input[type=checkbox][disabled]:indeterminate {
   font-size: 12px;
   color: #888;
   line-height: 18px;
-  padding: 0 6px;
+  padding: 0 6px 0 12px;
   margin-bottom: 10px
 }
 
@@ -4250,9 +4500,13 @@ input[type=checkbox][disabled]:indeterminate {
   font-size: 0;
   color: #000;
   line-height: 30px;
-  padding: 0 5px;
+  padding: 0 5px 0 12px;
   cursor: pointer;
   margin-bottom: 2px
+}
+
+.tea-region__item .tea-flag {
+  display: none
 }
 
 .tea-region__item:hover {
@@ -4269,8 +4523,7 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-region__name {
   vertical-align: middle;
-  font-size: 12px;
-  margin-left: 5px
+  font-size: 12px
 }
 
 .tea-region__new {
@@ -4302,6 +4555,7 @@ input[type=checkbox][disabled]:indeterminate {
   line-height: 28px;
   padding: 0 22px 0 10px;
   position: relative;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   font-size: 0
 }
@@ -4327,6 +4581,11 @@ input[type=checkbox][disabled]:indeterminate {
 .tea-dropdown.tea-dropdown--region-select .tea-dropdown-btn .tea-dropdown__value {
   line-height: 28px;
   display: inline-block
+}
+
+.tea-dropdown.tea-dropdown--region-select .tea-dropdown-btn .tea-dropdown__value .tea-region__item .tea-flag {
+  margin-right: 5px;
+  display: none
 }
 
 .tea-dropdown.tea-dropdown--region-select.is-active .tea-dropdown__header {
@@ -4362,6 +4621,7 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-regionempty__inner {
   background-color: #fff;
+  -webkit-box-shadow: 0 1px 4px 0 rgba(0, 0, 0, .2);
   box-shadow: 0 1px 4px 0 rgba(0, 0, 0, .2);
   min-width: 155px;
   min-height: 100px;
@@ -4374,6 +4634,55 @@ input[type=checkbox][disabled]:indeterminate {
   color: #888;
   line-height: 18px;
   margin-top: 20px
+}
+
+.tea-region-pave {
+  font-size: 0;
+  margin-bottom: -30px;
+  margin-top: 18px
+}
+
+.tea-region-pave .tea-segment {
+  margin-right: -1px;
+  margin-bottom: 0
+}
+
+.tea-region-pave .tea-segment .tea-btn {
+  margin-bottom: 0
+}
+
+.tea-region-pave__item {
+  display: inline-block;
+  position: relative;
+  margin-bottom: 28px
+}
+
+.tea-region-pave__area-name {
+  position: absolute;
+  display: block;
+  font-size: 12px;
+  top: -18px;
+  left: 0;
+  right: 0;
+  text-align: center
+}
+
+.tea-region-pave__area-name i {
+  padding: 0 2px;
+  background-color: #fff;
+  position: relative;
+  color: #888
+}
+
+.tea-region-pave__area-name:before {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 50%;
+  height: 1px;
+  background-color: #ddd
 }
 
 .tea-tree {
@@ -4397,6 +4706,8 @@ input[type=checkbox][disabled]:indeterminate {
   padding: 7px 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex
 }
 
@@ -4482,6 +4793,10 @@ input[type=checkbox][disabled]:indeterminate {
   display: inline-block
 }
 
+.tea-breadcrumb__item {
+  font-weight: 400
+}
+
 .tea-breadcrumb__item:before {
   font-size: 14px;
   color: #444;
@@ -4502,13 +4817,12 @@ input[type=checkbox][disabled]:indeterminate {
   color: #444
 }
 
-.tea-breadcrumb__item .is-current,
-.tea-breadcrumb__item span,
-.tea-breadcrumb__item strong {
+.tea-breadcrumb__item .is-current {
   color: #000;
   font-weight: 700
 }
 
+.tea-breadcrumb.tea-breadcrumb--fz-large .tea-breadcrumb__item .tea-breadcrumb__item-title,
 .tea-breadcrumb.tea-breadcrumb--fz-large .tea-breadcrumb__item :before,
 .tea-breadcrumb.tea-breadcrumb--fz-large .tea-breadcrumb__item a,
 .tea-breadcrumb.tea-breadcrumb--fz-large .tea-breadcrumb__item span,
@@ -4535,11 +4849,11 @@ input[type=checkbox][disabled]:indeterminate {
   height: 16px;
   content: "";
   display: inline-block;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   vertical-align: -4px;
   margin-left: 2px;
-  background-position: 65.89% 57.67%;
+  background-position: 0.47000000000000003% 70.89999999999999%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -4547,18 +4861,18 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-link-external--black:after {
   color: #444;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 65.89% 48.15%;
+  background-position: 65.89% 57.67%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-link-external--black:hover:after {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 65.89% 57.67%;
+  background-position: 0.47000000000000003% 70.89999999999999%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -4587,11 +4901,19 @@ input[type=checkbox][disabled]:indeterminate {
   margin-right: 0 !important
 }
 
+.tea-segment>span {
+  float: left
+}
+
+.tea-segment>span .tea-btn {
+  pointer-events: none
+}
+
 .tea-segment .tea-btn .tea-badge {
   font-size: 10px;
   position: absolute;
   right: 0;
-  top: -10px;
+  top: -8px;
   height: auto;
   line-height: normal
 }
@@ -4682,9 +5004,9 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-form__controls.is-success .tea-icon-valid {
   display: inline-block;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 99.53% 10.05%;
+  background-position: 99.53% 29.099999999999998%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -4692,7 +5014,7 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-form__controls.is-validating .tea-icon-valid {
   display: inline-block;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 67.75999999999999% 80.42%;
   -webkit-animation: spin .6s linear infinite;
@@ -4704,9 +5026,9 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-form__controls.is-error .tea-icon-valid {
   display: inline-block;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 65.89% 38.62%;
+  background-position: 65.89% 48.15%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -4748,7 +5070,8 @@ input[type=checkbox][disabled]:indeterminate {
   color: #888;
   padding-right: 20px;
   padding-top: 6px;
-  padding-bottom: 6px
+  padding-bottom: 6px;
+  width: 1px
 }
 
 .tea-form .tea-form__label .tea-icon {
@@ -4759,12 +5082,16 @@ input[type=checkbox][disabled]:indeterminate {
 .tea-form .tea-form__label legend {
   display: inline-block;
   white-space: nowrap;
-  font-size: 12px
+  font-size: 12px;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0)
 }
 
 .tea-form .tea-form__controls {
   color: #000;
-  word-break: break-word
+  word-break: break-word;
+  padding-right: 24px;
+  width: 100%
 }
 
 .tea-form .tea-form__controls--text {
@@ -4828,11 +5155,21 @@ input[type=checkbox][disabled]:indeterminate {
 .tea-form--vertical .tea-form__label {
   padding-bottom: 0;
   padding-top: 0;
-  font-size: 12px
+  font-size: 12px;
+  width: auto;
+  margin-bottom: 10px
 }
 
 .tea-form--vertical .tea-form__label label {
   color: #444
+}
+
+.tea-form--vertical .tea-form__help-text {
+  margin-top: 4px
+}
+
+.tea-form--vertical .tea-form__controls--text {
+  padding-top: 0
 }
 
 .tea-form--inline {
@@ -4843,6 +5180,10 @@ input[type=checkbox][disabled]:indeterminate {
   display: inline-block;
   vertical-align: top;
   margin-right: 20px
+}
+
+.tea-form--inline>.tea-form__item .tea-form__controls {
+  width: auto
 }
 
 .tea-form--inline>.tea-form__item .tea-form__controls,
@@ -4869,17 +5210,12 @@ input[type=checkbox][disabled]:indeterminate {
   width: 100%
 }
 
-.tea-form.size-full-width .tea-form__controls {
-  width: 100%;
-  padding-right: 24px
-}
-
-.tea-form.size-full-width .tea-form__controls .tea-icon-valid {
+.tea-form .tea-form__controls>.tea-icon-valid {
   position: absolute;
   margin-top: 7px
 }
 
-.tea-form.size-full-width .tea-form__controls.tea-form__controls--text .tea-icon-valid {
+.tea-form .tea-form__controls.tea-form__controls--text>.tea-icon-valid {
   margin-top: 0
 }
 
@@ -4975,10 +5311,15 @@ input[type=checkbox][disabled]:indeterminate {
   width: auto
 }
 
+.tea-dropdown-box.size-auto-width {
+  min-width: 75px
+}
+
 .tea-dropdown__header {
   height: 30px;
   padding: 0 22px 0 0;
   position: relative;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   cursor: pointer
 }
@@ -5014,7 +5355,8 @@ input[type=checkbox][disabled]:indeterminate {
   line-height: 30px;
   font-size: 12px;
   white-space: nowrap;
-  overflow: hidden
+  overflow: hidden;
+  text-align: left
 }
 
 .tea-dropdown-btn .tea-dropdown__value {
@@ -5028,6 +5370,7 @@ input[type=checkbox][disabled]:indeterminate {
 .tea-dropdown-box {
   border: 1px solid #ddd;
   background-color: #fff;
+  -webkit-box-shadow: 0 2px 3px 0 rgba(0, 0, 0, .2);
   box-shadow: 0 2px 3px 0 rgba(0, 0, 0, .2);
   min-width: 150px;
   position: relative
@@ -5042,12 +5385,26 @@ input[type=checkbox][disabled]:indeterminate {
   margin-bottom: 0
 }
 
+.tea-dropdown-box .tea-search--icon-front .tea-input--search,
 .tea-dropdown-box .tea-search--simple .tea-input--search {
   padding-left: 10px
 }
 
+.tea-dropdown-box .tea-search--icon-front .tea-input--search:focus,
 .tea-dropdown-box .tea-search--simple .tea-input--search:focus {
   border-color: #bbb
+}
+
+.tea-dropdown-box .tea-search--icon-front {
+  margin: 0 10px
+}
+
+.tea-dropdown-box .tea-search--icon-front .tea-input--search {
+  padding-left: 22px
+}
+
+.tea-dropdown-box .tea-search--icon-front .tea-btn--search {
+  left: -8px
 }
 
 .tea-option-list__item {
@@ -5102,6 +5459,16 @@ input[type=checkbox][disabled]:indeterminate {
   color: #000
 }
 
+.is-expanded .tea-dropdown-filter .tea-icon-filter,
+.tea-dropdown-filter:hover .tea-icon-filter {
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
+  ;
+  background-position: 17.29% 70.89999999999999%;
+  background-size: 1437.5% 1281.25%;
+  ;
+  background-repeat: no-repeat
+}
+
 .tea-option-list__item .tea-form-check {
   white-space: nowrap;
   overflow: hidden;
@@ -5140,8 +5507,8 @@ input[type=checkbox][disabled]:indeterminate {
   position: absolute;
   vertical-align: middle;
   background-repeat: no-repeat;
-  background-position: 91.12% 76.72%;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-position: 0.47000000000000003% 99.47%;
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-size: 1437.5% 1281.25%;
 }
@@ -5164,9 +5531,10 @@ input[type=checkbox][disabled]:indeterminate {
   cursor: not-allowed
 }
 
+.is-disabled .tea-dropdown-btn.tea-dropdown__header,
 .is-disabled .tea-dropdown-btn.tea-dropdown__header:hover,
 .is-expanded.tea-dropdown-btn.is-disabled .tea-dropdown__header {
-  background-color: #fff
+  background-color: #f2f2f2
 }
 
 .tea-inputnum {
@@ -5212,16 +5580,16 @@ input[type=checkbox][disabled]:indeterminate {
 }
 
 .tea-inputnum__plus:before {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 74.3% 38.62%;
+  background-position: 82.71% 0.53%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-inputnum__minus:before {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 82.71% 67.2%;
   background-size: 1437.5% 1281.25%;
@@ -5252,9 +5620,9 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-inputnum.is-disabled .tea-inputnum__plus:before,
 .tea-inputnum__plus.is-disabled:before {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 34.11% 80.42%;
+  background-position: 91.12% 38.62%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -5262,7 +5630,7 @@ input[type=checkbox][disabled]:indeterminate {
 
 .tea-inputnum.is-disabled .tea-inputnum__minus:before,
 .tea-inputnum__minus.is-disabled:before {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 82.71% 76.72%;
   background-size: 1437.5% 1281.25%;
@@ -5308,7 +5676,9 @@ input[type=checkbox][disabled]:indeterminate {
   overflow: hidden;
   background-color: #888;
   padding: 0;
+  -webkit-transition-duration: .4s;
   transition-duration: .4s;
+  -webkit-transition-property: background-color;
   transition-property: background-color;
   font-size: 0;
   cursor: pointer
@@ -5324,9 +5694,13 @@ input[type=checkbox][disabled]:indeterminate {
   border-radius: 100%;
   background-color: #fff;
   pointer-events: none;
+  -webkit-transition-timing-function: cubic-bezier(.54, 1.85, .5, 1);
   transition-timing-function: cubic-bezier(.54, 1.85, .5, 1);
+  -webkit-transition-duration: .4s;
   transition-duration: .4s;
+  -webkit-transition-property: left;
   transition-property: left;
+  -webkit-box-shadow: 0 3px 6px rgba(0, 0, 0, .3);
   box-shadow: 0 3px 6px rgba(0, 0, 0, .3)
 }
 
@@ -5342,7 +5716,7 @@ input[type=checkbox][disabled]:indeterminate {
   content: "";
   width: 12px;
   height: 12px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   -webkit-animation: spin .6s linear infinite;
   animation: spin .6s linear infinite;
@@ -5409,6 +5783,7 @@ input[type=search]::-webkit-search-cancel-button {
 .tea-search {
   position: relative;
   height: 30px;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -5427,7 +5802,7 @@ input[type=search]::-webkit-search-cancel-button {
   border-top: transparent;
   border-right: transparent;
   border-left: transparent;
-  padding: 0 30px 0 0
+  padding-left: 10px
 }
 
 .tea-search .tea-btn {
@@ -5455,6 +5830,24 @@ input[type=search]::-webkit-search-cancel-button {
   line-height: 21px;
   font-size: 12px;
   margin-top: 4px
+}
+
+.tea-search--icon-front .tea-input--search {
+  padding-left: 30px;
+  padding-right: 30px
+}
+
+.tea-search--icon-front .tea-btn--dismiss {
+  right: 0
+}
+
+.tea-search--icon-front .tea-btn--search {
+  left: 0
+}
+
+.tea-search--icon-front .tea-btn--search:hover {
+  background-color: transparent;
+  cursor: default
 }
 
 .tea-search.tea-search--tags {
@@ -5486,6 +5879,29 @@ input[type=search]::-webkit-search-cancel-button {
   display: none
 }
 
+.tea-search.tea-search--tags .tea-btn {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  bottom: 7px;
+  padding: 0;
+  vertical-align: middle
+}
+
+.tea-search.tea-search--tags .tea-btn--search {
+  right: 5px
+}
+
+.tea-search.tea-search--tags .tea-btn--dismiss {
+  right: 47px;
+  visibility: hidden
+}
+
+.tea-search.tea-search--tags .tea-btn--info {
+  right: 26px;
+  visibility: hidden
+}
+
 .tea-search.tea-search--tags.is-active {
   width: 100%;
   height: auto;
@@ -5504,39 +5920,30 @@ input[type=search]::-webkit-search-cancel-button {
   width: 100%
 }
 
+.tea-search.tea-search--tags.is-active .tea-btn--dismiss,
+.tea-search.tea-search--tags.is-active .tea-btn--info {
+  visibility: visible
+}
+
 .tea-search.tea-search--tags.is-active .tea-tag {
+  white-space: normal;
   padding: 0 25px 0 10px
 }
 
 .tea-search.tea-search--tags.is-active .tea-tag span {
   display: inline;
   max-width: none;
-  white-space: normal
+  white-space: normal;
+  vertical-align: middle
+}
+
+.tea-search.tea-search--tags.is-active .tea-tag span:before {
+  display: inline-block;
+  content: ""
 }
 
 .tea-search.tea-search--tags.is-active .tea-tag .tea-icon-dismiss {
   display: inline-block
-}
-
-.tea-search.tea-search--tags .tea-btn {
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  bottom: 7px;
-  padding: 0;
-  vertical-align: middle
-}
-
-.tea-search.tea-search--tags .tea-btn--search {
-  right: 5px
-}
-
-.tea-search.tea-search--tags .tea-btn--dismiss {
-  right: 47px
-}
-
-.tea-search.tea-search--tags .tea-btn--info {
-  right: 26px
 }
 
 .tea-search.tea-search--tags .tea-search__inner {
@@ -5544,6 +5951,7 @@ input[type=search]::-webkit-search-cancel-button {
   border: 1px solid #ddd;
   font-size: 0;
   min-height: 30px;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -5579,11 +5987,13 @@ input[type=search]::-webkit-search-cancel-button {
   background-color: #e5e5e5;
   color: #000;
   margin: 4px 4px 0 0;
-  padding: 0 10px;
+  padding: 0 8px;
   height: auto;
   line-height: 18px;
   vertical-align: middle;
-  border: 1px solid #e5e5e5
+  border: 1px solid #e5e5e5;
+  white-space: nowrap;
+  word-break: break-word
 }
 
 .tea-tag span {
@@ -5615,7 +6025,8 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-tag--edit {
-  padding: 0 25px 0 10px
+  padding: 0 25px 0 10px;
+  white-space: normal
 }
 
 .tea-tag--edit span {
@@ -5645,6 +6056,7 @@ input[type=search]::-webkit-search-cancel-button {
   border: 1px solid #ddd;
   font-size: 0;
   min-height: 30px;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -5675,11 +6087,67 @@ input[type=search]::-webkit-search-cancel-button {
   width: 100%
 }
 
+.tea-tag.is-blue {
+  background-color: #e5f0ff;
+  border-color: #e5f0ff;
+  color: #006eff
+}
+
+.tea-tag.is-blue-dark {
+  background-color: #006eff;
+  border-color: #006eff;
+  color: #fff
+}
+
+.tea-tag.is-warning {
+  background-color: #ffeed5;
+  border-color: #ffeed5;
+  color: #ff9d00
+}
+
+.tea-tag.is-warning-dark {
+  background-color: #ff9d00;
+  border-color: #ff9d00;
+  color: #fff
+}
+
+.tea-tag.is-error {
+  background-color: rgba(229, 69, 69, .14);
+  border-color: transparent;
+  color: #e54545
+}
+
+.tea-tag.is-error-dark {
+  background-color: #e54545;
+  border-color: #e54545;
+  color: #fff
+}
+
+.tea-tag.is-success {
+  background-color: #e9f6ea;
+  border-color: #e9f6ea;
+  color: #0abf5b
+}
+
+.tea-tag.is-success-dark {
+  background-color: #0abf5b;
+  border-color: #0abf5b;
+  color: #fff
+}
+
+.tea-tag.tea-tag--spaceless {
+  margin: 0
+}
+
 .tea-slider {
   min-height: 30px;
   display: table;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
   padding-bottom: 10px;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center
 }
 
@@ -5687,7 +6155,10 @@ input[type=search]::-webkit-search-cancel-button {
   position: relative;
   height: 4px;
   padding: 10px 0;
+  -webkit-box-sizing: initial;
   box-sizing: initial;
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
@@ -5765,20 +6236,7 @@ input[type=search]::-webkit-search-cancel-button {
   z-index: auto
 }
 
-.tea-slider__extend {
-  position: relative;
-  flex: 0;
-  white-space: nowrap;
-  padding: 0 0 0 15px;
-  display: inline-block\9;
-  vertical-align: middle\9
-}
-
-.tea-slider:hover .tea-slider__bar {
-  background-color: #bbb
-}
-
-.tea-slider:hover .tea-slider__handle-inner:after {
+.tea-slider__handle-inner:active:after {
   content: "";
   position: absolute;
   width: 24px;
@@ -5790,6 +6248,21 @@ input[type=search]::-webkit-search-cancel-button {
   top: -5px;
   border-radius: 100%;
   z-index: -1
+}
+
+.tea-slider__extend {
+  position: relative;
+  -webkit-box-flex: 0;
+  -ms-flex: 0;
+  flex: 0;
+  white-space: nowrap;
+  padding: 0 0 0 15px;
+  display: inline-block\9;
+  vertical-align: middle\9
+}
+
+.tea-slider:hover .tea-slider__bar {
+  background-color: #bbb
 }
 
 .tea-slider.is-disabled,
@@ -5887,6 +6360,7 @@ input[type=search]::-webkit-search-cancel-button {
   min-height: 120px;
   min-width: 300px;
   padding: 10px;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   border: 1px dashed #ddd;
   background-color: #fff;
@@ -5947,6 +6421,7 @@ input[type=search]::-webkit-search-cancel-button {
   height: 100px;
   min-width: 180px;
   padding-left: 10px;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   display: table-cell;
   vertical-align: top;
@@ -6006,9 +6481,14 @@ input[type=search]::-webkit-search-cancel-button {
 .tea-info-drag {
   min-height: 192px;
   background-color: #f2f2f2;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   display: none;
+  -ms-flex-pack: center;
+  -webkit-box-pack: center;
   justify-content: center;
+  -ms-flex-align: center;
+  -webkit-box-align: center;
   align-items: center;
   cursor: default
 }
@@ -6019,6 +6499,8 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-upload__body.tea-form-upload-drag--drag .tea-info-drag {
   border: 1px dashed #006eff;
+  display: -ms-flexbox;
+  display: -webkit-box;
   display: flex;
   position: absolute;
   left: 0;
@@ -6097,6 +6579,7 @@ input[type=search]::-webkit-search-cancel-button {
   margin-bottom: -1px
 }
 
+.tea-transfer.tea-transfer--no-search .tea-transfer__inner,
 .tea-transfer__cell:last-of-type .tea-transfer__inner {
   height: 380px
 }
@@ -6121,6 +6604,8 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-calendar__body {
+  display: -ms-flexbox;
+  display: -webkit-box;
   display: flex
 }
 
@@ -6131,6 +6616,8 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-calendar__table {
+  -ms-flex: 1;
+  -webkit-box-flex: 1;
   flex: 1;
   border-collapse: collapse;
   border-spacing: 0;
@@ -6168,6 +6655,8 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-calendar__caption {
+  -ms-flex: 100% 0 0;
+  -webkit-box-flex: 100%;
   flex: 100% 0 0;
   padding: 0 15px;
   text-align: left;
@@ -6188,22 +6677,33 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-calendar__header-group,
 .tea-calendar__row {
+  display: -ms-flexbox;
+  display: -webkit-box;
   display: flex;
+  -ms-flex: auto;
+  -webkit-box-flex: 1;
   flex: auto
 }
 
 .tea-calendar__row-group {
   font-size: 0;
+  -ms-flex: 100%;
+  -webkit-box-flex: 100%;
   flex: 100%
 }
 
 .tea-calendar__type-wrap {
+  display: -ms-flexbox;
+  display: -webkit-box;
   display: flex;
+  -ms-flex-wrap: wrap;
   flex-wrap: wrap;
   padding: 0 10px 10px
 }
 
 .tea-calendar__cell {
+  -ms-flex: auto;
+  -webkit-box-flex: 1;
   flex: auto;
   text-align: center;
   vertical-align: middle;
@@ -6263,6 +6763,8 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-list.tea-list--calendar-time {
+  -ms-flex: 1 0 88px;
+  -webkit-box-flex: 1;
   flex: 1 0 88px;
   border-left: 1px solid #ddd;
   border-top: 1px solid #ddd;
@@ -6338,11 +6840,11 @@ input[type=search]::-webkit-search-cancel-button {
   right: 10px;
   width: 16px;
   height: 16px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   cursor: pointer;
   z-index: 1;
-  background-position: 82.71% 19.580000000000002%;
+  background-position: 82.71% 29.099999999999998%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -6351,9 +6853,9 @@ input[type=search]::-webkit-search-cancel-button {
 .tea-datepicker__input.is-hover:after,
 .tea-datetimepicker__input.is-hover:after,
 .tea-monthpicker__input.is-hover:after {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 84.58% 99.47%;
+  background-position: 91.12% 76.72%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -6381,20 +6883,20 @@ input[type=search]::-webkit-search-cancel-button {
   right: 10px;
   width: 16px;
   height: 16px;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   cursor: pointer;
   z-index: 1;
-  background-position: 55.61000000000001% 34.39%;
+  background-position: 55.61000000000001% 43.919999999999995%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
 }
 
 .tea-timepicker__input.is-hover:after {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 84.58% 99.47%;
+  background-position: 91.12% 76.72%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -6558,6 +7060,10 @@ input[type=search]::-webkit-search-cancel-button {
   text-decoration: underline
 }
 
+.tea-table .tea-table__icon-wrap {
+  font-size: 0
+}
+
 .tea-table .tea-form-check .tea-checkbox,
 .tea-table .tea-form-check .tea-radio {
   top: 1px
@@ -6628,14 +7134,14 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-table__sortbtn.is-active,
 .tea-table__sortbtn:hover {
-  color: #444
+  color: #000
 }
 
 .tea-table__sortbtn.is-active .tea-icon-sort,
 .tea-table__sortbtn:hover .tea-icon-sort {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 59.35% 99.47%;
+  background-position: 76.17% 99.47%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -6643,14 +7149,14 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-table__filterbtn.is-active .tea-dropdown__value,
 .tea-table__filterbtn:hover .tea-dropdown__value {
-  color: #444
+  color: #000
 }
 
 .tea-table__filterbtn.is-active .tea-icon-filtrate,
 .tea-table__filterbtn:hover .tea-icon-filtrate {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
-  background-position: 8.88% 70.89999999999999%;
+  background-position: 17.29% 70.89999999999999%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -6688,6 +7194,7 @@ input[type=search]::-webkit-search-cancel-button {
   font-size: 0;
   padding-left: 10px;
   padding-right: 10px;
+  -webkit-box-sizing: initial;
   box-sizing: initial
 }
 
@@ -6759,6 +7266,10 @@ input[type=search]::-webkit-search-cancel-button {
   background-color: #f2f2f2
 }
 
+.tea-table__box tbody tr.no-hover:hover {
+  background-color: #fff
+}
+
 .tea-table__box tbody tr.is-disabled {
   background-color: #fff;
   opacity: .5;
@@ -6823,8 +7334,7 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-table__box .tea-table__tr--blank-new .tea-action-state {
   display: block;
-  text-align: center;
-  margin: 26px 0
+  text-align: center
 }
 
 .tea-table__body .tr__detailrow>td {
@@ -6886,6 +7396,10 @@ input[type=search]::-webkit-search-cancel-button {
 .tea-table__body tr:hover .tea-icon.is-visibility {
   visibility: visible;
   cursor: pointer
+}
+
+.tea-table__body tr:hover .tea-text-with-icon .tea-icon {
+  visibility: visible
 }
 
 .tea-list {
@@ -6999,8 +7513,8 @@ input[type=search]::-webkit-search-cancel-button {
   position: absolute;
   vertical-align: middle;
   background-repeat: no-repeat;
-  background-position: 91.12% 76.72%;
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-position: 0.47000000000000003% 99.47%;
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-size: 1437.5% 1281.25%;
 }
@@ -7030,6 +7544,11 @@ input[type=search]::-webkit-search-cancel-button {
 .tea-list--option.tea-list--checkoption .tea-form-check .tea-checkbox {
   top: 6px;
   left: 10px
+}
+
+.tea-list--option.tea-list--checkoption .tea-action-state {
+  display: block;
+  padding: 6px 10px
 }
 
 .tea-list--option>li.is-disabled {
@@ -7066,6 +7585,7 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-announce {
   width: 100%;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   padding-right: 80px;
   position: relative
@@ -7220,11 +7740,13 @@ input[type=search]::-webkit-search-cancel-button {
   border-radius: 0;
   background-color: #fff;
   line-height: 1.5;
+  -webkit-box-shadow: 1px 1.73px 3px 0 rgba(0, 0, 0, .1);
   box-shadow: 1px 1.73px 3px 0 rgba(0, 0, 0, .1);
   position: static !important;
   left: 50%;
   top: 50%;
   color: #000;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   white-space: normal;
   word-wrap: break-word
@@ -7235,6 +7757,7 @@ input[type=search]::-webkit-search-cancel-button {
   color: #fff;
   background-color: #333;
   border-color: #333;
+  -webkit-box-shadow: inherit;
   box-shadow: inherit;
   word-wrap: break-word;
   border-radius: 4px
@@ -7275,6 +7798,7 @@ input[type=search]::-webkit-search-cancel-button {
   color: #be3b38;
   background-color: #fbe3e3;
   border-color: #fbe3e3;
+  -webkit-box-shadow: inherit;
   box-shadow: inherit
 }
 
@@ -7407,7 +7931,8 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-tooltip {
-  display: inline-block
+  display: inline-block;
+  max-width: 300px
 }
 
 .tea-tooltip .tea-tooltip__inner {
@@ -7415,6 +7940,7 @@ input[type=search]::-webkit-search-cancel-button {
   color: #fff;
   background-color: #333;
   border-color: #333;
+  -webkit-box-shadow: inherit;
   box-shadow: inherit;
   border-radius: 4px;
   word-wrap: break-word
@@ -7506,7 +8032,9 @@ input[type=search]::-webkit-search-cancel-button {
   width: 550px;
   background-color: #fff;
   padding: 25px;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
+  -webkit-box-shadow: 1px 1.73px 20px 0 rgba(0, 0, 0, .2);
   box-shadow: 1px 1.73px 20px 0 rgba(0, 0, 0, .2)
 }
 
@@ -7532,6 +8060,11 @@ input[type=search]::-webkit-search-cancel-button {
   display: inline-block;
   font-size: 14px;
   line-height: 26px
+}
+
+.tea-dialog__headersubtitle {
+  font-size: 12px;
+  color: #888
 }
 
 .tea-dialog__header .tea-btn--icon {
@@ -7735,6 +8268,7 @@ input[type=search]::-webkit-search-cancel-button {
   border-radius: 2px;
   background: #e5f0ff;
   position: relative;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   margin-left: auto;
   margin-right: auto;
@@ -7840,6 +8374,7 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-cascader-menu {
   min-width: 198px;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -7903,13 +8438,17 @@ input[type=search]::-webkit-search-cancel-button {
   position: relative;
   width: 200px;
   background-color: #333;
-  display: box;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: vertical;
   -moz-flex-direction: column;
+  -ms-flex-direction: column;
   -o-flex-direction: column;
   flex-direction: column;
   height: 100%;
   vertical-align: top;
+  -webkit-transition: all .2s cubic-bezier(.4, 0, .2, 1);
   transition: all .2s cubic-bezier(.4, 0, .2, 1);
   overflow-x: hidden
 }
@@ -7917,6 +8456,8 @@ input[type=search]::-webkit-search-cancel-button {
 .tea-menu__title {
   color: #fff;
   padding: 0 20px 0 24px;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   height: 50px;
   width: 200px
@@ -7924,9 +8465,12 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-menu__title,
 .tea-menu__title-back {
-  display: box;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: horizontal;
   -moz-flex-direction: row;
+  -ms-flex-direction: row;
   -o-flex-direction: row;
   flex-direction: row
 }
@@ -7947,8 +8491,6 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-menu__title-main,
 .tea-menu__title-text {
-  display: inline-block;
-  vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -7963,8 +8505,11 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-menu__title-list {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   display: -webkit-box;
+  -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden
 }
@@ -7997,6 +8542,8 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-menu__body {
   width: 200px;
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
   flex: 1;
   overflow: auto;
   overflow-x: hidden
@@ -8069,6 +8616,7 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-menu__submenu .tea-menu__list .tea-menu__item {
   height: 33px !important;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box
 }
 
@@ -8168,11 +8716,11 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-menu__text .tea-icon-externallink {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   margin-top: -2px;
   margin-left: 5px;
-  background-position: 65.89% 48.15%;
+  background-position: 65.89% 57.67%;
   background-size: 1437.5% 1281.25%;
   ;
   background-repeat: no-repeat
@@ -8220,30 +8768,31 @@ input[type=search]::-webkit-search-cancel-button {
   border-top: 1px solid #262626
 }
 
-.tea-sidebar-is-collapsed.tea-menu,
-.tea-sidebar-is-collapsed.tea-menu .tea-menu__body {
+.tea-menu-is-collapsed.tea-menu,
+.tea-menu-is-collapsed.tea-menu .tea-menu__body {
   width: 63px;
   overflow-x: hidden;
+  -webkit-transition: all .2s cubic-bezier(.4, 0, .2, 1);
   transition: all .2s cubic-bezier(.4, 0, .2, 1)
 }
 
-.tea-sidebar-is-collapsed .tea-menu__title-icon {
+.tea-menu-is-collapsed .tea-menu__title-icon {
   display: block;
   position: absolute;
   left: 15px;
   top: 10px
 }
 
-.tea-sidebar-is-collapsed.tea-menu .tea-menu__text,
-.tea-sidebar-is-collapsed.tea-menu .tea-menu__title .tea-h2 {
+.tea-menu-is-collapsed.tea-menu .tea-menu__text,
+.tea-menu-is-collapsed.tea-menu .tea-menu__title .tea-h2 {
   display: none
 }
 
-.tea-sidebar-is-collapsed.tea-menu .tea-menu__item {
+.tea-menu-is-collapsed.tea-menu .tea-menu__item {
   height: 37px
 }
 
-.tea-sidebar-is-collapsed.tea-menu .tea-list__label .tea-menu__item {
+.tea-menu-is-collapsed.tea-menu .tea-list__label .tea-menu__item {
   border-top: 1px solid #262626;
   margin-top: 19px;
   padding-top: 19px;
@@ -8253,7 +8802,7 @@ input[type=search]::-webkit-search-cancel-button {
   height: 0
 }
 
-.tea-sidebar-is-collapsed.tea-menu .tea-menu__label {
+.tea-menu-is-collapsed.tea-menu .tea-menu__label {
   border-top: 1px solid #262626;
   margin-top: 20px;
   padding-top: 20px;
@@ -8263,7 +8812,8 @@ input[type=search]::-webkit-search-cancel-button {
   height: 25px
 }
 
-.tea-sidebar-is-collapsed .tea-menu__fold-icon .tea-icon-fold {
+.tea-menu-is-collapsed .tea-menu__fold-icon .tea-icon-fold,
+.tea-menu-is-locked.tea-menu-is-collapsed .tea-menu__fold-icon .tea-icon-fold {
   -webkit-transform: rotate(180deg);
   transform: rotate(180deg)
 }
@@ -8319,29 +8869,35 @@ input[type=search]::-webkit-search-cancel-button {
   background-color: #fff
 }
 
-.tea-sidebar-is-collapsed.tea-menu--light.tea-menu {
+.tea-menu-is-collapsed.tea-menu--light.tea-menu {
   width: 63px
 }
 
-.tea-sidebar-is-collapsed.tea-menu.tea-menu--light .tea-menu__label {
+.tea-menu-is-collapsed.tea-menu.tea-menu--light .tea-menu__label {
   border-top: 1px solid #e2e2e2
 }
 
-.tea-sidebar-is-hover .tea-menu {
+.tea-menu-is-locked.tea-menu {
   position: absolute;
   z-index: 1
 }
 
-.tea-sidebar.tea-sidebar-is-hover+.tea-content {
-  margin-left: 63px;
-  transition: all .2s cubic-bezier(.4, 0, .2, 1)
+.tea-menu-is-locked .tea-menu__fold-icon .tea-icon-fold {
+  -webkit-transform: rotate(180deg);
+  transform: rotate(180deg)
 }
 
 .tea-nav {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: horizontal;
   -moz-flex-direction: row;
+  -ms-flex-direction: row;
   -o-flex-direction: row;
   flex-direction: row;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   padding: 0 15px;
   height: 50px;
@@ -8349,7 +8905,18 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-nav__logo {
-  padding-right: 15px
+  padding-right: 15px;
+  position: relative
+}
+
+.tea-nav__logo:before {
+  content: "";
+  border-right: 1px solid #000;
+  width: 1px;
+  position: absolute;
+  top: -9px;
+  right: -2px;
+  bottom: -9px
 }
 
 .tea-nav__logo a {
@@ -8359,10 +8926,16 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-nav__service {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: horizontal;
   -moz-flex-direction: row;
+  -ms-flex-direction: row;
   -o-flex-direction: row;
   flex-direction: row;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
   align-items: center;
   height: 100%;
   position: relative
@@ -8412,7 +8985,7 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-nav__dropdown .tea-dropdown__header:hover .tea-icon-arrowdown {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 25.7% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -8429,7 +9002,7 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .tea-nav__dropdown.is-selected .tea-icon-arrowdown {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 25.7% 89.95%;
   background-size: 1437.5% 1281.25%;
@@ -8439,6 +9012,7 @@ input[type=search]::-webkit-search-cancel-button {
 
 .tea-nav__dropdown-box {
   background-color: #191919;
+  -webkit-box-shadow: none;
   box-shadow: none;
   border: 0;
   padding: 10px 0;
@@ -8482,12 +9056,13 @@ input[type=search]::-webkit-search-cancel-button {
   z-index: 1
 }
 
-.tea-nav__mes-num {
+.tea-nav__operation-inner .tea-badge.is-error-dark {
   background-color: #e54545;
   border: 2px solid #262626;
   height: 20px;
   font-size: 12px;
   color: #fff;
+  -webkit-box-sizing: border-box;
   box-sizing: border-box;
   position: absolute;
   border-radius: 20px;
@@ -8514,7 +9089,7 @@ input[type=search]::-webkit-search-cancel-button {
 }
 
 .is-selected .tea-nav__operation-inner .tea-icon-news {
-  background-image: url(sprite/tea-0.0.6.min-201906260959.svg);
+  background-image: url(sprite/tea-0.0.10.min-20199232030.svg);
   ;
   background-position: 74.3% 67.2%;
   background-size: 1437.5% 1281.25%;
@@ -8526,19 +9101,6 @@ input[type=search]::-webkit-search-cancel-button {
   background-image: url(assets/image/slice/svg/icon-help.svg?fill=#ffffff)
 }
 
-.tea-nav__split {
-  position: relative
-}
-
-.tea-nav__split:before {
-  content: "";
-  border-right: 1px solid #000;
-  height: 24px;
-  width: 1px;
-  position: absolute;
-  top: 13px
-}
-
 #MAXIM {
-  content: "yog20190626095959"
+  content: "yog2019923203016"
 }
