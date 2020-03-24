@@ -16,6 +16,7 @@ import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { EditLbcfBackGroupItemPanel } from './EditLbcfBackGroupItemPanel';
 import { reduceNs } from '../../../../../../helpers';
+import { BackendType } from '@src/modules/cluster/constants/Config';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -185,7 +186,7 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
       if (backGroupmode === 'create') {
         lbcfBackGroupEditions.forEach(item => {
           let labelObject = {};
-          let { labels, ports, name } = item;
+          let { labels, ports, name, backgroupType, serviceName, staticAddress, byName } = item;
           labels.forEach(label => {
             labelObject[label.key] = label.value;
           });
@@ -198,17 +199,27 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
             },
             spec: {
               lbName: resourceIns,
-              pods: {
-                // port: ports.length
-                //   ? ports.map(item => {
-                //       return { portNumber: +item.portNumber, protocol: item.protocol };
-                //     })
-                //   : undefined,
-                port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
-                byLabel: {
-                  selector: labels.length ? labelObject : undefined
-                }
-              }
+              pods:
+                backgroupType === BackendType.Pods
+                  ? {
+                      port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
+                      byLabel: labels.length
+                        ? {
+                            selector: labelObject
+                          }
+                        : undefined,
+                      byName: byName.length ? byName.map(name => name.value) : undefined
+                    }
+                  : undefined,
+              service:
+                backgroupType === BackendType.Service
+                  ? {
+                      name: serviceName,
+                      port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
+                      nodeSelector: labels.length ? labelObject : undefined
+                    }
+                  : undefined,
+              static: backgroupType === BackendType.Static ? staticAddress.map(address => address.value) : undefined
             }
           };
           jsonData = JSON.parse(JSON.stringify(jsonData));
@@ -238,20 +249,41 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
           });
         lbcfBackGroupEditions.forEach(item => {
           let labelObject = {};
-          let { labels, ports, name } = item;
+          let { labels, ports, name, backgroupType, serviceName, staticAddress, byName } = item;
           labels.forEach(label => {
             labelObject[label.key] = label.value;
           });
-          let jsonData = {
-            spec: {
-              pods: {
-                port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
-                byLabel: {
-                  selector: Object.assign({}, labelArray[item.name], labelObject)
+          let jsonData = {};
+          if (backgroupType === BackendType.Pods) {
+            jsonData = {
+              spec: {
+                pods: {
+                  port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
+                  byLabel: {
+                    selector: Object.assign({}, labelArray[item.name], labelObject)
+                  },
+                  byName: byName.length ? byName.map(name => name.value) : null
                 }
               }
-            }
-          };
+            };
+          } else if (backgroupType === BackendType.Service) {
+            jsonData = {
+              spec: {
+                service: {
+                  name: serviceName,
+                  port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
+                  nodeSelector: Object.assign({}, labelArray[item.name], labelObject)
+                }
+              }
+            };
+          } else {
+            jsonData = {
+              spec: {
+                static: staticAddress.map(name => name.value)
+              }
+            };
+          }
+
           jsonData = JSON.parse(JSON.stringify(jsonData));
           let resource: CreateResource = {
             id: uuid(),

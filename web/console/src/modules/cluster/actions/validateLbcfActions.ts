@@ -5,11 +5,12 @@ import { cloneDeep } from '../../common/utils';
 import * as ActionType from '../constants/ActionType';
 import { LbcfEdit, RootState } from '../models';
 import { Selector } from '../models/ServiceEdit';
+import { BackendType } from '../constants/Config';
 
 type GetState = () => RootState;
 
 export const validateLbcfActions = {
-  /** 校验名称是否正确 */
+  /** 校验名称是否正确  复用*/
   _validateLbcfName(name: string) {
     let reg = /^[a-z]([-a-z0-9]*[a-z0-9])?$/,
       status = 0,
@@ -18,13 +19,13 @@ export const validateLbcfActions = {
     // 验证服务名称
     if (!name) {
       status = 2;
-      message = t('负载均衡名称不能为空');
+      message = t('名称不能为空');
     } else if (name.length > 63) {
       status = 2;
-      message = t('负载均衡名称不能超过63个字符');
+      message = t('名称不能超过63个字符');
     } else if (!reg.test(name)) {
       status = 2;
-      message = t('负载均衡名称格式不正确');
+      message = t('名称格式不正确');
     } else {
       status = 1;
       message = '';
@@ -138,6 +139,24 @@ export const validateLbcfActions = {
     };
   },
 
+  validateLbcfBackGroupServiceName(backGroupId: string, value: string) {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      backGroupEdition.v_serviceName = validateLbcfActions._validateLbcfName(value);
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
   validatePort(backGroupId: string, id: string, value: string) {
     return async (dispatch, getState: GetState) => {
       let {
@@ -224,21 +243,97 @@ export const validateLbcfActions = {
       });
     };
   },
+
+  validateAddress(backGroupId: string, id: string) {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      let { staticAddress } = backGroupEdition;
+      let index = staticAddress.findIndex(item => item.id === id);
+      staticAddress[index].v_value = validateLbcfActions._validateStaticAddress(staticAddress[index].value);
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
+  _validateStaticAddress(data: string) {
+    let status = 0,
+      message = '';
+
+    if (!data) {
+      status = 2;
+      message = t('值不能为空');
+    } else {
+      status = 1;
+      message = '';
+    }
+
+    return { status, message };
+  },
+
+  validatePodName(backGroupId: string, id: string) {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      let { byName } = backGroupEdition;
+      let index = byName.findIndex(item => item.id === id);
+      byName[index].v_value = validateLbcfActions._validateLbcfName(byName[index].value);
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
   /** 校验整个表单 */
   _validateGameBGEdit(lbcfEdit: LbcfEdit) {
     let result = true;
     lbcfEdit.lbcfBackGroupEditions.forEach(item => {
-      let { ports, labels, name } = item;
+      let { ports, labels, name, backgroupType, staticAddress, serviceName, byName } = item;
       result = result && validateLbcfActions._validateLbcfName(name).status === 1;
-      ports.forEach(port => {
-        result = result && validateLbcfActions._validatePort(port.portNumber).status === 1;
-      });
-      labels.forEach(label => {
-        result =
-          result &&
-          validateLbcfActions._validateLabelContent(label.key, true).status === 1 &&
-          validateLbcfActions._validateLabelContent(label.value, false).status === 1;
-      });
+      if (backgroupType === BackendType.Static) {
+        staticAddress.forEach(address => {
+          result = result && validateLbcfActions._validateStaticAddress(address.value).status === 1;
+        });
+      } else if (backgroupType === BackendType.Service) {
+        result = result && validateLbcfActions._validateLbcfName(serviceName).status === 1;
+        ports.forEach(port => {
+          result = result && validateLbcfActions._validatePort(port.portNumber).status === 1;
+        });
+        labels.forEach(label => {
+          result =
+            result &&
+            validateLbcfActions._validateLabelContent(label.key, true).status === 1 &&
+            validateLbcfActions._validateLabelContent(label.value, false).status === 1;
+        });
+      } else {
+        byName.forEach(name => {
+          result = result && validateLbcfActions._validateLbcfName(name.value).status === 1;
+        });
+        ports.forEach(port => {
+          result = result && validateLbcfActions._validatePort(port.portNumber).status === 1;
+        });
+        labels.forEach(label => {
+          result =
+            result &&
+            validateLbcfActions._validateLabelContent(label.key, true).status === 1 &&
+            validateLbcfActions._validateLabelContent(label.value, false).status === 1;
+        });
+      }
     });
     return result;
   },
@@ -251,15 +346,34 @@ export const validateLbcfActions = {
         }
       } = getState();
       lbcfBackGroupEditions.forEach(item => {
-        let { ports, labels, id, name } = item;
+        let { ports, labels, id, name, backgroupType, serviceName, staticAddress, byName } = item;
         dispatch(validateLbcfActions.validateLbcfBackGroupName(id + '', name));
-        ports.forEach(port => {
-          dispatch(validateLbcfActions.validatePort(id + '', port.id + '', port.portNumber));
-        });
-        labels.forEach(label => {
-          dispatch(validateLbcfActions.validateLabelContent(id + '', label.id + '', { key: label.key }));
-          dispatch(validateLbcfActions.validateLabelContent(id + '', label.id + '', { value: label.value }));
-        });
+
+        if (backgroupType === BackendType.Static) {
+          staticAddress.forEach(address => {
+            dispatch(validateLbcfActions.validateAddress(id + '', address.id + ''));
+          });
+        } else if (backgroupType === BackendType.Service) {
+          dispatch(validateLbcfActions.validateLbcfBackGroupServiceName(id + '', serviceName));
+          ports.forEach(port => {
+            dispatch(validateLbcfActions.validatePort(id + '', port.id + '', port.portNumber));
+          });
+          labels.forEach(label => {
+            dispatch(validateLbcfActions.validateLabelContent(id + '', label.id + '', { key: label.key }));
+            dispatch(validateLbcfActions.validateLabelContent(id + '', label.id + '', { value: label.value }));
+          });
+        } else {
+          byName.forEach(name => {
+            dispatch(validateLbcfActions.validateAddress(id + '', name.id + ''));
+          });
+          ports.forEach(port => {
+            dispatch(validateLbcfActions.validatePort(id + '', port.id + '', port.portNumber));
+          });
+          labels.forEach(label => {
+            dispatch(validateLbcfActions.validateLabelContent(id + '', label.id + '', { key: label.key }));
+            dispatch(validateLbcfActions.validateLabelContent(id + '', label.id + '', { value: label.value }));
+          });
+        }
       });
     };
   }

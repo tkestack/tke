@@ -688,3 +688,15 @@ export enum GPUTYPE {
   PGPU = 'Physical',
   VGPU = 'Virtual'
 }
+
+export enum BackendType {
+  Pods = 'Pods',
+  Service = 'Service',
+  Static = 'Static'
+}
+
+export const BackendTypeList = [
+  { text: BackendType.Pods, value: BackendType.Pods },
+  { text: BackendType.Service, value: BackendType.Service },
+  { text: BackendType.Static, value: BackendType.Static }
+];
