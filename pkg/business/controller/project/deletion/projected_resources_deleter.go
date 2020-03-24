@@ -296,7 +296,7 @@ func recalculateParentProjectUsed(deleter *projectedResourcesDeleter, project *b
 				}
 				businessUtil.SubClusterHardFromUsed(&parentProject.Status.Clusters, release)
 			}
-			_, err := deleter.businessClient.Projects().Update(parentProject)
+			_, err := deleter.businessClient.Projects().UpdateStatus(parentProject)
 			if err != nil {
 				log.Error("Failed to update the parent project status", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 				return err
