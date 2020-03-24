@@ -21,7 +21,6 @@
 # Frontend dependencies
 /web/console/node_modules
 /web/installer/node_modules
-/web/shell/node_modules
 /web/.pnp
 /web/.pnp.js
 /web/console/webpack/dist
@@ -47,3 +46,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# provider config
+/provider/
