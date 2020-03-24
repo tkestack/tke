@@ -26,6 +26,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -36,6 +37,7 @@ type Storage struct {
 	Binding *BindingREST
 	Events  *EventREST
 	Log     *LogREST
+	Exec *ExecREST
 }
 
 // REST implements pkg/api/rest.StandardStorage.
@@ -67,6 +69,9 @@ func NewStorage(_ genericregistry.RESTOptionsGetter, platformClient platforminte
 		},
 		Log: &LogREST{
 			platformClient: platformClient,
+		},
+		Exec: &ExecREST{
+			platformClient:platformClient,
 		},
 	}
 }
@@ -118,6 +123,7 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
+		VersionedParams(options, platform.ParameterCodec).
 		Body(obj).
 		Do().
 		Into(result); err != nil {

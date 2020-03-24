@@ -90,6 +90,7 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 			authorized authorizer.Decision
 			reason     string
 		)
+
 		// first check if user is admin
 		tkeAttributes := ConvertTKEAttributes(ctx, attributes)
 		authorized = UnprotectedAuthorized(tkeAttributes)
@@ -215,7 +216,7 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 		case registry.GroupName:
 			tkeAttribs.Resource = fmt.Sprintf("registrynamespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
 		default:
-			if resourceType != "namespace"{
+			if resourceType != "namespace" {
 				tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
 			}
 		}
