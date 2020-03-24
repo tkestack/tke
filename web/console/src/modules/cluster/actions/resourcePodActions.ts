@@ -1,6 +1,4 @@
-import {
-    extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction
-} from '@tencent/ff-redux';
+import { extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { apiVersion } from '../../../../config/resource/common';
@@ -8,9 +6,7 @@ import { ResourceConfigVersionMap } from '../../../../config/resourceConfig';
 import { cloneDeep } from '../../../../src/modules/common';
 import { ResourceInfo } from '../../common/models';
 import { IsInNodeManageDetail } from '../components/resource/resourceDetail/ResourceDetail';
-import {
-    IsPodShowLoadingIcon, reduceContainerId
-} from '../components/resource/resourceDetail/ResourcePodPanel';
+import { IsPodShowLoadingIcon, reduceContainerId } from '../components/resource/resourceDetail/ResourcePodPanel';
 import * as ActionType from '../constants/ActionType';
 import { PollEventName } from '../constants/Config';
 import { Pod, PodFilterInNode, ResourceFilter, RootState } from '../models';
@@ -65,7 +61,12 @@ const fetchPodActions = generateFetcherActionCreator({
         }
       };
       k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-      response = await WebAPI.fetchResourceList(podQuery, podResourceInfo, isClearData, k8sQueryObj, false, false);
+      response = await WebAPI.fetchResourceList(podQuery, {
+        resourceInfo: podResourceInfo,
+        isClearData,
+        k8sQueryObj,
+        isNeedSpecific: false
+      });
     } else {
       // 这里是workload里面的拉取pod列表的逻辑
       response = await WebAPI.fetchExtraResourceList(podQuery, resourceInfo, isClearData, 'pods');

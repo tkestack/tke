@@ -1,13 +1,9 @@
-import {
-    createFFListActions, extend, FetchOptions, generateFetcherActionCreator, uuid
-} from '@tencent/ff-redux';
+import { createFFListActions, extend, FetchOptions, generateFetcherActionCreator, uuid } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
 import { Cluster, ClusterFilter, ResourceInfo } from '../../common/';
-import {
-    TellIsNeedFetchNS, TellIsNotNeedFetchResource
-} from '../components/resource/ResourceSidebarPanel';
+import { TellIsNeedFetchNS, TellIsNotNeedFetchResource } from '../components/resource/ResourceSidebarPanel';
 import * as ActionType from '../constants/ActionType';
 import { FFReduxActionName } from '../constants/Config';
 import { initAllcationRatioEdition } from '../constants/initState';
@@ -205,9 +201,11 @@ const restActions = {
       k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
       let response = await WebAPI.fetchResourceList(
         { filter: {}, search: '' },
-        clustercredentialResourceInfo,
-        false,
-        k8sQueryObj
+        {
+          resourceInfo: clustercredentialResourceInfo,
+          isClearData: false,
+          k8sQueryObj
+        }
       );
       if (response.records.length) {
         dispatch({

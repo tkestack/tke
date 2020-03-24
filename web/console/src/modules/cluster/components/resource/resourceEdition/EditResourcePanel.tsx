@@ -47,8 +47,8 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
   componentWillReceiveProps(nextProps: RootProps) {
     let oldYamlList = this.props.subRoot.resourceDetailState.yamlList,
       newYamlList = nextProps.subRoot.resourceDetailState.yamlList,
-      resourceSelection = this.props.subRoot.resourceOption.resourceSelection,
-      newResourceSelection = nextProps.subRoot.resourceOption.resourceSelection,
+      resourceSelection = this.props.subRoot.resourceOption.ffResourceList.selection,
+      newResourceSelection = nextProps.subRoot.resourceOption.ffResourceList.selection,
       newMode = nextProps.subRoot.mode;
 
     if (oldYamlList.data.recordCount === 0 && newYamlList.data.recordCount) {
@@ -189,7 +189,7 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
   _handleSubmit() {
     let { actions, subRoot, namespaceSelection, region, route } = this.props,
       { resourceInfo, mode, resourceOption } = subRoot,
-      { resourceSelection } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     if (this.state.config !== '') {
       let resource: CreateResource = {
@@ -199,7 +199,7 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
         namespace: namespaceSelection,
         yamlData: this.state.config,
         clusterId: route.queries['clusterId'],
-        resourceIns: mode === 'modify' ? resourceSelection[0].metadata.name : ''
+        resourceIns: mode === 'modify' ? ffResourceList.selection.metadata.name : ''
       };
 
       if (mode === 'apply') {

@@ -1,16 +1,19 @@
 import {
-    extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction
+  extend,
+  FetchOptions,
+  generateFetcherActionCreator,
+  RecordSet,
+  ReduxAction,
+  createFFListActions
 } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
 import { ResourceInfo } from '../../common/models';
 import { includes } from '../../common/utils';
-import {
-    IsResourceShowLoadingIcon
-} from '../components/resource/resourceTableOperation/ResourceTablePanel';
+import { IsResourceShowLoadingIcon } from '../components/resource/resourceTableOperation/ResourceTablePanel';
 import * as ActionType from '../constants/ActionType';
-import { PollEventName, ResourceNeedJudgeLoading } from '../constants/Config';
+import { PollEventName, ResourceNeedJudgeLoading, FFReduxActionName } from '../constants/Config';
 import { Resource, ResourceFilter, RootState } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
@@ -25,19 +28,18 @@ const fetchOptions: FetchOptions = {
   noCache: false
 };
 
-/** fetch resource list */
-const fetchResourceActions = generateFetcherActionCreator({
-  actionType: ActionType.FetchResourceList,
-  fetcher: async (getState: GetState, fetchOptions, dispatch) => {
+const listResourceActions = createFFListActions<Resource, ResourceFilter>({
+  actionName: FFReduxActionName.Resource_Workload,
+  fetcher: async (query, getState: GetState, fetchOptions) => {
     let { subRoot, projectNamespaceList, clusterVersion } = getState(),
       { resourceInfo, resourceOption, resourceName } = subRoot,
-      { resourceQuery } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
 
     let response: any;
     if (resourceName === 'lbcf') {
-      response = _reduceGameGateResource(clusterVersion, resourceQuery, resourceInfo, isClearData);
+      response = _reduceGameGateResource(clusterVersion, ffResourceList.query, resourceInfo, isClearData);
     } else if (resourceName === 'np') {
       let list = [];
       projectNamespaceList.data.records.forEach(item => {
@@ -61,21 +63,27 @@ const fetchResourceActions = generateFetcherActionCreator({
       };
       return result;
     } else {
-      response = await WebAPI.fetchResourceList(resourceQuery, resourceInfo, isClearData);
+      response = await WebAPI.fetchResourceList(ffResourceList.query, {
+        resourceInfo,
+        isClearData
+      });
     }
 
     return response;
   },
-  finish: async (dispatch, getState: GetState) => {
+  getRecord: (getState: GetState) => {
+    return getState().subRoot.resourceOption.ffResourceList;
+  },
+  onFinish: (record, dispatch, getState: GetState) => {
     let { subRoot, route } = getState(),
       { tab } = router.resolve(route),
       { resourceOption, mode, resourceName } = subRoot,
-      { resourceList } = resourceOption;
+      { ffResourceList } = resourceOption;
 
-    if (resourceList.data.recordCount) {
+    if (ffResourceList.list.data.recordCount) {
       let defaultResourceIns = route.queries['resourceIns'];
-      let finder = resourceList.data.records.find(item => item.metadata.name === defaultResourceIns);
-      dispatch(resourceActions.selectResource([finder ? finder : resourceList.data.records[0]]));
+      let finder = ffResourceList.list.data.records.find(item => item.metadata.name === defaultResourceIns);
+      dispatch(resourceActions.select(finder ? finder : ffResourceList.list.data.records[0]));
 
       /** ============== start 更新的时候，进行一些页面的初始化 =============  */
       if (mode === 'update' && resourceName === 'svc') {
@@ -96,7 +104,9 @@ const fetchResourceActions = generateFetcherActionCreator({
 
       /** ============== start 列表页，需要进行资源的轮询 ================= */
       if (mode === 'list' && includes(ResourceNeedJudgeLoading, resourceName)) {
-        if (resourceList.data.records.filter(item => IsResourceShowLoadingIcon(resourceName, item)).length === 0) {
+        if (
+          ffResourceList.list.data.records.filter(item => IsResourceShowLoadingIcon(resourceName, item)).length === 0
+        ) {
           dispatch(resourceActions.clearPollEvent());
         }
       } else {
@@ -112,9 +122,18 @@ const fetchResourceActions = generateFetcherActionCreator({
 async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceInfo, isClearData) {
   let gameBGresourceInfo = resourceConfig(clusterVersion).lbcf_bg;
   let gameBRresourceInfo = resourceConfig(clusterVersion).lbcf_br;
-  let gameBGList = await WebAPI.fetchResourceList(resourceQuery, gameBGresourceInfo, isClearData),
-    gameLBList = await WebAPI.fetchResourceList(resourceQuery, resourceInfo, isClearData),
-    gameBRList = await WebAPI.fetchResourceList(resourceQuery, gameBRresourceInfo, isClearData);
+  let gameBGList = await WebAPI.fetchResourceList(resourceQuery, {
+      resourceInfo: gameBGresourceInfo,
+      isClearData
+    }),
+    gameLBList = await WebAPI.fetchResourceList(resourceQuery, {
+      resourceInfo,
+      isClearData
+    }),
+    gameBRList = await WebAPI.fetchResourceList(resourceQuery, {
+      resourceInfo: gameBRresourceInfo,
+      isClearData
+    });
   gameLBList.records.forEach((item, index) => {
     let backGroups = [];
     gameBGList.records.forEach(backgroup => {
@@ -144,23 +163,7 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
   return gameLBList;
 }
 
-/** query resource list action */
-const queryResourceActions = generateQueryActionCreator({
-  actionType: ActionType.QueryResourceList,
-  bindFetcher: fetchResourceActions
-});
-
 const restActions = {
-  /** 在列表上选择具体的资源，如在deploymentList当中选择某个 deployment */
-  selectResource: (resource: Resource[]) => {
-    return async (dispatch, getState: GetState) => {
-      dispatch({
-        type: ActionType.SelectResource,
-        payload: resource
-      });
-    };
-  },
-
   /** 在列表上选择多个具体的资源，如在deploymentList当中选择某几个具体的deployment */
   selectMultipleResource: (resource: Resource[]) => {
     return async (dispatch, getState: GetState) => {
@@ -271,24 +274,24 @@ const restActions = {
         route,
         subRoot: {
           resourceName,
-          resourceOption: { resourceSelection }
+          resourceOption: { ffResourceList }
         }
       } = getState();
       let list = [];
       if (rsName === resourceName) {
         let defaultResourceIns =
-          route.queries['resourceIns'] || (resourceSelection[0] && resourceSelection[0].metadata.name);
+          route.queries['resourceIns'] || (ffResourceList.selection && ffResourceList.selection.metadata.name);
         list.push({ value: defaultResourceIns, text: defaultResourceIns });
       } else if (rsName === 'lbcf_bg') {
-        resourceSelection[0] &&
-          resourceSelection[0].spec.backGroups &&
-          resourceSelection[0].spec.backGroups.forEach(item => {
+        ffResourceList.selection &&
+          ffResourceList.selection.spec.backGroups &&
+          ffResourceList.selection.spec.backGroups.forEach(item => {
             list.push({ value: item.name, text: item.name });
           });
       } else if (rsName === 'lbcf_br') {
-        resourceSelection[0] &&
-          resourceSelection[0].spec.backGroups &&
-          resourceSelection[0].spec.backGroups.forEach(item => {
+        ffResourceList.selection &&
+          ffResourceList.selection.spec.backGroups &&
+          ffResourceList.selection.spec.backGroups.forEach(item => {
             for (let i = 0; i < item.backendRecords.length; ++i) {
               list.push({ value: item.backendRecords[i].name, text: item.backendRecords[i].name });
             }
@@ -356,7 +359,7 @@ const restActions = {
     resourceName: string,
     isNeedClear: boolean = true
   ) => {
-    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+    return async (dispatch, getState: GetState) => {
       let { clusterId, rid } = getState().route.queries;
       // 判断是否需要展示ns
       dispatch(resourceActions.toggleIsNeedFetchNamespace(isNeedFetchNamespace));
@@ -398,4 +401,4 @@ const restActions = {
   }
 };
 
-export const resourceActions = extend(fetchResourceActions, queryResourceActions, restActions);
+export const resourceActions = extend(listResourceActions, restActions);

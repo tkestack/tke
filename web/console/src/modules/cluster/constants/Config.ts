@@ -4,7 +4,9 @@ export const FFReduxActionName = {
   CLUSTER: 'cluster',
   REGION: 'region',
   COMPUTER: 'computer',
-  DETAILEVENT: 'DETAILEVENT'
+  DETAILEVENT: 'DETAILEVENT',
+
+  Resource_Workload: 'Resource_Workload'
 };
 /** ========================= end FFRedux的相关配置 ======================== */
 

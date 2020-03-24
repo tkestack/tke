@@ -14,9 +14,7 @@ import { DetailDisplayFieldProps, DetailInfoProps } from '../../../../common/mod
 import { cloneDeep, isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { ExternalTrafficPolicy, ResourceStatus, SessionAffinity } from '../../../constants/Config';
-import {
-    BackendGroup, BackendRecord, LbcfResource, PortMap, Resource, RuleMap
-} from '../../../models';
+import { BackendGroup, BackendRecord, LbcfResource, PortMap, Resource, RuleMap } from '../../../models';
 import { RootProps } from '../../ClusterApp';
 
 interface ResourceDetailPanelState {
@@ -39,10 +37,10 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
   render() {
     let { subRoot } = this.props,
       { resourceOption, resourceName } = subRoot,
-      { resourceSelection } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     let istapp = resourceName === 'tapp';
-    let resourceIns = cloneDeep(resourceSelection[0]);
+    let resourceIns = cloneDeep(ffResourceList.selection);
 
     if (istapp && resourceIns) {
       //tapp 需要展示灰度升级的container信息
