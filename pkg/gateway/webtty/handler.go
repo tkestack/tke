@@ -19,6 +19,7 @@
 package webtty
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -154,9 +155,10 @@ type streamHandler struct {
 }
 
 type xtermMessage struct {
-	Input string `json:"input"`
-	Rows  uint16 `json:"rows"`
-	Cols  uint16 `json:"cols"`
+	Input   string `json:"input"`
+	MsgType string `json:"type"`
+	Rows    uint16 `json:"rows"`
+	Cols    uint16 `json:"cols"`
 }
 
 func (handler *streamHandler) Next() (size *remotecommand.TerminalSize) {
@@ -165,27 +167,32 @@ func (handler *streamHandler) Next() (size *remotecommand.TerminalSize) {
 	return
 }
 
-func (handler *streamHandler) Read(p []byte) (size int, err error) {
+func (handler *streamHandler) Read(p []byte) (int, error) {
 	msg, err := handler.wsConn.Read()
 	if err != nil {
-		handler.wsConn.Close()
-		return
+		return 0, err
 	}
 
-	xtermMsg := &xtermMessage{
-		// MsgType: string(msg.MessageType),
-		Input: string(msg.Data),
+	var xtermMsg xtermMessage
+	if err = json.Unmarshal(msg.Data, &xtermMsg); err != nil {
+		return 0, nil
 	}
-	handler.resizeEvent <- remotecommand.TerminalSize{Width: xtermMsg.Cols, Height: xtermMsg.Rows}
-	size = len(xtermMsg.Input)
-	copy(p, xtermMsg.Input)
-	return
+
+	size := 0
+	if xtermMsg.MsgType == "resize" {
+		handler.resizeEvent <- remotecommand.TerminalSize{
+			Width:  xtermMsg.Cols,
+			Height: xtermMsg.Rows,
+		}
+	} else if xtermMsg.MsgType == "input" {
+		size = len(xtermMsg.Input)
+		copy(p, xtermMsg.Input)
+	}
+	return size, nil
 }
 
 func (handler *streamHandler) Write(p []byte) (size int, err error) {
-	copyData := make([]byte, len(p))
-	copy(copyData, p)
 	size = len(p)
-	err = handler.wsConn.Write(websocket.TextMessage, copyData)
+	err = handler.wsConn.Write(websocket.TextMessage, p)
 	return
 }
