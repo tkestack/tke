@@ -19,27 +19,58 @@
 package constants
 
 const (
-	// TokenFile for store tke token auth
-	TokenFile = "data/tke_token"
-	// OIDCClientSecretFile for store oidc client secret
-	OIDCClientSecretFile = "data/oidc_client_secret"
-	// OIDCAdminPasswordFile for store
-	OIDCAdminPasswordFile = "data/admin_password"
-	// RegistryPasswordFile for registry
-	RegistryPasswordFile = "data/registry_password"
+	DataDir        = "data/"
+	ClusterFile    = DataDir + "tke.json"
+	ClusterLogFile = DataDir + "tke.log"
 
-	// CACrtFile for store
-	CACrtFile = "data/ca.crt"
-	// CAKeyFile for store
-	CAKeyFile = "data/ca.key"
-	// ServerCrtFile for store
-	ServerCrtFile = "data/server.crt"
-	// ServerKeyFile for store
-	ServerKeyFile = "data/server.key"
-	// AdminCrtFile for store
-	AdminCrtFile = "data/admin.crt"
-	// AdminKeyFile for store
-	AdminKeyFile = "data/admin.key"
+	ProviderConfigFile = "provider/baremetal/conf/config.yaml"
 
-	KubeconfigFile = "data/admin.kubeconfig"
+	HooksDir             = "hooks/"
+	PreInstallHook       = HooksDir + "pre-install"
+	PostClusterReadyHook = HooksDir + "post-cluster-ready"
+	PostInstallHook      = HooksDir + "post-install"
+
+	DockerCertsDir = "/etc/docker/certs.d"
+
+	DefaultTeantID = "default"
+
+	DevRegistryDomain    = "docker.io"
+	DevRegistryNamespace = "tkestack"
+	ImagesFile           = "images.tar.gz"
+	ImagesPattern        = DevRegistryNamespace + "/*"
+
+	OIDCClientSecretFile = DataDir + "oidc_client_secret"
+	CACrtFile            = DataDir + "ca.crt"
+	CAKeyFile            = DataDir + "ca.key"
+	ServerCrtFile        = DataDir + "server.crt"
+	ServerKeyFile        = DataDir + "server.key"
+	AdminCrtFile         = DataDir + "admin.crt"
+	AdminKeyFile         = DataDir + "admin.key"
+
+	KubeconfigFile = DataDir + "admin.kubeconfig"
+)
+
+const (
+	RegistryHTTPCommandFmt = `
+docker run \
+-d \
+--name registry-http \
+--restart always \
+-p 80:5000 \
+-v /opt/tke-installer/registry:/var/lib/registry \
+%s
+`
+	RegistryHTTPSCommandFmt = `
+docker run \
+-d \
+--name registry-https \
+--restart always \
+-p 443:443 \
+-v /opt/tke-installer/registry:/var/lib/registry \
+-v registry-certs:/certs \
+-e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
+-e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt \
+-e REGISTRY_HTTP_TLS_KEY=/certs/server.key \
+%s
+`
 )
