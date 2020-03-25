@@ -19,14 +19,16 @@
 package handler
 
 import (
+	"net/http"
+	"regexp"
+
 	"github.com/rs/cors"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
-	"net/http"
-	"regexp"
 	apiserverfilter "tkestack.io/tke/pkg/apiserver/filter"
 	authfilter "tkestack.io/tke/pkg/auth/filter"
+	"tkestack.io/tke/pkg/platform/apiserver/filter"
 )
 
 type Chain func(apiHandler http.Handler, c *genericapiserver.Config) http.Handler
@@ -52,16 +54,17 @@ func BuildHandlerChain(ignoreAuthPathPrefixes []string) Chain {
 				"Authorization",
 				"X-Requested-With",
 				"If-Modified-Since",
-				"X-TKE-ClusterName",
-				"X-TKE-FuzzyResourceName",
+				filter.ClusterNameHeaderKey,
+				filter.ProjectNameHeaderKey,
+				filter.FuzzyResourceNameHeaderKey,
 				"X-CsrfCode",
 				"X-Referer",
 				"X-SeqId",
-				"X-Remote-Extra-RequestID",
+				apiserverfilter.HeaderRequestID,
 			},
 			ExposedHeaders: []string{
 				"Date",
-				"X-Remote-Extra-RequestID",
+				apiserverfilter.HeaderRequestID,
 			},
 			AllowCredentials: true,
 			MaxAge:           86400,
