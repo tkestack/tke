@@ -136,6 +136,7 @@ test:
 
 .PHONY: release.build
 release.build:
+	make push.multiarch
 	curl -XPOST \
       -H "authorization: Bearer $(GITHUB_TOKEN)" \
       -H "Accept: application/vnd.github.everest-preview+json" \
