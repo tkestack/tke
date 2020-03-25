@@ -578,12 +578,8 @@ func (t *TKE) initSteps() {
 		},
 	}...)
 
-	t.steps = filterSteps(t.steps, t.Para.Config.SkipSteps)
-}
-
-func filterSteps(steps []handler, skips []string) []handler {
-	return funk.Filter(steps, func(step handler) bool {
-		return !funk.ContainsString(skips, step.Name)
+	t.steps = funk.Filter(t.steps, func(step handler) bool {
+		return !funk.ContainsString(t.Para.Config.SkipSteps, step.Name)
 	}).([]handler)
 }
 
