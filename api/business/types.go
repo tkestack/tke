@@ -87,6 +87,8 @@ type ProjectStatus struct {
 	CalculatedNamespaces []string
 	// +optional
 	CachedSpecClusters ClusterHard
+	// +optional
+	CachedParent *string
 }
 
 // ProjectPhase defines the phase of project constructor.

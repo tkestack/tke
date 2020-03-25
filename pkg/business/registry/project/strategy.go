@@ -98,6 +98,12 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	} else { // For historic data that has no CachedSpecClusters
 		project.Status.CachedSpecClusters = oldProject.Spec.Clusters
 	}
+
+	if oldProject.Status.CachedParent != nil {
+		project.Status.CachedParent = oldProject.Status.CachedParent
+	} else { // For historic data that has no CachedParent
+		project.Status.CachedParent = &oldProject.Spec.ParentProjectName
+	}
 }
 
 // NamespaceScoped is false for projects.

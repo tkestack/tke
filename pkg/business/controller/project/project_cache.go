@@ -47,6 +47,11 @@ func (s *projectCache) getOrCreate(name string, self *v1.Project) *cachedProject
 			} else { // For historic data that has no CachedSpecClusters
 				project.state.Spec.Clusters = self.Spec.Clusters
 			}
+			if self.Status.CachedParent != nil {
+				project.state.Spec.ParentProjectName = *self.Status.CachedParent
+			} else {
+				project.state.Spec.ParentProjectName = self.Spec.ParentProjectName
+			}
 		}
 		s.m[name] = project
 	}

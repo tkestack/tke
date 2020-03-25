@@ -861,6 +861,7 @@ func autoConvert_v1_ProjectStatus_To_business_ProjectStatus(in *ProjectStatus, o
 	out.CalculatedChildProjects = *(*[]string)(unsafe.Pointer(&in.CalculatedChildProjects))
 	out.CalculatedNamespaces = *(*[]string)(unsafe.Pointer(&in.CalculatedNamespaces))
 	out.CachedSpecClusters = *(*business.ClusterHard)(unsafe.Pointer(&in.CachedSpecClusters))
+	out.CachedParent = (*string)(unsafe.Pointer(in.CachedParent))
 	return nil
 }
 
@@ -876,6 +877,7 @@ func autoConvert_business_ProjectStatus_To_v1_ProjectStatus(in *business.Project
 	out.CalculatedChildProjects = *(*[]string)(unsafe.Pointer(&in.CalculatedChildProjects))
 	out.CalculatedNamespaces = *(*[]string)(unsafe.Pointer(&in.CalculatedNamespaces))
 	out.CachedSpecClusters = *(*ClusterHard)(unsafe.Pointer(&in.CachedSpecClusters))
+	out.CachedParent = (*string)(unsafe.Pointer(in.CachedParent))
 	return nil
 }
 
