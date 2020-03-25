@@ -893,6 +893,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.CronHPAProxyOptions":                         schema_tke_api_platform_v1_CronHPAProxyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPASpec":                                 schema_tke_api_platform_v1_CronHPASpec(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPAStatus":                               schema_tke_api_platform_v1_CronHPAStatus(ref),
+		"tkestack.io/tke/api/platform/v1.File":                                        schema_tke_api_platform_v1_File(ref),
 		"tkestack.io/tke/api/platform/v1.GPUManager":                                  schema_tke_api_platform_v1_GPUManager(ref),
 		"tkestack.io/tke/api/platform/v1.GPUManagerList":                              schema_tke_api_platform_v1_GPUManagerList(ref),
 		"tkestack.io/tke/api/platform/v1.GPUManagerSpec":                              schema_tke_api_platform_v1_GPUManagerSpec(ref),
@@ -39063,6 +39064,12 @@ func schema_tke_api_business_v1_ProjectStatus(ref common.ReferenceCallback) comm
 							},
 						},
 					},
+					"cachedParent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},
@@ -41721,11 +41728,50 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Ref: ref("tkestack.io/tke/api/platform/v1.HA"),
 						},
 					},
+					"skipConditions": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"files": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/platform/v1.File"),
+									},
+								},
+							},
+						},
+					},
+					"hooks": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.HA"},
+			"tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA"},
 	}
 }
 
@@ -42579,6 +42625,32 @@ func schema_tke_api_platform_v1_CronHPAStatus(ref common.ReferenceCallback) comm
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_platform_v1_File(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"src": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"dst": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Only support regular file",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"src", "dst"},
+			},
+		},
 	}
 }
 

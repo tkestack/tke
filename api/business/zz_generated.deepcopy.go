@@ -732,6 +732,11 @@ func (in *ProjectStatus) DeepCopyInto(out *ProjectStatus) {
 			(*out)[key] = *val.DeepCopy()
 		}
 	}
+	if in.CachedParent != nil {
+		in, out := &in.CachedParent, &out.CachedParent
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 
