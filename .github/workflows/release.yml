@@ -18,6 +18,6 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - run: |
-          VERSION=${{ github.event.client_payload.version }}
+          export VERSION=${{ github.event.client_payload.version }}
           make release
           make release-test
