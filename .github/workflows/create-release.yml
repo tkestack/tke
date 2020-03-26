@@ -14,11 +14,13 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ncipollo/release-action@v1
         with:
+          name: ${{ github.base_ref }}
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.base_ref }}
           body: |
             ```
-            version=${{ github.ref }} && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
+            version=${{ github.base_refs }} && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
             ```
       - name: update docs
         id: update
