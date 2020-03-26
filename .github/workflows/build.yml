@@ -32,7 +32,7 @@ jobs:
                 "markdown": {
                     "content": "
         <font color=\"info\">${{ github.repository }} ${{ github.workflow }} finished</font>：
-        >status:  <font color=\"comment\">${{ steps.make.status }}</font>
+        >status:  <font color=\"comment\">${{ job.status }}</font>
         >committer: <font color=\"comment\">${{ github.actor }}</font>
                         "
                 }

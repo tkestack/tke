@@ -10,7 +10,7 @@ env:
 jobs:
   release:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - uses: actions/checkout@v2
@@ -60,7 +60,7 @@ jobs:
                   "markdown": {
                       "content": "
           <font color=\"info\">${{ github.repository }} ${{ github.workflow }} finished</font>：
-          >status:  <font color=\"comment\">${{ steps.build.status }}</font>
+          >status:  <font color=\"comment\">${{ job.status }}</font>
           >committer: <font color=\"comment\">${{ github.actor }}</font>
                           "
                   }
