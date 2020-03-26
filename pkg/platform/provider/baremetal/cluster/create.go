@@ -240,6 +240,9 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 	if err != nil {
 		return errors.Wrap(err, "get gpu quota admission IP error")
 	}
+	if cluster.Annotations == nil {
+		cluster.Annotations = make(map[string]string)
+	}
 	cluster.Annotations[constants.GPUQuotaAdmissionIPAnnotaion] = ip.String()
 
 	for _, m := range cluster.Spec.Machines {
