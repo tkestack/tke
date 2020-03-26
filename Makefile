@@ -152,7 +152,7 @@ release:
 ## release-test: test release
 .PHONY: release-test
 release-test:
-	go test -timeout=60m tkestack.io/tke/test/e2e_installer
+	go test -timeout=120m tkestack.io/tke/test/e2e_installer
 
 ## help: Show this help info.
 .PHONY: help
