@@ -79,8 +79,17 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 		policy.Spec.TenantID = tenantID
 	}
 
-	policy.Status.Groups = util.RemoveDuplicateSubjects(policy.Status.Groups)
-	policy.Status.Users = util.RemoveDuplicateSubjects(policy.Status.Users)
+	if len(policy.Status.Groups) != 0 {
+		policy.Status.Groups = util.RemoveDuplicateSubjects(policy.Status.Groups)
+	} else {
+		policy.Status.Groups = oldPolicy.Status.Groups
+	}
+
+	if len(policy.Status.Users) != 0 {
+		policy.Status.Users = util.RemoveDuplicateSubjects(policy.Status.Users)
+	} else {
+		policy.Status.Users = oldPolicy.Status.Users
+	}
 }
 
 // NamespaceScoped is false for policies.
