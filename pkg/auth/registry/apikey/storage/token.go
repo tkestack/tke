@@ -61,6 +61,7 @@ func (r *TokenREST) Create(ctx context.Context, obj runtime.Object, createValida
 	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
 	}
+	apiKey.Spec.Description = apikeyReq.Description
 
 	return r.apiKeyStore.Create(ctx, apiKey, createValidation, options)
 }
