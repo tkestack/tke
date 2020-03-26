@@ -60,6 +60,7 @@ func (r *PasswordREST) Create(ctx context.Context, obj runtime.Object, createVal
 	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
 	}
+	apiKey.Spec.Description = apikeyReq.Description
 
 	return r.apiKeyStore.Create(ctx, apiKey, createValidation, options)
 }
