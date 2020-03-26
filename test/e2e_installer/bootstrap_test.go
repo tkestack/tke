@@ -100,6 +100,7 @@ var _ = Describe("bootstrap", func() {
 				Username: one.Username,
 				Password: []byte(one.Password),
 			})
+			para.Cluster.Spec.PublicAlternativeNames = append(para.Cluster.Spec.PublicAlternativeNames, one.PublicIP)
 		}
 		para.Config.Auth.TKEAuth = &types.TKEAuth{}
 		para.Config.Registry.TKERegistry = &types.TKERegistry{Domain: "registry.tke.com"}
