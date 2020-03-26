@@ -20,6 +20,7 @@ package proxy
 
 import (
 	"fmt"
+
 	"k8s.io/apiserver/pkg/server/mux"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/api/business"
@@ -31,6 +32,7 @@ import (
 	"tkestack.io/tke/pkg/gateway/proxy/handler/frontproxy"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/passthrough"
 	platformapiserver "tkestack.io/tke/pkg/platform/apiserver"
+	authapiserver "tkestack.io/tke/pkg/auth/apiserver"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
 	"tkestack.io/tke/pkg/util/log"
@@ -77,6 +79,14 @@ func componentPrefix() map[moduleName][]modulePath {
 			modulePath{
 				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, auth.GroupName),
 				protected: true,
+			},
+			modulePath{
+				prefix:    authapiserver.AuthPath,
+				protected: false,
+			},
+			modulePath{
+				prefix: fmt.Sprintf("%s/", authapiserver.APIKeyPasswordPath),
+				protected: false,
 			},
 		},
 		moduleNameMonitor: {
