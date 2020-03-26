@@ -1275,6 +1275,9 @@ func (t *TKE) installTKEAuthAPI() error {
 	if t.Para.Config.HA != nil {
 		redirectHosts = append(redirectHosts, t.Para.Config.HA.VIP())
 	}
+	if t.Para.Cluster.Spec.PublicAlternativeNames != nil {
+		redirectHosts = append(redirectHosts, t.Para.Cluster.Spec.PublicAlternativeNames...)
+	}
 
 	option := map[string]interface{}{
 		"Replicas":         t.Config.Replicas,
