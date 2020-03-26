@@ -20,14 +20,18 @@ package common
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+
 	corev1 "k8s.io/api/core/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/trace"
-	"strings"
-	"time"
+	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	"tkestack.io/tke/pkg/platform/controller/addon/gpumanager/template"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -39,6 +43,7 @@ const (
 
 // ServiceOperator is used to operate remote service account and role-binding
 type ServiceOperator struct {
+	TkeCli clientset.Interface
 	K8sCli kubernetes.Interface
 }
 
@@ -55,7 +60,12 @@ func (s *ServiceOperator) CreateService(clusterName string) error {
 		return err
 	}
 	servicePayload.Name = DefaultServiceName
-
+	cluster, err := s.TkeCli.PlatformV1().Clusters().Get(clusterName, metav1.GetOptions{})
+	if err == nil {
+		if ip, ok := cluster.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]; ok {
+			servicePayload.Spec.ClusterIP = ip
+		}
+	}
 	t.Step("create service")
 	_, err = s.K8sCli.CoreV1().Services(metav1.NamespaceSystem).Create(servicePayload)
 	if err != nil {

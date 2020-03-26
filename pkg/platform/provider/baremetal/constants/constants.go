@@ -18,6 +18,8 @@
 
 package constants
 
+import platformv1 "tkestack.io/tke/api/platform/v1"
+
 const (
 	// KubernetesDir is the directory Kubernetes owns for storing various configuration files
 	KubernetesDir             = "/etc/kubernetes/"
@@ -72,4 +74,8 @@ const (
 	ConfDir      = ProviderDir + "conf/"
 	ManifestsDir = ProviderDir + "manifests/"
 	ConfigFile   = ConfDir + "config.yaml"
+
+	DNSIPIndex                   = 10
+	GPUQuotaAdmissionIPIndex     = 9
+	GPUQuotaAdmissionIPAnnotaion = platformv1.GroupName + "/gpu-quota-admission-ip"
 )

@@ -230,11 +230,17 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 	cluster.Status.ServiceCIDR = serviceCIDR
 	cluster.Status.NodeCIDRMaskSize = nodeCIDRMaskSize
 
-	dnsIP, err := GetDNSIP(cluster.Status.ServiceCIDR)
+	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.DNSIPIndex)
 	if err != nil {
 		return errors.Wrap(err, "get DNS IP error")
 	}
-	cluster.Status.DNSIP = dnsIP.String()
+	cluster.Status.DNSIP = ip.String()
+
+	ip, err = GetIndexedIP(cluster.Status.ServiceCIDR, constants.GPUQuotaAdmissionIPIndex)
+	if err != nil {
+		return errors.Wrap(err, "get gpu quota admission IP error")
+	}
+	cluster.Annotations[constants.GPUQuotaAdmissionIPAnnotaion] = ip
 
 	for _, m := range cluster.Spec.Machines {
 		cluster.AddAddress(platformv1.AddressReal, m.IP, 6443)
@@ -347,7 +353,16 @@ func (p *Provider) EnsureKubeadm(c *Cluster) error {
 
 func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
-
+	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
+	if GPUQuotaAdmissionHost == "" {
+		GPUQuotaAdmissionHost = "gpu-quota-admission"
+	}
+	schedulerPolicyConfig, err := template.ParseString(schedulerPolicyConfig, map[string]interface{}{
+		"GPUQuotaAdmissionHost": GPUQuotaAdmissionHost,
+	})
+	if err != nil {
+		return errors.Wrap(err, "parse schedulerPolicyConfig error")
+	}
 	for _, machine := range c.Spec.Machines {
 		tokenData := fmt.Sprintf(tokenFileTemplate, *c.ClusterCredential.Token)
 		err := c.SSH[machine.IP].WriteFile(strings.NewReader(tokenData), constants.TokenFile)
@@ -355,7 +370,7 @@ func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 			return errors.Wrap(err, machine.IP)
 		}
 
-		err = c.SSH[machine.IP].WriteFile(strings.NewReader(schedulerPolicyConfig), constants.SchedulerPolicyConfigFile)
+		err = c.SSH[machine.IP].WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.SchedulerPolicyConfigFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
