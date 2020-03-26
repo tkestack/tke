@@ -21,9 +21,26 @@ jobs:
             version=${{ github.ref }} && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
             ```
       - name: update docs
+        id: update
         run: |
           find . -name "*.md" -exec sed -i "s;version=v[0-9\.]*;version=${{ github.ref }};g" {} \;
           git config --global user.name 'QianChenglong'
           git config --global user.email 'qian_cheng_long@163.com'
           git commit -am 'ci: update docs for release ${{ github.ref }}'
           git push
+
+      - name: Notify
+        run: |
+          curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+             -H 'Content-Type: application/json' \
+             -d '
+             {
+                  "msgtype": "markdown",
+                  "markdown": {
+                      "content": "
+          <font color=\"info\">${{ github.repository }} ${{ github.workflow }} finished</font>：
+          >status:  <font color=\"comment\">${{ steps.update.status }}</font>
+          >committer: <font color=\"comment\">${{ github.actor }}</font>
+                          "
+                  }
+             }'
