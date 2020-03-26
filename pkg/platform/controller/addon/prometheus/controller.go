@@ -1166,6 +1166,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 			ScrapeInterval:     "60s",
 			RemoteRead:         remoteReadSpecs,
 			RemoteWrite:        remoteWriteSpecs,
+			Retention:          "2h",
 			EvaluationInterval: "1m",
 			AdditionalScrapeConfigs: &corev1.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{Name: prometheusSecret},
