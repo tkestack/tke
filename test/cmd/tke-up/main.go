@@ -34,12 +34,12 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/cmd/tke-installer/app/installer"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	"tkestack.io/tke/test/util/cloudprovider"
 )
 
 func quickConfig(nodes []cloudprovider.Instance) []byte {
-	para := new(installer.CreateClusterPara)
+	para := new(types.CreateClusterPara)
 	for _, one := range nodes[1:] {
 		para.Cluster.Spec.Machines = append(para.Cluster.Spec.Machines, platformv1.ClusterMachine{
 			IP:       one.InternalIP,
@@ -48,20 +48,20 @@ func quickConfig(nodes []cloudprovider.Instance) []byte {
 			Password: []byte(one.Password),
 		})
 	}
-	para.Config.Auth.TKEAuth = &installer.TKEAuth{}
-	para.Config.Registry.ThirdPartyRegistry = &installer.ThirdPartyRegistry{
+	para.Config.Auth.TKEAuth = &types.TKEAuth{}
+	para.Config.Registry.ThirdPartyRegistry = &types.ThirdPartyRegistry{
 		Domain:    "docker.io",
 		Namespace: "tkestack",
 		Username:  os.Getenv("REGISTRY_USERNAME"),
 		Password:  []byte(os.Getenv("REGISTRY_PASSWORD")),
 	}
-	para.Config.Business = &installer.Business{}
-	para.Config.Monitor = &installer.Monitor{
-		InfluxDBMonitor: &installer.InfluxDBMonitor{
-			LocalInfluxDBMonitor: &installer.LocalInfluxDBMonitor{},
+	para.Config.Business = &types.Business{}
+	para.Config.Monitor = &types.Monitor{
+		InfluxDBMonitor: &types.InfluxDBMonitor{
+			LocalInfluxDBMonitor: &types.LocalInfluxDBMonitor{},
 		},
 	}
-	para.Config.Gateway = &installer.Gateway{}
+	para.Config.Gateway = &types.Gateway{}
 
 	data, _ := json.Marshal(para)
 
@@ -130,16 +130,16 @@ func main() {
 		}
 		defer resp.Body.Close()
 		data, _ := ioutil.ReadAll(resp.Body)
-		progress := new(installer.ClusterProgress)
+		progress := new(types.ClusterProgress)
 		json.Unmarshal(data, progress)
 		switch progress.Status {
-		case installer.StatusSuccess:
+		case types.StatusSuccess:
 			fmt.Println(base64.StdEncoding.EncodeToString(progress.Kubeconfig))
 			return true, nil
 
-		case installer.StatusUnknown, installer.StatusDoing:
+		case types.StatusUnknown, types.StatusDoing:
 			return false, nil
-		case installer.StatusFailed:
+		case types.StatusFailed:
 			return false, fmt.Errorf("install failed:\n%s", progress.Data)
 		default:
 			return false, fmt.Errorf("unknown install progress status: %s", progress.Status)

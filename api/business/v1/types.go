@@ -89,6 +89,8 @@ type ProjectStatus struct {
 	CalculatedNamespaces []string `json:"calculatedNamespaces,omitempty" protobuf:"bytes,5,rep,name=calculatedNamespaces"`
 	// +optional
 	CachedSpecClusters ClusterHard `json:"cachedSpecClusters,omitempty" protobuf:"bytes,6,rep,name=cachedSpecClusters,casttype=ClusterHard"`
+	// +optional
+	CachedParent *string `json:"cachedParent,omitempty" protobuf:"bytes,7,opt,name=cachedParent"`
 }
 
 // ProjectPhase defines the phase of project constructor.

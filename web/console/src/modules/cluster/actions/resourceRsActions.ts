@@ -17,10 +17,10 @@ const fetchRsActions = generateFetcherActionCreator({
   fetcher: async (getState: GetState, fetchOptions, dispatch) => {
     let { subRoot, clusterVersion } = getState(),
       { resourceDetailState, resourceOption } = subRoot,
-      { resourceSelection } = resourceOption,
+      { ffResourceList } = resourceOption,
       { rsQuery } = resourceDetailState;
 
-    let labelInfo = resourceSelection[0].metadata.labels;
+    let labelInfo = ffResourceList.selection.metadata.labels;
     let labelKeys = Object.keys(labelInfo);
 
     let isClearData = (fetchOptions && fetchOptions.noCache) || labelKeys.length === 0 ? true : false;

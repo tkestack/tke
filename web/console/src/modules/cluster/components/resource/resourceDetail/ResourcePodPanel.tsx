@@ -505,17 +505,15 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
           >
             {t('销毁重建')}
           </LinkButton>
-          {/* {
-            <LinkButton
-              disabled={loginDisabled}
-              errorTip={t('当前容器状态不可登录')}
-              onClick={() => {
-                !loginDisabled && this._toggleRemoteLoginDialog(pod);
-              }}
-            >
-              {t('远程登录')}
-            </LinkButton>
-          } */}
+          <LinkButton
+            disabled={loginDisabled}
+            errorTip={t('当前容器状态不可登录')}
+            onClick={() => {
+              !loginDisabled && this._toggleRemoteLoginDialog(pod);
+            }}
+          >
+            {t('远程登录')}
+          </LinkButton>
         </span>
       );
     };
@@ -723,77 +721,77 @@ class ResourcePodContainerTable extends React.Component<ResourcePodContainerTabl
                   </td>
                 </tr>
               ) : (
-                containers.map((container, index) => (
-                  <tr key={index}>
-                    <td>
-                      <Text parent="div" overflow>
-                        {container.name}
-                      </Text>
-                    </td>
+                  containers.map((container, index) => (
+                    <tr key={index}>
+                      <td>
+                        <Text parent="div" overflow>
+                          {container.name}
+                        </Text>
+                      </td>
 
-                    <td>
-                      <div>
-                        <span id={'cId' + container.id} className="text-overflow m-width" style={{ maxWidth: '74%' }}>
-                          {containerStatus.length ? reduceContainerId(containerStatus, container.name) : '-'}
-                        </span>
-                        <Clip target={'#cId' + container.id} className="hover-icon" />
-                      </div>
-                    </td>
+                      <td>
+                        <div>
+                          <span id={'cId' + container.id} className="text-overflow m-width" style={{ maxWidth: '74%' }}>
+                            {containerStatus.length ? reduceContainerId(containerStatus, container.name) : '-'}
+                          </span>
+                          <Clip target={'#cId' + container.id} className="hover-icon" />
+                        </div>
+                      </td>
 
-                    <td>
-                      <Bubble placement="bottom" style={{ width: '100%' }} content={container.image || null}>
-                        <Text parent="div" overflow>
-                          {container.image}
-                        </Text>
-                      </Bubble>
-                    </td>
+                      <td>
+                        <Bubble placement="bottom" style={{ width: '100%' }} content={container.image || null}>
+                          <Text parent="div" overflow>
+                            {container.image}
+                          </Text>
+                        </Bubble>
+                      </td>
 
-                    {/* start 这里只有在node详情里面的container列表才需要展示 */}
-                    {isInNodeManage && (
-                      <td>
-                        <Text parent="div" overflow>
-                          {this._renderCPUAndMemory(t('核'), ReduceRequest('cpu', container.resources.requests))}
-                        </Text>
-                      </td>
-                    )}
-                    {isInNodeManage && (
-                      <td>
-                        <Text parent="div" overflow>
-                          {this._renderCPUAndMemory(t('核'), ReduceRequest('cpu', container.resources.limits))}
-                        </Text>
-                      </td>
-                    )}
-                    {isInNodeManage && (
-                      <td>
-                        <Text parent="div" overflow>
-                          {this._renderCPUAndMemory('M', ReduceRequest('memory', container.resources.requests))}
-                        </Text>
-                      </td>
-                    )}
-                    {isInNodeManage && (
-                      <td>
-                        <Text parent="div" overflow>
-                          {this._renderCPUAndMemory('M', ReduceRequest('memory', container.resources.limits))}
-                        </Text>
-                      </td>
-                    )}
-                    {isInNodeManage && (
-                      <td>
-                        <Text parent="div" overflow>
-                          {t('{{count}} 次', {
-                            count: containerStatus
-                              ? 0
-                              : containerStatus.find(item => item.name === container.name).restartCount
-                          })}
-                        </Text>
-                      </td>
-                    )}
-                    {/* end 这里只有在node详情里面的container列表才需要展示 */}
+                      {/* start 这里只有在node详情里面的container列表才需要展示 */}
+                      {isInNodeManage && (
+                        <td>
+                          <Text parent="div" overflow>
+                            {this._renderCPUAndMemory(t('核'), ReduceRequest('cpu', container.resources.requests))}
+                          </Text>
+                        </td>
+                      )}
+                      {isInNodeManage && (
+                        <td>
+                          <Text parent="div" overflow>
+                            {this._renderCPUAndMemory(t('核'), ReduceRequest('cpu', container.resources.limits))}
+                          </Text>
+                        </td>
+                      )}
+                      {isInNodeManage && (
+                        <td>
+                          <Text parent="div" overflow>
+                            {this._renderCPUAndMemory('M', ReduceRequest('memory', container.resources.requests))}
+                          </Text>
+                        </td>
+                      )}
+                      {isInNodeManage && (
+                        <td>
+                          <Text parent="div" overflow>
+                            {this._renderCPUAndMemory('M', ReduceRequest('memory', container.resources.limits))}
+                          </Text>
+                        </td>
+                      )}
+                      {isInNodeManage && (
+                        <td>
+                          <Text parent="div" overflow>
+                            {t('{{count}} 次', {
+                              count: containerStatus
+                                ? 0
+                                : containerStatus.find(item => item.name === container.name).restartCount
+                            })}
+                          </Text>
+                        </td>
+                      )}
+                      {/* end 这里只有在node详情里面的container列表才需要展示 */}
 
-                    <td>{this._reduceContainerStatus(container)}</td>
-                  </tr>
-                ))
-              )}
+                      <td>{this._reduceContainerStatus(container)}</td>
+                    </tr>
+                  ))
+                )}
             </tbody>
           </table>
         </div>

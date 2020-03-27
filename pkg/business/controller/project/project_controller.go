@@ -266,6 +266,30 @@ func (c *Controller) processDelete(cachedProject *cachedProject, key string) err
 }
 
 func (c *Controller) handlePhase(key string, cachedProject *cachedProject, project *v1.Project) error {
+	if cachedProject.state != nil &&
+		cachedProject.state.Spec.ParentProjectName != "" &&
+		cachedProject.state.Spec.ParentProjectName != project.Spec.ParentProjectName {
+		preParentProject, err := c.client.BusinessV1().Projects().Get(cachedProject.state.Spec.ParentProjectName, metav1.GetOptions{})
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				log.Error("Failed to get the previous parent project", log.String("projectName", key),
+					log.String("parentName", cachedProject.state.Spec.ParentProjectName), log.Err(err))
+				return err
+			}
+		} else {
+			calculatedChildProjectNames := sets.NewString(preParentProject.Status.CalculatedChildProjects...)
+			if calculatedChildProjectNames.Has(project.ObjectMeta.Name) {
+				calculatedChildProjectNames.Delete(project.ObjectMeta.Name)
+				preParentProject.Status.CalculatedChildProjects = calculatedChildProjectNames.List()
+				if preParentProject.Status.Clusters != nil {
+					businessUtil.SubClusterHardFromUsed(&preParentProject.Status.Clusters, cachedProject.state.Spec.Clusters)
+				}
+				if err := c.persistUpdate(preParentProject); err != nil && !errors.IsNotFound(err) {
+					return err
+				}
+			}
+		}
+	}
 	if project.Spec.ParentProjectName != "" {
 		parentProject, err := c.client.BusinessV1().Projects().Get(project.Spec.ParentProjectName, metav1.GetOptions{})
 		if err != nil {
@@ -294,11 +318,16 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 				return err
 			}
 		}
-		// Once parentProject has been updated, update project CachedSpecClusters immediately.
-		if project != nil && !reflect.DeepEqual(project.Spec.Clusters, project.Status.CachedSpecClusters) {
-			return c.updateCache(project, project.Spec.Clusters)
+		// Once parentProject has been updated, update project cached status immediately.
+		if project.Status.CachedParent == nil ||
+			project.Spec.ParentProjectName != *project.Status.CachedParent ||
+			!reflect.DeepEqual(project.Spec.Clusters, project.Status.CachedSpecClusters) {
+			return c.updateCachedStatus(project, project.Spec.Clusters, project.Spec.ParentProjectName)
 		}
+	} else if project.Status.CachedParent != nil && project.Spec.ParentProjectName != *project.Status.CachedParent {
+		return c.updateCachedStatus(project, nil, project.Spec.ParentProjectName)
 	}
+
 	return nil
 }
 
@@ -322,30 +351,32 @@ func (c *Controller) persistUpdate(project *v1.Project) error {
 	return err
 }
 
-func (c *Controller) updateCache(project *v1.Project, newCache v1.ClusterHard) error {
+func (c *Controller) updateCachedStatus(project *v1.Project, newCachedClusters v1.ClusterHard, newCachedParent string) error {
 	var err error
-	project.Status.CachedSpecClusters = newCache
+	project.Status.CachedParent = &newCachedParent
+	project.Status.CachedSpecClusters = newCachedClusters
 	for i := 0; i < clientRetryCount; i++ {
 		_, err = c.client.BusinessV1().Projects().UpdateStatus(project)
 		if err == nil {
 			return nil
 		}
 		if errors.IsNotFound(err) {
-			log.Info(fmt.Sprintf("Not updateCache of non-existed project %s", project.ObjectMeta.Name), log.Err(err))
+			log.Info(fmt.Sprintf("Not updateCachedStatus of non-existed project %s", project.ObjectMeta.Name), log.Err(err))
 			return nil
 		}
 		if errors.IsConflict(err) {
 			newProject, newErr := c.client.BusinessV1().Projects().Get(project.ObjectMeta.Name, metav1.GetOptions{})
 			if newErr == nil {
 				project = newProject
-				project.Status.CachedSpecClusters = newCache
+				project.Status.CachedParent = &newCachedParent
+				project.Status.CachedSpecClusters = newCachedClusters
 			} else {
 				log.Warn(fmt.Sprintf("Failed to get project %s", project.ObjectMeta.Name), log.Err(newErr))
 			}
 		}
-		log.Warn(fmt.Sprintf("Failed to updateCache of project %s", project.ObjectMeta.Name), log.Err(err))
+		log.Warn(fmt.Sprintf("Failed to updateCachedStatus of project %s", project.ObjectMeta.Name), log.Err(err))
 		time.Sleep(clientRetryInterval)
 	}
-	log.Error(fmt.Sprintf("Failed to updateCache of project %s", project.ObjectMeta.Name), log.Err(err))
+	log.Error(fmt.Sprintf("Failed to updateCachedStatus of project %s", project.ObjectMeta.Name), log.Err(err))
 	return err
 }

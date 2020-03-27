@@ -4,16 +4,17 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { apiServerVersion } from '../../../../config';
 import {
-    Method, operationResult, reduceK8sQueryString, reduceK8sRestfulPath, reduceNetworkRequest,
-    reduceNetworkWorkflow, requestMethodForAction
+  Method,
+  operationResult,
+  reduceK8sQueryString,
+  reduceK8sRestfulPath,
+  reduceNetworkRequest,
+  reduceNetworkWorkflow,
+  requestMethodForAction
 } from '../../../../helpers';
 import { isEmpty } from '../../common';
-import {
-    CreateResource, MergeType, RequestParams, ResourceInfo, UserDefinedHeader
-} from '../../common/models';
-import {
-    DifferentInterfaceResourceOperation, Namespace, Resource, ResourceFilter
-} from '../models';
+import { CreateResource, MergeType, RequestParams, ResourceInfo, UserDefinedHeader } from '../../common/models';
+import { DifferentInterfaceResourceOperation, Namespace, Resource, ResourceFilter } from '../models';
 
 // 提示框
 const tips = seajs.require('tips');
@@ -145,15 +146,28 @@ export async function modifyNamespaceSecret(resource: CreateResource[], regionId
  */
 export async function fetchResourceList(
   query: QueryState<ResourceFilter>,
-  resourceInfo: ResourceInfo,
-  isClearData: boolean = false,
-  k8sQueryObj: any = {},
-  isNeedDes: boolean = false,
-  isNeedSpecific: boolean = true
+  options: {
+    resourceInfo: ResourceInfo;
+    isClearData?: boolean;
+    k8sQueryObj?: any;
+    isNeedDes?: boolean;
+    isNeedSpecific?: boolean;
+    isContinue?: boolean;
+  }
 ) {
-  let { filter, search } = query,
+  let { filter, search, paging, continueToken } = query,
     { namespace, clusterId, regionId, specificName, meshId } = filter;
+
+  let {
+    resourceInfo,
+    isClearData = false,
+    k8sQueryObj = {},
+    isNeedDes = false,
+    isNeedSpecific = true,
+    isContinue = false
+  } = options;
   let resourceList = [];
+  let nextContinueToken: string;
 
   // 如果是主动清空 或者 resourceInfo 为空，都不需要发请求
   if (!isClearData && !isEmpty(resourceInfo)) {
@@ -178,6 +192,16 @@ export async function fetchResourceList(
     }
 
     // 这里是去拼接，是否需要在k8s url后面拼接一些queryString
+    if (isContinue && !search) {
+      let { pageSize } = paging;
+      k8sQueryObj = JSON.parse(
+        JSON.stringify(
+          Object.assign({}, k8sQueryObj, { limit: pageSize, continue: continueToken ? continueToken : undefined })
+        )
+      );
+    }
+
+    // 这里是去拼接，是否需要在k8s url后面拼接一些queryString
     let queryString = reduceK8sQueryString({ k8sQueryObj, restfulPath: k8sUrl });
     let url = k8sUrl + queryString;
 
@@ -192,6 +216,12 @@ export async function fetchResourceList(
 
       if (response.code === 0) {
         let listItems = response.data;
+
+        // 这里将继续拉取数据的token传递下去
+        if (isContinue && listItems.metadata && listItems.metadata.continue) {
+          nextContinueToken = listItems.metadata.continue;
+        }
+
         if (listItems.items) {
           resourceList = listItems.items.map(item => {
             return Object.assign({}, item, { id: uuid() });
@@ -215,7 +245,8 @@ export async function fetchResourceList(
 
   const result: RecordSet<Resource> = {
     recordCount: resourceList.length,
-    records: isNeedDes && resourceList.length > 1 ? resourceList.reverse() : resourceList
+    records: isNeedDes && resourceList.length > 1 ? resourceList.reverse() : resourceList,
+    continueToken: nextContinueToken
   };
 
   return result;

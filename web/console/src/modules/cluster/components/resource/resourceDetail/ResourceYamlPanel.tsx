@@ -25,15 +25,15 @@ export class ResourceYamlPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions, subRoot } = this.props,
       { resourceOption } = subRoot,
-      { resourceSelection } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     // 这里是从 列表跳入到详情页的时候，进行yaml的拉取
-    resourceSelection.length && actions.resourceDetail.fetchResourceYaml.fetch();
+    ffResourceList.selection && actions.resourceDetail.fetchResourceYaml.fetch();
   }
 
   componentWillReceiveProps(nextProps: RootProps) {
-    let newResourceSelection = nextProps.subRoot.resourceOption.resourceSelection,
-      oldResourceSelection = this.props.subRoot.resourceOption.resourceSelection;
+    let newResourceSelection = nextProps.subRoot.resourceOption.ffResourceList.selection,
+      oldResourceSelection = this.props.subRoot.resourceOption.ffResourceList.selection;
 
     // 在详情页面直接刷新的，由于请求顺序的原因，此时并没有resourceSelection，会导致请求yaml失败
     if (oldResourceSelection.length === 0 && newResourceSelection.length === 1) {
@@ -49,14 +49,14 @@ export class ResourceYamlPanel extends React.Component<RootProps, {}> {
         resourceInfo,
         detailResourceOption: { detailResourceName, detailResourceList, detailResourceSelection }
       } = subRoot,
-      { resourceList } = resourceOption,
+      { ffResourceList } = resourceOption,
       { yamlList } = resourceDetailState;
 
     const yamlData = yamlList.data.recordCount ? yamlList.data.records[0] : t('暂无YAML配置');
 
     let isNeedLoading =
-      resourceList.fetched !== true ||
-      resourceList.fetchState === FetchState.Fetching ||
+      ffResourceList.list.fetched !== true ||
+      ffResourceList.list.fetchState === FetchState.Fetching ||
       yamlList.fetchState === FetchState.Fetching;
 
     return (

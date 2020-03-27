@@ -27,9 +27,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  0,
 	},
@@ -38,9 +42,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  0,
 	},
@@ -49,9 +57,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "1f2c694cb54e80cc9d0bd63ff1f1362219c003f63db94cf2c73d6ba21274faf7",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  3059,
 	},
@@ -60,9 +72,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "fd1482cf5a9793289e8a5fc67c408ef9e13b87cff16f40a64dc49ca02de72cd6",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  920,
 	},
@@ -71,9 +87,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  0,
 	},
@@ -82,9 +102,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "8f1304a7838321a396aa962a55d306ead51b8433dfc80af43c4b1a8df1c0c4f9",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  9815,
 	},
@@ -93,9 +117,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "44aab25c24e40aa95ba19abe9cdfb21df8215049f123077a35e21f740ed91e37",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  2095,
 	},
@@ -104,9 +132,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "9e1b894cd8de723613d96dcf222679e753f3c27ce166b75f66e2ba7c1576b018",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  2616,
 	},
@@ -115,9 +147,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "1a9788f86cb5d97db0453672c027a7277d6a89297f3ca4c03bdc54a51030b563",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  4680,
 	},
@@ -126,9 +162,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  0,
 	},
@@ -137,9 +177,13 @@ var staticFiles = map[string]*staticFilesFile{
 		hash:  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
 		mime:  "",
 <<<<<<< HEAD
+<<<<<<< HEAD
 		mtime: time.Unix(1585020493, 0),
 =======
 		mtime: time.Unix(1585034506, 0),
+>>>>>>> upstream/master
+=======
+		mtime: time.Unix(1583286742, 0),
 >>>>>>> upstream/master
 		size:  0,
 	},

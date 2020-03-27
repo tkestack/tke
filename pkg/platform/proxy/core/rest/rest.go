@@ -89,6 +89,7 @@ func (c LegacyRESTStorageProvider) NewLegacyRESTStorage(restOptionsGetter generi
 		"pods/binding":                  podStore.Binding,
 		"pods/events":                   podStore.Events,
 		"pods/log":                      podStore.Log,
+		"pods/exec":                     podStore.Exec,
 		"bindings":                      podStore.Binding,
 		"podTemplates":                  podTemplateStore.PodTemplate,
 		"replicationControllers":        replicationControllerStore.ReplicationController,

@@ -42,7 +42,7 @@ export const resourceDetailActions = {
           resourceOption,
           detailResourceOption: { detailResourceInfo, detailResourceSelection }
         } = subRoot,
-        { resourceSelection } = resourceOption;
+        { ffResourceList } = resourceOption;
       if (resourceInfo.requestType.useDetailInfo) {
         let response = await WebAPI.fetchResourceYaml(
           detailResourceSelection,
@@ -54,7 +54,7 @@ export const resourceDetailActions = {
         return response;
       } else {
         let response = await WebAPI.fetchResourceYaml(
-          resourceSelection,
+          [ffResourceList.selection],
           resourceInfo,
           namespaceSelection,
           route.queries['clusterId'],

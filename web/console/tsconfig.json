@@ -30,15 +30,16 @@
       "@src/*": ["./src/*"],
       "@src": ["./src"],
       "@tencent/ff-validator": ["./lib/ff-validator"],
+      "@tencent/ff-validator/*": ["./lib/ff-validator/*"],
       "@tencent/ff-redux": ["./lib/ff-redux"],
+      "@tencent/ff-redux/*": ["./lib/ff-redux/*"],
       "@tencent/ff-component": ["./lib/ff-component/"],
+      "@tencent/ff-component/*": ["./lib/ff-component/*"],
       "@tencent/qcloud-redux-fetcher": ["./lib/ff-redux/libs/qcloud-redux-fetcher/"],
       "@tencent/qcloud-redux-query": ["./lib/ff-redux/libs/qcloud-redux-query/"],
       "@tencent/qcloud-redux-workflow'": ["./lib/ff-redux/libs/qcloud-redux-workflow/"],
     }
   },
   "exclude": ["node_modules", "dist", "build"],
-  "compoileOnSave": false
+  "compileOnSave": false
 }
-
-

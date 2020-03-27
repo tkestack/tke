@@ -52,9 +52,6 @@ export const ClearComputer = 'ClearComputer';
 
 /** ============================== start Resource 相关 =============================== */
 export const ClearResource = 'ClearResource';
-export const QueryResourceList = 'QueryResourceList';
-export const FetchResourceList = 'FetchResourceList';
-export const SelectResource = 'SelectResource';
 export const SelectMultipleResource = 'SelectMultipleResource';
 export const SelectDeleteResource = 'SelectDeleteResource';
 export const InitResourceName = 'InitResourceName';
