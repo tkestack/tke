@@ -19,14 +19,13 @@
 package cluster
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net"
-	"net/http"
 	"reflect"
 	"runtime"
 	"strings"
 	"time"
+
+	"tkestack.io/tke/pkg/util/validation"
 
 	"tkestack.io/tke/pkg/platform/util"
 
@@ -112,34 +111,6 @@ func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) (
 	return allErrs, nil
 }
 
-func dialBySimpleHTTPS(host string, port int32, timeout time.Duration) error {
-	client := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout: timeout,
-			}).DialContext,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
-	url := fmt.Sprintf("https://%s:%d", host, port)
-
-	request, err := http.NewRequest(http.MethodGet, url, nil)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = client.Do(request)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 	var allErrs field.ErrorList
 
@@ -153,7 +124,7 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 			if address.Port == 0 {
 				allErrs = append(allErrs, field.Required(field.NewPath("status", "addresses", string(address.Type), "port"), "must specify the port of address"))
 			}
-			err := dialBySimpleHTTPS(address.Host, address.Port, 5*time.Second)
+			err := validation.VailidateClusterHost(address.Host, address.Port, 5*time.Second)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("status", "addresses"), address, err.Error()))
 			}
