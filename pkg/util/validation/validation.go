@@ -26,8 +26,8 @@ import (
 	"time"
 )
 
-// VailidateClusterHost validates cluster host using https dial.
-func VailidateClusterHost(host string, port int32, timeout time.Duration) error {
+// VailidateClusterConnection validates cluster connection using https dial.
+func VailidateClusterConnection(host string, port int32, timeout time.Duration) error {
 	client := &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
