@@ -20,12 +20,13 @@ package deletion
 
 import (
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	"tkestack.io/tke/api/platform/v1"
+	v1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -264,7 +265,10 @@ func deleteNode(deleter *machineDeleter, machine *v1.Machine) error {
 
 	clientset, err := util.BuildExternalClientSetWithName(deleter.platformClient, machine.Spec.ClusterName)
 	if err != nil {
-		return err
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		return nil
 	}
 
 	err = clientset.CoreV1().Nodes().Delete(machine.Spec.IP, &metav1.DeleteOptions{})
