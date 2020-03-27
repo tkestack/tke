@@ -54,11 +54,17 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
+const (
+	OIDCPath           = "/oidc/"
+	AuthPath           = "/auth/"
+	APIKeyPasswordPath = "/apis/auth.tkestack.io/v1/apikeys/default/password"
+)
+
 func IgnoreAuthPathPrefixes() []string {
 	return []string{
-		"/oidc/",
-		"/auth/",
-		"/apis/auth.tkestack.io/v1/apikeys/default/password",
+		OIDCPath,
+		AuthPath,
+		APIKeyPasswordPath,
 	}
 }
 
