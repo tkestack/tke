@@ -37,8 +37,14 @@ func InstallNvidiaDriver(s ssh.Interface, option *NvidiaDriverOption) error {
 		return err
 	}
 
-	cmd := fmt.Sprintf("sh %s -s", dstFile)
-	_, stderr, exit, err := s.Exec(cmd)
+	cmd := "tar xvaf %s -C %s "
+	_, stderr, exit, err := s.Execf(cmd, dstFile, constants.DstBinDir)
+	if err != nil || exit != 0 {
+		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+	}
+
+	cmd = "NVIDIA.run -s"
+	_, stderr, exit, err = s.Exec(cmd)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
