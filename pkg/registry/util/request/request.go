@@ -21,6 +21,7 @@ package request
 import (
 	"net/http"
 	"strings"
+
 	utilhttp "tkestack.io/tke/pkg/util/http"
 )
 
@@ -37,7 +38,9 @@ func TenantID(req *http.Request, domainSuffix string, defaultTenant string) stri
 		if strings.HasSuffix(tenant, ".") {
 			tenant = strings.TrimSuffix(tenant, ".")
 		}
-		return tenant
+		if tenant != "" {
+			return tenant
+		}
 	}
 	return defaultTenant
 }

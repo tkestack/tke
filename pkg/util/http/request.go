@@ -19,15 +19,15 @@
 package http
 
 import (
-	"net"
 	"net/http"
+	"strings"
 )
 
 // DomainFromRequest returns the host by given http request.
 func DomainFromRequest(req *http.Request) string {
-	host, _, err := net.SplitHostPort(req.Host)
-	if err != nil {
-		return ""
+	i := strings.Index(req.Host, ":")
+	if i < 0 {
+		return req.Host
 	}
-	return host
+	return req.Host[:i]
 }
