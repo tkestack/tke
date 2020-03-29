@@ -1,3 +1,4 @@
+import { KeyValue } from 'src/modules/common';
 import { deepClone } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
@@ -83,6 +84,44 @@ export const validateLbcfActions = {
       message
     };
   },
+
+  _validateLbcfConfig(kvs: KeyValue[]) {
+    let status = 1,
+      message = '';
+    kvs.forEach(kv => {
+      if (kv.key === '' || kv.value === '') {
+        status = 2;
+        message = t('该配置未填写完');
+      }
+    });
+    return {
+      status,
+      message
+    };
+  },
+
+  validateLbcfConfig() {
+    return async (dispatch, getState: GetState) => {
+      let { config } = getState().subRoot.lbcfEdit;
+      const result = validateLbcfActions._validateLbcfConfig(config);
+      dispatch({
+        type: ActionType.V_Lbcf_Config,
+        payload: result
+      });
+    };
+  },
+
+  validateLbcfArgs() {
+    return async (dispatch, getState: GetState) => {
+      let { args } = getState().subRoot.lbcfEdit;
+      const result = validateLbcfActions._validateLbcfConfig(args);
+      dispatch({
+        type: ActionType.V_Lbcf_Args,
+        payload: result
+      });
+    };
+  },
+
   // validateLbcfClbSelection() {
   //   return async (dispatch, getState: GetState) => {
   //     let { clbSelection } = getState().subRoot.lbcfEdit;
@@ -100,7 +139,9 @@ export const validateLbcfActions = {
     result =
       result &&
       validateLbcfActions._validateLbcfName(lbcfEdit.name).status === 1 &&
-      validateLbcfActions._validateLbcfNamespace(lbcfEdit.namespace).status === 1;
+      validateLbcfActions._validateLbcfNamespace(lbcfEdit.namespace).status === 1 &&
+      validateLbcfActions._validateLbcfConfig(lbcfEdit.config).status === 1 &&
+      validateLbcfActions._validateLbcfConfig(lbcfEdit.args).status === 1;
 
     // if (lbcfEdit.createLbWay === 'existed') {
     //   result = result && validateLbcfActions._validateLbcfClbSelection(lbcfEdit.clbSelection).status === 1;
@@ -113,6 +154,8 @@ export const validateLbcfActions = {
     return async (dispatch, getState: GetState) => {
       dispatch(validateLbcfActions.validateLbcfName());
       dispatch(validateLbcfActions.validateLbcfNamespace());
+      dispatch(validateLbcfActions.validateLbcfConfig());
+      dispatch(validateLbcfActions.validateLbcfArgs());
       // if (getState().subRoot.lbcfEdit.createLbWay === 'existed') {
       //   dispatch(validateLbcfActions.validateLbcfClbSelection());
       // }

@@ -56,6 +56,7 @@ import {
   lbcf,
   lbcf_bg,
   lbcf_br,
+  lbcf_driver,
   clustercredential,
   serviceForMesh,
   gateway,
@@ -141,6 +142,7 @@ export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey =
     lbcf: getResourceConfig(lbcf, finalK8sVersion),
     lbcf_bg: getResourceConfig(lbcf_bg, finalK8sVersion),
     lbcf_br: getResourceConfig(lbcf_br, finalK8sVersion),
+    lbcf_driver: getResourceConfig(lbcf_driver, finalK8sVersion),
 
     /** =============== 这里是业务相关的 =============== */
     projects: getResourceConfig(projects, finalK8sVersion),

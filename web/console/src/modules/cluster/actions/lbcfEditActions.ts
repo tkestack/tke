@@ -1,14 +1,15 @@
+import { FFReduxActionName } from './../constants/Config';
 import { initStringArray } from './../constants/initState';
 import { KeyValue } from 'src/modules/common';
 
-import { deepClone, uuid } from '@tencent/ff-redux';
+import { deepClone, uuid, createFFListActions, RecordSet } from '@tencent/ff-redux';
 
 import { resourceConfig } from '../../../../config/resourceConfig';
 import * as ActionType from '../constants/ActionType';
 import { initLbcfBackGroupEdition, initLbcfBGPort, initSelector } from '../constants/initState';
 import { RootState, BackendGroup } from '../models';
 import { Namespace } from '../models/Namespace';
-import { ResourceFilter } from '../models/ResourceOption';
+import { ResourceFilter, Resource } from '../models/ResourceOption';
 import { CLB, Selector } from '../models/ServiceEdit';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
@@ -18,7 +19,30 @@ import { GameBackgroupEdition } from '../models/LbcfEdit';
 
 type GetState = () => RootState;
 
+const lbcfDriverFFReduxAction = createFFListActions<Resource, ResourceFilter>({
+  actionName: FFReduxActionName.LBCF_DRIVER,
+  fetcher: async (query, getState: GetState, fetchOptions) => {
+    let resourceInfo = resourceConfig(getState().clusterVersion).lbcf_driver;
+    let kubesystemResponse = await WebAPI.fetchResourceList(
+      Object.assign({}, query, { filter: Object.assign({}, query.filter, { namespace: 'kube-system' }) }),
+      { resourceInfo }
+    );
+    let response = await WebAPI.fetchResourceList(query, { resourceInfo });
+    let resourceList = kubesystemResponse.records.concat(response.records);
+    const result: RecordSet<Resource> = {
+      recordCount: resourceList.length,
+      records: resourceList
+    };
+    return result;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().subRoot.lbcfEdit.driver;
+  },
+  selectFirst: true
+});
+
 export const lbcfEditActions = {
+  driver: lbcfDriverFFReduxAction,
   /** 输入名称 */
   inputLbcfName: (name: string) => {
     return async (dispatch, getState: GetState) => {
