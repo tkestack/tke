@@ -339,9 +339,6 @@ func (c *Controller) createIPAMIfNeeded(key string, cachedIPAM *cachedIPAM, ipam
 		}
 	case v1.AddonPhaseFailed:
 		log.Info("IPAM is error", log.String("ipam", key))
-		if c.health.Exist(key) {
-			c.health.Del(key)
-		}
 	}
 	return nil
 }
@@ -713,7 +710,6 @@ func (c *Controller) watchIPAMHealth(key string) func() (bool, error) {
 			if err = c.persistUpdate(ipam); err != nil {
 				return false, err
 			}
-			return true, nil
 		}
 		return false, nil
 	}
