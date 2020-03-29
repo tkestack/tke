@@ -86,6 +86,8 @@ func NewProvider() (*Provider, error) {
 
 		p.EnsurePreflight, // wait basic setting done
 
+		p.EnsureNvidiaDriver,
+		p.EnsureNvidiaContainerRuntime,
 		p.EnsureDocker,
 		p.EnsureKubelet,
 		p.EnsureCNIPlugins,

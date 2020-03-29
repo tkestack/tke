@@ -34,6 +34,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
@@ -207,6 +208,20 @@ func (p *Provider) EnsureKubeconfig(m *Machine) error {
 	}
 
 	return nil
+}
+
+func (p *Provider) EnsureNvidiaDriver(m *Machine) error {
+	if !gpu.IsEnable(m.Labels) {
+		return nil
+	}
+	return gpu.InstallNvidiaDriver(m, &gpu.NvidiaDriverOption{})
+}
+
+func (p *Provider) EnsureNvidiaContainerRuntime(m *Machine) error {
+	if !gpu.IsEnable(m.Labels) {
+		return nil
+	}
+	return gpu.InstallNvidiaContainerRuntime(m, &gpu.NvidiaContainerRuntimeOption{})
 }
 
 func (p *Provider) EnsureDocker(m *Machine) error {
