@@ -10,7 +10,11 @@ import { dateFormatter } from '../../../../helpers';
 import { Clip, LinkButton, Resource } from '../../common';
 import { allActions } from '../actions';
 import {
-    AddonStatusEnum, AddonStatusNameMap, AddonStatusThemeMap, AddonTypeEnum, AddonTypeMap
+  AddonStatusEnum,
+  AddonStatusNameMap,
+  AddonStatusThemeMap,
+  AddonTypeEnum,
+  AddonTypeMap
 } from '../constants/Config';
 import { RootProps } from './AddonApp';
 
@@ -34,10 +38,10 @@ export class AddonTablePanel extends React.Component<RootProps, {}> {
         width: '15%',
         render: x => (
           <React.Fragment>
-            <Text id="addonName" overflow verticalAlign="middle">
+            <Text id={x.metadata.name} overflow verticalAlign="middle">
               {x.metadata.name || '-'}
             </Text>
-            <Clip target="#addonName" />
+            <Clip target={`#${x.metadata.name}`} />
             <Text parent="p">{x.spec.type || '-'}</Text>
           </React.Fragment>
         )

@@ -97,12 +97,12 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
   let gameBRresourceInfo = resourceConfig(clusterVersion).lbcf_br;
   let gameBGList = await WebAPI.fetchResourceList(resourceQuery, {
       resourceInfo: gameBGresourceInfo,
-      isClearData,
-      isContinue: true
+      isClearData
     }),
     gameLBList = await WebAPI.fetchResourceList(resourceQuery, {
       resourceInfo,
-      isClearData
+      isClearData,
+      isContinue: true
     }),
     gameBRList = await WebAPI.fetchResourceList(resourceQuery, {
       resourceInfo: gameBRresourceInfo,

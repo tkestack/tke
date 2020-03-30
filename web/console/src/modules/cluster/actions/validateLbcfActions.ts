@@ -1,5 +1,5 @@
 import { KeyValue } from 'src/modules/common';
-import { deepClone } from '@tencent/ff-redux';
+import { deepClone, FFListModel } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { cloneDeep } from '../../common/utils';
@@ -122,6 +122,32 @@ export const validateLbcfActions = {
     };
   },
 
+  _validateLbcfDriver(driver: FFListModel) {
+    let status = 0,
+      message = '';
+    if (!driver.selection) {
+      status = 2;
+      message = 'Driver不能为空';
+    } else {
+      status = 1;
+      message = '';
+    }
+    return {
+      status,
+      message
+    };
+  },
+  validateLbcfDriver() {
+    return async (dispatch, getState: GetState) => {
+      let { driver } = getState().subRoot.lbcfEdit;
+      const result = validateLbcfActions._validateLbcfDriver(driver);
+      dispatch({
+        type: ActionType.V_Lbcf_Driver,
+        payload: result
+      });
+    };
+  },
+
   // validateLbcfClbSelection() {
   //   return async (dispatch, getState: GetState) => {
   //     let { clbSelection } = getState().subRoot.lbcfEdit;
@@ -141,7 +167,8 @@ export const validateLbcfActions = {
       validateLbcfActions._validateLbcfName(lbcfEdit.name).status === 1 &&
       validateLbcfActions._validateLbcfNamespace(lbcfEdit.namespace).status === 1 &&
       validateLbcfActions._validateLbcfConfig(lbcfEdit.config).status === 1 &&
-      validateLbcfActions._validateLbcfConfig(lbcfEdit.args).status === 1;
+      validateLbcfActions._validateLbcfConfig(lbcfEdit.args).status === 1 &&
+      validateLbcfActions._validateLbcfDriver(lbcfEdit.driver).status === 1;
 
     // if (lbcfEdit.createLbWay === 'existed') {
     //   result = result && validateLbcfActions._validateLbcfClbSelection(lbcfEdit.clbSelection).status === 1;
@@ -156,6 +183,7 @@ export const validateLbcfActions = {
       dispatch(validateLbcfActions.validateLbcfNamespace());
       dispatch(validateLbcfActions.validateLbcfConfig());
       dispatch(validateLbcfActions.validateLbcfArgs());
+      dispatch(validateLbcfActions.validateLbcfDriver());
       // if (getState().subRoot.lbcfEdit.createLbWay === 'existed') {
       //   dispatch(validateLbcfActions.validateLbcfClbSelection());
       // }
