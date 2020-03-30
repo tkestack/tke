@@ -299,7 +299,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
           {this._renderPorts(ports)}
         </FormPanel.Item>
         <FormPanel.Item
-          label={backgroupType !== BackendType.Pods ? t('绑定节点') : t('绑定Pod')}
+          label={backgroupType !== BackendType.Pods ? t('绑定节点') : t('Pod Label')}
           text={labels.length === 0}
           isShow={backgroupType !== BackendType.Static}
         >

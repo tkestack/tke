@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { Button, ContentView, Form, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
-import { bindActionCreators, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
+import { bindActionCreators, isSuccessWorkflow, OperationState, uuid, deepClone } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { validateLbcfActions } from '../../../../../modules/cluster/actions/validateLbcfActions';
@@ -24,6 +24,10 @@ export class EditLbcfPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions, route } = this.props;
     actions.lbcf.selectLbcfNamespace(route.queries['np']);
+    actions.lbcf.driver.applyFilter({
+      clusterId: route.queries['clusterId'],
+      namespace: route.queries['np']
+    });
   }
 
   componentWillUnmount() {
@@ -32,10 +36,10 @@ export class EditLbcfPanel extends React.Component<RootProps, {}> {
   }
 
   render() {
-    let { actions, subRoot, route, namespaceList, cluster } = this.props,
+    let { actions, subRoot, route, namespaceList } = this.props,
       urlParams = router.resolve(route),
       { lbcfEdit, modifyResourceFlow } = subRoot,
-      { name, v_name, namespace, v_namespace, config, args } = lbcfEdit;
+      { name, v_name, namespace, v_namespace, config, args, driver, v_args, v_config } = lbcfEdit;
 
     /** 渲染namespace列表 */
     let namespaceOptions = namespaceList.data.recordCount
@@ -78,86 +82,113 @@ export class EditLbcfPanel extends React.Component<RootProps, {}> {
                 }
               }}
             />
-            <FormPanel.Item label={t('负载均衡配置')}>
+            <FormPanel.Item
+              label={t('负载类型')}
+              errorTipsStyle="Icon"
+              validator={v_namespace}
+              select={{
+                model: driver,
+                action: actions.lbcf.driver
+              }}
+            />
+            <FormPanel.Item label={t('负载均衡配置')} validator={v_config} errorTipsStyle={'Message'}>
               <FormPanel isNeedCard={false} fixed>
-                <FormPanel.Item
-                  keyvalue={{
-                    options: LbcfConfig,
-                    value: config,
-                    onChange: (values, option) => {
-                      actions.lbcf.selectConfig(values);
-                      if (option.value === 'loadBalancerType') {
-                        let loadBalancerType = values.find(v => v.key === 'loadBalancerType');
-                        if (loadBalancerType.value === 'INTERNAL') {
-                          if (!values.find(v => v.key === 'subnetID')) {
-                            values.push({
-                              key: 'subnetID',
-                              value: ''
-                            });
-                            actions.lbcf.selectConfig(values.slice(0));
-                          }
-                        }
-                      }
-                      if (option.value === 'listenerProtocol') {
-                        let listenerProtocol = values.find(v => v.key === 'listenerProtocol');
-                        if (listenerProtocol) {
-                          switch (listenerProtocol.value) {
-                            case 'HTTP':
-                              //
-                              if (!values.find(v => v.key === 'domain')) {
-                                values.push({
-                                  key: 'domain',
-                                  value: ''
-                                });
-                              }
-                              if (!values.find(v => v.key === 'url')) {
-                                values.push({
-                                  key: 'url',
-                                  value: ''
-                                });
-                              }
-                              actions.lbcf.selectConfig(values.slice(0));
-                              break;
-                            case 'HTTPS':
-                              if (!values.find(v => v.key === 'domain')) {
-                                values.push({
-                                  key: 'domain',
-                                  value: ''
-                                });
-                              }
-                              if (!values.find(v => v.key === 'url')) {
-                                values.push({
-                                  key: 'url',
-                                  value: ''
-                                });
-                              }
-                              actions.lbcf.selectConfig(values.slice(0));
-                              if (!args.find(a => a.key === 'listenerCertID')) {
-                                args.push({
-                                  key: 'listenerCertID',
-                                  value: ''
-                                });
-                                actions.lbcf.selectArgs(args.slice(0));
-                              }
+                <React.Fragment>
+                  {config.map((kv, index) => {
+                    return (
+                      <div key={index} style={{ marginBottom: 10 }}>
+                        <FormPanel.Input
+                          value={config[index].key}
+                          onChange={value => {
+                            let newConfig = deepClone(config);
+                            newConfig[index].key = value;
+                            actions.lbcf.selectConfig(newConfig);
+                          }}
+                        />
+                        <FormPanel.InlineText style={{ marginLeft: 5, marginRight: 5 }}>=</FormPanel.InlineText>
+                        <FormPanel.Input
+                          value={config[index].value}
+                          onChange={value => {
+                            let newConfig = deepClone(config);
+                            newConfig[index].value = value;
+                            actions.lbcf.selectConfig(newConfig);
+                          }}
+                        />
+                        <Button
+                          icon="close"
+                          onClick={() => {
+                            let newConfig = deepClone(config);
+                            newConfig.splice(index, 1);
+                            actions.lbcf.selectConfig(newConfig);
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
 
-                              break;
-                          }
-                        }
-                      }
-                    }
-                  }}
-                />
+                  <div>
+                    <Button
+                      type="link"
+                      onClick={() => {
+                        let newConfig = deepClone(config);
+                        newConfig.push({ key: '', value: '' });
+                        actions.lbcf.selectConfig(newConfig);
+                      }}
+                    >
+                      {t('新增配置')}
+                    </Button>
+                  </div>
+                </React.Fragment>
               </FormPanel>
             </FormPanel.Item>
-            <FormPanel.Item label={t('负载均衡属性')}>
+            <FormPanel.Item label={t('负载均衡属性')} validator={v_args} errorTipsStyle={'Message'}>
               <FormPanel isNeedCard={false} fixed>
-                <FormPanel.Item
-                  keyvalue={{
-                    options: LbcfArgsConfig,
-                    value: args,
-                    onChange: values => actions.lbcf.selectArgs(values)
-                  }}
-                />
+                <React.Fragment>
+                  {args.map((kv, index) => {
+                    return (
+                      <div key={index} style={{ marginBottom: 10 }}>
+                        <FormPanel.Input
+                          value={args[index].key}
+                          onChange={value => {
+                            let newArgs = deepClone(args);
+                            newArgs[index].key = value;
+                            actions.lbcf.selectArgs(newArgs);
+                          }}
+                        />
+                        <FormPanel.InlineText style={{ marginLeft: 5, marginRight: 5 }}>=</FormPanel.InlineText>
+                        <FormPanel.Input
+                          value={args[index].value}
+                          onChange={value => {
+                            let newArgs = deepClone(args);
+                            newArgs[index].value = value;
+                            actions.lbcf.selectArgs(newArgs);
+                          }}
+                        />
+                        <Button
+                          icon="close"
+                          onClick={() => {
+                            let newArgs = deepClone(args);
+                            newArgs.splice(index, 1);
+                            actions.lbcf.selectArgs(newArgs);
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+
+                  <div>
+                    <Button
+                      type="link"
+                      onClick={() => {
+                        let newArgs = deepClone(args);
+                        newArgs.push({ key: '', value: '' });
+                        actions.lbcf.selectArgs(newArgs);
+                      }}
+                    >
+                      {t('新增属性')}
+                    </Button>
+                  </div>
+                </React.Fragment>
               </FormPanel>
             </FormPanel.Item>
 
