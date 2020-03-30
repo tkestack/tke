@@ -1,11 +1,13 @@
 import {
-    extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationHooks, OperationTrigger
+  extend,
+  generateWorkflowActionCreator,
+  isSuccessWorkflow,
+  OperationHooks,
+  OperationTrigger
 } from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';
-import {
-    CreateIC, CreateResource, DifferentInterfaceResourceOperation, RootState
-} from '../models';
+import { CreateIC, CreateResource, DifferentInterfaceResourceOperation, RootState } from '../models';
 import { AllocationRatioEdition } from '../models/AllocationRatioEdition';
 import { Computer, ComputerLabelEdition, ComputerOperator } from '../models/Computer';
 import { router } from '../router';

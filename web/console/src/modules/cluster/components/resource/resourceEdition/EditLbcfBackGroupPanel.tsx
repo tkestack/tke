@@ -49,17 +49,19 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
   render() {
     let { actions, subRoot, route } = this.props,
       urlParams = router.resolve(route),
-      { lbcfEdit, modifyMultiResourceWorkflow } = subRoot,
+      { lbcfEdit, modifyMultiResourceWorkflow, updateMultiResource } = subRoot,
       { namespace, lbcfBackGroupEditions } = lbcfEdit;
-
-    let failed =
-      modifyMultiResourceWorkflow.operationState === OperationState.Done &&
-      !isSuccessWorkflow(modifyMultiResourceWorkflow);
 
     let canEdit = lbcfBackGroupEditions.every(item => !item.onEdit);
     let cantDelete = lbcfBackGroupEditions.length === 1;
 
     let mode = urlParams['tab'] === 'createBG' ? 'create' : 'update';
+
+    let failed =
+      mode === 'create'
+        ? modifyMultiResourceWorkflow.operationState === OperationState.Done &&
+          !isSuccessWorkflow(modifyMultiResourceWorkflow)
+        : updateMultiResource.operationState === OperationState.Done && !isSuccessWorkflow(updateMultiResource);
     return (
       <ContentView>
         <ContentView.Body>
@@ -149,7 +151,11 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
               >
                 {failed ? t('重试') : t('配置')}
               </Button>
-              <Button onClick={e => router.navigate(Object.assign({}, urlParams, { mode: 'list' }), route.queries)}>
+              <Button
+                onClick={e => {
+                  this._cancel();
+                }}
+              >
                 {t('取消')}
               </Button>
               <TipInfo
@@ -165,7 +171,30 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
       </ContentView>
     );
   }
+  private _cancel() {
+    let { actions, subRoot, route, region, cluster, clusterVersion } = this.props,
+      { modifyMultiResourceWorkflow, updateMultiResource } = subRoot,
+      urlParams = router.resolve(route);
+    let mode = urlParams['tab'] === 'createBG' ? 'create' : 'update';
+    if (mode === 'create') {
+      if (modifyMultiResourceWorkflow.operationState === OperationState.Done) {
+        actions.workflow.modifyMultiResource.reset();
+      }
 
+      if (modifyMultiResourceWorkflow.operationState === OperationState.Started) {
+        actions.workflow.modifyMultiResource.cancel();
+      }
+    } else {
+      if (updateMultiResource.operationState === OperationState.Done) {
+        actions.workflow.updateMultiResource.reset();
+      }
+
+      if (updateMultiResource.operationState === OperationState.Started) {
+        actions.workflow.updateMultiResource.cancel();
+      }
+    }
+    router.navigate(Object.assign({}, urlParams, { mode: 'list' }), route.queries);
+  }
   /** 处理提交请求 */
   private _handleSubmit() {
     let { actions, subRoot, route, region, cluster, clusterVersion } = this.props,

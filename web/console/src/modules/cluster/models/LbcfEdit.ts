@@ -24,6 +24,8 @@ export interface LbcfEdit extends Identifiable {
 
   driver?: FFListModel<Resource, ResourceFilter>;
 
+  v_driver?: Validation;
+
   /** vpcSelection */
   // vpcSelection?: string;
 
@@ -108,7 +110,7 @@ interface Port {
   v_portNumber?: Validation;
 }
 
-interface StringArray {
+export interface StringArray {
   id?: string;
   value: string;
   v_value?: Validation;
