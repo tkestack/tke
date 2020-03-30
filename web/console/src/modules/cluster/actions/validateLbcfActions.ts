@@ -435,7 +435,7 @@ export const validateLbcfActions = {
           });
         } else {
           byName.forEach(name => {
-            dispatch(validateLbcfActions.validateAddress(id + '', name.id + ''));
+            dispatch(validateLbcfActions.validatePodName(id + '', name.id + ''));
           });
           ports.forEach(port => {
             dispatch(validateLbcfActions.validatePort(id + '', port.id + '', port.portNumber));

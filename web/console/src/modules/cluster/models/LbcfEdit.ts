@@ -110,7 +110,7 @@ interface Port {
   v_portNumber?: Validation;
 }
 
-interface StringArray {
+export interface StringArray {
   id?: string;
   value: string;
   v_value?: Validation;

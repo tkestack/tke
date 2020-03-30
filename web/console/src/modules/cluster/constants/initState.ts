@@ -65,7 +65,7 @@ export const initLbcfBackGroupEdition = {
   v_name: initValidator,
   backgroupType: BackendType.Pods,
   staticAddress: [initStringArray],
-  byName: [initStringArray],
+  byName: [],
   serviceName: '',
   v_serviceName: initValidator,
   ports: [initLbcfBGPort],
