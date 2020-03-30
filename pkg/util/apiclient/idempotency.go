@@ -26,10 +26,11 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	apps "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	"k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbac "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -53,7 +54,7 @@ const (
 )
 
 // CreateOrUpdateConfigMap creates a ConfigMap if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
-func CreateOrUpdateConfigMap(client clientset.Interface, cm *v1.ConfigMap) error {
+func CreateOrUpdateConfigMap(client clientset.Interface, cm *corev1.ConfigMap) error {
 	if _, err := client.CoreV1().ConfigMaps(cm.ObjectMeta.Namespace).Create(cm); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return errors.Wrap(err, "unable to create configmap")
@@ -67,7 +68,7 @@ func CreateOrUpdateConfigMap(client clientset.Interface, cm *v1.ConfigMap) error
 }
 
 // CreateOrRetainConfigMap creates a ConfigMap if the target resource doesn't exist. If the resource exists already, this function will retain the resource instead.
-func CreateOrRetainConfigMap(client clientset.Interface, cm *v1.ConfigMap, configMapName string) error {
+func CreateOrRetainConfigMap(client clientset.Interface, cm *corev1.ConfigMap, configMapName string) error {
 	if _, err := client.CoreV1().ConfigMaps(cm.ObjectMeta.Namespace).Get(configMapName, metav1.GetOptions{}); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return nil
@@ -82,7 +83,7 @@ func CreateOrRetainConfigMap(client clientset.Interface, cm *v1.ConfigMap, confi
 }
 
 // CreateOrUpdateSecret creates a Secret if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
-func CreateOrUpdateSecret(client clientset.Interface, secret *v1.Secret) error {
+func CreateOrUpdateSecret(client clientset.Interface, secret *corev1.Secret) error {
 	if _, err := client.CoreV1().Secrets(secret.ObjectMeta.Namespace).Create(secret); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return errors.Wrap(err, "unable to create secret")
@@ -96,7 +97,7 @@ func CreateOrUpdateSecret(client clientset.Interface, secret *v1.Secret) error {
 }
 
 // CreateOrUpdateServiceAccount creates a ServiceAccount if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
-func CreateOrUpdateServiceAccount(client clientset.Interface, sa *v1.ServiceAccount) error {
+func CreateOrUpdateServiceAccount(client clientset.Interface, sa *corev1.ServiceAccount) error {
 	if _, err := client.CoreV1().ServiceAccounts(sa.ObjectMeta.Namespace).Create(sa); err != nil {
 		// Note: We don't run .Update here afterwards as that's probably not required
 		// Only thing that could be updated is annotations/labels in .metadata, but we don't use that currently
@@ -213,7 +214,7 @@ func CreateOrUpdateClusterRoleBinding(client clientset.Interface, clusterRoleBin
 // This is a condition function meant to be used with wait.Poll. false, nil
 // implies it is safe to try again, an error indicates no more tries should be
 // made and true indicates success.
-func PatchNodeOnce(client clientset.Interface, nodeName string, patchFn func(*v1.Node)) func() (bool, error) {
+func PatchNodeOnce(client clientset.Interface, nodeName string, patchFn func(*corev1.Node)) func() (bool, error) {
 	return func() (bool, error) {
 		// First get the node object
 		n, err := client.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
@@ -240,7 +241,7 @@ func PatchNodeOnce(client clientset.Interface, nodeName string, patchFn func(*v1
 			return false, errors.Wrapf(err, "failed to marshal modified node %q into JSON", n.Name)
 		}
 
-		patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, v1.Node{})
+		patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, corev1.Node{})
 		if err != nil {
 			return false, errors.Wrap(err, "failed to create two way merge patch")
 		}
@@ -259,7 +260,7 @@ func PatchNodeOnce(client clientset.Interface, nodeName string, patchFn func(*v1
 
 // PatchNode tries to patch a node using patchFn for the actual mutating logic.
 // Retries are provided by the wait package.
-func PatchNode(client clientset.Interface, nodeName string, patchFn func(*v1.Node)) error {
+func PatchNode(client clientset.Interface, nodeName string, patchFn func(*corev1.Node)) error {
 	// wait.Poll will rerun the condition function every interval function if
 	// the function returns false. If the condition function returns an error
 	// then the retries end and the error is returned.
@@ -267,7 +268,7 @@ func PatchNode(client clientset.Interface, nodeName string, patchFn func(*v1.Nod
 }
 
 // CreateOrUpdateService creates a service if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
-func CreateOrUpdateService(client clientset.Interface, svc *v1.Service) error {
+func CreateOrUpdateService(client clientset.Interface, svc *corev1.Service) error {
 	_, err := client.CoreV1().Services(svc.ObjectMeta.Namespace).Get(svc.Name, metav1.GetOptions{})
 	if err == nil {
 		err := client.CoreV1().Services(svc.ObjectMeta.Namespace).Delete(svc.Name, &metav1.DeleteOptions{})
@@ -309,7 +310,7 @@ func CreateOrUpdateStatefulSet(client clientset.Interface, sts *apps.StatefulSet
 }
 
 // CreateOrUpdateNamespace creates a namespace if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
-func CreateOrUpdateNamespace(client clientset.Interface, ns *v1.Namespace) error {
+func CreateOrUpdateNamespace(client clientset.Interface, ns *corev1.Namespace) error {
 	if _, err := client.CoreV1().Namespaces().Create(ns); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return errors.Wrap(err, "unable to create namespace")
@@ -323,7 +324,7 @@ func CreateOrUpdateNamespace(client clientset.Interface, ns *v1.Namespace) error
 }
 
 // CreateOrUpdateEndpoints creates a Endpoints if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
-func CreateOrUpdateEndpoints(client clientset.Interface, ep *v1.Endpoints) error {
+func CreateOrUpdateEndpoints(client clientset.Interface, ep *corev1.Endpoints) error {
 	if _, err := client.CoreV1().Endpoints(ep.ObjectMeta.Namespace).Create(ep); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return errors.Wrap(err, "unable to create endpoints")
@@ -379,7 +380,7 @@ func CreateOrUpdateCronJob(client clientset.Interface, cronjob *batchv1beta1.Cro
 }
 
 // CreateOrUpdateConfigMapFromFile like kubectl create configmap --from-file
-func CreateOrUpdateConfigMapFromFile(client clientset.Interface, cm *v1.ConfigMap, pattern string) error {
+func CreateOrUpdateConfigMapFromFile(client clientset.Interface, cm *corev1.ConfigMap, pattern string) error {
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return err
@@ -501,16 +502,46 @@ func DeleteService(client clientset.Interface, namespace string, svcName string)
 }
 
 // GetService get a service.
-func GetService(client clientset.Interface, namespace string, name string) (*v1.Service, error) {
+func GetService(client clientset.Interface, namespace string, name string) (*corev1.Service, error) {
 	return client.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
 }
 
 // GetServiceAccount get a service.
-func GetServiceAccount(client clientset.Interface, namespace string, name string) (*v1.ServiceAccount, error) {
+func GetServiceAccount(client clientset.Interface, namespace string, name string) (*corev1.ServiceAccount, error) {
 	return client.CoreV1().ServiceAccounts(namespace).Get(name, metav1.GetOptions{})
 }
 
 // GetClusterRoleBinding get a cluster role binding.
 func GetClusterRoleBinding(client clientset.Interface, name string) (*rbac.ClusterRoleBinding, error) {
 	return client.RbacV1().ClusterRoleBindings().Get(name, metav1.GetOptions{})
+}
+
+// CreateOrUpdateValidatingWebhookConfiguration creates a ValidatingWebhookConfigurations if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
+func CreateOrUpdateValidatingWebhookConfiguration(client clientset.Interface, obj *admissionv1beta1.ValidatingWebhookConfiguration) error {
+	if _, err := client.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Create(obj); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return errors.Wrap(err, "unable to create ValidatingWebhookConfiguration")
+		}
+
+		if _, err := client.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Update(obj); err != nil {
+			return errors.Wrap(err, "unable to update ValidatingWebhookConfiguration")
+		}
+	}
+
+	return nil
+}
+
+// CreateOrUpdateMutatingWebhookConfiguration creates a MutatingWebhookConfigurations if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
+func CreateOrUpdateMutatingWebhookConfiguration(client clientset.Interface, obj *admissionv1beta1.MutatingWebhookConfiguration) error {
+	if _, err := client.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Create(obj); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return errors.Wrap(err, "unable to create MutatingWebhookConfiguration")
+		}
+
+		if _, err := client.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Update(obj); err != nil {
+			return errors.Wrap(err, "unable to update MutatingWebhookConfiguration")
+		}
+	}
+
+	return nil
 }
