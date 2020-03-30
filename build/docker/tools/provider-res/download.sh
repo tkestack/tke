@@ -81,7 +81,8 @@ function download::nvidia_container_runtime() {
   fi
 
   for version in ${NVIDIA_CONTAINER_RUNTIME_VERSIONS}; do
-    wget -c "https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/res/${os}/${arch}/nvidia-container-runtime-${platform}-${version}.tgz"
+    wget -c "https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/res/${os}/${arch}/nvidia-container-runtime-${platform}-${version}.tgz" \
+      -O "nvidia-container-runtime-${platform}-${version}.tar.gz"
   done
 }
 

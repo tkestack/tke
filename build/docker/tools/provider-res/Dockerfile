@@ -18,20 +18,22 @@ FROM alpine:3.10
 
 WORKDIR /data
 
-COPY linux-amd64/cni-*          res/linux-amd64/
-COPY linux-arm64/cni-*          res/linux-arm64/
+## Make sure all files are end with .tar.gz
 
-COPY linux-amd64/docker-*       res/linux-amd64/
-COPY linux-arm64/docker-*       res/linux-arm64/
+COPY linux-amd64/cni-*.tar.gz          res/linux-amd64/
+COPY linux-arm64/cni-*.tar.gz          res/linux-arm64/
 
-COPY linux-amd64/kubernetes-*   res/linux-amd64/
-COPY linux-arm64/kubernetes-*   res/linux-arm64/
+COPY linux-amd64/docker-*.tar.gz       res/linux-amd64/
+COPY linux-arm64/docker-*.tar.gz       res/linux-arm64/
 
-COPY linux-amd64/kubeadm-*      res/linux-amd64/
-COPY linux-arm64/kubeadm-*      res/linux-arm64/
+COPY linux-amd64/kubernetes-*.tar.gz   res/linux-amd64/
+COPY linux-arm64/kubernetes-*.tar.gz   res/linux-arm64/
 
-COPY linux-amd64/NVIDIA-*       res/linux-amd64/
+COPY linux-amd64/kubeadm-*.tar.gz      res/linux-amd64/
+COPY linux-arm64/kubeadm-*.tar.gz      res/linux-arm64/
 
-COPY linux-amd64/nvidia-container-* res/linux-amd64/
+COPY linux-amd64/NVIDIA-*.tar.gz       res/linux-amd64/
+
+COPY linux-amd64/nvidia-container-*.tar.gz res/linux-amd64/
 
 ENTRYPOINT ["sh"]
