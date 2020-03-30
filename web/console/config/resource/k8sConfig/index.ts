@@ -21,7 +21,7 @@ export * from './addonResource';
 export * from './alarmPolicy';
 export * from './notifyChannel';
 
-export { lbcf, lbcf_bg, lbcf_br } from './lbcf';
+export { lbcf, lbcf_bg, lbcf_br, lbcf_driver } from './lbcf';
 
 export { serviceForMesh } from './serviceForMesh';
 export { gateway } from './gateway';

@@ -52,6 +52,7 @@ export interface ApiVersion {
   lbcf?: ResourceApiInfo;
   lbcf_bg?: ResourceApiInfo;
   lbcf_br?: ResourceApiInfo;
+  lbcf_driver?: ResourceApiInfo;
   /** ============= 以下是addon的相关配置 ============== */
   addon?: ResourceApiInfo;
   addon_helm?: ResourceApiInfo;
@@ -466,6 +467,13 @@ const k8sApiVersionFor18: ApiVersion = {
     basicEntry: apiServerVersion.basicUrl,
     watchModule: ConsoleModuleEnum.PLATFORM,
     headTitle: 'BackendRecord'
+  },
+  lbcf_driver: {
+    group: apiServerVersion.group,
+    version: apiServerVersion.version,
+    basicEntry: apiServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.PLATFORM,
+    headTitle: 'driver'
   },
   gateway: {
     group: 'networking.istio.io',

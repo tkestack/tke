@@ -14,22 +14,61 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-VERSION = v1.16.6-3
+IMAGE = provider-res
+VERSION = v1.16.6-4
 REGISTRY_PREFIX ?= tkestack
 
-TEMP_DIR:=$(shell mktemp -d)
+COMMON_SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+ROOT_DIR := $(abspath $(shell cd $(COMMON_SELF_DIR)/../../../.. && pwd -P))
 
-.PHONY:
-all: provider-res
+.PHONY: all
+all: image
 
-.PHONY:
-provider-res: download
-	@echo "===========> Building $@ $(VERSION) docker image"
-	docker build --pull -t $(REGISTRY_PREFIX)/$@:$(VERSION) -f ./Dockerfile ${TEMP_DIR}
-	@echo "===========> Pushing $@ $(VERSION) image to $(REGISTRY_PREFIX)"
-	docker push $(REGISTRY_PREFIX)/$@:$(VERSION)
-	rm -rf "${TEMP_DIR}"
+# ==============================================================================
+# Includes
+include $(ROOT_DIR)/build/lib/common.mk
+include $(ROOT_DIR)/build/lib/docker-buildx.mk
 
-.PHONY:
+# ==============================================================================
+
+.PHONY: per.build
+per.build: download
+	@cp "$(ROOT_DIR)/build/docker/tools/$(IMAGE)/Dockerfile" "$(WORK_DIR)/Dockerfile"
+
+.PHONY: download
 download:
-	go run ../../../../cmd/setup-env "DST_DIR=${TEMP_DIR} ./download.sh"
+	$(eval WORK_DIR := $(TMP_DIR)/$(IMAGE))
+	@mkdir -p "$(WORK_DIR)"
+	#@rm -rf "$(WORK_DIR)/*"
+	go run $(ROOT_DIR)/cmd/setup-env "DST_DIR=$(WORK_DIR) ./download.sh"
+
+## image: Build docker images for host arch.
+.PHONY: image
+image: per.build
+	@VERSION=$(VERSION) WORK_DIR="$(WORK_DIR)" $(MAKE) docker.buildx.$(IMAGE_PLAT).$(IMAGE)
+	#@rm -rf "$(WORK_DIR)"
+
+## manifest: Build docker images for host arch and push manifest list to registry.
+.PHONY: manifest
+manifest: per.build
+	@VERSION=$(VERSION) WORK_DIR="$(WORK_DIR)" $(MAKE) docker.manifest.$(IMAGE_PLAT).$(IMAGE)
+	#@rm -rf "$(WORK_DIR)"
+
+## manifest.multiarch: Build docker images for multiple platforms and push manifest lists to registry.
+.PHONY: manifest.multiarch
+manifest.multiarch: per.build
+	@set -o errexit; \
+	for platform in $(PLATFORMS); do \
+		VERSION=$(VERSION) WORK_DIR="$(WORK_DIR)" $(MAKE) docker.push.$${platform}.$(IMAGE); \
+	done
+	#@rm -rf "$(WORK_DIR)"
+	@echo "===========> Pushing manifest $(REGISTRY_PREFIX)/$(IMAGE):$(VERSION) and then remove the local manifest list"
+	REGISTRY_PREFIX=$(REGISTRY_PREFIX) PLATFROMS="$(PLATFORMS)" IMAGE=$(IMAGE) VERSION=$(VERSION) \
+	  DOCKER_CLI_EXPERIMENTAL=enabled $(ROOT_DIR)/build/lib/create-manifest.sh 
+
+## help: Show this help info.
+.PHONY: help
+help: Makefile
+	@echo -e "\nUsage: make <TARGETS> <OPTIONS> ...\n\nTargets:"
+	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
+	@echo "$$USAGE_OPTIONS"

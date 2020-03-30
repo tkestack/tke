@@ -256,3 +256,20 @@ export const lbcf_br = (k8sVersion: string) => {
   };
   return config;
 };
+
+export const lbcf_driver = (k8sVersion: string) => {
+  // apiVersion的配置
+  const apiKind = apiVersion[k8sVersion].lbcf_driver;
+  let config: ResourceInfo = {
+    headTitle: apiKind.headTitle,
+    basicEntry: apiKind.basicEntry,
+    group: apiKind.group,
+    version: apiKind.version,
+    namespaces: 'namespaces',
+    requestType: {
+      list: 'lbcflbdrivers',
+      addon: true
+    }
+  };
+  return config;
+};

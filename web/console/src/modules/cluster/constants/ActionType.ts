@@ -327,6 +327,8 @@ export const V_Gate_Namespace = 'V_GLB_Namespace';
 
 export const Lbcf_Config = 'Lbcf_Config';
 export const Lbcf_Args = 'Lbcf_Args';
+export const V_Lbcf_Config = 'V_Lbcf_Config';
+export const V_Lbcf_Args = 'V_Lbcf_Args';
 
 export const GLB_VpcSelection = 'GLB_VpcSelection';
 export const GLB_FecthClb = 'GLB_FecthClb';

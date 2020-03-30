@@ -24,7 +24,7 @@ cd "$DST_DIR" || exit
 
 function download::cni_plugins() {
   for version in ${CNI_PLUGINS_VERSIONS}; do
-    wget "https://github.com/containernetworking/plugins/releases/download/${version}/cni-plugins-${platform}-${version}.tgz" \
+    wget -c "https://github.com/containernetworking/plugins/releases/download/${version}/cni-plugins-${platform}-${version}.tgz" \
       -O "cni-plugins-${platform}-${version}.tar.gz"
   done
 }
@@ -40,23 +40,23 @@ function download::docker() {
   fi
 
   for version in ${DOCKER_VERSIONS}; do
-    wget "https://download.docker.com/${os}/static/stable/${docker_arch}/docker-${version}.tgz" \
+    wget -c "https://download.docker.com/${os}/static/stable/${docker_arch}/docker-${version}.tgz" \
       -O "docker-${platform}-${version}.tar.gz"
   done
 }
 
 function download::kubernetes() {
   for version in ${K8S_VERSIONS}; do
-    wget "https://dl.k8s.io/${version}/kubernetes-node-${platform}.tar.gz" \
+    wget -c "https://dl.k8s.io/${version}/kubernetes-node-${platform}.tar.gz" \
       -O "kubernetes-node-${platform}-${version}.tar.gz"
   done
 }
 
 function download::kubeadm() {
   for version in ${KUBEADM_VERSIONS}; do
-    wget "https://storage.googleapis.com/kubernetes-release/release/${version}/bin/${os}/${arch}/kubeadm"
+    wget -c "https://storage.googleapis.com/kubernetes-release/release/${version}/bin/${os}/${arch}/kubeadm"
     chmod +x kubeadm
-    tar cvzf "kubeadm-${platform}-${version}.tar.gz" kubeadm
+    GZIP=-n tar cvzf "kubeadm-${platform}-${version}.tar.gz" kubeadm
     rm kubeadm
   done
 }
@@ -67,10 +67,11 @@ function download::nvidia_driver() {
   fi
 
   for version in ${NVIDIA_DRIVER_VERSIONS}; do
-    wget "https://us.download.nvidia.cn/XFree86/Linux-x86_64/${version}/NVIDIA-Linux-x86_64-${version}.run" \
+    wget -c "https://us.download.nvidia.cn/XFree86/Linux-x86_64/${version}/NVIDIA-Linux-x86_64-${version}.run" \
       -O "NVIDIA.run"
     chmod +x "NVIDIA.run"
-    tar cvzf "NVIDIA-${platform}-${version}.tar.gz" "NVIDIA.run"
+    GZIP=-n tar cvzf "NVIDIA-${platform}-${version}.tar.gz" "NVIDIA.run"
+    rm "NVIDIA.run"
   done
 }
 
@@ -80,7 +81,7 @@ function download::nvidia_container_runtime() {
   fi
 
   for version in ${NVIDIA_CONTAINER_RUNTIME_VERSIONS}; do
-    wget "https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/res/${os}/${arch}/nvidia-container-runtime-${platform}-${version}.tgz"
+    wget -c "https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/res/${os}/${arch}/nvidia-container-runtime-${platform}-${version}.tgz"
   done
 }
 
@@ -97,6 +98,7 @@ for os in ${OSS}; do
     download::kubernetes
     download::kubeadm
     download::nvidia_driver
+    download::nvidia_container_runtime
 
     cd -
   done

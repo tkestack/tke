@@ -17,6 +17,21 @@
 FROM alpine:3.10
 
 WORKDIR /data
-COPY . res/
+
+COPY linux-amd64/cni-*          res/linux-amd64/
+COPY linux-arm64/cni-*          res/linux-arm64/
+
+COPY linux-amd64/docker-*       res/linux-amd64/
+COPY linux-arm64/docker-*       res/linux-arm64/
+
+COPY linux-amd64/kubernetes-*   res/linux-amd64/
+COPY linux-arm64/kubernetes-*   res/linux-arm64/
+
+COPY linux-amd64/kubeadm-*      res/linux-amd64/
+COPY linux-arm64/kubeadm-*      res/linux-arm64/
+
+COPY linux-amd64/NVIDIA-*       res/linux-amd64/
+
+COPY linux-amd64/nvidia-container-* res/linux-amd64/
 
 ENTRYPOINT ["sh"]
