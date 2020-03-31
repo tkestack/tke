@@ -46,7 +46,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -465,21 +464,8 @@ func (t *TKE) prepare() errors.APIStatus {
 	if err != nil {
 		return errors.NewInternalError(err)
 	}
-	allErrs := t.strategy.Validate(ctx, platformCluster)
 
-	for i, one := range platformCluster.Spec.Machines {
-		ok, err := utilnet.InterfaceHasAddr(one.IP)
-		if err != nil {
-			return errors.NewInternalError(err)
-		}
-		if ok {
-			allErrs = append(allErrs, field.Invalid(
-				field.NewPath("spec", "machines").Index(i).Child("ip"),
-				one.IP,
-				"target machines can't use one which runs installer"))
-			break
-		}
-	}
+	allErrs := t.strategy.Validate(ctx, platformCluster)
 	if len(allErrs) > 0 {
 		return errors.NewInvalid(kinds[0].GroupKind(), v1Cluster.GetName(), allErrs)
 	}
