@@ -211,14 +211,14 @@ func (p *Provider) EnsureKubeconfig(m *Machine) error {
 }
 
 func (p *Provider) EnsureNvidiaDriver(m *Machine) error {
-	if !gpu.IsEnable(m.Labels) {
+	if !gpu.IsEnable(m.Spec.Labels) {
 		return nil
 	}
 	return gpu.InstallNvidiaDriver(m, &gpu.NvidiaDriverOption{})
 }
 
 func (p *Provider) EnsureNvidiaContainerRuntime(m *Machine) error {
-	if !gpu.IsEnable(m.Labels) {
+	if !gpu.IsEnable(m.Spec.Labels) {
 		return nil
 	}
 	return gpu.InstallNvidiaContainerRuntime(m, &gpu.NvidiaContainerRuntimeOption{})
