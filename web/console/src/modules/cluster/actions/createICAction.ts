@@ -53,10 +53,10 @@ export const createICAction = {
     };
   },
 
-  useVip: (vip: boolean): ReduxAction<boolean> => {
+  selectVipType: (vipType: string): ReduxAction<string> => {
     return {
       type: ActionType.v_IC_Vip,
-      payload: vip
+      payload: vipType
     };
   },
 

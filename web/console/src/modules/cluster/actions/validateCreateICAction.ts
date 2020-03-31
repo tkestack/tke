@@ -106,14 +106,14 @@ export const validateCreateICAction = {
   _validateVIPServer(name: string) {
     let status = 0,
       message = '',
-      ipReg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/,
-      hostReg = /^([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?$/;
+      ipReg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
+    // hostReg = /^([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?$/;
     //验证集群名称
 
     if (!name) {
       status = 2;
       message = 'VIP不能为空';
-    } else if (!ipReg.test(name) && !hostReg.test(name)) {
+    } else if (!ipReg.test(name)) {
       status = 2;
       message = 'VIP格式不正确';
     } else {
