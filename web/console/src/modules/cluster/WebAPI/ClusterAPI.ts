@@ -11,7 +11,7 @@ import {
 } from '../../../../helpers';
 import { Cluster, ClusterFilter, RequestParams, ResourceInfo } from '../../common/models';
 import { CreateResource } from '../../common/models/CreateResource';
-import { authTypeMapping } from '../constants/Config';
+import { authTypeMapping, CreateICVipType } from '../constants/Config';
 import { CreateIC } from '../models';
 
 /**
@@ -112,7 +112,7 @@ export async function createIC(clusters: CreateIC[]) {
       maxNodePodNum,
       vipAddress,
       vipPort,
-      vip,
+      vipType,
       gpu,
       gpuType
     } = clusters[0];
@@ -165,11 +165,27 @@ export async function createIC(clusters: CreateIC[]) {
         displayName: name,
         clusterCIDR: cidr,
         networkDevice: networkDevice,
-        features: gpu
-          ? {
-              gpuType: gpuType
-            }
-          : undefined,
+        features: {
+          gpuType: gpu ? gpuType : undefined,
+          ha:
+            vipType !== CreateICVipType.unuse
+              ? {
+                  tke:
+                    vipType === CreateICVipType.tke
+                      ? {
+                          vip: vipAddress
+                        }
+                      : undefined,
+                  thirdParty:
+                    vipType === CreateICVipType.existed
+                      ? {
+                          vip: vipAddress,
+                          vport: +vipPort
+                        }
+                      : undefined
+                }
+              : undefined
+        },
         properties: {
           maxClusterServiceNum: maxClusterServiceNum,
           maxNodePodNum: maxNodePodNum
@@ -177,18 +193,7 @@ export async function createIC(clusters: CreateIC[]) {
         type: 'Baremetal',
         version: k8sVersion,
         machines: machines
-      },
-      status: vip
-        ? {
-            addresses: [
-              {
-                host: vipAddress,
-                type: 'Advertise',
-                port: vipPort ? +vipPort : 6443
-              }
-            ]
-          }
-        : undefined
+      }
     };
 
     jsonData = JSON.parse(JSON.stringify(jsonData));

@@ -703,3 +703,15 @@ export const BackendTypeList = [
   { text: BackendType.Service, value: BackendType.Service },
   { text: BackendType.Static, value: BackendType.Static }
 ];
+
+export enum CreateICVipType {
+  unuse = 'unuse',
+  existed = 'existed',
+  tke = 'tke'
+}
+
+export const CreateICVipTypeOptions = [
+  { text: '不使用', value: CreateICVipType.unuse },
+  { text: '使用已有', value: CreateICVipType.existed },
+  { text: 'TKE提供', value: CreateICVipType.tke }
+];

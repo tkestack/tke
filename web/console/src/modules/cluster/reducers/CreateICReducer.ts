@@ -4,7 +4,7 @@ import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
 
 import { initValidator } from '../../common/models';
 import * as ActionType from '../constants/ActionType';
-import { GPUTYPE, k8sVersionList } from '../constants/Config';
+import { GPUTYPE, k8sVersionList, CreateICVipType } from '../constants/Config';
 
 const TempReducer = combineReducers({
   name: reduceToPayload(ActionType.IC_Name, ''),
@@ -34,7 +34,7 @@ const TempReducer = combineReducers({
 
   v_vipPort: reduceToPayload(ActionType.v_IC_VipPort, initValidator),
 
-  vip: reduceToPayload(ActionType.v_IC_Vip, false),
+  vipType: reduceToPayload(ActionType.v_IC_Vip, CreateICVipType.unuse),
 
   gpu: reduceToPayload(ActionType.v_IC_Gpu, false),
 
