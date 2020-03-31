@@ -99,7 +99,7 @@ const restActions = {
         };
       });
       dispatch({
-        type: FFReduxActionName.CLUSTER + '_FetchDone',
+        type: FFReduxActionName.CLUSTER + '_BaseDone',
         payload: {
           data: result,
           trigger: 'Done'

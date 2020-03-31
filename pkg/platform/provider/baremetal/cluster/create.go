@@ -366,7 +366,7 @@ func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 	if err != nil {
 		return errors.Wrap(err, "parse schedulerPolicyConfig error")
 	}
-	for _, machine := range c.Spec.Machines {
+	for i, machine := range c.Spec.Machines {
 		tokenData := fmt.Sprintf(tokenFileTemplate, *c.ClusterCredential.Token)
 		err := c.SSH[machine.IP].WriteFile(strings.NewReader(tokenData), constants.TokenFile)
 		if err != nil {
@@ -413,6 +413,21 @@ func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 				err = c.SSH[machine.IP].WriteFile(bytes.NewReader(data), constants.KeepavlivedManifestFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
+				}
+			}
+			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 { // forward rest control-plane to first master
+				cmd := fmt.Sprintf("iptables -t nat -I PREROUTING 1 -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
+					c.Spec.Machines[0].IP)
+				_, stderr, exit, err := c.SSH[machine.IP].Exec(cmd)
+				if err != nil || exit != 0 {
+					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+				}
+
+				cmd = fmt.Sprintf("iptables -t nat -I POSTROUTING 1 -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
+					c.Spec.Machines[0].IP, machine.IP)
+				_, stderr, exit, err = c.SSH[machine.IP].Exec(cmd)
+				if err != nil || exit != 0 {
+					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 				}
 			}
 		}
@@ -674,5 +689,31 @@ func (p *Provider) EnsureNvidiaDevicePlugin(c *Cluster) error {
 		return err
 	}
 
+	return nil
+}
+
+func (p *Provider) EnsureCleanup(c *Cluster) error {
+	for i, machine := range c.Spec.Machines {
+		s := c.SSH[machine.IP]
+
+		if c.Spec.Features.HA != nil {
+			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 {
+				cmd := fmt.Sprintf("iptables -t nat -D PREROUTING -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
+					c.Spec.Machines[0].IP)
+				_, stderr, exit, err := s.Exec(cmd)
+				if err != nil || exit != 0 {
+					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+				}
+
+				cmd = fmt.Sprintf("iptables -t nat -D POSTROUTING -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
+					c.Spec.Machines[0].IP, machine.IP)
+				_, stderr, exit, err = s.Exec(cmd)
+				if err != nil || exit != 0 {
+					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+				}
+			}
+		}
+
+	}
 	return nil
 }

@@ -17,6 +17,8 @@ const TempReducer = combineReducers({
 
   v_namespace: reduceToPayload(ActionType.V_Gate_Namespace, initValidator),
 
+  v_driver: reduceToPayload(ActionType.V_Lbcf_Driver, initValidator),
+
   config: reduceToPayload(ActionType.Lbcf_Config, [
     {
       key: '',

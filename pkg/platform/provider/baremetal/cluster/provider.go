@@ -134,6 +134,8 @@ func NewProvider() (*Provider, error) {
 
 		p.EnsureNvidiaDevicePlugin,
 
+		p.EnsureCleanup,
+
 		p.EnsurePostInstallHook,
 	}
 

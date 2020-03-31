@@ -29,6 +29,7 @@ import (
 	"tkestack.io/tke/pkg/util/containerregistry"
 
 	"github.com/pkg/errors"
+	"github.com/thoas/go-funk"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
@@ -46,6 +47,7 @@ const (
 	ReasonFailedProcess     = "FailedProcess"
 	ReasonWaitingProcess    = "WaitingProcess"
 	ReasonSuccessfulProcess = "SuccessfulProcess"
+	ReasonSkipProcess       = "SkipProcess"
 
 	ConditionTypeDone = "EnsureDone"
 )
@@ -174,33 +176,48 @@ func (p *Provider) create(m *Machine) error {
 		return err
 	}
 
-	f := p.getCreateHandler(condition.Type)
-	if f == nil {
-		return fmt.Errorf("can't get handler by %s", condition.Type)
+	skipConditions := m.Cluster.Spec.Features.SkipConditions
+	if skipConditions == nil {
+		skipConditions = p.config.Feature.SkipConditions
 	}
-	err = f(m)
 	now := metav1.Now()
-	if err != nil {
-		log.Warn(err.Error())
+	if funk.ContainsString(skipConditions, condition.Type) {
 		m.SetCondition(platformv1.MachineCondition{
-			Type:          condition.Type,
-			Status:        platformv1.ConditionFalse,
-			LastProbeTime: now,
-			Message:       err.Error(),
-			Reason:        ReasonFailedProcess,
+			Type:               condition.Type,
+			Status:             platformv1.ConditionTrue,
+			LastProbeTime:      now,
+			LastTransitionTime: now,
+			Reason:             ReasonSkipProcess,
 		})
-		m.Status.Reason = ReasonFailedProcess
-		m.Status.Message = err.Error()
-		return nil
-	}
+	} else {
+		f := p.getCreateHandler(condition.Type)
+		if f == nil {
+			return fmt.Errorf("can't get handler by %s", condition.Type)
+		}
+		err = f(m)
+		now := metav1.Now()
+		if err != nil {
+			log.Warn(err.Error())
+			m.SetCondition(platformv1.MachineCondition{
+				Type:          condition.Type,
+				Status:        platformv1.ConditionFalse,
+				LastProbeTime: now,
+				Message:       err.Error(),
+				Reason:        ReasonFailedProcess,
+			})
+			m.Status.Reason = ReasonFailedProcess
+			m.Status.Message = err.Error()
+			return nil
+		}
 
-	m.SetCondition(platformv1.MachineCondition{
-		Type:               condition.Type,
-		Status:             platformv1.ConditionTrue,
-		LastProbeTime:      now,
-		LastTransitionTime: now,
-		Reason:             ReasonSuccessfulProcess,
-	})
+		m.SetCondition(platformv1.MachineCondition{
+			Type:               condition.Type,
+			Status:             platformv1.ConditionTrue,
+			LastProbeTime:      now,
+			LastTransitionTime: now,
+			Reason:             ReasonSuccessfulProcess,
+		})
+	}
 
 	nextConditionType := p.getNextConditionType(condition.Type)
 	if nextConditionType == ConditionTypeDone {

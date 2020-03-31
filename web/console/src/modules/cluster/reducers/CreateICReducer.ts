@@ -28,7 +28,7 @@ const TempReducer = combineReducers({
   computerList: reduceToPayload(ActionType.IC_ComputerList, []),
   computerEdit: reduceToPayload(ActionType.IC_ComputerEdit, null),
   vipAddress: reduceToPayload(ActionType.IC_VipAddress, ''),
-  vipPort: reduceToPayload(ActionType.IC_VipPort, ''),
+  vipPort: reduceToPayload(ActionType.IC_VipPort, '6443'),
 
   v_vipAddress: reduceToPayload(ActionType.v_IC_VipAddress, initValidator),
 

@@ -1102,14 +1102,13 @@ export const workloadEditActions = {
 
       newContainers = containers.map(item => {
         // 镜像地址如 domain:port/repo/name:tag，
-        let [registry, repo, nameWithTag = ''] = item.image.split('/');
-        let [name, tag = ''] = nameWithTag.split(':');
-
-        let originalRegistryAddress = [registry, repo, name].join('/');
+        let lastColonIndex = (item['image'] as string).lastIndexOf(':');
+        let registryName = lastColonIndex > -1 ? item['image'].slice(0, lastColonIndex) : item['image'],
+          tag = lastColonIndex > -1 ? item['image'].slice(lastColonIndex + 1) : 'latest';
 
         let tmp: ContainerItem = Object.assign({}, initContainer, {
           id: uuid(),
-          registry: originalRegistryAddress,
+          registry: registryName,
           tag,
           name: item.name
         });

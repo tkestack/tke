@@ -39,7 +39,7 @@ export class EditLbcfPanel extends React.Component<RootProps, {}> {
     let { actions, subRoot, route, namespaceList } = this.props,
       urlParams = router.resolve(route),
       { lbcfEdit, modifyResourceFlow } = subRoot,
-      { name, v_name, namespace, v_namespace, config, args, driver, v_args, v_config } = lbcfEdit;
+      { name, v_name, namespace, v_namespace, config, args, driver, v_args, v_config, v_driver } = lbcfEdit;
 
     /** 渲染namespace列表 */
     let namespaceOptions = namespaceList.data.recordCount
@@ -83,9 +83,9 @@ export class EditLbcfPanel extends React.Component<RootProps, {}> {
               }}
             />
             <FormPanel.Item
-              label={t('负载类型')}
+              label={t('负载均衡类型')}
               errorTipsStyle="Icon"
-              validator={v_namespace}
+              validator={v_driver}
               select={{
                 model: driver,
                 action: actions.lbcf.driver
@@ -222,7 +222,7 @@ export class EditLbcfPanel extends React.Component<RootProps, {}> {
   private _handleSubmit() {
     let { actions, subRoot, route, region, cluster } = this.props,
       { resourceInfo, mode, lbcfEdit } = subRoot,
-      { config, args } = lbcfEdit;
+      { config, args, driver } = lbcfEdit;
 
     actions.validate.lbcf.validateLbcfEdit();
     if (validateLbcfActions._validateLbcfEdit(lbcfEdit)) {
@@ -248,7 +248,7 @@ export class EditLbcfPanel extends React.Component<RootProps, {}> {
           namespace: reduceNs(namespace)
         },
         spec: {
-          lbDriver: 'lbcf-clb-driver',
+          lbDriver: driver.selection ? driver.selection.metadata.name : '',
           lbSpec: lbcfConfig,
           attributes: lbcfAttribute
         }
