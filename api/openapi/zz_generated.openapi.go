@@ -811,6 +811,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/business/v1.ImageNamespaceSpec":                          schema_tke_api_business_v1_ImageNamespaceSpec(ref),
 		"tkestack.io/tke/api/business/v1.ImageNamespaceStatus":                        schema_tke_api_business_v1_ImageNamespaceStatus(ref),
 		"tkestack.io/tke/api/business/v1.Namespace":                                   schema_tke_api_business_v1_Namespace(ref),
+		"tkestack.io/tke/api/business/v1.NamespaceCert":                               schema_tke_api_business_v1_NamespaceCert(ref),
+		"tkestack.io/tke/api/business/v1.NamespaceCertOptions":                        schema_tke_api_business_v1_NamespaceCertOptions(ref),
 		"tkestack.io/tke/api/business/v1.NamespaceList":                               schema_tke_api_business_v1_NamespaceList(ref),
 		"tkestack.io/tke/api/business/v1.NamespaceSpec":                               schema_tke_api_business_v1_NamespaceSpec(ref),
 		"tkestack.io/tke/api/business/v1.NamespaceStatus":                             schema_tke_api_business_v1_NamespaceStatus(ref),
@@ -38448,6 +38450,59 @@ func schema_tke_api_business_v1_Namespace(ref common.ReferenceCallback) common.O
 	}
 }
 
+func schema_tke_api_business_v1_NamespaceCert(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NamespaceCert represents a x509 certificate of a namespace in project.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"pem": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_tke_api_business_v1_NamespaceCertOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NamespaceCertOptions is query options of getting namespace with a x509 certificate.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"validdays": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pay attention to const CertOptionValiddays!",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_tke_api_business_v1_NamespaceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -38636,11 +38691,16 @@ func schema_tke_api_business_v1_NamespaceStatus(ref common.ReferenceCallback) co
 							},
 						},
 					},
+					"certificate": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/business/v1.NamespaceCert"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/api/resource.Quantity", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"k8s.io/apimachinery/pkg/api/resource.Quantity", "k8s.io/apimachinery/pkg/apis/meta/v1.Time", "tkestack.io/tke/api/business/v1.NamespaceCert"},
 	}
 }
 

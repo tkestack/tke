@@ -141,6 +141,23 @@ func (Namespace) SwaggerDoc() map[string]string {
 	return map_Namespace
 }
 
+var map_NamespaceCert = map[string]string{
+	"": "NamespaceCert represents a x509 certificate of a namespace in project.",
+}
+
+func (NamespaceCert) SwaggerDoc() map[string]string {
+	return map_NamespaceCert
+}
+
+var map_NamespaceCertOptions = map[string]string{
+	"":          "NamespaceCertOptions is query options of getting namespace with a x509 certificate.",
+	"validdays": "Pay attention to const CertOptionValiddays!",
+}
+
+func (NamespaceCertOptions) SwaggerDoc() map[string]string {
+	return map_NamespaceCertOptions
+}
+
 var map_NamespaceList = map[string]string{
 	"":      "NamespaceList is the whole list of all namespaces which owned by a tenant.",
 	"items": "List of namespaces",

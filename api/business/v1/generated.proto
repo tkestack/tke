@@ -187,6 +187,18 @@ message Namespace {
   optional NamespaceStatus status = 3;
 }
 
+// NamespaceCert represents a x509 certificate of a namespace in project.
+message NamespaceCert {
+  // +optional
+  optional bytes pem = 1;
+}
+
+// NamespaceCertOptions is query options of getting namespace with a x509 certificate.
+message NamespaceCertOptions {
+  // Pay attention to const CertOptionValiddays!
+  optional string validdays = 1;
+}
+
 // NamespaceList is the whole list of all namespaces which owned by a tenant.
 message NamespaceList {
   // +optional
@@ -243,6 +255,9 @@ message NamespaceStatus {
 
   // +optional
   map<string, k8s.io.apimachinery.pkg.api.resource.Quantity> cachedSpecHard = 7;
+
+  // +optional
+  optional NamespaceCert certificate = 8;
 }
 
 // Platform is a platform in TKE.
