@@ -448,6 +448,11 @@ func (in *ClusterCredential) DeepCopyInto(out *ClusterCredential) {
 		*out = make([]byte, len(*in))
 		copy(*out, *in)
 	}
+	if in.ETCDCAKey != nil {
+		in, out := &in.ETCDCAKey, &out.ETCDCAKey
+		*out = make([]byte, len(*in))
+		copy(*out, *in)
+	}
 	if in.ETCDAPIClientCert != nil {
 		in, out := &in.ETCDAPIClientCert, &out.ETCDAPIClientCert
 		*out = make([]byte, len(*in))
@@ -460,6 +465,11 @@ func (in *ClusterCredential) DeepCopyInto(out *ClusterCredential) {
 	}
 	if in.CACert != nil {
 		in, out := &in.CACert, &out.CACert
+		*out = make([]byte, len(*in))
+		copy(*out, *in)
+	}
+	if in.CAKey != nil {
+		in, out := &in.CAKey, &out.CAKey
 		*out = make([]byte, len(*in))
 		copy(*out, *in)
 	}

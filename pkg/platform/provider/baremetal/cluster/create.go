@@ -556,11 +556,23 @@ func (p *Provider) EnsureStoreCredential(c *Cluster) error {
 	}
 	c.ClusterCredential.CACert = data
 
+	data, err = c.SSH[c.Spec.Machines[0].IP].ReadFile(constants.CAKeyName)
+	if err != nil {
+		return errors.Wrapf(err, "read %s error", constants.CAKeyName)
+	}
+	c.ClusterCredential.CAKey = data
+
 	data, err = c.SSH[c.Spec.Machines[0].IP].ReadFile(constants.EtcdCACertName)
 	if err != nil {
 		return errors.Wrapf(err, "read %s error", constants.EtcdCACertName)
 	}
 	c.ClusterCredential.ETCDCACert = data
+
+	data, err = c.SSH[c.Spec.Machines[0].IP].ReadFile(constants.EtcdCAKeyName)
+	if err != nil {
+		return errors.Wrapf(err, "read %s error", constants.EtcdCAKeyName)
+	}
+	c.ClusterCredential.ETCDCAKey = data
 
 	data, err = c.SSH[c.Spec.Machines[0].IP].ReadFile(constants.APIServerEtcdClientCertName)
 	if err != nil {

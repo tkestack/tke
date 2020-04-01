@@ -1451,9 +1451,11 @@ func autoConvert_v1_ClusterCredential_To_platform_ClusterCredential(in *ClusterC
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
 	out.ETCDCACert = *(*[]byte)(unsafe.Pointer(&in.ETCDCACert))
+	out.ETCDCAKey = *(*[]byte)(unsafe.Pointer(&in.ETCDCAKey))
 	out.ETCDAPIClientCert = *(*[]byte)(unsafe.Pointer(&in.ETCDAPIClientCert))
 	out.ETCDAPIClientKey = *(*[]byte)(unsafe.Pointer(&in.ETCDAPIClientKey))
 	out.CACert = *(*[]byte)(unsafe.Pointer(&in.CACert))
+	out.CAKey = *(*[]byte)(unsafe.Pointer(&in.CAKey))
 	out.ClientCert = *(*[]byte)(unsafe.Pointer(&in.ClientCert))
 	out.ClientKey = *(*[]byte)(unsafe.Pointer(&in.ClientKey))
 	out.Token = (*string)(unsafe.Pointer(in.Token))
@@ -1472,9 +1474,11 @@ func autoConvert_platform_ClusterCredential_To_v1_ClusterCredential(in *platform
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
 	out.ETCDCACert = *(*[]byte)(unsafe.Pointer(&in.ETCDCACert))
+	out.ETCDCAKey = *(*[]byte)(unsafe.Pointer(&in.ETCDCAKey))
 	out.ETCDAPIClientCert = *(*[]byte)(unsafe.Pointer(&in.ETCDAPIClientCert))
 	out.ETCDAPIClientKey = *(*[]byte)(unsafe.Pointer(&in.ETCDAPIClientKey))
 	out.CACert = *(*[]byte)(unsafe.Pointer(&in.CACert))
+	out.CAKey = *(*[]byte)(unsafe.Pointer(&in.CAKey))
 	out.ClientCert = *(*[]byte)(unsafe.Pointer(&in.ClientCert))
 	out.ClientKey = *(*[]byte)(unsafe.Pointer(&in.ClientKey))
 	out.Token = (*string)(unsafe.Pointer(in.Token))

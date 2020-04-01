@@ -52,8 +52,12 @@ const (
 
 	// CACertName defines certificate name
 	CACertName = CertificatesDir + "ca.crt"
+	// CAKeyName defines certificate name
+	CAKeyName = CertificatesDir + "ca.key"
 	// EtcdCACertName defines etcd's CA certificate name
 	EtcdCACertName = CertificatesDir + "etcd/ca.crt"
+	// EtcdCAKeyName defines etcd's CA key name
+	EtcdCAKeyName = CertificatesDir + "etcd/ca.key"
 	// EtcdListenClientPort defines the port etcd listen on for client traffic
 	EtcdListenClientPort = 2379
 	// EtcdListenPeerPort defines the port etcd listen on for peer traffic

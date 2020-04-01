@@ -69,11 +69,13 @@ type ClusterMachine struct {
 type ClusterSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName
-	TenantID    string
+	Finalizers []FinalizerName
+	TenantID   string
+	// +optional
 	DisplayName string
 	Type        string
 	Version     string
+	// +optional
 	NetworkType NetworkType
 	// +optional
 	NetworkDevice string
@@ -257,16 +259,18 @@ type ClusterCredential struct {
 	// For TKE in global reuse
 	// +optional
 	ETCDCACert []byte
-	// For TKE in global reuse
+	// +optional
+	ETCDCAKey []byte
 	// +optional
 	ETCDAPIClientCert []byte
-	// For TKE in global reuse
 	// +optional
 	ETCDAPIClientKey []byte
 
 	// For validate the server cert
 	// +optional
 	CACert []byte
+	// +optional
+	CAKey []byte
 	// For kube-apiserver X509 auth
 	// +optional
 	ClientCert []byte

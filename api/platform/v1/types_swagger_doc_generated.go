@@ -202,16 +202,14 @@ func (ClusterCondition) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterCredential = map[string]string{
-	"":                  "ClusterCredential records the credential information needed to access the cluster.",
-	"etcdCACert":        "For TKE in global reuse",
-	"etcdAPIClientCert": "For TKE in global reuse",
-	"etcdAPIClientKey":  "For TKE in global reuse",
-	"caCert":            "For connect the cluster",
-	"clientCert":        "For kube-apiserver X509 auth",
-	"clientKey":         "For kube-apiserver X509 auth",
-	"token":             "For kube-apiserver token auth",
-	"bootstrapToken":    "For kubeadm init or join",
-	"certificateKey":    "For kubeadm init or join",
+	"":               "ClusterCredential records the credential information needed to access the cluster.",
+	"etcdCACert":     "For TKE in global reuse",
+	"caCert":         "For connect the cluster",
+	"clientCert":     "For kube-apiserver X509 auth",
+	"clientKey":      "For kube-apiserver X509 auth",
+	"token":          "For kube-apiserver token auth",
+	"bootstrapToken": "For kubeadm init or join",
+	"certificateKey": "For kubeadm init or join",
 }
 
 func (ClusterCredential) SwaggerDoc() map[string]string {

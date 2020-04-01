@@ -41573,18 +41573,22 @@ func schema_tke_api_platform_v1_ClusterCredential(ref common.ReferenceCallback) 
 							Format:      "byte",
 						},
 					},
+					"etcdCAKey": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
 					"etcdAPIClientCert": {
 						SchemaProps: spec.SchemaProps{
-							Description: "For TKE in global reuse",
-							Type:        []string{"string"},
-							Format:      "byte",
+							Type:   []string{"string"},
+							Format: "byte",
 						},
 					},
 					"etcdAPIClientKey": {
 						SchemaProps: spec.SchemaProps{
-							Description: "For TKE in global reuse",
-							Type:        []string{"string"},
-							Format:      "byte",
+							Type:   []string{"string"},
+							Format: "byte",
 						},
 					},
 					"caCert": {
@@ -41592,6 +41596,12 @@ func schema_tke_api_platform_v1_ClusterCredential(ref common.ReferenceCallback) 
 							Description: "For connect the cluster",
 							Type:        []string{"string"},
 							Format:      "byte",
+						},
+					},
+					"caKey": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
 						},
 					},
 					"clientCert": {
@@ -42158,7 +42168,7 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 						},
 					},
 				},
-				Required: []string{"tenantID", "displayName", "type", "version"},
+				Required: []string{"tenantID", "type", "version"},
 			},
 		},
 		Dependencies: []string{

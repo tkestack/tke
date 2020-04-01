@@ -270,37 +270,41 @@ message ClusterCredential {
   // +optional
   optional bytes etcdCACert = 4;
 
-  // For TKE in global reuse
   // +optional
-  optional bytes etcdAPIClientCert = 5;
+  optional bytes etcdCAKey = 5;
 
-  // For TKE in global reuse
   // +optional
-  optional bytes etcdAPIClientKey = 6;
+  optional bytes etcdAPIClientCert = 6;
+
+  // +optional
+  optional bytes etcdAPIClientKey = 7;
 
   // For connect the cluster
   // +optional
-  optional bytes caCert = 7;
+  optional bytes caCert = 8;
+
+  // +optional
+  optional bytes caKey = 9;
 
   // For kube-apiserver X509 auth
   // +optional
-  optional bytes clientCert = 8;
+  optional bytes clientCert = 10;
 
   // For kube-apiserver X509 auth
   // +optional
-  optional bytes clientKey = 9;
+  optional bytes clientKey = 11;
 
   // For kube-apiserver token auth
   // +optional
-  optional string token = 10;
+  optional string token = 12;
 
   // For kubeadm init or join
   // +optional
-  optional string bootstrapToken = 11;
+  optional string bootstrapToken = 13;
 
   // For kubeadm init or join
   // +optional
-  optional string certificateKey = 12;
+  optional string certificateKey = 14;
 }
 
 // ClusterCredentialList is the whole list of all ClusterCredential which owned by a tenant.
@@ -408,12 +412,14 @@ message ClusterSpec {
 
   optional string tenantID = 2;
 
+  // +optional
   optional string displayName = 3;
 
   optional string type = 4;
 
   optional string version = 5;
 
+  // +optional
   optional string networkType = 6;
 
   // +optional
