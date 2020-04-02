@@ -16,7 +16,7 @@ const fetchWorkloadActions = generateFetcherActionCreator({
     let { workloadQuery, clusterVersion } = getState();
     let { filter } = workloadQuery;
     let resourceInfo = resourceConfig(clusterVersion)[filter.workloadType];
-    let response = await WebAPI.fetchResourceList(getState().workloadQuery, resourceInfo);
+    let response = await WebAPI.fetchResourceList(getState().workloadQuery, { resourceInfo });
     return response;
   }
 });
