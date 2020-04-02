@@ -101,6 +101,10 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		platform.ClusterFinalize,
 	}
 
+	if cluster.Spec.DNSDomain == "" {
+		cluster.Spec.DNSDomain = "cluster.local"
+	}
+
 	clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return // avoid panic validate will be report error
