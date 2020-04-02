@@ -61,7 +61,7 @@ func ValidateCluster(obj *platform.Cluster, platformClient platforminternalclien
 
 	featuresPath := field.NewPath("spec", "features")
 
-	filePath := featuresPath.Child("hookFiles")
+	filePath := featuresPath.Child("files")
 	hookFiles := make(map[string]bool, len(obj.Spec.Features.Files))
 	for i, file := range obj.Spec.Features.Files {
 		hookFiles[file.Dst] = true
