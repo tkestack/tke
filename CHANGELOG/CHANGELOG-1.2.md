@@ -1,3 +1,35 @@
+## [1.2.3](https://github.com/tkestack/tke/compare/v1.2.2...v1.2.3) (2020-04-01)
+
+
+### Bug Fixes
+
+* add PublicAlternativeNames to tke-auth redirect hosts ([709ed72](https://github.com/tkestack/tke/commit/709ed7222355e4cb53e8055be9d0dc3416c1f56e))
+* apiclient clientset ([e54a749](https://github.com/tkestack/tke/commit/e54a74965a8f4e11e2f16b2c46bbab0a3d46ef54))
+* apikey description ([2f0ecde](https://github.com/tkestack/tke/commit/2f0ecde6caabdd65bf3311f9d18dbfbccf86facd))
+* delete machine in terminating when credential was deleted already. ([50d272c](https://github.com/tkestack/tke/commit/50d272c307460f4a434d4a373096e76021995ac4))
+* gpu driver package ([bec85c6](https://github.com/tkestack/tke/commit/bec85c6706c86d643d00109b320824651e0f7985))
+* install gpu driver for machine ([3a7c24e](https://github.com/tkestack/tke/commit/3a7c24ee78bf8a70e36b3bba56cdd2e7ddd47b0d))
+* install gpu driver for machine ([0b98a43](https://github.com/tkestack/tke/commit/0b98a434c9addd4ac56fe11304501ed43ca606ed))
+* ipam check health ([7848567](https://github.com/tkestack/tke/commit/78485674954d49727f86c7d7e5e9d04342acf168))
+* ipam check health ([cc7e11a](https://github.com/tkestack/tke/commit/cc7e11acfb31d4fd7110d231e384164e25ff3ebe))
+* lose users and groups when update policy spec from console ([#216](https://github.com/tkestack/tke/issues/216)) ([06df0a7](https://github.com/tkestack/tke/commit/06df0a7f441ea87996e3d10f81eb0efe521ddaf6))
+* Make sure all files in provider-res are end with tar.gz ([02ade0d](https://github.com/tkestack/tke/commit/02ade0dda8bd840ce996ba6f345e2fd645a1988d))
+* update provider-res version in tke ([ab4b7b6](https://github.com/tkestack/tke/commit/ab4b7b6a10eadd6241fa159e1d6cfb5c29b479f7))
+* update provider-res version in tke ([00989b6](https://github.com/tkestack/tke/commit/00989b6a1201a5cecbb30ad4fd78d1707dd7c0e4))
+
+
+### Features
+
+* add assets of png and svg for style ([#219](https://github.com/tkestack/tke/issues/219)) ([8fd98f4](https://github.com/tkestack/tke/commit/8fd98f4cf1f5b818f8c71f3f423d8ef69ba05c05))
+* add ca key and etcd key to cluster credential ([94ac217](https://github.com/tkestack/tke/commit/94ac21748f3b9f10e896d44a21d9189a366c7d23))
+* allow to install global on the machine running tke-installer, need add EnsureDocker into cluster.spec.features.skipConditions ([91a14de](https://github.com/tkestack/tke/commit/91a14de40f6e463192ab37b7c2e47e98291ae33b))
+* make path for /auth/ and apikey password unprotected in gateway ([#217](https://github.com/tkestack/tke/issues/217)) ([dbefdde](https://github.com/tkestack/tke/commit/dbefdde1f1ac013302d17a51943843a3777bd8b7))
+* support ha for cluster creation ([6c36511](https://github.com/tkestack/tke/commit/6c36511ef068c557a6f157ac96ea7eb44ee90d95))
+* support third party lb can't connect self when bootstrap like tgw and clb etc. ([2243eb4](https://github.com/tkestack/tke/commit/2243eb4774bdc61d3c35b00ac0536e62bbe6240f))
+* Use docker buildx to build keepalived & provider-res. Update provider-res version. ([dbde12a](https://github.com/tkestack/tke/commit/dbde12a0d6862878db90b95f602624f27beda23b))
+
+
+
 ## [1.2.2](https://github.com/tkestack/tke/compare/v1.2.1...v1.2.2) (2020-03-26)
 
 
