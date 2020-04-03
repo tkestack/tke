@@ -1015,7 +1015,7 @@ func (t *TKE) do() {
 	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
 	t.initSteps()
 
-	if t.Step == 0 {
+	if t.Step == 0 { //已经执行了的步骤数，为0就是刚开始安装
 		t.log.Print("===>starting install task")
 		t.progress.Status = StatusDoing
 	}
@@ -1025,9 +1025,9 @@ func (t *TKE) do() {
 	}
 
 	for t.Step < len(t.steps) {
-		t.log.Printf("%d.%s doing", t.Step, t.steps[t.Step].Name)
+		t.log.Printf("%d.%s doing", t.Step, t.steps[t.Step].Name) //append是有顺序的？根据用index来找到第几个append的？
 		start := time.Now()
-		err := t.steps[t.Step].Func()
+		err := t.steps[t.Step].Func() //找到第t.Step步来做
 		if err != nil {
 			t.progress.Status = StatusFailed
 			t.log.Printf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
@@ -1035,7 +1035,7 @@ func (t *TKE) do() {
 		}
 		t.log.Printf("%d.%s [Success] [%fs]", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds())
 
-		t.Step++
+		t.Step++ //执行成功步骤加1
 		t.backup()
 	}
 

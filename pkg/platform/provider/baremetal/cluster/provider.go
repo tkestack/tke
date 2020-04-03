@@ -303,6 +303,7 @@ func (p *Provider) OnDelete(cluster platformv1.Cluster) error {
 	return nil
 }
 
+//在installer的createGlobalCluster里，有个for循环一直调
 func (p *Provider) OnInitialize(args clusterprovider.Cluster) (clusterprovider.Cluster, error) {
 	c, err := NewCluster(args, p.config)
 	if err != nil {
@@ -319,6 +320,7 @@ func (p *Provider) OnUpdate(args clusterprovider.Cluster) (clusterprovider.Clust
 	return args, nil
 }
 
+//在这里调用bareMetal Provider的各个create handler
 func (p *Provider) create(c *Cluster) error {
 	condition, err := p.getCreateCurrentCondition(c)
 	if err != nil {
@@ -393,7 +395,7 @@ func (h Handler) name() string {
 	if i == -1 {
 		return ""
 	}
-	return strings.TrimSuffix(name[i:], "-fm")
+	return strings.TrimSuffix(name[i:], "-fm") //为什么需要去掉这个-fm的后缀？哪里来的？
 }
 
 func (p *Provider) getNextConditionType(conditionType string) string {

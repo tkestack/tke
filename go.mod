@@ -15,7 +15,7 @@ require (
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
-	github.com/aws/aws-sdk-go v1.25.7
+	github.com/aws/aws-sdk-go v1.25.7 // indirect
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/casbin/casbin/v2 v2.1.2

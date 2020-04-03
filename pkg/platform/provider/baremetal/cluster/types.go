@@ -35,6 +35,7 @@ import (
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 )
 
+//bareMetal 的cluster，结构更多些
 type Cluster struct {
 	clusterprovider.Cluster
 	*config.Config
