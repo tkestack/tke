@@ -30,7 +30,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	goruntime "runtime"
 	"sort"
 	"strings"
@@ -72,6 +71,7 @@ import (
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
+	"tkestack.io/tke/pkg/util/docker"
 	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/kubeconfig"
 	"tkestack.io/tke/pkg/util/log"
@@ -940,47 +940,43 @@ func (t *TKE) backup() error {
 }
 
 func (t *TKE) loadImages() error {
+	d := new(docker.Docker)
+	d.Stdout = t.log.Writer()
+	d.Stderr = t.log.Writer()
+
 	if _, err := os.Stat(constants.ImagesFile); err != nil {
 		return err
 	}
-	cmd := exec.Command("docker", "load", "-i", constants.ImagesFile)
-	cmd.Stdout = t.log.Writer()
-	cmd.Stderr = t.log.Writer()
-	err := cmd.Run()
+	err := d.LoadImages(constants.ImagesFile)
 	if err != nil {
-		return pkgerrors.Wrap(err, "docker load error")
+		return err
 	}
 
-	cmd = exec.Command("sh", "-c",
-		fmt.Sprintf("docker images --format='{{.Repository}}:{{.Tag}}' --filter='reference=%s'", constants.ImagesPattern),
-	)
-	out, err := cmd.Output()
-	if err != nil {
-		return pkgerrors.Wrap(err, "docker images error")
+	tkeImages, err := d.GetImages(constants.ImagesPattern)
+	if err != nil  {
+		return err
 	}
-	tkeImages := strings.Split(strings.TrimSpace(string(out)), "\n")
+
 	for _, image := range tkeImages {
 		imageNames := strings.Split(image, "/")
 		if len(imageNames) != 2 {
 			t.log.Printf("invalid image name:name=%s", image)
 			continue
 		}
-		nameAndTag := strings.Split(imageNames[1], ":")
-		if nameAndTag[0] == "tke-installer" { // no need to push installer image for speed up
+		name, _, err := d.SplitImageNameAndTag(imageNames[1])
+		if err != nil {
+			t.log.Printf("skip invalid image: %s", image)
 			continue
 		}
-		if nameAndTag[1] == "<none>" {
-			t.log.Printf("skip invalid tag:name=%s", image)
+		if name == "tke-installer" { // no need to push installer image for speed up
 			continue
 		}
+
 		target := fmt.Sprintf("%s/%s/%s", t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace(), imageNames[1])
 
-		cmd := exec.Command("docker", "tag", image, target)
-		cmd.Stdout = t.log.Writer()
-		cmd.Stderr = t.log.Writer()
-		err = cmd.Run()
+		err = d.TagImage(image, target)
 		if err != nil {
-			return pkgerrors.Wrap(err, "docker tag error:%s")
+			return err
 		}
 	}
 
@@ -1771,91 +1767,78 @@ func (t *TKE) importResource() error {
 }
 
 func (t *TKE) pushImages() error {
-	err := exec.Command("sh", "-c", "rm -rf /root/.docker/manifests/").Run()
+	d := new(docker.Docker)
+	d.Stdout = t.log.Writer()
+	d.Stderr = t.log.Writer()
+
+	imagePrefix := fmt.Sprintf("%s/*", t.Para.Config.Registry.Namespace())
+	if t.Para.Config.Registry.Domain() != "docker.io" { // docker images filter ignore docker.io
+		imagePrefix = t.Para.Config.Registry.Domain() + "/" + imagePrefix
+	}
+	tkeImages, err := d.GetImages(imagePrefix)
+	if err != nil {
+		return nil
+	}
+	sort.Strings(tkeImages)
+	srcImageSet := sets.NewString(tkeImages...)
+	destManifestSet := sets.NewString()
+
+	// clear all local manifest lists before create any manifest list
+	err = d.ClearLocalManifests()
 	if err != nil {
 		return err
 	}
-
-	imagesFilter := fmt.Sprintf("%s/*", t.Para.Config.Registry.Namespace())
-	if t.Para.Config.Registry.Domain() != "docker.io" { // docker images filter ignore docker.io
-		imagesFilter = t.Para.Config.Registry.Domain() + "/" + imagesFilter
-	}
-	cmd := exec.Command("sh", "-c",
-		fmt.Sprintf("docker images --format='{{.Repository}}:{{.Tag}}' --filter='reference=%s'", imagesFilter),
-	)
-	t.log.Print(cmd)
-	out, err := cmd.Output()
-	if err != nil {
-		return pkgerrors.Wrap(err, "docker images error")
-	}
-	tkeImages := strings.Split(strings.TrimSpace(string(out)), "\n")
-	sort.Strings(tkeImages)
-	tkeImagesSet := sets.NewString(tkeImages...)
 	for i, image := range tkeImages {
-		nameAndTag := strings.Split(image, ":")
-		if len(nameAndTag) != 2 {
-			continue
-		}
-		if nameAndTag[1] == "<none>" {
-			t.log.Printf("skip invalid tag:name=%s", image)
+		name, arch, tag, err := d.GetNameArchTag(image)
+		if err != nil { // skip invalid image
+			t.log.Printf("skip invalid image: %s", image)
 			continue
 		}
 
-		supportedArchs := regexp.MustCompile(fmt.Sprintf(`-(%s):`, strings.Join(spec.Archs, "|")))
-		// ignore image without arch when has image with arch for avoid overwrite manifest when push image without arch
-		archMatches := supportedArchs.FindStringSubmatch(image)
-		if archMatches == nil { // if without arch
-			for _, arch := range spec.Archs {
-				name := fmt.Sprintf("%s-%s:%s", nameAndTag[0], arch, nameAndTag[1])
-				if tkeImagesSet.Has(name) { // check whether has image with any arch
+		if arch == "" {
+			// ignore image without arch when has image with arch
+			// for avoid overwrite manifest when push image without arch
+			for _, specArch := range spec.Archs {
+				nameWithArch := fmt.Sprintf("%s-%s:%s", name, specArch, tag)
+				if srcImageSet.Has(nameWithArch) { // check whether has image with any arch
 					continue
 				}
 			}
-		}
 
-		cmd = exec.Command("docker", "push", image)
-		cmd.Stdout = t.log.Writer()
-		cmd.Stderr = t.log.Writer()
-		err = cmd.Run()
-		if err != nil {
-			return pkgerrors.Wrap(err, "docker push error")
-		}
-
-		if archMatches != nil {
-			arch := archMatches[1]
-			manifestName := supportedArchs.ReplaceAllString(image, ":")
-
-			cmdString := fmt.Sprintf("docker manifest create -a --insecure %s %s", manifestName, image)
-			cmd = exec.Command("sh", "-c", cmdString)
-			cmd.Stdout = t.log.Writer()
-			cmd.Stderr = t.log.Writer()
-			err = cmd.Run()
+			// only push image
+			err = d.PushImage(image)
 			if err != nil {
-				return pkgerrors.Wrap(err, "docker manifest create error")
+				return err
+			}
+		} else {
+			// when arch != "", need create manifest list
+			manifestName := fmt.Sprintf("%s:%s", name, tag)
+			destManifestSet.Insert(manifestName) // To speed up, push manifests after all changes have made
+
+			err = d.PushImageWithArch(image, manifestName, arch, "", false)
+			if err != nil {
+				return err
 			}
 
-			if arch == "arm64" {
-				cmdString := fmt.Sprintf("docker manifest annotate --arch arm64 --variant unknown %s %s", manifestName, image)
-				cmd = exec.Command("sh", "-c", cmdString)
-				cmd.Stdout = t.log.Writer()
-				cmd.Stderr = t.log.Writer()
-				err = cmd.Run()
+			if arch == spec.Arm64 {
+				err = d.PushArm64Variants(image, manifestName)
 				if err != nil {
-					return pkgerrors.Wrap(err, "docker manifest annotate error")
+					return err
 				}
-			}
-
-			cmdString = fmt.Sprintf("docker manifest push --insecure %s ", manifestName)
-			cmd = exec.Command("sh", "-c", cmdString)
-			cmd.Stdout = t.log.Writer()
-			cmd.Stderr = t.log.Writer()
-			err = cmd.Run()
-			if err != nil {
-				return pkgerrors.Wrap(err, "docker manifest push error")
 			}
 		}
 
 		t.log.Printf("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))
+	}
+
+	i := 0
+	for manifest := range destManifestSet {
+		err = d.PushManifest(manifest, true)
+		if err != nil {
+			return nil
+		}
+		t.log.Printf("push manifest %s to registry success[%d/%d]", manifest, i+1, destManifestSet.Len())
+		i++
 	}
 
 	return nil
