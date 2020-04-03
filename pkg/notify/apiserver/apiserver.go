@@ -22,6 +22,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	"time"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	notifyv1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
@@ -36,6 +37,7 @@ type ExtraConfig struct {
 	StorageFactory          serverstorage.StorageFactory
 	VersionedInformers      versionedinformers.SharedInformerFactory
 	PrivilegedUsername      string
+	MessageTTL              time.Duration
 }
 
 // Config contains the core configuration instance of apiserver and
@@ -90,6 +92,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		&notifyrest.StorageProvider{
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
+			MessageTTL:           c.ExtraConfig.MessageTTL,
 		},
 	}
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)

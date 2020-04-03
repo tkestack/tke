@@ -24,6 +24,7 @@ import (
 	genericserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
+	"time"
 	notifyinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/notify/internalversion"
 	"tkestack.io/tke/api/notify"
 	"tkestack.io/tke/api/notify/v1"
@@ -42,6 +43,7 @@ import (
 type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
 	PrivilegedUsername   string
+	MessageTTL           time.Duration
 }
 
 // Implement RESTStorageProvider
@@ -79,11 +81,11 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
 
-		messageREST := messagestorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		messageREST := messagestorage.NewStorage(restOptionsGetter, s.PrivilegedUsername, s.MessageTTL)
 		storageMap["messages"] = messageREST.Message
 		storageMap["messages/status"] = messageREST.Status
 
-		messageRequestREST := messagerequeststorage.NewStorage(restOptionsGetter, notifyClient, s.PrivilegedUsername)
+		messageRequestREST := messagerequeststorage.NewStorage(restOptionsGetter, notifyClient, s.PrivilegedUsername, s.MessageTTL)
 		storageMap["messagerequests"] = messageRequestREST.MessageRequest
 		storageMap["messagerequests/status"] = messageRequestREST.Status
 
