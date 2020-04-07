@@ -362,6 +362,12 @@ type ClusterProperty struct {
 // ResourceList is a set of (resource name, quantity) pairs.
 type ResourceList map[string]resource.Quantity
 
+// ResourceRequirements describes the compute resource requirements.
+type ResourceRequirements struct {
+	Limits   ResourceList
+	Requests ResourceList
+}
+
 // ClusterResource records the current available and maximum resource quota
 // information for the cluster.
 type ClusterResource struct {
@@ -727,6 +733,10 @@ type PrometheusSpec struct {
 	RemoteAddress PrometheusRemoteAddr
 	// +optional
 	NotifyWebhook string
+	// +optional
+	Resources ResourceRequirements
+	// +optional
+	RunOnMaster bool
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.

@@ -940,6 +940,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.Registry":                                    schema_tke_api_platform_v1_Registry(ref),
 		"tkestack.io/tke/api/platform/v1.RegistryList":                                schema_tke_api_platform_v1_RegistryList(ref),
 		"tkestack.io/tke/api/platform/v1.RegistrySpec":                                schema_tke_api_platform_v1_RegistrySpec(ref),
+		"tkestack.io/tke/api/platform/v1.ResourceRequirements":                        schema_tke_api_platform_v1_ResourceRequirements(ref),
 		"tkestack.io/tke/api/platform/v1.StorageBackEndCLS":                           schema_tke_api_platform_v1_StorageBackEndCLS(ref),
 		"tkestack.io/tke/api/platform/v1.StorageBackEndES":                            schema_tke_api_platform_v1_StorageBackEndES(ref),
 		"tkestack.io/tke/api/platform/v1.TKEHA":                                       schema_tke_api_platform_v1_TKEHA(ref),
@@ -44566,12 +44567,25 @@ func schema_tke_api_platform_v1_PrometheusSpec(ref common.ReferenceCallback) com
 							Format:      "",
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources is the resource request and limit for prometheus",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.ResourceRequirements"),
+						},
+					},
+					"runOnMaster": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RunOnMaster indicates whether to add master Affinity for all monitor components or not",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "clusterName"},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.PrometheusRemoteAddr"},
+			"tkestack.io/tke/api/platform/v1.PrometheusRemoteAddr", "tkestack.io/tke/api/platform/v1.ResourceRequirements"},
 	}
 }
 
@@ -44769,6 +44783,47 @@ func schema_tke_api_platform_v1_RegistrySpec(ref common.ReferenceCallback) commo
 				},
 			},
 		},
+	}
+}
+
+func schema_tke_api_platform_v1_ResourceRequirements(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ResourceRequirements describes the compute resource requirements.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"limits": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+									},
+								},
+							},
+						},
+					},
+					"requests": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/api/resource.Quantity"},
 	}
 }
 

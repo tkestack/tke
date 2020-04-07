@@ -365,6 +365,12 @@ type ClusterProperty struct {
 // ResourceList is a set of (resource name, quantity) pairs.
 type ResourceList map[string]resource.Quantity
 
+// ResourceRequirements describes the compute resource requirements.
+type ResourceRequirements struct {
+	Limits   ResourceList `json:"limits,omitempty" protobuf:"bytes,1,rep,name=limits,casttype=ResourceList"`
+	Requests ResourceList `json:"requests,omitempty" protobuf:"bytes,2,rep,name=requests,casttype=ResourceList"`
+}
+
 // ClusterResource records the current available and maximum resource quota
 // information for the cluster.
 type ClusterResource struct {
@@ -733,6 +739,12 @@ type PrometheusSpec struct {
 	// +optional
 	// NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
 	NotifyWebhook string `json:"notifyWebhook,omitempty" protobuf:"bytes,6,opt,name=notifyWebhook"`
+	// +optional
+	// Resources is the resource request and limit for prometheus
+	Resources ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,7,opt,name=resources"`
+	// +optional
+	// RunOnMaster indicates whether to add master Affinity for all monitor components or not
+	RunOnMaster bool `json:"runOnMaster,omitempty" protobuf:"bytes,8,opt,name=runOnMaster"`
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
