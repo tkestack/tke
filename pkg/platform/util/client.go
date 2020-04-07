@@ -513,7 +513,7 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 		Cluster:  contextName,
 		AuthInfo: contextName,
 	}
-	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "5s"}, nil)
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "30s"}, nil)
 	restConfig, err := clientConfig.ClientConfig()
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
