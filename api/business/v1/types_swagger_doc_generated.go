@@ -151,7 +151,7 @@ func (NamespaceCert) SwaggerDoc() map[string]string {
 
 var map_NamespaceCertOptions = map[string]string{
 	"":          "NamespaceCertOptions is query options of getting namespace with a x509 certificate.",
-	"validdays": "Pay attention to const CertOptionValiddays!",
+	"validDays": "Pay attention to const CertOptionValiddays!",
 }
 
 func (NamespaceCertOptions) SwaggerDoc() map[string]string {

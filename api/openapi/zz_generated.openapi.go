@@ -38491,7 +38491,7 @@ func schema_tke_api_business_v1_NamespaceCertOptions(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
-					"validdays": {
+					"validDays": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pay attention to const CertOptionValiddays!",
 							Type:        []string{"string"},
