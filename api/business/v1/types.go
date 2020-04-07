@@ -23,7 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const CertOptionValiddays = "validdays"
+const CertOptionValiddays = "validDays"
 
 // +genclient
 // +genclient:nonNamespaced
@@ -145,7 +145,7 @@ type NamespaceCertOptions struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Pay attention to const CertOptionValiddays!
-	ValidDays string `json:"validdays,omitempty" protobuf:"bytes,1,opt,name=validdays"`
+	ValidDays string `json:"validDays,omitempty" protobuf:"bytes,1,opt,name=validDays"`
 }
 
 // +genclient

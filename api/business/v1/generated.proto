@@ -196,7 +196,7 @@ message NamespaceCert {
 // NamespaceCertOptions is query options of getting namespace with a x509 certificate.
 message NamespaceCertOptions {
   // Pay attention to const CertOptionValiddays!
-  optional string validdays = 1;
+  optional string validDays = 1;
 }
 
 // NamespaceList is the whole list of all namespaces which owned by a tenant.
