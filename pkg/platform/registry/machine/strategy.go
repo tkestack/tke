@@ -140,7 +140,7 @@ func SelectionPredicate(label labels.Selector, field fields.Selector) storage.Se
 		Field:    field,
 		GetAttrs: GetAttrs,
 		IndexFields: []string{
-			"spec.tenantID", "spec.type", "spec.version", "status.locked", "status.version", "status.phase"},
+			"spec.tenantID", "spec.clusterName", "spec.type", "spec.version", "status.locked", "status.phase"},
 	}
 }
 
@@ -149,8 +149,9 @@ func ToSelectableFields(machine *platform.Machine) fields.Set {
 	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&machine.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
 		"spec.tenantID":    machine.Spec.TenantID,
-		"spec.type":        string(machine.Spec.Type),
 		"spec.clusterName": machine.Spec.ClusterName,
+		"spec.type":        machine.Spec.Type,
+		"spec.ip":          machine.Spec.IP,
 		"status.locked":    util.BoolPointerToSelectField(machine.Status.Locked),
 		"status.phase":     string(machine.Status.Phase),
 	}
