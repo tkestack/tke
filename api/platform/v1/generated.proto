@@ -1179,6 +1179,14 @@ message PrometheusSpec {
   // +optional
   // NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
   optional string notifyWebhook = 6;
+
+  // +optional
+  // Resources is the resource request and limit for prometheus
+  optional ResourceRequirements resources = 7;
+
+  // +optional
+  // RunOnMaster indicates whether to add master Affinity for all monitor components or not
+  optional bool runOnMaster = 8;
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
@@ -1244,6 +1252,13 @@ message RegistrySpec {
 
   // +optional
   optional string password = 6;
+}
+
+// ResourceRequirements describes the compute resource requirements.
+message ResourceRequirements {
+  map<string, k8s.io.apimachinery.pkg.api.resource.Quantity> limits = 1;
+
+  map<string, k8s.io.apimachinery.pkg.api.resource.Quantity> requests = 2;
 }
 
 // StorageBackEndCLS records the attributes required when the backend storage
