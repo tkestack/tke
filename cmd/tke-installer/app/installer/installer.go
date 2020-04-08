@@ -1776,7 +1776,9 @@ func (t *TKE) pushImages() error {
 	}
 	sort.Strings(tkeImages)
 	tkeImagesSet := sets.NewString(tkeImages...)
+	manifestSet := sets.NewString()
 
+	// clear all local manifest lists before create any manifest list
 	err = t.docker.ClearLocalManifests()
 	if err != nil {
 		return err
@@ -1791,9 +1793,9 @@ func (t *TKE) pushImages() error {
 
 		if arch == "" {
 			// ignore image without arch when has image with arch for avoid overwrite manifest when push image without arch
-			for _, arch := range spec.Archs {
-				name := fmt.Sprintf("%s-%s:%s", name, arch, tag)
-				if tkeImagesSet.Has(name) { // check whether has image with any arch
+			for _, specArch := range spec.Archs {
+				nameWithArch := fmt.Sprintf("%s-%s:%s", name, specArch, tag)
+				if tkeImagesSet.Has(nameWithArch) { // check whether has image with any arch
 					continue
 				}
 			}
@@ -1806,13 +1808,31 @@ func (t *TKE) pushImages() error {
 		} else {
 			// when arch != "", need create manifest list
 			manifestName := fmt.Sprintf("%s:%s", name, tag)
-			err = t.docker.PushImageWithArch(image, manifestName, arch, "", true)
+			manifestSet.Insert(manifestName) // To speed up, push manifests after all changes have made
+
+			err = t.docker.PushImageWithArch(image, manifestName, arch, "", false)
 			if err != nil {
 				return err
+			}
+
+			if arch == spec.Arm64 {
+				err = t.docker.PushArm64Variants(image, name, tag)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
 		t.log.Printf("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))
+	}
+
+	sortedManifests := manifestSet.List()
+	for i, manifest := range sortedManifests {
+		err = t.docker.PushManifest(manifest, true)
+		if err != nil {
+			return nil
+		}
+		t.log.Printf("push manifest %s to registry success[%d/%d]", manifest, i+1, len(sortedManifests))
 	}
 
 	return nil
