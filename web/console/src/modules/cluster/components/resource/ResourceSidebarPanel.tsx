@@ -35,10 +35,10 @@ interface ResourceSidebarPanelState {
   secondBarPath?: string;
 }
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps, ResourceSidebarPanelState> {
   constructor(props: ResourceListPanelProps) {
     super(props);
@@ -46,7 +46,7 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
     this.state = {
       currentPath: urlParams['resourceName'],
       isOpenSecondBar: '',
-      secondBarPath: ''
+      secondBarPath: '',
     };
   }
 
@@ -71,9 +71,9 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
     ) {
       // 处理state的值的变化
       this.setState({
-        isOpenSecondBar: subRouterList.find(item => item.path === type) ? type : '',
+        isOpenSecondBar: subRouterList.find((item) => item.path === type) ? type : '',
         secondBarPath: type,
-        currentPath: resourceName
+        currentPath: resourceName,
       });
     }
   }
@@ -102,13 +102,13 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
               <li
                 key={index}
                 className={classnames('', {
-                  'secondary-aside-select': this.state.isOpenSecondBar === sidebar.path
+                  'secondary-aside-select': this.state.isOpenSecondBar === sidebar.path,
                 })}
               >
                 <a
                   href="javascript:;"
                   className="secondary-aside-level-1"
-                  onClick={e => {
+                  onClick={(e) => {
                     this._handleClickForFirstBar(sidebar.path, true);
                   }}
                 >
@@ -123,12 +123,12 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
               <li key={index}>
                 <a
                   href="javascript:;"
-                  onClick={e => {
+                  onClick={(e) => {
                     this._handleClickForFirstBar(sidebar.basicUrl, false, sidebar.path);
                     e.stopPropagation();
                   }}
                   className={classnames('secondary-aside-level-1', {
-                    'secondary-aside-select': this.state.currentPath === sidebar.basicUrl
+                    'secondary-aside-select': this.state.currentPath === sidebar.basicUrl,
                   })}
                 >
                   <span>{sidebar.name}</span>
@@ -187,12 +187,12 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
     if (!isClickNested) {
       // 因为是非折叠的路由，所有openSecondBar置为空
       this.setState({
-        isOpenSecondBar: ''
+        isOpenSecondBar: '',
       });
       this._handleDataFetcher(path, sidebarPath);
     } else {
       this.setState({
-        isOpenSecondBar: path
+        isOpenSecondBar: path,
       });
     }
   }
@@ -204,7 +204,7 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
    */
   private _handleClickForSecondBar(subSidebarpath: string, sidebarPath: string) {
     this.setState({
-      currentPath: subSidebarpath
+      currentPath: subSidebarpath,
     });
     this._handleDataFetcher(subSidebarpath, sidebarPath);
   }
@@ -218,12 +218,12 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
         <li key={index}>
           <a
             href="javascript:;"
-            onClick={e => {
+            onClick={(e) => {
               this._handleClickForSecondBar(subSidebar.path, sidebarPath);
               e.stopPropagation();
             }}
             className={classnames('secondary-aside-level-2', {
-              'secondary-aside-select': this.state.currentPath === subSidebar.path
+              'secondary-aside-select': this.state.currentPath === subSidebar.path,
             })}
           >
             {subSidebar.name}

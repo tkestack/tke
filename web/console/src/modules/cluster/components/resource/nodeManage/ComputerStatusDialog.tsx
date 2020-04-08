@@ -7,51 +7,49 @@ import { Bubble, Button, Icon, Modal, Table, TableColumn, Text } from '@tencent/
 import { scrollable } from '@tencent/tea-component/lib/table/addons';
 
 import { dateFormatter } from '../../../../../../helpers';
-import {
-    Computer, ComputerFilter, DialogNameEnum, DialogState
-} from '../../../../../modules/cluster/models';
+import { Computer, ComputerFilter, DialogNameEnum, DialogState } from '../../../../../modules/cluster/models';
 import { ClusterCondition } from '../../../../common';
 import { allActions } from '../../../actions';
 
 const conditionStatusMap = {
   True: '成功',
   Unknown: '待处理',
-  False: '失败'
+  False: '失败',
 };
 
 const conditionStatusType = {
   True: 'success',
   False: 'danger',
-  Unknown: 'text'
+  Unknown: 'text',
 };
 
 let nodeConditionStaus = ['OutOfDisk', 'MemoryPressure', 'DiskPressure', 'PIDPressure'];
 interface ComputerStatusDialogProps {
-  computer: FFListModel<Computer, ComputerFilter>;
+  machine: FFListModel<Computer, ComputerFilter>;
   dialogState: DialogState;
   actions?: typeof allActions;
 }
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class ComputerStatusDialog extends React.Component<ComputerStatusDialogProps, {}> {
   render() {
-    let { computer, dialogState } = this.props;
+    let { machine, dialogState } = this.props;
 
-    if (!computer.selection) return <noscript />;
+    if (!machine.selection) return <noscript />;
     let isShowDialog = dialogState[DialogNameEnum.computerStatusDialog];
     let columns: TableColumn<ClusterCondition>[] = [
       {
         key: 'type',
         header: t('类型'),
-        render: x => <Text>{x.type}</Text>
+        render: (x) => <Text>{x.type}</Text>,
       },
       {
         key: 'status',
         header: t('状态'),
-        render: x => {
+        render: (x) => {
           let status;
           if (nodeConditionStaus.indexOf(x.type) !== -1) {
             status = x.status === 'False' ? 'success' : 'danger';
@@ -59,19 +57,19 @@ export class ComputerStatusDialog extends React.Component<ComputerStatusDialogPr
             status = conditionStatusType[x.status];
           }
           return <Text theme={status}>{conditionStatusMap[x.status] ? conditionStatusMap[x.status] : '-'}</Text>;
-        }
+        },
       },
       {
         key: 'probeTime',
         header: t('最后探测时间'),
-        render: x => (
+        render: (x) => (
           <Text>{dateFormatter(new Date(x.lastProbeTime || x.lastHeartbeatTime), 'YYYY-MM-DD HH:mm:ss') || '-'}</Text>
-        )
+        ),
       },
       {
         key: 'reason',
         header: t('原因'),
-        render: x => {
+        render: (x) => {
           let isFailed;
           if (nodeConditionStaus.indexOf(x.type) !== -1) {
             isFailed = x.status !== 'False';
@@ -88,31 +86,27 @@ export class ComputerStatusDialog extends React.Component<ComputerStatusDialogPr
               )}
             </React.Fragment>
           );
-        }
-      }
+        },
+      },
     ];
 
     return (
       <Modal
         size={700}
         visible={isShowDialog}
-        caption={`集群 ${computer.selection.metadata.name} 的状态`}
+        caption={`集群 ${machine.selection.metadata.name} 的状态`}
         onClose={this._handleClose.bind(this)}
       >
         <Modal.Body>
           <Table
             records={
-              computer.selection
-                ? computer.selection.status.conditions
-                  ? computer.selection.status.conditions
-                  : []
-                : []
+              machine.selection ? (machine.selection.status.conditions ? machine.selection.status.conditions : []) : []
             }
             columns={columns}
             addons={[
               scrollable({
-                maxHeight: 600
-              })
+                maxHeight: 600,
+              }),
             ]}
           />
         </Modal.Body>

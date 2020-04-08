@@ -1,6 +1,4 @@
-import {
-    FetcherState, FFListModel, Identifiable, QueryState, RecordSet, WorkflowState
-} from '@tencent/ff-redux';
+import { FetcherState, FFListModel, Identifiable, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
 
 import { CreateResource } from '../../common';
 import { Validation } from '../../common/models';
@@ -36,6 +34,9 @@ export interface ComputerState {
   /** computer的相关配置 */
   computer: FFListModel<Computer, ComputerFilter>;
 
+  /** computer的相关配置 */
+  machine: FFListModel<Computer, ComputerFilter>;
+
   /**创建com工作流 */
   createComputerWorkflow?: ResourceModifyFlow;
 
@@ -66,6 +67,10 @@ export interface ComputerState {
   updateNodeTaint?: ComputerTaintWorkflow;
 
   taintEdition?: ComputerTaintEdition;
+
+  isShowMachine?: boolean;
+
+  deleteMachineResouceIns?: Resource;
 }
 
 export interface ComputerFilter extends ResourceFilter {}
