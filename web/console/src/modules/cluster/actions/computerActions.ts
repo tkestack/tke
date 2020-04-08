@@ -1,3 +1,4 @@
+import { MachineStatus } from './../constants/Config';
 import { createFFListActions, extend, RecordSet, uuid } from '@tencent/ff-redux';
 
 import { resourceConfig } from '../../../../config';
@@ -17,33 +18,16 @@ const FFModelComputerActions = createFFListActions<Computer, ComputerFilter>({
   actionName: FFReduxActionName.COMPUTER,
   fetcher: async (query, getState: GetState) => {
     let { clusterVersion } = getState();
-    let k8sQueryObj = {
-      fieldSelector: {
-        'spec.clusterName': query.filter.clusterId ? query.filter.clusterId : undefined
-      }
-    };
     let nodeInfo: ResourceInfo = resourceConfig(clusterVersion)['node'],
       nodeItems = await WebAPI.fetchResourceList(query, {
-        resourceInfo: nodeInfo
-      }),
-      machinesInfo: ResourceInfo = resourceConfig(clusterVersion).machines,
-      machineItems = !query.search
-        ? await WebAPI.fetchResourceList(query, {
-            resourceInfo: machinesInfo,
-            k8sQueryObj
-          })
-        : {
-            recordCount: 0,
-            records: []
-          };
-    let resourceItems: RecordSet<Resource> = {
-      recordCount: 0,
-      records: []
-    };
+        resourceInfo: nodeInfo,
+        isContinue: true,
+      });
     //将machine资源和node资源关联起来
-    resourceItems.records = nodeItems.records.map(item => {
+    nodeItems.records = nodeItems.records.map((item) => {
       if (
-        Object.keys(item.metadata.labels).findIndex(key => key.indexOf('node-role.kubernetes.io/master') !== -1) !== -1
+        Object.keys(item.metadata.labels).findIndex((key) => key.indexOf('node-role.kubernetes.io/master') !== -1) !==
+        -1
       ) {
         item.metadata.role = 'Master&Etcd';
       } else {
@@ -51,79 +35,120 @@ const FFModelComputerActions = createFFListActions<Computer, ComputerFilter>({
       }
       let phase;
       if (item.status.conditions) {
-        let nodeStatus = item.status.conditions.find(item => item.type === 'Ready');
+        let nodeStatus = item.status.conditions.find((item) => item.type === 'Ready');
         phase = nodeStatus.status === 'True' ? 'Running' : 'Failed';
       }
       item.status.phase = phase;
       return item;
     });
-    machineItems.records.forEach(item => {
-      let finder = resourceItems.records.find(r => r.metadata.name === item.spec.ip);
-      if (finder && item.status) {
-        finder.spec.machineName = item.metadata.name;
-      } else {
-        resourceItems.records.push({
-          id: uuid(),
-          metadata: {
-            name: item.spec.ip,
-            creationTimestamp: item.metadata.creationTimestamp,
-            role: 'Worker'
-          },
-          spec: {
-            machineName: item.metadata.name,
-            podCIDR: '-'
-          },
-          status: {
-            capacity: {
-              cpu: 0,
-              memory: 0
-            },
-            conditions: item.status.conditions,
-            addresses: [],
-            phase: item.status.phase
-          }
-        });
-      }
-    });
-    resourceItems.recordCount = resourceItems.records.length;
-    let response = resourceItems;
-    return response;
+    return nodeItems;
   },
   getRecord: (getState: GetState) => {
     return getState().subRoot.computerState.computer;
   },
   onFinish: (record, dispatch: Redux.Dispatch, getState: GetState) => {
     let { computer } = getState().subRoot.computerState;
+    if (record.data.recordCount) {
+      dispatch(FFModelComputerActions.select(record.data.records[0]));
+    }
+    if (record.data.records.filter((item) => item.status.phase !== 'Running').length === 0) {
+      dispatch(FFModelComputerActions.clearPolling());
+    }
+  },
+});
+
+const FFModelMachineActions = createFFListActions<Computer, ComputerFilter>({
+  actionName: FFReduxActionName.MACHINE,
+  fetcher: async (query, getState: GetState) => {
+    let { clusterVersion } = getState();
+    let k8sQueryObj = {
+      fieldSelector: {
+        'spec.clusterName': query.filter.clusterId ? query.filter.clusterId : undefined,
+        'status.phase': MachineStatus.Initializing,
+      },
+    };
+    let machinesInfo: ResourceInfo = resourceConfig(clusterVersion).machines,
+      machineItems = await WebAPI.fetchResourceList(query, {
+        resourceInfo: machinesInfo,
+        k8sQueryObj,
+        isContinue: true,
+      });
+    machineItems.records = machineItems.records.map((item) => ({
+      id: uuid(),
+      metadata: {
+        name: item.spec.ip,
+        creationTimestamp: item.metadata.creationTimestamp,
+        role: 'Worker',
+      },
+      spec: {
+        machineName: item.metadata.name,
+        podCIDR: '-',
+      },
+      status: {
+        capacity: {
+          cpu: 0,
+          memory: 0,
+        },
+        conditions: item.status.conditions,
+        addresses: [],
+        phase: item.status.phase,
+      },
+    }));
+    return machineItems;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().subRoot.computerState.machine;
+  },
+  onFinish: (record, dispatch: Redux.Dispatch, getState: GetState) => {
+    let { machine } = getState().subRoot.computerState;
     if (getState().dialogState[DialogNameEnum.computerStatusDialog]) {
       let finder = record.data.records.find(
-        item => item.metadata.name === (computer.selection && computer.selection.metadata.name)
+        (item) => item.metadata.name === (machine.selection && machine.selection.metadata.name)
       );
       if (finder) {
-        dispatch(FFModelComputerActions.select(finder));
+        dispatch(FFModelMachineActions.select(finder));
       } else {
         dispatch(dialogActions.updateDialogState(DialogNameEnum.computerStatusDialog));
       }
     } else if (record.data.recordCount) {
-      dispatch(FFModelComputerActions.select(record.data.records[0]));
+      dispatch(FFModelMachineActions.select(record.data.records[0]));
     }
-    if (record.data.records.filter(item => item.status.phase !== 'Running').length === 0) {
-      dispatch(FFModelComputerActions.clearPolling());
+    if (record.data.records.length === 0) {
+      dispatch(FFModelMachineActions.clearPolling());
     }
-  }
+  },
 });
 
 const restActions = {
+  machine: FFModelMachineActions,
+
   poll: (filter?: ComputerFilter) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let {
         subRoot: {
-          computerState: { computer }
-        }
+          computerState: { computer },
+        },
       } = getState();
       dispatch(
-        computerActions.polling({
+        FFModelComputerActions.polling({
           filter: filter || computer.query.filter,
-          delayTime: 8000
+          delayTime: 8000,
+        })
+      );
+    };
+  },
+
+  pollMachine: (filter?: ComputerFilter) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          computerState: { machine },
+        },
+      } = getState();
+      dispatch(
+        FFModelMachineActions.polling({
+          filter: filter || machine.query.filter,
+          delayTime: 8000,
         })
       );
     };
@@ -134,12 +159,12 @@ const restActions = {
       let { labelEdition } = getState().subRoot.computerState;
       let labelArray = [];
       let labelKeys = Object.keys(labels);
-      labelKeys.forEach(key => {
+      labelKeys.forEach((key) => {
         let disabled = key.includes('kubernetes');
         let item = {
           value: labels[key],
           key: key,
-          disabled
+          disabled,
         };
         if (disabled) {
           labelArray.unshift(item);
@@ -151,11 +176,11 @@ const restActions = {
         type: ActionType.UpdateLabelEdition,
         payload: Object.assign({}, labelEdition, {
           computerName,
-          labels: labelArray.map(label => {
+          labels: labelArray.map((label) => {
             return Object.assign({}, label, { id: uuid(), v_key: initValidator, v_value: initValidator });
           }),
-          originLabel: labels
-        })
+          originLabel: labels,
+        }),
       });
     };
   },
@@ -168,13 +193,13 @@ const restActions = {
       let newlabel = {
         id: uuid(),
         key: '',
-        value: ''
+        value: '',
       };
 
       labels.push(newlabel);
       dispatch({
         type: ActionType.UpdateLabelEdition,
-        payload: Object.assign({}, labelEdition, { labels })
+        payload: Object.assign({}, labelEdition, { labels }),
       });
     };
   },
@@ -184,12 +209,12 @@ const restActions = {
     return async (dispatch, getState: GetState) => {
       let { labelEdition } = getState().subRoot.computerState;
       let labels = cloneDeep(labelEdition.labels),
-        eIndex = labels.findIndex(e => e.id === Id);
+        eIndex = labels.findIndex((e) => e.id === Id);
 
       labels.splice(eIndex, 1);
       dispatch({
         type: ActionType.UpdateLabelEdition,
-        payload: Object.assign({}, labelEdition, { labels })
+        payload: Object.assign({}, labelEdition, { labels }),
       });
     };
   },
@@ -199,15 +224,15 @@ const restActions = {
     return async (dispatch, getState: GetState) => {
       let { labelEdition } = getState().subRoot.computerState;
       let labels = cloneDeep(labelEdition.labels),
-        eIndex = labels.findIndex(e => e.id === Id),
+        eIndex = labels.findIndex((e) => e.id === Id),
         objKeys = Object.keys(obj);
 
-      objKeys.forEach(item => {
+      objKeys.forEach((item) => {
         labels[eIndex][item] = obj[item];
       });
       dispatch({
         type: ActionType.UpdateLabelEdition,
-        payload: Object.assign({}, labelEdition, { labels })
+        payload: Object.assign({}, labelEdition, { labels }),
       });
     };
   },
@@ -221,19 +246,19 @@ const restActions = {
           payload: Object.assign({}, taintEdition, {
             computerName,
             taints: [
-              { id: uuid(), v_key: initValidator, v_value: initValidator, key: '', value: '', effect: 'NoSchedule' }
-            ]
-          })
+              { id: uuid(), v_key: initValidator, v_value: initValidator, key: '', value: '', effect: 'NoSchedule' },
+            ],
+          }),
         });
       } else {
         let taintsArray = [];
-        taints.forEach(taint => {
+        taints.forEach((taint) => {
           let disabled = taint.key.indexOf('kubernetes') !== -1 ? true : false;
           let item = Object.assign({}, { value: '' }, taint, {
             id: uuid(),
             v_key: initValidator,
             v_value: initValidator,
-            disabled
+            disabled,
           });
           if (disabled) {
             taintsArray.unshift(item);
@@ -245,8 +270,8 @@ const restActions = {
           type: ActionType.UpdateTaintEdition,
           payload: Object.assign({}, taintEdition, {
             computerName,
-            taints: taintsArray
-          })
+            taints: taintsArray,
+          }),
         });
       }
     };
@@ -263,13 +288,13 @@ const restActions = {
         v_key: initValidator,
         value: '',
         v_value: initValidator,
-        effect: 'NoSchedule'
+        effect: 'NoSchedule',
       };
 
       taints.push(newtaints);
       dispatch({
         type: ActionType.UpdateTaintEdition,
-        payload: Object.assign({}, taintEdition, { taints })
+        payload: Object.assign({}, taintEdition, { taints }),
       });
     };
   },
@@ -279,12 +304,12 @@ const restActions = {
     return async (dispatch, getState: GetState) => {
       let { taintEdition } = getState().subRoot.computerState;
       let taints = cloneDeep(taintEdition.taints),
-        eIndex = taints.findIndex(e => e.id === Id);
+        eIndex = taints.findIndex((e) => e.id === Id);
 
       taints.splice(eIndex, 1);
       dispatch({
         type: ActionType.UpdateTaintEdition,
-        payload: Object.assign({}, taintEdition, { taints })
+        payload: Object.assign({}, taintEdition, { taints }),
       });
     };
   },
@@ -294,18 +319,56 @@ const restActions = {
     return async (dispatch, getState: GetState) => {
       let { taintEdition } = getState().subRoot.computerState;
       let taints = cloneDeep(taintEdition.taints),
-        eIndex = taints.findIndex(e => e.id === Id),
+        eIndex = taints.findIndex((e) => e.id === Id),
         objKeys = Object.keys(obj);
 
-      objKeys.forEach(item => {
+      objKeys.forEach((item) => {
         taints[eIndex][item] = obj[item];
       });
       dispatch({
         type: ActionType.UpdateTaintEdition,
-        payload: Object.assign({}, taintEdition, { taints })
+        payload: Object.assign({}, taintEdition, { taints }),
       });
     };
-  }
+  },
+
+  showMachine: (isShow: boolean) => {
+    return async (dispatch, getState: GetState) => {
+      dispatch({
+        type: ActionType.IsShowMachine,
+        payload: isShow,
+      });
+    };
+  },
+
+  fetchdeleteMachineResouceIns: (nodeName: string) => {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          computerState: {
+            machine: { query },
+          },
+        },
+        clusterVersion,
+      } = getState();
+      let k8sQueryObj = {
+        fieldSelector: {
+          'spec.clusterName': query.filter.clusterId ? query.filter.clusterId : undefined,
+          'spec.ip': nodeName,
+        },
+      };
+      let machinesInfo: ResourceInfo = resourceConfig(clusterVersion).machines,
+        machineItems = await WebAPI.fetchResourceList(query, {
+          resourceInfo: machinesInfo,
+          k8sQueryObj,
+          isContinue: true,
+        });
+      dispatch({
+        type: ActionType.FetchDeleteMachineResouceIns,
+        payload: machineItems.recordCount ? machineItems.records[0] : null,
+      });
+    };
+  },
 };
 
 export const computerActions = extend(FFModelComputerActions, restActions);

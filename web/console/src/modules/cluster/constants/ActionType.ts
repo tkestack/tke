@@ -47,6 +47,8 @@ export const UpdateNodeTaint = 'UpdateNodeTaint';
 export const UpdateTaintEdition = 'UpdateTaintEdition';
 export const FetchComputerPodList = 'FetchComputerPodList';
 export const QueryComputerPodList = 'QueryComputerPodList';
+export const IsShowMachine = 'IsShowMachine';
+export const FetchDeleteMachineResouceIns = 'FetchDeleteMachineResouceIns';
 export const ClearComputer = 'ClearComputer';
 /** ============================== end 节点 相关 =============================== */
 

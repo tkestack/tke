@@ -41,10 +41,10 @@ export interface ResourceListPanelProps extends RootProps {
   subRouterList: SubRouter[];
 }
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class ResourceListPanel extends React.Component<ResourceListPanelProps, {}> {
   render() {
     let { subRoot, route, subRouterList } = this.props,
@@ -72,7 +72,7 @@ export class ResourceListPanel extends React.Component<ResourceListPanelProps, {
             <DeleteComputerDialog {...this.props} />
             <ComputerStatusDialog
               dialogState={this.props.dialogState}
-              computer={this.props.subRoot.computerState.computer}
+              machine={this.props.subRoot.computerState.machine}
             />
             <BatchDrainComputerDialog {...this.props} />
             <div id="ComputerMonitorPanel" />
