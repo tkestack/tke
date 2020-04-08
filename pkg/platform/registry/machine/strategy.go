@@ -140,7 +140,7 @@ func SelectionPredicate(label labels.Selector, field fields.Selector) storage.Se
 		Field:    field,
 		GetAttrs: GetAttrs,
 		IndexFields: []string{
-			"spec.tenantID", "spec.clusterName", "spec.type", "spec.version", "status.locked", "status.phase"},
+			"spec.tenantID", "spec.clusterName", "spec.type", "spec.ip", "status.locked", "status.phase"},
 	}
 }
 
