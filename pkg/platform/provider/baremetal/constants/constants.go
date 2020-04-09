@@ -73,11 +73,13 @@ const (
 	// This is a duplicate definition of the constant in pkg/controller/service/service_controller.go
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
 
-	ProviderDir  = "provider/baremetal/"
-	SrcDir       = ProviderDir + "res/"
-	ConfDir      = ProviderDir + "conf/"
-	ManifestsDir = ProviderDir + "manifests/"
-	ConfigFile   = ConfDir + "config.yaml"
+	ProviderDir = "provider/baremetal/"
+	SrcDir      = ProviderDir + "res/"
+	ConfDir     = ProviderDir + "conf/"
+	ConfigFile  = ConfDir + "config.yaml"
+
+	ManifestsDir       = ProviderDir + "manifests/"
+	GPUManagerManifest = ManifestsDir + "gpu-manager/gpu-manager.yaml"
 
 	DNSIPIndex                   = 10
 	GPUQuotaAdmissionIPIndex     = 9

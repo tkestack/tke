@@ -132,8 +132,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().ConfigMaps().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("cronhpas"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().CronHPAs().Informer()}, nil
-	case platform.SchemeGroupVersion.WithResource("gpumanagers"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().GPUManagers().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("helms"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().Helms().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("ipams"):

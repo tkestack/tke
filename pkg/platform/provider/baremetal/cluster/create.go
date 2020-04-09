@@ -30,8 +30,6 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/util/template"
-
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	corev1 "k8s.io/api/core/v1"
@@ -51,8 +49,10 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/markcontrolplane"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util/hosts"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/template"
 )
 
 const (
@@ -699,6 +699,33 @@ func (p *Provider) EnsureNvidiaDevicePlugin(c *Cluster) error {
 	err = gpu.InstallNvidiaDevicePlugin(client, option)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureGPUManager(c *Cluster) error {
+	if c.Cluster.Spec.Features.GPUType == nil {
+		return nil
+	}
+
+	if *c.Cluster.Spec.Features.GPUType != platformv1.GPUVirtual {
+		return nil
+	}
+
+	client, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+
+	option := map[string]interface{}{
+		"GPUManagerImage":        images.Get().GPUManager.FullName(),
+		"BusyboxImage":           images.Get().Busybox.FullName(),
+		"GPUQuotaAdmissionImage": images.Get().GPUQuotaAdmission.FullName(),
+	}
+	err = apiclient.CreateResourceWithFile(client, constants.GPUManagerManifest, option)
+	if err != nil {
+		return errors.Wrap(err, "install gpu manager error")
 	}
 
 	return nil
