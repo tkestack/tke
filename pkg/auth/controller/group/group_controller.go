@@ -314,7 +314,7 @@ func (c *Controller) resyncGroups() {
 	for _, idp := range idpList.Items {
 		tenantSelector := fields.AndSelectors(
 			fields.OneTermEqualSelector("spec.tenantID", idp.Name),
-			fields.OneTermEqualSelector(auth.QueryLimitTag, "0"),
+			fields.OneTermEqualSelector(auth.LimitQueryTag, "0"),
 		)
 
 		groups, err := c.client.AuthV1().Groups().List(metav1.ListOptions{FieldSelector: tenantSelector.String()})

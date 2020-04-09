@@ -39,17 +39,20 @@ import (
 
 // Storage includes storage for configmap and all sub resources.
 type Storage struct {
-	User   *REST
-	Policy *PolicyREST
-	Role   *RoleREST
+	User    *REST
+	Policy  *PolicyREST
+	Role    *RoleREST
+	Project *ProjectREST
 }
 
 // NewStorage returns a Storage object that will work against configmap.
 func NewStorage(_ genericregistry.RESTOptionsGetter, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer) *Storage {
 	return &Storage{
-		User:   &REST{},
-		Policy: &PolicyREST{&REST{}, authClient, enforcer},
-		Role:   &RoleREST{&REST{}, authClient, enforcer},
+		User: &REST{},
+
+		Policy:  &PolicyREST{&REST{}, authClient, enforcer},
+		Role:    &RoleREST{&REST{}, authClient, enforcer},
+		Project: &ProjectREST{&REST{}, authClient, enforcer},
 	}
 }
 

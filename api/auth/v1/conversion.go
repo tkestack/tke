@@ -57,6 +57,7 @@ func AddFieldLabelConversionsForLocalIdentity(scheme *runtime.Scheme) error {
 			case "spec.tenantID",
 				"spec.username",
 				"keyword",
+				"policy",
 				"metadata.name":
 				return label, value, nil
 			default:
@@ -190,6 +191,7 @@ func AddFieldLabelConversionsForLocalGroup(scheme *runtime.Scheme) error {
 				"spec.projectID",
 				"spec.username",
 				"keyword",
+				"policy",
 				"metadata.name":
 				return label, value, nil
 			default:

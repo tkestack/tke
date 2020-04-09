@@ -218,14 +218,6 @@ func (ConfigMapList) SwaggerDoc() map[string]string {
 	return map_ConfigMapList
 }
 
-var map_Dummy = map[string]string{
-	"": "Dummy is a empty struct.",
-}
-
-func (Dummy) SwaggerDoc() map[string]string {
-	return map_Dummy
-}
-
 var map_Group = map[string]string{
 	"":     "Group is an object that contains the metadata about identify about tke local idp or third-party idp.",
 	"spec": "Spec defines the desired identities of group in this set.",
@@ -422,6 +414,14 @@ var map_PolicyStatus = map[string]string{
 
 func (PolicyStatus) SwaggerDoc() map[string]string {
 	return map_PolicyStatus
+}
+
+var map_ProjectBelongs = map[string]string{
+	"": "Dummy is a empty struct.",
+}
+
+func (ProjectBelongs) SwaggerDoc() map[string]string {
+	return map_ProjectBelongs
 }
 
 var map_ProjectPolicyBinding = map[string]string{

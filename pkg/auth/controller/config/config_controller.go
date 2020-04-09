@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/howeyc/fsnotify"
@@ -348,6 +349,9 @@ func (c *Controller) loadPolicy(tenantID string) error {
 	var errs []error
 
 	for _, pol := range policyList {
+		if pol.Name != "" {
+			pol.Name = strings.ReplaceAll(pol.Name, "{tenantID}", tenantID)
+		}
 		policySelector := fields.AndSelectors(
 			fields.OneTermEqualSelector("spec.tenantID", tenantID),
 			fields.OneTermEqualSelector("spec.displayName", pol.Spec.DisplayName),

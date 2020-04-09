@@ -334,8 +334,6 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 		}
 	}
 
-	fmt.Println("12345")
-
 	var existGroups []string
 	for _, rule := range rules {
 		if strings.HasPrefix(rule[0], authutil.GroupPrefix(role.Spec.TenantID)) {

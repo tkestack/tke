@@ -70,10 +70,10 @@ func (r *UnBindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		projectID = requestInfo.Name
 	}
 
+	log.Info("projectID", log.String("projectID", projectID))
 	projectPolicyList := &auth.ProjectPolicyBindingList{}
 	var errs []error
 	for _, policyID := range bind.Policies {
-
 		policy, err := r.authClient.Policies().Get(policyID, metav1.GetOptions{})
 		if err != nil {
 			log.Error("Get policy failed", log.String("policy", policyID), log.Err(err))
@@ -110,7 +110,7 @@ func (r *UnBindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		}
 
 		remainedUsers := make([]auth.Subject, 0)
-		for _, sub := range bind.Users {
+		for _, sub := range projectPolicy.Spec.Users {
 			if !util.InSubjects(sub, bind.Users) {
 				remainedUsers = append(remainedUsers, sub)
 			}
@@ -118,7 +118,7 @@ func (r *UnBindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		projectPolicy.Spec.Users = remainedUsers
 
 		remainedGroups := make([]auth.Subject, 0)
-		for _, sub := range bind.Groups {
+		for _, sub := range projectPolicy.Spec.Groups {
 			if !util.InSubjects(sub, bind.Groups) {
 				remainedGroups = append(remainedGroups, sub)
 			}
@@ -133,12 +133,11 @@ func (r *UnBindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		}
 
 		projectPolicyList.Items = append(projectPolicyList.Items, *projectPolicy)
-
 	}
 
 	if len(errs) == 0 {
 		return projectPolicyList, nil
 	}
 
-	return nil, utilerrors.NewAggregate(errs)
+	return nil, apierrors.NewInternalError(utilerrors.NewAggregate(errs))
 }

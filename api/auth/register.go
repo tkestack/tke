@@ -94,7 +94,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Client{},
 		&ClientList{},
 
-		&Dummy{},
+		&ProjectBelongs{},
 		&ConfigMap{},
 		&ConfigMapList{})
 

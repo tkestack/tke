@@ -24,17 +24,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	// KeywordQueryTag is a field tag to query object that contains the keyword.
-	KeywordQueryTag string = "keyword"
-
-	// QueryLimitTag is a field tag to query a maximum number of objects for a list call.
-	QueryLimitTag string = "limit"
-
-	// IssuerName is the name of issuer location.
-	IssuerName = "oidc"
-)
-
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -596,42 +585,25 @@ type ProjectPolicyBindingList struct {
 type ProjectPolicyBindingRequest struct {
 	metav1.TypeMeta `json:",inline"`
 
+	TenantID string `json:"tenantID,omitempty" protobuf:"bytes,1,rep,name=tenantID"`
 	// Policies holds the policies will bind to the subjects.
 	// +optional
-	Policies []string `json:"policies,omitempty" protobuf:"bytes,1,rep,name=policies"`
+	Policies []string `json:"policies,omitempty" protobuf:"bytes,2,rep,name=policies"`
 
-	Users  []Subject `json:"users" protobuf:"bytes,2,rep,name=users"`
-	Groups []Subject `json:"groups" protobuf:"bytes,3,rep,name=groups"`
+	Users  []Subject `json:"users" protobuf:"bytes,3,rep,name=users"`
+	Groups []Subject `json:"groups" protobuf:"bytes,4,rep,name=groups"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Dummy is a empty struct.
-type Dummy struct {
+type ProjectBelongs struct {
 	metav1.TypeMeta `json:",inline"`
 
-	OwnerProjects  []string `json:"ownerProjects" protobuf:"bytes,1,rep,name=ownerProjects"`
-	MemberProjects []string `json:"memberProjects" protobuf:"bytes,2,rep,name=memberProjects"`
+	TenantID        string                `protobuf:"bytes,1,opt,name=tenantID"`
+	ManagedProjects map[string]ExtraValue `json:"managedProjects" protobuf:"bytes,2,rep,name=managedProjects"`
+	MemberdProjects map[string]ExtraValue `json:"memberdProjects" protobuf:"bytes,3,rep,name=memberdProjects"`
 }
-
-const (
-	DefaultRuleModel = `
-[request_definition]
-r = sub, obj, act
-
-[policy_definition]
-p = sub, obj, act, eft
-
-[role_definition]
-g = _, _
-
-[policy_effect]
-e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
-
-[matchers]
-m = g(r.sub, p.sub)  && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.act)
-`
-)
 
 // +genclient
 // +genclient:nonNamespaced

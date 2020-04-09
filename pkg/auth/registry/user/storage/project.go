@@ -20,12 +20,12 @@ package storage
 
 import (
 	"context"
-	"strings"
+
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/apiserver/filter"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -38,64 +38,78 @@ import (
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
-// RoleREST implements the REST endpoint, list policies bound to the user.
-type RoleREST struct {
-	groupRest  *REST
+// ProjectREST implements the REST endpoint, list policies bound to the user.
+type ProjectREST struct {
+	userRest   *REST
 	authClient authinternalclient.AuthInterface
 	enforcer   *casbin.SyncedEnforcer
 }
 
-var _ = rest.Lister(&RoleREST{})
+var _ = rest.Lister(&ProjectREST{})
 
 // NewList returns an empty object that can be used with the List call.
-func (r *RoleREST) NewList() runtime.Object {
-	return &auth.RoleList{}
+func (r *ProjectREST) NewList() runtime.Object {
+	return &auth.ProjectBelongs{}
 }
 
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
-func (r *RoleREST) New() runtime.Object {
-	return &auth.Role{}
+func (r *ProjectREST) New() runtime.Object {
+	return &auth.ProjectBelongs{}
 }
 
-func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("unable to get request info from context")
 	}
 
-	groupID := requestInfo.Name
+	userID := requestInfo.Name
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		tenantID = filter.TenantIDFrom(ctx)
+		userID = util.CombineTenantAndName(tenantID, userID)
+	}
 
-	obj, err := r.groupRest.Get(ctx, groupID, &metav1.GetOptions{})
+	obj, err := r.userRest.Get(ctx, userID, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	grp := obj.(*auth.Group)
-	projectID := filter.ProjectIDFrom(ctx)
-	roles := r.enforcer.GetRolesForUserInDomain(util.GroupKey(grp.Spec.TenantID, grp.Spec.ID), projectID)
+	user := obj.(*auth.User)
 
-	var roleIDs []string
-	for _, r := range roles {
-		if strings.HasPrefix(r, "rol-") {
-			roleIDs = append(roleIDs, r)
-		}
-	}
+	managed := make(map[string]auth.ExtraValue)
+	memberd := make(map[string]auth.ExtraValue)
+	projectOwner := util.ProjectOwnerPolicyID(user.Spec.TenantID)
 
-	var roleList = &auth.RoleList{}
-	for _, id := range roleIDs {
-		rol, err := r.authClient.Roles().Get(id, metav1.GetOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			log.Error("Get role failed", log.String("role", id), log.Err(err))
-			return nil, err
-		}
-
-		if err != nil {
-			log.Warn("role has been deleted, but till in casbin", log.String("role", id))
+	rules := r.enforcer.GetFilteredGroupingPolicy(0, util.UserKey(user.Spec.TenantID, user.Spec.Name))
+	for _, r := range rules {
+		if len(r) != 3 {
+			log.Warn("invalid rule", log.Strings("rule", r))
 			continue
 		}
+		prj := r[2]
+		role := r[1]
 
-		roleList.Items = append(roleList.Items, *rol)
+		if prj != util.DefaultDomain {
+			if role == projectOwner {
+				if _, ok := managed[prj]; ok {
+					managed[prj] = append(managed[prj], role)
+				} else {
+					managed[prj] = auth.ExtraValue{role}
+				}
+			}
+
+			if _, ok := memberd[prj]; ok {
+				memberd[prj] = append(memberd[prj], role)
+			} else {
+				memberd[prj] = auth.ExtraValue{role}
+			}
+		}
 	}
 
-	return roleList, nil
+	return &auth.ProjectBelongs{
+		TenantID:        user.Spec.TenantID,
+		ManagedProjects: managed,
+		MemberdProjects: memberd,
+	}, nil
 }

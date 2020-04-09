@@ -23,14 +23,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	filter2 "tkestack.io/tke/pkg/apiserver/filter"
-
 	"github.com/casbin/casbin/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
+	genericfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/auth/filter"
 	authutil "tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util"
@@ -107,7 +106,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	projectID = filter2.GetProjectFromGroups(attr.GetUser().GetGroups())
+	projectID = genericfilter.GetProjectFromGroups(attr.GetUser().GetGroups())
 	if debug {
 		perms, err := a.enforcer.GetImplicitPermissionsForUser(authutil.UserKey(tenantID, subject), projectID)
 		if err != nil {

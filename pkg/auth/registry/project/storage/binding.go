@@ -132,5 +132,5 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 		return projectPolicyList, nil
 	}
 
-	return nil, utilerrors.NewAggregate(errs)
+	return nil, apierrors.NewInternalError(utilerrors.NewAggregate(errs))
 }

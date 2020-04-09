@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/fields"
@@ -86,7 +87,6 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 		FieldSelector: fieldSelector.String(),
 	}
 
-	log.Info("listOpts", log.Any("opts", listOpts))
 	policyList, err := r.authClient.Policies().List(listOpts)
 	if err != nil {
 		log.Error("List projected policy failed", log.String("selector", listOpts.FieldSelector), log.Err(err))

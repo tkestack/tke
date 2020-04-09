@@ -282,6 +282,7 @@ func TestConvertTKEAttributes(t *testing.T) {
 			},
 		},
 		{
+			ctx: context.Background(),
 			attr: &authorizer.AttributesRecord{
 				Verb:            "get",
 				Resource:        "clusters",
@@ -295,6 +296,20 @@ func TestConvertTKEAttributes(t *testing.T) {
 				Resource: "cluster:cls-82qkvzgp/alarmpolicy:*",
 			},
 		},
+		//{
+		//	ctx: contextWithNamespace(contextWithCluster(context.Background())),
+		//	attr: &authorizer.AttributesRecord{
+		//		Verb:            "list",
+		//		Resource:        "clusters",
+		//		ResourceRequest: true,
+		//		Subresource:     "lbcfbackendgroups",
+		//		Path:            "/apis/platform.tkestack.io/v1/clusters/cls-2brjpwrg/lbcfbackendgroups",
+		//	},
+		//	expect: &authorizer.AttributesRecord{
+		//		Verb:     "listLbcfbackendgroups",
+		//		Resource: "Resource:cluster:cls-2brjpwrg/namespace:ns-1/lbcfbackendgroup:*",
+		//	},
+		//},
 		{
 			ctx: contextWithCluster(context.Background()),
 			attr: &authorizer.AttributesRecord{
@@ -328,10 +343,12 @@ func compare(a authorizer.Attributes, b authorizer.Attributes) bool {
 }
 
 const (
-	clusterContextKey = "clusterName"
-	clusterName       = "cls-82qkvzgp"
-	projectID         = "prj-82qkvzgp"
-	projectContextKey = "projectID"
+	clusterContextKey   = "clusterName"
+	clusterName         = "cls-82qkvzgp"
+	projectID           = "prj-82qkvzgp"
+	projectContextKey   = "projectID"
+	namespace           = "ns-1"
+	namespaceContextKey = "namespace"
 )
 
 func contextWithCluster(ctx context.Context) context.Context {
@@ -340,4 +357,8 @@ func contextWithCluster(ctx context.Context) context.Context {
 
 func contextWithProject(ctx context.Context) context.Context {
 	return genericrequest.WithValue(ctx, projectContextKey, projectID)
+}
+
+func contextWithNamespace(ctx context.Context) context.Context {
+	return genericrequest.WithValue(ctx, namespaceContextKey, namespace)
 }

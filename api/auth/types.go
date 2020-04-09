@@ -26,8 +26,11 @@ const (
 	// KeywordQueryTag is a field tag to query object that contains the keyword.
 	KeywordQueryTag string = "keyword"
 
-	// QueryLimitTag is a field tag to query a maximum number of objects for a list call.
-	QueryLimitTag string = "limit"
+	// LimitQueryTag is a field tag to query a maximum number of objects for a list call.
+	LimitQueryTag string = "limit"
+
+	// PolicyQueryTag is a field tag to query localidentities with policies in extra.
+	PolicyQueryTag string = "policy"
 
 	// IssuerName is the name of issuer location.
 	IssuerName = "oidc"
@@ -548,6 +551,7 @@ type ProjectPolicyBindingSpec struct {
 type ProjectPolicyBindingRequest struct {
 	metav1.TypeMeta
 
+	TenantID string
 	// Policies holds the policies will bind to the subjects.
 	// +optional
 	Policies []string
@@ -737,9 +741,9 @@ const (
 type RoleSpec struct {
 	Finalizers []FinalizerName
 
-	ProjectID   string
 	DisplayName string
 	TenantID    string
+	ProjectID   string
 
 	// Username is Creator
 	Username    string
@@ -774,12 +778,14 @@ type PolicyBinding struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Dummy is a empty struct.
-type Dummy struct {
+// ProjectBelongs contains projects of user belongs.
+type ProjectBelongs struct {
 	metav1.TypeMeta
 
-	OwnerProjects  []string
-	MemberProjects []string
+	TenantID string
+	// project and roles in project
+	ManagedProjects map[string]ExtraValue
+	MemberdProjects map[string]ExtraValue
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
