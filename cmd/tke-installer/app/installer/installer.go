@@ -34,7 +34,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"tkestack.io/tke/pkg/util/docker"
 
 	"github.com/emicklei/go-restful"
 	pkgerrors "github.com/pkg/errors"
@@ -72,6 +71,7 @@ import (
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
+	"tkestack.io/tke/pkg/util/docker"
 	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/kubeconfig"
 	"tkestack.io/tke/pkg/util/log"
@@ -82,7 +82,6 @@ import (
 	_ "tkestack.io/tke/api/platform/install"
 )
 
-// ClusterResource is the REST layer to the Cluster domain
 type TKE struct {
 	Config  *config.Config           `json:"config"`
 	Para    *types.CreateClusterPara `json:"para"`
@@ -96,14 +95,14 @@ type TKE struct {
 	clusterProvider clusterprovider.Provider
 	isFromRestore   bool
 
-	docker			*docker.Docker
+	docker *docker.Docker
 
 	globalClient kubernetes.Interface
 	servers      []string
 	namespace    string
 }
 
-func NewTKE(config *config.Config) *TKE {
+func New(config *config.Config) *TKE {
 	c := new(TKE)
 
 	c.Config = config
