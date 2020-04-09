@@ -187,10 +187,6 @@ func (t *TKE) initSteps() {
 			Func: t.generateCertificates,
 		},
 		{
-			Name: "Prepare front proxy certificates",
-			Func: t.prepareFrontProxyCertificates,
-		},
-		{
 			Name: "Create global cluster",
 			Func: t.createGlobalCluster,
 		},
@@ -201,6 +197,10 @@ func (t *TKE) initSteps() {
 		{
 			Name: "Execute post deploy hook",
 			Func: t.postClusterReadyHook,
+		},
+		{
+			Name: "Prepare front proxy certificates",
+			Func: t.prepareFrontProxyCertificates,
 		},
 		{
 			Name: "Create namespace for install TKE",
@@ -846,32 +846,26 @@ func (t *TKE) generateCertificates() error {
 }
 
 func (t *TKE) prepareFrontProxyCertificates() error {
-	if t.Cluster.Spec.APIServerExtraArgs == nil {
-		t.Cluster.Spec.APIServerExtraArgs = make(map[string]string)
+	machine := t.Cluster.Spec.Machines[0]
+	sshConfig := &ssh.Config{
+		User:       machine.Username,
+		Host:       machine.IP,
+		Port:       int(machine.Port),
+		Password:   string(machine.Password),
+		PrivateKey: machine.PrivateKey,
+		PassPhrase: machine.PassPhrase,
 	}
-	t.Cluster.Spec.APIServerExtraArgs["proxy-client-cert-file"] = "/etc/kubernetes/admin.crt"
-	t.Cluster.Spec.APIServerExtraArgs["proxy-client-key-file"] = "/etc/kubernetes/admin.key"
-	for _, machine := range t.Cluster.Spec.Machines {
-		sshConfig := &ssh.Config{
-			User:       machine.Username,
-			Host:       machine.IP,
-			Port:       int(machine.Port),
-			Password:   string(machine.Password),
-			PrivateKey: machine.PrivateKey,
-			PassPhrase: machine.PassPhrase,
-		}
-		s, err := ssh.New(sshConfig)
-		if err != nil {
-			return err
-		}
-		err = s.CopyFile(constants.AdminCrtFile, "/etc/kubernetes/admin.crt")
-		if err != nil {
-			return err
-		}
-		err = s.CopyFile(constants.AdminKeyFile, "/etc/kubernetes/admin.key")
-		if err != nil {
-			return err
-		}
+	s, err := ssh.New(sshConfig)
+	if err != nil {
+		return err
+	}
+	data, err := s.ReadFile("/etc/kubernetes/pki/front-proxy-ca.crt")
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(constants.FrontProxyCACrtFile, data, 0644)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -1097,6 +1091,10 @@ func (t *TKE) prepareCertificates() error {
 	if err != nil {
 		return err
 	}
+	frontProxyCACrt, err := ioutil.ReadFile(constants.FrontProxyCACrtFile)
+	if err != nil {
+		return err
+	}
 	serverCrt, err := ioutil.ReadFile(constants.ServerCrtFile)
 	if err != nil {
 		return err
@@ -1120,15 +1118,16 @@ func (t *TKE) prepareCertificates() error {
 			Namespace: t.namespace,
 		},
 		Data: map[string]string{
-			"etcd-ca.crt": string(t.Cluster.ClusterCredential.ETCDCACert),
-			"etcd.crt":    string(t.Cluster.ClusterCredential.ETCDAPIClientCert),
-			"etcd.key":    string(t.Cluster.ClusterCredential.ETCDAPIClientKey),
-			"ca.crt":      string(caCrt),
-			"ca.key":      string(caKey),
-			"server.crt":  string(serverCrt),
-			"server.key":  string(serverKey),
-			"admin.crt":   string(adminCrt),
-			"admin.key":   string(adminKey),
+			"etcd-ca.crt":        string(t.Cluster.ClusterCredential.ETCDCACert),
+			"etcd.crt":           string(t.Cluster.ClusterCredential.ETCDAPIClientCert),
+			"etcd.key":           string(t.Cluster.ClusterCredential.ETCDAPIClientKey),
+			"ca.crt":             string(caCrt),
+			"ca.key":             string(caKey),
+			"front-proxy-ca.crt": string(frontProxyCACrt),
+			"server.crt":         string(serverCrt),
+			"server.key":         string(serverKey),
+			"admin.crt":          string(adminCrt),
+			"admin.key":          string(adminKey),
 		},
 	}
 

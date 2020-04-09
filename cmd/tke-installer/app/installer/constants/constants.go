@@ -42,6 +42,7 @@ const (
 	OIDCClientSecretFile = DataDir + "oidc_client_secret"
 	CACrtFile            = DataDir + "ca.crt"
 	CAKeyFile            = DataDir + "ca.key"
+	FrontProxyCACrtFile  = DataDir + "front-proxy-ca.crt"
 	ServerCrtFile        = DataDir + "server.crt"
 	ServerKeyFile        = DataDir + "server.key"
 	AdminCrtFile         = DataDir + "admin.crt"
