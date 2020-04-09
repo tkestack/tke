@@ -1,4 +1,4 @@
-import { i18n } from '@tencent/tea-app';
+import { i18n } from '@tea/app';
 import { translation } from '@i18n/translation';
 // 国际化工具的初始化
 i18n.init({ translation });

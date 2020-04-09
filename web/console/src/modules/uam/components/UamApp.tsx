@@ -11,7 +11,7 @@ import { configStore } from '../stores/RootStore';
 import { StrategyApp } from './strategy/StrategyApp';
 import { UserApp } from './user/UserApp';
 import { RoleApp } from './role/RoleApp';
-import { GroupApp } from './group/GroupApp';
+// import { GroupPanel } from './group/GroupApp';
 
 const store = configStore();
 
@@ -32,10 +32,10 @@ export class UamAppContainer extends React.Component<any, any> {
 export interface RootProps extends RootState {
   actions?: typeof allActions;
 }
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 @((router.serve as any)())
 class UamApp extends React.Component<RootProps, {}> {
   render() {
@@ -50,9 +50,11 @@ class UamApp extends React.Component<RootProps, {}> {
       content = <StrategyApp />;
     } else if (module === 'role') {
       content = <RoleApp />;
-    } else if (module === 'group') {
-      content = <GroupApp />;
-    } else {
+    }
+    // else if (module === 'group') {
+    //   content = <GroupPanel />;
+    // }
+    else {
       content = <UserApp />;
     }
 
