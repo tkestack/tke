@@ -133,6 +133,7 @@ func NewProvider() (*Provider, error) {
 		p.EnsureMarkControlPlane,
 
 		p.EnsureNvidiaDevicePlugin,
+		p.EnsureGPUManager,
 
 		p.EnsureCleanup,
 

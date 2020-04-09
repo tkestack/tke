@@ -354,43 +354,6 @@ func (CronHPAStatus) SwaggerDoc() map[string]string {
 	return map_CronHPAStatus
 }
 
-var map_GPUManager = map[string]string{
-	"":     "GPUManager is a kind of device plugin for kubelet to help manage GPUs.",
-	"spec": "Spec defines the desired identities of clusters in this set.",
-}
-
-func (GPUManager) SwaggerDoc() map[string]string {
-	return map_GPUManager
-}
-
-var map_GPUManagerList = map[string]string{
-	"":      "GPUManagerList is the whole list of all GPUManager which owned by a tenant.",
-	"items": "List of GPUManagers",
-}
-
-func (GPUManagerList) SwaggerDoc() map[string]string {
-	return map_GPUManagerList
-}
-
-var map_GPUManagerSpec = map[string]string{
-	"": "GPUManagerSpec describes the attributes of a GPUManager.",
-}
-
-func (GPUManagerSpec) SwaggerDoc() map[string]string {
-	return map_GPUManagerSpec
-}
-
-var map_GPUManagerStatus = map[string]string{
-	"":           "GPUManagerStatus is information about the current status of a GPUManager.",
-	"phase":      "Phase is the current lifecycle phase of the GPUManager of cluster.",
-	"reason":     "Reason is a brief CamelCase string that describes any failure.",
-	"retryCount": "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-}
-
-func (GPUManagerStatus) SwaggerDoc() map[string]string {
-	return map_GPUManagerStatus
-}
-
 var map_Helm = map[string]string{
 	"":     "Helm is a kubernetes package manager.",
 	"spec": "Spec defines the desired identities of clusters in this set.",
