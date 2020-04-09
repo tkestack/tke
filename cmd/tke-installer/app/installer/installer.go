@@ -680,10 +680,12 @@ func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 		if t.Step != 0 {
 			return errors.NewAlreadyExists(platformv1.Resource("Cluster"), "global")
 		}
-		err := req.ReadEntity(t.Para)
+		para := new(types.CreateClusterPara)
+		err := req.ReadEntity(para)
 		if err != nil {
 			return errors.NewBadRequest(err.Error())
 		}
+		t.Para = para
 		if err := t.prepare(); err != nil {
 			return err
 		}
