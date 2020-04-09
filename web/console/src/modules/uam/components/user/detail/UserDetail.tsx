@@ -30,7 +30,7 @@ insertCSS(
 `
 );
 
-export const UserDetailsPanel = () => {
+export const UserDetail = () => {
   const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
@@ -38,7 +38,8 @@ export const UserDetailsPanel = () => {
   const { route, userList, getUser, updateUser, userStrategyList } = state;
   const getUserData = getUser.data[0];
   const updateUserData = updateUser.data[0];
-  const { sub } = router.resolve(route);
+  // const { sub } = router.resolve(route);
+  const sub = route.queries['name'];
 
   const [basicParamsValue, setBasicParamsValue] = useState({ displayName: '', email: '', phoneNumber: '' });
   const [editValue, setEditValue] = useState({ editBasic: false });

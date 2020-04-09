@@ -35,6 +35,7 @@ import { resourceConfig } from '../../../config';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { METHODS } from 'http';
 
+// @ts-ignore
 const tips = seajs.require('tips');
 
 class RequestResult {
@@ -421,6 +422,40 @@ export async function fetchCategoryList() {
 
   return result;
 }
+
+/**
+ * 获取平台策略
+ */
+export async function getPlatformCategories() {
+  let categories: Category[] = [];
+  try {
+    const resourceInfo: ResourceInfo = resourceConfig()['category'];
+    const url = reduceK8sRestfulPath({ resourceInfo });
+    console.log('getPlatformCategories url is: ', resourceInfo, url);
+  //   const response = await reduceNetworkRequest({
+  //     method: 'GET',
+  //     url
+  //     // url: '/api/v1/categories/'
+  //   });
+  //   if (response.code === 0) {
+  //     if (response.data.items) {
+  //       categories = response.data.items;
+  //     } else {
+  //       categories = [];
+  //     }
+  //   }
+  } catch (error) {
+    tips.error(error.response.data.message, 2000);
+  }
+  // const result: RecordSet<Category> = {
+  //   recordCount: categories.length,
+  //   records: categories
+  // };
+  //
+  // return result;
+    return;
+}
+
 
 /**
  * 增加策略关联的用户
@@ -917,6 +952,7 @@ export async function commonDisassociateUser([user]: CommonUserAssociation[], pa
 export async function fetchPolicy(filter: PolicyInfoFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()['policy'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
+  console.log('fetchPolicy url', url);
   let rr: RequestResult = await GET(url);
   return rr.data;
 }
@@ -926,14 +962,19 @@ export async function fetchPolicy(filter: PolicyInfoFilter) {
  * @param query 列表查询条件参数
  */
 export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
-  const { search, filter } = query;
+  const { search, filter, keyword } = query;
   const queryObj = {
     // 'fieldSelector=keyword': search || ''
   };
+  let queryString = '';
+  if (keyword === 'platform') {
+    queryString = '?fieldSelector=spec.scope!=project';
+  }
 
   const resourceInfo: ResourceInfo = resourceConfig()['policy'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  // const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  console.log('fetchPolicyPlainList url + queryString', url, queryString, 111, query);
   let rr: RequestResult = await GET(url + queryString);
   let items: PolicyPlain[] =
     !rr.error && rr.data.items
@@ -943,10 +984,12 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
             name: i.metadata && i.metadata.name,
             displayName: i.spec && i.spec.displayName,
             category: i.spec && i.spec.category,
-            description: i.spec && i.spec.description
+            description: i.spec && i.spec.description,
+            tenantID: i.sepc && i.spec.tenantID
           };
         })
       : [];
+  console.log('fetchPolicyPlainList items is:', items);
   const result: RecordSet<PolicyPlain> = {
     recordCount: items.length,
     records: items

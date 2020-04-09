@@ -57,7 +57,7 @@ function TargetTable({ dataSource, onRemove }) {
   return <Table records={dataSource} recordKey="id" columns={columns} addons={[removeable({ onRemove })]} />;
 }
 
-export const BaseInfoPanel = (props) => {
+export const UserCreate = (props) => {
   const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);

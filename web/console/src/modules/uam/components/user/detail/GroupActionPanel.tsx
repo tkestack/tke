@@ -9,12 +9,11 @@ import { RootProps } from '../UserApp';
 // import { GroupAssociateWorkflowDialog } from '../associate/GroupAssociateWorkflowDialog';
 import { GroupFilter } from '../../../models';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class GroupActionPanel extends React.Component<RootProps, {}> {
-
   componentWillUnmount() {
     let { actions } = this.props;
     actions.group.associate.clearGroupAssociation();
@@ -26,11 +25,12 @@ export class GroupActionPanel extends React.Component<RootProps, {}> {
     let filter: GroupFilter = {
       resource: 'localidentity',
       // resourceID: route.queries['groupName']
-      resourceID: router.resolve(route).sub,
+      resourceID: route.queries['name'],
+      // resourceID: router.resolve(route).sub,
       /** 关联/解关联回调函数 */
       callback: () => {
         /** 重新加载用户 */
-      }
+      },
     };
     actions.group.associate.setupGroupFilter(filter);
     /** 拉取关联用户组列表，拉取后自动更新groupAssociation */
@@ -61,6 +61,4 @@ export class GroupActionPanel extends React.Component<RootProps, {}> {
       // </React.Fragment>
     );
   }
-
 }
-

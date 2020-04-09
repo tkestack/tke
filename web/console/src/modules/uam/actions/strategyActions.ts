@@ -108,6 +108,17 @@ const getCategories = generateFetcherActionCreator({
   }
 });
 
+// /**
+//  * 获取平台策略
+//  */
+// const getPlatformCategories = generateFetcherActionCreator({
+//   actionType: ActionTypes.GetPlatformCategories,
+//   fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
+//     let result = await WebAPI.getPlatformCategories();
+//     return result;
+//   }
+// });
+
 const restActions = {
   poll: () => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
@@ -123,7 +134,8 @@ const restActions = {
   removeStrategy,
   getCategories,
   getStrategy,
-  updateStrategy
+  updateStrategy,
+  // getPlatformCategories
 };
 
 export const strategyActions = extend({}, FFModelStrategyActions, restActions);

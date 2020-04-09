@@ -18,7 +18,7 @@ const mapDispatchToProps = (dispatch) =>
   });
 
 @connect((state) => state, mapDispatchToProps)
-export class GroupApp extends React.Component<RootProps, {}> {
+export class GroupPanel extends React.Component<RootProps, {}> {
   render() {
     let { route } = this.props,
       urlParam = router.resolve(route);

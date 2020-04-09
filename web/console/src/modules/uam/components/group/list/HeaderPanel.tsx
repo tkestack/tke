@@ -5,16 +5,15 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { router } from '../../../router';
 import { allActions } from '../../../actions';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch
+    dispatch,
   });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class HeaderPanel extends React.Component<RootProps, {}> {
-
   render() {
     const { route } = this.props;
     let urlParam = router.resolve(route);

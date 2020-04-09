@@ -8,17 +8,16 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { router } from '../../../router';
 import { allActions } from '../../../actions';
 import { Group, CommonUserFilter } from '../../../models';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 import { UserAssociateWorkflowDialog } from '../associate/UserAssociateWorkflowDialog';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch
+    dispatch,
   });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class TablePanel extends React.Component<RootProps, {}> {
-
   render() {
     let { actions, groupList, route } = this.props;
 
@@ -30,22 +29,22 @@ export class TablePanel extends React.Component<RootProps, {}> {
           <Text parent="div" overflow>
             <a
               href="javascript:;"
-              onClick={e => {
-                router.navigate({ module: 'group', sub: 'detail' }, { groupName: item.metadata.name });
+              onClick={(e) => {
+                router.navigate({ module: 'user', sub: 'group', action: 'detail' }, { groupName: item.metadata.name });
               }}
             >
               {item.spec.displayName || '-'}
             </a>
             {item.status['phase'] === 'Terminating' && <Icon type="loading" />}
           </Text>
-        )
+        ),
       },
       {
         key: 'description',
         header: t('描述'),
-        render: item => <Text parent="div">{item.spec.description || '-'}</Text>
+        render: (item) => <Text parent="div">{item.spec.description || '-'}</Text>,
       },
-      { key: 'operation', header: t('操作'), render: group => this._renderOperationCell(group) }
+      { key: 'operation', header: t('操作'), render: (group) => this._renderOperationCell(group) },
     ];
 
     return (
@@ -57,15 +56,16 @@ export class TablePanel extends React.Component<RootProps, {}> {
           columns={columns}
           model={groupList}
           action={actions.group.list}
-          rowDisabled={record => record.status['phase'] === 'Terminating'}
+          rowDisabled={(record) => record.status['phase'] === 'Terminating'}
           emptyTips={emptyTips}
           isNeedPagination={true}
           bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
         />
-        <UserAssociateWorkflowDialog onPostCancel={() => {
-          //取消按钮时，清理编辑状态
-          actions.commonUser.associate.clearUserAssociation();
-        }}
+        <UserAssociateWorkflowDialog
+          onPostCancel={() => {
+            //取消按钮时，清理编辑状态
+            actions.commonUser.associate.clearUserAssociation();
+          }}
         />
       </React.Fragment>
     );
@@ -87,7 +87,7 @@ export class TablePanel extends React.Component<RootProps, {}> {
               /** 关联/解关联回调函数 */
               callback: () => {
                 actions.group.list.fetch();
-              }
+              },
             };
             actions.commonUser.associate.setupUserFilter(filter);
             /** 拉取关联用户列表，拉取后自动更新commonUserAssociation */
@@ -100,21 +100,23 @@ export class TablePanel extends React.Component<RootProps, {}> {
         >
           <Trans>关联用户</Trans>
         </LinkButton>
-        <LinkButton onClick={() => this._removeGroup(group)}><Trans>删除</Trans></LinkButton>
+        <LinkButton onClick={() => this._removeGroup(group)}>
+          <Trans>删除</Trans>
+        </LinkButton>
       </React.Fragment>
     );
-  }
+  };
 
   _removeGroup = async (group: Group) => {
     let { actions } = this.props;
     const yes = await Modal.confirm({
       message: t('确认删除当前所选用户组') + ` - ${group.spec.displayName}？`,
       okText: t('删除'),
-      cancelText: t('取消')
+      cancelText: t('取消'),
     });
     if (yes) {
       actions.group.list.removeGroupWorkflow.start([group]);
       actions.group.list.removeGroupWorkflow.perform();
     }
-  }
+  };
 }
