@@ -20,11 +20,12 @@ package cluster
 
 import (
 	"fmt"
-	"net"
 	"reflect"
 	"runtime"
 	"strings"
 	"time"
+
+	"tkestack.io/tke/pkg/util/validation"
 
 	"tkestack.io/tke/pkg/platform/util"
 
@@ -123,7 +124,7 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 			if address.Port == 0 {
 				allErrs = append(allErrs, field.Required(field.NewPath("status", "addresses", string(address.Type), "port"), "must specify the port of address"))
 			}
-			_, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", address.Host, address.Port), 5*time.Second)
+			err := validation.VailidateClusterConnection(address.Host, address.Port, 5*time.Second)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("status", "addresses"), address, err.Error()))
 			}

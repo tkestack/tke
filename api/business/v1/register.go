@@ -53,6 +53,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&Namespace{},
 		&NamespaceList{},
+		&NamespaceCertOptions{},
 
 		&Platform{},
 		&PlatformList{},
