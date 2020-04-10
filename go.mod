@@ -23,7 +23,7 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.34.0
 	github.com/deislabs/oras v0.8.0 // indirect
-	github.com/dexidp/dex v0.0.0-20200319150056-3693b74791f4
+	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect

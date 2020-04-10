@@ -39,6 +39,7 @@ const (
 	flagAuthInitClientID           = "init-client-id"
 	flagAuthInitClientSecret       = "init-client-secret"
 	flagAuthInitClientRedirectUris = "init-client-redirect-uris"
+	flagAuthPasswordGrantConnID    = "password-grant-conn-id"
 )
 
 const (
@@ -51,6 +52,7 @@ const (
 	configAuthInitClientID           = "auth.init_client_id"
 	configAuthInitClientSecret       = "auth.init_client_secret"
 	configAuthInitClientRedirectUris = "auth.init_client_redirect_uris"
+	configAuthPasswordGrantConnID    = "auth.password_grant_conn_id"
 )
 
 // AuthOptions contains configuration items related to auth attributes.
@@ -64,6 +66,7 @@ type AuthOptions struct {
 	InitClientID           string
 	InitClientSecret       string
 	InitClientRedirectUris []string
+	PasswordGrantConnID    string
 }
 
 // NewAuthOptions creates a AuthOptions object with default parameters.
@@ -113,6 +116,10 @@ func (o *AuthOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringSlice(flagAuthInitClientRedirectUris, o.InitClientRedirectUris,
 		"Default client redirect uris will be created when started.")
 	_ = viper.BindPFlag(configAuthInitClientRedirectUris, fs.Lookup(flagAuthInitClientRedirectUris))
+
+	fs.String(flagAuthPasswordGrantConnID, o.PasswordGrantConnID,
+		"Default connector that can be used for password grant.")
+	_ = viper.BindPFlag(configAuthPasswordGrantConnID, fs.Lookup(flagAuthPasswordGrantConnID))
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -146,6 +153,10 @@ func (o *AuthOptions) ApplyFlags() []error {
 		errs = append(errs, fmt.Errorf("--%s and --%s must be specified", flagAuthInitClientID, flagAuthInitClientSecret))
 	}
 	o.InitClientRedirectUris = viper.GetStringSlice(configAuthInitClientRedirectUris)
+
+	if len(o.PasswordGrantConnID) == 0 {
+		o.PasswordGrantConnID = o.InitTenantID
+	}
 
 	return errs
 }
