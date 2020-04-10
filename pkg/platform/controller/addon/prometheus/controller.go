@@ -1390,6 +1390,13 @@ func createAlertManagerCRD(components images.Components, prometheus *v1.Promethe
 					"prometheus.io/port":   "9093",
 				},
 			},
+			Tolerations: []corev1.Toleration{
+				{
+					Key:      "node-role.kubernetes.io/master",
+					Operator: corev1.TolerationOpExists,
+					Effect:   corev1.TaintEffectNoSchedule,
+				},
+			},
 			BaseImage: containerregistryutil.GetImagePrefix(alertManagerImagePath),
 			Replicas:  controllerutil.Int32Ptr(3),
 			SecurityContext: &corev1.PodSecurityContext{
