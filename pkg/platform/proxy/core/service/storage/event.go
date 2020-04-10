@@ -92,32 +92,34 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		events = append(events, serviceEvent)
 	}
 
-	podSelector := labels.FormatLabels(service.Spec.Selector)
-	podListOptions := metav1.ListOptions{LabelSelector: podSelector}
-	podListByRS, err := client.CoreV1().Pods(namespaceName).List(podListOptions)
-	if err != nil {
-		return nil, err
-	}
-	for _, pod := range podListByRS.Items {
-		podEventsSelector := fields.AndSelectors(
-			fields.OneTermEqualSelector("involvedObject.uid", string(pod.UID)),
-			fields.OneTermEqualSelector("involvedObject.name", pod.Name),
-			fields.OneTermEqualSelector("involvedObject.namespace", pod.Namespace),
-			fields.OneTermEqualSelector("involvedObject.kind", "Pod"))
-		podEventsListOptions := metav1.ListOptions{
-			FieldSelector: podEventsSelector.String(),
-		}
-		podEvents, err := client.CoreV1().Events(namespaceName).List(podEventsListOptions)
+	if len(service.Spec.Selector) > 0 {
+		podSelector := labels.FormatLabels(service.Spec.Selector)
+		podListOptions := metav1.ListOptions{LabelSelector: podSelector}
+		podListByRS, err := client.CoreV1().Pods(namespaceName).List(podListOptions)
 		if err != nil {
 			return nil, err
 		}
+		for _, pod := range podListByRS.Items {
+			podEventsSelector := fields.AndSelectors(
+				fields.OneTermEqualSelector("involvedObject.uid", string(pod.UID)),
+				fields.OneTermEqualSelector("involvedObject.name", pod.Name),
+				fields.OneTermEqualSelector("involvedObject.namespace", pod.Namespace),
+				fields.OneTermEqualSelector("involvedObject.kind", "Pod"))
+			podEventsListOptions := metav1.ListOptions{
+				FieldSelector: podEventsSelector.String(),
+			}
+			podEvents, err := client.CoreV1().Events(namespaceName).List(podEventsListOptions)
+			if err != nil {
+				return nil, err
+			}
 
-		for _, podEvent := range podEvents.Items {
-			events = append(events, podEvent)
+			for _, podEvent := range podEvents.Items {
+				events = append(events, podEvent)
+			}
 		}
-	}
 
-	sort.Sort(events)
+		sort.Sort(events)
+	}
 
 	return &corev1.EventList{
 		Items: events,
