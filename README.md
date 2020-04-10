@@ -69,7 +69,7 @@ Other active channels:
 
 - WeChat Group
 
-![TKEStack](docs/images/WeChatIMG.png)
+![TKEStack](docs/images/WeChat.png)
 ## Licensing
 
 TKE is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text.
