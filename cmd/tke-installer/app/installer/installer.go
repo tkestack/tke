@@ -1717,6 +1717,9 @@ func (t *TKE) importResource() error {
 	if err != nil {
 		return err
 	}
+	// default timeout is 5 seconds, but create cluster need more time to validate spec
+	restConfig.Timeout = 120 * time.Second
+
 	client, err := tkeclientset.NewForConfig(restConfig)
 	if err != nil {
 		return err
