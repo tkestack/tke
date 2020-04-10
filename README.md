@@ -41,11 +41,11 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 ![Architecture Of TKE](docs/images/TKEStackHighLevelArchitecture@2x.png)
 
-## To start using TKE
+## Using
 
 - [tke-installer](./docs/user/tke-installer/README.md)
 
-## To start developing TKE
+## Developing
 
 Make sure that you have [Git-LFS](https://github.com/git-lfs/git-lfs) installed before developing TKE.
 
@@ -60,6 +60,16 @@ make
 ```
 
 For the full story, head over to the [developer's documentation](docs/devel/development.md).
+
+## Community
+
+You are encouraged to communicate most things via [GitHub issues](https://github.com/tkestack/tke/issues/new/choose) or pull requests.
+
+Other active channels:
+
+- WeChat Group
+
+![TKEStack](docs/images/WechatIMG6.jpeg)
 
 ## Licensing
 
