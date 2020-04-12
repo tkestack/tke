@@ -31,11 +31,22 @@
 
 ## Installation
 
-TKEStack use tke-installer tool to deploy. [refer](docs/user/tke-installer/normal-installation.md)
+### Minimum Requirements
+
+* Hardware
+  * 8 vCPU
+  * 16 GB of Memory
+* Operating Systems
+  * Ubuntu 16.04 (64-bit)
+  * CentOS Linux 7.5 (64-bit)
+
+### QuickStart
 
 ```
 version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
 ```
+
+TKEStack use tke-installer tool to deploy. [refer](https://github.com/tkestack/tke/blob/master/docs/user/tke-installer/README.md)
 
 ## Architecture
 
@@ -43,7 +54,7 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 ## Using
 
-- [tke-installer](./docs/user/tke-installer/README.md)
+[TKEStack Documentation ](https://github.com/tkestack/docs)
 
 ## Developing
 
