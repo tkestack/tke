@@ -29,6 +29,10 @@ import (
 	pkgerrors "github.com/pkg/errors"
 )
 
+const (
+	dockerENV = "DOCKER_CLI_EXPERIMENTAL=enabled"
+)
+
 // Docker wraps several docker commands.
 //
 // A Docker instance can be reused after calling its methods.
@@ -39,12 +43,42 @@ type Docker struct {
 	// to the null device (os.DevNull).
 	Stdout io.Writer
 	Stderr io.Writer
+
+	// bin is used to specify the full path of docker CLI.
+	// The default value of bin is 'docker', which uses the docker binary specified in PATH.
+	bin string
 }
 
 // New returns the Docker struct for executing docker commands.
-func New() *Docker {
+// The full path of docker binary is specified by the parameter dockerBin.
+// If dockerBin is empty, then the default value is to use docker binary specified in PATH.
+func New(dockerBin string) *Docker {
 	docker := &Docker{}
+	docker.SetBin(dockerBin)
 	return docker
+}
+
+// SetBin sets the docker binary with full path.
+// If dockerBin is empty, then the default value is to use docker binary specified in PATH.
+func (d *Docker) SetBin(dockerBin string) {
+	if dockerBin == "" {
+		d.bin = "docker"
+	} else {
+		d.bin = dockerBin
+	}
+}
+
+// Bin returns the docker CLI.
+func (d *Docker) Bin() string {
+	if d.bin == "" {
+		return "docker"
+	}
+	return d.bin
+}
+
+// binWithENV adds environment variables to docker bin.
+func (d *Docker) binWithENV() string {
+	return fmt.Sprintf("%s %s", dockerENV, d.Bin())
 }
 
 // runCmd starts to execute the command specified by cmdString.
@@ -67,7 +101,7 @@ func (d *Docker) getCmdOutput(cmdString string) ([]byte, error) {
 
 // GetImages returns docker images which match given image prefix.
 func (d *Docker) GetImages(imagePrefix string) ([]string, error) {
-	cmdString := fmt.Sprintf("docker images --format='{{.Repository}}:{{.Tag}}' --filter='reference=%s'", imagePrefix)
+	cmdString := fmt.Sprintf("%s images --format='{{.Repository}}:{{.Tag}}' --filter='reference=%s'", d.Bin(), imagePrefix)
 	out, err := d.getCmdOutput(cmdString)
 	if err != nil {
 		return nil, pkgerrors.Wrap(err, "docker images error")
@@ -173,7 +207,7 @@ func (d *Docker) SplitNameAndArch(name string) (string, string) {
 
 // LoadImages loads images from a tar archive file.
 func (d *Docker) LoadImages(imagesFile string) error {
-	cmdString := fmt.Sprintf("docker load -i %s", imagesFile)
+	cmdString := fmt.Sprintf("%s load -i %s", d.Bin(), imagesFile)
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker load error")
@@ -183,7 +217,7 @@ func (d *Docker) LoadImages(imagesFile string) error {
 
 // TagImage creates a tag destImage that refers to srcImage.
 func (d *Docker) TagImage(srcImage string, destImage string) error {
-	cmdString := fmt.Sprintf("docker tag %s %s", srcImage, destImage)
+	cmdString := fmt.Sprintf("%s tag %s %s", d.Bin(), srcImage, destImage)
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker tag error")
@@ -193,7 +227,7 @@ func (d *Docker) TagImage(srcImage string, destImage string) error {
 
 // PushImage pushes an image.
 func (d *Docker) PushImage(image string) error {
-	cmdString := fmt.Sprintf("docker push %s", image)
+	cmdString := fmt.Sprintf("%s push %s", d.Bin(), image)
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker push error")
@@ -203,7 +237,7 @@ func (d *Docker) PushImage(image string) error {
 
 // RemoveImage removes a local image.
 func (d *Docker) RemoveImage(image string) error {
-	cmdString := fmt.Sprintf("docker rmi %s ", image)
+	cmdString := fmt.Sprintf("%s rmi %s ", d.Bin(), image)
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker rmi error")
@@ -214,7 +248,7 @@ func (d *Docker) RemoveImage(image string) error {
 // RemoveContainers forces to remove one or more running containers.
 func (d *Docker) RemoveContainers(containers... string) error {
 	// Force the removal of containers. Do not return error.
-	cmdString := fmt.Sprintf("docker rm -f %s 2> /dev/null || true", strings.Join(containers, " "))
+	cmdString := fmt.Sprintf("%s rm -f %s 2> /dev/null || true", d.Bin(), strings.Join(containers, " "))
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker rm error")
@@ -224,7 +258,7 @@ func (d *Docker) RemoveContainers(containers... string) error {
 
 // RunImage derives a running container from an image.
 func (d *Docker) RunImage(image string, options string, runArgs string) error {
-	cmdString := fmt.Sprintf("docker run %s %s %s", options, image, runArgs)
+	cmdString := fmt.Sprintf("%s run %s %s %s", d.Bin(), options, image, runArgs)
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker run error")
@@ -245,7 +279,7 @@ func (d *Docker) ClearLocalManifests() error {
 
 // CreateManifest creates a local manifest list. (!IMPORTANT: local,local,local!)
 func (d *Docker) CreateManifest(image string, manifestName string) error {
-	cmdString := fmt.Sprintf("docker manifest create --amend --insecure %s %s", manifestName, image)
+	cmdString := fmt.Sprintf("%s manifest create --amend --insecure %s %s", d.binWithENV(), manifestName, image)
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker manifest create error")
@@ -263,8 +297,8 @@ func (d *Docker) AnnotateManifest(image string, manifestName string, arch string
 	if variant != "" {
 		variantArg = fmt.Sprintf("--variant %s", variant)
 	}
-	cmdString := fmt.Sprintf("docker manifest annotate %s %s --arch %s %s",
-		manifestName, image, arch, variantArg)
+	cmdString := fmt.Sprintf("%s manifest annotate %s %s --arch %s %s",
+		d.binWithENV(), manifestName, image, arch, variantArg)
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker manifest annotate error")
@@ -279,7 +313,7 @@ func (d *Docker) PushManifest(manifestName string, needPurge bool) error {
 		// Remove the local manifest list after push. !IMPORTANT: Remove local!
 		purgeArg = "--purge"
 	}
-	cmdString := fmt.Sprintf("docker manifest push --insecure %s %s ", purgeArg, manifestName)
+	cmdString := fmt.Sprintf("%s manifest push --insecure %s %s ", d.binWithENV(), purgeArg, manifestName)
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker manifest push error")

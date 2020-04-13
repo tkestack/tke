@@ -124,7 +124,7 @@ func New(config *config.Config) *TKE {
 	}
 	c.log = stdlog.New(f, "", stdlog.LstdFlags)
 
-	c.docker = new(docker.Docker)
+	c.docker = docker.New(baremetalconstants.DstBinDir + "docker")
 	c.docker.Stdout = c.log.Writer()
 	c.docker.Stderr = c.log.Writer()
 
