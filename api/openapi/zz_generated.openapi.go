@@ -41951,10 +41951,25 @@ func schema_tke_api_platform_v1_ClusterMachine(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"taints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If specified, the node's taints.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.Taint"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"ip", "port", "username"},
 			},
 		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.Taint"},
 	}
 }
 
@@ -44024,10 +44039,25 @@ func schema_tke_api_platform_v1_MachineSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
+					"taints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If specified, the node's taints.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.Taint"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"clusterName", "type", "ip", "port", "username"},
 			},
 		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.Taint"},
 	}
 }
 

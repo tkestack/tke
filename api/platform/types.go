@@ -19,6 +19,7 @@
 package platform
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -63,6 +64,7 @@ type ClusterMachine struct {
 	PrivateKey []byte
 	PassPhrase []byte
 	Labels     map[string]string
+	Taints     []corev1.Taint
 }
 
 // ClusterSpec is a description of a cluster.
@@ -1286,6 +1288,7 @@ type MachineSpec struct {
 	PrivateKey  []byte
 	PassPhrase  []byte
 	Labels      map[string]string
+	Taints      []corev1.Taint
 }
 
 // MachineStatus represents information about the status of an machine.
