@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/util/apiclient"
+
 	platformv1 "tkestack.io/tke/api/platform/v1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -38,7 +40,6 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/marknode"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util/hosts"
@@ -294,15 +295,7 @@ func (p *Provider) EnsureJoinNode(m *Machine) error {
 }
 
 func (p *Provider) EnsureMarkNode(m *Machine) error {
-	if len(m.Spec.Labels) == 0 {
-		return nil
-	}
-
-	option := &marknode.Option{
-		NodeName: m.Spec.IP,
-		Labels:   m.Spec.Labels,
-	}
-	err := marknode.Install(m.ClientSet, option)
+	err := apiclient.MarkNode(m.ClientSet, m.Spec.IP, m.Spec.Labels, m.Spec.Taints)
 	if err != nil {
 		return err
 	}

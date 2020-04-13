@@ -243,7 +243,8 @@ func (ClusterList) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterMachine = map[string]string{
-	"": "ClusterMachine is the master machine definition of cluster.",
+	"":       "ClusterMachine is the master machine definition of cluster.",
+	"taints": "If specified, the node's taints.",
 }
 
 func (ClusterMachine) SwaggerDoc() map[string]string {
@@ -622,6 +623,7 @@ func (MachineList) SwaggerDoc() map[string]string {
 var map_MachineSpec = map[string]string{
 	"":           "MachineSpec is a description of machine.",
 	"finalizers": "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
+	"taints":     "If specified, the node's taints.",
 }
 
 func (MachineSpec) SwaggerDoc() map[string]string {

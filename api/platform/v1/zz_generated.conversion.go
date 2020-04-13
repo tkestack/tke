@@ -25,6 +25,7 @@ package v1
 import (
 	unsafe "unsafe"
 
+	corev1 "k8s.io/api/core/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	platform "tkestack.io/tke/api/platform"
@@ -1590,6 +1591,7 @@ func autoConvert_v1_ClusterMachine_To_platform_ClusterMachine(in *ClusterMachine
 	out.PrivateKey = *(*[]byte)(unsafe.Pointer(&in.PrivateKey))
 	out.PassPhrase = *(*[]byte)(unsafe.Pointer(&in.PassPhrase))
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Taints = *(*[]corev1.Taint)(unsafe.Pointer(&in.Taints))
 	return nil
 }
 
@@ -1606,6 +1608,7 @@ func autoConvert_platform_ClusterMachine_To_v1_ClusterMachine(in *platform.Clust
 	out.PrivateKey = *(*[]byte)(unsafe.Pointer(&in.PrivateKey))
 	out.PassPhrase = *(*[]byte)(unsafe.Pointer(&in.PassPhrase))
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Taints = *(*[]corev1.Taint)(unsafe.Pointer(&in.Taints))
 	return nil
 }
 
@@ -2722,6 +2725,7 @@ func autoConvert_v1_MachineSpec_To_platform_MachineSpec(in *MachineSpec, out *pl
 	out.PrivateKey = *(*[]byte)(unsafe.Pointer(&in.PrivateKey))
 	out.PassPhrase = *(*[]byte)(unsafe.Pointer(&in.PassPhrase))
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Taints = *(*[]corev1.Taint)(unsafe.Pointer(&in.Taints))
 	return nil
 }
 
@@ -2742,6 +2746,7 @@ func autoConvert_platform_MachineSpec_To_v1_MachineSpec(in *platform.MachineSpec
 	out.PrivateKey = *(*[]byte)(unsafe.Pointer(&in.PrivateKey))
 	out.PassPhrase = *(*[]byte)(unsafe.Pointer(&in.PassPhrase))
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Taints = *(*[]corev1.Taint)(unsafe.Pointer(&in.Taints))
 	return nil
 }
 

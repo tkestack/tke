@@ -19,6 +19,7 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -67,6 +68,9 @@ type ClusterMachine struct {
 	PassPhrase []byte `json:"passPhrase,omitempty" protobuf:"bytes,6,opt,name=passPhrase"`
 	// +optional
 	Labels map[string]string `json:"labels,omitempty" protobuf:"bytes,7,opt,name=labels"`
+	// If specified, the node's taints.
+	// +optional
+	Taints []corev1.Taint `json:"taints,omitempty" protobuf:"bytes,8,opt,name=taints"`
 }
 
 // ClusterSpec is a description of a cluster.
@@ -1298,6 +1302,9 @@ type MachineSpec struct {
 	PassPhrase []byte `json:"passPhrase,omitempty" protobuf:"bytes,10,opt,name=passPhrase"`
 	// +optional
 	Labels map[string]string `json:"labels,omitempty" protobuf:"bytes,11,opt,name=labels"`
+	// If specified, the node's taints.
+	// +optional
+	Taints []corev1.Taint `json:"taints,omitempty" protobuf:"bytes,12,opt,name=taints"`
 }
 
 // MachineStatus represents information about the status of an machine.

@@ -545,3 +545,26 @@ func CreateOrUpdateMutatingWebhookConfiguration(client clientset.Interface, obj 
 
 	return nil
 }
+
+// MarkNode mark node by adding labels and taints
+func MarkNode(client clientset.Interface, nodeName string, labels map[string]string, taints []corev1.Taint) error {
+	return PatchNode(client, nodeName, func(n *corev1.Node) {
+		for k, v := range labels {
+			n.Labels[k] = v
+		}
+
+		for _, oldTaint := range n.Spec.Taints {
+			existed := false
+			for _, newTaint := range taints {
+				if newTaint.MatchTaint(&oldTaint) {
+					existed = true
+					break
+				}
+			}
+			if !existed {
+				taints = append(taints, oldTaint)
+			}
+		}
+		n.Spec.Taints = taints
+	})
+}
