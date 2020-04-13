@@ -20,7 +20,7 @@ const addGroupWorkflow = generateWorkflowActionCreator<Group, void>({
     [OperationTrigger.Done]: (dispatch, getState: GetState) => {
       let { groupAddWorkflow, route } = getState();
       if (isSuccessWorkflow(groupAddWorkflow)) {
-        router.navigate({ module: 'group', sub: '' }, route.queries);
+        router.navigate({ module: 'user', sub: 'group' }, route.queries);
         //进入列表时自动加载
         //退出状态页面时自动清理状态
       }

@@ -4,7 +4,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators, insertCSS, uuid } from '@tencent/ff-redux';
 import { useForm, useField } from 'react-final-form-hooks';
 import { allActions } from '../../../actions';
-import { Button, Text, Form, Input, Affix, Card, Radio, Transfer, Table } from '@tencent/tea-component';
+import { Button, Text, Form, Input, Affix, Card, Radio, Transfer, Table, SearchBox } from '@tencent/tea-component';
 import { router } from '../../../router';
 import { User } from '../../../models';
 import {
@@ -18,45 +18,6 @@ import { getStatus } from '../../../../common/validate';
 const { useState, useEffect, useRef } = React;
 const { scrollable, selectable, removeable } = Table.addons;
 
-const columns = [
-  {
-    key: 'displayName',
-    header: '策略名称',
-    render: (strategy) => <p>{strategy.displayName}</p>,
-  },
-  {
-    key: 'description',
-    header: '描述',
-    width: 300,
-    render: (strategy) => <p>{strategy.description || '-'}</p>,
-  },
-];
-
-function SourceTable({ dataSource, targetKeys, onChange }) {
-  return (
-    <Table
-      records={dataSource}
-      recordKey="id"
-      columns={columns}
-      addons={[
-        scrollable({
-          maxHeight: 310,
-          onScrollBottom: () => console.log('到达底部'),
-        }),
-        selectable({
-          value: targetKeys,
-          onChange,
-          rowSelect: true,
-        }),
-      ]}
-    />
-  );
-}
-
-function TargetTable({ dataSource, onRemove }) {
-  return <Table records={dataSource} recordKey="id" columns={columns} addons={[removeable({ onRemove })]} />;
-}
-
 export const UserCreate = (props) => {
   const state = useSelector((state) => state);
   const dispatch = useDispatch();
@@ -69,15 +30,15 @@ export const UserCreate = (props) => {
   const [targetKeys, setTargetKeys] = useState([]);
   const [inputValue, setInputValue] = useState('');
 
-  useEffect(() => {
-    actions.policy.associate.policyList.performSearch('platform');
-    // actions.strategy.getPlatformCategories.fetch();
-    // actions.policy.associate.policyList.fetch({
-    //   noCache: true,
-    //   data: { flag: 'platform' },
-    // });
-    // actions.policy.associate.policyList.applyFilter({ queryFilter: 'platform' });
-  }, []);
+  // useEffect(() => {
+  //   actions.policy.associate.policyList.performSearch('platform');
+  //   // actions.strategy.getPlatformCategories.fetch();
+  //   // actions.policy.associate.policyList.fetch({
+  //   //   noCache: true,
+  //   //   data: { flag: 'platform' },
+  //   // });
+  //   // actions.policy.associate.policyList.applyFilter({ queryFilter: 'platform' });
+  // }, []);
 
   // 处理外层滚动
   const bottomAffixRef = useRef(null);
@@ -307,7 +268,7 @@ export const UserCreate = (props) => {
                         scrollable={false}
                         title="为这个用户自定义独立的权限"
                         tip="支持按住 shift 键进行多选"
-                        // header={<SearchBox value={inputValue} onChange={(value) => setInputValue(value)} />}
+                        header={<SearchBox value={inputValue} onChange={(value) => setInputValue(value)} />}
                       >
                         <SourceTable
                           dataSource={strategyList.filter((i) => i.displayName.includes(inputValue))}
@@ -351,3 +312,42 @@ export const UserCreate = (props) => {
     </form>
   );
 };
+
+const columns = [
+  {
+    key: 'displayName',
+    header: '策略名称',
+    render: (strategy) => <p>{strategy.displayName}</p>,
+  },
+  {
+    key: 'description',
+    header: '描述',
+    width: 300,
+    render: (strategy) => <p>{strategy.description || '-'}</p>,
+  },
+];
+
+function SourceTable({ dataSource, targetKeys, onChange }) {
+  return (
+    <Table
+      records={dataSource}
+      recordKey="id"
+      columns={columns}
+      addons={[
+        scrollable({
+          maxHeight: 310,
+          onScrollBottom: () => console.log('到达底部'),
+        }),
+        selectable({
+          value: targetKeys,
+          onChange,
+          rowSelect: true,
+        }),
+      ]}
+    />
+  );
+}
+
+function TargetTable({ dataSource, onRemove }) {
+  return <Table records={dataSource} recordKey="id" columns={columns} addons={[removeable({ onRemove })]} />;
+}
