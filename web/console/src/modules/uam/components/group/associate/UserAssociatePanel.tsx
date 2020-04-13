@@ -21,7 +21,7 @@ export class UserAssociatePanel extends React.Component<Props, {}> {
     let { commonUserAssociation, actions, userPlainList } = this.props;
     // 表示 ResourceSelector 里要显示和选择的数据类型是 `UserPlain`
     const TransferTableSelector = TransferTable as new () => TransferTable<UserPlain>;
-
+    console.log('userPlainList is:', userPlainList);
     // 参数配置
     const selectorProps: TransferTableProps<UserPlain> = {
       /** 要供选择的数据 */

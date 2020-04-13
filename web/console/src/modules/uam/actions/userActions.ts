@@ -48,7 +48,7 @@ const getUser = generateFetcherActionCreator({
   fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
     let result = await WebAPI.getUser(options.data.name);
     return result;
-  }
+  },
 });
 
 /**
@@ -59,6 +59,16 @@ const updateUser = generateFetcherActionCreator({
   fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
     let result = await WebAPI.updateUser(options.data.user);
     return result;
+  },
+  finish: (dispatch: Redux.Dispatch, getState: GetState) => {
+    let count = 0;
+    const timer = setInterval(() => {
+      dispatch(userActions.poll());
+      ++count;
+      if (count >= 3) {
+        clearInterval(timer);
+      }
+    }, 1000);
   }
 });
 

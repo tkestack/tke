@@ -107,13 +107,18 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
   let users: User[] = [];
   const { search, filter } = query;
   let { isPolicyUser = false } = filter;
-  const queryObj = !search
-    ? {}
-    : {
-        fieldSelector: {
-          keyword: search || ''
-        }
-      };
+  const queryObj = !search ?
+    {
+      fieldSelector: {
+        policy: true
+      }
+    }
+    :
+    {
+      fieldSelector: {
+        keyword: search || ''
+      }
+    };
 
   try {
     const resourceInfo: ResourceInfo = isPolicyUser ? resourceConfig()['user'] : resourceConfig()['localidentity'];
@@ -230,7 +235,9 @@ export async function updateUser(user: User) {
       data: user
     });
     if (response.code === 0) {
-      tips.success(t('修改成功'), 2000);
+      setTimeout(() => {
+        tips.success(t('修改成功'), 2000);
+      }, 1000);
       return operationResult(response.data);
     } else {
       // 是否给tip得看具体返回的数据
@@ -715,7 +722,9 @@ export async function fetchGroupList(query: QueryState<GroupFilter>) {
     ? {
         'fieldSelector=spec.displayName': keyword
       }
-    : {};
+    : {
+        'fieldSelector=policy': 'true'
+      };
 
   const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo });
@@ -966,8 +975,9 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
   const queryObj = {
     // 'fieldSelector=keyword': search || ''
   };
+  console.log('fetchPolicyPlainList query is:', query);
   let queryString = '';
-  if (keyword === 'platform') {
+  if (filter.resource === 'platform') {
     queryString = '?fieldSelector=spec.scope!=project';
   }
 

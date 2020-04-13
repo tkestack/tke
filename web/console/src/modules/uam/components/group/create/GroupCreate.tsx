@@ -26,6 +26,7 @@ export class GroupCreate extends React.Component<RootProps, {}> {
     const { actions } = this.props;
     /** 拉取用户列表 */
     actions.commonUser.associate.userList.performSearch('');
+    // actions.policy.associate.policyList.applyFilter({ resource: 'platform', resourceID: '' });
   }
 
   render() {

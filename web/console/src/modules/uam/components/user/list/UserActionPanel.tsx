@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Justify, Icon, Table, Button, SearchBox } from '@tea/component';
 import { bindActionCreators } from '@tencent/ff-redux';
+
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { router } from '../../../router';
 import { allActions } from '../../../actions';
@@ -11,7 +12,6 @@ export const UserActionPanel = (props) => {
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { route, userList } = state;
-
   return (
     <Table.ActionPanel>
       <Justify
