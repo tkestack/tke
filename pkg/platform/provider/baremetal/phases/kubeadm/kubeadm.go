@@ -35,8 +35,9 @@ import (
 const (
 	kubeadmConfigFile  = "kubeadm/kubeadm-config.yaml"
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
+	kubeadmBin         = constants.DstBinDir + "kubeadm"
 
-	joinControlePlaneCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
+	joinControlePlaneCmd = kubeadmBin + ` join {{.ControlPlaneEndpoint}} \
 --node-name={{.NodeName}} --token={{.BootstrapToken}} \
 --control-plane --certificate-key={{.CertificateKey}} \
 --skip-phases=control-plane-join/mark-control-plane \
@@ -46,7 +47,7 @@ const (
 --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
 --ignore-preflight-errors=DirAvailable--etc-kubernetes-manifests
 `
-	joinNodeCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
+	joinNodeCmd = kubeadmBin + ` join {{.ControlPlaneEndpoint}} \
 --node-name={{.NodeName}} \
 --token={{.BootstrapToken}} \
 --discovery-token-unsafe-skip-ca-verification \
@@ -116,7 +117,7 @@ func Init(s ssh.Interface, option *InitOption, extraCmd string) error {
 		return err
 	}
 
-	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s", extraCmd, option.KubeadmConfigFileName)
+	cmd := fmt.Sprintf("%s init phase %s --config=%s", kubeadmBin, extraCmd, option.KubeadmConfigFileName)
 	stdout, stderr, exit, err := s.Exec(cmd)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
@@ -168,7 +169,7 @@ func JoinNode(s ssh.Interface, option *JoinNodeOption) error {
 	}
 	stdout, stderr, exit, err := s.Exec(string(cmd))
 	if err != nil || exit != 0 {
-		_, _, _, _ = s.Exec("kubeadm reset -f")
+		_, _, _, _ = s.Execf("%s reset -f", kubeadmBin)
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 	log.Info(stdout)
