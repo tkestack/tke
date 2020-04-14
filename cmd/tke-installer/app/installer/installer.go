@@ -1763,7 +1763,7 @@ func (t *TKE) registerAPI() error {
 			return false, nil
 		})
 		if err != nil {
-			return err
+			return pkgerrors.Wrapf(err, "check apiservices %v error", one)
 		}
 	}
 	return nil
