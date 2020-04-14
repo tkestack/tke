@@ -83,10 +83,12 @@ func (p *Provider) EnsurePreInstallHook(c *Cluster) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
+
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]
 
-		s.Execf("chmod +x %s", hook)
+		s.Execf("chmod +x %s", cmd)
 		_, stderr, exit, err := s.Exec(hook)
 		if err != nil || exit != 0 {
 			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
@@ -100,10 +102,12 @@ func (p *Provider) EnsurePostInstallHook(c *Cluster) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
+
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]
 
-		s.Execf("chmod +x %s", hook)
+		s.Execf("chmod +x %s", cmd)
 		_, stderr, exit, err := s.Exec(hook)
 		if err != nil || exit != 0 {
 			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)

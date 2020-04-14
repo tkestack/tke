@@ -68,8 +68,9 @@ func (p *Provider) EnsurePreInstallHook(m *Machine) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
 
-	m.Execf("chmod +x %s", hook)
+	m.Execf("chmod +x %s", cmd)
 	_, stderr, exit, err := m.Exec(hook)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
@@ -82,8 +83,9 @@ func (p *Provider) EnsurePostInstallHook(m *Machine) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
 
-	m.Execf("chmod +x %s", hook)
+	m.Execf("chmod +x %s", cmd)
 	_, stderr, exit, err := m.Exec(hook)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
