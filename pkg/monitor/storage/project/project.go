@@ -57,6 +57,8 @@ func (s *Storage) Collect() {
 		projectAllocated := businessv1.ResourceList{}
 		projectClusterCapacity := map[string]businessv1.ResourceList{}
 		projectClusterAllocated := map[string]businessv1.ResourceList{}
+		projectNamespaceCapacity := map[string]map[string]businessv1.ResourceList{}
+		projectNamespaceAllocated := map[string]map[string]businessv1.ResourceList{}
 
 		namespacesLists, err := s.businessClient.Namespaces(pro.Name).List(metav1.ListOptions{})
 		if err != nil {
@@ -66,16 +68,28 @@ func (s *Storage) Collect() {
 		for _, nmSpace := range namespacesLists.Items {
 			projectAllocated = resourceutil.ResourceAdd(projectAllocated, nmSpace.Status.Used)
 			clusterName := nmSpace.Spec.ClusterName
+
 			if _, ok := projectClusterCapacity[clusterName]; ok {
 				projectClusterCapacity[clusterName] = resourceutil.ResourceAdd(projectClusterCapacity[clusterName], nmSpace.Spec.Hard)
 			} else {
 				projectClusterCapacity[clusterName] = nmSpace.Spec.Hard
 			}
+
 			if _, ok := projectClusterAllocated[clusterName]; ok {
 				projectClusterAllocated[clusterName] = resourceutil.ResourceAdd(projectClusterAllocated[clusterName], nmSpace.Status.Used)
 			} else {
 				projectClusterAllocated[clusterName] = nmSpace.Status.Used
 			}
+
+			if _, ok := projectNamespaceCapacity[clusterName]; !ok {
+				projectNamespaceCapacity[clusterName] = map[string]businessv1.ResourceList{}
+			}
+			projectNamespaceCapacity[clusterName][nmSpace.Spec.Namespace] = nmSpace.Spec.Hard
+
+			if _, ok := projectNamespaceAllocated[clusterName]; !ok {
+				projectNamespaceAllocated[clusterName] = map[string]businessv1.ResourceList{}
+			}
+			projectNamespaceAllocated[clusterName][nmSpace.Spec.Namespace] = nmSpace.Status.Used
 		}
 
 		updateMetrics(tags, "project_allocated", projectAllocated)
@@ -89,6 +103,24 @@ func (s *Storage) Collect() {
 			clusterTags := tags
 			clusterTags["cluster_name"] = c
 			updateMetrics(clusterTags, "project_cluster_allocated", rList)
+		}
+		for c, nms := range projectNamespaceCapacity {
+			for nm, rList := range nms {
+				nsTags := tags
+				nsTags["cluster_name"] = c
+				nsTags["namespace"] = nm
+				nsTags["namespaceName"] = c + "-" + nm
+				updateMetrics(nsTags, "project_namespace_capacity", rList)
+			}
+		}
+		for c, nms := range projectNamespaceAllocated {
+			for nm, rList := range nms {
+				nsTags := tags
+				nsTags["cluster_name"] = c
+				nsTags["namespace"] = nm
+				nsTags["namespaceName"] = c + "-" + nm
+				updateMetrics(nsTags, "project_namespace_allocated", rList)
+			}
 		}
 	}
 }
