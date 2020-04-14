@@ -403,7 +403,7 @@ func scrapeConfigForPrometheus() string {
       - source_labels: [ __name__ ]
         regex: 'project_(.*)'
         action: keep
-      - regex: "instance|job|pod_name|namespace|scope|subresource"
+      - regex: "instance|job|pod_name|scope|subresource"
         action: labeldrop
 `
 	return cfgStr
