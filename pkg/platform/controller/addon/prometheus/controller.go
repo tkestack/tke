@@ -1532,16 +1532,6 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 							Ports: []corev1.ContainerPort{
 								{Name: "metrics", ContainerPort: 9100, HostPort: 9100},
 							},
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    *resource.NewMilliQuantity(100, resource.DecimalSI),
-									corev1.ResourceMemory: *resource.NewQuantity(128*1024*1024, resource.BinarySI),
-								},
-								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    *resource.NewMilliQuantity(100, resource.DecimalSI),
-									corev1.ResourceMemory: *resource.NewQuantity(1*1024*1024*1024, resource.BinarySI),
-								},
-							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									MountPath: "/host/proc",
