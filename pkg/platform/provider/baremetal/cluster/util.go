@@ -58,19 +58,15 @@ func GetServiceCIDRAndNodeCIDRMaskSize(clusterCIDR string, maxClusterServiceNum 
 	return serviceCidr.String(), int32(nodeCIDRMaskSize), nil
 }
 
-// same as kubeadm
-// GetDNSIP returns a dnsIP, which is 10th IP in svcSubnet CIDR range
-func GetDNSIP(svcSubnet string) (net.IP, error) {
-	// Get the service subnet CIDR
-	_, svcSubnetCIDR, err := net.ParseCIDR(svcSubnet)
+func GetIndexedIP(subnet string, index int) (net.IP, error) {
+	_, svcSubnetCIDR, err := net.ParseCIDR(subnet)
 	if err != nil {
-		return nil, errors.Wrapf(err, "couldn't parse service subnet CIDR %q", svcSubnet)
+		return nil, errors.Wrapf(err, "couldn't parse service subnet CIDR %q", subnet)
 	}
 
-	// Selects the last IP in service subnet CIDR range as dnsIP
-	dnsIP, err := ipallocator.GetIndexedIP(svcSubnetCIDR, 10)
+	dnsIP, err := ipallocator.GetIndexedIP(svcSubnetCIDR, index)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to get tenth IP address from service subnet CIDR %s", svcSubnetCIDR.String())
+		return nil, errors.Wrapf(err, "unable to get %dth IP address from service subnet CIDR %s", index, svcSubnetCIDR.String())
 	}
 
 	return dnsIP, nil

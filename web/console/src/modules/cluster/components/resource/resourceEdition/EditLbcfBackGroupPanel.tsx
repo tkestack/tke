@@ -16,6 +16,7 @@ import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { EditLbcfBackGroupItemPanel } from './EditLbcfBackGroupItemPanel';
 import { reduceNs } from '../../../../../../helpers';
+import { BackendType } from '@src/modules/cluster/constants/Config';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -27,15 +28,15 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
         actions,
         route,
         subRoot: {
-          resourceOption: { resourceList }
+          resourceOption: { ffResourceList }
         }
       } = this.props,
       urlParams = router.resolve(route);
     actions.lbcf.selectLbcfNamespace(route.queries['np']);
     let resourceIns = route.queries['resourceIns'];
     // 这里是从列表页进入的时候，需要去初始化 workloadEdit当中的内容，如果是直接在当前页面刷新的话，会去拉取列表，在fetchResource之后，会初始化
-    if (resourceList.data.recordCount && urlParams['tab'] === 'updateBG') {
-      let finder = resourceList.data.records.find(item => item.metadata.name === resourceIns);
+    if (ffResourceList.list.data.recordCount && urlParams['tab'] === 'updateBG') {
+      let finder = ffResourceList.list.data.records.find(item => item.metadata.name === resourceIns);
       finder && actions.lbcf.initGameBGEdition(finder.spec.backGroups);
     }
   }
@@ -48,17 +49,19 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
   render() {
     let { actions, subRoot, route } = this.props,
       urlParams = router.resolve(route),
-      { lbcfEdit, modifyMultiResourceWorkflow } = subRoot,
+      { lbcfEdit, modifyMultiResourceWorkflow, updateMultiResource } = subRoot,
       { namespace, lbcfBackGroupEditions } = lbcfEdit;
-
-    let failed =
-      modifyMultiResourceWorkflow.operationState === OperationState.Done &&
-      !isSuccessWorkflow(modifyMultiResourceWorkflow);
 
     let canEdit = lbcfBackGroupEditions.every(item => !item.onEdit);
     let cantDelete = lbcfBackGroupEditions.length === 1;
 
     let mode = urlParams['tab'] === 'createBG' ? 'create' : 'update';
+
+    let failed =
+      mode === 'create'
+        ? modifyMultiResourceWorkflow.operationState === OperationState.Done &&
+          !isSuccessWorkflow(modifyMultiResourceWorkflow)
+        : updateMultiResource.operationState === OperationState.Done && !isSuccessWorkflow(updateMultiResource);
     return (
       <ContentView>
         <ContentView.Body>
@@ -148,7 +151,11 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
               >
                 {failed ? t('重试') : t('配置')}
               </Button>
-              <Button onClick={e => router.navigate(Object.assign({}, urlParams, { mode: 'list' }), route.queries)}>
+              <Button
+                onClick={e => {
+                  this._cancel();
+                }}
+              >
                 {t('取消')}
               </Button>
               <TipInfo
@@ -164,14 +171,37 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
       </ContentView>
     );
   }
+  private _cancel() {
+    let { actions, subRoot, route, region, cluster, clusterVersion } = this.props,
+      { modifyMultiResourceWorkflow, updateMultiResource } = subRoot,
+      urlParams = router.resolve(route);
+    let mode = urlParams['tab'] === 'createBG' ? 'create' : 'update';
+    if (mode === 'create') {
+      if (modifyMultiResourceWorkflow.operationState === OperationState.Done) {
+        actions.workflow.modifyMultiResource.reset();
+      }
 
+      if (modifyMultiResourceWorkflow.operationState === OperationState.Started) {
+        actions.workflow.modifyMultiResource.cancel();
+      }
+    } else {
+      if (updateMultiResource.operationState === OperationState.Done) {
+        actions.workflow.updateMultiResource.reset();
+      }
+
+      if (updateMultiResource.operationState === OperationState.Started) {
+        actions.workflow.updateMultiResource.cancel();
+      }
+    }
+    router.navigate(Object.assign({}, urlParams, { mode: 'list' }), route.queries);
+  }
   /** 处理提交请求 */
   private _handleSubmit() {
     let { actions, subRoot, route, region, cluster, clusterVersion } = this.props,
       {
         resourceInfo,
         lbcfEdit,
-        resourceOption: { resourceList }
+        resourceOption: { ffResourceList }
       } = subRoot;
     actions.validate.lbcf.validateGameBGEdit();
     let { resourceIns } = route.queries,
@@ -185,7 +215,7 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
       if (backGroupmode === 'create') {
         lbcfBackGroupEditions.forEach(item => {
           let labelObject = {};
-          let { labels, ports, name } = item;
+          let { labels, ports, name, backgroupType, serviceName, staticAddress, byName } = item;
           labels.forEach(label => {
             labelObject[label.key] = label.value;
           });
@@ -198,17 +228,27 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
             },
             spec: {
               lbName: resourceIns,
-              pods: {
-                // port: ports.length
-                //   ? ports.map(item => {
-                //       return { portNumber: +item.portNumber, protocol: item.protocol };
-                //     })
-                //   : undefined,
-                port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
-                byLabel: {
-                  selector: labels.length ? labelObject : undefined
-                }
-              }
+              pods:
+                backgroupType === BackendType.Pods
+                  ? {
+                      port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
+                      byLabel: labels.length
+                        ? {
+                            selector: labelObject
+                          }
+                        : undefined,
+                      byName: byName.length ? byName.map(name => name.value) : undefined
+                    }
+                  : undefined,
+              service:
+                backgroupType === BackendType.Service
+                  ? {
+                      name: serviceName,
+                      port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
+                      nodeSelector: labels.length ? labelObject : undefined
+                    }
+                  : undefined,
+              static: backgroupType === BackendType.Static ? staticAddress.map(address => address.value) : undefined
             }
           };
           jsonData = JSON.parse(JSON.stringify(jsonData));
@@ -226,7 +266,7 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
         actions.workflow.modifyMultiResource.start(resources, region.selection.value);
         actions.workflow.modifyMultiResource.perform();
       } else {
-        let finder = resourceList.data.records.find(item => item.metadata.name === resourceIns);
+        let finder = ffResourceList.list.data.records.find(item => item.metadata.name === resourceIns);
         let labelArray = {};
         finder &&
           finder.spec.backGroups.forEach(backGroup => {
@@ -238,20 +278,41 @@ export class EditLbcfBackGroupPanel extends React.Component<RootProps, {}> {
           });
         lbcfBackGroupEditions.forEach(item => {
           let labelObject = {};
-          let { labels, ports, name } = item;
+          let { labels, ports, name, backgroupType, serviceName, staticAddress, byName } = item;
           labels.forEach(label => {
             labelObject[label.key] = label.value;
           });
-          let jsonData = {
-            spec: {
-              pods: {
-                port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
-                byLabel: {
-                  selector: Object.assign({}, labelArray[item.name], labelObject)
+          let jsonData = {};
+          if (backgroupType === BackendType.Pods) {
+            jsonData = {
+              spec: {
+                pods: {
+                  port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
+                  byLabel: {
+                    selector: Object.assign({}, labelArray[item.name], labelObject)
+                  },
+                  byName: byName.length ? byName.map(name => name.value) : null
                 }
               }
-            }
-          };
+            };
+          } else if (backgroupType === BackendType.Service) {
+            jsonData = {
+              spec: {
+                service: {
+                  name: serviceName,
+                  port: { portNumber: +ports[0].portNumber, protocol: ports[0].protocol },
+                  nodeSelector: Object.assign({}, labelArray[item.name], labelObject)
+                }
+              }
+            };
+          } else {
+            jsonData = {
+              spec: {
+                static: staticAddress.map(name => name.value)
+              }
+            };
+          }
+
           jsonData = JSON.parse(JSON.stringify(jsonData));
           let resource: CreateResource = {
             id: uuid(),

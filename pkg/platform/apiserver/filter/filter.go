@@ -22,17 +22,23 @@ import (
 	"bytes"
 	"context"
 	"io/ioutil"
-	genericrequest "k8s.io/apiserver/pkg/endpoints/request"
 	"net/http"
+
+	genericrequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
 const clusterContextKey = "clusterName"
 const requestBodyKey = "requestBody"
 const fuzzyResourceContextKey = "fuzzyResourceName"
 
-// ClusterNameHeaderKey is the header name of cluster
+// ClusterNameHeaderKey is the header name of cluster.
 const ClusterNameHeaderKey = "X-TKE-ClusterName"
-const fuzzyResourceNameHeaderKey = "X-TKE-FuzzyResourceName"
+
+// ProjectNameHeaderKey is the header name of project.
+const ProjectNameHeaderKey = "X-TKE-ProjectName"
+
+// FuzzyResourceNameHeaderKey is the header name of fuzzy resource query name.
+const FuzzyResourceNameHeaderKey = "X-TKE-FuzzyResourceName"
 
 // RequestBody represents the body of HTTP request.
 type RequestBody struct {
@@ -85,7 +91,7 @@ func WithCluster(handler http.Handler) http.Handler {
 // access chain.
 func WithFuzzyResource(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		fuzzyResourceName := req.Header.Get(fuzzyResourceNameHeaderKey)
+		fuzzyResourceName := req.Header.Get(FuzzyResourceNameHeaderKey)
 		if fuzzyResourceName != "" {
 			req = req.WithContext(genericrequest.WithValue(req.Context(), fuzzyResourceContextKey, fuzzyResourceName))
 		}

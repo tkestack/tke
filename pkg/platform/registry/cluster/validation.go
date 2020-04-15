@@ -21,6 +21,7 @@ package cluster
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/thoas/go-funk"
 	apimachineryValidation "k8s.io/apimachinery/pkg/api/validation"
@@ -60,7 +61,7 @@ func ValidateCluster(obj *platform.Cluster, platformClient platforminternalclien
 
 	featuresPath := field.NewPath("spec", "features")
 
-	filePath := featuresPath.Child("hookFiles")
+	filePath := featuresPath.Child("files")
 	hookFiles := make(map[string]bool, len(obj.Spec.Features.Files))
 	for i, file := range obj.Spec.Features.Files {
 		hookFiles[file.Dst] = true
@@ -81,8 +82,9 @@ func ValidateCluster(obj *platform.Cluster, platformClient platforminternalclien
 		if !funk.ContainsString(validHooks, string(k)) {
 			allErrs = append(allErrs, field.Invalid(hookPath.Key(string(k)), v, fmt.Sprintf("valid hook types are: %v", validHooks)))
 		}
-		if _, ok := hookFiles[v]; !ok {
-			allErrs = append(allErrs, field.Invalid(hookPath.Key(string(k)), v, fmt.Sprintf("hook file is not exists in %s", filePath.String())))
+		vv := strings.Split(v, " ")[0]
+		if _, ok := hookFiles[vv]; !ok {
+			allErrs = append(allErrs, field.Invalid(hookPath.Key(string(k)), vv, fmt.Sprintf("hook file is not exists in %s", filePath.String())))
 		}
 	}
 

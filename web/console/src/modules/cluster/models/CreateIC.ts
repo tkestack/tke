@@ -49,7 +49,7 @@ export interface CreateIC extends Identifiable {
   vipPort?: string;
   v_vipPort?: Validation;
 
-  vip?: boolean;
+  vipType?: string;
 
   gpu?: boolean;
 

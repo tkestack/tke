@@ -36,10 +36,10 @@ export class ResourceModifyHistoryPanel extends React.Component<RootProps, Resou
 
   componentDidMount() {
     let { actions, subRoot, route } = this.props,
-      { resourceSelection } = subRoot.resourceOption;
+      { ffResourceList } = subRoot.resourceOption;
 
     // 这里主要是几个tab之间相互跳，需要重新拉取
-    resourceSelection.length > 0 &&
+    ffResourceList.selection &&
       actions.resourceDetail.rs.applyFilter({
         regionId: +route.queries['rid'],
         clusterId: route.queries['clusterId'],
@@ -48,8 +48,8 @@ export class ResourceModifyHistoryPanel extends React.Component<RootProps, Resou
   }
 
   componentWillReceiveProps(nextProps: RootProps) {
-    let resourceSelection = this.props.subRoot.resourceOption.resourceSelection,
-      nextResourceSelection = nextProps.subRoot.resourceOption.resourceSelection;
+    let resourceSelection = this.props.subRoot.resourceOption.ffResourceList.selection,
+      nextResourceSelection = nextProps.subRoot.resourceOption.ffResourceList.selection;
 
     if (resourceSelection.length === 0 && nextResourceSelection.length) {
       let { route, actions } = nextProps;
@@ -199,9 +199,8 @@ export class ResourceModifyHistoryPanel extends React.Component<RootProps, Resou
 
   /** 生成操作按钮 */
   private _renderOperationButton(rs: Replicaset) {
-    let { resourceOption, resourceDetailState } = this.props.subRoot,
-      { rsList } = resourceDetailState,
-      { resourceSelection } = resourceOption;
+    let { resourceDetailState } = this.props.subRoot,
+      { rsList } = resourceDetailState;
 
     let disabled = false,
       errorTip = '';

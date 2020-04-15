@@ -232,14 +232,16 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       urlParams = router.resolve(route),
       { clusterId } = route.queries,
       { resourceOption, resourceName } = subRoot,
-      { resourceList } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     // 操作列表的list
     let operatorList = fieldInfo.operatorList;
     // 更多按钮的 pop方向
-    let resourceIndex = resourceList.data.records.findIndex(c => c.id === resource.id);
+    let resourceIndex = ffResourceList.list.data.records.findIndex(c => c.id === resource.id);
     let direction: 'down' | 'up' =
-      resourceIndex < resourceList.data.recordCount - 2 || resourceList.data.recordCount < 4 ? 'down' : 'up';
+      resourceIndex < ffResourceList.list.data.recordCount - 2 || ffResourceList.list.data.recordCount < 4
+        ? 'down'
+        : 'up';
 
     /** 编辑yaml的按钮 */
     const renderModifyButton = (operator: OperatorProps) => {
@@ -262,7 +264,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
           disabled={disabled}
           onClick={() => {
             if (!disabled) {
-              actions.resource.selectResource([resource]);
+              actions.resource.select(resource);
               router.navigate(
                 Object.assign({}, urlParams, { mode: 'modify' }),
                 Object.assign({}, route.queries, {
@@ -350,7 +352,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
           disabled={disabled}
           onClick={() => {
             if (!disabled) {
-              actions.resource.selectResource([resource]);
+              actions.resource.select(resource);
               router.navigate(
                 Object.assign({}, urlParams, {
                   mode: 'update',
@@ -668,7 +670,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
   private _renderBodyCell(resource: Resource, fieldInfo: DisplayFiledProps, clipId: string) {
     let { subRoot } = this.props,
       { resourceOption } = subRoot,
-      { resourceList } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     let content;
 
@@ -684,9 +686,11 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
     showData = showData.length === 1 ? showData[0] : showData;
 
     // 这里是当列表有 bubble等情况的时候，判断当前行属于第几行
-    let resourceIndex = resourceList.data.records.findIndex(item => item.id === resource.id);
+    let resourceIndex = ffResourceList.list.data.records.findIndex(item => item.id === resource.id);
     let direction: 'top' | 'bottom' =
-      resourceList.data.recordCount < 4 || resourceIndex < resourceList.data.recordCount - 2 ? 'top' : 'bottom';
+      ffResourceList.list.data.recordCount < 4 || resourceIndex < ffResourceList.list.data.recordCount - 2
+        ? 'top'
+        : 'bottom';
 
     if (fieldInfo.dataFormat === 'text') {
       content = this._reduceText(showData, fieldInfo, resource, clipId);
@@ -719,7 +723,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
   private _renderTablePanel() {
     let { actions, subRoot } = this.props,
       { resourceOption, resourceInfo, resourceName } = subRoot,
-      { resourceList, resourceQuery, resourceMultipleSelection } = resourceOption;
+      { ffResourceList, resourceMultipleSelection } = resourceOption;
 
     let addons = [];
 
@@ -738,7 +742,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
             value: resourceMultipleSelection.map(item => item.id as string),
             onChange: keys => {
               actions.resource.selectMultipleResource(
-                resourceList.data.records.filter(item => keys.indexOf(item.id as string) !== -1)
+                ffResourceList.list.data.records.filter(item => keys.indexOf(item.id as string) !== -1)
               );
             }
           })
@@ -785,10 +789,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
           )
         }
         action={actions.resource}
-        model={{
-          list: resourceList,
-          query: resourceQuery
-        }}
+        model={ffResourceList}
         emptyTips={t('您选择的该资源的列表为空，您可以切换到其他命名空间')}
         addons={addons}
         rowDisabled={record => {
@@ -797,6 +798,10 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
           } else {
             return false;
           }
+        }}
+        isNeedContinuePagination={true}
+        onRetry={() => {
+          actions.resource.resetPaging();
         }}
       />
     );
@@ -808,7 +813,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       urlParams = router.resolve(route);
 
     // 选择当前的具体的resouce
-    actions.resource.selectResource([resource]);
+    actions.resource.select(resource);
     // 进行路由的跳转
     router.navigate(
       Object.assign({}, urlParams, { mode: 'detail' }),

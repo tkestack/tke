@@ -27,7 +27,7 @@ const displayField: DisplayField = {
     noExsitedValue: defaulNotExistedValue
   },
   lb: {
-    dataField: ['status.lbInfo.lbID'],
+    dataField: ['status.lbInfo.loadBalancerID'],
     dataFormat: dataFormatConfig['text'],
     width: '10%',
     headTitle: '负载均衡对象',
@@ -204,8 +204,14 @@ export const lbcf = (k8sVersion: string) => {
       useDetailInfo: true,
       detailInfoList: {
         info: [{ text: '负载均衡', value: 'lbcf' }],
-        yaml: [{ text: '负载均衡', value: 'lbcf' }, { text: '后端负载', value: 'lbcf_bg' }],
-        event: [{ text: '负载均衡', value: 'lbcf' }, { text: '后端记录', value: 'lbcf_br' }]
+        yaml: [
+          { text: '负载均衡', value: 'lbcf' },
+          { text: '后端负载', value: 'lbcf_bg' }
+        ],
+        event: [
+          { text: '负载均衡', value: 'lbcf' },
+          { text: '后端记录', value: 'lbcf_br' }
+        ]
       }
     },
     displayField,
@@ -245,6 +251,23 @@ export const lbcf_br = (k8sVersion: string) => {
     namespaces: 'namespaces',
     requestType: {
       list: 'lbcfbackendrecords',
+      addon: true
+    }
+  };
+  return config;
+};
+
+export const lbcf_driver = (k8sVersion: string) => {
+  // apiVersion的配置
+  const apiKind = apiVersion[k8sVersion].lbcf_driver;
+  let config: ResourceInfo = {
+    headTitle: apiKind.headTitle,
+    basicEntry: apiKind.basicEntry,
+    group: apiKind.group,
+    version: apiKind.version,
+    namespaces: 'namespaces',
+    requestType: {
+      list: 'lbcflbdrivers',
       addon: true
     }
   };

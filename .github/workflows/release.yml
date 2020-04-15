@@ -1,0 +1,67 @@
+name: release
+
+on:
+  repository_dispatch:
+    types: [release]
+
+env:
+  VERSION: ${{ github.event.client_payload.version }}
+
+jobs:
+  release:
+
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: azure/docker-login@v1
+        with:
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and test
+        id: build
+        run: |
+          curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+             -H 'Content-Type: application/json' \
+             -d '
+             {
+                  "msgtype": "markdown",
+                  "markdown": {
+                      "content": "
+          <font color=\"info\">${{ github.repository }}</font>：
+          start release
+                          "
+                  }
+             }'
+          make release
+          curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+             -H 'Content-Type: application/json' \
+             -d '
+             {
+                  "msgtype": "markdown",
+                  "markdown": {
+                      "content": "
+          <font color=\"info\">${{ github.repository }}</font>：
+          make release success
+                          "
+                  }
+             }'
+          make release-test
+
+      - name: Notify
+        run: |
+          curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+             -H 'Content-Type: application/json' \
+             -d '
+             {
+                  "msgtype": "markdown",
+                  "markdown": {
+                      "content": "
+          <font color=\"info\">${{ github.repository }} ${{ github.workflow }} finished</font>：
+          >status:  <font color=\"comment\">${{ job.status }}</font>
+          >committer: <font color=\"comment\">${{ github.actor }}</font>
+                          "
+                  }
+             }'

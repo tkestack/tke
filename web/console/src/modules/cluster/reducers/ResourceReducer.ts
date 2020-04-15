@@ -1,26 +1,12 @@
 import { combineReducers } from 'redux';
 
-import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
-import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
-import { generateQueryReducer } from '@tencent/qcloud-redux-query';
+import { reduceToPayload, createFFListReducer } from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';
-import { Resource } from '../models';
+import { FFReduxActionName } from '../constants/Config';
 
 const TempReducer = combineReducers({
-  resourceQuery: generateQueryReducer({
-    actionType: ActionType.QueryResourceList
-  }),
-
-  resourceList: generateFetcherReducer<RecordSet<Resource>>({
-    actionType: ActionType.FetchResourceList,
-    initialData: {
-      recordCount: 0,
-      records: [] as Resource[]
-    }
-  }),
-
-  resourceSelection: reduceToPayload(ActionType.SelectResource, []),
+  ffResourceList: createFFListReducer(FFReduxActionName.Resource_Workload),
 
   resourceMultipleSelection: reduceToPayload(ActionType.SelectMultipleResource, []),
 

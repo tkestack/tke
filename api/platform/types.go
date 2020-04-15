@@ -19,6 +19,7 @@
 package platform
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -63,17 +64,20 @@ type ClusterMachine struct {
 	PrivateKey []byte
 	PassPhrase []byte
 	Labels     map[string]string
+	Taints     []corev1.Taint
 }
 
 // ClusterSpec is a description of a cluster.
 type ClusterSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName
-	TenantID    string
+	Finalizers []FinalizerName
+	TenantID   string
+	// +optional
 	DisplayName string
 	Type        string
 	Version     string
+	// +optional
 	NetworkType NetworkType
 	// +optional
 	NetworkDevice string
@@ -257,16 +261,18 @@ type ClusterCredential struct {
 	// For TKE in global reuse
 	// +optional
 	ETCDCACert []byte
-	// For TKE in global reuse
+	// +optional
+	ETCDCAKey []byte
 	// +optional
 	ETCDAPIClientCert []byte
-	// For TKE in global reuse
 	// +optional
 	ETCDAPIClientKey []byte
 
 	// For validate the server cert
 	// +optional
 	CACert []byte
+	// +optional
+	CAKey []byte
 	// For kube-apiserver X509 auth
 	// +optional
 	ClientCert []byte
@@ -357,6 +363,12 @@ type ClusterProperty struct {
 
 // ResourceList is a set of (resource name, quantity) pairs.
 type ResourceList map[string]resource.Quantity
+
+// ResourceRequirements describes the compute resource requirements.
+type ResourceRequirements struct {
+	Limits   ResourceList
+	Requests ResourceList
+}
 
 // ClusterResource records the current available and maximum resource quota
 // information for the cluster.
@@ -723,6 +735,10 @@ type PrometheusSpec struct {
 	RemoteAddress PrometheusRemoteAddr
 	// +optional
 	NotifyWebhook string
+	// +optional
+	Resources ResourceRequirements
+	// +optional
+	RunOnMaster bool
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
@@ -1272,6 +1288,7 @@ type MachineSpec struct {
 	PrivateKey  []byte
 	PassPhrase  []byte
 	Labels      map[string]string
+	Taints      []corev1.Taint
 }
 
 // MachineStatus represents information about the status of an machine.

@@ -27,12 +27,11 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/wait"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/util/wait"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/cmd/tke-installer/app/installer"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/test/util/cloudprovider"
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
@@ -93,7 +92,7 @@ var _ = Describe("bootstrap", func() {
 
 		By("prepare parametes")
 		url := fmt.Sprintf("http://%s:8080/api/cluster", nodes[0].InternalIP)
-		para := new(installer.CreateClusterPara)
+		para := new(types.CreateClusterPara)
 		for _, one := range nodes[1:] {
 			para.Cluster.Spec.Machines = append(para.Cluster.Spec.Machines, platformv1.ClusterMachine{
 				IP:       one.InternalIP,
@@ -101,16 +100,17 @@ var _ = Describe("bootstrap", func() {
 				Username: one.Username,
 				Password: []byte(one.Password),
 			})
+			para.Cluster.Spec.PublicAlternativeNames = append(para.Cluster.Spec.PublicAlternativeNames, one.PublicIP)
 		}
-		para.Config.Auth.TKEAuth = &installer.TKEAuth{}
-		para.Config.Registry.TKERegistry = &installer.TKERegistry{Domain: "registry.tke.com"}
-		para.Config.Business = &installer.Business{}
-		para.Config.Monitor = &installer.Monitor{
-			InfluxDBMonitor: &installer.InfluxDBMonitor{
-				LocalInfluxDBMonitor: &installer.LocalInfluxDBMonitor{},
+		para.Config.Auth.TKEAuth = &types.TKEAuth{}
+		para.Config.Registry.TKERegistry = &types.TKERegistry{Domain: "registry.tke.com"}
+		para.Config.Business = &types.Business{}
+		para.Config.Monitor = &types.Monitor{
+			InfluxDBMonitor: &types.InfluxDBMonitor{
+				LocalInfluxDBMonitor: &types.LocalInfluxDBMonitor{},
 			},
 		}
-		para.Config.Gateway = &installer.Gateway{}
+		para.Config.Gateway = &types.Gateway{}
 		body, err := json.Marshal(para)
 		Expect(err).To(BeNil())
 
@@ -130,15 +130,15 @@ var _ = Describe("bootstrap", func() {
 			defer resp.Body.Close()
 			data, err := ioutil.ReadAll(resp.Body)
 			Expect(err).To(BeNil())
-			progress := new(installer.ClusterProgress)
+			progress := new(types.ClusterProgress)
 			err = json.Unmarshal(data, progress)
 			Expect(err).To(BeNil())
 			switch progress.Status {
-			case installer.StatusUnknown, installer.StatusDoing:
+			case types.StatusUnknown, types.StatusDoing:
 				return false, nil
-			case installer.StatusFailed:
+			case types.StatusFailed:
 				return false, fmt.Errorf("install failed:\n%s", progress.Data)
-			case installer.StatusSuccess:
+			case types.StatusSuccess:
 				return true, nil
 			default:
 				return false, fmt.Errorf("unknown install progress status: %s", progress.Status)

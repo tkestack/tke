@@ -21,7 +21,7 @@ package ipam
 import (
 	"sync"
 
-	"tkestack.io/tke/api/platform/v1"
+	v1 "tkestack.io/tke/api/platform/v1"
 )
 
 type ipamHealth struct {
@@ -29,21 +29,21 @@ type ipamHealth struct {
 	ipamMap map[string]*v1.IPAM
 }
 
-func (s *ipamHealth) Exist(ipamName string) bool {
+func (s *ipamHealth) Exist(key string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, ok := s.ipamMap[ipamName]
+	_, ok := s.ipamMap[key]
 	return ok
 }
 
-func (s *ipamHealth) Set(ipam *v1.IPAM) {
+func (s *ipamHealth) Set(key string, ipam *v1.IPAM) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.ipamMap[ipam.Name] = ipam
+	s.ipamMap[key] = ipam
 }
 
-func (s *ipamHealth) Del(ipamName string) {
+func (s *ipamHealth) Del(key string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	delete(s.ipamMap, ipamName)
+	delete(s.ipamMap, key)
 }

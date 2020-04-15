@@ -134,6 +134,16 @@ lint:
 test:
 	@$(MAKE) go.test
 
+.PHONY: release.build
+release.build:
+	make push.multiarch
+	curl -XPOST \
+      -H "authorization: Bearer $(GITHUB_TOKEN)" \
+      -H "Accept: application/vnd.github.everest-preview+json" \
+      -H "Content-Type: application/json" \
+      https://api.github.com/repos/tkestack/tke/dispatches \
+      --data '{"event_type": "release", "client_payload": {"version": "$(VERSION)"}}'
+
 ## release: Release tke
 .PHONY: release
 release:
@@ -142,7 +152,7 @@ release:
 ## release-test: test release
 .PHONY: release-test
 release-test:
-	go test -timeout=60m tkestack.io/tke/test/e2e_installer
+	go test -timeout=120m tkestack.io/tke/test/e2e_installer
 
 ## help: Show this help info.
 .PHONY: help

@@ -28,6 +28,7 @@ type Provider interface {
 type Instance struct {
 	InstanceID string
 	InternalIP string
+	PublicIP   string
 	Port       int32
 	Username   string
 	Password   string

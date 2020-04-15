@@ -21,6 +21,9 @@ package ipam
 import (
 	normalerrors "errors"
 	"fmt"
+	"reflect"
+	"time"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -32,8 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"reflect"
-	"time"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
@@ -327,19 +328,20 @@ func (c *Controller) createIPAMIfNeeded(key string, cachedIPAM *cachedIPAM, ipam
 		go wait.Poll(waitTime, ipamTimeOut, c.ipamReinitialize(key, cachedIPAM, ipam))
 	case v1.AddonPhaseChecking:
 		if !c.checking.Exist(key) {
-			c.checking.Set(ipam)
+			c.checking.Set(key, ipam)
 			initDelay := time.Now().Add(5 * time.Minute)
 			go wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkIPAMStatus(ipam, key, initDelay))
 		}
 	case v1.AddonPhaseRunning:
 		if !c.health.Exist(key) {
-			c.health.Set(ipam)
+			c.health.Set(key, ipam)
 			go wait.PollImmediateUntil(5*time.Minute, c.watchIPAMHealth(key), c.stopCh)
 		}
 	case v1.AddonPhaseFailed:
 		log.Info("IPAM is error", log.String("ipam", key))
-		if c.health.Exist(key) {
-			c.health.Del(key)
+		if !c.health.Exist(key) {
+			c.health.Set(key, ipam)
+			go wait.PollImmediateUntil(5*time.Minute, c.watchIPAMHealth(key), c.stopCh)
 		}
 	}
 	return nil
@@ -691,7 +693,7 @@ func (c *Controller) watchIPAMHealth(key string) func() (bool, error) {
 		if err != nil {
 			return false, nil
 		}
-		if !c.health.Exist(cluster.Name) {
+		if !c.health.Exist(key) {
 			log.Info("health check over.")
 			return true, nil
 		}
@@ -705,14 +707,17 @@ func (c *Controller) watchIPAMHealth(key string) func() (bool, error) {
 			return false, err
 		}
 
-		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcIPAMAPIName, string(intstr.FromInt(9040).IntVal), `/healthy`, nil).DoRaw(); err != nil {
-			ipam = ipam.DeepCopy()
+		ipam = ipam.DeepCopy()
+		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcIPAMAPIName, "9040", `/healthy`, nil).DoRaw(); err != nil {
 			ipam.Status.Phase = v1.AddonPhaseFailed
 			ipam.Status.Reason = "IPAM is not healthy."
-			if err = c.persistUpdate(ipam); err != nil {
-				return false, err
-			}
-			return true, nil
+			log.Warnf("fail to access ipam %s's /healthy, %v", ipam.Name, err)
+		} else {
+			ipam.Status.Phase = v1.AddonPhaseRunning
+			ipam.Status.Reason = ""
+		}
+		if err = c.persistUpdate(ipam); err != nil {
+			return false, err
 		}
 		return false, nil
 	}

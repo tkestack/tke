@@ -47,14 +47,13 @@ export const UpdateNodeTaint = 'UpdateNodeTaint';
 export const UpdateTaintEdition = 'UpdateTaintEdition';
 export const FetchComputerPodList = 'FetchComputerPodList';
 export const QueryComputerPodList = 'QueryComputerPodList';
+export const IsShowMachine = 'IsShowMachine';
+export const FetchDeleteMachineResouceIns = 'FetchDeleteMachineResouceIns';
 export const ClearComputer = 'ClearComputer';
 /** ============================== end 节点 相关 =============================== */
 
 /** ============================== start Resource 相关 =============================== */
 export const ClearResource = 'ClearResource';
-export const QueryResourceList = 'QueryResourceList';
-export const FetchResourceList = 'FetchResourceList';
-export const SelectResource = 'SelectResource';
 export const SelectMultipleResource = 'SelectMultipleResource';
 export const SelectDeleteResource = 'SelectDeleteResource';
 export const InitResourceName = 'InitResourceName';
@@ -330,6 +329,9 @@ export const V_Gate_Namespace = 'V_GLB_Namespace';
 
 export const Lbcf_Config = 'Lbcf_Config';
 export const Lbcf_Args = 'Lbcf_Args';
+export const V_Lbcf_Config = 'V_Lbcf_Config';
+export const V_Lbcf_Args = 'V_Lbcf_Args';
+export const V_Lbcf_Driver = 'V_Lbcf_Driver';
 
 export const GLB_VpcSelection = 'GLB_VpcSelection';
 export const GLB_FecthClb = 'GLB_FecthClb';

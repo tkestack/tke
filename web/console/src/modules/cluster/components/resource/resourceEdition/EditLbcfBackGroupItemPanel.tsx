@@ -7,9 +7,10 @@ import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { allActions } from '../../../actions';
-import { LbcfProtocolList } from '../../../constants/Config';
+import { LbcfProtocolList, BackendTypeList, BackendType } from '../../../constants/Config';
 import { RootProps } from '../../ClusterApp';
-
+import { StringArray } from '@src/modules/cluster/models/LbcfEdit';
+import { Selector } from '../../../models';
 interface EditLbcfBackGroupItemPanelProps extends RootProps {
   backGroupId: string;
   backGroupmode: string;
@@ -46,19 +47,23 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
                     onBlur={e => actions.validate.lbcf.validatePort(backGroupId, port.id + '', e.target.value)}
                   />
                 </Bubble>
-                <Button icon={'close'} onClick={() => actions.lbcf.deleteLbcfBGPort(backGroupId, port.id + '')} />
+                {/* <Button
+                  disabled={ports.length === 1}
+                  icon={'close'}
+                  onClick={() => actions.lbcf.deleteLbcfBGPort(backGroupId, port.id + '')}
+                /> */}
               </List.Item>
             );
           })}
         </List>
-        <Button type="link" onClick={() => actions.lbcf.addLbcfBGPort(backGroupId)}>
+        {/* <Button type="link" onClick={() => actions.lbcf.addLbcfBGPort(backGroupId)}>
           {t('添加')}
-        </Button>
+        </Button> */}
       </React.Fragment>
     );
   }
 
-  _renderSelector(labels) {
+  _renderSelector(labels: Selector[]) {
     let { actions, backGroupId } = this.props;
 
     return (
@@ -68,7 +73,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
             return (
               <List.Item
                 key={label.id}
-                className={(label.v_value.status === 2 || label.v_value.status === 2) && 'is-error'}
+                className={(label.v_key.status === 2 || label.v_value.status === 2) && 'is-error'}
               >
                 <Bubble placement="right" content={label.v_key.status === 2 ? label.v_key.message : null}>
                   <Input
@@ -95,16 +100,82 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
                     }
                   />
                 </Bubble>
-                <Button
-                  disabled={labels.length === 1}
-                  icon={'close'}
-                  onClick={() => actions.lbcf.deleteLbcfBGLabels(backGroupId, label.id + '')}
-                />
+                <Button icon={'close'} onClick={() => actions.lbcf.deleteLbcfBGLabels(backGroupId, label.id + '')} />
               </List.Item>
             );
           })}
         </List>
         <Button type="link" onClick={() => actions.lbcf.addLbcfBGLabels(backGroupId)}>
+          {t('添加')}
+        </Button>
+        {/* <FormPanel.InlineText style={{ margin: '0px 5px' }}>{'|'}</FormPanel.InlineText> */}
+        {/* <Button type="link" onClick={() => actions.lbcf.showGameAppDialog(true)}>
+          {t('引用Workload')}
+        </Button> */}
+      </React.Fragment>
+    );
+  }
+
+  _renderStaticAddress(addresses: StringArray[]) {
+    let { actions, backGroupId } = this.props;
+
+    return (
+      <React.Fragment>
+        <List>
+          {addresses.map(address => {
+            return (
+              <List.Item key={address.id} className={address.v_value.status === 2 && 'is-error'}>
+                <Bubble placement="right" content={address.v_value.status === 2 ? address.v_value.message : null}>
+                  <Input
+                    size={'s'}
+                    value={address.value}
+                    onChange={value => actions.lbcf.updateLbcfBGAddress(backGroupId, address.id + '', { value: value })}
+                    onBlur={e => actions.validate.lbcf.validateAddress(backGroupId, address.id + '')}
+                  />
+                </Bubble>
+                <Button
+                  disabled={addresses.length === 1}
+                  icon={'close'}
+                  onClick={() => actions.lbcf.deleteLbcfBGAddress(backGroupId, address.id + '')}
+                />
+              </List.Item>
+            );
+          })}
+        </List>
+        <Button type="link" onClick={() => actions.lbcf.addLbcfBGAddress(backGroupId)}>
+          {t('添加')}
+        </Button>
+        {/* <FormPanel.InlineText style={{ margin: '0px 5px' }}>{'|'}</FormPanel.InlineText> */}
+        {/* <Button type="link" onClick={() => actions.lbcf.showGameAppDialog(true)}>
+          {t('引用Workload')}
+        </Button> */}
+      </React.Fragment>
+    );
+  }
+
+  _renderPodByName(byName: StringArray[]) {
+    let { actions, backGroupId } = this.props;
+
+    return (
+      <React.Fragment>
+        <List>
+          {byName.map(name => {
+            return (
+              <List.Item key={name.id} className={name.v_value.status === 2 && 'is-error'}>
+                <Bubble placement="right" content={name.v_value.status === 2 ? name.v_value.message : null}>
+                  <Input
+                    size={'s'}
+                    value={name.value}
+                    onChange={value => actions.lbcf.updateLbcfBGPodName(backGroupId, name.id + '', { value: value })}
+                    onBlur={e => actions.validate.lbcf.validatePodName(backGroupId, name.id + '')}
+                  />
+                </Bubble>
+                <Button icon={'close'} onClick={() => actions.lbcf.deleteLbcfBGPodName(backGroupId, name.id + '')} />
+              </List.Item>
+            );
+          })}
+        </List>
+        <Button type="link" onClick={() => actions.lbcf.addLbcfBGPodName(backGroupId)}>
           {t('添加')}
         </Button>
         {/* <FormPanel.InlineText style={{ margin: '0px 5px' }}>{'|'}</FormPanel.InlineText> */}
@@ -120,11 +191,35 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
       { lbcfBackGroupEditions } = lbcfEdit;
 
     let backGroupItem = lbcfBackGroupEditions.find(item => item.id === this.props.backGroupId);
-    let { id, ports, labels, name, v_name, onEdit } = backGroupItem;
-    let canSave =
-      v_name.status === 1 &&
-      ports.every(port => port.v_portNumber.status === 1) &&
-      labels.every(label => label.v_key.status === 1 && label.v_value.status === 1);
+    let {
+      id,
+      ports,
+      labels,
+      name,
+      v_name,
+      onEdit,
+      serviceName,
+      staticAddress,
+      backgroupType,
+      v_serviceName,
+      byName
+    } = backGroupItem;
+    let canSave = v_name.status === 1;
+    if (backgroupType === BackendType.Pods) {
+      canSave =
+        canSave &&
+        ports.every(port => port.v_portNumber.status === 1) &&
+        labels.every(label => label.v_key.status === 1 && label.v_value.status === 1) &&
+        byName.every(name => name.v_value.status === 1);
+    } else if (backgroupType === BackendType.Pods) {
+      canSave =
+        canSave &&
+        ports.every(port => port.v_portNumber.status === 1) &&
+        labels.every(label => label.v_key.status === 1 && label.v_value.status === 1) &&
+        v_serviceName.status === 1;
+    } else {
+      canSave = canSave && staticAddress.every(address => address.v_value.status === 1);
+    }
 
     return (
       <FormPanel
@@ -153,11 +248,56 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
             {name}
           </FormPanel.Item>
         )}
-        <FormPanel.Item label={t('端口:协议')} text={ports.length === 0}>
+        {backGroupmode === 'create' ? (
+          <FormPanel.Item
+            label={t('类型')}
+            segment={{
+              value: backgroupType,
+              options: BackendTypeList,
+              onChange: value => actions.lbcf.inputLbcfBackGroupType(backGroupId, value)
+            }}
+          />
+        ) : (
+          <FormPanel.Item text label={t('类型')}>
+            {backgroupType}
+          </FormPanel.Item>
+        )}
+        <FormPanel.Item
+          label={t('Service')}
+          errorTipsStyle="Icon"
+          validator={v_serviceName}
+          input={{
+            value: serviceName,
+            placeholder: t('请输入Service名称'),
+            onChange: value => actions.lbcf.inputLbcfBackGroupServiceName(backGroupId, value),
+            onBlur: e => actions.validate.lbcf.validateLbcfBackGroupServiceName(backGroupId, e.target.value)
+          }}
+          message={t('最长63个字符，只能包含小写字母、数字及分隔符("-")，且必须以小写字母开头，数字或小写字母结尾')}
+          isShow={backgroupType === BackendType.Service}
+        />
+        <FormPanel.Item
+          label={t('地址')}
+          text={staticAddress.length === 0}
+          isShow={backgroupType === BackendType.Static}
+        >
+          {this._renderStaticAddress(staticAddress)}
+        </FormPanel.Item>
+        <FormPanel.Item label={t('端口:协议')} text={ports.length === 0} isShow={backgroupType !== BackendType.Static}>
           {this._renderPorts(ports)}
         </FormPanel.Item>
-        <FormPanel.Item label={t('绑定节点')} text={labels.length === 0}>
+        <FormPanel.Item
+          label={backgroupType !== BackendType.Pods ? t('绑定节点') : t('Pod Label')}
+          text={labels.length === 0}
+          isShow={backgroupType === BackendType.Service || (backgroupType === BackendType.Pods && byName.length === 0)}
+        >
           {this._renderSelector(labels)}
+        </FormPanel.Item>
+        <FormPanel.Item
+          label={t('Pod Name')}
+          text={byName.length === 0}
+          isShow={backgroupType === BackendType.Pods && labels.length === 0}
+        >
+          {this._renderPodByName(byName)}
         </FormPanel.Item>
         <FormPanel.Item isShow={backGroupmode === 'create'}>
           <Justify

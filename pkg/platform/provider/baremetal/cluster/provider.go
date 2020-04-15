@@ -134,6 +134,8 @@ func NewProvider() (*Provider, error) {
 
 		p.EnsureNvidiaDevicePlugin,
 
+		p.EnsureCleanup,
+
 		p.EnsurePostInstallHook,
 	}
 
@@ -271,9 +273,6 @@ func (p *Provider) PreCreate(user clusterprovider.UserInfo, cluster platform.Clu
 	}
 	if cluster.Spec.NetworkDevice == "" {
 		cluster.Spec.NetworkDevice = "eth0"
-	}
-	if cluster.Spec.DNSDomain == "" {
-		cluster.Spec.DNSDomain = "cluster.local"
 	}
 	if cluster.Spec.Features.IPVS == nil {
 		cluster.Spec.Features.IPVS = pointer.ToBool(false)

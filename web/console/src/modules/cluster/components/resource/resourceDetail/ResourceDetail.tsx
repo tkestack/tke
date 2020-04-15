@@ -54,14 +54,18 @@ export class ResourceDetail extends React.Component<RootProps, {}> {
       subRoot: {
         resourceInfo,
         detailResourceOption: { detailResourceName },
-        resourceOption: { resourceList }
+        resourceOption: { ffResourceList }
       },
       route
     } = this.props;
     let urlParams = router.resolve(route);
     let tab = urlParams['tab'];
     //当直接跳转到其他tab页的时候，这时需要对集群内资源进行初始化。
-    if (resourceInfo.requestType && resourceInfo.requestType.useDetailInfo && resourceList.data.recordCount > 0) {
+    if (
+      resourceInfo.requestType &&
+      resourceInfo.requestType.useDetailInfo &&
+      ffResourceList.list.data.recordCount > 0
+    ) {
       let list = tab ? resourceInfo.requestType.detailInfoList[tab] : resourceInfo.requestType.detailInfoList['info'];
       if (list) {
         actions.resource.initDetailResourceName(list[0].value);

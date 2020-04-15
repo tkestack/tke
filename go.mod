@@ -6,8 +6,6 @@ replace (
 	// wait https://github.com/chartmuseum/storage/pull/34 to be merged
 	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.5.1-0.20191225102245-210f7683d0a6
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
-	// wait https://github.com/dexidp/dex/pull/1607 to be merged
-	github.com/dexidp/dex => github.com/choujimmy/dex v0.0.0-20191225100859-b1cb4b898bb7
 	k8s.io/client-go => k8s.io/client-go v0.17.0
 )
 
@@ -22,17 +20,16 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/casbin/casbin/v2 v2.1.2
 	github.com/chartmuseum/storage v0.5.0
-	github.com/coreos/go-oidc v2.1.0+incompatible
+	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.34.0
 	github.com/deislabs/oras v0.8.0 // indirect
-	github.com/dexidp/dex v0.0.0-20191223120519-789272a0c18f
+	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7
 	github.com/emicklei/go-restful v2.11.1+incompatible
 	github.com/fatih/color v1.7.0
-	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/go-openapi/inflect v0.19.0
@@ -40,10 +37,12 @@ require (
 	github.com/go-playground/locales v0.12.1 // indirect
 	github.com/go-playground/universal-translator v0.16.0 // indirect
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/snappy v0.0.1
+	github.com/golang/protobuf v1.3.5 // indirect
+	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/gofuzz v1.0.0
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/gorilla/mux v1.7.3
+	github.com/gorilla/websocket v1.4.0
 	github.com/gosuri/uitable v0.0.1
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-uuid v1.0.1
@@ -52,7 +51,7 @@ require (
 	github.com/jinzhu/configor v1.1.1
 	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
 	github.com/joho/godotenv v1.3.0
-	github.com/json-iterator/go v1.1.8
+	github.com/json-iterator/go v1.1.9
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
@@ -63,8 +62,8 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/sftp v1.10.0
 	github.com/prometheus/alertmanager v0.17.0
-	github.com/prometheus/client_golang v1.2.1
-	github.com/prometheus/common v0.7.0
+	github.com/prometheus/client_golang v1.4.0
+	github.com/prometheus/common v0.9.1
 	github.com/rs/cors v1.6.0
 	github.com/segmentio/ksuid v1.0.2
 	github.com/sirupsen/logrus v1.4.2
@@ -79,14 +78,16 @@ require (
 	go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20191028145041-f83a4685e152
-	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
-	google.golang.org/grpc v1.24.0
+	golang.org/x/tools v0.0.0-20200319210407-521f4a0cd458 // indirect
+	google.golang.org/grpc v1.26.0
 	gopkg.in/go-playground/validator.v9 v9.28.0
 	gopkg.in/ldap.v2 v2.5.1
-	gopkg.in/square/go-jose.v2 v2.3.1
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/square/go-jose.v2 v2.4.1
+	gopkg.in/yaml.v2 v2.2.5
 	helm.sh/chartmuseum v0.11.0
 	k8s.io/api v0.17.0
 	k8s.io/apiextensions-apiserver v0.17.0

@@ -98,6 +98,7 @@ func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 			StorageFactory:          cfg.StorageFactory,
 			APIResourceConfigSource: cfg.StorageFactory.APIResourceConfigSource,
 			PrivilegedUsername:      cfg.PrivilegedUsername,
+			MessageTTL:              cfg.MessageTTL,
 		},
 	}
 }

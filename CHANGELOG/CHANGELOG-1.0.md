@@ -1,0 +1,115 @@
+## [1.0.1](https://github.com/tkestack/tke/compare/v1.0.0...v1.0.1) (2019-12-16)
+
+
+### Bug Fixes
+
+* add BUILDER default value for release ([dc393fa](https://github.com/tkestack/tke/commit/dc393faf7c85d45ca89160355830f8d66b0056a3))
+* add chartmuseum path to gateway ([ffc3f85](https://github.com/tkestack/tke/commit/ffc3f8566d32a7b3043ef40ef9dcaee51f4a8fb7))
+* add domain suffix to registry api ([5bbd3a0](https://github.com/tkestack/tke/commit/5bbd3a0be8a251e6c227e43b2bf350bb4b9f8d1c))
+* add domain suffix to registry api ([79d32cc](https://github.com/tkestack/tke/commit/79d32ccf56599206c63ad9cb3a1c89176c3fc642))
+* add zero value check to daemonset ([6b4f34f](https://github.com/tkestack/tke/commit/6b4f34fc6a773e445924fdf9f6046617cfebc2c9))
+* allow empty clusters in project ([69d727e](https://github.com/tkestack/tke/commit/69d727ed497515dc21e995c2c4d1904dab7ad9e3))
+* baremetal provider ensureSysctl ([cccbeb7](https://github.com/tkestack/tke/commit/cccbeb722446ac72c75198de19c7a78d72d912da))
+* can NOT cascadingly delete projects and namespaces ([266b0e9](https://github.com/tkestack/tke/commit/266b0e9cbd331e06b9a80a9706b8690a7c7b94fc))
+* change field name of chart size ([0a21052](https://github.com/tkestack/tke/commit/0a21052e3db1e1ba7e5320b7d762645685bf146f))
+* check gateway config if not nil ([a95d54d](https://github.com/tkestack/tke/commit/a95d54df95ee6197dea28ca24affeba29eb9e8d8))
+* close [#71](https://github.com/tkestack/tke/issues/71),[#76](https://github.com/tkestack/tke/issues/76),[#77](https://github.com/tkestack/tke/issues/77) ([2cf65ad](https://github.com/tkestack/tke/commit/2cf65adbafdff77f2ed4199a98cd30078099a0a9))
+* cluster progress restore ([4107133](https://github.com/tkestack/tke/commit/4107133686784fd713554d871b1ccacaface9289))
+* errorSchema for apiregistration ([e5e4d23](https://github.com/tkestack/tke/commit/e5e4d23190abfe7b607eee6cee0c886fceaf49b6))
+* etcd use headless service, instead of using cluster IP with LB ([68e907e](https://github.com/tkestack/tke/commit/68e907e816445b773a95d13b177954eb74e925ee))
+* etcd use headless service, instead of using cluster IP with LB ([f37f158](https://github.com/tkestack/tke/commit/f37f158d7ff93f31143bb176788ab5c0b11c2cb5))
+* installer progress ([96af8c9](https://github.com/tkestack/tke/commit/96af8c9a6ba9ce7bbd2ce116eed48b76b913d60f))
+* installer staticfiles missing index.html ([57b5e7e](https://github.com/tkestack/tke/commit/57b5e7eb7eefd2560daf1f53bf6863efb4727a48))
+* installer step bug ([181afab](https://github.com/tkestack/tke/commit/181afab6d270adfb149b578853301cf89ba6fccb))
+* issus [#77](https://github.com/tkestack/tke/issues/77) [#76](https://github.com/tkestack/tke/issues/76) [#71](https://github.com/tkestack/tke/issues/71) ([d43b156](https://github.com/tkestack/tke/commit/d43b1569ff2a407bd7e2d8e3bcf8a2462f89340f))
+* merge conflicts ([9f88316](https://github.com/tkestack/tke/commit/9f883161741cbe8e541a89a567e7a9bce5f22b5a))
+* missing ca cert for docker when push image to tke registry ([9afc89f](https://github.com/tkestack/tke/commit/9afc89f81ff95a98696dba542c3584f5e791c08d))
+* missing ca cert for docker when push image to tke registry ([18c8e21](https://github.com/tkestack/tke/commit/18c8e217a238452f7f5c608a1ffff18a8dd58bed))
+* missing ca cert for docker when push image to tke registry ([005bb8f](https://github.com/tkestack/tke/commit/005bb8f4d162b453b41fc4fc49848d41b500efb7))
+* missing ha vip for global cluster cert ([4ce77bd](https://github.com/tkestack/tke/commit/4ce77bd7d5068f2ec34ae05cc7a1d596343f388f))
+* not delete imageNamespaces and chartGroups when deleting projects ([4963308](https://github.com/tkestack/tke/commit/4963308ceea17ef7f1b8740ce33adba3865c18aa))
+* prometheus disabled without monitoring storage configured ([33a9988](https://github.com/tkestack/tke/commit/33a9988fe5279311f35fd36112d4df654b515a7b))
+* provider option missing apply ([9beaf3c](https://github.com/tkestack/tke/commit/9beaf3c7b603ac0d20ee67413cf93c8ef306d2e2))
+* release sha256sum ([098ecaa](https://github.com/tkestack/tke/commit/098ecaa57826506f84121622c85fae51cf858c61))
+* remove installer license page ([749100a](https://github.com/tkestack/tke/commit/749100adfc3ebcf745f00e2c46a3db708e093736))
+* set hosts when push images to tke registry ([54d059b](https://github.com/tkestack/tke/commit/54d059bd9610b9be1c6aee829f84eabb7ad1199d))
+* tke-business-api registry config ([92388ac](https://github.com/tkestack/tke/commit/92388ac0af07640740bede4bf09c0ce594afc217))
+* tke-business-api yaml ([7aa6c6f](https://github.com/tkestack/tke/commit/7aa6c6f3bcff403212606c2a00754756ec244bec))
+* unable to delete business namespaces ([49fc51a](https://github.com/tkestack/tke/commit/49fc51a8d3869f78c6609b32715ac4c32b425712))
+* update addon assets while prometheus doc updated ([c77cfa6](https://github.com/tkestack/tke/commit/c77cfa6dc65995185e796701d3539ccf5bc1a8da))
+
+
+### Features
+
+* .gitignore add *.env ([489a1fb](https://github.com/tkestack/tke/commit/489a1fb71b2358bf69c800c4c09fc5677640ef27))
+* add chart api ([0b4c13a](https://github.com/tkestack/tke/commit/0b4c13ad1e0f7c225052158bfd0a68aa01450693))
+* add enableMasterSchedule to cluster ([4f81341](https://github.com/tkestack/tke/commit/4f81341f9a3c4d7e6063ad36c4731d4392ce0f95))
+* add implement for setlevel of logrus ([daf4555](https://github.com/tkestack/tke/commit/daf4555652f3a197522b89fe4c8ed034c29b714e))
+* Add installation guides ([#62](https://github.com/tkestack/tke/issues/62)) ([34be6ce](https://github.com/tkestack/tke/commit/34be6ce17bb4f3485697a58e5e269359fd78e0e6))
+* add job/cronjob resource for apiclient ([#80](https://github.com/tkestack/tke/issues/80)) ([292e1bd](https://github.com/tkestack/tke/commit/292e1bdd5028fa14a3d456fb75f59793a403e227))
+* add metrics list for apiregistration ([c78b83f](https://github.com/tkestack/tke/commit/c78b83f9c89fa8c3f8a564bd01499bbd7247ce2a))
+* business supports chart group ([4ffdf70](https://github.com/tkestack/tke/commit/4ffdf70f92c4fb821072375c9cb945e3842d8955))
+* business supports chart group ([3025157](https://github.com/tkestack/tke/commit/3025157d88e91737ff6c52199a20e96e835d7a8d))
+* implement API to delete chart version ([4e3fe77](https://github.com/tkestack/tke/commit/4e3fe770f4465acf7e8abc0fa96de3ec7c06372f))
+* implement API to get chart ([4662f6b](https://github.com/tkestack/tke/commit/4662f6b1837dd54ce09335751566765680287c9d))
+* implement pull chart ([76543d5](https://github.com/tkestack/tke/commit/76543d5548f6f3534bcc8e3ec831e72a14fc8bb5))
+* implement push chart ([733be74](https://github.com/tkestack/tke/commit/733be748d62548f7b8865a4c8d3c805e70a93ff8))
+* implement registry for chart and chartgroup ([b23d94d](https://github.com/tkestack/tke/commit/b23d94d216fc4c7dd7914419c29e02e44a4f5586))
+* Increased clientSet QPS and Burst limits ([8de24e8](https://github.com/tkestack/tke/commit/8de24e8eefb2c7eda7db6cc482663ba6afcf66f7))
+* integrated chartmuseum ([372b358](https://github.com/tkestack/tke/commit/372b35879fa6981473630b3d7513d78a4312a2c9))
+* integrated chartmuseum ([8a9dcc0](https://github.com/tkestack/tke/commit/8a9dcc0ad607d71ff57fe272fc27d3f3ca73400c))
+* machine ssh add username require root ([ba80166](https://github.com/tkestack/tke/commit/ba801665ab019d37607c9b9537f13a5d174367d3))
+* modify APIClient to optional configuration ([c9fa418](https://github.com/tkestack/tke/commit/c9fa41801e167182391e057de60d9eee338d0bc7))
+* remove dependence of business modules on registry ([82711e8](https://github.com/tkestack/tke/commit/82711e8416fe97b59a6cf66fa671af45abbf7f6c))
+* set baremetal cluster default CIDR ([4a9d19d](https://github.com/tkestack/tke/commit/4a9d19d38c18be46d2b4305d18e483d30035aa22))
+* set baremetal cluster default CIDR ([6893306](https://github.com/tkestack/tke/commit/6893306c0cf7d9bf4972601b62713ea95a1c18ad))
+* set baremetal cluster default version ([3f74a9d](https://github.com/tkestack/tke/commit/3f74a9d3ceb0b6cca481ecbbd53881d714641ac7))
+* set baremetal cluster default version ([f0a003d](https://github.com/tkestack/tke/commit/f0a003d4955867c1068ef339b895cad8db34e557))
+* Support providers option to tke-platform-{api,controller} ([252e6bf](https://github.com/tkestack/tke/commit/252e6bf341dd4dfce0ebeda1472c462bd4518804))
+* tke-installer support restore in ui mode ([a2e77b1](https://github.com/tkestack/tke/commit/a2e77b1732def839ebab78462d41dbc62c0da85e))
+
+
+
+# [1.0.0](https://github.com/tkestack/tke/compare/e9e3af69bec59a8e1fc7d83e3fa8cc6a2131762b...v1.0.0) (2019-12-10)
+
+
+### Bug Fixes
+
+* add BUILDER default value for release ([10fd8a9](https://github.com/tkestack/tke/commit/10fd8a955736f8d3cde90d09c5fa6895f5da04cc))
+* add missing baremetal provider manifests for release ([#24](https://github.com/tkestack/tke/issues/24)) ([8d70115](https://github.com/tkestack/tke/commit/8d70115342f6439fabcc5df97014625992a222ff))
+* add zero value check to daemonset ([cad188b](https://github.com/tkestack/tke/commit/cad188b813053e64be93d5ca7bc5c15d0ccf9b20))
+* baremetal provider ensureSysctl ([52087a3](https://github.com/tkestack/tke/commit/52087a34e9a5513ead8e3e9df860be3ea78e9106))
+* can't add node ([#22](https://github.com/tkestack/tke/issues/22)) ([ef0f3f3](https://github.com/tkestack/tke/commit/ef0f3f383019d9076c3bd8c97ac4205a689ccd03))
+* cluster progress restore ([69ccc3e](https://github.com/tkestack/tke/commit/69ccc3e4f3655f0a029f3cbdc1897701182d0bb7))
+* installer progress ([fc98527](https://github.com/tkestack/tke/commit/fc98527bac85293f254de274101a3cc1cd03e390))
+* installer staticfiles missing index.html ([f4a6e9e](https://github.com/tkestack/tke/commit/f4a6e9eb00b0339254575c2560413657d48fc096))
+* installer step bug ([656a0da](https://github.com/tkestack/tke/commit/656a0dafa7d7387459858bb3f94f7860f1762818))
+* missing `-i` for sed in disable swap ([25fc7f8](https://github.com/tkestack/tke/commit/25fc7f83770391491c3a7ad8138dff3955d46aa3))
+* missing ca cert for docker when push image to tke registry ([6cac016](https://github.com/tkestack/tke/commit/6cac016b441cd11f21ded349d53da58c29a7cb53))
+* missing ha vip for global cluster cert ([ac41f87](https://github.com/tkestack/tke/commit/ac41f879429c6f93746b7706e64bf9b976ce157d))
+* provider option missing apply ([d033c8b](https://github.com/tkestack/tke/commit/d033c8b0dc336cfec87083e282d71f22e8e1a6cf))
+* release sha256sum ([5fcac97](https://github.com/tkestack/tke/commit/5fcac9705477e7e11fe7bf8fea1ed8b861b44427))
+* remove installer license page ([baaa1c6](https://github.com/tkestack/tke/commit/baaa1c6294200762ddb03066760d499374ccd89c))
+* remove useless baremetal provider image ([bd245d3](https://github.com/tkestack/tke/commit/bd245d3f70e27a907d45c771645a7a8b95fe26ae))
+* set hosts when push images to tke registry ([4fee295](https://github.com/tkestack/tke/commit/4fee2952e40f14dfe18fa1e2456f4146bec6336f))
+* tke-business-api registry config ([15f68f2](https://github.com/tkestack/tke/commit/15f68f2fce8c89ff9bc5407bd39bad82f84443e9))
+* tke-business-api yaml ([3de41e0](https://github.com/tkestack/tke/commit/3de41e02f69dfdb58333288463d17e7b428688c9))
+* unable to delete business namespaces ([c72b21f](https://github.com/tkestack/tke/commit/c72b21f98f1f26fc259aab7b8a474954d4ef7928))
+* update addon assets while prometheus doc updated ([0144641](https://github.com/tkestack/tke/commit/0144641369f64cd23b601e172b52fe59fa969203))
+
+
+### Features
+
+* .gitignore add *.env ([c8d4ece](https://github.com/tkestack/tke/commit/c8d4ece682f56b5d324c48cccc691d089e453cf5))
+* Add installation guides ([#62](https://github.com/tkestack/tke/issues/62)) ([9226569](https://github.com/tkestack/tke/commit/9226569f8245a46aba798a1a1ead1c9dd8e615ac))
+* add redis cache to registry ([f1f39ae](https://github.com/tkestack/tke/commit/f1f39ae88f3e4172e93563891669393904446d3b))
+* modify APIClient to optional configuration ([666738b](https://github.com/tkestack/tke/commit/666738b2167085a10be94b9641f06fb45ecbff4a))
+* project initialized ([d137ada](https://github.com/tkestack/tke/commit/d137ada1fc63fc32ad4f90ade5b9118a748fb3d5))
+* project initialized ([e9e3af6](https://github.com/tkestack/tke/commit/e9e3af69bec59a8e1fc7d83e3fa8cc6a2131762b))
+* remove dependence of business modules on registry ([babc83c](https://github.com/tkestack/tke/commit/babc83c2b42c3433f9f51d60ff36c4932d98128a))
+* remove tea-cli config ([78c6a55](https://github.com/tkestack/tke/commit/78c6a55ea1ae5c97e7384a84993de4eba66410e3))
+* Support providers option to tke-platform-{api,controller} ([75efaa8](https://github.com/tkestack/tke/commit/75efaa801da1b8ca65800628a2e996affb78344a))
+* tke-installer support restore in ui mode ([ba866ec](https://github.com/tkestack/tke/commit/ba866ec7818435fd1052b4114a87a76d53cb7f8a))
+
+
+

@@ -30,7 +30,9 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/util/template"
+	"github.com/thoas/go-funk"
+
+	"tkestack.io/tke/pkg/util/apiclient"
 
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -48,11 +50,11 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/markcontrolplane"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/template"
 )
 
 const (
@@ -81,10 +83,12 @@ func (p *Provider) EnsurePreInstallHook(c *Cluster) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
+
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]
 
-		s.Execf("chmod +x %s", hook)
+		s.Execf("chmod +x %s", cmd)
 		_, stderr, exit, err := s.Exec(hook)
 		if err != nil || exit != 0 {
 			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
@@ -98,10 +102,12 @@ func (p *Provider) EnsurePostInstallHook(c *Cluster) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
+
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]
 
-		s.Execf("chmod +x %s", hook)
+		s.Execf("chmod +x %s", cmd)
 		_, stderr, exit, err := s.Exec(hook)
 		if err != nil || exit != 0 {
 			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
@@ -230,11 +236,20 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 	cluster.Status.ServiceCIDR = serviceCIDR
 	cluster.Status.NodeCIDRMaskSize = nodeCIDRMaskSize
 
-	dnsIP, err := GetDNSIP(cluster.Status.ServiceCIDR)
+	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.DNSIPIndex)
 	if err != nil {
 		return errors.Wrap(err, "get DNS IP error")
 	}
-	cluster.Status.DNSIP = dnsIP.String()
+	cluster.Status.DNSIP = ip.String()
+
+	ip, err = GetIndexedIP(cluster.Status.ServiceCIDR, constants.GPUQuotaAdmissionIPIndex)
+	if err != nil {
+		return errors.Wrap(err, "get gpu quota admission IP error")
+	}
+	if cluster.Annotations == nil {
+		cluster.Annotations = make(map[string]string)
+	}
+	cluster.Annotations[constants.GPUQuotaAdmissionIPAnnotaion] = ip.String()
 
 	for _, m := range cluster.Spec.Machines {
 		cluster.AddAddress(platformv1.AddressReal, m.IP, 6443)
@@ -347,15 +362,24 @@ func (p *Provider) EnsureKubeadm(c *Cluster) error {
 
 func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
-
-	for _, machine := range c.Spec.Machines {
+	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
+	if GPUQuotaAdmissionHost == "" {
+		GPUQuotaAdmissionHost = "gpu-quota-admission"
+	}
+	schedulerPolicyConfig, err := template.ParseString(schedulerPolicyConfig, map[string]interface{}{
+		"GPUQuotaAdmissionHost": GPUQuotaAdmissionHost,
+	})
+	if err != nil {
+		return errors.Wrap(err, "parse schedulerPolicyConfig error")
+	}
+	for i, machine := range c.Spec.Machines {
 		tokenData := fmt.Sprintf(tokenFileTemplate, *c.ClusterCredential.Token)
 		err := c.SSH[machine.IP].WriteFile(strings.NewReader(tokenData), constants.TokenFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
 
-		err = c.SSH[machine.IP].WriteFile(strings.NewReader(schedulerPolicyConfig), constants.SchedulerPolicyConfigFile)
+		err = c.SSH[machine.IP].WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.SchedulerPolicyConfigFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -395,6 +419,21 @@ func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 				err = c.SSH[machine.IP].WriteFile(bytes.NewReader(data), constants.KeepavlivedManifestFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
+				}
+			}
+			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 { // forward rest control-plane to first master
+				cmd := fmt.Sprintf("iptables -t nat -I PREROUTING 1 -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
+					c.Spec.Machines[0].IP)
+				_, stderr, exit, err := c.SSH[machine.IP].Exec(cmd)
+				if err != nil || exit != 0 {
+					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+				}
+
+				cmd = fmt.Sprintf("iptables -t nat -I POSTROUTING 1 -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
+					c.Spec.Machines[0].IP, machine.IP)
+				_, stderr, exit, err = c.SSH[machine.IP].Exec(cmd)
+				if err != nil || exit != 0 {
+					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 				}
 			}
 		}
@@ -523,11 +562,23 @@ func (p *Provider) EnsureStoreCredential(c *Cluster) error {
 	}
 	c.ClusterCredential.CACert = data
 
+	data, err = c.SSH[c.Spec.Machines[0].IP].ReadFile(constants.CAKeyName)
+	if err != nil {
+		return errors.Wrapf(err, "read %s error", constants.CAKeyName)
+	}
+	c.ClusterCredential.CAKey = data
+
 	data, err = c.SSH[c.Spec.Machines[0].IP].ReadFile(constants.EtcdCACertName)
 	if err != nil {
 		return errors.Wrapf(err, "read %s error", constants.EtcdCACertName)
 	}
 	c.ClusterCredential.ETCDCACert = data
+
+	data, err = c.SSH[c.Spec.Machines[0].IP].ReadFile(constants.EtcdCAKeyName)
+	if err != nil {
+		return errors.Wrapf(err, "read %s error", constants.EtcdCAKeyName)
+	}
+	c.ClusterCredential.ETCDCAKey = data
 
 	data, err = c.SSH[c.Spec.Machines[0].IP].ReadFile(constants.APIServerEtcdClientCertName)
 	if err != nil {
@@ -617,20 +668,21 @@ func (p *Provider) EnsureMarkControlPlane(c *Cluster) error {
 		return err
 	}
 
-	option := &markcontrolplane.Option{}
-	if !c.Spec.Features.EnableMasterSchedule {
-		option.Taints = []corev1.Taint{
-			{
-				Key:    "node-role.kubernetes.io/master",
-				Effect: corev1.TaintEffectNoSchedule,
-			},
-		}
-	}
-
 	for _, machine := range c.Spec.Machines {
-		option.NodeName = machine.IP
-		option.Labels = machine.Labels
-		err := markcontrolplane.Install(clientset, option)
+		if machine.Labels == nil {
+			machine.Labels = make(map[string]string)
+			machine.Labels[constants.LabelNodeRoleMaster] = ""
+		}
+		if !c.Spec.Features.EnableMasterSchedule {
+			taint := corev1.Taint{
+				Key:    constants.LabelNodeRoleMaster,
+				Effect: corev1.TaintEffectNoSchedule,
+			}
+			if !funk.Contains(machine.Taints, taint) {
+				machine.Taints = append(machine.Taints, taint)
+			}
+		}
+		err := apiclient.MarkNode(clientset, machine.IP, machine.Labels, machine.Taints)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -656,5 +708,31 @@ func (p *Provider) EnsureNvidiaDevicePlugin(c *Cluster) error {
 		return err
 	}
 
+	return nil
+}
+
+func (p *Provider) EnsureCleanup(c *Cluster) error {
+	for i, machine := range c.Spec.Machines {
+		s := c.SSH[machine.IP]
+
+		if c.Spec.Features.HA != nil {
+			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 {
+				cmd := fmt.Sprintf("iptables -t nat -D PREROUTING -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
+					c.Spec.Machines[0].IP)
+				_, stderr, exit, err := s.Exec(cmd)
+				if err != nil || exit != 0 {
+					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+				}
+
+				cmd = fmt.Sprintf("iptables -t nat -D POSTROUTING -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
+					c.Spec.Machines[0].IP, machine.IP)
+				_, stderr, exit, err = s.Exec(cmd)
+				if err != nil || exit != 0 {
+					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+				}
+			}
+		}
+
+	}
 	return nil
 }

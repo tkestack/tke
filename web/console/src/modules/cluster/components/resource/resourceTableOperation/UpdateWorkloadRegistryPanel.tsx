@@ -86,11 +86,11 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
 
   componentDidMount() {
     let { actions, subRoot, route } = this.props,
-      { resourceList } = subRoot.resourceOption;
+      { ffResourceList } = subRoot.resourceOption;
 
     // 这里是从列表页进入的时候，需要去初始化 workloadEdit当中的内容，如果是直接在当前页面刷新的话，会去拉取列表，在fetchResource之后，会初始化
-    if (resourceList.data.recordCount) {
-      let finder = resourceList.data.records.find(item => item.metadata.name === route.queries['resourceIns']);
+    if (ffResourceList.list.data.recordCount) {
+      let finder = ffResourceList.list.data.records.find(item => item.metadata.name === route.queries['resourceIns']);
       finder && actions.editWorkload.initWorkloadEditForUpdateRegistry(finder);
     }
   }
@@ -105,7 +105,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
     let { actions, subRoot, route } = this.props,
       urlParams = router.resolve(route),
       { workloadEdit, updateResourcePart, resourceOption } = subRoot,
-      { resourceList } = resourceOption,
+      { ffResourceList } = resourceOption,
       {
         partition,
         v_partition,
@@ -145,7 +145,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
     return (
       <MainBodyLayout>
         <FormLayout>
-          {resourceList.fetched !== true || resourceList.fetchState === FetchState.Fetching ? (
+          {ffResourceList.list.fetched !== true || ffResourceList.list.fetchState === FetchState.Fetching ? (
             loadingElement
           ) : (
             <div className="param-box server-update add">
@@ -318,7 +318,8 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
   private _handleSubmit() {
     let { actions, subRoot, route } = this.props,
       { resourceInfo, mode, workloadEdit, resourceOption } = subRoot,
-      targetResource = resourceOption.resourceSelection[0];
+      { ffResourceList } = resourceOption,
+      targetResource = ffResourceList.selection;
 
     actions.validate.workload.validateUpdateRegistryEdit();
 
@@ -460,7 +461,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
   private _renderContainerInfo() {
     let { actions, subRoot } = this.props,
       { workloadEdit, resourceOption } = subRoot,
-      { resourceList } = resourceOption,
+      { ffResourceList } = resourceOption,
       { containers } = workloadEdit;
 
     let loadingElement: JSX.Element = (
@@ -472,7 +473,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
 
     return (
       <FormItem label={t('容器')}>
-        {resourceList.fetched === false || resourceList.fetchState === FetchState.Fetching
+        {ffResourceList.list.fetched === false || ffResourceList.list.fetchState === FetchState.Fetching
           ? loadingElement
           : containers.map((container, index) => {
               let cKey = container.id + '';

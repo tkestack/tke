@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import {
-    Button, Dropdown, List, Modal, Select, Switch, Table, TagSearchBox, Text
-} from '@tea/component';
+import { Button, Dropdown, List, Modal, Select, Switch, Table, TagSearchBox, Text } from '@tea/component';
 // import { TagSearchBox } from '../../../../common/components/tagsearchbox';
 import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
 import { ChartInstancesPanel } from '@tencent/tchart';
@@ -120,7 +118,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
         groupBy: [{ value: 'workload_name' }],
         instance: {
           columns: [{ key: 'workload_name', name: t('工作负载名称') }],
-          list: resourceOption.resourceList.data.records.map(ins => ({
+          list: resourceOption.ffResourceList.list.data.records.map(ins => ({
             workload_name: ins.metadata.name,
             isChecked:
               !resourceOption.resourceMultipleSelection.length ||
@@ -206,7 +204,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   private _renderTagSearchBox() {
     let { subRoot } = this.props,
       { resourceInfo, resourceOption } = subRoot,
-      { resourceQuery } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     // const defaultValue = [{attr: {key: 'namespace',name: '命名空间'},values: [{name: namespaceSelection}]}];
 
@@ -237,7 +235,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
 
     // 受控展示的values
     // const values = resourceQuery.search ? this.state.searchBoxValues : isNeedFetchNamespace ? defaultValue : [];
-    const values = resourceQuery.search ? this.state.searchBoxValues : [];
+    const values = ffResourceList.query.search ? this.state.searchBoxValues : [];
 
     const isShow = !isEmpty(resourceInfo) && resourceInfo.actionField && resourceInfo.actionField.search.isAvailable;
 
@@ -261,7 +259,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   private _handleClickForTagSearch(tags) {
     let { actions, subRoot } = this.props,
       { resourceOption } = subRoot,
-      { resourceQuery } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     // 这里是控制tagSearch的展示
     this.setState({
@@ -272,7 +270,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
     // 如果检测到 tags的长度变化，并且key为 resourceName 去掉了，则清除搜索条件
     if (
       tags.length === 0 ||
-      (tags.length === 1 && resourceQuery.search && tags[0].attr && tags[0].attr.key !== 'resourceName')
+      (tags.length === 1 && ffResourceList.query.search && tags[0].attr && tags[0].attr.key !== 'resourceName')
     ) {
       actions.resource.changeKeyword('');
       actions.resource.performSearch('');
@@ -320,9 +318,9 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   private _renderManualRenew() {
     let { actions, subRoot, namespaceSelection } = this.props,
       { resourceOption, resourceInfo } = subRoot,
-      { resourceList } = resourceOption;
+      { ffResourceList } = resourceOption;
 
-    let loading = resourceList.loading || resourceList.fetchState === FetchState.Fetching;
+    let loading = ffResourceList.list.loading || ffResourceList.list.fetchState === FetchState.Fetching;
     const isShow =
       !isEmpty(resourceInfo) && resourceInfo.actionField && resourceInfo.actionField.manualRenew.isAvailable;
     return isShow ? (
@@ -343,16 +341,16 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   private _renderDownload() {
     let { subRoot } = this.props,
       { resourceOption, resourceInfo } = subRoot,
-      { resourceList } = resourceOption;
+      { ffResourceList } = resourceOption;
 
-    let loading = resourceList.loading || resourceList.fetchState === FetchState.Fetching;
+    let loading = ffResourceList.list.loading || ffResourceList.list.fetchState === FetchState.Fetching;
     const isShow = !isEmpty(resourceInfo) && resourceInfo.actionField && resourceInfo.actionField.download.isAvailable;
     return isShow ? (
       <Button
         icon="download"
         disabled={loading}
         title={t('导出全部')}
-        onClick={() => this.downloadHandle(resourceList.data.records)}
+        onClick={() => this.downloadHandle(ffResourceList.list.data.records)}
       />
     ) : (
       <noscript />

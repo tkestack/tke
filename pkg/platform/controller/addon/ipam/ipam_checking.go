@@ -21,7 +21,7 @@ package ipam
 import (
 	"sync"
 
-	"tkestack.io/tke/api/platform/v1"
+	v1 "tkestack.io/tke/api/platform/v1"
 )
 
 type ipamChecking struct {
@@ -36,10 +36,10 @@ func (s *ipamChecking) Exist(key string) bool {
 	return ok
 }
 
-func (s *ipamChecking) Set(ipam *v1.IPAM) {
+func (s *ipamChecking) Set(key string, ipam *v1.IPAM) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.ipamMap[ipam.Name] = ipam
+	s.ipamMap[key] = ipam
 }
 
 func (s *ipamChecking) Del(key string) {

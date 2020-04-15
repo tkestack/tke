@@ -2,11 +2,26 @@ import { uuid } from '@tencent/ff-redux';
 
 import { initValidator } from '../../common/models';
 import {
-    ConfigItems, ContainerItem, DialogNameEnum, DialogState, EnvItem, HealthCheck, HealthCheckItem,
-    HpaMetrics, ImagePullSecrets, LimitItem, MountItem, PortMap, SecretData, Selector, ValueFrom,
-    VolumeItem, WorkloadLabel
+  ConfigItems,
+  ContainerItem,
+  DialogNameEnum,
+  DialogState,
+  EnvItem,
+  HealthCheck,
+  HealthCheckItem,
+  HpaMetrics,
+  ImagePullSecrets,
+  LimitItem,
+  MountItem,
+  PortMap,
+  SecretData,
+  Selector,
+  ValueFrom,
+  VolumeItem,
+  WorkloadLabel
 } from '../models';
 import { CronMetrics } from '../models/WorkloadEdit';
+import { BackendType } from './Config';
 
 /** 创建服务，端口映射的初始值 */
 export const initPortsMap: PortMap = {
@@ -37,11 +52,22 @@ export const initLbcfBGPort = {
   v_portNumber: initValidator
 };
 
+export const initStringArray = {
+  id: uuid(),
+  value: '',
+  v_value: initValidator
+};
+
 export const initLbcfBackGroupEdition = {
   onEdit: true,
   id: uuid(),
   name: '',
   v_name: initValidator,
+  backgroupType: BackendType.Pods,
+  staticAddress: [initStringArray],
+  byName: [],
+  serviceName: '',
+  v_serviceName: initValidator,
   ports: [initLbcfBGPort],
   labels: [initSelector]
 };

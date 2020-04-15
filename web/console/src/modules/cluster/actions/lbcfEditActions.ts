@@ -1,21 +1,48 @@
+import { FFReduxActionName } from './../constants/Config';
+import { initStringArray } from './../constants/initState';
 import { KeyValue } from 'src/modules/common';
 
-import { deepClone, uuid } from '@tencent/ff-redux';
+import { deepClone, uuid, createFFListActions, RecordSet } from '@tencent/ff-redux';
 
 import { resourceConfig } from '../../../../config/resourceConfig';
 import * as ActionType from '../constants/ActionType';
 import { initLbcfBackGroupEdition, initLbcfBGPort, initSelector } from '../constants/initState';
-import { RootState } from '../models';
+import { RootState, BackendGroup } from '../models';
 import { Namespace } from '../models/Namespace';
-import { ResourceFilter } from '../models/ResourceOption';
+import { ResourceFilter, Resource } from '../models/ResourceOption';
 import { CLB, Selector } from '../models/ServiceEdit';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
 import { validateLbcfActions } from './validateLbcfActions';
+import { BackendType } from '../constants/Config';
+import { GameBackgroupEdition } from '../models/LbcfEdit';
 
 type GetState = () => RootState;
 
+const lbcfDriverFFReduxAction = createFFListActions<Resource, ResourceFilter>({
+  actionName: FFReduxActionName.LBCF_DRIVER,
+  fetcher: async (query, getState: GetState, fetchOptions) => {
+    let resourceInfo = resourceConfig(getState().clusterVersion).lbcf_driver;
+    let kubesystemResponse = await WebAPI.fetchResourceList(
+      Object.assign({}, query, { filter: Object.assign({}, query.filter, { namespace: 'kube-system' }) }),
+      { resourceInfo }
+    );
+    let response = await WebAPI.fetchResourceList(query, { resourceInfo });
+    let resourceList = kubesystemResponse.records.concat(response.records);
+    const result: RecordSet<Resource> = {
+      recordCount: resourceList.length,
+      records: resourceList
+    };
+    return result;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().subRoot.lbcfEdit.driver;
+  },
+  selectFirst: true
+});
+
 export const lbcfEditActions = {
+  driver: lbcfDriverFFReduxAction,
   /** 输入名称 */
   inputLbcfName: (name: string) => {
     return async (dispatch, getState: GetState) => {
@@ -177,6 +204,126 @@ export const lbcfEditActions = {
     };
   },
 
+  updateLbcfBGAddress: (backGroupId: string, id: string, object: any) => {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      let { staticAddress } = backGroupEdition;
+      let index = staticAddress.findIndex(item => item.id === id);
+      staticAddress[index] = Object.assign({}, staticAddress[index], object);
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
+  addLbcfBGAddress: (backGroupId: string) => {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      let { staticAddress } = backGroupEdition;
+
+      staticAddress.push(Object.assign({}, initStringArray, { id: uuid() }));
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
+  deleteLbcfBGAddress: (backGroupId: string, id: string) => {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      let { staticAddress } = backGroupEdition;
+      let index = staticAddress.findIndex(item => item.id === id);
+      staticAddress.splice(index, 1);
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
+  updateLbcfBGPodName: (backGroupId: string, id: string, object: any) => {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      let { byName } = backGroupEdition;
+      let index = byName.findIndex(item => item.id === id);
+      byName[index] = Object.assign({}, byName[index], object);
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
+  addLbcfBGPodName: (backGroupId: string) => {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      let { byName } = backGroupEdition;
+
+      byName.push(Object.assign({}, initStringArray, { id: uuid() }));
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
+  deleteLbcfBGPodName: (backGroupId: string, id: string) => {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      let { byName } = backGroupEdition;
+      let index = byName.findIndex(item => item.id === id);
+      byName.splice(index, 1);
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
   initLbcfBGLabels: (backGroupId: string, labels: Selector[]) => {
     return async (dispatch, getState: GetState) => {
       let {
@@ -277,36 +424,122 @@ export const lbcfEditActions = {
     };
   },
 
-  initGameBGEdition: backGroups => {
+  initGameBGEdition: (backGroups: BackendGroup[]) => {
     return async (dispatch, getState: GetState) => {
-      let backGroupEditions = [];
+      let backGroupEditions: GameBackgroupEdition[] = [];
       backGroups.forEach(backGroup => {
-        let keys = Object.keys(backGroup.labels);
-        backGroupEditions.push(
-          Object.assign({}, initLbcfBackGroupEdition, {
-            id: uuid(),
-            name: backGroup.name,
-            v_name: { status: 1, message: '' },
-            ports: [
-              Object.assign({}, initLbcfBGPort, {
-                id: uuid(),
-                portNumber: backGroup.port.portNumber,
-                protocol: backGroup.port.protocol
-              })
-            ],
-            labels: keys.map(key => {
-              return Object.assign({}, initSelector, {
-                id: uuid(),
-                key: key,
-                value: backGroup.labels[key]
-              });
+        if (backGroup.pods) {
+          let keys = backGroup.pods.labels ? Object.keys(backGroup.pods.labels) : [];
+          backGroupEditions.push(
+            Object.assign({}, initLbcfBackGroupEdition, {
+              id: uuid(),
+              name: backGroup.name,
+              backgroupType: BackendType.Pods,
+              ports: [
+                Object.assign({}, initLbcfBGPort, {
+                  id: uuid(),
+                  portNumber: backGroup.pods.port.portNumber,
+                  protocol: backGroup.pods.port.protocol
+                })
+              ],
+              labels: keys.map(key => {
+                return Object.assign({}, initSelector, {
+                  id: uuid(),
+                  key: key,
+                  value: backGroup.pods.labels[key]
+                });
+              }),
+              byName: backGroup.pods.byName
+                ? backGroup.pods.byName.map(name => {
+                    return Object.assign({}, initStringArray, {
+                      id: uuid(),
+                      value: name
+                    });
+                  })
+                : []
             })
-          })
-        );
+          );
+        } else if (backGroup.service) {
+          let keys = backGroup.service.nodeSelector ? Object.keys(backGroup.service.nodeSelector) : [];
+          backGroupEditions.push(
+            Object.assign({}, initLbcfBackGroupEdition, {
+              id: uuid(),
+              name: backGroup.name,
+              backgroupType: BackendType.Service,
+              ports: [
+                Object.assign({}, initLbcfBGPort, {
+                  id: uuid(),
+                  portNumber: backGroup.service.port.portNumber,
+                  protocol: backGroup.service.port.protocol
+                })
+              ],
+              labels: keys.map(key => {
+                return Object.assign({}, initSelector, {
+                  id: uuid(),
+                  key: key,
+                  value: backGroup.service.nodeSelector[key]
+                });
+              }),
+              serviceName: backGroup.service.name
+            })
+          );
+        } else {
+          backGroupEditions.push(
+            Object.assign({}, initLbcfBackGroupEdition, {
+              id: uuid(),
+              name: backGroup.name,
+              backgroupType: BackendType.Static,
+              staticAddress: backGroup.static
+                ? backGroup.static.map(name => {
+                    return Object.assign({}, initStringArray, {
+                      id: uuid(),
+                      value: name
+                    });
+                  })
+                : []
+            })
+          );
+        }
       });
       dispatch({
         type: ActionType.GBG_UpdateLbcfBackGroup,
         payload: backGroupEditions
+      });
+    };
+  },
+
+  inputLbcfBackGroupType: (backGroupId: string, type: string) => {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      backGroupEdition.backgroupType = type;
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
+      });
+    };
+  },
+
+  inputLbcfBackGroupServiceName: (backGroupId: string, serviceName: string) => {
+    return async (dispatch, getState: GetState) => {
+      let {
+        subRoot: {
+          lbcfEdit: { lbcfBackGroupEditions }
+        }
+      } = getState();
+
+      let newBackGroupEdition = deepClone(lbcfBackGroupEditions);
+      let backGroupEdition = newBackGroupEdition.find(item => item.id === backGroupId);
+      backGroupEdition.serviceName = serviceName;
+      dispatch({
+        type: ActionType.GBG_UpdateLbcfBackGroup,
+        payload: newBackGroupEdition
       });
     };
   },

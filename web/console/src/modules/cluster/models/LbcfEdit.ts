@@ -1,12 +1,9 @@
 import { string } from 'prop-types';
 
-import { extend, Identifiable, RecordSet } from '@tencent/ff-redux';
+import { extend, Identifiable, RecordSet, FFListModel } from '@tencent/ff-redux';
 
 import { KeyValue, Validation } from '../../common/models';
-import { Selector } from '../models';
-import { Namespace } from './Namespace';
-import { Resource, ResourceFilter } from './ResourceOption';
-import { CLB } from './ServiceEdit';
+import { Selector, Resource, ResourceFilter } from '../models';
 
 export interface LbcfEdit extends Identifiable {
   name?: string;
@@ -18,7 +15,16 @@ export interface LbcfEdit extends Identifiable {
   v_namespace?: Validation;
 
   config?: KeyValue[];
+
+  v_config?: Validation;
+
   args?: KeyValue[];
+
+  v_args?: Validation;
+
+  driver?: FFListModel<Resource, ResourceFilter>;
+
+  v_driver?: Validation;
 
   /** vpcSelection */
   // vpcSelection?: string;
@@ -104,6 +110,12 @@ interface Port {
   v_portNumber?: Validation;
 }
 
+export interface StringArray {
+  id?: string;
+  value: string;
+  v_value?: Validation;
+}
+
 /** 创建backGroup的时候，提交的jsonSchema */
 export interface LbcfBGJSONYaml {
   /** 资源的类型 */
@@ -138,7 +150,7 @@ interface LbcfBGMetadata {
 /** spec的配置项，非全部选项 */
 interface LbcfBGSpec {
   lbName: string;
-  pods: {
+  pods?: {
     port: {
       portNumber: number;
       protocol: string;
@@ -148,7 +160,19 @@ interface LbcfBGSpec {
         [props: string]: string;
       };
     };
+    byName: string[];
   };
+  service?: {
+    name: string;
+    port: {
+      portNumber: number;
+      protocol: string;
+    };
+    nodeSelector: {
+      [props: string]: string;
+    };
+  };
+  static?: string[];
 }
 /** status的配置项，非全部选项 */
 interface LbcfBGStatus {}
@@ -160,7 +184,21 @@ export interface GameBackgroupEdition extends Identifiable {
 
   v_name?: Validation;
 
-  ports?: Port[];
+  backgroupType?: string;
 
+  //static
+  staticAddress?: StringArray[];
+
+  //pod
+  byName?: StringArray[];
+
+  //service
+  serviceName?: string;
+
+  v_serviceName?: Validation;
+
+  //commom
   labels?: Selector[];
+
+  ports?: Port[];
 }

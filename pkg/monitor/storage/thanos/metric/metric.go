@@ -21,6 +21,7 @@ package metric
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 	"tkestack.io/tke/api/monitor"
@@ -222,10 +223,22 @@ func MergeResult(results model.Matrix, timestamp string, groupByWithoutTimestamp
 				}
 			}
 			values[index].([]interface{})[0] = sp.Timestamp.Unix() * 1000
-			values[index].([]interface{})[fieldIndex+1] = float64(sp.Value)
+			if !math.IsNaN(float64(sp.Value)) {
+				values[index].([]interface{})[fieldIndex+1] = float64(sp.Value)
+			}
 			for j, tag := range tags {
 				values[index].([]interface{})[len(fieldIndexes)+1+j] = tag
 			}
+		}
+	}
+
+	// get rid of empty values as samples may not fulfill all the time gap
+	for i, v := range values {
+		if v.([]interface{})[0] == nil {
+			continue
+		} else {
+			values = values[i:]
+			break
 		}
 	}
 

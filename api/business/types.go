@@ -87,6 +87,8 @@ type ProjectStatus struct {
 	CalculatedNamespaces []string
 	// +optional
 	CachedSpecClusters ClusterHard
+	// +optional
+	CachedParent *string
 }
 
 // ProjectPhase defines the phase of project constructor.
@@ -131,6 +133,15 @@ type ClusterHard map[string]HardQuantity
 
 // ClusterUsed is a set of (cluster name, ResourceQuantity) pairs.
 type ClusterUsed map[string]UsedQuantity
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// NamespaceCertOptions is query options of getting namespace with a x509 certificate.
+type NamespaceCertOptions struct {
+	metav1.TypeMeta `json:",inline"`
+
+	ValidDays string
+}
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -195,6 +206,14 @@ type NamespaceStatus struct {
 	Used ResourceList
 	// +optional
 	CachedSpecHard ResourceList
+	// +optional
+	Certificate *NamespaceCert
+}
+
+// NamespaceCert represents a x509 certificate of a namespace in project.
+type NamespaceCert struct {
+	// +optional
+	Pem []byte
 }
 
 // NamespacePhase indicates the status of namespace in project.

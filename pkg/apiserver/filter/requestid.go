@@ -20,27 +20,30 @@ package filter
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/segmentio/ksuid"
 	genericrequest "k8s.io/apiserver/pkg/endpoints/request"
-	"net/http"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-const headerRequestID = "X-Remote-Extra-RequestID"
+// HeaderRequestID is the header name of extra request ID.
+const HeaderRequestID = "X-Remote-Extra-RequestID"
+
 const requestIDContextKey = "requestID"
 
 // WithRequestID adds the unique requestID to the context of the http access
 // chain.
 func WithRequestID(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		requestID := req.Header.Get(headerRequestID)
+		requestID := req.Header.Get(HeaderRequestID)
 		if requestID == "" {
 			requestID = ksuid.New().String()
 		}
 		log.Debug("Received http request", log.String("requestID", requestID))
 		// add request id to context
 		req = req.WithContext(genericrequest.WithValue(req.Context(), requestIDContextKey, requestID))
-		w.Header().Set(headerRequestID, requestID)
+		w.Header().Set(HeaderRequestID, requestID)
 		handler.ServeHTTP(w, req)
 	})
 }

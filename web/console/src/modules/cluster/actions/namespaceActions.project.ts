@@ -87,16 +87,7 @@ const restActions = {
               regionId: +route.queries['rid']
             })
           )
-        : dispatch({
-            type: ActionType.FetchResourceList + 'Done',
-            payload: {
-              data: {
-                recordCount: 0,
-                records: []
-              },
-              trigger: 'Done'
-            }
-          });
+        : dispatch(resourceActions.clearFetch());
     };
   }
 };

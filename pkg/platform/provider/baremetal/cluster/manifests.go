@@ -37,7 +37,7 @@ const (
             }
          ],
          "nodeCacheCapable" : false,
-         "urlPrefix" : "http://gpu-quota-admission:3456/scheduler"
+         "urlPrefix" : "http://{{.GPUQuotaAdmissionHost}}:3456/scheduler"
       },
       {
          "apiVersion" : "v1beta1",

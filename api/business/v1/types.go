@@ -23,6 +23,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const CertOptionValiddays = "validDays"
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection
@@ -89,6 +91,8 @@ type ProjectStatus struct {
 	CalculatedNamespaces []string `json:"calculatedNamespaces,omitempty" protobuf:"bytes,5,rep,name=calculatedNamespaces"`
 	// +optional
 	CachedSpecClusters ClusterHard `json:"cachedSpecClusters,omitempty" protobuf:"bytes,6,rep,name=cachedSpecClusters,casttype=ClusterHard"`
+	// +optional
+	CachedParent *string `json:"cachedParent,omitempty" protobuf:"bytes,7,opt,name=cachedParent"`
 }
 
 // ProjectPhase defines the phase of project constructor.
@@ -133,6 +137,16 @@ type UsedQuantity struct {
 
 // ClusterUsed is a set of (cluster name, UsedQuantity) pairs.
 type ClusterUsed map[string]UsedQuantity
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// NamespaceCertOptions is query options of getting namespace with a x509 certificate.
+type NamespaceCertOptions struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Pay attention to const CertOptionValiddays!
+	ValidDays string `json:"validDays,omitempty" protobuf:"bytes,1,opt,name=validDays"`
+}
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -197,6 +211,14 @@ type NamespaceStatus struct {
 	Used ResourceList `json:"used,omitempty" protobuf:"bytes,6,rep,name=used,casttype=ResourceList"`
 	// +optional
 	CachedSpecHard ResourceList `json:"cachedSpecHard,omitempty" protobuf:"bytes,7,rep,name=cachedSpecHard,casttype=ResourceList"`
+	// +optional
+	Certificate *NamespaceCert `json:"certificate,omitempty" protobuf:"bytes,8,name=certificate,casttype=NamespaceCert"`
+}
+
+// NamespaceCert represents a x509 certificate of a namespace in project.
+type NamespaceCert struct {
+	// +optional
+	Pem []byte `json:"pem,omitempty" protobuf:"bytes,1,rep,name=pem"`
 }
 
 // NamespacePhase indicates the status of namespace in project.

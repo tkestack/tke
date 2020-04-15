@@ -114,7 +114,7 @@ data:
 
     [registry]
     container_domain = "{{ .RegistryDomain }}"
-    container_namespace = "tkestack"
+    container_namespace = "{{ .RegistryNamespace }}"
 
     [features]
     monitor_storage_type = "{{ .MonitorStorageType }}"

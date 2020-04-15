@@ -55,6 +55,7 @@ type Config struct {
 	PrivilegedUsername             string
 	ExternalHost                   string
 	ExternalPort                   int
+	MessageTTL                     time.Duration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -132,5 +133,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 		ExternalHost:                   opts.Generic.ExternalHost,
 		ExternalPort:                   opts.Generic.ExternalPort,
+		MessageTTL:                     opts.FeatureOptions.MessageTTL,
 	}, nil
 }

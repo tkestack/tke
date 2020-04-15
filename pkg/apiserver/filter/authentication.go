@@ -20,6 +20,13 @@ package filter
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"k8s.io/apiserver/pkg/authentication/user"
+	"tkestack.io/tke/pkg/platform/apiserver/filter"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +35,6 @@ import (
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/component-base/metrics"
 	"k8s.io/component-base/metrics/legacyregistry"
-	"net/http"
-	"strings"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -133,7 +138,22 @@ func WithAuthentication(handler http.Handler, auth authenticator.Request, failed
 		// authorization header is not required anymore in case of a successful authentication.
 		req.Header.Del("Authorization")
 
-		req = req.WithContext(genericapirequest.WithUser(req.Context(), resp.User))
+		if userInfo, ok := resp.User.(*user.DefaultInfo); ok {
+			if userInfo.Groups == nil {
+				userInfo.Groups = make([]string, 0)
+			}
+			clusterName := req.Header.Get(filter.ClusterNameHeaderKey)
+			if clusterName != "" {
+				userInfo.Groups = append(userInfo.Groups, fmt.Sprintf("cluster:%s", clusterName))
+			}
+			projectName := req.Header.Get(filter.ProjectNameHeaderKey)
+			if projectName != "" {
+				userInfo.Groups = append(userInfo.Groups, fmt.Sprintf("project:%s", projectName))
+			}
+			req = req.WithContext(genericapirequest.WithUser(req.Context(), userInfo))
+		} else {
+			req = req.WithContext(genericapirequest.WithUser(req.Context(), resp.User))
+		}
 
 		authenticatedUserCounter.WithLabelValues(compressUsername(resp.User.GetName())).Inc()
 		authenticatedAttemptsCounter.WithLabelValues(successLabel).Inc()

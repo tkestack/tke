@@ -25,6 +25,7 @@ package v1
 import (
 	unsafe "unsafe"
 
+	corev1 "k8s.io/api/core/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	platform "tkestack.io/tke/api/platform"
@@ -847,6 +848,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*ResourceRequirements)(nil), (*platform.ResourceRequirements)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ResourceRequirements_To_platform_ResourceRequirements(a.(*ResourceRequirements), b.(*platform.ResourceRequirements), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.ResourceRequirements)(nil), (*ResourceRequirements)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_ResourceRequirements_To_v1_ResourceRequirements(a.(*platform.ResourceRequirements), b.(*ResourceRequirements), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*StorageBackEndCLS)(nil), (*platform.StorageBackEndCLS)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_StorageBackEndCLS_To_platform_StorageBackEndCLS(a.(*StorageBackEndCLS), b.(*platform.StorageBackEndCLS), scope)
 	}); err != nil {
@@ -1451,9 +1462,11 @@ func autoConvert_v1_ClusterCredential_To_platform_ClusterCredential(in *ClusterC
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
 	out.ETCDCACert = *(*[]byte)(unsafe.Pointer(&in.ETCDCACert))
+	out.ETCDCAKey = *(*[]byte)(unsafe.Pointer(&in.ETCDCAKey))
 	out.ETCDAPIClientCert = *(*[]byte)(unsafe.Pointer(&in.ETCDAPIClientCert))
 	out.ETCDAPIClientKey = *(*[]byte)(unsafe.Pointer(&in.ETCDAPIClientKey))
 	out.CACert = *(*[]byte)(unsafe.Pointer(&in.CACert))
+	out.CAKey = *(*[]byte)(unsafe.Pointer(&in.CAKey))
 	out.ClientCert = *(*[]byte)(unsafe.Pointer(&in.ClientCert))
 	out.ClientKey = *(*[]byte)(unsafe.Pointer(&in.ClientKey))
 	out.Token = (*string)(unsafe.Pointer(in.Token))
@@ -1472,9 +1485,11 @@ func autoConvert_platform_ClusterCredential_To_v1_ClusterCredential(in *platform
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
 	out.ETCDCACert = *(*[]byte)(unsafe.Pointer(&in.ETCDCACert))
+	out.ETCDCAKey = *(*[]byte)(unsafe.Pointer(&in.ETCDCAKey))
 	out.ETCDAPIClientCert = *(*[]byte)(unsafe.Pointer(&in.ETCDAPIClientCert))
 	out.ETCDAPIClientKey = *(*[]byte)(unsafe.Pointer(&in.ETCDAPIClientKey))
 	out.CACert = *(*[]byte)(unsafe.Pointer(&in.CACert))
+	out.CAKey = *(*[]byte)(unsafe.Pointer(&in.CAKey))
 	out.ClientCert = *(*[]byte)(unsafe.Pointer(&in.ClientCert))
 	out.ClientKey = *(*[]byte)(unsafe.Pointer(&in.ClientKey))
 	out.Token = (*string)(unsafe.Pointer(in.Token))
@@ -1576,6 +1591,7 @@ func autoConvert_v1_ClusterMachine_To_platform_ClusterMachine(in *ClusterMachine
 	out.PrivateKey = *(*[]byte)(unsafe.Pointer(&in.PrivateKey))
 	out.PassPhrase = *(*[]byte)(unsafe.Pointer(&in.PassPhrase))
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Taints = *(*[]corev1.Taint)(unsafe.Pointer(&in.Taints))
 	return nil
 }
 
@@ -1592,6 +1608,7 @@ func autoConvert_platform_ClusterMachine_To_v1_ClusterMachine(in *platform.Clust
 	out.PrivateKey = *(*[]byte)(unsafe.Pointer(&in.PrivateKey))
 	out.PassPhrase = *(*[]byte)(unsafe.Pointer(&in.PassPhrase))
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Taints = *(*[]corev1.Taint)(unsafe.Pointer(&in.Taints))
 	return nil
 }
 
@@ -2708,6 +2725,7 @@ func autoConvert_v1_MachineSpec_To_platform_MachineSpec(in *MachineSpec, out *pl
 	out.PrivateKey = *(*[]byte)(unsafe.Pointer(&in.PrivateKey))
 	out.PassPhrase = *(*[]byte)(unsafe.Pointer(&in.PassPhrase))
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Taints = *(*[]corev1.Taint)(unsafe.Pointer(&in.Taints))
 	return nil
 }
 
@@ -2728,6 +2746,7 @@ func autoConvert_platform_MachineSpec_To_v1_MachineSpec(in *platform.MachineSpec
 	out.PrivateKey = *(*[]byte)(unsafe.Pointer(&in.PrivateKey))
 	out.PassPhrase = *(*[]byte)(unsafe.Pointer(&in.PassPhrase))
 	out.Labels = *(*map[string]string)(unsafe.Pointer(&in.Labels))
+	out.Taints = *(*[]corev1.Taint)(unsafe.Pointer(&in.Taints))
 	return nil
 }
 
@@ -3051,6 +3070,10 @@ func autoConvert_v1_PrometheusSpec_To_platform_PrometheusSpec(in *PrometheusSpec
 		return err
 	}
 	out.NotifyWebhook = in.NotifyWebhook
+	if err := Convert_v1_ResourceRequirements_To_platform_ResourceRequirements(&in.Resources, &out.Resources, s); err != nil {
+		return err
+	}
+	out.RunOnMaster = in.RunOnMaster
 	return nil
 }
 
@@ -3068,6 +3091,10 @@ func autoConvert_platform_PrometheusSpec_To_v1_PrometheusSpec(in *platform.Prome
 		return err
 	}
 	out.NotifyWebhook = in.NotifyWebhook
+	if err := Convert_platform_ResourceRequirements_To_v1_ResourceRequirements(&in.Resources, &out.Resources, s); err != nil {
+		return err
+	}
+	out.RunOnMaster = in.RunOnMaster
 	return nil
 }
 
@@ -3182,6 +3209,28 @@ func autoConvert_platform_RegistrySpec_To_v1_RegistrySpec(in *platform.RegistryS
 // Convert_platform_RegistrySpec_To_v1_RegistrySpec is an autogenerated conversion function.
 func Convert_platform_RegistrySpec_To_v1_RegistrySpec(in *platform.RegistrySpec, out *RegistrySpec, s conversion.Scope) error {
 	return autoConvert_platform_RegistrySpec_To_v1_RegistrySpec(in, out, s)
+}
+
+func autoConvert_v1_ResourceRequirements_To_platform_ResourceRequirements(in *ResourceRequirements, out *platform.ResourceRequirements, s conversion.Scope) error {
+	out.Limits = *(*platform.ResourceList)(unsafe.Pointer(&in.Limits))
+	out.Requests = *(*platform.ResourceList)(unsafe.Pointer(&in.Requests))
+	return nil
+}
+
+// Convert_v1_ResourceRequirements_To_platform_ResourceRequirements is an autogenerated conversion function.
+func Convert_v1_ResourceRequirements_To_platform_ResourceRequirements(in *ResourceRequirements, out *platform.ResourceRequirements, s conversion.Scope) error {
+	return autoConvert_v1_ResourceRequirements_To_platform_ResourceRequirements(in, out, s)
+}
+
+func autoConvert_platform_ResourceRequirements_To_v1_ResourceRequirements(in *platform.ResourceRequirements, out *ResourceRequirements, s conversion.Scope) error {
+	out.Limits = *(*ResourceList)(unsafe.Pointer(&in.Limits))
+	out.Requests = *(*ResourceList)(unsafe.Pointer(&in.Requests))
+	return nil
+}
+
+// Convert_platform_ResourceRequirements_To_v1_ResourceRequirements is an autogenerated conversion function.
+func Convert_platform_ResourceRequirements_To_v1_ResourceRequirements(in *platform.ResourceRequirements, out *ResourceRequirements, s conversion.Scope) error {
+	return autoConvert_platform_ResourceRequirements_To_v1_ResourceRequirements(in, out, s)
 }
 
 func autoConvert_v1_StorageBackEndCLS_To_platform_StorageBackEndCLS(in *StorageBackEndCLS, out *platform.StorageBackEndCLS, s conversion.Scope) error {

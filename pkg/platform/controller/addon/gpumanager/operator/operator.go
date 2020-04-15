@@ -51,7 +51,7 @@ func NewObjectOperator(TkeCli clientset.Interface) ObjectOperator {
 			TkeCli: TkeCli,
 		},
 		serviceAccountOperator: &common.ServiceAccountOperator{},
-		serviceOperator:        &common.ServiceOperator{},
+		serviceOperator:        &common.ServiceOperator{TkeCli: TkeCli},
 		serviceMetricOperator:  &common.ServiceMetricOperator{},
 	}
 

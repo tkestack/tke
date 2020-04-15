@@ -19,6 +19,7 @@
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -67,18 +68,23 @@ type ClusterMachine struct {
 	PassPhrase []byte `json:"passPhrase,omitempty" protobuf:"bytes,6,opt,name=passPhrase"`
 	// +optional
 	Labels map[string]string `json:"labels,omitempty" protobuf:"bytes,7,opt,name=labels"`
+	// If specified, the node's taints.
+	// +optional
+	Taints []corev1.Taint `json:"taints,omitempty" protobuf:"bytes,8,opt,name=taints"`
 }
 
 // ClusterSpec is a description of a cluster.
 type ClusterSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
 	// +optional
-	Finalizers  []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
-	TenantID    string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
-	DisplayName string          `json:"displayName" protobuf:"bytes,3,opt,name=displayName"`
-	Type        string          `json:"type" protobuf:"bytes,4,opt,name=type"`
-	Version     string          `json:"version" protobuf:"bytes,5,opt,name=version"`
-	NetworkType NetworkType     `json:"networkType,omitempty" protobuf:"bytes,6,opt,name=networkType,casttype=NetworkType"`
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	TenantID   string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	// +optional
+	DisplayName string `json:"displayName" protobuf:"bytes,3,opt,name=displayName"`
+	Type        string `json:"type" protobuf:"bytes,4,opt,name=type"`
+	Version     string `json:"version" protobuf:"bytes,5,opt,name=version"`
+	// +optional
+	NetworkType NetworkType `json:"networkType,omitempty" protobuf:"bytes,6,opt,name=networkType,casttype=NetworkType"`
 	// +optional
 	NetworkDevice string `json:"networkDevice,omitempty" protobuf:"bytes,7,opt,name=networkDevice"`
 	// +optional
@@ -260,31 +266,33 @@ type ClusterCredential struct {
 	// For TKE in global reuse
 	// +optional
 	ETCDCACert []byte `json:"etcdCACert,omitempty" protobuf:"bytes,4,opt,name=etcdCACert"`
-	// For TKE in global reuse
 	// +optional
-	ETCDAPIClientCert []byte `json:"etcdAPIClientCert,omitempty" protobuf:"bytes,5,opt,name=etcdAPIClientCert"`
-	// For TKE in global reuse
+	ETCDCAKey []byte `json:"etcdCAKey,omitempty" protobuf:"bytes,5,opt,name=etcdCAKey"`
 	// +optional
-	ETCDAPIClientKey []byte `json:"etcdAPIClientKey,omitempty" protobuf:"bytes,6,opt,name=etcdAPIClientKey"`
+	ETCDAPIClientCert []byte `json:"etcdAPIClientCert,omitempty" protobuf:"bytes,6,opt,name=etcdAPIClientCert"`
+	// +optional
+	ETCDAPIClientKey []byte `json:"etcdAPIClientKey,omitempty" protobuf:"bytes,7,opt,name=etcdAPIClientKey"`
 
 	// For connect the cluster
 	// +optional
-	CACert []byte `json:"caCert,omitempty" protobuf:"bytes,7,opt,name=caCert"`
+	CACert []byte `json:"caCert,omitempty" protobuf:"bytes,8,opt,name=caCert"`
+	// +optional
+	CAKey []byte `json:"caKey,omitempty" protobuf:"bytes,9,opt,name=caKey"`
 	// For kube-apiserver X509 auth
 	// +optional
-	ClientCert []byte `json:"clientCert,omitempty" protobuf:"bytes,8,opt,name=clientCert"`
+	ClientCert []byte `json:"clientCert,omitempty" protobuf:"bytes,10,opt,name=clientCert"`
 	// For kube-apiserver X509 auth
 	// +optional
-	ClientKey []byte `json:"clientKey,omitempty" protobuf:"bytes,9,opt,name=clientKey"`
+	ClientKey []byte `json:"clientKey,omitempty" protobuf:"bytes,11,opt,name=clientKey"`
 	// For kube-apiserver token auth
 	// +optional
-	Token *string `json:"token,omitempty" protobuf:"bytes,10,opt,name=token"`
+	Token *string `json:"token,omitempty" protobuf:"bytes,12,opt,name=token"`
 	// For kubeadm init or join
 	// +optional
-	BootstrapToken *string `json:"bootstrapToken,omitempty" protobuf:"bytes,11,opt,name=bootstrapToken"`
+	BootstrapToken *string `json:"bootstrapToken,omitempty" protobuf:"bytes,13,opt,name=bootstrapToken"`
 	// For kubeadm init or join
 	// +optional
-	CertificateKey *string `json:"certificateKey,omitempty" protobuf:"bytes,12,opt,name=certificateKey"`
+	CertificateKey *string `json:"certificateKey,omitempty" protobuf:"bytes,14,opt,name=certificateKey"`
 }
 
 // +genclient:nonNamespaced
@@ -360,6 +368,12 @@ type ClusterProperty struct {
 
 // ResourceList is a set of (resource name, quantity) pairs.
 type ResourceList map[string]resource.Quantity
+
+// ResourceRequirements describes the compute resource requirements.
+type ResourceRequirements struct {
+	Limits   ResourceList `json:"limits,omitempty" protobuf:"bytes,1,rep,name=limits,casttype=ResourceList"`
+	Requests ResourceList `json:"requests,omitempty" protobuf:"bytes,2,rep,name=requests,casttype=ResourceList"`
+}
 
 // ClusterResource records the current available and maximum resource quota
 // information for the cluster.
@@ -729,6 +743,12 @@ type PrometheusSpec struct {
 	// +optional
 	// NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
 	NotifyWebhook string `json:"notifyWebhook,omitempty" protobuf:"bytes,6,opt,name=notifyWebhook"`
+	// +optional
+	// Resources is the resource request and limit for prometheus
+	Resources ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,7,opt,name=resources"`
+	// +optional
+	// RunOnMaster indicates whether to add master Affinity for all monitor components or not
+	RunOnMaster bool `json:"runOnMaster,omitempty" protobuf:"bytes,8,opt,name=runOnMaster"`
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
@@ -1282,6 +1302,9 @@ type MachineSpec struct {
 	PassPhrase []byte `json:"passPhrase,omitempty" protobuf:"bytes,10,opt,name=passPhrase"`
 	// +optional
 	Labels map[string]string `json:"labels,omitempty" protobuf:"bytes,11,opt,name=labels"`
+	// If specified, the node's taints.
+	// +optional
+	Taints []corev1.Taint `json:"taints,omitempty" protobuf:"bytes,12,opt,name=taints"`
 }
 
 // MachineStatus represents information about the status of an machine.

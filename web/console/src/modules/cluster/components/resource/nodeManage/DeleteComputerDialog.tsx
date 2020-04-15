@@ -14,13 +14,13 @@ import { clearNodeSH } from '../../../constants/Config';
 import { CreateResource, Resource } from '../../../models';
 import { RootProps } from '../../ClusterApp';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class DeleteComputerDialog extends React.Component<RootProps, {}> {
   state = {
-    isOpenDownloadButton: false
+    isOpenDownloadButton: false,
   };
   render() {
     let { isOpenDownloadButton } = this.state;
@@ -30,10 +30,17 @@ export class DeleteComputerDialog extends React.Component<RootProps, {}> {
           deleteComputer,
           computerPodList,
           computerPodQuery,
-          computer: { selections }
-        }
+          computer: { selections },
+          deleteMachineResouceIns,
+        },
       } = subRoot;
-    let resourceIns = selections[0] && selections[0].spec.machineName ? selections[0].spec.machineName : '';
+    let resourceIns =
+      selections[0] &&
+      deleteMachineResouceIns &&
+      deleteMachineResouceIns.spec &&
+      selections[0].metadata.name === deleteMachineResouceIns.spec.ip
+        ? deleteMachineResouceIns.metadata.name
+        : '';
     let nodeName = selections[0] && selections[0].metadata.name;
     let resourceInfo = resourceConfig(clusterVersion).machines;
     // 需要提交的数据
@@ -41,36 +48,36 @@ export class DeleteComputerDialog extends React.Component<RootProps, {}> {
       id: uuid(),
       resourceInfo,
       clusterId: route.queries['clusterId'],
-      resourceIns
+      resourceIns,
     };
     let colunms: TableColumn<Resource>[] = [
       {
         key: 'name',
         header: t('实例（Pod）名称'),
         width: '55%',
-        render: x => (
+        render: (x) => (
           <Text parent="div" overflow>
             <span title={x.metadata.name}>{x.metadata.name}</span>
           </Text>
-        )
+        ),
       },
       {
         key: 'namespace',
         header: t('所属集群空间'),
         width: '45%',
-        render: x => (
+        render: (x) => (
           <Text parent="div" overflow>
             <span title={x.metadata.namespace}>{x.metadata.namespace}</span>
           </Text>
-        )
-      }
+        ),
+      },
     ];
     let computerPodCount = computerPodList.data.recordCount;
     // 这里主要是考虑在更新实例数量的时候，会调用删除接口删除hpa，不应该展示出dialog
     return (
       <WorkflowDialog
         caption={t('您确定要删除节点：{{nodeName}}吗？', {
-          nodeName
+          nodeName,
         })}
         workflow={deleteComputer}
         action={actions.workflow.deleteComputer}
@@ -96,14 +103,14 @@ export class DeleteComputerDialog extends React.Component<RootProps, {}> {
                   emptyTips={<div className="text-center">{t('节点的实例（Pod）列表为空')}</div>}
                   listModel={{
                     list: computerPodList,
-                    query: computerPodQuery
+                    query: computerPodQuery,
                   }}
                   actionOptions={actions.computerPod}
                   addons={[
                     stylize({
                       className: 'ovm-dialog-tablepanel',
-                      bodyStyle: { overflowY: 'auto', height: 160, minHeight: 100 }
-                    })
+                      bodyStyle: { overflowY: 'auto', height: 160, minHeight: 100 },
+                    }),
                   ]}
                   isNeedCard={false}
                 />
@@ -120,7 +127,7 @@ export class DeleteComputerDialog extends React.Component<RootProps, {}> {
             </Clip>
             <a
               href="javascript:void(0)"
-              onClick={e => downloadCrt(clearNodeSH, `clear${Date.now()}.sh`)}
+              onClick={(e) => downloadCrt(clearNodeSH, `clear${Date.now()}.sh`)}
               className="copy-btn"
               style={{ right: '50px' }}
             >
@@ -134,7 +141,7 @@ export class DeleteComputerDialog extends React.Component<RootProps, {}> {
                   width: '432px',
                   whiteSpace: 'pre-wrap',
                   overflow: 'auto',
-                  height: '300px'
+                  height: '300px',
                 }}
               >
                 {clearNodeSH}

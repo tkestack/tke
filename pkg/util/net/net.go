@@ -22,7 +22,7 @@ import "net"
 
 // GetSourceIP return srouce ip to target ip.
 func GetSourceIP(target string) (string, error) {
-	conn, err := net.Dial("udp", target)
+	conn, err := net.Dial("udp", target+":80")
 	if err != nil {
 		return "", err
 	}

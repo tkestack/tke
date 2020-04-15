@@ -1,6 +1,4 @@
-import {
-    extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction
-} from '@tencent/ff-redux';
+import { extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
@@ -50,9 +48,10 @@ const fetchComputerPodActions = generateFetcherActionCreator({
     k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
     let response = await WebAPI.fetchResourceList(
       { filter: { clusterId: clusterId }, search: '' },
-      podResourceInfo,
-      false,
-      k8sQueryObj
+      {
+        resourceInfo: podResourceInfo,
+        k8sQueryObj
+      }
     );
     return response;
   }

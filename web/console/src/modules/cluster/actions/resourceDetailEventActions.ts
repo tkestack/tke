@@ -37,7 +37,12 @@ const FFModelEventActions = createFFListActions<Event, ResourceFilter>({
         }
       };
       k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-      let response = await WebAPI.fetchResourceList(event.query, eventResourceInfo, isClearData, k8sQueryObj, true);
+      let response = await WebAPI.fetchResourceList(event.query, {
+        resourceInfo: eventResourceInfo,
+        isClearData,
+        k8sQueryObj,
+        isNeedDes: true
+      });
       return response;
     } else {
       let response;

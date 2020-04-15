@@ -1,17 +1,14 @@
-import { extend, FetchOptions, generateFetcherActionCreator, ReduxAction } from '@tencent/ff-redux';
-import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
-
+import { createFFListActions, extend, FetchOptions, ReduxAction } from '@tencent/ff-redux';
 import { resourceConfig } from '../../../../config';
 import { ResourceInfo } from '../../common/models';
 import { includes } from '../../common/utils';
-import {
-    IsResourceShowLoadingIcon
-} from '../components/resource/resourceTableOperation/ResourceTablePanel';
+import { IsResourceShowLoadingIcon } from '../components/resource/resourceTableOperation/ResourceTablePanel';
 import * as ActionType from '../constants/ActionType';
-import { PollEventName, ResourceNeedJudgeLoading } from '../constants/Config';
+import { FFReduxActionName, PollEventName, ResourceNeedJudgeLoading } from '../constants/Config';
 import { Resource, ResourceFilter, RootState } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
+import { lbcfEditActions } from './lbcfEditActions';
 import { namespaceActions } from './namespaceActions';
 import { resourceDetailActions } from './resourceDetailActions';
 import { resourceDetailEventActions } from './resourceDetailEventActions';
@@ -23,36 +20,41 @@ const fetchOptions: FetchOptions = {
   noCache: false
 };
 
-/** fetch resource list */
-const fetchResourceActions = generateFetcherActionCreator({
-  actionType: ActionType.FetchResourceList,
-  fetcher: async (getState: GetState, fetchOptions, dispatch) => {
+const listResourceActions = createFFListActions<Resource, ResourceFilter>({
+  actionName: FFReduxActionName.Resource_Workload,
+  fetcher: async (query, getState: GetState, fetchOptions) => {
     let { subRoot, route, clusterVersion } = getState(),
       { resourceInfo, resourceOption, resourceName } = subRoot,
-      { resourceQuery } = resourceOption;
+      { ffResourceList } = resourceOption;
 
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
 
     let response: any;
     // response = await WebAPI.fetchResourceList(resourceQuery, resourceInfo, isClearData);
     if (resourceName === 'lbcf') {
-      response = _reduceGameGateResource(clusterVersion, resourceQuery, resourceInfo, isClearData);
+      response = _reduceGameGateResource(clusterVersion, ffResourceList.query, resourceInfo, isClearData);
     } else {
-      response = await WebAPI.fetchResourceList(resourceQuery, resourceInfo, isClearData);
+      response = await WebAPI.fetchResourceList(ffResourceList.query, {
+        resourceInfo,
+        isClearData,
+        isContinue: true
+      });
     }
-
     return response;
   },
-  finish: async (dispatch, getState: GetState) => {
+  getRecord: (getState: GetState) => {
+    return getState().subRoot.resourceOption.ffResourceList;
+  },
+  onFinish: (record, dispatch, getState: GetState) => {
     let { subRoot, route } = getState(),
       { tab } = router.resolve(route),
       { resourceOption, mode, resourceName } = subRoot,
-      { resourceList } = resourceOption;
+      { ffResourceList } = resourceOption;
 
-    if (resourceList.data.recordCount) {
+    if (ffResourceList.list.data.recordCount) {
       let defaultResourceIns = route.queries['resourceIns'];
-      let finder = resourceList.data.records.find(item => item.metadata.name === defaultResourceIns);
-      dispatch(resourceActions.selectResource([finder ? finder : resourceList.data.records[0]]));
+      let finder = ffResourceList.list.data.records.find(item => item.metadata.name === defaultResourceIns);
+      dispatch(resourceActions.select(finder ? finder : ffResourceList.list.data.records[0]));
 
       /** ============== start 更新的时候，进行一些页面的初始化 =============  */
       if (mode === 'update' && resourceName === 'svc') {
@@ -68,12 +70,16 @@ const fetchResourceActions = generateFetcherActionCreator({
         dispatch(workloadEditActions.initWorkloadEditForUpdateRegistry(finder));
       } else if (mode === 'update' && tab === 'modifyPod') {
         dispatch(workloadEditActions.updateContainerNum(finder.spec.replicas));
+      } else if (mode === 'update' && tab === 'updateBG') {
+        dispatch(lbcfEditActions.initGameBGEdition(finder.spec.backGroups));
       }
       /** ============== end 更新的时候，进行一些页面的初始化 =============  */
 
       /** ============== start 列表页，需要进行资源的轮询 ================= */
       if (mode === 'list' && includes(ResourceNeedJudgeLoading, resourceName)) {
-        if (resourceList.data.records.filter(item => IsResourceShowLoadingIcon(resourceName, item)).length === 0) {
+        if (
+          ffResourceList.list.data.records.filter(item => IsResourceShowLoadingIcon(resourceName, item)).length === 0
+        ) {
           dispatch(resourceActions.clearPollEvent());
         }
       } else {
@@ -89,9 +95,19 @@ const fetchResourceActions = generateFetcherActionCreator({
 async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceInfo, isClearData) {
   let gameBGresourceInfo = resourceConfig(clusterVersion).lbcf_bg;
   let gameBRresourceInfo = resourceConfig(clusterVersion).lbcf_br;
-  let gameBGList = await WebAPI.fetchResourceList(resourceQuery, gameBGresourceInfo, isClearData),
-    gameLBList = await WebAPI.fetchResourceList(resourceQuery, resourceInfo, isClearData),
-    gameBRList = await WebAPI.fetchResourceList(resourceQuery, gameBRresourceInfo, isClearData);
+  let gameBGList = await WebAPI.fetchResourceList(resourceQuery, {
+      resourceInfo: gameBGresourceInfo,
+      isClearData
+    }),
+    gameLBList = await WebAPI.fetchResourceList(resourceQuery, {
+      resourceInfo,
+      isClearData,
+      isContinue: true
+    }),
+    gameBRList = await WebAPI.fetchResourceList(resourceQuery, {
+      resourceInfo: gameBRresourceInfo,
+      isClearData
+    });
   gameLBList.records.forEach((item, index) => {
     let backGroups = [];
     gameBGList.records.forEach(backgroup => {
@@ -100,10 +116,8 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
           records => records.metadata.labels['lbcf.tkestack.io/backend-group'] === backgroup.metadata.name
         );
         try {
-          backGroups.push({
+          let backGroup = {
             name: backgroup.metadata.name,
-            labels: backgroup.spec.pods.byLabel.selector,
-            port: backgroup.spec.pods.port,
             status: backgroup.status,
             backendRecords: backendRecords.map(record => {
               return {
@@ -112,7 +126,23 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
                 conditions: record.status && record.status.conditions ? record.status.conditions : []
               };
             })
-          });
+          };
+          if (backgroup.spec.pods) {
+            backGroup['pods'] = {
+              labels: backgroup.spec.pods.byLabel.selector,
+              port: backgroup.spec.pods.port,
+              byName: backgroup.spec.pods.byName
+            };
+          } else if (backgroup.spec.service) {
+            backGroup['service'] = {
+              name: backgroup.spec.service.name,
+              port: backgroup.spec.service.port,
+              nodeSelector: backgroup.spec.service.nodeSelector
+            };
+          } else {
+            backGroup['static'] = backgroup.spec.static;
+          }
+          backGroups.push(backGroup);
         } catch (e) {}
       }
     });
@@ -121,23 +151,7 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
   return gameLBList;
 }
 
-/** query resource list action */
-const queryResourceActions = generateQueryActionCreator({
-  actionType: ActionType.QueryResourceList,
-  bindFetcher: fetchResourceActions
-});
-
 const restActions = {
-  /** 在列表上选择具体的资源，如在deploymentList当中选择某个 deployment */
-  selectResource: (resource: Resource[]) => {
-    return async (dispatch, getState: GetState) => {
-      dispatch({
-        type: ActionType.SelectResource,
-        payload: resource
-      });
-    };
-  },
-
   /** 在列表上选择多个具体的资源，如在deploymentList当中选择某几个具体的deployment */
   selectMultipleResource: (resource: Resource[]) => {
     return async (dispatch, getState: GetState) => {
@@ -212,7 +226,7 @@ const restActions = {
   },
 
   /** 修改当前资源的名称 */
-  initDetailResourceName: (resourceName: string) => {
+  initDetailResourceName: (resourceName: string, defaultIns?: string) => {
     return async (dispatch, getState: GetState) => {
       let {
         subRoot: { mode }
@@ -224,7 +238,7 @@ const restActions = {
       // 初始化 detailresourceInfo的信息
       dispatch(resourceActions.initDetailResourceInfo(resourceName));
 
-      mode === 'detail' && dispatch(resourceActions.initDetailResourceList(resourceName));
+      mode === 'detail' && dispatch(resourceActions.initDetailResourceList(resourceName, defaultIns));
     };
   },
 
@@ -242,30 +256,30 @@ const restActions = {
     };
   },
 
-  initDetailResourceList: (rsName?: string) => {
+  initDetailResourceList: (rsName?: string, defaultIns?: string) => {
     return async (dispatch, getState: GetState) => {
       let {
         route,
         subRoot: {
           resourceName,
-          resourceOption: { resourceSelection }
+          resourceOption: { ffResourceList }
         }
       } = getState();
       let list = [];
       if (rsName === resourceName) {
         let defaultResourceIns =
-          route.queries['resourceIns'] || (resourceSelection[0] && resourceSelection[0].metadata.name);
+          route.queries['resourceIns'] || (ffResourceList.selection && ffResourceList.selection.metadata.name);
         list.push({ value: defaultResourceIns, text: defaultResourceIns });
       } else if (rsName === 'lbcf_bg') {
-        resourceSelection[0] &&
-          resourceSelection[0].spec.backGroups &&
-          resourceSelection[0].spec.backGroups.forEach(item => {
+        ffResourceList.selection &&
+          ffResourceList.selection.spec.backGroups &&
+          ffResourceList.selection.spec.backGroups.forEach(item => {
             list.push({ value: item.name, text: item.name });
           });
       } else if (rsName === 'lbcf_br') {
-        resourceSelection[0] &&
-          resourceSelection[0].spec.backGroups &&
-          resourceSelection[0].spec.backGroups.forEach(item => {
+        ffResourceList.selection &&
+          ffResourceList.selection.spec.backGroups &&
+          ffResourceList.selection.spec.backGroups.forEach(item => {
             for (let i = 0; i < item.backendRecords.length; ++i) {
               list.push({ value: item.backendRecords[i].name, text: item.backendRecords[i].name });
             }
@@ -275,7 +289,7 @@ const restActions = {
         type: ActionType.InitDetailResourceList,
         payload: list
       });
-      dispatch(resourceActions.selectDetailResouceIns(list.length ? list[0].value : ''));
+      dispatch(resourceActions.selectDetailResouceIns(defaultIns ? defaultIns : list.length ? list[0].value : ''));
     };
   },
 
@@ -333,7 +347,7 @@ const restActions = {
     resourceName: string,
     isNeedClear: boolean = true
   ) => {
-    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+    return async (dispatch, getState: GetState) => {
       let { clusterId, rid } = getState().route.queries;
       // 判断是否需要展示ns
       dispatch(resourceActions.toggleIsNeedFetchNamespace(isNeedFetchNamespace));
@@ -375,4 +389,4 @@ const restActions = {
   }
 };
 
-export const resourceActions = extend(fetchResourceActions, queryResourceActions, restActions);
+export const resourceActions = extend(listResourceActions, restActions);

@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { Button, Icon, Modal, Text } from '@tea/component';
 import { selectable } from '@tea/component/table/addons/selectable';
-import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
+import { TablePanel, TablePanelColumnProps, FormPanel } from '@tencent/ff-component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Bubble } from '@tencent/tea-component';
@@ -21,10 +21,10 @@ import { ReduceRequest } from '../resourceDetail/ResourcePodPanel';
 export const ComputerStatus = {
   Running: 'success',
   Initializing: 'label',
-  Failed: 'danger'
+  Failed: 'danger',
 };
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
 interface State {
@@ -33,12 +33,12 @@ interface State {
   sorts?: SortBy[];
 }
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class ComputerTablePanel extends React.Component<RootProps, State> {
   state = {
     showOsTips: false,
     selectCluster: null,
-    sorts: []
+    sorts: [],
   };
 
   handleExpand() {
@@ -62,7 +62,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         Object.assign({}, urlParams, { mode: 'list', type: 'basic', resourceName: 'info' }),
         Object.assign({}, route.queries, {
           rid: route.queries['rid'],
-          clusterId: selectCluster.clusterId
+          clusterId: selectCluster.clusterId,
         })
       );
       hide();
@@ -84,25 +84,25 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
   };
 
   render() {
+    let { isShowMachine } = this.props.subRoot.computerState;
     return (
       <React.Fragment>
-        {this._renderTablePanel()}
+        {isShowMachine ? this._renderMachineTablePanel() : this._renderComputerTablePanel()}
         {this.renderOsTipsDialog()}
       </React.Fragment>
     );
   }
-
-  private _renderTablePanel() {
+  private _renderMachineTablePanel() {
     const { subRoot, actions, route, cluster } = this.props,
       urlParams = router.resolve(route),
-      { computer } = subRoot.computerState;
+      { machine } = subRoot.computerState;
 
     const columns: TablePanelColumnProps<Computer>[] = [
       {
         key: 'instanceId',
         header: t('节点名'),
         width: '15%',
-        render: x => {
+        render: (x) => {
           let instanceId = x.metadata.name;
 
           return (
@@ -119,41 +119,30 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               <Clip target={`#${x.id}`} />
             </Text>
           );
-        }
+        },
       },
       {
         key: 'status',
         header: t('状态'),
         width: '8%',
-        render: x => (
+        render: (x) => (
           <React.Fragment>
             <Text theme={ComputerStatus[x.status.phase]} verticalAlign="middle" parent={'p'}>
               {x.status.phase || '-'}
             </Text>
-            <div className="sl-editor-name">
-              {x.spec.unschedulable && (
-                <span className="text-overflow m-width text-danger" title={t('已封锁')}>
-                  {t('已封锁')}
-                </span>
-              )}
-            </div>
             {x.status.phase === 'Initializing' && (
-              // <Bubble content={t('点击查看详情')}>
-
               <Button
                 type="link"
-                // icon={x.status.phase === 'Failed' ? 'error' : 'loading'}
                 onClick={() => {
-                  actions.computer.select(x);
+                  actions.computer.machine.select(x);
                   actions.dialog.updateDialogState(DialogNameEnum.computerStatusDialog);
                 }}
               >
                 {t('查看创建详情')}
               </Button>
-              // </Bubble>
             )}
           </React.Fragment>
-        )
+        ),
       },
       {
         key: 'role',
@@ -161,65 +150,28 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         width: '10%',
         render: (x: Computer) => {
           return <Text verticalAlign="middle">{x.metadata.role}</Text>;
-        }
-      },
-      {
-        key: 'capacity',
-        header: t('配置'),
-        width: '12%',
-        render: x => {
-          let capacity = x.status.capacity;
-          let capacityInfo = {
-            cpu: capacity.cpu,
-            memory: capacity.memory
-          };
-          let finalCpu = ReduceRequest('cpu', capacityInfo),
-            finalmem = (ReduceRequest('memory', capacity) / 1024).toFixed(2);
-
-          return (
-            <React.Fragment>
-              <Text verticalAlign="middle">
-                {t('{{count}} 核, ', {
-                  count: finalCpu
-                })}
-              </Text>
-              <Text verticalAlign="middle">{`${finalmem} GB`}</Text>
-            </React.Fragment>
-          );
-        }
+        },
       },
       {
         key: 'address',
         header: t('IP地址'),
         width: '15%',
-        render: x => {
-          let finalIPInfo = x.status.addresses.filter(item => item.type !== 'Hostname');
-
+        render: (x) => {
           return (
             <React.Fragment>
-              {finalIPInfo.map((item, index) => (
-                <p key={index}>
-                  <Text id={item.type} verticalAlign="middle">
-                    {item.address}
-                  </Text>
-                  <Clip target={`#${item.type}`} />
-                </p>
-              ))}
+              <Text id={x.metadata.name} verticalAlign="middle">
+                {x.metadata.name}
+              </Text>
+              <Clip target={`#${x.metadata.name}`} />
             </React.Fragment>
           );
-        }
-      },
-      {
-        key: 'podCIDR',
-        header: t('PodCIDR'),
-        width: '12%',
-        render: x => <Text>{x.spec.podCIDR}</Text>
+        },
       },
       {
         key: 'createTime',
         header: t('创建时间'),
         width: '15%',
-        render: x => {
+        render: (x) => {
           let time = dateFormatter(new Date(x.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss');
 
           let [year, currentTime] = time.split(' ');
@@ -233,8 +185,163 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               </Text>
             </React.Fragment>
           );
+        },
+      },
+    ];
+
+    return (
+      <TablePanel
+        columns={columns}
+        action={actions.computer.machine}
+        model={machine}
+        isNeedContinuePagination={true}
+        topTip={
+          <React.Fragment>
+            <FormPanel.Text style={{ textAlign: 'center' }}>
+              {/* {t('当前有以下机器正在创建中,')} */}
+              <Button
+                type={'link'}
+                onClick={() => {
+                  actions.computer.showMachine(false);
+                }}
+              >
+                {t('返回集群节点列表')}
+              </Button>
+            </FormPanel.Text>
+          </React.Fragment>
         }
-      }
+      />
+    );
+  }
+
+  private _renderComputerTablePanel() {
+    const { subRoot, actions, route, cluster } = this.props,
+      urlParams = router.resolve(route),
+      { computer, machine } = subRoot.computerState;
+
+    const columns: TablePanelColumnProps<Computer>[] = [
+      {
+        key: 'instanceId',
+        header: t('节点名'),
+        width: '15%',
+        render: (x) => {
+          let instanceId = x.metadata.name;
+
+          return (
+            <Text overflow>
+              <a
+                id={x.id + ''}
+                href="javascript:;"
+                onClick={() => {
+                  this._handleClickForNavigate(instanceId);
+                }}
+              >
+                {instanceId}
+              </a>
+              <Clip target={`#${x.id}`} />
+            </Text>
+          );
+        },
+      },
+      {
+        key: 'status',
+        header: t('状态'),
+        width: '8%',
+        render: (x) => (
+          <React.Fragment>
+            <Text theme={ComputerStatus[x.status.phase]} verticalAlign="middle" parent={'p'}>
+              {x.status.phase || '-'}
+            </Text>
+            <div className="sl-editor-name">
+              {x.spec.unschedulable && (
+                <span className="text-overflow m-width text-danger" title={t('已封锁')}>
+                  {t('已封锁')}
+                </span>
+              )}
+            </div>
+          </React.Fragment>
+        ),
+      },
+      {
+        key: 'role',
+        header: t('角色'),
+        width: '10%',
+        render: (x: Computer) => {
+          return <Text verticalAlign="middle">{x.metadata.role}</Text>;
+        },
+      },
+      {
+        key: 'capacity',
+        header: t('配置'),
+        width: '12%',
+        render: (x) => {
+          let capacity = x.status.capacity;
+          let capacityInfo = {
+            cpu: capacity.cpu,
+            memory: capacity.memory,
+          };
+          let finalCpu = ReduceRequest('cpu', capacityInfo),
+            finalmem = (ReduceRequest('memory', capacity) / 1024).toFixed(2);
+
+          return (
+            <React.Fragment>
+              <Text verticalAlign="middle">
+                {t('{{count}} 核, ', {
+                  count: finalCpu,
+                })}
+              </Text>
+              <Text verticalAlign="middle">{`${finalmem} GB`}</Text>
+            </React.Fragment>
+          );
+        },
+      },
+      {
+        key: 'address',
+        header: t('IP地址'),
+        width: '15%',
+        render: (x) => {
+          let finalIPInfo = x.status.addresses.filter((item) => item.type !== 'Hostname');
+
+          return (
+            <React.Fragment>
+              {finalIPInfo.map((item, index) => (
+                <p key={index}>
+                  <Text id={item.type + index} verticalAlign="middle">
+                    {item.address}
+                  </Text>
+                  <Clip target={`#${item.type + index}`} />
+                </p>
+              ))}
+            </React.Fragment>
+          );
+        },
+      },
+      {
+        key: 'podCIDR',
+        header: t('PodCIDR'),
+        width: '12%',
+        render: (x) => <Text>{x.spec.podCIDR}</Text>,
+      },
+      {
+        key: 'createTime',
+        header: t('创建时间'),
+        width: '15%',
+        render: (x) => {
+          let time = dateFormatter(new Date(x.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss');
+
+          let [year, currentTime] = time.split(' ');
+          return (
+            <React.Fragment>
+              <Text parent="p" key={'year'}>
+                {year}
+              </Text>
+              <Text parent="p" key={'currentTime'}>
+                {currentTime}
+              </Text>
+            </React.Fragment>
+          );
+        },
+      },
     ];
 
     let emptyTips: JSX.Element = (
@@ -251,21 +358,39 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
     return (
       <TablePanel
         columns={columns}
-        getOperations={x => this._renderOperationCell(x)}
+        getOperations={(x) => this._renderOperationCell(x)}
         action={actions.computer}
         model={computer}
         emptyTips={emptyTips}
+        isNeedContinuePagination={true}
+        topTip={
+          machine.list.data.recordCount > 0 ? (
+            <React.Fragment>
+              <FormPanel.Text style={{ textAlign: 'center' }}>
+                {t('部分节点正在初始化，初始化完成后将会在节点列表中展示，')}
+                <Button
+                  type={'link'}
+                  onClick={() => {
+                    actions.computer.showMachine(true);
+                  }}
+                >
+                  {t('查看初始化主机列表')}
+                </Button>
+              </FormPanel.Text>
+            </React.Fragment>
+          ) : null
+        }
         addons={[
           selectable({
-            value: computer.selections.map(item => item.id as string),
-            onChange: keys => {
+            value: computer.selections.map((item) => item.id as string),
+            onChange: (keys) => {
               actions.computer.selects(
-                computer.list.data.records.filter(record => {
+                computer.list.data.records.filter((record) => {
                   return keys.indexOf(record.id as string) !== -1;
                 })
               );
-            }
-          })
+            },
+          }),
         ]}
       />
     );
@@ -276,12 +401,12 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
    */
   private _handleClickForNavigate(resourceIns: string) {
     let { actions, route, subRoot } = this.props,
-      { resourceList } = subRoot.resourceOption,
+      { ffResourceList } = subRoot.resourceOption,
       urlParams = router.resolve(route);
 
     // 选择当前选择的具体的resource
-    let resourceSelection = resourceList.data.records.find(item => item.metadata.name === resourceIns);
-    actions.resource.selectResource([resourceSelection]);
+    let resourceSelection = ffResourceList.list.data.records.find((item) => item.metadata.name === resourceIns);
+    actions.resource.select(resourceSelection);
     // 进行路由的跳转
     router.navigate(
       Object.assign({}, urlParams, { mode: 'detail' }),
@@ -331,7 +456,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
 
   private _handleDeleteComputer(computer: Computer, clusterId: string) {
     let { actions } = this.props;
-
+    actions.computer.fetchdeleteMachineResouceIns(computer.metadata.name);
     actions.workflow.deleteComputer.start([computer]);
     actions.computerPod.applyFilter({ clusterId, specificName: computer.metadata.name });
     actions.computer.selects([computer]);

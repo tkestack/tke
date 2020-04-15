@@ -1,47 +1,46 @@
+/* eslint-disable */
 declare module Redux {
-
   interface ActionCreator extends Function {
-      (...args: any[]): any;
+    (...args: any[]): any;
   }
 
   interface Reducer extends Function {
-      (state: any, action: any): any;
+    (state: any, action: any): any;
   }
 
   interface Dispatch extends Function {
-      (action: any): any;
+    (action: any): any;
   }
 
   interface StoreMethods {
-      dispatch: Dispatch;
-      getState(): any;
+    dispatch: Dispatch;
+    getState(): any;
   }
 
-
   interface MiddlewareArg {
-      dispatch: Dispatch;
-      getState: Function;
+    dispatch: Dispatch;
+    getState: Function;
   }
 
   interface Middleware extends Function {
-      (obj: MiddlewareArg): Function;
+    (obj: MiddlewareArg): Function;
   }
 
   class Store {
-      getReducer(): Reducer;
-      replaceReducer(nextReducer: Reducer): void;
-      dispatch(action: any): any;
-      getState(): any;
-      subscribe(listener: Function): Function;
+    getReducer(): Reducer;
+    replaceReducer(nextReducer: Reducer): void;
+    dispatch(action: any): any;
+    getState(): any;
+    subscribe(listener: Function): Function;
   }
 
-  function createStore(reducer: Reducer, initialState?: any, enhancer?: ()=>any): Store;
+  function createStore(reducer: Reducer, initialState?: any, enhancer?: () => any): Store;
   function bindActionCreators<T>(actionCreators: T, dispatch: Dispatch): T;
   function combineReducers(reducers: any): Reducer;
   function applyMiddleware(...middlewares: Middleware[]): Function;
   function compose<T extends Function>(...functions: Function[]): T;
 }
 
-declare module "redux" {
+declare module 'redux' {
   export = Redux;
 }
