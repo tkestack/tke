@@ -374,9 +374,6 @@ func scrapeConfigForPrometheus() string {
       - source_labels: [__meta_kubernetes_pod_annotation_tke_prometheus_io_scrape]
         action: keep
         regex: true
-      - source_labels: [__meta_kubernetes_namespace]
-        action: replace
-        target_label: namespace
       - source_labels: [__meta_kubernetes_pod_name]
         action: keep
         regex: tke-monitor-controller.+
@@ -403,7 +400,7 @@ func scrapeConfigForPrometheus() string {
       - source_labels: [ __name__ ]
         regex: 'project_(.*)'
         action: keep
-      - regex: "instance|job|pod_name|scope|subresource"
+      - regex: "instance|job|pod_name|scope|node|subresource"
         action: labeldrop
 `
 	return cfgStr
