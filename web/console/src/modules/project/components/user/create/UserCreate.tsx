@@ -12,22 +12,30 @@ import { getStatus } from '../../../../common/validate';
 const { useState, useEffect, useRef } = React;
 const { scrollable, selectable, removeable } = Table.addons;
 
-export const BaseInfoPanel = (props) => {
+export const UserCreate = (props) => {
   const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
-  const action = actions.commonUser.associate.userList;
-  const { filterUsers, userPlainList, policyPlainList } = state;
-  const userList = userPlainList.list.data.records || [];
+  // const action = actions.commonUser.associate.userList;
+  const { route, filterUsers, userPlainList, manager, policyPlainList } = state;
+  // const userList = userPlainList.list.data.records || [];
+  const userList = manager.list.data.records || [];
   let strategyList = policyPlainList.list.data.records || [];
-  strategyList = strategyList.filter((item) => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
-  const tenantID = strategyList.filter((item) => item.displayName === '平台管理员').tenantID;
-  console.log('BaseInfoPanel userPlainList state:', userPlainList);
+  strategyList = strategyList.filter(
+    (item) => ['业务管理员', '业务成员', '业务只读'].includes(item.displayName) === false
+  );
+  const tenantID = strategyList.filter((item) => item.displayName === '业务管理员').tenantID;
+  console.log('BaseInfoPanel manager state:', manager);
   const [inputValue, setInputValue] = useState('');
   const [targetKeys, setTargetKeys] = useState([]);
 
   const [userInputValue, setUserInputValue] = useState('');
   const [userTargetKeys, setUserTargetKeys] = useState([]);
+
+  useEffect(() => {
+    actions.manager.fetch();
+    // actions.policy.associate.policyList.applyFilter({ resource: 'project', resourceID: '' });
+  }, []);
 
   // 处理外层滚动
   const bottomAffixRef = useRef(null);
@@ -45,25 +53,40 @@ export const BaseInfoPanel = (props) => {
 
   function onSubmit(values, form) {
     console.log('submit .....', values, targetKeys, userTargetKeys);
-    const { displayName, description, role } = values;
-    actions.group.create.addGroupWorkflow.start([
-      {
-        id: uuid(),
-        spec: {
-          displayName,
-          description,
-          extra: {
-            policies: role === 'custom' ? targetKeys.join(',') : role,
-          },
-        },
-        status: {
-          users: userTargetKeys.map((id) => ({
-            id,
-          })),
-        },
-      },
-    ]);
-    actions.group.create.addGroupWorkflow.perform();
+    const { role } = values;
+    // let userInfo: User = {
+    let userInfo = {
+      id: uuid(),
+      projectId: route.queries.projectId,
+      users: userTargetKeys.map((id) => ({
+        id,
+      })),
+      policies: role === 'custom' ? targetKeys : [role],
+    };
+    console.log('submit userInfo: ', userInfo);
+    actions.user.addUser.start([userInfo]);
+    actions.user.addUser.perform();
+    // router.navigate({ module: 'user' });
+
+    // actions.group.create.addGroupWorkflow.start([
+    //   {
+    //     id: uuid(),
+    //     spec: {
+    //       displayName,
+    //       description,
+    //       extra: {
+    //         policies: role === 'custom' ? targetKeys.join(',') : role,
+    //       },
+    //     },
+    //     status: {
+    //       users: userTargetKeys.map((id) => ({
+    //         id,
+    //       })),
+    //     },
+    //   },
+    // ]);
+    // actions.group.create.addGroupWorkflow.perform();
+
     // router.navigate({ module: 'user', sub: 'group' });
     // setTimeout(form.reset);
   }
@@ -76,22 +99,11 @@ export const BaseInfoPanel = (props) => {
      * useEffect(() => form.initialize({ }), []);
      */
     initialValuesEqual: () => true,
-    initialValues: { displayName: '', description: '', role: '' },
+    initialValues: { role: '' },
     validate: ({ displayName, description, role }) => {
       const errors = {
-        displayName: undefined,
-        description: undefined,
         role: undefined,
       };
-      if (!displayName) {
-        errors.displayName = t('请输入用户账号');
-      } else if (displayName.length > 60) {
-        errors.displayName = t('请输入用户组名称，不超过60个字符');
-      }
-
-      if (description.length > 255) {
-        errors.description = t('请输入用户组描述，不超过255个字符');
-      }
 
       if (!role) {
         errors.role = t('请选择平台角色');
@@ -101,8 +113,6 @@ export const BaseInfoPanel = (props) => {
     },
   });
 
-  const displayName = useField('displayName', form);
-  const description = useField('description', form);
   const role = useField('role', form);
 
   useEffect(() => {
@@ -123,54 +133,12 @@ export const BaseInfoPanel = (props) => {
       <Card>
         <Card.Body>
           <Form>
-            <Form.Item
-              label={t('用户组名称')}
-              required
-              status={getStatus(displayName.meta, validating)}
-              message={getStatus(displayName.meta, validating) === 'error' ? displayName.meta.error : ''}
-            >
-              <Input
-                {...displayName.input}
-                size="l"
-                autoComplete="off"
-                placeholder={t('请输入用户组名称，不超过60个字符')}
-              />
-            </Form.Item>
-            <Form.Item
-              label={t('用户组描述')}
-              status={getStatus(description.meta, validating)}
-              message={getStatus(description.meta, validating) === 'error' ? description.meta.error : ''}
-            >
-              <Input
-                {...description.input}
-                multiline
-                size="l"
-                autoComplete="off"
-                placeholder={t('请输入用户组描述，不超过255个字符')}
-              />
-            </Form.Item>
-            <Form.Item label={t('关联用户')}>
-              {/*下边SearchBox的改造*/}
-              {/*<SearchBox*/}
-              {/*    value={userInputValue}*/}
-              {/*    onChange={(keyword) => {*/}
-              {/*      action.changeKeyword((keyword || '').trim());*/}
-              {/*      setUserInputValue(keyword);*/}
-              {/*    }}*/}
-              {/*    onSearch={(keyword) => {*/}
-              {/*      action.performSearch((keyword || '').trim());*/}
-              {/*    }}*/}
-              {/*    onClear={() => {*/}
-              {/*      action.changeKeyword('');*/}
-              {/*      action.performSearch('');*/}
-              {/*      setUserInputValue('');*/}
-              {/*    }}*/}
-              {/*/>*/}
+            <Form.Item label={t('编辑成员')}>
               <Transfer
                 leftCell={
                   <Transfer.Cell
                     scrollable={false}
-                    title="当前用户组可关联以下用户"
+                    title="当前账户可分配以下责任人"
                     tip="支持按住 shift 键进行多选"
                     header={<SearchBox value={userInputValue} onChange={(value) => setUserInputValue(value)} />}
                   >
@@ -192,23 +160,23 @@ export const BaseInfoPanel = (props) => {
               />
             </Form.Item>
             <Form.Item
-              label={t('平台角色')}
+              label={t('业务角色')}
               required
               status={getStatus(role.meta, validating)}
               message={getStatus(role.meta, validating) === 'error' ? role.meta.error : ''}
             >
               <Radio.Group {...role.input} layout="column">
-                <Radio name={tenantID ? `pol-${tenantID}-administrator` : 'pol-default-administrator'}>
-                  <Text>管理员</Text>
-                  <Text parent="div">平台预设角色，允许访问和管理所有平台和业务的功能和资源</Text>
+                <Radio name={tenantID ? `pol-${tenantID}-project-owner` : 'pol-default-project-owner'}>
+                  <Text>所有者</Text>
+                  <Text parent="div">预设业务角色，允许管理业务自身和业务下的所有功能和资源</Text>
                 </Radio>
-                <Radio name={tenantID ? `pol-${tenantID}-platform` : 'pol-default-platform'}>
-                  <Text>平台用户</Text>
-                  <Text parent="div">平台预设角色，允许访问和管理大部分平台功能，可以新建集群及业务</Text>
+                <Radio name={tenantID ? `pol-${tenantID}-project-member` : 'pol-default-project-member'}>
+                  <Text>成员</Text>
+                  <Text parent="div">预设业务角色，允许访问和管理所在业务下的所有功能和资源</Text>
                 </Radio>
-                <Radio name={tenantID ? `pol-${tenantID}-viewer` : 'pol-default-viewer'}>
-                  <Text>租户</Text>
-                  <Text parent="div">平台预设角色，不绑定任何平台权限，仅能登录</Text>
+                <Radio name={tenantID ? `pol-${tenantID}-project-viewer` : 'pol-default-project-viewer'}>
+                  <Text>只读</Text>
+                  <Text parent="div">预设业务角色，仅能够查看业务下资源</Text>
                 </Radio>
                 <Radio name="custom">
                   <Text>自定义</Text>
@@ -216,7 +184,7 @@ export const BaseInfoPanel = (props) => {
                     leftCell={
                       <Transfer.Cell
                         scrollable={false}
-                        title="为这个用户自定义独立的权限"
+                        title="为这个用户选择单个角色"
                         tip="支持按住 shift 键进行多选"
                         header={<SearchBox value={inputValue} onChange={(value) => setInputValue(value)} />}
                       >

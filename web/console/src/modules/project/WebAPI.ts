@@ -430,7 +430,7 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
     let list = response.data;
     userList = list.items
       ? list.items.map(item => {
-          return { id: uuid(), displayName: item.spec && item.spec.displayName, name: item.spec && item.spec.name };
+          return { id: item.spec && item.spec.id, displayName: item.spec && item.spec.displayName, name: item.spec && item.spec.name };
         })
       : [];
   }

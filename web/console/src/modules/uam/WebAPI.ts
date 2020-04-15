@@ -226,23 +226,25 @@ export async function getUser(name: string) {
  * @param [userInfo] 用户数据, 这里和actions.user.addUser.start([userInfo]);的对应
  */
 export async function updateUser(user: User) {
+  console.log('updateUser user is:', user);
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
-    const url = reduceK8sRestfulPath({ resourceInfo, specificName: user.metadata.name });
-    const response = await reduceNetworkRequest({
-      method: Method.put,
-      url,
-      data: user
-    });
-    if (response.code === 0) {
-      setTimeout(() => {
-        tips.success(t('修改成功'), 2000);
-      }, 1000);
-      return operationResult(response.data);
-    } else {
-      // 是否给tip得看具体返回的数据
-      return operationResult(user, response);
-    }
+    // const url = reduceK8sRestfulPath({ resourceInfo, specificName: user.metadata.name });
+    const url = `/apis/auth.tkestack.io/v1/projects/{project-ID}/users`;
+    // const response = await reduceNetworkRequest({
+    //   method: Method.post,
+    //   url,
+    //   data: user
+    // });
+    // if (response.code === 0) {
+    //   setTimeout(() => {
+    //     tips.success(t('修改成功'), 2000);
+    //   }, 1000);
+    //   return operationResult(response.data);
+    // } else {
+    //   // 是否给tip得看具体返回的数据
+    //   return operationResult(user, response);
+    // }
   } catch (error) {
     tips.error(error.response.data.message, 2000);
 
@@ -258,9 +260,19 @@ export async function updateUser(user: User) {
 export async function fetchStrategyList(query: QueryState<StrategyFilter>) {
   let strategys: Strategy[] = [];
   let recordCount = 0;
-  const { search, paging } = query;
+  const { search, paging, filter } = query;
+  console.log('fetchStrategyList query is:', query);
+
+  let key = 'spec.scope!';
+  if (filter.type === 'platform') {
+    key = 'spec.scope!';
+  } else if (filter.type === 'business') {
+    key = 'spec.scope';
+  }
+
   const queryObj = {
     fieldSelector: {
+      [key]: 'project',
       keyword: search || ''
     }
   };
@@ -979,6 +991,8 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
   let queryString = '';
   if (filter.resource === 'platform') {
     queryString = '?fieldSelector=spec.scope!=project';
+  } else if (filter.resource === 'project') {
+    queryString = '?fieldSelector=spec.scope=project';
   }
 
   const resourceInfo: ResourceInfo = resourceConfig()['policy'];
