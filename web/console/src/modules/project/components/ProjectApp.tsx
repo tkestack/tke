@@ -39,17 +39,17 @@ export interface RootProps extends RootState {
   actions?: typeof allActions;
 }
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 @((router.serve as any)())
 class ProjectApp extends React.Component<RootProps, {}> {
   render() {
     let { route } = this.props,
       urlParam = router.resolve(route);
-
-    if (!urlParam['sub']) {
+    const { sub, tab, action } = urlParam;
+    if (!sub) {
       return (
         <ContentView>
           <ContentView.Header>
@@ -61,9 +61,9 @@ class ProjectApp extends React.Component<RootProps, {}> {
           </ContentView.Body>
         </ContentView>
       );
-    } else if (urlParam['sub'] === 'detail') {
+    } else if (sub === 'detail') {
       return <ProjectDetail {...this.props} />;
-    } else if (urlParam['sub'] === 'create') {
+    } else if (sub === 'create') {
       return (
         <ContentView>
           <ContentView.Header>
@@ -74,17 +74,18 @@ class ProjectApp extends React.Component<RootProps, {}> {
           </ContentView.Body>
         </ContentView>
       );
-    } else if (urlParam['sub'] === 'createNS') {
-      return (
-        <ContentView>
-          <ContentView.Header>
-            <ProjectHeadPanel isNeedBack={true} title={t('新建Namespace')} />
-          </ContentView.Header>
-          <ContentView.Body>
-            <CreateNamespacePanel />
-          </ContentView.Body>
-        </ContentView>
-      );
     }
+    // else if (tab === 'namespace' && action === 'createNS') {
+    //   return (
+    //     <ContentView>
+    //       <ContentView.Header>
+    //         <ProjectHeadPanel isNeedBack={true} title={t('新建Namespace')} />
+    //       </ContentView.Header>
+    //       <ContentView.Body>
+    //         <CreateNamespacePanel />
+    //       </ContentView.Body>
+    //     </ContentView>
+    //   );
+    // }
   }
 }

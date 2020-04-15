@@ -82,10 +82,11 @@ export const UserTablePanel = () => {
       key: 'policies',
       header: t('角色'),
       render: (user) => {
-        const content = Object.values(JSON.parse(user.spec.extra.policies)).join(',');
+        const extra = user.spec.extra;
+        const content = extra && extra.policies ? Object.values(JSON.parse(extra.policies)).join(',') : '-';
         return (
           <Text>
-            {content || '-'}
+            {content}
             <Icon
               onClick={() => {
                 // actions.cluster.selectCluster([x]);

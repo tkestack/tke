@@ -15,7 +15,7 @@ import {
   Tabs,
   Text,
   Tooltip,
-  Transfer
+  Transfer,
 } from '@tea/component';
 import { removeable, selectable } from '@tea/component/table/addons';
 import { TablePanel } from '@tencent/ff-component';
@@ -50,27 +50,27 @@ const tabs = [
   { id: 'actions', label: '策略语法' },
   { id: 'users', label: '关联用户' },
   { id: 'groups', label: '关联用户组' },
-  { id: 'roles', label: '已关联角色' }
+  { id: 'roles', label: '已关联角色' },
 ];
 export const StrategyDetailsPanel = () => {
-  const state = useSelector(state => state);
+  const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
   const { route, associatedUsersList, userList, getStrategy, updateStrategy } = state;
-  const associatedUsersListRecords = associatedUsersList.list.data.records.map(item => item.metadata.name);
+  const associatedUsersListRecords = associatedUsersList.list.data.records.map((item) => item.metadata.name);
   const userListRecords = userList.list.data.records;
   const getStrategyData = getStrategy.data[0];
   const updateStrategyData = updateStrategy.data[0];
 
-  const { sub } = router.resolve(route);
+  const categoryId = route.queries['id'];
 
   const [modalVisible, setModalVisible] = useState(false);
   const [basicParamsValue, setBasicParamsValue] = useState({ name: '', description: '' });
   const [userMsgsValue, setUserMsgsValue] = useState({
     inputValue: '',
     targetKeys: associatedUsersListRecords,
-    newTargetKeys: []
+    newTargetKeys: [],
   });
   const [editValue, setEditValue] = useState({ editorStatement: {}, editBasic: false });
   const [editorValue, setEditorValue] = useState({ ready: false, readOnly: true });
@@ -80,7 +80,7 @@ export const StrategyDetailsPanel = () => {
     // 请求策略详情
     actions.strategy.getStrategy.fetch({
       noCache: true,
-      data: { id: sub }
+      data: { id: categoryId },
     });
 
     return () => {
@@ -91,12 +91,12 @@ export const StrategyDetailsPanel = () => {
 
   useEffect(() => {
     // 初始化策略详情
-    if (getStrategyData && getStrategyData.target.metadata.name === sub) {
+    if (getStrategyData && getStrategyData.target.metadata.name === categoryId) {
       const showStrategy = getStrategyData.target;
       setStrategy(showStrategy);
       setBasicParamsValue({ name: showStrategy.spec.displayName, description: showStrategy.spec.description });
     }
-  }, [getStrategyData, sub]);
+  }, [getStrategyData, categoryId]);
 
   useEffect(() => {
     // 更新strategy
@@ -124,7 +124,7 @@ export const StrategyDetailsPanel = () => {
     {
       key: 'name',
       header: '用户',
-      render: user => {
+      render: (user) => {
         if (userMsgsValue.targetKeys.indexOf(user.metadata.name) !== -1) {
           return (
             <Tooltip title="用户已被关联">
@@ -137,16 +137,16 @@ export const StrategyDetailsPanel = () => {
             {user.spec.name}({user.spec.displayName})
           </p>
         );
-      }
-    }
+      },
+    },
   ];
   const columns: TableColumn<User>[] = [
     {
       key: 'name',
       header: t('关联用户'),
-      render: record => <Text parent="div">{record.spec.displayName}</Text>
+      render: (record) => <Text parent="div">{record.spec.displayName}</Text>,
     },
-    { key: 'operation', header: t('操作'), render: record => _renderOperationCell(record.metadata.name) }
+    { key: 'operation', header: t('操作'), render: (record) => _renderOperationCell(record.metadata.name) },
   ];
   return (
     <React.Fragment>
@@ -175,7 +175,7 @@ export const StrategyDetailsPanel = () => {
                   <Input
                     value={name}
                     className={isNameError && 'is-error'}
-                    onChange={value => {
+                    onChange={(value) => {
                       setBasicParamsValue({ ...basicParamsValue, name: value });
                     }}
                   />
@@ -190,7 +190,7 @@ export const StrategyDetailsPanel = () => {
                   <Input
                     multiline
                     value={description}
-                    onChange={value => setBasicParamsValue({ ...basicParamsValue, description: value })}
+                    onChange={(value) => setBasicParamsValue({ ...basicParamsValue, description: value })}
                   />
                 ) : (
                   <span className="item-descr-txt">{strategy.spec.description || '-'}</span>
@@ -224,9 +224,9 @@ export const StrategyDetailsPanel = () => {
         <Card.Body>
           <Tabs
             tabs={tabs}
-            onActive={tab => {
+            onActive={(tab) => {
               if (tab.id === 'users') {
-                actions.associateActions.applyFilter({ search: sub });
+                actions.associateActions.applyFilter({ search: categoryId });
               }
             }}
           >
@@ -286,7 +286,7 @@ export const StrategyDetailsPanel = () => {
                           header={
                             <SearchBox
                               value={userMsgsValue.inputValue}
-                              onChange={value => {
+                              onChange={(value) => {
                                 setUserMsgsValue({ ...userMsgsValue, inputValue: value });
                                 // 进行用户的搜索
                                 actions.user.performSearch(value);
@@ -295,7 +295,7 @@ export const StrategyDetailsPanel = () => {
                           }
                         >
                           <Table
-                            records={userListRecords.filter(user => {
+                            records={userListRecords.filter((user) => {
                               return (
                                 (user.spec.name &&
                                   (user.spec.name.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase()) ||
@@ -303,27 +303,27 @@ export const StrategyDetailsPanel = () => {
                                 user.spec.displayName.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase())
                               );
                             })}
-                            rowDisabled={record => {
+                            rowDisabled={(record) => {
                               return userMsgsValue.targetKeys.indexOf(record.metadata.name) !== -1;
                             }}
-                            recordKey={record => {
+                            recordKey={(record) => {
                               return record.metadata.name;
                             }}
                             columns={modalColumns}
                             addons={[
                               selectable({
                                 value: userMsgsValue.newTargetKeys.concat(userMsgsValue.targetKeys),
-                                onChange: keys => {
+                                onChange: (keys) => {
                                   const newKeys = [];
-                                  keys.forEach(item => {
+                                  keys.forEach((item) => {
                                     if (userMsgsValue.targetKeys.indexOf(item) === -1) {
                                       newKeys.push(item);
                                     }
                                   });
                                   setUserMsgsValue({ ...userMsgsValue, newTargetKeys: newKeys });
                                 },
-                                rowSelect: true
-                              })
+                                rowSelect: true,
+                              }),
                             ]}
                           />
                         </Transfer.Cell>
@@ -331,17 +331,19 @@ export const StrategyDetailsPanel = () => {
                       rightCell={
                         <Transfer.Cell title={t(`已选择 (${userMsgsValue.newTargetKeys.length}条)`)}>
                           <Table
-                            records={userListRecords.filter(i => userMsgsValue.newTargetKeys.includes(i.metadata.name))}
+                            records={userListRecords.filter((i) =>
+                              userMsgsValue.newTargetKeys.includes(i.metadata.name)
+                            )}
                             recordKey="name"
                             columns={modalColumns}
                             addons={[
                               removeable({
-                                onRemove: key =>
+                                onRemove: (key) =>
                                   setUserMsgsValue({
                                     ...userMsgsValue,
-                                    newTargetKeys: userMsgsValue.newTargetKeys.filter(i => i !== key)
-                                  })
-                              })
+                                    newTargetKeys: userMsgsValue.newTargetKeys.filter((i) => i !== key),
+                                  }),
+                              }),
                             ]}
                           />
                         </Transfer.Cell>
@@ -396,7 +398,7 @@ export const StrategyDetailsPanel = () => {
     const { name, description } = basicParamsValue;
     await actions.strategy.updateStrategy.fetch({
       noCache: true,
-      data: { ...strategy, name, description }
+      data: { ...strategy, name, description },
     });
     setEditValue({ ...editValue, editBasic: false });
   }
@@ -413,7 +415,7 @@ export const StrategyDetailsPanel = () => {
     // strategy.statement = editValue.editorStatement;
     await actions.strategy.updateStrategy.fetch({
       noCache: true,
-      data: { ...strategy, statement: editValue.editorStatement }
+      data: { ...strategy, statement: editValue.editorStatement },
     });
     setEditValue({ ...editValue, editorStatement: strategy.statement });
     setEditorValue({ ...editorValue, readOnly: true });
@@ -432,7 +434,7 @@ export const StrategyDetailsPanel = () => {
   }
 
   function _onEdit(instance) {
-    instance.getValue().then(value => {
+    instance.getValue().then((value) => {
       setEditValue({ ...editValue, editorStatement: JSON.parse(value) });
     });
   }
@@ -441,10 +443,10 @@ export const StrategyDetailsPanel = () => {
     const yes = await Modal.confirm({
       message: t('确认删除当前所选用户？'),
       okText: t('删除'),
-      cancelText: t('取消')
+      cancelText: t('取消'),
     });
     if (yes) {
-      actions.associateActions.removeAssociatedUser.start([{ id: sub, userNames: [name] }]);
+      actions.associateActions.removeAssociatedUser.start([{ id: categoryId, userNames: [name] }]);
       actions.associateActions.removeAssociatedUser.perform();
     }
   }
@@ -458,14 +460,14 @@ export const StrategyDetailsPanel = () => {
   }
   function _onSubmit() {
     actions.associateActions.associateUser.start([
-      { id: strategy.metadata.name, userNames: userMsgsValue.newTargetKeys }
+      { id: strategy.metadata.name, userNames: userMsgsValue.newTargetKeys },
     ]);
     actions.associateActions.associateUser.perform();
     setModalVisible(false);
     setUserMsgsValue({
       ...userMsgsValue,
       targetKeys: userMsgsValue.targetKeys.concat(userMsgsValue.newTargetKeys),
-      newTargetKeys: []
+      newTargetKeys: [],
     });
   }
 };

@@ -1,17 +1,37 @@
-import { FFListModel, WorkflowState } from '@tencent/ff-redux';
+import { FetcherState, FFListModel, OperationResult, RecordSet, WorkflowState } from '@tencent/ff-redux';
 
 import { RouteState } from '../../../../helpers';
-import { Region, RegionFilter } from '../../common/models';
+import { Region, RegionFilter, ResourceFilter } from '../../common/models';
 import { Resource } from '../../common/models/Resource';
+// import {
+//     Cluster, ClusterFilter, Manager, ManagerFilter, Namespace, NamespaceEdition, NamespaceFilter,
+//     NamespaceOperator, Project, ProjectEdition, ProjectFilter
+// } from './';
 import {
-    Cluster, ClusterFilter, Manager, ManagerFilter, Namespace, NamespaceEdition, NamespaceFilter,
-    NamespaceOperator, Project, ProjectEdition, ProjectFilter
-} from './';
+  User,
+  Member,
+  UserFilter,
+  Strategy,
+  StrategyFilter,
+  PolicyEditor,
+  PolicyPlain,
+  PolicyFilter,
+  PolicyAssociation,
+  GroupAssociation,
+  GroupFilter,
+  GroupPlain,
+  RoleAssociation,
+  RoleFilter,
+  RolePlain,
+  Cluster, ClusterFilter, Manager, ManagerFilter, Namespace, NamespaceEdition, NamespaceFilter,
+  NamespaceOperator, Project, ProjectEdition, ProjectFilter
+} from './index';
 
 type ProjectWorkflow = WorkflowState<Project, void>;
 type ProjectEditWorkflow = WorkflowState<ProjectEdition, void>;
 type NamespaceWorkflow = WorkflowState<Namespace, NamespaceOperator>;
 type NamespaceEditWorkflow = WorkflowState<NamespaceEdition, NamespaceOperator>;
+type userWorkflow = WorkflowState<Member, any>;
 
 export interface RootState {
   /** 路由 */
@@ -65,4 +85,41 @@ export interface RootState {
 
   /**当前管理员 */
   adminstratorInfo?: Resource;
+
+  /** 用户信息 */
+  userList?: FFListModel<User, UserFilter>;
+  addUserWorkflow?: userWorkflow;
+  removeUserWorkflow?: userWorkflow;
+  user?: User;
+  filterUsers?: User[];
+  getUser?: OperationResult<User>;
+  updateUser?: FetcherState<RecordSet<any>>;
+  userStrategyList?: FFListModel<Strategy, ResourceFilter>;
+
+  /** 策略相关 */
+  policyEditor?: PolicyEditor;
+
+  /** 关联策略相关，单独设置，不赋予任何场景相关的命名 */
+  policyPlainList?: FFListModel<PolicyPlain, PolicyFilter>;
+  policyAssociatedList?: FFListModel<PolicyPlain, PolicyFilter>;
+  associatePolicyWorkflow?: WorkflowState<PolicyAssociation, any>;
+  disassociatePolicyWorkflow?: WorkflowState<PolicyAssociation, any>;
+  policyAssociation?: PolicyAssociation;
+  policyFilter?: PolicyFilter;
+
+  /** 关联角色相关，单独设置，不赋予任何场景相关的命名 */
+  rolePlainList?: FFListModel<RolePlain, RoleFilter>;
+  roleAssociatedList?: FFListModel<RolePlain, RoleFilter>;
+  associateRoleWorkflow?: WorkflowState<RoleAssociation, any>;
+  disassociateRoleWorkflow?: WorkflowState<RoleAssociation, any>;
+  roleAssociation?: RoleAssociation;
+  roleFilter?: RoleFilter;
+
+  /** 关联用户组相关，单独设置，不赋予任何场景相关的命名 */
+  groupPlainList?: FFListModel<GroupPlain, GroupFilter>;
+  groupAssociatedList?: FFListModel<GroupPlain, GroupFilter>;
+  associateGroupWorkflow?: WorkflowState<GroupAssociation, any>;
+  disassociateGroupWorkflow?: WorkflowState<GroupAssociation, any>;
+  groupAssociation?: GroupAssociation;
+  groupFilter?: GroupFilter;
 }

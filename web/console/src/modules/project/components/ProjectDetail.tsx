@@ -13,23 +13,25 @@ import { NamespaceTablePanel } from './NamespaceTablePanel';
 import { RootProps } from './ProjectApp';
 import { ProjectDetailPanel } from './ProjectDetailPanel';
 import { SubpageHeadPanel } from './SubpageHeadPanel';
-
+import { ProjectHeadPanel } from '@src/modules/project/components/ProjectHeadPanel';
+import { CreateNamespacePanel } from '@src/modules/project/components/CreateNamespacePanel';
+import { UserPanel } from './user/UserPanel';
 interface ProjectDetailState {
   /** tabKey */
   tabId?: string;
 }
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class ProjectDetail extends React.Component<RootProps, ProjectDetailState> {
   constructor(props, context) {
     super(props, context);
     let { route } = props;
     let urlParams = router.resolve(route);
     this.state = {
-      tabId: urlParams['tab'] || 'info'
+      tabId: urlParams['tab'] || 'info',
     };
   }
 
@@ -47,40 +49,71 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
     let tabs = [
       {
         id: 'info',
-        label: t('业务信息')
+        label: t('业务信息'),
       },
+      { id: 'member', label: t('成员列表') },
       {
         id: 'namespace',
-        label: t('Namespace列表')
-      }
+        label: t('Namespace列表'),
+      },
     ];
 
     /** 默认选中第一个tab */
     let selected = tabs[0];
-    let finder = tabs.find(x => x.id === this.state.tabId);
+    let finder = tabs.find((x) => x.id === this.state.tabId);
     if (finder) {
       selected = finder;
     }
     let { route } = this.props;
     let urlParams = router.resolve(route);
+    const { sub, tab, action } = urlParams;
+    // else if (tab === 'namespace' && action === 'createNS') {
+    //     return (
+    //         <ContentView>
+    //           <ContentView.Header>
+    //             <ProjectHeadPanel isNeedBack={true} title={t('新建Namespace')} />
+    //           </ContentView.Header>
+    //           <ContentView.Body>
+    //             <CreateNamespacePanel />
+    //           </ContentView.Body>
+    //         </ContentView>
+    //     );
+    //   }
+    let content;
+    console.log('selected is:', selected, urlParams, sub, tab, action);
+    if (action === 'createNS') {
+      content = <ProjectHeadPanel isNeedBack={true} title={t('新建Namespace')} />;
+    } else if (action === 'create') {
+      content = <ProjectHeadPanel isNeedBack={true} title={t('添加成员')} />;
+    } else {
+      content = <SubpageHeadPanel />;
+    }
     return (
       <ContentView>
-        <ContentView.Header>
-          <SubpageHeadPanel />
-        </ContentView.Header>
+        <ContentView.Header>{content}</ContentView.Header>
         <ContentView.Body>
           <Tabs
             ceiling
             tabs={tabs}
             activeId={selected.id}
-            onActive={tab => {
-              router.navigate(Object.assign({}, urlParams, { tab: tab.id }), route.queries);
+            onActive={(tab) => {
+              console.log('urlParams is:', urlParams);
+              router.navigate(Object.assign({}, urlParams, { tab: tab.id, action: '' }), route.queries);
               this.setState({ tabId: tab.id });
             }}
           >
             <TabPanel id="namespace">
-              <NamespaceActionPanel {...this.props} />
-              <NamespaceTablePanel {...this.props} />
+              {action === 'createNS' ? (
+                <CreateNamespacePanel />
+              ) : (
+                <>
+                  <NamespaceActionPanel {...this.props} />
+                  <NamespaceTablePanel {...this.props} />
+                </>
+              )}
+            </TabPanel>
+            <TabPanel id="member">
+              <UserPanel />
             </TabPanel>
             <TabPanel id="info">
               <ProjectDetailPanel {...this.props} />
