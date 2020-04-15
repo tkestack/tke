@@ -12,7 +12,6 @@ export const UserActionPanel = (props) => {
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { route, userList } = state;
-  console.log('route:', route, route.queries);
   return (
     <Table.ActionPanel>
       <Justify

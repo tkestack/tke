@@ -7,5 +7,3 @@ export { Region, RegionFilter } from './Region';
 export { User, UserFilter, UserPlain, Member } from './User';
 export { Strategy, StrategyFilter } from './Strategy';
 export { Policy, PolicyFilter, PolicyAssociation, PolicyPlain, PolicyInfoFilter, PolicyEditor } from './Policy';
-export { RoleAssociation, RolePlain, RoleFilter } from './Role';
-export { GroupAssociation, GroupPlain, GroupFilter } from './Group';

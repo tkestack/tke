@@ -31,54 +31,54 @@ const addUser = generateWorkflowActionCreator<Member, void>({
         }
     }
 });
-
-/**
- * 删除用户
- */
-const removeUser = generateWorkflowActionCreator<any, void>({
-    actionType: ActionTypes.RemoveUser,
-    workflowStateLocator: (state: RootState) => state.removeUserWorkflow,
-    operationExecutor: WebAPI.removeUser,
-    after: {
-        [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState: GetState) => {
-            let { route } = getState();
-            dispatch(userActions.poll(route.queries));
-        }
-    }
-});
-
-/**
- * 获取用户
- */
-const getUser = generateFetcherActionCreator({
-    actionType: ActionTypes.GetUser,
-    fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
-        let result = await WebAPI.getUser(options.data.name);
-        return result;
-    },
-});
-
-/**
- * 更新用户
- */
-const updateUser = generateFetcherActionCreator({
-    actionType: ActionTypes.UpdateUser,
-    fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
-        let result = await WebAPI.updateUser(options.data.user);
-        return result;
-    },
-    finish: (dispatch: Redux.Dispatch, getState: GetState) => {
-        let { route } = getState();
-        let count = 0;
-        const timer = setInterval(() => {
-            dispatch(userActions.poll(route.queries));
-            ++count;
-            if (count >= 3) {
-                clearInterval(timer);
-            }
-        }, 1000);
-    }
-});
+//
+// /**
+//  * 删除用户
+//  */
+// const removeUser = generateWorkflowActionCreator<any, void>({
+//     actionType: ActionTypes.RemoveUser,
+//     workflowStateLocator: (state: RootState) => state.removeUserWorkflow,
+//     operationExecutor: WebAPI.removeUser,
+//     after: {
+//         [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState: GetState) => {
+//             let { route } = getState();
+//             dispatch(userActions.poll(route.queries));
+//         }
+//     }
+// });
+//
+// /**
+//  * 获取用户
+//  */
+// const getUser = generateFetcherActionCreator({
+//     actionType: ActionTypes.GetUser,
+//     fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
+//         let result = await WebAPI.getUser(options.data.name);
+//         return result;
+//     },
+// });
+//
+// /**
+//  * 更新用户
+//  */
+// const updateUser = generateFetcherActionCreator({
+//     actionType: ActionTypes.UpdateUser,
+//     fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
+//         let result = await WebAPI.updateUser(options.data.user);
+//         return result;
+//     },
+//     finish: (dispatch: Redux.Dispatch, getState: GetState) => {
+//         let { route } = getState();
+//         let count = 0;
+//         const timer = setInterval(() => {
+//             dispatch(userActions.poll(route.queries));
+//             ++count;
+//             if (count >= 3) {
+//                 clearInterval(timer);
+//             }
+//         }, 1000);
+//     }
+// });
 
 /**
  * 用户列表操作
@@ -105,36 +105,36 @@ const FFModelUserActions = createFFListActions<User, UserFilter>({
         }
     }
 });
-
-/* ================================ start 权限列表相关的 ================================ */
-const StrategyListActions = createFFListActions<Strategy, ResourceFilter>({
-    actionName: ActionTypes.UserStrategyList,
-    fetcher: async (query, getState: GetState) => {
-        let resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
-
-        let response = await CommonAPI.fetchExtraResourceList<Strategy>({
-            query,
-            resourceInfo,
-            extraResource: 'policies'
-        });
-        return response;
-    },
-    getRecord: (getState: GetState) => {
-        return getState().userStrategyList;
-    }
-});
-
-const strategyRestActions = {};
-
-const strategyActions = extend({}, StrategyListActions, strategyRestActions);
+//
+// /* ================================ start 权限列表相关的 ================================ */
+// const StrategyListActions = createFFListActions<Strategy, ResourceFilter>({
+//     actionName: ActionTypes.UserStrategyList,
+//     fetcher: async (query, getState: GetState) => {
+//         let resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
+//
+//         let response = await CommonAPI.fetchExtraResourceList<Strategy>({
+//             query,
+//             resourceInfo,
+//             extraResource: 'policies'
+//         });
+//         return response;
+//     },
+//     getRecord: (getState: GetState) => {
+//         return getState().userStrategyList;
+//     }
+// });
+//
+// const strategyRestActions = {};
+//
+// const strategyActions = extend({}, StrategyListActions, strategyRestActions);
 /* ================================ end 权限列表相关的 ================================ */
 
 const restActions = {
     addUser,
-    removeUser,
-    getUser,
-    updateUser,
-    strategy: strategyActions,
+    // removeUser,
+    // getUser,
+    // updateUser,
+    // strategy: strategyActions,
 
     /** 轮训操作 */
     poll: (params) => {

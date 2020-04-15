@@ -65,10 +65,8 @@ export const TablePanel = (props) => {
             {content || '-'}
             <Icon
               onClick={() => {
-                // actions.cluster.selectCluster([x]);
-                // actions.workflow.modifyClusterName.start([x], 1);
                 toggle();
-                setEditUserGroup(item);
+                setEditUserGroup({ ...item });
               }}
               style={{ cursor: 'pointer' }}
               type="pencil"

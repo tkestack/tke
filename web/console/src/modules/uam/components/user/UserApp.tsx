@@ -19,15 +19,14 @@ export const UserApp = (props) => {
   // const dispatch = useDispatch();
   // const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { route } = state;
-  let urlParam = router.resolve(route);
-  const { sub, action } = urlParam;
+  const { sub, action } = router.resolve(route);
 
   const tabs = [
     { id: 'normal', label: '用户' },
     { id: 'group', label: '用户组' },
   ];
 
-  let header;
+  let header: React.ReactNode;
   if (!action && (!sub || sub === 'normal' || sub === 'group')) {
     // 用户管理页头
     header = <Content.Header showBackButton onBackButtonClick={() => history.back()} title={t('用户管理')} />;
@@ -59,7 +58,6 @@ export const UserApp = (props) => {
               tabs={tabs}
               activeId={sub || 'normal'}
               onActive={(value) => {
-                console.log('tab value:', value);
                 router.navigate({ module: 'user', sub: value.id });
               }}
             >

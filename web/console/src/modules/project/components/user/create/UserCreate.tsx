@@ -4,7 +4,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators, insertCSS, uuid } from '@tencent/ff-redux';
 import { useForm, useField } from 'react-final-form-hooks';
 import { allActions } from '../../../actions';
-import { Button, Text, Form, Input, Affix, Card, Radio, Transfer, Table, SearchBox } from '@tencent/tea-component';
+import { Button, Text, Form, Affix, Card, Radio, Transfer, Table, SearchBox } from '@tencent/tea-component';
 import { router } from '../../../router';
 import { User, UserPlain } from '../../../models';
 import { getStatus } from '../../../../common/validate';
@@ -16,25 +16,21 @@ export const UserCreate = (props) => {
   const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
-  // const action = actions.commonUser.associate.userList;
-  const { route, filterUsers, userPlainList, manager, policyPlainList } = state;
-  // const userList = userPlainList.list.data.records || [];
+  const { route, manager, policyPlainList } = state;
   const userList = manager.list.data.records || [];
   let strategyList = policyPlainList.list.data.records || [];
   strategyList = strategyList.filter(
     (item) => ['业务管理员', '业务成员', '业务只读'].includes(item.displayName) === false
   );
   const tenantID = strategyList.filter((item) => item.displayName === '业务管理员').tenantID;
-  console.log('BaseInfoPanel manager state:', manager);
+
   const [inputValue, setInputValue] = useState('');
   const [targetKeys, setTargetKeys] = useState([]);
-
   const [userInputValue, setUserInputValue] = useState('');
   const [userTargetKeys, setUserTargetKeys] = useState([]);
 
   useEffect(() => {
     actions.manager.fetch();
-    // actions.policy.associate.policyList.applyFilter({ resource: 'project', resourceID: '' });
   }, []);
 
   // 处理外层滚动
@@ -54,7 +50,6 @@ export const UserCreate = (props) => {
   function onSubmit(values, form) {
     console.log('submit .....', values, targetKeys, userTargetKeys);
     const { role } = values;
-    // let userInfo: User = {
     let userInfo = {
       id: uuid(),
       projectId: route.queries.projectId,
@@ -66,29 +61,6 @@ export const UserCreate = (props) => {
     console.log('submit userInfo: ', userInfo);
     actions.user.addUser.start([userInfo]);
     actions.user.addUser.perform();
-    // router.navigate({ module: 'user' });
-
-    // actions.group.create.addGroupWorkflow.start([
-    //   {
-    //     id: uuid(),
-    //     spec: {
-    //       displayName,
-    //       description,
-    //       extra: {
-    //         policies: role === 'custom' ? targetKeys.join(',') : role,
-    //       },
-    //     },
-    //     status: {
-    //       users: userTargetKeys.map((id) => ({
-    //         id,
-    //       })),
-    //     },
-    //   },
-    // ]);
-    // actions.group.create.addGroupWorkflow.perform();
-
-    // router.navigate({ module: 'user', sub: 'group' });
-    // setTimeout(form.reset);
   }
 
   const { form, handleSubmit, validating, submitting } = useForm({
@@ -115,8 +87,8 @@ export const UserCreate = (props) => {
 
   const role = useField('role', form);
 
+  const roleValue = role.input.value;
   useEffect(() => {
-    const roleValue = role.input.value;
     if (targetKeys.length > 0 && !roleValue) {
       form.change('role', 'custom');
     }
@@ -126,7 +98,7 @@ export const UserCreate = (props) => {
       newTargetKeys.length = 0;
       setTargetKeys(newTargetKeys);
     }
-  }, [role.input.value, targetKeys]);
+  }, [roleValue, targetKeys]);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -218,7 +190,7 @@ export const UserCreate = (props) => {
               <Button
                 onClick={(e) => {
                   e.preventDefault();
-                  router.navigate({ module: 'user', sub: 'group' });
+                  history.back();
                 }}
               >
                 取消

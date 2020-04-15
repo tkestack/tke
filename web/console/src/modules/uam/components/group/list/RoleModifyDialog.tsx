@@ -41,35 +41,8 @@ export function RoleModifyDialog(props) {
       },
     ]);
     actions.group.detail.updateGroupWorkflow.perform();
-    // actions.group.updateUser.fetch({
-    //   noCache: true,
-    //   data: {
-    //     user: {
-    //       metadata: {
-    //         name: user.metadata.name,
-    //         resourceVersion: user.metadata.resourceVersion,
-    //       },
-    //       spec: { ...user.spec, extra: extraObj },
-    //     },
-    //   },
-    // });
     setTimeout(form.reset);
     toggle();
-    // const { privateNetwork, subNetwork, remark } = values;
-    // actions.privateAccess.changePrivate.start([
-    //     {
-    //         id: uuid(),
-    //         instanceId,
-    //         regionId,
-    //         VpcId: privateNetwork,
-    //         SubnetId: subNetwork,
-    //         remark,
-    //         Operation: Operation.Create
-    //     }
-    // ]);
-    // actions.privateAccess.changePrivate.perform();
-    // setTimeout(form.reset);
-    // toggle();
   }
   const { form, handleSubmit, validating, submitting } = useForm({
     onSubmit,
@@ -99,15 +72,15 @@ export function RoleModifyDialog(props) {
       if (keys.length === 1 && roleArray.includes(keys[0])) {
         form.change('role', keys[0]);
         setTargetKeys([]);
-      } else if (keys.length > 1) {
+      } else if (keys.length >= 1) {
         form.change('role', 'custom');
         setTargetKeys(keys);
       }
     }
   }, [user]);
 
+  const roleValue = role.input.value;
   useEffect(() => {
-    const roleValue = role.input.value;
     if (targetKeys.length > 0 && !roleValue) {
       form.change('role', 'custom');
     }
@@ -117,7 +90,7 @@ export function RoleModifyDialog(props) {
       newTargetKeys.length = 0;
       setTargetKeys(newTargetKeys);
     }
-  }, [role.input.value, targetKeys]);
+  }, [roleValue, targetKeys]);
 
   return (
     <Modal

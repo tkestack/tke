@@ -229,22 +229,22 @@ export async function updateUser(user: User) {
   console.log('updateUser user is:', user);
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
-    // const url = reduceK8sRestfulPath({ resourceInfo, specificName: user.metadata.name });
-    const url = `/apis/auth.tkestack.io/v1/projects/{project-ID}/users`;
-    // const response = await reduceNetworkRequest({
-    //   method: Method.post,
-    //   url,
-    //   data: user
-    // });
-    // if (response.code === 0) {
-    //   setTimeout(() => {
-    //     tips.success(t('修改成功'), 2000);
-    //   }, 1000);
-    //   return operationResult(response.data);
-    // } else {
-    //   // 是否给tip得看具体返回的数据
-    //   return operationResult(user, response);
-    // }
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: user.metadata.name });
+    // const url = `/apis/auth.tkestack.io/v1/projects/{project-ID}/users`;
+    const response = await reduceNetworkRequest({
+      method: Method.put,
+      url,
+      data: user
+    });
+    if (response.code === 0) {
+      setTimeout(() => {
+        tips.success(t('修改成功'), 2000);
+      }, 1000);
+      return operationResult(response.data);
+    } else {
+      // 是否给tip得看具体返回的数据
+      return operationResult(user, response);
+    }
   } catch (error) {
     tips.error(error.response.data.message, 2000);
 
