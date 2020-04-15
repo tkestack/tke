@@ -22,6 +22,7 @@ export const UserCreate = (props) => {
   const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
+
   const { filterUsers, policyPlainList } = state;
   let strategyList = policyPlainList.list.data.records || [];
   strategyList = strategyList.filter((item) => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
@@ -29,16 +30,6 @@ export const UserCreate = (props) => {
 
   const [targetKeys, setTargetKeys] = useState([]);
   const [inputValue, setInputValue] = useState('');
-
-  // useEffect(() => {
-  //   actions.policy.associate.policyList.performSearch('platform');
-  //   // actions.strategy.getPlatformCategories.fetch();
-  //   // actions.policy.associate.policyList.fetch({
-  //   //   noCache: true,
-  //   //   data: { flag: 'platform' },
-  //   // });
-  //   // actions.policy.associate.policyList.applyFilter({ queryFilter: 'platform' });
-  // }, []);
 
   // 处理外层滚动
   const bottomAffixRef = useRef(null);
@@ -73,7 +64,7 @@ export const UserCreate = (props) => {
     console.log('submit userInfo: ', userInfo);
     actions.user.addUser.start([userInfo]);
     actions.user.addUser.perform();
-    router.navigate({ module: 'user' });
+    // router.navigate({ module: 'user' });
     // setTimeout(form.reset);
   }
 
@@ -152,18 +143,18 @@ export const UserCreate = (props) => {
   const email = useField('email', form);
   const role = useField('role', form);
 
+  const roleValue = role.input.value;
   useEffect(() => {
-    const roleValue = role.input.value;
     if (targetKeys.length > 0 && !roleValue) {
       form.change('role', 'custom');
     }
     if (roleValue && roleValue !== 'custom') {
-      // 选择的时候是替换数组，所以引用不同，这里会被触发；这里清空的时候，让引用不变，所以这个useEffect不会被再次触发
+      // 对于targetKeys选择的时候是替换数组，所以引用不同，这里会被触发；这里清空的时候，让引用不变，所以这个useEffect不会被再次触发
       const newTargetKeys = targetKeys;
       newTargetKeys.length = 0;
       setTargetKeys(newTargetKeys);
     }
-  }, [role.input.value, targetKeys]);
+  }, [roleValue, targetKeys]);
 
   return (
     <form onSubmit={handleSubmit}>

@@ -1,11 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-
 import { ContentView, TabPanel, Tabs } from '@tea/component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-
-import { FormLayout, MainBodyLayout } from '../../common/layouts';
 import { allActions } from '../actions';
 import { router } from '../router';
 import { NamespaceActionPanel } from './NamespaceActionPanel';
@@ -16,6 +13,7 @@ import { SubpageHeadPanel } from './SubpageHeadPanel';
 import { ProjectHeadPanel } from '@src/modules/project/components/ProjectHeadPanel';
 import { CreateNamespacePanel } from '@src/modules/project/components/CreateNamespacePanel';
 import { UserPanel } from './user/UserPanel';
+
 interface ProjectDetailState {
   /** tabKey */
   tabId?: string;
@@ -39,11 +37,6 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
     let { actions, route } = this.props;
     actions.project.fetchDetail(route.queries['projectId']);
   }
-  componentWillUnmount() {
-    let { actions } = this.props;
-
-    // actions.project.selectProject([]);
-  }
 
   render() {
     let tabs = [
@@ -65,39 +58,25 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
       selected = finder;
     }
     let { route } = this.props;
-    let urlParams = router.resolve(route);
-    const { sub, tab, action } = urlParams;
-    // else if (tab === 'namespace' && action === 'createNS') {
-    //     return (
-    //         <ContentView>
-    //           <ContentView.Header>
-    //             <ProjectHeadPanel isNeedBack={true} title={t('新建Namespace')} />
-    //           </ContentView.Header>
-    //           <ContentView.Body>
-    //             <CreateNamespacePanel />
-    //           </ContentView.Body>
-    //         </ContentView>
-    //     );
-    //   }
-    let content;
-    console.log('selected is:', selected, urlParams, sub, tab, action);
+    const urlParams = router.resolve(route);
+    const { action } = urlParams;
+    let header;
     if (action === 'createNS') {
-      content = <ProjectHeadPanel isNeedBack={true} title={t('新建Namespace')} />;
+      header = <ProjectHeadPanel isNeedBack={true} title={t('新建Namespace')} />;
     } else if (action === 'create') {
-      content = <ProjectHeadPanel isNeedBack={true} title={t('添加成员')} />;
+      header = <ProjectHeadPanel isNeedBack={true} title={t('添加成员')} />;
     } else {
-      content = <SubpageHeadPanel />;
+      header = <SubpageHeadPanel />;
     }
     return (
       <ContentView>
-        <ContentView.Header>{content}</ContentView.Header>
+        <ContentView.Header>{header}</ContentView.Header>
         <ContentView.Body>
           <Tabs
             ceiling
             tabs={tabs}
             activeId={selected.id}
             onActive={(tab) => {
-              console.log('urlParams is:', urlParams);
               router.navigate(Object.assign({}, urlParams, { tab: tab.id, action: '' }), route.queries);
               this.setState({ tabId: tab.id });
             }}

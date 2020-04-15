@@ -6,12 +6,10 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { ContentView } from '@tencent/tea-component';
 
 import { ResetStoreAction } from '../../../../helpers';
-import { MainBodyLayout } from '../../common/layouts';
 import { allActions } from '../actions';
 import { RootState } from '../models';
 import { router } from '../router';
 import { configStore } from '../stores/RootStore';
-import { CreateNamespacePanel } from './CreateNamespacePanel';
 import { CreateProjectPanel } from './CreateProjectPanel';
 import { ProjectActionPanel } from './ProjectActionPanel';
 import { ProjectDetail } from './ProjectDetail';
@@ -46,9 +44,8 @@ const mapDispatchToProps = (dispatch) =>
 @((router.serve as any)())
 class ProjectApp extends React.Component<RootProps, {}> {
   render() {
-    let { route } = this.props,
-      urlParam = router.resolve(route);
-    const { sub, tab, action } = urlParam;
+    const { route } = this.props;
+    const { sub } = router.resolve(route);
     if (!sub) {
       return (
         <ContentView>
@@ -75,17 +72,5 @@ class ProjectApp extends React.Component<RootProps, {}> {
         </ContentView>
       );
     }
-    // else if (tab === 'namespace' && action === 'createNS') {
-    //   return (
-    //     <ContentView>
-    //       <ContentView.Header>
-    //         <ProjectHeadPanel isNeedBack={true} title={t('新建Namespace')} />
-    //       </ContentView.Header>
-    //       <ContentView.Body>
-    //         <CreateNamespacePanel />
-    //       </ContentView.Body>
-    //     </ContentView>
-    //   );
-    // }
   }
 }

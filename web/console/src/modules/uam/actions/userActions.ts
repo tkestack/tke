@@ -1,14 +1,15 @@
 import { resourceConfig } from '@config';
 import { CommonAPI, ResourceFilter, ResourceInfo } from '@src/modules/common';
 import {
-    createFFListActions, extend, FetchOptions, generateFetcherActionCreator,
-    generateWorkflowActionCreator, OperationTrigger
+  createFFListActions, extend, FetchOptions, generateFetcherActionCreator,
+  generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
 } from '@tencent/ff-redux';
 
 import * as ActionTypes from '../constants/ActionTypes';
 import { RootState, Strategy } from '../models';
 import { User, UserFilter } from '../models/index';
 import * as WebAPI from '../WebAPI';
+import { router } from '../router';
 
 type GetState = () => RootState;
 
@@ -20,8 +21,23 @@ const addUser = generateWorkflowActionCreator<User, void>({
   workflowStateLocator: (state: RootState) => state.addUserWorkflow,
   operationExecutor: WebAPI.addUser,
   after: {
-    [OperationTrigger.Done]: dispatch => {
-      dispatch(FFModelUserActions.applyFilter({}));
+    [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { addUserWorkflow, route } = getState();
+      if (isSuccessWorkflow(addUserWorkflow)) {
+        router.navigate({ module: 'user' }, route.queries);
+      }
+      /** 结束工作流 */
+      // dispatch(userActions.poll());
+      // dispatch(FFModelUserActions.applyFilter({}));
+      let count = 0;
+      const timer = setInterval(() => {
+        dispatch(FFModelUserActions.applyFilter({}));
+        // dispatch(userActions.poll());
+        ++count;
+        if (count >= 3) {
+          clearInterval(timer);
+        }
+      }, 1500);
     }
   }
 });
@@ -34,7 +50,7 @@ const removeUser = generateWorkflowActionCreator<any, void>({
   workflowStateLocator: (state: RootState) => state.removeUserWorkflow,
   operationExecutor: WebAPI.removeUser,
   after: {
-    [OperationTrigger.Done]: dispatch => {
+    [OperationTrigger.Done]: (dispatch: Redux.Dispatch) => {
       dispatch(userActions.poll());
     }
   }
@@ -63,12 +79,13 @@ const updateUser = generateFetcherActionCreator({
   finish: (dispatch: Redux.Dispatch, getState: GetState) => {
     let count = 0;
     const timer = setInterval(() => {
-      dispatch(userActions.poll());
+      dispatch(FFModelUserActions.applyFilter({}));
+      // dispatch(userActions.poll());
       ++count;
       if (count >= 3) {
         clearInterval(timer);
       }
-    }, 1000);
+    }, 1500);
   }
 });
 
@@ -89,7 +106,7 @@ const FFModelUserActions = createFFListActions<User, UserFilter>({
       let isNotNeedPoll =
         record.data.records.filter(item => item.status && item.status['phase'] && item.status['phase'] === 'Deleting')
           .length === 0;
-
+      console.log('ActionTypes.UserList isNotNeedPoll is:', isNotNeedPoll);
       if (isNotNeedPoll) {
         dispatch(FFModelUserActions.clearPolling());
       }

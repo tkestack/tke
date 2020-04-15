@@ -8,9 +8,6 @@ import { allActions } from '../../../actions';
 import { getStatus } from '../../../../common/validate';
 import { VALIDATE_PASSWORD_RULE } from '@src/modules/uam/constants/Config';
 
-const { useState, useEffect } = React;
-const { scrollable, selectable, removeable } = Table.addons;
-
 export function PasswordModifyDialog(props) {
   const state = useSelector((state) => state);
   const dispatch = useDispatch();
@@ -21,6 +18,7 @@ export function PasswordModifyDialog(props) {
   function onSubmit(values, form) {
     console.log('PasswordModifyDialog submit values:', values);
     const { password } = values;
+    const extraObj = { ...user.spec.extra, policies: Object.keys(JSON.parse(user.spec.extra.policies)).join(',') };
     actions.user.updateUser.fetch({
       noCache: true,
       data: {
@@ -29,9 +27,7 @@ export function PasswordModifyDialog(props) {
             name: user.metadata.name,
             resourceVersion: user.metadata.resourceVersion,
           },
-          spec: Object.assign({}, user.spec, {
-            hashedPassword: btoa(password),
-          }),
+          spec: { ...user.spec, hashedPassword: btoa(password), extra: extraObj },
         },
       },
     });

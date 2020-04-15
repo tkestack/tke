@@ -95,6 +95,9 @@ interface K8sRestfulPathOptions {
   /** 命名空间，具体的ns */
   namespace?: string;
 
+  /** 不在路径最后的变量，比如projectId*/
+  middleKey?: string;
+
   /** 具体的资源名称 */
   specificName?: string;
 
@@ -116,7 +119,7 @@ interface K8sRestfulPathOptions {
  * @param clusterId: string 集群id，适用于addon 请求平台转发的场景
  */
 export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
-  let { resourceInfo, namespace = '', specificName = '', extraResource = '', clusterId = '', meshId } = options;
+  let { resourceInfo, namespace = '', middleKey = '', specificName = '', extraResource = '', clusterId = '', meshId } = options;
 
   /// #if project
   //业务侧ns eg: cls-xxx-ns 需要去除前缀
@@ -162,6 +165,7 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
       (resourceInfo.group ? `${resourceInfo.group}/` : '') +
       `${resourceInfo.version}/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
+      (middleKey ? `${middleKey}/` : '') +
       `${resourceInfo.requestType.list}` +
       (specificName ? `/${specificName}` : '') +
       (extraResource ? `/${extraResource}` : '');

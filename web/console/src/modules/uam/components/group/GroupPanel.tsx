@@ -20,18 +20,15 @@ const mapDispatchToProps = (dispatch) =>
 @connect((state) => state, mapDispatchToProps)
 export class GroupPanel extends React.Component<RootProps, {}> {
   render() {
-    let { route } = this.props,
-      urlParam = router.resolve(route);
-    // if (urlParam['sub'] === 'group') {
-    //
-    // } else
-    if (urlParam['action'] === 'create') {
+    const { route } = this.props;
+    const { action } = router.resolve(route);
+    if (action === 'create') {
       return (
         <div className="manage-area">
           <GroupCreate {...this.props} />
         </div>
       );
-    } else if (urlParam['action'] === 'detail') {
+    } else if (action === 'detail') {
       return (
         <div className="manage-area">
           <GroupDetail {...this.props} />

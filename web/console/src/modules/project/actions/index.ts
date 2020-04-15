@@ -5,8 +5,6 @@ import { clusterActions } from './clusterActions';
 import { managerActions } from './managerActions';
 import { userActions } from './userActions';
 import { policyActions } from './policy';
-import { roleActions } from './role';
-import { groupActions } from './group';
 
 export const allActions = {
   project: projectActions,
@@ -16,6 +14,4 @@ export const allActions = {
   cluster: clusterActions,
   user: userActions,
   policy: policyActions,
-  role: roleActions,
-  group: groupActions
 };

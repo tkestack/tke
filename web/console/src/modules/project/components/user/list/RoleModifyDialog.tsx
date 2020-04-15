@@ -17,12 +17,11 @@ export function RoleModifyDialog(props) {
 
   const { policyPlainList, route } = state;
   let strategyList = policyPlainList.list.data.records || [];
-  strategyList = strategyList = strategyList.filter(
+  strategyList = strategyList.filter(
     (item) => ['业务管理员', '业务成员', '业务只读'].includes(item.displayName) === false
   );
-  console.log('PrivateEditorDialog state:', route.queries);
   const { isShowing, toggle, user } = props;
-
+  console.log('PrivateEditorDialog props user:', user);
   const [targetKeys, setTargetKeys] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [tenantID, setTenantID] = useState('default');
@@ -30,11 +29,6 @@ export function RoleModifyDialog(props) {
   function onSubmit(values, form) {
     console.log('RoleModifyDialog submit values:', values, targetKeys);
     const { role } = values;
-    // const extraObj =
-    //   role === 'custom'
-    //     ? { ...user.spec.extra, policies: targetKeys.join(',') }
-    //     : { ...user.spec.extra, policies: role };
-
     let userInfo = {
       id: uuid(),
       projectId: route.queries.projectId,
@@ -43,36 +37,8 @@ export function RoleModifyDialog(props) {
     };
     actions.user.addUser.start([userInfo]);
     actions.user.addUser.perform();
-    //
-    // actions.user.updateUser.fetch({
-    //   noCache: true,
-    //   data: {
-    //     user: {
-    //       metadata: {
-    //         name: user.metadata.name,
-    //         resourceVersion: user.metadata.resourceVersion,
-    //       },
-    //       spec: { ...user.spec, extra: extraObj },
-    //     },
-    //   },
-    // });
     setTimeout(form.reset);
     toggle();
-    // const { privateNetwork, subNetwork, remark } = values;
-    // actions.privateAccess.changePrivate.start([
-    //     {
-    //         id: uuid(),
-    //         instanceId,
-    //         regionId,
-    //         VpcId: privateNetwork,
-    //         SubnetId: subNetwork,
-    //         remark,
-    //         Operation: Operation.Create
-    //     }
-    // ]);
-    // actions.privateAccess.changePrivate.perform();
-    // setTimeout(form.reset);
-    // toggle();
   }
   const { form, handleSubmit, validating, submitting } = useForm({
     onSubmit,
@@ -106,15 +72,15 @@ export function RoleModifyDialog(props) {
       if (keys.length === 1 && roleArray.includes(keys[0])) {
         form.change('role', keys[0]);
         setTargetKeys([]);
-      } else if (keys.length > 1) {
+      } else if (keys.length >= 1) {
         form.change('role', 'custom');
         setTargetKeys(keys);
       }
     }
   }, [user]);
 
+  const roleValue = role.input.value;
   useEffect(() => {
-    const roleValue = role.input.value;
     if (targetKeys.length > 0 && !roleValue) {
       form.change('role', 'custom');
     }
@@ -124,7 +90,7 @@ export function RoleModifyDialog(props) {
       newTargetKeys.length = 0;
       setTargetKeys(newTargetKeys);
     }
-  }, [role.input.value, targetKeys]);
+  }, [roleValue, targetKeys]);
 
   return (
     <Modal
@@ -196,7 +162,6 @@ export function RoleModifyDialog(props) {
               htmlType="reset"
               onClick={() => {
                 toggle();
-                setTimeout(form.reset);
               }}
             >
               <Trans>取消</Trans>

@@ -16,16 +16,16 @@ export const BaseInfoPanel = (props) => {
   const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
-  const action = actions.commonUser.associate.userList;
-  const { filterUsers, userPlainList, policyPlainList } = state;
+
+  const { userPlainList, policyPlainList } = state;
   const userList = userPlainList.list.data.records || [];
   let strategyList = policyPlainList.list.data.records || [];
   strategyList = strategyList.filter((item) => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
   const tenantID = strategyList.filter((item) => item.displayName === '平台管理员').tenantID;
   console.log('BaseInfoPanel userPlainList state:', userPlainList);
+
   const [inputValue, setInputValue] = useState('');
   const [targetKeys, setTargetKeys] = useState([]);
-
   const [userInputValue, setUserInputValue] = useState('');
   const [userTargetKeys, setUserTargetKeys] = useState([]);
 
@@ -64,8 +64,6 @@ export const BaseInfoPanel = (props) => {
       },
     ]);
     actions.group.create.addGroupWorkflow.perform();
-    // router.navigate({ module: 'user', sub: 'group' });
-    // setTimeout(form.reset);
   }
 
   const { form, handleSubmit, validating, submitting } = useForm({
@@ -105,8 +103,8 @@ export const BaseInfoPanel = (props) => {
   const description = useField('description', form);
   const role = useField('role', form);
 
+  const roleValue = role.input.value;
   useEffect(() => {
-    const roleValue = role.input.value;
     if (targetKeys.length > 0 && !roleValue) {
       form.change('role', 'custom');
     }
@@ -116,7 +114,7 @@ export const BaseInfoPanel = (props) => {
       newTargetKeys.length = 0;
       setTargetKeys(newTargetKeys);
     }
-  }, [role.input.value, targetKeys]);
+  }, [roleValue, targetKeys]);
 
   return (
     <form onSubmit={handleSubmit}>
