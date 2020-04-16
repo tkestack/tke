@@ -182,7 +182,7 @@ export const UserCreate = (props) => {
           </Form>
         </Card.Body>
       </Card>
-      <Affix ref={bottomAffixRef} offsetBottom={0}>
+      <Affix ref={bottomAffixRef} offsetBottom={0} style={{ zIndex: 5 }}>
         <Card>
           <Card.Body style={{ borderTop: '1px solid #ddd' }}>
             <Form.Action style={{ borderTop: 0, marginTop: 0, paddingTop: 0 }}>
