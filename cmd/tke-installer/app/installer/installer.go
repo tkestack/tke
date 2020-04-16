@@ -32,6 +32,7 @@ import (
 	"path"
 	goruntime "runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -480,6 +481,11 @@ func (t *TKE) prepare() errors.APIStatus {
 		return errors.NewInternalError(err)
 	}
 
+	statusError = t.validateResource(v1Cluster)
+	if statusError != nil {
+		return statusError
+	}
+
 	t.Cluster.Cluster = *v1Cluster
 	t.backup()
 
@@ -652,6 +658,57 @@ func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 				return errors.NewBadRequest(fmt.Sprintf("certificate DNSNames must contains %v", one))
 			}
 		}
+	}
+
+	return nil
+}
+
+// validateResource validate the cpu and memory of cluster machines whether meets the requirements.
+func (t *TKE) validateResource(cluster *platformv1.Cluster) *errors.StatusError {
+	var (
+		cpuSum    int
+		memorySum int
+	)
+	for _, machine := range cluster.Spec.Machines {
+		sshConfig := &ssh.Config{
+			User:       machine.Username,
+			Host:       machine.IP,
+			Port:       int(machine.Port),
+			Password:   string(machine.Password),
+			PrivateKey: machine.PrivateKey,
+			PassPhrase: machine.PassPhrase,
+		}
+		s, err := ssh.New(sshConfig)
+		if err != nil {
+			return errors.NewInternalError(err)
+		}
+		cmd := "nproc --all"
+		stdout, err := s.CombinedOutput(cmd)
+		if err != nil {
+			return errors.NewInternalError(fmt.Errorf("get cpu error: %w", err))
+		}
+		cpu, err := strconv.Atoi(string(stdout))
+		if err != nil {
+			return errors.NewInternalError(fmt.Errorf("convert cpu value error: %w", err))
+		}
+		cpuSum += cpu
+
+		cmd = "dmidecode --type memory|awk '/Maximum Capacity/ {print $3}'"
+		stdout, err = s.CombinedOutput(cmd)
+		if err != nil {
+			return errors.NewInternalError(fmt.Errorf("get memory error: %w", err))
+		}
+		memory, err := strconv.Atoi(string(stdout))
+		if err != nil {
+			return errors.NewInternalError(fmt.Errorf("convert memory value error: %w", err))
+		}
+		memorySum += memory
+	}
+	if cpuSum < constants.CPURequest {
+		errors.NewBadRequest(fmt.Sprintf("at lease %d cores are required", constants.CPURequest))
+	}
+	if memorySum < constants.MemoryRequest {
+		errors.NewBadRequest(fmt.Sprintf("at lease %d GiB memory are required", constants.CPURequest))
 	}
 
 	return nil
@@ -1706,7 +1763,7 @@ func (t *TKE) registerAPI() error {
 			return false, nil
 		})
 		if err != nil {
-			return err
+			return pkgerrors.Wrapf(err, "check apiservices %v error", one)
 		}
 	}
 	return nil
@@ -1717,6 +1774,9 @@ func (t *TKE) importResource() error {
 	if err != nil {
 		return err
 	}
+	// default timeout is 5 seconds, but create cluster need more time to validate spec
+	restConfig.Timeout = 120 * time.Second
+
 	client, err := tkeclientset.NewForConfig(restConfig)
 	if err != nil {
 		return err

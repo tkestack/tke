@@ -16,24 +16,38 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package marknode
+package validation
 
 import (
-	corev1 "k8s.io/api/core/v1"
-	clientset "k8s.io/client-go/kubernetes"
-	"tkestack.io/tke/pkg/util/apiclient"
+	"crypto/tls"
+	"fmt"
+	"net"
+	"net/http"
+	"time"
 )
 
-type Option struct {
-	NodeName string
-	Labels   map[string]string
-}
+// VailidateClusterConnection validates cluster connection using https dial.
+func VailidateClusterConnection(host string, port int32, timeout time.Duration) error {
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout: timeout,
+			}).DialContext,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
 
-// Install mark node labels
-func Install(client clientset.Interface, option *Option) error {
-	return apiclient.PatchNode(client, option.NodeName, func(n *corev1.Node) {
-		for k, v := range option.Labels {
-			n.ObjectMeta.Labels[k] = v
-		}
-	})
+	url := fmt.Sprintf("https://%s:%d", host, port)
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.Do(request)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

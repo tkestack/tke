@@ -68,3 +68,8 @@ const (
 -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt \
 -e REGISTRY_HTTP_TLS_KEY=/certs/server.key`
 )
+
+const (
+	CPURequest    = 8
+	MemoryRequest = 16 // GiB
+)

@@ -143,9 +143,12 @@ func scrapeConfigForPrometheus() string {
         regex: (.+)
         action: replace
         target_label: "container_name"
-      - source_labels: [label_tke_cloud_tencent_com_projectName]
+      - source_labels: [label_tkestack_io_projectName]
         action: replace
         target_label: "project_name"
+      - source_labels: [label_tkestack_io_namespaceName]
+        action: replace
+        target_label: "namespace_name"
       - regex: "created_by_kind|created_by_name|pod|job|uid|pod_ip|host_ip|instance|__meta_kubernetes_namespace|__meta_kubernetes_service_name|__meta_kubernetes_service_label_(.+)|owner_is_controller|container"
         action: labeldrop
 
@@ -188,9 +191,12 @@ func scrapeConfigForPrometheus() string {
       - source_labels: [ __name__ ]
         regex: 'tke_(.*)|process_(.*)|grpc_(.*)|go_(.*)|apiserver_(.*)|etcd_(.*)'
         action: keep
-      - source_labels: [label_tke_cloud_tencent_com_projectName]
+      - source_labels: [label_tkestack_io_projectName]
         action: replace
         target_label: "project_name"
+      - source_labels: [label_tkestack_io_namespaceName]
+        action: replace
+        target_label: "namespace_name"
       - regex: "created_by_kind|created_by_name|pod|job|uid|pod_ip|host_ip|instance|__meta_kubernetes_namespace|__meta_kubernetes_service_name|__meta_kubernetes_service_label_(.+)|owner_is_controller|container"
         action: labeldrop
 
@@ -368,9 +374,6 @@ func scrapeConfigForPrometheus() string {
       - source_labels: [__meta_kubernetes_pod_annotation_tke_prometheus_io_scrape]
         action: keep
         regex: true
-      - source_labels: [__meta_kubernetes_namespace]
-        action: replace
-        target_label: namespace
       - source_labels: [__meta_kubernetes_pod_name]
         action: keep
         regex: tke-monitor-controller.+
@@ -397,7 +400,7 @@ func scrapeConfigForPrometheus() string {
       - source_labels: [ __name__ ]
         regex: 'project_(.*)'
         action: keep
-      - regex: "instance|job|pod_name|namespace|scope|subresource"
+      - regex: "instance|job|pod_name|scope|node|subresource"
         action: labeldrop
 `
 	return cfgStr
@@ -901,37 +904,37 @@ groups:
     expr: sum(k8s_pod_gpu_memory_request * on(node) group_left kube_node_labels {node_role="Node"} ) * 100 / scalar(k8s_cluster_gpu_memory_total)
 
   - record: project_namespace_cpu_core_used
-    expr: k8s_namespace_cpu_core_used* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_cpu_core_used* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_mem_usage_bytes
-    expr: k8s_namespace_mem_usage_bytes* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_mem_usage_bytes* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_mem_no_cache_bytes
-    expr: k8s_namespace_mem_no_cache_bytes* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_mem_no_cache_bytes* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_gpu_used
-    expr: k8s_namespace_gpu_used* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_gpu_used* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_gpu_memory_used
-    expr: k8s_namespace_gpu_memory_used* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_gpu_memory_used* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_network_receive_bytes_bw
-    expr: k8s_namespace_network_receive_bytes_bw* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_network_receive_bytes_bw* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_network_transmit_bytes_bw
-    expr: k8s_namespace_network_transmit_bytes_bw* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_network_transmit_bytes_bw* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_network_receive_bytes
-    expr: k8s_namespace_network_receive_bytes* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_network_receive_bytes* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_network_transmit_bytes
-    expr: k8s_namespace_network_transmit_bytes* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_network_transmit_bytes* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_fs_read_bytes
-    expr: k8s_namespace_fs_read_bytes* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_fs_read_bytes* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_namespace_fs_write_bytes
-    expr: k8s_namespace_fs_write_bytes* on(namespace) group_left(project_name) kube_namespace_labels
+    expr: k8s_namespace_fs_write_bytes* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
 
   - record: project_cluster_cpu_core_used
     expr: sum(project_namespace_cpu_core_used) by (project_name)

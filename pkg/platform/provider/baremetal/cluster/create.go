@@ -30,7 +30,9 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/util/template"
+	"github.com/thoas/go-funk"
+
+	"tkestack.io/tke/pkg/util/apiclient"
 
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -48,11 +50,11 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/markcontrolplane"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/template"
 )
 
 const (
@@ -81,10 +83,12 @@ func (p *Provider) EnsurePreInstallHook(c *Cluster) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
+
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]
 
-		s.Execf("chmod +x %s", hook)
+		s.Execf("chmod +x %s", cmd)
 		_, stderr, exit, err := s.Exec(hook)
 		if err != nil || exit != 0 {
 			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
@@ -98,10 +102,12 @@ func (p *Provider) EnsurePostInstallHook(c *Cluster) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
+
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]
 
-		s.Execf("chmod +x %s", hook)
+		s.Execf("chmod +x %s", cmd)
 		_, stderr, exit, err := s.Exec(hook)
 		if err != nil || exit != 0 {
 			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
@@ -662,20 +668,21 @@ func (p *Provider) EnsureMarkControlPlane(c *Cluster) error {
 		return err
 	}
 
-	option := &markcontrolplane.Option{}
-	if !c.Spec.Features.EnableMasterSchedule {
-		option.Taints = []corev1.Taint{
-			{
-				Key:    "node-role.kubernetes.io/master",
-				Effect: corev1.TaintEffectNoSchedule,
-			},
-		}
-	}
-
 	for _, machine := range c.Spec.Machines {
-		option.NodeName = machine.IP
-		option.Labels = machine.Labels
-		err := markcontrolplane.Install(clientset, option)
+		if machine.Labels == nil {
+			machine.Labels = make(map[string]string)
+			machine.Labels[constants.LabelNodeRoleMaster] = ""
+		}
+		if !c.Spec.Features.EnableMasterSchedule {
+			taint := corev1.Taint{
+				Key:    constants.LabelNodeRoleMaster,
+				Effect: corev1.TaintEffectNoSchedule,
+			}
+			if !funk.Contains(machine.Taints, taint) {
+				machine.Taints = append(machine.Taints, taint)
+			}
+		}
+		err := apiclient.MarkNode(clientset, machine.IP, machine.Labels, machine.Taints)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

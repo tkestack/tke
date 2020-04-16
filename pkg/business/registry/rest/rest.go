@@ -86,6 +86,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["namespaces"] = namespaceREST.Namespace
 		storageMap["namespaces/status"] = namespaceREST.Status
 		storageMap["namespaces/finalize"] = namespaceREST.Finalize
+		storageMap["namespaces/certificate"] = namespaceREST.Certificate
 
 		platformREST := platformstorage.NewStorage(restOptionsGetter, businessClient, s.PrivilegedUsername)
 		storageMap["platforms"] = platformREST.Platform

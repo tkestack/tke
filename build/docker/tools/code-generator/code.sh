@@ -101,9 +101,11 @@ EOF
 }
 
 # enumerate group versions
-ALL_FQ_APIS=() # e.g. k8s.io/kubernetes/pkg/apis/apps k8s.io/api/apps/v1
-INT_FQ_APIS=() # e.g. k8s.io/kubernetes/pkg/apis/apps
-EXT_FQ_APIS=() # e.g. k8s.io/api/apps/v1
+ALL_FQ_APIS=(${ALL_FQ_APIS:-}) # e.g. k8s.io/kubernetes/pkg/apis/apps k8s.io/api/apps/v1
+INT_FQ_APIS=(${INT_FQ_APIS:-}) # e.g. k8s.io/kubernetes/pkg/apis/apps
+EXT_FQ_APIS=(${EXT_FQ_APIS:-}) # e.g. k8s.io/api/apps/v1
+EXT_PB_APIS=(${EXT_PB_APIS:-}) # e.g. k8s.io/api/apps/v1
+
 for GVs in ${GROUPS_WITH_VERSIONS}; do
   IFS=: read -r G Vs <<<"${GVs}"
 
@@ -236,7 +238,7 @@ if [[ "${GENS}" = "all" ]] || [[ "${GENS}" = "all-external" ]] || grep -qw "prot
         --go-header-file "/root/boilerplate.go.txt" \
         --proto-import "${K8S_ROOT}/vendor" \
         --proto-import "${K8S_ROOT}/third_party/protobuf" \
-        --packages "$(codegen_join , "${EXT_FQ_APIS[@]}")" \
+        --packages "$(codegen_join , "${EXT_FQ_APIS[@]}" "${EXT_PB_APIS[@]}")" \
         "$@"
 fi
 

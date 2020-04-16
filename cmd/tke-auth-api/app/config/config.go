@@ -155,7 +155,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 	setupAuthorization(genericAPIServerConfig, aggregateAuthz)
 
-	dexConfig, err := setupDexConfig(opts.ETCD, authClient, opts.Auth.AssetsPath, opts.Auth.IDTokenTimeout, opts.Generic.ExternalHost, opts.Generic.ExternalPort)
+	dexConfig, err := setupDexConfig(opts.ETCD, authClient, opts.Auth.AssetsPath, opts.Auth.IDTokenTimeout, opts.Generic.ExternalHost, opts.Generic.ExternalPort, opts.Auth.PasswordGrantConnID)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func setupAuthorization(genericAPIServerConfig *genericapiserver.Config, authori
 	genericAPIServerConfig.Authorization.Authorizer = authorizer
 }
 
-func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, authClient authinternalclient.AuthInterface, templatePath string, tokenTimeout time.Duration, host string, port int) (*dexserver.Config, error) {
+func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, authClient authinternalclient.AuthInterface, templatePath string, tokenTimeout time.Duration, host string, port int, passwordConnID string) (*dexserver.Config, error) {
 	logger := dex.NewLogger(log.ZapLogger())
 	issuer := issuer(host, port)
 	namespace := etcdOpts.Prefix
@@ -272,6 +272,7 @@ func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, authClient auth
 		SkipApprovalScreen: true,
 
 		PrometheusRegistry: prometheus.NewRegistry(),
+		PasswordConnector:  passwordConnID,
 	}
 
 	return &dexConfig, nil

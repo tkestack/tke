@@ -22,6 +22,7 @@ syntax = 'proto2';
 
 package tkestack.io.tke.api.platform.v1;
 
+import "k8s.io/api/core/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/api/resource/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
@@ -374,6 +375,10 @@ message ClusterMachine {
 
   // +optional
   map<string, string> labels = 7;
+
+  // If specified, the node's taints.
+  // +optional
+  repeated k8s.io.api.core.v1.Taint taints = 8;
 }
 
 // ClusterProperty records the attribute information of the cluster.
@@ -991,6 +996,10 @@ message MachineSpec {
 
   // +optional
   map<string, string> labels = 11;
+
+  // If specified, the node's taints.
+  // +optional
+  repeated k8s.io.api.core.v1.Taint taints = 12;
 }
 
 // MachineStatus represents information about the status of an machine.

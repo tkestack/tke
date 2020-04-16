@@ -1115,7 +1115,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
 						SourceLabels: []string{"__name__"},
-						Regex:        "k8s_(.*)|kube_pod_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+						Regex:        "k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
 						Action:       "keep",
 					},
 				}
@@ -1131,7 +1131,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
 					Action:       "keep",
 				},
 			}
@@ -1146,7 +1146,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
 					Action:       "keep",
 				},
 			}
@@ -1185,7 +1185,8 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			ScrapeInterval:     "60s",
 			RemoteRead:         remoteReadSpecs,
 			RemoteWrite:        remoteWriteSpecs,
-			Retention:          "2h",
+			Retention:          "30m",
+			RetentionSize:      "5GB",
 			EvaluationInterval: "1m",
 			AdditionalScrapeConfigs: &corev1.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{Name: prometheusSecret},
@@ -1390,6 +1391,13 @@ func createAlertManagerCRD(components images.Components, prometheus *v1.Promethe
 					"prometheus.io/port":   "9093",
 				},
 			},
+			Tolerations: []corev1.Toleration{
+				{
+					Key:      "node-role.kubernetes.io/master",
+					Operator: corev1.TolerationOpExists,
+					Effect:   corev1.TaintEffectNoSchedule,
+				},
+			},
 			BaseImage: containerregistryutil.GetImagePrefix(alertManagerImagePath),
 			Replicas:  controllerutil.Int32Ptr(3),
 			SecurityContext: &corev1.PodSecurityContext{
@@ -1524,16 +1532,6 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 							},
 							Ports: []corev1.ContainerPort{
 								{Name: "metrics", ContainerPort: 9100, HostPort: 9100},
-							},
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    *resource.NewMilliQuantity(100, resource.DecimalSI),
-									corev1.ResourceMemory: *resource.NewQuantity(128*1024*1024, resource.BinarySI),
-								},
-								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    *resource.NewMilliQuantity(100, resource.DecimalSI),
-									corev1.ResourceMemory: *resource.NewQuantity(1*1024*1024*1024, resource.BinarySI),
-								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{

@@ -466,6 +466,183 @@ var (
 			},
 			[]string{"project_name", "cluster_name"},
 		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_cpu",
+				Help:           "Cpu capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_memory",
+				Help:           "Memory capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_configmaps",
+				Help:           "Configmaps capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_ephemeral_storage",
+				Help:           "Ephemeral-storage capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_persistentvolumeclaims",
+				Help:           "Persistentvolumeclaims capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_pods",
+				Help:           "Pods capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_resourcequotas",
+				Help:           "Resourcequotas capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_secrets",
+				Help:           "Secrets capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_services",
+				Help:           "Services capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_services_loadbalancers",
+				Help:           "Services loadbalancers capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_capacity_services_nodeports",
+				Help:           "Services nodeports capacity of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_cpu",
+				Help:           "Cpu allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_memory",
+				Help:           "Memory allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_configmaps",
+				Help:           "Configmaps allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_ephemeral_storage",
+				Help:           "Ephemeral-storage allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_persistentvolumeclaims",
+				Help:           "Persistentvolumeclaims allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_pods",
+				Help:           "Pods allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_resourcequotas",
+				Help:           "Resourcequotas allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_secrets",
+				Help:           "Secrets allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_services",
+				Help:           "Services allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_services_loadbalancers",
+				Help:           "Services loadbalancers allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
+		metrics.NewGaugeVec(
+			&metrics.GaugeOpts{
+				Name:           "project_namespace_allocated_services_nodeports",
+				Help:           "Services nodeports allocated of each namespace for each project.",
+				StabilityLevel: metrics.ALPHA,
+			},
+			[]string{"project_name", "cluster_name", "namespace", "namespaceName"},
+		),
 	}
 )
 

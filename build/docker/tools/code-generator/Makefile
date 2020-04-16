@@ -14,7 +14,7 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-VERSION = v1.17.0-2
+VERSION = v1.17.0-3
 REGISTRY_PREFIX ?= tkestack
 IMAGE_NAME ?= code-generator
 
