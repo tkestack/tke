@@ -1115,7 +1115,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
 						SourceLabels: []string{"__name__"},
-						Regex:        "k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+						Regex:        "k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 						Action:       "keep",
 					},
 				}
@@ -1131,7 +1131,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 					Action:       "keep",
 				},
 			}
@@ -1146,7 +1146,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 					Action:       "keep",
 				},
 			}

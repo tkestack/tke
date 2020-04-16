@@ -357,7 +357,7 @@ func scrapeConfigForPrometheus() string {
         regex: (.+)
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes'
+        regex: 'etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes|etcd_disk_wal_fsync_duration_seconds(.*)|etcd_disk_backend_commit_duration_seconds(.*)|etcd_network_peer_round_trip_time_seconds(.*)'
         action: keep
       - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
