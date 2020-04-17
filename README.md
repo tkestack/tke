@@ -29,6 +29,10 @@
   * Event persistence storage plugin.
   * System and application log persistence storage plugin.
 
+## Architecture
+
+![Architecture Of TKE](docs/images/TKEStackHighLevelArchitecture@2x.png)
+
 ## Installation
 
 ### Minimum Requirements
@@ -36,9 +40,11 @@
 * Hardware
   * 8 vCPU
   * 16 GB of Memory
+  * 50GB of Disk Space
 * Operating Systems
-  * Ubuntu 16.04 (64-bit)
-  * CentOS Linux 7.5 (64-bit)
+  * Ubuntu 16.04/18.04 LTS (64-bit)
+  * CentOS Linux 7.6 (64-bit)
+  * Tencent Linux 2.2
 
 ### QuickStart
 
@@ -48,13 +54,9 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 TKEStack use tke-installer tool to deploy. [refer](https://github.com/tkestack/tke/blob/master/docs/user/tke-installer/README.md)
 
-## Architecture
-
-![Architecture Of TKE](docs/images/TKEStackHighLevelArchitecture@2x.png)
-
 ## Using
 
-[TKEStack Documentation ](https://github.com/tkestack/docs)
+[TKEStack Documentation ](docs/zh-CN)
 
 ## Developing
 
