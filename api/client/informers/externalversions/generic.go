@@ -96,6 +96,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().ImageNamespaces().Informer()}, nil
 	case businessv1.SchemeGroupVersion.WithResource("namespaces"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().Namespaces().Informer()}, nil
+	case businessv1.SchemeGroupVersion.WithResource("nsemigrations"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().NsEmigrations().Informer()}, nil
 	case businessv1.SchemeGroupVersion.WithResource("platforms"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().Platforms().Informer()}, nil
 	case businessv1.SchemeGroupVersion.WithResource("projects"):

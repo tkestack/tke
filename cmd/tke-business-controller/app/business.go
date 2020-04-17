@@ -22,13 +22,13 @@ import (
 	"net/http"
 	"time"
 
-	"tkestack.io/tke/pkg/business/controller/platform"
-
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	"tkestack.io/tke/pkg/business/controller/chartgroup"
+	"tkestack.io/tke/pkg/business/controller/emigration"
 	"tkestack.io/tke/pkg/business/controller/imagenamespace"
 	"tkestack.io/tke/pkg/business/controller/namespace"
+	"tkestack.io/tke/pkg/business/controller/platform"
 	"tkestack.io/tke/pkg/business/controller/project"
 )
 
@@ -47,6 +47,9 @@ const (
 
 	platformSyncPeriod      = 30 * time.Second
 	concurrentPlatformSyncs = 1
+
+	emigrationSyncPeriod      = 30 * time.Second
+	concurrentEmigrationSyncs = 10
 )
 
 func startNamespaceController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -146,6 +149,22 @@ func startPlatformController(ctx ControllerContext) (http.Handler, bool, error) 
 	)
 
 	go ctrl.Run(concurrentPlatformSyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startNsEmigrationController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: businessv1.GroupName, Version: "v1", Resource: "nsemigrations"}] {
+		return nil, false, nil
+	}
+
+	ctrl := emigration.NewController(
+		ctx.PlatformClient,
+		ctx.ClientBuilder.ClientOrDie("nsemigration-controller"),
+		ctx.InformerFactory.Business().V1().NsEmigrations(),
+		emigrationSyncPeriod)
+
+	go ctrl.Run(concurrentEmigrationSyncs, ctx.Stop)
 
 	return nil, true, nil
 }

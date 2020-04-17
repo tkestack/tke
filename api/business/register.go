@@ -80,6 +80,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&ChartGroup{},
 		&ChartGroupList{},
+
+		&NsEmigration{},
+		&NsEmigrationList{},
 	)
 	return nil
 }

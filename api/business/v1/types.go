@@ -23,8 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const CertOptionValiddays = "validDays"
-
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection
@@ -139,7 +137,6 @@ type UsedQuantity struct {
 type ClusterUsed map[string]UsedQuantity
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // NamespaceCertOptions is query options of getting namespace with a x509 certificate.
 type NamespaceCertOptions struct {
 	metav1.TypeMeta `json:",inline"`
@@ -231,6 +228,8 @@ const (
 	NamespacePending NamespacePhase = "Pending"
 	// NamespaceAvailable indicates the namespace of the project is available.
 	NamespaceAvailable NamespacePhase = "Available"
+	// NamespaceLocked indicates the namespace is locked.
+	NamespaceLocked NamespacePhase = "Locked"
 	// Namespace indicates that the namespace failed to be created in the cluster or
 	// deleted in the cluster after it has been created.
 	NamespaceFailed NamespacePhase = "Failed"
@@ -477,4 +476,76 @@ const (
 	ChartGroupFailed ChartGroupPhase = "Failed"
 	// ChartGroupTerminating means the chart group is undergoing graceful termination.
 	ChartGroupTerminating ChartGroupPhase = "Terminating"
+)
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// NsEmigration is an namespace emigration.
+type NsEmigration struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of emigrations in this set.
+	// +optional
+	Spec NsEmigrationSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	// +optional
+	Status NsEmigrationStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// NsEmigrationList is the whole list of all namespace emigrations which owned by a tenant.
+type NsEmigrationList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of namespace emigrations
+	Items []NsEmigration `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// NsEmigrationSpec represents a namespace emigration.
+type NsEmigrationSpec struct {
+	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	Namespace   string `json:"namespace" protobuf:"bytes,2,opt,name=namespace"`
+	NsShowName  string `json:"nsShowName" protobuf:"bytes,3,opt,name=nsShowName"`
+	Destination string `json:"destination" protobuf:"bytes,4,opt,name=destination"`
+}
+
+// NsEmigrationStatus represents information about the status of a namespace emigration.
+type NsEmigrationStatus struct {
+	// +optional
+	Phase NsEmigrationPhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=NsEmigrationPhase"`
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,2,opt,name=lastTransitionTime"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,4,opt,name=message"`
+}
+
+// NsEmigrationPhase indicates the phase of namespace emigrations.
+type NsEmigrationPhase string
+
+// These are valid phases of namespace emigrations.
+const (
+	// NsEmigrationPending indicates that the emigration is waiting to be executed.
+	NsEmigrationPending NsEmigrationPhase = "Pending"
+	// NsEmigrationOldOneLocked indicates that old namespace has been locked.
+	NsEmigrationOldOneLocked NsEmigrationPhase = "OldOneLocked"
+	// NsEmigrationOldOneDetached indicates that old namespace has been detached from k8s cluster namespace.
+	NsEmigrationOldOneDetached NsEmigrationPhase = "OldOneDetached"
+	// NsEmigrationNewOneCreated indicates that new namespace has been created.
+	NsEmigrationNewOneCreated NsEmigrationPhase = "NewOneCreated"
+	// NsEmigrationOldOneTerminating indicates that old namespace is terminating.
+	NsEmigrationOldOneTerminating NsEmigrationPhase = "OldOneTerminating"
+	// NsEmigrationFinished indicates that the emigration finished.
+	NsEmigrationFinished NsEmigrationPhase = "Finished"
+	// NsEmigrationFailed indicates that the emigration failed.
+	NsEmigrationFailed NsEmigrationPhase = "Failed"
 )

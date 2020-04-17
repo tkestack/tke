@@ -82,3 +82,9 @@ func SetDefaults_ChartGroupStatus(obj *ChartGroupStatus) {
 		obj.Phase = ChartGroupPending
 	}
 }
+
+func SetDefaults_NsEmigrationStatus(obj *NsEmigrationStatus) {
+	if obj.Phase == "" {
+		obj.Phase = NsEmigrationPending
+	}
+}

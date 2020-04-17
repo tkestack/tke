@@ -33,6 +33,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/storage"
 	chartgroupstorage "tkestack.io/tke/pkg/business/registry/chartgroup/storage"
 	configmapstorage "tkestack.io/tke/pkg/business/registry/configmap/storage"
+	emigrationstorage "tkestack.io/tke/pkg/business/registry/emigration/storage"
 	imagenamespacestorage "tkestack.io/tke/pkg/business/registry/imagenamespace/storage"
 	namespacestorage "tkestack.io/tke/pkg/business/registry/namespace/storage"
 	platformstorage "tkestack.io/tke/pkg/business/registry/platform/storage"
@@ -96,6 +97,9 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
+
+		emigrationREST := emigrationstorage.NewStorage(restOptionsGetter, businessClient, s.PlatformClient, s.PrivilegedUsername)
+		storageMap["nsemigrations"] = emigrationREST.Emigration
 
 		if s.RegistryClient != nil {
 			imageNamespaceREST := imagenamespacestorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)
