@@ -43,7 +43,6 @@ import (
 	storageerr "k8s.io/apiserver/pkg/storage/errors"
 	"k8s.io/apiserver/pkg/util/dryrun"
 	"tkestack.io/tke/api/business"
-	businessv1 "tkestack.io/tke/api/business/v1"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -325,6 +324,44 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 
+func (r *REST) patchNamespaceList(obj runtime.Object) error {
+	nl, ok := obj.(*business.NamespaceList)
+	if !ok {
+		return fmt.Errorf("patchNamespaceList, expect *business.NamespaceList, but got %s", reflect.TypeOf(obj))
+	}
+
+	cache := map[string]*platformv1.Cluster{}
+	for idx := range nl.Items {
+		if err := r.patchNamespace(&nl.Items[idx], cache); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *REST) patchNamespace(obj runtime.Object, cache map[string]*platformv1.Cluster) error {
+	ns, ok := obj.(*business.Namespace)
+	if !ok {
+		return fmt.Errorf("patchNamespace, expect *business.Namespace, but got %s", reflect.TypeOf(obj))
+	}
+
+	cls, has := cache[ns.Spec.ClusterName]
+	if !has {
+		var err error
+		cls, err = r.platformClient.Clusters().Get(ns.Spec.ClusterName, metav1.GetOptions{})
+		if err != nil {
+			log.Errorf("patchNamespace %s: %s", ns.Name, err)
+			return nil
+		}
+		if cache != nil {
+			cache[ns.Spec.ClusterName] = cls
+		}
+	}
+	ns.Spec.ClusterVersion = cls.Status.Version
+	ns.Spec.ClusterDisplayName = cls.Spec.DisplayName
+	return nil
+}
+
 // StatusREST implements the REST endpoint for changing the status of a replication controller
 type StatusREST struct {
 	store *registry.Store
@@ -461,7 +498,7 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 	}
 	validDays, err := strconv.Atoi(options.(*business.NamespaceCertOptions).ValidDays)
 	if err != nil {
-		return nil, fmt.Errorf("prj:%s, ns:%s, query string '%s', %s", ns.Namespace, ns.Name, businessv1.CertOptionValiddays, err)
+		return nil, fmt.Errorf("prj:%s, ns:%s, query string '%s', %s", ns.Namespace, ns.Name, business.CertOptionValidDays, err)
 	}
 	user, _ := authentication.GetUsernameAndTenantID(ctx)
 	template := x509.Certificate{
@@ -492,6 +529,40 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 	return ns, nil
 }
 
+// EmigrateREST implements the REST endpoint for moving a namespace.
+type EmigrateREST struct {
+	store *registry.Store
+}
+
+// New returns an empty object that can be used with Create and Update after
+// request data has been put into it.
+func (r *EmigrateREST) New() runtime.Object {
+	return r.store.New()
+}
+
+// Get retrieves the object from the storage. It is required to support Patch.
+func (r *EmigrateREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
+}
+
+// Export an object.  Fields that are not user specified are stripped out
+// Returns the stripped object.
+func (r *EmigrateREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
+	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
+}
+
+// Update alters the Status.Phase and Annotations of a namespace.
+func (r *EmigrateREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo,
+	createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc,
+	forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	_, err := ValidateGetObjectAndTenantID(ctx, r.store, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
+	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
+}
+
 func shouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {
 	ns, ok := obj.(*business.Namespace)
 	if !ok {
@@ -499,42 +570,4 @@ func shouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing run
 		return false
 	}
 	return len(ns.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
-}
-
-func (r *REST) patchNamespaceList(obj runtime.Object) error {
-	nl, ok := obj.(*business.NamespaceList)
-	if !ok {
-		return fmt.Errorf("patchNamespaceList, expect *business.NamespaceList, but got %s", reflect.TypeOf(obj))
-	}
-
-	cache := map[string]*platformv1.Cluster{}
-	for idx := range nl.Items {
-		if err := r.patchNamespace(&nl.Items[idx], cache); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *REST) patchNamespace(obj runtime.Object, cache map[string]*platformv1.Cluster) error {
-	ns, ok := obj.(*business.Namespace)
-	if !ok {
-		return fmt.Errorf("patchNamespace, expect *business.Namespace, but got %s", reflect.TypeOf(obj))
-	}
-
-	cls, has := cache[ns.Spec.ClusterName]
-	if !has {
-		var err error
-		cls, err = r.platformClient.Clusters().Get(ns.Spec.ClusterName, metav1.GetOptions{})
-		if err != nil {
-			log.Errorf("patchNamespace %s: %s", ns.Name, err)
-			return nil
-		}
-		if cache != nil {
-			cache[ns.Spec.ClusterName] = cls
-		}
-	}
-	ns.Spec.ClusterVersion = cls.Status.Version
-	ns.Spec.ClusterDisplayName = cls.Spec.DisplayName
-	return nil
 }

@@ -193,6 +193,7 @@ message NamespaceCert {
   optional bytes pem = 1;
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // NamespaceCertOptions is query options of getting namespace with a x509 certificate.
 message NamespaceCertOptions {
   // Pay attention to const CertOptionValiddays!
@@ -258,6 +259,57 @@ message NamespaceStatus {
 
   // +optional
   optional NamespaceCert certificate = 8;
+}
+
+// NsEmigration is an namespace emigration.
+message NsEmigration {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of emigrations in this set.
+  // +optional
+  optional NsEmigrationSpec spec = 2;
+
+  // +optional
+  optional NsEmigrationStatus status = 3;
+}
+
+// NsEmigrationList is the whole list of all namespace emigrations which owned by a tenant.
+message NsEmigrationList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of namespace emigrations
+  repeated NsEmigration items = 2;
+}
+
+// NsEmigrationSpec represents a namespace emigration.
+message NsEmigrationSpec {
+  optional string tenantID = 1;
+
+  optional string namespace = 2;
+
+  optional string nsShowName = 3;
+
+  optional string destination = 4;
+}
+
+// NsEmigrationStatus represents information about the status of a namespace emigration.
+message NsEmigrationStatus {
+  // +optional
+  optional string phase = 1;
+
+  // The last time the condition transitioned from one status to another.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 2;
+
+  // The reason for the condition's last transition.
+  // +optional
+  optional string reason = 3;
+
+  // A human readable message indicating details about the transition.
+  // +optional
+  optional string message = 4;
 }
 
 // Platform is a platform in TKE.

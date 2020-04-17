@@ -48,6 +48,14 @@ type NamespaceListerExpansion interface{}
 // NamespaceNamespaceLister.
 type NamespaceNamespaceListerExpansion interface{}
 
+// NsEmigrationListerExpansion allows custom methods to be added to
+// NsEmigrationLister.
+type NsEmigrationListerExpansion interface{}
+
+// NsEmigrationNamespaceListerExpansion allows custom methods to be added to
+// NsEmigrationNamespaceLister.
+type NsEmigrationNamespaceListerExpansion interface{}
+
 // PlatformListerExpansion allows custom methods to be added to
 // PlatformLister.
 type PlatformListerExpansion interface{}
