@@ -82,7 +82,7 @@ Other active channels:
 
 - WeChat Group
 
-![TKEStack](docs/images/WeChatIMG.png)
+![TKEStack](docs/images/WeChat.png)
 
 ## Licensing
 
