@@ -678,7 +678,7 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
     /// #endif
     // 因为回滚需要使用特定的apiVersion，故不用reduceK8sRestful
     let k8sUrl =
-      `/${resourceInfo.basicEntry}/${rsResourceInfo.group}/${rsResourceInfo.version}/` +
+      `/${resourceInfo.basicEntry}/apps/v1beta1/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
       `${resourceInfo.requestType['list']}/${resourceIns}/rollback`;
     let url = k8sUrl;
