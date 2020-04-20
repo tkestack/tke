@@ -687,28 +687,28 @@ func (t *TKE) validateResource(cluster *platformv1.Cluster) *errors.StatusError 
 		if err != nil {
 			return errors.NewInternalError(fmt.Errorf("get cpu error: %w", err))
 		}
-		cpu, err := strconv.Atoi(string(stdout))
+		cpu, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
 		if err != nil {
 			return errors.NewInternalError(fmt.Errorf("convert cpu value error: %w", err))
 		}
 		cpuSum += cpu
 
-		cmd = "dmidecode --type memory|awk '/Maximum Capacity/ {print $3}'"
+		cmd = "free -g | grep Mem  | awk '{print $2}'"
 		stdout, err = s.CombinedOutput(cmd)
 		if err != nil {
 			return errors.NewInternalError(fmt.Errorf("get memory error: %w", err))
 		}
-		memory, err := strconv.Atoi(string(stdout))
+		memory, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
 		if err != nil {
 			return errors.NewInternalError(fmt.Errorf("convert memory value error: %w", err))
 		}
 		memorySum += memory
 	}
 	if cpuSum < constants.CPURequest {
-		errors.NewBadRequest(fmt.Sprintf("at lease %d cores are required", constants.CPURequest))
+		return errors.NewBadRequest(fmt.Sprintf("at lease %d cores are required", constants.CPURequest))
 	}
 	if memorySum < constants.MemoryRequest {
-		errors.NewBadRequest(fmt.Sprintf("at lease %d GiB memory are required", constants.CPURequest))
+		return errors.NewBadRequest(fmt.Sprintf("at lease %d GiB memory are required", constants.MemoryRequest))
 	}
 
 	return nil
