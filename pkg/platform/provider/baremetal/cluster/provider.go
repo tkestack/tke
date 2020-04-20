@@ -38,6 +38,7 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/spec"
@@ -133,6 +134,7 @@ func NewProvider() (*Provider, error) {
 		p.EnsureMarkControlPlane,
 
 		p.EnsureNvidiaDevicePlugin,
+		p.EnsureCSIOperator,
 
 		p.EnsureCleanup,
 
@@ -191,7 +193,6 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 		if c.Spec.Features.HA.TKEHA != nil {
 			for _, msg := range validation.IsValidIP(c.Spec.Features.HA.TKEHA.VIP) {
 				allErrs = append(allErrs, field.Invalid(path.Child("tke").Child("vip"), c.Spec.Features.HA.TKEHA.VIP, msg))
-
 			}
 		}
 		if c.Spec.Features.HA.ThirdPartyHA != nil {
@@ -202,6 +203,14 @@ func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
 			for _, msg := range validation.IsValidPortNum(int(c.Spec.Features.HA.ThirdPartyHA.VPort)) {
 				allErrs = append(allErrs, field.Invalid(path.Child("thirdParty").Child("vport"), c.Spec.Features.HA.ThirdPartyHA.VPort, msg))
 			}
+		}
+	}
+
+	if c.Spec.Features.CSIOperator != nil {
+		path := sPath.Child("features").Child("csiOperator")
+		err := csioperatorimage.Validate(c.Spec.Features.CSIOperator.Version)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(path.Child("version"), c.Spec.Features.CSIOperator.Version, err.Error()))
 		}
 	}
 

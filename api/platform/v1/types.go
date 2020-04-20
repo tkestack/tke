@@ -328,6 +328,8 @@ type ClusterFeature struct {
 	Files []File `json:"files,omitempty" protobuf:"bytes,8,opt,name=files"`
 	// +optional
 	Hooks map[HookType]string `json:"hooks,omitempty" protobuf:"bytes,9,opt,name=hooks"`
+	// +optional
+	CSIOperator *CSIOperatorFeature `json:"csiOperator,omitempty" protobuf:"bytes,10,opt,name=csiOperator"`
 }
 
 type HA struct {
@@ -350,6 +352,10 @@ type File struct {
 }
 
 type HookType string
+
+type CSIOperatorFeature struct {
+	Version string `json:"version" protobuf:"bytes,1,name=version"`
+}
 
 const (
 	HookPreInstall  HookType = "PreInstall"

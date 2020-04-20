@@ -54,6 +54,8 @@ spec:
               mountPath: /app/provider/baremetal/conf/kubeadm/
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
+            - name: csi-operator-manifests-volume
+                mountPath: /app/provider/baremetal/manifests/csi-operator/
             - name: keepalived-manifests-volume
               mountPath: /app/provider/baremetal/manifests/keepalived/
           ports:
@@ -103,6 +105,9 @@ spec:
         - name: gpu-manifests-volume
           configMap:
             name: gpu-manifests
+        - name: csi-operator-manifests-volume
+            configMap:
+              name: csi-operator-manifests
         - name: keepalived-manifests-volume
           configMap:
             name: keepalived-manifests

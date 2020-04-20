@@ -323,6 +323,8 @@ type ClusterFeature struct {
 	Files []File
 	// +optional
 	Hooks map[HookType]string
+	// +optional
+	CSIOperator *CSIOperatorFeature
 }
 
 type HA struct {
@@ -345,6 +347,10 @@ type File struct {
 }
 
 type HookType string
+
+type CSIOperatorFeature struct {
+	Version string
+}
 
 const (
 	HookPreInstall  HookType = "PreInstall"
