@@ -664,7 +664,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	}
 
 	// secret for alertmanager
-	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(webhookAddr)); err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(webhookAddr, prometheus.Spec.AlertRepeatInterval)); err != nil {
 		return err
 	}
 
@@ -1344,8 +1344,11 @@ var selectorForAlertManager = metav1.LabelSelector{
 	MatchLabels: map[string]string{"alertmanager": alertManagerCRDName, "app": "alertmanager"},
 }
 
-func createSecretForAlertmanager(webhookAddr string) *corev1.Secret {
-	config := configForAlertManager(webhookAddr)
+func createSecretForAlertmanager(webhookAddr string, repeatInterval string) *corev1.Secret {
+	if repeatInterval == "" {
+		repeatInterval = "1200s"
+	}
+	config := configForAlertManager(webhookAddr, repeatInterval)
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      alertManagerSecret,

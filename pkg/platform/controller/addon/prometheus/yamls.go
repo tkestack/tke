@@ -1006,7 +1006,7 @@ groups:
 	return rules
 }
 
-func configForAlertManager(webhookAddr string) string {
+func configForAlertManager(webhookAddr string, repeatInterval string) string {
 	config := fmt.Sprintf(`
     global:
       resolve_timeout: 5m
@@ -1015,7 +1015,7 @@ func configForAlertManager(webhookAddr string) string {
       group_by: ['alertname','alarmPolicyName','version']
       group_wait: 1s
       group_interval: 1s
-      repeat_interval: 300s
+      repeat_interval: %s
       receiver: 'web.hook'
       routes:
       - match:
@@ -1029,7 +1029,7 @@ func configForAlertManager(webhookAddr string) string {
         http_config:
          tls_config:
           insecure_skip_verify: true
-`, webhookAddr)
+`, repeatInterval, webhookAddr)
 
 	return config
 }

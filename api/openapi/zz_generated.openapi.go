@@ -44670,6 +44670,13 @@ func schema_tke_api_platform_v1_PrometheusSpec(ref common.ReferenceCallback) com
 							Format:      "",
 						},
 					},
+					"alertRepeatInterval": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AlertRepeatInterval indicates repeat interval of alerts",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "clusterName"},
 			},

@@ -749,6 +749,9 @@ type PrometheusSpec struct {
 	// +optional
 	// RunOnMaster indicates whether to add master Affinity for all monitor components or not
 	RunOnMaster bool `json:"runOnMaster,omitempty" protobuf:"bytes,8,opt,name=runOnMaster"`
+	// +optional
+	// AlertRepeatInterval indicates repeat interval of alerts
+	AlertRepeatInterval string `json:"alertRepeatInterval,omitempty" protobuf:"bytes,9,opt,name=alertRepeatInterval"`
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
