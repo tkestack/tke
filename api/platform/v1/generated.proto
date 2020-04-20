@@ -1196,6 +1196,10 @@ message PrometheusSpec {
   // +optional
   // RunOnMaster indicates whether to add master Affinity for all monitor components or not
   optional bool runOnMaster = 8;
+
+  // +optional
+  // AlertRepeatInterval indicates repeat interval of alerts
+  optional string alertRepeatInterval = 9;
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.

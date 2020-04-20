@@ -739,6 +739,8 @@ type PrometheusSpec struct {
 	Resources ResourceRequirements
 	// +optional
 	RunOnMaster bool
+	// +optional
+	AlertRepeatInterval string
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
