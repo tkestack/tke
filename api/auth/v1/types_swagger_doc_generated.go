@@ -346,7 +346,7 @@ func (LocalIdentitySpec) SwaggerDoc() map[string]string {
 
 var map_LocalIdentityStatus = map[string]string{
 	"":               "LocalIdentityStatus is a description of an identity status.",
-	"LastUpdateTime": "The last time the local identity was updated.",
+	"lastUpdateTime": "The last time the local identity was updated.",
 }
 
 func (LocalIdentityStatus) SwaggerDoc() map[string]string {
@@ -416,12 +416,29 @@ func (PolicyStatus) SwaggerDoc() map[string]string {
 	return map_PolicyStatus
 }
 
+var map_Project = map[string]string{
+	"": "Project contains members of projects.",
+}
+
+func (Project) SwaggerDoc() map[string]string {
+	return map_Project
+}
+
 var map_ProjectBelongs = map[string]string{
-	"": "Dummy is a empty struct.",
+	"": "ProjectBelongs contains projects of user belongs.",
 }
 
 func (ProjectBelongs) SwaggerDoc() map[string]string {
 	return map_ProjectBelongs
+}
+
+var map_ProjectList = map[string]string{
+	"":      "ProjectList is the whole list of all projects.",
+	"items": "List of projects.",
+}
+
+func (ProjectList) SwaggerDoc() map[string]string {
+	return map_ProjectList
 }
 
 var map_ProjectPolicyBinding = map[string]string{

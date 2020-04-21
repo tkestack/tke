@@ -95,7 +95,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 	log.Info("Create a new identity provider", log.String("type", idpObj.Spec.Type), log.String("name(tenant)", idpObj.Name))
 	switch idpObj.Spec.Type {
 	case local.ConnectorType:
-		idp, err = local.NewDefaultIdentityProvider(idpObj.Name, idpObj.Spec.Administrators, r.versionedInformers)
+		idp, err = local.NewDefaultIdentityProvider(idpObj.Name, idpObj.Spec.Administrators, r.authClient, r.versionedInformers)
 		if err != nil {
 			return nil, errors.NewInternalError(err)
 		}

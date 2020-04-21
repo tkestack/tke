@@ -68,7 +68,6 @@ func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.Lis
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
 		tenantID = filter.TenantIDFrom(ctx)
-		userID = util.CombineTenantAndName(tenantID, userID)
 	}
 
 	obj, err := r.userRest.Get(ctx, userID, &metav1.GetOptions{})

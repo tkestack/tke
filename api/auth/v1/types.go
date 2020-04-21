@@ -108,7 +108,7 @@ type LocalIdentityStatus struct {
 
 	// The last time the local identity was updated.
 	// +optional
-	LastUpdateTime metav1.Time `protobuf:"bytes,2,opt,name=lastUpdateTime"`
+	LastUpdateTime metav1.Time `json:"lastUpdateTime" protobuf:"bytes,2,opt,name=lastUpdateTime"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -596,13 +596,36 @@ type ProjectPolicyBindingRequest struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Dummy is a empty struct.
+// ProjectBelongs contains projects of user belongs.
 type ProjectBelongs struct {
 	metav1.TypeMeta `json:",inline"`
 
-	TenantID        string                `protobuf:"bytes,1,opt,name=tenantID"`
+	TenantID        string                `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
 	ManagedProjects map[string]ExtraValue `json:"managedProjects" protobuf:"bytes,2,rep,name=managedProjects"`
 	MemberdProjects map[string]ExtraValue `json:"memberdProjects" protobuf:"bytes,3,rep,name=memberdProjects"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Project contains members of projects.
+type Project struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,4,opt,name=metadata"`
+
+	TenantID string            `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	Users    map[string]string `json:"members" protobuf:"bytes,2,rep,name=members"`
+	Groups   map[string]string `json:"groups" protobuf:"bytes,3,rep,name=groups"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectList is the whole list of all projects.
+type ProjectList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of projects.
+	Items []Project `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 // +genclient

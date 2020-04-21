@@ -250,8 +250,8 @@ func (c *Controller) handleSpec(key string, role *v1.Role) error {
 	if role.Spec.ProjectID != "" {
 		projectID = role.Spec.ProjectID
 	}
-
-	rules := c.enforcer.GetRolesForUserInDomain(role.Name, authutil.DefaultDomain)
+	log.Info("xxx", log.Any("rules", c.enforcer.GetFilteredGroupingPolicy(0, role.Name)))
+	rules := c.enforcer.GetRolesForUserInDomain(role.Name, projectID)
 	log.Debugf("Get roles for role: %s, %v, %s", role.Name, rules, projectID)
 	var existsPolicies []string
 	for _, rule := range rules {

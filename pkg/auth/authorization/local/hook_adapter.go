@@ -66,6 +66,8 @@ func (d *adapterHookHandler) PostStartHook() (string, genericapiserver.PostStart
 
 		rm := domainrolemanager.NewRoleManager(10)
 		d.enforcer.SetRoleManager(rm)
+		_ = d.enforcer.LoadPolicy()
+
 		d.enforcer.StartAutoLoadPolicy(d.reloadInterval)
 		log.Info("finish start create casbin server")
 		return nil

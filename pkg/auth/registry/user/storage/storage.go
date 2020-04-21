@@ -32,6 +32,7 @@ import (
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -93,7 +94,10 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
-		tenantID, name = util.ParseTenantAndName(name)
+		tenantID = filter.TenantIDFrom(ctx)
+		if tenantID == "" {
+			tenantID, name = util.ParseTenantAndName(name)
+		}
 	}
 
 	idp, ok := identityprovider.GetIdentityProvider(tenantID)
@@ -114,7 +118,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if tenantID == "" {
+	if tenantID == "" && options != nil && options.FieldSelector != nil {
 		tenantID, _ = options.FieldSelector.RequiresExactMatch("spec.tenantID")
 		if tenantID == "" {
 			return &auth.UserList{}, nil

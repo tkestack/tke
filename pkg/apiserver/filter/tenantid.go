@@ -26,7 +26,7 @@ import (
 )
 
 // HeaderTenantID is the header name of tenantID.
-const headerTenantID = "X-TKE-TenantID"
+const HeaderTenantID = "X-TKE-TenantID"
 
 const tenantIDContextKey = "tenantID"
 
@@ -34,10 +34,10 @@ const tenantIDContextKey = "tenantID"
 // chain.
 func WithTenantID(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		requestID := req.Header.Get(headerTenantID)
+		requestID := req.Header.Get(HeaderTenantID)
 		// add request id to context
 		req = req.WithContext(genericrequest.WithValue(req.Context(), tenantIDContextKey, requestID))
-		w.Header().Set(headerTenantID, requestID)
+		w.Header().Set(HeaderTenantID, requestID)
 		handler.ServeHTTP(w, req)
 	})
 }

@@ -272,10 +272,7 @@ func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) 
 	log.Debug("LocalGroup controller - deleteRelatedRoles", log.String("group", group.Name))
 
 	subj := util.GroupKey(group.Spec.TenantID, group.Name)
-	roles, err := deleter.enforcer.GetRolesForUser(subj)
-	if err != nil {
-		return err
-	}
+	roles := deleter.enforcer.GetRolesForUserInDomain(subj, util.DefaultDomain)
 	log.Info("Try removing related rules for group", log.String("group", group.Name), log.Strings("rules", roles))
 
 	binding := v1.Binding{}
@@ -285,7 +282,7 @@ func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) 
 		switch {
 		case strings.HasPrefix(role, "pol-"):
 			pol := &v1.Policy{}
-			err = deleter.authClient.RESTClient().Post().
+			err := deleter.authClient.RESTClient().Post().
 				Resource("policies").
 				Name(role).
 				SubResource("unbinding").
@@ -298,7 +295,7 @@ func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) 
 			}
 		case strings.HasPrefix(role, "rol-"):
 			rol := &v1.Role{}
-			err = deleter.authClient.RESTClient().Post().
+			err := deleter.authClient.RESTClient().Post().
 				Resource("roles").
 				Name(role).
 				SubResource("unbinding").
@@ -311,7 +308,7 @@ func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) 
 			}
 		default:
 			log.Error("Unknown role name for group, remove it", log.String("group", group.Name), log.String("role", role))
-			_, err = deleter.enforcer.DeleteRoleForUser(subj, role)
+			_, err := deleter.enforcer.DeleteRoleForUser(subj, role)
 			if err != nil {
 				errs = append(errs, err)
 			}

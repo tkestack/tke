@@ -74,10 +74,6 @@ func (c *FakeAuth) ProjectPolicyBindings() internalversion.ProjectPolicyBindingI
 	return &FakeProjectPolicyBindings{c}
 }
 
-func (c *FakeAuth) ProjectRoles() internalversion.ProjectRoleInterface {
-	return &FakeProjectRoles{c}
-}
-
 func (c *FakeAuth) Roles() internalversion.RoleInterface {
 	return &FakeRoles{c}
 }

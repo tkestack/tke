@@ -29,7 +29,8 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		AddFieldLabelConversionsForLocalIdentity,
 		AddFieldLabelConversionsForAPIKey,
 		AddFieldLabelConversionsForPolicy,
-		AddFieldLabelConversionsForProjectPolicy,
+		AddFieldLabelConversionsForProjectPolicyBinding,
+		AddFieldLabelConversionsForProject,
 		AddFieldLabelConversionsForRule,
 		AddFieldLabelConversionsForCategory,
 		AddFieldLabelConversionsForLocalGroup,
@@ -106,16 +107,32 @@ func AddFieldLabelConversionsForPolicy(scheme *runtime.Scheme) error {
 		})
 }
 
-// AddFieldLabelConversionsForProjectPolicy adds a conversion function to convert
+// AddFieldLabelConversionsForProjectPolicyBinding adds a conversion function to convert
 // field selectors of ProjectPolicyBinding from the given version to internal version
 // representation.
-func AddFieldLabelConversionsForProjectPolicy(scheme *runtime.Scheme) error {
+func AddFieldLabelConversionsForProjectPolicyBinding(scheme *runtime.Scheme) error {
 	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("ProjectPolicyBinding"),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.tenantID",
 				"spec.projectID",
 				"spec.policyID":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForProject adds a conversion function to convert
+// field selectors of Project from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForProject(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Project"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.tenantID",
+				"metadata.name":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported: %s", label)
@@ -229,6 +246,7 @@ func AddFieldLabelConversionsForUser(scheme *runtime.Scheme) error {
 			switch label {
 			case "keyword",
 				"limit",
+				"policy",
 				"spec.tenantID":
 				return label, value, nil
 			default:

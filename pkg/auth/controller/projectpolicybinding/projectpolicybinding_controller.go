@@ -211,8 +211,7 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve projectPolicy from store", log.String("projectPolicy name", key), log.Err(err))
 	default:
 		if projectPolicy.Status.Phase == v1.BindingTerminating {
-
-			log.Error("Delete project policy", log.String("key", key))
+			log.Info("Delete project policy", log.String("key", key))
 			err = c.projectpolicyedResourcesDeleter.Delete(key)
 		} else {
 			err = c.processUpdate(projectPolicy, key)

@@ -435,7 +435,7 @@ const (
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// ProjectPolicyBinding represents a policy document for access control.
+// Policy represents a policy document for access control.
 type Policy struct {
 	metav1.TypeMeta
 	metav1.ObjectMeta
@@ -547,7 +547,7 @@ type ProjectPolicyBindingSpec struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// PolicyBinding references the request to bind or unbind policies to the role.
+// ProjectPolicyBindingRequest references the request to bind or unbind project policies to the role.
 type ProjectPolicyBindingRequest struct {
 	metav1.TypeMeta
 
@@ -585,54 +585,13 @@ type ProjectPolicyBindingList struct {
 	Items []ProjectPolicyBinding
 }
 
-// +genclient
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// ProjectRole represents a subjects bind to a roles in a project scope.
-type ProjectRole struct {
-	metav1.TypeMeta
-	metav1.ObjectMeta
-
-	Spec   ProjectRoleSpec
-	Status ProjectRoleStatus
-}
-
-// ProjectRoleSpec defines the desired identities of ProjectRoleSpec document in this set.
-type ProjectRoleSpec struct {
-	Finalizers []FinalizerName
-	TenantID   string
-	ProjectID  string
-
-	// A list of policies of
-	Policies []string
-	Users    []Subject
-	Groups   []Subject
-}
-
-// ProjectRoleStatus represents information about the status of a ProjectRole.
-type ProjectRoleStatus struct {
-	Phase BindingPhase
-}
-
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// ProjectPolicyBinding is the whole list of all ProjectPolicys.
-type ProjectRoleList struct {
-	metav1.TypeMeta
-	metav1.ListMeta
-	// List of policies.
-	Items []ProjectPolicyBinding
-}
-
 const (
 	DefaultRuleModel = `
 [request_definition]
 r = sub, dom, obj, act
 
 [policy_definition]
-p = sub, dom, obj, act
+p = sub, dom, obj, act, eft
 
 [role_definition]
 g = _, _, _
@@ -641,7 +600,7 @@ g = _, _, _
 e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
 
 [matchers]
-m = g(r.sub, p.sub, p.dom) && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.act)
+m = g(r.sub, p.sub, r.dom) && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.act)
 `
 )
 
@@ -786,6 +745,29 @@ type ProjectBelongs struct {
 	// project and roles in project
 	ManagedProjects map[string]ExtraValue
 	MemberdProjects map[string]ExtraValue
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Project contains members of projects.
+type Project struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	TenantID string
+	Users    map[string]string
+	Groups   map[string]string
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectList is the whole list of all projects.
+type ProjectList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of projects.
+	Items []Project
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

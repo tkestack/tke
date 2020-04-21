@@ -32,12 +32,17 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"tkestack.io/tke/api/auth"
+	authv1 "tkestack.io/tke/api/auth/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
 const (
-	PolicyTag   = "policy"
-	PoliciesKey = "policies"
+	PolicyTag        = "policy"
+	PoliciesKey      = "policies"
+	administratorKey = "administrator"
+
+	platformPolicyPattern      = "pol-%s-platform"
+	administratorPolicyPattern = "pol-%s-administrator"
 )
 
 func GetLocalIdentity(authClient authinternalclient.AuthInterface, tenantID, username string) (auth.LocalIdentity, error) {
@@ -192,6 +197,46 @@ func HandleUserPoliciesUpdate(authClient authinternalclient.AuthInterface, enfor
 	return errors.NewAggregate([]error{berr, uerr})
 }
 
+func SetAdministrator(enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity) {
+	if localIdentity.Spec.Extra == nil {
+		localIdentity.Spec.Extra = make(map[string]string)
+	}
+	localIdentity.Spec.Extra[administratorKey] = "false"
+	// Use implicit roles to check admin
+	roles, err := enforcer.GetImplicitRolesForUser(UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), "")
+	if err != nil {
+		log.Error("Get implicit roles for user failed", log.String("user", localIdentity.Spec.Username), log.Err(err))
+		return
+	}
+	for _, r := range roles {
+		if r == fmt.Sprintf(platformPolicyPattern, localIdentity.Spec.TenantID) ||
+			r == fmt.Sprintf(administratorPolicyPattern, localIdentity.Spec.TenantID) {
+			localIdentity.Spec.Extra[administratorKey] = "true"
+			return
+		}
+	}
+
+	idp, err := authClient.IdentityProviders().Get(localIdentity.Spec.TenantID, v1.GetOptions{})
+	if err != nil {
+		log.Error("get idp for tenant failed", log.String("tenantID", localIdentity.Spec.TenantID))
+		return
+	}
+
+	for _, name := range idp.Spec.Administrators {
+		if name == localIdentity.Spec.Username {
+			localIdentity.Spec.Extra[administratorKey] = "true"
+			return
+		}
+	}
+}
+
+func IsPlatformAdministrator(user authv1.User) bool {
+	if user.Spec.Extra != nil && user.Spec.Extra[administratorKey] == "true" {
+		return true
+	}
+	return false
+}
+
 func FillUserPolicies(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, localidentityList *auth.LocalIdentityList) {
 	if enforcer == nil || enforcer.GetRoleManager() == nil || enforcer.GetAdapter() == nil {
 		return
@@ -199,6 +244,9 @@ func FillUserPolicies(authClient authinternalclient.AuthInterface, enforcer *cas
 
 	policyDisplayNameMap := make(map[string]string)
 	for i, item := range localidentityList.Items {
+		SetAdministrator(enforcer, authClient, &localidentityList.Items[i])
+
+		// Use direct roles to fill policies
 		roles := enforcer.GetRolesForUserInDomain(UserKey(item.Spec.TenantID, item.Spec.Username), "")
 		var policies []string
 		for _, r := range roles {
@@ -230,10 +278,7 @@ func FillUserPolicies(authClient authinternalclient.AuthInterface, enforcer *cas
 			continue
 		}
 
-		if localidentityList.Items[i].Spec.Extra == nil {
-			localidentityList.Items[i].Spec.Extra = make(map[string]string)
-		}
-
 		localidentityList.Items[i].Spec.Extra[PoliciesKey] = string(b)
+
 	}
 }

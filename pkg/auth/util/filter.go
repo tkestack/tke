@@ -21,14 +21,15 @@ package util
 import (
 	"context"
 
-	"tkestack.io/tke/pkg/apiserver/filter"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 
 	"tkestack.io/tke/api/auth"
 	v1 "tkestack.io/tke/api/auth/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/apiserver/filter"
 )
 
 // FilterLocalIdentity is used to filter localIdentity that do not belong to the tenant.
@@ -191,4 +192,17 @@ func PredicateProjectIDListOptions(ctx context.Context, options *metainternal.Li
 	}
 	options.FieldSelector = fields.AndSelectors(options.FieldSelector, fields.OneTermEqualSelector("spec.projectID", projectID))
 	return options
+}
+
+// PredicateV1ListOptions determines the query options according to the tenant
+// attribute of the request user.
+func PredicateV1ListOptions(tenantID string, options *metainternal.ListOptions) *metav1.ListOptions {
+	v1ops := &metav1.ListOptions{}
+	if options == nil || options.FieldSelector == nil {
+		v1ops.FieldSelector = fields.OneTermEqualSelector("spec.tenantID", tenantID).String()
+		return v1ops
+	}
+
+	v1ops.FieldSelector = fields.AndSelectors(options.FieldSelector, fields.OneTermEqualSelector("spec.tenantID", tenantID)).String()
+	return v1ops
 }
