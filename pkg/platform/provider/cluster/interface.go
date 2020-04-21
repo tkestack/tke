@@ -55,12 +55,11 @@ type InternalCluster struct {
 type Provider interface {
 	Name() string
 
-	ValidateCredential(cluster InternalCluster) (field.ErrorList, error)
+	ValidateCredential(cluster InternalCluster) field.ErrorList
+	Validate(cluster *platform.Cluster) field.ErrorList
 
-	Validate(cluster platform.Cluster) (field.ErrorList, error)
 	PreCreate(user UserInfo, cluster platform.Cluster) (platform.Cluster, error)
 	AfterCreate(cluster platform.Cluster) ([]interface{}, error)
-	ValidateUpdate(cluster platform.Cluster, oldCluster platform.Cluster) (field.ErrorList, error)
 
 	OnInitialize(cluster Cluster) (Cluster, error)
 	OnUpdate(cluster Cluster) (Cluster, error)

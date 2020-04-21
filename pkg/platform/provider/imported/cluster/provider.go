@@ -23,9 +23,8 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"time"
 
-	"tkestack.io/tke/pkg/util/validation"
+	"tkestack.io/tke/pkg/platform/provider/imported/validation"
 
 	"tkestack.io/tke/pkg/platform/util"
 
@@ -78,7 +77,7 @@ func (p *Provider) Name() string {
 	return providerName
 }
 
-func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) (field.ErrorList, error) {
+func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) field.ErrorList {
 	var allErrs field.ErrorList
 
 	credential := cluster.ClusterCredential
@@ -108,29 +107,11 @@ func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) (
 		}
 	}
 
-	return allErrs, nil
+	return allErrs
 }
 
-func (p *Provider) Validate(c platform.Cluster) (field.ErrorList, error) {
-	var allErrs field.ErrorList
-
-	if len(c.Status.Addresses) == 0 {
-		allErrs = append(allErrs, field.Required(field.NewPath("status", "addresses"), "must specify at least one obj access address"))
-	} else {
-		for _, address := range c.Status.Addresses {
-			if address.Host == "" {
-				allErrs = append(allErrs, field.Required(field.NewPath("status", "addresses", string(address.Type), "host"), "must specify the ip of address"))
-			}
-			if address.Port == 0 {
-				allErrs = append(allErrs, field.Required(field.NewPath("status", "addresses", string(address.Type), "port"), "must specify the port of address"))
-			}
-			err := validation.VailidateClusterConnection(address.Host, address.Port, 5*time.Second)
-			if err != nil {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("status", "addresses"), address, err.Error()))
-			}
-		}
-	}
-	return allErrs, nil
+func (p *Provider) Validate(c *platform.Cluster) field.ErrorList {
+	return validation.ValidateCluster(c)
 }
 
 func (p *Provider) PreCreate(user clusterprovider.UserInfo, cluster platform.Cluster) (platform.Cluster, error) {
@@ -141,9 +122,8 @@ func (p *Provider) AfterCreate(cluster platform.Cluster) ([]interface{}, error) 
 	return nil, nil
 }
 
-func (p *Provider) ValidateUpdate(cluster platform.Cluster, oldCluster platform.Cluster) (field.ErrorList, error) {
-	var allErrs field.ErrorList
-	return allErrs, nil
+func (p *Provider) ValidateUpdate(cluster *platform.Cluster, oldCluter *platform.Cluster) field.ErrorList {
+	return nil
 }
 
 func (p *Provider) OnDelete(cluster platformv1.Cluster) error {

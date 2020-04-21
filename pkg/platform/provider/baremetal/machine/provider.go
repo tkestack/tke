@@ -23,10 +23,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"time"
-
-	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	"tkestack.io/tke/pkg/util/containerregistry"
 
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
@@ -35,10 +31,11 @@ import (
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/validation"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/ssh"
 )
 
 const providerName = "Baremetal"
@@ -114,48 +111,8 @@ func (p *Provider) Name() string {
 	return providerName
 }
 
-func (p *Provider) Validate(m platform.Machine) (field.ErrorList, error) {
-	var allErrs field.ErrorList
-
-	sPath := field.NewPath("spec")
-
-	if m.Spec.IP == "" {
-		allErrs = append(allErrs, field.Required(sPath.Child("ip"), ""))
-	} else {
-		if m.Spec.Username != "root" {
-			allErrs = append(allErrs, field.Invalid(sPath.Child("username"), m.Spec.Username, "must be root"))
-		}
-		if m.Spec.Password == nil && m.Spec.PrivateKey == nil {
-			allErrs = append(allErrs, field.Required(sPath.Child("password"), "password or privateKey at least one"))
-		}
-		sshConfig := &ssh.Config{
-			User:        m.Spec.Username,
-			Host:        m.Spec.IP,
-			Port:        int(m.Spec.Port),
-			Password:    string(m.Spec.Password),
-			PrivateKey:  m.Spec.PrivateKey,
-			PassPhrase:  m.Spec.PassPhrase,
-			DialTimeOut: time.Second,
-			Retry:       0,
-		}
-		s, err := ssh.New(sshConfig)
-		if err != nil {
-			allErrs = append(allErrs, field.Forbidden(sPath, err.Error()))
-		} else {
-			err = s.Ping()
-			if err != nil {
-				allErrs = append(allErrs, field.Forbidden(sPath, err.Error()))
-			} else {
-				if gpu.IsEnable(m.Spec.Labels) {
-					if !gpu.MachineIsSupport(s) {
-						allErrs = append(allErrs, field.Invalid(sPath.Child("labels"), m.Spec.Labels, "don't has GPU card"))
-					}
-				}
-			}
-		}
-	}
-
-	return allErrs, nil
+func (p *Provider) Validate(machine *platform.Machine) field.ErrorList {
+	return validation.ValidateMachine(machine)
 }
 
 func (p *Provider) OnInitialize(tkev1Machine platformv1.Machine, tkev1Cluster platformv1.Cluster, credential platformv1.ClusterCredential) (platformv1.Machine, error) {
