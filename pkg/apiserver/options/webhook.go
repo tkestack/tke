@@ -19,21 +19,22 @@
 package options
 
 import (
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"time"
 )
 
 const (
-	flagTokenWebhookConfigFile        = "token-webhook-config-file"
-	flagTokenWebhookVersion          = "token-webhook-version"
-	flagTokenWebhookCacheTTL          = "token-webhook-cache-ttl"
+	flagTokenWebhookConfigFile = "token-webhook-config-file"
+	flagTokenWebhookVersion    = "token-webhook-version"
+	flagTokenWebhookCacheTTL   = "token-webhook-cache-ttl"
 )
 
 const (
-	configTokenWebhookConfigFile         = "authentication.webhook.config_file"
-	configTokenWehookVersion          = "authentication.webhook.version"
-	configTokenWehookCacheTTL           = "authentication.webhook.cache_ttl"
+	configTokenWebhookConfigFile = "authentication.webhook.config_file"
+	configTokenWehookVersion     = "authentication.webhook.version"
+	configTokenWehookCacheTTL    = "authentication.webhook.cache_ttl"
 )
 
 type WebHookOptions struct {
@@ -41,7 +42,6 @@ type WebHookOptions struct {
 	Version    string
 	CacheTTL   time.Duration
 }
-
 
 // NewWebhookOptions creates the default WebHookOptions object.
 func NewWebhookOptions() *WebHookOptions {
@@ -78,4 +78,3 @@ func (w *WebHookOptions) ApplyFlags() []error {
 
 	return errs
 }
-
