@@ -50,11 +50,7 @@ func Validate(obj *platform.ClusterCredential, platformClient platforminternalcl
 			Cluster:           *cluster,
 			ClusterCredential: *obj,
 		}
-		resp, err := clusterProvider.ValidateCredential(args)
-		if err != nil {
-			allErrs = append(allErrs, field.InternalError(field.NewPath("spec"), err))
-		}
-		allErrs = append(allErrs, resp...)
+		allErrs = append(allErrs, clusterProvider.ValidateCredential(args)...)
 	}
 
 	return allErrs

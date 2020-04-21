@@ -26,8 +26,8 @@ import (
 	"time"
 )
 
-// VailidateClusterConnection validates cluster connection using https dial.
-func VailidateClusterConnection(host string, port int32, timeout time.Duration) error {
+// IsHTTPSReachle tests that https://host:port is reachble in timeout.
+func IsHTTPSReachle(host string, port int32, timeout time.Duration) error {
 	client := &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,

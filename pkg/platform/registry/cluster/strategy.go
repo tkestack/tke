@@ -22,6 +22,8 @@ import (
 	"context"
 	"fmt"
 
+	"tkestack.io/tke/api/platform/validation"
+
 	"github.com/jinzhu/copier"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -140,7 +142,7 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 
 // Validate validates a new cluster
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateCluster(obj.(*platform.Cluster), s.platformClient)
+	return validation.ValidateCluster(obj.(*platform.Cluster), s.platformClient)
 }
 
 // AllowCreateOnUpdate is false for clusters
@@ -161,7 +163,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end cluster.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateClusterUpdate(obj.(*platform.Cluster), old.(*platform.Cluster), s.platformClient)
+	return validation.ValidateClusterUpdate(obj.(*platform.Cluster), old.(*platform.Cluster), s.platformClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
