@@ -816,6 +816,11 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.ServiceCIDR != nil {
+		in, out := &in.ServiceCIDR, &out.ServiceCIDR
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

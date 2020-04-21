@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -229,10 +230,30 @@ func (p *Provider) EnsureDisableSwap(c *Cluster) error {
 // 因为validate那里没法更新对象（不能存储）
 // PreCrete，在api中错误只能panic，响应不会有报错提示，所以只能挪到这里处理
 func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
-	serviceCIDR, nodeCIDRMaskSize, err := GetServiceCIDRAndNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
-	if err != nil {
-		return errors.Wrap(err, "GetServiceCIDRAndNodeCIDRMaskSize error")
+	var serviceCIDR string
+	var nodeCIDRMaskSize int32
+
+	// use specified service cidr
+	if cluster.Spec.ServiceCIDR != nil {
+		_, cidr, err := net.ParseCIDR(*cluster.Spec.ServiceCIDR)
+		if err != nil {
+			return errors.Wrap(err, "Parse ServiceCIDR error")
+		}
+		serviceCIDR = cidr.String()
+
+		nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
+		if err != nil {
+			return errors.Wrap(err, "GetNodeCIDRMaskSize error")
+		}
+	} else {
+		// compute service cidr with service number
+		var err error
+		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
+		if err != nil {
+			return errors.Wrap(err, "GetServiceCIDRAndNodeCIDRMaskSize error")
+		}
 	}
+
 	cluster.Status.ServiceCIDR = serviceCIDR
 	cluster.Status.NodeCIDRMaskSize = nodeCIDRMaskSize
 

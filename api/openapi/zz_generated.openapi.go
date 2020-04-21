@@ -42243,6 +42243,13 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
+					"serviceCIDR": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},
