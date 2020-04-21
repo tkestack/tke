@@ -105,6 +105,10 @@ type ClusterSpec struct {
 	ControllerManagerExtraArgs map[string]string
 	// +optional
 	SchedulerExtraArgs map[string]string
+
+	// ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+	// +optionals
+	ServiceCIDR *string
 }
 
 // ClusterStatus represents information about the status of a cluster.
