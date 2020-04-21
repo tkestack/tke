@@ -97,3 +97,62 @@ func TestGetServiceCIDRAndNodeCIDRMaskSize(t *testing.T) {
 		})
 	}
 }
+
+func TestGetNodeCIDRMaskSize(t *testing.T) {
+	type args struct {
+		clusterCIDR   string
+		maxNodePodNum int32
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    int32
+		wantErr bool
+	}{
+		{
+			name: "maxNodePodNum == 0",
+			args: args{
+				clusterCIDR: "192.168.0.0/24",
+			},
+			wantErr: true,
+		},
+		{
+			name: "maxNodePodNum < clusterCIDR size",
+			args: args{
+				clusterCIDR:   "192.168.0.0/24",
+				maxNodePodNum: 64,
+			},
+			want:    26,
+			wantErr: false,
+		},
+		{
+			name: "maxNodePodNum == clusterCIDR size",
+			args: args{
+				clusterCIDR:   "192.168.0.0/24",
+				maxNodePodNum: 256,
+			},
+			want:    24,
+			wantErr: false,
+		},
+		{
+			name: "maxNodePodNum > clusterCIDR size",
+			args: args{
+				clusterCIDR:   "192.168.0.0/25",
+				maxNodePodNum: 256,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetNodeCIDRMaskSize(tt.args.clusterCIDR, tt.args.maxNodePodNum)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetNodeCIDRMaskSize() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("GetNodeCIDRMaskSize() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -27,7 +27,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/util/ipallocator"
 	"tkestack.io/tke/pkg/spec"
+	"tkestack.io/tke/pkg/util/validation"
 )
 
 var (
@@ -42,13 +44,13 @@ func ValidateCluster(obj *platform.Cluster) field.ErrorList {
 	return allErrs
 }
 
-// ValidateCluster validates a given ClusterSpec.
+// ValidatClusterSpec validates a given ClusterSpec.
 func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, ValidateClusterSpecVersion(spec.Version, fldPath.Child("version"), phase)...)
-	allErrs = append(allErrs, ValidateCIDR(spec.ClusterCIDR, fldPath.Child("clusterCIDR"))...)
-	allErrs = append(allErrs, ValidateClusterProperty(spec.Properties, fldPath.Child("properties"))...)
+	allErrs = append(allErrs, ValidateCIDRs(spec, fldPath)...)
+	allErrs = append(allErrs, ValidateClusterProperty(spec, fldPath.Child("properties"))...)
 	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
 
 	return allErrs
@@ -65,16 +67,37 @@ func ValidateClusterSpecVersion(version string, fldPath *field.Path, phase platf
 	return allErrs
 }
 
-// ValidateCIDR validates a given cidr.
-func ValidateCIDR(cidr string, fldPath *field.Path) field.ErrorList {
+// ValidateCIDRs validates clusterCIDR and serviceCIDR.
+func ValidateCIDRs(spec *platform.ClusterSpec, specPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if cidr == "" {
+	fldPath := specPath.Child("clusterCIDR")
+	cidr := spec.ClusterCIDR
+	var clusterCIDR *net.IPNet
+	if len(cidr) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath, ""))
 	} else {
-		_, _, err := net.ParseCIDR(cidr)
+		var err error
+		_, clusterCIDR, err = net.ParseCIDR(cidr)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath, cidr, err.Error()))
+		}
+	}
+
+	fldPath = specPath.Child("serviceCIDR")
+	if spec.ServiceCIDR != nil {
+		cidr := *spec.ServiceCIDR
+		_, serviceCIDR, err := net.ParseCIDR(cidr)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath, cidr, err.Error()))
+		} else {
+			if err := validation.IsSubNetOverlapped(clusterCIDR, serviceCIDR); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath, cidr, err.Error()))
+			}
+			if _, err := ipallocator.GetIndexedIP(serviceCIDR, 10); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath, cidr,
+					"must contains at least 10 ips, because kubeadm need the 10th ip"))
+			}
 		}
 	}
 
@@ -82,31 +105,41 @@ func ValidateCIDR(cidr string, fldPath *field.Path) field.ErrorList {
 }
 
 // ValidateClusterProperty validates a given ClusterProperty.
-func ValidateClusterProperty(property platform.ClusterProperty, fldPath *field.Path) field.ErrorList {
+func ValidateClusterProperty(spec *platform.ClusterSpec, propPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	properties := spec.Properties
 
-	if property.MaxNodePodNum == nil {
+	fldPath := propPath.Child("maxNodePodNum")
+	if properties.MaxNodePodNum == nil {
 		allErrs = append(allErrs, field.Required(fldPath, fmt.Sprintf("validate values are %v", nodePodNumAvails)))
 	} else {
-		if !funk.Contains(nodePodNumAvails, *property.MaxNodePodNum) {
-			allErrs = append(allErrs, field.NotSupported(fldPath.Child("maxNodePodNum"), *property.MaxNodePodNum,
+		if !funk.Contains(nodePodNumAvails, *properties.MaxNodePodNum) {
+			allErrs = append(allErrs, field.NotSupported(fldPath, *properties.MaxNodePodNum,
 				funk.Map(nodePodNumAvails, func(x int) string {
 					return strconv.Itoa(x)
 				}).([]string)))
 		}
 	}
-	if property.MaxClusterServiceNum == nil {
-		allErrs = append(allErrs, field.Required(fldPath, fmt.Sprintf("validate values are %v", clusterServiceNumAvails)))
-	} else {
-		if !funk.Contains(clusterServiceNumAvails, *property.MaxClusterServiceNum) {
-			allErrs = append(allErrs, field.NotSupported(fldPath.Child("maxClusterServiceNum"), *property.MaxNodePodNum,
-				funk.Map(clusterServiceNumAvails, func(x int) string {
-					return strconv.Itoa(x)
-				}).([]string)))
+
+	fldPath = propPath.Child("maxClusterServiceNum")
+	if properties.MaxClusterServiceNum == nil {
+		if spec.ServiceCIDR == nil { // not set serviceCIDR, need set maxClusterServiceNum
+			allErrs = append(allErrs, field.Required(fldPath, fmt.Sprintf("validate values are %v", clusterServiceNumAvails)))
 		}
-		if *property.MaxClusterServiceNum < 10 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("maxClusterServiceNum"), *property.MaxClusterServiceNum,
-				"must be greater than or equal to 10 because kubeadm need the 10th ip"))
+	} else {
+		if spec.ServiceCIDR != nil { // spec.serviceCIDR and properties.maxClusterServiceNum can't be used together
+			allErrs = append(allErrs, field.Forbidden(fldPath, "can't be used together with spec.serviceCIDR"))
+		} else {
+			if !funk.Contains(clusterServiceNumAvails, *properties.MaxClusterServiceNum) {
+				allErrs = append(allErrs, field.NotSupported(fldPath, *properties.MaxNodePodNum,
+					funk.Map(clusterServiceNumAvails, func(x int) string {
+						return strconv.Itoa(x)
+					}).([]string)))
+			}
+			if *properties.MaxClusterServiceNum < 10 {
+				allErrs = append(allErrs, field.Invalid(fldPath, *properties.MaxClusterServiceNum,
+					"must be greater than or equal to 10 because kubeadm need the 10th ip"))
+			}
 		}
 	}
 
