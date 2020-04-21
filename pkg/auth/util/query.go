@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	defaultQueryLimit = 50
+	defaultQueryLimit = 5000
 )
 
 func ParseQueryKeywordAndLimit(options *metainternal.ListOptions) (string, int) {

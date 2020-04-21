@@ -20,6 +20,7 @@ package authentication
 
 import (
 	"fmt"
+
 	"github.com/go-openapi/spec"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -92,6 +93,12 @@ func buildAuthenticator(o *options.AuthenticationOptions, apiAudiences []string)
 		ret.OIDCTenantIDPrefix = o.OIDC.TenantIDPrefix
 		ret.OIDCSigningAlgs = o.OIDC.SigningAlgs
 		ret.OIDCRequiredClaims = o.OIDC.RequiredClaims
+	}
+
+	if o.WebHook != nil {
+		ret.WebhookTokenAuthnConfigFile = o.WebHook.ConfigFile
+		ret.WebhookTokenAuthnVersion = o.WebHook.Version
+		ret.WebhookTokenAuthnCacheTTL = o.WebHook.CacheTTL
 	}
 
 	if o.RequestHeader != nil {
