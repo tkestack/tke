@@ -576,7 +576,7 @@ func (p *Provider) EnsureGalaxy(c *Cluster) error {
 
 func (p *Provider) EnsureJoinControlePlane(c *Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
-	option := &kubeadm.JoinControlePlaneOption{
+	option := &kubeadm.JoinControlPlaneOption{
 		BootstrapToken:       *c.ClusterCredential.BootstrapToken,
 		CertificateKey:       *c.ClusterCredential.CertificateKey,
 		ControlPlaneEndpoint: fmt.Sprintf("%s:6443", c.Spec.Machines[0].IP),
@@ -584,7 +584,7 @@ func (p *Provider) EnsureJoinControlePlane(c *Cluster) error {
 	}
 	for _, machine := range c.Spec.Machines[1:] {
 		option.NodeName = machine.IP
-		err := kubeadm.JoinControlePlane(c.SSH[machine.IP], option)
+		err := kubeadm.JoinControlPlane(c.SSH[machine.IP], option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

@@ -36,7 +36,8 @@ const (
 	kubeadmConfigFile  = "kubeadm/kubeadm-config.yaml"
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
-	joinControlePlaneCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
+	joinControlPlaneCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
+--apiserver-advertise-address={{.NodeName}} \
 --node-name={{.NodeName}} --token={{.BootstrapToken}} \
 --control-plane --certificate-key={{.CertificateKey}} \
 --skip-phases=control-plane-join/mark-control-plane \
@@ -116,7 +117,8 @@ func Init(s ssh.Interface, option *InitOption, extraCmd string) error {
 		return err
 	}
 
-	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s", extraCmd, option.KubeadmConfigFileName)
+	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s --apiserver-advertise-address=%s",
+		extraCmd, option.KubeadmConfigFileName, option.NodeName)
 	stdout, stderr, exit, err := s.Exec(cmd)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
@@ -126,7 +128,7 @@ func Init(s ssh.Interface, option *InitOption, extraCmd string) error {
 	return nil
 }
 
-type JoinControlePlaneOption struct {
+type JoinControlPlaneOption struct {
 	NodeName             string
 	BootstrapToken       string
 	CertificateKey       string
@@ -134,7 +136,7 @@ type JoinControlePlaneOption struct {
 	OIDCCA               []byte
 }
 
-func JoinControlePlane(s ssh.Interface, option *JoinControlePlaneOption) error {
+func JoinControlPlane(s ssh.Interface, option *JoinControlPlaneOption) error {
 	if len(option.OIDCCA) != 0 { // ensure oidc ca exists becase kubeadm reset probably delete it!
 		err := s.WriteFile(bytes.NewReader(option.OIDCCA), constants.OIDCCACertFile)
 		if err != nil {
@@ -142,7 +144,7 @@ func JoinControlePlane(s ssh.Interface, option *JoinControlePlaneOption) error {
 		}
 	}
 
-	cmd, err := template.ParseString(joinControlePlaneCmd, option)
+	cmd, err := template.ParseString(joinControlPlaneCmd, option)
 	if err != nil {
 		return errors.Wrap(err, "parse joinControlePlaneCmd error")
 	}
