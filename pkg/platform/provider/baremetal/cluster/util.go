@@ -24,7 +24,7 @@ import (
 	"net"
 
 	"github.com/pkg/errors"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/ipallocator"
+	"tkestack.io/tke/pkg/util/ipallocator"
 )
 
 func GetNodeCIDRMaskSize(clusterCIDR string, maxNodePodNum int32) (int32, error) {
