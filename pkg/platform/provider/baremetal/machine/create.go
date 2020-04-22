@@ -40,6 +40,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/cmdstring"
 	"tkestack.io/tke/pkg/util/hosts"
 )
 
@@ -149,20 +150,13 @@ func (p *Provider) EnsureKernelModule(m *Machine) error {
 	return nil
 }
 
-func setFileContent(file, pattern, content string) string {
-	return fmt.Sprintf("grep -Pq '%s' %s && sed -i 's;%s;%s;g' %s|| echo '%s' >> %s",
-		pattern, file,
-		pattern, content, file,
-		content, file)
-}
-
 func (p *Provider) EnsureSysctl(m *Machine) error {
-	_, err := m.CombinedOutput(setFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
+	_, err := m.CombinedOutput(cmdstring.SetFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
 	if err != nil {
 		return err
 	}
 
-	_, err = m.CombinedOutput(setFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
+	_, err = m.CombinedOutput(cmdstring.SetFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
 	if err != nil {
 		return err
 	}
