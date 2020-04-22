@@ -94,7 +94,7 @@ const updateStrategy = generateFetcherActionCreator({
       strategyActions.getStrategy.fetch({
         noCache: true,
         data: {
-          id: urlParams['sub']
+          id: route.queries['id']
         }
       })
     );
