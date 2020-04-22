@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/ipallocator"
+	"tkestack.io/tke/pkg/util/ipallocator"
 )
 
 // IsHTTPSReachle tests that https://host:port is reachble in timeout.

@@ -25,7 +25,7 @@ import (
 	"net"
 
 	api "k8s.io/api/core/v1"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/allocator"
+	"tkestack.io/tke/pkg/util/allocator"
 )
 
 // Interface manages the allocation of IP addresses out of a range. Interface
