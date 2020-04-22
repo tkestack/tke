@@ -24,19 +24,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-	"net"
 	"net/http"
 	"os"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/thoas/go-funk"
-
-	"tkestack.io/tke/pkg/util/apiclient"
-
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
+	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
@@ -53,6 +49,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util/hosts"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/template"
@@ -230,40 +227,58 @@ func (p *Provider) EnsureDisableSwap(c *Cluster) error {
 // 因为validate那里没法更新对象（不能存储）
 // PreCrete，在api中错误只能panic，响应不会有报错提示，所以只能挪到这里处理
 func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
-	var serviceCIDR string
-	var nodeCIDRMaskSize int32
-
-	// use specified service cidr
-	if cluster.Spec.ServiceCIDR != nil {
-		_, cidr, err := net.ParseCIDR(*cluster.Spec.ServiceCIDR)
-		if err != nil {
-			return errors.Wrap(err, "Parse ServiceCIDR error")
+	funcs := []func(cluster *Cluster) error{
+		completeNetworking,
+		completeDNS,
+		completeGPU,
+		completeAddresses,
+		completeCredential,
+	}
+	for _, f := range funcs {
+		if err := f(cluster); err != nil {
+			return err
 		}
-		serviceCIDR = cidr.String()
+	}
+	return nil
+}
 
+func completeNetworking(cluster *Cluster) error {
+	var (
+		serviceCIDR      string
+		nodeCIDRMaskSize int32
+		err              error
+	)
+
+	if cluster.Spec.ServiceCIDR != nil {
+		serviceCIDR = *cluster.Spec.ServiceCIDR
 		nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
 		if err != nil {
 			return errors.Wrap(err, "GetNodeCIDRMaskSize error")
 		}
 	} else {
-		// compute service cidr with service number
-		var err error
 		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
 		if err != nil {
 			return errors.Wrap(err, "GetServiceCIDRAndNodeCIDRMaskSize error")
 		}
 	}
-
 	cluster.Status.ServiceCIDR = serviceCIDR
 	cluster.Status.NodeCIDRMaskSize = nodeCIDRMaskSize
 
+	return nil
+}
+
+func completeDNS(cluster *Cluster) error {
 	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.DNSIPIndex)
 	if err != nil {
 		return errors.Wrap(err, "get DNS IP error")
 	}
 	cluster.Status.DNSIP = ip.String()
 
-	ip, err = GetIndexedIP(cluster.Status.ServiceCIDR, constants.GPUQuotaAdmissionIPIndex)
+	return nil
+}
+
+func completeGPU(cluster *Cluster) error {
+	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.GPUQuotaAdmissionIPIndex)
 	if err != nil {
 		return errors.Wrap(err, "get gpu quota admission IP error")
 	}
@@ -272,6 +287,10 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 	}
 	cluster.Annotations[constants.GPUQuotaAdmissionIPAnnotaion] = ip.String()
 
+	return nil
+}
+
+func completeAddresses(cluster *Cluster) error {
 	for _, m := range cluster.Spec.Machines {
 		cluster.AddAddress(platformv1.AddressReal, m.IP, 6443)
 	}
@@ -285,6 +304,10 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 		}
 	}
 
+	return nil
+}
+
+func completeCredential(cluster *Cluster) error {
 	token := ksuid.New().String()
 	cluster.ClusterCredential.Token = &token
 
@@ -294,11 +317,11 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 	}
 	cluster.ClusterCredential.BootstrapToken = &bootstrapToken
 
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
+	certBytes := make([]byte, 32)
+	if _, err := rand.Read(certBytes); err != nil {
 		return err
 	}
-	certificateKey := hex.EncodeToString(bytes)
+	certificateKey := hex.EncodeToString(certBytes)
 	cluster.ClusterCredential.CertificateKey = &certificateKey
 
 	return nil
