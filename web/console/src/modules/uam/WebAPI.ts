@@ -630,10 +630,27 @@ export async function updateRole([roleInfo]) {
  * @param role
  */
 export async function deleteRole([role]: Role[]) {
-  let resourceInfo: ResourceInfo = resourceConfig()['role'];
-  const url = reduceK8sRestfulPath({ resourceInfo, specificName: role.metadata.name });
-  let rr: RequestResult = await DELETE(url);
-  return operationResult(rr.data, rr.error);
+  // let resourceInfo: ResourceInfo = resourceConfig()['role'];
+  // const url = reduceK8sRestfulPath({ resourceInfo, specificName: role.metadata.name });
+  // let rr: RequestResult = await DELETE(url);
+  // return operationResult(rr.data, rr.error);
+  try {
+    let resourceInfo: ResourceInfo = resourceConfig()['role'];
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: role.metadata.name });
+    const response = await reduceNetworkRequest({
+      method: 'DELETE',
+      url
+    });
+    if (response.code === 0) {
+      tips.success('删除成功', 2000);
+      return operationResult(role);
+    } else {
+      return operationResult(role, response);
+    }
+  } catch (error) {
+    tips.error(error.response.data.message, 2000);
+    return operationResult(role, error.response);
+  }
 }
 
 /**
@@ -788,10 +805,27 @@ export async function updateGroup([groupInfo]) {
  * @param group
  */
 export async function deleteGroup([group]: Group[]) {
-  let resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
-  const url = reduceK8sRestfulPath({ resourceInfo, specificName: group.metadata.name });
-  let rr: RequestResult = await DELETE(url);
-  return operationResult(rr.data, rr.error);
+  // let resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+  // const url = reduceK8sRestfulPath({ resourceInfo, specificName: group.metadata.name });
+  // let rr: RequestResult = await DELETE(url);
+  // return operationResult(rr.data, rr.error);
+  try {
+    let resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: group.metadata.name });
+    const response = await reduceNetworkRequest({
+      method: 'DELETE',
+      url
+    });
+    if (response.code === 0) {
+      tips.success('删除成功', 2000);
+      return operationResult(group);
+    } else {
+      return operationResult(group, response);
+    }
+  } catch (error) {
+    tips.error(error.response.data.message, 2000);
+    return operationResult(group, error.response);
+  }
 }
 
 /**
@@ -837,6 +871,7 @@ export async function fetchGroupAssociatedList(query: QueryState<GroupFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'groups' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  console.log('fetchGroupAssociatedList GET:', url + queryString);
   let rr: RequestResult = await GET(url + queryString);
   let items: GroupPlain[] =
     !rr.error && rr.data.items

@@ -109,7 +109,7 @@ export const UserDetail = () => {
   const tabs = [
     { id: 'policies', label: '已关联策略' },
     { id: 'groups', label: '已关联用户组' },
-    { id: 'roles', label: '已关联角色' },
+    // { id: 'roles', label: '已关联角色' },
   ];
 
   return (
@@ -223,10 +223,10 @@ export const UserDetail = () => {
               <GroupActionPanel />
               <GroupTablePanel />
             </TabPanel>
-            <TabPanel id="roles">
-              <RoleActionPanel />
-              <RoleTablePanel />
-            </TabPanel>
+            {/*<TabPanel id="roles">*/}
+            {/*  <RoleActionPanel />*/}
+            {/*  <RoleTablePanel />*/}
+            {/*</TabPanel>*/}
           </Tabs>
         </Card.Body>
       </Card>

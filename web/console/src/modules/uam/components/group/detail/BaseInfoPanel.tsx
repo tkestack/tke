@@ -53,7 +53,7 @@ export class BaseInfoPanel extends React.Component<RootProps> {
 
     const tabs = [
       { id: 'users', label: '关联用户' },
-      { id: 'roles', label: '已关联角色' },
+      // { id: 'roles', label: '已关联角色' },
       { id: 'policies', label: '已关联策略' },
     ];
 
@@ -150,10 +150,10 @@ export class BaseInfoPanel extends React.Component<RootProps> {
                 <UserActionPanel />
                 <UserTablePanel />
               </TabPanel>
-              <TabPanel id="roles">
-                <RoleActionPanel />
-                <RoleTablePanel />
-              </TabPanel>
+              {/*<TabPanel id="roles">*/}
+              {/*  <RoleActionPanel />*/}
+              {/*  <RoleTablePanel />*/}
+              {/*</TabPanel>*/}
               <TabPanel id="policies">
                 <PolicyActionPanel />
                 <PolicyTablePanel />

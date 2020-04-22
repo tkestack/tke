@@ -46,12 +46,6 @@ insertCSS(
 );
 
 let editorRef;
-const tabs = [
-  { id: 'actions', label: '策略语法' },
-  { id: 'users', label: '关联用户' },
-  { id: 'groups', label: '关联用户组' },
-  { id: 'roles', label: '已关联角色' },
-];
 export const StrategyDetailsPanel = () => {
   const state = useSelector((state) => state);
   const dispatch = useDispatch();
@@ -63,7 +57,21 @@ export const StrategyDetailsPanel = () => {
   const getStrategyData = getStrategy.data[0];
   const updateStrategyData = updateStrategy.data[0];
 
+  const { sub } = router.resolve(route);
+  console.log('StrategyDetailsPanel sub:', sub);
   const categoryId = route.queries['id'];
+
+  let tabs;
+  if (sub === 'platform') {
+    tabs = [
+      { id: 'actions', label: '策略语法' },
+      { id: 'users', label: '关联用户' },
+      { id: 'groups', label: '关联用户组' },
+      // { id: 'roles', label: '已关联角色' },
+    ];
+  } else if (sub === 'business') {
+    tabs = [{ id: 'actions', label: '策略语法' }];
+  }
 
   const [modalVisible, setModalVisible] = useState(false);
   const [basicParamsValue, setBasicParamsValue] = useState({ name: '', description: '' });
@@ -371,10 +379,10 @@ export const StrategyDetailsPanel = () => {
               <GroupActionPanel />
               <GroupTablePanel />
             </TabPanel>
-            <TabPanel id="roles">
-              <RoleActionPanel />
-              <RoleTablePanel />
-            </TabPanel>
+            {/*<TabPanel id="roles">*/}
+            {/*  <RoleActionPanel />*/}
+            {/*  <RoleTablePanel />*/}
+            {/*</TabPanel>*/}
           </Tabs>
         </Card.Body>
       </Card>
