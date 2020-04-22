@@ -1739,17 +1739,23 @@ func (t *TKE) registerAPI() error {
 			},
 		}
 
-		_, err := client.ApiregistrationV1().APIServices().Get(apiService.Name, metav1.GetOptions{})
-		if err == nil {
-			err := client.ApiregistrationV1().APIServices().Delete(apiService.Name, &metav1.DeleteOptions{})
-			if err != nil {
-				return err
+		err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+			_, err := client.ApiregistrationV1().APIServices().Get(apiService.Name, metav1.GetOptions{})
+			if err == nil {
+				err := client.ApiregistrationV1().APIServices().Delete(apiService.Name, &metav1.DeleteOptions{})
+				if err != nil {
+					return false, nil
+				}
 			}
-		}
-		if _, err := client.ApiregistrationV1().APIServices().Create(apiService); err != nil {
-			if !errors.IsAlreadyExists(err) {
-				return err
+			if _, err := client.ApiregistrationV1().APIServices().Create(apiService); err != nil {
+				if !errors.IsAlreadyExists(err) {
+					return false, nil
+				}
 			}
+			return true, nil
+		})
+		if err != nil {
+			return pkgerrors.Wrapf(err, "register apiservice %v error", one)
 		}
 
 		err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
