@@ -271,7 +271,7 @@ func (c *Controller) handlePhase(key string, cachedCluster *cachedCluster, clust
 	switch cluster.Status.Phase {
 	case platformv1.ClusterInitializing:
 		err = c.doInitializing(cluster)
-	case platformv1.ClusterRunning:
+	case platformv1.ClusterRunning, platformv1.ClusterFailed:
 		// first get cluster credential to ensure it exited when such as global import, missing credential momently
 		// cause health check fail in period
 		credential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
@@ -279,10 +279,10 @@ func (c *Controller) handlePhase(key string, cachedCluster *cachedCluster, clust
 			return err
 		}
 		err = c.doUpdate(cluster, credential)
-		c.ensureHealthCheck(key, cluster) // after update to avoid version conflict
 		log.Info("update cluster", log.String("clusterName", cluster.Name), log.Err(err))
-	case platformv1.ClusterFailed:
-		c.ensureHealthCheck(key, cluster)
+		if err == nil {
+			c.ensureHealthCheck(key, cluster) // after update to avoid version conflict
+		}
 	}
 
 	return err
