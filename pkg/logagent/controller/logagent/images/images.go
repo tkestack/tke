@@ -33,6 +33,7 @@ const (
 
 type Components struct {
 	LogCollector containerregistry.Image
+	LogFile      containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -49,6 +50,7 @@ func (c Components) Get(name string) *containerregistry.Image {
 var versionMap = map[string]Components{
 	LatestVersion: {
 		LogCollector: containerregistry.Image{Name: "log-agent", Tag: "v1.1.0"},
+		LogFile: containerregistry.Image{Name: "log-file", Tag: "v1.1.0"},
 	},
 }
 
