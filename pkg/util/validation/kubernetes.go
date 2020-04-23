@@ -36,7 +36,7 @@ func ValidateEnum(value interface{}, fldPath *field.Path, values interface{}) fi
 		return allErrs
 	}
 
-	validValues := funk.Map(values, func(i interface{}) string {
+	validValuesString := funk.Map(values, func(i interface{}) string {
 		return fmt.Sprintf("%v", i)
 	}).([]string)
 
@@ -47,13 +47,13 @@ func ValidateEnum(value interface{}, fldPath *field.Path, values interface{}) fi
 		}
 	} else {
 		if v.IsZero() {
-			allErrs = append(allErrs, field.Required(fldPath, fmt.Sprintf("valid values: %v", validValues)))
+			allErrs = append(allErrs, field.Required(fldPath, fmt.Sprintf("valid values: %v", validValuesString)))
 			return allErrs
 		}
 	}
 
-	if !funk.Contains(validValues, value) {
-		allErrs = append(allErrs, field.NotSupported(fldPath, value, validValues))
+	if !funk.Contains(values, value) {
+		allErrs = append(allErrs, field.NotSupported(fldPath, value, validValuesString))
 	}
 
 	return allErrs
