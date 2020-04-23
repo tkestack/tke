@@ -20,9 +20,10 @@ export const StrategyTablePanel = (props) => {
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { type } = props;
-  const { strategyList, userList, associatedUsersList } = state;
+  const { route, strategyList, userList, associatedUsersList } = state;
   const associatedUsersListRecords = associatedUsersList.list.data.records.map((item) => item.metadata.name);
   const userListRecords = userList.list.data.records;
+  const { sub } = router.resolve(route);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [userMsgsValue, setUserMsgsValue] = useState({
@@ -212,37 +213,42 @@ export const StrategyTablePanel = (props) => {
   function _renderOperationCell(strategy: Strategy) {
     return (
       <React.Fragment>
-        <LinkButton
-          tipDirection="right"
-          onClick={() => _setModalVisible(strategy)}
-          disabled={strategy.status['phase'] === 'Terminating'}
-        >
-          <Trans>关联用户</Trans>
-        </LinkButton>
-        <LinkButton
-          tipDirection="right"
-          disabled={strategy.status['phase'] === 'Terminating'}
-          onClick={(e) => {
-            /** 设置用户组关联场景 */
-            let filter: GroupFilter = {
-              resource: 'policy',
-              resourceID: strategy.metadata.name,
-              /** 关联/解关联回调函数 */
-              callback: () => {
-                actions.strategy.fetch();
-              },
-            };
-            actions.group.associate.setupGroupFilter(filter);
-            /** 拉取关联用户组列表，拉取后自动更新groupAssociation */
-            actions.group.associate.groupAssociatedList.applyFilter(filter);
-            /** 拉取用户组列表 */
-            actions.group.associate.groupList.performSearch('');
-            /** 开始关联用户组工作流 */
-            actions.group.associate.associateGroupWorkflow.start();
-          }}
-        >
-          <Trans>关联用户组</Trans>
-        </LinkButton>
+        {sub === 'platform' && (
+          <>
+            <LinkButton
+              tipDirection="right"
+              onClick={() => _setModalVisible(strategy)}
+              disabled={strategy.status['phase'] === 'Terminating'}
+            >
+              <Trans>关联用户</Trans>
+            </LinkButton>
+            <LinkButton
+              tipDirection="right"
+              disabled={strategy.status['phase'] === 'Terminating'}
+              onClick={(e) => {
+                /** 设置用户组关联场景 */
+                let filter: GroupFilter = {
+                  resource: 'policy',
+                  resourceID: strategy.metadata.name,
+                  /** 关联/解关联回调函数 */
+                  callback: () => {
+                    actions.strategy.fetch();
+                  },
+                };
+                actions.group.associate.setupGroupFilter(filter);
+                /** 拉取关联用户组列表，拉取后自动更新groupAssociation */
+                actions.group.associate.groupAssociatedList.applyFilter(filter);
+                /** 拉取用户组列表 */
+                actions.group.associate.groupList.performSearch('');
+                /** 开始关联用户组工作流 */
+                actions.group.associate.associateGroupWorkflow.start();
+              }}
+            >
+              <Trans>关联用户组</Trans>
+            </LinkButton>
+            </>
+          )
+        }
         {strategy.type !== 1 && <LinkButton onClick={() => _removeCategory(strategy)}>删除</LinkButton>}
       </React.Fragment>
     );

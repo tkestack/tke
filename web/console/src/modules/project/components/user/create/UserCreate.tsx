@@ -99,7 +99,7 @@ export const UserCreate = (props) => {
       setTargetKeys(newTargetKeys);
     }
   }, [roleValue, targetKeys]);
-
+  // onChange={(value) => setUserInputValue(value)}
   return (
     <form onSubmit={handleSubmit}>
       <Card>
@@ -112,10 +112,27 @@ export const UserCreate = (props) => {
                     scrollable={false}
                     title="当前账户可分配以下责任人"
                     tip="支持按住 shift 键进行多选"
-                    header={<SearchBox value={userInputValue} onChange={(value) => setUserInputValue(value)} />}
+                    header={
+                      <SearchBox
+                        value={userInputValue}
+                        onChange={keyword => {
+                          setUserInputValue(keyword);
+                          // actions.manager.changeKeyword((keyword || '').trim());
+                          actions.manager.performSearch((keyword || '').trim());
+                        }}
+                        onSearch={keyword => {
+                          actions.manager.performSearch((keyword || '').trim());
+                        }}
+                        onClear={() => {
+                          actions.manager.changeKeyword('');
+                          actions.manager.performSearch('');
+                        }}
+                      />
+                    }
                   >
                     <UserAssociateSourceTable
-                      dataSource={userList.filter((i) => i.displayName.includes(userInputValue))}
+                      dataSource={userList}
+                      // dataSource={userList.filter((i) => i.displayName.includes(userInputValue))}
                       targetKeys={userTargetKeys}
                       onChange={(keys) => setUserTargetKeys(keys)}
                     />
