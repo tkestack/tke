@@ -37,7 +37,6 @@ const (
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
 	joinControlPlaneCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
---apiserver-advertise-address={{.NodeName}} \
 --node-name={{.NodeName}} --token={{.BootstrapToken}} \
 --control-plane --certificate-key={{.CertificateKey}} \
 --skip-phases=control-plane-join/mark-control-plane \
@@ -117,8 +116,8 @@ func Init(s ssh.Interface, option *InitOption, extraCmd string) error {
 		return err
 	}
 
-	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s --apiserver-advertise-address=%s",
-		extraCmd, option.KubeadmConfigFileName, option.NodeName)
+	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s",
+		extraCmd, option.KubeadmConfigFileName)
 	stdout, stderr, exit, err := s.Exec(cmd)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
