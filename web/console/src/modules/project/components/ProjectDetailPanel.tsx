@@ -78,18 +78,18 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
         >
           {projectItem.spec.displayName}
         </FormPanel.Item>
-        <FormPanel.Item
-          label={t('成员')}
-          text
-          textProps={{
-            onEdit: () => {
-              actions.project.initEdition(projectItem);
-              actions.project.editProjectManager.start([]);
-            }
-          }}
-        >
-          {this.formatManager(projectItem.spec.members)}
-        </FormPanel.Item>
+        {/*<FormPanel.Item*/}
+        {/*  label={t('成员')}*/}
+        {/*  text*/}
+        {/*  textProps={{*/}
+        {/*    onEdit: () => {*/}
+        {/*      actions.project.initEdition(projectItem);*/}
+        {/*      actions.project.editProjectManager.start([]);*/}
+        {/*    }*/}
+        {/*  }}*/}
+        {/*>*/}
+        {/*  {this.formatManager(projectItem.spec.members)}*/}
+        {/*</FormPanel.Item>*/}
         <FormPanel.Item label={t('资源限制')}>{this._renderTablePanel()}</FormPanel.Item>
         <FormPanel.Item text label={t('创建时间')}>
           {dateFormatter(new Date(projectItem.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}

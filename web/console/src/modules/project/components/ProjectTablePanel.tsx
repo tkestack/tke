@@ -150,26 +150,33 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
         header: t('成员'),
         render: x => (
           <div>
-            <Bubble placement="left" content={this.formatManager(x.spec.members) || null}>
-              <span className="text">
-                {this.formatManager(x.spec.members ? x.spec.members.slice(0, 1) : [])}
-                <Text parent="div" overflow>
-                  {x.spec.members && x.spec.members.length > 1 ? '...' : ''}
-                </Text>
-              </span>
-            </Bubble>
+            {/*<Bubble placement="left" content={this.formatManager(x.spec.members) || null}>*/}
+            {/*  <span className="text">*/}
+            {/*    {this.formatManager(x.spec.members ? x.spec.members.slice(0, 1) : [])}*/}
+            {/*    <Text parent="div" overflow>*/}
+            {/*      {x.spec.members && x.spec.members.length > 1 ? '...' : ''}*/}
+            {/*    </Text>*/}
+            {/*  </span>*/}
+            {/*</Bubble>*/}
             {x.status.phase === 'Terminating' ? (
               <noscript />
             ) : (
-              <span className="hover-icon">
+              <span>
                 <a
                   href="javascript:;"
-                  className="pencil-icon hover-icon"
-                  onClick={() => {
-                    actions.project.initEdition(x);
-                    actions.project.editProjectManager.start([]);
+                  className="pencil-icon"
+                  onClick={e => {
+                    router.navigate({ sub: 'detail', tab: 'member' }, { projectId: x.metadata.name });
                   }}
                 />
+                {/*<a*/}
+                {/*  href="javascript:;"*/}
+                {/*  className="pencil-icon hover-icon"*/}
+                {/*  onClick={() => {*/}
+                {/*    actions.project.initEdition(x);*/}
+                {/*    actions.project.editProjectManager.start([]);*/}
+                {/*  }}*/}
+                {/*/>*/}
               </span>
             )}
           </div>
