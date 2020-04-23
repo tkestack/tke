@@ -213,7 +213,7 @@ export const StrategyTablePanel = (props) => {
   function _renderOperationCell(strategy: Strategy) {
     return (
       <React.Fragment>
-        {sub === 'platform' && (
+        {sub !== 'business' && (
           <>
             <LinkButton
               tipDirection="right"

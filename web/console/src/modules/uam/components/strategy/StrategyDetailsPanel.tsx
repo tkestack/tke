@@ -61,15 +61,15 @@ export const StrategyDetailsPanel = () => {
   const categoryId = route.queries['id'];
 
   let tabs;
-  if (sub === 'platform') {
+  if (sub === 'business') {
+    tabs = [{ id: 'actions', label: '策略语法' }];
+  } else {
     tabs = [
       { id: 'actions', label: '策略语法' },
       { id: 'users', label: '关联用户' },
       { id: 'groups', label: '关联用户组' },
       // { id: 'roles', label: '已关联角色' },
     ];
-  } else if (sub === 'business') {
-    tabs = [{ id: 'actions', label: '策略语法' }];
   }
 
   const [modalVisible, setModalVisible] = useState(false);
