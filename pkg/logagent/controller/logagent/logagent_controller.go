@@ -58,6 +58,7 @@ const (
 	crbName        = "logagent-role-binding"
 	svcAccountName = "logagent"
 	daemonSetName  = "logagent"
+	fileContainer  = "file"
 
 	clientRetryCount    = 5
 	clientRetryInterval = 5 * time.Second
@@ -334,7 +335,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 
 	switch LogCollector.Status.Phase {
 	case v1.AddonPhaseInitializing:
-		log.Infof("LogCollector will be created", log.String("name", key))
+		log.Info("LogCollector will be created", log.String("name", key))
 		err := c.installLogCollector(LogCollector)
 		if err == nil {
 			LogCollector = LogCollector.DeepCopy()
@@ -343,6 +344,8 @@ func (c *Controller) createLogCollectorIfNeeded(
 			LogCollector.Status.Reason = ""
 			LogCollector.Status.RetryCount = 0
 			return c.persistUpdate(LogCollector)
+		} else {
+			log.Errorf("LogCollector install error %v %v", err, log.String("name", key))
 		}
 		// Install LogCollector failed.
 		LogCollector = LogCollector.DeepCopy()
@@ -353,6 +356,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 		LogCollector.Status.LastReInitializingTimestamp = metav1.Now()
 		return c.persistUpdate(LogCollector)
 	case v1.AddonPhaseReinitializing:
+		log.Info("LogCollector will be reinitialized", log.String("name", key))
 		var interval = time.Since(LogCollector.Status.LastReInitializingTimestamp.Time)
 		var waitTime time.Duration
 		if interval >= timeOut {
@@ -371,6 +375,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 			}
 		}()
 	case v1.AddonPhaseChecking:
+		log.Info("LogCollector will be checked", log.String("name", key))
 		if _, ok := c.checking.Load(key); !ok {
 			c.checking.Store(key, true)
 			initDelay := time.Now().Add(5 * time.Minute)
@@ -387,6 +392,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 			}()
 		}
 	case v1.AddonPhaseRunning:
+		log.Info("LogCollector will be running", log.String("name", key))
 		if c.needUpgrade(LogCollector) {
 			c.health.Delete(key)
 			LogCollector = LogCollector.DeepCopy()
@@ -398,6 +404,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 		if _, ok := c.health.Load(key); !ok {
 			c.health.Store(key, true)
 			go func() {
+				defer c.health.Delete(key)
 				healthErr := wait.PollImmediateUntil(5*time.Minute,
 					c.watchLogCollectorHealth(key), c.stopCh)
 				if healthErr != nil {
@@ -409,6 +416,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 			}()
 		}
 	case v1.AddonPhaseUpgrading:
+		log.Info("LogCollector will be upgraded", log.String("name", key))
 		if _, ok := c.upgrading.Load(key); !ok {
 			c.upgrading.Store(key, true)
 			upgradeDelay := time.Now().Add(timeOut)
@@ -439,6 +447,7 @@ func (c *Controller) installLogCollector(LogCollector *v1.LogAgent) error {
 	kubeClient, err := util.GetClusterClient(LogCollector.Spec.ClusterName,c.platformClient)
 
 	if err != nil {
+		log.Infof("unable to get cluster client %v", err)
 		return err
 	}
 
@@ -523,6 +532,12 @@ func (c *Controller) installDaemonSet(
 	newDaemon := oldDaemon.DeepCopy()
 	newDaemon.Labels = daemon.Labels
 	newDaemon.Spec = daemon.Spec
+
+	if len(oldDaemon.Spec.Template.Spec.Containers) == 2 {
+		newDaemon.Spec.Template.Spec.Containers[0].Resources = oldDaemon.Spec.Template.Spec.Containers[0].Resources
+		newDaemon.Spec.Template.Spec.Containers[1].Resources = oldDaemon.Spec.Template.Spec.Containers[1].Resources
+	}
+
 	_, err = daemonClient.Update(newDaemon)
 
 	return err
@@ -606,8 +621,6 @@ func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
 									Add: []corev1.Capability{"SYS_ADMIN"},
 								},
 							},
-							Command: []string{"/bin/bash", "-c"},
-							Args: []string{"/usr/output/bin/start.sh"},
 							Resources: corev1.ResourceRequirements{
 								// TODO: add support for configuring them
 								Limits: corev1.ResourceList{
@@ -632,6 +645,36 @@ func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
 								{Name: "datadocker", MountPath: "/data/docker"},
 								{Name: "optdocker", MountPath: "/opt/docker"},
 								{Name: "tdagent", MountPath: "/var/log/td-agent"},
+								{Name: "localtime", MountPath: "/etc/localtime"},
+							},
+						},
+						{
+							Name:  fileContainer,
+							Image: path.Join(util.GetRegistryDomain(), util.GetRegistryNamespace(), images.Get(version).LogFile.BaseName()),
+							SecurityContext: &corev1.SecurityContext{
+								Privileged: boolPtr(false),
+								Capabilities: &corev1.Capabilities{
+									Add: []corev1.Capability{"SYS_ADMIN"},
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								// TODO: add support for configuring them
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    *resource.NewMilliQuantity(500, resource.DecimalSI),
+									corev1.ResourceMemory: *resource.NewScaledQuantity(512, resource.Mega),
+								},
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    *resource.NewMilliQuantity(300, resource.DecimalSI),
+									corev1.ResourceMemory: *resource.NewScaledQuantity(250, resource.Mega),
+								},
+							},
+							Env: []corev1.EnvVar{
+								{Name: "HOST_ROOTFS", Value: "/rootfs"},
+								{Name: "K8S_NODE_NAME", ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "spec.nodeName"}}},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{Name: "sock", MountPath: "/var/run/docker.sock"},
+								{Name: "rootfs", MountPath: "/rootfs"},
 								{Name: "localtime", MountPath: "/etc/localtime"},
 							},
 						},
@@ -784,7 +827,6 @@ func (c *Controller) checkLogCollectorStatus(
 				if err = c.persistUpdate(LogCollector); err != nil {
 					return false, err
 				}
-				return true, nil
 			}
 			return false, nil
 		}
@@ -820,7 +862,7 @@ func (c *Controller) watchLogCollectorHealth(key string) func() (bool, error) {
 			return false, err
 		}
 
-		if _, ok := c.health.Load(key); !ok { //use key instead of cluster.name??
+		if _, ok := c.health.Load(key); !ok {
 			log.Info("Health check over.")
 			return true, nil
 		}
