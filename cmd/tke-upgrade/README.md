@@ -2,7 +2,7 @@
 
 ### git clone
 ```shell script
-git clone http://git.code.oa.com/eetke/upgrade.git
+git clone https://github.com/tkestack/tke.git
 ```
 
 ### find installer data in /opt/tke-install/data and copy to tke-upgrade
