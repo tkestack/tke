@@ -709,8 +709,9 @@ func (p *Provider) EnsureMarkControlPlane(c *Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		if machine.Labels == nil {
 			machine.Labels = make(map[string]string)
-			machine.Labels[constants.LabelNodeRoleMaster] = ""
 		}
+		machine.Labels[constants.LabelNodeRoleMaster] = ""
+
 		if !c.Spec.Features.EnableMasterSchedule {
 			taint := corev1.Taint{
 				Key:    constants.LabelNodeRoleMaster,
