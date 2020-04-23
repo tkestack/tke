@@ -22,7 +22,6 @@ export const BaseInfoPanel = (props) => {
   let strategyList = policyPlainList.list.data.records || [];
   strategyList = strategyList.filter((item) => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
   const tenantID = strategyList.filter((item) => item.displayName === '平台管理员').tenantID;
-  console.log('BaseInfoPanel userPlainList state:', userPlainList);
 
   const [inputValue, setInputValue] = useState('');
   const [targetKeys, setTargetKeys] = useState([]);
@@ -44,7 +43,6 @@ export const BaseInfoPanel = (props) => {
   }, []);
 
   function onSubmit(values, form) {
-    console.log('submit .....', values, targetKeys, userTargetKeys);
     const { displayName, description, role } = values;
     actions.group.create.addGroupWorkflow.start([
       {

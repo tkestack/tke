@@ -58,7 +58,6 @@ export const StrategyDetailsPanel = () => {
   const updateStrategyData = updateStrategy.data[0];
 
   const { sub } = router.resolve(route);
-  console.log('StrategyDetailsPanel sub:', sub);
   const categoryId = route.queries['id'];
 
   let tabs;

@@ -871,7 +871,6 @@ export async function fetchGroupAssociatedList(query: QueryState<GroupFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'groups' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  console.log('fetchGroupAssociatedList GET:', url + queryString);
   let rr: RequestResult = await GET(url + queryString);
   let items: GroupPlain[] =
     !rr.error && rr.data.items
@@ -1008,7 +1007,6 @@ export async function commonDisassociateUser([user]: CommonUserAssociation[], pa
 export async function fetchPolicy(filter: PolicyInfoFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()['policy'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
-  console.log('fetchPolicy url', url);
   let rr: RequestResult = await GET(url);
   return rr.data;
 }
@@ -1022,7 +1020,6 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
   const queryObj = {
     // 'fieldSelector=keyword': search || ''
   };
-  console.log('fetchPolicyPlainList query is:', query);
   let queryString = '';
   if (filter.resource === 'platform') {
     queryString = '?fieldSelector=spec.scope!=project';
@@ -1032,8 +1029,6 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
 
   const resourceInfo: ResourceInfo = resourceConfig()['policy'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  // const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  console.log('fetchPolicyPlainList url + queryString', url, queryString, 111, query);
   let rr: RequestResult = await GET(url + queryString);
   let items: PolicyPlain[] =
     !rr.error && rr.data.items
@@ -1048,7 +1043,6 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
           };
         })
       : [];
-  console.log('fetchPolicyPlainList items is:', items);
   const result: RecordSet<PolicyPlain> = {
     recordCount: items.length,
     records: items
