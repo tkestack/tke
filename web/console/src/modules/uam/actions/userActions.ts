@@ -106,7 +106,6 @@ const FFModelUserActions = createFFListActions<User, UserFilter>({
       let isNotNeedPoll =
         record.data.records.filter(item => item.status && item.status['phase'] && item.status['phase'] === 'Deleting')
           .length === 0;
-      console.log('ActionTypes.UserList isNotNeedPoll is:', isNotNeedPoll);
       if (isNotNeedPoll) {
         dispatch(FFModelUserActions.clearPolling());
       }

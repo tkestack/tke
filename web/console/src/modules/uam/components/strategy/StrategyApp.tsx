@@ -37,7 +37,6 @@ export const StrategyApp = (props) => {
 
   let urlParam = router.resolve(route);
   const { module, sub, action } = urlParam;
-  console.log('StrategyApp sub is:', module, sub);
 
   const tabs = [
     { id: 'platform', label: '平台策略' },
@@ -65,7 +64,6 @@ export const StrategyApp = (props) => {
               tabs={tabs}
               activeId={sub || 'platform'}
               onActive={(value) => {
-                console.log('tab value:', value);
                 router.navigate({ module: 'strategy', sub: value.id });
               }}
             >

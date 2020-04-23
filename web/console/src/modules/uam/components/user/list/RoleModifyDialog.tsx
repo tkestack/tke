@@ -15,7 +15,6 @@ export function RoleModifyDialog(props) {
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
-  console.log('PrivateEditorDialog state:', state);
   const { policyPlainList } = state;
   let strategyList = policyPlainList.list.data.records || [];
   strategyList = strategyList.filter((item) => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
@@ -64,7 +63,6 @@ export function RoleModifyDialog(props) {
   const role = useField('role', form);
 
   useEffect(() => {
-    console.log('each time user is:', user);
     if (user) {
       const {
         tenantID,
@@ -74,7 +72,6 @@ export function RoleModifyDialog(props) {
       const policiesParse = JSON.parse(policies);
       const keys = Object.keys(policiesParse);
       const roleArray = [`pol-${tenantID}-administrator`, `pol-${tenantID}-platform`, `pol-${tenantID}-viewer`];
-      console.log('roleArray keys:', roleArray, keys);
       if (keys.length === 1 && roleArray.includes(keys[0])) {
         form.change('role', keys[0]);
         setTargetKeys([]);
