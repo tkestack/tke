@@ -132,9 +132,7 @@ export class CreateProjectPanel extends React.Component<
             }
           }}
         />
-        <FormPanel.Item
-          label={t('业务管理员')}
-        >
+        <FormPanel.Item label={t('业务管理员')}>
           <div style={{ width: 600 }}>
             <EditProjectManagerPanel {...this.props} />
           </div>
