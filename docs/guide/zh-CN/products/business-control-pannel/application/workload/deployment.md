@@ -8,7 +8,7 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
 ### 创建 Deployment
 1. 登录TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】。
 2. 选择需要创建Deployment的业务下相应的命名空间，展开工作负载下拉项，进入Deployment管理页面。如下图所示：
-   ![](images/deployment.png)
+   ![](../../../../../../images/deployment.png)
 3. 单击【新建】，进入 “新建Workload” 页面。
 根据实际需求，设置 Deployment 参数。关键参数信息如下：
  - **工作负载名**：输入自定义名称。
@@ -53,23 +53,23 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
    - **Session Affinity**：会话保持，设置会话保持后，会根据请求IP把请求转发给这个IP之前访问过的Pod。
 4. 单击【创建Workload】，完成创建。如下图所示：
 当运行数量=期望数量时，即表示 Deployment 下的所有 Pod 已创建完成。
-    ![](images/podnum.png)
+    ![](../../../../../../images/podnum.png)
 
 ### 更新 Deployment
 
 #### 更新 YAML
 1. 登录TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】。 
 2. 选择需要更新的业务下相应的命名空间，展开工作负载列表，进入Deployment管理页面。如下图所示：
-   ![](images/deployment.png)
+   ![](../../../../../../images/deployment.png)
 3. 在需要更新 YAML 的 Deployment 行中，单击【更多】>【编辑YAML】，进入更新 Deployment 页面。如下图所示：
-   ![](images/updateYaml.png)
+   ![](../../../../../../images/updateYaml.png)
 4. 在 “更新Deployment” 页面，编辑 YAML，单击【完成】，即可更新 YAML。如下图所示：
 ![更新YAML](https://main.qcloudimg.com/raw/ddc23ea3fc49bdb05e35c59b67a577ac.png)
 
 ### 回滚 Deployment
 1. 登录 TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】。
 2. 选择要变更的业务下相应的命名空间，展开工作负载列表，进入 Deployment 管理页面，点击进入要回滚的 Deployment 详情页面。如下图所示：
-   ![](images/podManagement.png)
+   ![](../../../../../../images/podManagement.png)
 3. 单击【修订历史】页面，选择合适版本进行回顾。
 4. 在弹出的 “回滚资源” 提示框中，单击【确定】即可完成回滚。
 
@@ -77,14 +77,14 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
 1. 登录 TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】。
 2. 选择要变更的业务下相应的命名空间，展开工作负载列表，进入 Deployment 管理页面。
 3. 点击 Deployment 列表操作栏的【更新实例数量】按钮。如下图所示：
-   ![](images/updateNum.png)
+   ![](../../../../../../images/updateNum.png)
 4. 根据实际需求调整 Pod 数量，单击【更新实例数目】即可完成调整。
 
 ### 查看Deployment监控数据
 1. 登录 TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】，。
 2. 选择要变更的业务下相应的命名空间，进入 Deployment 管理页面。
 3. 单击【监控】按钮，在弹出的工作负载监控页面选择工作负载查看监控信息。如下图所示：
-   ![](images/workloaddata.png)
+   ![](../../../../../../images/workloaddata.png)
 
 ## Kubectl 操作 Deployment 指引
 
