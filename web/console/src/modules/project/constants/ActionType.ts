@@ -26,6 +26,7 @@ export const GetUser = 'GetUser';
 export const UpdateUser = 'UpdateUser';
 export const FetchUserByName = 'FetchUserByName';
 export const UserStrategyList = 'UserStrategyList';
+export const LoginUserInfo = 'LoginUserInfo';
 
 /** 策略*/
 export const StrategyList = 'StrategyList';
