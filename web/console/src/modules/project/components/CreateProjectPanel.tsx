@@ -58,7 +58,6 @@ export class CreateProjectPanel extends React.Component<
     };
     try {
         let response = await reduceNetworkRequest(params);
-        console.log('getUserInfo response is: ', response);
         let loginUserInfo = {
             id: '',
             name: '',
@@ -133,10 +132,16 @@ export class CreateProjectPanel extends React.Component<
             }
           }}
         />
-        <FormPanel.Item label={t('业务管理员')}>
+        <FormPanel.Item
+          label={t('业务管理员')}
+        >
           <div style={{ width: 600 }}>
             <EditProjectManagerPanel {...this.props} />
           </div>
+          {
+            (!projectEdition.members || projectEdition.members.length === 0) &&
+            <Text theme="danger" style={{ fontSize: '12px' }}>需要至少选择一个责任人</Text>
+          }
         </FormPanel.Item>
         <FormPanel.Item label={t('集群')}>
           {projectEdition.clusters.map((item, index) => {
