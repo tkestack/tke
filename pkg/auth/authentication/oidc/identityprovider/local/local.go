@@ -171,7 +171,7 @@ func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, use
 	}
 
 	ident.Email = localIdentity.Spec.Email
-
+	ident.PreferredUsername = localIdentity.Spec.DisplayName
 	if emailVerified, ok := localIdentity.Spec.Extra["emailVerified"]; ok {
 		ident.EmailVerified, _ = strconv.ParseBool(emailVerified)
 	}

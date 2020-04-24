@@ -161,6 +161,7 @@ func setupOIDCClient(oidcOpts *apiserveroptions.OIDCWithSecretOptions) (*oidc.Au
 		CAFile:               oidcOpts.CAFile,
 		UsernameClaim:        oidcOpts.UsernameClaim,
 		UsernamePrefix:       oidcOpts.UsernamePrefix,
+		DisplayNameClaim:     oidcOpts.DisplayNameClaim,
 		GroupsClaim:          oidcOpts.GroupsClaim,
 		GroupsPrefix:         oidcOpts.GroupsPrefix,
 		TenantIDClaim:        oidcOpts.TenantIDClaim,
