@@ -30,12 +30,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/thoas/go-funk"
-
-	"tkestack.io/tke/pkg/util/apiclient"
-
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
+	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
@@ -51,7 +48,9 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/hosts"
+	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/cmdstring"
+	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/template"
@@ -175,23 +174,16 @@ func (p *Provider) EnsureKernelModule(c *Cluster) error {
 	return nil
 }
 
-func setFileContent(file, pattern, content string) string {
-	return fmt.Sprintf("grep -Pq '%s' %s && sed -i 's;%s;%s;g' %s|| echo '%s' >> %s",
-		pattern, file,
-		pattern, content, file,
-		content, file)
-}
-
 func (p *Provider) EnsureSysctl(c *Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		s := c.SSH[machine.IP]
 
-		_, err := s.CombinedOutput(setFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
+		_, err := s.CombinedOutput(cmdstring.SetFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
 
-		_, err = s.CombinedOutput(setFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
+		_, err = s.CombinedOutput(cmdstring.SetFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -229,20 +221,58 @@ func (p *Provider) EnsureDisableSwap(c *Cluster) error {
 // 因为validate那里没法更新对象（不能存储）
 // PreCrete，在api中错误只能panic，响应不会有报错提示，所以只能挪到这里处理
 func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
-	serviceCIDR, nodeCIDRMaskSize, err := GetServiceCIDRAndNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
-	if err != nil {
-		return errors.Wrap(err, "GetServiceCIDRAndNodeCIDRMaskSize error")
+	funcs := []func(cluster *Cluster) error{
+		completeNetworking,
+		completeDNS,
+		completeGPU,
+		completeAddresses,
+		completeCredential,
+	}
+	for _, f := range funcs {
+		if err := f(cluster); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func completeNetworking(cluster *Cluster) error {
+	var (
+		serviceCIDR      string
+		nodeCIDRMaskSize int32
+		err              error
+	)
+
+	if cluster.Spec.ServiceCIDR != nil {
+		serviceCIDR = *cluster.Spec.ServiceCIDR
+		nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
+		if err != nil {
+			return errors.Wrap(err, "GetNodeCIDRMaskSize error")
+		}
+	} else {
+		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
+		if err != nil {
+			return errors.Wrap(err, "GetServiceCIDRAndNodeCIDRMaskSize error")
+		}
 	}
 	cluster.Status.ServiceCIDR = serviceCIDR
 	cluster.Status.NodeCIDRMaskSize = nodeCIDRMaskSize
 
+	return nil
+}
+
+func completeDNS(cluster *Cluster) error {
 	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.DNSIPIndex)
 	if err != nil {
 		return errors.Wrap(err, "get DNS IP error")
 	}
 	cluster.Status.DNSIP = ip.String()
 
-	ip, err = GetIndexedIP(cluster.Status.ServiceCIDR, constants.GPUQuotaAdmissionIPIndex)
+	return nil
+}
+
+func completeGPU(cluster *Cluster) error {
+	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.GPUQuotaAdmissionIPIndex)
 	if err != nil {
 		return errors.Wrap(err, "get gpu quota admission IP error")
 	}
@@ -251,6 +281,10 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 	}
 	cluster.Annotations[constants.GPUQuotaAdmissionIPAnnotaion] = ip.String()
 
+	return nil
+}
+
+func completeAddresses(cluster *Cluster) error {
 	for _, m := range cluster.Spec.Machines {
 		cluster.AddAddress(platformv1.AddressReal, m.IP, 6443)
 	}
@@ -264,6 +298,10 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 		}
 	}
 
+	return nil
+}
+
+func completeCredential(cluster *Cluster) error {
 	token := ksuid.New().String()
 	cluster.ClusterCredential.Token = &token
 
@@ -273,11 +311,11 @@ func (p *Provider) EnsureClusterComplete(cluster *Cluster) error {
 	}
 	cluster.ClusterCredential.BootstrapToken = &bootstrapToken
 
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
+	certBytes := make([]byte, 32)
+	if _, err := rand.Read(certBytes); err != nil {
 		return err
 	}
-	certificateKey := hex.EncodeToString(bytes)
+	certificateKey := hex.EncodeToString(certBytes)
 	cluster.ClusterCredential.CertificateKey = &certificateKey
 
 	return nil
@@ -538,7 +576,7 @@ func (p *Provider) EnsureGalaxy(c *Cluster) error {
 
 func (p *Provider) EnsureJoinControlePlane(c *Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
-	option := &kubeadm.JoinControlePlaneOption{
+	option := &kubeadm.JoinControlPlaneOption{
 		BootstrapToken:       *c.ClusterCredential.BootstrapToken,
 		CertificateKey:       *c.ClusterCredential.CertificateKey,
 		ControlPlaneEndpoint: fmt.Sprintf("%s:6443", c.Spec.Machines[0].IP),
@@ -546,7 +584,7 @@ func (p *Provider) EnsureJoinControlePlane(c *Cluster) error {
 	}
 	for _, machine := range c.Spec.Machines[1:] {
 		option.NodeName = machine.IP
-		err := kubeadm.JoinControlePlane(c.SSH[machine.IP], option)
+		err := kubeadm.JoinControlPlane(c.SSH[machine.IP], option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -671,8 +709,9 @@ func (p *Provider) EnsureMarkControlPlane(c *Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		if machine.Labels == nil {
 			machine.Labels = make(map[string]string)
-			machine.Labels[constants.LabelNodeRoleMaster] = ""
 		}
+		machine.Labels[constants.LabelNodeRoleMaster] = ""
+
 		if !c.Spec.Features.EnableMasterSchedule {
 			taint := corev1.Taint{
 				Key:    constants.LabelNodeRoleMaster,

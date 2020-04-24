@@ -296,6 +296,8 @@ export const initContainer: ContainerItem = {
   v_arg: initValidator,
   healthCheck: initHealthCheck,
   privileged: false,
+  addCapabilities: [],
+  dropCapabilities: [],
   imagePullPolicy: 'Always'
 };
 

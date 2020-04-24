@@ -20,6 +20,7 @@ package options
 
 import (
 	"fmt"
+	"k8s.io/klog"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -51,6 +52,7 @@ const (
 type AuthenticationOptions struct {
 	ClientCert           *genericoptions.ClientCertAuthenticationOptions
 	OIDC                 *OIDCOptions
+	WebHook              *WebHookOptions
 	RequestHeader        *genericoptions.RequestHeaderAuthenticationOptions
 	TokenFile            *TokenFileAuthenticationOptions
 	TokenSuccessCacheTTL time.Duration
@@ -74,6 +76,7 @@ func NewAuthenticationOptions() *AuthenticationOptions {
 	return &AuthenticationOptions{
 		ClientCert:           &genericoptions.ClientCertAuthenticationOptions{},
 		OIDC:                 NewOIDCOptions(),
+		WebHook:              NewWebhookOptions(),
 		RequestHeader:        &genericoptions.RequestHeaderAuthenticationOptions{},
 		TokenFile:            &TokenFileAuthenticationOptions{},
 		TokenSuccessCacheTTL: 10 * time.Second,
@@ -93,6 +96,8 @@ func (o *AuthenticationOptions) AddFlags(fs *pflag.FlagSet) {
 
 	o.OIDC.AddFlags(fs)
 
+	o.WebHook.AddFlags(fs)
+
 	o.RequestHeader.AddFlags(fs)
 	_ = viper.BindPFlag(configAuthnRequestHeaderUsernameHeaders, fs.Lookup(flagAuthnRequestHeaderUsernameHeaders))
 	_ = viper.BindPFlag(configAuthnRequestHeaderGroupHeaders, fs.Lookup(flagAuthnRequestHeaderGroupHeaders))
@@ -110,6 +115,7 @@ func (o *AuthenticationOptions) ApplyFlags() []error {
 	o.TokenFile.TokenFile = viper.GetString(configAuthnTokenFile)
 
 	errs = append(errs, o.OIDC.ApplyFlags()...)
+	errs = append(errs, o.WebHook.ApplyFlags()...)
 
 	o.RequestHeader.AllowedNames = viper.GetStringSlice(configAuthnRequestHeaderAllowedNames)
 	o.RequestHeader.ClientCAFile = viper.GetString(configAuthnRequestHeaderClientCAFile)
@@ -123,6 +129,17 @@ func (o *AuthenticationOptions) ApplyFlags() []error {
 
 	if o.OIDC != nil && len(o.OIDC.ExternalIssuerURL) == 0 {
 		o.OIDC.ExternalIssuerURL = o.OIDC.IssuerURL
+	}
+
+	if o.WebHook != nil {
+		if len(o.WebHook.ConfigFile) > 0 && o.WebHook.CacheTTL > 0 {
+			if o.TokenSuccessCacheTTL > 0 && o.WebHook.CacheTTL < o.TokenSuccessCacheTTL {
+				klog.Warningf("the webhook cache ttl of %s is shorter than the overall cache ttl of %s for successful token authentication attempts.", o.WebHook.CacheTTL, o.TokenSuccessCacheTTL)
+			}
+			if o.TokenFailureCacheTTL > 0 && o.WebHook.CacheTTL < o.TokenFailureCacheTTL {
+				klog.Warningf("the webhook cache ttl of %s is shorter than the overall cache ttl of %s for failed token authentication attempts.", o.WebHook.CacheTTL, o.TokenFailureCacheTTL)
+			}
+		}
 	}
 
 	return errs

@@ -63,6 +63,7 @@ func (h *APIKeyAuthenticator) AuthenticateToken(ctx context.Context, token strin
 		fields.OneTermEqualSelector("spec.tenantID", tokenInfo.TenantID),
 		fields.OneTermEqualSelector("spec.apiKey", token))
 
+	log.Info("apikey selector", log.String("selector", selector.String()))
 	apiKeyList, err := h.authClient.APIKeys().List(metav1.ListOptions{FieldSelector: selector.String()})
 	if err != nil {
 		log.Error("List api keys failed", log.String("api key", token), log.Err(err))

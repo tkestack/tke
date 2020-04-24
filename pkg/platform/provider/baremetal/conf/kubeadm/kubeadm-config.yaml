@@ -6,6 +6,8 @@ bootstrapTokens:
     ttl: "0"
 nodeRegistration:
   name: {{.NodeName}}
+localAPIEndpoint:
+  AdvertiseAddress:  {{.NodeName}}
 certificateKey: {{.CertificateKey}}
 ---
 apiVersion: kubeadm.k8s.io/v1beta2

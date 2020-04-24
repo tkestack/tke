@@ -152,7 +152,7 @@ func (p *Provider) PreCreate(user clusterprovider.UserInfo, cluster platform.Clu
 	if cluster.Spec.Features.IPVS == nil {
 		cluster.Spec.Features.IPVS = pointer.ToBool(false)
 	}
-	if cluster.Spec.Properties.MaxClusterServiceNum == nil {
+	if cluster.Spec.Properties.MaxClusterServiceNum == nil && cluster.Spec.ServiceCIDR == nil {
 		cluster.Spec.Properties.MaxClusterServiceNum = pointer.ToInt32(256)
 	}
 	if cluster.Spec.Properties.MaxNodePodNum == nil {

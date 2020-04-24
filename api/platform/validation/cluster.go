@@ -23,7 +23,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/thoas/go-funk"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -192,10 +191,8 @@ func ValidateHooks(hooks map[platform.HookType]string, fldPath *field.Path, file
 	}
 
 	hookFiles := make(map[string]bool, len(files))
-	if files != nil {
-		hookFiles = funk.Map(files, func(f string) (string, bool) {
-			return f, true
-		}).(map[string]bool)
+	for _, f := range files {
+		hookFiles[f.Dst] = true
 	}
 
 	for k, v := range hooks {

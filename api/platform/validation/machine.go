@@ -27,7 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
@@ -191,7 +190,7 @@ func ValidateMachineWithCluster(ip string, fldPath *field.Path, cluster *platfor
 	ones, _ := cidr.Mask.Size()
 	maxNode := math.Exp2(float64(cluster.Status.NodeCIDRMaskSize - int32(ones)))
 
-	fieldSelector := fields.OneTermEqualSelector(fldPath.Child("clusterName").String(), cluster.Name).String()
+	fieldSelector := fmt.Sprintf("spec.clusterName=%s", cluster.Name)
 	machineList, err := platformClient.Machines().List(metav1.ListOptions{FieldSelector: fieldSelector})
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(fldPath, err))

@@ -2,13 +2,13 @@ import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Select, Switch } from '@tea/component';
+import { Select, SelectMultiple, Switch } from '@tea/component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { FormItem } from '../../../../common/components';
 import { allActions } from '../../../actions';
-import { ImagePullPolicyList } from '../../../constants/Config';
+import { ImagePullPolicyList, AddCapabilitiesList, DropCapabilitiesList } from '../../../constants/Config';
 import { RootProps } from '../../ClusterApp';
 import { EditResourceContainerHealthCheckPanel } from './EditResourceContainerHealthCheckPanel';
 
@@ -104,6 +104,28 @@ export class EditResourceContainerAdvancedPanel extends React.Component<Containe
               />
               <p className="form-input-help text-label">{t('容器开启特权级，将拥有宿主机的root权限')}</p>
             </div>
+          </FormItem>
+
+          <FormItem label={t('权限集-增加')}>
+            <SelectMultiple
+              size="auto"
+              options={AddCapabilitiesList.map(item => ({ value: item, text: item }))}
+              value={container.addCapabilities}
+              onChange={value => {
+                actions.editWorkload.updateContainer({ addCapabilities: value }, cKey);
+              }}
+            />
+          </FormItem>
+
+          <FormItem label={t('权限集-删除')}>
+            <SelectMultiple
+              size="auto"
+              options={DropCapabilitiesList.map(item => ({ value: item, text: item }))}
+              value={container.dropCapabilities}
+              onChange={value => {
+                actions.editWorkload.updateContainer({ dropCapabilities: value }, cKey);
+              }}
+            />
           </FormItem>
         </ul>
       </div>

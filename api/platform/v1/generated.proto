@@ -462,6 +462,10 @@ message ClusterSpec {
 
   // +optional
   map<string, string> schedulerExtraArgs = 18;
+
+  // ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+  // +optional
+  optional string serviceCIDR = 19;
 }
 
 // ClusterStatus represents information about the status of a cluster.

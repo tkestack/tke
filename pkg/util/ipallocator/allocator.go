@@ -25,7 +25,7 @@ import (
 	"net"
 
 	api "k8s.io/api/core/v1"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/allocator"
+	"tkestack.io/tke/pkg/util/allocator"
 )
 
 // Interface manages the allocation of IP addresses out of a range. Interface
@@ -285,4 +285,18 @@ func GetIndexedIP(subnet *net.IPNet, index int) (net.IP, error) {
 		return nil, fmt.Errorf("can't generate IP with index %d from subnet. subnet too small. subnet: %q", index, subnet)
 	}
 	return ip, nil
+}
+
+// GetFirstIP returns subnet's first IP
+func GetFirstIP(subnet *net.IPNet) (net.IP, error) {
+	return GetIndexedIP(subnet, 0)
+}
+
+// GetLastIP returns subnet's last IP
+func GetLastIP(subnet *net.IPNet) (net.IP, error) {
+	size := RangeSize(subnet)
+	if size <= 0 {
+		return nil, fmt.Errorf("can't get range size of subnet. subnet: %q", subnet)
+	}
+	return GetIndexedIP(subnet, int(size-1))
 }
