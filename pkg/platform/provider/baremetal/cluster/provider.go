@@ -150,7 +150,7 @@ func (p *Provider) PreCreate(user clusterprovider.UserInfo, cluster platform.Clu
 		cluster.Spec.NetworkDevice = "eth0"
 	}
 	if cluster.Spec.Features.IPVS == nil {
-		cluster.Spec.Features.IPVS = pointer.ToBool(false)
+		cluster.Spec.Features.IPVS = pointer.ToBool(true)
 	}
 	if cluster.Spec.Properties.MaxClusterServiceNum == nil && cluster.Spec.ServiceCIDR == nil {
 		cluster.Spec.Properties.MaxClusterServiceNum = pointer.ToInt32(256)
