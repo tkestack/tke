@@ -8,7 +8,7 @@ import {
 import { t } from '@tencent/tea-app/lib/i18n';
 import { Alert, Bubble, Button, Icon, Modal, Text } from '@tencent/tea-component';
 
-import { getWorkflowError } from '../../common';
+import { getWorkflowError, RequestParams, ResourceInfo } from '../../common';
 import { allActions } from '../actions';
 import { projectActions } from '../actions/projectActions';
 import { resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
@@ -17,6 +17,9 @@ import { router } from '../router';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
 import { EditProjectManagerPanel } from './EditProjectManagerPanel';
 import { RootProps } from './ProjectApp';
+import { resourceConfig } from '@config/resourceConfig';
+import { reduceK8sRestfulPath } from '@helper/urlUtil';
+import { Method, reduceNetworkRequest } from '@helper/reduceNetwork';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
@@ -26,11 +29,11 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class CreateProjectPanel extends React.Component<
   RootProps,
-  { currentClusterIndex: number; isShowDialog: boolean }
+  { currentClusterIndex: number; isShowDialog: boolean; }
 > {
   state = {
     currentClusterIndex: 0,
-    isShowDialog: false
+    isShowDialog: false,
   };
   componentDidMount() {
     let { actions, project, manager } = this.props;
@@ -41,6 +44,36 @@ export class CreateProjectPanel extends React.Component<
     if (manager.list.data.recordCount === 0) {
       actions.manager.applyFilter({});
     }
+    this.getUserInfo();
+  }
+
+  //获取用户信息包括用户业务信息
+  async getUserInfo() {
+    let { actions } = this.props;
+    let infoResourceInfo: ResourceInfo = resourceConfig()['info'];
+    let url = reduceK8sRestfulPath({ resourceInfo: infoResourceInfo });
+    let params: RequestParams = {
+        method: Method.get,
+        url,
+    };
+    try {
+        let response = await reduceNetworkRequest(params);
+        console.log('getUserInfo response is: ', response);
+        let loginUserInfo = {
+            id: '',
+            name: '',
+            displayName: ''
+        };
+        if (!response.code) {
+            const { uid, name, extra } = response.data;
+            loginUserInfo = {
+                id: uid,
+                name,
+                displayName: extra.displayname ? extra.displayname[0] : ''
+            };
+        }
+        actions.project.selectManager([loginUserInfo]);
+    } catch (error) {}
   }
 
   formatResourceLimit(resourceLimit: ProjectResourceLimit[]) {
@@ -100,7 +133,7 @@ export class CreateProjectPanel extends React.Component<
             }
           }}
         />
-        <FormPanel.Item label={t('业务成员')}>
+        <FormPanel.Item label={t('业务管理员')}>
           <div style={{ width: 600 }}>
             <EditProjectManagerPanel {...this.props} />
           </div>

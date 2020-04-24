@@ -1,7 +1,7 @@
 import { resourceConfig } from '@config';
 import { CommonAPI, ResourceFilter, ResourceInfo } from '@src/modules/common';
 import {
-    createFFListActions, extend, FetchOptions, generateFetcherActionCreator,
+    createFFListActions, deepClone, extend, FetchOptions, generateFetcherActionCreator,
     generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
 } from '@tencent/ff-redux';
 
@@ -165,7 +165,17 @@ const restActions = {
                 payload: filterUsers
             });
         };
-    }
+    },
+
+    // getLoginUserInfo: () => {
+    //     return async (dispatch: Redux.Dispatch, getState: GetState) => {
+    //         let response = await WebAPI.fetchAdminstratorInfo();
+    //         dispatch({
+    //             type: ActionType.LoginUserInfo,
+    //             payload: response
+    //         });
+    //     };
+    // }
 };
 
 export const userActions = extend({}, FFModelUserActions, restActions);

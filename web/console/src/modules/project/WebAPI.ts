@@ -444,6 +444,23 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
 }
 
 /**
+ * 查询登陆用户信息
+ * @param query
+ */
+// export async function fetchLoginUserInfo() {
+//   let userInfo: ResourceInfo = resourceConfig()['info'];
+//   let url = reduceK8sRestfulPath({ resourceInfo: userInfo });
+//   let method = 'GET';
+//   let params: RequestParams = {
+//     method,
+//     url
+//   };
+//   let response = await reduceNetworkRequest(params);
+//
+//   return response;
+// }
+
+/**
  *
  * @param query 集群列表查询的一些过滤条件
  */

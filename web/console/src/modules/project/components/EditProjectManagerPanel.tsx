@@ -12,7 +12,6 @@ export class EditProjectManagerPanel extends React.Component<EditProjectManagerP
     let { projectEdition, actions, manager, rowDisabled } = this.props;
     // 表示 ResourceSelector 里要显示和选择的数据类型是 `Manager`
     const TransferTableSelector = TransferTable as new () => TransferTable<Manager>;
-
     // 参数配置
     const selectorProps: TransferTableProps<Manager> = {
       /** 要供选择的数据 */
@@ -26,10 +25,12 @@ export class EditProjectManagerPanel extends React.Component<EditProjectManagerP
       selections: projectEdition.members,
 
       /** 用户选择发生改变后，应该更新选中的数据状态 */
-      onChange: (selection: Manager[]) => actions.project.selectManager(selection),
+      onChange: (selection: Manager[]) => {
+        actions.project.selectManager(selection);
+      },
 
       /** 选择器标题 */
-      title: t(`当前账户可分配以下责任人`),
+      title: t(`当前业务可分配以下责任人`),
 
       columns: [
         {
