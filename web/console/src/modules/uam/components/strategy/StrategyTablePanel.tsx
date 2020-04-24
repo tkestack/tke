@@ -246,9 +246,8 @@ export const StrategyTablePanel = (props) => {
             >
               <Trans>关联用户组</Trans>
             </LinkButton>
-            </>
-          )
-        }
+          </>
+        )}
         {strategy.type !== 1 && <LinkButton onClick={() => _removeCategory(strategy)}>删除</LinkButton>}
       </React.Fragment>
     );

@@ -115,12 +115,12 @@ export const UserCreate = (props) => {
                     header={
                       <SearchBox
                         value={userInputValue}
-                        onChange={keyword => {
+                        onChange={(keyword) => {
                           setUserInputValue(keyword);
                           // actions.manager.changeKeyword((keyword || '').trim());
                           actions.manager.performSearch((keyword || '').trim());
                         }}
-                        onSearch={keyword => {
+                        onSearch={(keyword) => {
                           actions.manager.performSearch((keyword || '').trim());
                         }}
                         onClear={() => {
