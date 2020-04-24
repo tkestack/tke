@@ -310,7 +310,7 @@ func scrapeConfigForPrometheus() string {
         regex: (.+)
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_request_latencies_summary_count|apiserver_request_latencies_summary_sum|node_sockstat_TCP_inuse|node_network_transmit_bytes|node_network_receive_bytes|node_filesystem_size|node_filesystem_avail|node_disk_bytes_written|node_disk_bytes_read|node_disk_writes_completed|node_disk_reads_completed'
+        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_request_duration_seconds_(.*)|node_sockstat_TCP_inuse|node_network_transmit_bytes|node_network_receive_bytes|node_filesystem_size|node_filesystem_avail|node_disk_bytes_written|node_disk_bytes_read|node_disk_writes_completed|node_disk_reads_completed'
         action: keep
       - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
@@ -997,7 +997,7 @@ groups:
     expr: up{instance=~"(.*)10252"} * on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_component_apiserver_request_latency
-    expr: sum(apiserver_request_latencies_summary_sum) by (node) / sum(apiserver_request_latencies_summary_count) by (node)
+    expr: sum(apiserver_request_duration_seconds_sum{verb!="WATCH"}) by (node) * 1000000 / sum(apiserver_request_duration_seconds_count{verb!="WATCH"}) by (node)
 
   - record: k8s_component_scheduler_scheduling_latency
     expr: sum(scheduler_e2e_scheduling_latency_microseconds_sum) by (node) / sum(scheduler_e2e_scheduling_latency_microseconds_count) by (node)
