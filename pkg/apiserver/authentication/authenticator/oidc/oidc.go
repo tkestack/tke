@@ -579,6 +579,7 @@ func (a *Authenticator) AuthenticateToken(ctx context.Context, token string) (*a
 				tenantID = a.tenantIDPrefix + tenantID
 			}
 			info.Extra[TenantIDKey] = []string{tenantID}
+			info.UID = federateIDClaim.UserID
 		}
 	}
 
