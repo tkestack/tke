@@ -104,6 +104,8 @@ type InitOption struct {
 
 	ImageRepository string
 	ClusterName     string
+
+	KubeProxyMode string
 }
 
 func Init(s ssh.Interface, option *InitOption, extraCmd string) error {

@@ -497,6 +497,10 @@ func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 			certSANs = append(certSANs, c.Spec.Features.HA.ThirdPartyHA.VIP)
 		}
 	}
+	kubeProxyMode := "iptables"
+	if c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS {
+		kubeProxyMode = "ipvs"
+	}
 
 	return &kubeadm.InitOption{
 		KubeadmConfigFileName: constants.KubeadmConfigFileName,
@@ -522,6 +526,8 @@ func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 
 		ImageRepository: c.Registry.Prefix,
 		ClusterName:     c.Name,
+
+		KubeProxyMode: kubeProxyMode,
 	}
 }
 
