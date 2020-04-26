@@ -101,7 +101,7 @@ type Config struct {
 // on a given TKE auth command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(authapi.Codecs)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(apiserver.IgnoreAuthPathPrefixes())
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(apiserver.IgnoreAuthPathPrefixes(), apiserver.IgnoreAuthzPathPrefixes())
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 
 	genericAPIServerConfig.EnableIndex = false

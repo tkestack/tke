@@ -796,7 +796,7 @@ type SubjectAccessReviewSpec struct {
 	User string `json:"user,omitempty" protobuf:"bytes,3,opt,name=user"`
 	// Groups is the groups you're testing for.
 	// +optional
-	Groups []string `json:"groups,omitempty" protobuf:"bytes,4,rep,name=groups"`
+	Groups []string `json:"group,omitempty" protobuf:"bytes,4,rep,name=group"`
 	// Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer
 	// it needs a reflection here.
 	// +optional

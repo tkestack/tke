@@ -150,6 +150,7 @@ func WithAuthentication(handler http.Handler, auth authenticator.Request, failed
 			if projectName != "" {
 				userInfo.Groups = append(userInfo.Groups, GroupWithProject(projectName))
 			}
+
 			req = req.WithContext(genericapirequest.WithUser(req.Context(), userInfo))
 		} else {
 			req = req.WithContext(genericapirequest.WithUser(req.Context(), resp.User))

@@ -92,7 +92,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 
 	genericAPIServerConfig := genericapiserver.NewConfig(monitor.Codecs)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableProfiling = false
