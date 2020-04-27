@@ -81,6 +81,7 @@ func startProjectController(ctx ControllerContext) (http.Handler, bool, error) {
 		projectSyncPeriod,
 		businessv1.ProjectFinalize,
 		ctx.RegistryClient != nil,
+		ctx.AuthClient,
 	)
 
 	go ctrl.Run(concurrentProjectSyncs, ctx.Stop)

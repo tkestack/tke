@@ -27,6 +27,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	businessv1 "tkestack.io/tke/api/business/v1"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	businessUtil "tkestack.io/tke/pkg/business/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -45,13 +46,15 @@ func NewProjectedResourcesDeleter(projectClient v1clientset.ProjectInterface,
 	businessClient v1clientset.BusinessV1Interface,
 	finalizerToken businessv1.FinalizerName,
 	deleteProjectWhenDone bool,
-	registryEnabled bool) ProjectedResourcesDeleterInterface {
+	registryEnabled bool,
+	authClient authversionedclient.AuthV1Interface) ProjectedResourcesDeleterInterface {
 	d := &projectedResourcesDeleter{
 		projectClient:         projectClient,
 		businessClient:        businessClient,
 		finalizerToken:        finalizerToken,
 		deleteProjectWhenDone: deleteProjectWhenDone,
 		registryEnabled:       registryEnabled,
+		authClient:            authClient,
 	}
 	return d
 }
@@ -69,6 +72,7 @@ type projectedResourcesDeleter struct {
 	// Also delete the project when all resources in the project have been deleted.
 	deleteProjectWhenDone bool
 	registryEnabled       bool
+	authClient            authversionedclient.AuthV1Interface
 }
 
 // Delete deletes all resources in the given project.
@@ -251,6 +255,7 @@ var deleteResourceFuncs = []deleteResourceFunc{
 	deleteNamespaces,
 	deleteChildProjects,
 	recalculateParentProjectUsed,
+	deleteBusinessUsersFromAuth,
 }
 
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
@@ -273,6 +278,11 @@ func (d *projectedResourcesDeleter) deleteAllContent(project *businessv1.Project
 	}
 
 	log.Debug("Project controller - deletedAllContent", log.String("projectName", project.ObjectMeta.Name))
+	return nil
+}
+
+func deleteBusinessUsersFromAuth(deleter *projectedResourcesDeleter, project *businessv1.Project) error {
+	// TODO: deleteBusinessUsersFromAuth?
 	return nil
 }
 

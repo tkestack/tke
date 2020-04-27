@@ -99,8 +99,12 @@ type ProjectPhase string
 const (
 	// ProjectActive indicates the project is active.
 	ProjectActive ProjectPhase = "Active"
+	// ProjectPending indicates that the project has been declared.
+	ProjectPending ProjectPhase = "Pending"
 	// ProjectTerminating means the project is undergoing graceful termination.
 	ProjectTerminating ProjectPhase = "Terminating"
+	// ProjectFailed indicates that the project has been failed.
+	ProjectFailed ProjectPhase = "Failed"
 )
 
 // FinalizerName is the name identifying a finalizer during project lifecycle.

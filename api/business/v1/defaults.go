@@ -28,7 +28,7 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 
 func SetDefaults_ProjectStatus(obj *ProjectStatus) {
 	if obj.Phase == "" {
-		obj.Phase = ProjectActive
+		obj.Phase = ProjectPending
 	}
 	if obj.CalculatedChildProjects == nil {
 		obj.CalculatedChildProjects = []string{}
