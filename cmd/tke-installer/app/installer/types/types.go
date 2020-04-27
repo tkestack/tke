@@ -36,6 +36,7 @@ type Config struct {
 	Registry  Registry  `json:"registry"`
 	Business  *Business `json:"business,omitempty"`
 	Monitor   *Monitor  `json:"monitor,omitempty"`
+	Logagent  *Logagent `json:"logagent,omitempty"`
 	HA        *HA       `json:"ha,omitempty"`
 	Gateway   *Gateway  `json:"gateway,omitempty"`
 	SkipSteps []string  `json:"skipSteps,omitempty"`
@@ -196,4 +197,9 @@ const (
 type Handler struct {
 	Name string
 	Func func() error
+}
+
+type Logagent struct {
+	RegistryDomain string `json:"domain,omitempty"`
+	RegistryNamespace string `json:"namespace:omitempty"`
 }
