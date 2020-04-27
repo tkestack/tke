@@ -35,10 +35,10 @@ import (
 
 const (
 	policySyncPeriod      = 5 * time.Minute
-	concurrentPolicySyncs = 5
+	concurrentPolicySyncs = 10
 
 	projectPolicySyncPeriod      = 5 * time.Minute
-	concurrentProjectPolicySyncs = 5
+	concurrentProjectPolicySyncs = 10
 
 	localIdentitySyncPeriod      = 5 * time.Minute
 	concurrentLocalIdentitySyncs = 5

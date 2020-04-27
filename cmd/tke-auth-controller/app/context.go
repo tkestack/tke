@@ -144,7 +144,6 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 
 	rm := domainrolemanager.NewRoleManager(10)
 	enforcer.SetRoleManager(rm)
-	_ = enforcer.LoadPolicy()
 	enforcer.StartAutoLoadPolicy(cfg.CasbinReloadInterval)
 
 	ctx := ControllerContext{
