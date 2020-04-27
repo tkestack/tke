@@ -40,6 +40,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
+	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy"
 	galaxyimages "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
@@ -51,6 +52,7 @@ import (
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/cmdstring"
+	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
@@ -919,10 +921,38 @@ func (p *Provider) EnsureGPUManager(c *v1.Cluster) error {
 		"BusyboxImage":           images.Get().Busybox.FullName(),
 		"GPUQuotaAdmissionImage": images.Get().GPUQuotaAdmission.FullName(),
 	}
+
 	err = apiclient.CreateResourceWithFile(client, constants.GPUManagerManifest, option)
 	if err != nil {
 		return errors.Wrap(err, "install gpu manager error")
 	}
+
+	return nil
+}
+
+func (p *Provider) EnsureCSIOperator(c *v1.Cluster) error {
+	if c.Cluster.Spec.Features.CSIOperator == nil {
+		return nil
+	}
+
+	log.Info("csi-perator in feature will be created.", log.String("name", c.Cluster.Name))
+
+	client, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+
+	option := map[string]interface{}{
+		"CSIOperatorImage": csioperatorimage.Get(c.Cluster.Spec.Features.CSIOperator.Version).CSIOperator.FullName(),
+		"RegistryDomain":   containerregistryutil.GetPrefix(),
+	}
+
+	err = apiclient.CreateResourceWithFile(client, constants.CSIOperatorManifest, option)
+	if err != nil {
+		return errors.Wrap(err, "install csi operator error")
+	}
+
+	log.Info("csi-perator in feature already created.", log.String("name", c.Cluster.Name))
 
 	return nil
 }
