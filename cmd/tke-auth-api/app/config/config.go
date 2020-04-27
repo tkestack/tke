@@ -326,12 +326,12 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 
 func setupDefaultConnector(versionInformers versionedinformers.SharedInformerFactory, auth *options.AuthOptions) error {
 	log.Info("setup tke local connector", log.Any("tenantID", auth.InitTenantID))
-	if _, ok := identityprovider.IdentityProvidersStore[auth.InitTenantID]; !ok {
+	if _, ok := identityprovider.GetIdentityProvider(auth.InitTenantID); !ok {
 		defaultIDP, err := local.NewDefaultIdentityProvider(auth.InitTenantID, auth.InitIDPAdmins, versionInformers)
 		if err != nil {
 			return nil
 		}
-		identityprovider.IdentityProvidersStore[auth.InitTenantID] = defaultIDP
+		identityprovider.SetIdentityProvider(auth.InitTenantID, defaultIDP)
 	}
 
 	return nil
@@ -357,8 +357,8 @@ func setupLDAPConnector(auth *options.AuthOptions) error {
 		return err
 	}
 
-	if _, ok := identityprovider.IdentityProvidersStore[auth.InitTenantID]; !ok {
-		identityprovider.IdentityProvidersStore[auth.InitTenantID] = idp
+	if _, ok := identityprovider.GetIdentityProvider(auth.InitTenantID); !ok {
+		identityprovider.SetIdentityProvider(auth.InitTenantID, idp)
 	}
 
 	return nil
