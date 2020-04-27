@@ -80,8 +80,9 @@ const (
 	ConfigFile            = ConfDir + "config.yaml"
 	AuditPolicyConfigFile = "audit-policy.yaml"
 
-	ManifestsDir       = ProviderDir + "manifests/"
-	GPUManagerManifest = ManifestsDir + "gpu-manager/gpu-manager.yaml"
+	ManifestsDir        = ProviderDir + "manifests/"
+	GPUManagerManifest  = ManifestsDir + "gpu-manager/gpu-manager.yaml"
+	CSIOperatorManifest = ManifestsDir + "csi-operator/csi-operator.yaml"
 
 	DNSIPIndex                   = 10
 	GPUQuotaAdmissionIPIndex     = 9

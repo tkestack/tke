@@ -880,6 +880,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/notify/v1.TemplateWechat":                                schema_tke_api_notify_v1_TemplateWechat(ref),
 		"tkestack.io/tke/api/platform/v1.AddonSpec":                                   schema_tke_api_platform_v1_AddonSpec(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperator":                                 schema_tke_api_platform_v1_CSIOperator(ref),
+		"tkestack.io/tke/api/platform/v1.CSIOperatorFeature":                          schema_tke_api_platform_v1_CSIOperatorFeature(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperatorList":                             schema_tke_api_platform_v1_CSIOperatorList(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperatorSpec":                             schema_tke_api_platform_v1_CSIOperatorSpec(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperatorStatus":                           schema_tke_api_platform_v1_CSIOperatorStatus(ref),
@@ -41656,6 +41657,25 @@ func schema_tke_api_platform_v1_CSIOperator(ref common.ReferenceCallback) common
 	}
 }
 
+func schema_tke_api_platform_v1_CSIOperatorFeature(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"version"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_platform_v1_CSIOperatorList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -42596,11 +42616,16 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"csiOperator": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.CSIOperatorFeature"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA"},
+			"tkestack.io/tke/api/platform/v1.CSIOperatorFeature", "tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA"},
 	}
 }
 

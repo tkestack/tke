@@ -28,7 +28,7 @@ import (
 
 const (
 	// LatestVersion is latest version of addon.
-	LatestVersion = "v1.0.1"
+	LatestVersion = "v1.0.2"
 )
 
 type Components struct {
@@ -48,19 +48,15 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var versionMap = map[string]Components{
 	LatestVersion: {
-		CSIOperator: containerregistry.Image{Name: "csi-operator", Tag: "v1.0.1"},
+		CSIOperator: containerregistry.Image{Name: "csi-operator", Tag: "v1.0.2"},
 	},
 }
 
 func List() []string {
 	items := make([]string, 0, len(versionMap))
-	keys := make([]string, 0, len(versionMap))
-	for key := range versionMap {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		v := reflect.ValueOf(versionMap[key])
+	versions := Versions()
+	for _, version := range versions {
+		v := reflect.ValueOf(versionMap[version])
 		for i := 0; i < v.NumField(); i++ {
 			v, _ := v.Field(i).Interface().(containerregistry.Image)
 			items = append(items, v.BaseName())
@@ -70,12 +66,14 @@ func List() []string {
 	return items
 }
 
-func Validate(version string) error {
-	_, ok := versionMap[version]
-	if !ok {
-		return fmt.Errorf("the component version definition corresponding to version %s could not be found", version)
+func Versions() []string {
+	keys := make([]string, 0, len(versionMap))
+	for key := range versionMap {
+		keys = append(keys, key)
 	}
-	return nil
+	sort.Strings(keys)
+
+	return keys
 }
 
 func Get(version string) Components {
