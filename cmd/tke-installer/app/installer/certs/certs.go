@@ -39,6 +39,7 @@ var (
 		"tke-gateway",
 		"tke-monitor-api",
 		"tke-registry-api",
+		"tke-logagent-api",
 	}
 )
 

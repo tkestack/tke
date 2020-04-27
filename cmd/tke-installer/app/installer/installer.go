@@ -311,6 +311,19 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
+	if t.Para.Config.Logagent != nil {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke-logagent-api",
+				Func: t.installTKELogagentAPI,
+			},
+			{
+				Name: "Install tke-logagent-controller",
+				Func: t.installTKELogagentController,
+			},
+		}...)
+	}
+
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Register tke api into global cluster",
@@ -1272,6 +1285,7 @@ func (t *TKE) installTKEGateway() error {
 		"EnableAuth":       t.Para.Config.Auth.TKEAuth != nil,
 		"EnableMonitor":    t.Para.Config.Monitor != nil,
 		"EnableBusiness":   t.Para.Config.Business != nil,
+		"EnableLogagent":   t.Para.Config.Logagent != nil,
 	}
 	if t.Para.Config.Registry.TKERegistry != nil {
 		option["RegistryDomainSuffix"] = t.Para.Config.Registry.TKERegistry.Domain
@@ -1295,6 +1309,60 @@ func (t *TKE) installTKEGateway() error {
 		}
 		return ok, nil
 	})
+}
+
+func (t *TKE) installTKELogagentAPI() error {
+	options := map[string]interface{}{
+		"Replicas":                   t.Config.Replicas,
+		"Image":                      images.Get().TKELogagentAPI.FullName(),
+		"TenantID":                   t.Para.Config.Auth.TKEAuth.TenantID,
+		"Username":                   t.Para.Config.Auth.TKEAuth.Username,
+		"SyncProjectsWithNamespaces": t.Config.SyncProjectsWithNamespaces,
+		"EnableAuth":                 t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry":             t.Para.Config.Registry.TKERegistry != nil,
+	}
+	if t.Para.Config.Auth.OIDCAuth != nil {
+		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
+		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
+		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
+	}
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-logagent-api/*.yaml", options)
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-logagent-api")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKELogagentController() error {
+	options := map[string]interface{}{
+		"Replicas":       t.Config.Replicas,
+		"Image":          images.Get().TKELogagentController.FullName(),
+		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
+		"RegistryDomain": t.Para.Config.Registry.Domain(),
+		"RegistryNamespace": t.Para.Config.Registry.Namespace(),
+	}
+	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-logagent-controller/*.yaml", options)
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-logagent-controller")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+
+	return fmt.Errorf("installTKELogagentController not implemented")
 }
 
 func (t *TKE) installETCD() error {
