@@ -95,7 +95,7 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
-
+			p.EnsureCSIOperator,
 			p.EnsureCleanup,
 
 			p.EnsurePostInstallHook,

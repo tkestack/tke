@@ -83,6 +83,8 @@ const (
 	ManifestsDir       = ProviderDir + "manifests/"
 	GPUManagerManifest = ManifestsDir + "gpu-manager/gpu-manager.yaml"
 
+	CsiOperatorManifest = ManifestsDir + "csi-operator/csi-operator.yaml"
+
 	DNSIPIndex                   = 10
 	GPUQuotaAdmissionIPIndex     = 9
 	GPUQuotaAdmissionIPAnnotaion = platformv1.GroupName + "/gpu-quota-admission-ip"

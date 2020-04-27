@@ -26,6 +26,8 @@ import (
 	"github.com/thoas/go-funk"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
+
+	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/spec"
@@ -53,6 +55,13 @@ func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, phase p
 	allErrs = append(allErrs, ValidateCIDRs(spec, fldPath)...)
 	allErrs = append(allErrs, ValidateClusterProperty(spec, fldPath.Child("properties"))...)
 	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
+	if spec.Features.CSIOperator != nil {
+		path := fldPath.Child("features").Child("csiOperator")
+		err := csioperatorimage.Validate(spec.Features.CSIOperator.Version)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(path.Child("version"), spec.Features.CSIOperator.Version, err.Error()))
+		}
+	}
 
 	return allErrs
 }
