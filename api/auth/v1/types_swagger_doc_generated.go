@@ -595,7 +595,7 @@ var map_SubjectAccessReviewSpec = map[string]string{
 	"resourceAttributesList": "ResourceAttributesList describes information for multi resource access request.",
 	"nonResourceAttributes":  "NonResourceAttributes describes information for a non-resource access request",
 	"user":                   "User is the user you're testing for. If you specify \"User\" but not \"Groups\", then is it interpreted as \"What if User were not a member of any groups",
-	"groups":                 "Groups is the groups you're testing for.",
+	"group":                  "Groups is the groups you're testing for.",
 	"extra":                  "Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer it needs a reflection here.",
 	"uid":                    "UID information about the requesting user.",
 }

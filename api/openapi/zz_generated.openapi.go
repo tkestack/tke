@@ -38158,7 +38158,7 @@ func schema_tke_api_auth_v1_SubjectAccessReviewSpec(ref common.ReferenceCallback
 							Format:      "",
 						},
 					},
-					"groups": {
+					"group": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Groups is the groups you're testing for.",
 							Type:        []string{"array"},

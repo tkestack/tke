@@ -66,7 +66,7 @@ func (h *TokenAuthenticator) AuthenticateToken(ctx context.Context, token string
 		return nil, false, err
 	}
 
-	info := &user.DefaultInfo{Name: claims.Name}
+	info := &user.DefaultInfo{Name: claims.Name, UID: claims.FederatedIDClaims.UserID}
 	info.Groups = claims.Groups
 
 	info.Extra = map[string][]string{}

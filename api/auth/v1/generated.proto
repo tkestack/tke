@@ -791,7 +791,7 @@ message SubjectAccessReviewSpec {
 
   // Groups is the groups you're testing for.
   // +optional
-  repeated string groups = 4;
+  repeated string group = 4;
 
   // Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer
   // it needs a reflection here.

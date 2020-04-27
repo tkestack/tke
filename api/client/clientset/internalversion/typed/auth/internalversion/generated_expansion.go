@@ -40,6 +40,8 @@ type LocalIdentityExpansion interface{}
 
 type PolicyExpansion interface{}
 
+type ProjectExpansion interface{}
+
 type ProjectPolicyBindingExpansion interface{}
 
 type RoleExpansion interface{}

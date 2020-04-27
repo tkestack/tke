@@ -247,6 +247,7 @@ type deleteResourceFunc func(deleter *groupedResourcesDeleter, group *v1.LocalGr
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteRelatedRoles,
+	deleteRelatedProjectPolicyBinding,
 	deleteRelatedRules,
 }
 
@@ -312,6 +313,58 @@ func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) 
 			if err != nil {
 				errs = append(errs, err)
 			}
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
+}
+
+func deleteRelatedProjectPolicyBinding(deleter *groupedResourcesDeleter, group *v1.LocalGroup) error {
+	subj := util.GroupKey(group.Spec.TenantID, group.Name)
+	rules := deleter.enforcer.GetFilteredGroupingPolicy(0, subj)
+
+	var errs []error
+	belongsProjectPolicies := make(map[string][]string)
+	for _, r := range rules {
+		if len(r) != 3 {
+			log.Warn("invalid rule", log.Strings("rule", r))
+			continue
+		}
+		project := r[2]
+		role := r[1]
+		if strings.HasPrefix(project, "prj-") {
+			switch {
+			case strings.HasPrefix(role, "pol-"):
+				belongsProjectPolicies[project] = append(belongsProjectPolicies[project], role)
+			default:
+				log.Error("Unknown role name for group in project, remove it", log.String("project", project), log.String("user", group.Name), log.String("role", role))
+				_, err := deleter.enforcer.DeleteRoleForUserInDomain(subj, role, project)
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+		}
+	}
+
+	for project, policies := range belongsProjectPolicies {
+		log.Info("Unbind group with project policies", log.String("group", group.Name),
+			log.String("project", project), log.Strings("policies", policies))
+		bindingRequest := v1.ProjectPolicyBindingRequest{
+			TenantID: group.Spec.TenantID,
+			Policies: policies,
+			Groups: []v1.Subject{
+				{
+					ID:   group.Name,
+					Name: group.Spec.DisplayName,
+				},
+			},
+		}
+		result := v1.ProjectPolicyBindingList{}
+		err := deleter.authClient.RESTClient().Post().Resource("projects").Name(project).SubResource("unbinding").Body(&bindingRequest).Do().Into(&result)
+		if err != nil {
+			log.Info("Unbind group with project policies failed", log.String("group", group.Name),
+				log.String("project", project), log.Strings("policies", policies), log.Err(err))
+			errs = append(errs, err)
 		}
 	}
 

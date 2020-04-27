@@ -20,7 +20,7 @@ package util
 
 import "fmt"
 
-func ProjectOwnerPolicyID(tenantID string) string{
+func ProjectOwnerPolicyID(tenantID string) string {
 	return fmt.Sprintf("pol-%s-project-owner", tenantID)
 }
 

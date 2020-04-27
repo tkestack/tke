@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"strings"
 
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/apiserver/filter"
@@ -89,7 +90,7 @@ func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.Lis
 		prj := r[2]
 		role := r[1]
 
-		if prj != util.DefaultDomain {
+		if strings.HasPrefix(prj, "prj-") {
 			if role == projectOwner {
 				if _, ok := managed[prj]; ok {
 					managed[prj] = append(managed[prj], role)

@@ -20,14 +20,13 @@ package deletion
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"strings"
 	v1 "tkestack.io/tke/api/auth/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/pkg/auth/util"
@@ -246,7 +245,7 @@ type deleteResourceFunc func(deleter *loalIdentitiedResourcesDeleter, localIdent
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteRelatedRoles,
-	//TODO delete related project roles
+	deleteRelatedProjectPolicyBinding,
 	deleteApikeys,
 }
 
@@ -331,6 +330,58 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 			if err != nil {
 				errs = append(errs, err)
 			}
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
+}
+
+func deleteRelatedProjectPolicyBinding(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
+	subj := util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username)
+	rules := deleter.enforcer.GetFilteredGroupingPolicy(0, subj)
+
+	var errs []error
+	belongsProjectPolicies := make(map[string][]string)
+	for _, r := range rules {
+		if len(r) != 3 {
+			log.Warn("invalid rule", log.Strings("rule", r))
+			continue
+		}
+		project := r[2]
+		role := r[1]
+		if strings.HasPrefix(project, "prj-") {
+			switch {
+			case strings.HasPrefix(role, "pol-"):
+				belongsProjectPolicies[project] = append(belongsProjectPolicies[project], role)
+			default:
+				log.Error("Unknown role name for user in project, remove it", log.String("project", project), log.String("user", localIdentity.Spec.Username), log.String("role", role))
+				_, err := deleter.enforcer.DeleteRoleForUserInDomain(subj, role, project)
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+		}
+	}
+
+	for project, policies := range belongsProjectPolicies {
+		log.Info("Unbind user with project policies", log.String("user", localIdentity.Spec.Username),
+			log.String("project", project), log.Strings("policies", policies))
+		bindingRequest := v1.ProjectPolicyBindingRequest{
+			TenantID: localIdentity.Spec.TenantID,
+			Policies: policies,
+			Users: []v1.Subject{
+				{
+					ID:   localIdentity.Name,
+					Name: localIdentity.Spec.Username,
+				},
+			},
+		}
+		result := v1.ProjectPolicyBindingList{}
+		err := deleter.authClient.RESTClient().Post().Resource("projects").Name(project).SubResource("unbinding").Body(&bindingRequest).Do().Into(&result)
+		if err != nil {
+			log.Info("Unbind user with project policies failed", log.String("user", localIdentity.Spec.Username),
+				log.String("project", project), log.Strings("policies", policies), log.Err(err))
+			errs = append(errs, err)
 		}
 	}
 

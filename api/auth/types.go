@@ -747,6 +747,8 @@ type ProjectBelongs struct {
 	MemberdProjects map[string]ExtraValue
 }
 
+// +genclient
+// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Project contains members of projects.

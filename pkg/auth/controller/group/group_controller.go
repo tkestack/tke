@@ -148,7 +148,7 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 	log.Info("Starting group controller")
 	defer log.Info("Shutting down group controller")
 
-	if ok := cache.WaitForCacheSync(stopCh, c.groupListerSynced, c.ruleListerSynced); !ok {
+	if ok := cache.WaitForCacheSync(stopCh, c.groupListerSynced); !ok {
 		log.Error("Failed to wait for group caches to sync")
 	}
 
@@ -251,7 +251,7 @@ func convertToGroup(localGroup *v1.LocalGroup) *v1.Group {
 
 func (c *Controller) handleSubjects(key string, group *v1.Group) error {
 	rules := c.enforcer.GetFilteredGroupingPolicy(1, authutil.GroupKey(group.Spec.TenantID, key))
-	log.Debugf("Get grouping rules for group: %s, %v", group.Name, rules)
+	log.Infof("Get grouping rules for group: %s, %v", group.Name, rules)
 	var existMembers []string
 	for _, rule := range rules {
 		if strings.HasPrefix(rule[0], authutil.UserPrefix(group.Spec.TenantID)) {

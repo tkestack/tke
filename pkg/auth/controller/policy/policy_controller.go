@@ -148,6 +148,7 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 	if ok := cache.WaitForCacheSync(stopCh, c.policyListerSynced, c.ruleListerSynced); !ok {
 		log.Error("Failed to wait for policy caches to sync")
 	}
+	log.Info("Finish Starting policy controller")
 
 	for i := 0; i < workers; i++ {
 		go wait.Until(c.worker, time.Second, stopCh)
