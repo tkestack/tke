@@ -1286,6 +1286,10 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 			File: baremetalconstants.ManifestsDir + "/gpu/*",
 		},
 		{
+			Name: "csi-operator-manifests",
+			File: baremetalconstants.ManifestsDir + "/csi-operator/*",
+		},
+		{
 			Name: "keepalived-manifests",
 			File: baremetalconstants.ManifestsDir + "/keepalived/*",
 		},

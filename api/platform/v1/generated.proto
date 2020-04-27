@@ -53,6 +53,10 @@ message CSIOperator {
   optional CSIOperatorStatus status = 3;
 }
 
+message CSIOperatorFeature {
+  optional string version = 1;
+}
+
 // CSIOperatorList is the whole list of all storage operators which owned by a tenant.
 message CSIOperatorList {
   // +optional
@@ -345,6 +349,9 @@ message ClusterFeature {
 
   // +optional
   map<string, string> hooks = 9;
+
+  // +optional
+  optional CSIOperatorFeature csiOperator = 10;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.

@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/validation"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/types"
@@ -95,6 +96,7 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
+			p.EnsureCSIOperator,
 
 			p.EnsureCleanup,
 
@@ -129,6 +131,9 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	}
 	if cluster.Spec.Features.IPVS == nil {
 		cluster.Spec.Features.IPVS = pointer.ToBool(true)
+	}
+	if cluster.Spec.Features.CSIOperator.Version == "" {
+		cluster.Spec.Features.CSIOperator.Version = csioperatorimage.LatestVersion
 	}
 	if cluster.Spec.Properties.MaxClusterServiceNum == nil && cluster.Spec.ServiceCIDR == nil {
 		cluster.Spec.Properties.MaxClusterServiceNum = pointer.ToInt32(256)

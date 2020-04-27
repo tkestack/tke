@@ -26,6 +26,8 @@ import (
 	"github.com/thoas/go-funk"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
+
+	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/spec"
@@ -53,6 +55,7 @@ func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, phase p
 	allErrs = append(allErrs, ValidateCIDRs(spec, fldPath)...)
 	allErrs = append(allErrs, ValidateClusterProperty(spec, fldPath.Child("properties"))...)
 	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
+	allErrs = append(allErrs, ValidateClusterFeature(&spec.Features, fldPath.Child("features"))...)
 
 	return allErrs
 }
@@ -164,6 +167,26 @@ func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.
 				}
 			}
 		}
+	}
+
+	return allErrs
+}
+
+func ValidateClusterFeature(feature *platform.ClusterFeature, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if feature.CSIOperator != nil {
+		allErrs = append(allErrs, ValidateCSIOperator(feature.CSIOperator, fldPath.Child("csiOperator"))...)
+	}
+
+	return allErrs
+}
+
+func ValidateCSIOperator(csioperator *platform.CSIOperatorFeature, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	image := csioperatorimage.GetImage(csioperator.Version)
+	if image == nil {
+		err := fmt.Errorf("version not found")
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("version"), csioperator.Version, err.Error()))
 	}
 
 	return allErrs
