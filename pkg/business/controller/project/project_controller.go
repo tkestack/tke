@@ -30,8 +30,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+
 	v1 "tkestack.io/tke/api/business/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	businessv1informer "tkestack.io/tke/api/client/informers/externalversions/business/v1"
 	businessv1lister "tkestack.io/tke/api/client/listers/business/v1"
 	"tkestack.io/tke/pkg/business/controller/project/deletion"
@@ -69,18 +71,21 @@ type Controller struct {
 	listerSynced cache.InformerSynced
 	// helper to delete all resources in the project when the project is deleted.
 	projectedResourcesDeleter deletion.ProjectedResourcesDeleterInterface
+
+	authClient authversionedclient.AuthV1Interface
 }
 
 // NewController creates a new Project object.
 func NewController(client clientset.Interface, projectInformer businessv1informer.ProjectInformer,
-	resyncPeriod time.Duration, finalizerToken v1.FinalizerName, registryEnabled bool) *Controller {
+	resyncPeriod time.Duration, finalizerToken v1.FinalizerName, registryEnabled bool, authClient authversionedclient.AuthV1Interface) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
 		client: client,
 		cache:  &projectCache{m: make(map[string]*cachedProject)},
 		queue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
 		projectedResourcesDeleter: deletion.NewProjectedResourcesDeleter(client.BusinessV1().Projects(),
-			client.BusinessV1(), finalizerToken, true, registryEnabled),
+			client.BusinessV1(), finalizerToken, true, registryEnabled, authClient),
+		authClient: authClient,
 	}
 
 	if client != nil && client.BusinessV1().RESTClient().GetRateLimiter() != nil {
@@ -211,7 +216,7 @@ func (c *Controller) syncItem(key string) error {
 	case err != nil:
 		log.Warn("Unable to retrieve project from store", log.String("projectName", key), log.Err(err))
 	default:
-		if project.Status.Phase == v1.ProjectActive {
+		if project.Status.Phase == v1.ProjectPending || project.Status.Phase == v1.ProjectActive {
 			cachedProject = c.cache.getOrCreate(key, project)
 			err = c.processUpdate(cachedProject, project, key)
 		} else if project.Status.Phase == v1.ProjectTerminating {
@@ -266,6 +271,17 @@ func (c *Controller) processDelete(cachedProject *cachedProject, key string) err
 }
 
 func (c *Controller) handlePhase(key string, cachedProject *cachedProject, project *v1.Project) error {
+	if project.Status.Phase == v1.ProjectPending {
+		if c.authClient != nil && len(project.Spec.Members) > 0 {
+			// TODO: add business users.
+		}
+		project.Status.Phase = v1.ProjectActive
+		var err error
+		if project, err = c.persistUpdate(project); err != nil || project == nil {
+			return err
+		}
+	}
+
 	if cachedProject.state != nil &&
 		cachedProject.state.Spec.ParentProjectName != "" &&
 		cachedProject.state.Spec.ParentProjectName != project.Spec.ParentProjectName {
@@ -284,7 +300,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 				if preParentProject.Status.Clusters != nil {
 					businessUtil.SubClusterHardFromUsed(&preParentProject.Status.Clusters, cachedProject.state.Spec.Clusters)
 				}
-				if err := c.persistUpdate(preParentProject); err != nil && !errors.IsNotFound(err) {
+				if _, err := c.persistUpdate(preParentProject); err != nil && !errors.IsNotFound(err) {
 					return err
 				}
 			}
@@ -303,7 +319,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 				parentProject.Status.Clusters = make(v1.ClusterUsed)
 			}
 			businessUtil.AddClusterHardToUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
-			if err := c.persistUpdate(parentProject); err != nil {
+			if _, err := c.persistUpdate(parentProject); err != nil {
 				return err
 			}
 		} else if cachedProject.state != nil && !reflect.DeepEqual(cachedProject.state.Spec.Clusters, project.Spec.Clusters) {
@@ -314,7 +330,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 			businessUtil.SubClusterHardFromUsed(&parentProject.Status.Clusters, cachedProject.state.Spec.Clusters)
 			// add new
 			businessUtil.AddClusterHardToUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
-			if err := c.persistUpdate(parentProject); err != nil {
+			if _, err := c.persistUpdate(parentProject); err != nil {
 				return err
 			}
 		}
@@ -331,24 +347,25 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 	return nil
 }
 
-func (c *Controller) persistUpdate(project *v1.Project) error {
+func (c *Controller) persistUpdate(project *v1.Project) (*v1.Project, error) {
+	var prj *v1.Project
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().Projects().UpdateStatus(project)
+		prj, err = c.client.BusinessV1().Projects().UpdateStatus(project)
 		if err == nil {
-			return nil
+			return prj, nil
 		}
 		if errors.IsNotFound(err) {
-			log.Info("Not persisting update to projects that no longer exists", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
-			return nil
+			log.Errorf("Not persisting update to projects that no longer exists", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
+			return nil, err
 		}
 		if errors.IsConflict(err) {
-			return fmt.Errorf("not persisting update to projects '%s' that has been changed since we received it: %v", project.ObjectMeta.Name, err)
+			return nil, fmt.Errorf("not persisting update to projects '%s' that has been changed since we received it: %v", project.ObjectMeta.Name, err)
 		}
 		log.Warn(fmt.Sprintf("Failed to persist updated status of project %s", project.ObjectMeta.Name), log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 		time.Sleep(clientRetryInterval)
 	}
-	return err
+	return nil, err
 }
 
 func (c *Controller) updateCachedStatus(project *v1.Project, newCachedClusters v1.ClusterHard, newCachedParent string) error {
