@@ -30,8 +30,8 @@ import (
 	"gopkg.in/square/go-jose.v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
 	"tkestack.io/tke/pkg/util/log"
@@ -65,10 +65,11 @@ func NewDexHookHandler(ctx context.Context, authClient authinternalclient.AuthIn
 
 // PostStartHook provides a function that is called after the server has started.
 func (d *dexHookHandler) PostStartHook() (string, genericapiserver.PostStartHookFunc, error) {
-	return "create-dex-server", func(_ genericapiserver.PostStartHookContext) error {
+	return "create-dex-server", func(context genericapiserver.PostStartHookContext) error {
 		log.Info("start create dex server")
 		// Ensure all identity providers defined exists in dex.
-		for tenantID, idp := range IdentityProvidersStore {
+		idpMap := GetAllIdentityProviderMap()
+		for tenantID, idp := range idpMap {
 			idp, err := idp.Store()
 			if err != nil {
 				log.Errorf("Get connector for tenant failed", log.String("tenantID", tenantID), log.Err(err))
