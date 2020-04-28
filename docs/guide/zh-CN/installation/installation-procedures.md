@@ -32,7 +32,7 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 1. 填写 TKEStack 控制台基本配置信息
 
-![img](Images/step-1.png)
+![img](../../../images/step-1.png)
 
 - **用户名**：TKEStack 控制台管理员名称
 - **密码**：TKEStack 控制台管理员密码
@@ -43,7 +43,7 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 2. 填写 TKEStack 控制台集群设置信息
 
-![img](Images/step-2.png)
+![img](../../../images/step-2.png)
 
 - **网卡名称**：集群节点使用的网卡，根据实际环境填写正确的网卡名称，默认为eth0
 
@@ -62,13 +62,13 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 - **访问地址：** Master 节点内网 IP，请配置至少 8 Cores & 16G内存 及以上的机型
   - **SSH 端口**：请确保目标机器安全组开放 SSH 端口和 ICMP 协议，否则无法远程登录和 PING 服务器
 
-![img](Images/step-3-2.png)
+![img](../../../images/step-3-2.png)
 
 * **高级设置**：可以自定义 Global 集群的 Docker、kube-apiserver、kube-controller-manager、kube-scheduler、kubelet 运行参数
 
 3. 填写 TKEStack 控制台认证信息。
 
-![img](Images/step-3-1.png)
+![img](../../../images/step-3-1.png)
 
 - **认证方式：**
   - **TKE提供**：使用 TKE 自带的认证方式
@@ -76,7 +76,7 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 4. 填写 TKEStack 控制台镜像仓库信息。
 
-![img](Images/step-4.png)
+![img](../../../images/step-4.png)
 
 - **镜像仓库类型：**
   - **TKE提供**：使用 TKE 自带的镜像仓库
@@ -84,11 +84,11 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 5. 确认是否开启 TKEStack 控制台业务模块，建议开启。
 
-![img](Images/step-5.png)
+![img](../../../images/step-5.png)
 
 6. 选择 TKEStack 控制台监控存储类型。
 
-![img](Images/step-6.png)
+![img](../../../images/step-6.png)
 
 - **监控存储类型**：
   - **TKE提供**：使用 TKE 自带的 Influxdb 作为存储
@@ -98,7 +98,7 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 7. 确认是否开启 TKEStack 控制台，选择开启则需要填写控制台域名及证书。
 
-![img](Images/step-7.png)
+![img](../../../images/step-7.png)
 
 - **监控存储类型**:
   - **自签名证书**：使用 TKE 带有的自签名证书
@@ -106,15 +106,15 @@ version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 8. 确认 TKEStack 控制台所有配置是否正确。
 
-![img](Images/step-8.png)
+![img](../../../images/step-8.png)
 
 9. 开始安装 TKEStack 控制台，安装成功后界面如下
 
-![img](Images/step-9.png)
+![img](../../../images/step-9.png)
 
 10. 按照指引配置域名访问 TKEStack 控制台。
 
-![img](Images/step-10.png)
+![img](../../../images/step-10.png)
 
 ## 安装常见问题
 

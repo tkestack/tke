@@ -310,7 +310,7 @@ func scrapeConfigForPrometheus() string {
         regex: (.+)
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_request_latencies_summary_count|apiserver_request_latencies_summary_sum|node_sockstat_TCP_inuse|node_network_transmit_bytes|node_network_receive_bytes|node_filesystem_size|node_filesystem_avail|node_disk_bytes_written|node_disk_bytes_read|node_disk_writes_completed|node_disk_reads_completed'
+        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_request_duration_seconds_(.*)|node_sockstat_TCP_inuse|node_network_transmit_bytes_total|node_network_receive_bytes_total|node_filesystem_size_bytes|node_filesystem_avail_bytes|node_disk_written_bytes_total|node_disk_read_bytes_total|node_disk_writes_completed_total|node_disk_reads_completed_total'
         action: keep
       - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
@@ -643,28 +643,34 @@ groups:
     expr: sum(k8s_pod_gpu_memory_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left() kube_node_status_capacity_gpu_memory
 
   - record: k8s_node_fs_write_bytes
-    expr: (sum by (node) (irate(node_disk_bytes_written[4m]))) *on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_written_bytes_total[4m]))) *on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_fs_read_bytes
-    expr: (sum by (node) (irate(node_disk_bytes_read[4m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_read_bytes_total[4m])))*on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_fs_write_times
-    expr: (sum by (node) (irate(node_disk_writes_completed[4m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_writes_completed_total[4m])))*on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_fs_read_times
-    expr: (sum by (node) (irate(node_disk_reads_completed[4m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_reads_completed_total[4m])))*on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_pod_num
     expr: count(k8s_pod_status_ready) without (pod_name,workload_kind,workload_name,namespace)
 
   - record: k8s_node_disk_space_rate
-    expr: (100 - sum (node_filesystem_avail{fstype=~"ext3|ext4|xfs"}) by (node) / sum (node_filesystem_size{fstype=~"ext3|ext4|xfs"}) by (node) *100) *on(node) group_left(node_role) kube_node_labels
+    expr: (100 - sum (node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"}) by (node) / sum (node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"}) by (node) *100) *on(node) group_left(node_role) kube_node_labels
+
+  - record: k8s_node_filesystem_avail_bytes
+    expr: node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"}
+
+  - record: k8s_node_filesystem_size_bytes
+    expr: node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"}
 
   - record: k8s_node_network_receive_bytes_bw
-    expr: (sum by (node) (irate(node_network_receive_bytes{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_network_receive_bytes_total{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_network_transmit_bytes_bw
-    expr: (sum by (node) (irate(node_network_transmit_bytes{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_network_transmit_bytes_total{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_workload_abnormal
     expr: |-
@@ -997,7 +1003,7 @@ groups:
     expr: up{instance=~"(.*)10252"} * on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_component_apiserver_request_latency
-    expr: sum(apiserver_request_latencies_summary_sum) by (node) / sum(apiserver_request_latencies_summary_count) by (node)
+    expr: sum(apiserver_request_duration_seconds_sum{verb!="WATCH"}) by (node) * 1000000 / sum(apiserver_request_duration_seconds_count{verb!="WATCH"}) by (node)
 
   - record: k8s_component_scheduler_scheduling_latency
     expr: sum(scheduler_e2e_scheduling_latency_microseconds_sum) by (node) / sum(scheduler_e2e_scheduling_latency_microseconds_count) by (node)
