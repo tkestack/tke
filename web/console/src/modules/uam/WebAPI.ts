@@ -274,7 +274,9 @@ export async function fetchStrategyList(query: QueryState<StrategyFilter>) {
     fieldSelector: {
       [key]: 'project',
       keyword: search || ''
-    }
+    },
+    // continue: undefined,
+    // limit: paging.pageSize
   };
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['policy'];

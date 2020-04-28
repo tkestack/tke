@@ -111,7 +111,8 @@ export const StrategyTablePanel = (props) => {
         action={actions.strategy}
         rowDisabled={(record) => record.status['phase'] === 'Terminating'}
         emptyTips={emptyTips}
-        isNeedPagination={true}
+        // isNeedPagination={true}
+        // isNeedContinuePagination={true}
         bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
       />
       <GroupAssociateWorkflowDialog
