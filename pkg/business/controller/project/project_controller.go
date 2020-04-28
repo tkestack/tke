@@ -31,11 +31,13 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
+	av1 "tkestack.io/tke/api/auth/v1"
 	v1 "tkestack.io/tke/api/business/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	businessv1informer "tkestack.io/tke/api/client/informers/externalversions/business/v1"
 	businessv1lister "tkestack.io/tke/api/client/listers/business/v1"
+	authutil "tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/business/controller/project/deletion"
 	businessUtil "tkestack.io/tke/pkg/business/util"
 	controllerutil "tkestack.io/tke/pkg/controller"
@@ -271,15 +273,57 @@ func (c *Controller) processDelete(cachedProject *cachedProject, key string) err
 }
 
 func (c *Controller) handlePhase(key string, cachedProject *cachedProject, project *v1.Project) error {
-	if project.Status.Phase == v1.ProjectPending {
-		if c.authClient != nil && len(project.Spec.Members) > 0 {
-			// TODO: add business users.
+	switch project.Status.Phase {
+	case v1.ProjectPending:
+		return c.processPending(key, cachedProject, project)
+	case v1.ProjectActive:
+		return c.processActive(key, cachedProject, project)
+	default:
+		log.Infof("%s, do NOT process phase: %s", project.Name, project.Status.Phase)
+		return nil
+	}
+}
+
+func (c *Controller) processPending(key string, cachedProject *cachedProject, project *v1.Project) error {
+	if project.Status.Phase != v1.ProjectPending {
+		panic(fmt.Sprintf("%s != %s", project.Status.Phase, v1.ProjectPending))
+	}
+
+	if c.authClient != nil && len(project.Spec.Members) > 0 {
+		bindingRequest := av1.ProjectPolicyBindingRequest{
+			TenantID: project.Spec.TenantID,
+			Policies: []string{authutil.ProjectOwnerPolicyID(project.Spec.TenantID)},
+			Users:    []av1.Subject{{ID: project.Spec.Members[0]}},
 		}
-		project.Status.Phase = v1.ProjectActive
-		var err error
-		if project, err = c.persistUpdate(project); err != nil || project == nil {
+		result := &av1.ProjectPolicyBindingRequest{}
+		if err := c.authClient.RESTClient().Post().
+			Resource("projects").
+			Name(project.Name).
+			SubResource("binding").
+			Body(&bindingRequest).
+			Do().
+			Into(result); err != nil {
+			project.Status.Phase = v1.ProjectFailed
+			project.Status.LastTransitionTime = metav1.Now()
+			project.Status.Reason = err.Error()
+			project.Status.Message = "failed to add business member"
+			_, err = c.persistUpdate(project)
 			return err
 		}
+	}
+	project.Status.Phase = v1.ProjectActive
+	project.Status.Locked = nil
+	var err error
+	if project, err = c.persistUpdate(project); err != nil || project == nil {
+		return err
+	}
+
+	return c.processActive(key, cachedProject, project)
+}
+
+func (c *Controller) processActive(key string, cachedProject *cachedProject, project *v1.Project) error {
+	if project.Status.Phase != v1.ProjectActive {
+		panic(fmt.Sprintf("%s != %s", project.Status.Phase, v1.ProjectActive))
 	}
 
 	if cachedProject.state != nil &&

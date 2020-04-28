@@ -39822,11 +39822,31 @@ func schema_tke_api_business_v1_ProjectStatus(ref common.ReferenceCallback) comm
 							Format: "",
 						},
 					},
+					"lastTransitionTime": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The last time the condition transitioned from one status to another.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The reason for the condition's last transition.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A human readable message indicating details about the transition.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/business/v1.HardQuantity", "tkestack.io/tke/api/business/v1.UsedQuantity"},
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Time", "tkestack.io/tke/api/business/v1.HardQuantity", "tkestack.io/tke/api/business/v1.UsedQuantity"},
 	}
 }
 
