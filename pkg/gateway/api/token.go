@@ -47,6 +47,15 @@ func registerTokenRoute(container *restful.Container, oauthConfig *oauth2.Config
 	ws.Path(fmt.Sprintf("/apis/%s/%s/tokens", GroupName, Version))
 
 	ws.Route(ws.
+		POST("/").
+		Doc("generate token by username and password").
+		Operation("createPasswordToken").
+		Produces(restful.MIME_JSON).
+		Returns(http.StatusCreated, "Created", v1.Status{}).
+		Returns(http.StatusInternalServerError, "InternalError", v1.Status{}).
+		Returns(http.StatusUnauthorized, "Unauthorized", v1.Status{}).
+		To(handleTokenGenerateFunc(oauthConfig, oidcHTTPClient)))
+	ws.Route(ws.
 		GET("info").
 		Doc("obtain the user information corresponding to the token").
 		Operation("getInfo").
@@ -76,6 +85,33 @@ func registerTokenRoute(container *restful.Container, oauthConfig *oauth2.Config
 		Returns(http.StatusUnauthorized, "Unauthorized", v1.Status{}).
 		To(handleTokenRenewFunc(oauthConfig, oidcHTTPClient)))
 	container.Add(ws)
+}
+
+func handleTokenGenerateFunc(oauthConfig *oauth2.Config, httpClient *http.Client) func(*restful.Request, *restful.Response) {
+	return func(request *restful.Request, response *restful.Response) {
+		username, password, err := retrievePassword(request.Request)
+		if err != nil {
+			responsewriters.WriteRawJSON(http.StatusUnauthorized, errors.NewUnauthorized(err.Error()), response.ResponseWriter)
+			return
+		}
+
+		ctx := gooidc.ClientContext(context.Background(), httpClient)
+		t, err := oauthConfig.PasswordCredentialsToken(ctx, username, password)
+		if err != nil {
+			responsewriters.WriteRawJSON(http.StatusUnauthorized, errors.NewUnauthorized(err.Error()), response.ResponseWriter)
+			return
+		}
+
+		if err := token.ResponseToken(t, response.ResponseWriter); err != nil {
+			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), response.ResponseWriter)
+			return
+		}
+
+		responsewriters.WriteRawJSON(http.StatusCreated, v1.Status{
+			Status: v1.StatusSuccess,
+			Code:   http.StatusCreated,
+		}, response.ResponseWriter)
+	}
 }
 
 func handleTokenInfo(oidcAuthenticator *oidc.Authenticator) func(*restful.Request, *restful.Response) {

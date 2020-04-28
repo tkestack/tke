@@ -3,12 +3,12 @@ import { connect } from 'react-redux';
 
 import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators, isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
-import { t } from '@tencent/tea-app/lib/i18n';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Bubble, Button, ContentView, Icon, Justify } from '@tencent/tea-component';
 
 import { getWorkflowError, InputField, TipInfo } from '../../../../modules/common';
 import { allActions } from '../../actions';
-import { GPUTYPE } from '../../constants/Config';
+import { GPUTYPE, CreateICVipTypeOptions, CreateICVipType } from '../../constants/Config';
 import { ICComponter } from '../../models';
 import { router } from '../../router';
 import { RootProps } from '../ClusterApp';
@@ -98,7 +98,7 @@ export class CreateICPanel extends React.Component<RootProps, State> {
         v_vipAddress,
         vipPort,
         v_vipPort,
-        vip,
+        vipType,
         v_networkDevice,
         gpu,
         gpuType
@@ -109,8 +109,16 @@ export class CreateICPanel extends React.Component<RootProps, State> {
 
     let canSave = !hasEditing && v_name.status === 1 && computerList.length !== 0 && v_networkDevice.status !== 2;
 
-    if (vip) {
-      canSave = canSave && v_vipAddress.status === 1 && v_vipPort.status === 1;
+    let showExistVipUnuseTip = false;
+    if (vipType === CreateICVipType.existed) {
+      let nodeNum = 0;
+      computerList.forEach(c => {
+        nodeNum += c.ipList.split(';').length;
+      });
+      canSave = canSave && v_vipAddress.status === 1 && v_vipPort.status !== 2;
+      showExistVipUnuseTip = nodeNum > 1 ? false : true;
+    } else if (vipType === CreateICVipType.tke) {
+      canSave = canSave && v_vipAddress.status === 1;
     }
 
     const workflow = createICWorkflow;
@@ -181,31 +189,56 @@ export class CreateICPanel extends React.Component<RootProps, State> {
                 onBlur: actions.validate.createIC.validateNetworkDevice
               }}
             />
-            <FormPanel.Item label="VIP" text>
-              <FormPanel.Checkbox value={vip} onChange={actions.createIC.useVip} />
+            <FormPanel.Item label="高可用类型" text>
+              <FormPanel.Segment
+                value={vipType}
+                options={CreateICVipTypeOptions}
+                onChange={actions.createIC.selectVipType}
+              />
             </FormPanel.Item>
 
-            <FormPanel.Item label="" isShow={vip}>
+            <FormPanel.Item
+              label="VIP地址"
+              isShow={vipType !== CreateICVipType.unuse}
+              message={
+                vipType === CreateICVipType.tke ? (
+                  '用户需要提供一个可用的IP地址，保证该IP和各master节点可以正常联通，TKE会为集群部署keepalived并配置该IP为VIP'
+                ) : (
+                  <Trans>
+                    <p>
+                      在用户自定义VIP情况下，VIP后端需要绑定6443（kube-apiserver端口）端口，同时请确保该VIP有至少两个LB后端（master),
+                    </p>
+                    <p>由于LB自身路由问题，单LB后端情况下存在集群不可用风险。</p>
+                  </Trans>
+                )
+              }
+            >
               <InputField
                 type="text"
                 value={vipAddress}
                 style={{ marginRight: '5px' }}
-                placeholder={t('请输入 域名 或 ip地址')}
+                placeholder={t('请输入ip地址')}
                 tipMode="popup"
                 validator={v_vipAddress}
                 onChange={value => actions.createIC.inputVipAddress(value)}
                 onBlur={actions.validate.createIC.validateVIPServer}
               />
-              <InputField
-                type="text"
-                value={vipPort}
-                style={{ width: '100px' }}
-                placeholder={t('默认6443')}
-                tipMode="popup"
-                validator={v_vipPort}
-                onChange={value => actions.createIC.inputVipPort(value)}
-                onBlur={actions.validate.createIC.validatePort}
-              />
+              {vipType === CreateICVipType.existed && (
+                <React.Fragment>
+                  <InputField
+                    type="text"
+                    value={vipPort}
+                    style={{ width: '120px', marginRight: '5px' }}
+                    tipMode="popup"
+                    validator={v_vipPort}
+                    onChange={value => actions.createIC.inputVipPort(value)}
+                    onBlur={actions.validate.createIC.validatePort}
+                  />
+                  <Bubble content={t('后端6443端口的映射端口')}>
+                    <Icon type="info" />
+                  </Bubble>
+                </React.Fragment>
+              )}
             </FormPanel.Item>
 
             <FormPanel.Item label="GPU" text>
@@ -238,7 +271,19 @@ export class CreateICPanel extends React.Component<RootProps, State> {
               }
             />
 
-            <FormPanel.Item>
+            <FormPanel.Item
+              message={
+                showExistVipUnuseTip ? (
+                  <FormPanel.HelpText theme="danger">
+                    {t(
+                      '在用户自定义VIP情况下，请确保该VIP有至少两个LB后端（master节点），单LB后端情况下存在集群不可用风险，请增加master节点或修改【高可用类型】'
+                    )}
+                  </FormPanel.HelpText>
+                ) : (
+                  ''
+                )
+              }
+            >
               {computerList.map((item, index) => {
                 return item.isEditing ? (
                   <SelectICComputerPanel

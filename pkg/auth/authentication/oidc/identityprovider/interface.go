@@ -20,6 +20,7 @@ package identityprovider
 
 import (
 	"context"
+	"sync"
 
 	"github.com/dexidp/dex/connector"
 	dexlog "github.com/dexidp/dex/pkg/log"
@@ -38,8 +39,43 @@ type IdentityProvider interface {
 	Store() (*auth.IdentityProvider, error)
 }
 
-// IdentityProvidersStore represents identity providers for every tenantID.
-var IdentityProvidersStore = make(map[string]IdentityProvider)
+var (
+	// identityProvidersStore represents identity providers for every tenantID.
+	identityProvidersStore = make(map[string]IdentityProvider)
+	mutex                  sync.RWMutex
+)
+
+func GetIdentityProvider(tenantID string) (IdentityProvider, bool) {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	idp, ok := identityProvidersStore[tenantID]
+	return idp, ok
+}
+
+func SetIdentityProvider(tenantID string, provider IdentityProvider) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	identityProvidersStore[tenantID] = provider
+}
+
+func DeleteIdentityProvider(tenantID string) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	delete(identityProvidersStore, tenantID)
+}
+
+func GetAllIdentityProviderMap() map[string]IdentityProvider {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	newMap := make(map[string]IdentityProvider)
+	for k, v := range identityProvidersStore {
+		newMap[k] = v
+	}
+
+	return newMap
+}
 
 // UserGetter is an object that can get the user that match the provided field and label criteria.
 type UserGetter interface {

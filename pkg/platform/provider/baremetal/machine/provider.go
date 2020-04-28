@@ -23,21 +23,19 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"time"
-
-	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	"tkestack.io/tke/pkg/util/containerregistry"
 
 	"github.com/pkg/errors"
+	"github.com/thoas/go-funk"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/validation"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/ssh"
 )
 
 const providerName = "Baremetal"
@@ -46,6 +44,7 @@ const (
 	ReasonFailedProcess     = "FailedProcess"
 	ReasonWaitingProcess    = "WaitingProcess"
 	ReasonSuccessfulProcess = "SuccessfulProcess"
+	ReasonSkipProcess       = "SkipProcess"
 
 	ConditionTypeDone = "EnsureDone"
 )
@@ -86,6 +85,8 @@ func NewProvider() (*Provider, error) {
 
 		p.EnsurePreflight, // wait basic setting done
 
+		p.EnsureNvidiaDriver,
+		p.EnsureNvidiaContainerRuntime,
 		p.EnsureDocker,
 		p.EnsureKubelet,
 		p.EnsureCNIPlugins,
@@ -110,48 +111,8 @@ func (p *Provider) Name() string {
 	return providerName
 }
 
-func (p *Provider) Validate(m platform.Machine) (field.ErrorList, error) {
-	var allErrs field.ErrorList
-
-	sPath := field.NewPath("spec")
-
-	if m.Spec.IP == "" {
-		allErrs = append(allErrs, field.Required(sPath.Child("ip"), ""))
-	} else {
-		if m.Spec.Username != "root" {
-			allErrs = append(allErrs, field.Invalid(sPath.Child("username"), m.Spec.Username, "must be root"))
-		}
-		if m.Spec.Password == nil && m.Spec.PrivateKey == nil {
-			allErrs = append(allErrs, field.Required(sPath.Child("password"), "password or privateKey at least one"))
-		}
-		sshConfig := &ssh.Config{
-			User:        m.Spec.Username,
-			Host:        m.Spec.IP,
-			Port:        int(m.Spec.Port),
-			Password:    string(m.Spec.Password),
-			PrivateKey:  m.Spec.PrivateKey,
-			PassPhrase:  m.Spec.PassPhrase,
-			DialTimeOut: time.Second,
-			Retry:       0,
-		}
-		s, err := ssh.New(sshConfig)
-		if err != nil {
-			allErrs = append(allErrs, field.Forbidden(sPath, err.Error()))
-		} else {
-			err = s.Ping()
-			if err != nil {
-				allErrs = append(allErrs, field.Forbidden(sPath, err.Error()))
-			} else {
-				if gpu.IsEnable(m.Spec.Labels) {
-					if !gpu.MachineIsSupport(s) {
-						allErrs = append(allErrs, field.Invalid(sPath.Child("labels"), m.Spec.Labels, "don't has GPU card"))
-					}
-				}
-			}
-		}
-	}
-
-	return allErrs, nil
+func (p *Provider) Validate(machine *platform.Machine) field.ErrorList {
+	return validation.ValidateMachine(machine)
 }
 
 func (p *Provider) OnInitialize(tkev1Machine platformv1.Machine, tkev1Cluster platformv1.Cluster, credential platformv1.ClusterCredential) (platformv1.Machine, error) {
@@ -172,33 +133,48 @@ func (p *Provider) create(m *Machine) error {
 		return err
 	}
 
-	f := p.getCreateHandler(condition.Type)
-	if f == nil {
-		return fmt.Errorf("can't get handler by %s", condition.Type)
+	skipConditions := m.Cluster.Spec.Features.SkipConditions
+	if skipConditions == nil {
+		skipConditions = p.config.Feature.SkipConditions
 	}
-	err = f(m)
 	now := metav1.Now()
-	if err != nil {
-		log.Warn(err.Error())
+	if funk.ContainsString(skipConditions, condition.Type) {
 		m.SetCondition(platformv1.MachineCondition{
-			Type:          condition.Type,
-			Status:        platformv1.ConditionFalse,
-			LastProbeTime: now,
-			Message:       err.Error(),
-			Reason:        ReasonFailedProcess,
+			Type:               condition.Type,
+			Status:             platformv1.ConditionTrue,
+			LastProbeTime:      now,
+			LastTransitionTime: now,
+			Reason:             ReasonSkipProcess,
 		})
-		m.Status.Reason = ReasonFailedProcess
-		m.Status.Message = err.Error()
-		return nil
-	}
+	} else {
+		f := p.getCreateHandler(condition.Type)
+		if f == nil {
+			return fmt.Errorf("can't get handler by %s", condition.Type)
+		}
+		err = f(m)
+		now := metav1.Now()
+		if err != nil {
+			log.Warn(err.Error())
+			m.SetCondition(platformv1.MachineCondition{
+				Type:          condition.Type,
+				Status:        platformv1.ConditionFalse,
+				LastProbeTime: now,
+				Message:       err.Error(),
+				Reason:        ReasonFailedProcess,
+			})
+			m.Status.Reason = ReasonFailedProcess
+			m.Status.Message = err.Error()
+			return nil
+		}
 
-	m.SetCondition(platformv1.MachineCondition{
-		Type:               condition.Type,
-		Status:             platformv1.ConditionTrue,
-		LastProbeTime:      now,
-		LastTransitionTime: now,
-		Reason:             ReasonSuccessfulProcess,
-	})
+		m.SetCondition(platformv1.MachineCondition{
+			Type:               condition.Type,
+			Status:             platformv1.ConditionTrue,
+			LastProbeTime:      now,
+			LastTransitionTime: now,
+			Reason:             ReasonSuccessfulProcess,
+		})
+	}
 
 	nextConditionType := p.getNextConditionType(condition.Type)
 	if nextConditionType == ConditionTypeDone {

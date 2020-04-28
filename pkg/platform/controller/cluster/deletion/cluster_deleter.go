@@ -241,8 +241,8 @@ var deleteResourceFuncs = []deleteResourceFunc{
 	deletePersistentEvent,
 	deleteHelm,
 	deleteClusterProvider,
-	deleteClusterCredential,
 	deleteMachine,
+	deleteClusterCredential,
 }
 
 // deleteAllContent will use the client to delete each resource identified in cluster.
@@ -362,7 +362,7 @@ func deleteMachine(deleter *clusterDeleter, cluster *v1.Cluster) error {
 	if len(machineList.Items) == 0 {
 		return nil
 	}
-	background := metav1.DeletePropagationBackground
+	background := metav1.DeletePropagationForeground
 	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
 	for _, machine := range machineList.Items {
 		if err := deleter.platformClient.Machines().Delete(machine.ObjectMeta.Name, deleteOpt); err != nil {

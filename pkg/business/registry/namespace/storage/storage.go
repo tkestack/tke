@@ -20,12 +20,21 @@ package storage
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
+	"math/big"
 	"reflect"
+	"strconv"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
@@ -34,6 +43,7 @@ import (
 	storageerr "k8s.io/apiserver/pkg/storage/errors"
 	"k8s.io/apiserver/pkg/util/dryrun"
 	"tkestack.io/tke/api/business"
+	businessv1 "tkestack.io/tke/api/business/v1"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -44,11 +54,15 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
+const _rsaKeyBits = 2048
+const _defaultCertValidDays = 365
+
 // Storage includes storage for namespace and all sub resources.
 type Storage struct {
-	Namespace *REST
-	Status    *StatusREST
-	Finalize  *FinalizeREST
+	Namespace   *REST
+	Status      *StatusREST
+	Finalize    *FinalizeREST
+	Certificate *CertificateREST
 }
 
 // NewStorage returns a Storage object that will work against namespace sets.
@@ -84,10 +98,13 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, businessClient *bu
 	finalizeStore.UpdateStrategy = namespace.NewFinalizeStrategy(strategy)
 	finalizeStore.ExportStrategy = namespace.NewFinalizeStrategy(strategy)
 
+	certificateStore := *store
+
 	return &Storage{
-		Namespace: &REST{store, platformClient, privilegedUsername},
-		Status:    &StatusREST{&statusStore},
-		Finalize:  &FinalizeREST{&finalizeStore},
+		Namespace:   newREST(store, platformClient, privilegedUsername),
+		Status:      &StatusREST{&statusStore},
+		Finalize:    &FinalizeREST{&finalizeStore},
+		Certificate: &CertificateREST{&certificateStore, platformClient, privilegedUsername},
 	}
 }
 
@@ -124,6 +141,14 @@ type REST struct {
 	*registry.Store
 	platformClient     platformversionedclient.PlatformV1Interface
 	privilegedUsername string
+}
+
+func newREST(store *registry.Store, platformClient platformversionedclient.PlatformV1Interface, privilegedUsername string) *REST {
+	return &REST{
+		Store:              store,
+		platformClient:     platformClient,
+		privilegedUsername: privilegedUsername,
+	}
 }
 
 var _ rest.ShortNamesProvider = &REST{}
@@ -365,6 +390,106 @@ func (r *FinalizeREST) Update(ctx context.Context, name string, objInfo rest.Upd
 		return nil, false, err
 	}
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
+}
+
+// CertificateREST implements the REST endpoint for getting a x509 certificate for namespaces.
+type CertificateREST struct {
+	store              *registry.Store
+	platformClient     platformversionedclient.PlatformV1Interface
+	privilegedUsername string
+}
+
+// New returns an empty object that can be used with Create and Update after
+// request data has been put into it.
+func (r *CertificateREST) New() runtime.Object {
+	return r.store.New()
+}
+
+func (r *CertificateREST) NewGetOptions() (runtime.Object, bool, string) {
+	return &business.NamespaceCertOptions{ValidDays: strconv.Itoa(_defaultCertValidDays)}, false, ""
+}
+
+// Get retrieves the namespace from the storage and patch a x509 certificate.
+func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.Object) (runtime.Object, error) {
+	obj, err := newREST(r.store, r.platformClient, r.privilegedUsername).Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	ns := obj.(*business.Namespace)
+
+	cluster, err := r.platformClient.Clusters().Get(ns.Spec.ClusterName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("prj:%s, ns:%s, get cluster %s, %s", ns.Namespace, ns.Name, ns.Spec.ClusterName, err)
+	}
+	if cluster.Spec.Type == "Imported" {
+		return nil, fmt.Errorf("prj:%s, ns:%s, cluster %s is Imported, NOT support generating certificate", ns.Namespace, ns.Name, ns.Spec.ClusterName)
+	}
+	fieldSelector := fields.OneTermEqualSelector("clusterName", ns.Spec.ClusterName).String()
+	list, err := r.platformClient.ClusterCredentials().List(metav1.ListOptions{FieldSelector: fieldSelector})
+	if err != nil {
+		return nil, fmt.Errorf("prj:%s, ns:%s, get cluster credential, %s", ns.Namespace, ns.Name, err)
+	} else if len(list.Items) == 0 {
+		return nil, fmt.Errorf("prj:%s, ns:%s, no cluster credential", ns.Namespace, ns.Name)
+	}
+	credential := list.Items[0]
+	certBlock, _ := pem.Decode(credential.CACert)
+	if certBlock == nil {
+		return nil, fmt.Errorf("prj:%s, ns:%s, pem decode root cert error, bytes:%v", ns.Namespace, ns.Name, credential.CACert)
+	}
+	if certBlock.Type != "CERTIFICATE" {
+		return nil, fmt.Errorf("prj:%s, ns:%s, pem decode root cert, invalid type %s", ns.Namespace, ns.Name, certBlock.Type)
+	}
+	rootCert, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("prj:%s, ns:%s, parse root cert, %s, bytes:%v", ns.Namespace, ns.Name, err, certBlock.Bytes)
+	}
+	keyBlock, _ := pem.Decode(credential.CAKey)
+	if keyBlock == nil {
+		return nil, fmt.Errorf("prj:%s, ns:%s, pem decode root key error, bytes:%v", ns.Namespace, ns.Name, credential.CAKey)
+	}
+	if keyBlock.Type != "RSA PRIVATE KEY" {
+		return nil, fmt.Errorf("prj:%s, ns:%s, pem decode root key, invalid type %s", ns.Namespace, ns.Name, keyBlock.Type)
+	}
+	rootKey, err := x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("prj:%s, ns:%s, parse root key, %s, bytes:%v", ns.Namespace, ns.Name, err, keyBlock.Bytes)
+	}
+
+	private, err := rsa.GenerateKey(rand.Reader, _rsaKeyBits)
+	if err != nil {
+		return nil, fmt.Errorf("prj:%s, ns:%s, generate prive key, %s", ns.Namespace, ns.Name, err)
+	}
+	validDays, err := strconv.Atoi(options.(*business.NamespaceCertOptions).ValidDays)
+	if err != nil {
+		return nil, fmt.Errorf("prj:%s, ns:%s, query string '%s', %s", ns.Namespace, ns.Name, businessv1.CertOptionValiddays, err)
+	}
+	user, _ := authentication.GetUsernameAndTenantID(ctx)
+	template := x509.Certificate{
+		Subject: pkix.Name{
+			CommonName: user,
+			Organization: []string{
+				fmt.Sprintf("cluster:%s", ns.Spec.ClusterName),
+				fmt.Sprintf("project:%s", ns.Namespace),
+				fmt.Sprintf("namespace:%s", ns.Spec.Namespace),
+			},
+		},
+		SerialNumber: big.NewInt(rootCert.SerialNumber.Int64() + 1),
+		NotBefore:    rootCert.NotBefore,
+		NotAfter:     time.Now().AddDate(0, 0, validDays),
+		IsCA:         false,
+	}
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, rootCert, &private.PublicKey, rootKey)
+	if err != nil {
+		return nil, fmt.Errorf("CreateCertificate(%+v), %s", template.Subject, err)
+	}
+
+	ns.Status.Certificate = &business.NamespaceCert{
+		Pem: pem.EncodeToMemory(&pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: derBytes,
+		}),
+	}
+	return ns, nil
 }
 
 func shouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {

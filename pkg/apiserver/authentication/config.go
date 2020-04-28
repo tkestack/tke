@@ -33,6 +33,7 @@ import (
 	tokenunion "k8s.io/apiserver/pkg/authentication/token/union"
 	"k8s.io/apiserver/plugin/pkg/authenticator/password/passwordfile"
 	"k8s.io/apiserver/plugin/pkg/authenticator/request/basicauth"
+	"k8s.io/apiserver/plugin/pkg/authenticator/token/webhook"
 	certutil "k8s.io/client-go/util/cert"
 	"time"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/localtrust"
@@ -41,24 +42,28 @@ import (
 
 // Config contains the data on how to authenticate a request to the Kube API Server
 type Config struct {
-	ClientCAFile          string
-	TokenAuthFile         string
-	OIDCIssuerURL         string
-	OIDCExternalIssuerURL string
-	OIDCClientID          string
-	OIDCCAFile            string
-	OIDCUsernameClaim     string
-	OIDCUsernamePrefix    string
-	OIDCGroupsClaim       string
-	OIDCGroupsPrefix      string
-	OIDCTenantIDClaim     string
-	OIDCTenantIDPrefix    string
-	OIDCSigningAlgs       []string
-	OIDCRequiredClaims    map[string]string
-	APIAudiences          authenticator.Audiences
-	TokenSuccessCacheTTL  time.Duration
-	TokenFailureCacheTTL  time.Duration
-	RequestHeaderConfig   *authenticatorfactory.RequestHeaderConfig
+	ClientCAFile                string
+	TokenAuthFile               string
+	OIDCIssuerURL               string
+	OIDCExternalIssuerURL       string
+	OIDCClientID                string
+	OIDCCAFile                  string
+	OIDCUsernameClaim           string
+	OIDCUsernamePrefix          string
+	OIDCGroupsClaim             string
+	OIDCGroupsPrefix            string
+	OIDCTenantIDClaim           string
+	OIDCTenantIDPrefix          string
+	OIDCSigningAlgs             []string
+	OIDCRequiredClaims          map[string]string
+	APIAudiences                authenticator.Audiences
+	WebhookTokenAuthnConfigFile string
+	WebhookTokenAuthnVersion    string
+	WebhookTokenAuthnCacheTTL   time.Duration
+
+	TokenSuccessCacheTTL time.Duration
+	TokenFailureCacheTTL time.Duration
+	RequestHeaderConfig  *authenticatorfactory.RequestHeaderConfig
 }
 
 // New returns an authenticator.Request or an error that supports the standard
@@ -121,6 +126,14 @@ func (config Config) New() (authenticator.Request, *spec.SecurityDefinitions, er
 			return nil, nil, err
 		}
 		tokenAuthenticators = append(tokenAuthenticators, oidcAuth)
+	}
+
+	if len(config.WebhookTokenAuthnConfigFile) > 0 {
+		webhookTokenAuth, err := newWebhookTokenAuthenticator(config.WebhookTokenAuthnConfigFile, config.WebhookTokenAuthnVersion, config.WebhookTokenAuthnCacheTTL, config.APIAudiences)
+		if err != nil {
+			return nil, nil, err
+		}
+		tokenAuthenticators = append(tokenAuthenticators, webhookTokenAuth)
 	}
 
 	if len(tokenAuthenticators) > 0 {
@@ -187,4 +200,13 @@ func newAuthenticatorFromOIDCIssuerURL(opts *oidc.Options) (authenticator.Token,
 	}
 
 	return tokenAuthenticator, nil
+}
+
+func newWebhookTokenAuthenticator(webhookConfigFile string, version string, ttl time.Duration, implicitAuds authenticator.Audiences) (authenticator.Token, error) {
+	webhookTokenAuthenticator, err := webhook.New(webhookConfigFile, version, implicitAuds)
+	if err != nil {
+		return nil, err
+	}
+
+	return tokencache.New(webhookTokenAuthenticator, false, ttl, ttl), nil
 }

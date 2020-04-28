@@ -46,7 +46,7 @@ endif
 
 .PHONY: image.verify
 image.verify:
-	$(eval API_VERSION := $(shell $(DOCKER) version | grep -E 'API version: {6}[0-9]' | awk '{print $$3} END { if (NR==0) print 0}' ))
+	$(eval API_VERSION := $(shell $(DOCKER) version | grep -E 'API version: {1,6}[0-9]' | head -n1 | awk '{print $$3} END { if (NR==0) print 0}' ))
 	$(eval PASS := $(shell echo "$(API_VERSION) > $(DOCKER_SUPPORTED_API_VERSION)" | bc))
 	@if [ $(PASS) -ne 1 ]; then \
 		$(DOCKER) -v ;\
@@ -56,7 +56,7 @@ image.verify:
 
 .PHONY: image.daemon.verify
 image.daemon.verify:
-	$(eval PASS := $(shell $(DOCKER) version | grep -q -E 'Experimental: {5}true' && echo 1 || echo 0))
+	$(eval PASS := $(shell $(DOCKER) version | grep -q -E 'Experimental: {1,5}true' && echo 1 || echo 0))
 	@if [ $(PASS) -ne 1 ]; then \
 		echo "Experimental features of Docker daemon is not enabled. Please add \"experimental\": true in '/etc/docker/daemon.json' and then restart Docker daemon."; \
 		exit 1; \

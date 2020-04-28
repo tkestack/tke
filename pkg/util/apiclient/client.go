@@ -28,7 +28,6 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 )
 
 // GetClientset return clientset
@@ -36,27 +35,19 @@ func GetClientset(masterEndpoint string, token string, caCert []byte) (*kubernet
 	restConfig := &rest.Config{
 		Host:        masterEndpoint,
 		BearerToken: token,
-		TLSClientConfig: rest.TLSClientConfig{
+		Timeout:     5 * time.Second,
+	}
+	if caCert != nil {
+		restConfig.TLSClientConfig = rest.TLSClientConfig{
 			CAData: caCert,
-		},
-		Timeout: 5 * time.Second,
+		}
+	} else {
+		restConfig.TLSClientConfig = rest.TLSClientConfig{
+			Insecure: true,
+		}
 	}
 
 	return kubernetes.NewForConfig(restConfig)
-}
-
-// GetPlatformClientset return clientset
-func GetPlatformClientset(masterEndpoint string, token string, caCert []byte) (tkeclientset.Interface, error) {
-	restConfig := &rest.Config{
-		Host:        masterEndpoint,
-		BearerToken: token,
-		TLSClientConfig: rest.TLSClientConfig{
-			CAData: caCert,
-		},
-		Timeout: 5 * time.Second,
-	}
-
-	return tkeclientset.NewForConfig(restConfig)
 }
 
 // CheckAPIHealthz check healthz

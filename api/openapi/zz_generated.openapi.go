@@ -811,6 +811,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/business/v1.ImageNamespaceSpec":                          schema_tke_api_business_v1_ImageNamespaceSpec(ref),
 		"tkestack.io/tke/api/business/v1.ImageNamespaceStatus":                        schema_tke_api_business_v1_ImageNamespaceStatus(ref),
 		"tkestack.io/tke/api/business/v1.Namespace":                                   schema_tke_api_business_v1_Namespace(ref),
+		"tkestack.io/tke/api/business/v1.NamespaceCert":                               schema_tke_api_business_v1_NamespaceCert(ref),
+		"tkestack.io/tke/api/business/v1.NamespaceCertOptions":                        schema_tke_api_business_v1_NamespaceCertOptions(ref),
 		"tkestack.io/tke/api/business/v1.NamespaceList":                               schema_tke_api_business_v1_NamespaceList(ref),
 		"tkestack.io/tke/api/business/v1.NamespaceSpec":                               schema_tke_api_business_v1_NamespaceSpec(ref),
 		"tkestack.io/tke/api/business/v1.NamespaceStatus":                             schema_tke_api_business_v1_NamespaceStatus(ref),
@@ -940,6 +942,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.Registry":                                    schema_tke_api_platform_v1_Registry(ref),
 		"tkestack.io/tke/api/platform/v1.RegistryList":                                schema_tke_api_platform_v1_RegistryList(ref),
 		"tkestack.io/tke/api/platform/v1.RegistrySpec":                                schema_tke_api_platform_v1_RegistrySpec(ref),
+		"tkestack.io/tke/api/platform/v1.ResourceRequirements":                        schema_tke_api_platform_v1_ResourceRequirements(ref),
 		"tkestack.io/tke/api/platform/v1.StorageBackEndCLS":                           schema_tke_api_platform_v1_StorageBackEndCLS(ref),
 		"tkestack.io/tke/api/platform/v1.StorageBackEndES":                            schema_tke_api_platform_v1_StorageBackEndES(ref),
 		"tkestack.io/tke/api/platform/v1.TKEHA":                                       schema_tke_api_platform_v1_TKEHA(ref),
@@ -38448,6 +38451,59 @@ func schema_tke_api_business_v1_Namespace(ref common.ReferenceCallback) common.O
 	}
 }
 
+func schema_tke_api_business_v1_NamespaceCert(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NamespaceCert represents a x509 certificate of a namespace in project.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"pem": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_tke_api_business_v1_NamespaceCertOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NamespaceCertOptions is query options of getting namespace with a x509 certificate.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"validDays": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pay attention to const CertOptionValiddays!",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_tke_api_business_v1_NamespaceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -38636,11 +38692,16 @@ func schema_tke_api_business_v1_NamespaceStatus(ref common.ReferenceCallback) co
 							},
 						},
 					},
+					"certificate": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/business/v1.NamespaceCert"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/api/resource.Quantity", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+			"k8s.io/apimachinery/pkg/api/resource.Quantity", "k8s.io/apimachinery/pkg/apis/meta/v1.Time", "tkestack.io/tke/api/business/v1.NamespaceCert"},
 	}
 }
 
@@ -41573,18 +41634,22 @@ func schema_tke_api_platform_v1_ClusterCredential(ref common.ReferenceCallback) 
 							Format:      "byte",
 						},
 					},
+					"etcdCAKey": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
 					"etcdAPIClientCert": {
 						SchemaProps: spec.SchemaProps{
-							Description: "For TKE in global reuse",
-							Type:        []string{"string"},
-							Format:      "byte",
+							Type:   []string{"string"},
+							Format: "byte",
 						},
 					},
 					"etcdAPIClientKey": {
 						SchemaProps: spec.SchemaProps{
-							Description: "For TKE in global reuse",
-							Type:        []string{"string"},
-							Format:      "byte",
+							Type:   []string{"string"},
+							Format: "byte",
 						},
 					},
 					"caCert": {
@@ -41592,6 +41657,12 @@ func schema_tke_api_platform_v1_ClusterCredential(ref common.ReferenceCallback) 
 							Description: "For connect the cluster",
 							Type:        []string{"string"},
 							Format:      "byte",
+						},
+					},
+					"caKey": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
 						},
 					},
 					"clientCert": {
@@ -41880,10 +41951,25 @@ func schema_tke_api_platform_v1_ClusterMachine(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"taints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If specified, the node's taints.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.Taint"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"ip", "port", "username"},
 			},
 		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.Taint"},
 	}
 }
 
@@ -42157,8 +42243,15 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
+					"serviceCIDR": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"tenantID", "displayName", "type", "version"},
+				Required: []string{"tenantID", "type", "version"},
 			},
 		},
 		Dependencies: []string{
@@ -43953,10 +44046,25 @@ func schema_tke_api_platform_v1_MachineSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
+					"taints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If specified, the node's taints.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.Taint"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"clusterName", "type", "ip", "port", "username"},
 			},
 		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.Taint"},
 	}
 }
 
@@ -44556,12 +44664,32 @@ func schema_tke_api_platform_v1_PrometheusSpec(ref common.ReferenceCallback) com
 							Format:      "",
 						},
 					},
+					"resources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resources is the resource request and limit for prometheus",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.ResourceRequirements"),
+						},
+					},
+					"runOnMaster": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RunOnMaster indicates whether to add master Affinity for all monitor components or not",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"alertRepeatInterval": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AlertRepeatInterval indicates repeat interval of alerts",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "clusterName"},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.PrometheusRemoteAddr"},
+			"tkestack.io/tke/api/platform/v1.PrometheusRemoteAddr", "tkestack.io/tke/api/platform/v1.ResourceRequirements"},
 	}
 }
 
@@ -44759,6 +44887,47 @@ func schema_tke_api_platform_v1_RegistrySpec(ref common.ReferenceCallback) commo
 				},
 			},
 		},
+	}
+}
+
+func schema_tke_api_platform_v1_ResourceRequirements(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ResourceRequirements describes the compute resource requirements.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"limits": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+									},
+								},
+							},
+						},
+					},
+					"requests": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/api/resource.Quantity"},
 	}
 }
 

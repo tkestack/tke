@@ -53,7 +53,7 @@ const (
             }
          ],
          "nodeCacheCapable" : false,
-         "urlPrefix" : "http://127.0.0.1:32760/v1"
+         "urlPrefix" : "http://galaxy-ipam:9040/v1"
       }
    ],
    "kind" : "Policy"

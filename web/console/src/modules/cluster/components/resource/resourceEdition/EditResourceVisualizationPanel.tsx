@@ -1090,6 +1090,28 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         };
       }
 
+      // 增加权限集
+      if (!isEmpty(c.addCapabilities)) {
+        if (isEmpty(containerItem['securityContext'])) {
+          containerItem['securityContext'] = {};
+        }
+        if (isEmpty(containerItem['securityContext']['capabilities'])) {
+          containerItem['securityContext']['capabilities'] = {};
+        }
+        containerItem['securityContext']['capabilities']['add'] = c.addCapabilities;
+      }
+
+      // 删除权限集
+      if (!isEmpty(c.dropCapabilities)) {
+        if (isEmpty(containerItem['securityContext'])) {
+          containerItem['securityContext'] = {};
+        }
+        if (isEmpty(containerItem['securityContext']['capabilities'])) {
+          containerItem['securityContext']['capabilities'] = {};
+        }
+        containerItem['securityContext']['capabilities']['drop'] = c.dropCapabilities;
+      }
+
       // 存活检查
       const reduceHealthCheck = (healthCheckItem: HealthCheckItem) => {
         let healthItem = {

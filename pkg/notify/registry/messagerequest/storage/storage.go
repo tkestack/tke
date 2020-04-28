@@ -27,6 +27,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"time"
 	notifyinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/notify/internalversion"
 	"tkestack.io/tke/api/notify"
 	"tkestack.io/tke/pkg/apiserver/authentication"
@@ -43,11 +44,14 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against messages.
-func NewStorage(optsGetter genericregistry.RESTOptionsGetter, notifyClient *notifyinternalclient.NotifyClient, privilegedUsername string) *Storage {
+func NewStorage(optsGetter genericregistry.RESTOptionsGetter, notifyClient *notifyinternalclient.NotifyClient, privilegedUsername string, messageTTL time.Duration) *Storage {
 	strategy := messagerequeststrategy.NewStrategy(notifyClient)
 	store := &registry.Store{
-		NewFunc:                  func() runtime.Object { return &notify.MessageRequest{} },
-		NewListFunc:              func() runtime.Object { return &notify.MessageRequestList{} },
+		NewFunc:     func() runtime.Object { return &notify.MessageRequest{} },
+		NewListFunc: func() runtime.Object { return &notify.MessageRequestList{} },
+		TTLFunc: func(obj runtime.Object, existing uint64, update bool) (uint64, error) {
+			return uint64(messageTTL.Seconds()), nil
+		},
 		DefaultQualifiedResource: notify.Resource("messagerequests"),
 		PredicateFunc:            messagerequeststrategy.MatchMessageRequest,
 		ReturnDeletedObject:      true,

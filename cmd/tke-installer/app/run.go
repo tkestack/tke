@@ -25,7 +25,7 @@ import (
 
 // Run runs the specified TKE installer. This should never exit.
 func Run(cfg *config.Config, stopCh <-chan struct{}) error {
-	installer.NewTKE(cfg).Run()
+	installer.New(cfg).Run()
 
 	return nil
 }

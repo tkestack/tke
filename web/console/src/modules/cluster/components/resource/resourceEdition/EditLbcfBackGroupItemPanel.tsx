@@ -9,7 +9,8 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { allActions } from '../../../actions';
 import { LbcfProtocolList, BackendTypeList, BackendType } from '../../../constants/Config';
 import { RootProps } from '../../ClusterApp';
-
+import { StringArray } from '@src/modules/cluster/models/LbcfEdit';
+import { Selector } from '../../../models';
 interface EditLbcfBackGroupItemPanelProps extends RootProps {
   backGroupId: string;
   backGroupmode: string;
@@ -62,7 +63,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
     );
   }
 
-  _renderSelector(labels, isNeed?: boolean) {
+  _renderSelector(labels: Selector[]) {
     let { actions, backGroupId } = this.props;
 
     return (
@@ -72,7 +73,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
             return (
               <List.Item
                 key={label.id}
-                className={(label.v_value.status === 2 || label.v_value.status === 2) && 'is-error'}
+                className={(label.v_key.status === 2 || label.v_value.status === 2) && 'is-error'}
               >
                 <Bubble placement="right" content={label.v_key.status === 2 ? label.v_key.message : null}>
                   <Input
@@ -99,11 +100,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
                     }
                   />
                 </Bubble>
-                <Button
-                  disabled={isNeed && labels.length === 1}
-                  icon={'close'}
-                  onClick={() => actions.lbcf.deleteLbcfBGLabels(backGroupId, label.id + '')}
-                />
+                <Button icon={'close'} onClick={() => actions.lbcf.deleteLbcfBGLabels(backGroupId, label.id + '')} />
               </List.Item>
             );
           })}
@@ -119,7 +116,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
     );
   }
 
-  _renderStaticAddress(addresses) {
+  _renderStaticAddress(addresses: StringArray[]) {
     let { actions, backGroupId } = this.props;
 
     return (
@@ -127,10 +124,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
         <List>
           {addresses.map(address => {
             return (
-              <List.Item
-                key={address.id}
-                className={(address.v_value.status === 2 || address.v_value.status === 2) && 'is-error'}
-              >
+              <List.Item key={address.id} className={address.v_value.status === 2 && 'is-error'}>
                 <Bubble placement="right" content={address.v_value.status === 2 ? address.v_value.message : null}>
                   <Input
                     size={'s'}
@@ -159,7 +153,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
     );
   }
 
-  _renderPodByName(byName) {
+  _renderPodByName(byName: StringArray[]) {
     let { actions, backGroupId } = this.props;
 
     return (
@@ -167,10 +161,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
         <List>
           {byName.map(name => {
             return (
-              <List.Item
-                key={name.id}
-                className={(name.v_value.status === 2 || name.v_value.status === 2) && 'is-error'}
-              >
+              <List.Item key={name.id} className={name.v_value.status === 2 && 'is-error'}>
                 <Bubble placement="right" content={name.v_value.status === 2 ? name.v_value.message : null}>
                   <Input
                     size={'s'}
@@ -179,11 +170,7 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
                     onBlur={e => actions.validate.lbcf.validatePodName(backGroupId, name.id + '')}
                   />
                 </Bubble>
-                <Button
-                  disabled={name.length === 1}
-                  icon={'close'}
-                  onClick={() => actions.lbcf.deleteLbcfBGPodName(backGroupId, name.id + '')}
-                />
+                <Button icon={'close'} onClick={() => actions.lbcf.deleteLbcfBGPodName(backGroupId, name.id + '')} />
               </List.Item>
             );
           })}
@@ -299,13 +286,17 @@ export class EditLbcfBackGroupItemPanel extends React.Component<EditLbcfBackGrou
           {this._renderPorts(ports)}
         </FormPanel.Item>
         <FormPanel.Item
-          label={backgroupType !== BackendType.Pods ? t('绑定节点') : t('绑定Pod')}
+          label={backgroupType !== BackendType.Pods ? t('绑定节点') : t('Pod Label')}
           text={labels.length === 0}
-          isShow={backgroupType !== BackendType.Static}
+          isShow={backgroupType === BackendType.Service || (backgroupType === BackendType.Pods && byName.length === 0)}
         >
-          {this._renderSelector(labels, backgroupType !== BackendType.Service)}
+          {this._renderSelector(labels)}
         </FormPanel.Item>
-        <FormPanel.Item label={t('Pod Name')} text={labels.length === 0} isShow={backgroupType === BackendType.Pods}>
+        <FormPanel.Item
+          label={t('Pod Name')}
+          text={byName.length === 0}
+          isShow={backgroupType === BackendType.Pods && labels.length === 0}
+        >
           {this._renderPodByName(byName)}
         </FormPanel.Item>
         <FormPanel.Item isShow={backGroupmode === 'create'}>
