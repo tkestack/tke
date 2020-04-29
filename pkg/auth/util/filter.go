@@ -20,8 +20,11 @@ package util
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/fields"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+
 	"tkestack.io/tke/api/auth"
 	v1 "tkestack.io/tke/api/auth/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
@@ -88,4 +91,25 @@ func FilterGroup(ctx context.Context, group *auth.LocalGroup) error {
 		return errors.NewNotFound(v1.Resource("group"), group.ObjectMeta.Name)
 	}
 	return nil
+}
+
+// PredicateUserNameListOptions determines the query options according to the username
+// attribute of the request user.
+func PredicateUserNameListOptions(ctx context.Context, options *metainternal.ListOptions) *metainternal.ListOptions {
+	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return options
+	}
+	if options == nil {
+		return &metainternal.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("spec.username", username),
+		}
+	}
+
+	if options.FieldSelector == nil {
+		options.FieldSelector = fields.OneTermEqualSelector("spec.username", username)
+		return options
+	}
+	options.FieldSelector = fields.AndSelectors(options.FieldSelector, fields.OneTermEqualSelector("spec.username", username))
+	return options
 }

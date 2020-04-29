@@ -42,6 +42,8 @@ import (
 	"k8s.io/apiserver/pkg/authentication/request/bearertoken"
 	"k8s.io/apiserver/pkg/authentication/request/union"
 	"k8s.io/apiserver/pkg/authentication/request/websocket"
+	tokencache "k8s.io/apiserver/pkg/authentication/token/cache"
+	tokenunion "k8s.io/apiserver/pkg/authentication/token/union"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
@@ -144,8 +146,13 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 
 	authClient := authinternalclient.NewForConfigOrDie(genericAPIServerConfig.LoopbackClientConfig)
+	apiKeyAuth, err := authenticator.NewAPIKeyAuthenticator(authClient)
+	if err != nil {
+		return nil, err
+	}
+
 	tokenAuth := authenticator.NewTokenAuthenticator(authClient)
-	if err := setupAuthentication(genericAPIServerConfig, opts.Authentication, tokenAuth); err != nil {
+	if err := setupAuthentication(genericAPIServerConfig, opts.Authentication, []genericauthenticator.Token{tokenAuth, apiKeyAuth}); err != nil {
 		return nil, err
 	}
 
@@ -155,12 +162,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 	setupAuthorization(genericAPIServerConfig, aggregateAuthz)
 
-	dexConfig, err := setupDexConfig(opts.ETCD, authClient, opts.Auth.AssetsPath, opts.Auth.IDTokenTimeout, opts.Generic.ExternalHost, opts.Generic.ExternalPort)
-	if err != nil {
-		return nil, err
-	}
-
-	apiKeyAuth, err := authenticator.NewAPIKeyAuthenticator(authClient)
+	dexConfig, err := setupDexConfig(opts.ETCD, authClient, opts.Auth.AssetsPath, opts.Auth.IDTokenTimeout, opts.Generic.ExternalHost, opts.Generic.ExternalPort, opts.Auth.PasswordGrantConnID)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +206,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}, nil
 }
 
-func setupAuthentication(genericAPIServerConfig *genericapiserver.Config, opts *apiserveroptions.AuthenticationWithAPIOptions, tokenAuth *authenticator.TokenAuthenticator) error {
+func setupAuthentication(genericAPIServerConfig *genericapiserver.Config, opts *apiserveroptions.AuthenticationWithAPIOptions, tokenAuthenticators []genericauthenticator.Token) error {
 	if err := authentication.SetupAuthentication(genericAPIServerConfig, opts); err != nil {
 		return nil
 	}
@@ -215,6 +217,11 @@ func setupAuthentication(genericAPIServerConfig *genericapiserver.Config, opts *
 		configAuthenticators,
 	}
 	defs := *configDefs
+	tokenAuth := tokenunion.New(tokenAuthenticators...)
+	if opts.TokenSuccessCacheTTL > 0 || opts.TokenFailureCacheTTL > 0 {
+		tokenAuth = tokencache.New(tokenAuth, true, opts.TokenSuccessCacheTTL, opts.TokenFailureCacheTTL)
+	}
+
 	authenticators = append(authenticators, bearertoken.New(tokenAuth), websocket.NewProtocolAuthenticator(tokenAuth))
 	defs["BearerToken"] = &spec.SecurityScheme{
 		SecuritySchemeProps: spec.SecuritySchemeProps{
@@ -236,7 +243,7 @@ func setupAuthorization(genericAPIServerConfig *genericapiserver.Config, authori
 	genericAPIServerConfig.Authorization.Authorizer = authorizer
 }
 
-func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, authClient authinternalclient.AuthInterface, templatePath string, tokenTimeout time.Duration, host string, port int) (*dexserver.Config, error) {
+func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, authClient authinternalclient.AuthInterface, templatePath string, tokenTimeout time.Duration, host string, port int, passwordConnID string) (*dexserver.Config, error) {
 	logger := dex.NewLogger(log.ZapLogger())
 	issuer := issuer(host, port)
 	namespace := etcdOpts.Prefix
@@ -272,6 +279,7 @@ func setupDexConfig(etcdOpts *storageoptions.ETCDStorageOptions, authClient auth
 		SkipApprovalScreen: true,
 
 		PrometheusRegistry: prometheus.NewRegistry(),
+		PasswordConnector:  passwordConnID,
 	}
 
 	return &dexConfig, nil
@@ -318,12 +326,12 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 
 func setupDefaultConnector(versionInformers versionedinformers.SharedInformerFactory, auth *options.AuthOptions) error {
 	log.Info("setup tke local connector", log.Any("tenantID", auth.InitTenantID))
-	if _, ok := identityprovider.IdentityProvidersStore[auth.InitTenantID]; !ok {
+	if _, ok := identityprovider.GetIdentityProvider(auth.InitTenantID); !ok {
 		defaultIDP, err := local.NewDefaultIdentityProvider(auth.InitTenantID, auth.InitIDPAdmins, versionInformers)
 		if err != nil {
 			return nil
 		}
-		identityprovider.IdentityProvidersStore[auth.InitTenantID] = defaultIDP
+		identityprovider.SetIdentityProvider(auth.InitTenantID, defaultIDP)
 	}
 
 	return nil
@@ -349,8 +357,8 @@ func setupLDAPConnector(auth *options.AuthOptions) error {
 		return err
 	}
 
-	if _, ok := identityprovider.IdentityProvidersStore[auth.InitTenantID]; !ok {
-		identityprovider.IdentityProvidersStore[auth.InitTenantID] = idp
+	if _, ok := identityprovider.GetIdentityProvider(auth.InitTenantID); !ok {
+		identityprovider.SetIdentityProvider(auth.InitTenantID, idp)
 	}
 
 	return nil

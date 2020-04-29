@@ -22,6 +22,8 @@ import (
 	"context"
 	"fmt"
 
+	"tkestack.io/tke/api/platform/validation"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -100,7 +102,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new machine
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return Validate(obj.(*platform.Machine), s.platformClient)
+	return validation.ValidateMachine(obj.(*platform.Machine), s.platformClient)
 }
 
 // AllowCreateOnUpdate is false for machines
@@ -121,7 +123,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end cluster.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateUpdate(obj.(*platform.Machine), old.(*platform.Machine))
+	return validation.ValidateMachineUpdate(obj.(*platform.Machine), old.(*platform.Machine))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -140,7 +142,7 @@ func SelectionPredicate(label labels.Selector, field fields.Selector) storage.Se
 		Field:    field,
 		GetAttrs: GetAttrs,
 		IndexFields: []string{
-			"spec.tenantID", "spec.type", "spec.version", "status.locked", "status.version", "status.phase"},
+			"spec.tenantID", "spec.clusterName", "spec.type", "spec.ip", "status.locked", "status.phase"},
 	}
 }
 
@@ -149,8 +151,9 @@ func ToSelectableFields(machine *platform.Machine) fields.Set {
 	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&machine.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
 		"spec.tenantID":    machine.Spec.TenantID,
-		"spec.type":        string(machine.Spec.Type),
 		"spec.clusterName": machine.Spec.ClusterName,
+		"spec.type":        machine.Spec.Type,
+		"spec.ip":          machine.Spec.IP,
 		"status.locked":    util.BoolPointerToSelectField(machine.Status.Locked),
 		"status.phase":     string(machine.Status.Phase),
 	}

@@ -202,16 +202,14 @@ func (ClusterCondition) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterCredential = map[string]string{
-	"":                  "ClusterCredential records the credential information needed to access the cluster.",
-	"etcdCACert":        "For TKE in global reuse",
-	"etcdAPIClientCert": "For TKE in global reuse",
-	"etcdAPIClientKey":  "For TKE in global reuse",
-	"caCert":            "For connect the cluster",
-	"clientCert":        "For kube-apiserver X509 auth",
-	"clientKey":         "For kube-apiserver X509 auth",
-	"token":             "For kube-apiserver token auth",
-	"bootstrapToken":    "For kubeadm init or join",
-	"certificateKey":    "For kubeadm init or join",
+	"":               "ClusterCredential records the credential information needed to access the cluster.",
+	"etcdCACert":     "For TKE in global reuse",
+	"caCert":         "For connect the cluster",
+	"clientCert":     "For kube-apiserver X509 auth",
+	"clientKey":      "For kube-apiserver X509 auth",
+	"token":          "For kube-apiserver token auth",
+	"bootstrapToken": "For kubeadm init or join",
+	"certificateKey": "For kubeadm init or join",
 }
 
 func (ClusterCredential) SwaggerDoc() map[string]string {
@@ -245,7 +243,8 @@ func (ClusterList) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterMachine = map[string]string{
-	"": "ClusterMachine is the master machine definition of cluster.",
+	"":       "ClusterMachine is the master machine definition of cluster.",
+	"taints": "If specified, the node's taints.",
 }
 
 func (ClusterMachine) SwaggerDoc() map[string]string {
@@ -271,9 +270,10 @@ func (ClusterResource) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterSpec = map[string]string{
-	"":           "ClusterSpec is a description of a cluster.",
-	"finalizers": "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
-	"dnsDomain":  "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
+	"":            "ClusterSpec is a description of a cluster.",
+	"finalizers":  "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
+	"dnsDomain":   "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
+	"serviceCIDR": "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {
@@ -624,6 +624,7 @@ func (MachineList) SwaggerDoc() map[string]string {
 var map_MachineSpec = map[string]string{
 	"":           "MachineSpec is a description of machine.",
 	"finalizers": "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
+	"taints":     "If specified, the node's taints.",
 }
 
 func (MachineSpec) SwaggerDoc() map[string]string {
@@ -741,10 +742,13 @@ func (PrometheusRemoteAddr) SwaggerDoc() map[string]string {
 }
 
 var map_PrometheusSpec = map[string]string{
-	"":              "PrometheusSpec describes the attributes on a Prometheus.",
-	"subVersion":    "SubVersion is the components version such as node-exporter.",
-	"remoteAddress": "RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.",
-	"notifyWebhook": "NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address \"https://[notify-api-address]/webhook\" will be used.",
+	"":                    "PrometheusSpec describes the attributes on a Prometheus.",
+	"subVersion":          "SubVersion is the components version such as node-exporter.",
+	"remoteAddress":       "RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.",
+	"notifyWebhook":       "NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address \"https://[notify-api-address]/webhook\" will be used.",
+	"resources":           "Resources is the resource request and limit for prometheus",
+	"runOnMaster":         "RunOnMaster indicates whether to add master Affinity for all monitor components or not",
+	"alertRepeatInterval": "AlertRepeatInterval indicates repeat interval of alerts",
 }
 
 func (PrometheusSpec) SwaggerDoc() map[string]string {
@@ -786,6 +790,14 @@ var map_RegistrySpec = map[string]string{
 
 func (RegistrySpec) SwaggerDoc() map[string]string {
 	return map_RegistrySpec
+}
+
+var map_ResourceRequirements = map[string]string{
+	"": "ResourceRequirements describes the compute resource requirements.",
+}
+
+func (ResourceRequirements) SwaggerDoc() map[string]string {
+	return map_ResourceRequirements
 }
 
 var map_StorageBackEndCLS = map[string]string{

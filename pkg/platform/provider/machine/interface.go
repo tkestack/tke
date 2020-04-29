@@ -26,6 +26,6 @@ import (
 
 type Provider interface {
 	Name() string
-	Validate(machine platform.Machine) (field.ErrorList, error)
+	Validate(machine *platform.Machine) field.ErrorList
 	OnInitialize(machine v1.Machine, cluster v1.Cluster, credential v1.ClusterCredential) (v1.Machine, error)
 }

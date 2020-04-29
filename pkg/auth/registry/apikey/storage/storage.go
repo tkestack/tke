@@ -22,8 +22,6 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/fields"
-
 	"tkestack.io/tke/pkg/apiserver/authentication"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -125,11 +123,7 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 // ValidateListObject validate if list by admin, if false, filter deleted apikey.
 func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, options *metainternal.ListOptions) (runtime.Object, error) {
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
-
-	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if tenantID != "" {
-		wrappedOptions.FieldSelector = fields.AndSelectors(wrappedOptions.FieldSelector, fields.OneTermEqualSelector("spec.username", username))
-	}
+	wrappedOptions = util.PredicateUserNameListOptions(ctx, wrappedOptions)
 
 	obj, err := store.List(ctx, wrappedOptions)
 	if err != nil {

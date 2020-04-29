@@ -26,21 +26,22 @@ import (
 	"strings"
 	"time"
 
-	platformv1 "tkestack.io/tke/api/platform/v1"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/marknode"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/hosts"
+	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/cmdstring"
+	"tkestack.io/tke/pkg/util/hosts"
 )
 
 const (
@@ -66,8 +67,9 @@ func (p *Provider) EnsurePreInstallHook(m *Machine) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
 
-	m.Execf("chmod +x %s", hook)
+	m.Execf("chmod +x %s", cmd)
 	_, stderr, exit, err := m.Exec(hook)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
@@ -80,8 +82,9 @@ func (p *Provider) EnsurePostInstallHook(m *Machine) error {
 	if hook == "" {
 		return nil
 	}
+	cmd := strings.Split(hook, " ")[0]
 
-	m.Execf("chmod +x %s", hook)
+	m.Execf("chmod +x %s", cmd)
 	_, stderr, exit, err := m.Exec(hook)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
@@ -147,20 +150,13 @@ func (p *Provider) EnsureKernelModule(m *Machine) error {
 	return nil
 }
 
-func setFileContent(file, pattern, content string) string {
-	return fmt.Sprintf("grep -Pq '%s' %s && sed -i 's;%s;%s;g' %s|| echo '%s' >> %s",
-		pattern, file,
-		pattern, content, file,
-		content, file)
-}
-
 func (p *Provider) EnsureSysctl(m *Machine) error {
-	_, err := m.CombinedOutput(setFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
+	_, err := m.CombinedOutput(cmdstring.SetFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
 	if err != nil {
 		return err
 	}
 
-	_, err = m.CombinedOutput(setFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
+	_, err = m.CombinedOutput(cmdstring.SetFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
 	if err != nil {
 		return err
 	}
@@ -207,6 +203,20 @@ func (p *Provider) EnsureKubeconfig(m *Machine) error {
 	}
 
 	return nil
+}
+
+func (p *Provider) EnsureNvidiaDriver(m *Machine) error {
+	if !gpu.IsEnable(m.Spec.Labels) {
+		return nil
+	}
+	return gpu.InstallNvidiaDriver(m, &gpu.NvidiaDriverOption{})
+}
+
+func (p *Provider) EnsureNvidiaContainerRuntime(m *Machine) error {
+	if !gpu.IsEnable(m.Spec.Labels) {
+		return nil
+	}
+	return gpu.InstallNvidiaContainerRuntime(m, &gpu.NvidiaContainerRuntimeOption{})
 }
 
 func (p *Provider) EnsureDocker(m *Machine) error {
@@ -279,15 +289,7 @@ func (p *Provider) EnsureJoinNode(m *Machine) error {
 }
 
 func (p *Provider) EnsureMarkNode(m *Machine) error {
-	if len(m.Spec.Labels) == 0 {
-		return nil
-	}
-
-	option := &marknode.Option{
-		NodeName: m.Spec.IP,
-		Labels:   m.Spec.Labels,
-	}
-	err := marknode.Install(m.ClientSet, option)
+	err := apiclient.MarkNode(m.ClientSet, m.Spec.IP, m.Spec.Labels, m.Spec.Taints)
 	if err != nil {
 		return err
 	}

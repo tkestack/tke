@@ -132,7 +132,7 @@ data:
 
     [authentication]
     token_auth_file = "/app/certs/token.csv"
-    client_ca_file = "/app/certs/ca.crt"
+    client_ca_file = "/app/certs/front-proxy-ca.crt"
 
       [authentication.oidc]
 {{- if .EnableAuth }}
@@ -152,8 +152,13 @@ data:
   {{- end}}
 {{- end }}
 
+{{- if .EnableAuth }}
+      [authentication.webhook]
+      config_file = "/app/conf/tke-authn-webhook.yaml"
+{{- end }}
+
       [authentication.requestheader]
-      client_ca_file = "/app/certs/ca.crt"
+      client_ca_file = "/app/certs/front-proxy-ca.crt"
       username_headers = "X-Remote-User"
       group_headers = "X-Remote-Group"
       extra_headers_prefix = "X-Remote-Extra-"
@@ -161,10 +166,30 @@ data:
     [authorization]
 {{- if .EnableAuth }}
     mode = "Webhook"
-    webhook_config_file = "/app/conf/tke-auth-webhook.yaml"
+    webhook_config_file = "/app/conf/tke-authz-webhook.yaml"
 {{- end }}
 
-  tke-auth-webhook.yaml: |
+  tke-authn-webhook.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-auth-api/auth/authn
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+    - context:
+        cluster: tke
+        user: admin-cert
+      name: tke
+
+  tke-authz-webhook.yaml: |
     apiVersion: v1
     kind: Config
     clusters:

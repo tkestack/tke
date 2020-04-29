@@ -339,8 +339,9 @@ func (c *Controller) createIPAMIfNeeded(key string, cachedIPAM *cachedIPAM, ipam
 		}
 	case v1.AddonPhaseFailed:
 		log.Info("IPAM is error", log.String("ipam", key))
-		if c.health.Exist(key) {
-			c.health.Del(key)
+		if !c.health.Exist(key) {
+			c.health.Set(key, ipam)
+			go wait.PollImmediateUntil(5*time.Minute, c.watchIPAMHealth(key), c.stopCh)
 		}
 	}
 	return nil
@@ -632,7 +633,7 @@ func serviceIPAM() *corev1.Service {
 				{Name: "scheduler-port", Port: 9040, TargetPort: intstr.FromInt(9040), NodePort: 32760},
 				{Name: "api-port", Port: 9041, TargetPort: intstr.FromInt(9041), NodePort: 32761},
 			},
-			Type: corev1.ServiceTypeNodePort,
+			Type: corev1.ServiceTypeClusterIP,
 		},
 	}
 }
@@ -706,14 +707,17 @@ func (c *Controller) watchIPAMHealth(key string) func() (bool, error) {
 			return false, err
 		}
 
-		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcIPAMAPIName, string(intstr.FromInt(9040).IntVal), `/healthy`, nil).DoRaw(); err != nil {
-			ipam = ipam.DeepCopy()
+		ipam = ipam.DeepCopy()
+		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcIPAMAPIName, "9040", `/healthy`, nil).DoRaw(); err != nil {
 			ipam.Status.Phase = v1.AddonPhaseFailed
 			ipam.Status.Reason = "IPAM is not healthy."
-			if err = c.persistUpdate(ipam); err != nil {
-				return false, err
-			}
-			return true, nil
+			log.Warnf("fail to access ipam %s's /healthy, %v", ipam.Name, err)
+		} else {
+			ipam.Status.Phase = v1.AddonPhaseRunning
+			ipam.Status.Reason = ""
+		}
+		if err = c.persistUpdate(ipam); err != nil {
+			return false, err
 		}
 		return false, nil
 	}

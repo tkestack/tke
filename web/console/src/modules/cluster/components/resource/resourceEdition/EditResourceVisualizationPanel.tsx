@@ -558,12 +558,6 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         annotations['description'] = description;
       }
 
-      if (workloadAnnotations.length) {
-        workloadAnnotations.forEach(annotation => {
-          annotations[annotation.labelKey] = annotation.labelValue;
-        });
-      }
-
       // 判断当前的工作负载类型
       let isCronJobs = workloadType === 'cronjob',
         isJobs = workloadType === 'job',
@@ -586,6 +580,14 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
       // 如果选择了网络模式，需要把网络模式写在annotations当中
       let templateAnnotations = {};
+
+      //将annotation赋值到template中
+      if (workloadAnnotations.length) {
+        workloadAnnotations.forEach(annotation => {
+          annotations[annotation.labelKey] = annotation.labelValue;
+          templateAnnotations[annotation.labelKey] = annotation.labelValue;
+        });
+      }
       if (networkType) {
         if (networkType === WorkloadNetworkTypeEnum.Nat || networkType === WorkloadNetworkTypeEnum.Overlay) {
           templateAnnotations['k8s.v1.cni.cncf.io/networks'] = 'galaxy-flannel';
@@ -1075,7 +1077,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
       // 如果有运行命令 command: string[]
       if (c.cmd) {
-        containerItem['command'] = [c.cmd];
+        containerItem['command'] = c.cmd.trim().split('\n');
       }
 
       // 如果有运行参数
@@ -1088,6 +1090,28 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         containerItem['securityContext'] = {
           privileged: c.privileged
         };
+      }
+
+      // 增加权限集
+      if (!isEmpty(c.addCapabilities)) {
+        if (isEmpty(containerItem['securityContext'])) {
+          containerItem['securityContext'] = {};
+        }
+        if (isEmpty(containerItem['securityContext']['capabilities'])) {
+          containerItem['securityContext']['capabilities'] = {};
+        }
+        containerItem['securityContext']['capabilities']['add'] = c.addCapabilities;
+      }
+
+      // 删除权限集
+      if (!isEmpty(c.dropCapabilities)) {
+        if (isEmpty(containerItem['securityContext'])) {
+          containerItem['securityContext'] = {};
+        }
+        if (isEmpty(containerItem['securityContext']['capabilities'])) {
+          containerItem['securityContext']['capabilities'] = {};
+        }
+        containerItem['securityContext']['capabilities']['drop'] = c.dropCapabilities;
       }
 
       // 存活检查

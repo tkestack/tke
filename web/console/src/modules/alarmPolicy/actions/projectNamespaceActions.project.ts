@@ -1,6 +1,4 @@
-import {
-    extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction, uuid
-} from '@tencent/ff-redux';
+import { extend, FetchOptions, generateFetcherActionCreator, RecordSet, ReduxAction, uuid } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
@@ -121,7 +119,7 @@ const restActions = {
       };
 
       dispatch({
-        type: FFReduxActionName.CLUSTER + '_FetchDone',
+        type: FFReduxActionName.CLUSTER + '_BaseDone',
         payload: {
           data: result,
           trigger: 'Done'
@@ -144,7 +142,7 @@ const restActions = {
         router.navigate(urlParams, Object.assign({}, route.queries, { clusterId: '' }));
         dispatch(alarmPolicyActions.clear());
         dispatch({
-          type: 'AlarmPolicy_FetchDone',
+          type: 'AlarmPolicy_BaseDone',
           payload: {
             data: {
               recordCount: 0,

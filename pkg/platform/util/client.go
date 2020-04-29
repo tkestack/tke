@@ -513,7 +513,7 @@ func BuildClientSet(cluster *platform.Cluster, credential *platform.ClusterCrede
 		Cluster:  contextName,
 		AuthInfo: contextName,
 	}
-	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "5s"}, nil)
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "30s"}, nil)
 	restConfig, err := clientConfig.ClientConfig()
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
@@ -591,4 +591,30 @@ func CheckClusterHealthzWithTimeout(platformClient platformversionedclient.Platf
 	})
 
 	return err
+}
+
+func GetClusterAndCredential(platformClient platforminternalclient.PlatformInterface, clusterName string) (*platform.Cluster, *platform.ClusterCredential, error) {
+	cluster, err := platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	credential, err := ClusterCredential(platformClient, clusterName)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cluster, credential, nil
+}
+
+func GetClusterAndCredentialV1(platformClient platformversionedclient.PlatformV1Interface, clusterName string) (*platformv1.Cluster, *platformv1.ClusterCredential, error) {
+	cluster, err := platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	credential, err := ClusterCredentialV1(platformClient, clusterName)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cluster, credential, nil
 }

@@ -1,9 +1,9 @@
 import { string } from 'prop-types';
 
-import { extend, Identifiable, RecordSet } from '@tencent/ff-redux';
+import { extend, Identifiable, RecordSet, FFListModel } from '@tencent/ff-redux';
 
 import { KeyValue, Validation } from '../../common/models';
-import { Selector } from '../models';
+import { Selector, Resource, ResourceFilter } from '../models';
 
 export interface LbcfEdit extends Identifiable {
   name?: string;
@@ -15,7 +15,16 @@ export interface LbcfEdit extends Identifiable {
   v_namespace?: Validation;
 
   config?: KeyValue[];
+
+  v_config?: Validation;
+
   args?: KeyValue[];
+
+  v_args?: Validation;
+
+  driver?: FFListModel<Resource, ResourceFilter>;
+
+  v_driver?: Validation;
 
   /** vpcSelection */
   // vpcSelection?: string;
@@ -101,7 +110,7 @@ interface Port {
   v_portNumber?: Validation;
 }
 
-interface StringArray {
+export interface StringArray {
   id?: string;
   value: string;
   v_value?: Validation;

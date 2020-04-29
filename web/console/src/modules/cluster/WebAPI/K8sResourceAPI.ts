@@ -514,8 +514,6 @@ export async function applyDifferentInterfaceResource(
       allResponses.push(response);
     }
 
-    console.log(allResponses);
-
     //统一处理相应结果
     allResponses.forEach(response => {
       //有一个响应出错
@@ -526,7 +524,6 @@ export async function applyDifferentInterfaceResource(
     //所有的响应都OK的话
     return operationResult(resources);
   } catch (error) {
-    console.log(error);
     return operationResult(resources, reduceNetworkWorkflow(error));
   }
 }
@@ -650,7 +647,6 @@ export async function deleteResourceIns(resource: CreateResource[], regionId: nu
       url,
       data: JSON.stringify(extraParamsForDelete)
     };
-
     let response = await reduceNetworkRequest(params, clusterId);
 
     if (response.code === 0) {
@@ -676,15 +672,12 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
     /// #if project
     //业务侧ns eg: cls-xxx-ns 需要去除前缀
     if (resourceInfo.namespaces) {
-      namespace = namespace
-        .split('-')
-        .splice(2)
-        .join('-');
+      namespace = namespace.split('-').splice(2).join('-');
     }
     /// #endif
     // 因为回滚需要使用特定的apiVersion，故不用reduceK8sRestful
     let k8sUrl =
-      `/${resourceInfo.basicEntry}/${rsResourceInfo.group}/${rsResourceInfo.version}/` +
+      `/${resourceInfo.basicEntry}/apps/v1beta1/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
       `${resourceInfo.requestType['list']}/${resourceIns}/rollback`;
     let url = k8sUrl;

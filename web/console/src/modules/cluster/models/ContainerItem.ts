@@ -65,6 +65,12 @@ export interface ContainerItem extends Identifiable {
   /** 是否特权级容器 */
   privileged?: boolean;
 
+  /** 增加权限集 */
+  addCapabilities?: string[];
+
+  /** 删除权限集 */
+  dropCapabilities?: string[];
+
   /** 镜像更新策略 */
   imagePullPolicy?: string;
 }

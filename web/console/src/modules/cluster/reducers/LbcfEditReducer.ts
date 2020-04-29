@@ -1,6 +1,7 @@
+import { FFReduxActionName } from './../constants/Config';
 import { combineReducers } from 'redux';
 
-import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
+import { RecordSet, reduceToPayload, createFFListReducer } from '@tencent/ff-redux';
 
 import { initValidator } from '../../common/models';
 import * as ActionType from '../constants/ActionType';
@@ -16,30 +17,24 @@ const TempReducer = combineReducers({
 
   v_namespace: reduceToPayload(ActionType.V_Gate_Namespace, initValidator),
 
+  v_driver: reduceToPayload(ActionType.V_Lbcf_Driver, initValidator),
+
   config: reduceToPayload(ActionType.Lbcf_Config, [
     {
-      key: 'loadBalancerID',
-      value: LbcfConfig.find(o => o.value === 'loadBalancerID').defaultValue || ''
-    },
-    {
-      key: 'loadBalancerType',
-      value: LbcfConfig.find(o => o.value === 'loadBalancerType').defaultValue || ''
-    },
-    {
-      key: 'vpcID',
-      value: LbcfConfig.find(o => o.value === 'vpcID').defaultValue || ''
-    },
-    {
-      key: 'listenerProtocol',
-      value: LbcfConfig.find(o => o.value === 'listenerProtocol').defaultValue || ''
-    },
-    {
-      key: 'listenerPort',
-      value: LbcfConfig.find(o => o.value === 'listenerPort').defaultValue || ''
+      key: '',
+      value: ''
     }
   ]),
-  args: reduceToPayload(ActionType.Lbcf_Args, []),
+  args: reduceToPayload(ActionType.Lbcf_Args, [
+    {
+      key: '',
+      value: ''
+    }
+  ]),
 
+  v_config: reduceToPayload(ActionType.V_Lbcf_Config, initValidator),
+
+  v_args: reduceToPayload(ActionType.V_Lbcf_Args, initValidator),
   /** LBReducer*/
   // vpcSelection: reduceToPayload(ActionType.GLB_VpcSelection, ''),
 
@@ -53,7 +48,14 @@ const TempReducer = combineReducers({
 
   /** backGroupReducer*/
 
-  lbcfBackGroupEditions: reduceToPayload(ActionType.GBG_UpdateLbcfBackGroup, [initLbcfBackGroupEdition])
+  lbcfBackGroupEditions: reduceToPayload(ActionType.GBG_UpdateLbcfBackGroup, [initLbcfBackGroupEdition]),
+
+  driver: createFFListReducer(
+    FFReduxActionName.LBCF_DRIVER,
+    null,
+    x => x.metadata.name,
+    x => x.metadata.name
+  )
 
   // gameAppList: reduceToPayload(ActionType.GBG_FetchGameApp, []),
 

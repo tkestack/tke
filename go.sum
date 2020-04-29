@@ -228,6 +228,8 @@ github.com/dexidp/dex v0.0.0-20200303100508-d820fd45d80c h1:rwimutyvV0/97FXbBtkO
 github.com/dexidp/dex v0.0.0-20200303100508-d820fd45d80c/go.mod h1:7ic4FXokPpBxUHngMrp5MZQv4j6ixPoqF+1zC6QRlhw=
 github.com/dexidp/dex v0.0.0-20200319150056-3693b74791f4 h1:f5pMr7VGOyj3tkMV7ryl96KFWVGSns/mDezZCVVkmXk=
 github.com/dexidp/dex v0.0.0-20200319150056-3693b74791f4/go.mod h1:7ic4FXokPpBxUHngMrp5MZQv4j6ixPoqF+1zC6QRlhw=
+github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969 h1:drMoVJ6/vWbEq9Ldxps8T9hvSqo1Nab6+Rx0Xv7ei0E=
+github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969/go.mod h1:7ic4FXokPpBxUHngMrp5MZQv4j6ixPoqF+1zC6QRlhw=
 github.com/dexidp/dex v2.13.0+incompatible h1:EQPpzCi51omkwBe0KYpRGaV3rk6CVvjcqeMGCe3Q00w=
 github.com/dexidp/dex v2.13.0+incompatible/go.mod h1:cRGkPWqKhDD1FMCICe2JbYDdVR2xGLa38F6iuH/jNAs=
 github.com/dgrijalva/jwt-go v0.0.0-20170104182250-a601269ab70c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=

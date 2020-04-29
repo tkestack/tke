@@ -30,9 +30,9 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	goruntime "runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -46,7 +46,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -73,6 +72,7 @@ import (
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
+	"tkestack.io/tke/pkg/util/docker"
 	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/kubeconfig"
 	"tkestack.io/tke/pkg/util/log"
@@ -83,7 +83,6 @@ import (
 	_ "tkestack.io/tke/api/platform/install"
 )
 
-// ClusterResource is the REST layer to the Cluster domain
 type TKE struct {
 	Config  *config.Config           `json:"config"`
 	Para    *types.CreateClusterPara `json:"para"`
@@ -97,12 +96,14 @@ type TKE struct {
 	clusterProvider clusterprovider.Provider
 	isFromRestore   bool
 
+	docker *docker.Docker
+
 	globalClient kubernetes.Interface
 	servers      []string
 	namespace    string
 }
 
-func NewTKE(config *config.Config) *TKE {
+func New(config *config.Config) *TKE {
 	c := new(TKE)
 
 	c.Config = config
@@ -123,6 +124,10 @@ func NewTKE(config *config.Config) *TKE {
 		log.Fatal(err.Error())
 	}
 	c.log = stdlog.New(f, "", stdlog.LstdFlags)
+
+	c.docker = new(docker.Docker)
+	c.docker.Stdout = c.log.Writer()
+	c.docker.Stderr = c.log.Writer()
 
 	if !config.Force {
 		data, err := ioutil.ReadFile(constants.ClusterFile)
@@ -188,10 +193,6 @@ func (t *TKE) initSteps() {
 			Func: t.generateCertificates,
 		},
 		{
-			Name: "Prepare front proxy certificates",
-			Func: t.prepareFrontProxyCertificates,
-		},
-		{
 			Name: "Create global cluster",
 			Func: t.createGlobalCluster,
 		},
@@ -202,6 +203,10 @@ func (t *TKE) initSteps() {
 		{
 			Name: "Execute post deploy hook",
 			Func: t.postClusterReadyHook,
+		},
+		{
+			Name: "Prepare front proxy certificates",
+			Func: t.prepareFrontProxyCertificates,
 		},
 		{
 			Name: "Create namespace for install TKE",
@@ -465,21 +470,8 @@ func (t *TKE) prepare() errors.APIStatus {
 	if err != nil {
 		return errors.NewInternalError(err)
 	}
-	allErrs := t.strategy.Validate(ctx, platformCluster)
 
-	for i, one := range platformCluster.Spec.Machines {
-		ok, err := utilnet.InterfaceHasAddr(one.IP)
-		if err != nil {
-			return errors.NewInternalError(err)
-		}
-		if ok {
-			allErrs = append(allErrs, field.Invalid(
-				field.NewPath("spec", "machines").Index(i).Child("ip"),
-				one.IP,
-				"target machines can't use one which runs installer"))
-			break
-		}
-	}
+	allErrs := t.strategy.Validate(ctx, platformCluster)
 	if len(allErrs) > 0 {
 		return errors.NewInvalid(kinds[0].GroupKind(), v1Cluster.GetName(), allErrs)
 	}
@@ -487,6 +479,11 @@ func (t *TKE) prepare() errors.APIStatus {
 	err = platform.Scheme.Convert(platformCluster, v1Cluster, nil)
 	if err != nil {
 		return errors.NewInternalError(err)
+	}
+
+	statusError = t.validateResource(v1Cluster)
+	if statusError != nil {
+		return statusError
 	}
 
 	t.Cluster.Cluster = *v1Cluster
@@ -666,6 +663,57 @@ func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 	return nil
 }
 
+// validateResource validate the cpu and memory of cluster machines whether meets the requirements.
+func (t *TKE) validateResource(cluster *platformv1.Cluster) *errors.StatusError {
+	var (
+		cpuSum    int
+		memorySum int
+	)
+	for _, machine := range cluster.Spec.Machines {
+		sshConfig := &ssh.Config{
+			User:       machine.Username,
+			Host:       machine.IP,
+			Port:       int(machine.Port),
+			Password:   string(machine.Password),
+			PrivateKey: machine.PrivateKey,
+			PassPhrase: machine.PassPhrase,
+		}
+		s, err := ssh.New(sshConfig)
+		if err != nil {
+			return errors.NewInternalError(err)
+		}
+		cmd := "nproc --all"
+		stdout, err := s.CombinedOutput(cmd)
+		if err != nil {
+			return errors.NewInternalError(fmt.Errorf("get cpu error: %w", err))
+		}
+		cpu, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
+		if err != nil {
+			return errors.NewInternalError(fmt.Errorf("convert cpu value error: %w", err))
+		}
+		cpuSum += cpu
+
+		cmd = "free -g | grep Mem  | awk '{print $2}'"
+		stdout, err = s.CombinedOutput(cmd)
+		if err != nil {
+			return errors.NewInternalError(fmt.Errorf("get memory error: %w", err))
+		}
+		memory, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
+		if err != nil {
+			return errors.NewInternalError(fmt.Errorf("convert memory value error: %w", err))
+		}
+		memorySum += memory
+	}
+	if cpuSum < constants.CPURequest {
+		return errors.NewBadRequest(fmt.Sprintf("at lease %d cores are required", constants.CPURequest))
+	}
+	if memorySum < constants.MemoryRequest {
+		return errors.NewBadRequest(fmt.Sprintf("at lease %d GiB memory are required", constants.MemoryRequest))
+	}
+
+	return nil
+}
+
 func (t *TKE) completeProviderConfigForRegistry() error {
 	c, err := baremetalconfig.New(constants.ProviderConfigFile)
 	if err != nil {
@@ -689,10 +737,12 @@ func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 		if t.Step != 0 {
 			return errors.NewAlreadyExists(platformv1.Resource("Cluster"), "global")
 		}
-		err := req.ReadEntity(t.Para)
+		para := new(types.CreateClusterPara)
+		err := req.ReadEntity(para)
 		if err != nil {
 			return errors.NewBadRequest(err.Error())
 		}
+		t.Para = para
 		if err := t.prepare(); err != nil {
 			return err
 		}
@@ -860,32 +910,26 @@ func (t *TKE) generateCertificates() error {
 }
 
 func (t *TKE) prepareFrontProxyCertificates() error {
-	if t.Cluster.Spec.APIServerExtraArgs == nil {
-		t.Cluster.Spec.APIServerExtraArgs = make(map[string]string)
+	machine := t.Cluster.Spec.Machines[0]
+	sshConfig := &ssh.Config{
+		User:       machine.Username,
+		Host:       machine.IP,
+		Port:       int(machine.Port),
+		Password:   string(machine.Password),
+		PrivateKey: machine.PrivateKey,
+		PassPhrase: machine.PassPhrase,
 	}
-	t.Cluster.Spec.APIServerExtraArgs["proxy-client-cert-file"] = "/etc/kubernetes/admin.crt"
-	t.Cluster.Spec.APIServerExtraArgs["proxy-client-key-file"] = "/etc/kubernetes/admin.key"
-	for _, machine := range t.Cluster.Spec.Machines {
-		sshConfig := &ssh.Config{
-			User:       machine.Username,
-			Host:       machine.IP,
-			Port:       int(machine.Port),
-			Password:   string(machine.Password),
-			PrivateKey: machine.PrivateKey,
-			PassPhrase: machine.PassPhrase,
-		}
-		s, err := ssh.New(sshConfig)
-		if err != nil {
-			return err
-		}
-		err = s.CopyFile(constants.AdminCrtFile, "/etc/kubernetes/admin.crt")
-		if err != nil {
-			return err
-		}
-		err = s.CopyFile(constants.AdminKeyFile, "/etc/kubernetes/admin.key")
-		if err != nil {
-			return err
-		}
+	s, err := ssh.New(sshConfig)
+	if err != nil {
+		return err
+	}
+	data, err := s.ReadFile("/etc/kubernetes/pki/front-proxy-ca.crt")
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(constants.FrontProxyCACrtFile, data, 0644)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -957,44 +1001,36 @@ func (t *TKE) loadImages() error {
 	if _, err := os.Stat(constants.ImagesFile); err != nil {
 		return err
 	}
-	cmd := exec.Command("docker", "load", "-i", constants.ImagesFile)
-	cmd.Stdout = t.log.Writer()
-	cmd.Stderr = t.log.Writer()
-	err := cmd.Run()
+	err := t.docker.LoadImages(constants.ImagesFile)
 	if err != nil {
-		return pkgerrors.Wrap(err, "docker load error")
+		return err
 	}
 
-	cmd = exec.Command("sh", "-c",
-		fmt.Sprintf("docker images --format='{{.Repository}}:{{.Tag}}' --filter='reference=%s'", constants.ImagesPattern),
-	)
-	out, err := cmd.Output()
+	tkeImages, err := t.docker.GetImages(constants.ImagesPattern)
 	if err != nil {
-		return pkgerrors.Wrap(err, "docker images error")
+		return err
 	}
-	tkeImages := strings.Split(strings.TrimSpace(string(out)), "\n")
+
 	for _, image := range tkeImages {
 		imageNames := strings.Split(image, "/")
 		if len(imageNames) != 2 {
 			t.log.Printf("invalid image name:name=%s", image)
 			continue
 		}
-		nameAndTag := strings.Split(imageNames[1], ":")
-		if nameAndTag[0] == "tke-installer" { // no need to push installer image for speed up
+		name, _, err := t.docker.SplitImageNameAndTag(imageNames[1])
+		if err != nil {
+			t.log.Printf("skip invalid image: %s", image)
 			continue
 		}
-		if nameAndTag[1] == "<none>" {
-			t.log.Printf("skip invalid tag:name=%s", image)
+		if name == "tke-installer" { // no need to push installer image for speed up
 			continue
 		}
+
 		target := fmt.Sprintf("%s/%s/%s", t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace(), imageNames[1])
 
-		cmd := exec.Command("docker", "tag", image, target)
-		cmd.Stdout = t.log.Writer()
-		cmd.Stderr = t.log.Writer()
-		err = cmd.Run()
+		err = t.docker.TagImage(image, target)
 		if err != nil {
-			return pkgerrors.Wrap(err, "docker tag error:%s")
+			return err
 		}
 	}
 
@@ -1031,30 +1067,27 @@ func (t *TKE) setupLocalRegistry() error {
 }
 
 func (t *TKE) startLocalRegistry() error {
-	cmd := exec.Command("sh", "-c", "docker rm -f registry-http registry-https")
-	cmd.Stdout = t.log.Writer()
-	cmd.Run()
-
-	cmd = exec.Command("sh", "-c", "rm -rf ~/.docker/manifests")
-	cmd.Stderr = t.log.Writer()
-	cmd.Run()
-
-	image := strings.ReplaceAll(images.Get().Registry.FullName(), ":", fmt.Sprintf("-%s:", goruntime.GOARCH))
-	cmd = exec.Command("sh", "-c", fmt.Sprintf(constants.RegistryHTTPCommandFmt, image))
-	cmd.Stdout = t.log.Writer()
-	cmd.Stderr = t.log.Writer()
-	err := cmd.Run()
+	err := t.docker.RemoveContainers("registry-http", "registry-https")
 	if err != nil {
-		return pkgerrors.Wrap(err, "docker run error")
+		return err
+	}
+
+	err = t.docker.ClearLocalManifests()
+	if err != nil {
+		return err
+	}
+
+	registryImage := strings.ReplaceAll(images.Get().Registry.FullName(), ":", fmt.Sprintf("-%s:", goruntime.GOARCH))
+
+	err = t.docker.RunImage(registryImage, constants.RegistryHTTPOptions, "")
+	if err != nil {
+		return err
 	}
 
 	// for docker manifest create which --insecure is not working
-	cmd = exec.Command("sh", "-c", fmt.Sprintf(constants.RegistryHTTPSCommandFmt, image))
-	cmd.Stdout = t.log.Writer()
-	cmd.Stderr = t.log.Writer()
-	err = cmd.Run()
+	err = t.docker.RunImage(registryImage, constants.RegistryHTTPSOptions, "")
 	if err != nil {
-		return pkgerrors.Wrap(err, "docker run error")
+		return err
 	}
 
 	return nil
@@ -1111,6 +1144,10 @@ func (t *TKE) prepareCertificates() error {
 	if err != nil {
 		return err
 	}
+	frontProxyCACrt, err := ioutil.ReadFile(constants.FrontProxyCACrtFile)
+	if err != nil {
+		return err
+	}
 	serverCrt, err := ioutil.ReadFile(constants.ServerCrtFile)
 	if err != nil {
 		return err
@@ -1134,15 +1171,16 @@ func (t *TKE) prepareCertificates() error {
 			Namespace: t.namespace,
 		},
 		Data: map[string]string{
-			"etcd-ca.crt": string(t.Cluster.ClusterCredential.ETCDCACert),
-			"etcd.crt":    string(t.Cluster.ClusterCredential.ETCDAPIClientCert),
-			"etcd.key":    string(t.Cluster.ClusterCredential.ETCDAPIClientKey),
-			"ca.crt":      string(caCrt),
-			"ca.key":      string(caKey),
-			"server.crt":  string(serverCrt),
-			"server.key":  string(serverKey),
-			"admin.crt":   string(adminCrt),
-			"admin.key":   string(adminKey),
+			"etcd-ca.crt":        string(t.Cluster.ClusterCredential.ETCDCACert),
+			"etcd.crt":           string(t.Cluster.ClusterCredential.ETCDAPIClientCert),
+			"etcd.key":           string(t.Cluster.ClusterCredential.ETCDAPIClientKey),
+			"ca.crt":             string(caCrt),
+			"ca.key":             string(caKey),
+			"front-proxy-ca.crt": string(frontProxyCACrt),
+			"server.crt":         string(serverCrt),
+			"server.key":         string(serverKey),
+			"admin.crt":          string(adminCrt),
+			"admin.key":          string(adminKey),
 		},
 	}
 
@@ -1274,6 +1312,9 @@ func (t *TKE) installTKEAuthAPI() error {
 	}
 	if t.Para.Config.HA != nil {
 		redirectHosts = append(redirectHosts, t.Para.Config.HA.VIP())
+	}
+	if t.Para.Cluster.Spec.PublicAlternativeNames != nil {
+		redirectHosts = append(redirectHosts, t.Para.Cluster.Spec.PublicAlternativeNames...)
 	}
 
 	option := map[string]interface{}{
@@ -1698,17 +1739,23 @@ func (t *TKE) registerAPI() error {
 			},
 		}
 
-		_, err := client.ApiregistrationV1().APIServices().Get(apiService.Name, metav1.GetOptions{})
-		if err == nil {
-			err := client.ApiregistrationV1().APIServices().Delete(apiService.Name, &metav1.DeleteOptions{})
-			if err != nil {
-				return err
+		err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+			_, err := client.ApiregistrationV1().APIServices().Get(apiService.Name, metav1.GetOptions{})
+			if err == nil {
+				err := client.ApiregistrationV1().APIServices().Delete(apiService.Name, &metav1.DeleteOptions{})
+				if err != nil {
+					return false, nil
+				}
 			}
-		}
-		if _, err := client.ApiregistrationV1().APIServices().Create(apiService); err != nil {
-			if !errors.IsAlreadyExists(err) {
-				return err
+			if _, err := client.ApiregistrationV1().APIServices().Create(apiService); err != nil {
+				if !errors.IsAlreadyExists(err) {
+					return false, nil
+				}
 			}
+			return true, nil
+		})
+		if err != nil {
+			return pkgerrors.Wrapf(err, "register apiservice %v error", one)
 		}
 
 		err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
@@ -1722,7 +1769,7 @@ func (t *TKE) registerAPI() error {
 			return false, nil
 		})
 		if err != nil {
-			return err
+			return pkgerrors.Wrapf(err, "check apiservices %v error", one)
 		}
 	}
 	return nil
@@ -1733,6 +1780,9 @@ func (t *TKE) importResource() error {
 	if err != nil {
 		return err
 	}
+	// default timeout is 5 seconds, but create cluster need more time to validate spec
+	restConfig.Timeout = 120 * time.Second
+
 	client, err := tkeclientset.NewForConfig(restConfig)
 	if err != nil {
 		return err
@@ -1782,91 +1832,73 @@ func (t *TKE) importResource() error {
 }
 
 func (t *TKE) pushImages() error {
-	err := exec.Command("sh", "-c", "rm -rf /root/.docker/manifests/").Run()
-	if err != nil {
-		return err
-	}
-
 	imagesFilter := fmt.Sprintf("%s/*", t.Para.Config.Registry.Namespace())
 	if t.Para.Config.Registry.Domain() != "docker.io" { // docker images filter ignore docker.io
 		imagesFilter = t.Para.Config.Registry.Domain() + "/" + imagesFilter
 	}
-	cmd := exec.Command("sh", "-c",
-		fmt.Sprintf("docker images --format='{{.Repository}}:{{.Tag}}' --filter='reference=%s'", imagesFilter),
-	)
-	t.log.Print(cmd)
-	out, err := cmd.Output()
+	tkeImages, err := t.docker.GetImages(imagesFilter)
 	if err != nil {
-		return pkgerrors.Wrap(err, "docker images error")
+		return err
 	}
-	tkeImages := strings.Split(strings.TrimSpace(string(out)), "\n")
 	sort.Strings(tkeImages)
 	tkeImagesSet := sets.NewString(tkeImages...)
+	manifestSet := sets.NewString()
+
+	// clear all local manifest lists before create any manifest list
+	err = t.docker.ClearLocalManifests()
+	if err != nil {
+		return err
+	}
+
 	for i, image := range tkeImages {
-		nameAndTag := strings.Split(image, ":")
-		if len(nameAndTag) != 2 {
-			continue
-		}
-		if nameAndTag[1] == "<none>" {
-			t.log.Printf("skip invalid tag:name=%s", image)
+		name, arch, tag, err := t.docker.GetNameArchTag(image)
+		if err != nil { // skip invalid image
+			t.log.Printf("skip invalid image: %s", image)
 			continue
 		}
 
-		supportedArchs := regexp.MustCompile(fmt.Sprintf(`-(%s):`, strings.Join(spec.Archs, "|")))
-		// ignore image without arch when has image with arch for avoid overwrite manifest when push image without arch
-		archMatches := supportedArchs.FindStringSubmatch(image)
-		if archMatches == nil { // if without arch
-			for _, arch := range spec.Archs {
-				name := fmt.Sprintf("%s-%s:%s", nameAndTag[0], arch, nameAndTag[1])
-				if tkeImagesSet.Has(name) { // check whether has image with any arch
+		if arch == "" {
+			// ignore image without arch when has image with arch for avoid overwrite manifest when push image without arch
+			for _, specArch := range spec.Archs {
+				nameWithArch := fmt.Sprintf("%s-%s:%s", name, specArch, tag)
+				if tkeImagesSet.Has(nameWithArch) { // check whether has image with any arch
 					continue
 				}
 			}
-		}
 
-		cmd = exec.Command("docker", "push", image)
-		cmd.Stdout = t.log.Writer()
-		cmd.Stderr = t.log.Writer()
-		err = cmd.Run()
-		if err != nil {
-			return pkgerrors.Wrap(err, "docker push error")
-		}
-
-		if archMatches != nil {
-			arch := archMatches[1]
-			manifestName := supportedArchs.ReplaceAllString(image, ":")
-
-			cmdString := fmt.Sprintf("docker manifest create -a --insecure %s %s", manifestName, image)
-			cmd = exec.Command("sh", "-c", cmdString)
-			cmd.Stdout = t.log.Writer()
-			cmd.Stderr = t.log.Writer()
-			err = cmd.Run()
+			// only push image
+			err = t.docker.PushImage(image)
 			if err != nil {
-				return pkgerrors.Wrap(err, "docker manifest create error")
+				return err
+			}
+		} else {
+			// when arch != "", need create manifest list
+			manifestName := fmt.Sprintf("%s:%s", name, tag)
+			manifestSet.Insert(manifestName) // To speed up, push manifests after all changes have made
+
+			err = t.docker.PushImageWithArch(image, manifestName, arch, "", false)
+			if err != nil {
+				return err
 			}
 
-			if arch == "arm64" {
-				cmdString := fmt.Sprintf("docker manifest annotate --arch arm64 --variant unknown %s %s", manifestName, image)
-				cmd = exec.Command("sh", "-c", cmdString)
-				cmd.Stdout = t.log.Writer()
-				cmd.Stderr = t.log.Writer()
-				err = cmd.Run()
+			if arch == spec.Arm64 {
+				err = t.docker.PushArm64Variants(image, name, tag)
 				if err != nil {
-					return pkgerrors.Wrap(err, "docker manifest annotate error")
+					return err
 				}
-			}
-
-			cmdString = fmt.Sprintf("docker manifest push --insecure %s ", manifestName)
-			cmd = exec.Command("sh", "-c", cmdString)
-			cmd.Stdout = t.log.Writer()
-			cmd.Stderr = t.log.Writer()
-			err = cmd.Run()
-			if err != nil {
-				return pkgerrors.Wrap(err, "docker manifest push error")
 			}
 		}
 
 		t.log.Printf("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))
+	}
+
+	sortedManifests := manifestSet.List()
+	for i, manifest := range sortedManifests {
+		err = t.docker.PushManifest(manifest, true)
+		if err != nil {
+			return nil
+		}
+		t.log.Printf("push manifest %s to registry success[%d/%d]", manifest, i+1, len(sortedManifests))
 	}
 
 	return nil

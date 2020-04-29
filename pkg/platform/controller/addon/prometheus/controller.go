@@ -647,7 +647,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 		return err
 	}
 	// Deployment for prometheus-operator
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deployPrometheusOperatorApps(components)); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deployPrometheusOperatorApps(components, prometheus)); err != nil {
 		return err
 	}
 
@@ -664,7 +664,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	}
 
 	// secret for alertmanager
-	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(webhookAddr)); err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(webhookAddr, prometheus.Spec.AlertRepeatInterval)); err != nil {
 		return err
 	}
 
@@ -679,7 +679,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	}
 
 	// Crd alertmanager instance
-	if _, err := mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Create(createAlertManagerCRD(components)); err != nil {
+	if _, err := mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Create(createAlertManagerCRD(components, prometheus)); err != nil {
 		return err
 	}
 
@@ -722,7 +722,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 		return err
 	}
 	// Crd prometheus instance
-	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(createPrometheusCRD(components, cluster.Name, remoteWrites, remoteReads, c.remoteType)); err != nil {
+	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(createPrometheusCRD(components, prometheus, cluster.Name, remoteWrites, remoteReads, c.remoteType)); err != nil {
 		return err
 	}
 	prometheus.Status.SubVersion[PrometheusService] = components.PrometheusService.Tag
@@ -759,11 +759,11 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	}
 	// Deployment for kube-state-metrics
 	if extensionsAPIGroup {
-		if _, err := kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Create(createExtensionDeploymentForMetrics(components)); err != nil {
+		if _, err := kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Create(createExtensionDeploymentForMetrics(components, prometheus)); err != nil {
 			return err
 		}
 	} else {
-		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(createAppsDeploymentForMetrics(components)); err != nil {
+		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(createAppsDeploymentForMetrics(components, prometheus)); err != nil {
 			return err
 		}
 	}
@@ -890,8 +890,8 @@ func clusterRoleBindingPrometheusOperator() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func deployPrometheusOperatorApps(components images.Components) *appsv1.Deployment {
-	return &appsv1.Deployment{
+func deployPrometheusOperatorApps(components images.Components, prometheus *v1.Prometheus) *appsv1.Deployment {
+	deploy := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "apps/v1",
@@ -956,6 +956,25 @@ func deployPrometheusOperatorApps(components images.Components) *appsv1.Deployme
 			},
 		},
 	}
+	if prometheus.Spec.RunOnMaster {
+		deploy.Spec.Template.Spec.Affinity = &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "node-role.kubernetes.io/master",
+									Operator: corev1.NodeSelectorOpExists,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+	return deploy
 }
 
 var selectorForPrometheus = metav1.LabelSelector{
@@ -1056,7 +1075,7 @@ func clusterRoleBindingPrometheus() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func createPrometheusCRD(components images.Components, clusterName string, remoteWrites, remoteReads []string, remoteType string) *monitoringv1.Prometheus {
+func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus, clusterName string, remoteWrites, remoteReads []string, remoteType string) *monitoringv1.Prometheus {
 	remoteReadSpecs := []monitoringv1.RemoteReadSpec{}
 	for _, r := range remoteReads {
 		if r == "nil" {
@@ -1096,7 +1115,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
 						SourceLabels: []string{"__name__"},
-						Regex:        "k8s_(.*)|kube_pod_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+						Regex:        "k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 						Action:       "keep",
 					},
 				}
@@ -1112,7 +1131,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 					Action:       "keep",
 				},
 			}
@@ -1127,7 +1146,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 					Action:       "keep",
 				},
 			}
@@ -1144,7 +1163,7 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 
 		remoteWriteSpecs = append(remoteWriteSpecs, rw)
 	}
-	return &monitoringv1.Prometheus{
+	monitorV1Prometheus := &monitoringv1.Prometheus{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: monitoring.GroupName + "/v1",
 			Kind:       monitoringv1.PrometheusesKind,
@@ -1166,6 +1185,8 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 			ScrapeInterval:     "60s",
 			RemoteRead:         remoteReadSpecs,
 			RemoteWrite:        remoteWriteSpecs,
+			Retention:          "30m",
+			RetentionSize:      "5GB",
 			EvaluationInterval: "1m",
 			AdditionalScrapeConfigs: &corev1.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{Name: prometheusSecret},
@@ -1217,6 +1238,38 @@ func createPrometheusCRD(components images.Components, clusterName string, remot
 			Version:                         components.PrometheusService.Tag,
 		},
 	}
+	if prometheus.Spec.RunOnMaster {
+		monitorV1Prometheus.Spec.Affinity = &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "node-role.kubernetes.io/master",
+									Operator: corev1.NodeSelectorOpExists,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+	if len(prometheus.Spec.Resources.Requests) > 0 {
+		resources := corev1.ResourceRequirements{
+			Limits:   corev1.ResourceList{},
+			Requests: corev1.ResourceList{},
+		}
+		for k, v := range prometheus.Spec.Resources.Limits {
+			resources.Limits[corev1.ResourceName(k)] = v
+		}
+		for k, v := range prometheus.Spec.Resources.Requests {
+			resources.Requests[corev1.ResourceName(k)] = v
+		}
+		monitorV1Prometheus.Spec.Resources = resources
+	}
+	return monitorV1Prometheus
 }
 
 func createSecretForPrometheus() *corev1.Secret {
@@ -1291,8 +1344,11 @@ var selectorForAlertManager = metav1.LabelSelector{
 	MatchLabels: map[string]string{"alertmanager": alertManagerCRDName, "app": "alertmanager"},
 }
 
-func createSecretForAlertmanager(webhookAddr string) *corev1.Secret {
-	config := configForAlertManager(webhookAddr)
+func createSecretForAlertmanager(webhookAddr string, repeatInterval string) *corev1.Secret {
+	if repeatInterval == "" {
+		repeatInterval = "1200s"
+	}
+	config := configForAlertManager(webhookAddr, repeatInterval)
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      alertManagerSecret,
@@ -1319,8 +1375,8 @@ func serviceAccountAlertmanager() *corev1.ServiceAccount {
 	}
 }
 
-func createAlertManagerCRD(components images.Components) *monitoringv1.Alertmanager {
-	return &monitoringv1.Alertmanager{
+func createAlertManagerCRD(components images.Components, prometheus *v1.Prometheus) *monitoringv1.Alertmanager {
+	monitorV1Alertmanager := &monitoringv1.Alertmanager{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: monitoring.GroupName + "/v1",
 			Kind:       monitoringv1.AlertmanagersKind,
@@ -1338,6 +1394,13 @@ func createAlertManagerCRD(components images.Components) *monitoringv1.Alertmana
 					"prometheus.io/port":   "9093",
 				},
 			},
+			Tolerations: []corev1.Toleration{
+				{
+					Key:      "node-role.kubernetes.io/master",
+					Operator: corev1.TolerationOpExists,
+					Effect:   corev1.TaintEffectNoSchedule,
+				},
+			},
 			BaseImage: containerregistryutil.GetImagePrefix(alertManagerImagePath),
 			Replicas:  controllerutil.Int32Ptr(3),
 			SecurityContext: &corev1.PodSecurityContext{
@@ -1349,6 +1412,25 @@ func createAlertManagerCRD(components images.Components) *monitoringv1.Alertmana
 			Version:            components.AlertManagerService.Tag,
 		},
 	}
+	if prometheus.Spec.RunOnMaster {
+		monitorV1Alertmanager.Spec.Affinity = &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "node-role.kubernetes.io/master",
+									Operator: corev1.NodeSelectorOpExists,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+	return monitorV1Alertmanager
 }
 
 func createServiceForAlerterManager() *corev1.Service {
@@ -1404,21 +1486,20 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 							Name:  nodeExporterDaemonSet,
 							Image: components.NodeExporterService.FullName(),
 							Args: []string{
-								"--path.procfs=/host/proc",
-								"--path.sysfs=/host/sys",
+								"--path.rootfs=/host",
 								"--no-collector.arp",
 								"--no-collector.bcache",
 								"--no-collector.bonding",
 								"--no-collector.buddyinfo",
 								"--no-collector.conntrack",
 								"--no-collector.cpu",
+								"--no-collector.cpufreq",
 								"--collector.diskstats",
 								"--no-collector.drbd",
 								"--no-collector.edac",
 								"--no-collector.entropy",
 								"--no-collector.filefd",
 								"--collector.filesystem",
-								"--no-collector.gmond",
 								"--no-collector.hwmon",
 								"--no-collector.infiniband",
 								"--no-collector.interrupts",
@@ -1427,13 +1508,15 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 								"--no-collector.loadavg",
 								"--no-collector.logind",
 								"--no-collector.mdadm",
-								"--no-collector.megacli",
 								"--no-collector.meminfo",
 								"--no-collector.meminfo_numa",
 								"--no-collector.mountstats",
 								"--collector.netdev",
 								"--no-collector.netstat",
+								"--no-collector.netclass",
 								"--no-collector.nfs",
+								"--no-collector.nfsd",
+								"--no-collector.pressure",
 								"--no-collector.ntp",
 								"--no-collector.qdisc",
 								"--no-collector.runit",
@@ -1454,25 +1537,10 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 							Ports: []corev1.ContainerPort{
 								{Name: "metrics", ContainerPort: 9100, HostPort: 9100},
 							},
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    *resource.NewMilliQuantity(100, resource.DecimalSI),
-									corev1.ResourceMemory: *resource.NewQuantity(128*1024*1024, resource.BinarySI),
-								},
-								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    *resource.NewMilliQuantity(100, resource.DecimalSI),
-									corev1.ResourceMemory: *resource.NewQuantity(1*1024*1024*1024, resource.BinarySI),
-								},
-							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									MountPath: "/host/proc",
-									Name:      "proc",
-									ReadOnly:  true,
-								},
-								{
-									MountPath: "/host/sys",
-									Name:      "sys",
+									MountPath: "/host",
+									Name:      "root",
 									ReadOnly:  true,
 								},
 							},
@@ -1482,18 +1550,10 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 					HostPID:     true,
 					Volumes: []corev1.Volume{
 						{
-							Name: "proc",
+							Name: "root",
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/proc",
-								},
-							},
-						},
-						{
-							Name: "sys",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/sys",
+									Path: "/",
 								},
 							},
 						},
@@ -1704,8 +1764,8 @@ func createRoleBingdingForMetrics() *rbacv1.RoleBinding {
 	}
 }
 
-func createExtensionDeploymentForMetrics(components images.Components) *extensionsv1beta1.Deployment {
-	return &extensionsv1beta1.Deployment{
+func createExtensionDeploymentForMetrics(components images.Components, prometheus *v1.Prometheus) *extensionsv1beta1.Deployment {
+	deploy := &extensionsv1beta1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "apps/v1",
@@ -1758,10 +1818,29 @@ func createExtensionDeploymentForMetrics(components images.Components) *extensio
 			},
 		},
 	}
+	if prometheus.Spec.RunOnMaster {
+		deploy.Spec.Template.Spec.Affinity = &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "node-role.kubernetes.io/master",
+									Operator: corev1.NodeSelectorOpExists,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+	return deploy
 }
 
-func createAppsDeploymentForMetrics(components images.Components) *appsv1.Deployment {
-	return &appsv1.Deployment{
+func createAppsDeploymentForMetrics(components images.Components, prometheus *v1.Prometheus) *appsv1.Deployment {
+	deploy := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "apps/v1",
@@ -1814,6 +1893,25 @@ func createAppsDeploymentForMetrics(components images.Components) *appsv1.Deploy
 			},
 		},
 	}
+	if prometheus.Spec.RunOnMaster {
+		deploy.Spec.Template.Spec.Affinity = &corev1.Affinity{
+			NodeAffinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "node-role.kubernetes.io/master",
+									Operator: corev1.NodeSelectorOpExists,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+	return deploy
 }
 
 func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData bool) error {
