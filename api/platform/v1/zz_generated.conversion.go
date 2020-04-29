@@ -1674,6 +1674,7 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	out.NetworkType = platform.NetworkType(in.NetworkType)
 	out.NetworkDevice = in.NetworkDevice
 	out.ClusterCIDR = in.ClusterCIDR
+	out.ServiceCIDR = (*string)(unsafe.Pointer(in.ServiceCIDR))
 	out.DNSDomain = in.DNSDomain
 	out.PublicAlternativeNames = *(*[]string)(unsafe.Pointer(&in.PublicAlternativeNames))
 	if err := Convert_v1_ClusterFeature_To_platform_ClusterFeature(&in.Features, &out.Features, s); err != nil {
@@ -1688,7 +1689,7 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	out.APIServerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.APIServerExtraArgs))
 	out.ControllerManagerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.ControllerManagerExtraArgs))
 	out.SchedulerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.SchedulerExtraArgs))
-	out.ServiceCIDR = (*string)(unsafe.Pointer(in.ServiceCIDR))
+	out.ClusterCredentialRef = (*corev1.LocalObjectReference)(unsafe.Pointer(in.ClusterCredentialRef))
 	return nil
 }
 
@@ -1706,6 +1707,7 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	out.NetworkType = NetworkType(in.NetworkType)
 	out.NetworkDevice = in.NetworkDevice
 	out.ClusterCIDR = in.ClusterCIDR
+	out.ServiceCIDR = (*string)(unsafe.Pointer(in.ServiceCIDR))
 	out.DNSDomain = in.DNSDomain
 	out.PublicAlternativeNames = *(*[]string)(unsafe.Pointer(&in.PublicAlternativeNames))
 	if err := Convert_platform_ClusterFeature_To_v1_ClusterFeature(&in.Features, &out.Features, s); err != nil {
@@ -1720,7 +1722,7 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	out.APIServerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.APIServerExtraArgs))
 	out.ControllerManagerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.ControllerManagerExtraArgs))
 	out.SchedulerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.SchedulerExtraArgs))
-	out.ServiceCIDR = (*string)(unsafe.Pointer(in.ServiceCIDR))
+	out.ClusterCredentialRef = (*corev1.LocalObjectReference)(unsafe.Pointer(in.ClusterCredentialRef))
 	return nil
 }
 

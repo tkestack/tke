@@ -433,6 +433,10 @@ message ClusterSpec {
   // +optional
   optional string clusterCIDR = 8;
 
+  // ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+  // +optional
+  optional string serviceCIDR = 19;
+
   // DNSDomain is the dns domain used by k8s services. Defaults to "cluster.local".
   optional string dnsDomain = 9;
 
@@ -463,9 +467,10 @@ message ClusterSpec {
   // +optional
   map<string, string> schedulerExtraArgs = 18;
 
-  // ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+  // If not specified, the provider should at least create one;
+  // If specified, provider should validates.
   // +optional
-  optional string serviceCIDR = 19;
+  optional k8s.io.api.core.v1.LocalObjectReference clusterCredentialRef = 20;
 }
 
 // ClusterStatus represents information about the status of a cluster.

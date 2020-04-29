@@ -21,6 +21,8 @@ package storage
 import (
 	"context"
 
+	"tkestack.io/tke/pkg/util/apiclient"
+
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -31,7 +33,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -67,7 +68,7 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	if controllerutil.IsClusterVersionBefore1_9(client) {
+	if apiclient.ClusterVersionIsBefore19(client) {
 		return listPodsByAppsBeta(client, namespaceName, name, options)
 	}
 	return listPodsByApps(client, namespaceName, name, options)

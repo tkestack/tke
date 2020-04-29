@@ -26,6 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"tkestack.io/tke/pkg/util/apiclient"
+
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	promopk8sutil "github.com/coreos/prometheus-operator/pkg/k8sutil"
@@ -653,7 +655,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 
 	prometheus.Status.SubVersion[PrometheusOperatorService] = components.PrometheusOperatorService.Tag
 
-	extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+	extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 
 	// get notify webhook address
 	var webhookAddr string
@@ -686,7 +688,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	prometheus.Status.SubVersion[AlertManagerService] = components.AlertManagerService.Tag
 
 	// Secret for prometheus-etcd
-	credential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
+	credential, err := util.GetClusterCredentialV1(c.client.PlatformV1(), cluster)
 	if err != nil {
 		return err
 	}
@@ -1940,7 +1942,7 @@ func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData boo
 		return err
 	}
 
-	extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+	extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 
 	// delete prometheus
 	err = kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(prometheusETCDSecret, &metav1.DeleteOptions{})
@@ -2295,7 +2297,7 @@ func upgradeVersion(kubeClient *kubernetes.Clientset, workLoad, patch string) er
 
 	switch workLoad {
 	case kubeStateWorkLoad, prometheusWorkLoad, AlertManagerWorkLoad:
-		extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+		extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 		if extensionsAPIGroup {
 			_, err = kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Patch(workLoad, types.JSONPatchType, []byte(patch))
 		} else {

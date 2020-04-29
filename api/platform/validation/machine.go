@@ -29,7 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	utilmath "tkestack.io/tke/pkg/util/math"
@@ -40,7 +40,7 @@ import (
 const MaxTimeOffset = 5 * 300
 
 // ValidateMachine validates a given machine.
-func ValidateMachine(machine *platform.Machine, platformClient internalversion.PlatformInterface) field.ErrorList {
+func ValidateMachine(machine *platform.Machine, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&machine.ObjectMeta, false, apimachineryvalidation.NameIsDNSLabel, field.NewPath("metadata"))
 	allErrs = append(allErrs, ValidateMachineSpec(&machine.Spec, field.NewPath("spec"), platformClient)...)
 	allErrs = append(allErrs, ValidateMachineByProvider(machine)...)
@@ -63,7 +63,7 @@ func ValidateMachineUpdate(machine *platform.Machine, oldMachine *platform.Machi
 }
 
 // ValidateMachineSpec validates a given machine spec.
-func ValidateMachineSpec(spec *platform.MachineSpec, fldPath *field.Path, platformClient internalversion.PlatformInterface) field.ErrorList {
+func ValidateMachineSpec(spec *platform.MachineSpec, fldPath *field.Path, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, ValidateMachineSpecType(spec.Type, fldPath.Child("type"))...)
@@ -178,7 +178,7 @@ func ValidateSSH(fldPath *field.Path, ip string, port int, user string, password
 }
 
 // ValidateMachineWithCluster validates a given machine by ip with cluster.
-func ValidateMachineWithCluster(ip string, fldPath *field.Path, cluster *platform.Cluster, platformClient internalversion.PlatformInterface) field.ErrorList {
+func ValidateMachineWithCluster(ip string, fldPath *field.Path, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for _, machine := range cluster.Spec.Machines {
 		if machine.IP == ip {
@@ -210,7 +210,7 @@ func ValidateMachineWithCluster(ip string, fldPath *field.Path, cluster *platfor
 }
 
 // ValidateClusterName validates a given clusterName and return cluster if exists.
-func ValidateClusterName(clusterName string, fldPath *field.Path, cluster *platform.Cluster, platformClient internalversion.PlatformInterface) field.ErrorList {
+func ValidateClusterName(clusterName string, fldPath *field.Path, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if clusterName == "" {

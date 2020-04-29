@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
+	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/ipallocator"
 	"tkestack.io/tke/pkg/util/validation"
@@ -38,7 +39,7 @@ var (
 )
 
 // ValidateCluster validates a given Cluster.
-func ValidateCluster(obj *platform.Cluster) field.ErrorList {
+func ValidateCluster(obj *types.Cluster) field.ErrorList {
 	allErrs := ValidatClusterSpec(&obj.Spec, field.NewPath("spec"), obj.Status.Phase)
 
 	return allErrs

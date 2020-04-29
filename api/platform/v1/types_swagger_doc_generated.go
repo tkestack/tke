@@ -270,10 +270,11 @@ func (ClusterResource) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterSpec = map[string]string{
-	"":            "ClusterSpec is a description of a cluster.",
-	"finalizers":  "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
-	"dnsDomain":   "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
-	"serviceCIDR": "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+	"":                     "ClusterSpec is a description of a cluster.",
+	"finalizers":           "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
+	"serviceCIDR":          "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+	"dnsDomain":            "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
+	"clusterCredentialRef": "If not specified, the provider should at least create one; If specified, provider should validates.",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {

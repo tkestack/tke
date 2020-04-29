@@ -36,6 +36,8 @@ import (
 	"strings"
 	"time"
 
+	v1 "tkestack.io/tke/pkg/platform/types/v1"
+
 	"github.com/emicklei/go-restful"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -86,7 +88,7 @@ import (
 type TKE struct {
 	Config  *config.Config           `json:"config"`
 	Para    *types.CreateClusterPara `json:"para"`
-	Cluster *clusterprovider.Cluster `json:"cluster"`
+	Cluster *v1.Cluster              `json:"cluster"`
 	Step    int                      `json:"step"`
 
 	log             *stdlog.Logger
@@ -108,7 +110,7 @@ func New(config *config.Config) *TKE {
 
 	c.Config = config
 	c.Para = new(types.CreateClusterPara)
-	c.Cluster = new(clusterprovider.Cluster)
+	c.Cluster = new(v1.Cluster)
 	c.progress = new(types.ClusterProgress)
 	c.progress.Status = types.StatusUnknown
 
