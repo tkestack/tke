@@ -62,6 +62,24 @@ func GetLocalIdentity(authClient authinternalclient.AuthInterface, tenantID, use
 	return localIdentityList.Items[0], nil
 }
 
+func GetUserByName(authClient authinternalclient.AuthInterface, tenantID, username string) (auth.User, error) {
+	tenantUserSelector := fields.AndSelectors(
+		fields.OneTermEqualSelector("spec.tenantID", tenantID),
+		fields.OneTermEqualSelector("spec.username", username))
+
+	userList, err := authClient.Users().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	if err != nil {
+		return auth.User{}, err
+	}
+
+	if len(userList.Items) == 0 {
+		return auth.User{}, apierrors.NewNotFound(auth.Resource("users"), username)
+	}
+
+	return userList.Items[0], nil
+
+}
+
 func UserKey(tenantID string, name string) string {
 	return fmt.Sprintf("%s%s", UserPrefix(tenantID), name)
 }

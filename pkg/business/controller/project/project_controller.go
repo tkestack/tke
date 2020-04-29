@@ -293,9 +293,14 @@ func (c *Controller) processPending(key string, cachedProject *cachedProject, pr
 		bindingRequest := av1.ProjectPolicyBindingRequest{
 			TenantID: project.Spec.TenantID,
 			Policies: []string{authutil.ProjectOwnerPolicyID(project.Spec.TenantID)},
-			Users:    []av1.Subject{{ID: project.Spec.Members[0]}},
+			Users:    []av1.Subject{},
 		}
-		result := &av1.ProjectPolicyBindingRequest{}
+
+		for _, name := range project.Spec.Members {
+			bindingRequest.Users = append(bindingRequest.Users, av1.Subject{Name: name})
+		}
+
+		result := &av1.ProjectPolicyBindingList{}
 		if err := c.authClient.RESTClient().Post().
 			Resource("projects").
 			Name(project.Name).

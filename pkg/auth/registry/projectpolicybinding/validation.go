@@ -56,7 +56,6 @@ func ValidateProjectPolicyBinding(binding *auth.ProjectPolicyBinding, authClient
 		}
 	}
 
-	// TODO maybe need to check projectID exists?
 	if binding.Spec.ProjectID == "" {
 		allErrs = append(allErrs, field.Required(fldSpecPath.Child("projectID"), "must specify projectID"))
 	}
@@ -64,16 +63,17 @@ func ValidateProjectPolicyBinding(binding *auth.ProjectPolicyBinding, authClient
 	var validUsers []auth.Subject
 	fldUserPath := field.NewPath("spec", "users")
 	for i, subj := range binding.Spec.Users {
-		if subj.ID == "" {
-			allErrs = append(allErrs, field.Required(fldUserPath, "must specify subject id"))
+		if subj.ID == "" && subj.Name == "" {
+			allErrs = append(allErrs, field.Required(fldUserPath, "must specify subject id or name"))
 			continue
 		}
 
-		if subj.Name == "" {
+		switch {
+		case subj.ID != "" && subj.Name == "":
 			val, err := authClient.Users().Get(util.CombineTenantAndName(binding.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					log.Warn("user of the policy is not found, will removed it", log.String("policy", binding.Name), log.String("user", subj.Name))
+					log.Warn("user is not found, will removed it", log.String("policy", binding.Name), log.String("user", subj.ID))
 				} else {
 					allErrs = append(allErrs, field.InternalError(fldUserPath, err))
 				}
@@ -85,7 +85,23 @@ func ValidateProjectPolicyBinding(binding *auth.ProjectPolicyBinding, authClient
 					validUsers = append(validUsers, binding.Spec.Users[i])
 				}
 			}
-		} else {
+		case subj.ID == "" && subj.Name != "":
+			user, err := util.GetUserByName(authClient, binding.Spec.TenantID, subj.Name)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					log.Warn("user is not found in tenant, will removed it", log.String("policy", binding.Name), log.String("user", subj.Name))
+				} else {
+					allErrs = append(allErrs, field.InternalError(fldUserPath, err))
+				}
+			} else {
+				if user.Spec.TenantID != binding.Spec.TenantID {
+					allErrs = append(allErrs, field.Invalid(fldUserPath, subj.ID, "must in the same tenant with the project"))
+				} else {
+					binding.Spec.Users[i].ID = user.Spec.ID
+					validUsers = append(validUsers, binding.Spec.Users[i])
+				}
+			}
+		default:
 			validUsers = append(validUsers, binding.Spec.Users[i])
 		}
 	}

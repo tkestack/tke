@@ -37,8 +37,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
-	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
-	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
@@ -67,18 +65,14 @@ type identityProvider struct {
 	tenantID       string
 	administrators []string
 
-	authClient          authinternalclient.AuthInterface
-	localIdentityLister authv1lister.LocalIdentityLister
-	localGroupLister    authv1lister.LocalGroupLister
+	authClient authinternalclient.AuthInterface
 }
 
-func NewDefaultIdentityProvider(tenantID string, administrators []string, authClient authinternalclient.AuthInterface, versionInformers versionedinformers.SharedInformerFactory) (identityprovider.IdentityProvider, error) {
+func NewDefaultIdentityProvider(tenantID string, administrators []string, authClient authinternalclient.AuthInterface) (identityprovider.IdentityProvider, error) {
 	return &identityProvider{
-		tenantID:            tenantID,
-		administrators:      administrators,
-		authClient:          authClient,
-		localIdentityLister: versionInformers.Auth().V1().LocalIdentities().Lister(),
-		localGroupLister:    versionInformers.Auth().V1().LocalGroups().Lister(),
+		tenantID:       tenantID,
+		administrators: administrators,
+		authClient:     authClient,
 	}, nil
 }
 

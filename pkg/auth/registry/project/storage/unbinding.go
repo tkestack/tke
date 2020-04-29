@@ -112,6 +112,10 @@ func (r *UnBindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		remainedUsers := make([]auth.Subject, 0)
 		for _, sub := range projectPolicy.Spec.Users {
 			if !util.InSubjects(sub, bind.Users) {
+				if sub.ID != "" {
+					sub.Name = ""
+				}
+
 				remainedUsers = append(remainedUsers, sub)
 			}
 		}
@@ -120,6 +124,7 @@ func (r *UnBindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		remainedGroups := make([]auth.Subject, 0)
 		for _, sub := range projectPolicy.Spec.Groups {
 			if !util.InSubjects(sub, bind.Groups) {
+				sub.Name = ""
 				remainedGroups = append(remainedGroups, sub)
 			}
 		}

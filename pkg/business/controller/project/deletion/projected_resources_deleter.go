@@ -282,6 +282,9 @@ func (d *projectedResourcesDeleter) deleteAllContent(project *businessv1.Project
 }
 
 func deleteBusinessUsersFromAuth(deleter *projectedResourcesDeleter, project *businessv1.Project) error {
+	if deleter.authClient == nil {
+		return nil
+	}
 	return deleter.authClient.ProjectPolicyBindings().DeleteCollection(&metav1.DeleteOptions{},
 		metav1.ListOptions{FieldSelector: fmt.Sprintf("spec.projectID=%s", project.Name)})
 }

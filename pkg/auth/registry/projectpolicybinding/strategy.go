@@ -82,7 +82,7 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	}
 
 	newBinding.Spec.Groups = util.RemoveDuplicateSubjects(newBinding.Spec.Groups)
-	newBinding.Spec.Users = util.RemoveDuplicateSubjects(newBinding.Spec.Users)
+	newBinding.Spec.Users = util.RemoveDuplicateSubjectsByIDOrName(newBinding.Spec.Users)
 }
 
 // NamespaceScoped is false for policies.
@@ -128,7 +128,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	}
 
 	binding.Spec.Groups = util.RemoveDuplicateSubjects(binding.Spec.Groups)
-	binding.Spec.Users = util.RemoveDuplicateSubjects(binding.Spec.Users)
+	binding.Spec.Users = util.RemoveDuplicateSubjectsByIDOrName(binding.Spec.Users)
 }
 
 // Validate validates a new policy.

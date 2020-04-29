@@ -108,7 +108,7 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 		}
 
 		for _, sub := range bind.Users {
-			if !util.InSubjects(sub, projectPolicy.Spec.Users) {
+			if !util.InSubjectsWithIDOrName(sub, projectPolicy.Spec.Users) {
 				projectPolicy.Spec.Users = append(projectPolicy.Spec.Users, sub)
 			}
 		}

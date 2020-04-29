@@ -247,7 +247,8 @@ func AddFieldLabelConversionsForUser(scheme *runtime.Scheme) error {
 			case "keyword",
 				"limit",
 				"policy",
-				"spec.tenantID":
+				"spec.tenantID",
+				"spec.username":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported: %s", label)

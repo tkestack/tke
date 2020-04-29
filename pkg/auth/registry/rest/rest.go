@@ -177,7 +177,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["groups/policies"] = groupRest.Policy
 		storageMap["groups/roles"] = groupRest.Role
 
-		idpRest := idpstorage.NewStorage(restOptionsGetter, authClient, s.VersionedInformers)
+		idpRest := idpstorage.NewStorage(restOptionsGetter, authClient)
 		storageMap["identityproviders"] = idpRest
 
 		cliRest := clistorage.NewStorage(restOptionsGetter, s.DexStorage)
