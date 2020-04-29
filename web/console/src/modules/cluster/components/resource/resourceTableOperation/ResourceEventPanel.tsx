@@ -73,6 +73,10 @@ const workloadTypeList = [
   {
     value: 'svc',
     label: 'Service'
+  },
+  {
+    value: 'tapp',
+    label: 'TApp'
   }
 ];
 interface ResourceEventPanelState {

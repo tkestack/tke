@@ -53,16 +53,15 @@ export class EditResourceContainerAdvancedPanel extends React.Component<Containe
           </FormItem>
           <FormItem label={t('运行命令')}>
             <div className="form-unit is-success">
-              <input
-                type="text"
-                placeholder=""
-                className="tc-15-input-text m"
+              <textarea
+                className="tc-15-input-textarea"
                 value={container.cmd}
                 onChange={e => actions.editWorkload.updateContainer({ cmd: e.target.value }, cKey)}
+                placeholder={t('注意每个命令单独一行')}
               />
               <p className="form-input-help text-label">
                 <Trans>
-                  <span style={{ verticalAlign: '-1px' }}>控制容器运行的输入命令，</span>
+                  <span style={{ verticalAlign: '-1px' }}>控制容器运行的输入命令</span>
                 </Trans>
               </p>
             </div>
@@ -73,6 +72,7 @@ export class EditResourceContainerAdvancedPanel extends React.Component<Containe
                 className="tc-15-input-textarea"
                 value={container.arg}
                 onChange={e => actions.editWorkload.updateContainer({ arg: e.target.value }, cKey)}
+                placeholder={t('注意每个参数单独一行')}
               />
               <p className="form-input-help text-label">
                 <Trans>

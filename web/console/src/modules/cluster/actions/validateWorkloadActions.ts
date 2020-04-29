@@ -349,16 +349,16 @@ export const validateWorkloadActions = {
   /** 校验annotations的value是否正确 */
   _validateWorkloadAnnotationsValue(value: string) {
     let status = 0,
-      message = '',
-      reg = /^([A-Za-z0-9][-A-Za-z0-9_\.]*)?[A-Za-z0-9]$/;
+      message = '';
+    // reg = /^([A-Za-z0-9][-A-Za-z0-9_\.]*)?[A-Za-z0-9]$/;
 
     // 验证key
     if (!value) {
       status = 2;
       message = t('Value不能为空');
-    } else if (!reg.test(value)) {
-      status = 2;
-      message = t('Value格式不正确');
+      // } else if (!reg.test(value)) {
+      //   status = 2;
+      //   message = t('Value格式不正确');
     } else {
       status = 1;
       message = '';
