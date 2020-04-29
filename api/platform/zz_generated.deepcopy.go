@@ -767,6 +767,11 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 		*out = make([]FinalizerName, len(*in))
 		copy(*out, *in)
 	}
+	if in.ServiceCIDR != nil {
+		in, out := &in.ServiceCIDR, &out.ServiceCIDR
+		*out = new(string)
+		**out = **in
+	}
 	if in.PublicAlternativeNames != nil {
 		in, out := &in.PublicAlternativeNames, &out.PublicAlternativeNames
 		*out = make([]string, len(*in))
@@ -816,9 +821,9 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 			(*out)[key] = val
 		}
 	}
-	if in.ServiceCIDR != nil {
-		in, out := &in.ServiceCIDR, &out.ServiceCIDR
-		*out = new(string)
+	if in.ClusterCredentialRef != nil {
+		in, out := &in.ClusterCredentialRef, &out.ClusterCredentialRef
+		*out = new(v1.LocalObjectReference)
 		**out = **in
 	}
 	return

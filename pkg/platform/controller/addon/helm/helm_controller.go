@@ -23,6 +23,8 @@ import (
 	"reflect"
 	"time"
 
+	"tkestack.io/tke/pkg/util/apiclient"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -326,7 +328,7 @@ func createProvisioner(helm *v1.Helm, client clientset.Interface) (Provisioner, 
 	if err != nil {
 		return nil, err
 	}
-	isExtensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+	isExtensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 
 	provisioner := NewProvisioner(kubeClient, &Option{
 		version:              helm.Spec.Version,

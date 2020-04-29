@@ -21,6 +21,8 @@ package clustercredential
 import (
 	"context"
 
+	"tkestack.io/tke/api/platform/validation"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -99,7 +101,7 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 
 // Validate validates a new clusterCredential.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return Validate(obj.(*platform.ClusterCredential), s.platformClient)
+	return validation.ValidateClusterCredential(obj.(*platform.ClusterCredential), s.platformClient)
 }
 
 // AllowCreateOnUpdate is false for persistent events
@@ -120,7 +122,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end namespace set.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateUpdate(obj.(*platform.ClusterCredential), old.(*platform.ClusterCredential), s.platformClient)
+	return validation.ValidateUpdateClusterCredential(obj.(*platform.ClusterCredential), old.(*platform.ClusterCredential), s.platformClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
