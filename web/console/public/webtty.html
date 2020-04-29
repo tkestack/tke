@@ -36,6 +36,7 @@
   <meta name="msapplication-TileColor" content="#262626">
   <meta name="msapplication-TileImage" content="/static/image/ms-icon-144x144.png">
   <meta name="theme-color" content="#262626">
+  <script src="/static/js/base64.min.js"></script>
   <script src="/static/js/xterm.js"></script>
   <script src="/static/js/xterm-addon-fit.js"></script>
 </head>
@@ -65,15 +66,25 @@
     sock.onopen = function(event) {
       var msg = {type: "resize", rows: term.rows, cols: term.cols};
       sock.send(JSON.stringify(msg));
+      msg = {type: "input", input: Base64.encode("export TERM=xterm && clear \r")};
+      sock.send(JSON.stringify(msg));
     }
     sock.onclose = function(event) {
-      console.log("Websocket closed");
+      if (event.wasClean) {
+		console.log("[close] Connection closed cleanly, code: " + event.code + ", reason: " + event.reason);
+	  } else {
+	    console.log("[close] Connection died");
+		term.write("\r");
+	  }
+	  term.write("Connection Reset By Peer! Try Refresh");
     }
     sock.onmessage = function(event) {
-      term.write(event.data);
+      term.write(Base64.decode(event.data));
     }
     sock.onerror = function(event) {
-      console.log("on error");
+      console.log('[error] Connection error');
+	  term.write("error: " + event.message);
+	  term.destroy();
     }
 
     window.addEventListener("resize", function() {
@@ -83,7 +94,7 @@
     })
 
     term.onData(input => {
-      var msg = {type: "input", input: input};
+      var msg = {type: "input", input: Base64.encode(input)};
       sock.send(JSON.stringify(msg));
     });
 

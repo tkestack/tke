@@ -19,11 +19,12 @@
 package webtty
 
 import (
-	"encoding/json"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 
@@ -34,6 +35,25 @@ import (
 	"tkestack.io/tke/pkg/gateway/token"
 	"tkestack.io/tke/pkg/util/log"
 )
+
+const (
+	// endOfTransmission defines end transmission flag.
+	endOfTransmission = "\u0004"
+	// bufferSize specify I/O buffer sizes. If a buffer size is zero, then buffers
+	// allocated by the HTTP server are used. The I/O buffer sizes do not limit
+	// the size of the messages that can be sent or received.
+	bufferSize = 1024
+	// writeWait defines time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
+)
+
+var wsUpgrader = websocket.Upgrader{
+	ReadBufferSize:  bufferSize,
+	WriteBufferSize: bufferSize,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 type handler struct {
 	url          *url.URL
@@ -111,9 +131,9 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		command = "/bin/sh"
 	}
 
-	wsConn, err := InitWebsocket(w, req)
+	conn, err := wsUpgrader.Upgrade(w, req, nil)
 	if err != nil {
-		log.Error("Failed tp init websocket", log.Err(err))
+		log.Error("Failed initialize websocket connection", log.Err(err))
 		http.Error(w, "Internal Error", http.StatusInternalServerError)
 		return
 	}
@@ -135,7 +155,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	handler := &streamHandler{wsConn: wsConn, resizeEvent: make(chan remotecommand.TerminalSize)}
+	handler := &streamHandler{conn: conn, resizeEvent: make(chan remotecommand.TerminalSize)}
 	if err := executor.Stream(remotecommand.StreamOptions{
 		Stdin:             handler,
 		Stdout:            handler,
@@ -150,7 +170,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 type streamHandler struct {
-	wsConn      *WSConnection
+	conn        *websocket.Conn
 	resizeEvent chan remotecommand.TerminalSize
 }
 
@@ -161,38 +181,71 @@ type xtermMessage struct {
 	Cols    uint16 `json:"cols"`
 }
 
-func (handler *streamHandler) Next() (size *remotecommand.TerminalSize) {
-	ret := <-handler.resizeEvent
-	size = &ret
-	return
+// Next handles pty->process resize events, called in a loop from remotecommand
+// as long as the process is running.
+func (handler *streamHandler) Next() *remotecommand.TerminalSize {
+	select {
+	case size := <-handler.resizeEvent:
+		return &size
+	}
 }
 
+// Read handles pty->process messages (stdin, resize), called in a loop from
+// remotecommand as long as the process is running.
 func (handler *streamHandler) Read(p []byte) (int, error) {
-	msg, err := handler.wsConn.Read()
-	if err != nil {
-		return 0, err
-	}
-
 	var xtermMsg xtermMessage
-	if err = json.Unmarshal(msg.Data, &xtermMsg); err != nil {
-		return 0, nil
+	if err := handler.conn.ReadJSON(&xtermMsg); err != nil {
+		log.Error("Failed to read and unmarshal message from websocket", log.Err(err))
+		return copy(p, endOfTransmission), err
 	}
 
-	size := 0
-	if xtermMsg.MsgType == "resize" {
+	switch xtermMsg.MsgType {
+	case "resize":
 		handler.resizeEvent <- remotecommand.TerminalSize{
 			Width:  xtermMsg.Cols,
 			Height: xtermMsg.Rows,
 		}
-	} else if xtermMsg.MsgType == "input" {
-		size = len(xtermMsg.Input)
-		copy(p, xtermMsg.Input)
+		return 0, nil
+	case "input":
+		if len(xtermMsg.Input) == 0 {
+			return 0, nil
+		}
+		input, err := decodeInputMessage(xtermMsg.Input)
+		if err != nil {
+			return copy(p, endOfTransmission), err
+		}
+		return copy(p, input), nil
+	default:
+		log.Error("Unknown message type from websocket", log.String("type", xtermMsg.MsgType))
+		return copy(p, endOfTransmission), fmt.Errorf("unknown message type %s from websocket", xtermMsg.MsgType)
+	}
+}
+
+// Write handles process->pty stdout, called from remotecommand whenever there
+// is any output.
+func (handler *streamHandler) Write(p []byte) (int, error) {
+	size := len(p)
+	if size == 0 {
+		return 0, nil
+	}
+	output := encodeOutputMessage(p)
+	_ = handler.conn.SetWriteDeadline(time.Now().Add(writeWait))
+	if err := handler.conn.WriteMessage(websocket.TextMessage, []byte(output)); err != nil {
+		log.Error("Failed write message to websocket connection", log.Err(err))
+		return size, err
 	}
 	return size, nil
 }
 
-func (handler *streamHandler) Write(p []byte) (size int, err error) {
-	size = len(p)
-	err = handler.wsConn.Write(websocket.TextMessage, p)
-	return
+// Close shutdown the websocket connection.
+func (handler *streamHandler) Close() error {
+	return handler.conn.Close()
+}
+
+func decodeInputMessage(input string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(input)
+}
+
+func encodeOutputMessage(output []byte) string {
+	return base64.StdEncoding.EncodeToString(output)
 }
