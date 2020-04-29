@@ -22,7 +22,6 @@ import (
 	"context"
 
 	"github.com/casbin/casbin/v2"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,7 +93,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 		tenantID, name = util.ParseTenantAndName(name)
 	}
 
-	idp, ok := identityprovider.IdentityProvidersStore[tenantID]
+	idp, ok := identityprovider.GetIdentityProvider(tenantID)
 	if !ok {
 		log.Error("Tenant has no related identity providers", log.String("tenantID", tenantID))
 		return nil, apierrors.NewNotFound(auth.Resource("user"), name)
@@ -119,7 +118,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		}
 	}
 
-	idp, ok := identityprovider.IdentityProvidersStore[tenantID]
+	idp, ok := identityprovider.GetIdentityProvider(tenantID)
 	if !ok {
 		log.Error("Tenant has no related identity providers", log.String("tenantID", tenantID))
 		return &auth.UserList{}, nil

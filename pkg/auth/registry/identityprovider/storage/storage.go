@@ -22,22 +22,22 @@ import (
 	"context"
 	"encoding/json"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/ldap"
-	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
-	"tkestack.io/tke/pkg/util/log"
-
 	dexldap "github.com/dexidp/dex/connector/ldap"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	oidcidp "tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/ldap"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
 	"tkestack.io/tke/pkg/auth/registry/identityprovider"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // Storage includes storage for signing keys and all sub resources.
@@ -79,6 +79,13 @@ type REST struct {
 	versionedInformers versionedinformers.SharedInformerFactory
 }
 
+var _ rest.ShortNamesProvider = &REST{}
+
+// ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
+func (r *REST) ShortNames() []string {
+	return []string{"idp"}
+}
+
 func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var idp oidcidp.IdentityProvider
 	var err error
@@ -108,7 +115,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 
 	result, err := r.Store.Create(ctx, obj, createValidation, options)
 	if err == nil && idp != nil {
-		oidcidp.IdentityProvidersStore[idpObj.Name] = idp
+		oidcidp.SetIdentityProvider(idpObj.Name, idp)
 	}
 
 	return result, err

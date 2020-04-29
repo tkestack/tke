@@ -18,7 +18,7 @@ Cron 格式说明如下：
 ### 创建 CronJob
 1. 登录TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】。
 2. 选择需要创建CronJob的业务下相应的命名空间，展开工作负载下拉项，进入CronJob管理页面。如下图所示：
-   ![](images/CronJobNew.png)
+   ![](../../../../../../images/CronJobNew.png)
 3. 单击【创建】按钮，进入 新建Workload页面。
 4. 根据实际需求，设置 CronJob 参数。关键参数信息如下：
  - **工作负载名**：输入自定义名称。

@@ -12,7 +12,7 @@
 
 1. 在集群安装时，配置OIDC认证信息，关于OIDC配置信息，请参考[Configuring the API Server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server)。
 
-![installer-oidc](../Images/installer-oidc.png)
+![installer-oidc](../../../images/installer-oidc.png)
 
 2. 集群安装完成后，可以通过调用API的形式切换认证模式为OIDC或LDAP
 
