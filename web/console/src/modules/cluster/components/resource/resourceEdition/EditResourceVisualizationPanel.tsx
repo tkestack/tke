@@ -1077,7 +1077,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
       // 如果有运行命令 command: string[]
       if (c.cmd) {
-        containerItem['command'] = [c.cmd];
+        containerItem['command'] = c.cmd.trim().split('\n');
       }
 
       // 如果有运行参数
