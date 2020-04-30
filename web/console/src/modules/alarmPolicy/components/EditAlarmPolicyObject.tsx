@@ -60,7 +60,7 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
       return <noscript />;
     }
     let finalWorkloadTypeList = workloadTypeList.slice();
-    if (addons['TappController'] && addons['TappController'].status.toLocaleLowerCase() === 'running') {
+    if (addons['TappController']) {
       finalWorkloadTypeList.push({
         value: 'tapp',
         label: 'Tapp'
