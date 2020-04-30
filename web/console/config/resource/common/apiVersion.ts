@@ -4,7 +4,8 @@ import {
   notifyServerVersion,
   basicServerVersion,
   authServerVersion,
-  monitorServerVersion
+  monitorServerVersion,
+  auditServerVersion,
 } from '../../apiServerVersion';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { ConsoleModuleEnum } from '../../../Wrapper';
@@ -104,6 +105,10 @@ export interface ApiVersion {
 
   /** 组织资源 */
   apiKey?: ResourceApiInfo;
+
+  /** 审计记录 */
+  audit?: ResourceApiInfo;
+  auditFilterCondition?: ResourceApiInfo;
 }
 
 interface ResourceApiInfo {
@@ -203,7 +208,7 @@ const k8sApiVersionFor114: ApiVersion = {
     version: 'v1',
     basicEntry: 'apis',
     headTitle: 'ReplicaSet'
-  }
+  },
 };
 /** ================== start 1.14 的apiversion配置 ======================== */
 
@@ -474,6 +479,13 @@ const k8sApiVersionFor18: ApiVersion = {
     basicEntry: apiServerVersion.basicUrl,
     watchModule: ConsoleModuleEnum.PLATFORM,
     headTitle: 'driver'
+  },
+  audit: {
+    group: auditServerVersion.group,
+    version: auditServerVersion.version,
+    basicEntry: auditServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Audit,
+    headTitle: 'Audits'
   },
   gateway: {
     group: 'networking.istio.io',
