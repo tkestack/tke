@@ -46,7 +46,10 @@ export enum ConsoleModuleEnum {
   ApiKey = 'apiKey',
 
   /** 认证模块 */
-  Auth = 'auth'
+  Auth = 'auth',
+
+  /** 审计模块 */
+  Audit = 'audit'
 }
 
 export enum PlatformTypeEnum {
@@ -172,6 +175,11 @@ const commonRouterConfig: RouterConfig[] = [
         url: '/tkestack/persistent-event',
         title: '事件持久化',
         watchModule: ConsoleModuleEnum.PLATFORM
+      },
+      {
+        url: '/tkestack/audit',
+        title: '审计记录',
+        watchModule: ConsoleModuleEnum.PLATFORM
       }
     ]
   }
@@ -281,10 +289,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
   constructor(props: ConsoleWrapperProps) {
     super(props);
     this.state = {
-      selected: location.pathname
-        .split('/')
-        .slice(0, 4)
-        .join('/'),
+      selected: location.pathname.split('/').slice(0, 4).join('/'),
       toggleName: '',
       userInfo: {
         extra: '',
