@@ -53,7 +53,7 @@ export const AuditPanel = () => {
   const [cluster, setCluster] = useState('');
   const [namespace, setNamespace] = useState('');
   const [resource, setResource] = useState('');
-  const [name, setName] = useState('');
+  const [user, setUser] = useState('');
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
   const [expandedKeys, setExpandedKeys] = useState([]);
@@ -69,11 +69,11 @@ export const AuditPanel = () => {
       cluster,
       namespace,
       resource,
-      name,
+      user,
       startTime: startTime ? startTime : '',
       endTime: endTime ? endTime : ''
     });
-  }, [cluster, namespace, resource, name, startTime, endTime]);
+  }, [cluster, namespace, resource, user, startTime, endTime]);
 
   const columns: TableColumn<Audit>[] = [
     {
@@ -153,8 +153,8 @@ export const AuditPanel = () => {
               type="simulate"
               appearence="button"
               options={userNameOptions}
-              value={name}
-              onChange={value => setName(value)}
+              value={user}
+              onChange={value => setUser(value)}
               placeholder={t('请选择操作人')}
             />
           </Form.Item>
@@ -206,6 +206,10 @@ export const AuditPanel = () => {
                     <p>
                       <Trans>请求URI：</Trans>
                       {record.requestURI}
+                    </p>
+                    <p>
+                      <Trans>源地址：</Trans>
+                      {record.sourceIPs}
                     </p>
                     <p>HTTP Code：{record.code}</p>
                     <p>

@@ -23,13 +23,14 @@ export interface Audit extends Identifiable {
     requestReceivedTimestamp: number; // 请求时间
     stageTimestamp: number; // 事件生成时间
     clusterName: string; // 操作的集群
+    sourceIPs: string; // 源地址
 }
 
 export interface AuditFilter {
     cluster?: string;
     namespace?: string;
     resource?: string;
-    name?: string; // 具体的资源名称
+    user?: string; // 名字
     query?: string; // 提供关键字模糊查询
     startTime?: number | ''; // 开始时间
     endTime?: number | ''; // 结束时间
