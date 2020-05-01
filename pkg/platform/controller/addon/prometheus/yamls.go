@@ -38,11 +38,13 @@ func scrapeConfigForPrometheus() string {
       relabel_configs:
       - action: labelmap
         regex: __meta_kubernetes_node_label_(.+)
+      - source_labels: [ "__meta_kubernetes_node_annotation_device_type" ]
+        target_label: device_type
       metric_relabel_configs:
       - source_labels: [ __name__ ]
         regex: 'kubelet_running_pod_count'
         action: keep
-      - regex: (__name__|instance|node_role_kubernetes_io_master)
+      - regex: (__name__|instance|node_role_kubernetes_io_master|device_type)
         action: labelkeep
       - source_labels: [ __name__ ]
         target_label: "node_role"
@@ -625,52 +627,52 @@ groups:
     expr: sum(idelta(kube_pod_container_status_restarts_total [2m])) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_node_status_ready
-    expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role)  kube_node_labels)  without(condition, status)
+    expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role, device_type)  kube_node_labels)  without(condition, status)
 
   - record: k8s_node_pod_restart_total
-    expr: sum(k8s_pod_restart_total) without (pod_name,workload_kind,workload_name,namespace)
+    expr: sum(k8s_pod_restart_total) without (pod_name,workload_kind,workload_name,namespace) * on(node) group_left(device_type) kube_node_labels
 
   - record: k8s_node_cpu_usage
-    expr: sum(k8s_pod_cpu_core_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left kube_node_status_capacity_cpu_cores
+    expr: sum(k8s_pod_cpu_core_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left kube_node_status_capacity_cpu_cores * on(node) group_left(device_type) kube_node_labels
 
   - record: k8s_node_mem_usage
-    expr: sum(k8s_pod_mem_usage_bytes) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left kube_node_status_capacity_memory_bytes
+    expr: sum(k8s_pod_mem_usage_bytes) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left kube_node_status_capacity_memory_bytes * on(node) group_left(device_type) kube_node_labels
 
   - record: k8s_node_gpu_usage
-    expr: sum(k8s_pod_gpu_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left kube_node_status_capacity_gpu
+    expr: sum(k8s_pod_gpu_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left kube_node_status_capacity_gpu * on(node) group_left(device_type) kube_node_labels
 
   - record: k8s_node_gpu_memory_usage
-    expr: sum(k8s_pod_gpu_memory_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left() kube_node_status_capacity_gpu_memory
+    expr: sum(k8s_pod_gpu_memory_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left() kube_node_status_capacity_gpu_memory * on(node) group_left(device_type) kube_node_labels
 
   - record: k8s_node_fs_write_bytes
-    expr: (sum by (node) (irate(node_disk_written_bytes_total[4m]))) *on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_written_bytes_total[4m]))) *on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_fs_read_bytes
-    expr: (sum by (node) (irate(node_disk_read_bytes_total[4m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_read_bytes_total[4m])))*on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_fs_write_times
-    expr: (sum by (node) (irate(node_disk_writes_completed_total[4m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_writes_completed_total[4m])))*on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_fs_read_times
-    expr: (sum by (node) (irate(node_disk_reads_completed_total[4m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_disk_reads_completed_total[4m])))*on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_pod_num
-    expr: count(k8s_pod_status_ready) without (pod_name,workload_kind,workload_name,namespace)
+    expr: count(k8s_pod_status_ready) without (pod_name,workload_kind,workload_name,namespace) * on(node) group_left(device_type) kube_node_labels
 
   - record: k8s_node_disk_space_rate
-    expr: (100 - sum (node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"}) by (node) / sum (node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"}) by (node) *100) *on(node) group_left(node_role) kube_node_labels
+    expr: (100 - sum (node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"}) by (node) / sum (node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"}) by (node) *100) *on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_filesystem_avail_bytes
-    expr: node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"}
+    expr: (sum by (node) (node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"})) *on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_filesystem_size_bytes
-    expr: node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"}
+    expr: (sum by (node) (node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"})) *on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_network_receive_bytes_bw
-    expr: (sum by (node) (irate(node_network_receive_bytes_total{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_network_receive_bytes_total{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_network_transmit_bytes_bw
-    expr: (sum by (node) (irate(node_network_transmit_bytes_total{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role) kube_node_labels
+    expr: (sum by (node) (irate(node_network_transmit_bytes_total{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_workload_abnormal
     expr: |-
