@@ -16,6 +16,8 @@
 
 FROM alpine:3.10
 
+RUN echo "hosts: files dns" >> /etc/nsswitch.conf
+
 WORKDIR /app
 
 ENV PATH="/app/bin:$PATH"
