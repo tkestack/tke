@@ -349,7 +349,7 @@ export class EditSecretPanel extends React.Component<RootProps, EditSecretPanelS
           apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
           metadata: {
             name: name,
-            namespace: reduceNs(item.name),
+            namespace: item.name,
             labels: {
               'qcloud-app': name
             }

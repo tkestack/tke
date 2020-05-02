@@ -37,9 +37,9 @@
       "@tencent/ff-component/*": ["./lib/ff-component/*"],
       "@tencent/qcloud-redux-fetcher": ["./lib/ff-redux/libs/qcloud-redux-fetcher/"],
       "@tencent/qcloud-redux-query": ["./lib/ff-redux/libs/qcloud-redux-query/"],
-      "@tencent/qcloud-redux-workflow'": ["./lib/ff-redux/libs/qcloud-redux-workflow/"],
+      "@tencent/qcloud-redux-workflow'": ["./lib/ff-redux/libs/qcloud-redux-workflow/"]
     }
   },
-  "exclude": ["node_modules", "dist", "build"],
+  "exclude": ["node_modules", "dist", "build", "public", "loader", "webpack"],
   "compileOnSave": false
 }
