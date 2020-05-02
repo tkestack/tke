@@ -281,10 +281,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
   constructor(props: ConsoleWrapperProps) {
     super(props);
     this.state = {
-      selected: location.pathname
-        .split('/')
-        .slice(0, 4)
-        .join('/'),
+      selected: location.pathname.split('/').slice(0, 4).join('/'),
       toggleName: '',
       userInfo: {
         extra: '',

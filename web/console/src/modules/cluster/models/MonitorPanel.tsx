@@ -513,7 +513,7 @@ export function getClusterTables(clusterId) {
         {
           expr: `mean(k8s_component_apiserver_request_latency)`,
           alias: 'Apiserver时延',
-          unit: 's',
+          unit: 'ms',
           valueLabels: v => TransformField(v, 1000, 3, ['µ', 'm', '', 'k', 'M', 'G', 'T', 'P']),
           thousands: 1000
         }
