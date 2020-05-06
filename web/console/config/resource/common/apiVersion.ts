@@ -80,6 +80,7 @@ export interface ApiVersion {
 
   /** ============= 以上是 业务配置信息 的相关配置 ============== */
   projects?: ResourceApiInfo;
+  members?: ResourceApiInfo;
   platforms?: ResourceApiInfo;
   portal?: ResourceApiInfo;
   namespaces?: ResourceApiInfo;
@@ -645,6 +646,13 @@ const k8sProjectApiVersion: ApiVersion = {
     basicEntry: businessServerVersion.basicUrl,
     watchModule: ConsoleModuleEnum.Business,
     headTitle: 'Project'
+  },
+  members: {
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
+    headTitle: 'members'
   },
   namespaces: {
     group: businessServerVersion.group,

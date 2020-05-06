@@ -90,8 +90,8 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
     const { search, filter } = query;
     const { projectId } = filter;
     try {
-        const resourceInfo: ResourceInfo = resourceConfig()['user'];
-        const url = reduceK8sRestfulPath({ resourceInfo, middleKey: `projects/${projectId}` });
+        const resourceInfo: ResourceInfo = resourceConfig()['members'];
+        const url = reduceK8sRestfulPath({ resourceInfo, specificName: projectId, extraResource: 'users' });
         const response = await reduceNetworkRequest({
             method: Method.get,
             url
@@ -119,8 +119,8 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
 export async function addUser([userInfo]) {
     const { projectId, users, policies } = userInfo;
     try {
-        const resourceInfo: ResourceInfo = resourceConfig()['user'];
-        const url = reduceK8sRestfulPath({ resourceInfo, middleKey: `projects/${projectId}` });
+        const resourceInfo: ResourceInfo = resourceConfig()['members'];
+        const url = reduceK8sRestfulPath({ resourceInfo, specificName: projectId, extraResource: 'users' });
         const response = await reduceNetworkRequest({
             method: Method.post,
             url,

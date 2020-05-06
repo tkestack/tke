@@ -165,7 +165,6 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
       (resourceInfo.group ? `${resourceInfo.group}/` : '') +
       `${resourceInfo.version}/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
-      (middleKey ? `${middleKey}/` : '') +
       `${resourceInfo.requestType.list}` +
       (specificName ? `/${specificName}` : '') +
       (extraResource ? `/${extraResource}` : '');
