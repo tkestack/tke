@@ -1486,21 +1486,20 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 							Name:  nodeExporterDaemonSet,
 							Image: components.NodeExporterService.FullName(),
 							Args: []string{
-								"--path.procfs=/host/proc",
-								"--path.sysfs=/host/sys",
+								"--path.rootfs=/host",
 								"--no-collector.arp",
 								"--no-collector.bcache",
 								"--no-collector.bonding",
 								"--no-collector.buddyinfo",
 								"--no-collector.conntrack",
 								"--no-collector.cpu",
+								"--no-collector.cpufreq",
 								"--collector.diskstats",
 								"--no-collector.drbd",
 								"--no-collector.edac",
 								"--no-collector.entropy",
 								"--no-collector.filefd",
 								"--collector.filesystem",
-								"--no-collector.gmond",
 								"--no-collector.hwmon",
 								"--no-collector.infiniband",
 								"--no-collector.interrupts",
@@ -1509,13 +1508,15 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 								"--no-collector.loadavg",
 								"--no-collector.logind",
 								"--no-collector.mdadm",
-								"--no-collector.megacli",
 								"--no-collector.meminfo",
 								"--no-collector.meminfo_numa",
 								"--no-collector.mountstats",
 								"--collector.netdev",
 								"--no-collector.netstat",
+								"--no-collector.netclass",
 								"--no-collector.nfs",
+								"--no-collector.nfsd",
+								"--no-collector.pressure",
 								"--no-collector.ntp",
 								"--no-collector.qdisc",
 								"--no-collector.runit",
@@ -1538,13 +1539,8 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									MountPath: "/host/proc",
-									Name:      "proc",
-									ReadOnly:  true,
-								},
-								{
-									MountPath: "/host/sys",
-									Name:      "sys",
+									MountPath: "/host",
+									Name:      "root",
 									ReadOnly:  true,
 								},
 							},
@@ -1554,18 +1550,10 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 					HostPID:     true,
 					Volumes: []corev1.Volume{
 						{
-							Name: "proc",
+							Name: "root",
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/proc",
-								},
-							},
-						},
-						{
-							Name: "sys",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/sys",
+									Path: "/",
 								},
 							},
 						},

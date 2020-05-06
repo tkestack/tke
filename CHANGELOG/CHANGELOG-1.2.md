@@ -1,3 +1,64 @@
+## [1.2.4](https://github.com/tkestack/tke/compare/v1.2.3...v1.2.4) (2020-04-26)
+
+
+### Bug Fixes
+
+* Add master toleration for alertmanager ([f6cd780](https://github.com/tkestack/tke/commit/f6cd7802592f72168354340588faec0d728d60b5))
+* add two variants (unknown & v8) for arm64 images ([3058b0b](https://github.com/tkestack/tke/commit/3058b0b630d130c55334e45d2fe3b24ef4cbba78))
+* alarmplicy fetch workloadInstance bug ([#234](https://github.com/tkestack/tke/issues/234)) ([3605b3c](https://github.com/tkestack/tke/commit/3605b3cf1753742e6b9b3fee79f856c83d0ef9f7))
+* change label namespaceName to namespace_name for project metrics ([19f80cd](https://github.com/tkestack/tke/commit/19f80cd7bf1349696051119c7a57bdfb70825740))
+* chmod with hook's path ([0025cd4](https://github.com/tkestack/tke/commit/0025cd4d181231cff7b2fba6ca851fafd84d6aca))
+* cluster dns domain default value ([ecb0277](https://github.com/tkestack/tke/commit/ecb0277770d814891df139519579298776add423))
+* extend imporResource timeout ([2d06e70](https://github.com/tkestack/tke/commit/2d06e706f6ebb3ac9068b337f0c81f9b09d77251))
+* field selector in list machine when using spec.ip ([7b30b37](https://github.com/tkestack/tke/commit/7b30b37cab3891f0344cd27257b4b737d7db1c8a))
+* hook validate spell error ([3d98d50](https://github.com/tkestack/tke/commit/3d98d50265dac23af0143a4d3d860cb7763471f0))
+* illegal request to query service event list ([6285f88](https://github.com/tkestack/tke/commit/6285f88763692665abea17f102c09dbbc79d6118))
+* label project_name of ns should begin with tkestack.io, and add ([4627865](https://github.com/tkestack/tke/commit/4627865e54f3da720dc0e8738c981834376f6149))
+* machine index fields missing spec.ip ([b174f44](https://github.com/tkestack/tke/commit/b174f44e151157900116aff3d048819e7fef1719))
+* make Makefile compatible with docker version under 18.03 ([#266](https://github.com/tkestack/tke/issues/266)) ([14b3f65](https://github.com/tkestack/tke/commit/14b3f653edbc2a2a835f8044c874321908db38ff))
+* mark master ([2fa91f1](https://github.com/tkestack/tke/commit/2fa91f147585bf9c5051b16acf368a6e28363b92))
+* remove request and limit of node-exporter ([e65cc0e](https://github.com/tkestack/tke/commit/e65cc0e298babca4e3b615e632a806c7cef65900))
+* **cluster:** AdvertiseAddress in kubeadm ([527636f](https://github.com/tkestack/tke/commit/527636f11fefa515523b5c1f7ea371d184bb5998))
+* **cluster:** check url in keepalived vrrp_script ([798c06c](https://github.com/tkestack/tke/commit/798c06c749979705a984b18bdd3e9a2a81dc1db4))
+* **cluster:** hang in failed status when health check is not ok ([8d1e4bc](https://github.com/tkestack/tke/commit/8d1e4bc015d69d7d4b623a97f0bd3548378aeba9))
+* **cluster:** validation machine clusterName ([019d7af](https://github.com/tkestack/tke/commit/019d7af9ff87b3930b1eb3b93dad67f78bc84e10))
+* **tke-installer:** tke-platform-api cert auth ([f929c65](https://github.com/tkestack/tke/commit/f929c654ebc70411f7284c4eabb2a455fa79a6ce))
+* **tke-installer:** validate cpu and memory requirements ([225df85](https://github.com/tkestack/tke/commit/225df85deed64d476cb92b12e3ea2469cc1aa61d))
+* **tke-installer:** validate error when multiple request body is not same ([0a606e4](https://github.com/tkestack/tke/commit/0a606e44786774c79a20b05a5df2f4a99a36984b))
+* remove unnecessary labels for tke project metrics ([4bd16e4](https://github.com/tkestack/tke/commit/4bd16e40662e8d6b813976d67ffd56639f77448b))
+* rollback does not exist in deployment of apps/v1 ([23ccebd](https://github.com/tkestack/tke/commit/23ccebdb0fb059f86584cbd65546a312ea44c114))
+* set retentionSize to limit prometheus disk usage; set retention ([8810ef2](https://github.com/tkestack/tke/commit/8810ef24ddceba93c8ee8e45e0056b53b9ec6127))
+* ValidateEnum ([87300fc](https://github.com/tkestack/tke/commit/87300fcda9c1630132da7d46230abac440687863))
+* ValidateHooks ([ed638ac](https://github.com/tkestack/tke/commit/ed638ac5776b11c94b9a1a281bdc0968e1785f65))
+* webhook fmt ([#291](https://github.com/tkestack/tke/issues/291)) ([5d04ec7](https://github.com/tkestack/tke/commit/5d04ec7e08436c948a2810a31c57ce1d855f14e0))
+
+
+### Features
+
+* add alertRepeatInterval option to prometheus addon ([a5a3059](https://github.com/tkestack/tke/commit/a5a3059d8249a2e732a6b8bece5e231e603d3e9d))
+* Add metrics for namespace capacity and allocated ([0674196](https://github.com/tkestack/tke/commit/06741964397698ddd2b22c573c303dbc61b2bbe1))
+* add more etcd metrics to prometheus config ([bd451ed](https://github.com/tkestack/tke/commit/bd451ed2967948a08318c8e34167ccd6add18a2f))
+* Add option message_ttl to tke-notify-api to specify ttl of ([2692bac](https://github.com/tkestack/tke/commit/2692bacc81b1aafb746dedfdc4d8878ed3102434))
+* Add Resources and RunOnMaster to spec of prometheus addon ([d6dcdd2](https://github.com/tkestack/tke/commit/d6dcdd261463f9e9bc89da87b4f43b489bf12f98))
+* adjust clientset timeout to 30s ([73f35e9](https://github.com/tkestack/tke/commit/73f35e9852c75e4cc492006d32433d3465dee791))
+* generate certificate for business namespace ([2fd8b08](https://github.com/tkestack/tke/commit/2fd8b087b77d26ced42226b0e5fc82412ef0edf0))
+* generate certificate for business namespace ([7795ce1](https://github.com/tkestack/tke/commit/7795ce110cfa60f62665bd2b8fe270222e3fea33))
+* **tke-installer:** the validity period of the certificate is revised to 100 years, close [#260](https://github.com/tkestack/tke/issues/260) ([151d23d](https://github.com/tkestack/tke/commit/151d23d5866834503379a294c7643f712fdf9e7b))
+* hook support args ([40c0201](https://github.com/tkestack/tke/commit/40c020141fc28cd5d098160042c08825569b42c3))
+* **cluster:** ClusterSpec add ServiceCIDR ([ef33d2d](https://github.com/tkestack/tke/commit/ef33d2d613acd3102e297dcaed4b01145351f8c3))
+* reuse the global cluster front proxy cert for tke components ([4085dc6](https://github.com/tkestack/tke/commit/4085dc6f442eb55ee9498c1133125f05d96c2bba))
+* **cluster:** support multi network card for control plane ([9eacb15](https://github.com/tkestack/tke/commit/9eacb15395715b43b291d23758fe4940ac05a323))
+* **galaxy:** update galaxy and galaxy-ipam version, galaxy-ipam service use clusterIP to avoid ipvs nodePort issue ([b20a314](https://github.com/tkestack/tke/commit/b20a314f22684803a341eb4e552c306e4d12dbd7))
+* Improve node list performance ([#240](https://github.com/tkestack/tke/issues/240)) ([9879edf](https://github.com/tkestack/tke/commit/9879edfd1f3eefae80881705eda7daaf1e7dffde))
+* platform and auth support webhook authentication ([#290](https://github.com/tkestack/tke/issues/290)) ([084c739](https://github.com/tkestack/tke/commit/084c7391872eb44809c486a38fbdafb3681386f5))
+* Send metrics kube_node_labels and kube_namespace_labels to remote ([55b81dc](https://github.com/tkestack/tke/commit/55b81dc99e582363d108a47580b020e07729820f))
+* support password grant ([#258](https://github.com/tkestack/tke/issues/258)) ([f604469](https://github.com/tkestack/tke/commit/f604469e3fe072a55c93f186be344130cd11c1b5))
+* support taints for master and worker ([af5e105](https://github.com/tkestack/tke/commit/af5e10569ee5a6e258433d8accaca213b4fe3b11))
+* **tke-installer:** add cpu and memory validation ([5b24650](https://github.com/tkestack/tke/commit/5b24650a0609540f6deb1ce267f65830de13cd11))
+* **tke-installer:** add retry for register apiservices ([dc54a05](https://github.com/tkestack/tke/commit/dc54a050b51ab3dee58f2b74942391746c81df6f))
+
+
+
 ## [1.2.3](https://github.com/tkestack/tke/compare/v1.2.2...v1.2.3) (2020-04-01)
 
 
