@@ -37,7 +37,7 @@
 2. 切换至 平台管理控制台，选择 集群管理 页面，如下图1所示：
 3. 点击集群ID，进入要管理的集群，如下图2所示：
 4. 点击【YAML创建资源】，如下图3所示：![CSI创建](images/CSI创建.png)
-5. 文件中指定各自存储插件镜像的名称，这里以`tencentcbs`的 yaml 为例：（前提创建腾讯云账号），
+5. 文件中指定各自存储插件镜像的名称，这里以`tencentcbs`的 yaml 为例：（前提创建腾讯云账号）
 ```
 apiVersion: storage.tkestack.io/v1
 kind: CSI
