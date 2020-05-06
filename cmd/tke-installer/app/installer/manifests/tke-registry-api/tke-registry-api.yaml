@@ -108,7 +108,7 @@ data:
 
     [authentication]
     token_auth_file = "/app/certs/token.csv"
-    client_ca_file = "/app/certs/front-proxy-ca.crt"
+    client_ca_file = "/app/certs/ca.crt"
 
       [authentication.oidc]
 {{- if .EnableAuth }}
