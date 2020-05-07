@@ -20,11 +20,12 @@ package config
 
 import (
 	"fmt"
+	"path/filepath"
+	"time"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	"path/filepath"
-	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	generatedopenapi "tkestack.io/tke/api/openapi"
@@ -101,6 +102,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig.MaxRequestBodyBytes = chartmuseum.MaxUploadSize
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
+	genericAPIServerConfig.EnableProfiling = false
 
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err
