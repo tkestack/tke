@@ -76,6 +76,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
+	genericAPIServerConfig.EnableProfiling = false
 
 	if opts.Audit.PolicyFile != "" {
 		p, err := policy.LoadPolicyFromFile(opts.Audit.PolicyFile)

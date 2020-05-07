@@ -20,12 +20,13 @@ package config
 
 import (
 	"fmt"
+	"path/filepath"
+	"time"
+
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
-	"path/filepath"
-	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
@@ -93,6 +94,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
+	genericAPIServerConfig.EnableProfiling = false
 
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err
