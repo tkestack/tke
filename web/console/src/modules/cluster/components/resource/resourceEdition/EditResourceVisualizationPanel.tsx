@@ -596,6 +596,18 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         }
       }
 
+      // 日志目录信息放在 annotations 中
+      let logInfo = containers.reduce((prev, item) => {
+        if (isEmpty(item.logPath)) {
+          return prev;
+        }
+        prev[item.name] = item.logDir + item.logPath;
+        return prev;
+      }, {});
+      if (!isEmpty(logInfo)) {
+        templateAnnotations['log.tke.cloud.tencent.com/log-dir'] = JSON.stringify(logInfo);
+      }
+
       // template的内容，因为cronJob是放在 jobTemplate当中
       let templateContent = {
         metadata: {

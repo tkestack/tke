@@ -14,7 +14,14 @@ import {
 } from '../../../../helpers';
 import { isEmpty } from '../../common';
 import { CreateResource, MergeType, RequestParams, ResourceInfo, UserDefinedHeader } from '../../common/models';
-import { DifferentInterfaceResourceOperation, Namespace, Resource, ResourceFilter } from '../models';
+import {
+  DifferentInterfaceResourceOperation,
+  LogContentQuery,
+  LogHierarchyQuery,
+  Namespace,
+  Resource,
+  ResourceFilter
+} from '../models';
 
 // 提示框
 const tips = seajs.require('tips');
@@ -436,6 +443,156 @@ export async function fetchResourceLogList(
   };
 
   return result;
+}
+
+/**
+ * 获取日志组件的组件名称
+ */
+export async function fetchLogagents(clusterId: string) {
+  let logAgent = {};
+  let url = `/apis/logagent.tkestack.io/v1/logagents?fieldSelector=spec.clusterName=${clusterId}`;
+  // 构建参数
+  let params: RequestParams = {
+    method: Method.get,
+    url,
+  };
+
+  let response = await reduceNetworkRequest(params, clusterId);
+
+  if (response.code === 0) {
+    const { items } = response.data;
+    if (!isEmpty(items)) {
+      // 返回的是数组形式，理论上可以有多个 logAgent，实际上默认取第一个即可
+      logAgent = items[0];
+    }
+  }
+
+  return logAgent;
+}
+
+/**
+ * 获取日志目录结构
+ */
+export async function fetchResourceLogHierarchy(query: LogHierarchyQuery) {
+  let { agentName, clusterId, namespace, pod, container } = query;
+  let logList = [];
+
+  let url = `/apis/logagent.tkestack.io/v1/logagents/${agentName}/filetree`;
+  const payload = {
+    kind: 'LogFileTree',
+    apiVersion: 'logagent.tkestack.io/v1',
+    spec: {
+      clusterId,
+      namespace,
+      container,
+      pod
+    }
+  };
+  // 构建参数
+  let params: RequestParams = {
+    method: Method.post,
+    url,
+    userDefinedHeader: {},
+    data: payload,
+  };
+
+  let response = await reduceNetworkRequest(params, clusterId);
+
+  const traverse = (hierarchyData, path = '') => {
+    let { path: subPath, isDir, children } = hierarchyData;
+    // 如果是日志文件的话，构造完整路径，附加到日志文件列表，返回
+    if (!isDir) {
+      logList.push(path ? path + '/' + subPath : subPath);
+      return;
+    }
+    for (let i = 0; i < children.length; i++) {
+      const item = children[i];
+      traverse(item, path ? path + '/' + subPath : subPath);
+    }
+  };
+
+  if (response.code === 0) {
+    let content = response.data;
+    content !== '' && traverse(content);
+  }
+
+  return logList;
+}
+
+/**
+ * 获取日志内容
+ */
+export async function fetchResourceLogContent(query: LogContentQuery) {
+  // let logList = [];
+  let content = '';
+  let { agentName, clusterId, namespace, pod, container, start, length, filepath } = query;
+
+  let url = `/apis/logagent.tkestack.io/v1/logagents/${agentName}/filecontent`;
+  const payload = {
+    kind: 'LogFileContent',
+    apiVersion: 'logagent.tkestack.io/v1',
+    spec: {
+      clusterId,
+      namespace,
+      container,
+      pod,
+      start,
+      length,
+      filepath,
+    }
+  };
+  // 构建参数
+  let params: RequestParams = {
+    method: Method.post,
+    url,
+    userDefinedHeader: {},
+    data: payload,
+  };
+
+  let response = await reduceNetworkRequest(params, clusterId);
+
+  if (response.code === 0) {
+    let { data } = response;
+    content = data.content;
+  }
+
+  return content;
+}
+
+/**
+ * 下载日志文件
+ * @param query
+ */
+export async function downloadLogFile(query) {
+  let content = '';
+  let { agentName, clusterId, namespace, pod, container, filepath } = query;
+
+  let url = `/apis/logagent.tkestack.io/v1/logagents/${agentName}/filedownload`;
+  const payload = {
+    pod,
+    namespace,
+    container,
+    path: filepath,
+  };
+  // 构建参数
+  let params: RequestParams = {
+    method: Method.post,
+    url,
+    data: payload,
+  };
+
+  let response = await reduceNetworkRequest(params, clusterId);
+
+  if (response.code === 0) {
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/x-tar' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filepath);
+    document.body.appendChild(link);
+    link.click();
+  }
+
+  return content;
 }
 
 /**
