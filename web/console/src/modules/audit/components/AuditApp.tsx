@@ -34,44 +34,22 @@ export interface RootProps extends RootState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-// @connect(state => state, mapDispatchToProps)
-// @((router.serve as any)())
-// class AuditApp extends React.Component<RootProps, {}> {
-//   render() {
-//     return (
-//       <Layout>
-//         <Body>
-//           <Content>
-//             <Content.Header title="审计记录"></Content.Header>
-//             <Content.Body>
-//               <AuditPanel />
-//             </Content.Body>
-//           </Content>
-//         </Body>
-//       </Layout>
-//     );
-//   }
-// }
-
-const AuditApp = (props: RootProps) => {
-  useEffect(() => {
-    return () => {
-      console.log('AuditApp render unmount.... ');
-      (router.serve as any)();
-    };
-  });
-  console.log('AuditApp render ....');
-  return (
-    <Layout>
-      <Body>
-        <Content>
-          <Content.Header title="审计记录"></Content.Header>
-          <Content.Body>
-            <AuditPanel />
-          </Content.Body>
-        </Content>
-      </Body>
-    </Layout>
-  );
-};
+@connect(state => state, mapDispatchToProps)
+@((router.serve as any)())
+class AuditApp extends React.Component<RootProps, {}> {
+  render() {
+    return (
+      <Layout>
+        <Body>
+          <Content>
+            <Content.Header title="审计记录"></Content.Header>
+            <Content.Body>
+              <AuditPanel />
+            </Content.Body>
+          </Content>
+        </Body>
+      </Layout>
+    );
+  }
+}
 
