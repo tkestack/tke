@@ -51,6 +51,11 @@ export interface ContainerItem extends Identifiable {
   workingDir?: string;
   v_workingDir?: Validation;
 
+  /** 日志目录 */
+  logDir?: string;
+  logPath?: string;
+  v_logDir?: Validation;
+
   /** cmd */
   cmd?: string;
   v_cmd?: Validation;

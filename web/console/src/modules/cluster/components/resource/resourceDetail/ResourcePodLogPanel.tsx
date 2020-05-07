@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Justify, Switch } from '@tea/component';
+import { Button, Justify, Switch } from '@tea/component';
 import { bindActionCreators, FetchState } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
@@ -11,6 +11,8 @@ import { TailList } from '../../../constants/Config';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { YamlEditorPanel } from '../YamlEditorPanel';
+import * as WebAPI from '../../../WebAPI';
+import { DownloadLogQuery } from '../../../models';
 
 // 加载中的样式
 const loadingElement: JSX.Element = (
@@ -45,12 +47,28 @@ export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
     }
   }
 
-  componentDidMount() {
-    let { subRoot, actions } = this.props,
-      { podName, containerName, tailLines } = subRoot.resourceDetailState.logOption;
+  async componentDidMount() {
+    let { route, subRoot, actions } = this.props,
+      { podName, containerName, logFile, tailLines } = subRoot.resourceDetailState.logOption;
+
+    // 获取集群日志组件名称
+    let logAgent = await WebAPI.fetchLogagents(route.queries['clusterId']);
+    actions.resourceDetail.log.setLogAgent(logAgent);
 
     if (podName !== '' && containerName !== '') {
+      actions.resourceDetail.log.selectLogFile(logFile);
       actions.resourceDetail.log.handleFetchData(podName, containerName, tailLines);
+
+      if (logAgent && logAgent['metadata'] && logAgent['metadata']['name']) {
+        let agentName = logAgent['metadata']['name'];
+        actions.resourceDetail.log.getLogHierarchy({
+          agentName,
+          clusterId: route.queries['clusterId'],
+          namespace: route.queries['np'],
+          container: containerName,
+          pod: podName
+        });
+      }
     }
   }
 
@@ -71,18 +89,23 @@ export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
 
   /** 展示日志内容 */
   private _renderLogContent() {
-    let { logList } = this.props.subRoot.resourceDetailState;
-
-    let logContent = logList.data.recordCount ? logList.data.records[0] : t('暂无日志');
+    let { logList, logOption } = this.props.subRoot.resourceDetailState,
+      { logFile } = logOption;
+    let logContent = '';
+    if (logFile === 'stdout') {
+      logContent = logList.data.recordCount ? logList.data.records[0] : t('暂无日志');
+    } else {
+      logContent = this.props.subRoot.resourceDetailState.logContent;
+    }
 
     return <YamlEditorPanel config={logContent} readOnly={true} isNeedRefreshContent={true} mode="text/x-sh" />;
   }
 
   /** 渲染日志的过滤条件 */
   private _renderFilterBar() {
-    let { subRoot, actions } = this.props,
-      { podList, logOption } = subRoot.resourceDetailState,
-      { podName, containerName, tailLines, isAutoRenew } = logOption;
+    let { route, subRoot, actions } = this.props,
+      { podList, logHierarchy, logOption, logAgent } = subRoot.resourceDetailState,
+      { podName, containerName, logFile, tailLines, isAutoRenew } = logOption;
 
     // 判断是否需要展示loading态
     let isShowLoading = podList.fetched !== true || podList.fetchState === FetchState.Fetching;
@@ -120,6 +143,23 @@ export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
       </option>
     );
 
+    // 渲染日志文件列表
+    let logFileList = containerName ? logHierarchy : [];
+    let logFileOptions = logFileList.length
+      ? logFileList.map((logFilepath, index) => {
+          return (
+            <option key={index} value={logFilepath}>
+              {logFilepath}
+            </option>
+          );
+        })
+      : [];
+    logFileOptions.unshift(
+      <option key={-1} value="stdout">
+        {t('标准输出')}
+      </option>
+    );
+
     // 渲染拉取数据条数的
     let tailOptions = TailList.map((tail, index) => {
       let text = tail.label;
@@ -129,6 +169,30 @@ export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
         </option>
       );
     });
+
+    const renderDownloadButton = () => {
+      return (
+        <Button
+          icon="download"
+          title={t('下载')}
+          onClick={() => {
+            let agentName = '';
+            if (logAgent && logAgent['metadata'] && logAgent['metadata']['name']) {
+              agentName = logAgent['metadata']['name'];
+            }
+            const downloadQuery: DownloadLogQuery = {
+              agentName,
+              namespace: route.queries['np'],
+              clusterId: route.queries['clusterId'],
+              pod: podName,
+              container: containerName,
+              filepath: logFile,
+            };
+            actions.resourceDetail.log.downloadLogFile(downloadQuery);
+          }}
+        />
+      );
+    };
 
     return (
       <div className="tc-action-grid" style={{ marginTop: '0' }}>
@@ -159,6 +223,16 @@ export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
                 </select>
                 <select
                   className="tc-15-select m tea-ml-2n"
+                  disabled={containerName === ''}
+                  value={logFile}
+                  onChange={e => {
+                    actions.resourceDetail.log.selectLogFile(e.target.value);
+                  }}
+                >
+                  {logFileOptions}
+                </select>
+                <select
+                  className="tc-15-select m tea-ml-2n"
                   disabled={podName === '' || containerName === ''}
                   value={tailLines}
                   onChange={e => {
@@ -167,6 +241,7 @@ export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
                 >
                   {tailOptions}
                 </select>
+                {logFile !== 'stdout' && renderDownloadButton()}
               </React.Fragment>
             )
           }
@@ -195,7 +270,6 @@ export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
       actions.resourceDetail.log.toggleAutoRenew();
       actions.resourceDetail.log.clearPollLog();
     } else {
-      // 进行日志的拉取
       actions.resourceDetail.log.handleFetchData(podName, containerName, tailLines);
     }
   }

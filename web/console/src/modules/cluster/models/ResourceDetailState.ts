@@ -64,6 +64,12 @@ export interface ResourceDetailState {
 
   /** logOption 用于日志的选择过滤条件 */
   logOption?: LogOption;
+
+  logAgent?: LogAgent;
+
+  logHierarchy?: string[];
+
+  logContent?: string;
 }
 
 export interface LogOption {
@@ -73,6 +79,9 @@ export interface LogOption {
   /** containerName */
   containerName?: string;
 
+  /** logFile */
+  logFile?: string;
+
   /** tailLines */
   tailLines?: string;
 
@@ -80,9 +89,108 @@ export interface LogOption {
   isAutoRenew?: boolean;
 }
 
+/**
+ * 查询日志目录结构的 payload 定义
+ */
+export interface LogHierarchyQuery {
+  agentName?: string;
+
+  namespace?: string;
+
+  clusterId?: string;
+
+  pod?: string;
+
+  container?: string;
+}
+
+export interface LAMetadata {
+  name?: string;
+
+  generateName?: string;
+
+  selfLink?: string;
+
+  uid?: string;
+
+  resourceVersion?: string;
+
+  creationTimestamp?: string;
+}
+
+export interface LASpec {
+  tenantID?: string;
+
+  clusterName?: string;
+
+  version?: string;
+}
+
+export interface LAStatus {
+  version?: string;
+
+  phase?: string;
+
+  retryCount?: number;
+
+  lastReInitializingTimestamp?: any;
+}
+
+/**
+ * LogAgent 的结构定义
+ */
+export interface LogAgent {
+  metadata?: LAMetadata;
+
+  spec?: LASpec;
+
+  status?: LAStatus;
+}
+
+/**
+ * 查询日志内容的 payload 定义
+ */
+export interface LogContentQuery {
+  agentName?: string;
+
+  namespace?: string;
+
+  clusterId?: string;
+
+  pod?: string;
+
+  container?: string;
+
+  start?: number;
+
+  length?: number;
+
+  filepath?: string;
+}
+
+/**
+ * 下载日志文件的 payload 定义
+ */
+export interface DownloadLogQuery {
+  agentName?: string;
+
+  namespace?: string;
+
+  clusterId?: string;
+
+  pod?: string;
+
+  container?: string;
+
+  filepath?: string;
+}
+
 export interface PodLogFilter extends ResourceFilter {
   /** container的名称 */
   container?: string;
+
+  /** 日志文件路径 */
+  logFile?: string;
 
   /** 显示日志的条数 */
   tailLines?: string;
