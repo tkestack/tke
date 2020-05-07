@@ -41,6 +41,7 @@ import (
 	csioperator "tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator/images"
 	volumedecorator "tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
+	logagent       "tkestack.io/tke/pkg/logagent/controller/logagent/images"
 )
 
 func main() {
@@ -61,6 +62,7 @@ func main() {
 		csioperator.List,
 		volumedecorator.List,
 		tappcontroller.List,
+		logagent.List,
 	}
 	var result []string
 	for _, f := range funcs {
