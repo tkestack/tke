@@ -98,7 +98,7 @@
     "happypack": "^5.0.0",
     "ifvisible.js": "^1.0.6",
     "marked": "^0.7.0",
-    "prettier": "2.0.2",
+    "prettier": "2.0.5",
     "progress-bar-webpack-plugin": "^1.11.0",
     "react-addons-css-transition-group": "^15.6.2",
     "react-codemirror": "^1.0.0",

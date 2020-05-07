@@ -55,3 +55,12 @@ export const monitorServerVersion = {
   group: 'monitor.tkestack.io',
   version: 'v1'
 };
+
+/**
+ * 审计模块
+ */
+export const auditServerVersion = {
+  basicUrl: 'apis',
+  group: 'audit.tkestack.io',
+  version: 'v1'
+};

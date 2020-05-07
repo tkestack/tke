@@ -48,6 +48,9 @@ export enum ConsoleModuleEnum {
 
   /** 认证模块 */
   Auth = 'auth',
+
+  /** 审计模块 */
+  Audit = 'audit',
 }
 
 export enum PlatformTypeEnum {
@@ -164,8 +167,13 @@ const commonRouterConfig: RouterConfig[] = [
         title: '事件持久化',
         watchModule: ConsoleModuleEnum.PLATFORM,
       },
-    ],
-  },
+      {
+        url: '/tkestack/audit',
+        title: '审计记录',
+        watchModule: ConsoleModuleEnum.PLATFORM,
+      }
+    ]
+  }
 ];
 
 /** 基础的侧边栏导航栏配置 */

@@ -71,7 +71,8 @@ import {
   cronhpa,
   role,
   localgroup,
-  group
+  group,
+  audit,
 } from './resource/k8sConfig';
 import { serviceEntry } from './resource/k8sConfig/serviceEntry';
 import { ResourceInfo } from '../src/modules/common/models';
@@ -197,6 +198,10 @@ export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey =
     controlPlane: getResourceConfig(controlPlane, finalK8sVersion),
     virtualservice: getResourceConfig(virtualService, finalK8sVersion),
     destinationrule: getResourceConfig(destinationRule, finalK8sVersion),
-    serviceentry: getResourceConfig(serviceEntry, finalK8sVersion)
+    serviceentry: getResourceConfig(serviceEntry, finalK8sVersion),
+
+    /** 审计记录 */
+    audit: getResourceConfig(audit, finalK8sVersion),
+    auditFilterCondition: getResourceConfig(audit, finalK8sVersion),
   };
 };
