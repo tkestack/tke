@@ -23,7 +23,6 @@ import (
 
 	"tkestack.io/tke/api/platform"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
-	gpumanager "tkestack.io/tke/pkg/platform/controller/addon/gpumanager/images"
 	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
 	ipam "tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
 	lbcf "tkestack.io/tke/pkg/platform/controller/addon/lbcf/images"
@@ -49,8 +48,6 @@ const (
 	PersistentEvent AddonType = "PersistentEvent"
 	// LogCollector is type for log collector.
 	LogCollector AddonType = "LogCollector"
-	// GPUManager is type for GPU
-	GPUManager AddonType = "GPUManager"
 	// TappController is type for TappController
 	TappController AddonType = "TappController"
 	// CSIOperator is type for CSIOperator
@@ -95,12 +92,6 @@ var Types = map[AddonType]Info{
 		Level:                  platform.LevelEnhance,
 		LatestVersion:          logcollector.LatestVersion,
 		Description:            description("LogCollector.md"),
-		CompatibleClusterTypes: cluster.Providers(),
-	},
-	GPUManager: {
-		Level:                  platform.LevelBasic,
-		LatestVersion:          gpumanager.LatestVersion,
-		Description:            description("GPUManager.md"),
 		CompatibleClusterTypes: cluster.Providers(),
 	},
 	TappController: {

@@ -38,8 +38,6 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&ConfigMapList{}, func(obj interface{}) { SetObjectDefaults_ConfigMapList(obj.(*ConfigMapList)) })
 	scheme.AddTypeDefaultingFunc(&CronHPA{}, func(obj interface{}) { SetObjectDefaults_CronHPA(obj.(*CronHPA)) })
 	scheme.AddTypeDefaultingFunc(&CronHPAList{}, func(obj interface{}) { SetObjectDefaults_CronHPAList(obj.(*CronHPAList)) })
-	scheme.AddTypeDefaultingFunc(&GPUManager{}, func(obj interface{}) { SetObjectDefaults_GPUManager(obj.(*GPUManager)) })
-	scheme.AddTypeDefaultingFunc(&GPUManagerList{}, func(obj interface{}) { SetObjectDefaults_GPUManagerList(obj.(*GPUManagerList)) })
 	scheme.AddTypeDefaultingFunc(&Helm{}, func(obj interface{}) { SetObjectDefaults_Helm(obj.(*Helm)) })
 	scheme.AddTypeDefaultingFunc(&HelmList{}, func(obj interface{}) { SetObjectDefaults_HelmList(obj.(*HelmList)) })
 	scheme.AddTypeDefaultingFunc(&IPAM{}, func(obj interface{}) { SetObjectDefaults_IPAM(obj.(*IPAM)) })
@@ -102,17 +100,6 @@ func SetObjectDefaults_CronHPAList(in *CronHPAList) {
 	for i := range in.Items {
 		a := &in.Items[i]
 		SetObjectDefaults_CronHPA(a)
-	}
-}
-
-func SetObjectDefaults_GPUManager(in *GPUManager) {
-	SetDefaults_GPUManagerStatus(&in.Status)
-}
-
-func SetObjectDefaults_GPUManagerList(in *GPUManagerList) {
-	for i := range in.Items {
-		a := &in.Items[i]
-		SetObjectDefaults_GPUManager(a)
 	}
 }
 
