@@ -19,6 +19,8 @@
 package authentication
 
 import (
+	"time"
+
 	"github.com/go-openapi/spec"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/authenticatorfactory"
@@ -35,28 +37,28 @@ import (
 	"k8s.io/apiserver/plugin/pkg/authenticator/request/basicauth"
 	"k8s.io/apiserver/plugin/pkg/authenticator/token/webhook"
 	certutil "k8s.io/client-go/util/cert"
-	"time"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/localtrust"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 )
 
 // Config contains the data on how to authenticate a request to the Kube API Server
 type Config struct {
-	ClientCAFile                string
-	TokenAuthFile               string
-	OIDCIssuerURL               string
-	OIDCExternalIssuerURL       string
-	OIDCClientID                string
-	OIDCCAFile                  string
-	OIDCUsernameClaim           string
-	OIDCUsernamePrefix          string
-	OIDCGroupsClaim             string
-	OIDCGroupsPrefix            string
-	OIDCTenantIDClaim           string
-	OIDCTenantIDPrefix          string
-	OIDCSigningAlgs             []string
-	OIDCRequiredClaims          map[string]string
-	APIAudiences                authenticator.Audiences
+	ClientCAFile          string
+	TokenAuthFile         string
+	OIDCIssuerURL         string
+	OIDCExternalIssuerURL string
+	OIDCClientID          string
+	OIDCCAFile            string
+	OIDCUsernameClaim     string
+	OIDCUsernamePrefix    string
+	OIDCGroupsClaim       string
+	OIDCGroupsPrefix      string
+	OIDCTenantIDClaim     string
+	OIDCTenantIDPrefix    string
+	OIDCSigningAlgs       []string
+	OIDCRequiredClaims    map[string]string
+	APIAudiences          authenticator.Audiences
+
 	WebhookTokenAuthnConfigFile string
 	WebhookTokenAuthnVersion    string
 	WebhookTokenAuthnCacheTTL   time.Duration
@@ -203,7 +205,7 @@ func newAuthenticatorFromOIDCIssuerURL(opts *oidc.Options) (authenticator.Token,
 }
 
 func newWebhookTokenAuthenticator(webhookConfigFile string, version string, ttl time.Duration, implicitAuds authenticator.Audiences) (authenticator.Token, error) {
-	webhookTokenAuthenticator, err := webhook.New(webhookConfigFile, version, implicitAuds)
+	webhookTokenAuthenticator, err := webhook.New(webhookConfigFile, version, implicitAuds, nil)
 	if err != nil {
 		return nil, err
 	}
