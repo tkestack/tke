@@ -29,12 +29,12 @@ require (
 	github.com/brancz/gojsontoyaml v0.0.0-20190425155809-e8bd32d46b3d // indirect
 	github.com/casbin/casbin/v2 v2.1.2
 	github.com/chartmuseum/auth v0.4.1 // indirect
+	github.com/chartmuseum/storage v0.8.0
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/containerd/continuity v0.0.0-20200107194136-26c1120b8d41 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.29.0
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
-	github.com/deislabs/oras v0.8.0 // indirect
 	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/cli v0.0.0-20200130152716-5d0cf8839492 // indirect
@@ -124,15 +124,14 @@ require (
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	golang.org/x/tools v0.0.0-20200319210407-521f4a0cd458 // indirect
 	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
-	google.golang.org/api v0.15.1 // indirect
-	google.golang.org/grpc v1.26.0
+	google.golang.org/grpc v1.27.1
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0 // indirect
 	gopkg.in/yaml.v2 v2.2.8
-	helm.sh/chartmuseum v0.8.2
+	helm.sh/chartmuseum v0.12.0
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 	k8s.io/api v0.18.2
 	k8s.io/apiextensions-apiserver v0.18.2
@@ -141,7 +140,6 @@ require (
 	k8s.io/client-go v0.18.2
 	k8s.io/cluster-bootstrap v0.18.2
 	k8s.io/component-base v0.18.2
-	k8s.io/helm v2.16.1+incompatible
 	k8s.io/klog v1.0.0
 	k8s.io/kube-aggregator v0.18.2
 	k8s.io/kube-openapi v0.0.0-20200121204235-bf4fb3bd569c
