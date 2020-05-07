@@ -1,16 +1,16 @@
 
 
-# 常见问题列表：
+# 安装问题列表：
 
 [如何规划部署资源](#如何规划部署资源)  
 
-[如何使用存储  ](#如何使用存储)  
+[如何使用存储](#如何使用存储)  
 
-[常见报错解决方案  ](#常见报错解决方案)  
+[常见报错解决方案](#常见报错解决方案)  
 
-[如何重新部署集群  ](#如何重新部署集群)  
+[如何重新部署集群](#如何重新部署集群)  
 
-### 如何规划部署资源
+## 如何规划部署资源
 
 TKEStack支持使用物理机或虚拟机部署，采用kubernetes on kubernetes架构部署，在主机上只拥有一个物理机进程kubelet，其他kubernetes组件均为容器。架构上分为global集群和业务集群。global集群，运行整个TKEStack平台自身所需要的组件，业务集群运行用户业务。在实际的部署过程中，可根据实际情况进行调整。
 
@@ -26,13 +26,20 @@ Global server，若干台，用以部署 Globa 集群，常见的部署模式分
 
 集群节点主机配置，请参考[资源需求](../安装部署/资源需求.md)。
 
-### 如何使用存储
+## 如何使用存储
 
 TKEStack 没有提供存储服务，Global集群中的镜像仓库、ETCD、InfluxDB等数据组件，均使用本地磁盘存储数据。如果您需要使用存储服务，建议使用[ROOK](https://rook.io/)或者[chubaoFS](https://chubao.io/)，部署一套容器化的分布式存储服务。
 
-### 常见报错解决方案
 
-#### 1.密码安装报错
+## 常见报错解决方案
+
+安装过程中的错误主要集中在硬件和软件配置上。
+
+* 首先检查Global节点是否满足**8核16G内存，50G系统盘**的要求。
+
+* 其次仔细检查每个节点的硬件和软件需求：[installation requirements](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
+
+### 密码安装报错
 
 错误情况：使用密码安装Global集群报 ssh:unable to authenticate 错误。
 
@@ -40,11 +47,34 @@ TKEStack 没有提供存储服务，Global集群中的镜像仓库、ETCD、Infl
 
 注：建议配置SSH key的方式安装Global集群。
 
-#### 2.
 
-### 如何重新部署集群
+## 如何重新部署集群
 
-1. 使用如下脚本：
+### 继续安装
+
+若安装报错后，请先排障，再登录到 Installer 节点执行如下命令后，重新打开 http://[tke-installer-IP]:8080/index.html 安装控制台。
+
+```
+docker restart tke-installer
+```
+
+### 重新安装
+
+安装报错后，请先排障，再登录到 Installer 节点执行如下命令后，重新打开 http://[tke-installer-IP]:8080/index.html 安装控制台。
+
+```
+rm -rf /opt/tke-installer/data && docker restart tke-installer
+```
+
+### 彻底清除所有安装文件，重新部署TKEStack。
+
+想要彻底清理TKEStack，请对installer和所有Global Cluster节点执行下方脚本。
+
+```shell
+curl -s https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tools/clean.sh | sh
+```
+
+或者使用如下脚本：
 
 ```shell
 #!/bin/bash
@@ -74,5 +104,4 @@ rm -rfv /var/lib/postgresql /etc/core/token /var/lib/redis /storage /chart_stora
 systemctl start docker 2>/dev/null
 ```
 
-2. 清理 installe r节点 /opt/tke-installer/data 目录下的文件，重启 tke-installer 容器后，重新打开安装页面即可。
-
+注：如有混合部署其他业务，请基于实际情况评估目录内数据是否可删除。
