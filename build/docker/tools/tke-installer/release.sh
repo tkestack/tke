@@ -61,7 +61,7 @@ function prepare::tke_installer() {
 
   ls -l "${DST_DIR}"
 
-  curl -L "https://storage.googleapis.com/kubernetes-release/release/${K8S_VERION}bin/${TARGET_OS}/${TARGET_ARCH}/kubectl" -o "${DST_DIR}/bin/kubectl"
+  curl -L "https://storage.googleapis.com/kubernetes-release/release/${K8S_VERION}/bin/${TARGET_OS}/${TARGET_ARCH}/kubectl" -o "${DST_DIR}/bin/kubectl"
   chmod +x "${DST_DIR}/bin/kubectl"
 
   cp -v "$OUTPUT_DIR/${TARGET_OS}/${TARGET_ARCH}/tke-installer" "${DST_DIR}/bin"
