@@ -39,6 +39,7 @@ import (
 	persistentevent "tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
 	prometheus "tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
 
+	logagent "tkestack.io/tke/pkg/logagent/controller/logagent/images"
 	volumedecorator "tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
 	csioperator "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
@@ -62,6 +63,7 @@ func main() {
 		csioperator.List,
 		volumedecorator.List,
 		tappcontroller.List,
+		logagent.List,
 	}
 	var result []string
 	for _, f := range funcs {
