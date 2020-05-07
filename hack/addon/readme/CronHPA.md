@@ -39,7 +39,7 @@ CronHPA 可让用户利用[crontab](https://en.wikipedia.org/wiki/Cron)实现对
 5. 在新建负载页面中，【开启】定时调节，如下图所示：![定时调节](images/定时调节.png)
 6. 【新增策略】按钮可以新增策略，策略右边的叉可以减少策略
 7. 每条触发策略由两条字段组成
-   1. **Crontab** ：例如 "0 23 * * 5"表示每周五23:00
+   1. **Crontab** ：例如 "0 23 * * 5"表示每周五23:00，详见[crontab](https://en.wikipedia.org/wiki/Cron)
    2. **目标实例数** ：设置实例数量
 
 

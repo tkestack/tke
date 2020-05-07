@@ -48,6 +48,8 @@
 
 ### QuickStart
 
+[First please confirm the installation requirements](docs/guide/zh-CN/installation/installation-requirement.md)
+
 ```
 version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
 ```
@@ -82,7 +84,7 @@ Other active channels:
 
 - WeChat Group
 
-![TKEStack](docs/images/wechatIMG.png)
+![TKEStack](docs/images/wechat.png)
 
 ## Licensing
 
