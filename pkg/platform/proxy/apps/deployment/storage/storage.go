@@ -323,12 +323,17 @@ var _ = rest.GroupVersionKindProvider(&RollbackREST{})
 
 // GroupVersionKind is used to specify a particular GroupVersionKind to discovery.
 func (r *RollbackREST) GroupVersionKind(containingGV schema.GroupVersion) schema.GroupVersionKind {
-	return extensionsv1beta1.SchemeGroupVersion.WithKind("DeploymentRollback")
+	switch containingGV {
+	case extensionsv1beta1.SchemeGroupVersion:
+		return extensionsv1beta1.SchemeGroupVersion.WithKind("DeploymentRollback")
+	default:
+		return appsv1beta1.SchemeGroupVersion.WithKind("DeploymentRollback")
+	}
 }
 
 // New creates a new Rollback object
 func (r *RollbackREST) New() runtime.Object {
-	return &extensionsv1beta1.DeploymentRollback{}
+	return &appsv1beta1.DeploymentRollback{}
 }
 
 // Create inserts a new item according to the unique key from the object.

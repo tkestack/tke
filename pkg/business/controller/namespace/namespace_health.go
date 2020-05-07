@@ -19,6 +19,7 @@
 package namespace
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -96,9 +97,11 @@ func (c *Controller) watchNamespaceHealth(key string) func() (bool, error) {
 			log.Error("Check namespace health, namespace get failed", log.String("projectName", projectName), log.String("namespaceName", namespaceName), log.Err(err))
 			return false, nil
 		}
-		// if status is terminated,to exit the  health check loop
-		if namespace.Status.Phase == v1.NamespaceTerminating || namespace.Status.Phase == v1.NamespacePending {
-			log.Warn("Namespace status is terminated, to exit the health check loop", log.String("projectName", projectName), log.String("namespaceName", namespaceName))
+		if namespace.Status.Phase == v1.NamespaceTerminating ||
+			namespace.Status.Phase == v1.NamespacePending ||
+			namespace.Status.Phase == v1.NamespaceLocked {
+			log.Warn(fmt.Sprintf("Namespace status is %s, to exit the health check loop", namespace.Status.Phase),
+				log.String("projectName", projectName), log.String("namespaceName", namespaceName))
 			c.health.Del(key)
 			return true, nil
 		}
@@ -122,7 +125,7 @@ func (c *Controller) checkNamespaceHealth(namespace *v1.Namespace) error {
 		namespace.Status.LastTransitionTime = metav1.Now()
 		namespace.Status.Message = message
 		namespace.Status.Reason = reason
-		return c.persistUpdate(namespace)
+		return c.persistUpdateNamespace(namespace)
 	}
 	message, reason, used := cls.CalculateNamespaceUsed(kubeClient, namespace)
 	if message != "" {
@@ -130,14 +133,14 @@ func (c *Controller) checkNamespaceHealth(namespace *v1.Namespace) error {
 		namespace.Status.LastTransitionTime = metav1.Now()
 		namespace.Status.Message = message
 		namespace.Status.Reason = reason
-		return c.persistUpdate(namespace)
+		return c.persistUpdateNamespace(namespace)
 	}
 	if !reflect.DeepEqual(namespace.Status.Used, used) {
 		log.Infof("%s:%s update used", namespace.Namespace, namespace.Name)
 		namespace.Status.Used = used
 		namespace.Status.Message = ""
 		namespace.Status.Reason = ""
-		return c.persistUpdate(namespace)
+		return c.persistUpdateNamespace(namespace)
 	}
 	return nil
 }

@@ -59,4 +59,19 @@ const (
    "kind" : "Policy"
 }
 `
+
+	auditWebhookConfig = `
+apiVersion: v1
+kind: Config
+clusters:
+  - name: tke
+    cluster:
+      server: {{.AuditBackendAddress}}/apis/audit.tkestack.io/v1/events/sink/{{.ClusterName}}
+      insecure-skip-tls-verify: true
+current-context: tke
+contexts:
+  - context:
+      cluster: tke
+    name: tke
+`
 )

@@ -37,7 +37,7 @@ type Storage struct {
 	Binding *BindingREST
 	Events  *EventREST
 	Log     *LogREST
-	Exec *ExecREST
+	Exec    *ExecREST
 }
 
 // REST implements pkg/api/rest.StandardStorage.
@@ -71,7 +71,7 @@ func NewStorage(_ genericregistry.RESTOptionsGetter, platformClient platforminte
 			platformClient: platformClient,
 		},
 		Exec: &ExecREST{
-			platformClient:platformClient,
+			platformClient: platformClient,
 		},
 	}
 }

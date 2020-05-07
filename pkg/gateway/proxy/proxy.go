@@ -24,15 +24,17 @@ import (
 	"k8s.io/apiserver/pkg/server/mux"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/api/business"
+	"tkestack.io/tke/api/logagent"
 	"tkestack.io/tke/api/monitor"
 	"tkestack.io/tke/api/notify"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
+	auditapi "tkestack.io/tke/pkg/audit/api"
+	authapiserver "tkestack.io/tke/pkg/auth/apiserver"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/frontproxy"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/passthrough"
 	platformapiserver "tkestack.io/tke/pkg/platform/apiserver"
-	authapiserver "tkestack.io/tke/pkg/auth/apiserver"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
 	"tkestack.io/tke/pkg/util/log"
@@ -49,6 +51,8 @@ const (
 	moduleNameRegistry moduleName = "registry"
 	moduleNameAuth     moduleName = "auth"
 	moduleNameMonitor  moduleName = "monitor"
+	moduleNameLogagent moduleName = "logagent"
+	moduleNameAudit    moduleName = "audit"
 )
 
 type modulePath struct {
@@ -85,7 +89,7 @@ func componentPrefix() map[moduleName][]modulePath {
 				protected: false,
 			},
 			modulePath{
-				prefix: fmt.Sprintf("%s/", authapiserver.APIKeyPasswordPath),
+				prefix:    fmt.Sprintf("%s/", authapiserver.APIKeyPasswordPath),
 				protected: false,
 			},
 		},
@@ -114,6 +118,26 @@ func componentPrefix() map[moduleName][]modulePath {
 			},
 			modulePath{
 				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, registry.GroupName),
+				protected: true,
+			},
+		},
+		moduleNameLogagent: {
+			modulePath{
+				prefix: fmt.Sprintf("%s/%s/", apiPrefix, logagent.GroupName),
+				protected: true,
+			},
+		},
+		moduleNameAudit: {
+			modulePath{
+				prefix:    fmt.Sprintf("%s/%s/%s/events/sink/", apiPrefix, auditapi.GroupName, auditapi.Version),
+				protected: false,
+			},
+			modulePath{
+				prefix:    fmt.Sprintf("%s/%s/%s/events/list/", apiPrefix, auditapi.GroupName, auditapi.Version),
+				protected: true,
+			},
+			modulePath{
+				prefix:    fmt.Sprintf("%s/%s/%s/events/listFieldValues/", apiPrefix, auditapi.GroupName, auditapi.Version),
 				protected: true,
 			},
 		},
@@ -208,6 +232,22 @@ func prefixProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gateway
 		if prefixes, ok := componentPrefixMap[moduleNameRegistry]; ok {
 			for _, prefix := range prefixes {
 				pathPrefixProxyMap[prefix] = *cfg.Components.Registry
+			}
+		}
+	}
+
+	if cfg.Components.LogAgent != nil {
+		if prefixes, ok := componentPrefixMap[moduleNameLogagent]; ok {
+			for _, prefix := range prefixes {
+				pathPrefixProxyMap[prefix] = *cfg.Components.LogAgent
+			}
+		}
+	}
+	// audit
+	if cfg.Components.Audit != nil {
+		if prefixes, ok := componentPrefixMap[moduleNameAudit]; ok {
+			for _, prefix := range prefixes {
+				pathPrefixProxyMap[prefix] = *cfg.Components.Audit
 			}
 		}
 	}

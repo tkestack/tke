@@ -133,11 +133,7 @@ const restActions = {
       let { regionSelection, route } = getState(),
         urlParams = router.resolve(route);
       if (cluster) {
-        dispatch(clusterActions.select(cluster));
-        router.navigate(urlParams, Object.assign({}, route.queries, { clusterId: cluster.metadata.name }));
-        dispatch(
-          alarmPolicyActions.applyFilter({ regionId: +regionSelection.value, clusterId: cluster.metadata.name })
-        );
+        dispatch(clusterActions.selectCluster(cluster));
       } else {
         router.navigate(urlParams, Object.assign({}, route.queries, { clusterId: '' }));
         dispatch(alarmPolicyActions.clear());

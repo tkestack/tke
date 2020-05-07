@@ -19,6 +19,8 @@
 package options
 
 import (
+	"fmt"
+
 	"github.com/spf13/pflag"
 	genericapiserveroptions "k8s.io/apiserver/pkg/server/options"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
@@ -36,6 +38,7 @@ type Options struct {
 	Generic        *apiserveroptions.GenericOptions
 	Authentication *apiserveroptions.AuthenticationWithAPIOptions
 	Authorization  *apiserveroptions.AuthorizationOptions
+	Audit          *genericapiserveroptions.AuditOptions
 }
 
 // NewOptions creates a new Options with a default config.
@@ -48,6 +51,7 @@ func NewOptions(serverName string) *Options {
 		Generic:        apiserveroptions.NewGenericOptions(),
 		Authentication: apiserveroptions.NewAuthenticationWithAPIOptions(),
 		Authorization:  apiserveroptions.NewAuthorizationOptions(),
+		Audit:          genericapiserveroptions.NewAuditOptions(),
 	}
 }
 
@@ -60,6 +64,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Generic.AddFlags(fs)
 	o.Authentication.AddFlags(fs)
 	o.Authorization.AddFlags(fs)
+	o.Audit.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -99,6 +104,10 @@ func (o *Options) Complete() error {
 			return err
 		}
 		o.ETCD.WatchCacheSizes = watchCacheSizes
+	}
+
+	if (o.Audit.WebhookOptions.ConfigFile != "" || o.Audit.LogOptions.Path != "") && o.Audit.PolicyFile == "" {
+		return fmt.Errorf("audit log/webhook config specified, but audit policy file is empty")
 	}
 	return nil
 }

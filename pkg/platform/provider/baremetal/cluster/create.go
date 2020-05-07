@@ -400,6 +400,7 @@ func (p *Provider) EnsureKubeadm(c *Cluster) error {
 
 func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
+	auditPolicyData, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.AuditPolicyConfigFile))
 	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
 	if GPUQuotaAdmissionHost == "" {
 		GPUQuotaAdmissionHost = "gpu-quota-admission"
@@ -409,6 +410,13 @@ func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 	})
 	if err != nil {
 		return errors.Wrap(err, "parse schedulerPolicyConfig error")
+	}
+	auditWebhookConfig, err := template.ParseString(auditWebhookConfig, map[string]interface{}{
+		"AuditBackendAddress": p.config.Audit.Address,
+		"ClusterName":         c.Name,
+	})
+	if err != nil {
+		return errors.Wrap(err, "parse auditWebhookConfig error")
 	}
 	for i, machine := range c.Spec.Machines {
 		tokenData := fmt.Sprintf(tokenFileTemplate, *c.ClusterCredential.Token)
@@ -476,12 +484,24 @@ func (p *Provider) EnsurePrepareForControlplane(c *Cluster) error {
 			}
 		}
 
+		if p.config.Audit.Address != "" {
+			if len(auditPolicyData) != 0 {
+				err = c.SSH[machine.IP].WriteFile(bytes.NewReader(auditPolicyData), path.Join(constants.KubernetesDir, constants.AuditPolicyConfigFile))
+				if err != nil {
+					return errors.Wrap(err, machine.IP)
+				}
+				err = c.SSH[machine.IP].WriteFile(bytes.NewReader(auditWebhookConfig), path.Join(constants.KubernetesDir, constants.AuditWebhookConfigFile))
+				if err != nil {
+					return errors.Wrap(err, machine.IP)
+				}
+			}
+		}
 	}
 
 	return nil
 }
 
-func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
+func (p *Provider) getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 	controlPlaneEndpoint := fmt.Sprintf("%s:6443", c.Spec.Machines[0].IP)
 	addr := c.Address(platformv1.AddressAdvertise)
 	if addr != nil {
@@ -500,6 +520,14 @@ func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 	kubeProxyMode := "iptables"
 	if c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS {
 		kubeProxyMode = "ipvs"
+	}
+	apiserverExtraArgs := c.Spec.APIServerExtraArgs
+	if apiserverExtraArgs == nil {
+		apiserverExtraArgs = make(map[string]string)
+	}
+	if p.config.Audit.Address != "" {
+		apiserverExtraArgs["audit-policy-file"] = path.Join(constants.KubernetesDir, constants.AuditPolicyConfigFile)
+		apiserverExtraArgs["audit-webhook-config-file"] = path.Join(constants.KubernetesDir, constants.AuditWebhookConfigFile)
 	}
 
 	return &kubeadm.InitOption{
@@ -520,7 +548,7 @@ func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 		ServiceClusterIPRange: c.Status.ServiceCIDR,
 		CertSANs:              certSANs,
 
-		APIServerExtraArgs:         c.Spec.APIServerExtraArgs,
+		APIServerExtraArgs:         apiserverExtraArgs,
 		ControllerManagerExtraArgs: c.Spec.ControllerManagerExtraArgs,
 		SchedulerExtraArgs:         c.Spec.SchedulerExtraArgs,
 
@@ -532,40 +560,40 @@ func getKubeadmInitOption(c *Cluster) *kubeadm.InitOption {
 }
 
 func (p *Provider) EnsureKubeadmInitKubeletStartPhase(c *Cluster) error {
-	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], getKubeadmInitOption(c),
+	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], p.getKubeadmInitOption(c),
 		fmt.Sprintf("kubelet-start --node-name=%s", c.Spec.Machines[0].IP))
 }
 
 func (p *Provider) EnsureKubeadmInitCertsPhase(c *Cluster) error {
-	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], getKubeadmInitOption(c), "certs all")
+	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], p.getKubeadmInitOption(c), "certs all")
 }
 
 func (p *Provider) EnsureKubeadmInitKubeConfigPhase(c *Cluster) error {
-	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], getKubeadmInitOption(c), "kubeconfig all")
+	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], p.getKubeadmInitOption(c), "kubeconfig all")
 }
 
 func (p *Provider) EnsureKubeadmInitControlPlanePhase(c *Cluster) error {
-	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], getKubeadmInitOption(c), "control-plane all")
+	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], p.getKubeadmInitOption(c), "control-plane all")
 }
 
 func (p *Provider) EnsureKubeadmInitEtcdPhase(c *Cluster) error {
-	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], getKubeadmInitOption(c), "etcd local")
+	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], p.getKubeadmInitOption(c), "etcd local")
 }
 
 func (p *Provider) EnsureKubeadmInitUploadConfigPhase(c *Cluster) error {
-	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], getKubeadmInitOption(c), "upload-config all ")
+	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], p.getKubeadmInitOption(c), "upload-config all ")
 }
 
 func (p *Provider) EnsureKubeadmInitUploadCertsPhase(c *Cluster) error {
-	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], getKubeadmInitOption(c), "upload-certs --upload-certs")
+	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], p.getKubeadmInitOption(c), "upload-certs --upload-certs")
 }
 
 func (p *Provider) EnsureKubeadmInitBootstrapTokenPhase(c *Cluster) error {
-	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], getKubeadmInitOption(c), "bootstrap-token")
+	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], p.getKubeadmInitOption(c), "bootstrap-token")
 }
 
 func (p *Provider) EnsureKubeadmInitAddonPhase(c *Cluster) error {
-	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], getKubeadmInitOption(c), "addon all")
+	return kubeadm.Init(c.SSH[c.Spec.Machines[0].IP], p.getKubeadmInitOption(c), "addon all")
 }
 
 func (p *Provider) EnsureGalaxy(c *Cluster) error {

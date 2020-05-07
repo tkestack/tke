@@ -5,10 +5,21 @@ import { RouteState } from '../../../../helpers/Router';
 import { Cluster } from '../../common';
 import { User, UserFilter } from '../../uam/models';
 import {
-    AlarmPolicy, AlarmPolicyEdition, AlarmPolicyFilter, AlarmPolicyOperator, ClusterFilter, Group,
-    Namespace, NamespaceFilter, Region, RegionFilter, Resource, ResourceFilter
+  AlarmPolicy,
+  AlarmPolicyEdition,
+  AlarmPolicyFilter,
+  AlarmPolicyOperator,
+  ClusterFilter,
+  Group,
+  Namespace,
+  NamespaceFilter,
+  Region,
+  RegionFilter,
+  Resource,
+  ResourceFilter
 } from './';
 import { GroupFilter } from './Group';
+import { AddonStatus } from './Addon';
 
 type AlarmPolicyOpWorkflow = WorkflowState<AlarmPolicy, AlarmPolicyOperator>;
 type AlarmPolicyCreateWorkflow = WorkflowState<AlarmPolicyEdition, AlarmPolicyOperator>;
@@ -35,6 +46,8 @@ export interface RootState {
   regionSelection?: Region;
 
   cluster?: FFListModel<Cluster, ClusterFilter>;
+
+  addons?: AddonStatus;
 
   /**当前集群命名空间 */
   namespaceList?: FetcherState<RecordSet<Namespace>>;

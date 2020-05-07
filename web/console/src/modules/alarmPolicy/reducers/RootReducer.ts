@@ -1,8 +1,12 @@
 import { combineReducers } from 'redux';
 
 import {
-    createFFListReducer, generateFetcherReducer, generateQueryReducer, generateWorkflowReducer,
-    RecordSet, reduceToPayload
+  createFFListReducer,
+  generateFetcherReducer,
+  generateQueryReducer,
+  generateWorkflowReducer,
+  RecordSet,
+  reduceToPayload
 } from '@tencent/ff-redux';
 
 import { FFReduxActionName } from '../../cluster/constants/Config';
@@ -31,6 +35,8 @@ export const RootReducer = combineReducers({
 
   cluster: createFFListReducer<Cluster, ClusterFilter>(FFReduxActionName.CLUSTER),
   clusterVersion: reduceToPayload(ActionType.InitClusterVersion, '1.16'),
+
+  addons: reduceToPayload(ActionType.FetchClusterAddons, {}),
 
   /**当前集群命名空间 */
   namespaceList: generateFetcherReducer({

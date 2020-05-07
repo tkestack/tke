@@ -34,6 +34,8 @@ type Interface interface {
 	ImageNamespaces() ImageNamespaceInformer
 	// Namespaces returns a NamespaceInformer.
 	Namespaces() NamespaceInformer
+	// NsEmigrations returns a NsEmigrationInformer.
+	NsEmigrations() NsEmigrationInformer
 	// Platforms returns a PlatformInformer.
 	Platforms() PlatformInformer
 	// Projects returns a ProjectInformer.
@@ -69,6 +71,11 @@ func (v *version) ImageNamespaces() ImageNamespaceInformer {
 // Namespaces returns a NamespaceInformer.
 func (v *version) Namespaces() NamespaceInformer {
 	return &namespaceInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// NsEmigrations returns a NsEmigrationInformer.
+func (v *version) NsEmigrations() NsEmigrationInformer {
+	return &nsEmigrationInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // Platforms returns a PlatformInformer.

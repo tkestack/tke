@@ -28,6 +28,8 @@ type ImageNamespaceExpansion interface{}
 
 type NamespaceExpansion interface{}
 
+type NsEmigrationExpansion interface{}
+
 type PlatformExpansion interface{}
 
 type PortalExpansion interface{}

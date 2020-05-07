@@ -6,9 +6,7 @@ import { reduceK8sRestfulPath } from '../../../helpers';
 import { reduceNetworkRequest } from '../../../helpers/reduceNetwork';
 import { RequestParams, ResourceInfo } from '../common/models';
 import { AlarmPolicyMetrics } from './constants/Config';
-import {
-    AlarmPolicy, AlarmPolicyFilter, NamespaceFilter, Resource, ResourceFilter
-} from './models';
+import { AlarmPolicy, AlarmPolicyFilter, NamespaceFilter, Resource, ResourceFilter } from './models';
 import { AlarmPolicyEdition, AlarmPolicyOperator, MetricsObject } from './models/AlarmPolicy';
 import { Namespace } from './models/Namespace';
 
@@ -112,7 +110,8 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
   let workloadTypeMap = {
     Deployment: 'deployment',
     StatefulSet: 'statefulset',
-    DaemonSet: 'daemonset'
+    DaemonSet: 'daemonset',
+    Tapp: 'tapp'
   };
   alarmPolicyList = items.map(item => {
     let alarmPolicyMetricsConfig =
@@ -190,7 +189,8 @@ function getAlarmPolicyParams(alarmPolicyEdition: AlarmPolicyEdition[], opreator
   let workloadTypeMap = {
     deployment: 'Deployment',
     statefulset: 'StatefulSet',
-    daemonset: 'DaemonSet'
+    daemonset: 'DaemonSet',
+    tapp: 'Tapp'
   };
   let params = {
     ClusterInstanceId: opreator.clusterId,
