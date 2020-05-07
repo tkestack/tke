@@ -6,8 +6,8 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
 
 <span id="creatDeployment"></span>
 ### 创建 Deployment
-1. 登录TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】。
-2. 选择需要创建Deployment的业务下相应的命名空间，展开工作负载下拉项，进入Deployment管理页面。如下图所示：
+1. 登录TKEStack，切换到【业务】管理控制台，选择左侧导航栏中的【应用管理】。
+2. 选择需要创建Deployment的【业务】下相应的【命名空间】，展开【工作负载】下拉项，进入【Deployment】管理页面。如下图所示：
    ![](../../../../../../images/deployment.png)
 3. 单击【新建】，进入 “新建Workload” 页面。
 根据实际需求，设置 Deployment 参数。关键参数信息如下：
@@ -58,8 +58,8 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
 ### 更新 Deployment
 
 #### 更新 YAML
-1. 登录TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】。 
-2. 选择需要更新的业务下相应的命名空间，展开工作负载列表，进入Deployment管理页面。如下图所示：
+1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。 
+2. 选择需要更新的【业务】下相应的【命名空间】，展开【工作负载】列表，进入Deployment管理页面。如下图所示：
    ![](../../../../../../images/deployment.png)
 3. 在需要更新 YAML 的 Deployment 行中，单击【更多】>【编辑YAML】，进入更新 Deployment 页面。如下图所示：
    ![](../../../../../../images/updateYaml.png)
