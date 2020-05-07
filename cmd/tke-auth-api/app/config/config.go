@@ -104,6 +104,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 
 	genericAPIServerConfig.EnableIndex = false
+	genericAPIServerConfig.EnableProfiling = false
 
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err

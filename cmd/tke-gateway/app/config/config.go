@@ -99,6 +99,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString(), sets.NewString(), []string{"/"})
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableDiscovery = false
+	genericAPIServerConfig.EnableProfiling = false
 
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err
