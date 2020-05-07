@@ -21,6 +21,7 @@ package v1
 import (
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
@@ -36,4 +37,33 @@ func (in *MachineSpec) SSH() (*ssh.SSH, error) {
 		Retry:       0,
 	}
 	return ssh.New(sshConfig)
+}
+
+func (in *Machine) SetCondition(newCondition MachineCondition) {
+	var conditions []MachineCondition
+
+	exist := false
+
+	if newCondition.LastProbeTime.IsZero() {
+		newCondition.LastProbeTime = metav1.Now()
+	}
+	for _, condition := range in.Status.Conditions {
+		if condition.Type == newCondition.Type {
+			exist = true
+			if newCondition.LastTransitionTime.IsZero() {
+				newCondition.LastTransitionTime = condition.LastTransitionTime
+			}
+			condition = newCondition
+		}
+		conditions = append(conditions, condition)
+	}
+
+	if !exist {
+		if newCondition.LastTransitionTime.IsZero() {
+			newCondition.LastTransitionTime = metav1.Now()
+		}
+		conditions = append(conditions, newCondition)
+	}
+
+	in.Status.Conditions = conditions
 }
