@@ -920,59 +920,6 @@ type AddonSpec struct {
 	Version     string
 }
 
-// +genclient
-// +genclient:nonNamespaced
-// +genclient:skipVerbs=deleteCollection
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// GPUManager is a kind of device plugin for kubelet to help manage GPUs.
-type GPUManager struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ObjectMeta
-
-	// Spec defines the desired identities of clusters in this set.
-	// +optional
-	Spec GPUManagerSpec
-	// +optional
-	Status GPUManagerStatus
-}
-
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// GPUManagerList is the whole list of all GPUManager which owned by a tenant.
-type GPUManagerList struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ListMeta
-
-	// List of Helms
-	Items []GPUManager
-}
-
-// GPUManagerSpec describes the attributes of a GPUManager.
-type GPUManagerSpec struct {
-	TenantID    string
-	ClusterName string
-	Version     string
-}
-
-// GPUManagerStatus is information about the current status of a GPUManager.
-type GPUManagerStatus struct {
-	// +optional
-	Version string
-	// Phase is the current lifecycle phase of the GPUManager of cluster.
-	// +optional
-	Phase AddonPhase
-	// Reason is a brief CamelCase string that describes any failure.
-	// +optional
-	Reason string
-	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-	// +optional
-	RetryCount int32
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // TappControllerProxyOptions is the query options to a kube-apiserver proxy call.

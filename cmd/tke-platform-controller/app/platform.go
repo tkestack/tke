@@ -25,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/cronhpa"
-	gm "tkestack.io/tke/pkg/platform/controller/addon/gpumanager"
 	"tkestack.io/tke/pkg/platform/controller/addon/helm"
 	"tkestack.io/tke/pkg/platform/controller/addon/ipam"
 	"tkestack.io/tke/pkg/platform/controller/addon/lbcf"
@@ -140,24 +139,6 @@ func startPersistentEventController(ctx ControllerContext) (http.Handler, bool, 
 
 	go func() {
 		_ = ctrl.Run(concurrentPersistentEventSyncs, ctx.Stop)
-	}()
-
-	return nil, true, nil
-}
-
-func startGPUManagerController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "gpumanagers"}] {
-		return nil, false, nil
-	}
-
-	ctrl := gm.NewController(
-		ctx.ClientBuilder.ClientOrDie("gm-controller"),
-		ctx.InformerFactory.Platform().V1().GPUManagers(),
-		eventSyncPeriod,
-	)
-
-	go func() {
-		_ = ctrl.Run(concurrentSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil

@@ -32,7 +32,6 @@ import (
 	galaxy "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
 
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
-	gpumanager "tkestack.io/tke/pkg/platform/controller/addon/gpumanager/images"
 	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
 	ipam "tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
 	lbcf "tkestack.io/tke/pkg/platform/controller/addon/lbcf/images"
@@ -53,7 +52,6 @@ func main() {
 		//galaxy.List,
 
 		cronhpa.List,
-		gpumanager.List,
 		helm.List,
 		ipam.List,
 		lbcf.List,

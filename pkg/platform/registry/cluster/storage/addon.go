@@ -87,7 +87,6 @@ var (
 	allAddonFinders = []addonFinderFunc{
 		helm,
 		persistentEvent,
-		gpumanager,
 		tappcontroller,
 		csiOperator,
 		volumeDecorator,
@@ -170,40 +169,6 @@ func persistentEvent(a *addonFinder) {
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.PersistentEvent),
 			Level:   clusteraddontype.Types[clusteraddontype.PersistentEvent].Level,
-			Version: l.Items[0].Spec.Version,
-		},
-		Status: platform.ClusterAddonStatus{
-			Version: l.Items[0].Status.Version,
-			Phase:   string(l.Items[0].Status.Phase),
-			Reason:  l.Items[0].Status.Reason,
-		},
-	})
-	a.mutex.Unlock()
-}
-
-func gpumanager(a *addonFinder) {
-	defer a.wg.Done()
-	l, err := a.platformClient.GPUManagers().List(metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
-	})
-	if err != nil {
-		a.mutex.Lock()
-		a.errors = append(a.errors, err)
-		a.mutex.Unlock()
-		return
-	}
-	if len(l.Items) == 0 {
-		return
-	}
-	a.mutex.Lock()
-	a.addons = append(a.addons, platform.ClusterAddon{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              l.Items[0].ObjectMeta.Name,
-			CreationTimestamp: l.Items[0].ObjectMeta.CreationTimestamp,
-		},
-		Spec: platform.ClusterAddonSpec{
-			Type:    string(clusteraddontype.GPUManager),
-			Level:   clusteraddontype.Types[clusteraddontype.GPUManager].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{

@@ -77,9 +77,11 @@ const (
 	ProviderDir           = "provider/baremetal/"
 	SrcDir                = ProviderDir + "res/"
 	ConfDir               = ProviderDir + "conf/"
-	ManifestsDir          = ProviderDir + "manifests/"
 	ConfigFile            = ConfDir + "config.yaml"
 	AuditPolicyConfigFile = "audit-policy.yaml"
+
+	ManifestsDir       = ProviderDir + "manifests/"
+	GPUManagerManifest = ManifestsDir + "gpu-manager/gpu-manager.yaml"
 
 	DNSIPIndex                   = 10
 	GPUQuotaAdmissionIPIndex     = 9
