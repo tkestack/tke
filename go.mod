@@ -1,6 +1,7 @@
 module tkestack.io/tke
 
 go 1.12
+
 replace (
 	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
