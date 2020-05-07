@@ -42893,6 +42893,13 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							Format: "",
 						},
 					},
+					"serviceCIDR": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"dnsDomain": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
@@ -43005,11 +43012,10 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
-					"serviceCIDR": {
+					"clusterCredentialRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "If not specified, the provider should at least create one; If specified, provider should validates.",
+							Ref:         ref("k8s.io/api/core/v1.LocalObjectReference"),
 						},
 					},
 				},
@@ -43017,7 +43023,7 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty"},
+			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty"},
 	}
 }
 

@@ -29,6 +29,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/fields"
+
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
 	pkgerrors "github.com/pkg/errors"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -62,7 +64,7 @@ func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, plat
 		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
 	}
 
-	credential, err := ClusterCredential(platformClient, cluster.Name)
+	credential, err := GetClusterCredential(platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platform
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
 	}
-	credential, err := ClusterCredential(platformClient, cluster.Name)
+	credential, err := GetClusterCredential(platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +363,7 @@ func BuildVersionedClientSet(cluster *platformv1.Cluster, credential *platformv1
 // BuildExternalClientSet creates the clientset of kubernetes by given cluster
 // object and returns it.
 func BuildExternalClientSet(cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*kubernetes.Clientset, error) {
-	credential, err := ClusterCredentialV1(client, cluster.Name)
+	credential, err := GetClusterCredentialV1(client, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -390,7 +392,7 @@ func BuildExternalClientSetWithName(platformClient platformversionedclient.Platf
 // BuildExternalExtensionClientSetNoStatus creates the api extension clientset of kubernetes by given
 // cluster object and returns it.
 func BuildExternalExtensionClientSetNoStatus(cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*apiextensionsclient.Clientset, error) {
-	credential, err := ClusterCredentialV1(client, cluster.Name)
+	credential, err := GetClusterCredentialV1(client, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -415,7 +417,7 @@ func BuildExternalExtensionClientSet(cluster *platformv1.Cluster, client platfor
 // BuildExternalMonitoringClientSetNoStatus creates the monitoring clientset of prometheus operator by given
 // cluster object and returns it.
 func BuildExternalMonitoringClientSetNoStatus(cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (monitoringclient.Interface, error) {
-	credential, err := ClusterCredentialV1(client, cluster.Name)
+	credential, err := GetClusterCredentialV1(client, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -593,28 +595,58 @@ func CheckClusterHealthzWithTimeout(platformClient platformversionedclient.Platf
 	return err
 }
 
-func GetClusterAndCredential(platformClient platforminternalclient.PlatformInterface, clusterName string) (*platform.Cluster, *platform.ClusterCredential, error) {
-	cluster, err := platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
-	if err != nil {
-		return nil, nil, err
-	}
-	credential, err := ClusterCredential(platformClient, clusterName)
-	if err != nil {
-		return nil, nil, err
+// GetClusterCredential returns the cluster's credential
+func GetClusterCredential(client platforminternalclient.PlatformInterface, cluster *platform.Cluster) (*platform.ClusterCredential, error) {
+	var (
+		credential *platform.ClusterCredential
+		err        error
+	)
+
+	if cluster.Spec.ClusterCredentialRef != nil {
+		credential, err = client.ClusterCredentials().Get(cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			return nil, err
+		}
+	} else {
+		clusterName := cluster.Name
+		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
+		clusterCredentials, err := client.ClusterCredentials().List(metav1.ListOptions{FieldSelector: fieldSelector})
+		if err != nil {
+			return nil, err
+		}
+		if len(clusterCredentials.Items) == 0 {
+			return nil, errors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
+		}
+		credential = &clusterCredentials.Items[0]
 	}
 
-	return cluster, credential, nil
+	return credential, nil
 }
 
-func GetClusterAndCredentialV1(platformClient platformversionedclient.PlatformV1Interface, clusterName string) (*platformv1.Cluster, *platformv1.ClusterCredential, error) {
-	cluster, err := platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
-	if err != nil {
-		return nil, nil, err
-	}
-	credential, err := ClusterCredentialV1(platformClient, clusterName)
-	if err != nil {
-		return nil, nil, err
+// GetClusterCredentialV1 returns the versioned cluster's credential
+func GetClusterCredentialV1(client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*platformv1.ClusterCredential, error) {
+	var (
+		credential *platformv1.ClusterCredential
+		err        error
+	)
+
+	if cluster.Spec.ClusterCredentialRef != nil {
+		credential, err = client.ClusterCredentials().Get(cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			return nil, err
+		}
+	} else {
+		clusterName := cluster.Name
+		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
+		clusterCredentials, err := client.ClusterCredentials().List(metav1.ListOptions{FieldSelector: fieldSelector})
+		if err != nil {
+			return nil, err
+		}
+		if len(clusterCredentials.Items) == 0 {
+			return nil, errors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
+		}
+		credential = &clusterCredentials.Items[0]
 	}
 
-	return cluster, credential, nil
+	return credential, nil
 }

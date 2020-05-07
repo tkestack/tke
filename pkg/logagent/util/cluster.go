@@ -23,15 +23,16 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/client-go/kubernetes"
 	"net"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/client-go/kubernetes"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1platform "tkestack.io/tke/api/platform/v1"
@@ -42,7 +43,6 @@ import (
 // ClusterNameToClient mapping cluster to kubernetes client
 // clusterName => kubernetes.Interface
 var ClusterNameToClient sync.Map
-
 
 // GetClusterClient get kubernetes client via cluster name
 func GetClusterClient(clusterName string, platformClient platformversionedclient.PlatformV1Interface) (kubernetes.Interface, error) {
@@ -67,14 +67,13 @@ func GetClusterClient(clusterName string, platformClient platformversionedclient
 	return kubeClient, nil
 }
 
-
 //TODO: use api && controller instead of proxy
-func APIServerLocationByCluster(ctx context.Context, clusterName string,platformClient platformversionedclient.PlatformV1Interface)(*url.URL, http.RoundTripper, string, error){
+func APIServerLocationByCluster(ctx context.Context, clusterName string, platformClient platformversionedclient.PlatformV1Interface) (*url.URL, http.RoundTripper, string, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, nil, "", errors.NewBadRequest("unable to get request info from context")
 	}
-	cluster , err := platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
+	cluster, err := platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
 	if err != nil {
 		log.Errorf("unable to get cluster %v", err)
 		return nil, nil, "", err
@@ -82,12 +81,11 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string,platform
 	if cluster.Status.Phase != v1platform.ClusterRunning {
 		return nil, nil, "", errors.NewServiceUnavailable(fmt.Sprintf("cluster %s status is abnormal", cluster.ObjectMeta.Name))
 	}
-	credential, err :=  util.ClusterCredentialV1(platformClient,clusterName)
+	credential, err := util.GetClusterCredentialV1(platformClient, cluster)
 	if err != nil {
 		log.Errorf("unable to get credential %v", err)
 		return nil, nil, "", err
 	}
-
 
 	transport, err := BuildTransportV1(credential)
 	if err != nil {
@@ -109,8 +107,6 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string,platform
 	}, transport, token, nil
 }
 
-
-
 //use cache to optimize this function
 func GetClusterPodIp(clusterName, namespace, podName string, platformClient platformversionedclient.PlatformV1Interface) (string, error) {
 	client, err := GetClusterClient(clusterName, platformClient)
@@ -125,9 +121,6 @@ func GetClusterPodIp(clusterName, namespace, podName string, platformClient plat
 	}
 	return pod.Status.HostIP, nil
 }
-
-
-
 
 // BuildTransport create the http transport for communicate to backend
 // kubernetes api server.
@@ -162,7 +155,6 @@ func BuildTransportV1(credential *platformv1.ClusterCredential) (http.RoundTripp
 
 	return transport, nil
 }
-
 
 // rootCertPool returns nil if caData is empty.  When passed along, this will mean "use system CAs".
 // When caData is not empty, it will be the ONLY information used in the CertPool.

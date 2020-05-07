@@ -83,6 +83,9 @@ type ClusterSpec struct {
 	NetworkDevice string
 	// +optional
 	ClusterCIDR string
+	// ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+	// +optional
+	ServiceCIDR *string
 	// +optional
 	// DNSDomain is the dns domain used by k8s services. Defaults to "cluster.local".
 	DNSDomain string
@@ -106,9 +109,11 @@ type ClusterSpec struct {
 	// +optional
 	SchedulerExtraArgs map[string]string
 
-	// ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
-	// +optionals
-	ServiceCIDR *string
+	// ClusterCredentialRef for isolate sensitive information.
+	// If not specified, cluster controller will create one;
+	// If specified, provider must make sure is valid.
+	// +optional
+	ClusterCredentialRef *corev1.LocalObjectReference
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -163,19 +168,6 @@ const (
 
 // NetworkType defines the network type of cluster.
 type NetworkType string
-
-const (
-	// NetworkPhysics indicates the communication network using the physics network to establish the pod between nodes.
-	NetworkPhysics NetworkType = "Physics"
-	// NetworkVPC indicates the communication network using the VPC to establish the pod between nodes.
-	NetworkVPC NetworkType = "VPC"
-	// NetworkFlannel indicates the communication network using the flannel to establish the pod between nodes.
-	NetworkFlannel NetworkType = "Flannel"
-	// NetworkCalico indicates the communication network using the calico to establish the pod between nodes.
-	NetworkCalico NetworkType = "Calico"
-	// NetworkIPIP indicates the communication network using the IPIP to establish the pod between nodes.
-	NetworkIPIP NetworkType = "IPIP"
-)
 
 // GPUType defines the gpu type of cluster.
 type GPUType string

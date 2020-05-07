@@ -19,6 +19,7 @@
 package cluster
 
 import (
+	"math/rand"
 	"sync"
 	"time"
 
@@ -63,9 +64,9 @@ func (c *Controller) ensureHealthCheck(key string, cluster *v1.Cluster) {
 	if c.health.Exist(key) {
 		return
 	}
-
 	log.Info("start health check for cluster", log.String("clusterName", key), log.String("phase", string(cluster.Status.Phase)))
 	c.health.Set(key, cluster)
+	time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
 	go wait.PollImmediateUntil(5*time.Minute, c.watchClusterHealth(cluster.Name), c.stopCh)
 }
 
@@ -73,7 +74,7 @@ func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
 	// wait for create clustercredential, optimize first health check for user experience
 	if cluster.Status.Phase == v1.ClusterInitializing {
 		err := wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
-			_, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
+			_, err := util.GetClusterCredentialV1(c.platformClient, cluster)
 			if err != nil {
 				return false, nil
 			}
@@ -83,7 +84,7 @@ func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
 			log.Warn("wait for create clustercredential error", log.String("clusterName", cluster.Name))
 		}
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(cluster, c.platformClient)
 	if err != nil {
 		cluster.Status.Phase = v1.ClusterFailed
 		cluster.Status.Message = err.Error()
@@ -247,7 +248,7 @@ func (c *Controller) watchClusterHealth(clusterName string) func() (bool, error)
 	return func() (bool, error) {
 		log.Info("Check cluster health", log.String("clusterName", clusterName))
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(clusterName, metav1.GetOptions{})
+		cluster, err := c.platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				log.Warn("Cluster not found, to exit the health check loop", log.String("clusterName", clusterName))
