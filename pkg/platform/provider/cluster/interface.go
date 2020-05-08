@@ -28,6 +28,7 @@ import (
 	"github.com/thoas/go-funk"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/server/mux"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/types"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -47,6 +48,8 @@ const (
 // types in cluster management.
 type Provider interface {
 	Name() string
+
+	RegisterHandler(mux *mux.PathRecorderMux)
 
 	Validate(cluster *types.Cluster) field.ErrorList
 
@@ -79,6 +82,9 @@ func (p *DelegateProvider) Name() string {
 		return "unknown"
 	}
 	return p.ProviderName
+}
+
+func (p *DelegateProvider) RegisterHandler(mux *mux.PathRecorderMux) {
 }
 
 func (p *DelegateProvider) Validate(cluster *types.Cluster) field.ErrorList {

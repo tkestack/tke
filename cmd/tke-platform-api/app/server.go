@@ -23,6 +23,7 @@ import (
 	"tkestack.io/tke/cmd/tke-platform-api/app/config"
 	"tkestack.io/tke/pkg/platform/apiserver"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -75,6 +76,9 @@ func createFilterChain(apiServer *genericapiserver.GenericAPIServer) {
 
 func registerHandler(apiServer *apiserver.APIServer) error {
 	createFilterChain(apiServer.GenericAPIServer)
+
+	clusterprovider.RegisterHandler(apiServer.GenericAPIServer.Handler.NonGoRestfulMux)
+
 	log.Info("All of http handlers registered", log.Strings("paths", apiServer.GenericAPIServer.Handler.ListedPaths()))
 	return nil
 }
