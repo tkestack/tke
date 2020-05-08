@@ -93,9 +93,12 @@ function build::installer() {
     mkdir -p "${INSTALLER_DIR}/res"
 
     cp -v build/docker/tools/tke-installer/{build.sh,init_installer.sh,install.sh} "${INSTALLER_DIR}"/
+
     cp -v "${DST_DIR}/provider/baremetal/res/${target_platform}/docker-${target_platform}-${DOCKER_VERSION}.tar.gz" \
           "${INSTALLER_DIR}/res/docker.tgz"
     cp -v pkg/platform/provider/baremetal/conf/docker/docker.service "${INSTALLER_DIR}/res/"
+    cp -v build/docker/tools/tke-installer/daemon.json "${INSTALLER_DIR}/res/"
+
     docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" | gzip -c > "${INSTALLER_DIR}/res/tke-installer.tgz"
 
     sed -i "s;VERSION=.*;VERSION=$VERSION;g" "${INSTALLER_DIR}/install.sh"
