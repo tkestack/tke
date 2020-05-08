@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -86,7 +87,7 @@ func (d *namespacedResourcesDeleter) Delete(projectName string, namespaceName st
 	// Multiple controllers may edit a namespace during termination
 	// first get the latest state of the namespace before proceeding
 	// if the namespace was deleted already, don't do anything
-	namespace, err := d.businessClient.Namespaces(projectName).Get(namespaceName, metav1.GetOptions{})
+	namespace, err := d.businessClient.Namespaces(projectName).Get(context.Background(), namespaceName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -146,12 +147,12 @@ func (d *namespacedResourcesDeleter) Delete(projectName string, namespaceName st
 
 // Deletes the given namespace.
 func (d *namespacedResourcesDeleter) deleteNamespace(namespace *v1.Namespace) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := namespace.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.businessClient.Namespaces(namespace.ObjectMeta.Namespace).Delete(namespace.ObjectMeta.Name, opts)
+	err := d.businessClient.Namespaces(namespace.ObjectMeta.Namespace).Delete(context.Background(), namespace.ObjectMeta.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -175,7 +176,7 @@ func (d *namespacedResourcesDeleter) retryOnConflictError(namespace *v1.Namespac
 			return nil, err
 		}
 		prevNamespace := latestNamespace
-		latestNamespace, err = d.businessClient.Namespaces(latestNamespace.ObjectMeta.Namespace).Get(latestNamespace.ObjectMeta.Name, metav1.GetOptions{})
+		latestNamespace, err = d.businessClient.Namespaces(latestNamespace.ObjectMeta.Namespace).Get(context.Background(), latestNamespace.ObjectMeta.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -194,7 +195,7 @@ func (d *namespacedResourcesDeleter) updateNamespaceStatusFunc(namespace *v1.Nam
 	newNamespace.ObjectMeta = namespace.ObjectMeta
 	newNamespace.Status = namespace.Status
 	newNamespace.Status.Phase = v1.NamespaceTerminating
-	return d.businessClient.Namespaces(newNamespace.ObjectMeta.Namespace).UpdateStatus(&newNamespace)
+	return d.businessClient.Namespaces(newNamespace.ObjectMeta.Namespace).UpdateStatus(context.Background(), &newNamespace, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the namespace.Spec.Finalizers is an empty list
@@ -225,7 +226,7 @@ func (d *namespacedResourcesDeleter) finalizeNamespace(namespace *v1.Namespace) 
 		Name(namespaceFinalize.Name).
 		SubResource("finalize").
 		Body(&namespaceFinalize).
-		Do().
+		Do(context.Background()).
 		Into(namespace)
 
 	if err != nil {
@@ -270,7 +271,7 @@ func (d *namespacedResourcesDeleter) deleteAllContent(namespace *v1.Namespace) e
 func recalculateProjectUsed(deleter *namespacedResourcesDeleter, namespace *v1.Namespace) error {
 	log.Debug("Namespace controller - recalculateProjectUsed", log.String("namespaceName", namespace.ObjectMeta.Name))
 
-	project, err := deleter.businessClient.Projects().Get(namespace.ObjectMeta.Namespace, metav1.GetOptions{})
+	project, err := deleter.businessClient.Projects().Get(context.Background(), namespace.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get the project", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("projectName", namespace.ObjectMeta.Namespace), log.Err(err))
 		return err
@@ -296,7 +297,7 @@ func recalculateProjectUsed(deleter *namespacedResourcesDeleter, namespace *v1.N
 				project.Status.Clusters[namespace.Spec.ClusterName] = clusterUsed
 			}
 		}
-		_, err := deleter.businessClient.Projects().Update(project)
+		_, err := deleter.businessClient.Projects().Update(context.Background(), project, metav1.UpdateOptions{})
 		if err != nil {
 			log.Error("Failed to update the project status", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("projectName", namespace.ObjectMeta.Namespace), log.Err(err))
 			return err

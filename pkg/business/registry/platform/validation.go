@@ -19,6 +19,7 @@
 package platform
 
 import (
+	"context"
 	"fmt"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
@@ -38,7 +39,7 @@ func ValidatePlatform(platform *business.Platform, businessClient *businessinter
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&platform.ObjectMeta, false, ValidatePlatformName, field.NewPath("metadata"))
 
 	if platform.Spec.TenantID != "" && platform.Name != options.DefaultPlatform {
-		platformList, err := businessClient.Platforms().List(metav1.ListOptions{
+		platformList, err := businessClient.Platforms().List(context.Background(), metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.tenantID=%s", platform.Spec.TenantID),
 		})
 		if err != nil {

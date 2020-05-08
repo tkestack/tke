@@ -19,6 +19,8 @@
 package localgroup
 
 import (
+	"context"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,7 +54,7 @@ func ValidateLocalGroup(group *auth.LocalGroup, authClient authinternalclient.Au
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
+			val, err := authClient.LocalIdentities().Get(context.Background(), subj.ID, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("user of the group is not found, will removed it", log.String("group", group.Name), log.String("user", subj.Name))

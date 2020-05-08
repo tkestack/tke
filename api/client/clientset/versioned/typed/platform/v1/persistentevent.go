@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type PersistentEventsGetter interface {
 
 // PersistentEventInterface has methods to work with PersistentEvent resources.
 type PersistentEventInterface interface {
-	Create(*v1.PersistentEvent) (*v1.PersistentEvent, error)
-	Update(*v1.PersistentEvent) (*v1.PersistentEvent, error)
-	UpdateStatus(*v1.PersistentEvent) (*v1.PersistentEvent, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.PersistentEvent, error)
-	List(opts metav1.ListOptions) (*v1.PersistentEventList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.PersistentEvent, err error)
+	Create(ctx context.Context, persistentEvent *v1.PersistentEvent, opts metav1.CreateOptions) (*v1.PersistentEvent, error)
+	Update(ctx context.Context, persistentEvent *v1.PersistentEvent, opts metav1.UpdateOptions) (*v1.PersistentEvent, error)
+	UpdateStatus(ctx context.Context, persistentEvent *v1.PersistentEvent, opts metav1.UpdateOptions) (*v1.PersistentEvent, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.PersistentEvent, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.PersistentEventList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.PersistentEvent, err error)
 	PersistentEventExpansion
 }
 
@@ -63,19 +64,19 @@ func newPersistentEvents(c *PlatformV1Client) *persistentEvents {
 }
 
 // Get takes name of the persistentEvent, and returns the corresponding persistentEvent object, and an error if there is any.
-func (c *persistentEvents) Get(name string, options metav1.GetOptions) (result *v1.PersistentEvent, err error) {
+func (c *persistentEvents) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.PersistentEvent, err error) {
 	result = &v1.PersistentEvent{}
 	err = c.client.Get().
 		Resource("persistentevents").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of PersistentEvents that match those selectors.
-func (c *persistentEvents) List(opts metav1.ListOptions) (result *v1.PersistentEventList, err error) {
+func (c *persistentEvents) List(ctx context.Context, opts metav1.ListOptions) (result *v1.PersistentEventList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *persistentEvents) List(opts metav1.ListOptions) (result *v1.PersistentE
 		Resource("persistentevents").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested persistentEvents.
-func (c *persistentEvents) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *persistentEvents) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *persistentEvents) Watch(opts metav1.ListOptions) (watch.Interface, erro
 		Resource("persistentevents").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a persistentEvent and creates it.  Returns the server's representation of the persistentEvent, and an error, if there is any.
-func (c *persistentEvents) Create(persistentEvent *v1.PersistentEvent) (result *v1.PersistentEvent, err error) {
+func (c *persistentEvents) Create(ctx context.Context, persistentEvent *v1.PersistentEvent, opts metav1.CreateOptions) (result *v1.PersistentEvent, err error) {
 	result = &v1.PersistentEvent{}
 	err = c.client.Post().
 		Resource("persistentevents").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(persistentEvent).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a persistentEvent and updates it. Returns the server's representation of the persistentEvent, and an error, if there is any.
-func (c *persistentEvents) Update(persistentEvent *v1.PersistentEvent) (result *v1.PersistentEvent, err error) {
+func (c *persistentEvents) Update(ctx context.Context, persistentEvent *v1.PersistentEvent, opts metav1.UpdateOptions) (result *v1.PersistentEvent, err error) {
 	result = &v1.PersistentEvent{}
 	err = c.client.Put().
 		Resource("persistentevents").
 		Name(persistentEvent.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(persistentEvent).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *persistentEvents) UpdateStatus(persistentEvent *v1.PersistentEvent) (result *v1.PersistentEvent, err error) {
+func (c *persistentEvents) UpdateStatus(ctx context.Context, persistentEvent *v1.PersistentEvent, opts metav1.UpdateOptions) (result *v1.PersistentEvent, err error) {
 	result = &v1.PersistentEvent{}
 	err = c.client.Put().
 		Resource("persistentevents").
 		Name(persistentEvent.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(persistentEvent).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the persistentEvent and deletes it. Returns an error if one occurs.
-func (c *persistentEvents) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *persistentEvents) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("persistentevents").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched persistentEvent.
-func (c *persistentEvents) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.PersistentEvent, err error) {
+func (c *persistentEvents) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.PersistentEvent, err error) {
 	result = &v1.PersistentEvent{}
 	err = c.client.Patch(pt).
 		Resource("persistentevents").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

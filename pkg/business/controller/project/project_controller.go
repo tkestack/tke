@@ -19,6 +19,7 @@
 package project
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -285,7 +286,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 	if cachedProject.state != nil &&
 		cachedProject.state.Spec.ParentProjectName != "" &&
 		cachedProject.state.Spec.ParentProjectName != project.Spec.ParentProjectName {
-		preParentProject, err := c.client.BusinessV1().Projects().Get(cachedProject.state.Spec.ParentProjectName, metav1.GetOptions{})
+		preParentProject, err := c.client.BusinessV1().Projects().Get(context.Background(), cachedProject.state.Spec.ParentProjectName, metav1.GetOptions{})
 		if err != nil {
 			if !errors.IsNotFound(err) {
 				log.Error("Failed to get the previous parent project", log.String("projectName", key),
@@ -307,7 +308,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 		}
 	}
 	if project.Spec.ParentProjectName != "" {
-		parentProject, err := c.client.BusinessV1().Projects().Get(project.Spec.ParentProjectName, metav1.GetOptions{})
+		parentProject, err := c.client.BusinessV1().Projects().Get(context.Background(), project.Spec.ParentProjectName, metav1.GetOptions{})
 		if err != nil {
 			log.Error("Failed to get the parent project", log.String("projectName", key), log.Err(err))
 			return err
@@ -351,7 +352,7 @@ func (c *Controller) persistUpdate(project *v1.Project) (*v1.Project, error) {
 	var prj *v1.Project
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		prj, err = c.client.BusinessV1().Projects().UpdateStatus(project)
+		prj, err = c.client.BusinessV1().Projects().UpdateStatus(context.Background(), project, metav1.UpdateOptions{})
 		if err == nil {
 			return prj, nil
 		}
@@ -373,7 +374,7 @@ func (c *Controller) updateCachedStatus(project *v1.Project, newCachedClusters v
 	project.Status.CachedParent = &newCachedParent
 	project.Status.CachedSpecClusters = newCachedClusters
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().Projects().UpdateStatus(project)
+		_, err = c.client.BusinessV1().Projects().UpdateStatus(context.Background(), project, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -382,7 +383,7 @@ func (c *Controller) updateCachedStatus(project *v1.Project, newCachedClusters v
 			return nil
 		}
 		if errors.IsConflict(err) {
-			newProject, newErr := c.client.BusinessV1().Projects().Get(project.ObjectMeta.Name, metav1.GetOptions{})
+			newProject, newErr := c.client.BusinessV1().Projects().Get(context.Background(), project.ObjectMeta.Name, metav1.GetOptions{})
 			if newErr == nil {
 				project = newProject
 				project.Status.CachedParent = &newCachedParent

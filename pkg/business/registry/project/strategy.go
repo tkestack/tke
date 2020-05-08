@@ -157,7 +157,7 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 					Name: project.Name,
 				},
 			}
-			_, err = client.CoreV1().Namespaces().Create(ns)
+			_, err = client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
 			if err != nil && !errors.IsAlreadyExists(err) {
 				return err
 			}
@@ -186,7 +186,7 @@ func (s *Strategy) AfterDelete(obj runtime.Object) error {
 			if err != nil {
 				return err
 			}
-			err = client.CoreV1().Namespaces().Delete(project.Name, &metav1.DeleteOptions{})
+			err = client.CoreV1().Namespaces().Delete(context.Background(), project.Name, metav1.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
 				return err
 			}
@@ -233,7 +233,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a project")
 	}
-	return labels.Set(project.ObjectMeta.Labels), ToSelectableFields(project), nil
+	return project.ObjectMeta.Labels, ToSelectableFields(project), nil
 }
 
 // MatchProject returns a generic matcher for a given label and field selector.

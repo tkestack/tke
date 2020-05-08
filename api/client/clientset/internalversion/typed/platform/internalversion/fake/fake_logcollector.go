@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var logcollectorsResource = schema.GroupVersionResource{Group: "platform.tkestac
 var logcollectorsKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "", Kind: "LogCollector"}
 
 // Get takes name of the logCollector, and returns the corresponding logCollector object, and an error if there is any.
-func (c *FakeLogCollectors) Get(name string, options v1.GetOptions) (result *platform.LogCollector, err error) {
+func (c *FakeLogCollectors) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.LogCollector, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(logcollectorsResource, name), &platform.LogCollector{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeLogCollectors) Get(name string, options v1.GetOptions) (result *pla
 }
 
 // List takes label and field selectors, and returns the list of LogCollectors that match those selectors.
-func (c *FakeLogCollectors) List(opts v1.ListOptions) (result *platform.LogCollectorList, err error) {
+func (c *FakeLogCollectors) List(ctx context.Context, opts v1.ListOptions) (result *platform.LogCollectorList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(logcollectorsResource, logcollectorsKind, opts), &platform.LogCollectorList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeLogCollectors) List(opts v1.ListOptions) (result *platform.LogColle
 }
 
 // Watch returns a watch.Interface that watches the requested logCollectors.
-func (c *FakeLogCollectors) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeLogCollectors) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(logcollectorsResource, opts))
 }
 
 // Create takes the representation of a logCollector and creates it.  Returns the server's representation of the logCollector, and an error, if there is any.
-func (c *FakeLogCollectors) Create(logCollector *platform.LogCollector) (result *platform.LogCollector, err error) {
+func (c *FakeLogCollectors) Create(ctx context.Context, logCollector *platform.LogCollector, opts v1.CreateOptions) (result *platform.LogCollector, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(logcollectorsResource, logCollector), &platform.LogCollector{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeLogCollectors) Create(logCollector *platform.LogCollector) (result 
 }
 
 // Update takes the representation of a logCollector and updates it. Returns the server's representation of the logCollector, and an error, if there is any.
-func (c *FakeLogCollectors) Update(logCollector *platform.LogCollector) (result *platform.LogCollector, err error) {
+func (c *FakeLogCollectors) Update(ctx context.Context, logCollector *platform.LogCollector, opts v1.UpdateOptions) (result *platform.LogCollector, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(logcollectorsResource, logCollector), &platform.LogCollector{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeLogCollectors) Update(logCollector *platform.LogCollector) (result 
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeLogCollectors) UpdateStatus(logCollector *platform.LogCollector) (*platform.LogCollector, error) {
+func (c *FakeLogCollectors) UpdateStatus(ctx context.Context, logCollector *platform.LogCollector, opts v1.UpdateOptions) (*platform.LogCollector, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(logcollectorsResource, "status", logCollector), &platform.LogCollector{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeLogCollectors) UpdateStatus(logCollector *platform.LogCollector) (*
 }
 
 // Delete takes name of the logCollector and deletes it. Returns an error if one occurs.
-func (c *FakeLogCollectors) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeLogCollectors) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(logcollectorsResource, name), &platform.LogCollector{})
 	return err
 }
 
 // Patch applies the patch and returns the patched logCollector.
-func (c *FakeLogCollectors) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.LogCollector, err error) {
+func (c *FakeLogCollectors) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.LogCollector, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(logcollectorsResource, name, pt, data, subresources...), &platform.LogCollector{})
 	if obj == nil {

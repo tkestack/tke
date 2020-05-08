@@ -19,6 +19,7 @@
 package chartgroup
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -85,7 +86,7 @@ func (c *Controller) watchChartGroupHealth(key string) func() (bool, error) {
 			return true, nil
 		}
 
-		chartGroup, err := c.client.BusinessV1().ChartGroups(projectName).Get(chartGroupName, metav1.GetOptions{})
+		chartGroup, err := c.client.BusinessV1().ChartGroups(projectName).Get(context.Background(), chartGroupName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			log.Error("ChartGroup not found, to exit the health check loop",
 				log.String("projectName", projectName), log.String("chartGroupName", chartGroupName))
@@ -114,7 +115,7 @@ func (c *Controller) watchChartGroupHealth(key string) func() (bool, error) {
 }
 
 func (c *Controller) checkChartGroupHealth(chartGroup *businessv1.ChartGroup) error {
-	chartGroupList, err := c.registryClient.ChartGroups().List(metav1.ListOptions{
+	chartGroupList, err := c.registryClient.ChartGroups().List(context.Background(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chartGroup.Spec.TenantID, chartGroup.Spec.Name),
 	})
 	if err != nil {

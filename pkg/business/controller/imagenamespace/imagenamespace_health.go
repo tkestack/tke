@@ -19,6 +19,7 @@
 package imagenamespace
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -85,7 +86,7 @@ func (c *Controller) watchImageNamespaceHealth(key string) func() (bool, error) 
 			return true, nil
 		}
 
-		imageNamespace, err := c.client.BusinessV1().ImageNamespaces(projectName).Get(imageNamespaceName, metav1.GetOptions{})
+		imageNamespace, err := c.client.BusinessV1().ImageNamespaces(projectName).Get(context.Background(), imageNamespaceName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			log.Error("ImageNamespace not found, to exit the health check loop",
 				log.String("projectName", projectName), log.String("imageNamespaceName", imageNamespaceName))
@@ -114,7 +115,7 @@ func (c *Controller) watchImageNamespaceHealth(key string) func() (bool, error) 
 }
 
 func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageNamespace) error {
-	imageNamespaceList, err := c.registryClient.Namespaces().List(metav1.ListOptions{
+	imageNamespaceList, err := c.registryClient.Namespaces().List(context.Background(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", imageNamespace.Spec.TenantID, imageNamespace.Spec.Name),
 	})
 	if err != nil {

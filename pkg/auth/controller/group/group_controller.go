@@ -19,6 +19,7 @@
 package group
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -305,7 +306,7 @@ func (c *Controller) pollGroups(stopCh <-chan struct{}) {
 }
 
 func (c *Controller) resyncGroups() {
-	idpList, err := c.client.AuthV1().IdentityProviders().List(metav1.ListOptions{})
+	idpList, err := c.client.AuthV1().IdentityProviders().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error("List all identity providers failed", log.Err(err))
 		return
@@ -317,7 +318,7 @@ func (c *Controller) resyncGroups() {
 			fields.OneTermEqualSelector(auth.QueryLimitTag, "0"),
 		)
 
-		groups, err := c.client.AuthV1().Groups().List(metav1.ListOptions{FieldSelector: tenantSelector.String()})
+		groups, err := c.client.AuthV1().Groups().List(context.Background(), metav1.ListOptions{FieldSelector: tenantSelector.String()})
 		if err != nil {
 			log.Error("List groups for tenant failed", log.String("tenant", idp.Name), log.Err(err))
 			continue
@@ -327,5 +328,4 @@ func (c *Controller) resyncGroups() {
 			_ = c.handleSubjects(grp.Name, grp.DeepCopy())
 		}
 	}
-
 }

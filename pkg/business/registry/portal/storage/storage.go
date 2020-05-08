@@ -87,7 +87,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		}, nil
 	}
 	listOpt := v1.ListOptions{FieldSelector: fmt.Sprintf("spec.tenantID=%s", tenantID)}
-	platformList, err := r.businessClient.Platforms().List(listOpt)
+	platformList, err := r.businessClient.Platforms().List(ctx, listOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		}
 	}
 
-	projectList, err := r.businessClient.Projects().List(listOpt)
+	projectList, err := r.businessClient.Projects().List(ctx, listOpt)
 	if err != nil {
 		return nil, err
 	}

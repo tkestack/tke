@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,7 +43,7 @@ var namespacesResource = schema.GroupVersionResource{Group: "business.tkestack.i
 var namespacesKind = schema.GroupVersionKind{Group: "business.tkestack.io", Version: "v1", Kind: "Namespace"}
 
 // Get takes name of the namespace, and returns the corresponding namespace object, and an error if there is any.
-func (c *FakeNamespaces) Get(name string, options v1.GetOptions) (result *businessv1.Namespace, err error) {
+func (c *FakeNamespaces) Get(ctx context.Context, name string, options v1.GetOptions) (result *businessv1.Namespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(namespacesResource, c.ns, name), &businessv1.Namespace{})
 
@@ -52,7 +54,7 @@ func (c *FakeNamespaces) Get(name string, options v1.GetOptions) (result *busine
 }
 
 // List takes label and field selectors, and returns the list of Namespaces that match those selectors.
-func (c *FakeNamespaces) List(opts v1.ListOptions) (result *businessv1.NamespaceList, err error) {
+func (c *FakeNamespaces) List(ctx context.Context, opts v1.ListOptions) (result *businessv1.NamespaceList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(namespacesResource, namespacesKind, c.ns, opts), &businessv1.NamespaceList{})
 
@@ -74,14 +76,14 @@ func (c *FakeNamespaces) List(opts v1.ListOptions) (result *businessv1.Namespace
 }
 
 // Watch returns a watch.Interface that watches the requested namespaces.
-func (c *FakeNamespaces) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeNamespaces) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(namespacesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a namespace and creates it.  Returns the server's representation of the namespace, and an error, if there is any.
-func (c *FakeNamespaces) Create(namespace *businessv1.Namespace) (result *businessv1.Namespace, err error) {
+func (c *FakeNamespaces) Create(ctx context.Context, namespace *businessv1.Namespace, opts v1.CreateOptions) (result *businessv1.Namespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(namespacesResource, c.ns, namespace), &businessv1.Namespace{})
 
@@ -92,7 +94,7 @@ func (c *FakeNamespaces) Create(namespace *businessv1.Namespace) (result *busine
 }
 
 // Update takes the representation of a namespace and updates it. Returns the server's representation of the namespace, and an error, if there is any.
-func (c *FakeNamespaces) Update(namespace *businessv1.Namespace) (result *businessv1.Namespace, err error) {
+func (c *FakeNamespaces) Update(ctx context.Context, namespace *businessv1.Namespace, opts v1.UpdateOptions) (result *businessv1.Namespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(namespacesResource, c.ns, namespace), &businessv1.Namespace{})
 
@@ -104,7 +106,7 @@ func (c *FakeNamespaces) Update(namespace *businessv1.Namespace) (result *busine
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeNamespaces) UpdateStatus(namespace *businessv1.Namespace) (*businessv1.Namespace, error) {
+func (c *FakeNamespaces) UpdateStatus(ctx context.Context, namespace *businessv1.Namespace, opts v1.UpdateOptions) (*businessv1.Namespace, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(namespacesResource, "status", c.ns, namespace), &businessv1.Namespace{})
 
@@ -115,7 +117,7 @@ func (c *FakeNamespaces) UpdateStatus(namespace *businessv1.Namespace) (*busines
 }
 
 // Delete takes name of the namespace and deletes it. Returns an error if one occurs.
-func (c *FakeNamespaces) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeNamespaces) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(namespacesResource, c.ns, name), &businessv1.Namespace{})
 
@@ -123,15 +125,15 @@ func (c *FakeNamespaces) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeNamespaces) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(namespacesResource, c.ns, listOptions)
+func (c *FakeNamespaces) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(namespacesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &businessv1.NamespaceList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched namespace.
-func (c *FakeNamespaces) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *businessv1.Namespace, err error) {
+func (c *FakeNamespaces) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *businessv1.Namespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(namespacesResource, c.ns, name, pt, data, subresources...), &businessv1.Namespace{})
 

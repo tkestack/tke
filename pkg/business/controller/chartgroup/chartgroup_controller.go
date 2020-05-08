@@ -19,6 +19,7 @@
 package chartgroup
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -305,7 +306,7 @@ func (c *Controller) handlePhase(key string, cachedChartGroup *cachedChartGroup,
 }
 
 func (c *Controller) createChartGroup(chartGroup *businessv1.ChartGroup) error {
-	_, err := c.registryClient.ChartGroups().Create(&registryv1.ChartGroup{
+	_, err := c.registryClient.ChartGroups().Create(context.Background(), &registryv1.ChartGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
 				"projectName": chartGroup.Namespace,
@@ -315,7 +316,7 @@ func (c *Controller) createChartGroup(chartGroup *businessv1.ChartGroup) error {
 			Name:        chartGroup.Name,
 			DisplayName: chartGroup.Spec.DisplayName,
 			TenantID:    chartGroup.Spec.TenantID,
-		}})
+		}}, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -326,7 +327,7 @@ func (c *Controller) createChartGroup(chartGroup *businessv1.ChartGroup) error {
 func (c *Controller) persistUpdate(chartGroup *businessv1.ChartGroup) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().ChartGroups(chartGroup.Namespace).UpdateStatus(chartGroup)
+		_, err = c.client.BusinessV1().ChartGroups(chartGroup.Namespace).UpdateStatus(context.Background(), chartGroup, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

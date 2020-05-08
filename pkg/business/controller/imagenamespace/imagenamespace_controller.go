@@ -19,6 +19,7 @@
 package imagenamespace
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -305,7 +306,7 @@ func (c *Controller) handlePhase(key string, cachedImageNamespace *cachedImageNa
 }
 
 func (c *Controller) createRegistryNamespace(imageNamespace *businessv1.ImageNamespace) error {
-	_, err := c.registryClient.Namespaces().Create(&registryv1.Namespace{
+	_, err := c.registryClient.Namespaces().Create(context.Background(), &registryv1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
 				"projectName": imageNamespace.Namespace,
@@ -315,7 +316,7 @@ func (c *Controller) createRegistryNamespace(imageNamespace *businessv1.ImageNam
 			Name:        imageNamespace.Name,
 			DisplayName: imageNamespace.Spec.DisplayName,
 			TenantID:    imageNamespace.Spec.TenantID,
-		}})
+		}}, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -326,7 +327,7 @@ func (c *Controller) createRegistryNamespace(imageNamespace *businessv1.ImageNam
 func (c *Controller) persistUpdate(imageNamespace *businessv1.ImageNamespace) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().ImageNamespaces(imageNamespace.Namespace).UpdateStatus(imageNamespace)
+		_, err = c.client.BusinessV1().ImageNamespaces(imageNamespace.Namespace).UpdateStatus(context.Background(), imageNamespace, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

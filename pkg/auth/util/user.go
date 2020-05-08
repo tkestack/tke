@@ -19,11 +19,13 @@
 package util
 
 import (
+	"context"
 	"fmt"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"strings"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
@@ -33,7 +35,7 @@ func GetLocalIdentity(authClient authinternalclient.AuthInterface, tenantID, use
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
 		fields.OneTermEqualSelector("spec.username", username))
 
-	localIdentityList, err := authClient.LocalIdentities().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	localIdentityList, err := authClient.LocalIdentities().List(context.Background(), v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {
 		return auth.LocalIdentity{}, err
 	}
@@ -66,7 +68,7 @@ func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string
 	err := authClient.RESTClient().Get().
 		Resource("localidentities").
 		Name(userID).
-		SubResource("groups").Do().Into(&groupList)
+		SubResource("groups").Do(context.Background()).Into(&groupList)
 
 	return groupList, err
 }

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,7 +21,11 @@
 package v1
 
 import (
+	"context"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	rest "k8s.io/client-go/rest"
+	scheme "tkestack.io/tke/api/client/clientset/versioned/scheme"
 	v1 "tkestack.io/tke/api/monitor/v1"
 )
 
@@ -33,7 +37,7 @@ type MetricsGetter interface {
 
 // MetricInterface has methods to work with Metric resources.
 type MetricInterface interface {
-	Create(*v1.Metric) (*v1.Metric, error)
+	Create(ctx context.Context, metric *v1.Metric, opts metav1.CreateOptions) (*v1.Metric, error)
 	MetricExpansion
 }
 
@@ -50,12 +54,13 @@ func newMetrics(c *MonitorV1Client) *metrics {
 }
 
 // Create takes the representation of a metric and creates it.  Returns the server's representation of the metric, and an error, if there is any.
-func (c *metrics) Create(metric *v1.Metric) (result *v1.Metric, err error) {
+func (c *metrics) Create(ctx context.Context, metric *v1.Metric, opts metav1.CreateOptions) (result *v1.Metric, err error) {
 	result = &v1.Metric{}
 	err = c.client.Post().
 		Resource("metrics").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(metric).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,7 +43,7 @@ var nsemigrationsResource = schema.GroupVersionResource{Group: "business.tkestac
 var nsemigrationsKind = schema.GroupVersionKind{Group: "business.tkestack.io", Version: "v1", Kind: "NsEmigration"}
 
 // Get takes name of the nsEmigration, and returns the corresponding nsEmigration object, and an error if there is any.
-func (c *FakeNsEmigrations) Get(name string, options v1.GetOptions) (result *businessv1.NsEmigration, err error) {
+func (c *FakeNsEmigrations) Get(ctx context.Context, name string, options v1.GetOptions) (result *businessv1.NsEmigration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(nsemigrationsResource, c.ns, name), &businessv1.NsEmigration{})
 
@@ -52,7 +54,7 @@ func (c *FakeNsEmigrations) Get(name string, options v1.GetOptions) (result *bus
 }
 
 // List takes label and field selectors, and returns the list of NsEmigrations that match those selectors.
-func (c *FakeNsEmigrations) List(opts v1.ListOptions) (result *businessv1.NsEmigrationList, err error) {
+func (c *FakeNsEmigrations) List(ctx context.Context, opts v1.ListOptions) (result *businessv1.NsEmigrationList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(nsemigrationsResource, nsemigrationsKind, c.ns, opts), &businessv1.NsEmigrationList{})
 
@@ -74,14 +76,14 @@ func (c *FakeNsEmigrations) List(opts v1.ListOptions) (result *businessv1.NsEmig
 }
 
 // Watch returns a watch.Interface that watches the requested nsEmigrations.
-func (c *FakeNsEmigrations) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeNsEmigrations) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(nsemigrationsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a nsEmigration and creates it.  Returns the server's representation of the nsEmigration, and an error, if there is any.
-func (c *FakeNsEmigrations) Create(nsEmigration *businessv1.NsEmigration) (result *businessv1.NsEmigration, err error) {
+func (c *FakeNsEmigrations) Create(ctx context.Context, nsEmigration *businessv1.NsEmigration, opts v1.CreateOptions) (result *businessv1.NsEmigration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(nsemigrationsResource, c.ns, nsEmigration), &businessv1.NsEmigration{})
 
@@ -92,7 +94,7 @@ func (c *FakeNsEmigrations) Create(nsEmigration *businessv1.NsEmigration) (resul
 }
 
 // Update takes the representation of a nsEmigration and updates it. Returns the server's representation of the nsEmigration, and an error, if there is any.
-func (c *FakeNsEmigrations) Update(nsEmigration *businessv1.NsEmigration) (result *businessv1.NsEmigration, err error) {
+func (c *FakeNsEmigrations) Update(ctx context.Context, nsEmigration *businessv1.NsEmigration, opts v1.UpdateOptions) (result *businessv1.NsEmigration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(nsemigrationsResource, c.ns, nsEmigration), &businessv1.NsEmigration{})
 
@@ -104,7 +106,7 @@ func (c *FakeNsEmigrations) Update(nsEmigration *businessv1.NsEmigration) (resul
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeNsEmigrations) UpdateStatus(nsEmigration *businessv1.NsEmigration) (*businessv1.NsEmigration, error) {
+func (c *FakeNsEmigrations) UpdateStatus(ctx context.Context, nsEmigration *businessv1.NsEmigration, opts v1.UpdateOptions) (*businessv1.NsEmigration, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(nsemigrationsResource, "status", c.ns, nsEmigration), &businessv1.NsEmigration{})
 
@@ -115,7 +117,7 @@ func (c *FakeNsEmigrations) UpdateStatus(nsEmigration *businessv1.NsEmigration) 
 }
 
 // Delete takes name of the nsEmigration and deletes it. Returns an error if one occurs.
-func (c *FakeNsEmigrations) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeNsEmigrations) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(nsemigrationsResource, c.ns, name), &businessv1.NsEmigration{})
 
@@ -123,15 +125,15 @@ func (c *FakeNsEmigrations) Delete(name string, options *v1.DeleteOptions) error
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeNsEmigrations) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(nsemigrationsResource, c.ns, listOptions)
+func (c *FakeNsEmigrations) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(nsemigrationsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &businessv1.NsEmigrationList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched nsEmigration.
-func (c *FakeNsEmigrations) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *businessv1.NsEmigration, err error) {
+func (c *FakeNsEmigrations) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *businessv1.NsEmigration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(nsemigrationsResource, c.ns, name, pt, data, subresources...), &businessv1.NsEmigration{})
 

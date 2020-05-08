@@ -19,6 +19,7 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -53,7 +54,7 @@ type clusterGetter struct {
 }
 
 func (getter *clusterGetter) Cluster(name string, options metav1.GetOptions) (*platformv1.Cluster, error) {
-	return getter.platformClient.Clusters().Get(name, options)
+	return getter.platformClient.Clusters().Get(context.Background(), name, options)
 }
 
 type businessObjectGetter struct {
@@ -61,11 +62,11 @@ type businessObjectGetter struct {
 }
 
 func (getter *businessObjectGetter) Project(name string, options metav1.GetOptions) (*business.Project, error) {
-	return getter.businessClient.Projects().Get(name, options)
+	return getter.businessClient.Projects().Get(context.Background(), name, options)
 }
 
 func (getter *businessObjectGetter) Namespace(project, name string, options metav1.GetOptions) (*business.Namespace, error) {
-	return getter.businessClient.Namespaces(project).Get(name, options)
+	return getter.businessClient.Namespaces(project).Get(context.Background(), name, options)
 }
 
 // ValidateCluster validate cluster
@@ -74,7 +75,7 @@ func ValidateCluster(platformClient platforminternalclient.PlatformInterface, cl
 	if clusterName == "" {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "clusterName"), "must specify cluster name"))
 	} else {
-		_, err := platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
+		_, err := platformClient.Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), clusterName, fmt.Sprintf("can't get cluster:%s", err)))
 		}

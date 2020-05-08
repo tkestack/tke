@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"tkestack.io/tke/pkg/auth/util"
 
 	"tkestack.io/tke/pkg/util/log"
@@ -78,5 +79,5 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 
 	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("users", policy.Status.Users), log.Any("groups", policy.Status.Groups))
 
-	return r.authClient.Policies().UpdateStatus(policy)
+	return r.authClient.Policies().UpdateStatus(ctx, policy, metav1.UpdateOptions{})
 }

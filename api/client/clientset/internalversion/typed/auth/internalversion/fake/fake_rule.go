@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var rulesResource = schema.GroupVersionResource{Group: "auth.tkestack.io", Versi
 var rulesKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "", Kind: "Rule"}
 
 // Get takes name of the rule, and returns the corresponding rule object, and an error if there is any.
-func (c *FakeRules) Get(name string, options v1.GetOptions) (result *auth.Rule, err error) {
+func (c *FakeRules) Get(ctx context.Context, name string, options v1.GetOptions) (result *auth.Rule, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(rulesResource, name), &auth.Rule{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeRules) Get(name string, options v1.GetOptions) (result *auth.Rule, 
 }
 
 // List takes label and field selectors, and returns the list of Rules that match those selectors.
-func (c *FakeRules) List(opts v1.ListOptions) (result *auth.RuleList, err error) {
+func (c *FakeRules) List(ctx context.Context, opts v1.ListOptions) (result *auth.RuleList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(rulesResource, rulesKind, opts), &auth.RuleList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeRules) List(opts v1.ListOptions) (result *auth.RuleList, err error)
 }
 
 // Watch returns a watch.Interface that watches the requested rules.
-func (c *FakeRules) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeRules) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(rulesResource, opts))
 }
 
 // Create takes the representation of a rule and creates it.  Returns the server's representation of the rule, and an error, if there is any.
-func (c *FakeRules) Create(rule *auth.Rule) (result *auth.Rule, err error) {
+func (c *FakeRules) Create(ctx context.Context, rule *auth.Rule, opts v1.CreateOptions) (result *auth.Rule, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(rulesResource, rule), &auth.Rule{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeRules) Create(rule *auth.Rule) (result *auth.Rule, err error) {
 }
 
 // Update takes the representation of a rule and updates it. Returns the server's representation of the rule, and an error, if there is any.
-func (c *FakeRules) Update(rule *auth.Rule) (result *auth.Rule, err error) {
+func (c *FakeRules) Update(ctx context.Context, rule *auth.Rule, opts v1.UpdateOptions) (result *auth.Rule, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(rulesResource, rule), &auth.Rule{})
 	if obj == nil {
@@ -97,22 +99,22 @@ func (c *FakeRules) Update(rule *auth.Rule) (result *auth.Rule, err error) {
 }
 
 // Delete takes name of the rule and deletes it. Returns an error if one occurs.
-func (c *FakeRules) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeRules) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(rulesResource, name), &auth.Rule{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeRules) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(rulesResource, listOptions)
+func (c *FakeRules) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(rulesResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &auth.RuleList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched rule.
-func (c *FakeRules) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.Rule, err error) {
+func (c *FakeRules) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.Rule, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(rulesResource, name, pt, data, subresources...), &auth.Rule{})
 	if obj == nil {

@@ -19,6 +19,7 @@
 package util
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"time"
@@ -92,7 +93,7 @@ func (g genericKeySigner) Generate(username string, tenantID string, expire time
 		},
 	})
 
-	keys, err := g.authClient.APISigningKeys().Get(DefaultAPISigningKey, metav1.GetOptions{})
+	keys, err := g.authClient.APISigningKeys().Get(context.Background(), DefaultAPISigningKey, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get signing keys", log.Err(err))
 		return nil, err
@@ -124,7 +125,7 @@ func (g genericKeySigner) Generate(username string, tenantID string, expire time
 }
 
 func (g genericKeySigner) Verify(apiKey string) (*APIClaims, error) {
-	keys, err := g.authClient.APISigningKeys().Get(DefaultAPISigningKey, metav1.GetOptions{})
+	keys, err := g.authClient.APISigningKeys().Get(context.Background(), DefaultAPISigningKey, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get signing keys", log.Err(err))
 		return nil, err

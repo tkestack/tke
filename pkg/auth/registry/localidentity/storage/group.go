@@ -20,8 +20,9 @@ package storage
 
 import (
 	"context"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"strings"
+
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -58,6 +59,14 @@ func (r *GroupREST) New() runtime.Object {
 	return &auth.LocalGroup{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *GroupREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("groups"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
@@ -88,7 +97,7 @@ func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListO
 
 	var groupList = &auth.GroupList{}
 	for _, id := range groupIDs {
-		grp, err := r.authClient.Groups().Get(util.CombineTenantAndName(localIdentity.Spec.TenantID, id), metav1.GetOptions{})
+		grp, err := r.authClient.Groups().Get(ctx, util.CombineTenantAndName(localIdentity.Spec.TenantID, id), metav1.GetOptions{})
 		if err != nil && apierrors.IsNotFound(err) {
 			log.Error("Get group failed", log.String("group", id), log.Err(err))
 			return nil, err

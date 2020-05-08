@@ -20,6 +20,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -93,7 +94,7 @@ func (d *groupedResourcesDeleter) Delete(groupName string) error {
 	// Multiple controllers may edit a group during termination
 	// first get the latest state of the group before proceeding
 	// if the group was deleted already, don't do anything
-	group, err := d.groupClient.Get(groupName, metav1.GetOptions{})
+	group, err := d.groupClient.Get(context.Background(), groupName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -154,13 +155,13 @@ func (d *groupedResourcesDeleter) Delete(groupName string) error {
 
 // Deletes the given group.
 func (d *groupedResourcesDeleter) deleteGroup(group *v1.LocalGroup) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := group.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
 
-	err := d.groupClient.Delete(group.Name, opts)
+	err := d.groupClient.Delete(context.Background(), group.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))
 		return err
@@ -185,7 +186,7 @@ func (d *groupedResourcesDeleter) retryOnConflictError(group *v1.LocalGroup, fn 
 			return nil, err
 		}
 		prevGroup := latestGroup
-		latestGroup, err = d.groupClient.Get(latestGroup.Name, metav1.GetOptions{})
+		latestGroup, err = d.groupClient.Get(context.Background(), latestGroup.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -204,7 +205,7 @@ func (d *groupedResourcesDeleter) updateGroupStatusFunc(group *v1.LocalGroup) (*
 	newGroup.ObjectMeta = group.ObjectMeta
 	newGroup.Status = group.Status
 	newGroup.Status.Phase = v1.GroupTerminating
-	return d.groupClient.UpdateStatus(&newGroup)
+	return d.groupClient.UpdateStatus(context.Background(), &newGroup, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the group.Spec.Finalizers is an empty list
@@ -234,7 +235,7 @@ func (d *groupedResourcesDeleter) finalizeGroup(group *v1.LocalGroup) (*v1.Local
 		Name(groupFinalize.Name).
 		SubResource("finalize").
 		Body(&groupFinalize).
-		Do().
+		Do(context.Background()).
 		Into(updated)
 
 	if err != nil {
@@ -290,7 +291,8 @@ func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) 
 				Name(role).
 				SubResource("unbinding").
 				Body(&binding).
-				Do().Into(pol)
+				Do(context.Background()).
+				Into(pol)
 			if err != nil {
 				log.Error("Unbind policy for group failed", log.String("group", group.Name),
 					log.String("policy", role), log.Err(err))
@@ -303,7 +305,7 @@ func deleteRelatedRoles(deleter *groupedResourcesDeleter, group *v1.LocalGroup) 
 				Name(role).
 				SubResource("unbinding").
 				Body(&binding).
-				Do().Into(rol)
+				Do(context.Background()).Into(rol)
 			if err != nil {
 				log.Error("Unbind role for group failed", log.String("group", group.Name),
 					log.String("policy", role), log.Err(err))

@@ -19,6 +19,7 @@
 package local
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,8 +54,8 @@ func NewLocalHookHandler(authClient authinternalclient.AuthInterface, versionedI
 }
 
 func (d *localHookHandler) PostStartHook() (string, genericapiserver.PostStartHookFunc, error) {
-	return "wait-local-sync", func(context genericapiserver.PostStartHookContext) error {
-		if ok := cache.WaitForCacheSync(context.StopCh, d.localIdentityInformer.Informer().HasSynced, d.localGroupInformer.Informer().HasSynced); !ok {
+	return "wait-local-sync", func(ctx genericapiserver.PostStartHookContext) error {
+		if ok := cache.WaitForCacheSync(ctx.StopCh, d.localIdentityInformer.Informer().HasSynced, d.localGroupInformer.Informer().HasSynced); !ok {
 			log.Error("Failed to wait for local identity and group caches to sync")
 		}
 
@@ -62,7 +63,7 @@ func (d *localHookHandler) PostStartHook() (string, genericapiserver.PostStartHo
 			tenantUserSelector := fields.AndSelectors(
 				fields.OneTermEqualSelector("spec.type", ConnectorType),
 			)
-			conns, err := d.authClient.IdentityProviders().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+			conns, err := d.authClient.IdentityProviders().List(context.Background(), v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 			if err != nil {
 				log.Error("List default idp from registry failed", log.Err(err))
 				return
@@ -82,7 +83,7 @@ func (d *localHookHandler) PostStartHook() (string, genericapiserver.PostStartHo
 				identityprovider.SetIdentityProvider(conn.Name, idp)
 				log.Info("load local identity provider successfully", log.String("idp", conn.Name))
 			}
-		}, 30*time.Second, 0.0, false, context.StopCh)
+		}, 30*time.Second, 0.0, false, ctx.StopCh)
 
 		return nil
 	}, nil

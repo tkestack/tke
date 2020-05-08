@@ -19,6 +19,7 @@
 package emigration
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -42,7 +43,7 @@ func ValidateNsEmigrationCreate(emigration *business.NsEmigration, businessClien
 	if emigration.Spec.Namespace == "" {
 		allErrs = append(allErrs, field.Invalid(fldNamespace, emigration.Spec.Namespace, "empty business namespace name"))
 	}
-	ns, err := businessClient.Namespaces(emigration.Namespace).Get(emigration.Spec.Namespace, v1.GetOptions{})
+	ns, err := businessClient.Namespaces(emigration.Namespace).Get(context.Background(), emigration.Spec.Namespace, v1.GetOptions{})
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldNamespace, emigration.Spec.Namespace,
 			fmt.Sprintf("failed to get this business namespace, %s", err)))
@@ -58,7 +59,7 @@ func ValidateNsEmigrationCreate(emigration *business.NsEmigration, businessClien
 	} else if emigration.Spec.Destination == emigration.Namespace {
 		allErrs = append(allErrs, field.Invalid(fldDestPrj, emigration.Spec.Destination, "is still the current project"))
 	}
-	project, err := businessClient.Projects().Get(emigration.Spec.Destination, v1.GetOptions{})
+	project, err := businessClient.Projects().Get(context.Background(), emigration.Spec.Destination, v1.GetOptions{})
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldDestPrj, emigration.Spec.Destination,
 			fmt.Sprintf("failed to get this project, %s", err)))
@@ -67,7 +68,7 @@ func ValidateNsEmigrationCreate(emigration *business.NsEmigration, businessClien
 		fldHard := field.NewPath(fmt.Sprintf("namespace(%s)", emigration.Spec.Namespace), "spec", "hard")
 		allErrs = append(allErrs, namespace.ValidateAgainstProject(ns, nil, project, fldProject, fldHard)...)
 	}
-	_, err = businessClient.Namespaces(emigration.Spec.Destination).Get(emigration.Spec.Namespace, v1.GetOptions{})
+	_, err = businessClient.Namespaces(emigration.Spec.Destination).Get(context.Background(), emigration.Spec.Namespace, v1.GetOptions{})
 	if err == nil {
 		allErrs = append(allErrs, field.Invalid(fldDestPrj, emigration.Spec.Destination,
 			fmt.Sprintf("already has a namespace with the name %s", emigration.Spec.Namespace)))

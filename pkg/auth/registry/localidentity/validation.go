@@ -19,6 +19,7 @@
 package localidentity
 
 import (
+	"context"
 	"fmt"
 
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
@@ -151,7 +152,7 @@ func localIdentityExists(authClient authinternalclient.AuthInterface, tenantID, 
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
 		fields.OneTermEqualSelector("spec.username", username))
 
-	localIdentityList, err := authClient.LocalIdentities().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	localIdentityList, err := authClient.LocalIdentities().List(context.Background(), v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {
 		return false, err
 	}

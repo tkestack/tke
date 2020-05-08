@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var csioperatorsResource = schema.GroupVersionResource{Group: "platform.tkestack
 var csioperatorsKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "", Kind: "CSIOperator"}
 
 // Get takes name of the cSIOperator, and returns the corresponding cSIOperator object, and an error if there is any.
-func (c *FakeCSIOperators) Get(name string, options v1.GetOptions) (result *platform.CSIOperator, err error) {
+func (c *FakeCSIOperators) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.CSIOperator, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(csioperatorsResource, name), &platform.CSIOperator{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeCSIOperators) Get(name string, options v1.GetOptions) (result *plat
 }
 
 // List takes label and field selectors, and returns the list of CSIOperators that match those selectors.
-func (c *FakeCSIOperators) List(opts v1.ListOptions) (result *platform.CSIOperatorList, err error) {
+func (c *FakeCSIOperators) List(ctx context.Context, opts v1.ListOptions) (result *platform.CSIOperatorList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(csioperatorsResource, csioperatorsKind, opts), &platform.CSIOperatorList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeCSIOperators) List(opts v1.ListOptions) (result *platform.CSIOperat
 }
 
 // Watch returns a watch.Interface that watches the requested cSIOperators.
-func (c *FakeCSIOperators) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeCSIOperators) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(csioperatorsResource, opts))
 }
 
 // Create takes the representation of a cSIOperator and creates it.  Returns the server's representation of the cSIOperator, and an error, if there is any.
-func (c *FakeCSIOperators) Create(cSIOperator *platform.CSIOperator) (result *platform.CSIOperator, err error) {
+func (c *FakeCSIOperators) Create(ctx context.Context, cSIOperator *platform.CSIOperator, opts v1.CreateOptions) (result *platform.CSIOperator, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(csioperatorsResource, cSIOperator), &platform.CSIOperator{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeCSIOperators) Create(cSIOperator *platform.CSIOperator) (result *pl
 }
 
 // Update takes the representation of a cSIOperator and updates it. Returns the server's representation of the cSIOperator, and an error, if there is any.
-func (c *FakeCSIOperators) Update(cSIOperator *platform.CSIOperator) (result *platform.CSIOperator, err error) {
+func (c *FakeCSIOperators) Update(ctx context.Context, cSIOperator *platform.CSIOperator, opts v1.UpdateOptions) (result *platform.CSIOperator, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(csioperatorsResource, cSIOperator), &platform.CSIOperator{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeCSIOperators) Update(cSIOperator *platform.CSIOperator) (result *pl
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeCSIOperators) UpdateStatus(cSIOperator *platform.CSIOperator) (*platform.CSIOperator, error) {
+func (c *FakeCSIOperators) UpdateStatus(ctx context.Context, cSIOperator *platform.CSIOperator, opts v1.UpdateOptions) (*platform.CSIOperator, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(csioperatorsResource, "status", cSIOperator), &platform.CSIOperator{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeCSIOperators) UpdateStatus(cSIOperator *platform.CSIOperator) (*pla
 }
 
 // Delete takes name of the cSIOperator and deletes it. Returns an error if one occurs.
-func (c *FakeCSIOperators) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeCSIOperators) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(csioperatorsResource, name), &platform.CSIOperator{})
 	return err
 }
 
 // Patch applies the patch and returns the patched cSIOperator.
-func (c *FakeCSIOperators) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.CSIOperator, err error) {
+func (c *FakeCSIOperators) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.CSIOperator, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(csioperatorsResource, name, pt, data, subresources...), &platform.CSIOperator{})
 	if obj == nil {

@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -92,7 +93,7 @@ func (d *loalIdentitiedResourcesDeleter) Delete(localIdentityName string) error 
 	// Multiple controllers may edit a localIdentity during termination
 	// first get the latest state of the localIdentity before proceeding
 	// if the localIdentity was deleted already, don't do anything
-	localIdentity, err := d.localIdentityClient.Get(localIdentityName, metav1.GetOptions{})
+	localIdentity, err := d.localIdentityClient.Get(context.Background(), localIdentityName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -153,12 +154,12 @@ func (d *loalIdentitiedResourcesDeleter) Delete(localIdentityName string) error 
 
 // Deletes the given localIdentity.
 func (d *loalIdentitiedResourcesDeleter) deleteLocalIdentity(localIdentity *v1.LocalIdentity) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := localIdentity.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.localIdentityClient.Delete(localIdentity.Name, opts)
+	err := d.localIdentityClient.Delete(context.Background(), localIdentity.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))
 		return err
@@ -183,7 +184,7 @@ func (d *loalIdentitiedResourcesDeleter) retryOnConflictError(localIdentity *v1.
 			return nil, err
 		}
 		prevLocalIdentity := latestLocalIdentity
-		latestLocalIdentity, err = d.localIdentityClient.Get(latestLocalIdentity.Name, metav1.GetOptions{})
+		latestLocalIdentity, err = d.localIdentityClient.Get(context.Background(), latestLocalIdentity.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +203,7 @@ func (d *loalIdentitiedResourcesDeleter) updateLocalIdentityStatusFunc(localIden
 	newLocalIdentity.ObjectMeta = localIdentity.ObjectMeta
 	newLocalIdentity.Status = localIdentity.Status
 	newLocalIdentity.Status.Phase = v1.LocalIdentityDeleting
-	return d.localIdentityClient.UpdateStatus(&newLocalIdentity)
+	return d.localIdentityClient.UpdateStatus(context.Background(), &newLocalIdentity, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the localIdentity.Spec.Finalizers is an empty list
@@ -232,7 +233,7 @@ func (d *loalIdentitiedResourcesDeleter) finalizeLocalIdentity(localIdentity *v1
 		Name(localIdentityFinalize.Name).
 		SubResource("finalize").
 		Body(&localIdentityFinalize).
-		Do().
+		Do(context.Background()).
 		Into(updated)
 
 	if err != nil {
@@ -293,7 +294,8 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 				Name(role).
 				SubResource("unbinding").
 				Body(&binding).
-				Do().Into(pol)
+				Do(context.Background()).
+				Into(pol)
 			if err != nil {
 				log.Error("Unbind policy for user failed", log.String("user", localIdentity.Spec.Username),
 					log.String("policy", role), log.Err(err))
@@ -306,7 +308,8 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 				Name(strings.TrimPrefix(role, util.GroupPrefix(localIdentity.Spec.TenantID))).
 				SubResource("unbinding").
 				Body(&binding).
-				Do().Into(grp)
+				Do(context.Background()).
+				Into(grp)
 			if err != nil {
 				log.Error("Unbind group for user failed", log.String("user", localIdentity.Spec.Username),
 					log.String("group", role), log.Err(err))
@@ -319,7 +322,8 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 				Name(role).
 				SubResource("unbinding").
 				Body(&binding).
-				Do().Into(rol)
+				Do(context.Background()).
+				Into(rol)
 			if err != nil {
 				log.Error("Unbind group for user failed", log.String("user", localIdentity.Spec.Username),
 					log.String("group", role), log.Err(err))
@@ -342,5 +346,5 @@ func deleteApikeys(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.Lo
 		fields.OneTermEqualSelector("spec.tenantID", localIdentity.Spec.TenantID),
 		fields.OneTermEqualSelector("spec.username", localIdentity.Spec.Username))
 
-	return deleter.authClient.APIKeys().DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: policySelector.String()})
+	return deleter.authClient.APIKeys().DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: policySelector.String()})
 }

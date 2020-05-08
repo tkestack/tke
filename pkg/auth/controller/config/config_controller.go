@@ -19,6 +19,7 @@
 package config
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -26,6 +27,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"time"
+
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -304,7 +306,7 @@ func (c *Controller) loadCategory() error {
 	var errs []error
 
 	for _, cat := range categoryList {
-		result, err := c.client.AuthV1().Categories().Get(cat.Name, metav1.GetOptions{})
+		result, err := c.client.AuthV1().Categories().Get(context.Background(), cat.Name, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			errs = append(errs, err)
 			continue
@@ -312,7 +314,7 @@ func (c *Controller) loadCategory() error {
 
 		if err != nil {
 			log.Info("Create a new policy category", log.String("id", cat.Name), log.String("displayName", cat.Spec.DisplayName))
-			_, err = c.client.AuthV1().Categories().Create(cat)
+			_, err = c.client.AuthV1().Categories().Create(context.Background(), cat, metav1.CreateOptions{})
 
 			if err != nil {
 				errs = append(errs, err)
@@ -321,7 +323,7 @@ func (c *Controller) loadCategory() error {
 			if !reflect.DeepEqual(result.Spec, cat.Spec) {
 				log.Info("Update policy category", log.String("id", cat.Name), log.String("displayName", cat.Spec.DisplayName))
 				result.Spec = cat.Spec
-				_, err = c.client.AuthV1().Categories().Update(result)
+				_, err = c.client.AuthV1().Categories().Update(context.Background(), result, metav1.UpdateOptions{})
 
 				if err != nil {
 					errs = append(errs, err)
@@ -355,7 +357,7 @@ func (c *Controller) loadPolicy(tenantID string) error {
 			fields.OneTermEqualSelector("spec.type", string(auth.PolicyDefault)),
 		)
 
-		result, err := c.client.AuthV1().Policies().List(metav1.ListOptions{FieldSelector: policySelector.String()})
+		result, err := c.client.AuthV1().Policies().List(context.Background(), metav1.ListOptions{FieldSelector: policySelector.String()})
 		if err != nil {
 			return err
 		}
@@ -370,7 +372,7 @@ func (c *Controller) loadPolicy(tenantID string) error {
 			if !reflect.DeepEqual(exists.Spec, pol.Spec) {
 				log.Info("Update default policy", log.String("displayName", pol.Spec.DisplayName))
 				exists.Spec = pol.Spec
-				_, err = c.client.AuthV1().Policies().Update(&exists)
+				_, err = c.client.AuthV1().Policies().Update(context.Background(), &exists, metav1.UpdateOptions{})
 
 				if err != nil {
 					errs = append(errs, err)
@@ -378,7 +380,7 @@ func (c *Controller) loadPolicy(tenantID string) error {
 			}
 		} else {
 			log.Info("Create a new default policy", log.String("displayName", pol.Spec.DisplayName))
-			_, err = c.client.AuthV1().Policies().Create(pol)
+			_, err = c.client.AuthV1().Policies().Create(context.Background(), pol, metav1.CreateOptions{})
 			if err != nil {
 				errs = append(errs, err)
 			}
@@ -394,7 +396,7 @@ func (c *Controller) createAdmin(tenantID string) error {
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
 		fields.OneTermEqualSelector("spec.username", c.username))
 
-	localIdentityList, err := c.client.AuthV1().LocalIdentities().List(metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	localIdentityList, err := c.client.AuthV1().LocalIdentities().List(context.Background(), metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {
 		return err
 	}
@@ -403,7 +405,7 @@ func (c *Controller) createAdmin(tenantID string) error {
 		return nil
 	}
 
-	_, err = c.client.AuthV1().LocalIdentities().Create(&v1.LocalIdentity{
+	_, err = c.client.AuthV1().LocalIdentities().Create(context.Background(), &v1.LocalIdentity{
 		Spec: v1.LocalIdentitySpec{
 			HashedPassword: base64.StdEncoding.EncodeToString([]byte(c.password)),
 			TenantID:       tenantID,
@@ -413,7 +415,7 @@ func (c *Controller) createAdmin(tenantID string) error {
 				"platformadmin": "true",
 			},
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		log.Error("Failed to create the default admin identity for tenant", log.String("tenant", tenantID), log.Err(err))
 		return err
