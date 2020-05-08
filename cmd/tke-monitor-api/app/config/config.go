@@ -39,6 +39,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/handler"
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	"tkestack.io/tke/pkg/apiserver/util"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	monitorconfig "tkestack.io/tke/pkg/monitor/apis/config"
 	monitorconfigvalidation "tkestack.io/tke/pkg/monitor/apis/config/validation"
@@ -96,6 +97,9 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableProfiling = false
 
+	if err := util.SetupAuditConfig(genericAPIServerConfig, opts.Audit); err != nil {
+		return nil, err
+	}
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err
 	}

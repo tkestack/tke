@@ -19,6 +19,7 @@
 package options
 
 import (
+	"fmt"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	genericapiserveroptions "k8s.io/apiserver/pkg/server/options"
@@ -47,6 +48,7 @@ type Options struct {
 	// The Registry will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Monitor's current working directory.
 	MonitorConfig string
+	Audit         *genericapiserveroptions.AuditOptions
 }
 
 // NewOptions creates a new Options with a default config.
@@ -60,6 +62,7 @@ func NewOptions(serverName string) *Options {
 		Authentication:    apiserveroptions.NewAuthenticationWithAPIOptions(),
 		Authorization:     apiserveroptions.NewAuthorizationOptions(),
 		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
+		Audit:             genericapiserveroptions.NewAuditOptions(),
 	}
 }
 
@@ -73,6 +76,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Authentication.AddFlags(fs)
 	o.Authorization.AddFlags(fs)
 	o.PlatformAPIClient.AddFlags(fs)
+	o.Audit.AddFlags(fs)
 
 	fs.String(flagMonitorConfig, o.MonitorConfig,
 		"The Monitor will load its initial configuration from this file. The path may be absolute or relative; relative paths start at the Monitor's current working directory. Omit this flag to use the built-in default configuration values.")
@@ -119,6 +123,9 @@ func (o *Options) Complete() error {
 			return err
 		}
 		o.ETCD.WatchCacheSizes = watchCacheSizes
+	}
+	if (o.Audit.WebhookOptions.ConfigFile != "" || o.Audit.LogOptions.Path != "") && o.Audit.PolicyFile == "" {
+		return fmt.Errorf("audit log/webhook config specified, but audit policy file is empty")
 	}
 	return nil
 }

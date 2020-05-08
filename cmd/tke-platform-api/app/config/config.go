@@ -20,23 +20,12 @@ package config
 
 import (
 	"fmt"
-	"io"
-	"os"
 	"time"
 
-	"gopkg.in/natefinch/lumberjack.v2"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apiserver/pkg/audit"
-	"k8s.io/apiserver/pkg/audit/policy"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/filters"
-	apiserveroptions "k8s.io/apiserver/pkg/server/options"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	pluginbuffered "k8s.io/apiserver/plugin/pkg/audit/buffered"
-	pluginlog "k8s.io/apiserver/plugin/pkg/audit/log"
-	plugintruncate "k8s.io/apiserver/plugin/pkg/audit/truncate"
-	pluginwebhook "k8s.io/apiserver/plugin/pkg/audit/webhook"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	generatedopenapi "tkestack.io/tke/api/openapi"
@@ -48,6 +37,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/handler"
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	"tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/platform/apiserver"
 )
 
@@ -78,28 +68,9 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableProfiling = false
 
-	if opts.Audit.PolicyFile != "" {
-		p, err := policy.LoadPolicyFromFile(opts.Audit.PolicyFile)
-		if err != nil {
-			return nil, fmt.Errorf("loading audit policy file: %v", err)
-		}
-		checker := policy.NewChecker(p)
-
-		logBackend := buildLogAuditBackend(opts.Audit.LogOptions)
-		webhookBackend, err := buildWebhookAuditBackend(opts.Audit.WebhookOptions)
-		if err != nil {
-			return nil, err
-		}
-		backend := logBackend
-		if backend == nil && webhookBackend != nil {
-			backend = webhookBackend
-		} else if webhookBackend != nil {
-			backend = audit.Union(backend, webhookBackend)
-		}
-		genericAPIServerConfig.AuditBackend = backend
-		genericAPIServerConfig.AuditPolicyChecker = checker
+	if err := util.SetupAuditConfig(genericAPIServerConfig, opts.Audit); err != nil {
+		return nil, err
 	}
-
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err
 	}
@@ -151,39 +122,4 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		StorageFactory:                 storageFactory,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 	}, nil
-}
-
-func buildLogAuditBackend(o apiserveroptions.AuditLogOptions) audit.Backend {
-	if o.Path == "" {
-		return nil
-	}
-	var w io.Writer = os.Stdout
-	if o.Path != "-" {
-		w = &lumberjack.Logger{
-			Filename:   o.Path,
-			MaxAge:     o.MaxAge,
-			MaxBackups: o.MaxBackups,
-			MaxSize:    o.MaxSize,
-		}
-	}
-	groupVersion, _ := schema.ParseGroupVersion(o.GroupVersionString)
-	logBackend := pluginlog.NewBackend(w, o.Format, groupVersion)
-	logBackend = pluginbuffered.NewBackend(logBackend, o.BatchOptions.BatchConfig)
-	return logBackend
-}
-
-func buildWebhookAuditBackend(o apiserveroptions.AuditWebhookOptions) (audit.Backend, error) {
-	if o.ConfigFile == "" {
-		return nil, nil
-	}
-	groupVersion, _ := schema.ParseGroupVersion(o.GroupVersionString)
-	webhook, err := pluginwebhook.NewBackend(o.ConfigFile, groupVersion, o.InitialBackoff)
-	if err != nil {
-		return nil, fmt.Errorf("initializing audit webhook: %v", err)
-	}
-	webhook = pluginbuffered.NewBackend(webhook, o.BatchOptions.BatchConfig)
-	if o.TruncateOptions.Enabled {
-		webhook = plugintruncate.NewBackend(webhook, o.TruncateOptions.TruncateConfig, groupVersion)
-	}
-	return webhook, nil
 }
