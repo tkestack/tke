@@ -33,10 +33,18 @@ type es struct {
 	Addr        string
 	Indices     string
 	ReserveDays int
+	username    string
+	password    string
 }
 
 func NewStorage(conf *config.ElasticSearchStorage) (storage.AuditStorage, error) {
-	cli := &es{Addr: conf.Address, Indices: conf.Indices, ReserveDays: conf.ReserveDays}
+	cli := &es{
+		Addr:        conf.Address,
+		Indices:     conf.Indices,
+		ReserveDays: conf.ReserveDays,
+		username:    conf.Username,
+		password:    conf.Password,
+	}
 	if cli.Indices == "" {
 		cli.Indices = defaultIndices
 	}
@@ -47,7 +55,7 @@ func NewStorage(conf *config.ElasticSearchStorage) (storage.AuditStorage, error)
 	if err != nil {
 		return nil, err
 	}
-	go wait.Forever(cli.cleanup, time.Hour*24)
+	go wait.Forever(cli.cleanup, time.Hour)
 	go wait.Forever(cli.updateFieldEnumCache, time.Minute)
 	return cli, nil
 }
@@ -61,7 +69,7 @@ func (s *es) init() error {
 
 func (s *es) indicesTypeExist() bool {
 	req := gorequest.New()
-	resp, _, err := req.Get(fmt.Sprintf("%s/%s/_mapping/%s", s.Addr, s.Indices, typ)).End()
+	resp, _, err := req.Get(fmt.Sprintf("%s/%s/_mapping/%s", s.Addr, s.Indices, typ)).SetBasicAuth(s.username, s.password).End()
 	if len(err) != 0 {
 		return false
 	} else if resp.StatusCode != 200 {
@@ -73,7 +81,7 @@ func (s *es) indicesTypeExist() bool {
 func (s *es) indicesTypeCreate() error {
 	keywords := []string{"stage", "verb", "userName", "resource", "namespace", "name", "status", "clusterName"}
 	texts := []string{"auditID", "requestURI", "userAgent", "uid", "apiGroup", "apiVersion", "message", "reason", "details", "requestObject", "responseObject", "sourceIPs"}
-	req := gorequest.New().Put(fmt.Sprintf("%s/%s", s.Addr, s.Indices))
+	req := gorequest.New().Put(fmt.Sprintf("%s/%s", s.Addr, s.Indices)).SetBasicAuth(s.username, s.password)
 	req.Header["content-type"] = "application/json"
 	properties := map[string]map[string]string{
 		"code": {
@@ -159,7 +167,7 @@ func (s *es) Query(param *storage.QueryParameter) ([]*types.Event, int, error) {
 			"bool": {"filter": terms},
 		}
 	}
-	req := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/_search", s.Addr, s.Indices, typ))
+	req := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/_search", s.Addr, s.Indices, typ)).SetBasicAuth(s.username, s.password)
 	req.Header["content-type"] = "application/json"
 	resp, body, errs := req.SendStruct(query).End()
 	if len(errs) > 0 {
@@ -220,7 +228,7 @@ func (s *es) FieldValues() map[string][]string {
 }
 
 func (s *es) batchSave(events []*types.Event) error {
-	req := gorequest.New().Post(fmt.Sprintf("%s/%s/%s/_bulk", s.Addr, s.Indices, typ))
+	req := gorequest.New().Post(fmt.Sprintf("%s/%s/%s/_bulk", s.Addr, s.Indices, typ)).SetBasicAuth(s.username, s.password)
 	req.Header["content-type"] = "application/x-ndjson"
 	req.BounceToRawString = true
 	buf := bytes.NewBuffer(nil)
@@ -241,11 +249,15 @@ func (s *es) batchSave(events []*types.Event) error {
 }
 
 func (s *es) cleanup() {
-	req := gorequest.New().Post(fmt.Sprintf("%s/%s/%s/_delete_by_query", s.Addr, s.Indices, typ))
+	log.Infof("trigger es audit event cleanup")
+	req := gorequest.New().Post(fmt.Sprintf("%s/%s/%s/_delete_by_query", s.Addr, s.Indices, typ)).SetBasicAuth(s.username, s.password)
 	req.Header["content-type"] = "application/json"
 	t := time.Now().Unix()*1000 - int64(s.ReserveDays*24*60*60*1000)
 	query := fmt.Sprintf(`{"query":{"bool":{"filter":{"range":{"requestReceivedTimestamp":{"lte":%d}}}}}}`, t)
-	req.SendString(query).End()
+	_, _, errs := req.SendString(query).End()
+	if len(errs) != 0 {
+		log.Errorf("failed cleanup older audit events: %v", errs)
+	}
 	return
 }
 
@@ -263,7 +275,7 @@ func (s *es) updateFieldEnumCache() {
 		wg.Add(1)
 		go func(field string) {
 			defer wg.Done()
-			req := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/_search", s.Addr, s.Indices, typ))
+			req := gorequest.New().Get(fmt.Sprintf("%s/%s/%s/_search", s.Addr, s.Indices, typ)).SetBasicAuth(s.username, s.password)
 			req.Header["content-type"] = "application/json"
 			_, body, errs := req.SendString(fmt.Sprintf(`{"size":0,"aggs":{"distinct_colors":{"terms":{"field":"%s","size":1000}}}}`, field)).End()
 			result := struct {
