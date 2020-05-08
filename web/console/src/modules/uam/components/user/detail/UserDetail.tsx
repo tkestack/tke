@@ -7,16 +7,16 @@ import { TablePanel } from '@tencent/ff-component';
 import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
-import { dateFormat } from '../../../../../helpers/dateUtil';
-import { allActions } from '../../actions';
-import { STRATEGY_TYPE, VALIDATE_EMAIL_RULE, VALIDATE_PHONE_RULE } from '../../constants/Config';
-import { Strategy, User } from '../../models';
-import { router } from '../../router';
+import { dateFormat } from '@helper/dateUtil';
+import { allActions } from '../../../actions';
+import { STRATEGY_TYPE, VALIDATE_EMAIL_RULE, VALIDATE_PHONE_RULE } from '../../../constants/Config';
+import { Strategy, User } from '../../../models';
+import { router } from '../../../router';
 
-import { RoleActionPanel } from './detail/RoleActionPanel';
-import { RoleTablePanel } from './detail/RoleTablePanel';
-import { GroupActionPanel } from './detail/GroupActionPanel';
-import { GroupTablePanel } from './detail/GroupTablePanel';
+import { RoleActionPanel } from './RoleActionPanel';
+import { RoleTablePanel } from './RoleTablePanel';
+import { GroupActionPanel } from './GroupActionPanel';
+import { GroupTablePanel } from './GroupTablePanel';
 const { useState, useEffect, useRef } = React;
 const _isEqual = require('lodash/isEqual');
 
@@ -30,15 +30,16 @@ insertCSS(
 `
 );
 
-export const UserDetailsPanel = () => {
-  const state = useSelector(state => state);
+export const UserDetail = () => {
+  const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
   const { route, userList, getUser, updateUser, userStrategyList } = state;
   const getUserData = getUser.data[0];
   const updateUserData = updateUser.data[0];
-  const { sub } = router.resolve(route);
+  // const { sub } = router.resolve(route);
+  const sub = route.queries['name'];
 
   const [basicParamsValue, setBasicParamsValue] = useState({ displayName: '', email: '', phoneNumber: '' });
   const [editValue, setEditValue] = useState({ editBasic: false });
@@ -48,7 +49,7 @@ export const UserDetailsPanel = () => {
     // 请求用户详情
     actions.user.getUser.fetch({
       noCache: true,
-      data: { name: sub }
+      data: { name: sub },
     });
 
     // 进行用户绑定的策略的拉取
@@ -89,26 +90,26 @@ export const UserDetailsPanel = () => {
       key: 'name',
       header: t('策略名'),
       width: '20%',
-      render: x => x.spec.displayName
+      render: (x) => x.spec.displayName,
     },
     {
       key: 'category',
       header: t('类型'),
       width: '20%',
-      render: x => x.spec.category
+      render: (x) => x.spec.category,
     },
     {
       key: 'desp',
       header: t('描述'),
       width: '40%',
-      render: x => x.spec.description
-    }
+      render: (x) => x.spec.description,
+    },
   ];
 
   const tabs = [
     { id: 'policies', label: '已关联策略' },
     { id: 'groups', label: '已关联用户组' },
-    { id: 'roles', label: '已关联角色' }
+    // { id: 'roles', label: '已关联角色' },
   ];
 
   return (
@@ -135,7 +136,7 @@ export const UserDetailsPanel = () => {
                     <Input
                       value={displayName}
                       className={isNameError && 'is-error'}
-                      onChange={value => {
+                      onChange={(value) => {
                         setBasicParamsValue({ ...basicParamsValue, displayName: value });
                       }}
                     />
@@ -151,7 +152,7 @@ export const UserDetailsPanel = () => {
                   <React.Fragment>
                     <Input
                       value={phoneNumber}
-                      onChange={value => {
+                      onChange={(value) => {
                         setBasicParamsValue({ ...basicParamsValue, phoneNumber: value });
                       }}
                     />
@@ -171,7 +172,7 @@ export const UserDetailsPanel = () => {
                   <React.Fragment>
                     <Input
                       value={email}
-                      onChange={value => {
+                      onChange={(value) => {
                         setBasicParamsValue({ ...basicParamsValue, email: value });
                       }}
                     />
@@ -222,10 +223,10 @@ export const UserDetailsPanel = () => {
               <GroupActionPanel />
               <GroupTablePanel />
             </TabPanel>
-            <TabPanel id="roles">
-              <RoleActionPanel />
-              <RoleTablePanel />
-            </TabPanel>
+            {/*<TabPanel id="roles">*/}
+            {/*  <RoleActionPanel />*/}
+            {/*  <RoleTablePanel />*/}
+            {/*</TabPanel>*/}
           </Tabs>
         </Card.Body>
       </Card>
@@ -245,16 +246,16 @@ export const UserDetailsPanel = () => {
         user: {
           metadata: {
             name: user.metadata.name,
-            resourceVersion: user.metadata.resourceVersion
+            resourceVersion: user.metadata.resourceVersion,
           },
           spec: {
             username: user.spec.username,
             displayName,
             phoneNumber,
-            email
-          }
-        }
-      }
+            email,
+          },
+        },
+      },
     });
     setEditValue({ editBasic: false });
   }

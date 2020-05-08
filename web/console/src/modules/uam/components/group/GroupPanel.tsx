@@ -12,33 +12,32 @@ export interface RootProps extends RootState {
   actions?: typeof allActions;
 }
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch
+    dispatch,
   });
 
-@connect(state => state, mapDispatchToProps)
-export class GroupApp extends React.Component<RootProps, {}> {
-
+@connect((state) => state, mapDispatchToProps)
+export class GroupPanel extends React.Component<RootProps, {}> {
   render() {
-    let { route } = this.props,
-      urlParam = router.resolve(route);
-    if (!urlParam['sub']) {
-      return (
-        <div className="manage-area">
-          <GroupList {...this.props} />
-        </div>
-      );
-    } else if (urlParam['sub'] === 'create') {
+    const { route } = this.props;
+    const { action } = router.resolve(route);
+    if (action === 'create') {
       return (
         <div className="manage-area">
           <GroupCreate {...this.props} />
         </div>
       );
-    } else if (urlParam['sub'] === 'detail') {
+    } else if (action === 'detail') {
       return (
         <div className="manage-area">
           <GroupDetail {...this.props} />
+        </div>
+      );
+    } else {
+      return (
+        <div className="manage-area">
+          <GroupList {...this.props} />
         </div>
       );
     }

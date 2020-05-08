@@ -5,16 +5,15 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { router } from '../../../router';
 import { allActions } from '../../../actions';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 import { UserAssociateWorkflowDialog } from '../associate/UserAssociateWorkflowDialog';
 import { CommonUserFilter } from '../../../models';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class UserActionPanel extends React.Component<RootProps, {}> {
-
   componentWillUnmount() {
     let { actions } = this.props;
     actions.commonUser.associate.clearUserAssociation();
@@ -29,7 +28,7 @@ export class UserActionPanel extends React.Component<RootProps, {}> {
       /** 关联/解关联回调函数 */
       callback: () => {
         actions.group.detail.fetchGroup({ name: route.queries['groupName'] });
-      }
+      },
     };
     actions.commonUser.associate.setupUserFilter(filter);
     /** 拉取关联用户列表，拉取后自动更新commonUserAssociation */
@@ -47,23 +46,25 @@ export class UserActionPanel extends React.Component<RootProps, {}> {
         <Table.ActionPanel>
           <Justify
             left={
-              <Button type="primary" onClick={e => {
-                /** 开始关联用户工作流 */
-                actions.commonUser.associate.associateUserWorkflow.start();
-              }}>
+              <Button
+                type="primary"
+                onClick={(e) => {
+                  /** 开始关联用户工作流 */
+                  actions.commonUser.associate.associateUserWorkflow.start();
+                }}
+              >
                 {t('关联用户')}
               </Button>
             }
           />
         </Table.ActionPanel>
-        <UserAssociateWorkflowDialog onPostCancel={() => {
-          /** 不清理commonUserAssociation */
-          // actions.commonUser.associate.clearUserAssociation();
-        }}
+        <UserAssociateWorkflowDialog
+          onPostCancel={() => {
+            /** 不清理commonUserAssociation */
+            // actions.commonUser.associate.clearUserAssociation();
+          }}
         />
       </React.Fragment>
     );
   }
-
 }
-

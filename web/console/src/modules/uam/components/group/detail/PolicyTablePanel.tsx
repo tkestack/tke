@@ -8,16 +8,15 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { router } from '../../../router';
 import { allActions } from '../../../actions';
 import { PolicyPlain, PolicyAssociation, GroupAssociation, GroupPlain, GroupFilter } from '../../../models';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch
+    dispatch,
   });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class PolicyTablePanel extends React.Component<RootProps, {}> {
-
   render() {
     let { actions, policyAssociation, policyAssociatedList } = this.props;
 
@@ -29,7 +28,7 @@ export class PolicyTablePanel extends React.Component<RootProps, {}> {
           <Text parent="div" overflow>
             {policy.displayName || '-'}
           </Text>
-        )
+        ),
       },
       {
         key: 'category',
@@ -38,7 +37,7 @@ export class PolicyTablePanel extends React.Component<RootProps, {}> {
           <Text parent="div" overflow>
             {policy.category || '-'}
           </Text>
-        )
+        ),
       },
       {
         key: 'description',
@@ -47,7 +46,7 @@ export class PolicyTablePanel extends React.Component<RootProps, {}> {
           <Text parent="div" overflow>
             {policy.description || '-'}
           </Text>
-        )
+        ),
       },
       // { key: 'operation', header: t('操作'), render: policy => this._renderOperationCell(policy) }
     ];
@@ -79,14 +78,14 @@ export class PolicyTablePanel extends React.Component<RootProps, {}> {
         </LinkButton>
       </React.Fragment>
     );
-  }
+  };
 
   _removePolicy = async (policy: PolicyPlain) => {
     let { actions, policyFilter } = this.props;
     const yes = await Modal.confirm({
       message: t('确认解除当前策略关联') + ` - ${policy.displayName}？`,
       okText: t('解除'),
-      cancelText: t('取消')
+      cancelText: t('取消'),
     });
     if (yes) {
       /** 目前还没有实现基于用户组解绑策略 */
@@ -94,6 +93,5 @@ export class PolicyTablePanel extends React.Component<RootProps, {}> {
       actions.policy.associate.disassociatePolicyWorkflow.start([policyAssociation], policyFilter);
       actions.policy.associate.disassociatePolicyWorkflow.perform();
     }
-  }
-
+  };
 }

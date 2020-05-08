@@ -1,20 +1,19 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 import { Justify, Icon } from '@tencent/tea-component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { allActions } from '../../../actions';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class HeaderPanel extends React.Component<RootProps, {}> {
-
   goBack = () => {
     history.back();
-  }
+  };
 
   render() {
     let { route } = this.props;

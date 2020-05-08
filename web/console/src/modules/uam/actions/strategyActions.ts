@@ -41,8 +41,10 @@ const addStrategy = generateWorkflowActionCreator<Strategy, void>({
   workflowStateLocator: (state: RootState) => state.addStrategyWorkflow,
   operationExecutor: WebAPI.addStrategy,
   after: {
-    [OperationTrigger.Done]: dispatch => {
-      dispatch(strategyActions.poll());
+    [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState: GetState) => {
+      const { route } = getState();
+      let { sub } = router.resolve(route);
+      dispatch(strategyActions.poll({ type: sub }));
     }
   }
 });
@@ -55,8 +57,10 @@ const removeStrategy = generateWorkflowActionCreator<any, void>({
   workflowStateLocator: (state: RootState) => state.removeStrategyWorkflow,
   operationExecutor: WebAPI.removeStrategy,
   after: {
-    [OperationTrigger.Done]: dispatch => {
-      dispatch(strategyActions.poll());
+    [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState: GetState) => {
+      const { route } = getState();
+      let { sub } = router.resolve(route);
+      dispatch(strategyActions.poll({ type: sub }));
     }
   }
 });
@@ -90,7 +94,7 @@ const updateStrategy = generateFetcherActionCreator({
       strategyActions.getStrategy.fetch({
         noCache: true,
         data: {
-          id: urlParams['sub']
+          id: route.queries['id']
         }
       })
     );
@@ -108,11 +112,23 @@ const getCategories = generateFetcherActionCreator({
   }
 });
 
+// /**
+//  * 获取平台策略
+//  */
+// const getPlatformCategories = generateFetcherActionCreator({
+//   actionType: ActionTypes.GetPlatformCategories,
+//   fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
+//     let result = await WebAPI.getPlatformCategories();
+//     return result;
+//   }
+// });
+
 const restActions = {
-  poll: () => {
+  poll: (type) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       dispatch(
         strategyActions.polling({
+          filter: type,
           delayTime: 5000
         })
       );
@@ -123,7 +139,8 @@ const restActions = {
   removeStrategy,
   getCategories,
   getStrategy,
-  updateStrategy
+  updateStrategy,
+  // getPlatformCategories
 };
 
 export const strategyActions = extend({}, FFModelStrategyActions, restActions);

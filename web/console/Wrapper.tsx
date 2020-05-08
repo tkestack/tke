@@ -4,7 +4,7 @@ import {
   reduceK8sRestfulPath,
   Method,
   reduceNetworkRequest,
-  setConsoleAPIAddress
+  setConsoleAPIAddress,
 } from './helpers';
 import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig } from './config';
@@ -12,6 +12,7 @@ import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
 import { Button, Icon, Text, Bubble, NavMenu, List } from '@tencent/tea-component';
 
+// @ts-ignore
 const routerSea = seajs.require('router');
 
 /**平台管理员,业务成员,游客,未初始化 */
@@ -19,7 +20,7 @@ enum UserType {
   admin = 'admin',
   member = 'member',
   other = 'other',
-  init = 'init'
+  init = 'init',
 }
 
 /** 获取当前控制台modules的 域名映射表 */
@@ -49,7 +50,7 @@ export enum ConsoleModuleEnum {
   Auth = 'auth',
 
   /** 审计模块 */
-  Audit = 'audit'
+  Audit = 'audit',
 }
 
 export enum PlatformTypeEnum {
@@ -57,7 +58,7 @@ export enum PlatformTypeEnum {
   Manager = 'manager',
 
   /** 业务 */
-  Business = 'business'
+  Business = 'business',
 }
 
 interface RouterConfig {
@@ -82,17 +83,17 @@ const commonRouterConfig: RouterConfig[] = [
   {
     url: '/tkestack/cluster',
     title: '集群管理',
-    watchModule: ConsoleModuleEnum.PLATFORM
+    watchModule: ConsoleModuleEnum.PLATFORM,
   },
   {
     url: '/tkestack/project',
     title: '业务管理',
-    watchModule: ConsoleModuleEnum.Business
+    watchModule: ConsoleModuleEnum.Business,
   },
   {
     url: '/tkestack/addon',
     title: '扩展组件',
-    watchModule: ConsoleModuleEnum.PLATFORM
+    watchModule: ConsoleModuleEnum.PLATFORM,
   },
   {
     title: '组织资源',
@@ -101,45 +102,35 @@ const commonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack/registry/repo',
         title: '镜像仓库管理',
-        watchModule: ConsoleModuleEnum.Registry
+        watchModule: ConsoleModuleEnum.Registry,
       },
       {
         url: '/tkestack/registry/chart',
         title: 'Chart包仓库管理',
-        watchModule: ConsoleModuleEnum.Chart
+        watchModule: ConsoleModuleEnum.Chart,
       },
       {
         url: '/tkestack/registry/apikey',
         title: '访问凭证',
-        watchModule: ConsoleModuleEnum.ApiKey
-      }
-    ]
+        watchModule: ConsoleModuleEnum.ApiKey,
+      },
+    ],
   },
   {
     title: '访问管理',
     watchModule: [ConsoleModuleEnum.Auth],
     subRouterConfig: [
       {
-        url: '/tkestack/uam/role',
-        title: '角色管理',
-        watchModule: ConsoleModuleEnum.Auth
-      },
-      {
-        url: '/tkestack/uam/group',
-        title: '用户组管理',
-        watchModule: ConsoleModuleEnum.Auth
-      },
-      {
         url: '/tkestack/uam/user',
         title: '用户管理',
-        watchModule: ConsoleModuleEnum.Auth
+        watchModule: ConsoleModuleEnum.Auth,
       },
       {
         url: '/tkestack/uam/strategy',
         title: '策略管理',
-        watchModule: ConsoleModuleEnum.Auth
-      }
-    ]
+        watchModule: ConsoleModuleEnum.Auth,
+      },
+    ],
   },
   {
     title: '监控&告警',
@@ -148,14 +139,14 @@ const commonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack/alarm',
         title: '告警设置',
-        watchModule: ConsoleModuleEnum.Monitor
+        watchModule: ConsoleModuleEnum.Monitor,
       },
       {
         url: '/tkestack/notify',
         title: '通知设置',
-        watchModule: ConsoleModuleEnum.Notify
-      }
-    ]
+        watchModule: ConsoleModuleEnum.Notify,
+      },
+    ],
   },
   {
     title: '运维中心',
@@ -164,22 +155,22 @@ const commonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack/helm',
         title: 'Helm应用',
-        watchModule: ConsoleModuleEnum.PLATFORM
+        watchModule: ConsoleModuleEnum.PLATFORM,
       },
       {
         url: '/tkestack/log',
         title: '日志',
-        watchModule: ConsoleModuleEnum.PLATFORM
+        watchModule: ConsoleModuleEnum.PLATFORM,
       },
       {
         url: '/tkestack/persistent-event',
         title: '事件持久化',
-        watchModule: ConsoleModuleEnum.PLATFORM
+        watchModule: ConsoleModuleEnum.PLATFORM,
       },
       {
         url: '/tkestack/audit',
         title: '审计记录',
-        watchModule: ConsoleModuleEnum.PLATFORM
+        watchModule: ConsoleModuleEnum.PLATFORM,
       }
     ]
   }
@@ -190,12 +181,12 @@ const businessCommonRouterConfig: RouterConfig[] = [
   {
     url: '/tkestack-project/application',
     title: '应用管理',
-    watchModule: ConsoleModuleEnum.Business
+    watchModule: ConsoleModuleEnum.Business,
   },
   {
     url: '/tkestack-project/helm',
     title: 'Helm应用',
-    watchModule: ConsoleModuleEnum.PLATFORM
+    watchModule: ConsoleModuleEnum.PLATFORM,
   },
   {
     title: '组织资源',
@@ -204,14 +195,14 @@ const businessCommonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack-project/registry/repo',
         title: '仓库管理',
-        watchModule: ConsoleModuleEnum.Registry
+        watchModule: ConsoleModuleEnum.Registry,
       },
       {
         url: '/tkestack-project/registry/apikey',
         title: '访问凭证',
-        watchModule: ConsoleModuleEnum.ApiKey
-      }
-    ]
+        watchModule: ConsoleModuleEnum.ApiKey,
+      },
+    ],
   },
   {
     title: '监控&告警',
@@ -220,15 +211,15 @@ const businessCommonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack-project/alarm',
         title: '告警设置',
-        watchModule: ConsoleModuleEnum.Monitor
+        watchModule: ConsoleModuleEnum.Monitor,
       },
       {
         url: '/tkestack-project/notify',
         title: '通知设置',
-        watchModule: ConsoleModuleEnum.Notify
-      }
-    ]
-  }
+        watchModule: ConsoleModuleEnum.Notify,
+      },
+    ],
+  },
 ];
 
 interface ConsoleWrapperProps {
@@ -294,7 +285,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       userInfo: {
         extra: '',
         groups: [],
-        name: ''
+        name: '',
       },
       consoleApiMap: window['modules'] || {},
       isShowPlatformSwitch: false,
@@ -304,8 +295,8 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       routerConfig: [],
       asideRouterSelect: {
         index: -1,
-        isShow: false
-      }
+        isShow: false,
+      },
     };
   }
 
@@ -321,12 +312,12 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     let url = reduceK8sRestfulPath({ resourceInfo: infoResourceInfo });
     let params: RequestParams = {
       method: Method.get,
-      url
+      url,
     };
     try {
       let response = await reduceNetworkRequest(params);
       this.setState({
-        userInfo: response.data
+        userInfo: response.data,
       });
     } catch (error) {}
   }
@@ -339,7 +330,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     let url = reduceK8sRestfulPath({ resourceInfo: moduleResourceInfo });
     let params: RequestParams = {
       method: Method.get,
-      url
+      url,
     };
     try {
       let consoleApiMap;
@@ -359,7 +350,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         this.props.platformType === PlatformTypeEnum.Business ? businessCommonRouterConfig : commonRouterConfig;
       let currentRouterConfig: RouterConfig[] = initRouterConfig.filter((routerConfig, index) => {
         if (Array.isArray(routerConfig.watchModule)) {
-          return routerConfig.watchModule.some(item => moduleKeys.includes(item));
+          return routerConfig.watchModule.some((item) => moduleKeys.includes(item));
         }
         return moduleKeys.includes(routerConfig.watchModule);
       });
@@ -370,7 +361,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       currentRouterConfig.forEach((routerConfig, index) => {
         // 进行二级路由信息的初始化
         if (subRouterIndex < 0 && routerConfig.subRouterConfig) {
-          let subRouterUrl = routerConfig.subRouterConfig.map(item => item.url);
+          let subRouterUrl = routerConfig.subRouterConfig.map((item) => item.url);
           if (subRouterUrl.includes(this.state.selected)) {
             subRouterIndex = index;
           }
@@ -381,8 +372,8 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         routerConfig: currentRouterConfig,
         asideRouterSelect: {
           index: subRouterIndex,
-          isShow: subRouterIndex > -1
-        }
+          isShow: subRouterIndex > -1,
+        },
       });
     } catch (error) {}
   }
@@ -393,15 +384,15 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     let url = reduceK8sRestfulPath({ resourceInfo: userResourceInfo });
     let params: RequestParams = {
       method: Method.get,
-      url
+      url,
     };
     try {
       let response = await reduceNetworkRequest(params);
       if (response.code === 0) {
-        let projects = Object.keys(response.data.projects).map(key => {
+        let projects = Object.keys(response.data.projects).map((key) => {
           return {
             id: key,
-            name: response.data.projects[key]
+            name: response.data.projects[key],
           };
         });
         let userType = response.data.administrator
@@ -411,7 +402,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           : UserType.other;
         this.setState({
           userType,
-          projects
+          projects,
         });
         if (userType === UserType.member && this.props.platformType === PlatformTypeEnum.Manager) {
           location.href = location.origin + '/tkestack-project/application';
@@ -434,7 +425,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     let url = reduceK8sRestfulPath({ resourceInfo: logoutInfo });
     let params: RequestParams = {
       method: Method.get,
-      url
+      url,
     };
     try {
       let response = await reduceNetworkRequest(params);
@@ -454,7 +445,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
 
   _handleHoverForFlatformSwitch(isShow: boolean = false) {
     this.setState({
-      isShowPlatformSwitch: isShow
+      isShowPlatformSwitch: isShow,
     });
   }
 
@@ -570,9 +561,9 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
 
                   /** 需要判断当前路由设置是否为二级路由设置 */
                   if (routerIns.subRouterConfig) {
-                    let subRouterUrl = routerIns.subRouterConfig.map(item => item.url);
+                    let subRouterUrl = routerIns.subRouterConfig.map((item) => item.url);
                     isSelected = subRouterUrl.includes(this.state.selected);
-                    let selectedIndex = subRouterUrl.findIndex(item => item === this.state.selected);
+                    let selectedIndex = subRouterUrl.findIndex((item) => item === this.state.selected);
                     let { index: asideIndex, isShow } = this.state.asideRouterSelect;
 
                     routerContent = (
@@ -588,8 +579,8 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
                             this.setState({
                               asideRouterSelect: {
                                 index,
-                                isShow: asideIndex !== index ? true : !isShow
-                              }
+                                isShow: asideIndex !== index ? true : !isShow,
+                              },
                             });
                           }}
                         >
@@ -602,7 +593,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
                               <li key={subIndex}>
                                 <a
                                   className={classnames('qc-aside-level-2', {
-                                    'qc-aside-select': selectedIndex === subIndex
+                                    'qc-aside-select': selectedIndex === subIndex,
                                   })}
                                   href="javascript:;"
                                   onClick={() => {
@@ -626,10 +617,10 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
                         <a
                           style={{ paddingLeft: '24px' }}
                           className={classnames('qc-aside-level-1', {
-                            'qc-aside-select': isSelected
+                            'qc-aside-select': isSelected,
                           })}
                           href="javascript:;"
-                          onClick={e => {
+                          onClick={(e) => {
                             if (!isSelected) {
                               // 这里需要区分是否为别的业务，如果是别的业务，是进行业务的跳转
                               if (this.props.platformType === PlatformTypeEnum.Manager) {

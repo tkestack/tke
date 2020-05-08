@@ -227,6 +227,9 @@ const restActions = {
         ok = false;
       }
     });
+    if (!projectEdition.members || projectEdition.members.length === 0) {
+      ok = false;
+    }
     return ok;
   },
 

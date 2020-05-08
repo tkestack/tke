@@ -13,6 +13,11 @@ export interface Group extends Identifiable {
     displayName: string;
     /** 描述 */
     description: string;
+    /** 其他*/
+    extra?: {
+      policies: string;
+      [props: string]: any;
+    };
   };
   [props: string]: any;
 }
@@ -47,6 +52,10 @@ export interface GroupCreation extends Identifiable {
     displayName: string;
     /** 描述 */
     description: string;
+    /** 其他*/
+    extra?: {
+      policies: string;
+    };
   };
   status?: {
     /** 用户 */

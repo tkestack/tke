@@ -5,16 +5,15 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { router } from '../../../router';
 import { allActions } from '../../../actions';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 // import { RoleAssociateWorkflowDialog } from '../associate/RoleAssociateWorkflowDialog';
 import { RoleFilter } from '../../../models';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class RoleActionPanel extends React.Component<RootProps, {}> {
-
   componentWillUnmount() {
     let { actions } = this.props;
     actions.role.associate.clearRoleAssociation();
@@ -29,7 +28,7 @@ export class RoleActionPanel extends React.Component<RootProps, {}> {
       /** 关联/解关联回调函数 */
       callback: () => {
         actions.group.detail.fetchGroup({ name: route.queries['groupName'] });
-      }
+      },
     };
     actions.role.associate.setupRoleFilter(filter);
     /** 拉取关联角色列表，拉取后自动更新roleAssociation */
@@ -60,6 +59,4 @@ export class RoleActionPanel extends React.Component<RootProps, {}> {
       // </React.Fragment>
     );
   }
-
 }
-

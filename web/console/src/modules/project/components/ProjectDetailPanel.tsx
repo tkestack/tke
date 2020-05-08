@@ -20,7 +20,7 @@ import { RootProps } from './ProjectApp';
 export class ProjectDetailPanel extends React.Component<RootProps, {}> {
   state = {
     currentClusterIndex: 0,
-    isShowDialog: false
+    isShowDialog: false,
   };
   componentDidMount() {
     let { actions, route } = this.props;
@@ -73,23 +73,23 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
             onEdit: () => {
               actions.project.initEdition(projectItem);
               actions.project.editProjectName.start([]);
-            }
+            },
           }}
         >
           {projectItem.spec.displayName}
         </FormPanel.Item>
-        <FormPanel.Item
-          label={t('成员')}
-          text
-          textProps={{
-            onEdit: () => {
-              actions.project.initEdition(projectItem);
-              actions.project.editProjectManager.start([]);
-            }
-          }}
-        >
-          {this.formatManager(projectItem.spec.members)}
-        </FormPanel.Item>
+        {/*<FormPanel.Item*/}
+        {/*  label={t('成员')}*/}
+        {/*  text*/}
+        {/*  textProps={{*/}
+        {/*    onEdit: () => {*/}
+        {/*      actions.project.initEdition(projectItem);*/}
+        {/*      actions.project.editProjectManager.start([]);*/}
+        {/*    }*/}
+        {/*  }}*/}
+        {/*>*/}
+        {/*  {this.formatManager(projectItem.spec.members)}*/}
+        {/*</FormPanel.Item>*/}
         <FormPanel.Item label={t('资源限制')}>{this._renderTablePanel()}</FormPanel.Item>
         <FormPanel.Item text label={t('创建时间')}>
           {dateFormatter(new Date(projectItem.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}
@@ -106,10 +106,10 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
     let { actions, namespace, project } = this.props,
       projectItem = project.selections[0] ? project.selections[0] : null;
     let clusterKeys = projectItem && projectItem.spec.clusters ? Object.keys(projectItem.spec.clusters) : [];
-    let finalClusterList = clusterKeys.map(item => {
+    let finalClusterList = clusterKeys.map((item) => {
       return {
         name: item,
-        hard: projectItem.spec.clusters[item].hard
+        hard: projectItem.spec.clusters[item].hard,
       };
     });
     const columns: TableColumn<{ name: string; hard: any }>[] = [
@@ -117,17 +117,17 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
         key: 'name',
         header: t('名称'),
         width: '20%',
-        render: x => (
+        render: (x) => (
           <div>
             <span className="text-overflow">{x.name}</span>
           </div>
-        )
+        ),
       },
       {
         width: '65%',
         key: 'resourceLimit',
         header: t('集群配额'),
-        render: x => <React.Fragment>{this.formatResourceLimit(x.hard)}</React.Fragment>
+        render: (x) => <React.Fragment>{this.formatResourceLimit(x.hard)}</React.Fragment>,
       },
       {
         width: '15%',
@@ -140,14 +140,14 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
               actions.project.initEdition(projectItem);
               this.setState({
                 isShowDialog: true,
-                currentClusterIndex: recordIndex
+                currentClusterIndex: recordIndex,
               });
             }}
           >
             {t('编辑')}
           </Button>
-        )
-      }
+        ),
+      },
     ];
 
     return (
@@ -163,8 +163,8 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
                   status="empty"
                   emptyText={<div className="text-center">{t('该业务没有集群配额限制')}</div>}
                 />
-              )
-            })
+              ),
+            }),
           ]}
         />
       </div>
@@ -215,7 +215,7 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
     const { actions, project, projectEdition, editProjecResourceLimit } = this.props;
     let { currentClusterIndex, isShowDialog } = this.state;
     let parentProjectSelection = projectEdition.parentProject
-      ? project.list.data.records.find(item => item.metadata.name === projectEdition.parentProject)
+      ? project.list.data.records.find((item) => item.metadata.name === projectEdition.parentProject)
       : null;
     let clusterName = projectEdition.clusters.length ? projectEdition.clusters[currentClusterIndex].name : '-';
 
@@ -247,13 +247,13 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
           onCancel={() => cancel()}
           failMessage={failed ? getWorkflowError(editProjecResourceLimit) : null}
           resourceLimits={projectEdition.clusters[currentClusterIndex].resourceLimits}
-          onSubmit={resourceLimits => {
+          onSubmit={(resourceLimits) => {
             if (projectEdition.clusters[currentClusterIndex]) {
               projectEdition.clusters[currentClusterIndex] = Object.assign(
                 {},
                 projectEdition.clusters[currentClusterIndex],
                 {
-                  resourceLimits
+                  resourceLimits,
                 }
               );
             }

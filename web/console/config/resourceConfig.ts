@@ -25,6 +25,7 @@ import {
   moduleConfig,
   info,
   projects,
+  members,
   portal,
   namespaces,
   localidentity,
@@ -147,6 +148,7 @@ export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey =
 
     /** =============== 这里是业务相关的 =============== */
     projects: getResourceConfig(projects, finalK8sVersion),
+    members: getResourceConfig(members, finalK8sVersion),
     portal: getResourceConfig(portal, finalK8sVersion),
     platforms: getResourceConfig(platforms, finalK8sVersion),
     namespaces: getResourceConfig(namespaces, finalK8sVersion),
