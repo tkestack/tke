@@ -31,6 +31,9 @@ const clusterContextKey = "clusterName"
 const requestBodyKey = "requestBody"
 const fuzzyResourceContextKey = "fuzzyResourceName"
 
+const namespaceContextKey = "namespace"
+const namespaceParamKey = "namespace"
+
 // ClusterNameHeaderKey is the header name of cluster.
 const ClusterNameHeaderKey = "X-TKE-ClusterName"
 
@@ -72,6 +75,15 @@ func RequestBodyFrom(ctx context.Context) (*RequestBody, bool) {
 	}
 	obj, ok := val.(*RequestBody)
 	return obj, ok
+}
+
+// ClusterFrom get the cluster name from request context.
+func NamespaceFrom(ctx context.Context) string {
+	namespace, ok := ctx.Value(namespaceContextKey).(string)
+	if !ok {
+		return ""
+	}
+	return namespace
 }
 
 // WithCluster creates an http handler that tries to get the cluster name from
@@ -119,6 +131,20 @@ func WithRequestBody(handler http.Handler) http.Handler {
 				req = req.WithContext(genericrequest.WithValue(req.Context(), requestBodyKey, requestBody))
 			}
 		}
+		handler.ServeHTTP(w, req)
+	})
+}
+
+// WithNamespace creates an http handler that tries to get the namespace id from
+// the given request query params, and then stores any such namespace found onto the
+// provided context for the request.
+func WithNamespace(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		keys, ok := req.URL.Query()[namespaceParamKey]
+		if ok && len(keys[0]) > 0 {
+			req = req.WithContext(genericrequest.WithValue(req.Context(), namespaceContextKey, keys[0]))
+		}
+
 		handler.ServeHTTP(w, req)
 	})
 }

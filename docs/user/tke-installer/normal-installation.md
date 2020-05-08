@@ -19,14 +19,18 @@ The hardware requirements for nodes mostly depend on your workloads, the minimum
 * Hardware
   * 8 vCPU
   * 16 GB of Memory
+  * 50 GB of Disk Space
 
 > Note: Installer node need extra 20GB disk to store images and temporary files.
 
 TKEStack is tested on the following operating system:
 
 * Operating Systems
-  * Ubuntu 16.04 (64-bit)
-  * CentOS Linux 7.5 (64-bit)
+  * Ubuntu 16.04/18.04  LTS (64-bit)
+  * CentOS Linux 7.6 (64-bit)
+  * Tencent Linux 2.2 
+
+Please refer to [ installation requirements](docs/guide/zh-CN/installation/installation-requirement.md) for more information
 
 
 ## Installing tke-installer
@@ -43,44 +47,46 @@ First Log in to your Linux host and install tke-installer via this command:
 ## Starting the installation
 
 Open your browser to http://`INSTALLER-NODE-IP`:8080/index.html, the Web GUI will guide you to initialize and install the TKEStack.
-  
-1. Set the account information and HA VIP
+
+1. Set the account information and **HA VIP（Not necessary）**
   
    ![](../../images/step-1.png)
   
 2. Configure the global cluster, set cluster's nic, GPU type and container network, specify the master node information，advance option enable you to set customized parameters
 
+   > Note: The addresses of all nodes should preferably use **intranet addresses**.
+
    ![](../../images/step-2.png)
-  
+
 3. Set authentication information
 
    ![](../../images/step-3.png)
-  
+
 4. Specify the image registry, TKEStack will deploy a local registry by default
 
    ![](../../images/step-4.png)
-  
+
 5. Business setting，default is on
 
    ![](../../images/step-5.png)
-  
+
 6. Monitor settings，TKE will install an influxDB as the monitor data's storage, or specify the influxDB address and ES address, or disable the monitor
-  
+
    ![](../../images/step-6.png)
-  
+
 7. Console settings, if enabled, specify the console page's address and certificate
-  
+
    ![](../../images/step-7.png)
-  
+
 8. Preview all the configuration, if no problem, click `install` to start, next page will show the install logs in real time
-   
+
    ![](../../images/step-8.png)
-   
+
 
 ## Using TKEStack
 
 After the installation is completed, you will receive a `===>install task [Success]` message, click the `Guidance` button to check the TKEStack console address, open a browser to access.
-   
+
    ![](../../images/step-9.png)
 
 The login username and password are specified in previous installation step:

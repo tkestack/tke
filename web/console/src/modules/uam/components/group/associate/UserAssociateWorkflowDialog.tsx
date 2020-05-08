@@ -3,28 +3,22 @@ import { connect } from 'react-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
 import { allActions } from '../../../actions';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 import { WorkflowDialog } from '../../../../common/components';
 import { UserAssociatePanel } from './UserAssociatePanel';
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch
+    dispatch,
   });
 
 interface WorkflowDialogProps extends RootProps {
   onPostCancel?: () => void;
 }
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class UserAssociateWorkflowDialog extends React.Component<WorkflowDialogProps, {}> {
-
   render() {
-    const {
-      actions,
-      commonUserAssociation,
-      commonUserFilter,
-      commonAssociateUserWorkflow
-    } = this.props;
+    const { actions, commonUserAssociation, commonUserFilter, commonAssociateUserWorkflow } = this.props;
     const { onPostCancel = undefined } = this.props;
     return (
       <WorkflowDialog

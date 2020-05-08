@@ -86,3 +86,15 @@ func FilterChartGroup(ctx context.Context, chartGroup *business.ChartGroup) erro
 	}
 	return nil
 }
+
+// FilterNsEmigration is used to filter emigrations that do not belong to the tenant.
+func FilterNsEmigration(ctx context.Context, emigration *business.NsEmigration) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if emigration.Spec.TenantID != tenantID {
+		return errors.NewNotFound(businessv1.Resource("nsemigration"), emigration.ObjectMeta.Name)
+	}
+	return nil
+}

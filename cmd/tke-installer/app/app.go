@@ -19,7 +19,6 @@
 package app
 
 import (
-	commonapiserver "k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
 	"tkestack.io/tke/cmd/tke-installer/app/options"
 	"tkestack.io/tke/pkg/app"
@@ -54,7 +53,6 @@ func run(opts *options.Options) app.RunFunc {
 			return err
 		}
 
-		stopCh := commonapiserver.SetupSignalHandler()
-		return Run(cfg, stopCh)
+		return Run(cfg)
 	}
 }

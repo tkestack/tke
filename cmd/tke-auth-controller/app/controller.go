@@ -51,6 +51,7 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers := map[string]InitFunc{}
 
 	controllers["policy"] = startPolicyController
+	controllers["projectpolicy"] = startProjectPolicyController
 	controllers["localidentity"] = startLocalIdentityController
 	controllers["groups"] = startGroupController
 	controllers["roles"] = startRoleController

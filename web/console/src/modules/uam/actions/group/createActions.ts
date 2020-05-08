@@ -7,6 +7,7 @@ import { initGroupCreationState } from '../../constants/initState';
 import { GroupValidateSchema } from '../../constants/GroupValidateConfig';
 import { router } from '../../router';
 import { createValidatorActions, getValidatorActionType } from '@tencent/ff-validator';
+import { listActions } from './listActions';
 type GetState = () => RootState;
 
 /**
@@ -17,15 +18,23 @@ const addGroupWorkflow = generateWorkflowActionCreator<Group, void>({
   workflowStateLocator: (state: RootState) => state.groupAddWorkflow,
   operationExecutor: WebAPI.addGroup,
   after: {
-    [OperationTrigger.Done]: (dispatch, getState: GetState) => {
+    [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState: GetState) => {
       let { groupAddWorkflow, route } = getState();
       if (isSuccessWorkflow(groupAddWorkflow)) {
-        router.navigate({ module: 'group', sub: '' }, route.queries);
+        router.navigate({ module: 'user', sub: 'group' }, route.queries);
         //进入列表时自动加载
         //退出状态页面时自动清理状态
       }
       /** 结束工作流 */
       dispatch(createActions.addGroupWorkflow.reset());
+      let count = 0;
+      const timer = setInterval(() => {
+        dispatch(listActions.poll());
+        ++count;
+        if (count >= 3) {
+          clearInterval(timer);
+        }
+      }, 1500);
     }
   }
 });

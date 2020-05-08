@@ -34,8 +34,6 @@ type ConfigMapExpansion interface{}
 
 type CronHPAExpansion interface{}
 
-type GPUManagerExpansion interface{}
-
 type HelmExpansion interface{}
 
 type IPAMExpansion interface{}

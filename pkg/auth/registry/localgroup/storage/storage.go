@@ -64,7 +64,7 @@ type Storage struct {
 
 // NewStorage returns a Storage object that will work against groups.
 func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, privilegedUsername string) *Storage {
-	strategy := localgroup.NewStrategy(authClient)
+	strategy := localgroup.NewStrategy(authClient, enforcer)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.LocalGroup{} },
 		NewListFunc:              func() runtime.Object { return &auth.LocalGroupList{} },
@@ -95,7 +95,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 	finalizeStore.ExportStrategy = localgroup.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		Group:     &REST{store, privilegedUsername},
+		Group:     &REST{store, authClient, enforcer, privilegedUsername},
 		Status:    &StatusREST{&statusStore},
 		Finalize:  &FinalizeREST{&finalizeStore},
 		Binding:   &BindingREST{store, authClient},
@@ -138,6 +138,8 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 // REST implements a RESTStorage for clusters against etcd.
 type REST struct {
 	*registry.Store
+	authClient authinternalclient.AuthInterface
+	enforcer   *casbin.SyncedEnforcer
 
 	privilegedUsername string
 }
@@ -147,9 +149,30 @@ func (r *REST) ShortNames() []string {
 	return []string{"grp"}
 }
 
+// Create creates a new version of a resource.
+func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	group := obj.(*auth.LocalGroup)
+	policies, needBind := util.GetPoliciesFromGroupExtra(group)
+	result, err := r.Store.Create(ctx, group, createValidation, options)
+	if err != nil {
+		return nil, err
+	}
+	group = result.(*auth.LocalGroup)
+
+	if needBind {
+		err = util.BindGroupPolicies(r.authClient, group, policies)
+		if err != nil {
+			log.Error("bind init policies failed", log.Err(err))
+		}
+	}
+
+	return result, nil
+}
+
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	keyword := util.InterceptKeyword(options)
+	policy := util.InterceptParam(options, util.PolicyTag)
+	keyword := util.InterceptParam(options, auth.KeywordQueryTag)
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
 	obj, err := r.Store.List(ctx, wrappedOptions)
 	if err != nil {
@@ -165,6 +188,10 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 			}
 		}
 		groupList.Items = newList
+	}
+
+	if policy == "true" {
+		util.FillGroupPolicies(r.authClient, r.enforcer, groupList)
 	}
 	return groupList, nil
 }

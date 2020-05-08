@@ -28,6 +28,7 @@ import (
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
 	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	logagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
 	monitorv1 "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1"
 	notifyv1 "tkestack.io/tke/api/client/clientset/versioned/typed/notify/v1"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -38,6 +39,7 @@ type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	AuthV1() authv1.AuthV1Interface
 	BusinessV1() businessv1.BusinessV1Interface
+	LogagentV1() logagentv1.LogagentV1Interface
 	MonitorV1() monitorv1.MonitorV1Interface
 	NotifyV1() notifyv1.NotifyV1Interface
 	PlatformV1() platformv1.PlatformV1Interface
@@ -50,6 +52,7 @@ type Clientset struct {
 	*discovery.DiscoveryClient
 	authV1     *authv1.AuthV1Client
 	businessV1 *businessv1.BusinessV1Client
+	logagentV1 *logagentv1.LogagentV1Client
 	monitorV1  *monitorv1.MonitorV1Client
 	notifyV1   *notifyv1.NotifyV1Client
 	platformV1 *platformv1.PlatformV1Client
@@ -64,6 +67,11 @@ func (c *Clientset) AuthV1() authv1.AuthV1Interface {
 // BusinessV1 retrieves the BusinessV1Client
 func (c *Clientset) BusinessV1() businessv1.BusinessV1Interface {
 	return c.businessV1
+}
+
+// LogagentV1 retrieves the LogagentV1Client
+func (c *Clientset) LogagentV1() logagentv1.LogagentV1Interface {
+	return c.logagentV1
 }
 
 // MonitorV1 retrieves the MonitorV1Client
@@ -115,6 +123,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.logagentV1, err = logagentv1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.monitorV1, err = monitorv1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -145,6 +157,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
 	cs.authV1 = authv1.NewForConfigOrDie(c)
 	cs.businessV1 = businessv1.NewForConfigOrDie(c)
+	cs.logagentV1 = logagentv1.NewForConfigOrDie(c)
 	cs.monitorV1 = monitorv1.NewForConfigOrDie(c)
 	cs.notifyV1 = notifyv1.NewForConfigOrDie(c)
 	cs.platformV1 = platformv1.NewForConfigOrDie(c)
@@ -159,6 +172,7 @@ func New(c rest.Interface) *Clientset {
 	var cs Clientset
 	cs.authV1 = authv1.New(c)
 	cs.businessV1 = businessv1.New(c)
+	cs.logagentV1 = logagentv1.New(c)
 	cs.monitorV1 = monitorv1.New(c)
 	cs.notifyV1 = notifyv1.New(c)
 	cs.platformV1 = platformv1.New(c)

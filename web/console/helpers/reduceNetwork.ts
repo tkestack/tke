@@ -71,7 +71,7 @@ export const requestMethodForAction = (type: string) => {
  * 统一的请求处理
  * @param userParams: RequestParams
  */
-export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?: string) => {
+export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?: string, projectId?: string, keyword?: string) => {
   let {
     method,
     url,
@@ -87,6 +87,16 @@ export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?
   if (clusterId) {
     userDefinedHeader = Object.assign({}, userDefinedHeader, {
       'X-TKE-ClusterName': clusterId
+    });
+  }
+  if (projectId) {
+    userDefinedHeader = Object.assign({}, userDefinedHeader, {
+      'X-TKE-ProjectName': projectId
+    });
+  }
+  if (keyword) {
+    userDefinedHeader = Object.assign({}, userDefinedHeader, {
+      'X-TKE-FuzzyResourceName': keyword
     });
   }
 

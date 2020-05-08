@@ -46,6 +46,10 @@ func (c *FakeBusiness) Namespaces(namespace string) internalversion.NamespaceInt
 	return &FakeNamespaces{c, namespace}
 }
 
+func (c *FakeBusiness) NsEmigrations(namespace string) internalversion.NsEmigrationInterface {
+	return &FakeNsEmigrations{c, namespace}
+}
+
 func (c *FakeBusiness) Platforms() internalversion.PlatformInterface {
 	return &FakePlatforms{c}
 }

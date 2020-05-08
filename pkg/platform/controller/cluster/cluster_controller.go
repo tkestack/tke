@@ -23,20 +23,22 @@ import (
 	"reflect"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	clientset "tkestack.io/tke/api/client/clientset/versioned"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/controller/cluster/deletion"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
-	"tkestack.io/tke/pkg/platform/util"
+	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -51,7 +53,7 @@ const (
 
 // Controller is responsible for performing actions dependent upon a cluster phase.
 type Controller struct {
-	client         clientset.Interface
+	platformClient platformversionedclient.PlatformV1Interface
 	cache          *clusterCache
 	health         *clusterHealth
 	queue          workqueue.RateLimitingInterface
@@ -85,24 +87,24 @@ func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluste
 
 // NewController creates a new Controller object.
 func NewController(
-	client clientset.Interface,
+	platformClient platformversionedclient.PlatformV1Interface,
 	clusterInformer platformv1informer.ClusterInformer,
 	resyncPeriod time.Duration,
 	finalizerToken platformv1.FinalizerName) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
-		client: client,
-		cache:  &clusterCache{clusterMap: make(map[string]*cachedCluster)},
-		health: &clusterHealth{clusterMap: make(map[string]*platformv1.Cluster)},
-		queue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "cluster"),
-		clusterDeleter: deletion.NewClusterDeleter(client.PlatformV1().Clusters(),
-			client.PlatformV1(),
+		platformClient: platformClient,
+		cache:          &clusterCache{clusterMap: make(map[string]*cachedCluster)},
+		health:         &clusterHealth{clusterMap: make(map[string]*platformv1.Cluster)},
+		queue:          workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "cluster"),
+		clusterDeleter: deletion.NewClusterDeleter(platformClient.Clusters(),
+			platformClient,
 			finalizerToken,
 			true),
 	}
 
-	if client != nil && client.PlatformV1().RESTClient().GetRateLimiter() != nil {
-		_ = metrics.RegisterMetricAndTrackRateLimiterUsage("cluster_controller", client.PlatformV1().RESTClient().GetRateLimiter())
+	if platformClient != nil && platformClient.RESTClient().GetRateLimiter() != nil {
+		_ = metrics.RegisterMetricAndTrackRateLimiterUsage("cluster_controller", platformClient.RESTClient().GetRateLimiter())
 	}
 
 	// configure the namespace informer event handlers
@@ -194,11 +196,16 @@ func (c *Controller) syncCluster(key string) error {
 		return err
 	}
 
-	// cluster holds the latest cluster info from apiserver
 	cluster, err := c.lister.Get(name)
 
+	if err == nil {
+		if err := c.ensureSyncOldClusterCredential(cluster); err != nil {
+			return fmt.Errorf("sync old ClusterCredential error: %w", err)
+		}
+	}
+
 	switch {
-	case errors.IsNotFound(err):
+	case apierrors.IsNotFound(err):
 		log.Info("Cluster has been deleted. Attempting to cleanup resources", log.String("clusterName", key))
 		err = c.processClusterDeletion(key)
 	case err != nil:
@@ -268,21 +275,19 @@ func (c *Controller) processClusterDelete(key string) error {
 
 func (c *Controller) handlePhase(key string, cachedCluster *cachedCluster, cluster *platformv1.Cluster) error {
 	var err error
+
 	switch cluster.Status.Phase {
 	case platformv1.ClusterInitializing:
-		err = c.doInitializing(cluster)
+		err = c.onCreate(cluster)
+		log.Info("cluster_controller.onCreate", log.String("clusterName", cluster.Name), log.Err(err))
 	case platformv1.ClusterRunning, platformv1.ClusterFailed:
-		// first get cluster credential to ensure it exited when such as global import, missing credential momently
-		// cause health check fail in period
-		credential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
-		if err != nil {
-			return err
-		}
-		err = c.doUpdate(cluster, credential)
-		log.Info("update cluster", log.String("clusterName", cluster.Name), log.Err(err))
+		err = c.onUpdate(cluster)
+		log.Info("cluster_controller.onUpdate", log.String("clusterName", cluster.Name), log.Err(err))
 		if err == nil {
 			c.ensureHealthCheck(key, cluster) // after update to avoid version conflict
 		}
+	default:
+		err = fmt.Errorf("no handler for %q", cluster.Status.Phase)
 	}
 
 	return err
@@ -327,18 +332,18 @@ func (c *Controller) addOrUpdateCondition(cluster *platformv1.Cluster, newCondit
 func (c *Controller) persistUpdate(cluster *platformv1.Cluster) error {
 	var err error
 	for i := 0; i < clusterClientRetryCount; i++ {
-		_, err = c.client.PlatformV1().Clusters().UpdateStatus(cluster)
+		_, err = c.platformClient.Clusters().UpdateStatus(cluster)
 		if err == nil {
 			return nil
 		}
 		// if the object no longer exists, we don't want to recreate it. Just bail
 		// out so that we can process the delete, which we should soon be receiving
 		// if we haven't already
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			log.Info("Not persisting update to cluster set that no longer exists", log.String("clusterName", cluster.Name), log.Err(err))
 			return nil
 		}
-		if errors.IsConflict(err) {
+		if apierrors.IsConflict(err) {
 			return fmt.Errorf("not persisting update to cluster '%s' that has been changed since we received it: %v", cluster.ClusterName, err)
 		}
 		log.Warn("Failed to persist updated status of cluster", log.String("clusterName", cluster.ClusterName), log.Err(err))
@@ -348,52 +353,43 @@ func (c *Controller) persistUpdate(cluster *platformv1.Cluster) error {
 	return err
 }
 
-func (c *Controller) doInitializing(cluster *platformv1.Cluster) error {
-	clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+func (c *Controller) onCreate(cluster *platformv1.Cluster) error {
+	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return err
 	}
-	args := clusterprovider.Cluster{
-		Cluster: *cluster,
+	if err := c.ensureClusterCredential(cluster); err != nil {
+		return fmt.Errorf("ensureClusterCredential error: %w", err)
 	}
-	// support explict create by user
-	clusterCredential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
-	if err == nil {
-		args.ClusterCredential = *clusterCredential
-	}
-
-	resp, err := clusterProvider.OnInitialize(args)
-	if err != nil {
-		cluster.Status.Message = err.Error()
-		cluster.Status.Reason = reasonFailedInit
-		_, _ = c.client.PlatformV1().Clusters().Update(cluster)
-		return err
-	}
-	condition := resp.Status.Conditions[len(resp.Status.Conditions)-1]
-	if condition.Status == platformv1.ConditionFalse { // means current condition run into error
-		resp.Status.Message = condition.Message
-		resp.Status.Reason = condition.Reason
-		_, _ = c.client.PlatformV1().Clusters().Update(&resp.Cluster)
-		return fmt.Errorf("OnInitialize.%s [Failed] reason: %s message: %s",
-			condition.Type, condition.Reason, condition.Message)
-	}
-	resp.Status.Message = ""
-	resp.Status.Reason = ""
-	_, err = c.client.PlatformV1().Clusters().Update(&resp.Cluster)
+	clusterWrapper, err := typesv1.GetCluster(c.platformClient, cluster)
 	if err != nil {
 		return err
 	}
 
-	if !reflect.DeepEqual(args.ClusterCredential, resp.ClusterCredential) {
-		if args.ClusterCredential.Name == "" { // zero value means is not create before
-			resp.ClusterCredential.Name = fmt.Sprintf("cc-%s", cluster.Name)
-			resp.ClusterCredential.TenantID = cluster.Spec.TenantID
-			resp.ClusterCredential.ClusterName = cluster.Name
-
-			_, err = c.client.PlatformV1().ClusterCredentials().Create(&resp.ClusterCredential)
-		} else {
-			_, err = c.client.PlatformV1().ClusterCredentials().Update(&resp.ClusterCredential)
+	for clusterWrapper.Status.Phase == platformv1.ClusterInitializing {
+		err = provider.OnCreate(clusterWrapper)
+		if err != nil {
+			clusterWrapper.Status.Message = err.Error()
+			clusterWrapper.Status.Reason = reasonFailedInit
+			_, _ = c.platformClient.Clusters().Update(clusterWrapper.Cluster)
+			return err
 		}
+		condition := clusterWrapper.Status.Conditions[len(clusterWrapper.Status.Conditions)-1]
+		if condition.Status == platformv1.ConditionFalse { // means current condition run into error
+			clusterWrapper.Status.Message = condition.Message
+			clusterWrapper.Status.Reason = condition.Reason
+			_, _ = c.platformClient.Clusters().Update(clusterWrapper.Cluster)
+			return fmt.Errorf("Provider.OnCreate.%s [Failed] reason: %s message: %s",
+				condition.Type, condition.Reason, condition.Message)
+		}
+		clusterWrapper.Status.Message = ""
+		clusterWrapper.Status.Reason = ""
+
+		clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(clusterWrapper.ClusterCredential)
+		if err != nil {
+			return err
+		}
+		clusterWrapper.Cluster, err = c.platformClient.Clusters().Update(clusterWrapper.Cluster)
 		if err != nil {
 			return err
 		}
@@ -402,27 +398,92 @@ func (c *Controller) doInitializing(cluster *platformv1.Cluster) error {
 	return nil
 }
 
-func (c *Controller) doUpdate(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) error {
-	clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+func (c *Controller) onUpdate(cluster *platformv1.Cluster) error {
+	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return err
 	}
-	args := clusterprovider.Cluster{
-		Cluster:           *cluster,
-		ClusterCredential: *credential,
+
+	clusterWrapper, err := typesv1.GetCluster(c.platformClient, cluster)
+	if err != nil {
+		return err
 	}
-	resp, err := clusterProvider.OnUpdate(args)
+	err = provider.OnUpdate(clusterWrapper)
 	if err != nil {
 		cluster.Status.Message = err.Error()
 		cluster.Status.Reason = reasonFailedUpdate
-		_, _ = c.client.PlatformV1().Clusters().Update(cluster)
+		_, _ = c.platformClient.Clusters().Update(cluster)
 		return err
 	}
-	resp.Status.Message = ""
-	resp.Status.Reason = ""
-	_, err = c.client.PlatformV1().Clusters().Update(&resp.Cluster)
+	clusterWrapper.Status.Message = ""
+	clusterWrapper.Status.Reason = ""
+
+	if _, err := c.platformClient.ClusterCredentials().Update(clusterWrapper.ClusterCredential); err != nil {
+		return err
+	}
+	if _, err := c.platformClient.Clusters().Update(clusterWrapper.Cluster); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ensureSyncOldClusterCredential using for sync old cluster without ClusterCredentialRef, will remove in next release.
+func (c *Controller) ensureSyncOldClusterCredential(cluster *platformv1.Cluster) error {
+	if cluster.Spec.ClusterCredentialRef != nil {
+		return nil
+	}
+
+	fieldSelector := fields.OneTermEqualSelector("clusterName", cluster.Name).String()
+	clusterCredentials, err := c.platformClient.ClusterCredentials().List(metav1.ListOptions{FieldSelector: fieldSelector})
 	if err != nil {
 		return err
+	}
+	if len(clusterCredentials.Items) == 0 {
+		return nil
+	}
+	credential := &clusterCredentials.Items[0]
+	cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
+	cluster, err = c.platformClient.Clusters().Update(cluster)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Controller) ensureClusterCredential(cluster *platformv1.Cluster) error {
+	if cluster.Spec.ClusterCredentialRef == nil {
+		// Deprecated: will remove in next release
+		if cluster.Spec.Type == "Imported" { // don't precreate ClusterCredential for Imported cluster
+			return nil
+		}
+
+		credential := &platformv1.ClusterCredential{
+			TenantID:    cluster.Spec.TenantID,
+			ClusterName: cluster.Name,
+		}
+		credential, err := c.platformClient.ClusterCredentials().Create(credential)
+		if err != nil && !apierrors.IsAlreadyExists(err) {
+			return err
+		}
+		cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
+		cluster, err = c.platformClient.Clusters().Update(cluster)
+		if err != nil {
+			return err
+		}
+	} else {
+		credential, err := c.platformClient.ClusterCredentials().Get(cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		if credential.ClusterName != cluster.Name {
+			credential.ClusterName = cluster.Name
+			_, err = c.platformClient.ClusterCredentials().Update(credential)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

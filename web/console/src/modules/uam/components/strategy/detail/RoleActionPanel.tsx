@@ -9,12 +9,11 @@ import { RootProps } from '../StrategyApp';
 // import { RoleAssociateWorkflowDialog } from '../associate/RoleAssociateWorkflowDialog';
 import { RoleFilter } from '../../../models';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class RoleActionPanel extends React.Component<RootProps, {}> {
-
   componentWillUnmount() {
     let { actions } = this.props;
     actions.role.associate.clearRoleAssociation();
@@ -26,11 +25,12 @@ export class RoleActionPanel extends React.Component<RootProps, {}> {
     let filter: RoleFilter = {
       resource: 'policy',
       // resourceID: route.queries['groupName']
-      resourceID: router.resolve(route).sub,
+      // resourceID: router.resolve(route).sub,
+      resourceID: route.queries['id'],
       /** 关联/解关联回调函数 */
       callback: () => {
         /** 重新加载策略 */
-      }
+      },
     };
     actions.role.associate.setupRoleFilter(filter);
     /** 拉取关联角色列表，拉取后自动更新roleAssociation */
@@ -61,6 +61,4 @@ export class RoleActionPanel extends React.Component<RootProps, {}> {
       // </React.Fragment>
     );
   }
-
 }
-

@@ -19,13 +19,30 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"strings"
+
+	"github.com/casbin/casbin/v2"
+	"k8s.io/apimachinery/pkg/util/errors"
+	"tkestack.io/tke/pkg/util"
+	"tkestack.io/tke/pkg/util/log"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"tkestack.io/tke/api/auth"
+	authv1 "tkestack.io/tke/api/auth/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+)
+
+const (
+	PolicyTag        = "policy"
+	PoliciesKey      = "policies"
+	administratorKey = "administrator"
+
+	platformPolicyPattern      = "pol-%s-platform"
+	administratorPolicyPattern = "pol-%s-administrator"
 )
 
 func GetLocalIdentity(authClient authinternalclient.AuthInterface, tenantID, username string) (auth.LocalIdentity, error) {
@@ -45,20 +62,34 @@ func GetLocalIdentity(authClient authinternalclient.AuthInterface, tenantID, use
 	return localIdentityList.Items[0], nil
 }
 
+func GetUserByName(authClient authinternalclient.AuthInterface, tenantID, username string) (auth.User, error) {
+	tenantUserSelector := fields.AndSelectors(
+		fields.OneTermEqualSelector("spec.tenantID", tenantID),
+		fields.OneTermEqualSelector("spec.username", username))
+
+	userList, err := authClient.Users().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	if err != nil {
+		return auth.User{}, err
+	}
+
+	if len(userList.Items) == 0 {
+		return auth.User{}, apierrors.NewNotFound(auth.Resource("users"), username)
+	}
+
+	return userList.Items[0], nil
+
+}
+
 func UserKey(tenantID string, name string) string {
 	return fmt.Sprintf("%s%s", UserPrefix(tenantID), name)
 }
 
 func UserPrefix(tenantID string) string {
-	return fmt.Sprintf("%s::user::", tenantID)
+	return fmt.Sprintf("%s##user##", tenantID)
 }
 
-func GroupKey(tenantID string, name string) string {
-	return fmt.Sprintf("%s%s", GroupPrefix(tenantID), name)
-}
-
-func GroupPrefix(tenantID string) string {
-	return fmt.Sprintf("%s::group::", tenantID)
+func ProjectPolicyName(projectID string, policyID string) string {
+	return fmt.Sprintf("%s-%s", projectID, policyID)
 }
 
 func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string) (auth.LocalGroupList, error) {
@@ -72,7 +103,7 @@ func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string
 }
 
 func ParseTenantAndName(str string) (string, string) {
-	parts := strings.Split(str, "::")
+	parts := strings.Split(str, "##")
 	if len(parts) > 1 {
 		return parts[0], parts[1]
 	}
@@ -81,5 +112,191 @@ func ParseTenantAndName(str string) (string, string) {
 }
 
 func CombineTenantAndName(tenantID, name string) string {
-	return fmt.Sprintf("%s::%s", tenantID, name)
+	return fmt.Sprintf("%s##%s", tenantID, name)
+}
+
+func GetPoliciesFromUserExtra(localIdentity *auth.LocalIdentity) ([]string, bool) {
+	var policies []string
+	if len(localIdentity.Spec.Extra) == 0 {
+		return policies, false
+	}
+	str, exists := localIdentity.Spec.Extra[PoliciesKey]
+	if !exists {
+		return policies, false
+	}
+
+	extra := localIdentity.Spec.Extra
+	delete(extra, PoliciesKey)
+	localIdentity.Spec.Extra = extra
+
+	splits := strings.Split(str, ",")
+
+	for _, p := range splits {
+		p = strings.TrimSpace(p)
+		if strings.HasPrefix(p, "pol-") {
+			policies = append(policies, p)
+		}
+	}
+
+	return policies, true
+}
+
+func BindUserPolicies(authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, policies []string) error {
+	var errs []error
+	for _, p := range policies {
+		binding := auth.Binding{}
+		binding.Users = append(binding.Users, auth.Subject{ID: localIdentity.Name, Name: localIdentity.Spec.Username})
+		pol := &auth.Policy{}
+		err := authClient.RESTClient().Post().
+			Resource("policies").
+			Name(p).
+			SubResource("binding").
+			Body(&binding).
+			Do().Into(pol)
+		if err != nil {
+			log.Error("bind policy for user failed", log.String("user", localIdentity.Spec.Username),
+				log.String("policy", p), log.Err(err))
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.NewAggregate(errs)
+}
+
+func UnBindUserPolicies(authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, policies []string) error {
+	var errs []error
+	for _, p := range policies {
+		binding := auth.Binding{}
+		binding.Users = append(binding.Users, auth.Subject{ID: localIdentity.Name, Name: localIdentity.Spec.Username})
+		pol := &auth.Policy{}
+		err := authClient.RESTClient().Post().
+			Resource("policies").
+			Name(p).
+			SubResource("unbinding").
+			Body(&binding).
+			Do().Into(pol)
+		if err != nil {
+			log.Error("unbind policy for user failed", log.String("user", localIdentity.Spec.Username),
+				log.String("policy", p), log.Err(err))
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.NewAggregate(errs)
+}
+
+func HandleUserPoliciesUpdate(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, localIdentity *auth.LocalIdentity) error {
+	newPolicies, needHandlePolicy := GetPoliciesFromUserExtra(localIdentity)
+	if !needHandlePolicy {
+		return nil
+	}
+
+	roles := enforcer.GetRolesForUserInDomain(UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), "")
+	var oldPolicies []string
+	for _, r := range roles {
+		if strings.HasPrefix(r, "pol-") {
+			oldPolicies = append(oldPolicies, r)
+		}
+	}
+
+	added, removed := util.DiffStringSlice(oldPolicies, newPolicies)
+
+	log.Info("handler user policies ", log.Strings("added", added), log.Strings("removed", removed))
+	berr := BindUserPolicies(authClient, localIdentity, added)
+	if berr != nil {
+		log.Error("bind user policies failed", log.String("user", localIdentity.Spec.Username), log.Strings("policies", added), log.Err(berr))
+	}
+
+	uerr := UnBindUserPolicies(authClient, localIdentity, removed)
+	if berr != nil {
+		log.Error("un bind user policies failed", log.String("user", localIdentity.Spec.Username), log.Strings("policies", removed), log.Err(uerr))
+	}
+
+	return errors.NewAggregate([]error{berr, uerr})
+}
+
+func SetAdministrator(enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity) {
+	if localIdentity.Spec.Extra == nil {
+		localIdentity.Spec.Extra = make(map[string]string)
+	}
+	localIdentity.Spec.Extra[administratorKey] = "false"
+	// Use implicit roles to check admin
+	roles, err := enforcer.GetImplicitRolesForUser(UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), "")
+	if err != nil {
+		log.Error("Get implicit roles for user failed", log.String("user", localIdentity.Spec.Username), log.Err(err))
+		return
+	}
+	for _, r := range roles {
+		if r == fmt.Sprintf(platformPolicyPattern, localIdentity.Spec.TenantID) ||
+			r == fmt.Sprintf(administratorPolicyPattern, localIdentity.Spec.TenantID) {
+			localIdentity.Spec.Extra[administratorKey] = "true"
+			return
+		}
+	}
+
+	idp, err := authClient.IdentityProviders().Get(localIdentity.Spec.TenantID, v1.GetOptions{})
+	if err != nil {
+		log.Error("get idp for tenant failed", log.String("tenantID", localIdentity.Spec.TenantID))
+		return
+	}
+
+	for _, name := range idp.Spec.Administrators {
+		if name == localIdentity.Spec.Username {
+			localIdentity.Spec.Extra[administratorKey] = "true"
+			return
+		}
+	}
+}
+
+func IsPlatformAdministrator(user authv1.User) bool {
+	if user.Spec.Extra != nil && user.Spec.Extra[administratorKey] == "true" {
+		return true
+	}
+	return false
+}
+
+func FillUserPolicies(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, localidentityList *auth.LocalIdentityList) {
+	if enforcer == nil || enforcer.GetRoleManager() == nil || enforcer.GetAdapter() == nil {
+		return
+	}
+
+	policyDisplayNameMap := make(map[string]string)
+	for i, item := range localidentityList.Items {
+		SetAdministrator(enforcer, authClient, &localidentityList.Items[i])
+
+		// Use direct roles to fill policies
+		roles := enforcer.GetRolesForUserInDomain(UserKey(item.Spec.TenantID, item.Spec.Username), "")
+		var policies []string
+		for _, r := range roles {
+			if strings.HasPrefix(r, "pol-") {
+				policies = append(policies, r)
+			}
+		}
+
+		m := make(map[string]string)
+		for _, p := range policies {
+			displayName, ok := policyDisplayNameMap[p]
+			if ok {
+				m[p] = displayName
+			} else {
+				pol, err := authClient.Policies().Get(p, v1.GetOptions{})
+				if err != nil {
+					log.Error("get policy failed", log.String("policy", p), log.Err(err))
+					continue
+				}
+
+				m[p] = pol.Spec.DisplayName
+				policyDisplayNameMap[p] = pol.Spec.DisplayName
+			}
+		}
+
+		b, err := json.Marshal(m)
+		if err != nil {
+			log.Error("Marshal policy map for user failed", log.String("user", item.Spec.Username), log.Err(err))
+			continue
+		}
+
+		localidentityList.Items[i].Spec.Extra[PoliciesKey] = string(b)
+
+	}
 }
