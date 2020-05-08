@@ -19,8 +19,12 @@
 package cluster
 
 import (
+	"path"
+	"strings"
+
 	"github.com/AlekSi/pointer"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/server/mux"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/validation"
@@ -111,6 +115,12 @@ func NewProvider() (*Provider, error) {
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
 	return p, nil
+}
+
+func (p *Provider) RegisterHandler(mux *mux.PathRecorderMux) {
+	prefix := "/provider/" + strings.ToLower(p.Name())
+
+	mux.HandleFunc(path.Join(prefix, "ping"), p.ping)
 }
 
 func (p *Provider) Validate(cluster *types.Cluster) field.ErrorList {
