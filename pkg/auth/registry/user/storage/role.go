@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"strings"
+	"tkestack.io/tke/pkg/apiserver/filter"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -70,12 +71,8 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 		return nil, err
 	}
 	user := obj.(*auth.User)
-
-	roles, err := r.enforcer.GetRolesForUser(util.UserKey(user.Spec.TenantID, user.Spec.Name))
-	if err != nil {
-		log.Error("List roles for user failed from casbin failed", log.String("user", userID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	projectID := filter.ProjectIDFrom(ctx)
+	roles := r.enforcer.GetRolesForUserInDomain(util.UserKey(user.Spec.TenantID, user.Spec.Name), projectID)
 
 	var roleIDs []string
 	for _, r := range roles {
@@ -97,7 +94,10 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 			continue
 		}
 
-		roleList.Items = append(roleList.Items, *rol)
+		if rol.Spec.ProjectID == projectID {
+			roleList.Items = append(roleList.Items, *rol)
+		}
+
 	}
 
 	return roleList, nil

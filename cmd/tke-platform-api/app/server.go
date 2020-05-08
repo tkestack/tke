@@ -70,6 +70,7 @@ func createFilterChain(apiServer *genericapiserver.GenericAPIServer) {
 	apiServer.Handler.FullHandlerChain = filter.WithCluster(apiServer.Handler.FullHandlerChain)
 	apiServer.Handler.FullHandlerChain = filter.WithRequestBody(apiServer.Handler.FullHandlerChain)
 	apiServer.Handler.FullHandlerChain = filter.WithFuzzyResource(apiServer.Handler.FullHandlerChain)
+	apiServer.Handler.FullHandlerChain = filter.WithNamespace(apiServer.Handler.FullHandlerChain)
 }
 
 func registerHandler(apiServer *apiserver.APIServer) error {

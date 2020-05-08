@@ -59,7 +59,7 @@ type Config struct {
 // on a given TKE platform apiserver command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(platform.Codecs)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil)
 	genericAPIServerConfig.LongRunningFunc = filters.BasicLongRunningRequestCheck(
 		sets.NewString("watch", "proxy"),
 		sets.NewString("attach", "exec", "proxy", "log", "portforward"),

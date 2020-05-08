@@ -25,30 +25,30 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"time"
-	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
-	"tkestack.io/tke/pkg/util/metrics"
-
-	v1 "tkestack.io/tke/api/auth/v1"
-	controllerutil "tkestack.io/tke/pkg/controller"
+	"tkestack.io/tke/api/auth"
 
 	"github.com/howeyc/fsnotify"
+	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
-	"tkestack.io/tke/api/auth"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/workqueue"
+
+	v1 "tkestack.io/tke/api/auth/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
 	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
+	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/metrics"
 )
 
 const (
@@ -349,40 +349,67 @@ func (c *Controller) loadPolicy(tenantID string) error {
 	var errs []error
 
 	for _, pol := range policyList {
-		policySelector := fields.AndSelectors(
-			fields.OneTermEqualSelector("spec.tenantID", tenantID),
-			fields.OneTermEqualSelector("spec.displayName", pol.Spec.DisplayName),
-			fields.OneTermEqualSelector("spec.type", string(auth.PolicyDefault)),
-		)
-
-		result, err := c.client.AuthV1().Policies().List(metav1.ListOptions{FieldSelector: policySelector.String()})
-		if err != nil {
-			return err
+		if pol.Name != "" {
+			pol.Name = strings.ReplaceAll(pol.Name, "{tenantID}", tenantID)
 		}
+
 		pol.Spec.Type = v1.PolicyDefault
 		pol.Spec.TenantID = tenantID
 		pol.Spec.Username = "admin"
 		pol.Spec.Finalizers = []v1.FinalizerName{
 			v1.PolicyFinalize,
 		}
-		if len(result.Items) > 0 {
-			exists := result.Items[0]
-			if !reflect.DeepEqual(exists.Spec, pol.Spec) {
-				log.Info("Update default policy", log.String("displayName", pol.Spec.DisplayName))
-				exists.Spec = pol.Spec
-				_, err = c.client.AuthV1().Policies().Update(&exists)
+		if pol.Name == "" {
+			policySelector := fields.AndSelectors(
+				fields.OneTermEqualSelector("spec.tenantID", tenantID),
+				fields.OneTermEqualSelector("spec.displayName", pol.Spec.DisplayName),
+				fields.OneTermEqualSelector("spec.type", string(auth.PolicyDefault)),
+			)
 
+			result, err := c.client.AuthV1().Policies().List(metav1.ListOptions{FieldSelector: policySelector.String()})
+			if err != nil {
+				return err
+			}
+
+			if len(result.Items) > 0 {
+				exists := result.Items[0]
+				if !reflect.DeepEqual(exists.Spec, pol.Spec) {
+					log.Info("Update default policy", log.String("displayName", pol.Spec.DisplayName))
+					exists.Spec = pol.Spec
+					_, err = c.client.AuthV1().Policies().Update(&exists)
+
+					if err != nil {
+						errs = append(errs, err)
+					}
+				}
+			} else {
+				log.Info("Create a new default policy", log.String("displayName", pol.Spec.DisplayName))
+				_, err = c.client.AuthV1().Policies().Create(pol)
 				if err != nil {
 					errs = append(errs, err)
 				}
 			}
 		} else {
-			log.Info("Create a new default policy", log.String("displayName", pol.Spec.DisplayName))
-			_, err = c.client.AuthV1().Policies().Create(pol)
+			log.Info("Create a new default policy with policy name", log.String("name", pol.Name))
+			exists, err := c.client.AuthV1().Policies().Get(pol.Name, metav1.GetOptions{})
+			if err != nil && apierrors.IsNotFound(err) {
+				_, err = c.client.AuthV1().Policies().Create(pol)
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+
+			if err != nil {
+				errs = append(errs, err)
+			}
+			exists.Spec = pol.Spec
+			_, err = c.client.AuthV1().Policies().Update(exists)
+
 			if err != nil {
 				errs = append(errs, err)
 			}
 		}
+
 	}
 
 	return utilerrors.NewAggregate(errs)

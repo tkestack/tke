@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/sets"
+
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -51,7 +53,7 @@ const (
 	//   deletion and prevent new objects from being created in the terminating channel
 	// * non-leader etcd servers to observe last-minute object creations in a channel
 	//   so this controller's cleanup can actually clean up all objects
-	policyDeletionGracePeriod = 5 * time.Second
+	policyDeletionGracePeriod = 2 * time.Second
 
 	controllerName = "policy-controller"
 )
@@ -65,7 +67,7 @@ type Controller struct {
 	ruleLister         authv1lister.RuleLister
 	ruleListerSynced   cache.InformerSynced
 	// helper to delete all resources in the policy when the policy is deleted.
-	policyedResourcesDeleter deletion.PoliciedResourcesDeleterInterface
+	policiedResourcesDeleter deletion.PoliciedResourcesDeleterInterface
 	enforcer                 *casbin.SyncedEnforcer
 }
 
@@ -76,7 +78,7 @@ func NewController(client clientset.Interface, policyInformer authv1informer.Pol
 		client:                   client,
 		queue:                    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
 		enforcer:                 enforcer,
-		policyedResourcesDeleter: deletion.NewPoliciedResourcesDeleter(client.AuthV1().Policies(), client.AuthV1(), enforcer, finalizerToken, true),
+		policiedResourcesDeleter: deletion.NewPoliciedResourcesDeleter(client.AuthV1().Policies(), client.AuthV1(), enforcer, finalizerToken, true),
 	}
 
 	if client != nil && client.AuthV1().RESTClient().GetRateLimiter() != nil {
@@ -90,7 +92,7 @@ func NewController(client clientset.Interface, policyInformer authv1informer.Pol
 				old, ok1 := oldObj.(*v1.Policy)
 				cur, ok2 := newObj.(*v1.Policy)
 				if ok1 && ok2 && controller.needsUpdate(old, cur) {
-					log.Info("Update enqueue")
+					log.Info("Update enqueue", log.String("policy", cur.Name))
 					controller.enqueue(newObj)
 				}
 			},
@@ -146,6 +148,7 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 	if ok := cache.WaitForCacheSync(stopCh, c.policyListerSynced, c.ruleListerSynced); !ok {
 		log.Error("Failed to wait for policy caches to sync")
 	}
+	log.Info("Finish Starting policy controller")
 
 	for i := 0; i < workers; i++ {
 		go wait.Until(c.worker, time.Second, stopCh)
@@ -210,7 +213,7 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve policy from store", log.String("policy name", key), log.Err(err))
 	default:
 		if policy.Status.Phase == v1.PolicyTerminating {
-			err = c.policyedResourcesDeleter.Delete(key)
+			err = c.policiedResourcesDeleter.Delete(key)
 		} else {
 			err = c.processUpdate(policy, key)
 		}
@@ -233,6 +236,7 @@ func (c *Controller) processUpdate(policy *v1.Policy, key string) error {
 func (c *Controller) handlePhase(key string, policy *v1.Policy) error {
 
 	var errs []error
+
 	err := c.handleSpec(key, policy)
 	if err != nil {
 		errs = append(errs, err)
@@ -257,6 +261,7 @@ func (c *Controller) handleSpec(key string, policy *v1.Policy) error {
 	}
 
 	expectedRule := authutil.ConvertPolicyToRuleArray(outPolicy)
+
 	added, removed := util.Diff2DStringSlice(existedRule, expectedRule)
 
 	if len(added) != 0 || len(removed) != 0 {
@@ -286,29 +291,35 @@ func (c *Controller) handleSpec(key string, policy *v1.Policy) error {
 }
 
 func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
-	rules := c.enforcer.GetFilteredGroupingPolicy(1, policy.Name)
-	log.Debugf("Get grouping rules for policy: %s, %v", policy.Name, rules)
+	switch policy.Spec.Scope {
+	case v1.PolicyProject:
+		// use projectpolicy-controller to sync project-scoped policy
+		return nil
+	default:
+		return c.handlePlatformPolicySubjects(key, policy)
+	}
+}
+
+func (c *Controller) handleRules(tenantID, key string, expectSubj []string) error {
+	rules := c.enforcer.GetFilteredGroupingPolicy(1, key)
+	log.Debugf("Get grouping rules for policy: %s, %v", key, rules)
 	var existSubj []string
 	for _, rule := range rules {
-		if strings.HasPrefix(rule[0], authutil.UserPrefix(policy.Spec.TenantID)) {
-			existSubj = append(existSubj, strings.TrimPrefix(rule[0], authutil.UserPrefix(policy.Spec.TenantID)))
+		if strings.HasPrefix(rule[0], authutil.UserPrefix(tenantID)) || strings.HasPrefix(rule[0], authutil.GroupPrefix(tenantID)) {
+			existSubj = append(existSubj, rule[0])
 		}
-	}
-
-	var expectedSubj []string
-	for _, subj := range policy.Status.Users {
-		expectedSubj = append(expectedSubj, subj.Name)
 	}
 
 	var errs []error
-	added, removed := util.DiffStringSlice(existSubj, expectedSubj)
+	added, removed := util.DiffStringSlice(existSubj, expectSubj)
 	if len(added) != 0 || len(removed) != 0 {
-		log.Info("Handle policy users changed", log.String("policy", key), log.Strings("added", added), log.Strings("removed", removed))
+		log.Info("Handle policy subj changed", log.String("policy", key), log.Strings("added", added), log.Strings("removed", removed))
 	}
+
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(policy.Spec.TenantID, add), policy.Name); err != nil {
-				log.Errorf("Bind user to policy failed", log.String("policy", policy.Name), log.String("user", add), log.Err(err))
+			if _, err := c.enforcer.AddRoleForUserInDomain(add, key, authutil.DefaultDomain); err != nil {
+				log.Errorf("Bind subj to policy failed", log.String("policy", key), log.String("subj", add), log.Err(err))
 				errs = append(errs, err)
 			}
 		}
@@ -316,46 +327,28 @@ func (c *Controller) handleSubjects(key string, policy *v1.Policy) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(policy.Spec.TenantID, remove), policy.Name); err != nil {
-				log.Errorf("Unbind user to policy failed", log.String("policy", policy.Name), log.String("user", remove), log.Err(err))
-				errs = append(errs, err)
-			}
-		}
-	}
-
-	var existGroups []string
-	for _, rule := range rules {
-		if strings.HasPrefix(rule[0], authutil.GroupPrefix(policy.Spec.TenantID)) {
-			existGroups = append(existGroups, strings.TrimPrefix(rule[0], authutil.GroupPrefix(policy.Spec.TenantID)))
-		}
-	}
-
-	var expectedGroups []string
-	for _, subj := range policy.Status.Groups {
-		expectedGroups = append(expectedGroups, subj.ID)
-	}
-
-	added, removed = util.DiffStringSlice(existGroups, expectedGroups)
-	if len(added) != 0 || len(removed) != 0 {
-		log.Info("Handle policy groups changed", log.String("role", key), log.Strings("added", added), log.Strings("removed", removed))
-	}
-	if len(added) > 0 {
-		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(authutil.GroupKey(policy.Spec.TenantID, add), policy.Name); err != nil {
-				log.Errorf("Bind groups to policy failed", log.String("policy", policy.Name), log.String("group", add), log.Err(err))
-				errs = append(errs, err)
-			}
-		}
-	}
-
-	if len(removed) > 0 {
-		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(authutil.GroupKey(policy.Spec.TenantID, remove), policy.Name); err != nil {
-				log.Errorf("Unbind group to policy failed", log.String("policy", policy.Name), log.String("group", remove), log.Err(err))
+			if _, err := c.enforcer.DeleteRoleForUserInDomain(remove, key, authutil.DefaultDomain); err != nil {
+				log.Errorf("Unbind subj to policy failed", log.String("policy", key), log.String("subj", remove), log.Err(err))
 				errs = append(errs, err)
 			}
 		}
 	}
 
 	return utilerrors.NewAggregate(errs)
+}
+
+func (c *Controller) handlePlatformPolicySubjects(key string, policy *v1.Policy) error {
+	log.Info("handle platform policy subjects", log.String("policy", policy.Name))
+
+	expectedSubj := sets.String{}
+	for _, subj := range policy.Status.Users {
+		expectedSubj.Insert(authutil.UserKey(policy.Spec.TenantID, subj.Name))
+	}
+
+	for _, subj := range policy.Status.Groups {
+		expectedSubj.Insert(authutil.GroupKey(policy.Spec.TenantID, subj.ID))
+	}
+
+	return c.handleRules(policy.Spec.TenantID, policy.Name, expectedSubj.UnsortedList())
+
 }

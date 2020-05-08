@@ -96,7 +96,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	var ignoredAuthPathPrefixes []string
 	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, distribution.IgnoredAuthPathPrefixes()...)
 	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, chartmuseum.IgnoredAuthPathPrefixes()...)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes, nil)
 	// long running function for distribution and chartmuseum path.
 	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString("watch"), sets.NewString(), ignoredAuthPathPrefixes)
 	// increase default max post payload for distribution and chartmuseum.

@@ -21,7 +21,6 @@ package storage
 import (
 	"context"
 
-	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -40,7 +39,6 @@ import (
 type PolicyREST struct {
 	roleStore  *registry.Store
 	authClient authinternalclient.AuthInterface
-	enforcer   *casbin.SyncedEnforcer
 }
 
 var _ = rest.Lister(&PolicyREST{})

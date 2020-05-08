@@ -24,17 +24,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	// KeywordQueryTag is a field tag to query object that contains the keyword.
-	KeywordQueryTag string = "keyword"
-
-	// QueryLimitTag is a field tag to query a maximum number of objects for a list call.
-	QueryLimitTag string = "limit"
-
-	// IssuerName is the name of issuer location.
-	IssuerName = "oidc"
-)
-
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -74,6 +63,9 @@ const (
 
 	// PolicyFinalize is an internal finalizer values to Policy.
 	PolicyFinalize FinalizerName = "policy"
+
+	// ProjectPolicyFinalize is an internal finalizer values to ProjectPolicyBinding.
+	ProjectPolicyFinalize FinalizerName = "projectpolicybinding"
 
 	// GroupFinalize is an internal finalizer values to Group.
 	GroupFinalize FinalizerName = "localgroup"
@@ -116,7 +108,7 @@ type LocalIdentityStatus struct {
 
 	// The last time the local identity was updated.
 	// +optional
-	LastUpdateTime metav1.Time `protobuf:"bytes,2,opt,name=lastUpdateTime"`
+	LastUpdateTime metav1.Time `json:"lastUpdateTime" protobuf:"bytes,2,opt,name=lastUpdateTime"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -174,6 +166,8 @@ type LocalGroupSpec struct {
 
 	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`
 	Description string `json:"description" protobuf:"bytes,5,opt,name=description"`
+
+	Extra map[string]string `json:"extra" protobuf:"bytes,6,rep,name=extra"`
 }
 
 // LocalGroupStatus represents information about the status of a group.
@@ -241,6 +235,8 @@ type GroupSpec struct {
 	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
 	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
 	Description string `json:"description" protobuf:"bytes,4,opt,name=description"`
+
+	Extra map[string]string `json:"extra" protobuf:"bytes,5,rep,name=extra"`
 }
 
 // GroupStatus represents information about the status of a group.
@@ -487,15 +483,24 @@ const (
 	PolicyDefault PolicyType = "default"
 )
 
+// PolicyScope defines the policy is belong to platform or project.
+type PolicyScope string
+
+const (
+	PolicyPlatform PolicyScope = "platform"
+	PolicyProject  PolicyScope = "project"
+)
+
 // PolicySpec is a description of a policy.
 type PolicySpec struct {
 	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,8,rep,name=finalizers,casttype=FinalizerName"`
 
-	DisplayName string     `json:"displayName" protobuf:"bytes,7,opt,name=displayName"`
-	TenantID    string     `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
-	Category    string     `json:"category" protobuf:"bytes,9,opt,name=category"`
-	Type        PolicyType `json:"type" protobuf:"varint,10,opt,name=type,casttype=PolicyType"`
-	Username    string     `json:"username" protobuf:"bytes,2,opt,name=username"`
+	DisplayName string      `json:"displayName" protobuf:"bytes,7,opt,name=displayName"`
+	TenantID    string      `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	Category    string      `json:"category" protobuf:"bytes,9,opt,name=category"`
+	Type        PolicyType  `json:"type" protobuf:"varint,10,opt,name=type,casttype=PolicyType"`
+	Scope       PolicyScope `json:"scope" protobuf:"bytes,11,opt,name=scope,casttype=PolicyScope"`
+	Username    string      `json:"username" protobuf:"bytes,2,opt,name=username"`
 	// +optional
 	Description string `json:"description" protobuf:"bytes,3,opt,name=description"`
 
@@ -525,24 +530,103 @@ type PolicyStatus struct {
 	Groups []Subject `json:"groups" protobuf:"bytes,3,rep,name=groups"`
 }
 
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectPolicyBinding is a collection of subjects bond to policies in a project scope.
+type ProjectPolicyBinding struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	Spec   ProjectPolicyBindingSpec   `json:"spec" protobuf:"bytes,2,opt,name=spec"`
+	Status ProjectPolicyBindingStatus `protobuf:"bytes,3,opt,name=status"`
+}
+
+// ProjectPolicyBindingSpec defines the desired identities of ProjectPolicyBindingSpec document in this set.
+type ProjectPolicyBindingSpec struct {
+	// Spec defines the desired identities of role document in this set.
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	TenantID   string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	ProjectID  string          `json:"projectID" protobuf:"bytes,3,opt,name=projectID"`
+	PolicyID   string          `json:"policyID" protobuf:"bytes,4,opt,name=policyID"`
+	Users      []Subject       `json:"users" protobuf:"bytes,5,rep,name=users"`
+	Groups     []Subject       `json:"groups" protobuf:"bytes,6,rep,name=groups"`
+}
+
+// BindingPhase defines the phase of ProjectPolicyBinding constructor.
+type BindingPhase string
+
 const (
-	DefaultRuleModel = `
-[request_definition]
-r = sub, obj, act
-
-[policy_definition]
-p = sub, obj, act, eft
-
-[role_definition]
-g = _, _
-
-[policy_effect]
-e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
-
-[matchers]
-m = g(r.sub, p.sub)  && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.act)
-`
+	BindingActive BindingPhase = "Active"
+	// RoleTerminating means the role is undergoing graceful termination.
+	BindingTerminating BindingPhase = "Terminating"
 )
+
+// ProjectPolicyBindingStatus represents information about the status of a ProjectPolicyBinding.
+type ProjectPolicyBindingStatus struct {
+	Phase BindingPhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=BindingPhase"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectPolicyBindingList is the whole list of all ProjectPolicyBindings.
+type ProjectPolicyBindingList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of policies.
+	Items []ProjectPolicyBinding `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectPolicyBindingRequest references the request to bind or unbind policies to the role.
+type ProjectPolicyBindingRequest struct {
+	metav1.TypeMeta `json:",inline"`
+
+	TenantID string `json:"tenantID,omitempty" protobuf:"bytes,1,rep,name=tenantID"`
+	// Policies holds the policies will bind to the subjects.
+	// +optional
+	Policies []string `json:"policies,omitempty" protobuf:"bytes,2,rep,name=policies"`
+
+	Users  []Subject `json:"users" protobuf:"bytes,3,rep,name=users"`
+	Groups []Subject `json:"groups" protobuf:"bytes,4,rep,name=groups"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectBelongs contains projects of user belongs.
+type ProjectBelongs struct {
+	metav1.TypeMeta `json:",inline"`
+
+	TenantID        string                `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	ManagedProjects map[string]ExtraValue `json:"managedProjects" protobuf:"bytes,2,rep,name=managedProjects"`
+	MemberdProjects map[string]ExtraValue `json:"memberdProjects" protobuf:"bytes,3,rep,name=memberdProjects"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Project contains members of projects.
+type Project struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,4,opt,name=metadata"`
+
+	TenantID string            `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	Users    map[string]string `json:"members" protobuf:"bytes,2,rep,name=members"`
+	Groups   map[string]string `json:"groups" protobuf:"bytes,3,rep,name=groups"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectList is the whole list of all projects.
+type ProjectList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of projects.
+	Items []Project `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
 
 // +genclient
 // +genclient:nonNamespaced
@@ -645,6 +729,8 @@ type RoleSpec struct {
 	DisplayName string `json:"displayName" protobuf:"bytes,2,opt,name=displayName"`
 	TenantID    string `json:"tenantID" protobuf:"bytes,3,opt,name=tenantID"`
 
+	ProjectID string `json:"projectID" protobuf:"bytes,7,opt,name=projectID"`
+
 	// Username is Creator
 	Username    string `json:"username" protobuf:"bytes,4,opt,name=username"`
 	Description string `json:"description" protobuf:"bytes,5,opt,name=description"`
@@ -710,7 +796,7 @@ type SubjectAccessReviewSpec struct {
 	User string `json:"user,omitempty" protobuf:"bytes,3,opt,name=user"`
 	// Groups is the groups you're testing for.
 	// +optional
-	Groups []string `json:"groups,omitempty" protobuf:"bytes,4,rep,name=groups"`
+	Groups []string `json:"group,omitempty" protobuf:"bytes,4,rep,name=group"`
 	// Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer
 	// it needs a reflection here.
 	// +optional

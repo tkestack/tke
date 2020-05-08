@@ -1072,6 +1072,9 @@ func autoConvert_v1_ProjectStatus_To_business_ProjectStatus(in *ProjectStatus, o
 	out.CalculatedNamespaces = *(*[]string)(unsafe.Pointer(&in.CalculatedNamespaces))
 	out.CachedSpecClusters = *(*business.ClusterHard)(unsafe.Pointer(&in.CachedSpecClusters))
 	out.CachedParent = (*string)(unsafe.Pointer(in.CachedParent))
+	out.LastTransitionTime = in.LastTransitionTime
+	out.Reason = in.Reason
+	out.Message = in.Message
 	return nil
 }
 
@@ -1088,6 +1091,9 @@ func autoConvert_business_ProjectStatus_To_v1_ProjectStatus(in *business.Project
 	out.CalculatedNamespaces = *(*[]string)(unsafe.Pointer(&in.CalculatedNamespaces))
 	out.CachedSpecClusters = *(*ClusterHard)(unsafe.Pointer(&in.CachedSpecClusters))
 	out.CachedParent = (*string)(unsafe.Pointer(in.CachedParent))
+	out.LastTransitionTime = in.LastTransitionTime
+	out.Reason = in.Reason
+	out.Message = in.Message
 	return nil
 }
 

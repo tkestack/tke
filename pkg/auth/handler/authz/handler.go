@@ -57,7 +57,7 @@ func (h *Handler) Authorize(request *restful.Request, response *restful.Response
 		responsewriters.WriteRawJSON(http.StatusBadRequest, errors.NewBadRequest(errs.ToAggregate().Error()).Status(), response.ResponseWriter)
 		return
 	}
-
+	log.Debug("Receive subjectAccessReview request", log.Any("access review", accessReview))
 	authorizationAttributes := util.AuthorizationAttributesFrom(accessReview.Spec)
 	decision, reason, evaluationErr := h.authorizer.Authorize(request.Request.Context(), authorizationAttributes)
 

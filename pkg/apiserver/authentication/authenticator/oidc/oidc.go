@@ -562,7 +562,6 @@ func (a *Authenticator) AuthenticateToken(ctx context.Context, token string) (*a
 		if displayName != "" {
 			info.Extra[DisplayNameKey] = []string{displayName}
 		}
-		log.Info("displayName %+v", log.Any("extra", info.Extra))
 	}
 
 	if a.groupsClaim != "" {
