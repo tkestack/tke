@@ -190,7 +190,10 @@ message Namespace {
 // NamespaceCert represents a x509 certificate of a namespace in project.
 message NamespaceCert {
   // +optional
-  optional bytes pem = 1;
+  optional bytes certPem = 1;
+
+  // +optional
+  optional bytes keyPem = 2;
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

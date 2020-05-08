@@ -218,7 +218,9 @@ type NamespaceStatus struct {
 // NamespaceCert represents a x509 certificate of a namespace in project.
 type NamespaceCert struct {
 	// +optional
-	Pem []byte
+	CertPem []byte
+	// +optional
+	KeyPem []byte
 }
 
 // NamespacePhase indicates the status of namespace in project.

@@ -38471,7 +38471,13 @@ func schema_tke_api_business_v1_NamespaceCert(ref common.ReferenceCallback) comm
 				Description: "NamespaceCert represents a x509 certificate of a namespace in project.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"pem": {
+					"certPem": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+					"keyPem": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "byte",
