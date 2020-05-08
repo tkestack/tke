@@ -20,9 +20,10 @@ package config
 
 import (
 	"fmt"
+	"path/filepath"
+
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
-	"path/filepath"
 	generatedopenapi "tkestack.io/tke/api/openapi"
 	"tkestack.io/tke/cmd/tke-audit-api/app/options"
 	"tkestack.io/tke/pkg/apiserver"
@@ -76,9 +77,10 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig := genericapiserver.NewConfig(apiserver.Codecs)
 	var ignoredAuthPathPrefixes []string
 	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, audit.IgnoredAuthPathPrefixes()...)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes, nil)
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableDiscovery = false
+	genericAPIServerConfig.EnableProfiling = false
 
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err

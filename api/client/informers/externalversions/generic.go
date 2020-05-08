@@ -81,6 +81,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().LocalIdentities().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("policies"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Policies().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("projectpolicybindings"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().ProjectPolicyBindings().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("roles"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Roles().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("rules"):
@@ -141,8 +143,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().ConfigMaps().Informer()}, nil
 	case platformv1.SchemeGroupVersion.WithResource("cronhpas"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().CronHPAs().Informer()}, nil
-	case platformv1.SchemeGroupVersion.WithResource("gpumanagers"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().GPUManagers().Informer()}, nil
 	case platformv1.SchemeGroupVersion.WithResource("helms"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().Helms().Informer()}, nil
 	case platformv1.SchemeGroupVersion.WithResource("ipams"):

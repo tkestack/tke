@@ -37,6 +37,10 @@ spec:
           image: {{ .Image }}
           args:
             - -C=/app/conf/tke-monitor-api.toml
+{{- if .EnableAudit }}
+            - --audit-policy-file=/app/conf/audit-policy.yaml
+            - --audit-webhook-config-file=/app/conf/audit-api-client-config.yaml
+{{- end }}
           volumeMounts:
             - name: certs-volume
               mountPath: /app/certs
@@ -198,3 +202,33 @@ data:
             password: {{ .StoragePassword }}
 {{- end }}
 
+{{- if .EnableAudit }}
+  audit-policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    omitStages:
+    - "RequestReceived"
+    - "ResponseStarted"
+    rules:
+    - level: None
+      resources:
+      - group: "monitor.tkestack.io"
+        resources: ["configmaps", "*/status"]
+    - level: RequestResponse
+      verbs: ["create", "update", "patch", "delete", "deletecollection"]
+
+  audit-api-client-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          insecure-skip-tls-verify: true
+          server: https://tke-audit-api/apis/audit.tkestack.io/v1/events/sink/control-plane
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+        name: tke
+
+  {{- end }}

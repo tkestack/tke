@@ -37,34 +37,38 @@ func ParseQueryKeywordAndLimit(options *metainternal.ListOptions) (string, int) 
 	limit := defaultQueryLimit
 	if options.FieldSelector != nil {
 		keyword, _ = options.FieldSelector.RequiresExactMatch(auth.KeywordQueryTag)
-		limitStr, _ := options.FieldSelector.RequiresExactMatch(auth.QueryLimitTag)
+		limitStr, _ := options.FieldSelector.RequiresExactMatch(auth.LimitQueryTag)
 		if li, err := strconv.Atoi(limitStr); err == nil && li >= 0 {
 			limit = li
 		}
+
+		removeFromField(options, auth.KeywordQueryTag)
+		removeFromField(options, auth.LimitQueryTag)
+
 	}
 
 	return keyword, limit
 }
 
-func InterceptKeyword(options *metainternal.ListOptions) string {
-	keyword := ""
+func InterceptParam(options *metainternal.ListOptions, key string) string {
+	value := ""
 	found := false
 	if options.FieldSelector != nil {
-		keyword, found = options.FieldSelector.RequiresExactMatch(auth.KeywordQueryTag)
+		value, found = options.FieldSelector.RequiresExactMatch(key)
 		if found {
-			removeKeywordFromField(options)
+			removeFromField(options, key)
 		}
 	}
 
-	return keyword
+	return value
 }
 
-func removeKeywordFromField(options *metainternal.ListOptions) {
+func removeFromField(options *metainternal.ListOptions, param string) {
 	strs := strings.Split(options.FieldSelector.String(), ",")
 	var remain []string
 	for _, str := range strs {
 		s, _ := fields.ParseSelector(str)
-		_, found := s.RequiresExactMatch(auth.KeywordQueryTag)
+		_, found := s.RequiresExactMatch(param)
 		if !found {
 			remain = append(remain, str)
 		}

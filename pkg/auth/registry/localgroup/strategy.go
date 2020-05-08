@@ -22,6 +22,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/casbin/casbin/v2"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,15 +48,17 @@ type Strategy struct {
 	names.NameGenerator
 
 	authClient authinternalclient.AuthInterface
+	enforcer   *casbin.SyncedEnforcer
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating group objects.
-func NewStrategy(authClient authinternalclient.AuthInterface) *Strategy {
+func NewStrategy(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer) *Strategy {
 	return &Strategy{
 		ObjectTyper:   auth.Scheme,
 		NameGenerator: namesutil.Generator,
 		authClient:    authClient,
+		enforcer:      enforcer,
 	}
 }
 
@@ -65,7 +69,7 @@ func (Strategy) DefaultGarbageCollectionGroup(ctx context.Context) rest.GarbageC
 
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
-func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+func (s *Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	oldGroup := old.(*auth.LocalGroup)
 	group, _ := obj.(*auth.LocalGroup)
@@ -83,6 +87,8 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	} else {
 		group.Status.Users = oldGroup.Status.Users
 	}
+
+	_ = util.HandleGroupPoliciesUpdate(s.authClient, s.enforcer, group)
 }
 
 // NamespaceScoped is false for policies.

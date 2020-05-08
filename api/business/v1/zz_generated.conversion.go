@@ -651,7 +651,8 @@ func Convert_business_Namespace_To_v1_Namespace(in *business.Namespace, out *Nam
 }
 
 func autoConvert_v1_NamespaceCert_To_business_NamespaceCert(in *NamespaceCert, out *business.NamespaceCert, s conversion.Scope) error {
-	out.Pem = *(*[]byte)(unsafe.Pointer(&in.Pem))
+	out.CertPem = *(*[]byte)(unsafe.Pointer(&in.CertPem))
+	out.KeyPem = *(*[]byte)(unsafe.Pointer(&in.KeyPem))
 	return nil
 }
 
@@ -661,7 +662,8 @@ func Convert_v1_NamespaceCert_To_business_NamespaceCert(in *NamespaceCert, out *
 }
 
 func autoConvert_business_NamespaceCert_To_v1_NamespaceCert(in *business.NamespaceCert, out *NamespaceCert, s conversion.Scope) error {
-	out.Pem = *(*[]byte)(unsafe.Pointer(&in.Pem))
+	out.CertPem = *(*[]byte)(unsafe.Pointer(&in.CertPem))
+	out.KeyPem = *(*[]byte)(unsafe.Pointer(&in.KeyPem))
 	return nil
 }
 
@@ -1070,6 +1072,9 @@ func autoConvert_v1_ProjectStatus_To_business_ProjectStatus(in *ProjectStatus, o
 	out.CalculatedNamespaces = *(*[]string)(unsafe.Pointer(&in.CalculatedNamespaces))
 	out.CachedSpecClusters = *(*business.ClusterHard)(unsafe.Pointer(&in.CachedSpecClusters))
 	out.CachedParent = (*string)(unsafe.Pointer(in.CachedParent))
+	out.LastTransitionTime = in.LastTransitionTime
+	out.Reason = in.Reason
+	out.Message = in.Message
 	return nil
 }
 
@@ -1086,6 +1091,9 @@ func autoConvert_business_ProjectStatus_To_v1_ProjectStatus(in *business.Project
 	out.CalculatedNamespaces = *(*[]string)(unsafe.Pointer(&in.CalculatedNamespaces))
 	out.CachedSpecClusters = *(*ClusterHard)(unsafe.Pointer(&in.CachedSpecClusters))
 	out.CachedParent = (*string)(unsafe.Pointer(in.CachedParent))
+	out.LastTransitionTime = in.LastTransitionTime
+	out.Reason = in.Reason
+	out.Message = in.Message
 	return nil
 }
 

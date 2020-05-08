@@ -34,9 +34,9 @@ import (
 type Chain func(apiHandler http.Handler, c *genericapiserver.Config) http.Handler
 
 // BuildHandlerChain returns the chained http Handler.
-func BuildHandlerChain(ignoreAuthPathPrefixes []string) Chain {
+func BuildHandlerChain(ignoreAuthPathPrefixes []string, ingnoreAuthzPathPrefixes []string) Chain {
 	return func(apiHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		handler := authfilter.WithTKEAuthorization(apiHandler, c.Authorization.Authorizer, c.Serializer, ignoreAuthPathPrefixes)
+		handler := authfilter.WithTKEAuthorization(apiHandler, c.Authorization.Authorizer, c.Serializer, append(ignoreAuthPathPrefixes, ingnoreAuthzPathPrefixes...))
 		handler = genericfilters.WithMaxInFlightLimit(handler, c.MaxRequestsInFlight, c.MaxMutatingRequestsInFlight, c.LongRunningFunc)
 		handler = genericapifilters.WithImpersonation(handler, c.Authorization.Authorizer, c.Serializer)
 		handler = genericapifilters.WithAudit(handler, c.AuditBackend, c.AuditPolicyChecker, c.LongRunningFunc)
@@ -87,6 +87,7 @@ func BuildHandlerChain(ignoreAuthPathPrefixes []string) Chain {
 		handler = genericapifilters.WithRequestInfo(handler, c.RequestInfoResolver)
 		handler = apiserverfilter.WithLocal(handler)
 		handler = apiserverfilter.WithRequestID(handler)
+		handler = apiserverfilter.WithProject(handler)
 		handler = genericfilters.WithPanicRecovery(handler)
 		return handler
 	}

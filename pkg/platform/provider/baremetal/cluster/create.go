@@ -900,6 +900,33 @@ func (p *Provider) EnsureNvidiaDevicePlugin(c *v1.Cluster) error {
 	return nil
 }
 
+func (p *Provider) EnsureGPUManager(c *v1.Cluster) error {
+	if c.Cluster.Spec.Features.GPUType == nil {
+		return nil
+	}
+
+	if *c.Cluster.Spec.Features.GPUType != platformv1.GPUVirtual {
+		return nil
+	}
+
+	client, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+
+	option := map[string]interface{}{
+		"GPUManagerImage":        images.Get().GPUManager.FullName(),
+		"BusyboxImage":           images.Get().Busybox.FullName(),
+		"GPUQuotaAdmissionImage": images.Get().GPUQuotaAdmission.FullName(),
+	}
+	err = apiclient.CreateResourceWithFile(client, constants.GPUManagerManifest, option)
+	if err != nil {
+		return errors.Wrap(err, "install gpu manager error")
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureCleanup(c *v1.Cluster) error {
 	for i, machine := range c.Spec.Machines {
 		s, err := machine.SSH()

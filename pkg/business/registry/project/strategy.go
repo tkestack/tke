@@ -134,6 +134,9 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	project.Spec.Finalizers = []business.FinalizerName{
 		business.ProjectFinalize,
 	}
+
+	locked := true
+	project.Status.Locked = &locked
 }
 
 // AfterCreate implements a further operation to run after a resource is

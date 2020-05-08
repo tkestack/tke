@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"tkestack.io/tke/pkg/apiserver/util"
 
 	"github.com/casbin/casbin/v2"
 	casbinlog "github.com/casbin/casbin/v2/log"
@@ -100,11 +101,15 @@ type Config struct {
 // on a given TKE auth command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(authapi.Codecs)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(apiserver.IgnoreAuthPathPrefixes())
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(apiserver.IgnoreAuthPathPrefixes(), apiserver.IgnoreAuthzPathPrefixes())
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 
 	genericAPIServerConfig.EnableIndex = false
+	genericAPIServerConfig.EnableProfiling = false
 
+	if err := util.SetupAuditConfig(genericAPIServerConfig, opts.Audit); err != nil {
+		return nil, err
+	}
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err
 	}
@@ -171,7 +176,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	log.Info("init tenant type", log.String("type", opts.Auth.InitTenantType))
 	switch opts.Auth.InitTenantType {
 	case local.ConnectorType:
-		err = setupDefaultConnector(versionedInformers, opts.Auth)
+		err = setupDefaultConnector(authClient, opts.Auth)
 		if err != nil {
 			return nil, err
 		}
@@ -307,6 +312,7 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 		if err != nil {
 			return nil, err
 		}
+
 	} else {
 		enforcer, err = casbin.NewSyncedEnforcer(authorizationOptions.CasbinModelFile)
 		if err != nil {
@@ -324,10 +330,10 @@ func setupCasbinEnforcer(authorizationOptions *options.AuthorizationOptions) (*c
 	return enforcer, nil
 }
 
-func setupDefaultConnector(versionInformers versionedinformers.SharedInformerFactory, auth *options.AuthOptions) error {
+func setupDefaultConnector(authClient authinternalclient.AuthInterface, auth *options.AuthOptions) error {
 	log.Info("setup tke local connector", log.Any("tenantID", auth.InitTenantID))
 	if _, ok := identityprovider.GetIdentityProvider(auth.InitTenantID); !ok {
-		defaultIDP, err := local.NewDefaultIdentityProvider(auth.InitTenantID, auth.InitIDPAdmins, versionInformers)
+		defaultIDP, err := local.NewDefaultIdentityProvider(auth.InitTenantID, auth.InitIDPAdmins, authClient)
 		if err != nil {
 			return nil
 		}
@@ -419,7 +425,6 @@ func keyMatchCustomFunction(key1 string, key2 string) bool {
 		}
 
 		key2 = re.ReplaceAllString(key2, "$1[^/]+$2")
-		fmt.Printf("%d %s\n", i, key2)
 		i = i + 1
 	}
 

@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"tkestack.io/tke/pkg/auth/util"
 
 	"tkestack.io/tke/pkg/util/log"
@@ -63,6 +64,10 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	}
 	policy := polObj.(*auth.Policy)
 
+	if policy.Spec.Scope == auth.PolicyProject {
+		return nil, errors.NewBadRequest("unable bind subject to project-scoped policy, please use projectbinding api")
+	}
+
 	for _, sub := range bind.Users {
 		if !util.InSubjects(sub, policy.Status.Users) {
 			policy.Status.Users = append(policy.Status.Users, sub)
@@ -77,6 +82,5 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	}
 
 	log.Info("bind policy subjects", log.String("policy", policy.Name), log.Any("users", policy.Status.Users), log.Any("groups", policy.Status.Groups))
-
 	return r.authClient.Policies().UpdateStatus(policy)
 }

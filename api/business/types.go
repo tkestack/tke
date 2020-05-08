@@ -91,6 +91,15 @@ type ProjectStatus struct {
 	CachedSpecClusters ClusterHard
 	// +optional
 	CachedParent *string
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string
 }
 
 // ProjectPhase defines the phase of project constructor.
@@ -218,7 +227,9 @@ type NamespaceStatus struct {
 // NamespaceCert represents a x509 certificate of a namespace in project.
 type NamespaceCert struct {
 	// +optional
-	Pem []byte
+	CertPem []byte
+	// +optional
+	KeyPem []byte
 }
 
 // NamespacePhase indicates the status of namespace in project.

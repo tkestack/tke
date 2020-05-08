@@ -53,9 +53,10 @@ func NonResourceAttributesFrom(user user.Info, in authv1.NonResourceAttributes) 
 // AuthorizationAttributesFrom takes a spec and returns the proper authz attributes to check it.
 func AuthorizationAttributesFrom(spec authv1.SubjectAccessReviewSpec) authorizer.AttributesRecord {
 	userToCheck := &user.DefaultInfo{
-		Name:  spec.User,
-		UID:   spec.UID,
-		Extra: convertToUserInfoExtra(spec.Extra),
+		Name:   spec.User,
+		UID:    spec.UID,
+		Groups: spec.Groups,
+		Extra:  convertToUserInfoExtra(spec.Extra),
 	}
 
 	var authorizationAttributes authorizer.AttributesRecord

@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"strings"
+	"tkestack.io/tke/pkg/apiserver/filter"
 
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 
@@ -72,12 +73,8 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 		return nil, err
 	}
 	localGroup := obj.(*auth.LocalGroup)
-
-	roles, err := r.enforcer.GetRolesForUser(util.GroupKey(localGroup.Spec.TenantID, localGroup.Name))
-	if err != nil {
-		log.Error("List roles for group failed from casbin failed", log.String("group", groupID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	projectID := filter.ProjectIDFrom(ctx)
+	roles := r.enforcer.GetRolesForUserInDomain(util.GroupKey(localGroup.Spec.TenantID, localGroup.Name), projectID)
 
 	var roleIDs []string
 	for _, r := range roles {
@@ -99,7 +96,10 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 			continue
 		}
 
-		roleList.Items = append(roleList.Items, *rol)
+		// empty or project equal
+		if rol.Spec.ProjectID == projectID {
+			roleList.Items = append(roleList.Items, *rol)
+		}
 	}
 
 	return roleList, nil

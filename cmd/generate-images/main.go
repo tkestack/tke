@@ -32,7 +32,6 @@ import (
 	galaxy "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
 
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
-	gpumanager "tkestack.io/tke/pkg/platform/controller/addon/gpumanager/images"
 	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
 	ipam "tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
 	lbcf "tkestack.io/tke/pkg/platform/controller/addon/lbcf/images"
@@ -42,6 +41,7 @@ import (
 	csioperator "tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator/images"
 	volumedecorator "tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
+	logagent       "tkestack.io/tke/pkg/logagent/controller/logagent/images"
 )
 
 func main() {
@@ -53,7 +53,6 @@ func main() {
 		//galaxy.List,
 
 		cronhpa.List,
-		gpumanager.List,
 		helm.List,
 		ipam.List,
 		lbcf.List,
@@ -63,6 +62,7 @@ func main() {
 		csioperator.List,
 		volumedecorator.List,
 		tappcontroller.List,
+		logagent.List,
 	}
 	var result []string
 	for _, f := range funcs {

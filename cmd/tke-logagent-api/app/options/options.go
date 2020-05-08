@@ -19,6 +19,7 @@
 package options
 
 import (
+	"fmt"
 	"github.com/spf13/pflag"
 	genericapiserveroptions "k8s.io/apiserver/pkg/server/options"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
@@ -41,19 +42,21 @@ type Options struct {
 	// The Registry will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Monitor's current working directory.
 	LogagentConfig string
+	Audit          *genericapiserveroptions.AuditOptions
 }
 
 // NewOptions creates a new Options with a default config.
 func NewOptions(serverName string) *Options {
 	return &Options{
-		Log:            log.NewOptions(),
-		SecureServing:  apiserveroptions.NewSecureServingOptions(serverName, 9999),
-		Debug:          apiserveroptions.NewDebugOptions(),
-		Generic:        apiserveroptions.NewGenericOptions(),
-		Authentication: apiserveroptions.NewAuthenticationWithAPIOptions(),
-		Authorization:  apiserveroptions.NewAuthorizationOptions(),
-		ETCD:           storageoptions.NewETCDStorageOptions("/tke/logagent-api"),
+		Log:               log.NewOptions(),
+		SecureServing:     apiserveroptions.NewSecureServingOptions(serverName, 9999),
+		Debug:             apiserveroptions.NewDebugOptions(),
+		Generic:           apiserveroptions.NewGenericOptions(),
+		Authentication:    apiserveroptions.NewAuthenticationWithAPIOptions(),
+		Authorization:     apiserveroptions.NewAuthorizationOptions(),
+		ETCD:              storageoptions.NewETCDStorageOptions("/tke/logagent-api"),
 		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
+		Audit:             genericapiserveroptions.NewAuditOptions(),
 	}
 }
 
@@ -66,8 +69,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Generic.AddFlags(fs)
 	o.Authentication.AddFlags(fs)
 	o.Authorization.AddFlags(fs)
-	o.PlatformAPIClient.AddFlags(fs)//read platform config ang generate platform client
+	o.PlatformAPIClient.AddFlags(fs) //read platform config ang generate platform client
 	//reference monitor to add more flags here
+	o.Audit.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -86,7 +90,6 @@ func (o *Options) ApplyFlags() []error {
 
 	return errs
 }
-
 
 // Complete set default Options.
 // Should be called after tke-logagent flags parsed.
@@ -109,6 +112,9 @@ func (o *Options) Complete() error {
 			return err
 		}
 		o.ETCD.WatchCacheSizes = watchCacheSizes
+	}
+	if (o.Audit.WebhookOptions.ConfigFile != "" || o.Audit.LogOptions.Path != "") && o.Audit.PolicyFile == "" {
+		return fmt.Errorf("audit log/webhook config specified, but audit policy file is empty")
 	}
 	return nil
 }

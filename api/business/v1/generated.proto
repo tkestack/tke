@@ -190,7 +190,10 @@ message Namespace {
 // NamespaceCert represents a x509 certificate of a namespace in project.
 message NamespaceCert {
   // +optional
-  optional bytes pem = 1;
+  optional bytes certPem = 1;
+
+  // +optional
+  optional bytes keyPem = 2;
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -419,6 +422,18 @@ message ProjectStatus {
 
   // +optional
   optional string cachedParent = 7;
+
+  // The last time the condition transitioned from one status to another.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 8;
+
+  // The reason for the condition's last transition.
+  // +optional
+  optional string reason = 9;
+
+  // A human readable message indicating details about the transition.
+  // +optional
+  optional string message = 10;
 }
 
 // UsedQuantity is a straightforward wrapper of ResourceList.

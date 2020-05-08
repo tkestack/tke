@@ -40,6 +40,6 @@
       "@tencent/qcloud-redux-workflow'": ["./lib/ff-redux/libs/qcloud-redux-workflow/"]
     }
   },
-  "exclude": ["node_modules", "dist", "build"],
+  "exclude": ["node_modules", "dist", "build", "public", "loader", "webpack"],
   "compileOnSave": false
 }

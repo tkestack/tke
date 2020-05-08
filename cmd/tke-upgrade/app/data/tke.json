@@ -1,0 +1,407 @@
+{
+ "config": {
+  "ServerName": "tke-installer",
+  "ListenAddr": ":8080",
+  "NoUI": false,
+  "Config": "conf/tke.json",
+  "Force": false,
+  "SyncProjectsWithNamespaces": false,
+  "Replicas": 2
+ },
+ "para": {
+  "cluster": {
+   "kind": "Cluster",
+   "apiVersion": "platform.tkestack.io/v1",
+   "metadata": {
+    "name": "global",
+    "creationTimestamp": null
+   },
+   "spec": {
+    "finalizers": [
+     "cluster"
+    ],
+    "tenantID": "default",
+    "displayName": "TKE",
+    "type": "Baremetal",
+    "version": "1.16.6",
+    "networkDevice": "eth0",
+    "clusterCIDR": "192.168.0.0/16",
+    "dnsDomain": "cluster.local",
+    "features": {
+     "ipvs": false,
+     "enableMasterSchedule": true
+    },
+    "properties": {
+     "maxClusterServiceNum": 256,
+     "maxNodePodNum": 256
+    },
+    "machines": [
+     {
+      "ip": "127.0.0.1",
+      "port": 22,
+      "username": "root",
+      "password": ""
+     },
+     {
+      "ip": "127.0.0.2",
+      "port": 22,
+      "username": "root",
+      "password": ""
+     },
+     {
+      "ip": "127.0.0.3",
+      "port": 22,
+      "username": "root",
+      "password": ""
+     }
+    ],
+    "apiServerExtraArgs": {
+     "proxy-client-cert-file": "/etc/kubernetes/admin.crt",
+     "proxy-client-key-file": "/etc/kubernetes/admin.key"
+    }
+   },
+   "status": {
+    "version": "",
+    "resource": {}
+   }
+  },
+  "Config": {
+   "basic": {
+    "username": "test",
+    "password": ""
+   },
+   "auth": {
+    "tke": {
+     "tenantID": "default",
+     "username": "test",
+     "password": ""
+    }
+   },
+   "registry": {
+    "thirdParty": {
+     "domain": "register.tke.com",
+     "namespace": "tke",
+     "username": "docker",
+     "password": ""
+    }
+   },
+   "business": {},
+   "monitor": {
+    "influxDB": {
+     "local": {}
+    }
+   },
+   "gateway": {
+    "domain": "tke.com",
+    "cert": {
+     "selfSigned": {}
+    }
+   }
+  }
+ },
+ "cluster": {
+  "kind": "Cluster",
+  "apiVersion": "platform.tkestack.io/v1",
+  "metadata": {
+   "name": "global",
+   "creationTimestamp": null
+  },
+  "spec": {
+   "finalizers": [
+    "cluster"
+   ],
+   "tenantID": "default",
+   "displayName": "TKE",
+   "type": "Baremetal",
+   "version": "1.16.6",
+   "networkDevice": "eth0",
+   "clusterCIDR": "192.168.0.0/16",
+   "dnsDomain": "cluster.local",
+   "features": {
+    "ipvs": false,
+    "enableMasterSchedule": true
+   },
+   "properties": {
+    "maxClusterServiceNum": 256,
+    "maxNodePodNum": 256
+   },
+   "machines": [
+    {
+     "ip": "127.0.0.1",
+     "port": 22,
+     "username": "root",
+     "password": ""
+    },
+    {
+     "ip": "127.0.0.2",
+     "port": 22,
+     "username": "root",
+     "password": ""
+    },
+    {
+     "ip": "127.0.0.3",
+     "port": 22,
+     "username": "root",
+     "password": ""
+    }
+   ],
+   "apiServerExtraArgs": {
+    "proxy-client-cert-file": "/etc/kubernetes/admin.crt",
+    "proxy-client-key-file": "/etc/kubernetes/admin.key"
+   }
+  },
+  "status": {
+   "version": "",
+   "phase": "Running",
+   "conditions": [
+    {
+     "type": "EnsureRegistryHosts",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:12:03Z",
+     "lastTransitionTime": "2020-03-19T09:12:03Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKernelModule",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:12:08Z",
+     "lastTransitionTime": "2020-03-19T09:12:08Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureSysctl",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:12:13Z",
+     "lastTransitionTime": "2020-03-19T09:12:13Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureDisableSwap",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:12:18Z",
+     "lastTransitionTime": "2020-03-19T09:12:18Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsurePreflight",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:12:27Z",
+     "lastTransitionTime": "2020-03-19T09:12:27Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureClusterComplete",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:12:32Z",
+     "lastTransitionTime": "2020-03-19T09:12:32Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureNvidiaDriver",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:12:37Z",
+     "lastTransitionTime": "2020-03-19T09:12:37Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureNvidiaContainerRuntime",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:12:42Z",
+     "lastTransitionTime": "2020-03-19T09:12:42Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureDocker",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:13:01Z",
+     "lastTransitionTime": "2020-03-19T09:13:01Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubelet",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:13:16Z",
+     "lastTransitionTime": "2020-03-19T09:13:16Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureCNIPlugins",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:13:23Z",
+     "lastTransitionTime": "2020-03-19T09:13:23Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadm",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:13:30Z",
+     "lastTransitionTime": "2020-03-19T09:13:30Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsurePrepareForControlplane",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:13:36Z",
+     "lastTransitionTime": "2020-03-19T09:13:36Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitKubeletStartPhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:13:41Z",
+     "lastTransitionTime": "2020-03-19T09:13:41Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitCertsPhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:13:49Z",
+     "lastTransitionTime": "2020-03-19T09:13:49Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureStoreCredential",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:13:54Z",
+     "lastTransitionTime": "2020-03-19T09:13:54Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeconfig",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:13:59Z",
+     "lastTransitionTime": "2020-03-19T09:13:59Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitKubeConfigPhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:14:05Z",
+     "lastTransitionTime": "2020-03-19T09:14:05Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitControlPlanePhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:14:10Z",
+     "lastTransitionTime": "2020-03-19T09:14:10Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitEtcdPhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:14:15Z",
+     "lastTransitionTime": "2020-03-19T09:14:15Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitWaitControlPlanePhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:14:40Z",
+     "lastTransitionTime": "2020-03-19T09:14:40Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitUploadConfigPhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:14:46Z",
+     "lastTransitionTime": "2020-03-19T09:14:46Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitUploadCertsPhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:14:51Z",
+     "lastTransitionTime": "2020-03-19T09:14:51Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitBootstrapTokenPhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:14:56Z",
+     "lastTransitionTime": "2020-03-19T09:14:56Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureKubeadmInitAddonPhase",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:15:01Z",
+     "lastTransitionTime": "2020-03-19T09:15:01Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureGalaxy",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:15:06Z",
+     "lastTransitionTime": "2020-03-19T09:15:06Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureJoinControlePlane",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:17:08Z",
+     "lastTransitionTime": "2020-03-19T09:17:08Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsurePatchAnnotation",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:17:15Z",
+     "lastTransitionTime": "2020-03-19T09:17:15Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureMarkControlPlane",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:17:33Z",
+     "lastTransitionTime": "2020-03-19T09:17:33Z",
+     "reason": "SuccessfulProcess"
+    },
+    {
+     "type": "EnsureNvidiaDevicePlugin",
+     "status": "True",
+     "lastProbeTime": "2020-03-19T09:17:38Z",
+     "lastTransitionTime": "2020-03-19T09:17:38Z",
+     "reason": "SuccessfulProcess"
+    }
+   ],
+   "addresses": [
+    {
+     "type": "Real",
+     "host": "127.0.0.1",
+     "port": 6443
+    },
+    {
+     "type": "Real",
+     "host": "127.0.0.2",
+     "port": 6443
+    },
+    {
+     "type": "Real",
+     "host": "127.0.0.3",
+     "port": 6443
+    }
+   ],
+   "resource": {},
+   "serviceCIDR": "192.168.255.0/24",
+   "nodeCIDRMaskSize": 24,
+   "dnsIP": "192.168.255.10"
+  },
+  "ClusterCredential": {
+   "metadata": {
+    "name": "cc-global",
+    "creationTimestamp": null
+   },
+   "tenantID": "default",
+   "clusterName": "global",
+   "etcdCACert": "",
+   "etcdAPIClientCert": "",
+   "etcdAPIClientKey": "",
+   "caCert": "",
+   "token": "",
+   "bootstrapToken": "",
+   "certificateKey": ""
+  }
+ },
+ "step": 27
+}

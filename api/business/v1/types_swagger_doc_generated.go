@@ -293,8 +293,11 @@ func (ProjectSpec) SwaggerDoc() map[string]string {
 }
 
 var map_ProjectStatus = map[string]string{
-	"":         "ProjectStatus represents information about the status of a project.",
-	"clusters": "Clusters represents clusters that have been used and the resource usage of each cluster.",
+	"":                   "ProjectStatus represents information about the status of a project.",
+	"clusters":           "Clusters represents clusters that have been used and the resource usage of each cluster.",
+	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
+	"reason":             "The reason for the condition's last transition.",
+	"message":            "A human readable message indicating details about the transition.",
 }
 
 func (ProjectStatus) SwaggerDoc() map[string]string {

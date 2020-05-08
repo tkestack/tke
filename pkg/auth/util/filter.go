@@ -20,14 +20,16 @@ package util
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/fields"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 
 	"tkestack.io/tke/api/auth"
 	v1 "tkestack.io/tke/api/auth/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/apiserver/filter"
 )
 
 // FilterLocalIdentity is used to filter localIdentity that do not belong to the tenant.
@@ -66,6 +68,34 @@ func FilterPolicy(ctx context.Context, policy *auth.Policy) error {
 	if policy.Spec.TenantID != tenantID {
 		return errors.NewNotFound(v1.Resource("policy"), policy.ObjectMeta.Name)
 	}
+
+	projectID := filter.ProjectIDFrom(ctx)
+	if projectID != "" && policy.Spec.Scope != auth.PolicyProject {
+		return errors.NewNotFound(v1.Resource("policy"), policy.ObjectMeta.Name)
+	}
+
+	return nil
+}
+
+// FilterPolicy is used to filter policy that do not belong to the tenant.
+func FilterProjectPolicy(ctx context.Context, binding *auth.ProjectPolicyBinding) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if binding.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("projectPolicy"), binding.ObjectMeta.Name)
+	}
+
+	projectID := filter.ProjectIDFrom(ctx)
+	if projectID == "" {
+		return nil
+	}
+
+	if binding.Spec.ProjectID != projectID {
+		return errors.NewNotFound(v1.Resource("projectPolicy"), binding.ObjectMeta.Name)
+	}
+
 	return nil
 }
 
@@ -78,6 +108,16 @@ func FilterRole(ctx context.Context, role *auth.Role) error {
 	if role.Spec.TenantID != tenantID {
 		return errors.NewNotFound(v1.Resource("role"), role.ObjectMeta.Name)
 	}
+
+	projectID := filter.ProjectIDFrom(ctx)
+	if projectID == "" {
+		return nil
+	}
+
+	if role.Spec.ProjectID != projectID {
+		return errors.NewNotFound(v1.Resource("role"), role.ObjectMeta.Name)
+	}
+
 	return nil
 }
 
@@ -112,4 +152,57 @@ func PredicateUserNameListOptions(ctx context.Context, options *metainternal.Lis
 	}
 	options.FieldSelector = fields.AndSelectors(options.FieldSelector, fields.OneTermEqualSelector("spec.username", username))
 	return options
+}
+
+// PredicateProjectListOptions determines the query options according to the project
+// attribute of the request user.
+func PredicateProjectListOptions(ctx context.Context, options *metainternal.ListOptions) *metainternal.ListOptions {
+	projectID := filter.ProjectIDFrom(ctx)
+	if projectID == "" {
+		return options
+	}
+	if options == nil {
+		return &metainternal.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("spec.scope", string(auth.PolicyProject)),
+		}
+	}
+	if options.FieldSelector == nil {
+		options.FieldSelector = fields.OneTermEqualSelector("spec.scope", string(auth.PolicyProject))
+		return options
+	}
+	options.FieldSelector = fields.AndSelectors(options.FieldSelector, fields.OneTermEqualSelector("spec.scope", string(auth.PolicyProject)))
+	return options
+}
+
+// PredicateProjectIDListOptions determines the query options according to the project
+// attribute of the request user.
+func PredicateProjectIDListOptions(ctx context.Context, options *metainternal.ListOptions) *metainternal.ListOptions {
+	projectID := filter.ProjectIDFrom(ctx)
+	if projectID == "" {
+		return options
+	}
+	if options == nil {
+		return &metainternal.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("spec.projectID", projectID),
+		}
+	}
+	if options.FieldSelector == nil {
+		options.FieldSelector = fields.OneTermEqualSelector("spec.projectID", projectID)
+		return options
+	}
+	options.FieldSelector = fields.AndSelectors(options.FieldSelector, fields.OneTermEqualSelector("spec.projectID", projectID))
+	return options
+}
+
+// PredicateV1ListOptions determines the query options according to the tenant
+// attribute of the request user.
+func PredicateV1ListOptions(tenantID string, options *metainternal.ListOptions) *metav1.ListOptions {
+	v1ops := &metav1.ListOptions{}
+	if options == nil || options.FieldSelector == nil {
+		v1ops.FieldSelector = fields.OneTermEqualSelector("spec.tenantID", tenantID).String()
+		return v1ops
+	}
+
+	v1ops.FieldSelector = fields.AndSelectors(options.FieldSelector, fields.OneTermEqualSelector("spec.tenantID", tenantID)).String()
+	return v1ops
 }

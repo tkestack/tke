@@ -137,12 +137,6 @@ test:
 .PHONY: release.build
 release.build:
 	make push.multiarch
-	curl -XPOST \
-      -H "authorization: Bearer $(GITHUB_TOKEN)" \
-      -H "Accept: application/vnd.github.everest-preview+json" \
-      -H "Content-Type: application/json" \
-      https://api.github.com/repos/tkestack/tke/dispatches \
-      --data '{"event_type": "release", "client_payload": {"version": "$(VERSION)"}}'
 
 ## release: Release tke
 .PHONY: release

@@ -111,7 +111,7 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
     Deployment: 'deployment',
     StatefulSet: 'statefulset',
     DaemonSet: 'daemonset',
-    Tapp: 'tapp'
+    TApp: 'tapp'
   };
   alarmPolicyList = items.map(item => {
     let alarmPolicyMetricsConfig =
@@ -190,7 +190,7 @@ function getAlarmPolicyParams(alarmPolicyEdition: AlarmPolicyEdition[], opreator
     deployment: 'Deployment',
     statefulset: 'StatefulSet',
     daemonset: 'DaemonSet',
-    tapp: 'Tapp'
+    tapp: 'TApp'
   };
   let params = {
     ClusterInstanceId: opreator.clusterId,

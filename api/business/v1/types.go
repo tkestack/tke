@@ -91,6 +91,15 @@ type ProjectStatus struct {
 	CachedSpecClusters ClusterHard `json:"cachedSpecClusters,omitempty" protobuf:"bytes,6,rep,name=cachedSpecClusters,casttype=ClusterHard"`
 	// +optional
 	CachedParent *string `json:"cachedParent,omitempty" protobuf:"bytes,7,opt,name=cachedParent"`
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,8,opt,name=lastTransitionTime"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,9,opt,name=reason"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,10,opt,name=message"`
 }
 
 // ProjectPhase defines the phase of project constructor.
@@ -219,7 +228,9 @@ type NamespaceStatus struct {
 // NamespaceCert represents a x509 certificate of a namespace in project.
 type NamespaceCert struct {
 	// +optional
-	Pem []byte `json:"pem,omitempty" protobuf:"bytes,1,rep,name=pem"`
+	CertPem []byte `json:"certPem,omitempty" protobuf:"bytes,1,rep,name=certPem"`
+	// +optional
+	KeyPem []byte `json:"keyPem,omitempty" protobuf:"bytes,2,rep,name=keyPem"`
 }
 
 // NamespacePhase indicates the status of namespace in project.
