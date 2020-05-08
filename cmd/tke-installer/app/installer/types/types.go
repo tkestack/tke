@@ -78,6 +78,8 @@ type Audit struct {
 type ElasticSearch struct {
 	Address     string `json:"address" validate:"required"`
 	ReserveDays int    `json:"reserveDays" validate:"required"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
 }
 
 func (r *Registry) Domain() string {

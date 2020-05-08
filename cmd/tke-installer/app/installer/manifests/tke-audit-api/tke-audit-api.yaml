@@ -120,3 +120,5 @@ data:
       elasticSearch:
         address: "{{ .StorageAddress }}"
         reserveDays: {{ .ReserveDays }}
+        username: "{{ .Username }}"
+        password: "{{ .Password }}"

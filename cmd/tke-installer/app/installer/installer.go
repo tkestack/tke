@@ -1476,6 +1476,8 @@ func (t *TKE) installTKEAudit() error {
 		options["StorageType"] = "es"
 		options["StorageAddress"] = t.Para.Config.Audit.ElasticSearch.Address
 		options["ReserveDays"] = t.Para.Config.Audit.ElasticSearch.ReserveDays
+		options["Username"] = t.Para.Config.Audit.ElasticSearch.Username
+		options["Password"] = t.Para.Config.Audit.ElasticSearch.Password
 	}
 
 	if err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-audit-api/*.yaml", options); err != nil {
