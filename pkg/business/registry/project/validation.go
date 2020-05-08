@@ -237,5 +237,30 @@ func validateAgainstParent(project *business.Project, old *business.Project, get
 
 	}
 
+	parentSet := map[string]bool{project.Name: true}
+	parentList := []string{project.Name}
+	parentName := project.Spec.ParentProjectName
+	for parentName != "" {
+		parentList = append(parentList, parentName)
+		if _, has := parentSet[parentName]; has {
+			return append(allErrs,
+				field.Invalid(fldParentProjectPath,
+					project.Spec.ParentProjectName,
+					fmt.Sprintf("ancestor projects formed a circle: %s", parentList)))
+		}
+		parentSet[parentName] = true
+		if parent, err := getter.Project(parentName, metav1.GetOptions{}); err != nil {
+			if errors.IsNotFound(err) {
+				break
+			}
+			return append(allErrs,
+				field.Invalid(fldParentProjectPath,
+					project.Spec.ParentProjectName,
+					fmt.Sprintf("failed to detect ancestor circle, \"%s\", already checked: %s", err, parentList)))
+		} else {
+			parentName = parent.Spec.ParentProjectName
+		}
+	}
+
 	return allErrs
 }
