@@ -19,6 +19,8 @@
 package policy
 
 import (
+	"context"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,7 +79,7 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.Users().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Users().Get(context.Background(), util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("user of the policy is not found, will removed it", log.String("policy", policy.Name), log.String("user", subj.Name))
@@ -106,7 +108,7 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.Groups().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Groups().Get(context.Background(), util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("group of the policy is not found, will removed it", log.String("policy", policy.Name), log.String("group", subj.Name))

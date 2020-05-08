@@ -19,6 +19,8 @@
 package role
 
 import (
+	"context"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,7 +47,7 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 
 	var validPolicies []string
 	for _, pid := range role.Spec.Policies {
-		pol, err := authClient.Policies().Get(pid, metav1.GetOptions{})
+		pol, err := authClient.Policies().Get(context.Background(), pid, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				log.Warn("policy of the role is not found, will removed it", log.String("role", role.Name), log.String("policy", pol.Name))
@@ -70,7 +72,7 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.Users().Get(util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Users().Get(context.Background(), util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("user of the role is not found, will removed it", log.String("role", role.Name), log.String("user", subj.Name))
@@ -99,7 +101,7 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.Groups().Get(util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Groups().Get(context.Background(), util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("group of the role is not found, will removed it", log.String("role", role.Name), log.String("group", subj.Name))

@@ -19,6 +19,7 @@
 package platform
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -200,7 +201,7 @@ func (c *Controller) process(platform *v1.Platform) error {
 		return nil
 	}
 
-	idp, err := c.authClient.IdentityProviders().Get(tenantID, metav1.GetOptions{})
+	idp, err := c.authClient.IdentityProviders().Get(context.Background(), tenantID, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Get identity provider for tenant failed", log.String("tennantID", tenantID), log.Err(err))
 		return err
@@ -210,9 +211,8 @@ func (c *Controller) process(platform *v1.Platform) error {
 		log.Info("Attempting update identity provider for tenant with new administrators", log.String("tenant", tenantID),
 			log.Strings("administrators", platform.Spec.Administrators))
 		idp.Spec.Administrators = platform.Spec.Administrators
-		_, err = c.authClient.IdentityProviders().Update(idp)
+		_, err = c.authClient.IdentityProviders().Update(context.Background(), idp, metav1.UpdateOptions{})
 	}
 
 	return err
-
 }

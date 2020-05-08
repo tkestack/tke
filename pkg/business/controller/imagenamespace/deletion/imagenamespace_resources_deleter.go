@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -84,7 +85,7 @@ func (d *imageNamespaceResourcesDeleter) Delete(projectName, imageNamespaceName 
 	// Multiple controllers may edit an imageNamespace during termination
 	// first get the latest state of the imageNamespace before proceeding
 	// if the imageNamespace was deleted already, don't do anything
-	imageNamespace, err := d.businessClient.ImageNamespaces(projectName).Get(imageNamespaceName, metav1.GetOptions{})
+	imageNamespace, err := d.businessClient.ImageNamespaces(projectName).Get(context.Background(), imageNamespaceName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -144,12 +145,12 @@ func (d *imageNamespaceResourcesDeleter) Delete(projectName, imageNamespaceName 
 
 // Deletes the given imageNamespace.
 func (d *imageNamespaceResourcesDeleter) deleteImageNamespace(imageNamespace *businessv1.ImageNamespace) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := imageNamespace.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.businessClient.ImageNamespaces(imageNamespace.Namespace).Delete(imageNamespace.Name, opts)
+	err := d.businessClient.ImageNamespaces(imageNamespace.Namespace).Delete(context.Background(), imageNamespace.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -173,7 +174,7 @@ func (d *imageNamespaceResourcesDeleter) retryOnConflictError(imageNamespace *bu
 			return nil, err
 		}
 		prevImageNamespace := latestImageNamespace
-		latestImageNamespace, err = d.businessClient.ImageNamespaces(latestImageNamespace.Namespace).Get(latestImageNamespace.Name, metav1.GetOptions{})
+		latestImageNamespace, err = d.businessClient.ImageNamespaces(latestImageNamespace.Namespace).Get(context.Background(), latestImageNamespace.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -192,7 +193,7 @@ func (d *imageNamespaceResourcesDeleter) updateImageNamespaceStatusFunc(imageNam
 	newImageNamespace.ObjectMeta = imageNamespace.ObjectMeta
 	newImageNamespace.Status = imageNamespace.Status
 	newImageNamespace.Status.Phase = businessv1.ImageNamespaceTerminating
-	return d.businessClient.ImageNamespaces(imageNamespace.Namespace).UpdateStatus(&newImageNamespace)
+	return d.businessClient.ImageNamespaces(imageNamespace.Namespace).UpdateStatus(context.Background(), &newImageNamespace, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the imageNamespace.Spec.Finalizers is an empty list
@@ -223,7 +224,7 @@ func (d *imageNamespaceResourcesDeleter) finalizeImageNamespace(imageNamespace *
 		Name(imageNamespaceFinalize.Name).
 		SubResource("finalize").
 		Body(&imageNamespaceFinalize).
-		Do().
+		Do(context.Background()).
 		Into(imageNamespace)
 
 	if err != nil {
@@ -265,7 +266,7 @@ func (d *imageNamespaceResourcesDeleter) deleteAllContent(imageNamespace *busine
 }
 
 func deleteImageNamespace(deleter *imageNamespaceResourcesDeleter, imageNamespace *businessv1.ImageNamespace) error {
-	namespaceList, err := deleter.registryClient.Namespaces().List(metav1.ListOptions{
+	namespaceList, err := deleter.registryClient.Namespaces().List(context.Background(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", imageNamespace.Spec.TenantID, imageNamespace.Name),
 	})
 	if err != nil {
@@ -276,7 +277,7 @@ func deleteImageNamespace(deleter *imageNamespaceResourcesDeleter, imageNamespac
 	}
 	namespaceObject := namespaceList.Items[0]
 
-	err = deleter.registryClient.Namespaces().Delete(namespaceObject.Name, &metav1.DeleteOptions{})
+	err = deleter.registryClient.Namespaces().Delete(context.Background(), namespaceObject.Name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return fmt.Errorf("deleteImageNamespace(%s), %s", imageNamespace.Name, err)
 	}

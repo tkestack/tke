@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var localgroupsResource = schema.GroupVersionResource{Group: "auth.tkestack.io",
 var localgroupsKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "v1", Kind: "LocalGroup"}
 
 // Get takes name of the localGroup, and returns the corresponding localGroup object, and an error if there is any.
-func (c *FakeLocalGroups) Get(name string, options v1.GetOptions) (result *authv1.LocalGroup, err error) {
+func (c *FakeLocalGroups) Get(ctx context.Context, name string, options v1.GetOptions) (result *authv1.LocalGroup, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(localgroupsResource, name), &authv1.LocalGroup{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeLocalGroups) Get(name string, options v1.GetOptions) (result *authv
 }
 
 // List takes label and field selectors, and returns the list of LocalGroups that match those selectors.
-func (c *FakeLocalGroups) List(opts v1.ListOptions) (result *authv1.LocalGroupList, err error) {
+func (c *FakeLocalGroups) List(ctx context.Context, opts v1.ListOptions) (result *authv1.LocalGroupList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(localgroupsResource, localgroupsKind, opts), &authv1.LocalGroupList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeLocalGroups) List(opts v1.ListOptions) (result *authv1.LocalGroupLi
 }
 
 // Watch returns a watch.Interface that watches the requested localGroups.
-func (c *FakeLocalGroups) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeLocalGroups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(localgroupsResource, opts))
 }
 
 // Create takes the representation of a localGroup and creates it.  Returns the server's representation of the localGroup, and an error, if there is any.
-func (c *FakeLocalGroups) Create(localGroup *authv1.LocalGroup) (result *authv1.LocalGroup, err error) {
+func (c *FakeLocalGroups) Create(ctx context.Context, localGroup *authv1.LocalGroup, opts v1.CreateOptions) (result *authv1.LocalGroup, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(localgroupsResource, localGroup), &authv1.LocalGroup{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeLocalGroups) Create(localGroup *authv1.LocalGroup) (result *authv1.
 }
 
 // Update takes the representation of a localGroup and updates it. Returns the server's representation of the localGroup, and an error, if there is any.
-func (c *FakeLocalGroups) Update(localGroup *authv1.LocalGroup) (result *authv1.LocalGroup, err error) {
+func (c *FakeLocalGroups) Update(ctx context.Context, localGroup *authv1.LocalGroup, opts v1.UpdateOptions) (result *authv1.LocalGroup, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(localgroupsResource, localGroup), &authv1.LocalGroup{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeLocalGroups) Update(localGroup *authv1.LocalGroup) (result *authv1.
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeLocalGroups) UpdateStatus(localGroup *authv1.LocalGroup) (*authv1.LocalGroup, error) {
+func (c *FakeLocalGroups) UpdateStatus(ctx context.Context, localGroup *authv1.LocalGroup, opts v1.UpdateOptions) (*authv1.LocalGroup, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(localgroupsResource, "status", localGroup), &authv1.LocalGroup{})
 	if obj == nil {
@@ -108,22 +110,22 @@ func (c *FakeLocalGroups) UpdateStatus(localGroup *authv1.LocalGroup) (*authv1.L
 }
 
 // Delete takes name of the localGroup and deletes it. Returns an error if one occurs.
-func (c *FakeLocalGroups) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeLocalGroups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(localgroupsResource, name), &authv1.LocalGroup{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeLocalGroups) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(localgroupsResource, listOptions)
+func (c *FakeLocalGroups) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(localgroupsResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &authv1.LocalGroupList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched localGroup.
-func (c *FakeLocalGroups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *authv1.LocalGroup, err error) {
+func (c *FakeLocalGroups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *authv1.LocalGroup, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(localgroupsResource, name, pt, data, subresources...), &authv1.LocalGroup{})
 	if obj == nil {

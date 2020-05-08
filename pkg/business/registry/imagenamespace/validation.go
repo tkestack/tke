@@ -19,6 +19,7 @@
 package imagenamespace
 
 import (
+	"context"
 	"fmt"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
@@ -39,7 +40,7 @@ func ValidateImageNamespaceCreate(imageNamespace *business.ImageNamespace,
 	allErrs := validateImageNamespace(imageNamespace, businessClient, registryClient)
 
 	fldName := field.NewPath("spec", "name")
-	namespaceList, err := registryClient.Namespaces().List(metav1.ListOptions{
+	namespaceList, err := registryClient.Namespaces().List(context.Background(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", imageNamespace.Spec.TenantID, imageNamespace.Name),
 	})
 	if err != nil {

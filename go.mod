@@ -10,7 +10,8 @@ replace (
 
 require (
 	github.com/AlekSi/pointer v1.1.0
-	github.com/Masterminds/semver v1.5.0
+	github.com/NYTimes/gziphandler v1.1.1 // indirect
+	github.com/ant31/crd-validation v0.0.0-20180702145049-30f8a35d0ac2 // indirect
 	github.com/aws/aws-sdk-go v1.29.32
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
@@ -27,6 +28,7 @@ require (
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/garyburd/redigo v1.6.0 // indirect
+	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/go-openapi/inflect v0.19.0
 	github.com/go-openapi/spec v0.19.4
 	github.com/gogo/protobuf v1.3.1
@@ -37,9 +39,11 @@ require (
 	github.com/gosuri/uitable v0.0.4
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-uuid v1.0.1
+	github.com/hashicorp/go-version v1.1.0 // indirect
 	github.com/howeyc/fsnotify v0.9.0
 	github.com/influxdata/influxdb1-client v0.0.0-20190402204710-8ff2fc3824fc
 	github.com/jinzhu/configor v1.1.1
+	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.9
 	github.com/kr/fs v0.1.0 // indirect
@@ -57,7 +61,7 @@ require (
 	github.com/segmentio/ksuid v1.0.2
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
@@ -65,9 +69,10 @@ require (
 	github.com/thoas/go-funk v0.4.0
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200401174654-e694b7bb0875
 	go.uber.org/zap v1.10.0
-	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
+	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
 	google.golang.org/grpc v1.26.0
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/ldap.v2 v2.5.1
@@ -75,7 +80,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.2.8
 	helm.sh/chartmuseum v0.12.0
-	helm.sh/helm/v3 v3.2.1
+	helm.sh/helm/v3 v3.1.2
 	k8s.io/api v0.18.2
 	k8s.io/apiextensions-apiserver v0.18.2
 	k8s.io/apimachinery v0.18.2

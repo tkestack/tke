@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,7 +43,7 @@ var messagerequestsResource = schema.GroupVersionResource{Group: "notify.tkestac
 var messagerequestsKind = schema.GroupVersionKind{Group: "notify.tkestack.io", Version: "v1", Kind: "MessageRequest"}
 
 // Get takes name of the messageRequest, and returns the corresponding messageRequest object, and an error if there is any.
-func (c *FakeMessageRequests) Get(name string, options v1.GetOptions) (result *notifyv1.MessageRequest, err error) {
+func (c *FakeMessageRequests) Get(ctx context.Context, name string, options v1.GetOptions) (result *notifyv1.MessageRequest, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(messagerequestsResource, c.ns, name), &notifyv1.MessageRequest{})
 
@@ -52,7 +54,7 @@ func (c *FakeMessageRequests) Get(name string, options v1.GetOptions) (result *n
 }
 
 // List takes label and field selectors, and returns the list of MessageRequests that match those selectors.
-func (c *FakeMessageRequests) List(opts v1.ListOptions) (result *notifyv1.MessageRequestList, err error) {
+func (c *FakeMessageRequests) List(ctx context.Context, opts v1.ListOptions) (result *notifyv1.MessageRequestList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(messagerequestsResource, messagerequestsKind, c.ns, opts), &notifyv1.MessageRequestList{})
 
@@ -74,14 +76,14 @@ func (c *FakeMessageRequests) List(opts v1.ListOptions) (result *notifyv1.Messag
 }
 
 // Watch returns a watch.Interface that watches the requested messageRequests.
-func (c *FakeMessageRequests) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeMessageRequests) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(messagerequestsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a messageRequest and creates it.  Returns the server's representation of the messageRequest, and an error, if there is any.
-func (c *FakeMessageRequests) Create(messageRequest *notifyv1.MessageRequest) (result *notifyv1.MessageRequest, err error) {
+func (c *FakeMessageRequests) Create(ctx context.Context, messageRequest *notifyv1.MessageRequest, opts v1.CreateOptions) (result *notifyv1.MessageRequest, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(messagerequestsResource, c.ns, messageRequest), &notifyv1.MessageRequest{})
 
@@ -92,7 +94,7 @@ func (c *FakeMessageRequests) Create(messageRequest *notifyv1.MessageRequest) (r
 }
 
 // Update takes the representation of a messageRequest and updates it. Returns the server's representation of the messageRequest, and an error, if there is any.
-func (c *FakeMessageRequests) Update(messageRequest *notifyv1.MessageRequest) (result *notifyv1.MessageRequest, err error) {
+func (c *FakeMessageRequests) Update(ctx context.Context, messageRequest *notifyv1.MessageRequest, opts v1.UpdateOptions) (result *notifyv1.MessageRequest, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(messagerequestsResource, c.ns, messageRequest), &notifyv1.MessageRequest{})
 
@@ -104,7 +106,7 @@ func (c *FakeMessageRequests) Update(messageRequest *notifyv1.MessageRequest) (r
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMessageRequests) UpdateStatus(messageRequest *notifyv1.MessageRequest) (*notifyv1.MessageRequest, error) {
+func (c *FakeMessageRequests) UpdateStatus(ctx context.Context, messageRequest *notifyv1.MessageRequest, opts v1.UpdateOptions) (*notifyv1.MessageRequest, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(messagerequestsResource, "status", c.ns, messageRequest), &notifyv1.MessageRequest{})
 
@@ -115,7 +117,7 @@ func (c *FakeMessageRequests) UpdateStatus(messageRequest *notifyv1.MessageReque
 }
 
 // Delete takes name of the messageRequest and deletes it. Returns an error if one occurs.
-func (c *FakeMessageRequests) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeMessageRequests) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(messagerequestsResource, c.ns, name), &notifyv1.MessageRequest{})
 
@@ -123,15 +125,15 @@ func (c *FakeMessageRequests) Delete(name string, options *v1.DeleteOptions) err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeMessageRequests) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(messagerequestsResource, c.ns, listOptions)
+func (c *FakeMessageRequests) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(messagerequestsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &notifyv1.MessageRequestList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched messageRequest.
-func (c *FakeMessageRequests) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *notifyv1.MessageRequest, err error) {
+func (c *FakeMessageRequests) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *notifyv1.MessageRequest, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(messagerequestsResource, c.ns, name, pt, data, subresources...), &notifyv1.MessageRequest{})
 

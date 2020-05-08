@@ -19,6 +19,8 @@
 package util
 
 import (
+	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -50,5 +52,5 @@ func GetEvents(client *kubernetes.Clientset, uid, namespace, name, kind string) 
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	return client.CoreV1().Events(namespace).List(listOptions)
+	return client.CoreV1().Events(namespace).List(context.Background(), listOptions)
 }

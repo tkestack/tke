@@ -74,5 +74,5 @@ func (r *PolicyUnbindingREST) Create(ctx context.Context, obj runtime.Object, cr
 
 	role.Spec.Policies = remained
 	log.Info("PolicyUnbinding: role policies", log.String("role", role.Name), log.Any("policies", role.Spec.Policies))
-	return r.authClient.Roles().Update(role)
+	return r.authClient.Roles().Update(ctx, role, metav1.UpdateOptions{})
 }

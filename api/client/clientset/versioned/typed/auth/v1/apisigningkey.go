@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type APISigningKeysGetter interface {
 
 // APISigningKeyInterface has methods to work with APISigningKey resources.
 type APISigningKeyInterface interface {
-	Create(*v1.APISigningKey) (*v1.APISigningKey, error)
-	Update(*v1.APISigningKey) (*v1.APISigningKey, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.APISigningKey, error)
-	List(opts metav1.ListOptions) (*v1.APISigningKeyList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.APISigningKey, err error)
+	Create(ctx context.Context, aPISigningKey *v1.APISigningKey, opts metav1.CreateOptions) (*v1.APISigningKey, error)
+	Update(ctx context.Context, aPISigningKey *v1.APISigningKey, opts metav1.UpdateOptions) (*v1.APISigningKey, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.APISigningKey, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.APISigningKeyList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.APISigningKey, err error)
 	APISigningKeyExpansion
 }
 
@@ -63,19 +64,19 @@ func newAPISigningKeys(c *AuthV1Client) *aPISigningKeys {
 }
 
 // Get takes name of the aPISigningKey, and returns the corresponding aPISigningKey object, and an error if there is any.
-func (c *aPISigningKeys) Get(name string, options metav1.GetOptions) (result *v1.APISigningKey, err error) {
+func (c *aPISigningKeys) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.APISigningKey, err error) {
 	result = &v1.APISigningKey{}
 	err = c.client.Get().
 		Resource("apisigningkeys").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of APISigningKeys that match those selectors.
-func (c *aPISigningKeys) List(opts metav1.ListOptions) (result *v1.APISigningKeyList, err error) {
+func (c *aPISigningKeys) List(ctx context.Context, opts metav1.ListOptions) (result *v1.APISigningKeyList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *aPISigningKeys) List(opts metav1.ListOptions) (result *v1.APISigningKey
 		Resource("apisigningkeys").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested aPISigningKeys.
-func (c *aPISigningKeys) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *aPISigningKeys) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *aPISigningKeys) Watch(opts metav1.ListOptions) (watch.Interface, error)
 		Resource("apisigningkeys").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a aPISigningKey and creates it.  Returns the server's representation of the aPISigningKey, and an error, if there is any.
-func (c *aPISigningKeys) Create(aPISigningKey *v1.APISigningKey) (result *v1.APISigningKey, err error) {
+func (c *aPISigningKeys) Create(ctx context.Context, aPISigningKey *v1.APISigningKey, opts metav1.CreateOptions) (result *v1.APISigningKey, err error) {
 	result = &v1.APISigningKey{}
 	err = c.client.Post().
 		Resource("apisigningkeys").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(aPISigningKey).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a aPISigningKey and updates it. Returns the server's representation of the aPISigningKey, and an error, if there is any.
-func (c *aPISigningKeys) Update(aPISigningKey *v1.APISigningKey) (result *v1.APISigningKey, err error) {
+func (c *aPISigningKeys) Update(ctx context.Context, aPISigningKey *v1.APISigningKey, opts metav1.UpdateOptions) (result *v1.APISigningKey, err error) {
 	result = &v1.APISigningKey{}
 	err = c.client.Put().
 		Resource("apisigningkeys").
 		Name(aPISigningKey.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(aPISigningKey).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the aPISigningKey and deletes it. Returns an error if one occurs.
-func (c *aPISigningKeys) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *aPISigningKeys) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("apisigningkeys").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *aPISigningKeys) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (c *aPISigningKeys) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("apisigningkeys").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched aPISigningKey.
-func (c *aPISigningKeys) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.APISigningKey, err error) {
+func (c *aPISigningKeys) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.APISigningKey, err error) {
 	result = &v1.APISigningKey{}
 	err = c.client.Patch(pt).
 		Resource("apisigningkeys").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

@@ -20,6 +20,9 @@ package util
 
 import (
 	"context"
+	"reflect"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,8 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	clientrest "k8s.io/client-go/rest"
-	"reflect"
-	"strings"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
@@ -104,12 +105,11 @@ func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptio
 	result := s.NewListFunc()
 	if err := client.
 		Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		SpecificallyVersionedParams(options, platform.ParameterCodec, v1.SchemeGroupVersion).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}
@@ -153,13 +153,12 @@ func (s *Store) Get(ctx context.Context, name string, options *v1.GetOptions) (r
 	result := s.New()
 	if err := client.
 		Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		Name(name).
 		VersionedParams(options, platform.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}
@@ -179,12 +178,11 @@ func (s *Store) Watch(ctx context.Context, options *metainternalversion.ListOpti
 	options.Watch = true
 
 	return client.Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		SpecificallyVersionedParams(options, platform.ParameterCodec, v1.SchemeGroupVersion).
-		Watch()
+		Watch(ctx)
 }
 
 // Create inserts a new item according to the unique key from the object.
@@ -202,14 +200,13 @@ func (s *Store) Create(ctx context.Context, obj runtime.Object, createValidation
 	result := s.New()
 	if err := client.
 		Post().
-		Context(ctx).
 		SetHeader("Content-Type", requestBody.ContentType).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		VersionedParams(options, platform.ParameterCodec).
 		Body(requestBody.Data).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}
@@ -240,7 +237,6 @@ func (s *Store) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		return nil, false, errors.NewBadRequest("unsupported request method")
 	}
 	if err := req.
-		Context(ctx).
 		SetHeader("Content-Type", requestBody.ContentType).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
@@ -248,7 +244,7 @@ func (s *Store) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		VersionedParams(options, platform.ParameterCodec).
 		Name(name).
 		Body(requestBody.Data).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, false, err
 	}
@@ -265,14 +261,13 @@ func (s *Store) Delete(ctx context.Context, name string, deleteValidation rest.V
 
 	result := client.
 		Delete().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		VersionedParams(options, platform.ParameterCodec).
 		Name(name).
 		Body(options).
-		Do()
+		Do(ctx)
 	resultErr := result.Error()
 	if resultErr != nil {
 		return nil, false, resultErr
@@ -297,12 +292,11 @@ func (s *Store) DeleteCollection(ctx context.Context, options *v1.DeleteOptions,
 
 	result := client.
 		Delete().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SpecificallyVersionedParams(listOptions, platform.ParameterCodec, v1.SchemeGroupVersion).
 		Body(options).
-		Do()
+		Do(ctx)
 
 	resultErr := result.Error()
 	if resultErr != nil {

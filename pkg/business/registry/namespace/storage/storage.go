@@ -171,7 +171,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
 	obj, err := r.Store.List(ctx, wrappedOptions)
 	if err == nil && obj != nil {
-		if err := r.patchNamespaceList(obj); err != nil {
+		if err := r.patchNamespaceList(ctx, obj); err != nil {
 			return nil, err
 		}
 	}
@@ -182,7 +182,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
 	if err == nil && obj != nil {
-		if err := r.patchNamespace(obj, nil); err != nil {
+		if err := r.patchNamespace(ctx, obj, nil); err != nil {
 			return nil, err
 		}
 	}
@@ -324,7 +324,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 
-func (r *REST) patchNamespaceList(obj runtime.Object) error {
+func (r *REST) patchNamespaceList(ctx context.Context, obj runtime.Object) error {
 	nl, ok := obj.(*business.NamespaceList)
 	if !ok {
 		return fmt.Errorf("patchNamespaceList, expect *business.NamespaceList, but got %s", reflect.TypeOf(obj))
@@ -332,14 +332,14 @@ func (r *REST) patchNamespaceList(obj runtime.Object) error {
 
 	cache := map[string]*platformv1.Cluster{}
 	for idx := range nl.Items {
-		if err := r.patchNamespace(&nl.Items[idx], cache); err != nil {
+		if err := r.patchNamespace(ctx, &nl.Items[idx], cache); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (r *REST) patchNamespace(obj runtime.Object, cache map[string]*platformv1.Cluster) error {
+func (r *REST) patchNamespace(ctx context.Context, obj runtime.Object, cache map[string]*platformv1.Cluster) error {
 	ns, ok := obj.(*business.Namespace)
 	if !ok {
 		return fmt.Errorf("patchNamespace, expect *business.Namespace, but got %s", reflect.TypeOf(obj))
@@ -348,7 +348,7 @@ func (r *REST) patchNamespace(obj runtime.Object, cache map[string]*platformv1.C
 	cls, has := cache[ns.Spec.ClusterName]
 	if !has {
 		var err error
-		cls, err = r.platformClient.Clusters().Get(ns.Spec.ClusterName, metav1.GetOptions{})
+		cls, err = r.platformClient.Clusters().Get(ctx, ns.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil {
 			log.Errorf("patchNamespace %s: %s", ns.Name, err)
 			return nil
@@ -454,7 +454,7 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 	}
 	ns := obj.(*business.Namespace)
 
-	cluster, err := r.platformClient.Clusters().Get(ns.Spec.ClusterName, metav1.GetOptions{})
+	cluster, err := r.platformClient.Clusters().Get(ctx, ns.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("prj:%s, ns:%s, get cluster %s, %s", ns.Namespace, ns.Name, ns.Spec.ClusterName, err)
 	}
@@ -462,7 +462,7 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 		return nil, fmt.Errorf("prj:%s, ns:%s, cluster %s is Imported, NOT support generating certificate", ns.Namespace, ns.Name, ns.Spec.ClusterName)
 	}
 	fieldSelector := fields.OneTermEqualSelector("clusterName", ns.Spec.ClusterName).String()
-	list, err := r.platformClient.ClusterCredentials().List(metav1.ListOptions{FieldSelector: fieldSelector})
+	list, err := r.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
 	if err != nil {
 		return nil, fmt.Errorf("prj:%s, ns:%s, get cluster credential, %s", ns.Namespace, ns.Name, err)
 	} else if len(list.Items) == 0 {

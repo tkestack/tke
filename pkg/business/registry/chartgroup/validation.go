@@ -19,6 +19,7 @@
 package chartgroup
 
 import (
+	"context"
 	"fmt"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
@@ -39,7 +40,7 @@ func ValidateChartGroupCreate(chartGroup *business.ChartGroup,
 	allErrs := validateChartGroup(chartGroup, businessClient, registryClient)
 
 	fldName := field.NewPath("spec", "name")
-	chartGroupList, err := registryClient.ChartGroups().List(metav1.ListOptions{
+	chartGroupList, err := registryClient.ChartGroups().List(context.Background(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chartGroup.Spec.TenantID, chartGroup.Name),
 	})
 	if err != nil {

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,8 +38,8 @@ type ClusterAddonsGetter interface {
 
 // ClusterAddonInterface has methods to work with ClusterAddon resources.
 type ClusterAddonInterface interface {
-	Get(name string, options v1.GetOptions) (*platform.ClusterAddon, error)
-	List(opts v1.ListOptions) (*platform.ClusterAddonList, error)
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*platform.ClusterAddon, error)
+	List(ctx context.Context, opts v1.ListOptions) (*platform.ClusterAddonList, error)
 	ClusterAddonExpansion
 }
 
@@ -55,19 +56,19 @@ func newClusterAddons(c *PlatformClient) *clusterAddons {
 }
 
 // Get takes name of the clusterAddon, and returns the corresponding clusterAddon object, and an error if there is any.
-func (c *clusterAddons) Get(name string, options v1.GetOptions) (result *platform.ClusterAddon, err error) {
+func (c *clusterAddons) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.ClusterAddon, err error) {
 	result = &platform.ClusterAddon{}
 	err = c.client.Get().
 		Resource("clusteraddons").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of ClusterAddons that match those selectors.
-func (c *clusterAddons) List(opts v1.ListOptions) (result *platform.ClusterAddonList, err error) {
+func (c *clusterAddons) List(ctx context.Context, opts v1.ListOptions) (result *platform.ClusterAddonList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -77,7 +78,7 @@ func (c *clusterAddons) List(opts v1.ListOptions) (result *platform.ClusterAddon
 		Resource("clusteraddons").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

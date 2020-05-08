@@ -19,6 +19,7 @@
 package namespace
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sync"
@@ -87,7 +88,7 @@ func (c *Controller) watchNamespaceHealth(key string) func() (bool, error) {
 			c.health.Del(key)
 			return true, nil
 		}
-		namespace, err := c.client.BusinessV1().Namespaces(projectName).Get(namespaceName, metav1.GetOptions{})
+		namespace, err := c.client.BusinessV1().Namespaces(projectName).Get(context.Background(), namespaceName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			log.Error("Namespace not found, to exit the health check loop", log.String("projectName", projectName), log.String("namespaceName", namespaceName))
 			c.health.Del(key)

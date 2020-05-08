@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type HelmsGetter interface {
 
 // HelmInterface has methods to work with Helm resources.
 type HelmInterface interface {
-	Create(*platform.Helm) (*platform.Helm, error)
-	Update(*platform.Helm) (*platform.Helm, error)
-	UpdateStatus(*platform.Helm) (*platform.Helm, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	Get(name string, options v1.GetOptions) (*platform.Helm, error)
-	List(opts v1.ListOptions) (*platform.HelmList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.Helm, err error)
+	Create(ctx context.Context, helm *platform.Helm, opts v1.CreateOptions) (*platform.Helm, error)
+	Update(ctx context.Context, helm *platform.Helm, opts v1.UpdateOptions) (*platform.Helm, error)
+	UpdateStatus(ctx context.Context, helm *platform.Helm, opts v1.UpdateOptions) (*platform.Helm, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*platform.Helm, error)
+	List(ctx context.Context, opts v1.ListOptions) (*platform.HelmList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.Helm, err error)
 	HelmExpansion
 }
 
@@ -63,19 +64,19 @@ func newHelms(c *PlatformClient) *helms {
 }
 
 // Get takes name of the helm, and returns the corresponding helm object, and an error if there is any.
-func (c *helms) Get(name string, options v1.GetOptions) (result *platform.Helm, err error) {
+func (c *helms) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.Helm, err error) {
 	result = &platform.Helm{}
 	err = c.client.Get().
 		Resource("helms").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Helms that match those selectors.
-func (c *helms) List(opts v1.ListOptions) (result *platform.HelmList, err error) {
+func (c *helms) List(ctx context.Context, opts v1.ListOptions) (result *platform.HelmList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *helms) List(opts v1.ListOptions) (result *platform.HelmList, err error)
 		Resource("helms").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested helms.
-func (c *helms) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *helms) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *helms) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("helms").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a helm and creates it.  Returns the server's representation of the helm, and an error, if there is any.
-func (c *helms) Create(helm *platform.Helm) (result *platform.Helm, err error) {
+func (c *helms) Create(ctx context.Context, helm *platform.Helm, opts v1.CreateOptions) (result *platform.Helm, err error) {
 	result = &platform.Helm{}
 	err = c.client.Post().
 		Resource("helms").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(helm).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a helm and updates it. Returns the server's representation of the helm, and an error, if there is any.
-func (c *helms) Update(helm *platform.Helm) (result *platform.Helm, err error) {
+func (c *helms) Update(ctx context.Context, helm *platform.Helm, opts v1.UpdateOptions) (result *platform.Helm, err error) {
 	result = &platform.Helm{}
 	err = c.client.Put().
 		Resource("helms").
 		Name(helm.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(helm).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *helms) UpdateStatus(helm *platform.Helm) (result *platform.Helm, err error) {
+func (c *helms) UpdateStatus(ctx context.Context, helm *platform.Helm, opts v1.UpdateOptions) (result *platform.Helm, err error) {
 	result = &platform.Helm{}
 	err = c.client.Put().
 		Resource("helms").
 		Name(helm.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(helm).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the helm and deletes it. Returns an error if one occurs.
-func (c *helms) Delete(name string, options *v1.DeleteOptions) error {
+func (c *helms) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("helms").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched helm.
-func (c *helms) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.Helm, err error) {
+func (c *helms) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.Helm, err error) {
 	result = &platform.Helm{}
 	err = c.client.Patch(pt).
 		Resource("helms").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

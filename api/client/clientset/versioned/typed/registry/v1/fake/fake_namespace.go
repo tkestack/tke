@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var namespacesResource = schema.GroupVersionResource{Group: "registry.tkestack.i
 var namespacesKind = schema.GroupVersionKind{Group: "registry.tkestack.io", Version: "v1", Kind: "Namespace"}
 
 // Get takes name of the namespace, and returns the corresponding namespace object, and an error if there is any.
-func (c *FakeNamespaces) Get(name string, options v1.GetOptions) (result *registryv1.Namespace, err error) {
+func (c *FakeNamespaces) Get(ctx context.Context, name string, options v1.GetOptions) (result *registryv1.Namespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(namespacesResource, name), &registryv1.Namespace{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeNamespaces) Get(name string, options v1.GetOptions) (result *regist
 }
 
 // List takes label and field selectors, and returns the list of Namespaces that match those selectors.
-func (c *FakeNamespaces) List(opts v1.ListOptions) (result *registryv1.NamespaceList, err error) {
+func (c *FakeNamespaces) List(ctx context.Context, opts v1.ListOptions) (result *registryv1.NamespaceList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(namespacesResource, namespacesKind, opts), &registryv1.NamespaceList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeNamespaces) List(opts v1.ListOptions) (result *registryv1.Namespace
 }
 
 // Watch returns a watch.Interface that watches the requested namespaces.
-func (c *FakeNamespaces) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeNamespaces) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(namespacesResource, opts))
 }
 
 // Create takes the representation of a namespace and creates it.  Returns the server's representation of the namespace, and an error, if there is any.
-func (c *FakeNamespaces) Create(namespace *registryv1.Namespace) (result *registryv1.Namespace, err error) {
+func (c *FakeNamespaces) Create(ctx context.Context, namespace *registryv1.Namespace, opts v1.CreateOptions) (result *registryv1.Namespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(namespacesResource, namespace), &registryv1.Namespace{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeNamespaces) Create(namespace *registryv1.Namespace) (result *regist
 }
 
 // Update takes the representation of a namespace and updates it. Returns the server's representation of the namespace, and an error, if there is any.
-func (c *FakeNamespaces) Update(namespace *registryv1.Namespace) (result *registryv1.Namespace, err error) {
+func (c *FakeNamespaces) Update(ctx context.Context, namespace *registryv1.Namespace, opts v1.UpdateOptions) (result *registryv1.Namespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(namespacesResource, namespace), &registryv1.Namespace{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeNamespaces) Update(namespace *registryv1.Namespace) (result *regist
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeNamespaces) UpdateStatus(namespace *registryv1.Namespace) (*registryv1.Namespace, error) {
+func (c *FakeNamespaces) UpdateStatus(ctx context.Context, namespace *registryv1.Namespace, opts v1.UpdateOptions) (*registryv1.Namespace, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(namespacesResource, "status", namespace), &registryv1.Namespace{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeNamespaces) UpdateStatus(namespace *registryv1.Namespace) (*registr
 }
 
 // Delete takes name of the namespace and deletes it. Returns an error if one occurs.
-func (c *FakeNamespaces) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeNamespaces) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(namespacesResource, name), &registryv1.Namespace{})
 	return err
 }
 
 // Patch applies the patch and returns the patched namespace.
-func (c *FakeNamespaces) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *registryv1.Namespace, err error) {
+func (c *FakeNamespaces) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *registryv1.Namespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(namespacesResource, name, pt, data, subresources...), &registryv1.Namespace{})
 	if obj == nil {

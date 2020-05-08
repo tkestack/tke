@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type ChartGroupsGetter interface {
 
 // ChartGroupInterface has methods to work with ChartGroup resources.
 type ChartGroupInterface interface {
-	Create(*registry.ChartGroup) (*registry.ChartGroup, error)
-	Update(*registry.ChartGroup) (*registry.ChartGroup, error)
-	UpdateStatus(*registry.ChartGroup) (*registry.ChartGroup, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	Get(name string, options v1.GetOptions) (*registry.ChartGroup, error)
-	List(opts v1.ListOptions) (*registry.ChartGroupList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *registry.ChartGroup, err error)
+	Create(ctx context.Context, chartGroup *registry.ChartGroup, opts v1.CreateOptions) (*registry.ChartGroup, error)
+	Update(ctx context.Context, chartGroup *registry.ChartGroup, opts v1.UpdateOptions) (*registry.ChartGroup, error)
+	UpdateStatus(ctx context.Context, chartGroup *registry.ChartGroup, opts v1.UpdateOptions) (*registry.ChartGroup, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*registry.ChartGroup, error)
+	List(ctx context.Context, opts v1.ListOptions) (*registry.ChartGroupList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *registry.ChartGroup, err error)
 	ChartGroupExpansion
 }
 
@@ -63,19 +64,19 @@ func newChartGroups(c *RegistryClient) *chartGroups {
 }
 
 // Get takes name of the chartGroup, and returns the corresponding chartGroup object, and an error if there is any.
-func (c *chartGroups) Get(name string, options v1.GetOptions) (result *registry.ChartGroup, err error) {
+func (c *chartGroups) Get(ctx context.Context, name string, options v1.GetOptions) (result *registry.ChartGroup, err error) {
 	result = &registry.ChartGroup{}
 	err = c.client.Get().
 		Resource("chartgroups").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of ChartGroups that match those selectors.
-func (c *chartGroups) List(opts v1.ListOptions) (result *registry.ChartGroupList, err error) {
+func (c *chartGroups) List(ctx context.Context, opts v1.ListOptions) (result *registry.ChartGroupList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *chartGroups) List(opts v1.ListOptions) (result *registry.ChartGroupList
 		Resource("chartgroups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested chartGroups.
-func (c *chartGroups) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *chartGroups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *chartGroups) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("chartgroups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a chartGroup and creates it.  Returns the server's representation of the chartGroup, and an error, if there is any.
-func (c *chartGroups) Create(chartGroup *registry.ChartGroup) (result *registry.ChartGroup, err error) {
+func (c *chartGroups) Create(ctx context.Context, chartGroup *registry.ChartGroup, opts v1.CreateOptions) (result *registry.ChartGroup, err error) {
 	result = &registry.ChartGroup{}
 	err = c.client.Post().
 		Resource("chartgroups").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(chartGroup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a chartGroup and updates it. Returns the server's representation of the chartGroup, and an error, if there is any.
-func (c *chartGroups) Update(chartGroup *registry.ChartGroup) (result *registry.ChartGroup, err error) {
+func (c *chartGroups) Update(ctx context.Context, chartGroup *registry.ChartGroup, opts v1.UpdateOptions) (result *registry.ChartGroup, err error) {
 	result = &registry.ChartGroup{}
 	err = c.client.Put().
 		Resource("chartgroups").
 		Name(chartGroup.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(chartGroup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *chartGroups) UpdateStatus(chartGroup *registry.ChartGroup) (result *registry.ChartGroup, err error) {
+func (c *chartGroups) UpdateStatus(ctx context.Context, chartGroup *registry.ChartGroup, opts v1.UpdateOptions) (result *registry.ChartGroup, err error) {
 	result = &registry.ChartGroup{}
 	err = c.client.Put().
 		Resource("chartgroups").
 		Name(chartGroup.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(chartGroup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the chartGroup and deletes it. Returns an error if one occurs.
-func (c *chartGroups) Delete(name string, options *v1.DeleteOptions) error {
+func (c *chartGroups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("chartgroups").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched chartGroup.
-func (c *chartGroups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *registry.ChartGroup, err error) {
+func (c *chartGroups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *registry.ChartGroup, err error) {
 	result = &registry.ChartGroup{}
 	err = c.client.Patch(pt).
 		Resource("chartgroups").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

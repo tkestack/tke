@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var rolesResource = schema.GroupVersionResource{Group: "auth.tkestack.io", Versi
 var rolesKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "v1", Kind: "Role"}
 
 // Get takes name of the role, and returns the corresponding role object, and an error if there is any.
-func (c *FakeRoles) Get(name string, options v1.GetOptions) (result *authv1.Role, err error) {
+func (c *FakeRoles) Get(ctx context.Context, name string, options v1.GetOptions) (result *authv1.Role, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(rolesResource, name), &authv1.Role{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeRoles) Get(name string, options v1.GetOptions) (result *authv1.Role
 }
 
 // List takes label and field selectors, and returns the list of Roles that match those selectors.
-func (c *FakeRoles) List(opts v1.ListOptions) (result *authv1.RoleList, err error) {
+func (c *FakeRoles) List(ctx context.Context, opts v1.ListOptions) (result *authv1.RoleList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(rolesResource, rolesKind, opts), &authv1.RoleList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeRoles) List(opts v1.ListOptions) (result *authv1.RoleList, err erro
 }
 
 // Watch returns a watch.Interface that watches the requested roles.
-func (c *FakeRoles) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeRoles) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(rolesResource, opts))
 }
 
 // Create takes the representation of a role and creates it.  Returns the server's representation of the role, and an error, if there is any.
-func (c *FakeRoles) Create(role *authv1.Role) (result *authv1.Role, err error) {
+func (c *FakeRoles) Create(ctx context.Context, role *authv1.Role, opts v1.CreateOptions) (result *authv1.Role, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(rolesResource, role), &authv1.Role{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeRoles) Create(role *authv1.Role) (result *authv1.Role, err error) {
 }
 
 // Update takes the representation of a role and updates it. Returns the server's representation of the role, and an error, if there is any.
-func (c *FakeRoles) Update(role *authv1.Role) (result *authv1.Role, err error) {
+func (c *FakeRoles) Update(ctx context.Context, role *authv1.Role, opts v1.UpdateOptions) (result *authv1.Role, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(rolesResource, role), &authv1.Role{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeRoles) Update(role *authv1.Role) (result *authv1.Role, err error) {
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeRoles) UpdateStatus(role *authv1.Role) (*authv1.Role, error) {
+func (c *FakeRoles) UpdateStatus(ctx context.Context, role *authv1.Role, opts v1.UpdateOptions) (*authv1.Role, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(rolesResource, "status", role), &authv1.Role{})
 	if obj == nil {
@@ -108,22 +110,22 @@ func (c *FakeRoles) UpdateStatus(role *authv1.Role) (*authv1.Role, error) {
 }
 
 // Delete takes name of the role and deletes it. Returns an error if one occurs.
-func (c *FakeRoles) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeRoles) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(rolesResource, name), &authv1.Role{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeRoles) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(rolesResource, listOptions)
+func (c *FakeRoles) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(rolesResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &authv1.RoleList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched role.
-func (c *FakeRoles) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *authv1.Role, err error) {
+func (c *FakeRoles) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *authv1.Role, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(rolesResource, name, pt, data, subresources...), &authv1.Role{})
 	if obj == nil {

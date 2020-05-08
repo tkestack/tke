@@ -493,7 +493,6 @@ func parseNamespaceIfScoped(namespace string, kind string) (string, bool) {
 		kindLower == "persistentvolume" ||
 		kindLower == "storageclass" ||
 		kindLower == "volumeattachment" ||
-		kindLower == "serviceaccount" ||
 		kindLower == "clusterrole" ||
 		kindLower == "clusterrolebinding" {
 		namespaceScoped = false

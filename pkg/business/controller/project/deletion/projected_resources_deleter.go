@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -93,7 +94,7 @@ func (d *projectedResourcesDeleter) Delete(projectName string) error {
 	// Multiple controllers may edit a project during termination
 	// first get the latest state of the project before proceeding
 	// if the project was deleted already, don't do anything
-	project, err := d.projectClient.Get(projectName, metav1.GetOptions{})
+	project, err := d.projectClient.Get(context.Background(), projectName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -157,12 +158,12 @@ func (d *projectedResourcesDeleter) Delete(projectName string) error {
 
 // Deletes the given project.
 func (d *projectedResourcesDeleter) deleteProject(project *businessv1.Project) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := project.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.projectClient.Delete(project.Name, opts)
+	err := d.projectClient.Delete(context.Background(), project.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -186,7 +187,7 @@ func (d *projectedResourcesDeleter) retryOnConflictError(project *businessv1.Pro
 			return nil, err
 		}
 		prevProject := latestProject
-		latestProject, err = d.projectClient.Get(latestProject.Name, metav1.GetOptions{})
+		latestProject, err = d.projectClient.Get(context.Background(), latestProject.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -205,7 +206,7 @@ func (d *projectedResourcesDeleter) updateProjectStatusFunc(project *businessv1.
 	newProject.ObjectMeta = project.ObjectMeta
 	newProject.Status = project.Status
 	newProject.Status.Phase = businessv1.ProjectTerminating
-	return d.projectClient.UpdateStatus(&newProject)
+	return d.projectClient.UpdateStatus(context.Background(), &newProject, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the project.Spec.Finalizers is an empty list
@@ -235,7 +236,7 @@ func (d *projectedResourcesDeleter) finalizeProject(project *businessv1.Project)
 		Name(projectFinalize.Name).
 		SubResource("finalize").
 		Body(&projectFinalize).
-		Do().
+		Do(context.Background()).
 		Into(project)
 
 	if err != nil {
@@ -293,7 +294,7 @@ func recalculateParentProjectUsed(deleter *projectedResourcesDeleter, project *b
 	log.Debug("Project controller - recalculateParentProjectUsed", log.String("projectName", project.ObjectMeta.Name))
 
 	if project.Spec.ParentProjectName != "" {
-		parentProject, err := deleter.businessClient.Projects().Get(project.Spec.ParentProjectName, metav1.GetOptions{})
+		parentProject, err := deleter.businessClient.Projects().Get(context.Background(), project.Spec.ParentProjectName, metav1.GetOptions{})
 		if err != nil {
 			log.Error("Failed to get the parent project", log.String("projectName", project.ObjectMeta.Name), log.String("parentProjectName", project.Spec.ParentProjectName), log.Err(err))
 			return err
@@ -309,7 +310,7 @@ func recalculateParentProjectUsed(deleter *projectedResourcesDeleter, project *b
 				}
 				businessUtil.SubClusterHardFromUsed(&parentProject.Status.Clusters, release)
 			}
-			_, err := deleter.businessClient.Projects().UpdateStatus(parentProject)
+			_, err := deleter.businessClient.Projects().UpdateStatus(context.Background(), parentProject, metav1.UpdateOptions{})
 			if err != nil {
 				log.Error("Failed to update the parent project status", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 				return err
@@ -322,7 +323,7 @@ func recalculateParentProjectUsed(deleter *projectedResourcesDeleter, project *b
 func deleteChildProjects(deleter *projectedResourcesDeleter, project *businessv1.Project) error {
 	log.Debug("Project controller - deleteChildProjects", log.String("projectName", project.ObjectMeta.Name))
 
-	childProjectList, err := deleter.businessClient.Projects().List(metav1.ListOptions{
+	childProjectList, err := deleter.businessClient.Projects().List(context.Background(), metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.parentProjectName", project.ObjectMeta.Name).String(),
 	})
 	if err != nil {
@@ -331,8 +332,8 @@ func deleteChildProjects(deleter *projectedResourcesDeleter, project *businessv1
 	}
 	for _, childProject := range childProjectList.Items {
 		background := metav1.DeletePropagationBackground
-		deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-		if err := deleter.businessClient.Projects().Delete(childProject.ObjectMeta.Name, deleteOpt); err != nil {
+		deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+		if err := deleter.businessClient.Projects().Delete(context.Background(), childProject.ObjectMeta.Name, deleteOpt); err != nil {
 			log.Info("Project controller - failed to delete child project", log.String("projectName", project.ObjectMeta.Name), log.String("childProjectName", childProject.ObjectMeta.Name), log.Err(err))
 		}
 	}
@@ -343,15 +344,15 @@ func deleteChildProjects(deleter *projectedResourcesDeleter, project *businessv1
 func deleteNamespaces(deleter *projectedResourcesDeleter, project *businessv1.Project) error {
 	log.Debug("Project controller - deleteNamespaces", log.String("projectName", project.ObjectMeta.Name))
 
-	namespaceList, err := deleter.businessClient.Namespaces(project.ObjectMeta.Name).List(metav1.ListOptions{})
+	namespaceList, err := deleter.businessClient.Namespaces(project.ObjectMeta.Name).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error("Project controller - failed to list namespaces", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 		return err
 	}
 	for _, namespace := range namespaceList.Items {
 		background := metav1.DeletePropagationBackground
-		deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-		if err := deleter.businessClient.Namespaces(project.ObjectMeta.Name).Delete(namespace.ObjectMeta.Name, deleteOpt); err != nil {
+		deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+		if err := deleter.businessClient.Namespaces(project.ObjectMeta.Name).Delete(context.Background(), namespace.ObjectMeta.Name, deleteOpt); err != nil {
 			log.Info("Project controller - failed to delete namespace", log.String("projectName", project.ObjectMeta.Name), log.String("namespace", namespace.ObjectMeta.Name), log.Err(err))
 		}
 	}
@@ -365,15 +366,15 @@ func deleteImageNamespaces(deleter *projectedResourcesDeleter, project *business
 	}
 	log.Debug("Project controller - deleteImageNamespaces", log.String("projectName", project.ObjectMeta.Name))
 
-	imageNamespaceList, err := deleter.businessClient.ImageNamespaces(project.ObjectMeta.Name).List(metav1.ListOptions{})
+	imageNamespaceList, err := deleter.businessClient.ImageNamespaces(project.ObjectMeta.Name).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error("Project controller - failed to list imageNamespaces", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 		return err
 	}
 	for _, imageNamespace := range imageNamespaceList.Items {
 		background := metav1.DeletePropagationBackground
-		deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-		if err := deleter.businessClient.ImageNamespaces(project.ObjectMeta.Name).Delete(imageNamespace.ObjectMeta.Name, deleteOpt); err != nil {
+		deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+		if err := deleter.businessClient.ImageNamespaces(project.ObjectMeta.Name).Delete(context.Background(), imageNamespace.ObjectMeta.Name, deleteOpt); err != nil {
 			log.Info("Project controller - failed to delete imageNamespace", log.String("projectName", project.ObjectMeta.Name), log.String("imageNamespace", imageNamespace.ObjectMeta.Name), log.Err(err))
 		}
 	}
@@ -387,15 +388,15 @@ func deleteChartGroups(deleter *projectedResourcesDeleter, project *businessv1.P
 	}
 	log.Debug("Project controller - deleteChartGroups", log.String("projectName", project.ObjectMeta.Name))
 
-	chartGroupList, err := deleter.businessClient.ChartGroups(project.ObjectMeta.Name).List(metav1.ListOptions{})
+	chartGroupList, err := deleter.businessClient.ChartGroups(project.ObjectMeta.Name).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error("Project controller - failed to list chartGroups", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 		return err
 	}
 	for _, chartGroup := range chartGroupList.Items {
 		background := metav1.DeletePropagationBackground
-		deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-		if err := deleter.businessClient.ChartGroups(project.ObjectMeta.Name).Delete(chartGroup.ObjectMeta.Name, deleteOpt); err != nil {
+		deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+		if err := deleter.businessClient.ChartGroups(project.ObjectMeta.Name).Delete(context.Background(), chartGroup.ObjectMeta.Name, deleteOpt); err != nil {
 			log.Info("Project controller - failed to delete chartGroup", log.String("projectName", project.ObjectMeta.Name), log.String("chartGroup", chartGroup.ObjectMeta.Name), log.Err(err))
 		}
 	}
@@ -411,7 +412,7 @@ func (d *projectedResourcesDeleter) hasAllChildrenDeleted(project *businessv1.Pr
 }
 
 func (d *projectedResourcesDeleter) hasAllChildProjectsDeleted(project *businessv1.Project) bool {
-	childProjectList, err := d.businessClient.Projects().List(metav1.ListOptions{
+	childProjectList, err := d.businessClient.Projects().List(context.Background(), metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.parentProjectName", project.ObjectMeta.Name).String(),
 	})
 	if err != nil {
@@ -419,7 +420,7 @@ func (d *projectedResourcesDeleter) hasAllChildProjectsDeleted(project *business
 		return false
 	}
 	for _, childProject := range childProjectList.Items {
-		_, err = d.businessClient.Projects().Get(childProject.ObjectMeta.Name, metav1.GetOptions{})
+		_, err = d.businessClient.Projects().Get(context.Background(), childProject.ObjectMeta.Name, metav1.GetOptions{})
 		if err == nil || !errors.IsNotFound(err) {
 			return false
 		}
@@ -429,13 +430,13 @@ func (d *projectedResourcesDeleter) hasAllChildProjectsDeleted(project *business
 }
 
 func (d *projectedResourcesDeleter) hasAllNamespacesDeleted(project *businessv1.Project) bool {
-	namespaceList, err := d.businessClient.Namespaces(project.ObjectMeta.Name).List(metav1.ListOptions{})
+	namespaceList, err := d.businessClient.Namespaces(project.ObjectMeta.Name).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error("Project controller - failed to list namespaces", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 		return false
 	}
 	for _, namespace := range namespaceList.Items {
-		_, err = d.businessClient.Namespaces(project.ObjectMeta.Name).Get(namespace.ObjectMeta.Name, metav1.GetOptions{})
+		_, err = d.businessClient.Namespaces(project.ObjectMeta.Name).Get(context.Background(), namespace.ObjectMeta.Name, metav1.GetOptions{})
 		if err == nil || !errors.IsNotFound(err) {
 			return false
 		}
@@ -448,13 +449,13 @@ func (d *projectedResourcesDeleter) hasAllImageNamespacesDeleted(project *busine
 	if !d.registryEnabled {
 		return true
 	}
-	imageNamespaceList, err := d.businessClient.ImageNamespaces(project.ObjectMeta.Name).List(metav1.ListOptions{})
+	imageNamespaceList, err := d.businessClient.ImageNamespaces(project.ObjectMeta.Name).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error("Project controller - failed to list imageNamespaces", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 		return false
 	}
 	for _, imageNamespace := range imageNamespaceList.Items {
-		_, err = d.businessClient.ImageNamespaces(project.ObjectMeta.Name).Get(imageNamespace.ObjectMeta.Name, metav1.GetOptions{})
+		_, err = d.businessClient.ImageNamespaces(project.ObjectMeta.Name).Get(context.Background(), imageNamespace.ObjectMeta.Name, metav1.GetOptions{})
 		if err == nil || !errors.IsNotFound(err) {
 			return false
 		}
@@ -467,13 +468,13 @@ func (d *projectedResourcesDeleter) hasAllChartGroupsDeleted(project *businessv1
 	if !d.registryEnabled {
 		return true
 	}
-	chartGroupList, err := d.businessClient.ChartGroups(project.ObjectMeta.Name).List(metav1.ListOptions{})
+	chartGroupList, err := d.businessClient.ChartGroups(project.ObjectMeta.Name).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.Error("Project controller - failed to list chartGroups", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 		return false
 	}
 	for _, chartGroup := range chartGroupList.Items {
-		_, err = d.businessClient.ChartGroups(project.ObjectMeta.Name).Get(chartGroup.ObjectMeta.Name, metav1.GetOptions{})
+		_, err = d.businessClient.ChartGroups(project.ObjectMeta.Name).Get(context.Background(), chartGroup.ObjectMeta.Name, metav1.GetOptions{})
 		if err == nil || !errors.IsNotFound(err) {
 			return false
 		}

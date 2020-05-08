@@ -19,6 +19,7 @@
 package namespace
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -115,7 +116,7 @@ func NewController(platformClient platformversionedclient.PlatformV1Interface, c
 func PersistUpdateNamesapce(client clientset.Interface, namespace *v1.Namespace) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = client.BusinessV1().Namespaces(namespace.ObjectMeta.Namespace).UpdateStatus(namespace)
+		_, err = client.BusinessV1().Namespaces(namespace.ObjectMeta.Namespace).UpdateStatus(context.Background(), namespace, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -357,7 +358,7 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 }
 
 func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, namespace *v1.Namespace) error {
-	project, err := c.client.BusinessV1().Projects().Get(namespace.ObjectMeta.Namespace, metav1.GetOptions{})
+	project, err := c.client.BusinessV1().Projects().Get(context.Background(), namespace.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get the project", log.String("projectName", namespace.ObjectMeta.Namespace), log.Err(err))
 		return err
@@ -428,7 +429,7 @@ func (c *Controller) persistUpdateNamespace(namespace *v1.Namespace) error {
 func (c *Controller) persistUpdateProject(project *v1.Project) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().Projects().UpdateStatus(project)
+		_, err = c.client.BusinessV1().Projects().UpdateStatus(context.Background(), project, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

@@ -19,6 +19,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -131,7 +132,7 @@ func (a *RestAdapter) SavePolicy(model model.Model) error {
 
 // destroy or clean all of policy
 func (a *RestAdapter) destroy() error {
-	err := a.ruleClient.DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{})
+	err := a.ruleClient.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
 	return err
 }
 
@@ -166,7 +167,7 @@ func ConvertRule(ptype string, line []string) (rule authv1.Rule) {
 
 func (a *RestAdapter) savePolicy(rules []authv1.Rule) error {
 	for _, rule := range rules {
-		if _, err := a.ruleClient.Create(&rule); err != nil && !apierrors.IsAlreadyExists(err) {
+		if _, err := a.ruleClient.Create(context.Background(), &rule, metav1.CreateOptions{}); err != nil && !apierrors.IsAlreadyExists(err) {
 			return err
 		}
 	}
@@ -177,7 +178,7 @@ func (a *RestAdapter) savePolicy(rules []authv1.Rule) error {
 // Part of the Auto-Save feature.
 func (a *RestAdapter) AddPolicy(sec string, ptype string, line []string) error {
 	rule := ConvertRule(ptype, line)
-	if _, err := a.ruleClient.Create(&rule); !apierrors.IsAlreadyExists(err) {
+	if _, err := a.ruleClient.Create(context.Background(), &rule, metav1.CreateOptions{}); !apierrors.IsAlreadyExists(err) {
 		return err
 	}
 
@@ -279,5 +280,5 @@ func (a *RestAdapter) constructFilterSelector(rule authv1.Rule) string {
 
 func (a *RestAdapter) removeFilteredPolicy(filter string) error {
 	log.Info("RemoveFilterPolicy", log.String("filter", filter))
-	return a.ruleClient.DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: filter})
+	return a.ruleClient.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: filter})
 }

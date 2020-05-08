@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -93,7 +94,7 @@ func (d *policiedResourcesDeleter) Delete(policyName string) error {
 	// Multiple controllers may edit a policy during termination
 	// first get the latest state of the policy before proceeding
 	// if the policy was deleted already, don't do anything
-	policy, err := d.policyClient.Get(policyName, metav1.GetOptions{})
+	policy, err := d.policyClient.Get(context.Background(), policyName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -154,12 +155,12 @@ func (d *policiedResourcesDeleter) Delete(policyName string) error {
 
 // Deletes the given policy.
 func (d *policiedResourcesDeleter) deletePolicy(policy *v1.Policy) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := policy.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.policyClient.Delete(policy.Name, opts)
+	err := d.policyClient.Delete(context.Background(), policy.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))
 		return err
@@ -184,7 +185,7 @@ func (d *policiedResourcesDeleter) retryOnConflictError(policy *v1.Policy, fn up
 			return nil, err
 		}
 		prevPolicy := latestPolicy
-		latestPolicy, err = d.policyClient.Get(latestPolicy.Name, metav1.GetOptions{})
+		latestPolicy, err = d.policyClient.Get(context.Background(), latestPolicy.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +204,7 @@ func (d *policiedResourcesDeleter) updatePolicyStatusFunc(policy *v1.Policy) (*v
 	newPolicy.ObjectMeta = policy.ObjectMeta
 	newPolicy.Status = policy.Status
 	newPolicy.Status.Phase = v1.PolicyTerminating
-	return d.policyClient.UpdateStatus(&newPolicy)
+	return d.policyClient.UpdateStatus(context.Background(), &newPolicy, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the policy.Spec.Finalizers is an empty list
@@ -233,7 +234,7 @@ func (d *policiedResourcesDeleter) finalizePolicy(policy *v1.Policy) (*v1.Policy
 		Name(policyFinalize.Name).
 		SubResource("finalize").
 		Body(&policyFinalize).
-		Do().
+		Do(context.Background()).
 		Into(updated)
 
 	if err != nil {
@@ -289,7 +290,8 @@ func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 				Name(role).
 				SubResource("policyunbinding").
 				Body(&unbinding).
-				Do().Into(rol)
+				Do(context.Background()).
+				Into(rol)
 			if err != nil {
 				if errors.IsNotFound(err) {
 					continue

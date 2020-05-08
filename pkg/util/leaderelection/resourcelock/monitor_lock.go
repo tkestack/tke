@@ -19,12 +19,14 @@
 package resourcelock
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	monitorv1client "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1"
-	"tkestack.io/tke/api/monitor/v1"
+	v1 "tkestack.io/tke/api/monitor/v1"
 )
 
 // MonitorConfigMapLock defines the structure of using configmap resources to implement
@@ -42,7 +44,7 @@ type MonitorConfigMapLock struct {
 func (cml *MonitorConfigMapLock) Get() (*LeaderElectionRecord, error) {
 	var record LeaderElectionRecord
 	var err error
-	cml.cm, err = cml.Client.ConfigMaps().Get(cml.ConfigMapMeta.Name, metav1.GetOptions{})
+	cml.cm, err = cml.Client.ConfigMaps().Get(context.Background(), cml.ConfigMapMeta.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +65,7 @@ func (cml *MonitorConfigMapLock) Create(ler LeaderElectionRecord) error {
 	if err != nil {
 		return err
 	}
-	cml.cm, err = cml.Client.ConfigMaps().Create(&v1.ConfigMap{
+	cml.cm, err = cml.Client.ConfigMaps().Create(context.Background(), &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cml.ConfigMapMeta.Name,
 			Namespace: cml.ConfigMapMeta.Namespace,
@@ -71,7 +73,7 @@ func (cml *MonitorConfigMapLock) Create(ler LeaderElectionRecord) error {
 				LeaderElectionRecordAnnotationKey: string(recordBytes),
 			},
 		},
-	})
+	}, metav1.CreateOptions{})
 	return err
 }
 
@@ -85,7 +87,7 @@ func (cml *MonitorConfigMapLock) Update(ler LeaderElectionRecord) error {
 		return err
 	}
 	cml.cm.Annotations[LeaderElectionRecordAnnotationKey] = string(recordBytes)
-	cml.cm, err = cml.Client.ConfigMaps().Update(cml.cm)
+	cml.cm, err = cml.Client.ConfigMaps().Update(context.Background(), cml.cm, metav1.UpdateOptions{})
 	return err
 }
 
