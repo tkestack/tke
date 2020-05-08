@@ -651,7 +651,8 @@ func Convert_business_Namespace_To_v1_Namespace(in *business.Namespace, out *Nam
 }
 
 func autoConvert_v1_NamespaceCert_To_business_NamespaceCert(in *NamespaceCert, out *business.NamespaceCert, s conversion.Scope) error {
-	out.Pem = *(*[]byte)(unsafe.Pointer(&in.Pem))
+	out.CertPem = *(*[]byte)(unsafe.Pointer(&in.CertPem))
+	out.KeyPem = *(*[]byte)(unsafe.Pointer(&in.KeyPem))
 	return nil
 }
 
@@ -661,7 +662,8 @@ func Convert_v1_NamespaceCert_To_business_NamespaceCert(in *NamespaceCert, out *
 }
 
 func autoConvert_business_NamespaceCert_To_v1_NamespaceCert(in *business.NamespaceCert, out *NamespaceCert, s conversion.Scope) error {
-	out.Pem = *(*[]byte)(unsafe.Pointer(&in.Pem))
+	out.CertPem = *(*[]byte)(unsafe.Pointer(&in.CertPem))
+	out.KeyPem = *(*[]byte)(unsafe.Pointer(&in.KeyPem))
 	return nil
 }
 

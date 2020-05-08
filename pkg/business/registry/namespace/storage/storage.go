@@ -508,22 +508,31 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 				fmt.Sprintf("cluster:%s", ns.Spec.ClusterName),
 				fmt.Sprintf("project:%s", ns.Namespace),
 				fmt.Sprintf("namespace:%s", ns.Spec.Namespace),
+				fmt.Sprintf("tenant:%s", ns.Spec.TenantID),
 			},
 		},
-		SerialNumber: big.NewInt(rootCert.SerialNumber.Int64() + 1),
-		NotBefore:    rootCert.NotBefore,
-		NotAfter:     time.Now().AddDate(0, 0, validDays),
-		IsCA:         false,
+		SerialNumber:          big.NewInt(rootCert.SerialNumber.Int64() + 1),
+		NotBefore:             rootCert.NotBefore,
+		NotAfter:              time.Now().AddDate(0, 0, validDays),
+		BasicConstraintsValid: true,
+		IsCA:                  false,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment,
 	}
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, rootCert, &private.PublicKey, rootKey)
+	certBytes, err := x509.CreateCertificate(rand.Reader, &template, rootCert, &private.PublicKey, rootKey)
 	if err != nil {
 		return nil, fmt.Errorf("CreateCertificate(%+v), %s", template.Subject, err)
 	}
+	keyBytes := x509.MarshalPKCS1PrivateKey(private)
 
 	ns.Status.Certificate = &business.NamespaceCert{
-		Pem: pem.EncodeToMemory(&pem.Block{
+		CertPem: pem.EncodeToMemory(&pem.Block{
 			Type:  "CERTIFICATE",
-			Bytes: derBytes,
+			Bytes: certBytes,
+		}),
+		KeyPem: pem.EncodeToMemory(&pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: keyBytes,
 		}),
 	}
 	return ns, nil
