@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"tkestack.io/tke/pkg/apiserver/util"
 
 	"github.com/casbin/casbin/v2"
 	casbinlog "github.com/casbin/casbin/v2/log"
@@ -106,6 +107,9 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableProfiling = false
 
+	if err := util.SetupAuditConfig(genericAPIServerConfig, opts.Audit); err != nil {
+		return nil, err
+	}
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err
 	}
