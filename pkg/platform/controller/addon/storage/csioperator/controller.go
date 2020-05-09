@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator/images"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -498,7 +498,7 @@ func (c *Controller) installDeployment(
 	csiOperator *v1.CSIOperator,
 	kubeClient kubernetes.Interface,
 	svInfo *storageutil.SVInfo) error {
-	deploy := c.genDeployment(images.Get(csiOperator.Spec.Version), svInfo)
+	deploy := c.genDeployment(images.Get(csiOperator.Spec.Version).CSIOperator.FullName(), svInfo)
 	deployClient := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem)
 
 	oldDeploy, err := deployClient.Get(deploy.Name, metav1.GetOptions{})
@@ -555,7 +555,7 @@ func genCRB() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func (c *Controller) genDeployment(components images.Components, svInfo *storageutil.SVInfo) *appsv1.Deployment {
+func (c *Controller) genDeployment(image string, svInfo *storageutil.SVInfo) *appsv1.Deployment {
 	deploy := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -587,7 +587,7 @@ func (c *Controller) genDeployment(components images.Components, svInfo *storage
 					Containers: []corev1.Container{
 						{
 							Name:  deploymentName,
-							Image: components.CSIOperator.FullName(),
+							Image: image,
 							Args:  genContainerArgs(svInfo),
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
