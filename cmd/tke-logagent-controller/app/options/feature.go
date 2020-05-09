@@ -63,8 +63,8 @@ func (o *FeatureOptions) ApplyFlags() []error {
 	o.Domain = viper.GetString(configDomain)
 	o.Namespace = viper.GetString(configNamespace)
 
-	if len(o.Domain) == 0 || len(o.Namespace) == 0 {
-		errs = append(errs, fmt.Errorf("%s and %s must be specified", configDomain, configNamespace))
+	if len(o.Namespace) == 0 {
+		errs = append(errs, fmt.Errorf("%s must be specified", configNamespace))
 	}
 	return errs
 }
