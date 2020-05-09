@@ -381,7 +381,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 			initDelay := time.Now().Add(5 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				checkStatusErr := wait.PollImmediate(5*time.Second, 5*time.Minute+10*time.Second,
+				checkStatusErr := wait.PollImmediate(5*time.Second, 15*time.Minute+10*time.Second,
 					c.checkLogCollectorStatus(LogCollector, key, initDelay))
 				if checkStatusErr != nil {
 					log.Error("Check status of LogCollector failed",
