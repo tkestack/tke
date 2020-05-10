@@ -11,14 +11,14 @@ const { useState, useEffect } = React;
 const { scrollable, selectable, removeable } = Table.addons;
 
 export function RoleModifyDialog(props) {
-  const state = useSelector((state) => state);
+  const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
   const { policyPlainList, route } = state;
   let strategyList = policyPlainList.list.data.records || [];
   strategyList = strategyList.filter(
-    (item) => ['业务管理员', '业务成员', '业务只读'].includes(item.displayName) === false
+    item => ['业务管理员', '业务成员', '业务只读'].includes(item.displayName) === false
   );
   const { isShowing, toggle, user } = props;
   console.log('PrivateEditorDialog props user:', user);
@@ -33,7 +33,7 @@ export function RoleModifyDialog(props) {
       id: uuid(),
       projectId: route.queries.projectId,
       users: [{ id: user.metadata.name }],
-      policies: role === 'custom' ? targetKeys : [role],
+      policies: role === 'custom' ? targetKeys : [role]
     };
     actions.user.addUser.start([userInfo]);
     actions.user.addUser.perform();
@@ -50,8 +50,8 @@ export function RoleModifyDialog(props) {
     initialValuesEqual: () => true,
     initialValues: { role: '' },
     validate: ({ role }) => ({
-      role: !role ? t('请选择业务角色') : undefined,
-    }),
+      role: !role ? t('请选择业务角色') : undefined
+    })
   });
   const role = useField('role', form);
 
@@ -59,7 +59,7 @@ export function RoleModifyDialog(props) {
     if (user) {
       const {
         tenantID,
-        extra: { policies },
+        extra: { policies }
       } = user.spec;
       setTenantID(tenantID);
       const policiesParse = JSON.parse(policies);
@@ -67,7 +67,7 @@ export function RoleModifyDialog(props) {
       const roleArray = [
         `pol-${tenantID}-project-owner`,
         `pol-${tenantID}-project-member`,
-        `pol-${tenantID}-project-viewer`,
+        `pol-${tenantID}-project-viewer`
       ];
       if (keys.length === 1 && roleArray.includes(keys[0])) {
         form.change('role', keys[0]);
@@ -131,20 +131,20 @@ export function RoleModifyDialog(props) {
                         scrollable={false}
                         title="为这个用户自定义独立的权限"
                         tip="支持按住 shift 键进行多选"
-                        header={<SearchBox value={inputValue} onChange={(value) => setInputValue(value)} />}
+                        header={<SearchBox value={inputValue} onChange={value => setInputValue(value)} />}
                       >
                         <SourceTable
                           dataSource={strategyList}
                           targetKeys={targetKeys}
-                          onChange={(keys) => setTargetKeys(keys)}
+                          onChange={keys => setTargetKeys(keys)}
                         />
                       </Transfer.Cell>
                     }
                     rightCell={
                       <Transfer.Cell title={`已选择 (${targetKeys.length})`}>
                         <TargetTable
-                          dataSource={strategyList.filter((i) => targetKeys.includes(i.id))}
-                          onRemove={(key) => setTargetKeys(targetKeys.filter((i) => i !== key))}
+                          dataSource={strategyList.filter(i => targetKeys.includes(i.id))}
+                          onRemove={key => setTargetKeys(targetKeys.filter(i => i !== key))}
                         />
                       </Transfer.Cell>
                     }
@@ -177,14 +177,14 @@ const columns = [
   {
     key: 'displayName',
     header: '策略名称',
-    render: (strategy) => <p>{strategy.displayName}</p>,
+    render: strategy => <p>{strategy.displayName}</p>
   },
   {
     key: 'description',
     header: '描述',
     width: 150,
-    render: (strategy) => <p>{strategy.description || '-'}</p>,
-  },
+    render: strategy => <p>{strategy.description || '-'}</p>
+  }
 ];
 
 function SourceTable({ dataSource, targetKeys, onChange }) {
@@ -196,13 +196,13 @@ function SourceTable({ dataSource, targetKeys, onChange }) {
       addons={[
         scrollable({
           maxHeight: 310,
-          onScrollBottom: () => console.log('到达底部'),
+          onScrollBottom: () => console.log('到达底部')
         }),
         selectable({
           value: targetKeys,
           onChange,
-          rowSelect: true,
-        }),
+          rowSelect: true
+        })
       ]}
     />
   );

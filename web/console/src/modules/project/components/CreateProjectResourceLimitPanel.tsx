@@ -3,14 +3,10 @@ import * as React from 'react';
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import { deepClone, uuid } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
-import {
-    Alert, Bubble, Button, Col, Input, InputAdorment, Row, Select
-} from '@tencent/tea-component';
+import { Alert, Bubble, Button, Col, Input, InputAdorment, Row, Select } from '@tencent/tea-component';
 
 import { LinkButton } from '../../common/components';
-import {
-    initProjectResourceLimit, resourceLimitTypeList, resourceTypeToUnit
-} from '../constants/Config';
+import { initProjectResourceLimit, resourceLimitTypeList, resourceTypeToUnit } from '../constants/Config';
 import { ProjectResourceLimit } from '../models/Project';
 
 interface CreateProjectResourceLimitPanelPorps {
@@ -208,7 +204,7 @@ export class CreateProjectResourceLimitPanel extends React.Component<
     });
     if (ok) {
       this.props.onSubmit && this.props.onSubmit(resourceLimits);
-      this.props.onCancel && this.props.onCancel();
+      // this.props.onCancel && this.props.onCancel();
     }
   }
   _renderResourceLimitList() {
@@ -257,7 +253,7 @@ export class CreateProjectResourceLimitPanel extends React.Component<
             </Bubble>
           </Col>
           <Col span={2}>
-            <Button icon="close" disabled={maxLimit !== null} onClick={() => this.deleteLimit(item.id + '')} />
+            <Button icon="close" disabled={maxLimit !== undefined} onClick={() => this.deleteLimit(item.id + '')} />
           </Col>
         </Row>
       );

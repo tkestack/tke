@@ -4,21 +4,30 @@
   "env": {
     "development": {
       "presets": [
-        ["env", {
-          "loose": true,
-          "modules": "commonjs",
-          "exclude": ["babel-plugin-transform-async-to-generator", "babel-plugin-transform-regenerator", "babel-plugin-transform-es2015-spread"]
-        }]
+        [
+          "env",
+          {
+            "loose": true,
+            "modules": "commonjs",
+            "exclude": [
+              "babel-plugin-transform-async-to-generator",
+              "babel-plugin-transform-regenerator",
+              "babel-plugin-transform-es2015-spread"
+            ]
+          }
+        ]
       ],
       "plugins": [
         [
           "react-transform",
           {
-            "transforms": [{
-              "transform": "react-transform-hmr",
-              "imports": ["react"],
-              "locals": ["module"]
-            }]
+            "transforms": [
+              {
+                "transform": "react-transform-hmr",
+                "imports": ["react"],
+                "locals": ["module"]
+              }
+            ]
           }
         ]
       ]

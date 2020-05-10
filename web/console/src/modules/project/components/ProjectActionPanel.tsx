@@ -24,6 +24,7 @@ export class ProjectActionPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions } = this.props;
     actions.project.poll({});
+    actions.project.projectUsrInfo.applyFilter({});
     actions.manager.applyFilter({});
     actions.manager.fetchAdminstratorInfo();
   }

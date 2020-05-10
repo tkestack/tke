@@ -13,5 +13,5 @@ export const allActions = {
   region: regionActions,
   cluster: clusterActions,
   user: userActions,
-  policy: policyActions,
+  policy: policyActions
 };

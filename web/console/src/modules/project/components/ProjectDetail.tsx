@@ -19,17 +19,17 @@ interface ProjectDetailState {
   tabId?: string;
 }
 
-const mapDispatchToProps = (dispatch) =>
+const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect((state) => state, mapDispatchToProps)
+@connect(state => state, mapDispatchToProps)
 export class ProjectDetail extends React.Component<RootProps, ProjectDetailState> {
   constructor(props, context) {
     super(props, context);
     let { route } = props;
     let urlParams = router.resolve(route);
     this.state = {
-      tabId: urlParams['tab'] || 'info',
+      tabId: urlParams['tab'] || 'info'
     };
   }
 
@@ -42,18 +42,18 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
     let tabs = [
       {
         id: 'info',
-        label: t('业务信息'),
+        label: t('业务信息')
       },
       { id: 'member', label: t('成员列表') },
       {
         id: 'namespace',
-        label: t('Namespace列表'),
-      },
+        label: t('Namespace列表')
+      }
     ];
 
     /** 默认选中第一个tab */
     let selected = tabs[0];
-    let finder = tabs.find((x) => x.id === this.state.tabId);
+    let finder = tabs.find(x => x.id === this.state.tabId);
     if (finder) {
       selected = finder;
     }
@@ -76,7 +76,7 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
             ceiling
             tabs={tabs}
             activeId={selected.id}
-            onActive={(tab) => {
+            onActive={tab => {
               router.navigate(Object.assign({}, urlParams, { tab: tab.id, action: '' }), route.queries);
               this.setState({ tabId: tab.id });
             }}

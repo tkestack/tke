@@ -49,6 +49,7 @@ export interface ApiVersion {
   helm?: ResourceApiInfo;
   logcs?: ResourceApiInfo;
   clustercredential?: ResourceApiInfo;
+  auth_project?: ResourceApiInfo;
 
   lbcf?: ResourceApiInfo;
   lbcf_bg?: ResourceApiInfo;
@@ -388,6 +389,13 @@ const k8sApiVersionFor18: ApiVersion = {
     basicEntry: authServerVersion.basicUrl,
     watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Users'
+  },
+  auth_project: {
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
+    headTitle: 'PorjectUsers'
   },
   role: {
     group: authServerVersion.group,

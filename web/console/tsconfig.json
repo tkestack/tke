@@ -7,7 +7,7 @@
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,
-    "target": "es2017",
+    "target": "es2018",
     "allowJs": true,
     "noLib": false,
     "experimentalDecorators": true,
@@ -40,7 +40,6 @@
       "@tencent/qcloud-redux-workflow'": ["./lib/ff-redux/libs/qcloud-redux-workflow/"]
     }
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "build","lib","public","loader"],
+  "exclude": ["node_modules", "dist", "build", "develop", "loader", "public", "webpack"],
   "compileOnSave": false
 }
