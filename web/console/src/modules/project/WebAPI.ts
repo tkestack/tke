@@ -3,6 +3,7 @@ import { collectionPaging, OperationResult, QueryState, RecordSet, uuid } from '
 import { resourceConfig } from '../../../config/resourceConfig';
 import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow } from '../../../helpers';
 import { Method } from '../../../helpers/reduceNetwork';
+import { reduceK8sQueryString } from '../../../helpers/urlUtil';
 import { Region, RegionFilter, RequestParams, ResourceInfo } from '../common/models';
 import { resourceTypeToUnit } from './constants/Config';
 import {
@@ -33,19 +34,35 @@ function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] 
  * @param query 地域查询的一些过滤条件
  */
 export async function fetchProjectList(query: QueryState<ProjectFilter>) {
-  let { search, paging } = query;
+  let {
+    search,
+    filter: { parentProject },
+    searchFilter: { projectId }
+  } = query;
 
   let projectResourceInfo: ResourceInfo = resourceConfig()['projects'];
-  let url = reduceK8sRestfulPath({ resourceInfo: projectResourceInfo });
+  let k8sQueryObj = {
+    fieldSelector: {
+      'spec.parentProjectName': parentProject ? parentProject : undefined
+    }
+  };
+  k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
+
+  let k8sUrl = reduceK8sRestfulPath({ resourceInfo: projectResourceInfo, specificName: projectId ? projectId : null });
+
+  let queryString = reduceK8sQueryString({ k8sQueryObj, restfulPath: k8sUrl });
+
+  let url = k8sUrl + queryString;
+
   let params: RequestParams = {
     method: Method.get,
     url
   };
-
-  let response = await reduceNetworkRequest(params);
   let projectList = [],
     total = 0;
   try {
+    let response = await reduceNetworkRequest(params);
+
     if (response.code === 0) {
       let listItems = response.data;
       if (listItems.items) {
@@ -437,7 +454,11 @@ export async function fetchUser(query: QueryState<ManagerFilter>) {
     let list = response.data;
     userList = list.items
       ? list.items.map(item => {
-          return { id: uuid(), displayName: item.spec && item.spec.displayName, name: item.spec && item.spec.name };
+          return {
+            id: item.metadata.name,
+            displayName: item.spec && item.spec.displayName,
+            name: item.spec && item.spec.name
+          };
         })
       : [];
   }
@@ -563,4 +584,69 @@ export async function fetchProjectUserInfo(query: QueryState<ProjectFilter>) {
   }
 
   return projectUserMap;
+}
+/**
+ * 添加已有业务为子业务
+ * @param query
+ */
+export async function addExistMultiProject(projects: Project[], parentProjectName: string) {
+  let resourceInfo = resourceConfig().projects;
+  try {
+    let requests = projects.map(async item => {
+      let url = reduceK8sRestfulPath({ resourceInfo, specificName: item.metadata.name });
+      let method = Method.patch;
+      let param = {
+        method,
+        url,
+        userDefinedHeader: {
+          'Content-Type': 'application/strategic-merge-patch+json'
+        },
+        data: {
+          spec: {
+            parentProjectName
+          }
+        }
+      };
+      let response = reduceNetworkRequest(param);
+      return response;
+    });
+    // 构建参数
+    let response = await Promise.all(requests);
+    if (response.every(r => r.code === 0)) {
+      return operationResult(projects);
+    } else {
+      return operationResult(projects, reduceNetworkWorkflow(response));
+    }
+  } catch (error) {
+    return operationResult(projects, reduceNetworkWorkflow(error));
+  }
+}
+
+export async function deleteParentProject(projects: Project[]) {
+  let resourceInfo = resourceConfig().projects;
+  try {
+    let url = reduceK8sRestfulPath({ resourceInfo, specificName: projects[0].metadata.name });
+    let method = Method.patch;
+    let param = {
+      method,
+      url,
+      userDefinedHeader: {
+        'Content-Type': 'application/strategic-merge-patch+json'
+      },
+      data: {
+        spec: {
+          parentProjectName: null
+        }
+      }
+    };
+    // 构建参数s
+    let response = await reduceNetworkRequest(param);
+    if (response.code === 0) {
+      return operationResult(projects);
+    } else {
+      return operationResult(projects, reduceNetworkWorkflow(response));
+    }
+  } catch (error) {
+    return operationResult(projects, reduceNetworkWorkflow(error));
+  }
 }

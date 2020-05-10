@@ -79,5 +79,16 @@ export const RootReducer = combineReducers({
   /** 关联策略相关 */
   policyPlainList: createFFListReducer(ActionType.PolicyPlainList),
 
-  projectUserInfo: createFFObjectReducer(FFReduxActionName.ProjectUserInfo)
+  projectUserInfo: createFFObjectReducer(FFReduxActionName.ProjectUserInfo),
+
+  detailProject: createFFListReducer('detailProject'),
+
+  addExistMultiProject: generateWorkflowReducer({
+    actionType: ActionType.AddExistMultiProject
+  }),
+  deleteParentProject: generateWorkflowReducer({
+    actionType: ActionType.DeleteParentProject
+  }),
+
+  projectDetail: reduceToPayload(ActionType.ProjectDetail, null)
 });

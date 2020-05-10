@@ -24,7 +24,7 @@ import {
   ProjectFilter
 } from './index';
 
-type ProjectWorkflow = WorkflowState<Project, void>;
+type ProjectWorkflow = WorkflowState<Project, string>;
 type ProjectEditWorkflow = WorkflowState<ProjectEdition, void>;
 type NamespaceWorkflow = WorkflowState<Namespace, NamespaceOperator>;
 type NamespaceEditWorkflow = WorkflowState<NamespaceEdition, NamespaceOperator>;
@@ -93,4 +93,12 @@ export interface RootState {
 
   /**project和用户信息的映射 */
   projectUserInfo?: FFObjectModel<ProjectUserMap, ProjectFilter>;
+
+  detailProject?: FFListModel<Project, ProjectFilter>;
+
+  addExistMultiProject?: ProjectWorkflow;
+
+  deleteParentProject?: ProjectWorkflow;
+
+  projectDetail?: Project;
 }

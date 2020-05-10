@@ -92,6 +92,8 @@ export interface ProjectFilter {
 
   /**业务名称 */
   displayName?: string;
+
+  parentProject?: string;
 }
 
 export interface ProjectUserMap {

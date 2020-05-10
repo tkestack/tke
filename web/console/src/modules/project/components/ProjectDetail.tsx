@@ -13,6 +13,8 @@ import { SubpageHeadPanel } from './SubpageHeadPanel';
 import { ProjectHeadPanel } from '@src/modules/project/components/ProjectHeadPanel';
 import { CreateNamespacePanel } from '@src/modules/project/components/CreateNamespacePanel';
 import { UserPanel } from './user/UserPanel';
+import { DetailSubProjectPanel } from './DetailSubProjectPanel';
+import { DetailSubProjectActionPanel } from './DetailSubProjectActionPanel';
 
 interface ProjectDetailState {
   /** tabKey */
@@ -43,6 +45,10 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
       {
         id: 'info',
         label: t('业务信息')
+      },
+      {
+        id: 'subProject',
+        label: t('子业务')
       },
       { id: 'member', label: t('成员列表') },
       {
@@ -93,6 +99,10 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
             </TabPanel>
             <TabPanel id="member">
               <UserPanel />
+            </TabPanel>
+            <TabPanel id="subProject">
+              <DetailSubProjectActionPanel />
+              <DetailSubProjectPanel />
             </TabPanel>
             <TabPanel id="info">
               <ProjectDetailPanel {...this.props} />

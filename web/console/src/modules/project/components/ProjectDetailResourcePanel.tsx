@@ -52,13 +52,12 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
     );
   }
   private _renderTablePanel() {
-    let { actions, namespace, project } = this.props,
-      projectItem = project.selections[0] ? project.selections[0] : null;
-    let clusterKeys = projectItem && projectItem.spec.clusters ? Object.keys(projectItem.spec.clusters) : [];
+    let { actions, namespace, projectDetail } = this.props;
+    let clusterKeys = projectDetail && projectDetail.spec.clusters ? Object.keys(projectDetail.spec.clusters) : [];
     let finalClusterList = clusterKeys.map(item => {
       return {
         name: item,
-        hard: projectItem.spec.clusters[item].hard
+        hard: projectDetail.spec.clusters[item].hard
       };
     });
     const columns: TableColumn<{ name: string; hard: any }>[] = [
@@ -87,7 +86,7 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
             <Button
               type="link"
               onClick={() => {
-                actions.project.initEdition(projectItem);
+                actions.project.initEdition(projectDetail);
                 this.setState({
                   currentClusterIndex: recordIndex,
                   isShowEditDialog: true
@@ -101,7 +100,7 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
               className={'tea-ml-2n'}
               type="link"
               onClick={() => {
-                actions.project.initEdition(projectItem);
+                actions.project.initEdition(projectDetail);
                 this.setState({
                   currentClusterIndex: recordIndex,
                   isShowDeleteDialog: clusterKeys.length
@@ -135,7 +134,7 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
         <Button
           type={'link'}
           onClick={() => {
-            actions.project.initEdition(projectItem);
+            actions.project.initEdition(projectDetail);
             actions.project.addClusters();
             this.setState({
               isShowAddDialog: true,

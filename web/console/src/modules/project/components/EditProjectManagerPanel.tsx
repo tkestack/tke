@@ -39,7 +39,7 @@ export class EditProjectManagerPanel extends React.Component<EditProjectManagerP
           render: (manager: Manager) => <p>{`${manager.displayName}(${manager.name})`}</p>
         }
       ],
-      recordKey: 'name'
+      recordKey: 'id'
     };
     return <TransferTableSelector {...selectorProps} />;
   }

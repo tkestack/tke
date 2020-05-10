@@ -213,7 +213,7 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
   private _renderOperationCell(project: Project) {
     const { deleteProject } = this.props;
 
-    const matchPerformingWorkflow = (workflow: WorkflowState<Project, void>) => {
+    const matchPerformingWorkflow = (workflow: WorkflowState<Project, string>) => {
       return (
         workflow.operationState === OperationState.Performing &&
         workflow.targets &&
