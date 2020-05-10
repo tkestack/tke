@@ -3,9 +3,7 @@ import { connect } from 'react-redux';
 
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import { Bubble, Icon, Modal, TableColumn, Text } from '@tea/component';
-import {
-    bindActionCreators, isSuccessWorkflow, OperationState, WorkflowState
-} from '@tencent/ff-redux';
+import { bindActionCreators, isSuccessWorkflow, OperationState, WorkflowState } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter } from '../../../../helpers';
@@ -58,14 +56,8 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
           <div>
             <span className="text-overflow">
               {x.metadata.name.includes('cls')
-                ? x.metadata.name
-                    .split('-')
-                    .splice(2)
-                    .join('-')
-                : x.metadata.name
-                    .split('-')
-                    .splice(1)
-                    .join('-')}
+                ? x.metadata.name.split('-').splice(2).join('-')
+                : x.metadata.name.split('-').splice(1).join('-')}
             </span>
           </div>
         )
@@ -217,6 +209,7 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
               projectId: projectSelection.metadata.name
             });
             actions.namespace.editNamespaceResourceLimit.perform();
+            cancel();
           }}
         />
       </Modal>

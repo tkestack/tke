@@ -1,15 +1,22 @@
 import { collectionPaging, OperationResult, QueryState, RecordSet, uuid } from '@tencent/ff-redux';
 
 import { resourceConfig } from '../../../config/resourceConfig';
-import {
-    reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow
-} from '../../../helpers';
+import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow } from '../../../helpers';
 import { Method } from '../../../helpers/reduceNetwork';
 import { Region, RegionFilter, RequestParams, ResourceInfo } from '../common/models';
 import { resourceTypeToUnit } from './constants/Config';
 import {
-    Cluster, ClusterFilter, Manager, ManagerFilter, Namespace, NamespaceEdition, NamespaceFilter,
-    NamespaceOperator, Project, ProjectEdition, ProjectFilter
+  Cluster,
+  ClusterFilter,
+  Manager,
+  ManagerFilter,
+  Namespace,
+  NamespaceEdition,
+  NamespaceFilter,
+  NamespaceOperator,
+  Project,
+  ProjectEdition,
+  ProjectFilter
 } from './models';
 import { ProjectResourceLimit } from './models/Project';
 
@@ -517,4 +524,43 @@ export async function modifyAdminstrator(projects: ProjectEdition[]) {
   } catch (error) {
     return operationResult(projects, reduceNetworkWorkflow(error));
   }
+}
+
+/**
+ * 业务查询
+ * @param query 地域查询的一些过滤条件
+ */
+export async function fetchProjectUserInfo(query: QueryState<ProjectFilter>) {
+  let projectResourceInfo: ResourceInfo = resourceConfig().auth_project;
+  let url = reduceK8sRestfulPath({ resourceInfo: projectResourceInfo });
+  let params: RequestParams = {
+    method: Method.get,
+    url
+  };
+
+  let response = await reduceNetworkRequest(params);
+  let projectUserMap = {};
+  try {
+    if (response.code === 0) {
+      let listItems = response.data;
+      if (listItems.items) {
+        listItems.items.forEach(item => {
+          let userInfo = item.members
+            ? Object.keys(item.members).map(key => ({
+                id: key,
+                username: item.members[key]
+              }))
+            : [];
+          projectUserMap[item.metadata.name] = userInfo;
+        });
+      }
+    }
+  } catch (error) {
+    // 这里是搜索的时候，如果搜索不到的话，会报404的错误，只有在 resourceNotFound的时候，不把错误抛出去
+    if (+error.response.status !== 404) {
+      throw error;
+    }
+  }
+
+  return projectUserMap;
 }

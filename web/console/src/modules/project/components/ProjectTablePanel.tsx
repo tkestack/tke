@@ -51,10 +51,9 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
   formatManager(managers) {
     if (managers) {
       return managers.map((m, index) => {
-        // let manager = managerList.data.records.find(i => i.uin+"" === m.name+"");
         return (
           <p key={index} className="text-overflow">
-            {m}
+            {m.username}
           </p>
         );
       });
@@ -62,7 +61,7 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
   }
 
   private _renderTablePanel() {
-    let { actions, project } = this.props;
+    let { actions, project, projectUserInfo } = this.props;
     const columns: TableColumn<Project>[] = [
       {
         key: 'name',
@@ -148,34 +147,39 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
       {
         key: 'managers',
         header: t('成员'),
-        render: x => (
-          <div>
-            <Bubble placement="left" content={this.formatManager(x.spec.members) || null}>
-              <span className="text">
-                {this.formatManager(x.spec.members ? x.spec.members.slice(0, 1) : [])}
-                <Text parent="div" overflow>
-                  {x.spec.members && x.spec.members.length > 1 ? '...' : ''}
-                </Text>
-              </span>
-            </Bubble>
-            {x.status.phase === 'Terminating' ? (
-              <noscript />
-            ) : (
-              <span className="hover-icon">
-                <a
-                  href="javascript:;"
-                  className="pencil-icon hover-icon"
-                  onClick={() => {
-                    actions.project.initEdition(x);
-                    actions.project.editProjectManager.start([]);
-                  }}
-                />
-              </span>
-            )}
-          </div>
-        )
+        render: x => {
+          let { projectUserInfo } = this.props;
+          let members =
+            projectUserInfo.object.data && projectUserInfo.object.data[x.metadata.name]
+              ? projectUserInfo.object.data[x.metadata.name]
+              : [];
+          return (
+            <div>
+              <Bubble placement="left" content={this.formatManager(members) || null}>
+                <span className="text">
+                  {this.formatManager(members.length ? members.slice(0, 1) : [])}
+                  <Text parent="div" overflow>
+                    {members && members.length > 1 ? '...' : ''}
+                  </Text>
+                </span>
+              </Bubble>
+              {x.status.phase === 'Terminating' ? (
+                <noscript />
+              ) : (
+                <span>
+                  <a
+                    href="javascript:;"
+                    className="pencil-icon"
+                    onClick={e => {
+                      router.navigate({ sub: 'detail', tab: 'member' }, { projectId: x.metadata.name });
+                    }}
+                  />
+                </span>
+              )}
+            </div>
+          );
+        }
       },
-
       {
         key: 'createdTime',
         header: t('创建时间'),

@@ -10,3 +10,4 @@ export {
 } from './Model';
 export { getValidationActionType } from './ActionType';
 export { generateValidateReducer } from './Reducer';
+export { getStatus } from './Form';

@@ -1,15 +1,21 @@
+import { ProjectUserMap } from './../models/Project';
+import { FFReduxActionName } from './../constants/Config';
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import {
-    createFFListActions, deepClone, extend, generateWorkflowActionCreator, isSuccessWorkflow,
-    OperationTrigger, uuid
+  createFFListActions,
+  deepClone,
+  extend,
+  generateWorkflowActionCreator,
+  isSuccessWorkflow,
+  OperationTrigger,
+  uuid,
+  createFFObjectActions
 } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { initValidator } from '../../common/models/Validation';
 import * as ActionType from '../constants/ActionType';
-import {
-    initProjectEdition, initProjectResourceLimit, resourceTypeToUnit
-} from '../constants/Config';
+import { initProjectEdition, initProjectResourceLimit, resourceTypeToUnit } from '../constants/Config';
 import { Project, ProjectEdition, ProjectFilter, RootState } from '../models';
 import { Manager } from '../models/Manager';
 import { ProjectResourceLimit } from '../models/Project';
@@ -46,14 +52,27 @@ const FFModelProjectActions = createFFListActions<Project, ProjectFilter>({
   }
 });
 
+const FFObjectProjectUserInfoActions = createFFObjectActions<ProjectUserMap, ProjectFilter>({
+  actionName: FFReduxActionName.ProjectUserInfo,
+  fetcher: async (query, getState: GetState) => {
+    let response = await WebAPI.fetchProjectUserInfo(query);
+    return response;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().projectUserInfo;
+  }
+});
+
 const restActions = {
+  projectUsrInfo: FFObjectProjectUserInfoActions,
+
   poll: (filter?: ProjectFilter) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { project } = getState();
       dispatch(
         FFModelProjectActions.polling({
           filter: filter || project.query.filter,
-          delayTime: 8000
+          delayTime: 10000
         })
       );
     };

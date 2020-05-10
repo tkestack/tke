@@ -1,17 +1,34 @@
-import { FFListModel, WorkflowState } from '@tencent/ff-redux';
+import { ProjectUserMap } from './Project';
+import { FFObjectModel } from './../../../../lib/ff-redux/src/object/Model';
+import { FetcherState, FFListModel, OperationResult, RecordSet, WorkflowState } from '@tencent/ff-redux';
 
 import { RouteState } from '../../../../helpers';
-import { Region, RegionFilter } from '../../common/models';
+import { Region, RegionFilter, ResourceFilter } from '../../common/models';
 import { Resource } from '../../common/models/Resource';
 import {
-    Cluster, ClusterFilter, Manager, ManagerFilter, Namespace, NamespaceEdition, NamespaceFilter,
-    NamespaceOperator, Project, ProjectEdition, ProjectFilter
-} from './';
+  User,
+  Member,
+  UserFilter,
+  PolicyPlain,
+  PolicyFilter,
+  Cluster,
+  ClusterFilter,
+  Manager,
+  ManagerFilter,
+  Namespace,
+  NamespaceEdition,
+  NamespaceFilter,
+  NamespaceOperator,
+  Project,
+  ProjectEdition,
+  ProjectFilter
+} from './index';
 
 type ProjectWorkflow = WorkflowState<Project, void>;
 type ProjectEditWorkflow = WorkflowState<ProjectEdition, void>;
 type NamespaceWorkflow = WorkflowState<Namespace, NamespaceOperator>;
 type NamespaceEditWorkflow = WorkflowState<NamespaceEdition, NamespaceOperator>;
+type userWorkflow = WorkflowState<Member, any>;
 
 export interface RootState {
   /** 路由 */
@@ -65,4 +82,15 @@ export interface RootState {
 
   /**当前管理员 */
   adminstratorInfo?: Resource;
+
+  /** 用户信息 */
+  userList?: FFListModel<User, UserFilter>;
+
+  addUserWorkflow?: userWorkflow;
+
+  /** 关联策略相关，单独设置，不赋予任何场景相关的命名 */
+  policyPlainList?: FFListModel<PolicyPlain, PolicyFilter>;
+
+  /**project和用户信息的映射 */
+  projectUserInfo?: FFObjectModel<ProjectUserMap, ProjectFilter>;
 }

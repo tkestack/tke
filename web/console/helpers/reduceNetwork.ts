@@ -71,7 +71,12 @@ export const requestMethodForAction = (type: string) => {
  * 统一的请求处理
  * @param userParams: RequestParams
  */
-export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?: string) => {
+export const reduceNetworkRequest = async (
+  userParams: RequestParams,
+  clusterId?: string,
+  projectId?: string,
+  keyword?: string
+) => {
   let {
     method,
     url,
@@ -87,6 +92,16 @@ export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?
   if (clusterId) {
     userDefinedHeader = Object.assign({}, userDefinedHeader, {
       'X-TKE-ClusterName': clusterId
+    });
+  }
+  if (projectId) {
+    userDefinedHeader = Object.assign({}, userDefinedHeader, {
+      'X-TKE-ProjectName': projectId
+    });
+  }
+  if (keyword) {
+    userDefinedHeader = Object.assign({}, userDefinedHeader, {
+      'X-TKE-FuzzyResourceName': keyword
     });
   }
 
@@ -115,7 +130,7 @@ export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?
   } catch (error) {
     // 如果返回是 401的话，自动登出，此时是鉴权不过，cookies失效了
     if (error.response && error.response.status === 401) {
-      // location.reload();
+      location.reload();
     } else if (error.response && error.response.status === 403) {
       changeForbiddentConfig({
         isShow: true,
@@ -172,7 +187,7 @@ export const reduceNetworkWorkflow = (error: any) => {
  * @param target T[]
  * @param error any
  */
-export const operationResult = function<T>(target: T[] | T, error?: any): OperationResult<T>[] {
+export const operationResult = function <T>(target: T[] | T, error?: any): OperationResult<T>[] {
   if (target instanceof Array) {
     return target.map(x => ({ success: !error, target: x, error }));
   }

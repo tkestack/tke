@@ -149,10 +149,7 @@ const restActions = {
   /** 初始化集群的版本 */
   initClusterVersion: (clusterVersion: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let k8sVersion = clusterVersion
-        .split('.')
-        .slice(0, 2)
-        .join('.');
+      let k8sVersion = clusterVersion.split('.').slice(0, 2).join('.');
       dispatch({
         type: ActionType.ClusterVersion,
         payload: k8sVersion

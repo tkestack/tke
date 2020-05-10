@@ -93,3 +93,10 @@ export interface ProjectFilter {
   /**业务名称 */
   displayName?: string;
 }
+
+export interface ProjectUserMap {
+  [props: string]: {
+    id: string;
+    username: string;
+  }[];
+}

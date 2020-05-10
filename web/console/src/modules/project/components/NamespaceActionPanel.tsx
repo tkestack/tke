@@ -33,7 +33,7 @@ export class NamespaceActionPanel extends React.Component<RootProps, {}> {
             <Button
               type="primary"
               onClick={() => {
-                router.navigate({ sub: 'createNS' }, route.queries);
+                router.navigate({ sub: 'detail', tab: 'namespace', action: 'createNS' }, route.queries);
               }}
             >
               {/* <b className="icon-add" /> */}
