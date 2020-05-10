@@ -41,26 +41,25 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
   }
 
   render() {
-    let { actions, route, project } = this.props,
-      projectItem = project.selections[0] ? project.selections[0] : null;
+    let { actions, projectDetail } = this.props;
 
-    return projectItem ? (
+    return projectDetail ? (
       <FormPanel title={t('基本信息')}>
         <FormPanel.Item
           label={t('业务名称')}
           text
           textProps={{
             onEdit: () => {
-              actions.project.initEdition(projectItem);
+              actions.project.initEdition(projectDetail);
               actions.project.editProjectName.start([]);
             }
           }}
         >
-          {projectItem.spec.displayName}
+          {projectDetail.spec.displayName}
         </FormPanel.Item>
         <ProjectDetailResourcePanel {...this.props} />
         <FormPanel.Item text label={t('创建时间')}>
-          {dateFormatter(new Date(projectItem.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}
+          {dateFormatter(new Date(projectDetail.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}
         </FormPanel.Item>
         {this._renderEditProjectNameDialog()}
         {this._renderEditProjectManagerDialog()}

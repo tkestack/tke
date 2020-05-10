@@ -6,6 +6,9 @@ export const EditProjecResourceLimit = 'EditProjecResourceLimit';
 export const UpdateProjectEdition = 'UpdateProjectEdition';
 export const ClearProjectEdition = 'ClearProjectEdition';
 export const DeleteProject = 'DeleteProject';
+export const AddExistMultiProject = 'AddExistMultiProject';
+export const DeleteParentProject = 'DeleteParentProject';
+export const ProjectDetail = 'ProjectDetail';
 
 /**命名空间 */
 export const CreateNamespace = 'CreateNamespace';
