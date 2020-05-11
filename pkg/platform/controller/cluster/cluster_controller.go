@@ -19,6 +19,7 @@
 package cluster
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -440,7 +441,12 @@ func (c *Controller) ensureSyncOldClusterCredential(cluster *platformv1.Cluster)
 		return err
 	}
 	if len(clusterCredentials.Items) == 0 {
-		return nil
+		// Deprecated: will remove in next release
+		if cluster.Spec.Type == "Imported" {
+			return errors.New("waiting create ClusterCredential")
+		} else {
+			return nil
+		}
 	}
 	credential := &clusterCredentials.Items[0]
 	cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
