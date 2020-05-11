@@ -1,3 +1,4 @@
+import { NamespaceCert } from './Namespace';
 import { ProjectUserMap } from './Project';
 import { FFObjectModel } from './../../../../lib/ff-redux/src/object/Model';
 import { FetcherState, FFListModel, OperationResult, RecordSet, WorkflowState } from '@tencent/ff-redux';
@@ -101,4 +102,9 @@ export interface RootState {
   deleteParentProject?: ProjectWorkflow;
 
   projectDetail?: Project;
+
+  /**namespaceTable */
+  namespaceKubectlConfig?: FFObjectModel<NamespaceCert, NamespaceFilter>;
+
+  migrateNamesapce?: NamespaceWorkflow;
 }

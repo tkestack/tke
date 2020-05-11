@@ -81,9 +81,18 @@ export interface NamespaceEdition extends Identifiable {
 export interface NamespaceOperator {
   /**业务 */
   projectId?: string;
+  /**迁移使用 */
+  desProjectId?: string;
 }
 
 export interface NamespaceFilter {
   /**业务Id */
   projectId?: string;
+
+  np?: string;
+}
+
+export interface NamespaceCert {
+  certPem: string;
+  keyPem: string;
 }

@@ -650,3 +650,78 @@ export async function deleteParentProject(projects: Project[]) {
     return operationResult(projects, reduceNetworkWorkflow(error));
   }
 }
+
+export async function fetchNamespaceKubectlConfig(query: QueryState<NamespaceFilter>) {
+  let {
+    filter: { projectId, np }
+  } = query;
+  let NamespaceResourceInfo: ResourceInfo = resourceConfig().namespaces;
+  let url = reduceK8sRestfulPath({
+    resourceInfo: NamespaceResourceInfo,
+    specificName: projectId,
+    extraResource: `namespaces/${np}/certificate`
+  });
+
+  /** 构建参数 */
+  let method = 'GET';
+  let params: RequestParams = {
+    method,
+    url
+  };
+  let result;
+  try {
+    let response = await reduceNetworkRequest(params);
+    if (response.code === 0) {
+      result = {
+        certPem: response.data.status.certificate ? response.data.status.certificate.certPem : '',
+        keyPem: response.data.status.certificate ? response.data.status.certificate.keyPem : ''
+      };
+    }
+  } catch (error) {
+    result = {
+      certPem: '',
+      keyPem: ''
+    };
+  }
+
+  return result;
+}
+
+export async function migrateNamesapce(namespaces: Namespace[], options: NamespaceOperator) {
+  try {
+    let { projectId, desProjectId } = options;
+    let NamespaceResourceInfo: ResourceInfo = resourceConfig().namespaces;
+    let url = reduceK8sRestfulPath({
+      resourceInfo: NamespaceResourceInfo,
+      specificName: projectId,
+      extraResource: `nsemigrations`
+    });
+
+    let method = Method.post;
+    let param = {
+      method,
+      url,
+      data: {
+        kind: 'NsEmigration',
+        apiVersion: 'business.tkestack.io/v1',
+        metadata: {
+          namespace: projectId
+        },
+        spec: {
+          namespace: namespaces[0].metadata.name,
+          nsShowName: namespaces[0].metadata.namespace,
+          destination: desProjectId
+        }
+      }
+    };
+    // 构建参数
+    let response = await reduceNetworkRequest(param);
+    if (response.code === 0) {
+      return operationResult(namespaces);
+    } else {
+      return operationResult(namespaces, reduceNetworkWorkflow(response));
+    }
+  } catch (error) {
+    return operationResult(namespaces, reduceNetworkWorkflow(error));
+  }
+}

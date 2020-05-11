@@ -90,5 +90,11 @@ export const RootReducer = combineReducers({
     actionType: ActionType.DeleteParentProject
   }),
 
-  projectDetail: reduceToPayload(ActionType.ProjectDetail, null)
+  projectDetail: reduceToPayload(ActionType.ProjectDetail, null),
+
+  namespaceKubectlConfig: createFFObjectReducer(FFReduxActionName.NamespaceKubectlConfig),
+
+  migrateNamesapce: generateWorkflowReducer({
+    actionType: ActionType.MigrateNamesapce
+  })
 });

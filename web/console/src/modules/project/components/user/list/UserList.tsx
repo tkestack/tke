@@ -8,13 +8,14 @@ import { allActions } from '../../../actions';
 import { router } from '../../../router';
 const { useState, useEffect } = React;
 
-export const UserList = (props) => {
-  const state = useSelector((state) => state);
+export const UserList = props => {
+  const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { route } = state;
   useEffect(() => {
     actions.user.poll(route.queries);
+    return () => actions.user.clearPolling();
   }, []);
 
   return (
