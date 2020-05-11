@@ -106,6 +106,9 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsurePostInstallHook,
 		},
+		UpdateHandlers: []clusterprovider.Handler{
+			p.EnsureStoreCredential,
+		},
 	}
 
 	cfg, err := config.New(constants.ConfigFile)
