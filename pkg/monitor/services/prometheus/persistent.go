@@ -19,24 +19,26 @@
 package prometheus
 
 import (
+	"context"
+	"time"
+
 	v1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"time"
 	"tkestack.io/tke/pkg/monitor/util"
 	"tkestack.io/tke/pkg/monitor/util/rule"
 	prometheusrule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-func (h *processor) loadRule(clusterName string) (util.GenericRuleOperator, error) {
-	monitoringClient, err := util.GetMonitoringClient(clusterName, h.platformClient)
+func (h *processor) loadRule(ctx context.Context, clusterName string) (util.GenericRuleOperator, error) {
+	monitoringClient, err := util.GetMonitoringClient(ctx, clusterName, h.platformClient)
 	if err != nil {
 		return nil, err
 	}
 
-	promRule, err := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
+	promRule, err := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(ctx, prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +54,8 @@ func (h *processor) loadRule(clusterName string) (util.GenericRuleOperator, erro
 	return ruleOp, nil
 }
 
-func (h *processor) saveRule(clusterName string, groups []v1.RuleGroup) error {
-	monitoringClient, err := util.GetMonitoringClient(clusterName, h.platformClient)
+func (h *processor) saveRule(ctx context.Context, clusterName string, groups []v1.RuleGroup) error {
+	monitoringClient, err := util.GetMonitoringClient(ctx, clusterName, h.platformClient)
 	if err != nil {
 		return err
 	}
@@ -61,13 +63,13 @@ func (h *processor) saveRule(clusterName string, groups []v1.RuleGroup) error {
 	log.Infof("Save rule to prometheusRule %s(%s)", clusterName, prometheusrule.PrometheusRuleAlert)
 
 	return wait.PollImmediate(time.Second, time.Second*5, func() (done bool, err error) {
-		promRule, getErr := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
+		promRule, getErr := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(ctx, prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
 		if getErr != nil {
 			return false, getErr
 		}
 
 		promRule.Spec.Groups = groups
-		_, err = monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Update(promRule)
+		_, err = monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Update(ctx, promRule, metav1.UpdateOptions{})
 		if err == nil {
 			return true, nil
 		}

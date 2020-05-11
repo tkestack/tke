@@ -19,6 +19,8 @@
 package template
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,14 +34,14 @@ import (
 var ValidateTemplateName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateTemplate tests if required fields in the template are set.
-func ValidateTemplate(template *notify.Template, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
+func ValidateTemplate(ctx context.Context, template *notify.Template, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&template.ObjectMeta, true, ValidateTemplateName, field.NewPath("metadata"))
 
 	if template.Spec.DisplayName == "" {
 		allErrs = append(allErrs, field.Required(field.NewPath("displayName"), "must specify display name"))
 	}
 
-	channel, err := notifyClient.Channels().Get(template.ObjectMeta.Namespace, metav1.GetOptions{})
+	channel, err := notifyClient.Channels().Get(ctx, template.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		allErrs = append(allErrs, field.NotFound(field.NewPath("metadata", "namespace"), template.ObjectMeta.Namespace))
 	} else if err != nil {
@@ -85,9 +87,9 @@ func ValidateTemplate(template *notify.Template, notifyClient *notifyinternalcli
 
 // ValidateTemplateUpdate tests if required fields in the template are set during
 // an update.
-func ValidateTemplateUpdate(template *notify.Template, old *notify.Template, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
+func ValidateTemplateUpdate(ctx context.Context, template *notify.Template, old *notify.Template, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&template.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateTemplate(template, notifyClient)...)
+	allErrs = append(allErrs, ValidateTemplate(ctx, template, notifyClient)...)
 
 	return allErrs
 }

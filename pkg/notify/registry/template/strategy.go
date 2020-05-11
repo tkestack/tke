@@ -96,7 +96,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new template.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateTemplate(obj.(*notify.Template), s.notifyClient)
+	return ValidateTemplate(ctx, obj.(*notify.Template), s.notifyClient)
 }
 
 // AllowCreateOnUpdate is false for templates.
@@ -117,7 +117,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end template.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateTemplateUpdate(obj.(*notify.Template), old.(*notify.Template), s.notifyClient)
+	return ValidateTemplateUpdate(ctx, obj.(*notify.Template), old.(*notify.Template), s.notifyClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -126,7 +126,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a template")
 	}
-	return labels.Set(template.ObjectMeta.Labels), ToSelectableFields(template), nil
+	return template.ObjectMeta.Labels, ToSelectableFields(template), nil
 }
 
 // MatchTemplate returns a generic matcher for a given label and field selector.

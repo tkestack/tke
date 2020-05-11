@@ -19,6 +19,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 
 	v1 "tkestack.io/tke/api/platform/v1"
@@ -43,8 +44,8 @@ func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, 
 		return nil, err
 	}
 
-	apiServer.GenericAPIServer.AddPostStartHookOrDie("start-notify-api-server-informers", func(context genericapiserver.PostStartHookContext) error {
-		cfg.VersionedSharedInformerFactory.Start(context.StopCh)
+	apiServer.GenericAPIServer.AddPostStartHookOrDie("start-notify-api-server-informers", func(ctx genericapiserver.PostStartHookContext) error {
+		cfg.VersionedSharedInformerFactory.Start(ctx.StopCh)
 
 		// Store notify api address in configmap named tke-notify-api; It is used by prometheus addon for alertmanager to send alarms
 		notifyAPIAddress := fmt.Sprintf("https://%s:%d", cfg.ExternalHost, cfg.ExternalPort)
@@ -58,12 +59,12 @@ func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, 
 				Annotations: map[string]string{NotifyAPIAddressKey: notifyAPIAddress},
 			},
 		}
-		cm, err := cfg.PlatformClient.ConfigMaps().Get(NotifyApiConfigMapName, metav1.GetOptions{})
+		cm, err := cfg.PlatformClient.ConfigMaps().Get(context.Background(), NotifyApiConfigMapName, metav1.GetOptions{})
 		if err == nil && cm != nil {
 			v, ok := cm.Annotations[NotifyAPIAddressKey]
 			if !ok || v != notifyConfigMap.Annotations[NotifyAPIAddressKey] {
 				notifyConfigMap.ResourceVersion = cm.ResourceVersion
-				_, err = cfg.PlatformClient.ConfigMaps().Update(notifyConfigMap)
+				_, err = cfg.PlatformClient.ConfigMaps().Update(context.Background(), notifyConfigMap, metav1.UpdateOptions{})
 				if err != nil {
 					log.Warnf("failed to update configmap for tke-notify-api due to %v", err)
 					return err
@@ -71,7 +72,7 @@ func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, 
 			}
 			return nil
 		}
-		cm, err = cfg.PlatformClient.ConfigMaps().Create(notifyConfigMap)
+		cm, err = cfg.PlatformClient.ConfigMaps().Create(context.Background(), notifyConfigMap, metav1.CreateOptions{})
 		if err != nil {
 			log.Warnf("failed to create configmap for tke-notify-api due to %v", err)
 			return err

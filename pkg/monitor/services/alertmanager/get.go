@@ -19,12 +19,14 @@
 package alertmanager
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-func (h *processor) Get(clusterName string, alertValue string) (*config.Route, error) {
+func (h *processor) Get(ctx context.Context, clusterName string, alertValue string) (*config.Route, error) {
 	h.Lock()
 	defer h.Unlock()
 
@@ -36,7 +38,7 @@ func (h *processor) Get(clusterName string, alertValue string) (*config.Route, e
 		return nil, errors.New("empty alertValue")
 	}
 
-	routeOp, err := h.loadConfig(clusterName)
+	routeOp, err := h.loadConfig(ctx, clusterName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "route operator not found")
 	}
