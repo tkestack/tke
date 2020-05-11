@@ -24,12 +24,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"net/http"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/logagent"
 	"tkestack.io/tke/pkg/logagent/util"
@@ -40,7 +41,7 @@ import (
 type FileNodeREST struct {
 	//apiKeyStore *registry.Store
 	//rest.Storage
-	apiKeyStore *registry.Store
+	apiKeyStore    *registry.Store
 	PlatformClient platformversionedclient.PlatformV1Interface
 	//*registry.Store
 }
@@ -49,23 +50,23 @@ var _ = rest.Creater(&FileNodeREST{})
 
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
-func (r *FileNodeREST)  New() runtime.Object {
+func (r *FileNodeREST) New() runtime.Object {
 	return &logagent.LogFileTree{}
 }
 
 type FileNodeRequest struct {
-	PodName string `json:"podName"`
+	PodName   string `json:"podName"`
 	Namespace string `json:"namespace"`
 	Container string `json:"container"`
 }
 
 type FileNodeProxy struct {
-	Req logagent.LogFileTreeSpec
-	Ip string
+	Req  logagent.LogFileTreeSpec
+	Ip   string
 	Port string
 }
 
-func (p *FileNodeProxy) GetReaderCloser() (io.ReadCloser,error) {
+func (p *FileNodeProxy) GetReaderCloser() (io.ReadCloser, error) {
 	jsonStr, err := json.Marshal(p.Req)
 	if err != nil {
 		log.Errorf("unable to marshal request to json %v", err)
@@ -92,14 +93,14 @@ func (r *FileNodeREST) Create(ctx context.Context, obj runtime.Object, createVal
 	//userName, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	fileNode := obj.(*logagent.LogFileTree)
 	//log.Infof("get userNmae %v tenantId %v and fileNode spec=%+v", userName, tenantID, fileNode.Spec)
-	hostIp, err := util.GetClusterPodIp(fileNode.Spec.ClusterId, fileNode.Spec.Namespace, fileNode.Spec.Pod, r.PlatformClient)
-	if  err != nil {
+	hostIp, err := util.GetClusterPodIp(ctx, fileNode.Spec.ClusterId, fileNode.Spec.Namespace, fileNode.Spec.Pod, r.PlatformClient)
+	if err != nil {
 		return nil, errors.NewInternalError(fmt.Errorf("unable to get host ip"))
 	}
 	return &util.LocationStreamer{
-		Request: &FileNodeProxy{Req:fileNode.Spec ,Ip:hostIp,Port:util.LogagentPort},
-		Transport: nil,
-		ContentType:     "application/json",
-		Ip: hostIp,
+		Request:     &FileNodeProxy{Req: fileNode.Spec, Ip: hostIp, Port: util.LogagentPort},
+		Transport:   nil,
+		ContentType: "application/json",
+		Ip:          hostIp,
 	}, nil
 }
