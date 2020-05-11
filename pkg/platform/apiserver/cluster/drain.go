@@ -19,15 +19,17 @@
 package cluster
 
 import (
+	"context"
 	"fmt"
+	"math"
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	"math"
-	"time"
 	"tkestack.io/tke/pkg/platform/apiserver/cluster/drain"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -40,8 +42,8 @@ type drainCmdOptions struct {
 }
 
 // DrainNode work as kubectl drain node
-func DrainNode(client kubernetes.Interface, node *corev1.Node) error {
-	return newDrainCmdOptions(client, node).RunDrain()
+func DrainNode(ctx context.Context, client kubernetes.Interface, node *corev1.Node) error {
+	return newDrainCmdOptions(client, node).RunDrain(ctx)
 }
 
 func newDrainCmdOptions(client kubernetes.Interface, node *corev1.Node) *drainCmdOptions {
@@ -59,11 +61,11 @@ func newDrainCmdOptions(client kubernetes.Interface, node *corev1.Node) *drainCm
 }
 
 // RunDrain runs the 'drain' command
-func (o *drainCmdOptions) RunDrain() error {
-	if err := o.RunCordonOrUncordon(true); err != nil {
+func (o *drainCmdOptions) RunDrain(ctx context.Context) error {
+	if err := o.RunCordonOrUncordon(ctx, true); err != nil {
 		return err
 	}
-	err := o.deleteOrEvictPodsSimple(o.node)
+	err := o.deleteOrEvictPodsSimple(ctx, o.node)
 	if err != nil {
 		log.Errorf("unable to drain node %q", o.node.Name)
 	}
@@ -71,8 +73,8 @@ func (o *drainCmdOptions) RunDrain() error {
 	return err
 }
 
-func (o *drainCmdOptions) deleteOrEvictPodsSimple(nodeInfo *corev1.Node) error {
-	list, errs := o.drainer.GetPodsForDeletion(nodeInfo.Name)
+func (o *drainCmdOptions) deleteOrEvictPodsSimple(ctx context.Context, nodeInfo *corev1.Node) error {
+	list, errs := o.drainer.GetPodsForDeletion(ctx, nodeInfo.Name)
 	if errs != nil {
 		return utilerrors.NewAggregate(errs)
 	}
@@ -80,8 +82,8 @@ func (o *drainCmdOptions) deleteOrEvictPodsSimple(nodeInfo *corev1.Node) error {
 		log.Warn(warnings)
 	}
 
-	if err := o.deleteOrEvictPods(list.Pods()); err != nil {
-		pendingList, newErrs := o.drainer.GetPodsForDeletion(nodeInfo.Name)
+	if err := o.deleteOrEvictPods(ctx, list.Pods()); err != nil {
+		pendingList, newErrs := o.drainer.GetPodsForDeletion(ctx, nodeInfo.Name)
 
 		log.Errorf("There are pending pods in node %q when an error occurred: %v\n", nodeInfo.Name, err)
 		for _, pendingPod := range pendingList.Pods() {
@@ -96,7 +98,7 @@ func (o *drainCmdOptions) deleteOrEvictPodsSimple(nodeInfo *corev1.Node) error {
 }
 
 // deleteOrEvictPods deletes or evicts the pods on the api server
-func (o *drainCmdOptions) deleteOrEvictPods(pods []corev1.Pod) error {
+func (o *drainCmdOptions) deleteOrEvictPods(ctx context.Context, pods []corev1.Pod) error {
 	if len(pods) == 0 {
 		return nil
 	}
@@ -107,23 +109,23 @@ func (o *drainCmdOptions) deleteOrEvictPods(pods []corev1.Pod) error {
 	}
 
 	getPodFn := func(namespace, name string) (*corev1.Pod, error) {
-		return o.drainer.Client.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		return o.drainer.Client.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 	}
 
 	if len(policyGroupVersion) > 0 {
-		return o.evictPods(pods, policyGroupVersion, getPodFn)
+		return o.evictPods(ctx, pods, policyGroupVersion, getPodFn)
 	}
-	return o.deletePods(pods, getPodFn)
+	return o.deletePods(ctx, pods, getPodFn)
 }
 
-func (o *drainCmdOptions) evictPods(pods []corev1.Pod, policyGroupVersion string, getPodFn func(namespace, name string) (*corev1.Pod, error)) error {
+func (o *drainCmdOptions) evictPods(ctx context.Context, pods []corev1.Pod, policyGroupVersion string, getPodFn func(namespace, name string) (*corev1.Pod, error)) error {
 	returnCh := make(chan error, 1)
 
 	for _, pod := range pods {
 		go func(pod corev1.Pod, returnCh chan error) {
 			for {
 				log.Infof("evicting pod %q\n", pod.Name)
-				err := o.drainer.EvictPod(pod, policyGroupVersion)
+				err := o.drainer.EvictPod(ctx, pod, policyGroupVersion)
 				if err == nil {
 					break
 				} else if apierrors.IsNotFound(err) {
@@ -172,7 +174,7 @@ func (o *drainCmdOptions) evictPods(pods []corev1.Pod, policyGroupVersion string
 	return utilerrors.NewAggregate(errors)
 }
 
-func (o *drainCmdOptions) deletePods(pods []corev1.Pod, getPodFn func(namespace, name string) (*corev1.Pod, error)) error {
+func (o *drainCmdOptions) deletePods(ctx context.Context, pods []corev1.Pod, getPodFn func(namespace, name string) (*corev1.Pod, error)) error {
 	// 0 timeout means infinite, we use MaxInt64 to represent it.
 	var globalTimeout time.Duration
 	if o.drainer.Timeout == 0 {
@@ -181,7 +183,7 @@ func (o *drainCmdOptions) deletePods(pods []corev1.Pod, getPodFn func(namespace,
 		globalTimeout = o.drainer.Timeout
 	}
 	for _, pod := range pods {
-		err := o.drainer.DeletePod(pod)
+		err := o.drainer.DeletePod(ctx, pod)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
@@ -199,7 +201,7 @@ func (o *drainCmdOptions) waitForDelete(pods []corev1.Pod, interval, timeout tim
 	}
 
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
-		pendingPods := []corev1.Pod{}
+		var pendingPods []corev1.Pod
 		for i, pod := range pods {
 			p, err := getPodFn(pod.Namespace, pod.Name)
 			if apierrors.IsNotFound(err) || (p != nil && p.ObjectMeta.UID != pod.ObjectMeta.UID) {
@@ -222,7 +224,7 @@ func (o *drainCmdOptions) waitForDelete(pods []corev1.Pod, interval, timeout tim
 
 // RunCordonOrUncordon runs either Cordon or Uncordon.  The desired value for
 // "Unschedulable" is passed as the first arg.
-func (o *drainCmdOptions) RunCordonOrUncordon(desired bool) error {
+func (o *drainCmdOptions) RunCordonOrUncordon(ctx context.Context, desired bool) error {
 	cordonOrUncordon := "cordon"
 	if !desired {
 		cordonOrUncordon = "un" + cordonOrUncordon
@@ -232,7 +234,7 @@ func (o *drainCmdOptions) RunCordonOrUncordon(desired bool) error {
 	if updateRequired := cordonHelper.UpdateIfRequired(desired); !updateRequired {
 		return nil
 	}
-	err, patchErr := cordonHelper.PatchOrReplace(o.drainer.Client)
+	err, patchErr := cordonHelper.PatchOrReplace(ctx, o.drainer.Client)
 	if patchErr != nil {
 		return fmt.Errorf("error: unable to %s node %q: %v", cordonOrUncordon, o.node.Name, patchErr)
 	}

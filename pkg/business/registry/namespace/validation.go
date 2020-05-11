@@ -19,6 +19,7 @@
 package namespace
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -84,12 +85,12 @@ func ValidateAgainstProject(namespace, old *business.Namespace, project *busines
 }
 
 // ValidateNamespace tests if required fields in the namespace are set.
-func ValidateNamespace(namespace *business.Namespace, old *business.Namespace,
+func ValidateNamespace(ctx context.Context, namespace *business.Namespace, old *business.Namespace,
 	objectGetter validation.BusinessObjectGetter, clusterGetter validation.ClusterGetter) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&namespace.ObjectMeta,
 		true, ValidateNamespaceName, field.NewPath("metadata"))
 	allErrs = append(allErrs,
-		validation.ValidateClusterVersioned(clusterGetter, namespace.Spec.ClusterName, namespace.Spec.TenantID)...)
+		validation.ValidateClusterVersioned(ctx, clusterGetter, namespace.Spec.ClusterName, namespace.Spec.TenantID)...)
 
 	fldSpecPath := field.NewPath("spec")
 
@@ -105,7 +106,7 @@ func ValidateNamespace(namespace *business.Namespace, old *business.Namespace,
 	}
 
 	fldProject := field.NewPath("metadata", "namespace")
-	project, err := objectGetter.Project(namespace.ObjectMeta.Namespace, metav1.GetOptions{})
+	project, err := objectGetter.Project(ctx, namespace.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return append(allErrs, field.NotFound(fldProject, namespace.ObjectMeta.Namespace))
@@ -132,10 +133,10 @@ func ValidateNamespace(namespace *business.Namespace, old *business.Namespace,
 
 // ValidateNamespaceUpdate tests if required fields in the namespace are set during
 // an update.
-func ValidateNamespaceUpdate(namespace *business.Namespace, old *business.Namespace,
+func ValidateNamespaceUpdate(ctx context.Context, namespace *business.Namespace, old *business.Namespace,
 	objectGetter validation.BusinessObjectGetter, clusterGetter validation.ClusterGetter) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&namespace.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateNamespace(namespace, old, objectGetter, clusterGetter)...)
+	allErrs = append(allErrs, ValidateNamespace(ctx, namespace, old, objectGetter, clusterGetter)...)
 
 	if namespace.Spec.ClusterName != old.Spec.ClusterName {
 		allErrs = append(allErrs,

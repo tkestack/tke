@@ -35,12 +35,12 @@ import (
 var _validateChartGroupName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateChartGroupCreate tests if required fields in the ChartGroup are set correctly.
-func ValidateChartGroupCreate(chartGroup *business.ChartGroup,
+func ValidateChartGroupCreate(ctx context.Context, chartGroup *business.ChartGroup,
 	businessClient *businessinternalclient.BusinessClient, registryClient registryversionedclient.RegistryV1Interface) field.ErrorList {
 	allErrs := validateChartGroup(chartGroup, businessClient, registryClient)
 
 	fldName := field.NewPath("spec", "name")
-	chartGroupList, err := registryClient.ChartGroups().List(context.Background(), metav1.ListOptions{
+	chartGroupList, err := registryClient.ChartGroups().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chartGroup.Spec.TenantID, chartGroup.Name),
 	})
 	if err != nil {
@@ -54,7 +54,7 @@ func ValidateChartGroupCreate(chartGroup *business.ChartGroup,
 
 // ValidateChartGroupUpdate tests if required fields in the ChartGroup are set during
 // an update.
-func ValidateChartGroupUpdate(chartGroup *business.ChartGroup, old *business.ChartGroup,
+func ValidateChartGroupUpdate(ctx context.Context, chartGroup *business.ChartGroup, old *business.ChartGroup,
 	businessClient *businessinternalclient.BusinessClient, registryClient registryversionedclient.RegistryV1Interface) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&chartGroup.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 	allErrs = append(allErrs, validateChartGroup(chartGroup, businessClient, registryClient)...)

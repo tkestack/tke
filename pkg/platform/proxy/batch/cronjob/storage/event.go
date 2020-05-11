@@ -79,5 +79,5 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	return client.CoreV1().Events(namespaceName).List(listOptions)
+	return client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 }

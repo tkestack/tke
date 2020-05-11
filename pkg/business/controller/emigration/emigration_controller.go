@@ -211,32 +211,32 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve emigration from store", log.String("projectName", projectName),
 			log.String("emigrationName", emigrationName), log.Err(err))
 	default:
-		err = c.processUpdate(emigration)
+		err = c.processUpdate(context.Background(), emigration)
 	}
 	return err
 }
 
-func (c *Controller) processUpdate(emigration *v1.NsEmigration) error {
+func (c *Controller) processUpdate(ctx context.Context, emigration *v1.NsEmigration) error {
 	switch emigration.Status.Phase {
 	case v1.NsEmigrationPending:
-		return c.processPending(emigration)
+		return c.processPending(ctx, emigration)
 	case v1.NsEmigrationOldOneLocked:
-		return c.processOldOneLocked(emigration)
+		return c.processOldOneLocked(ctx, emigration)
 	case v1.NsEmigrationOldOneDetached:
-		return c.processOldOneDetached(emigration)
+		return c.processOldOneDetached(ctx, emigration)
 	case v1.NsEmigrationNewOneCreated:
-		return c.processNewOneCreated(emigration)
+		return c.processNewOneCreated(ctx, emigration)
 	case v1.NsEmigrationOldOneTerminating:
-		return c.processOldOneTerminating(emigration)
+		return c.processOldOneTerminating(ctx, emigration)
 	case v1.NsEmigrationFinished:
-		return c.processFinished(emigration)
+		return c.processFinished(ctx, emigration)
 	default:
-		return c.processOthers(emigration)
+		return c.processOthers(ctx, emigration)
 	}
 }
 
-func (c *Controller) getOldNamespace(emigration *v1.NsEmigration) (*v1.Namespace, error) {
-	oldNS, err := c.client.BusinessV1().Namespaces(emigration.Namespace).Get(context.Background(), emigration.Spec.Namespace, metav1.GetOptions{})
+func (c *Controller) getOldNamespace(ctx context.Context, emigration *v1.NsEmigration) (*v1.Namespace, error) {
+	oldNS, err := c.client.BusinessV1().Namespaces(emigration.Namespace).Get(ctx, emigration.Spec.Namespace, metav1.GetOptions{})
 	if err != nil {
 		oldNS = nil
 		emigration.Status.Message = fmt.Sprintf("%s, failed to get namespace %s/%s",
@@ -248,63 +248,63 @@ func (c *Controller) getOldNamespace(emigration *v1.NsEmigration) (*v1.Namespace
 	return oldNS, err
 }
 
-func (c *Controller) processPending(emigration *v1.NsEmigration) error {
+func (c *Controller) processPending(ctx context.Context, emigration *v1.NsEmigration) error {
 	if emigration.Status.Phase != v1.NsEmigrationPending {
 		panic(fmt.Sprintf("%s != %s", emigration.Status.Phase, v1.NsEmigrationPending))
 	}
-	oldNS, err := c.getOldNamespace(emigration)
+	oldNS, err := c.getOldNamespace(ctx, emigration)
 	if err != nil {
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	if oldNS.Status.Phase != v1.NamespaceAvailable {
 		emigration.Status.Message = fmt.Sprintf("%s, namespace %s/%s is NOT in phase %s",
 			emigration.Status.Phase, oldNS.Namespace, oldNS.Spec.Namespace, oldNS.Status.Phase)
 		emigration.Status.Phase = v1.NsEmigrationFailed
 		emigration.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	oldNS.Status.Phase = v1.NamespaceLocked
-	if err := businessns.PersistUpdateNamesapce(c.client, oldNS); err != nil {
+	if err := businessns.PersistUpdateNamesapce(ctx, c.client, oldNS); err != nil {
 		emigration.Status.Message = fmt.Sprintf("%s, failed to lock namespace %s/%s",
 			emigration.Status.Phase, oldNS.Namespace, oldNS.Spec.Namespace)
 		emigration.Status.Phase = v1.NsEmigrationFailed
 		emigration.Status.Reason = err.Error()
 		emigration.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	emigration.Status.Phase = v1.NsEmigrationOldOneLocked
 	emigration.Status.LastTransitionTime = metav1.Now()
-	return c.persistUpdateEmigration(emigration)
+	return c.persistUpdateEmigration(ctx, emigration)
 }
 
-func (c *Controller) processOldOneLocked(emigration *v1.NsEmigration) error {
+func (c *Controller) processOldOneLocked(ctx context.Context, emigration *v1.NsEmigration) error {
 	if emigration.Status.Phase != v1.NsEmigrationOldOneLocked {
 		panic(fmt.Sprintf("%s != %s", emigration.Status.Phase, v1.NsEmigrationOldOneLocked))
 	}
-	oldNS, err := c.getOldNamespace(emigration)
+	oldNS, err := c.getOldNamespace(ctx, emigration)
 	if err != nil {
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
-	if err := c.detachFromClusterNamespace(oldNS); err != nil {
+	if err := c.detachFromClusterNamespace(ctx, oldNS); err != nil {
 		emigration.Status.Message = fmt.Sprintf("%s, failed to detach namespace %s/%s from cluster",
 			emigration.Status.Phase, oldNS.Namespace, oldNS.Spec.Namespace)
 		emigration.Status.Phase = v1.NsEmigrationFailed
 		emigration.Status.Reason = err.Error()
 		emigration.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	emigration.Status.Phase = v1.NsEmigrationOldOneDetached
 	emigration.Status.LastTransitionTime = metav1.Now()
-	return c.persistUpdateEmigration(emigration)
+	return c.persistUpdateEmigration(ctx, emigration)
 }
 
-func (c *Controller) processOldOneDetached(emigration *v1.NsEmigration) error {
+func (c *Controller) processOldOneDetached(ctx context.Context, emigration *v1.NsEmigration) error {
 	if emigration.Status.Phase != v1.NsEmigrationOldOneDetached {
 		panic(fmt.Sprintf("%s != %s", emigration.Status.Phase, v1.NsEmigrationOldOneDetached))
 	}
-	oldNS, err := c.getOldNamespace(emigration)
+	oldNS, err := c.getOldNamespace(ctx, emigration)
 	if err != nil {
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	newNS := v1.Namespace{}
 	newNS.Namespace = emigration.Spec.Destination
@@ -312,31 +312,31 @@ func (c *Controller) processOldOneDetached(emigration *v1.NsEmigration) error {
 	newNS.Spec.ClusterName = oldNS.Spec.ClusterName
 	newNS.Spec.Namespace = oldNS.Spec.Namespace
 	newNS.Spec.Hard = oldNS.Spec.Hard
-	if _, err := c.client.BusinessV1().Namespaces(newNS.Namespace).Create(context.Background(), &newNS, metav1.CreateOptions{}); err != nil {
+	if _, err := c.client.BusinessV1().Namespaces(newNS.Namespace).Create(ctx, &newNS, metav1.CreateOptions{}); err != nil {
 		emigration.Status.Message = fmt.Sprintf("%s, failed to create namespace %s/%s",
 			emigration.Status.Phase, emigration.Spec.Destination, emigration.Spec.NsShowName)
 		emigration.Status.Phase = v1.NsEmigrationFailed
 		emigration.Status.Reason = err.Error()
 		emigration.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	emigration.Status.Phase = v1.NsEmigrationNewOneCreated
 	emigration.Status.LastTransitionTime = metav1.Now()
-	return c.persistUpdateEmigration(emigration)
+	return c.persistUpdateEmigration(ctx, emigration)
 }
 
-func (c *Controller) processNewOneCreated(emigration *v1.NsEmigration) error {
+func (c *Controller) processNewOneCreated(ctx context.Context, emigration *v1.NsEmigration) error {
 	if emigration.Status.Phase != v1.NsEmigrationNewOneCreated {
 		panic(fmt.Sprintf("%s != %s", emigration.Status.Phase, v1.NsEmigrationNewOneCreated))
 	}
-	newNS, err := c.client.BusinessV1().Namespaces(emigration.Spec.Destination).Get(context.Background(), emigration.Spec.Namespace, metav1.GetOptions{})
+	newNS, err := c.client.BusinessV1().Namespaces(emigration.Spec.Destination).Get(ctx, emigration.Spec.Namespace, metav1.GetOptions{})
 	if err != nil {
 		emigration.Status.Message = fmt.Sprintf("%s, failed to check status of namespace %s/%s",
 			emigration.Status.Phase, emigration.Spec.Destination, emigration.Spec.NsShowName)
 		emigration.Status.Reason = err.Error()
 		emigration.Status.Phase = v1.NsEmigrationFailed
 		emigration.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	// waiting for newNS to be NamespaceAvailable
 	if newNS.Status.Phase != v1.NamespaceAvailable {
@@ -345,19 +345,19 @@ func (c *Controller) processNewOneCreated(emigration *v1.NsEmigration) error {
 				emigration.Status.Phase, emigration.Spec.Destination, emigration.Spec.NsShowName, newNS.Status.Phase)
 			emigration.Status.Phase = v1.NsEmigrationFailed
 			emigration.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdateEmigration(emigration)
+			return c.persistUpdateEmigration(ctx, emigration)
 		}
 		emigration.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
-	oldNS, err := c.client.BusinessV1().Namespaces(emigration.Namespace).Get(context.Background(), emigration.Spec.Namespace, metav1.GetOptions{})
+	oldNS, err := c.client.BusinessV1().Namespaces(emigration.Namespace).Get(ctx, emigration.Spec.Namespace, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		emigration.Status.Message = fmt.Sprintf("%s, failed to check status of namespace %s/%s",
 			emigration.Status.Phase, emigration.Namespace, emigration.Spec.NsShowName)
 		emigration.Status.Phase = v1.NsEmigrationFailed
 		emigration.Status.Reason = err.Error()
 		emigration.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	if err == nil {
 		if oldNS.Status.Phase != v1.NamespaceLocked {
@@ -365,36 +365,36 @@ func (c *Controller) processNewOneCreated(emigration *v1.NsEmigration) error {
 				emigration.Status.Phase, oldNS.Namespace, oldNS.Spec.Namespace, oldNS.Status.Phase)
 			emigration.Status.Phase = v1.NsEmigrationFailed
 			emigration.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdateEmigration(emigration)
+			return c.persistUpdateEmigration(ctx, emigration)
 		}
 		background := metav1.DeletePropagationBackground
 		deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
-		if err := c.client.BusinessV1().Namespaces(oldNS.Namespace).Delete(context.Background(), oldNS.Name, deleteOpt); err != nil && !errors.IsNotFound(err) {
+		if err := c.client.BusinessV1().Namespaces(oldNS.Namespace).Delete(ctx, oldNS.Name, deleteOpt); err != nil && !errors.IsNotFound(err) {
 			emigration.Status.Message = fmt.Sprintf("%s, failed to delete namespace %s/%s",
 				emigration.Status.Phase, oldNS.Namespace, oldNS.Spec.Namespace)
 			emigration.Status.Phase = v1.NsEmigrationFailed
 			emigration.Status.Reason = err.Error()
 			emigration.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdateEmigration(emigration)
+			return c.persistUpdateEmigration(ctx, emigration)
 		}
 	}
 	emigration.Status.Phase = v1.NsEmigrationOldOneTerminating
 	emigration.Status.LastTransitionTime = metav1.Now()
-	return c.persistUpdateEmigration(emigration)
+	return c.persistUpdateEmigration(ctx, emigration)
 }
 
-func (c *Controller) processOldOneTerminating(emigration *v1.NsEmigration) error {
+func (c *Controller) processOldOneTerminating(ctx context.Context, emigration *v1.NsEmigration) error {
 	if emigration.Status.Phase != v1.NsEmigrationOldOneTerminating {
 		panic(fmt.Sprintf("%s != %s", emigration.Status.Phase, v1.NsEmigrationOldOneTerminating))
 	}
-	oldNS, err := c.client.BusinessV1().Namespaces(emigration.Namespace).Get(context.Background(), emigration.Spec.Namespace, metav1.GetOptions{})
+	oldNS, err := c.client.BusinessV1().Namespaces(emigration.Namespace).Get(ctx, emigration.Spec.Namespace, metav1.GetOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		emigration.Status.Message = fmt.Sprintf("%s, failed to check status of namespace %s/%s",
 			emigration.Status.Phase, emigration.Namespace, emigration.Spec.NsShowName)
 		emigration.Status.Reason = err.Error()
 		emigration.Status.Phase = v1.NsEmigrationFailed
 		emigration.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	if err == nil {
 		if oldNS.Status.Phase != v1.NamespaceTerminating {
@@ -402,35 +402,35 @@ func (c *Controller) processOldOneTerminating(emigration *v1.NsEmigration) error
 				emigration.Status.Phase, emigration.Namespace, emigration.Spec.NsShowName, oldNS.Status.Phase)
 			emigration.Status.Phase = v1.NsEmigrationFailed
 			emigration.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdateEmigration(emigration)
+			return c.persistUpdateEmigration(ctx, emigration)
 		}
 		emigration.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateEmigration(emigration)
+		return c.persistUpdateEmigration(ctx, emigration)
 	}
 	emigration.Status.Phase = v1.NsEmigrationFinished
 	emigration.Status.LastTransitionTime = metav1.Now()
-	return c.persistUpdateEmigration(emigration)
+	return c.persistUpdateEmigration(ctx, emigration)
 }
 
-func (c *Controller) processFinished(emigration *v1.NsEmigration) error {
+func (c *Controller) processFinished(ctx context.Context, emigration *v1.NsEmigration) error {
 	if emigration.Status.Phase != v1.NsEmigrationFinished {
 		panic(fmt.Sprintf("%s != %s", emigration.Status.Phase, v1.NsEmigrationFinished))
 	}
-	return c.client.BusinessV1().NsEmigrations(emigration.Namespace).Delete(context.Background(), emigration.Name, metav1.DeleteOptions{})
+	return c.client.BusinessV1().NsEmigrations(emigration.Namespace).Delete(ctx, emigration.Name, metav1.DeleteOptions{})
 }
 
-func (c *Controller) processOthers(emigration *v1.NsEmigration) error {
+func (c *Controller) processOthers(ctx context.Context, emigration *v1.NsEmigration) error {
 	if emigration.Status.Phase == v1.NsEmigrationFailed {
 		return nil
 	}
 	emigration.Status.Message = fmt.Sprintf("invalid emigration phase %s", emigration.Status.Phase)
 	emigration.Status.Phase = v1.NsEmigrationFailed
 	emigration.Status.LastTransitionTime = metav1.Now()
-	return c.persistUpdateEmigration(emigration)
+	return c.persistUpdateEmigration(ctx, emigration)
 }
 
-func (c *Controller) detachFromClusterNamespace(namespace *v1.Namespace) error {
-	kubeClient, err := util.BuildExternalClientSetWithName(c.platformClient, namespace.Spec.ClusterName)
+func (c *Controller) detachFromClusterNamespace(ctx context.Context, namespace *v1.Namespace) error {
+	kubeClient, err := util.BuildExternalClientSetWithName(ctx, c.platformClient, namespace.Spec.ClusterName)
 	if err != nil {
 		log.Error("Failed to create the kubernetes client",
 			log.String("namespaceName", namespace.ObjectMeta.Name),
@@ -438,13 +438,13 @@ func (c *Controller) detachFromClusterNamespace(namespace *v1.Namespace) error {
 			log.Err(err))
 		return err
 	}
-	return cls.DetachFromClusterNamespace(kubeClient, namespace)
+	return cls.DetachFromClusterNamespace(ctx, kubeClient, namespace)
 }
 
-func (c *Controller) persistUpdateEmigration(emigration *v1.NsEmigration) error {
+func (c *Controller) persistUpdateEmigration(ctx context.Context, emigration *v1.NsEmigration) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().NsEmigrations(emigration.ObjectMeta.Namespace).Update(context.Background(), emigration, metav1.UpdateOptions{})
+		_, err = c.client.BusinessV1().NsEmigrations(emigration.ObjectMeta.Namespace).Update(ctx, emigration, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

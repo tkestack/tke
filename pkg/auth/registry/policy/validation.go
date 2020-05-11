@@ -37,7 +37,7 @@ import (
 var ValidatePolicyName = apiMachineryValidation.NameIsDNSLabel
 
 // ValidatePolicy tests if required fields in the policy are set.
-func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInterface) field.ErrorList {
+func ValidatePolicy(ctx context.Context, policy *auth.Policy, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&policy.ObjectMeta, false, ValidatePolicyName, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
@@ -79,7 +79,7 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.Users().Get(context.Background(), util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Users().Get(ctx, util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("user of the policy is not found, will removed it", log.String("policy", policy.Name), log.String("user", subj.Name))
@@ -108,7 +108,7 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.Groups().Get(context.Background(), util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Groups().Get(ctx, util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("group of the policy is not found, will removed it", log.String("policy", policy.Name), log.String("group", subj.Name))
@@ -138,9 +138,9 @@ func ValidatePolicy(policy *auth.Policy, authClient authinternalclient.AuthInter
 
 // ValidatePolicyUpdate tests if required fields in the policy are set during
 // an update.
-func ValidatePolicyUpdate(policy *auth.Policy, old *auth.Policy, authClient authinternalclient.AuthInterface) field.ErrorList {
+func ValidatePolicyUpdate(ctx context.Context, policy *auth.Policy, old *auth.Policy, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&policy.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidatePolicy(policy, authClient)...)
+	allErrs = append(allErrs, ValidatePolicy(ctx, policy, authClient)...)
 
 	fldSpecPath := field.NewPath("spec")
 	if policy.Spec.TenantID != old.Spec.TenantID {

@@ -69,13 +69,13 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 	}
 
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return listPodsByAppsBeta(client, namespaceName, name, options)
+		return listPodsByAppsBeta(ctx, client, namespaceName, name, options)
 	}
-	return listPodsByApps(client, namespaceName, name, options)
+	return listPodsByApps(ctx, client, namespaceName, name, options)
 }
 
-func listPodsByAppsBeta(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	statefulSet, err := client.AppsV1beta1().StatefulSets(namespaceName).Get(name, *options)
+func listPodsByAppsBeta(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	statefulSet, err := client.AppsV1beta1().StatefulSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1beta1.Resource("statefulSet/pods"), name)
 	}
@@ -87,7 +87,7 @@ func listPodsByAppsBeta(client *kubernetes.Clientset, namespaceName, name string
 
 	// list all of the pod, by stateful set labels
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -105,8 +105,8 @@ func listPodsByAppsBeta(client *kubernetes.Clientset, namespaceName, name string
 	return podList, nil
 }
 
-func listPodsByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	statefulSet, err := client.AppsV1().StatefulSets(namespaceName).Get(name, *options)
+func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	statefulSet, err := client.AppsV1().StatefulSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1beta1.Resource("statefulSet/pods"), name)
 	}
@@ -118,7 +118,7 @@ func listPodsByApps(client *kubernetes.Clientset, namespaceName, name string, op
 
 	// list all of the pod, by stateful set labels
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}

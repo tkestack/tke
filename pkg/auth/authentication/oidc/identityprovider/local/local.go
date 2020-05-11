@@ -123,7 +123,7 @@ func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, use
 	}
 
 	log.Debug("Check user login", log.String("tenantID", p.tenantID), log.String("username", username), log.String("password", password))
-	localIdentity, err := util.GetLocalIdentity(authClient, p.tenantID, username)
+	localIdentity, err := util.GetLocalIdentity(ctx, authClient, p.tenantID, username)
 	if err != nil {
 		log.Error("Get user failed", log.String("user", username), log.Err(err))
 		return ident, false, nil
@@ -152,7 +152,7 @@ func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, use
 
 	ident.UserID = localIdentity.ObjectMeta.Name
 	ident.Username = localIdentity.Spec.Username
-	groups, err := util.GetGroupsForUser(authClient, localIdentity.ObjectMeta.Name)
+	groups, err := util.GetGroupsForUser(ctx, authClient, localIdentity.ObjectMeta.Name)
 	if err == nil {
 		for _, g := range groups.Items {
 			ident.Groups = append(ident.Groups, g.ObjectMeta.Name)
@@ -172,7 +172,7 @@ func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, use
 
 func (p *localConnector) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
 	// If the user has been deleted, the refresh token will be rejected.
-	ident, err := util.GetLocalIdentity(p.authClient, p.tenantID, identity.Username)
+	ident, err := util.GetLocalIdentity(ctx, p.authClient, p.tenantID, identity.Username)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return connector.Identity{}, errors.New("user not found")

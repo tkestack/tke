@@ -54,7 +54,7 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 		return nil, nil, "", errors.NewForbidden(platform.Resource("clusters"), cluster.ObjectMeta.Name, fmt.Errorf("cluster is been locked"))
 	}
 
-	clusterCredential, err := GetClusterCredential(platformClient, cluster)
+	clusterCredential, err := GetClusterCredential(ctx, platformClient, cluster)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
@@ -89,7 +89,7 @@ func APIServerLocation(ctx context.Context, platformClient platforminternalclien
 		return nil, nil, "", errors.NewBadRequest("clusterName is required")
 	}
 
-	cluster, err := platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
+	cluster, err := platformClient.Clusters().Get(ctx, clusterName, metav1.GetOptions{})
 	if err != nil {
 		return nil, nil, "", err
 	}

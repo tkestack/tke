@@ -19,7 +19,9 @@
 package helm
 
 import (
+	"context"
 	"fmt"
+
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -34,17 +36,17 @@ import (
 var ValidateName = apiMachineryValidation.ValidateNamespaceName
 
 // ValidateHelm tests if required fields in the cluster are set.
-func ValidateHelm(obj *platform.Helm, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
+func ValidateHelm(ctx context.Context, obj *platform.Helm, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&obj.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
-	allErrs = append(allErrs, validation.ValidateCluster(platformClient, obj.Spec.ClusterName)...)
-	allErrs = append(allErrs, validateSpec(platformClient, obj.Spec.Version, obj.Spec.ClusterName)...)
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, platformClient, obj.Spec.ClusterName)...)
+	allErrs = append(allErrs, validateSpec(ctx, platformClient, obj.Spec.Version, obj.Spec.ClusterName)...)
 	return allErrs
 }
 
-func validateSpec(platformInterface platforminternalclient.PlatformInterface, version string, clusterName string) field.ErrorList {
+func validateSpec(ctx context.Context, platformInterface platforminternalclient.PlatformInterface, version string, clusterName string) field.ErrorList {
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateComponentVersion(version)...)
-	allErrs = append(allErrs, validateUniqueAddon(platformInterface, clusterName)...)
+	allErrs = append(allErrs, validateUniqueAddon(ctx, platformInterface, clusterName)...)
 	return allErrs
 }
 
@@ -58,10 +60,10 @@ func validateComponentVersion(version string) field.ErrorList {
 }
 
 // validateUniqueAddon validate only one addon in the same cluster
-func validateUniqueAddon(platformClient platforminternalclient.PlatformInterface, clusterName string) field.ErrorList {
+func validateUniqueAddon(ctx context.Context, platformClient platforminternalclient.PlatformInterface, clusterName string) field.ErrorList {
 	var allErrs field.ErrorList
 	fieldSelector := fmt.Sprintf("spec.clusterName=%s", clusterName)
-	helms, err := platformClient.Helms().List(metav1.ListOptions{FieldSelector: fieldSelector})
+	helms, err := platformClient.Helms().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(field.NewPath("spec", "clusterName"),
 			fmt.Errorf("list helms of the cluster error:%s", err)))
@@ -74,10 +76,10 @@ func validateUniqueAddon(platformClient platforminternalclient.PlatformInterface
 
 // ValidateHelmUpdate tests if required fields in the namespace set are
 // set during an update.
-func ValidateHelmUpdate(new *platform.Helm, old *platform.Helm, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
+func ValidateHelmUpdate(ctx context.Context, new *platform.Helm, old *platform.Helm, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&new.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 	allErrs = append(allErrs, apiMachineryValidation.ValidateObjectMeta(&new.ObjectMeta, false, ValidateName, field.NewPath("metadata"))...)
-	allErrs = append(allErrs, validation.ValidateCluster(platformClient, new.Spec.ClusterName)...)
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, platformClient, new.Spec.ClusterName)...)
 	allErrs = append(allErrs, validateSpecUpdate(new, old)...)
 	return allErrs
 }

@@ -37,7 +37,7 @@ import (
 var ValidateRoleName = apiMachineryValidation.NameIsDNSLabel
 
 // ValidateRole tests if required fields in the role are set.
-func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) field.ErrorList {
+func ValidateRole(ctx context.Context, role *auth.Role, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&role.ObjectMeta, false, ValidateRoleName, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
@@ -47,7 +47,7 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 
 	var validPolicies []string
 	for _, pid := range role.Spec.Policies {
-		pol, err := authClient.Policies().Get(context.Background(), pid, metav1.GetOptions{})
+		pol, err := authClient.Policies().Get(ctx, pid, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				log.Warn("policy of the role is not found, will removed it", log.String("role", role.Name), log.String("policy", pol.Name))
@@ -72,7 +72,7 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.Users().Get(context.Background(), util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Users().Get(ctx, util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("user of the role is not found, will removed it", log.String("role", role.Name), log.String("user", subj.Name))
@@ -101,7 +101,7 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.Groups().Get(context.Background(), util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Groups().Get(ctx, util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("group of the role is not found, will removed it", log.String("role", role.Name), log.String("group", subj.Name))
@@ -132,9 +132,9 @@ func ValidateRole(role *auth.Role, authClient authinternalclient.AuthInterface) 
 
 // ValidateRoleUpdate tests if required fields in the role are set during
 // an update.
-func ValidateRoleUpdate(role *auth.Role, old *auth.Role, authClient authinternalclient.AuthInterface) field.ErrorList {
+func ValidateRoleUpdate(ctx context.Context, role *auth.Role, old *auth.Role, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&role.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateRole(role, authClient)...)
+	allErrs = append(allErrs, ValidateRole(ctx, role, authClient)...)
 
 	fldSpecPath := field.NewPath("spec")
 	if role.Spec.TenantID != old.Spec.TenantID {

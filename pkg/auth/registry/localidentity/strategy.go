@@ -110,7 +110,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new identity.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateLocalIdentity(s.authClient, obj.(*auth.LocalIdentity), false)
+	return ValidateLocalIdentity(ctx, s.authClient, obj.(*auth.LocalIdentity), false)
 }
 
 // AllowCreateOnUpdate is false for identities.
@@ -131,7 +131,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an identity.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLocalIdentityUpdate(s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
+	return ValidateLocalIdentityUpdate(ctx, s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -140,7 +140,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a localIdentity")
 	}
-	return labels.Set(localIdentity.ObjectMeta.Labels), ToSelectableFields(localIdentity), nil
+	return localIdentity.ObjectMeta.Labels, ToSelectableFields(localIdentity), nil
 }
 
 // MatchLocalIdentity returns a generic matcher for a given label and field selector.
@@ -231,5 +231,5 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLocalIdentityUpdate(s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
+	return ValidateLocalIdentityUpdate(ctx, s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
 }

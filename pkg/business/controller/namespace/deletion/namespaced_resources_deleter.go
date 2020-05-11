@@ -37,7 +37,7 @@ import (
 // NamespacedResourcesDeleterInterface to delete a namespace with all resources in
 // it.
 type NamespacedResourcesDeleterInterface interface {
-	Delete(projectName string, namespaceName string) error
+	Delete(ctx context.Context, projectName string, namespaceName string) error
 }
 
 // NewNamespacedResourcesDeleter to create the namespacedResourcesDeleter that
@@ -83,11 +83,11 @@ type namespacedResourcesDeleter struct {
 // Returns ResourcesRemainingError if it deleted some resources but needs
 // to wait for them to go away.
 // Caller is expected to keep calling this until it succeeds.
-func (d *namespacedResourcesDeleter) Delete(projectName string, namespaceName string) error {
+func (d *namespacedResourcesDeleter) Delete(ctx context.Context, projectName string, namespaceName string) error {
 	// Multiple controllers may edit a namespace during termination
 	// first get the latest state of the namespace before proceeding
 	// if the namespace was deleted already, don't do anything
-	namespace, err := d.businessClient.Namespaces(projectName).Get(context.Background(), namespaceName, metav1.GetOptions{})
+	namespace, err := d.businessClient.Namespaces(projectName).Get(ctx, namespaceName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -102,7 +102,7 @@ func (d *namespacedResourcesDeleter) Delete(projectName string, namespaceName st
 
 	// ensure that the status is up to date on the namespace
 	// if we get a not found error, we assume the namespace is truly gone
-	namespace, err = d.retryOnConflictError(namespace, d.updateNamespaceStatusFunc)
+	namespace, err = d.retryOnConflictError(ctx, namespace, d.updateNamespaceStatusFunc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -117,17 +117,17 @@ func (d *namespacedResourcesDeleter) Delete(projectName string, namespaceName st
 
 	// Delete the namespace if it is already finalized.
 	if d.deleteNamespaceWhenDone && finalized(namespace) {
-		return d.deleteNamespace(namespace)
+		return d.deleteNamespace(ctx, namespace)
 	}
 
 	// there may still be content for us to remove
-	err = d.deleteAllContent(namespace)
+	err = d.deleteAllContent(ctx, namespace)
 	if err != nil {
 		return err
 	}
 
 	// we have removed content, so mark it finalized by us
-	namespace, err = d.retryOnConflictError(namespace, d.finalizeNamespace)
+	namespace, err = d.retryOnConflictError(ctx, namespace, d.finalizeNamespace)
 	if err != nil {
 		// in normal practice, this should not be possible, but if a deployment is running
 		// two controllers to do namespace deletion that share a common finalizer token it's
@@ -140,19 +140,19 @@ func (d *namespacedResourcesDeleter) Delete(projectName string, namespaceName st
 
 	// Check if we can delete now.
 	if d.deleteNamespaceWhenDone && finalized(namespace) {
-		return d.deleteNamespace(namespace)
+		return d.deleteNamespace(ctx, namespace)
 	}
 	return nil
 }
 
 // Deletes the given namespace.
-func (d *namespacedResourcesDeleter) deleteNamespace(namespace *v1.Namespace) error {
+func (d *namespacedResourcesDeleter) deleteNamespace(ctx context.Context, namespace *v1.Namespace) error {
 	var opts metav1.DeleteOptions
 	uid := namespace.UID
 	if len(uid) > 0 {
 		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.businessClient.Namespaces(namespace.ObjectMeta.Namespace).Delete(context.Background(), namespace.ObjectMeta.Name, opts)
+	err := d.businessClient.Namespaces(namespace.ObjectMeta.Namespace).Delete(ctx, namespace.ObjectMeta.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -160,15 +160,15 @@ func (d *namespacedResourcesDeleter) deleteNamespace(namespace *v1.Namespace) er
 }
 
 // updateNamespaceFunc is a function that makes an update to a namespace
-type updateNamespaceFunc func(namespace *v1.Namespace) (*v1.Namespace, error)
+type updateNamespaceFunc func(ctx context.Context, namespace *v1.Namespace) (*v1.Namespace, error)
 
 // retryOnConflictError retries the specified fn if there was a conflict error
 // it will return an error if the UID for an object changes across retry operations.
 // TODO RetryOnConflict should be a generic concept in client code
-func (d *namespacedResourcesDeleter) retryOnConflictError(namespace *v1.Namespace, fn updateNamespaceFunc) (result *v1.Namespace, err error) {
+func (d *namespacedResourcesDeleter) retryOnConflictError(ctx context.Context, namespace *v1.Namespace, fn updateNamespaceFunc) (result *v1.Namespace, err error) {
 	latestNamespace := namespace
 	for {
-		result, err = fn(latestNamespace)
+		result, err = fn(ctx, latestNamespace)
 		if err == nil {
 			return result, nil
 		}
@@ -176,7 +176,7 @@ func (d *namespacedResourcesDeleter) retryOnConflictError(namespace *v1.Namespac
 			return nil, err
 		}
 		prevNamespace := latestNamespace
-		latestNamespace, err = d.businessClient.Namespaces(latestNamespace.ObjectMeta.Namespace).Get(context.Background(), latestNamespace.ObjectMeta.Name, metav1.GetOptions{})
+		latestNamespace, err = d.businessClient.Namespaces(latestNamespace.ObjectMeta.Namespace).Get(ctx, latestNamespace.ObjectMeta.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +187,7 @@ func (d *namespacedResourcesDeleter) retryOnConflictError(namespace *v1.Namespac
 }
 
 // updateNamespaceStatusFunc will verify that the status of the namespace is correct
-func (d *namespacedResourcesDeleter) updateNamespaceStatusFunc(namespace *v1.Namespace) (*v1.Namespace, error) {
+func (d *namespacedResourcesDeleter) updateNamespaceStatusFunc(ctx context.Context, namespace *v1.Namespace) (*v1.Namespace, error) {
 	if namespace.DeletionTimestamp.IsZero() || namespace.Status.Phase == v1.NamespaceTerminating {
 		return namespace, nil
 	}
@@ -195,7 +195,7 @@ func (d *namespacedResourcesDeleter) updateNamespaceStatusFunc(namespace *v1.Nam
 	newNamespace.ObjectMeta = namespace.ObjectMeta
 	newNamespace.Status = namespace.Status
 	newNamespace.Status.Phase = v1.NamespaceTerminating
-	return d.businessClient.Namespaces(newNamespace.ObjectMeta.Namespace).UpdateStatus(context.Background(), &newNamespace, metav1.UpdateOptions{})
+	return d.businessClient.Namespaces(newNamespace.ObjectMeta.Namespace).UpdateStatus(ctx, &newNamespace, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the namespace.Spec.Finalizers is an empty list
@@ -204,7 +204,7 @@ func finalized(namespace *v1.Namespace) bool {
 }
 
 // finalizeNamespace removes the specified finalizerToken and finalizes the namespace
-func (d *namespacedResourcesDeleter) finalizeNamespace(namespace *v1.Namespace) (*v1.Namespace, error) {
+func (d *namespacedResourcesDeleter) finalizeNamespace(ctx context.Context, namespace *v1.Namespace) (*v1.Namespace, error) {
 	namespaceFinalize := v1.Namespace{}
 	namespaceFinalize.ObjectMeta = namespace.ObjectMeta
 	namespaceFinalize.Spec = namespace.Spec
@@ -226,7 +226,7 @@ func (d *namespacedResourcesDeleter) finalizeNamespace(namespace *v1.Namespace) 
 		Name(namespaceFinalize.Name).
 		SubResource("finalize").
 		Body(&namespaceFinalize).
-		Do(context.Background()).
+		Do(ctx).
 		Into(namespace)
 
 	if err != nil {
@@ -238,7 +238,7 @@ func (d *namespacedResourcesDeleter) finalizeNamespace(namespace *v1.Namespace) 
 	return namespace, err
 }
 
-type deleteResourceFunc func(deleter *namespacedResourcesDeleter, namespace *v1.Namespace) error
+type deleteResourceFunc func(ctx context.Context, deleter *namespacedResourcesDeleter, namespace *v1.Namespace) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	recalculateProjectUsed,
@@ -248,12 +248,12 @@ var deleteResourceFuncs = []deleteResourceFunc{
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
-func (d *namespacedResourcesDeleter) deleteAllContent(namespace *v1.Namespace) error {
+func (d *namespacedResourcesDeleter) deleteAllContent(ctx context.Context, namespace *v1.Namespace) error {
 	log.Debug("Namespace controller - deleteAllContent", log.String("namespaceName", namespace.ObjectMeta.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
-		err := deleteFunc(d, namespace)
+		err := deleteFunc(ctx, d, namespace)
 		if err != nil {
 			// If there is an error, hold on to it but proceed with all the remaining resource.
 			errs = append(errs, err)
@@ -268,10 +268,10 @@ func (d *namespacedResourcesDeleter) deleteAllContent(namespace *v1.Namespace) e
 	return nil
 }
 
-func recalculateProjectUsed(deleter *namespacedResourcesDeleter, namespace *v1.Namespace) error {
+func recalculateProjectUsed(ctx context.Context, deleter *namespacedResourcesDeleter, namespace *v1.Namespace) error {
 	log.Debug("Namespace controller - recalculateProjectUsed", log.String("namespaceName", namespace.ObjectMeta.Name))
 
-	project, err := deleter.businessClient.Projects().Get(context.Background(), namespace.ObjectMeta.Namespace, metav1.GetOptions{})
+	project, err := deleter.businessClient.Projects().Get(ctx, namespace.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get the project", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("projectName", namespace.ObjectMeta.Namespace), log.Err(err))
 		return err
@@ -297,7 +297,7 @@ func recalculateProjectUsed(deleter *namespacedResourcesDeleter, namespace *v1.N
 				project.Status.Clusters[namespace.Spec.ClusterName] = clusterUsed
 			}
 		}
-		_, err := deleter.businessClient.Projects().Update(context.Background(), project, metav1.UpdateOptions{})
+		_, err := deleter.businessClient.Projects().Update(ctx, project, metav1.UpdateOptions{})
 		if err != nil {
 			log.Error("Failed to update the project status", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("projectName", namespace.ObjectMeta.Namespace), log.Err(err))
 			return err
@@ -307,12 +307,12 @@ func recalculateProjectUsed(deleter *namespacedResourcesDeleter, namespace *v1.N
 	return nil
 }
 
-func deleteNamespaceFromCluster(deleter *namespacedResourcesDeleter, namespace *v1.Namespace) error {
-	kubeClient, err := platformutil.BuildExternalClientSetWithName(deleter.platformClient, namespace.Spec.ClusterName)
+func deleteNamespaceFromCluster(ctx context.Context, deleter *namespacedResourcesDeleter, namespace *v1.Namespace) error {
+	kubeClient, err := platformutil.BuildExternalClientSetWithName(ctx, deleter.platformClient, namespace.Spec.ClusterName)
 	if err != nil {
 		log.Error("Failed to create the kubernetes client", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 		return err
 	}
 	// ResourceQuota has also gone with namespace.
-	return cls.DeleteNamespaceFromCluster(kubeClient, namespace)
+	return cls.DeleteNamespaceFromCluster(ctx, kubeClient, namespace)
 }

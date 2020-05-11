@@ -95,7 +95,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new project.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateAPIkey(obj.(*auth.APIKey), s.keySigner, s.privilegedUsername)
+	return ValidateAPIkey(ctx, obj.(*auth.APIKey), s.keySigner, s.privilegedUsername)
 }
 
 // AllowCreateOnUpdate is false for projects.
@@ -144,7 +144,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end project.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateAPIKeyUpdate(obj.(*auth.APIKey), old.(*auth.APIKey))
+	return ValidateAPIKeyUpdate(ctx, obj.(*auth.APIKey), old.(*auth.APIKey))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -153,7 +153,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a apikey")
 	}
-	return labels.Set(project.ObjectMeta.Labels), ToSelectableFields(project), nil
+	return project.ObjectMeta.Labels, ToSelectableFields(project), nil
 }
 
 // MatchMatchAPIKeyLocalIdentity returns a generic matcher for a given label and field selector.

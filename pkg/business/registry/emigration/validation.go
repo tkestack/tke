@@ -36,14 +36,14 @@ import (
 var _validateNsEmigrationName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateNsEmigrationCreate tests if required fields in the NsEmigration are set correctly.
-func ValidateNsEmigrationCreate(emigration *business.NsEmigration, businessClient *businessinternalclient.BusinessClient) field.ErrorList {
+func ValidateNsEmigrationCreate(ctx context.Context, emigration *business.NsEmigration, businessClient *businessinternalclient.BusinessClient) field.ErrorList {
 	allErrs := validateNsEmigration(emigration, businessClient)
 
 	fldNamespace := field.NewPath("spec", "namespace")
 	if emigration.Spec.Namespace == "" {
 		allErrs = append(allErrs, field.Invalid(fldNamespace, emigration.Spec.Namespace, "empty business namespace name"))
 	}
-	ns, err := businessClient.Namespaces(emigration.Namespace).Get(context.Background(), emigration.Spec.Namespace, v1.GetOptions{})
+	ns, err := businessClient.Namespaces(emigration.Namespace).Get(ctx, emigration.Spec.Namespace, v1.GetOptions{})
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldNamespace, emigration.Spec.Namespace,
 			fmt.Sprintf("failed to get this business namespace, %s", err)))
@@ -59,7 +59,7 @@ func ValidateNsEmigrationCreate(emigration *business.NsEmigration, businessClien
 	} else if emigration.Spec.Destination == emigration.Namespace {
 		allErrs = append(allErrs, field.Invalid(fldDestPrj, emigration.Spec.Destination, "is still the current project"))
 	}
-	project, err := businessClient.Projects().Get(context.Background(), emigration.Spec.Destination, v1.GetOptions{})
+	project, err := businessClient.Projects().Get(ctx, emigration.Spec.Destination, v1.GetOptions{})
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldDestPrj, emigration.Spec.Destination,
 			fmt.Sprintf("failed to get this project, %s", err)))
@@ -68,7 +68,7 @@ func ValidateNsEmigrationCreate(emigration *business.NsEmigration, businessClien
 		fldHard := field.NewPath(fmt.Sprintf("namespace(%s)", emigration.Spec.Namespace), "spec", "hard")
 		allErrs = append(allErrs, namespace.ValidateAgainstProject(ns, nil, project, fldProject, fldHard)...)
 	}
-	_, err = businessClient.Namespaces(emigration.Spec.Destination).Get(context.Background(), emigration.Spec.Namespace, v1.GetOptions{})
+	_, err = businessClient.Namespaces(emigration.Spec.Destination).Get(ctx, emigration.Spec.Namespace, v1.GetOptions{})
 	if err == nil {
 		allErrs = append(allErrs, field.Invalid(fldDestPrj, emigration.Spec.Destination,
 			fmt.Sprintf("already has a namespace with the name %s", emigration.Spec.Namespace)))
@@ -82,7 +82,7 @@ func ValidateNsEmigrationCreate(emigration *business.NsEmigration, businessClien
 
 // ValidateNsEmigrationUpdate tests if required fields in the NsEmigration are set during
 // an update.
-func ValidateNsEmigrationUpdate(emigration, old *business.NsEmigration, businessClient *businessinternalclient.BusinessClient) field.ErrorList {
+func ValidateNsEmigrationUpdate(ctx context.Context, emigration, old *business.NsEmigration, businessClient *businessinternalclient.BusinessClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&emigration.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 	allErrs = append(allErrs, validateNsEmigration(emigration, businessClient)...)
 

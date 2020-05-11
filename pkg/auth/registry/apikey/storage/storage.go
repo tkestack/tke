@@ -202,7 +202,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	}
 
 	apiKey := obj.(*auth.APIKey)
-	tokenInfo, err := r.keySigner.Verify(apiKey.Spec.APIkey)
+	tokenInfo, err := r.keySigner.Verify(ctx, apiKey.Spec.APIkey)
 	if tokenInfo != nil {
 		if tokenInfo.UserName != userName {
 			return nil, false, apierrors.NewForbidden(auth.Resource("apiKeys"), name, fmt.Errorf("forbid to delete"))

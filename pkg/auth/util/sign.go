@@ -52,8 +52,8 @@ type KeyData struct {
 
 // KeySigner is a interface used to generate api key for a user
 type KeySigner interface {
-	Generate(username string, tenantID string, expire time.Duration) (*auth.APIKey, error)
-	Verify(apiKey string) (*APIClaims, error)
+	Generate(ctx context.Context, username string, tenantID string, expire time.Duration) (*auth.APIKey, error)
+	Verify(ctx context.Context, apiKey string) (*APIClaims, error)
 }
 
 // NewGenericKeySigner creates a generic key signer instance.
@@ -66,7 +66,7 @@ type genericKeySigner struct {
 }
 
 // Generate use generate api key from username and tenantID.
-func (g genericKeySigner) Generate(username string, tenantID string, expire time.Duration) (*auth.APIKey, error) {
+func (g genericKeySigner) Generate(ctx context.Context, username string, tenantID string, expire time.Duration) (*auth.APIKey, error) {
 	now := time.Now()
 
 	// jti ensures api key unique in case generating in the same time.
@@ -93,7 +93,7 @@ func (g genericKeySigner) Generate(username string, tenantID string, expire time
 		},
 	})
 
-	keys, err := g.authClient.APISigningKeys().Get(context.Background(), DefaultAPISigningKey, metav1.GetOptions{})
+	keys, err := g.authClient.APISigningKeys().Get(ctx, DefaultAPISigningKey, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get signing keys", log.Err(err))
 		return nil, err
@@ -124,8 +124,8 @@ func (g genericKeySigner) Generate(username string, tenantID string, expire time
 	return apiKey, nil
 }
 
-func (g genericKeySigner) Verify(apiKey string) (*APIClaims, error) {
-	keys, err := g.authClient.APISigningKeys().Get(context.Background(), DefaultAPISigningKey, metav1.GetOptions{})
+func (g genericKeySigner) Verify(ctx context.Context, apiKey string) (*APIClaims, error) {
+	keys, err := g.authClient.APISigningKeys().Get(ctx, DefaultAPISigningKey, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get signing keys", log.Err(err))
 		return nil, err

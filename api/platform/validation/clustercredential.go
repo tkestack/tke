@@ -19,6 +19,7 @@
 package validation
 
 import (
+	"context"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,11 +34,11 @@ import (
 )
 
 // ValidateClusterCredential validates a given ClusterCredential.
-func ValidateClusterCredential(credential *platform.ClusterCredential, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
+func ValidateClusterCredential(ctx context.Context, credential *platform.ClusterCredential, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := validation.ValidateObjectMeta(&credential.ObjectMeta, false, apimachineryvalidation.NameIsDNSLabel, field.NewPath("metadata"))
 
 	if credential.ClusterName != "" {
-		cluster, err := platformClient.Clusters().Get(credential.ClusterName, metav1.GetOptions{})
+		cluster, err := platformClient.Clusters().Get(ctx, credential.ClusterName, metav1.GetOptions{})
 		if err != nil {
 			return allErrs
 		}
@@ -67,7 +68,7 @@ func ValidateClusterCredential(credential *platform.ClusterCredential, platformC
 				}
 				if credential.CACert != nil {
 					restConfig.CAData = credential.CACert
-					if err = utilvalidation.ValidateRESTConfig(restConfig); err != nil {
+					if err = utilvalidation.ValidateRESTConfig(ctx, restConfig); err != nil {
 						if !apierrors.IsUnauthorized(err) {
 							allErrs = append(allErrs, field.Invalid(field.NewPath("caCert"), "", err.Error()))
 						}
@@ -78,7 +79,7 @@ func ValidateClusterCredential(credential *platform.ClusterCredential, platformC
 				if credential.Token != nil {
 					config := rest.CopyConfig(restConfig)
 					config.BearerToken = *credential.Token
-					if err = utilvalidation.ValidateRESTConfig(config); err != nil {
+					if err = utilvalidation.ValidateRESTConfig(ctx, config); err != nil {
 						if apierrors.IsUnauthorized(err) {
 							allErrs = append(allErrs, field.Invalid(field.NewPath("token"), *credential.Token, err.Error()))
 						} else {
@@ -90,7 +91,7 @@ func ValidateClusterCredential(credential *platform.ClusterCredential, platformC
 					config := rest.CopyConfig(restConfig)
 					config.TLSClientConfig.CertData = credential.ClientCert
 					config.TLSClientConfig.KeyData = credential.ClientKey
-					if err = utilvalidation.ValidateRESTConfig(config); err != nil {
+					if err = utilvalidation.ValidateRESTConfig(ctx, config); err != nil {
 						if apierrors.IsUnauthorized(err) {
 							allErrs = append(allErrs, field.Invalid(field.NewPath("clientCert"), "", err.Error()))
 						} else {
@@ -106,7 +107,7 @@ func ValidateClusterCredential(credential *platform.ClusterCredential, platformC
 }
 
 // ValidateUpdateClusterCredential tests if an update to a ClusterCredential is valid.
-func ValidateUpdateClusterCredential(newObj *platform.ClusterCredential, oldObj *platform.ClusterCredential, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
+func ValidateUpdateClusterCredential(ctx context.Context, newObj *platform.ClusterCredential, oldObj *platform.ClusterCredential, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := validation.ValidateObjectMetaUpdate(&newObj.ObjectMeta, &oldObj.ObjectMeta, field.NewPath("metadata"))
 
 	return allErrs

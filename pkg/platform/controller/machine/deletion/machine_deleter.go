@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -84,7 +85,7 @@ func (d *machineDeleter) Delete(name string) error {
 	// Multiple controllers may edit a machine during termination
 	// first get the latest state of the machine before proceeding
 	// if the machine was deleted already, don't do anything
-	machine, err := d.machineClient.Get(name, metav1.GetOptions{})
+	machine, err := d.machineClient.Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -144,12 +145,12 @@ func (d *machineDeleter) Delete(name string) error {
 
 // Deletes the given machine.
 func (d *machineDeleter) deleteMachine(machine *v1.Machine) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := machine.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.machineClient.Delete(machine.Name, opts)
+	err := d.machineClient.Delete(context.Background(), machine.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -173,7 +174,7 @@ func (d *machineDeleter) retryOnConflictError(machine *v1.Machine, fn updateMach
 			return nil, err
 		}
 		prevMachine := latestMachine
-		latestMachine, err = d.machineClient.Get(latestMachine.Name, metav1.GetOptions{})
+		latestMachine, err = d.machineClient.Get(context.Background(), latestMachine.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -192,7 +193,7 @@ func (d *machineDeleter) updateMachineStatusFunc(machine *v1.Machine) (*v1.Machi
 	newMachine.ObjectMeta = machine.ObjectMeta
 	newMachine.Status = machine.Status
 	newMachine.Status.Phase = v1.MachineTerminating
-	return d.machineClient.UpdateStatus(&newMachine)
+	return d.machineClient.UpdateStatus(context.Background(), &newMachine, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the machine.Spec.Finalizers is an empty list
@@ -223,7 +224,7 @@ func (d *machineDeleter) finalizeMachine(machine *v1.Machine) (*v1.Machine, erro
 		Name(machineFinalize.Name).
 		SubResource("finalize").
 		Body(&machineFinalize).
-		Do().
+		Do(context.Background()).
 		Into(machine)
 
 	if err != nil {
@@ -270,7 +271,7 @@ func deleteMachineProvider(deleter *machineDeleter, machine *v1.Machine) error {
 	if err != nil {
 		panic(err)
 	}
-	cluster, err := typesv1.GetClusterByName(deleter.platformClient, machine.Spec.ClusterName)
+	cluster, err := typesv1.GetClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
@@ -281,7 +282,7 @@ func deleteMachineProvider(deleter *machineDeleter, machine *v1.Machine) error {
 func deleteNode(deleter *machineDeleter, machine *v1.Machine) error {
 	log.Debug("Machine controller - deleteNode", log.String("machineName", machine.Name))
 
-	cluster, err := typesv1.GetClusterByName(deleter.platformClient, machine.Spec.ClusterName)
+	cluster, err := typesv1.GetClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
@@ -293,7 +294,7 @@ func deleteNode(deleter *machineDeleter, machine *v1.Machine) error {
 		return err
 	}
 
-	err = clientset.CoreV1().Nodes().Delete(machine.Spec.IP, &metav1.DeleteOptions{})
+	err = clientset.CoreV1().Nodes().Delete(context.Background(), machine.Spec.IP, metav1.DeleteOptions{})
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err

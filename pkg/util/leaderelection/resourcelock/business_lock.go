@@ -41,10 +41,10 @@ type BusinessConfigMapLock struct {
 }
 
 // Get returns the election record from a ConfigMap Annotation
-func (cml *BusinessConfigMapLock) Get() (*LeaderElectionRecord, error) {
+func (cml *BusinessConfigMapLock) Get(ctx context.Context) (*LeaderElectionRecord, error) {
 	var record LeaderElectionRecord
 	var err error
-	cml.cm, err = cml.Client.ConfigMaps().Get(context.Background(), cml.ConfigMapMeta.Name, metav1.GetOptions{})
+	cml.cm, err = cml.Client.ConfigMaps().Get(ctx, cml.ConfigMapMeta.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +60,12 @@ func (cml *BusinessConfigMapLock) Get() (*LeaderElectionRecord, error) {
 }
 
 // Create attempts to create a LeaderElectionRecord annotation
-func (cml *BusinessConfigMapLock) Create(ler LeaderElectionRecord) error {
+func (cml *BusinessConfigMapLock) Create(ctx context.Context, ler LeaderElectionRecord) error {
 	recordBytes, err := json.Marshal(ler)
 	if err != nil {
 		return err
 	}
-	cml.cm, err = cml.Client.ConfigMaps().Create(context.Background(), &v1.ConfigMap{
+	cml.cm, err = cml.Client.ConfigMaps().Create(ctx, &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cml.ConfigMapMeta.Name,
 			Namespace: cml.ConfigMapMeta.Namespace,
@@ -78,7 +78,7 @@ func (cml *BusinessConfigMapLock) Create(ler LeaderElectionRecord) error {
 }
 
 // Update will update an existing annotation on a given resource.
-func (cml *BusinessConfigMapLock) Update(ler LeaderElectionRecord) error {
+func (cml *BusinessConfigMapLock) Update(ctx context.Context, ler LeaderElectionRecord) error {
 	if cml.cm == nil {
 		return errors.New("endpoint not initialized, call get or create first")
 	}
@@ -87,7 +87,7 @@ func (cml *BusinessConfigMapLock) Update(ler LeaderElectionRecord) error {
 		return err
 	}
 	cml.cm.Annotations[LeaderElectionRecordAnnotationKey] = string(recordBytes)
-	cml.cm, err = cml.Client.ConfigMaps().Update(context.Background(), cml.cm, metav1.UpdateOptions{})
+	cml.cm, err = cml.Client.ConfigMaps().Update(ctx, cml.cm, metav1.UpdateOptions{})
 	return err
 }
 

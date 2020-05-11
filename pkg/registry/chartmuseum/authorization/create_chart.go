@@ -19,6 +19,7 @@
 package authorization
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -77,7 +78,7 @@ func (a *authorization) doAPICreateProvenance(w http.ResponseWriter, req *http.R
 		log.Error("Failed to unmarshal chart file", log.Err(err))
 		return
 	}
-	if err := a.afterAPICreateChart(chartGroup, ct, header.Size); err != nil {
+	if err := a.afterAPICreateChart(req.Context(), chartGroup, ct, header.Size); err != nil {
 		log.Error("Failed to update registry chart resource", log.Err(err))
 	}
 }
@@ -94,7 +95,7 @@ func (a *authorization) validateAPICreateChart(w http.ResponseWriter, req *http.
 		a.notFound(w)
 		return nil, fmt.Errorf("not found")
 	}
-	chartGroupList, err := a.registryClient.ChartGroups().List(metav1.ListOptions{
+	chartGroupList, err := a.registryClient.ChartGroups().List(req.Context(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartGroupName),
 	})
 	if err != nil {
@@ -136,8 +137,8 @@ func (a *authorization) validateAPICreateChart(w http.ResponseWriter, req *http.
 	return &chartGroup, nil
 }
 
-func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, chartMeta *chart.Metadata, ctSize int64) error {
-	chartList, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).List(metav1.ListOptions{
+func (a *authorization) afterAPICreateChart(ctx context.Context, chartGroup *registry.ChartGroup, chartMeta *chart.Metadata, ctSize int64) error {
+	chartList, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s,spec.chartGroupName=%s", chartGroup.Spec.TenantID, chartMeta.Name, chartGroup.Spec.Name),
 	})
 	if err != nil {
@@ -147,7 +148,7 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, cha
 	needIncreaseChartCount := false
 	if len(chartList.Items) == 0 {
 		needIncreaseChartCount = true
-		if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).Create(&registry.Chart{
+		if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).Create(ctx, &registry.Chart{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: chartGroup.ObjectMeta.Name,
 			},
@@ -167,7 +168,7 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, cha
 					},
 				},
 			},
-		}); err != nil {
+		}, metav1.CreateOptions{}); err != nil {
 			log.Error("Failed to create chart while pushed chart",
 				log.String("tenantID", chartGroup.Spec.TenantID),
 				log.String("chartGroupName", chartGroup.Spec.Name),
@@ -190,7 +191,7 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, cha
 						ChartSize:   ctSize,
 						TimeCreated: metav1.Now(),
 					}
-					if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(&chartObject); err != nil {
+					if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(ctx, &chartObject, metav1.UpdateOptions{}); err != nil {
 						log.Error("Failed to update chart version while chart pushed",
 							log.String("tenantID", chartGroup.Spec.TenantID),
 							log.String("chartGroupName", chartGroup.Spec.Name),
@@ -210,7 +211,7 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, cha
 				ChartSize:   ctSize,
 				TimeCreated: metav1.Now(),
 			})
-			if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(&chartObject); err != nil {
+			if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(ctx, &chartObject, metav1.UpdateOptions{}); err != nil {
 				log.Error("Failed to create repository tag while received notification",
 					log.String("tenantID", chartGroup.Spec.TenantID),
 					log.String("chartGroupName", chartGroup.Spec.Name),
@@ -225,7 +226,7 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, cha
 	if needIncreaseChartCount {
 		// update chart group's chart count
 		chartGroup.Status.ChartCount = chartGroup.Status.ChartCount + 1
-		if _, err := a.registryClient.ChartGroups().UpdateStatus(chartGroup); err != nil {
+		if _, err := a.registryClient.ChartGroups().UpdateStatus(ctx, chartGroup, metav1.UpdateOptions{}); err != nil {
 			log.Error("Failed to update chart group's chart count while pushed",
 				log.String("tenantID", chartGroup.Spec.TenantID),
 				log.String("chartGroupName", chartGroup.Spec.Name),
