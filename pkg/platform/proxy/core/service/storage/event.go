@@ -69,7 +69,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	service, err := client.CoreV1().Services(namespaceName).Get(name, *options)
+	service, err := client.CoreV1().Services(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("services/events"), name)
 	}
@@ -82,7 +82,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	serviceEvents, err := client.CoreV1().Events(namespaceName).List(listOptions)
+	serviceEvents, err := client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	if len(service.Spec.Selector) > 0 {
 		podSelector := labels.FormatLabels(service.Spec.Selector)
 		podListOptions := metav1.ListOptions{LabelSelector: podSelector}
-		podListByRS, err := client.CoreV1().Pods(namespaceName).List(podListOptions)
+		podListByRS, err := client.CoreV1().Pods(namespaceName).List(ctx, podListOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -108,7 +108,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 			podEventsListOptions := metav1.ListOptions{
 				FieldSelector: podEventsSelector.String(),
 			}
-			podEvents, err := client.CoreV1().Events(namespaceName).List(podEventsListOptions)
+			podEvents, err := client.CoreV1().Events(namespaceName).List(ctx, podEventsListOptions)
 			if err != nil {
 				return nil, err
 			}

@@ -43,7 +43,7 @@ func (e EventSlice) Swap(i, j int) {
 }
 
 // GetEvents list the resource events by resource namespace and name.
-func GetEvents(client *kubernetes.Clientset, uid, namespace, name, kind string) (*corev1.EventList, error) {
+func GetEvents(ctx context.Context, client *kubernetes.Clientset, uid, namespace, name, kind string) (*corev1.EventList, error) {
 	selector := fields.AndSelectors(
 		fields.OneTermEqualSelector("involvedObject.uid", uid),
 		fields.OneTermEqualSelector("involvedObject.name", name),
@@ -52,5 +52,5 @@ func GetEvents(client *kubernetes.Clientset, uid, namespace, name, kind string) 
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	return client.CoreV1().Events(namespace).List(context.Background(), listOptions)
+	return client.CoreV1().Events(namespace).List(ctx, listOptions)
 }

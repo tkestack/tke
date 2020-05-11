@@ -19,6 +19,7 @@
 package types
 
 import (
+	"context"
 	"path"
 
 	v1 "tkestack.io/tke/api/platform/v1"
@@ -206,10 +207,10 @@ const (
 
 type Handler struct {
 	Name string
-	Func func() error
+	Func func(ctx context.Context) error
 }
 
 type Logagent struct {
-	RegistryDomain string `json:"domain,omitempty"`
+	RegistryDomain    string `json:"domain,omitempty"`
 	RegistryNamespace string `json:"namespace:omitempty"`
 }

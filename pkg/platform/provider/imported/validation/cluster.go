@@ -19,6 +19,7 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -36,15 +37,15 @@ import (
 )
 
 // ValidateCluster validates a given Cluster.
-func ValidateCluster(cluster *types.Cluster) field.ErrorList {
+func ValidateCluster(ctx context.Context, cluster *types.Cluster) field.ErrorList {
 	allErrs := ValidatClusterAddresses(cluster.Status.Addresses, field.NewPath("status", "addresses"))
 
 	if cluster.Spec.ClusterCredentialRef != nil {
-		allErrs = append(allErrs, ValidatClusterCredentialRef(cluster, field.NewPath("spec", "clusterCredentialRef"))...)
+		allErrs = append(allErrs, ValidatClusterCredentialRef(ctx, cluster, field.NewPath("spec", "clusterCredentialRef"))...)
 
 		client, err := cluster.Clientset()
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("name"), cluster.Name, fmt.Sprintf("get clientset error: %w", err)))
+			allErrs = append(allErrs, field.Invalid(field.NewPath("name"), cluster.Name, fmt.Sprintf("get clientset error: %v", err)))
 		}
 		if cluster.Status.Phase == platform.ClusterInitializing {
 			allErrs = append(allErrs, ValidateClusterMark(cluster.Name, field.NewPath("name"), client)...)
@@ -84,7 +85,7 @@ func ValidatClusterAddresses(addresses []platform.ClusterAddress, fldPath *field
 }
 
 // ValidatClusterCredentialRef validates cluster.Spec.ClusterCredentialRef.
-func ValidatClusterCredentialRef(cluster *types.Cluster, fldPath *field.Path) field.ErrorList {
+func ValidatClusterCredentialRef(ctx context.Context, cluster *types.Cluster, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	credential := cluster.ClusterCredential
@@ -111,7 +112,7 @@ func ValidatClusterCredentialRef(cluster *types.Cluster, fldPath *field.Path) fi
 		}
 		if credential.CACert != nil {
 			restConfig.CAData = credential.CACert
-			if err = utilvalidation.ValidateRESTConfig(restConfig); err != nil {
+			if err = utilvalidation.ValidateRESTConfig(ctx, restConfig); err != nil {
 				if !apierrors.IsUnauthorized(err) {
 					allErrs = append(allErrs, field.Invalid(field.NewPath("caCert"), "", err.Error()))
 				}
@@ -123,7 +124,7 @@ func ValidatClusterCredentialRef(cluster *types.Cluster, fldPath *field.Path) fi
 		if credential.Token != nil {
 			config := rest.CopyConfig(restConfig)
 			config.BearerToken = *credential.Token
-			if err = utilvalidation.ValidateRESTConfig(config); err != nil {
+			if err = utilvalidation.ValidateRESTConfig(ctx, config); err != nil {
 				if apierrors.IsUnauthorized(err) {
 					allErrs = append(allErrs, field.Invalid(field.NewPath("token"), *credential.Token, err.Error()))
 				} else {
@@ -135,7 +136,7 @@ func ValidatClusterCredentialRef(cluster *types.Cluster, fldPath *field.Path) fi
 			config := rest.CopyConfig(restConfig)
 			config.TLSClientConfig.CertData = credential.ClientCert
 			config.TLSClientConfig.KeyData = credential.ClientKey
-			if err = utilvalidation.ValidateRESTConfig(config); err != nil {
+			if err = utilvalidation.ValidateRESTConfig(ctx, config); err != nil {
 				if apierrors.IsUnauthorized(err) {
 					allErrs = append(allErrs, field.Invalid(field.NewPath("clientCert"), "", err.Error()))
 				} else {

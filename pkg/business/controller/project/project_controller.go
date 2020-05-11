@@ -219,7 +219,7 @@ func (c *Controller) syncItem(key string) error {
 	default:
 		if project.Status.Phase == v1.ProjectPending || project.Status.Phase == v1.ProjectActive {
 			cachedProject = c.cache.getOrCreate(key, project)
-			err = c.processUpdate(cachedProject, project, key)
+			err = c.processUpdate(context.Background(), cachedProject, project, key)
 		} else if project.Status.Phase == v1.ProjectTerminating {
 			log.Info("Project has been terminated. Attempting to cleanup resources", log.String("projectName", key))
 			_ = c.processDeletion(key)
@@ -231,7 +231,7 @@ func (c *Controller) syncItem(key string) error {
 	return err
 }
 
-func (c *Controller) processUpdate(cachedProject *cachedProject, project *v1.Project, key string) error {
+func (c *Controller) processUpdate(ctx context.Context, cachedProject *cachedProject, project *v1.Project, key string) error {
 	if cachedProject.state != nil {
 		// exist and the project name changed
 		if cachedProject.state.UID != project.UID {
@@ -241,7 +241,7 @@ func (c *Controller) processUpdate(cachedProject *cachedProject, project *v1.Pro
 		}
 	}
 	// start update machine if needed
-	err := c.handlePhase(key, cachedProject, project)
+	err := c.handlePhase(ctx, key, cachedProject, project)
 	if err != nil {
 		return err
 	}
@@ -271,14 +271,14 @@ func (c *Controller) processDelete(cachedProject *cachedProject, key string) err
 	return nil
 }
 
-func (c *Controller) handlePhase(key string, cachedProject *cachedProject, project *v1.Project) error {
+func (c *Controller) handlePhase(ctx context.Context, key string, cachedProject *cachedProject, project *v1.Project) error {
 	if project.Status.Phase == v1.ProjectPending {
 		if c.authClient != nil && len(project.Spec.Members) > 0 {
 			// TODO: add business users.
 		}
 		project.Status.Phase = v1.ProjectActive
 		var err error
-		if project, err = c.persistUpdate(project); err != nil || project == nil {
+		if project, err = c.persistUpdate(ctx, project); err != nil || project == nil {
 			return err
 		}
 	}
@@ -286,7 +286,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 	if cachedProject.state != nil &&
 		cachedProject.state.Spec.ParentProjectName != "" &&
 		cachedProject.state.Spec.ParentProjectName != project.Spec.ParentProjectName {
-		preParentProject, err := c.client.BusinessV1().Projects().Get(context.Background(), cachedProject.state.Spec.ParentProjectName, metav1.GetOptions{})
+		preParentProject, err := c.client.BusinessV1().Projects().Get(ctx, cachedProject.state.Spec.ParentProjectName, metav1.GetOptions{})
 		if err != nil {
 			if !errors.IsNotFound(err) {
 				log.Error("Failed to get the previous parent project", log.String("projectName", key),
@@ -301,14 +301,14 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 				if preParentProject.Status.Clusters != nil {
 					businessUtil.SubClusterHardFromUsed(&preParentProject.Status.Clusters, cachedProject.state.Spec.Clusters)
 				}
-				if _, err := c.persistUpdate(preParentProject); err != nil && !errors.IsNotFound(err) {
+				if _, err := c.persistUpdate(ctx, preParentProject); err != nil && !errors.IsNotFound(err) {
 					return err
 				}
 			}
 		}
 	}
 	if project.Spec.ParentProjectName != "" {
-		parentProject, err := c.client.BusinessV1().Projects().Get(context.Background(), project.Spec.ParentProjectName, metav1.GetOptions{})
+		parentProject, err := c.client.BusinessV1().Projects().Get(ctx, project.Spec.ParentProjectName, metav1.GetOptions{})
 		if err != nil {
 			log.Error("Failed to get the parent project", log.String("projectName", key), log.Err(err))
 			return err
@@ -320,7 +320,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 				parentProject.Status.Clusters = make(v1.ClusterUsed)
 			}
 			businessUtil.AddClusterHardToUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
-			if _, err := c.persistUpdate(parentProject); err != nil {
+			if _, err := c.persistUpdate(ctx, parentProject); err != nil {
 				return err
 			}
 		} else if cachedProject.state != nil && !reflect.DeepEqual(cachedProject.state.Spec.Clusters, project.Spec.Clusters) {
@@ -331,7 +331,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 			businessUtil.SubClusterHardFromUsed(&parentProject.Status.Clusters, cachedProject.state.Spec.Clusters)
 			// add new
 			businessUtil.AddClusterHardToUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
-			if _, err := c.persistUpdate(parentProject); err != nil {
+			if _, err := c.persistUpdate(ctx, parentProject); err != nil {
 				return err
 			}
 		}
@@ -339,20 +339,20 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 		if project.Status.CachedParent == nil ||
 			project.Spec.ParentProjectName != *project.Status.CachedParent ||
 			!reflect.DeepEqual(project.Spec.Clusters, project.Status.CachedSpecClusters) {
-			return c.updateCachedStatus(project, project.Spec.Clusters, project.Spec.ParentProjectName)
+			return c.updateCachedStatus(ctx, project, project.Spec.Clusters, project.Spec.ParentProjectName)
 		}
 	} else if project.Status.CachedParent != nil && project.Spec.ParentProjectName != *project.Status.CachedParent {
-		return c.updateCachedStatus(project, nil, project.Spec.ParentProjectName)
+		return c.updateCachedStatus(ctx, project, nil, project.Spec.ParentProjectName)
 	}
 
 	return nil
 }
 
-func (c *Controller) persistUpdate(project *v1.Project) (*v1.Project, error) {
+func (c *Controller) persistUpdate(ctx context.Context, project *v1.Project) (*v1.Project, error) {
 	var prj *v1.Project
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		prj, err = c.client.BusinessV1().Projects().UpdateStatus(context.Background(), project, metav1.UpdateOptions{})
+		prj, err = c.client.BusinessV1().Projects().UpdateStatus(ctx, project, metav1.UpdateOptions{})
 		if err == nil {
 			return prj, nil
 		}
@@ -369,12 +369,12 @@ func (c *Controller) persistUpdate(project *v1.Project) (*v1.Project, error) {
 	return nil, err
 }
 
-func (c *Controller) updateCachedStatus(project *v1.Project, newCachedClusters v1.ClusterHard, newCachedParent string) error {
+func (c *Controller) updateCachedStatus(ctx context.Context, project *v1.Project, newCachedClusters v1.ClusterHard, newCachedParent string) error {
 	var err error
 	project.Status.CachedParent = &newCachedParent
 	project.Status.CachedSpecClusters = newCachedClusters
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().Projects().UpdateStatus(context.Background(), project, metav1.UpdateOptions{})
+		_, err = c.client.BusinessV1().Projects().UpdateStatus(ctx, project, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -383,7 +383,7 @@ func (c *Controller) updateCachedStatus(project *v1.Project, newCachedClusters v
 			return nil
 		}
 		if errors.IsConflict(err) {
-			newProject, newErr := c.client.BusinessV1().Projects().Get(context.Background(), project.ObjectMeta.Name, metav1.GetOptions{})
+			newProject, newErr := c.client.BusinessV1().Projects().Get(ctx, project.ObjectMeta.Name, metav1.GetOptions{})
 			if newErr == nil {
 				project = newProject
 				project.Status.CachedParent = &newCachedParent

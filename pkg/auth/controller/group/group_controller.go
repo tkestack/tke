@@ -297,7 +297,7 @@ func (c *Controller) pollGroups(stopCh <-chan struct{}) {
 	for {
 		select {
 		case <-timerC.C:
-			c.resyncGroups()
+			c.resyncGroups(context.Background())
 		case <-stopCh:
 			timerC.Stop()
 			return
@@ -305,8 +305,8 @@ func (c *Controller) pollGroups(stopCh <-chan struct{}) {
 	}
 }
 
-func (c *Controller) resyncGroups() {
-	idpList, err := c.client.AuthV1().IdentityProviders().List(context.Background(), metav1.ListOptions{})
+func (c *Controller) resyncGroups(ctx context.Context) {
+	idpList, err := c.client.AuthV1().IdentityProviders().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		log.Error("List all identity providers failed", log.Err(err))
 		return
@@ -318,7 +318,7 @@ func (c *Controller) resyncGroups() {
 			fields.OneTermEqualSelector(auth.QueryLimitTag, "0"),
 		)
 
-		groups, err := c.client.AuthV1().Groups().List(context.Background(), metav1.ListOptions{FieldSelector: tenantSelector.String()})
+		groups, err := c.client.AuthV1().Groups().List(ctx, metav1.ListOptions{FieldSelector: tenantSelector.String()})
 		if err != nil {
 			log.Error("List groups for tenant failed", log.String("tenant", idp.Name), log.Err(err))
 			continue

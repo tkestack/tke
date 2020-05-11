@@ -134,7 +134,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new role.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateRole(obj.(*auth.Role), s.authClient)
+	return ValidateRole(ctx, obj.(*auth.Role), s.authClient)
 }
 
 // AllowCreateOnUpdate is false for policies.
@@ -155,7 +155,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end role.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRoleUpdate(obj.(*auth.Role), old.(*auth.Role), s.authClient)
+	return ValidateRoleUpdate(ctx, obj.(*auth.Role), old.(*auth.Role), s.authClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -164,7 +164,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a role")
 	}
-	return labels.Set(role.ObjectMeta.Labels), ToSelectableFields(role), nil
+	return role.ObjectMeta.Labels, ToSelectableFields(role), nil
 }
 
 // MatchRole returns a generic matcher for a given label and field selector.
@@ -227,7 +227,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRoleUpdate(obj.(*auth.Role), old.(*auth.Role), s.authClient)
+	return ValidateRoleUpdate(ctx, obj.(*auth.Role), old.(*auth.Role), s.authClient)
 }
 
 // FinalizeStrategy implements finalizer logic for Machine.
@@ -256,5 +256,5 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRoleUpdate(obj.(*auth.Role), old.(*auth.Role), s.authClient)
+	return ValidateRoleUpdate(ctx, obj.(*auth.Role), old.(*auth.Role), s.authClient)
 }

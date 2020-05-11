@@ -87,7 +87,7 @@ func (r *LBCFBackendRecordREST) Connect(ctx context.Context, clusterName string,
 	if err != nil {
 		return nil, err
 	}
-	credential, err := util.GetClusterCredential(r.platformClient, cluster)
+	credential, err := util.GetClusterCredential(ctx, r.platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (h *lbcfBackendRecordHandler) serveAction(w http.ResponseWriter, req *http.
 	}
 	switch h.action {
 	case string(LBCFEvents):
-		if eventList, err := h.getEventList(); err != nil {
+		if eventList, err := h.getEventList(req.Context()); err != nil {
 			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		} else {
 			responsewriters.WriteRawJSON(http.StatusOK, eventList, w)
@@ -171,11 +171,11 @@ func (h *lbcfBackendRecordHandler) serveAction(w http.ResponseWriter, req *http.
 	}
 }
 
-func (h *lbcfBackendRecordHandler) getEventList() (*corev1.EventList, error) {
-	return getLBCFEvents(h.cluster, h.clusterCredential, recordResource, "BackendRecord", h.namespace, h.name)
+func (h *lbcfBackendRecordHandler) getEventList(ctx context.Context) (*corev1.EventList, error) {
+	return getLBCFEvents(ctx, h.cluster, h.clusterCredential, recordResource, "BackendRecord", h.namespace, h.name)
 }
 
-func getLBCFEvents(cluster *platform.Cluster, credential *platform.ClusterCredential, resource schema.GroupVersionResource, kind, namespace, name string) (*corev1.EventList, error) {
+func getLBCFEvents(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential, resource schema.GroupVersionResource, kind, namespace, name string) (*corev1.EventList, error) {
 	var clusterv1 platformv1.Cluster
 	if err := apiplatformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, &clusterv1, nil); err != nil {
 		return nil, err
@@ -188,17 +188,17 @@ func getLBCFEvents(cluster *platform.Cluster, credential *platform.ClusterCreden
 	if err != nil {
 		return nil, err
 	}
-	obj, err := dynamicClient.Resource(resource).Namespace(namespace).Get(name, metav1.GetOptions{})
+	obj, err := dynamicClient.Resource(resource).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	kubeclient, err := util.BuildClientSet(cluster, credential)
+	kubeclient, err := util.BuildClientSet(ctx, cluster, credential)
 	if err != nil {
 		return nil, err
 	}
 
-	eventList, err := util.GetEvents(kubeclient, string(obj.GetUID()), obj.GetNamespace(), obj.GetName(), kind)
+	eventList, err := util.GetEvents(ctx, kubeclient, string(obj.GetUID()), obj.GetNamespace(), obj.GetName(), kind)
 	if err != nil {
 		return nil, err
 	}

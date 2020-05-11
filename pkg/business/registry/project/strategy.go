@@ -201,7 +201,7 @@ func (s *Strategy) AfterDelete(obj runtime.Object) error {
 
 // Validate validates a new project.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateProject(obj.(*business.Project), nil,
+	return ValidateProject(ctx, obj.(*business.Project), nil,
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
 
@@ -223,7 +223,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end project.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateProjectUpdate(obj.(*business.Project), old.(*business.Project),
+	return ValidateProjectUpdate(ctx, obj.(*business.Project), old.(*business.Project),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
 
@@ -288,7 +288,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateProjectUpdate(obj.(*business.Project), old.(*business.Project),
+	return ValidateProjectUpdate(ctx, obj.(*business.Project), old.(*business.Project),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
 
@@ -327,6 +327,6 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateProjectUpdate(obj.(*business.Project), old.(*business.Project),
+	return ValidateProjectUpdate(ctx, obj.(*business.Project), old.(*business.Project),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }

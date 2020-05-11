@@ -36,7 +36,7 @@ import (
 var ValidateGroupName = apiMachineryValidation.NameIsDNSLabel
 
 // ValidateLocalGroup tests if required fields in the group are set.
-func ValidateLocalGroup(group *auth.LocalGroup, authClient authinternalclient.AuthInterface) field.ErrorList {
+func ValidateLocalGroup(ctx context.Context, group *auth.LocalGroup, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&group.ObjectMeta, false, ValidateGroupName, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
@@ -54,7 +54,7 @@ func ValidateLocalGroup(group *auth.LocalGroup, authClient authinternalclient.Au
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.LocalIdentities().Get(context.Background(), subj.ID, metav1.GetOptions{})
+			val, err := authClient.LocalIdentities().Get(ctx, subj.ID, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("user of the group is not found, will removed it", log.String("group", group.Name), log.String("user", subj.Name))
@@ -83,9 +83,9 @@ func ValidateLocalGroup(group *auth.LocalGroup, authClient authinternalclient.Au
 
 // ValidateLocalGroupUpdate tests if required fields in the group are set during
 // an update.
-func ValidateLocalGroupUpdate(group *auth.LocalGroup, old *auth.LocalGroup, authClient authinternalclient.AuthInterface) field.ErrorList {
+func ValidateLocalGroupUpdate(ctx context.Context, group *auth.LocalGroup, old *auth.LocalGroup, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&group.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateLocalGroup(group, authClient)...)
+	allErrs = append(allErrs, ValidateLocalGroup(ctx, group, authClient)...)
 
 	fldSpecPath := field.NewPath("spec")
 	if group.Spec.TenantID != old.Spec.TenantID {

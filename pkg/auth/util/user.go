@@ -30,12 +30,12 @@ import (
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
-func GetLocalIdentity(authClient authinternalclient.AuthInterface, tenantID, username string) (auth.LocalIdentity, error) {
+func GetLocalIdentity(ctx context.Context, authClient authinternalclient.AuthInterface, tenantID, username string) (auth.LocalIdentity, error) {
 	tenantUserSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
 		fields.OneTermEqualSelector("spec.username", username))
 
-	localIdentityList, err := authClient.LocalIdentities().List(context.Background(), v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	localIdentityList, err := authClient.LocalIdentities().List(ctx, v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {
 		return auth.LocalIdentity{}, err
 	}
@@ -63,12 +63,12 @@ func GroupPrefix(tenantID string) string {
 	return fmt.Sprintf("%s::group::", tenantID)
 }
 
-func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string) (auth.LocalGroupList, error) {
+func GetGroupsForUser(ctx context.Context, authClient authinternalclient.AuthInterface, userID string) (auth.LocalGroupList, error) {
 	groupList := auth.LocalGroupList{}
 	err := authClient.RESTClient().Get().
 		Resource("localidentities").
 		Name(userID).
-		SubResource("groups").Do(context.Background()).Into(&groupList)
+		SubResource("groups").Do(ctx).Into(&groupList)
 
 	return groupList, err
 }

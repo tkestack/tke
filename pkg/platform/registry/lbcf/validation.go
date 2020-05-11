@@ -19,6 +19,8 @@
 package lbcf
 
 import (
+	"context"
+
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
@@ -31,18 +33,18 @@ import (
 var ValidateName = apiMachineryValidation.ValidateNamespaceName
 
 // ValidateLBCF tests if required fields in the cluster are set.
-func ValidateLBCF(obj *platform.LBCF, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
+func ValidateLBCF(ctx context.Context, obj *platform.LBCF, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&obj.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
-	allErrs = append(allErrs, validation.ValidateCluster(platformClient, obj.Spec.ClusterName)...)
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, platformClient, obj.Spec.ClusterName)...)
 
 	return allErrs
 }
 
 // ValidateLBCFUpdate tests if required fields in the namespace set are
 // set during an update.
-func ValidateLBCFUpdate(lbcf *platform.LBCF, old *platform.LBCF, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
+func ValidateLBCFUpdate(ctx context.Context, lbcf *platform.LBCF, old *platform.LBCF, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&lbcf.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateLBCF(lbcf, platformClient)...)
+	allErrs = append(allErrs, ValidateLBCF(ctx, lbcf, platformClient)...)
 
 	if lbcf.Spec.ClusterName != old.Spec.ClusterName {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), lbcf.Spec.ClusterName, "disallowed change the cluster name"))

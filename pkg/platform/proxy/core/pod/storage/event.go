@@ -65,7 +65,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	pod, err := client.CoreV1().Pods(namespaceName).Get(name, *options)
+	pod, err := client.CoreV1().Pods(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("pods/events"), name)
 	}
@@ -78,5 +78,5 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	return client.CoreV1().Events(namespaceName).List(listOptions)
+	return client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 }

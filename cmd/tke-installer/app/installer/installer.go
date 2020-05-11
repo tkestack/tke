@@ -378,16 +378,16 @@ func (t *TKE) initSteps() {
 func (t *TKE) Run() {
 	var err error
 	if t.Config.NoUI {
-		err = t.run()
+		err = t.run(context.Background())
 	} else {
-		err = t.runWithUI()
+		err = t.runWithUI(context.Background())
 	}
 	if err != nil {
 		log.Error(err.Error())
 	}
 }
 
-func (t *TKE) run() error {
+func (t *TKE) run(ctx context.Context) error {
 	if !t.isFromRestore {
 		if err := t.loadPara(); err != nil {
 			return err
@@ -399,12 +399,12 @@ func (t *TKE) run() error {
 		}
 	}
 
-	t.do()
+	t.do(ctx)
 
 	return nil
 }
 
-func (t *TKE) runWithUI() error {
+func (t *TKE) runWithUI(ctx context.Context) error {
 	a := NewAssertsResource()
 	restful.Add(a.WebService())
 	restful.Add(t.WebService())
@@ -414,7 +414,7 @@ func (t *TKE) runWithUI() error {
 	restful.Filter(globalLogging)
 
 	if t.isFromRestore {
-		go t.do()
+		go t.do(ctx)
 	}
 
 	log.Infof("Starting %s at http://%s", t.Config.ServerName, t.Config.ListenAddr)
@@ -790,7 +790,7 @@ func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 		if err := t.prepare(); err != nil {
 			return err
 		}
-		go t.do()
+		go t.do(req.Request.Context())
 
 		return nil
 	}()
@@ -803,7 +803,7 @@ func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 }
 
 func (t *TKE) retryCreateCluster(req *restful.Request, rsp *restful.Response) {
-	go t.do()
+	go t.do(req.Request.Context())
 	_ = rsp.WriteEntity(nil)
 }
 
@@ -857,7 +857,7 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 	}
 }
 
-func (t *TKE) do() {
+func (t *TKE) do(ctx context.Context) {
 	start := time.Now()
 
 	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
@@ -875,7 +875,7 @@ func (t *TKE) do() {
 	for t.Step < len(t.steps) {
 		t.log.Printf("%d.%s doing", t.Step, t.steps[t.Step].Name)
 		start := time.Now()
-		err := t.steps[t.Step].Func()
+		err := t.steps[t.Step].Func(ctx)
 		if err != nil {
 			t.progress.Status = types.StatusFailed
 			t.log.Printf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
@@ -929,7 +929,7 @@ func (t *TKE) runAfterClusterReady() bool {
 	return t.Cluster.Status.Phase == platformv1.ClusterRunning
 }
 
-func (t *TKE) generateCertificates() error {
+func (t *TKE) generateCertificates(ctx context.Context) error {
 	var dnsNames []string
 	if t.Para.Config.Gateway != nil && t.Para.Config.Gateway.Domain != "" {
 		dnsNames = append(dnsNames, t.Para.Config.Gateway.Domain)
@@ -953,7 +953,7 @@ func (t *TKE) generateCertificates() error {
 	return certs.Generate(dnsNames, ips)
 }
 
-func (t *TKE) prepareFrontProxyCertificates() error {
+func (t *TKE) prepareFrontProxyCertificates(ctx context.Context) error {
 	machine := t.Cluster.Spec.Machines[0]
 	sshConfig := &ssh.Config{
 		User:       machine.Username,
@@ -979,7 +979,7 @@ func (t *TKE) prepareFrontProxyCertificates() error {
 	return nil
 }
 
-func (t *TKE) createGlobalCluster() error {
+func (t *TKE) createGlobalCluster(ctx context.Context) error {
 	// update provider config and recreate
 	err := t.completeProviderConfigForRegistry()
 	if err != nil {
@@ -1038,7 +1038,7 @@ func (t *TKE) backup() error {
 	return ioutil.WriteFile(constants.ClusterFile, data, 0777)
 }
 
-func (t *TKE) loadImages() error {
+func (t *TKE) loadImages(ctx context.Context) error {
 	if _, err := os.Stat(constants.ImagesFile); err != nil {
 		return err
 	}
@@ -1078,7 +1078,7 @@ func (t *TKE) loadImages() error {
 	return nil
 }
 
-func (t *TKE) setupLocalRegistry() error {
+func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 	server := t.Para.Config.Registry.Domain()
 
 	err := t.startLocalRegistry()
@@ -1166,17 +1166,17 @@ func (t *TKE) initDataForDeployTKE() error {
 	return nil
 }
 
-func (t *TKE) createNamespace() error {
+func (t *TKE) createNamespace(ctx context.Context) error {
 	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: t.namespace,
 		},
 	}
 
-	return apiclient.CreateOrUpdateNamespace(t.globalClient, ns)
+	return apiclient.CreateOrUpdateNamespace(ctx, t.globalClient, ns)
 }
 
-func (t *TKE) prepareCertificates() error {
+func (t *TKE) prepareCertificates(ctx context.Context) error {
 	caCrt, err := ioutil.ReadFile(constants.CACrtFile)
 	if err != nil {
 		return err
@@ -1239,10 +1239,10 @@ func (t *TKE) prepareCertificates() error {
 		}
 	}
 
-	return apiclient.CreateOrUpdateConfigMap(t.globalClient, cm)
+	return apiclient.CreateOrUpdateConfigMap(ctx, t.globalClient, cm)
 }
 
-func (t *TKE) prepareBaremetalProviderConfig() error {
+func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 	c, err := baremetalconfig.New(constants.ProviderConfigFile)
 	if err != nil {
 		return err
@@ -1291,7 +1291,7 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 		},
 	}
 	for _, one := range configMaps {
-		err := apiclient.CreateOrUpdateConfigMapFromFile(t.globalClient,
+		err := apiclient.CreateOrUpdateConfigMapFromFile(ctx, t.globalClient,
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      one.Name,
@@ -1307,7 +1307,7 @@ func (t *TKE) prepareBaremetalProviderConfig() error {
 	return nil
 }
 
-func (t *TKE) installTKEGateway() error {
+func (t *TKE) installTKEGateway(ctx context.Context) error {
 	option := map[string]interface{}{
 		"Image":            images.Get().TKEGateway.FullName(),
 		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
@@ -1329,13 +1329,13 @@ func (t *TKE) installTKEGateway() error {
 		option["ServerCrt"] = t.Para.Config.Gateway.Cert.ThirdPartyCert.Certificate
 		option["ServerKey"] = t.Para.Config.Gateway.Cert.ThirdPartyCert.PrivateKey
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-gateway/*.yaml", option)
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-gateway/*.yaml", option)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDaemonset(t.globalClient, t.namespace, "tke-gateway")
+		ok, err := apiclient.CheckDaemonset(ctx, t.globalClient, t.namespace, "tke-gateway")
 		if err != nil {
 			return false, nil
 		}
@@ -1343,7 +1343,7 @@ func (t *TKE) installTKEGateway() error {
 	})
 }
 
-func (t *TKE) installTKELogagentAPI() error {
+func (t *TKE) installTKELogagentAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":                   t.Config.Replicas,
 		"Image":                      images.Get().TKELogagentAPI.FullName(),
@@ -1358,13 +1358,13 @@ func (t *TKE) installTKELogagentAPI() error {
 		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
 		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-logagent-api/*.yaml", options)
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-logagent-api/*.yaml", options)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-logagent-api")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-logagent-api")
 		if err != nil {
 			return false, nil
 		}
@@ -1372,22 +1372,22 @@ func (t *TKE) installTKELogagentAPI() error {
 	})
 }
 
-func (t *TKE) installTKELogagentController() error {
+func (t *TKE) installTKELogagentController(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKELogagentController.FullName(),
-		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
-		"RegistryDomain": t.Para.Config.Registry.Domain(),
+		"Replicas":          t.Config.Replicas,
+		"Image":             images.Get().TKELogagentController.FullName(),
+		"EnableAuth":        t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry":    t.Para.Config.Registry.TKERegistry != nil,
+		"RegistryDomain":    t.Para.Config.Registry.Domain(),
 		"RegistryNamespace": t.Para.Config.Registry.Namespace(),
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-logagent-controller/*.yaml", options)
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-logagent-controller/*.yaml", options)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-logagent-controller")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-logagent-controller")
 		if err != nil {
 			return false, nil
 		}
@@ -1397,14 +1397,14 @@ func (t *TKE) installTKELogagentController() error {
 	return fmt.Errorf("installTKELogagentController not implemented")
 }
 
-func (t *TKE) installETCD() error {
-	return apiclient.CreateResourceWithDir(t.globalClient, "manifests/etcd/*.yaml",
+func (t *TKE) installETCD(ctx context.Context) error {
+	return apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/etcd/*.yaml",
 		map[string]interface{}{
 			"Servers": t.servers,
 		})
 }
 
-func (t *TKE) installTKEAuthAPI() error {
+func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
 	redirectHosts := t.servers
 	redirectHosts = append(redirectHosts, "tke-gateway")
 	if t.Para.Config.Gateway != nil && t.Para.Config.Gateway.Domain != "" {
@@ -1425,13 +1425,13 @@ func (t *TKE) installTKEAuthAPI() error {
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth-api/*.yaml", option)
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-auth-api/*.yaml", option)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth-api")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-auth-api")
 		if err != nil {
 			return false, nil
 		}
@@ -1439,8 +1439,8 @@ func (t *TKE) installTKEAuthAPI() error {
 	})
 }
 
-func (t *TKE) installTKEAuthController() error {
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-auth-controller/*.yaml",
+func (t *TKE) installTKEAuthController(ctx context.Context) error {
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-auth-controller/*.yaml",
 		map[string]interface{}{
 			"Replicas":      t.Config.Replicas,
 			"Image":         images.Get().TKEAuthController.FullName(),
@@ -1452,7 +1452,7 @@ func (t *TKE) installTKEAuthController() error {
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-auth-controller")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-auth-controller")
 		if err != nil {
 			return false, nil
 		}
@@ -1460,7 +1460,7 @@ func (t *TKE) installTKEAuthController() error {
 	})
 }
 
-func (t *TKE) installTKEAudit() error {
+func (t *TKE) installTKEAudit(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":   t.Config.Replicas,
 		"Image":      images.Get().TKEAudit.FullName(),
@@ -1478,12 +1478,12 @@ func (t *TKE) installTKEAudit() error {
 		options["ReserveDays"] = t.Para.Config.Audit.ElasticSearch.ReserveDays
 	}
 
-	if err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-audit-api/*.yaml", options); err != nil {
+	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-audit-api/*.yaml", options); err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-audit-api")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-audit-api")
 		if err != nil {
 			return false, nil
 		}
@@ -1491,7 +1491,7 @@ func (t *TKE) installTKEAudit() error {
 	})
 }
 
-func (t *TKE) installTKEPlatformAPI() error {
+func (t *TKE) installTKEPlatformAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":    t.Config.Replicas,
 		"Image":       images.Get().TKEPlatformAPI.FullName(),
@@ -1503,13 +1503,13 @@ func (t *TKE) installTKEPlatformAPI() error {
 		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
 		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-platform-api/*.yaml", options)
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-platform-api/*.yaml", options)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-platform-api")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-platform-api")
 		if err != nil {
 			return false, nil
 		}
@@ -1517,7 +1517,7 @@ func (t *TKE) installTKEPlatformAPI() error {
 	})
 }
 
-func (t *TKE) installTKEPlatformController() error {
+func (t *TKE) installTKEPlatformController(ctx context.Context) error {
 	params := map[string]interface{}{
 		"Replicas":                t.Config.Replicas,
 		"Image":                   images.Get().TKEPlatformController.FullName(),
@@ -1555,12 +1555,12 @@ func (t *TKE) installTKEPlatformController() error {
 		}
 	}
 
-	if err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-platform-controller/*.yaml", params); err != nil {
+	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-platform-controller/*.yaml", params); err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-platform-controller")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-platform-controller")
 		if err != nil {
 			return false, nil
 		}
@@ -1568,7 +1568,7 @@ func (t *TKE) installTKEPlatformController() error {
 	})
 }
 
-func (t *TKE) installTKEBusinessAPI() error {
+func (t *TKE) installTKEBusinessAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":                   t.Config.Replicas,
 		"Image":                      images.Get().TKEBusinessAPI.FullName(),
@@ -1583,13 +1583,13 @@ func (t *TKE) installTKEBusinessAPI() error {
 		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
 		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-business-api/*.yaml", options)
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-business-api/*.yaml", options)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-business-api")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-business-api")
 		if err != nil {
 			return false, nil
 		}
@@ -1597,8 +1597,8 @@ func (t *TKE) installTKEBusinessAPI() error {
 	})
 }
 
-func (t *TKE) installTKEBusinessController() error {
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-business-controller/*.yaml",
+func (t *TKE) installTKEBusinessController(ctx context.Context) error {
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-business-controller/*.yaml",
 		map[string]interface{}{
 			"Replicas":       t.Config.Replicas,
 			"Image":          images.Get().TKEBusinessController.FullName(),
@@ -1610,7 +1610,7 @@ func (t *TKE) installTKEBusinessController() error {
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-business-controller")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-business-controller")
 		if err != nil {
 			return false, nil
 		}
@@ -1618,8 +1618,8 @@ func (t *TKE) installTKEBusinessController() error {
 	})
 }
 
-func (t *TKE) installInfluxDB() error {
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/influxdb/*.yaml",
+func (t *TKE) installInfluxDB(ctx context.Context) error {
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/influxdb/*.yaml",
 		map[string]interface{}{
 			"Image":    images.Get().InfluxDB.FullName(),
 			"NodeName": t.servers[0],
@@ -1628,7 +1628,7 @@ func (t *TKE) installInfluxDB() error {
 		return err
 	}
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckStatefulSet(t.globalClient, t.namespace, "influxdb")
+		ok, err := apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "influxdb")
 		if err != nil || !ok {
 			return false, nil
 		}
@@ -1636,7 +1636,7 @@ func (t *TKE) installInfluxDB() error {
 	})
 }
 
-func (t *TKE) installTKEMonitorAPI() error {
+func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":   t.Config.Replicas,
 		"Image":      images.Get().TKEMonitorAPI.FullName(),
@@ -1667,12 +1667,12 @@ func (t *TKE) installTKEMonitorAPI() error {
 		}
 	}
 
-	if err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-monitor-api/*.yaml", options); err != nil {
+	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-monitor-api/*.yaml", options); err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-monitor-api")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-monitor-api")
 		if err != nil {
 			return false, nil
 		}
@@ -1680,7 +1680,7 @@ func (t *TKE) installTKEMonitorAPI() error {
 	})
 }
 
-func (t *TKE) installTKEMonitorController() error {
+func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 	params := map[string]interface{}{
 		"Replicas":       t.Config.Replicas,
 		"Image":          images.Get().TKEMonitorController.FullName(),
@@ -1705,12 +1705,12 @@ func (t *TKE) installTKEMonitorController() error {
 		}
 	}
 
-	if err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-monitor-controller/*.yaml", params); err != nil {
+	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-monitor-controller/*.yaml", params); err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-monitor-controller")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-monitor-controller")
 		if err != nil {
 			return false, nil
 		}
@@ -1718,7 +1718,7 @@ func (t *TKE) installTKEMonitorController() error {
 	})
 }
 
-func (t *TKE) installTKENotifyAPI() error {
+func (t *TKE) installTKENotifyAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":   t.Config.Replicas,
 		"Image":      images.Get().TKENotifyAPI.FullName(),
@@ -1729,13 +1729,13 @@ func (t *TKE) installTKENotifyAPI() error {
 		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
 		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-notify-api/*.yaml", options)
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-notify-api/*.yaml", options)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-notify-api")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-notify-api")
 		if err != nil {
 			return false, nil
 		}
@@ -1743,8 +1743,8 @@ func (t *TKE) installTKENotifyAPI() error {
 	})
 }
 
-func (t *TKE) installTKENotifyController() error {
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-notify-controller/*.yaml",
+func (t *TKE) installTKENotifyController(ctx context.Context) error {
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-notify-controller/*.yaml",
 		map[string]interface{}{
 			"Replicas": t.Config.Replicas,
 			"Image":    images.Get().TKENotifyController.FullName(),
@@ -1754,7 +1754,7 @@ func (t *TKE) installTKENotifyController() error {
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-notify-controller")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-notify-controller")
 		if err != nil {
 			return false, nil
 		}
@@ -1762,7 +1762,7 @@ func (t *TKE) installTKENotifyController() error {
 	})
 }
 
-func (t *TKE) installTKERegistryAPI() error {
+func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Image":         images.Get().TKERegistryAPI.FullName(),
 		"NodeName":      t.servers[0],
@@ -1776,13 +1776,13 @@ func (t *TKE) installTKERegistryAPI() error {
 		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
 		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
 	}
-	err := apiclient.CreateResourceWithDir(t.globalClient, "manifests/tke-registry-api/*.yaml", options)
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-api/*.yaml", options)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(t.globalClient, t.namespace, "tke-registry-api")
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-registry-api")
 		if err != nil {
 			return false, nil
 		}
@@ -1790,7 +1790,7 @@ func (t *TKE) installTKERegistryAPI() error {
 	})
 }
 
-func (t *TKE) preparePushImagesToTKERegistry() error {
+func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain(), File: "hosts"}
 	err := localHosts.Set(t.servers[0])
 	if err != nil {
@@ -1826,7 +1826,7 @@ func (t *TKE) preparePushImagesToTKERegistry() error {
 	return nil
 }
 
-func (t *TKE) registerAPI() error {
+func (t *TKE) registerAPI(ctx context.Context) error {
 	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
 
 	restConfig, err := t.Cluster.RESTConfigForBootstrap(&rest.Config{})
@@ -1872,14 +1872,14 @@ func (t *TKE) registerAPI() error {
 		}
 
 		err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-			_, err := client.ApiregistrationV1().APIServices().Get(apiService.Name, metav1.GetOptions{})
+			_, err := client.ApiregistrationV1().APIServices().Get(ctx, apiService.Name, metav1.GetOptions{})
 			if err == nil {
-				err := client.ApiregistrationV1().APIServices().Delete(apiService.Name, &metav1.DeleteOptions{})
+				err := client.ApiregistrationV1().APIServices().Delete(ctx, apiService.Name, metav1.DeleteOptions{})
 				if err != nil {
 					return false, nil
 				}
 			}
-			if _, err := client.ApiregistrationV1().APIServices().Create(apiService); err != nil {
+			if _, err := client.ApiregistrationV1().APIServices().Create(ctx, apiService, metav1.CreateOptions{}); err != nil {
 				if !errors.IsAlreadyExists(err) {
 					return false, nil
 				}
@@ -1891,7 +1891,7 @@ func (t *TKE) registerAPI() error {
 		}
 
 		err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-			a, err := client.ApiregistrationV1().APIServices().Get(apiService.Name, metav1.GetOptions{})
+			a, err := client.ApiregistrationV1().APIServices().Get(ctx, apiService.Name, metav1.GetOptions{})
 			if err != nil {
 				return false, nil
 			}
@@ -1907,7 +1907,7 @@ func (t *TKE) registerAPI() error {
 	return nil
 }
 
-func (t *TKE) importResource() error {
+func (t *TKE) importResource(ctx context.Context) error {
 	restConfig, err := t.Cluster.RESTConfigForBootstrap(&rest.Config{Timeout: 120 * time.Second})
 	if err != nil {
 		return err
@@ -1920,11 +1920,11 @@ func (t *TKE) importResource() error {
 
 	// ensure api ready
 	err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		_, err = client.PlatformV1().Clusters().List(metav1.ListOptions{})
+		_, err = client.PlatformV1().Clusters().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, nil
 		}
-		_, err = client.PlatformV1().ClusterCredentials().List(metav1.ListOptions{})
+		_, err = client.PlatformV1().ClusterCredentials().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -1934,26 +1934,26 @@ func (t *TKE) importResource() error {
 		return err
 	}
 
-	_, err = client.PlatformV1().ClusterCredentials().Get(t.Cluster.ClusterCredential.Name, metav1.GetOptions{})
+	_, err = client.PlatformV1().ClusterCredentials().Get(ctx, t.Cluster.ClusterCredential.Name, metav1.GetOptions{})
 	if err == nil {
-		err := client.PlatformV1().ClusterCredentials().Delete(t.Cluster.ClusterCredential.Name, &metav1.DeleteOptions{})
+		err := client.PlatformV1().ClusterCredentials().Delete(ctx, t.Cluster.ClusterCredential.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
 	}
-	_, err = client.PlatformV1().ClusterCredentials().Create(t.Cluster.ClusterCredential)
+	_, err = client.PlatformV1().ClusterCredentials().Create(ctx, t.Cluster.ClusterCredential, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
 
-	_, err = client.PlatformV1().Clusters().Get(t.Cluster.Name, metav1.GetOptions{})
+	_, err = client.PlatformV1().Clusters().Get(ctx, t.Cluster.Name, metav1.GetOptions{})
 	if err == nil {
-		err := client.PlatformV1().Clusters().Delete(t.Cluster.Name, &metav1.DeleteOptions{})
+		err := client.PlatformV1().Clusters().Delete(ctx, t.Cluster.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
 	}
-	_, err = client.PlatformV1().Clusters().Create(t.Cluster.Cluster)
+	_, err = client.PlatformV1().Clusters().Create(ctx, t.Cluster.Cluster, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -1961,7 +1961,7 @@ func (t *TKE) importResource() error {
 	return nil
 }
 
-func (t *TKE) pushImages() error {
+func (t *TKE) pushImages(ctx context.Context) error {
 	imagesFilter := fmt.Sprintf("%s/*", t.Para.Config.Registry.Namespace())
 	if t.Para.Config.Registry.Domain() != "docker.io" { // docker images filter ignore docker.io
 		imagesFilter = t.Para.Config.Registry.Domain() + "/" + imagesFilter
@@ -2034,15 +2034,15 @@ func (t *TKE) pushImages() error {
 	return nil
 }
 
-func (t *TKE) preInstallHook() error {
+func (t *TKE) preInstallHook(ctx context.Context) error {
 	return t.execHook(constants.PreInstallHook)
 }
 
-func (t *TKE) postClusterReadyHook() error {
+func (t *TKE) postClusterReadyHook(ctx context.Context) error {
 	return t.execHook(constants.PostClusterReadyHook)
 }
 
-func (t *TKE) postInstallHook() error {
+func (t *TKE) postInstallHook(ctx context.Context) error {
 	return t.execHook(constants.PostInstallHook)
 }
 
@@ -2072,7 +2072,7 @@ func (t *TKE) getKubeconfig() (*api.Config, error) {
 	), nil
 }
 
-func (t *TKE) setGlobalClusterHosts() error {
+func (t *TKE) setGlobalClusterHosts(ctx context.Context) error {
 	domains := []string{
 		t.Para.Config.Registry.Domain(),
 		t.Cluster.Spec.TenantID + "." + t.Para.Config.Registry.Domain(),
@@ -2103,7 +2103,7 @@ func (t *TKE) setGlobalClusterHosts() error {
 	return nil
 }
 
-func (t *TKE) writeKubeconfig() error {
+func (t *TKE) writeKubeconfig(ctx context.Context) error {
 	cfg, err := t.getKubeconfig()
 	if err != nil {
 		return err

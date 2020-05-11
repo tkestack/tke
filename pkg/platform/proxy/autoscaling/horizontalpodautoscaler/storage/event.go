@@ -20,6 +20,8 @@ package storage
 
 import (
 	"context"
+	"sort"
+
 	asv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -29,7 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"sort"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/util"
 )
@@ -67,7 +68,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	hpa, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).Get(name, *options)
+	hpa, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(asv1.Resource("horizontalpodautoscalers/events"), name)
 	}
@@ -80,7 +81,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	hpaEvents, err := client.CoreV1().Events(namespaceName).List(listOptions)
+	hpaEvents, err := client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, err
 	}

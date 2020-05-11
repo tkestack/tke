@@ -106,7 +106,7 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 
 // Validate validates a new LBCF.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateLBCF(obj.(*platform.LBCF), s.platformClient)
+	return ValidateLBCF(ctx, obj.(*platform.LBCF), s.platformClient)
 }
 
 // AllowCreateOnUpdate is false for persistent events
@@ -127,7 +127,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end namespace set.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLBCFUpdate(obj.(*platform.LBCF), old.(*platform.LBCF), s.platformClient)
+	return ValidateLBCFUpdate(ctx, obj.(*platform.LBCF), old.(*platform.LBCF), s.platformClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -136,7 +136,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		log.Fatalf("GetAttrs type = %v", reflect.TypeOf(obj))
 	}
-	return labels.Set(lbcf.ObjectMeta.Labels), ToSelectableFields(lbcf), nil
+	return lbcf.ObjectMeta.Labels, ToSelectableFields(lbcf), nil
 }
 
 // MatchLBCF returns a generic matcher for a given label and field selector.

@@ -54,7 +54,7 @@ func (h *APIKeyAuthenticator) AuthenticateToken(ctx context.Context, token strin
 		log.Debug("Finish verifying api key", log.String("api key", token), log.Duration("processTime", time.Since(startTime)))
 	}()
 
-	tokenInfo, err := h.keySigner.Verify(token)
+	tokenInfo, err := h.keySigner.Verify(ctx, token)
 	if err != nil {
 		return nil, false, err
 	}
@@ -83,14 +83,14 @@ func (h *APIKeyAuthenticator) AuthenticateToken(ctx context.Context, token strin
 
 	info := &user.DefaultInfo{Name: tokenInfo.UserName}
 
-	localIdentity, err := util.GetLocalIdentity(h.authClient, tokenInfo.TenantID, info.Name)
+	localIdentity, err := util.GetLocalIdentity(ctx, h.authClient, tokenInfo.TenantID, info.Name)
 	if err != nil {
 		log.Error("Get localIdentity failed", log.String("localIdentity", info.Name), log.Err(err))
 		return nil, false, err
 	}
 
 	info.UID = localIdentity.ObjectMeta.Name
-	groups, err := util.GetGroupsForUser(h.authClient, localIdentity.ObjectMeta.Name)
+	groups, err := util.GetGroupsForUser(ctx, h.authClient, localIdentity.ObjectMeta.Name)
 	if err == nil {
 		for _, g := range groups.Items {
 			info.Groups = append(info.Groups, g.ObjectMeta.Name)
