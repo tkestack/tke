@@ -192,6 +192,7 @@ type NamespaceSpec struct {
 	Finalizers         []FinalizerName
 	TenantID           string
 	ClusterName        string
+	ClusterType        string
 	ClusterVersion     string
 	ClusterDisplayName string
 	Namespace          string

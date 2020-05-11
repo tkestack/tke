@@ -222,6 +222,8 @@ message NamespaceSpec {
 
   optional string clusterName = 3;
 
+  optional string clusterType = 8;
+
   optional string clusterVersion = 6;
 
   optional string clusterDisplayName = 7;
