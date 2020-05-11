@@ -21,6 +21,7 @@ package chart
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -92,8 +93,8 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 }
 
 // Validate validates a new chart.
-func (s *Strategy) Validate(_ context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateChart(obj.(*registry.Chart), s.registryClient)
+func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	return ValidateChart(ctx, obj.(*registry.Chart), s.registryClient)
 }
 
 // AllowCreateOnUpdate is false for repositories.
@@ -113,8 +114,8 @@ func (Strategy) Canonicalize(runtime.Object) {
 }
 
 // ValidateUpdate is the default update validation for an end chart.
-func (s *Strategy) ValidateUpdate(_ context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateChartUpdate(obj.(*registry.Chart), old.(*registry.Chart))
+func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateChartUpdate(ctx, obj.(*registry.Chart), old.(*registry.Chart))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -177,6 +178,6 @@ func (StatusStrategy) PrepareForUpdate(_ context.Context, obj, old runtime.Objec
 // ValidateUpdate is invoked after default fields in the object have been
 // filled in before the object is persisted.  This method should not mutate
 // the object.
-func (s *StatusStrategy) ValidateUpdate(_ context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateChartUpdate(obj.(*registry.Chart), old.(*registry.Chart))
+func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateChartUpdate(ctx, obj.(*registry.Chart), old.(*registry.Chart))
 }

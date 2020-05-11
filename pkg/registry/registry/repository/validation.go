@@ -19,7 +19,9 @@
 package repository
 
 import (
+	"context"
 	"fmt"
+
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -33,7 +35,7 @@ import (
 var ValidateRepositoryName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateRepository tests if required fields in the repository are set.
-func ValidateRepository(repository *registry.Repository, registryClient *registryinternalclient.RegistryClient) field.ErrorList {
+func ValidateRepository(ctx context.Context, repository *registry.Repository, registryClient *registryinternalclient.RegistryClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&repository.ObjectMeta, true, ValidateRepositoryName, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
@@ -45,7 +47,7 @@ func ValidateRepository(repository *registry.Repository, registryClient *registr
 	}
 
 	if repository.Spec.NamespaceName != "" && repository.Spec.Name != "" {
-		namespaceList, err := registryClient.Namespaces().List(metav1.ListOptions{
+		namespaceList, err := registryClient.Namespaces().List(ctx, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", repository.Spec.TenantID, repository.Spec.NamespaceName),
 		})
 		if err != nil {
@@ -58,7 +60,7 @@ func ValidateRepository(repository *registry.Repository, registryClient *registr
 				allErrs = append(allErrs, field.NotFound(field.NewPath("metadata", "namespace"), repository.ObjectMeta.Namespace))
 			}
 
-			repoList, err := registryClient.Repositories(namespace.ObjectMeta.Name).List(metav1.ListOptions{
+			repoList, err := registryClient.Repositories(namespace.ObjectMeta.Name).List(ctx, metav1.ListOptions{
 				FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s,spec.namespaceName=%s", repository.Spec.TenantID, repository.Spec.Name, repository.Spec.NamespaceName),
 			})
 			if err != nil {
@@ -79,7 +81,7 @@ func ValidateRepository(repository *registry.Repository, registryClient *registr
 
 // ValidateRepositoryUpdate tests if required fields in the repository are set
 // during an update.
-func ValidateRepositoryUpdate(repository *registry.Repository, old *registry.Repository) field.ErrorList {
+func ValidateRepositoryUpdate(ctx context.Context, repository *registry.Repository, old *registry.Repository) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&repository.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 
 	if repository.Spec.TenantID != old.Spec.TenantID {

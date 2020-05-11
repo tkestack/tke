@@ -23,42 +23,43 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	netutil "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"time"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/logagent"
 	"tkestack.io/tke/pkg/logagent/util"
 	"tkestack.io/tke/pkg/util/log"
 )
+
 // TokenREST implements the REST endpoint.
 type FileDownloadREST struct {
 	//rest.Storage
-	store *registry.Store
+	store          *registry.Store
 	PlatformClient platformversionedclient.PlatformV1Interface
 }
 
 type FileDownloadRequest struct {
-	PodName 	string `json:"pod"`
-	Namespace 	string `json:"namespace"`
-	Container 	string `json:"container"`
-	Path      	string  `json:"path"`
+	PodName   string `json:"pod"`
+	Namespace string `json:"namespace"`
+	Container string `json:"container"`
+	Path      string `json:"path"`
 }
-
 
 var _ = rest.Connecter(&FileDownloadREST{})
 
-func (r *FileDownloadREST)  New() runtime.Object {
+func (r *FileDownloadREST) New() runtime.Object {
 	return &logagent.LogFileDownload{}
 }
 
-func (r *FileDownloadREST)  NewConnectOptions() (runtime.Object, bool, string) {
+func (r *FileDownloadREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return &logagent.LogFileDownload{}, false, ""
 }
 
@@ -75,16 +76,16 @@ func (r *FileDownloadREST) Connect(ctx context.Context, loagentName string, opts
 	}
 	logagent := logagentObject.(*logagent.LogAgent)
 	return &logCollectorProxyHandler{
-		clusterId: logagent.Spec.ClusterName,
+		clusterId:      logagent.Spec.ClusterName,
 		platformClient: r.PlatformClient,
-		location: &url.URL{Scheme:"http",},
+		location:       &url.URL{Scheme: "http"},
 	}, nil
 }
 
 type logCollectorProxyHandler struct {
-	clusterId string
+	clusterId      string
 	platformClient platformversionedclient.PlatformV1Interface
-	location  *url.URL
+	location       *url.URL
 }
 
 func (h *logCollectorProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -101,7 +102,7 @@ func (h *logCollectorProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 		return
 	}
 	req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-	hostIp, err := util.GetClusterPodIp(h.clusterId, reqConfig.Namespace,reqConfig.PodName, h.platformClient)
+	hostIp, err := util.GetClusterPodIp(req.Context(), h.clusterId, reqConfig.Namespace, reqConfig.PodName, h.platformClient)
 	if err != nil {
 		util.WriteResponseError(w, util.ErrorInternalError, "unable to find host for this request")
 		log.Errorf("unable to get hostip %v", err)
@@ -111,7 +112,7 @@ func (h *logCollectorProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 	loc := *h.location
 	loc.RawQuery = req.URL.RawQuery
 	loc.Path = "/v1/logfile/download"
-	loc.Host = hostIp+":8090"
+	loc.Host = hostIp + ":8090"
 	newReq := req.WithContext(context.Background())
 	newReq.Header = netutil.CloneHeader(req.Header)
 	newReq.URL = &loc
