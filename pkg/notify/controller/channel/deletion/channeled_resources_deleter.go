@@ -19,20 +19,22 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/notify/v1"
-	"tkestack.io/tke/api/notify/v1"
+	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 // ChanneledResourcesDeleterInterface to delete a channel with all resources in
 // it.
 type ChanneledResourcesDeleterInterface interface {
-	Delete(channelName string) error
+	Delete(ctx context.Context, channelName string) error
 }
 
 // NewChanneledResourcesDeleter to create the channeledResourcesDeleter that
@@ -79,11 +81,11 @@ type channeledResourcesDeleter struct {
 // Returns ResourcesRemainingError if it deleted some resources but needs
 // to wait for them to go away.
 // Caller is expected to keep calling this until it succeeds.
-func (d *channeledResourcesDeleter) Delete(channelName string) error {
+func (d *channeledResourcesDeleter) Delete(ctx context.Context, channelName string) error {
 	// Multiple controllers may edit a channel during termination
 	// first get the latest state of the channel before proceeding
 	// if the channel was deleted already, don't do anything
-	channel, err := d.channelClient.Get(channelName, metav1.GetOptions{})
+	channel, err := d.channelClient.Get(ctx, channelName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -98,7 +100,7 @@ func (d *channeledResourcesDeleter) Delete(channelName string) error {
 
 	// ensure that the status is up to date on the channel
 	// if we get a not found error, we assume the channel is truly gone
-	channel, err = d.retryOnConflictError(channel, d.updateChannelStatusFunc)
+	channel, err = d.retryOnConflictError(ctx, channel, d.updateChannelStatusFunc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -113,17 +115,17 @@ func (d *channeledResourcesDeleter) Delete(channelName string) error {
 
 	// Delete the channel if it is already finalized.
 	if d.deleteChannelWhenDone && finalized(channel) {
-		return d.deleteChannel(channel)
+		return d.deleteChannel(ctx, channel)
 	}
 
 	// there may still be content for us to remove
-	err = d.deleteAllContent(channel)
+	err = d.deleteAllContent(ctx, channel)
 	if err != nil {
 		return err
 	}
 
 	// we have removed content, so mark it finalized by us
-	channel, err = d.retryOnConflictError(channel, d.finalizeChannel)
+	channel, err = d.retryOnConflictError(ctx, channel, d.finalizeChannel)
 	if err != nil {
 		// in normal practice, this should not be possible, but if a deployment is running
 		// two controllers to do channel deletion that share a common finalizer token it's
@@ -136,19 +138,19 @@ func (d *channeledResourcesDeleter) Delete(channelName string) error {
 
 	// Check if we can delete now.
 	if d.deleteChannelWhenDone && finalized(channel) {
-		return d.deleteChannel(channel)
+		return d.deleteChannel(ctx, channel)
 	}
 	return nil
 }
 
 // Deletes the given channel.
-func (d *channeledResourcesDeleter) deleteChannel(channel *v1.Channel) error {
-	var opts *metav1.DeleteOptions
+func (d *channeledResourcesDeleter) deleteChannel(ctx context.Context, channel *v1.Channel) error {
+	var opts metav1.DeleteOptions
 	uid := channel.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.channelClient.Delete(channel.Name, opts)
+	err := d.channelClient.Delete(ctx, channel.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -156,15 +158,15 @@ func (d *channeledResourcesDeleter) deleteChannel(channel *v1.Channel) error {
 }
 
 // updateChannelFunc is a function that makes an update to a channel
-type updateChannelFunc func(channel *v1.Channel) (*v1.Channel, error)
+type updateChannelFunc func(ctx context.Context, channel *v1.Channel) (*v1.Channel, error)
 
 // retryOnConflictError retries the specified fn if there was a conflict error
 // it will return an error if the UID for an object changes across retry operations.
 // TODO RetryOnConflict should be a generic concept in client code
-func (d *channeledResourcesDeleter) retryOnConflictError(channel *v1.Channel, fn updateChannelFunc) (result *v1.Channel, err error) {
+func (d *channeledResourcesDeleter) retryOnConflictError(ctx context.Context, channel *v1.Channel, fn updateChannelFunc) (result *v1.Channel, err error) {
 	latestChannel := channel
 	for {
-		result, err = fn(latestChannel)
+		result, err = fn(ctx, latestChannel)
 		if err == nil {
 			return result, nil
 		}
@@ -172,7 +174,7 @@ func (d *channeledResourcesDeleter) retryOnConflictError(channel *v1.Channel, fn
 			return nil, err
 		}
 		prevChannel := latestChannel
-		latestChannel, err = d.channelClient.Get(latestChannel.Name, metav1.GetOptions{})
+		latestChannel, err = d.channelClient.Get(ctx, latestChannel.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -183,7 +185,7 @@ func (d *channeledResourcesDeleter) retryOnConflictError(channel *v1.Channel, fn
 }
 
 // updateChannelStatusFunc will verify that the status of the channel is correct
-func (d *channeledResourcesDeleter) updateChannelStatusFunc(channel *v1.Channel) (*v1.Channel, error) {
+func (d *channeledResourcesDeleter) updateChannelStatusFunc(ctx context.Context, channel *v1.Channel) (*v1.Channel, error) {
 	if channel.DeletionTimestamp.IsZero() || channel.Status.Phase == v1.ChannelTerminating {
 		return channel, nil
 	}
@@ -191,7 +193,7 @@ func (d *channeledResourcesDeleter) updateChannelStatusFunc(channel *v1.Channel)
 	newChannel.ObjectMeta = channel.ObjectMeta
 	newChannel.Status = channel.Status
 	newChannel.Status.Phase = v1.ChannelTerminating
-	return d.channelClient.UpdateStatus(&newChannel)
+	return d.channelClient.UpdateStatus(ctx, &newChannel, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the channel.Spec.Finalizers is an empty list
@@ -200,7 +202,7 @@ func finalized(channel *v1.Channel) bool {
 }
 
 // finalizeChannel removes the specified finalizerToken and finalizes the channel
-func (d *channeledResourcesDeleter) finalizeChannel(channel *v1.Channel) (*v1.Channel, error) {
+func (d *channeledResourcesDeleter) finalizeChannel(ctx context.Context, channel *v1.Channel) (*v1.Channel, error) {
 	channelFinalize := v1.Channel{}
 	channelFinalize.ObjectMeta = channel.ObjectMeta
 	channelFinalize.Spec = channel.Spec
@@ -221,7 +223,7 @@ func (d *channeledResourcesDeleter) finalizeChannel(channel *v1.Channel) (*v1.Ch
 		Name(channelFinalize.Name).
 		SubResource("finalize").
 		Body(&channelFinalize).
-		Do().
+		Do(ctx).
 		Into(channel)
 
 	if err != nil {
@@ -233,7 +235,7 @@ func (d *channeledResourcesDeleter) finalizeChannel(channel *v1.Channel) (*v1.Ch
 	return channel, err
 }
 
-type deleteResourceFunc func(deleter *channeledResourcesDeleter, channel *v1.Channel) error
+type deleteResourceFunc func(ctx context.Context, deleter *channeledResourcesDeleter, channel *v1.Channel) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteTemplate,
@@ -243,12 +245,12 @@ var deleteResourceFuncs = []deleteResourceFunc{
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
-func (d *channeledResourcesDeleter) deleteAllContent(channel *v1.Channel) error {
+func (d *channeledResourcesDeleter) deleteAllContent(ctx context.Context, channel *v1.Channel) error {
 	log.Debug("Channel controller - deleteAllContent", log.String("channelName", channel.ObjectMeta.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
-		err := deleteFunc(d, channel)
+		err := deleteFunc(ctx, d, channel)
 		if err != nil {
 			// If there is an error, hold on to it but proceed with all the remaining resource.
 			errs = append(errs, err)
@@ -263,12 +265,12 @@ func (d *channeledResourcesDeleter) deleteAllContent(channel *v1.Channel) error 
 	return nil
 }
 
-func deleteTemplate(deleter *channeledResourcesDeleter, channel *v1.Channel) error {
+func deleteTemplate(ctx context.Context, deleter *channeledResourcesDeleter, channel *v1.Channel) error {
 	log.Debug("Channel controller - deleteTemplate", log.String("channelName", channel.ObjectMeta.Name))
 
 	background := metav1.DeletePropagationBackground
-	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-	if err := deleter.notifyClient.Templates(channel.ObjectMeta.Name).DeleteCollection(deleteOpt, metav1.ListOptions{}); err != nil {
+	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+	if err := deleter.notifyClient.Templates(channel.ObjectMeta.Name).DeleteCollection(ctx, deleteOpt, metav1.ListOptions{}); err != nil {
 		log.Error("Channel controller - failed to delete template collections", log.String("channelName", channel.ObjectMeta.Name), log.Err(err))
 		return err
 	}
@@ -276,12 +278,12 @@ func deleteTemplate(deleter *channeledResourcesDeleter, channel *v1.Channel) err
 	return nil
 }
 
-func deleteMessageRequest(deleter *channeledResourcesDeleter, channel *v1.Channel) error {
+func deleteMessageRequest(ctx context.Context, deleter *channeledResourcesDeleter, channel *v1.Channel) error {
 	log.Debug("Channel controller - deleteMessageRequest", log.String("channelName", channel.ObjectMeta.Name))
 
 	background := metav1.DeletePropagationBackground
-	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-	if err := deleter.notifyClient.Templates(channel.ObjectMeta.Name).DeleteCollection(deleteOpt, metav1.ListOptions{}); err != nil {
+	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+	if err := deleter.notifyClient.Templates(channel.ObjectMeta.Name).DeleteCollection(ctx, deleteOpt, metav1.ListOptions{}); err != nil {
 		log.Error("Channel controller - failed to delete message request collections", log.String("channelName", channel.ObjectMeta.Name), log.Err(err))
 		return err
 	}

@@ -22,12 +22,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/server/mux"
-	restclient "k8s.io/client-go/rest"
 	"net/http"
 	"strings"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/server/mux"
+	restclient "k8s.io/client-go/rest"
 	notifyinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/notify/internalversion"
 	"tkestack.io/tke/api/notify"
 	"tkestack.io/tke/pkg/util/log"
@@ -146,7 +147,7 @@ func registerAlarmWebhook(m *mux.PathRecorderMux, loopbackClientConfig *restclie
 				messageRequest := newMessageRequest(channel, template, receivers, receiverGroups, variables)
 
 				notifyClient := notifyinternalclient.NewForConfigOrDie(loopbackClientConfig)
-				_, err = notifyClient.MessageRequests(messageRequest.ObjectMeta.Namespace).Create(messageRequest)
+				_, err = notifyClient.MessageRequests(messageRequest.ObjectMeta.Namespace).Create(req.Context(), messageRequest, metav1.CreateOptions{})
 				if err != nil {
 					setErrResponse(err.Error(), http.StatusInternalServerError, w)
 					return

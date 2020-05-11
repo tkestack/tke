@@ -19,10 +19,11 @@
 package alertmanager
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
-	alert_config "github.com/prometheus/alertmanager/config"
+	alertconfig "github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v2"
 )
 
@@ -34,13 +35,13 @@ func TestProcessor_List(t *testing.T) {
 	}
 
 	t.Logf("List all routes")
-	targetRoutes, err := p.List(clusterName)
+	targetRoutes, err := p.List(context.Background(), clusterName)
 	if err != nil {
 		t.Errorf("list should success, code: %s", err)
 		return
 	}
 
-	expectConfig := &alert_config.Config{}
+	expectConfig := &alertconfig.Config{}
 	_ = yaml.Unmarshal([]byte(exampleAlertConfig), expectConfig)
 
 	if !reflect.DeepEqual(targetRoutes, expectConfig.Route.Routes) {

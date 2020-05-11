@@ -19,6 +19,8 @@
 package services
 
 import (
+	"context"
+
 	v1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/emicklei/go-restful"
 	alertconfig "github.com/prometheus/alertmanager/config"
@@ -41,23 +43,23 @@ type ConfigProcessor interface {
 
 // RuleProcessor defines the interface of operation rules service of prometheus
 type RuleProcessor interface {
-	CreateGroup(clusterName, groupName string, ruleGroup *v1.RuleGroup) error
-	DeleteGroup(clusterName, groupName string) error
-	GetGroup(clusterName, groupName string) (*v1.RuleGroup, error)
-	UpdateGroup(clusterName, groupName string, ruleGroup *v1.RuleGroup) error
-	ListGroups(clusterName string) ([]*v1.RuleGroup, error)
-	CreateRule(clusterName, groupName string, recordName string, rule *v1.Rule) error
-	DeleteRule(clusterName, groupName string, recordName string) error
-	GetRule(clusterName, groupName string, recordName string) (*v1.Rule, error)
-	UpdateRule(clusterName, groupName string, recordName string, rule *v1.Rule) error
-	ListRules(clusterName string, groupName string) ([]*v1.Rule, error)
+	CreateGroup(ctx context.Context, clusterName, groupName string, ruleGroup *v1.RuleGroup) error
+	DeleteGroup(ctx context.Context, clusterName, groupName string) error
+	GetGroup(ctx context.Context, clusterName, groupName string) (*v1.RuleGroup, error)
+	UpdateGroup(ctx context.Context, clusterName, groupName string, ruleGroup *v1.RuleGroup) error
+	ListGroups(ctx context.Context, clusterName string) ([]*v1.RuleGroup, error)
+	CreateRule(ctx context.Context, clusterName, groupName string, recordName string, rule *v1.Rule) error
+	DeleteRule(ctx context.Context, clusterName, groupName string, recordName string) error
+	GetRule(ctx context.Context, clusterName, groupName string, recordName string) (*v1.Rule, error)
+	UpdateRule(ctx context.Context, clusterName, groupName string, recordName string, rule *v1.Rule) error
+	ListRules(ctx context.Context, clusterName string, groupName string) ([]*v1.Rule, error)
 }
 
 // RouteProcessor defines the interface of operation route service of alertmanager
 type RouteProcessor interface {
-	Create(clusterName string, alertValue string, route *alertconfig.Route) error
-	Delete(clusterName string, alertValue string) error
-	Get(clusterName string, alertValue string) (*alertconfig.Route, error)
-	List(clusterName string) ([]*alertconfig.Route, error)
-	Update(clusterName string, alertValue string, route *alertconfig.Route) error
+	Create(ctx context.Context, clusterName string, alertValue string, route *alertconfig.Route) error
+	Delete(ctx context.Context, clusterName string, alertValue string) error
+	Get(ctx context.Context, clusterName string, alertValue string) (*alertconfig.Route, error)
+	List(ctx context.Context, clusterName string) ([]*alertconfig.Route, error)
+	Update(ctx context.Context, clusterName string, alertValue string, route *alertconfig.Route) error
 }

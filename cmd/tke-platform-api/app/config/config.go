@@ -176,7 +176,7 @@ func buildWebhookAuditBackend(o apiserveroptions.AuditWebhookOptions) (audit.Bac
 		return nil, nil
 	}
 	groupVersion, _ := schema.ParseGroupVersion(o.GroupVersionString)
-	webhook, err := pluginwebhook.NewBackend(o.ConfigFile, groupVersion, o.InitialBackoff)
+	webhook, err := pluginwebhook.NewBackend(o.ConfigFile, groupVersion, o.InitialBackoff, nil)
 	if err != nil {
 		return nil, fmt.Errorf("initializing audit webhook: %v", err)
 	}

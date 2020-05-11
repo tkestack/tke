@@ -19,12 +19,12 @@
 package prometheus
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
-	prometheus_rule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	prometheusrule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 )
 
 func TestProcessor_UpdateGroup(t *testing.T) {
@@ -37,13 +37,13 @@ func TestProcessor_UpdateGroup(t *testing.T) {
 	expectRuleGroup := getExpectRule(exampleRuleStr)
 
 	t.Logf("With non-existed group")
-	err = p.UpdateGroup(clusterName, "non-exist-group", &expectRuleGroup.Groups[0])
+	err = p.UpdateGroup(context.Background(), clusterName, "non-exist-group", &expectRuleGroup.Groups[0])
 	if err == nil {
 		t.Errorf("update should failed")
 		return
 	}
 
-	err = p.CreateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("creation should success, %s", err)
 		return
@@ -51,14 +51,14 @@ func TestProcessor_UpdateGroup(t *testing.T) {
 
 	t.Logf("With correct group name")
 	expectRuleGroup.Groups[0].Rules = nil
-	err = p.UpdateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.UpdateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("update should success, code: %s", err)
 		return
 	}
 
 	t.Logf("Get group")
-	targetGroup, err := p.GetGroup(clusterName, expectRuleGroup.Groups[0].Name)
+	targetGroup, err := p.GetGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name)
 	if err != nil {
 		t.Errorf("get should success, code: %s", err)
 		return
@@ -70,7 +70,7 @@ func TestProcessor_UpdateGroup(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheus_rule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return
@@ -94,14 +94,14 @@ func TestProcessor_UpdateRule(t *testing.T) {
 	recordName := expectRuleGroup.Groups[0].Rules[0].Alert
 
 	t.Logf("With non-existed record")
-	err = p.UpdateRule(clusterName, expectRuleGroup.Groups[0].Name, "non-exist-record", &expectRuleGroup.Groups[0].Rules[0])
+	err = p.UpdateRule(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, "non-exist-record", &expectRuleGroup.Groups[0].Rules[0])
 	if err == nil {
 		t.Errorf("update should failed")
 		return
 	}
 
 	t.Logf("Create record")
-	err = p.CreateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("creation should success, %s", err)
 		return
@@ -112,13 +112,13 @@ func TestProcessor_UpdateRule(t *testing.T) {
 		"alert": "test",
 		"foo":   "bar",
 	}
-	err = p.UpdateRule(clusterName, expectRuleGroup.Groups[0].Name, recordName, &expectRuleGroup.Groups[0].Rules[0])
+	err = p.UpdateRule(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, recordName, &expectRuleGroup.Groups[0].Rules[0])
 	if err != nil {
 		t.Errorf("update should success, code: %s", err)
 		return
 	}
 
-	targetRule, err := p.GetRule(clusterName, expectRuleGroup.Groups[0].Name, recordName)
+	targetRule, err := p.GetRule(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, recordName)
 	if err != nil {
 		t.Errorf("get should success, code: %s", err)
 		return
@@ -130,7 +130,7 @@ func TestProcessor_UpdateRule(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheus_rule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return

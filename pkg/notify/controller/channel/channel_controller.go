@@ -19,17 +19,19 @@
 package channel
 
 import (
+	"context"
 	"fmt"
+	"time"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"time"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	notifyinformers "tkestack.io/tke/api/client/informers/externalversions/notify/v1"
 	notifylisters "tkestack.io/tke/api/client/listers/notify/v1"
-	"tkestack.io/tke/api/notify/v1"
+	v1 "tkestack.io/tke/api/notify/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/notify/controller/channel/deletion"
 	"tkestack.io/tke/pkg/util/log"
@@ -164,7 +166,7 @@ func (nm *Controller) syncChannelFromKey(key string) (err error) {
 		utilruntime.HandleError(fmt.Errorf("unable to retrieve channel %v from store: %v", key, err))
 		return err
 	}
-	return nm.channeldResourcesDeleter.Delete(channel.Name)
+	return nm.channeldResourcesDeleter.Delete(context.Background(), channel.Name)
 }
 
 // Run starts observing the system with the specified number of workers.
