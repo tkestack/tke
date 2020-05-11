@@ -85,7 +85,7 @@ func (r *LBCFLoadBalancerREST) Connect(ctx context.Context, clusterName string, 
 	if err != nil {
 		return nil, err
 	}
-	credential, err := util.GetClusterCredential(r.platformClient, cluster)
+	credential, err := util.GetClusterCredential(ctx, r.platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}
