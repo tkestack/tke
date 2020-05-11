@@ -221,12 +221,14 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
     };
     return (
       <Modal visible={this.state.isShowDeleteDialog} caption={t('解除集群关联')} onClose={() => cancel()}>
-        <FormPanel.InlineText>
-          {t('确定要删除业务和{{clusterName}}的关联么？', {
-            clusterName: clusterName
-          })}
-        </FormPanel.InlineText>
-        <React.Fragment>
+        <Modal.Body>
+          <FormPanel.InlineText>
+            {t('确定要删除业务和{{clusterName}}的关联么？', {
+              clusterName: clusterName
+            })}
+          </FormPanel.InlineText>
+        </Modal.Body>
+        <Modal.Footer>
           <Button
             type="primary"
             style={{ margin: '0px 5px 0px 40px' }}
@@ -256,7 +258,7 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
           ) : (
             <noscript />
           )}
-        </React.Fragment>
+        </Modal.Footer>
       </Modal>
     );
   }
@@ -304,11 +306,11 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
       }
     };
     return (
-      <Modal visible={isShowAddDialog} caption={t('新增集群限制')} onClose={() => cancel()}>
+      <Modal visible={isShowAddDialog} caption={t('新增集群限制')} onClose={() => cancel()} size={700}>
         <FormPanel>
           <FormPanel.Item label={t('集群')}>
             <FormPanel.Select
-              label={t('集群')}
+              label={t('资源限制')}
               value={item.name}
               validator={item.v_name}
               model={finalClusterList}

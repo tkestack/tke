@@ -23,7 +23,7 @@ const mapDispatchToProps = dispatch =>
 export class DetailSubProjectActionPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { route, actions } = this.props;
-    actions.project.fetch();
+
     actions.detail.project.applyPolling({ parentProject: route.queries['projectId'] });
   }
 

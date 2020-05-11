@@ -15,6 +15,7 @@ export const CreateNamespace = 'CreateNamespace';
 export const EditNamespaceResourceLimit = 'EditNamespaceResourceLimit';
 export const UpdateNamespaceEdition = 'UpdateNamespaceEdition';
 export const DeleteNamespace = 'DeleteNamespace';
+export const MigrateNamesapce = 'MigrateNamesapce';
 
 /**admin */
 export const ModifyAdminstrator = 'ModifyAdminstrator';

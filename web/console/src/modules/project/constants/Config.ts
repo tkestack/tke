@@ -186,5 +186,6 @@ export const VALIDATE_NAME_RULE = {
 export const STRATEGY_TYPE = ['自定义策略', '预设策略'];
 
 export const FFReduxActionName = {
-  ProjectUserInfo: 'ProjectUserInfo'
+  ProjectUserInfo: 'ProjectUserInfo',
+  NamespaceKubectlConfig: 'NamespaceKubectlConfig'
 };

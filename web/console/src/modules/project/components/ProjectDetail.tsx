@@ -38,6 +38,7 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
   componentDidMount() {
     let { actions, route } = this.props;
     actions.project.fetchDetail(route.queries['projectId']);
+    actions.project.fetch();
   }
 
   render() {

@@ -22,6 +22,7 @@ import {
   User,
   UserFilter
 } from './index';
+import { NamespaceCert } from './Namespace';
 import { ProjectUserMap } from './Project';
 
 type ProjectWorkflow = WorkflowState<Project, string>;
@@ -100,4 +101,9 @@ export interface RootState {
   deleteParentProject?: ProjectWorkflow;
 
   projectDetail?: Project;
+
+  /**namespaceTable */
+  namespaceKubectlConfig?: FFObjectModel<NamespaceCert, NamespaceFilter>;
+
+  migrateNamesapce?: NamespaceWorkflow;
 }
