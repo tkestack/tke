@@ -59,7 +59,9 @@ func ValidateProject(ctx context.Context, project *business.Project, old *busine
 	if len(project.Spec.Clusters) > 0 {
 		for clusterName, clusterHard := range project.Spec.Clusters {
 			for k, v := range clusterHard.Hard {
-				hardErrs = append(hardErrs, validation.ValidateClusterVersioned(ctx, clusterGetter, clusterName, project.Spec.TenantID)...)
+				if old == nil { // Only validate cluster when creating projects.
+					hardErrs = append(hardErrs, validation.ValidateClusterVersioned(ctx, clusterGetter, clusterName, project.Spec.TenantID)...)
+				}
 				resPath := fldHardPath.Key(clusterName + k)
 				hardErrs = append(hardErrs, resource.ValidateResourceQuotaResourceName(k, resPath)...)
 				hardErrs = append(hardErrs, resource.ValidateResourceQuantityValue(k, v, resPath)...)
@@ -125,8 +127,10 @@ func validateAgainstChildren(ctx context.Context, project *business.Project, get
 	for _, name := range project.Status.CalculatedChildProjects {
 		childProject, err := getter.Project(ctx, name, metav1.GetOptions{})
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldChildrenProjectsPath, name,
-				fmt.Sprintf("failed to get child project '%s', for %s", name, err)))
+			if !errors.IsNotFound(err) {
+				allErrs = append(allErrs, field.Invalid(fldChildrenProjectsPath, name,
+					fmt.Sprintf("failed to get child project '%s', for %s", name, err)))
+			}
 			continue
 		}
 
@@ -146,8 +150,10 @@ func validateAgainstChildren(ctx context.Context, project *business.Project, get
 	for _, name := range project.Status.CalculatedNamespaces {
 		childNamespace, err := getter.Namespace(ctx, project.Name, name, metav1.GetOptions{})
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldChildrenNamespacesPath, name,
-				fmt.Sprintf("failed to get child namespace '%s', for %s", name, err)))
+			if !errors.IsNotFound(err) {
+				allErrs = append(allErrs, field.Invalid(fldChildrenNamespacesPath, name,
+					fmt.Sprintf("failed to get child namespace '%s', for %s", name, err)))
+			}
 			continue
 		}
 
