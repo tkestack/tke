@@ -193,6 +193,7 @@ type NamespaceSpec struct {
 	Finalizers         []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
 	TenantID           string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
 	ClusterName        string          `json:"clusterName" protobuf:"bytes,3,opt,name=clusterName"`
+	ClusterType        string          `json:"clusterType" protobuf:"bytes,8,opt,name=clusterType"`
 	ClusterVersion     string          `json:"clusterVersion" protobuf:"bytes,6,opt,name=clusterVersion"`
 	ClusterDisplayName string          `json:"clusterDisplayName" protobuf:"bytes,7,opt,name=clusterDisplayName"`
 	Namespace          string          `json:"namespace" protobuf:"bytes,4,opt,name=namespace"`

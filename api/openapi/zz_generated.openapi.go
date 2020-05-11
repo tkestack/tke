@@ -39540,6 +39540,12 @@ func schema_tke_api_business_v1_NamespaceSpec(ref common.ReferenceCallback) comm
 							Format: "",
 						},
 					},
+					"clusterType": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"clusterVersion": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -39573,7 +39579,7 @@ func schema_tke_api_business_v1_NamespaceSpec(ref common.ReferenceCallback) comm
 						},
 					},
 				},
-				Required: []string{"tenantID", "clusterName", "clusterVersion", "clusterDisplayName", "namespace"},
+				Required: []string{"tenantID", "clusterName", "clusterType", "clusterVersion", "clusterDisplayName", "namespace"},
 			},
 		},
 		Dependencies: []string{
