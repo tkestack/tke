@@ -19,6 +19,7 @@
 package alertmanager
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -96,7 +97,7 @@ func createProcessorServer() (kubernetes.Interface, services.RouteProcessor, str
 	}
 
 	util.ClusterNameToClient.Store(testClusterName, k8sClient)
-	_, _ = k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(configMap)
+	_, _ = k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(context.Background(), configMap, metav1.CreateOptions{})
 	// Because we have set kubernetes client, so set nil is ok
 	p := NewProcessor(nil)
 
