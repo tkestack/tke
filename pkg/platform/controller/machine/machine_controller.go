@@ -404,7 +404,7 @@ func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) 
 	cluster.Status.Message = ""
 	cluster.Status.Reason = ""
 
-	machine, err = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
+	_, err = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}

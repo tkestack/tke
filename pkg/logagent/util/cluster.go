@@ -108,7 +108,7 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 }
 
 //use cache to optimize this function
-func GetClusterPodIp(ctx context.Context, clusterName, namespace, podName string, platformClient platformversionedclient.PlatformV1Interface) (string, error) {
+func GetClusterPodIP(ctx context.Context, clusterName, namespace, podName string, platformClient platformversionedclient.PlatformV1Interface) (string, error) {
 	client, err := GetClusterClient(ctx, clusterName, platformClient)
 	if err != nil {
 		log.Errorf("unable to get cluster client %v", err)

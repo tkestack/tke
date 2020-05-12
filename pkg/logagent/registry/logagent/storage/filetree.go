@@ -62,7 +62,7 @@ type FileNodeRequest struct {
 
 type FileNodeProxy struct {
 	Req  logagent.LogFileTreeSpec
-	Ip   string
+	IP   string
 	Port string
 }
 
@@ -72,7 +72,7 @@ func (p *FileNodeProxy) GetReaderCloser() (io.ReadCloser, error) {
 		log.Errorf("unable to marshal request to json %v", err)
 		return nil, fmt.Errorf("unable to marshal request")
 	}
-	url := "http://" + p.Ip + ":" + p.Port + "/v1/logfile/directory"
+	url := "http://" + p.IP + ":" + p.Port + "/v1/logfile/directory"
 	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	httpReq.Header.Set("Content-Type", "application/json")
 	if err != nil {
@@ -93,14 +93,14 @@ func (r *FileNodeREST) Create(ctx context.Context, obj runtime.Object, createVal
 	//userName, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	fileNode := obj.(*logagent.LogFileTree)
 	//log.Infof("get userNmae %v tenantId %v and fileNode spec=%+v", userName, tenantID, fileNode.Spec)
-	hostIp, err := util.GetClusterPodIp(ctx, fileNode.Spec.ClusterId, fileNode.Spec.Namespace, fileNode.Spec.Pod, r.PlatformClient)
+	hostIP, err := util.GetClusterPodIP(ctx, fileNode.Spec.ClusterId, fileNode.Spec.Namespace, fileNode.Spec.Pod, r.PlatformClient)
 	if err != nil {
 		return nil, errors.NewInternalError(fmt.Errorf("unable to get host ip"))
 	}
 	return &util.LocationStreamer{
-		Request:     &FileNodeProxy{Req: fileNode.Spec, Ip: hostIp, Port: util.LogagentPort},
+		Request:     &FileNodeProxy{Req: fileNode.Spec, IP: hostIP, Port: util.LogagentPort},
 		Transport:   nil,
 		ContentType: "application/json",
-		Ip:          hostIp,
+		IP:          hostIP,
 	}, nil
 }

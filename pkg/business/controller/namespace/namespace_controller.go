@@ -413,15 +413,6 @@ func (c *Controller) ensureNamespaceOnCluster(ctx context.Context, namespace *v1
 	return cls.EnsureResourceQuotaOnCluster(ctx, kubeClient, namespace)
 }
 
-func (c *Controller) detachFromClusterNamespace(ctx context.Context, namespace *v1.Namespace) error {
-	kubeClient, err := util.BuildExternalClientSetWithName(ctx, c.platformClient, namespace.Spec.ClusterName)
-	if err != nil {
-		log.Error("Failed to create the kubernetes client", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
-		return err
-	}
-	return cls.DetachFromClusterNamespace(ctx, kubeClient, namespace)
-}
-
 func (c *Controller) persistUpdateNamespace(ctx context.Context, namespace *v1.Namespace) error {
 	return PersistUpdateNamesapce(ctx, c.client, namespace)
 }

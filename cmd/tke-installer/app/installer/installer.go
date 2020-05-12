@@ -1397,8 +1397,6 @@ func (t *TKE) installTKELogagentController(ctx context.Context) error {
 		}
 		return ok, nil
 	})
-
-	return fmt.Errorf("installTKELogagentController not implemented")
 }
 
 func (t *TKE) installETCD(ctx context.Context) error {

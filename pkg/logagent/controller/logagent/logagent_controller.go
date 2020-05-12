@@ -337,9 +337,9 @@ func (c *Controller) createLogCollectorIfNeeded(
 			LogCollector.Status.Reason = ""
 			LogCollector.Status.RetryCount = 0
 			return c.persistUpdate(ctx, LogCollector)
-		} else {
-			log.Errorf("LogCollector install error %v %v", err, log.String("name", key))
 		}
+		log.Errorf("LogCollector install error %v %v", err, log.String("name", key))
+
 		// Install LogCollector failed.
 		LogCollector = LogCollector.DeepCopy()
 		fillOperatorStatus(LogCollector)

@@ -23,6 +23,7 @@ import (
 	"os"
 	"runtime"
 	"time"
+
 	"tkestack.io/tke/cmd/tke-logagent-controller/app"
 )
 
@@ -34,4 +35,3 @@ func main() {
 
 	app.NewApp("tke-logagent-controller").Run()
 }
-

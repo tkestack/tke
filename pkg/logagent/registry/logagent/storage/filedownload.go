@@ -76,14 +76,14 @@ func (r *FileDownloadREST) Connect(ctx context.Context, loagentName string, opts
 	}
 	logagent := logagentObject.(*logagent.LogAgent)
 	return &logCollectorProxyHandler{
-		clusterId:      logagent.Spec.ClusterName,
+		clusterID:      logagent.Spec.ClusterName,
 		platformClient: r.PlatformClient,
 		location:       &url.URL{Scheme: "http"},
 	}, nil
 }
 
 type logCollectorProxyHandler struct {
-	clusterId      string
+	clusterID      string
 	platformClient platformversionedclient.PlatformV1Interface
 	location       *url.URL
 }
@@ -102,17 +102,17 @@ func (h *logCollectorProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 		return
 	}
 	req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-	hostIp, err := util.GetClusterPodIp(req.Context(), h.clusterId, reqConfig.Namespace, reqConfig.PodName, h.platformClient)
+	hostIP, err := util.GetClusterPodIP(req.Context(), h.clusterID, reqConfig.Namespace, reqConfig.PodName, h.platformClient)
 	if err != nil {
 		util.WriteResponseError(w, util.ErrorInternalError, "unable to find host for this request")
 		log.Errorf("unable to get hostip %v", err)
 		return
 	}
-	log.Infof("get host ip is %v body is %v", hostIp, req.Body)
+	log.Infof("get host ip is %v body is %v", hostIP, req.Body)
 	loc := *h.location
 	loc.RawQuery = req.URL.RawQuery
 	loc.Path = "/v1/logfile/download"
-	loc.Host = hostIp + ":8090"
+	loc.Host = hostIP + ":8090"
 	newReq := req.WithContext(context.Background())
 	newReq.Header = netutil.CloneHeader(req.Header)
 	newReq.URL = &loc

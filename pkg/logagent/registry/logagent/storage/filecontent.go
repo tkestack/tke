@@ -54,7 +54,7 @@ func (r *FileContentREST) New() runtime.Object {
 
 type FileContentProxy struct {
 	Req  logagent.LogFileContentSpec
-	Ip   string
+	IP   string
 	Port string
 }
 
@@ -64,7 +64,7 @@ func (p *FileContentProxy) GetReaderCloser() (io.ReadCloser, error) {
 		log.Errorf("unable to marshal request to json %v", err)
 		return nil, fmt.Errorf("unable to marshal request")
 	}
-	url := "http://" + p.Ip + ":" + p.Port + "/v1/logfile/content"
+	url := "http://" + p.IP + ":" + p.Port + "/v1/logfile/content"
 	log.Infof("url is %v", url)
 	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	httpReq.Header.Set("Content-Type", "application/json")
@@ -86,14 +86,14 @@ func (r *FileContentREST) Create(ctx context.Context, obj runtime.Object, create
 	//userName, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	fileContent := obj.(*logagent.LogFileContent)
 	//log.Infof("get userNmae %v tenantId %v and fileNode spec=%+v", userName, tenantID, fileContent.Spec)
-	hostIp, err := util.GetClusterPodIp(ctx, fileContent.Spec.ClusterId, fileContent.Spec.Namespace, fileContent.Spec.Pod, r.PlatformClient)
+	hostIP, err := util.GetClusterPodIP(ctx, fileContent.Spec.ClusterId, fileContent.Spec.Namespace, fileContent.Spec.Pod, r.PlatformClient)
 	if err != nil {
 		return nil, errors.NewInternalError(fmt.Errorf("unable to get pod ip %v", err))
 	}
 	return &util.LocationStreamer{
-		Request:     &FileContentProxy{Req: fileContent.Spec, Ip: hostIp, Port: util.LogagentPort},
+		Request:     &FileContentProxy{Req: fileContent.Spec, IP: hostIP, Port: util.LogagentPort},
 		Transport:   nil,
 		ContentType: "application/json",
-		Ip:          hostIp,
+		IP:          hostIP,
 	}, nil
 }

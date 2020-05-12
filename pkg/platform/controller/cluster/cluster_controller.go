@@ -445,13 +445,12 @@ func (c *Controller) ensureSyncOldClusterCredential(ctx context.Context, cluster
 		// Deprecated: will remove in next release
 		if cluster.Spec.Type == "Imported" {
 			return errors.New("waiting create ClusterCredential")
-		} else {
-			return nil
 		}
+		return nil
 	}
 	credential := &clusterCredentials.Items[0]
 	cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
-	cluster, err = c.platformClient.Clusters().Update(ctx, cluster, metav1.UpdateOptions{})
+	_, err = c.platformClient.Clusters().Update(ctx, cluster, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -475,7 +474,7 @@ func (c *Controller) ensureClusterCredential(ctx context.Context, cluster *platf
 			return err
 		}
 		cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
-		cluster, err = c.platformClient.Clusters().Update(ctx, cluster, metav1.UpdateOptions{})
+		_, err = c.platformClient.Clusters().Update(ctx, cluster, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}

@@ -22,9 +22,6 @@ import (
 	"context"
 	"strings"
 
-	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/apiserver/filter"
-
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -74,10 +71,13 @@ func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.Lis
 	}
 
 	userID := requestInfo.Name
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if tenantID == "" {
-		tenantID = filter.TenantIDFrom(ctx)
-	}
+	// todo: confirm this
+	//var tenantID string
+	//if _, t := authentication.GetUsernameAndTenantID(ctx); t == "" {
+	//	tenantID = t
+	//} else {
+	//	tenantID = filter.TenantIDFrom(ctx)
+	//}
 
 	obj, err := r.userRest.Get(ctx, userID, &metav1.GetOptions{})
 	if err != nil {

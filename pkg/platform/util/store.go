@@ -65,22 +65,6 @@ func (s *Store) NamespaceScoped() bool {
 	return s.Namespaced
 }
 
-func listOptions(o *metainternalversion.ListOptions) *v1.ListOptions {
-	if o == nil {
-		return &v1.ListOptions{}
-	}
-	return &v1.ListOptions{
-		LabelSelector:       o.LabelSelector.String(),
-		FieldSelector:       o.FieldSelector.String(),
-		Watch:               o.Watch,
-		AllowWatchBookmarks: o.AllowWatchBookmarks,
-		ResourceVersion:     o.ResourceVersion,
-		TimeoutSeconds:      o.TimeoutSeconds,
-		Limit:               o.Limit,
-		Continue:            o.Continue,
-	}
-}
-
 // List returns a list of items matching labels and field according to the
 // backend kubernetes api server.
 func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
