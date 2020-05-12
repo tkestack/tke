@@ -28,6 +28,7 @@ import (
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
 	authinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	businessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
+	logagentinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/logagent/internalversion"
 	monitorinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/monitor/internalversion"
 	notifyinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/notify/internalversion"
 	platforminternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
@@ -38,6 +39,7 @@ type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	Auth() authinternalversion.AuthInterface
 	Business() businessinternalversion.BusinessInterface
+	Logagent() logagentinternalversion.LogagentInterface
 	Monitor() monitorinternalversion.MonitorInterface
 	Notify() notifyinternalversion.NotifyInterface
 	Platform() platforminternalversion.PlatformInterface
@@ -50,6 +52,7 @@ type Clientset struct {
 	*discovery.DiscoveryClient
 	auth     *authinternalversion.AuthClient
 	business *businessinternalversion.BusinessClient
+	logagent *logagentinternalversion.LogagentClient
 	monitor  *monitorinternalversion.MonitorClient
 	notify   *notifyinternalversion.NotifyClient
 	platform *platforminternalversion.PlatformClient
@@ -64,6 +67,11 @@ func (c *Clientset) Auth() authinternalversion.AuthInterface {
 // Business retrieves the BusinessClient
 func (c *Clientset) Business() businessinternalversion.BusinessInterface {
 	return c.business
+}
+
+// Logagent retrieves the LogagentClient
+func (c *Clientset) Logagent() logagentinternalversion.LogagentInterface {
+	return c.logagent
 }
 
 // Monitor retrieves the MonitorClient
@@ -115,6 +123,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.logagent, err = logagentinternalversion.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.monitor, err = monitorinternalversion.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -145,6 +157,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
 	cs.auth = authinternalversion.NewForConfigOrDie(c)
 	cs.business = businessinternalversion.NewForConfigOrDie(c)
+	cs.logagent = logagentinternalversion.NewForConfigOrDie(c)
 	cs.monitor = monitorinternalversion.NewForConfigOrDie(c)
 	cs.notify = notifyinternalversion.NewForConfigOrDie(c)
 	cs.platform = platforminternalversion.NewForConfigOrDie(c)
@@ -159,6 +172,7 @@ func New(c rest.Interface) *Clientset {
 	var cs Clientset
 	cs.auth = authinternalversion.New(c)
 	cs.business = businessinternalversion.New(c)
+	cs.logagent = logagentinternalversion.New(c)
 	cs.monitor = monitorinternalversion.New(c)
 	cs.notify = notifyinternalversion.New(c)
 	cs.platform = platforminternalversion.New(c)

@@ -19,6 +19,7 @@
 package machine
 
 import (
+	"math/rand"
 	"sync"
 	"time"
 
@@ -57,20 +58,19 @@ func (s *machineHealth) Del(name string) {
 	delete(s.m, name)
 }
 
-func (c *Controller) startMachineHealthCheck(key string, machine *v1.Machine) error {
-	if !c.health.Exist(key) {
-		c.health.Set(machine)
-		go wait.PollImmediateUntil(1*time.Minute, c.watchHealth(machine.Name), c.stopCh)
-		log.Info("Machine phase start new health check", log.String("name", key), log.String("phase", string(machine.Status.Phase)))
-	} else {
-		log.Info("Machine phase health check exit", log.String("name", key), log.String("phase", string(machine.Status.Phase)))
+func (c *Controller) ensureHealthCheck(key string, machine *v1.Machine) {
+	if c.health.Exist(key) {
+		return
 	}
 
-	return nil
+	log.Info("start health check for cluster", log.String("machineName", key), log.String("phase", string(machine.Status.Phase)))
+	c.health.Set(machine)
+	time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
+	go wait.PollImmediateUntil(5*time.Minute, c.watchHealth(machine.Name), c.stopCh)
 }
 
 func (c *Controller) checkHealth(m *v1.Machine) error {
-	clientset, err := util.BuildExternalClientSetWithName(c.client.PlatformV1(), m.Spec.ClusterName)
+	clientset, err := util.BuildExternalClientSetWithName(c.platformclient, m.Spec.ClusterName)
 	if err != nil {
 		m.Status.Phase = v1.MachineFailed
 		m.Status.Message = err.Error()
@@ -138,7 +138,7 @@ func (c *Controller) watchHealth(name string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Debug("Check machine health", log.String("name", name))
 
-		m, err := c.client.PlatformV1().Machines().Get(name, metav1.GetOptions{})
+		m, err := c.platformclient.Machines().Get(name, metav1.GetOptions{})
 		if err != nil {
 			// if machine is not found,to exit the health check loop
 			if errors.IsNotFound(err) {

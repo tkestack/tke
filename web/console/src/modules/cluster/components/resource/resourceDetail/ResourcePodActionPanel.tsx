@@ -13,14 +13,13 @@ import { initValidator } from '../../../../../../src/modules/common';
 import { cloneDeep, isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { CreateResource, PodFilterInNode } from '../../../models';
-import {
-    containerMonitorFields, MonitorPanelProps, podMonitorFields
-} from '../../../models/MonitorPanel';
+import { containerMonitorFields, MonitorPanelProps, podMonitorFields } from '../../../models/MonitorPanel';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { IsInNodeManageDetail } from './ResourceDetail';
 import { ResourceGrayUpgradeDialog } from './ResourceGrayUpgradeDialog';
 import { ResourceTappPodDeleteDialog } from './ResourceTappPodDeleteDialog';
+import { reduceNs } from '@helper';
 
 /** k8s pod的状态值 */
 const PodPhase = ['Pending', 'Running', 'Succeeded', 'Failed', 'Unknown'];
@@ -328,7 +327,7 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
                     ? [['node', '=', route.queries['resourceIns'] || '']]
                     : [
                         ['workload_name', '=', route.queries['resourceIns'] || ''],
-                        ['namespace', '=', route.queries['np'] || 'default']
+                        ['namespace', '=', reduceNs(route.queries['np'] || 'default')]
                       ])
                 ],
                 fields: podMonitorFields
@@ -364,7 +363,7 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
                         ? resourceDetailState.podList.data.records[0].metadata.name
                         : '')
                   ],
-                  ...(isInNodeManage ? [] : [['namespace', '=', route.queries['np'] || 'default']])
+                  ...(isInNodeManage ? [] : [['namespace', '=', reduceNs(route.queries['np'] || 'default')]])
                 ],
                 fields: containerMonitorFields
               }

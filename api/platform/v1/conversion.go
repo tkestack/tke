@@ -20,6 +20,7 @@ package v1
 
 import (
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -31,7 +32,6 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		AddFieldLabelConversionsForRegistry,
 		AddFieldLabelConversionsForPersistentEvent,
 		AddFieldLabelConversionsForHelm,
-		AddFieldLabelConversionsForGPUManager,
 		AddFieldLabelConversionsForTappController,
 		AddFieldLabelConversionsForCSIOperator,
 		AddFieldLabelConversionsForVolumeDecorator,
@@ -150,26 +150,6 @@ func AddFieldLabelConversionsForRegistry(scheme *runtime.Scheme) error {
 // representation.
 func AddFieldLabelConversionsForHelm(scheme *runtime.Scheme) error {
 	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Helm"),
-		func(label, value string) (string, string, error) {
-			switch label {
-			case "spec.tenantID",
-				"spec.clusterName",
-				"spec.version",
-				"status.phase",
-				"status.version",
-				"metadata.name":
-				return label, value, nil
-			default:
-				return "", "", fmt.Errorf("field label not supported: %s", label)
-			}
-		})
-}
-
-// AddFieldLabelConversionsForGPUManager adds a conversion function to convert
-// field selectors of GPUManager from the given version to internal version
-// representation.
-func AddFieldLabelConversionsForGPUManager(scheme *runtime.Scheme) error {
-	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("GPUManager"),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.tenantID",

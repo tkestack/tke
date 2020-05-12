@@ -15,23 +15,27 @@ import { GroupAssociateWorkflowDialog } from './associate/GroupAssociateWorkflow
 const { useState, useEffect } = React;
 const _isEqual = require('lodash/isEqual');
 
-export const StrategyTablePanel = () => {
-  const state = useSelector(state => state);
+export const StrategyTablePanel = (props) => {
+  const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
-
-  const { strategyList, userList, associatedUsersList } = state;
-  const associatedUsersListRecords = associatedUsersList.list.data.records.map(item => item.metadata.name);
+  const { type } = props;
+  const { route, strategyList, userList, associatedUsersList } = state;
+  const associatedUsersListRecords = associatedUsersList.list.data.records.map((item) => item.metadata.name);
   const userListRecords = userList.list.data.records;
+  const { sub } = router.resolve(route);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [userMsgsValue, setUserMsgsValue] = useState({
     inputValue: '',
     targetKeys: associatedUsersListRecords,
-    newTargetKeys: []
+    newTargetKeys: [],
   });
   const [currentStrategy, setCurrentStrategy] = useState({ id: undefined });
 
+  useEffect(() => {
+    actions.strategy.poll({ type });
+  }, [type]);
   useEffect(() => {
     // 关联用户
     if (!_isEqual(associatedUsersListRecords, userMsgsValue.targetKeys)) {
@@ -49,7 +53,7 @@ export const StrategyTablePanel = () => {
     {
       key: 'name',
       header: '用户',
-      render: user => {
+      render: (user) => {
         if (userMsgsValue.targetKeys.indexOf(user.metadata.name) !== -1) {
           return (
             <Tooltip title="用户已被关联">
@@ -62,8 +66,8 @@ export const StrategyTablePanel = () => {
             {user.spec.name}({user.spec.displayName})
           </p>
         );
-      }
-    }
+      },
+    },
   ];
   const columns: TableColumn<Strategy>[] = [
     {
@@ -73,41 +77,42 @@ export const StrategyTablePanel = () => {
         <Text parent="div" overflow>
           <a
             href="javascript:;"
-            onClick={e => {
-              router.navigate({ module: 'strategy', sub: `${item.metadata.name}` });
+            onClick={(e) => {
+              router.navigate({ module: 'strategy', sub: type, action: 'detail' }, { id: item.metadata.name });
             }}
           >
             {item.spec.displayName}
           </a>
           {item.status['phase'] === 'Terminating' && <Icon type="loading" />}
         </Text>
-      )
+      ),
     },
     {
       key: 'description',
       header: t('描述'),
-      render: item => <Text parent="div">{item.spec.description || '-'}</Text>
+      render: (item) => <Text parent="div">{item.spec.description || '-'}</Text>,
     },
     {
       key: 'service',
       header: t('服务类型'),
-      render: item => <Text parent="div">{item.spec.category || '-'}</Text>
+      render: (item) => <Text parent="div">{item.spec.category || '-'}</Text>,
     },
-    { key: 'operation', header: t('操作'), render: user => _renderOperationCell(user) }
+    { key: 'operation', header: t('操作'), render: (user) => _renderOperationCell(user) },
   ];
 
   return (
     <React.Fragment>
       <TablePanel
-        recordKey={record => {
+        recordKey={(record) => {
           return record.metadata.name;
         }}
         columns={columns}
         model={strategyList}
         action={actions.strategy}
-        rowDisabled={record => record.status['phase'] === 'Terminating'}
+        rowDisabled={(record) => record.status['phase'] === 'Terminating'}
         emptyTips={emptyTips}
-        isNeedPagination={true}
+        // isNeedPagination={true}
+        // isNeedContinuePagination={true}
         bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
       />
       <GroupAssociateWorkflowDialog
@@ -127,7 +132,7 @@ export const StrategyTablePanel = () => {
                   header={
                     <SearchBox
                       value={userMsgsValue.inputValue}
-                      onChange={value => {
+                      onChange={(value) => {
                         setUserMsgsValue({ ...userMsgsValue, inputValue: value });
                         actions.user.performSearch(value);
                       }}
@@ -138,34 +143,34 @@ export const StrategyTablePanel = () => {
                     records={
                       userListRecords &&
                       userListRecords.filter(
-                        user =>
+                        (user) =>
                           (user.spec.name &&
                             (user.spec.name.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase()) ||
                               user.spec.name.toLowerCase() !== 'admin')) ||
                           user.spec.displayName.toLowerCase().includes(userMsgsValue.inputValue.toLowerCase())
                       )
                     }
-                    rowDisabled={record => {
+                    rowDisabled={(record) => {
                       return userMsgsValue.targetKeys.indexOf(record.metadata.name) !== -1;
                     }}
-                    recordKey={record => {
+                    recordKey={(record) => {
                       return record.metadata.name;
                     }}
                     columns={modalColumns}
                     addons={[
                       selectable({
                         value: userMsgsValue.newTargetKeys.concat(userMsgsValue.targetKeys),
-                        onChange: keys => {
+                        onChange: (keys) => {
                           const newKeys = [];
-                          keys.forEach(item => {
+                          keys.forEach((item) => {
                             if (userMsgsValue.targetKeys.indexOf(item) === -1) {
                               newKeys.push(item);
                             }
                           });
                           setUserMsgsValue({ ...userMsgsValue, newTargetKeys: newKeys });
                         },
-                        rowSelect: true
-                      })
+                        rowSelect: true,
+                      }),
                     ]}
                   />
                 </Transfer.Cell>
@@ -174,18 +179,18 @@ export const StrategyTablePanel = () => {
                 <Transfer.Cell title={t(`已选择 (${userMsgsValue.newTargetKeys.length}条)`)}>
                   <Table
                     records={
-                      userListRecords && userListRecords.filter(i => userMsgsValue.newTargetKeys.includes(i.name))
+                      userListRecords && userListRecords.filter((i) => userMsgsValue.newTargetKeys.includes(i.name))
                     }
                     recordKey="name"
                     columns={modalColumns}
                     addons={[
                       removeable({
-                        onRemove: key =>
+                        onRemove: (key) =>
                           setUserMsgsValue({
                             ...userMsgsValue,
-                            newTargetKeys: userMsgsValue.newTargetKeys.filter(i => i !== key)
-                          })
-                      })
+                            newTargetKeys: userMsgsValue.newTargetKeys.filter((i) => i !== key),
+                          }),
+                      }),
                     ]}
                   />
                 </Transfer.Cell>
@@ -209,37 +214,41 @@ export const StrategyTablePanel = () => {
   function _renderOperationCell(strategy: Strategy) {
     return (
       <React.Fragment>
-        <LinkButton
-          tipDirection="right"
-          onClick={() => _setModalVisible(strategy)}
-          disabled={strategy.status['phase'] === 'Terminating'}
-        >
-          <Trans>关联用户</Trans>
-        </LinkButton>
-        <LinkButton
-          tipDirection="right"
-          disabled={strategy.status['phase'] === 'Terminating'}
-          onClick={e => {
-            /** 设置用户组关联场景 */
-            let filter: GroupFilter = {
-              resource: 'policy',
-              resourceID: strategy.metadata.name,
-              /** 关联/解关联回调函数 */
-              callback: () => {
-                actions.strategy.fetch();
-              }
-            };
-            actions.group.associate.setupGroupFilter(filter);
-            /** 拉取关联用户组列表，拉取后自动更新groupAssociation */
-            actions.group.associate.groupAssociatedList.applyFilter(filter);
-            /** 拉取用户组列表 */
-            actions.group.associate.groupList.performSearch('');
-            /** 开始关联用户组工作流 */
-            actions.group.associate.associateGroupWorkflow.start();
-          }}
-        >
-          <Trans>关联用户组</Trans>
-        </LinkButton>
+        {sub !== 'business' && (
+          <>
+            <LinkButton
+              tipDirection="right"
+              onClick={() => _setModalVisible(strategy)}
+              disabled={strategy.status['phase'] === 'Terminating'}
+            >
+              <Trans>关联用户</Trans>
+            </LinkButton>
+            <LinkButton
+              tipDirection="right"
+              disabled={strategy.status['phase'] === 'Terminating'}
+              onClick={(e) => {
+                /** 设置用户组关联场景 */
+                let filter: GroupFilter = {
+                  resource: 'policy',
+                  resourceID: strategy.metadata.name,
+                  /** 关联/解关联回调函数 */
+                  callback: () => {
+                    actions.strategy.fetch();
+                  },
+                };
+                actions.group.associate.setupGroupFilter(filter);
+                /** 拉取关联用户组列表，拉取后自动更新groupAssociation */
+                actions.group.associate.groupAssociatedList.applyFilter(filter);
+                /** 拉取用户组列表 */
+                actions.group.associate.groupList.performSearch('');
+                /** 开始关联用户组工作流 */
+                actions.group.associate.associateGroupWorkflow.start();
+              }}
+            >
+              <Trans>关联用户组</Trans>
+            </LinkButton>
+          </>
+        )}
         {strategy.type !== 1 && <LinkButton onClick={() => _removeCategory(strategy)}>删除</LinkButton>}
       </React.Fragment>
     );
@@ -249,14 +258,14 @@ export const StrategyTablePanel = () => {
     actions.associateActions.applyFilter({ search: strategy.metadata.name + '' });
     setModalVisible(true);
     setCurrentStrategy({
-      id: strategy.metadata.name
+      id: strategy.metadata.name,
     });
   }
   function _close() {
     setModalVisible(false);
     setUserMsgsValue({
       ...userMsgsValue,
-      newTargetKeys: []
+      newTargetKeys: [],
     });
   }
   function _onSubmit() {
@@ -266,14 +275,14 @@ export const StrategyTablePanel = () => {
     setUserMsgsValue({
       ...userMsgsValue,
       targetKeys: userMsgsValue.targetKeys.concat(userMsgsValue.newTargetKeys),
-      newTargetKeys: []
+      newTargetKeys: [],
     });
   }
   async function _removeCategory(strategy: Strategy) {
     const yes = await Modal.confirm({
       message: t('确认删除当前所选策略？'),
       okText: t('删除'),
-      cancelText: t('取消')
+      cancelText: t('取消'),
     });
     if (yes) {
       actions.strategy.removeStrategy.start([strategy.metadata.name]);

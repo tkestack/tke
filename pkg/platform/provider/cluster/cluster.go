@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+
+	"k8s.io/apiserver/pkg/server/mux"
 )
 
 var (
@@ -42,6 +44,13 @@ func Register(name string, provider Provider) {
 		panic("cluster: Register called twice for provider " + name)
 	}
 	providers[name] = provider
+}
+
+// RegisterHandler register all provider's hanlder.
+func RegisterHandler(mux *mux.PathRecorderMux) {
+	for _, p := range providers {
+		p.RegisterHandler(mux)
+	}
 }
 
 // Providers returns a sorted list of the names of the registered providers.

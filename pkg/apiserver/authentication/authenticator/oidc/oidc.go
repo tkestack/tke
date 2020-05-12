@@ -49,6 +49,10 @@ const (
 	// TenantIDKey defines the key representing the tenant id in the additional
 	// information mapping table of the user information.
 	TenantIDKey = "tenantid"
+
+	// DisplayNameKey defines the key representing the user display name in the additional
+	// information mapping table of the user information.
+	DisplayNameKey = "displayname"
 )
 
 // Options defines the configuration options needed to initialize OpenID
@@ -94,6 +98,9 @@ type Options struct {
 	// the provided value. A value "oidc:" would result in usernames like "oidc:john".
 	UsernamePrefix string
 
+	// DisplayNameClaim is the JWT field to use as the user's display name.
+	DisplayNameClaim string
+
 	// GroupsClaim, if specified, causes the OIDCAuthenticator to try to populate the user's
 	// groups with an ID Token field. If the GroupsClaim field is present in an ID Token the value
 	// must be a string or list of strings.
@@ -135,18 +142,19 @@ func initVerifier(ctx context.Context, config *oidc.Config, issuer, externalIssu
 // Authenticator checks a string value against a backing authentication store and
 // returns a Response or an error if the token could not be checked.
 type Authenticator struct {
-	IssuerURL      string
-	usernameClaim  string
-	usernamePrefix string
-	groupsClaim    string
-	groupsPrefix   string
-	tenantIDClaim  string
-	tenantIDPrefix string
-	requiredClaims map[string]string
-	clientIDs      authenticator.Audiences
-	apiAudiences   authenticator.Audiences
-	verifier       *oidc.IDTokenVerifier
-	resolver       *claimResolver
+	IssuerURL        string
+	usernameClaim    string
+	usernamePrefix   string
+	displayNameClaim string
+	groupsClaim      string
+	groupsPrefix     string
+	tenantIDClaim    string
+	tenantIDPrefix   string
+	requiredClaims   map[string]string
+	clientIDs        authenticator.Audiences
+	apiAudiences     authenticator.Audiences
+	verifier         *oidc.IDTokenVerifier
+	resolver         *claimResolver
 }
 
 // New to create the Authenticator object by give options.
@@ -222,18 +230,19 @@ func New(opts *Options) (*Authenticator, error) {
 	}
 
 	a := &Authenticator{
-		IssuerURL:      opts.ExternalIssuerURL,
-		usernameClaim:  opts.UsernameClaim,
-		usernamePrefix: opts.UsernamePrefix,
-		groupsClaim:    opts.GroupsClaim,
-		groupsPrefix:   opts.GroupsPrefix,
-		tenantIDClaim:  opts.TenantIDClaim,
-		tenantIDPrefix: opts.TenantIDPrefix,
-		requiredClaims: opts.RequiredClaims,
-		clientIDs:      authenticator.Audiences{opts.ClientID},
-		apiAudiences:   opts.APIAudiences,
-		verifier:       verifier,
-		resolver:       resolver,
+		IssuerURL:        opts.ExternalIssuerURL,
+		usernameClaim:    opts.UsernameClaim,
+		usernamePrefix:   opts.UsernamePrefix,
+		displayNameClaim: opts.DisplayNameClaim,
+		groupsClaim:      opts.GroupsClaim,
+		groupsPrefix:     opts.GroupsPrefix,
+		tenantIDClaim:    opts.TenantIDClaim,
+		tenantIDPrefix:   opts.TenantIDPrefix,
+		requiredClaims:   opts.RequiredClaims,
+		clientIDs:        authenticator.Audiences{opts.ClientID},
+		apiAudiences:     opts.APIAudiences,
+		verifier:         verifier,
+		resolver:         resolver,
 	}
 
 	return a, nil
@@ -543,6 +552,18 @@ func (a *Authenticator) AuthenticateToken(ctx context.Context, token string) (*a
 		Groups: make([]string, 0),
 		Extra:  make(map[string][]string),
 	}
+
+	var displayName string
+	if a.displayNameClaim != "" {
+		if err := c.unmarshalClaim(a.displayNameClaim, &displayName); err != nil {
+			return nil, false, fmt.Errorf("oidc: parse displayName claims %q: %v", a.displayNameClaim, err)
+		}
+
+		if displayName != "" {
+			info.Extra[DisplayNameKey] = []string{displayName}
+		}
+	}
+
 	if a.groupsClaim != "" {
 		if _, ok := c[a.groupsClaim]; ok {
 			// Some admins want to use string claims like "role" as the group value.
@@ -579,6 +600,7 @@ func (a *Authenticator) AuthenticateToken(ctx context.Context, token string) (*a
 				tenantID = a.tenantIDPrefix + tenantID
 			}
 			info.Extra[TenantIDKey] = []string{tenantID}
+			info.UID = federateIDClaim.UserID
 		}
 	}
 

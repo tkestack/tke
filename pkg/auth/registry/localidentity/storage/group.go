@@ -20,8 +20,9 @@ package storage
 
 import (
 	"context"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"strings"
+
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -73,11 +74,7 @@ func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListO
 	}
 	localIdentity := obj.(*auth.LocalIdentity)
 
-	roles, err := r.enforcer.GetRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
-	if err != nil {
-		log.Error("List roles for user failed from casbin failed", log.String("user", userID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	roles := r.enforcer.GetRolesForUserInDomain(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), util.DefaultDomain)
 
 	var groupIDs []string
 	for _, r := range roles {
@@ -89,12 +86,14 @@ func (r *GroupREST) List(ctx context.Context, options *metainternalversion.ListO
 	var groupList = &auth.GroupList{}
 	for _, id := range groupIDs {
 		grp, err := r.authClient.Groups().Get(util.CombineTenantAndName(localIdentity.Spec.TenantID, id), metav1.GetOptions{})
-		if err != nil && apierrors.IsNotFound(err) {
+		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("Get group failed", log.String("group", id), log.Err(err))
 			return nil, err
 		}
 
 		if err != nil {
+			_, _ = r.enforcer.DeleteRoleForUserInDomain(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username),
+				util.GroupKey(localIdentity.Spec.TenantID, id), util.DefaultDomain)
 			log.Warn("group has been deleted, but till in casbin", log.String("group", id))
 			continue
 		}

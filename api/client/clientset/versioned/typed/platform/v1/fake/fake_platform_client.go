@@ -58,10 +58,6 @@ func (c *FakePlatformV1) CronHPAs() v1.CronHPAInterface {
 	return &FakeCronHPAs{c}
 }
 
-func (c *FakePlatformV1) GPUManagers() v1.GPUManagerInterface {
-	return &FakeGPUManagers{c}
-}
-
 func (c *FakePlatformV1) Helms() v1.HelmInterface {
 	return &FakeHelms{c}
 }

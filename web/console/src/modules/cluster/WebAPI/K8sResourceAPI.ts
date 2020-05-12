@@ -10,7 +10,7 @@ import {
   reduceK8sRestfulPath,
   reduceNetworkRequest,
   reduceNetworkWorkflow,
-  requestMethodForAction,
+  requestMethodForAction
 } from '../../../../helpers';
 import { isEmpty } from '../../common';
 import { CreateResource, MergeType, RequestParams, ResourceInfo, UserDefinedHeader } from '../../common/models';
@@ -40,7 +40,7 @@ export async function fetchNamespaceList(query: QueryState<ResourceFilter>, reso
   /** 构建参数 */
   let params: RequestParams = {
     method: Method.get,
-    url,
+    url
   };
 
   try {
@@ -49,16 +49,16 @@ export async function fetchNamespaceList(query: QueryState<ResourceFilter>, reso
     if (response.code === 0) {
       let list = response.data;
       if (list.items) {
-        namespaceList = list.items.map((item) => {
+        namespaceList = list.items.map(item => {
           return {
             id: uuid(),
-            name: item.metadata.name,
+            name: item.metadata.name
           };
         });
       } else {
         namespaceList.push({
           id: uuid(),
-          name: list.metadata.name,
+          name: list.metadata.name
         });
       }
     }
@@ -71,7 +71,7 @@ export async function fetchNamespaceList(query: QueryState<ResourceFilter>, reso
 
   const result: RecordSet<Namespace> = {
     recordCount: namespaceList.length,
-    records: namespaceList,
+    records: namespaceList
   };
 
   return result;
@@ -96,7 +96,7 @@ export async function modifyNamespaceSecret(resource: CreateResource[], regionId
     if (!isCreate) {
       url += `/${resourceIns}`;
       userDefinedHeader = {
-        'Content-Type': 'application/strategic-merge-patch+json',
+        'Content-Type': 'application/strategic-merge-patch+json'
       };
       method = Method.patch;
     }
@@ -114,12 +114,12 @@ export async function modifyNamespaceSecret(resource: CreateResource[], regionId
           Method: method,
           Path: url,
           Version: '2018-05-25',
-          RequestBody: jsonData,
+          RequestBody: jsonData
         },
         opts: {
-          tipErr: false,
-        },
-      },
+          tipErr: false
+        }
+      }
     };
 
     let response = await reduceNetworkRequest(params, clusterId);
@@ -164,7 +164,7 @@ export async function fetchResourceList(
     k8sQueryObj = {},
     isNeedDes = false,
     isNeedSpecific = true,
-    isContinue = false,
+    isContinue = false
   } = options;
   let resourceList = [];
   let nextContinueToken: string;
@@ -179,7 +179,7 @@ export async function fetchResourceList(
         namespace,
         specificName: isNeedSpecific ? search : '',
         clusterId,
-        meshId,
+        meshId
       });
     } else {
       k8sUrl = reduceK8sRestfulPath({
@@ -187,7 +187,7 @@ export async function fetchResourceList(
         namespace,
         specificName: isNeedSpecific ? specificName : '',
         clusterId,
-        meshId,
+        meshId
       });
     }
 
@@ -208,7 +208,7 @@ export async function fetchResourceList(
     // 构建参数
     let params: RequestParams = {
       method: Method.get,
-      url,
+      url
     };
 
     try {
@@ -223,7 +223,7 @@ export async function fetchResourceList(
         }
 
         if (listItems.items) {
-          resourceList = listItems.items.map((item) => {
+          resourceList = listItems.items.map(item => {
             return Object.assign({}, item, { id: uuid() });
           });
         } else {
@@ -231,7 +231,7 @@ export async function fetchResourceList(
           resourceList.push({
             metadata: listItems.metadata,
             spec: listItems.spec,
-            status: listItems.status,
+            status: listItems.status
           });
         }
       }
@@ -246,7 +246,7 @@ export async function fetchResourceList(
   const result: RecordSet<Resource> = {
     recordCount: resourceList.length,
     records: isNeedDes && resourceList.length > 1 ? resourceList.reverse() : resourceList,
-    continueToken: nextContinueToken,
+    continueToken: nextContinueToken
   };
 
   return result;
@@ -283,7 +283,7 @@ export async function fetchSpecificResourceList(
     // 构建参数
     let params: RequestParams = {
       method: Method.get,
-      url,
+      url
     };
 
     try {
@@ -292,7 +292,7 @@ export async function fetchSpecificResourceList(
       if (response.code === 0) {
         let listItems = response.data;
         if (listItems.items) {
-          resourceList = listItems.items.map((item) => {
+          resourceList = listItems.items.map(item => {
             return Object.assign({}, item, { id: uuid() });
           });
         } else {
@@ -300,7 +300,7 @@ export async function fetchSpecificResourceList(
           resourceList.push({
             metadata: listItems.metadata,
             spec: listItems.spec,
-            status: listItems.status,
+            status: listItems.status
           });
         }
       }
@@ -314,7 +314,7 @@ export async function fetchSpecificResourceList(
     if (isRecordSet) {
       result = {
         recordCount: resourceList.length,
-        records: resourceList,
+        records: resourceList
       };
     } else {
       result = resourceList;
@@ -356,7 +356,7 @@ export async function fetchExtraResourceList(
     // 构建参数
     let params: RequestParams = {
       method: Method.get,
-      url,
+      url
     };
 
     let response = await reduceNetworkRequest(params, clusterId);
@@ -364,7 +364,7 @@ export async function fetchExtraResourceList(
     if (response.code === 0) {
       let listItems = response.data;
       if (listItems.items) {
-        extraResourceList = listItems.items.map((item) => {
+        extraResourceList = listItems.items.map(item => {
           return Object.assign({}, item, { id: uuid() });
         });
       }
@@ -373,7 +373,7 @@ export async function fetchExtraResourceList(
 
   const result: RecordSet<any> = {
     recordCount: extraResourceList.length,
-    records: isNeedDes && extraResourceList.length ? extraResourceList.reverse() : extraResourceList,
+    records: isNeedDes && extraResourceList.length ? extraResourceList.reverse() : extraResourceList
   };
 
   return result;
@@ -414,12 +414,12 @@ export async function fetchResourceLogList(
         restParams: {
           Method: Method.get,
           Path: url,
-          Version: '2018-05-25',
+          Version: '2018-05-25'
         },
         opts: {
-          tipErr: false,
-        },
-      },
+          tipErr: false
+        }
+      }
     };
 
     let response = await reduceNetworkRequest(params, clusterId);
@@ -432,7 +432,7 @@ export async function fetchResourceLogList(
 
   const result: RecordSet<any> = {
     recordCount: logList.length,
-    records: logList,
+    records: logList
   };
 
   return result;
@@ -453,7 +453,7 @@ export async function applyResourceIns(resource: CreateResource[], regionId: num
     let userDefinedHeader: UserDefinedHeader = yamlData
       ? {
           Accept: 'application/json',
-          'Content-Type': 'application/yaml',
+          'Content-Type': 'application/yaml'
         }
       : {};
 
@@ -462,7 +462,7 @@ export async function applyResourceIns(resource: CreateResource[], regionId: num
       method: Method.post,
       url,
       userDefinedHeader,
-      data: yamlData ? yamlData : jsonData,
+      data: yamlData ? yamlData : jsonData
     };
 
     let response = await reduceNetworkRequest(params, clusterId);
@@ -500,7 +500,7 @@ export async function applyDifferentInterfaceResource(
       let userDefinedHeader: UserDefinedHeader = yamlData
         ? {
             Accept: 'application/json',
-            'Content-Type': 'application/yaml',
+            'Content-Type': 'application/yaml'
           }
         : {};
       // 构建参数
@@ -508,14 +508,14 @@ export async function applyDifferentInterfaceResource(
         method,
         url,
         userDefinedHeader,
-        data: yamlData ? yamlData : jsonData,
+        data: yamlData ? yamlData : jsonData
       };
       let response = await reduceNetworkRequest(params, clusterId);
       allResponses.push(response);
     }
 
     //统一处理相应结果
-    allResponses.forEach((response) => {
+    allResponses.forEach(response => {
       //有一个响应出错
       if (response.code !== 0) {
         return operationResult(resources, reduceNetworkWorkflow(response));
@@ -524,7 +524,6 @@ export async function applyDifferentInterfaceResource(
     //所有的响应都OK的话
     return operationResult(resources);
   } catch (error) {
-    console.log(error);
     return operationResult(resources, reduceNetworkWorkflow(error));
   }
 }
@@ -545,7 +544,7 @@ export async function modifyResourceIns(resource: CreateResource[], regionId: nu
     let userDefinedHeader: UserDefinedHeader = yamlData
       ? {
           Accept: 'application/json',
-          'Content-Type': 'application/yaml',
+          'Content-Type': 'application/yaml'
         }
       : {};
 
@@ -554,7 +553,7 @@ export async function modifyResourceIns(resource: CreateResource[], regionId: nu
       method,
       url,
       userDefinedHeader,
-      data: yamlData ? yamlData : jsonData,
+      data: yamlData ? yamlData : jsonData
     };
 
     let response = await reduceNetworkRequest(params, clusterId);
@@ -575,7 +574,7 @@ export async function modifyResourceIns(resource: CreateResource[], regionId: nu
  */
 export async function modifyMultiResourceIns(resource: CreateResource[], regionId: number) {
   try {
-    let requests = resource.map(async (item) => {
+    let requests = resource.map(async item => {
       let { mode, resourceIns, clusterId, yamlData, resourceInfo, namespace, jsonData } = item;
       let url = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId });
       // 获取具体的请求方法，create为POST，modify为PUT
@@ -584,7 +583,7 @@ export async function modifyMultiResourceIns(resource: CreateResource[], regionI
       let userDefinedHeader: UserDefinedHeader = yamlData
         ? {
             Accept: 'application/json',
-            'Content-Type': 'application/yaml',
+            'Content-Type': 'application/yaml'
           }
         : {};
       let param = {
@@ -600,19 +599,19 @@ export async function modifyMultiResourceIns(resource: CreateResource[], regionI
             Method: method,
             Path: url,
             Version: '2018-05-25',
-            RequestBody: yamlData ? yamlData : jsonData,
+            RequestBody: yamlData ? yamlData : jsonData
           },
           opts: {
-            tipErr: false,
-          },
-        },
+            tipErr: false
+          }
+        }
       };
       let response = await reduceNetworkRequest(param, clusterId);
       return response;
     });
     // 构建参数
     let response = await Promise.all(requests);
-    if (response.every((r) => r.code === 0)) {
+    if (response.every(r => r.code === 0)) {
       return operationResult(resource);
     } else {
       return operationResult(resource, reduceNetworkWorkflow(response));
@@ -636,7 +635,7 @@ export async function deleteResourceIns(resource: CreateResource[], regionId: nu
 
     // 是用于后台去异步的删除resource当中的pod
     let extraParamsForDelete = {
-      propagationPolicy: 'Background',
+      propagationPolicy: 'Background'
     };
     if (resourceInfo.headTitle === 'Namespace') {
       extraParamsForDelete['gracePeriodSeconds'] = 0;
@@ -646,7 +645,7 @@ export async function deleteResourceIns(resource: CreateResource[], regionId: nu
     let params: RequestParams = {
       method: Method.delete,
       url,
-      data: JSON.stringify(extraParamsForDelete),
+      data: JSON.stringify(extraParamsForDelete)
     };
     let response = await reduceNetworkRequest(params, clusterId);
 
@@ -678,7 +677,7 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
     /// #endif
     // 因为回滚需要使用特定的apiVersion，故不用reduceK8sRestful
     let k8sUrl =
-      `/${resourceInfo.basicEntry}/${rsResourceInfo.group}/${rsResourceInfo.version}/` +
+      `/${resourceInfo.basicEntry}/apps/v1beta1/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
       `${resourceInfo.requestType['list']}/${resourceIns}/rollback`;
     let url = k8sUrl;
@@ -696,9 +695,9 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
           Method: Method.post,
           Path: url,
           Version: '2018-05-25',
-          RequestBody: jsonData,
-        },
-      },
+          RequestBody: jsonData
+        }
+      }
     };
 
     let response = await reduceNetworkRequest(params, clusterId);
@@ -728,7 +727,7 @@ export async function updateResourceIns(resource: CreateResource[], regionId: nu
       method: Method.patch,
       url,
       userDefinedHeader: {
-        'Content-Type': isStrategic ? 'application/strategic-merge-patch+json' : 'application/merge-patch+json',
+        'Content-Type': isStrategic ? 'application/strategic-merge-patch+json' : 'application/merge-patch+json'
       },
       data: jsonData,
       apiParams: {
@@ -739,9 +738,9 @@ export async function updateResourceIns(resource: CreateResource[], regionId: nu
           Method: Method.patch,
           Path: url,
           Version: '2018-05-25',
-          RequestBody: jsonData,
-        },
-      },
+          RequestBody: jsonData
+        }
+      }
     };
 
     let response = await reduceNetworkRequest(params, clusterId);
@@ -764,7 +763,7 @@ export async function updateResourceIns(resource: CreateResource[], regionId: nu
  */
 export async function updateMultiResourceIns(resource: CreateResource[], regionId: number) {
   try {
-    let requests = resource.map(async (item) => {
+    let requests = resource.map(async item => {
       let { resourceIns, clusterId, resourceInfo, namespace, jsonData, mergeType } = item;
 
       let url = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId });
@@ -772,7 +771,7 @@ export async function updateMultiResourceIns(resource: CreateResource[], regionI
         method: Method.patch,
         url,
         userDefinedHeader: {
-          'Content-Type': mergeType ? mergeType : MergeType.StrategicMerge,
+          'Content-Type': mergeType ? mergeType : MergeType.StrategicMerge
         },
         data: jsonData,
         apiParams: {
@@ -783,16 +782,16 @@ export async function updateMultiResourceIns(resource: CreateResource[], regionI
             Method: Method.patch,
             Path: url,
             Version: '2018-05-25',
-            RequestBody: jsonData,
-          },
-        },
+            RequestBody: jsonData
+          }
+        }
       };
 
       let response = await reduceNetworkRequest(params, clusterId);
       return response;
     });
     let response = await Promise.all(requests);
-    if (response.every((r) => r.code === 0)) {
+    if (response.every(r => r.code === 0)) {
       tips.success(t('更新成功'), 2000);
       return operationResult(resource);
     } else {
@@ -819,18 +818,18 @@ export async function fetchResourceYaml(
     resourceInfo,
     namespace,
     specificName: Array.isArray(resourceIns) ? resourceIns[0].metadata.name : resourceIns,
-    clusterId,
+    clusterId
   });
 
   let userDefinedHeader = {
-    Accept: 'application/yaml',
+    Accept: 'application/yaml'
   };
 
   // 构建参数
   let params: RequestParams = {
     method: Method.get,
     url,
-    userDefinedHeader,
+    userDefinedHeader
   };
 
   let response = await reduceNetworkRequest(params, clusterId);
@@ -838,7 +837,7 @@ export async function fetchResourceYaml(
 
   const result: RecordSet<Resource> = {
     recordCount: yamlList.length,
-    records: yamlList,
+    records: yamlList
   };
 
   return result;

@@ -17,7 +17,7 @@ export const GetCategories = 'GetCategories';
 export const GetStrategyAssociatedUsers = 'GetStrategyAssociatedUsers';
 export const RemoveAssociatedUser = 'RemoveAssociatedUser';
 export const AddAssociatedUser = 'AddAssociatedUser';
-
+export const GetPlatformCategories = 'GetPlatformCategories';
 
 export const RoleList = 'RoleList';
 export const RolePlainList = 'RolePlainList';

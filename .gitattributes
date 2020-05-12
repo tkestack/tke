@@ -4,3 +4,5 @@
 **/generated.proto
 api/client/**/*.go linguist-generated=true
 **/assets/assets.go linguist-generated=true
+pkg/gateway/assets/assets.go binary
+cmd/tke-installer/assets/assets.go binary

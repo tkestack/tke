@@ -34,7 +34,6 @@ type PlatformInterface interface {
 	ClusterCredentialsGetter
 	ConfigMapsGetter
 	CronHPAsGetter
-	GPUManagersGetter
 	HelmsGetter
 	IPAMsGetter
 	LBCFsGetter
@@ -78,10 +77,6 @@ func (c *PlatformClient) ConfigMaps() ConfigMapInterface {
 
 func (c *PlatformClient) CronHPAs() CronHPAInterface {
 	return newCronHPAs(c)
-}
-
-func (c *PlatformClient) GPUManagers() GPUManagerInterface {
-	return newGPUManagers(c)
 }
 
 func (c *PlatformClient) Helms() HelmInterface {

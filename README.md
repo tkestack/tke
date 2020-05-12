@@ -29,6 +29,10 @@
   * Event persistence storage plugin.
   * System and application log persistence storage plugin.
 
+## Architecture
+
+![Architecture Of TKE](docs/images/TKEStackHighLevelArchitecture@2x.png)
+
 ## Installation
 
 ### Minimum Requirements
@@ -36,25 +40,31 @@
 * Hardware
   * 8 vCPU
   * 16 GB of Memory
+  * 50 GB of Disk Space
 * Operating Systems
-  * Ubuntu 16.04 (64-bit)
-  * CentOS Linux 7.5 (64-bit)
+  * Ubuntu 16.04/18.04  LTS (64-bit)
+  * CentOS Linux 7.6 (64-bit)
+  * Tencent Linux 2.2 
 
 ### QuickStart
 
+1. **Check Requirements:**  Please confirm the [installation requirements](docs/guide/zh-CN/installation/installation-requirement.md)
+2. **Configure Installer:** Please execute the following command in the terminal of your **installer** node
+
+```shell
+version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
 ```
-version=v1.2.3 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
-```
 
-TKEStack use tke-installer tool to deploy. [refer](https://github.com/tkestack/tke/blob/master/docs/user/tke-installer/README.md)
+3. **Configure Console:** Open your browser to http://`INSTALLER-NODE-IP`:8080/index.html, the Web GUI will guide you to initialize and install the TKEStack's **Global Cluster and Console**. You can refer to [installation-procedures](docs/guide/zh-CN/installation/installation-procedures.md)
+4. **Enjoy TKEStack:**  Open your browser to http://console.tke.com
 
-## Architecture
+> TKEStack use tke-installer tool to deploy. Please refer to [tke-installer](docs/user/tke-installer/README.md) for more information.
+> If you encounter problems during installation, you can refer to [FAQ installation](docs/guide/zh-CN/FAQ/installation.md)
 
-![Architecture Of TKE](docs/images/TKEStackHighLevelArchitecture@2x.png)
 
 ## Using
 
-[TKEStack Documentation ](https://github.com/tkestack/docs)
+[TKEStack Documentation ](docs/guide/zh-CN)
 
 ## Developing
 
@@ -80,7 +90,7 @@ Other active channels:
 
 - WeChat Group
 
-![TKEStack](docs/images/WeChatIMG.png)
+![TKEStack](docs/images/wechat.png)
 
 ## Licensing
 

@@ -189,6 +189,43 @@ func (NamespaceStatus) SwaggerDoc() map[string]string {
 	return map_NamespaceStatus
 }
 
+var map_NsEmigration = map[string]string{
+	"":     "NsEmigration is an namespace emigration.",
+	"spec": "Spec defines the desired identities of emigrations in this set.",
+}
+
+func (NsEmigration) SwaggerDoc() map[string]string {
+	return map_NsEmigration
+}
+
+var map_NsEmigrationList = map[string]string{
+	"":      "NsEmigrationList is the whole list of all namespace emigrations which owned by a tenant.",
+	"items": "List of namespace emigrations",
+}
+
+func (NsEmigrationList) SwaggerDoc() map[string]string {
+	return map_NsEmigrationList
+}
+
+var map_NsEmigrationSpec = map[string]string{
+	"": "NsEmigrationSpec represents a namespace emigration.",
+}
+
+func (NsEmigrationSpec) SwaggerDoc() map[string]string {
+	return map_NsEmigrationSpec
+}
+
+var map_NsEmigrationStatus = map[string]string{
+	"":                   "NsEmigrationStatus represents information about the status of a namespace emigration.",
+	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
+	"reason":             "The reason for the condition's last transition.",
+	"message":            "A human readable message indicating details about the transition.",
+}
+
+func (NsEmigrationStatus) SwaggerDoc() map[string]string {
+	return map_NsEmigrationStatus
+}
+
 var map_Platform = map[string]string{
 	"":     "Platform is a platform in TKE.",
 	"spec": "Spec defines the desired identities of platforms in this set.",
@@ -256,8 +293,11 @@ func (ProjectSpec) SwaggerDoc() map[string]string {
 }
 
 var map_ProjectStatus = map[string]string{
-	"":         "ProjectStatus represents information about the status of a project.",
-	"clusters": "Clusters represents clusters that have been used and the resource usage of each cluster.",
+	"":                   "ProjectStatus represents information about the status of a project.",
+	"clusters":           "Clusters represents clusters that have been used and the resource usage of each cluster.",
+	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
+	"reason":             "The reason for the condition's last transition.",
+	"message":            "A human readable message indicating details about the transition.",
 }
 
 func (ProjectStatus) SwaggerDoc() map[string]string {

@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"strings"
+	"tkestack.io/tke/pkg/apiserver/filter"
 
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 
@@ -73,12 +74,9 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 	}
 	localIdentity := obj.(*auth.LocalIdentity)
 
-	roles, err := r.enforcer.GetRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
-	if err != nil {
-		log.Error("List roles for user failed from casbin failed", log.String("user", userID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	projectID := filter.ProjectIDFrom(ctx)
 
+	roles := r.enforcer.GetRolesForUserInDomain(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), projectID)
 	var roleIDs []string
 	for _, r := range roles {
 		if strings.HasPrefix(r, "rol-") {
@@ -99,7 +97,10 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 			continue
 		}
 
-		roleList.Items = append(roleList.Items, *rol)
+		// empty or project equal
+		if rol.Spec.ProjectID == projectID {
+			roleList.Items = append(roleList.Items, *rol)
+		}
 	}
 
 	return roleList, nil

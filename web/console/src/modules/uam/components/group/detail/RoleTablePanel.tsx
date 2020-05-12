@@ -8,16 +8,15 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { router } from '../../../router';
 import { allActions } from '../../../actions';
 import { RolePlain, RoleAssociation, GroupAssociation, GroupPlain, GroupFilter } from '../../../models';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch
+    dispatch,
   });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class RoleTablePanel extends React.Component<RootProps, {}> {
-
   render() {
     let { actions, roleAssociation, roleAssociatedList } = this.props;
 
@@ -29,7 +28,7 @@ export class RoleTablePanel extends React.Component<RootProps, {}> {
           <Text parent="div" overflow>
             {role.displayName || '-'}
           </Text>
-        )
+        ),
       },
       {
         key: 'description',
@@ -38,7 +37,7 @@ export class RoleTablePanel extends React.Component<RootProps, {}> {
           <Text parent="div" overflow>
             {role.description || '-'}
           </Text>
-        )
+        ),
       },
       // { key: 'operation', header: t('操作'), render: role => this._renderOperationCell(role) }
     ];
@@ -72,14 +71,14 @@ export class RoleTablePanel extends React.Component<RootProps, {}> {
         </LinkButton>
       </React.Fragment>
     );
-  }
+  };
 
   _removeRole = async (role: RolePlain) => {
     let { actions, roleFilter } = this.props;
     const yes = await Modal.confirm({
       message: t('确认解除当前角色关联') + ` - ${role.displayName}？`,
       okText: t('解除'),
-      cancelText: t('取消')
+      cancelText: t('取消'),
     });
     if (yes) {
       /** 目前还没有实现基于用户组解绑角色 */
@@ -87,6 +86,5 @@ export class RoleTablePanel extends React.Component<RootProps, {}> {
       actions.role.associate.disassociateRoleWorkflow.start([roleAssociation], roleFilter);
       actions.role.associate.disassociateRoleWorkflow.perform();
     }
-  }
-
+  };
 }

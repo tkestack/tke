@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"strings"
+	"tkestack.io/tke/pkg/apiserver/filter"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -70,12 +71,8 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 		return nil, err
 	}
 	grp := obj.(*auth.Group)
-
-	roles, err := r.enforcer.GetRolesForUser(util.GroupKey(grp.Spec.TenantID, grp.Spec.ID))
-	if err != nil {
-		log.Error("List roles for group failed from casbin failed", log.String("group", groupID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	projectID := filter.ProjectIDFrom(ctx)
+	roles := r.enforcer.GetRolesForUserInDomain(util.GroupKey(grp.Spec.TenantID, grp.Spec.ID), projectID)
 
 	var policyIDs []string
 	for _, r := range roles {

@@ -29,8 +29,8 @@ import (
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/supervisor"
 	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/supervisor"
 )
 
 type Option struct {

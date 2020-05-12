@@ -12,13 +12,13 @@ replace (
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/Azure/go-autorest v13.3.1+incompatible // indirect
-	github.com/Masterminds/semver v1.4.2 // indirect
+	github.com/Masterminds/semver v1.4.2
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/aws/aws-sdk-go v1.25.7
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/casbin/casbin/v2 v2.1.2
+	github.com/casbin/casbin/v2 v2.2.1
 	github.com/chartmuseum/storage v0.5.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.34.0
@@ -28,6 +28,7 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7
+	github.com/dovics/domain-role-manager v0.0.0-20200325101749-a44f9c315081
 	github.com/emicklei/go-restful v2.11.1+incompatible
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.7
@@ -49,7 +50,7 @@ require (
 	github.com/howeyc/fsnotify v0.9.0
 	github.com/influxdata/influxdb1-client v0.0.0-20190402204710-8ff2fc3824fc
 	github.com/jinzhu/configor v1.1.1
-	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
+	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3 // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/json-iterator/go v1.1.9
 	github.com/kr/fs v0.1.0 // indirect
@@ -86,6 +87,7 @@ require (
 	google.golang.org/grpc v1.26.0
 	gopkg.in/go-playground/validator.v9 v9.28.0
 	gopkg.in/ldap.v2 v2.5.1
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.2.5
 	helm.sh/chartmuseum v0.11.0

@@ -37,6 +37,10 @@ spec:
           image: {{ .Image }}
           args:
             - -C=/app/conf/tke-platform-api.toml
+{{- if .EnableAudit }}
+            - --audit-policy-file=/app/conf/audit-policy.yaml
+            - --audit-webhook-config-file=/app/conf/audit-api-client-config.yaml
+{{- end }}
           volumeMounts:
             - name: certs-volume
               mountPath: /app/certs
@@ -54,6 +58,8 @@ spec:
               mountPath: /app/provider/baremetal/conf/kubeadm/
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
+            - name: csi-operator-manifests-volume
+                mountPath: /app/provider/baremetal/manifests/csi-operator/
             - name: keepalived-manifests-volume
               mountPath: /app/provider/baremetal/manifests/keepalived/
           ports:
@@ -103,6 +109,9 @@ spec:
         - name: gpu-manifests-volume
           configMap:
             name: gpu-manifests
+        - name: csi-operator-manifests-volume
+            configMap:
+              name: csi-operator-manifests
         - name: keepalived-manifests-volume
           configMap:
             name: keepalived-manifests
@@ -132,7 +141,7 @@ data:
 
     [authentication]
     token_auth_file = "/app/certs/token.csv"
-    client_ca_file = "/app/certs/front-proxy-ca.crt"
+    client_ca_file = "/app/certs/ca.crt"
 
       [authentication.oidc]
 {{- if .EnableAuth }}
@@ -152,6 +161,11 @@ data:
   {{- end}}
 {{- end }}
 
+{{- if .EnableAuth }}
+      [authentication.webhook]
+      config_file = "/app/conf/tke-authn-webhook.yaml"
+{{- end }}
+
       [authentication.requestheader]
       client_ca_file = "/app/certs/front-proxy-ca.crt"
       username_headers = "X-Remote-User"
@@ -161,10 +175,30 @@ data:
     [authorization]
 {{- if .EnableAuth }}
     mode = "Webhook"
-    webhook_config_file = "/app/conf/tke-auth-webhook.yaml"
+    webhook_config_file = "/app/conf/tke-authz-webhook.yaml"
 {{- end }}
 
-  tke-auth-webhook.yaml: |
+  tke-authn-webhook.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-auth-api/auth/authn
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+    - context:
+        cluster: tke
+        user: admin-cert
+      name: tke
+
+  tke-authz-webhook.yaml: |
     apiVersion: v1
     kind: Config
     clusters:
@@ -183,3 +217,34 @@ data:
         cluster: tke
         user: admin-cert
       name: tke
+
+{{- if .EnableAudit }}
+  audit-policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    omitStages:
+    - "RequestReceived"
+    - "ResponseStarted"
+    rules:
+    - level: None
+      resources:
+      - group: "platform.tkestack.io"
+        resources: ["configmaps", "*/status"]
+    - level: RequestResponse
+      verbs: ["create", "update", "patch", "delete", "deletecollection"]
+
+  audit-api-client-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          insecure-skip-tls-verify: true
+          server: https://tke-audit-api/apis/audit.tkestack.io/v1/events/sink/control-plane
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+        name: tke
+
+{{- end }}

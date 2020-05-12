@@ -35,13 +35,8 @@ import (
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-
 	"tkestack.io/tke/api/auth"
-	authv1 "tkestack.io/tke/api/auth/v1"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
-	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
-	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
@@ -70,20 +65,14 @@ type identityProvider struct {
 	tenantID       string
 	administrators []string
 
-	localIdentityLister authv1lister.LocalIdentityLister
-	localGroupLister    authv1lister.LocalGroupLister
+	authClient authinternalclient.AuthInterface
 }
 
-func NewDefaultIdentityProvider(tenantID string, administrators []string, versionInformers versionedinformers.SharedInformerFactory) (identityprovider.IdentityProvider, error) {
-	if versionInformers == nil {
-		return nil, fmt.Errorf("versioned informers of local type idp is nil")
-	}
-
+func NewDefaultIdentityProvider(tenantID string, administrators []string, authClient authinternalclient.AuthInterface) (identityprovider.IdentityProvider, error) {
 	return &identityProvider{
-		tenantID:            tenantID,
-		administrators:      administrators,
-		localIdentityLister: versionInformers.Auth().V1().LocalIdentities().Lister(),
-		localGroupLister:    versionInformers.Auth().V1().LocalGroups().Lister(),
+		tenantID:       tenantID,
+		administrators: administrators,
+		authClient:     authClient,
 	}, nil
 }
 
@@ -171,7 +160,7 @@ func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, use
 	}
 
 	ident.Email = localIdentity.Spec.Email
-
+	ident.PreferredUsername = localIdentity.Spec.DisplayName
 	if emailVerified, ok := localIdentity.Spec.Extra["emailVerified"]; ok {
 		ident.EmailVerified, _ = strconv.ParseBool(emailVerified)
 	}
@@ -206,7 +195,7 @@ func (c *identityProvider) GetUser(ctx context.Context, name string, options *me
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
 
-	localIdentity, err := c.localIdentityLister.Get(name)
+	localIdentity, err := c.authClient.LocalIdentities().Get(name, *options)
 	if err != nil {
 		return nil, err
 	}
@@ -222,39 +211,35 @@ func (c *identityProvider) GetUser(ctx context.Context, name string, options *me
 // List is an object that can list users that match the provided field and label criteria.
 func (c *identityProvider) ListUsers(ctx context.Context, options *metainternal.ListOptions) (*auth.UserList, error) {
 	keyword, limit := util.ParseQueryKeywordAndLimit(options)
-
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
 
-	allList, err := c.localIdentityLister.List(labels.Everything())
+	v1Opt := util.PredicateV1ListOptions(c.tenantID, options)
+	localIdentityList, err := c.authClient.LocalIdentities().List(*v1Opt)
 	if err != nil {
 		return nil, err
 	}
 
-	var localIdentityList []*authv1.LocalIdentity
-	for i, item := range allList {
-		if item.Spec.TenantID == c.tenantID {
-			localIdentityList = append(localIdentityList, allList[i])
-		}
-	}
-
 	if keyword != "" {
-		var newList []*authv1.LocalIdentity
-		for i, val := range localIdentityList {
+		var newList []auth.LocalIdentity
+		for _, val := range localIdentityList.Items {
 			if strings.Contains(val.Name, keyword) || strings.Contains(val.Spec.Username, keyword) || strings.Contains(val.Spec.DisplayName, keyword) {
-				newList = append(newList, localIdentityList[i])
+				newList = append(newList, val)
 			}
 		}
-		localIdentityList = newList
+
+		localIdentityList.Items = newList
 	}
 
-	items := localIdentityList[0:min(len(localIdentityList), limit)]
+	if limit > 0 {
+		localIdentityList.Items = localIdentityList.Items[0:min(len(localIdentityList.Items), limit)]
+	}
 
 	userList := auth.UserList{}
-	for _, item := range items {
-		user := convertToUser(item)
+	for _, item := range localIdentityList.Items {
+		user := convertToUser(&item)
 		userList.Items = append(userList.Items, user)
 	}
 
@@ -268,7 +253,7 @@ func (c *identityProvider) GetGroup(ctx context.Context, name string, options *m
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
 
-	localGroup, err := c.localGroupLister.Get(name)
+	localGroup, err := c.authClient.LocalGroups().Get(name, *options)
 	if err != nil {
 		return nil, err
 	}
@@ -283,50 +268,42 @@ func (c *identityProvider) GetGroup(ctx context.Context, name string, options *m
 
 // List is an object that can list users that match the provided field and label criteria.
 func (c *identityProvider) ListGroups(ctx context.Context, options *metainternal.ListOptions) (*auth.GroupList, error) {
-
 	keyword, limit := util.ParseQueryKeywordAndLimit(options)
-
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
 
-	allList, err := c.localGroupLister.List(labels.Everything())
+	v1Opt := util.PredicateV1ListOptions(c.tenantID, options)
+
+	localGroupList, err := c.authClient.LocalGroups().List(*v1Opt)
 	if err != nil {
 		return nil, err
 	}
-
-	var localGroupList []*authv1.LocalGroup
-	for i, item := range allList {
-		if item.Spec.TenantID == c.tenantID {
-			localGroupList = append(localGroupList, allList[i])
-		}
-	}
-
 	if keyword != "" {
-		var newList []*authv1.LocalGroup
-		for i, val := range localGroupList {
+		var newList []auth.LocalGroup
+		for _, val := range localGroupList.Items {
 			if strings.Contains(val.Name, keyword) || strings.Contains(val.Spec.DisplayName, keyword) {
-				newList = append(newList, localGroupList[i])
+				newList = append(newList, val)
 			}
 		}
-		localGroupList = newList
+		localGroupList.Items = newList
 	}
 
 	if limit > 0 {
-		localGroupList = localGroupList[0:min(len(localGroupList), limit)]
+		localGroupList.Items = localGroupList.Items[0:min(len(localGroupList.Items), limit)]
 	}
 
 	groupList := auth.GroupList{}
-	for _, item := range localGroupList {
-		group := convertToGroup(item)
+	for _, item := range localGroupList.Items {
+		group := convertToGroup(&item)
 		groupList.Items = append(groupList.Items, group)
 	}
 
 	return &groupList, nil
 }
 
-func convertToUser(localIdentity *authv1.LocalIdentity) auth.User {
+func convertToUser(localIdentity *auth.LocalIdentity) auth.User {
 	return auth.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: localIdentity.ObjectMeta.Name,
@@ -343,7 +320,7 @@ func convertToUser(localIdentity *authv1.LocalIdentity) auth.User {
 	}
 }
 
-func convertToGroup(localGroup *authv1.LocalGroup) auth.Group {
+func convertToGroup(localGroup *auth.LocalGroup) auth.Group {
 	return auth.Group{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: localGroup.ObjectMeta.Name,
@@ -355,22 +332,9 @@ func convertToGroup(localGroup *authv1.LocalGroup) auth.Group {
 			Description: localGroup.Spec.Description,
 		},
 		Status: auth.GroupStatus{
-			Users: fromV1Subject(localGroup.Status.Users),
+			Users: localGroup.Status.Users,
 		},
 	}
-}
-
-func fromV1Subject(v1Subjects []authv1.Subject) []auth.Subject {
-	var subjects []auth.Subject
-
-	for _, sub := range v1Subjects {
-		subjects = append(subjects, auth.Subject{
-			ID:   sub.ID,
-			Name: sub.Name,
-		})
-	}
-
-	return subjects
 }
 
 func min(a, b int) int {

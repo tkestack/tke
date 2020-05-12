@@ -104,6 +104,8 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	} else { // For historic data that has no CachedParent
 		project.Status.CachedParent = &oldProject.Spec.ParentProjectName
 	}
+
+	project.Spec.Members = oldProject.Spec.Members
 }
 
 // NamespaceScoped is false for projects.
@@ -132,6 +134,9 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	project.Spec.Finalizers = []business.FinalizerName{
 		business.ProjectFinalize,
 	}
+
+	locked := true
+	project.Status.Locked = &locked
 }
 
 // AfterCreate implements a further operation to run after a resource is
@@ -317,6 +322,8 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 
 	newProject.Status.CalculatedChildProjects = childProjects
 	newProject.Status.CalculatedNamespaces = childNamespaces
+
+	newProject.Spec.Members = oldProject.Spec.Members
 }
 
 // ValidateUpdate is invoked after default fields in the object have been

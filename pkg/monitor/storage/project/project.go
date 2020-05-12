@@ -109,7 +109,7 @@ func (s *Storage) Collect() {
 				nsTags := tags
 				nsTags["cluster_name"] = c
 				nsTags["namespace"] = nm
-				nsTags["namespaceName"] = c + "-" + nm
+				nsTags["namespace_name"] = c + "-" + nm
 				updateMetrics(nsTags, "project_namespace_capacity", rList)
 			}
 		}
@@ -118,7 +118,7 @@ func (s *Storage) Collect() {
 				nsTags := tags
 				nsTags["cluster_name"] = c
 				nsTags["namespace"] = nm
-				nsTags["namespaceName"] = c + "-" + nm
+				nsTags["namespace_name"] = c + "-" + nm
 				updateMetrics(nsTags, "project_namespace_allocated", rList)
 			}
 		}

@@ -7,16 +7,15 @@ import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { allActions } from '../../../actions';
 import { UserPlain, CommonUserAssociation } from '../../../models';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch
+    dispatch,
   });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class UserTablePanel extends React.Component<RootProps, {}> {
-
   render() {
     let { actions, commonUserAssociation, commonUserAssociatedList } = this.props;
 
@@ -26,11 +25,13 @@ export class UserTablePanel extends React.Component<RootProps, {}> {
         header: t('用户ID / 名称'),
         render: (user, text, index) => (
           <Text parent="div" overflow>
-            {user.name || '-'}{' / '}{user.displayName || '-'}
+            {user.name || '-'}
+            {' / '}
+            {user.displayName || '-'}
           </Text>
-        )
+        ),
       },
-      { key: 'operation', header: t('操作'), render: user => this._renderOperationCell(user) }
+      { key: 'operation', header: t('操作'), render: (user) => this._renderOperationCell(user) },
     ];
 
     return (
@@ -60,20 +61,19 @@ export class UserTablePanel extends React.Component<RootProps, {}> {
         </LinkButton>
       </React.Fragment>
     );
-  }
+  };
 
   _removeUser = async (user: UserPlain) => {
     let { actions, commonUserFilter } = this.props;
     const yes = await Modal.confirm({
       message: t('确认解除当前用户关联') + ` - ${user.displayName}？`,
       okText: t('解除'),
-      cancelText: t('取消')
+      cancelText: t('取消'),
     });
     if (yes) {
       let userAssociation: CommonUserAssociation = { id: uuid(), removeUsers: [user] };
       actions.commonUser.associate.disassociateUserWorkflow.start([userAssociation], commonUserFilter);
       actions.commonUser.associate.disassociateUserWorkflow.perform();
     }
-  }
-
+  };
 }

@@ -23,6 +23,8 @@ import (
 	"sort"
 	"sync"
 
+	"tkestack.io/tke/pkg/util/apiclient"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -36,7 +38,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -96,7 +97,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 
 	ef := newEventsFinder(ctx, namespaceName, *client, r.platformClient)
 
-	if controllerutil.IsClusterVersionBefore1_9(client) {
+	if apiclient.ClusterVersionIsBefore19(client) {
 		return ef.listEventsByExtensions(client, namespaceName, name, options)
 	}
 	return ef.listEventsByApps(client, namespaceName, name, options)

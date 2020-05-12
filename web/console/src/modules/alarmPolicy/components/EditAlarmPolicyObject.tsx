@@ -55,9 +55,16 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
   }
 
   renderRadioList(type) {
-    let { alarmPolicyEdition, actions, namespaceList } = this.props;
+    let { alarmPolicyEdition, actions, namespaceList, addons } = this.props;
     if (type === 'cluster' || type === '') {
       return <noscript />;
+    }
+    let finalWorkloadTypeList = workloadTypeList.slice();
+    if (addons['TappController']) {
+      finalWorkloadTypeList.push({
+        value: 'tapp',
+        label: 'TApp'
+      });
     }
     let radioList: JSX.Element[] = [];
     AlarmObjectsType[type].forEach((item, index) => {
@@ -91,7 +98,7 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
                 <FormItem label="WorkloadType" isNeedFormInput={false}>
                   <SelectList
                     value={alarmPolicyEdition.alarmObjectWorkloadType + ''}
-                    recordList={workloadTypeList}
+                    recordList={finalWorkloadTypeList}
                     valueField="value"
                     textField="name"
                     textFields={['label']}

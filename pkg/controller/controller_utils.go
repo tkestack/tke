@@ -20,16 +20,14 @@ package controller
 
 import (
 	"fmt"
-	"k8s.io/client-go/kubernetes"
-	"regexp"
-	"strconv"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"tkestack.io/tke/pkg/util/log"
+
 	// register auth group api scheme for api server.
 	_ "tkestack.io/tke/api/platform/install"
 )
@@ -52,38 +50,6 @@ func WaitForCacheSync(controllerName string, stopCh <-chan struct{}, cacheSyncs 
 
 	log.Info("Caches are synced for controller", log.String("controllerName", controllerName))
 	return true
-}
-
-// IsClusterVersionBefore1_9 to check if cluster version before v1.9.x
-// DO NOT delete it because TKE support cluster v1.8.x
-func IsClusterVersionBefore1_9(kubeClient *kubernetes.Clientset) bool {
-	return isClusterVersionBefore(kubeClient, 1, 9)
-}
-
-func isClusterVersionBefore(kubeClient *kubernetes.Clientset, majorV int, minorV int) bool {
-	version, err := kubeClient.Discovery().ServerVersion()
-	if err != nil {
-		log.Error("error in isClusterVersionBefore")
-		return false
-	}
-	valid := regexp.MustCompile("[0-9]")
-	version.Minor = strings.Join(valid.FindAllString(version.Minor, -1), "")
-
-	versionMajor, err := strconv.Atoi(version.Major)
-	if err != nil {
-		log.Error("error in isClusterVersionBefore")
-		return false
-	}
-
-	versionMinor, err := strconv.Atoi(version.Minor)
-	if err != nil {
-		log.Error("error in isClusterVersionBefore")
-		return false
-	}
-	if versionMajor < majorV || (versionMajor == majorV && versionMinor < minorV) {
-		return true
-	}
-	return false
 }
 
 // Int32Ptr translate int32 to pointer

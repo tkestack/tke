@@ -6,3 +6,4 @@ export { remove } from './remove';
 export { getWorkflowError, getWorkflowErrorCode } from './getWorkflowError';
 export { isEmpty } from './isEmpty';
 export { includes } from './includes';
+export { useModal } from './tHooks';

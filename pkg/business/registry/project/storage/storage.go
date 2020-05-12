@@ -36,6 +36,7 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 	"tkestack.io/tke/api/business"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/cmd/tke-business-api/app/options"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
@@ -55,6 +56,7 @@ type Storage struct {
 func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 	businessClient *businessinternalclient.BusinessClient,
 	platformClient platformversionedclient.PlatformV1Interface,
+	authClient authversionedclient.AuthV1Interface,
 	privilegedUsername string, features *options.FeatureOptions) *Storage {
 	strategy := projectstrategy.NewStrategy(businessClient, platformClient, features)
 	store := &registry.Store{
@@ -91,7 +93,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 	finalizeStore.ExportStrategy = projectstrategy.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		Project:  &REST{store, privilegedUsername},
+		Project:  &REST{store, authClient, privilegedUsername},
 		Status:   &StatusREST{&statusStore},
 		Finalize: &FinalizeREST{&finalizeStore},
 	}
@@ -129,6 +131,8 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 // REST implements a RESTStorage for projects against etcd.
 type REST struct {
 	*registry.Store
+
+	authClient         authversionedclient.AuthV1Interface
 	privilegedUsername string
 }
 

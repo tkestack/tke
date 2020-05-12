@@ -110,7 +110,9 @@ func EnsureNamespaceOnCluster(kubeClient *kubernetes.Clientset, namespace *v1.Na
 	}
 	projectName, ok := ns.ObjectMeta.Labels[util.LabelProjectName]
 	if !ok {
-		ns.Labels = make(map[string]string)
+		if ns.Labels == nil {
+			ns.Labels = make(map[string]string)
+		}
 		ns.Labels[util.LabelProjectName] = namespace.ObjectMeta.Namespace
 		ns.Labels[util.LabelNamespaceName] = namespace.ObjectMeta.Name
 		_, err := kubeClient.CoreV1().Namespaces().Update(ns)
@@ -158,6 +160,24 @@ func EnsureResourceQuotaOnCluster(kubeClient *kubernetes.Clientset, namespace *v
 		_, err := kubeClient.CoreV1().ResourceQuotas(namespace.Spec.Namespace).Update(resourceQuota)
 		if err != nil {
 			log.Error("Failed to update the resource quota on cluster", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
+			return err
+		}
+	}
+	return nil
+}
+
+func DetachFromClusterNamespace(kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
+	ns, err := kubeClient.CoreV1().Namespaces().Get(namespace.Spec.Namespace, metav1.GetOptions{})
+	if ns == nil || errors.IsNotFound(err) {
+		return nil
+	}
+	_, ok := ns.ObjectMeta.Labels[util.LabelProjectName]
+	if ok {
+		delete(ns.Labels, util.LabelProjectName)
+		delete(ns.Labels, util.LabelNamespaceName)
+		_, err := kubeClient.CoreV1().Namespaces().Update(ns)
+		if err != nil {
+			log.Error("Failed to update the namespace on cluster", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 			return err
 		}
 	}

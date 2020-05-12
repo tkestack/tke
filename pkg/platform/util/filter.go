@@ -101,19 +101,6 @@ func FilterHelm(ctx context.Context, helm *platform.Helm) error {
 	return nil
 }
 
-// FilterGPUManager is used to filter helm that do not belong
-// to the tenant.
-func FilterGPUManager(ctx context.Context, gm *platform.GPUManager) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if tenantID == "" {
-		return nil
-	}
-	if gm.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("gpumanager"), gm.ObjectMeta.Name)
-	}
-	return nil
-}
-
 // FilterTappController is used to filter tapp controller that do not belong
 // to the tenant.
 func FilterTappController(ctx context.Context, tappController *platform.TappController) error {
