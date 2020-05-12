@@ -16,7 +16,7 @@
    ![](../../../../images/nginx-0.png)
 
 3. 进入【工作负载】的【 Deployment 】中，选择【新建】。如下图所示：
-  ![](../../../../images/nginx-1.png)
+    ![](../../../../images/nginx-1.png)
 
 4. 在“新建Workload”页面，只需输入下图中红框的参数即可。
 
@@ -30,9 +30,9 @@
 
    ![](../../../../images/nginx-5.png)
 
-6. 如果在第5步中有创建Service，则可以再【服务】下的【Service】看到与刚刚创建的Deployment同名的Service
+6. 如果在第5步中有创建Service，则可以在【服务】下的【Service】看到与刚刚创建的Deployment同名的Service
 
-   ![](../../../../../../../../../OneDrive - pku.edu.cn/Tencent/TKEStack/tke/docs/images/business-svc.png)
+   ![](../../../../images/nginx-6.png)
 
 
 ### 访问 Nginx 服务
@@ -41,14 +41,11 @@
 
 #### 通过主机节点端口访问 nginx 服务
 
-1. 单击【服务】>【Service】。在“Service”页面，看到与名为nginx的Deployment同名的 nginx Service已经运行，如下图所示：
-   ![](../../../../images/nginx-6.png)
+在本地主机的浏览器地址栏输入`集群任意节点IP:30000 端口`，例如`10.0.0.1:30000`即可访问服务。如果服务创建成功，访问服务时直接进入 nginx 服务器的默认欢迎页。如下图所示：
 
-2. 在本地主机的浏览器地址栏输入集群任意节点IP的 30000 端口即可访问服务。如果服务创建成功，访问服务时直接进入 nginx 服务器的默认欢迎页。如下图所示：
+> 注意：如果本地主机在集群内网中，输入节点的内网IP地址即可；如果本地主机不在集群内网中，需要输入节点的外网IP地址
 
-   > 注意：如果本地主机在集群内网中，输入节点的内网IP地址即可；如果本地主机不在集群内网中，需要输入节点的外网IP地址
-
-   ![](https://main.qcloudimg.com/raw/37246241fe0abd1d3796c080b1661217.png)
+![](https://main.qcloudimg.com/raw/37246241fe0abd1d3796c080b1661217.png)
 
 #### 通过服务名称访问 nginx 服务
 

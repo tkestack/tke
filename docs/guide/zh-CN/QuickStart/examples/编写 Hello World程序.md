@@ -117,7 +117,7 @@ sudo docker push default.registry.tke.com/【命名空间】/helloworld:v1
    ![](../../../../images/helloworld-7.png)![](../../../../images/helloworld-10.png)
  >注意：
  >
- >1. 镜像，地址要填全：default.registry.tke.com/【命名空间】/【镜像名】，本示例中是：default.registry.tke.com/public-image/helloworld
+ >1. 镜像，地址要填全：default.registry.tke.com/【命名空间】/【镜像名】，例如：default.registry.tke.com/test/helloworld
  >
  >2. 服务所在集群的安全组需要放通节点网络及容器网络，同时需要放通30000 - 32768端口，否则可能会出现容器服务无法使用问题。
 5. 单击【创建Workload】，完成 Hello World 服务的创建。
@@ -127,15 +127,13 @@ sudo docker push default.registry.tke.com/【命名空间】/helloworld:v1
 #### 通过主机节点端口访问 Hello World 服务
 1. 选择【服务】>【Service】，在“Service”管理页面，看到与名为helloworld的Deployment同名的 helloworld Service已经运行，如下图所示：![](../../../../images/helloworld-11.png)
 
-2. 在本地主机的浏览器地址栏输入集群任意节点IP的 30001 端口即可访问服务。如果服务创建成功，访问服务时页面会返回` Hello World！ `
+2. 在本地主机的浏览器地址栏输入`集群任意节点IP:30000 端口`，例如`10.0.0.1:30000`即可访问服务。如果服务创建成功，访问服务时页面会返回` Hello World！ `
 
    > 注意：如果本地主机在集群内网中，输入节点的内网IP地址即可；如果本地主机不在集群内网中，需要输入节点的外网IP地址
 
 #### 通过服务名称访问 Hello World 服务
 
 集群内的其他服务或容器可以直接通过服务名称访问。
-
-
 
 
 
