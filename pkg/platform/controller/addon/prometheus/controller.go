@@ -20,6 +20,7 @@ package prometheus
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -29,12 +30,12 @@ import (
 
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
-	promopk8sutil "github.com/coreos/prometheus-operator/pkg/k8sutil"
 	influxApi "github.com/influxdata/influxdb1-client/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -127,14 +128,6 @@ const (
 	specialLabelName  = "k8s-submitter"
 	specialLabelValue = "controller"
 )
-
-var crdKinds = []monitoringv1.CrdKind{
-	monitoringv1.DefaultCrdKinds.Alertmanager,
-	monitoringv1.DefaultCrdKinds.Prometheus,
-	monitoringv1.DefaultCrdKinds.PodMonitor,
-	monitoringv1.DefaultCrdKinds.PrometheusRule,
-	monitoringv1.DefaultCrdKinds.ServiceMonitor,
-}
 
 type influxdbClient struct {
 	address string
@@ -578,17 +571,17 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
-	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.client.PlatformV1())
+	crdClient, err := util.BuildExternalExtensionClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
-	mclient, err := util.BuildExternalMonitoringClientSet(cluster, c.client.PlatformV1())
+	mclient, err := util.BuildExternalMonitoringClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
@@ -624,9 +617,14 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		remoteReads = prometheus.Spec.RemoteAddress.ReadAddr
 	}
 
-	for _, crdKind := range crdKinds {
-		crd := promopk8sutil.NewCustomResourceDefinition(crdKind, monitoring.GroupName, nil, true)
-		_, err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd)
+	crds := getCRDs()
+	for _, crd := range crds {
+		crdObj := apiextensionsv1.CustomResourceDefinition{}
+		err := json.Unmarshal([]byte(crd), &crdObj)
+		if err != nil {
+			return err
+		}
+		_, err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
@@ -688,7 +686,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	prometheus.Status.SubVersion[AlertManagerService] = components.AlertManagerService.Tag
 
 	// Secret for prometheus-etcd
-	credential, err := util.GetClusterCredentialV1(c.client.PlatformV1(), cluster)
+	credential, err := util.GetClusterCredentialV1(ctx, c.client.PlatformV1(), cluster)
 	if err != nil {
 		return err
 	}
@@ -1925,17 +1923,17 @@ func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Pro
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
-	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.client.PlatformV1())
+	crdClient, err := util.BuildExternalExtensionClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
-	mclient, err := util.BuildExternalMonitoringClientSet(cluster, c.client.PlatformV1())
+	mclient, err := util.BuildExternalMonitoringClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
@@ -2079,9 +2077,15 @@ func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Pro
 		errs = append(errs, err)
 	}
 
-	for _, crdKind := range crdKinds {
-		crd := promopk8sutil.NewCustomResourceDefinition(crdKind, monitoring.GroupName, nil, true)
-		err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(ctx, crd.Name, metav1.DeleteOptions{})
+	crds := getCRDs()
+	for _, crd := range crds {
+		crdObj := apiextensionsv1.CustomResourceDefinition{}
+		err := json.Unmarshal([]byte(crd), &crdObj)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Delete(ctx, crdObj.Name, metav1.DeleteOptions{})
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -2140,7 +2144,7 @@ func (c *Controller) watchPrometheusHealth(ctx context.Context, key string) func
 			log.Info("Prometheus health check over", log.String("prome", key))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -2173,7 +2177,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 			log.Info("Prometheus status checking over", log.String("prome", key))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -2220,7 +2224,7 @@ func (c *Controller) checkPrometheusUpgrade(ctx context.Context, prometheus *v1.
 			log.Info("Prometheus upgrade over", log.String("prome", key))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
