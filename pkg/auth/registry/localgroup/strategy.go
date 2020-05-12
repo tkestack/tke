@@ -88,7 +88,7 @@ func (s *Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object
 		group.Status.Users = oldGroup.Status.Users
 	}
 
-	_ = util.HandleGroupPoliciesUpdate(s.authClient, s.enforcer, group)
+	_ = util.HandleGroupPoliciesUpdate(ctx, s.authClient, s.enforcer, group)
 }
 
 // NamespaceScoped is false for policies.

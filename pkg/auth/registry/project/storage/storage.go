@@ -99,7 +99,7 @@ func (r *REST) Get(ctx context.Context, projectName string, options *metav1.GetO
 		projectID = requestInfo.Name
 	}
 
-	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(metav1.ListOptions{
+	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.projectID=%s", projectID),
 	})
 	if err != nil {
@@ -145,7 +145,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		v1opts = util.PredicateV1ListOptions(tenantID, options)
 	}
 
-	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(*v1opts)
+	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, *v1opts)
 	if err != nil {
 		log.Error("list project policies failed", log.Err(err))
 		return nil, err

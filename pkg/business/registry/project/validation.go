@@ -250,7 +250,7 @@ func validateAgainstParent(ctx context.Context, project *business.Project, old *
 					fmt.Sprintf("ancestor projects formed a circle: %s", parentList)))
 		}
 		parentSet[parentName] = true
-		if parent, err := getter.Project(parentName, metav1.GetOptions{}); err != nil {
+		if parent, err := getter.Project(ctx, parentName, metav1.GetOptions{}); err != nil {
 			if errors.IsNotFound(err) {
 				break
 			}

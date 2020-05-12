@@ -55,9 +55,17 @@ func (r *PolicyREST) New() runtime.Object {
 	return &auth.Policy{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *PolicyREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("policies"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 // Get finds a resource in the storage by name and returns it.
 func (r *PolicyREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	pol, err := r.authClient.Policies().Get(name, metav1.GetOptions{})
+	pol, err := r.authClient.Policies().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Get policy failed ", log.String("policy", name), log.Err(err))
 		return nil, err
@@ -87,7 +95,7 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 		FieldSelector: fieldSelector.String(),
 	}
 
-	policyList, err := r.authClient.Policies().List(listOpts)
+	policyList, err := r.authClient.Policies().List(ctx, listOpts)
 	if err != nil {
 		log.Error("List projected policy failed", log.String("selector", listOpts.FieldSelector), log.Err(err))
 		return nil, err

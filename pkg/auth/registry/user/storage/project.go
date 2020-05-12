@@ -59,6 +59,14 @@ func (r *ProjectREST) New() runtime.Object {
 	return &auth.ProjectBelongs{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *ProjectREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("projects"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {

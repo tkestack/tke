@@ -73,7 +73,7 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 	}
 
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(metav1.ListOptions{
+	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.projectID=%s", projectID),
 	})
 	if err != nil {
@@ -90,7 +90,7 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 	groupList := &auth.GroupList{}
 	policyNameMap := map[string]string{}
 	for groupID, policyIDs := range groupPolicyMap {
-		group, err := r.authClient.Groups().Get(util.CombineTenantAndName(tenantID, groupID), metav1.GetOptions{})
+		group, err := r.authClient.Groups().Get(ctx, util.CombineTenantAndName(tenantID, groupID), metav1.GetOptions{})
 		if err != nil {
 			log.Error("Get group failed", log.String("id", groupID), log.Err(err))
 			continue
@@ -101,7 +101,7 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 			if name, ok := policyNameMap[pid]; ok {
 				m[pid] = name
 			} else {
-				pol, err := r.authClient.Policies().Get(pid, metav1.GetOptions{})
+				pol, err := r.authClient.Policies().Get(ctx, pid, metav1.GetOptions{})
 				if err != nil {
 					log.Error("Get policy failed", log.String("pid", pid), log.Err(err))
 					continue
@@ -145,7 +145,7 @@ func (r *GroupREST) Create(ctx context.Context, obj runtime.Object, createValida
 
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 
-	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(metav1.ListOptions{
+	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.projectID=%s", projectID),
 	})
 

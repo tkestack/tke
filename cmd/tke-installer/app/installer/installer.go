@@ -998,7 +998,7 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 	var errCount int
 	for {
 		start := time.Now()
-		err := t.clusterProvider.OnCreate(t.Cluster)
+		err := t.clusterProvider.OnCreate(ctx, t.Cluster)
 		if err != nil {
 			return err
 		}

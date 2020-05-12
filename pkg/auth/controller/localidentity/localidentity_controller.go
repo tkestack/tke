@@ -19,6 +19,7 @@
 package localidentity
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -206,7 +207,7 @@ func (c *Controller) syncItem(key string) error {
 	default:
 		// Only check deleting localIdentity for now
 		if localIdentity.Status.Phase == v1.LocalIdentityDeleting {
-			err = c.localIdentityedResourcesDeleter.Delete(key)
+			err = c.localIdentityedResourcesDeleter.Delete(context.Background(), key)
 		}
 
 		log.Debug("Handle localIdentity", log.Any("localIdentity", localIdentity))

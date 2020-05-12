@@ -160,7 +160,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 	group = result.(*auth.LocalGroup)
 
 	if needBind {
-		err = util.BindGroupPolicies(r.authClient, group, policies)
+		err = util.BindGroupPolicies(ctx, r.authClient, group, policies)
 		if err != nil {
 			log.Error("bind init policies failed", log.Err(err))
 		}
@@ -191,7 +191,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 	}
 
 	if policy == "true" {
-		util.FillGroupPolicies(r.authClient, r.enforcer, groupList)
+		util.FillGroupPolicies(ctx, r.authClient, r.enforcer, groupList)
 	}
 	return groupList, nil
 }

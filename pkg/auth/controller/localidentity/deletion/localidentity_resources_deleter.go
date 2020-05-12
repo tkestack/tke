@@ -21,13 +21,14 @@ package deletion
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"strings"
 	v1 "tkestack.io/tke/api/auth/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/pkg/auth/util"
@@ -38,7 +39,7 @@ import (
 // LocalIdentitiedResourcesDeleterInterface to delete a localIdentity with all resources in
 // it.
 type LocalIdentitiedResourcesDeleterInterface interface {
-	Delete(localIdentityName string) error
+	Delete(ctx context.Context, localIdentityName string) error
 }
 
 // NewLocalIdentitiedResourcesDeleterx to create the loalIdentitiedResourcesDeleter that
@@ -89,11 +90,11 @@ type loalIdentitiedResourcesDeleter struct {
 // Returns ResourcesRemainingError if it deleted some resources but needs
 // to wait for them to go away.
 // Caller is expected to keep calling this until it succeeds.
-func (d *loalIdentitiedResourcesDeleter) Delete(localIdentityName string) error {
+func (d *loalIdentitiedResourcesDeleter) Delete(ctx context.Context, localIdentityName string) error {
 	// Multiple controllers may edit a localIdentity during termination
 	// first get the latest state of the localIdentity before proceeding
 	// if the localIdentity was deleted already, don't do anything
-	localIdentity, err := d.localIdentityClient.Get(context.Background(), localIdentityName, metav1.GetOptions{})
+	localIdentity, err := d.localIdentityClient.Get(ctx, localIdentityName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -108,7 +109,7 @@ func (d *loalIdentitiedResourcesDeleter) Delete(localIdentityName string) error 
 
 	// ensure that the status is up to date on the localIdentity
 	// if we get a not found error, we assume the localIdentity is truly gone
-	localIdentity, err = d.retryOnConflictError(localIdentity, d.updateLocalIdentityStatusFunc)
+	localIdentity, err = d.retryOnConflictError(ctx, localIdentity, d.updateLocalIdentityStatusFunc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -123,17 +124,17 @@ func (d *loalIdentitiedResourcesDeleter) Delete(localIdentityName string) error 
 
 	// Delete the localIdentity if it is already finalized.
 	if d.deleteLocalIdentityWhenDone && finalized(localIdentity) {
-		return d.deleteLocalIdentity(localIdentity)
+		return d.deleteLocalIdentity(ctx, localIdentity)
 	}
 
 	// there may still be content for us to remove
-	err = d.deleteAllContent(localIdentity)
+	err = d.deleteAllContent(ctx, localIdentity)
 	if err != nil {
 		return err
 	}
 
 	// we have removed content, so mark it finalized by us
-	localIdentity, err = d.retryOnConflictError(localIdentity, d.finalizeLocalIdentity)
+	localIdentity, err = d.retryOnConflictError(ctx, localIdentity, d.finalizeLocalIdentity)
 	if err != nil {
 		// in normal practice, this should not be possible, but if a deployment is running
 		// two controllers to do localIdentity deletion that share a common finalizer token it's
@@ -146,20 +147,20 @@ func (d *loalIdentitiedResourcesDeleter) Delete(localIdentityName string) error 
 
 	// Check if we can delete now.
 	if d.deleteLocalIdentityWhenDone && finalized(localIdentity) {
-		return d.deleteLocalIdentity(localIdentity)
+		return d.deleteLocalIdentity(ctx, localIdentity)
 	}
 
 	return nil
 }
 
 // Deletes the given localIdentity.
-func (d *loalIdentitiedResourcesDeleter) deleteLocalIdentity(localIdentity *v1.LocalIdentity) error {
+func (d *loalIdentitiedResourcesDeleter) deleteLocalIdentity(ctx context.Context, localIdentity *v1.LocalIdentity) error {
 	var opts metav1.DeleteOptions
 	uid := localIdentity.UID
 	if len(uid) > 0 {
 		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.localIdentityClient.Delete(context.Background(), localIdentity.Name, opts)
+	err := d.localIdentityClient.Delete(ctx, localIdentity.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))
 		return err
@@ -168,15 +169,15 @@ func (d *loalIdentitiedResourcesDeleter) deleteLocalIdentity(localIdentity *v1.L
 }
 
 // updateLocalIdentityFunc is a function that makes an update to a localIdentity
-type updateLocalIdentityFunc func(localIdentity *v1.LocalIdentity) (*v1.LocalIdentity, error)
+type updateLocalIdentityFunc func(ctx context.Context, localIdentity *v1.LocalIdentity) (*v1.LocalIdentity, error)
 
 // retryOnConflictError retries the specified fn if there was a conflict error
 // it will return an error if the UID for an object changes across retry operations.
 // TODO RetryOnConflict should be a generic concept in client code
-func (d *loalIdentitiedResourcesDeleter) retryOnConflictError(localIdentity *v1.LocalIdentity, fn updateLocalIdentityFunc) (result *v1.LocalIdentity, err error) {
+func (d *loalIdentitiedResourcesDeleter) retryOnConflictError(ctx context.Context, localIdentity *v1.LocalIdentity, fn updateLocalIdentityFunc) (result *v1.LocalIdentity, err error) {
 	latestLocalIdentity := localIdentity
 	for {
-		result, err = fn(latestLocalIdentity)
+		result, err = fn(ctx, latestLocalIdentity)
 		if err == nil {
 			return result, nil
 		}
@@ -184,7 +185,7 @@ func (d *loalIdentitiedResourcesDeleter) retryOnConflictError(localIdentity *v1.
 			return nil, err
 		}
 		prevLocalIdentity := latestLocalIdentity
-		latestLocalIdentity, err = d.localIdentityClient.Get(context.Background(), latestLocalIdentity.Name, metav1.GetOptions{})
+		latestLocalIdentity, err = d.localIdentityClient.Get(ctx, latestLocalIdentity.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +196,7 @@ func (d *loalIdentitiedResourcesDeleter) retryOnConflictError(localIdentity *v1.
 }
 
 // updateLocalIdentityStatusFunc will verify that the status of the localIdentity is correct
-func (d *loalIdentitiedResourcesDeleter) updateLocalIdentityStatusFunc(localIdentity *v1.LocalIdentity) (*v1.LocalIdentity, error) {
+func (d *loalIdentitiedResourcesDeleter) updateLocalIdentityStatusFunc(ctx context.Context, localIdentity *v1.LocalIdentity) (*v1.LocalIdentity, error) {
 	if localIdentity.DeletionTimestamp.IsZero() || localIdentity.Status.Phase == v1.LocalIdentityDeleting {
 		return localIdentity, nil
 	}
@@ -203,7 +204,7 @@ func (d *loalIdentitiedResourcesDeleter) updateLocalIdentityStatusFunc(localIden
 	newLocalIdentity.ObjectMeta = localIdentity.ObjectMeta
 	newLocalIdentity.Status = localIdentity.Status
 	newLocalIdentity.Status.Phase = v1.LocalIdentityDeleting
-	return d.localIdentityClient.UpdateStatus(context.Background(), &newLocalIdentity, metav1.UpdateOptions{})
+	return d.localIdentityClient.UpdateStatus(ctx, &newLocalIdentity, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the localIdentity.Spec.Finalizers is an empty list
@@ -212,7 +213,7 @@ func finalized(localIdentity *v1.LocalIdentity) bool {
 }
 
 // finalizeLocalIdentity removes the specified finalizerToken and finalizes the localIdentity
-func (d *loalIdentitiedResourcesDeleter) finalizeLocalIdentity(localIdentity *v1.LocalIdentity) (*v1.LocalIdentity, error) {
+func (d *loalIdentitiedResourcesDeleter) finalizeLocalIdentity(ctx context.Context, localIdentity *v1.LocalIdentity) (*v1.LocalIdentity, error) {
 	localIdentityFinalize := v1.LocalIdentity{}
 	localIdentityFinalize.ObjectMeta = localIdentity.ObjectMeta
 	localIdentityFinalize.Spec = localIdentity.Spec
@@ -233,7 +234,7 @@ func (d *loalIdentitiedResourcesDeleter) finalizeLocalIdentity(localIdentity *v1
 		Name(localIdentityFinalize.Name).
 		SubResource("finalize").
 		Body(&localIdentityFinalize).
-		Do(context.Background()).
+		Do(ctx).
 		Into(updated)
 
 	if err != nil {
@@ -242,7 +243,7 @@ func (d *loalIdentitiedResourcesDeleter) finalizeLocalIdentity(localIdentity *v1
 	return updated, err
 }
 
-type deleteResourceFunc func(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error
+type deleteResourceFunc func(ctx context.Context, deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteRelatedRoles,
@@ -253,12 +254,12 @@ var deleteResourceFuncs = []deleteResourceFunc{
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
-func (d *loalIdentitiedResourcesDeleter) deleteAllContent(localIdentity *v1.LocalIdentity) error {
+func (d *loalIdentitiedResourcesDeleter) deleteAllContent(ctx context.Context, localIdentity *v1.LocalIdentity) error {
 	log.Debug("LocalIdentity controller - deleteAllContent", log.String("localIdentityName", localIdentity.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
-		err := deleteFunc(d, localIdentity)
+		err := deleteFunc(ctx, d, localIdentity)
 		if err != nil {
 			// If there is an error, hold on to it but proceed with all the remaining resource.
 			errs = append(errs, err)
@@ -272,7 +273,7 @@ func (d *loalIdentitiedResourcesDeleter) deleteAllContent(localIdentity *v1.Loca
 	return nil
 }
 
-func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
+func deleteRelatedRoles(ctx context.Context, deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
 	log.Debug("LocalIdentity controller - deleteRelatedRoles", log.String("localIdentityName", localIdentity.Name))
 
 	// delete roles for bind to * domain
@@ -293,7 +294,7 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 				Name(role).
 				SubResource("unbinding").
 				Body(&binding).
-				Do(context.Background()).
+				Do(ctx).
 				Into(pol)
 			if err != nil {
 				log.Error("Unbind policy for user failed", log.String("user", localIdentity.Spec.Username),
@@ -307,7 +308,7 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 				Name(strings.TrimPrefix(role, util.GroupPrefix(localIdentity.Spec.TenantID))).
 				SubResource("unbinding").
 				Body(&binding).
-				Do(context.Background()).
+				Do(ctx).
 				Into(grp)
 			if err != nil {
 				log.Error("Unbind group for user failed", log.String("user", localIdentity.Spec.Username),
@@ -321,7 +322,7 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 				Name(role).
 				SubResource("unbinding").
 				Body(&binding).
-				Do(context.Background()).
+				Do(ctx).
 				Into(rol)
 			if err != nil {
 				log.Error("Unbind group for user failed", log.String("user", localIdentity.Spec.Username),
@@ -340,7 +341,7 @@ func deleteRelatedRoles(deleter *loalIdentitiedResourcesDeleter, localIdentity *
 	return utilerrors.NewAggregate(errs)
 }
 
-func deleteRelatedProjectPolicyBinding(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
+func deleteRelatedProjectPolicyBinding(ctx context.Context, deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
 	subj := util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username)
 	rules := deleter.enforcer.GetFilteredGroupingPolicy(0, subj)
 
@@ -381,7 +382,7 @@ func deleteRelatedProjectPolicyBinding(deleter *loalIdentitiedResourcesDeleter, 
 			},
 		}
 		result := v1.ProjectPolicyBindingList{}
-		err := deleter.authClient.RESTClient().Post().Resource("projects").Name(project).SubResource("unbinding").Body(&bindingRequest).Do().Into(&result)
+		err := deleter.authClient.RESTClient().Post().Resource("projects").Name(project).SubResource("unbinding").Body(&bindingRequest).Do(ctx).Into(&result)
 		if err != nil {
 			log.Info("Unbind user with project policies failed", log.String("user", localIdentity.Spec.Username),
 				log.String("project", project), log.Strings("policies", policies), log.Err(err))
@@ -392,10 +393,10 @@ func deleteRelatedProjectPolicyBinding(deleter *loalIdentitiedResourcesDeleter, 
 	return utilerrors.NewAggregate(errs)
 }
 
-func deleteApikeys(deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
+func deleteApikeys(ctx context.Context, deleter *loalIdentitiedResourcesDeleter, localIdentity *v1.LocalIdentity) error {
 	policySelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.tenantID", localIdentity.Spec.TenantID),
 		fields.OneTermEqualSelector("spec.username", localIdentity.Spec.Username))
 
-	return deleter.authClient.APIKeys().DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: policySelector.String()})
+	return deleter.authClient.APIKeys().DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: policySelector.String()})
 }

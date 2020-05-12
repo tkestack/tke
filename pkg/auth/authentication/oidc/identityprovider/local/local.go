@@ -195,7 +195,7 @@ func (c *identityProvider) GetUser(ctx context.Context, name string, options *me
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
 
-	localIdentity, err := c.authClient.LocalIdentities().Get(name, *options)
+	localIdentity, err := c.authClient.LocalIdentities().Get(ctx, name, *options)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func (c *identityProvider) ListUsers(ctx context.Context, options *metainternal.
 	}
 
 	v1Opt := util.PredicateV1ListOptions(c.tenantID, options)
-	localIdentityList, err := c.authClient.LocalIdentities().List(*v1Opt)
+	localIdentityList, err := c.authClient.LocalIdentities().List(ctx, *v1Opt)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +253,7 @@ func (c *identityProvider) GetGroup(ctx context.Context, name string, options *m
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
 
-	localGroup, err := c.authClient.LocalGroups().Get(name, *options)
+	localGroup, err := c.authClient.LocalGroups().Get(ctx, name, *options)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (c *identityProvider) ListGroups(ctx context.Context, options *metainternal
 
 	v1Opt := util.PredicateV1ListOptions(c.tenantID, options)
 
-	localGroupList, err := c.authClient.LocalGroups().List(*v1Opt)
+	localGroupList, err := c.authClient.LocalGroups().List(ctx, *v1Opt)
 	if err != nil {
 		return nil, err
 	}

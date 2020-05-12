@@ -77,7 +77,7 @@ func (r *ProjectGroupREST) List(ctx context.Context, options *metainternal.ListO
 		return nil, errors.NewBadRequest("must specify projectID header")
 	}
 
-	proBinding, err := r.authClient.ProjectPolicyBindings().Get(util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
+	proBinding, err := r.authClient.ProjectPolicyBindings().Get(ctx, util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (r *ProjectGroupREST) List(ctx context.Context, options *metainternal.ListO
 	for _, subj := range proBinding.Spec.Groups {
 		var group *auth.Group
 		if subj.ID != "" {
-			group, err = r.authClient.Groups().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			group, err = r.authClient.Groups().Get(ctx, util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				log.Error("Get group failed", log.String("id", subj.ID), log.Err(err))
 				group = constructGroup(subj.ID, subj.Name)

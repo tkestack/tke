@@ -192,7 +192,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 	localIdentity = result.(*auth.LocalIdentity)
 
 	if needBind {
-		err = util.BindUserPolicies(r.authClient, localIdentity, policies)
+		err = util.BindUserPolicies(ctx, r.authClient, localIdentity, policies)
 		if err != nil {
 			log.Error("bind init policies failed", log.Err(err))
 		}
@@ -211,7 +211,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 
 	identityList := obj.(*auth.LocalIdentityList)
 	if policy == "true" {
-		util.FillUserPolicies(r.authClient, r.enforcer, identityList)
+		util.FillUserPolicies(ctx, r.authClient, r.enforcer, identityList)
 	}
 
 	return identityList, nil
@@ -305,7 +305,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 		return obj, err
 	}
 	localIdentity := obj.(*auth.LocalIdentity)
-	util.SetAdministrator(r.enforcer, r.authClient, localIdentity)
+	util.SetAdministrator(ctx, r.enforcer, r.authClient, localIdentity)
 	return localIdentity, nil
 }
 

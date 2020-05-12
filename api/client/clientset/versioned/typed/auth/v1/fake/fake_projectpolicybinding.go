@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var projectpolicybindingsResource = schema.GroupVersionResource{Group: "auth.tke
 var projectpolicybindingsKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "v1", Kind: "ProjectPolicyBinding"}
 
 // Get takes name of the projectPolicyBinding, and returns the corresponding projectPolicyBinding object, and an error if there is any.
-func (c *FakeProjectPolicyBindings) Get(name string, options v1.GetOptions) (result *authv1.ProjectPolicyBinding, err error) {
+func (c *FakeProjectPolicyBindings) Get(ctx context.Context, name string, options v1.GetOptions) (result *authv1.ProjectPolicyBinding, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(projectpolicybindingsResource, name), &authv1.ProjectPolicyBinding{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeProjectPolicyBindings) Get(name string, options v1.GetOptions) (res
 }
 
 // List takes label and field selectors, and returns the list of ProjectPolicyBindings that match those selectors.
-func (c *FakeProjectPolicyBindings) List(opts v1.ListOptions) (result *authv1.ProjectPolicyBindingList, err error) {
+func (c *FakeProjectPolicyBindings) List(ctx context.Context, opts v1.ListOptions) (result *authv1.ProjectPolicyBindingList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(projectpolicybindingsResource, projectpolicybindingsKind, opts), &authv1.ProjectPolicyBindingList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeProjectPolicyBindings) List(opts v1.ListOptions) (result *authv1.Pr
 }
 
 // Watch returns a watch.Interface that watches the requested projectPolicyBindings.
-func (c *FakeProjectPolicyBindings) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeProjectPolicyBindings) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(projectpolicybindingsResource, opts))
 }
 
 // Create takes the representation of a projectPolicyBinding and creates it.  Returns the server's representation of the projectPolicyBinding, and an error, if there is any.
-func (c *FakeProjectPolicyBindings) Create(projectPolicyBinding *authv1.ProjectPolicyBinding) (result *authv1.ProjectPolicyBinding, err error) {
+func (c *FakeProjectPolicyBindings) Create(ctx context.Context, projectPolicyBinding *authv1.ProjectPolicyBinding, opts v1.CreateOptions) (result *authv1.ProjectPolicyBinding, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(projectpolicybindingsResource, projectPolicyBinding), &authv1.ProjectPolicyBinding{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeProjectPolicyBindings) Create(projectPolicyBinding *authv1.ProjectP
 }
 
 // Update takes the representation of a projectPolicyBinding and updates it. Returns the server's representation of the projectPolicyBinding, and an error, if there is any.
-func (c *FakeProjectPolicyBindings) Update(projectPolicyBinding *authv1.ProjectPolicyBinding) (result *authv1.ProjectPolicyBinding, err error) {
+func (c *FakeProjectPolicyBindings) Update(ctx context.Context, projectPolicyBinding *authv1.ProjectPolicyBinding, opts v1.UpdateOptions) (result *authv1.ProjectPolicyBinding, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(projectpolicybindingsResource, projectPolicyBinding), &authv1.ProjectPolicyBinding{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeProjectPolicyBindings) Update(projectPolicyBinding *authv1.ProjectP
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeProjectPolicyBindings) UpdateStatus(projectPolicyBinding *authv1.ProjectPolicyBinding) (*authv1.ProjectPolicyBinding, error) {
+func (c *FakeProjectPolicyBindings) UpdateStatus(ctx context.Context, projectPolicyBinding *authv1.ProjectPolicyBinding, opts v1.UpdateOptions) (*authv1.ProjectPolicyBinding, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(projectpolicybindingsResource, "status", projectPolicyBinding), &authv1.ProjectPolicyBinding{})
 	if obj == nil {
@@ -108,22 +110,22 @@ func (c *FakeProjectPolicyBindings) UpdateStatus(projectPolicyBinding *authv1.Pr
 }
 
 // Delete takes name of the projectPolicyBinding and deletes it. Returns an error if one occurs.
-func (c *FakeProjectPolicyBindings) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeProjectPolicyBindings) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(projectpolicybindingsResource, name), &authv1.ProjectPolicyBinding{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeProjectPolicyBindings) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(projectpolicybindingsResource, listOptions)
+func (c *FakeProjectPolicyBindings) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(projectpolicybindingsResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &authv1.ProjectPolicyBindingList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched projectPolicyBinding.
-func (c *FakeProjectPolicyBindings) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *authv1.ProjectPolicyBinding, err error) {
+func (c *FakeProjectPolicyBindings) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *authv1.ProjectPolicyBinding, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(projectpolicybindingsResource, name, pt, data, subresources...), &authv1.ProjectPolicyBinding{})
 	if obj == nil {

@@ -77,7 +77,7 @@ func (r *ProjectUserREST) List(ctx context.Context, options *metainternal.ListOp
 		return nil, errors.NewBadRequest("must specify projectID")
 	}
 
-	proBinding, err := r.authClient.ProjectPolicyBindings().Get(util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
+	proBinding, err := r.authClient.ProjectPolicyBindings().Get(ctx, util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (r *ProjectUserREST) List(ctx context.Context, options *metainternal.ListOp
 	for _, subj := range proBinding.Spec.Users {
 		var user *auth.User
 		if subj.ID != "" {
-			user, err = r.authClient.Users().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			user, err = r.authClient.Users().Get(ctx, util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				log.Error("Get user failed", log.String("id", subj.ID), log.Err(err))
 				user = constructUser(subj.ID, subj.Name)

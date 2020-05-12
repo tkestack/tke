@@ -77,7 +77,7 @@ func (s *Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object
 	}
 
 	localIdentity.Status.LastUpdateTime = metav1.Now()
-	_ = util.HandleUserPoliciesUpdate(s.authClient, s.enforcer, localIdentity)
+	_ = util.HandleUserPoliciesUpdate(ctx, s.authClient, s.enforcer, localIdentity)
 }
 
 // NamespaceScoped is false for identities.

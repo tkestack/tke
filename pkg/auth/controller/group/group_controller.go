@@ -219,7 +219,7 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve group from store", log.String("group name", key), log.Err(err))
 	default:
 		if group.Status.Phase == v1.GroupTerminating {
-			err = c.groupedResourcesDeleter.Delete(key)
+			err = c.groupedResourcesDeleter.Delete(context.Background(), key)
 		} else {
 			err = c.processUpdate(group, key)
 		}
