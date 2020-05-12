@@ -21,6 +21,7 @@ package app
 import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/cmd/tke-auth-api/app/config"
+	genericfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/auth/apiserver"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/util/log"
@@ -78,6 +79,7 @@ func createFilterChain(apiServer *genericapiserver.GenericAPIServer) {
 	apiServer.Handler.FullHandlerChain = filter.WithCluster(apiServer.Handler.FullHandlerChain)
 	apiServer.Handler.FullHandlerChain = filter.WithRequestBody(apiServer.Handler.FullHandlerChain)
 	apiServer.Handler.FullHandlerChain = filter.WithFuzzyResource(apiServer.Handler.FullHandlerChain)
+	apiServer.Handler.FullHandlerChain = genericfilter.WithTenantID(apiServer.Handler.FullHandlerChain)
 }
 
 func registerHandler(apiServer *apiserver.APIServer) error {

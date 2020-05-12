@@ -452,7 +452,7 @@ func (c *Controller) uninstallLBCF(lbcf *v1.LBCF) error {
 	if err != nil {
 		return err
 	}
-	credential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
+	credential, err := util.GetClusterCredentialV1(c.client.PlatformV1(), cluster)
 	if err != nil {
 		return err
 	}

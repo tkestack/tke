@@ -26,6 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"tkestack.io/tke/pkg/util/apiclient"
+
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	promopk8sutil "github.com/coreos/prometheus-operator/pkg/k8sutil"
@@ -653,7 +655,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 
 	prometheus.Status.SubVersion[PrometheusOperatorService] = components.PrometheusOperatorService.Tag
 
-	extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+	extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 
 	// get notify webhook address
 	var webhookAddr string
@@ -664,7 +666,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	}
 
 	// secret for alertmanager
-	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(webhookAddr)); err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(webhookAddr, prometheus.Spec.AlertRepeatInterval)); err != nil {
 		return err
 	}
 
@@ -686,7 +688,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	prometheus.Status.SubVersion[AlertManagerService] = components.AlertManagerService.Tag
 
 	// Secret for prometheus-etcd
-	credential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
+	credential, err := util.GetClusterCredentialV1(c.client.PlatformV1(), cluster)
 	if err != nil {
 		return err
 	}
@@ -1115,7 +1117,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
 						SourceLabels: []string{"__name__"},
-						Regex:        "k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+						Regex:        "k8s_(.*)|apiserver_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 						Action:       "keep",
 					},
 				}
@@ -1131,7 +1133,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Regex:        "project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 					Action:       "keep",
 				},
 			}
@@ -1146,7 +1148,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes",
+					Regex:        "project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 					Action:       "keep",
 				},
 			}
@@ -1344,8 +1346,11 @@ var selectorForAlertManager = metav1.LabelSelector{
 	MatchLabels: map[string]string{"alertmanager": alertManagerCRDName, "app": "alertmanager"},
 }
 
-func createSecretForAlertmanager(webhookAddr string) *corev1.Secret {
-	config := configForAlertManager(webhookAddr)
+func createSecretForAlertmanager(webhookAddr string, repeatInterval string) *corev1.Secret {
+	if repeatInterval == "" {
+		repeatInterval = "1200s"
+	}
+	config := configForAlertManager(webhookAddr, repeatInterval)
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      alertManagerSecret,
@@ -1483,21 +1488,20 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 							Name:  nodeExporterDaemonSet,
 							Image: components.NodeExporterService.FullName(),
 							Args: []string{
-								"--path.procfs=/host/proc",
-								"--path.sysfs=/host/sys",
+								"--path.rootfs=/host",
 								"--no-collector.arp",
 								"--no-collector.bcache",
 								"--no-collector.bonding",
 								"--no-collector.buddyinfo",
 								"--no-collector.conntrack",
 								"--no-collector.cpu",
+								"--no-collector.cpufreq",
 								"--collector.diskstats",
 								"--no-collector.drbd",
 								"--no-collector.edac",
 								"--no-collector.entropy",
 								"--no-collector.filefd",
 								"--collector.filesystem",
-								"--no-collector.gmond",
 								"--no-collector.hwmon",
 								"--no-collector.infiniband",
 								"--no-collector.interrupts",
@@ -1506,13 +1510,15 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 								"--no-collector.loadavg",
 								"--no-collector.logind",
 								"--no-collector.mdadm",
-								"--no-collector.megacli",
 								"--no-collector.meminfo",
 								"--no-collector.meminfo_numa",
 								"--no-collector.mountstats",
 								"--collector.netdev",
 								"--no-collector.netstat",
+								"--no-collector.netclass",
 								"--no-collector.nfs",
+								"--no-collector.nfsd",
+								"--no-collector.pressure",
 								"--no-collector.ntp",
 								"--no-collector.qdisc",
 								"--no-collector.runit",
@@ -1535,13 +1541,8 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									MountPath: "/host/proc",
-									Name:      "proc",
-									ReadOnly:  true,
-								},
-								{
-									MountPath: "/host/sys",
-									Name:      "sys",
+									MountPath: "/host",
+									Name:      "root",
 									ReadOnly:  true,
 								},
 							},
@@ -1551,18 +1552,10 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 					HostPID:     true,
 					Volumes: []corev1.Volume{
 						{
-							Name: "proc",
+							Name: "root",
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/proc",
-								},
-							},
-						},
-						{
-							Name: "sys",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/sys",
+									Path: "/",
 								},
 							},
 						},
@@ -1949,7 +1942,7 @@ func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData boo
 		return err
 	}
 
-	extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+	extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 
 	// delete prometheus
 	err = kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(prometheusETCDSecret, &metav1.DeleteOptions{})
@@ -2304,7 +2297,7 @@ func upgradeVersion(kubeClient *kubernetes.Clientset, workLoad, patch string) er
 
 	switch workLoad {
 	case kubeStateWorkLoad, prometheusWorkLoad, AlertManagerWorkLoad:
-		extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+		extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 		if extensionsAPIGroup {
 			_, err = kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Patch(workLoad, types.JSONPatchType, []byte(patch))
 		} else {

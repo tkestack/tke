@@ -30,6 +30,7 @@ const (
 	flagOIDCExternalIssuerURL = "oidc-external-issuer-url"
 	flagOIDCUsernameClaim     = "oidc-username-claim"
 	flagOIDCUsernamePrefix    = "oidc-username-prefix"
+	flagOIDCDisplayNameClaim  = "oidc-displayname-claim"
 	flagOIDCGroupsPrefix      = "oidc-groups-prefix"
 	flagOIDCGroupsClaim       = "oidc-groups-claim"
 	flagOIDCTenantIDClaim     = "oidc-tenantid-claim"
@@ -46,6 +47,7 @@ const (
 	configOIDCExternalIssuerURL = "authentication.oidc.external_issuer_url"
 	configOIDCUsernameClaim     = "authentication.oidc.username_claim"
 	configOIDCUsernamePrefix    = "authentication.oidc.username_prefix"
+	configOIDCDisplayNameClaim  = "authentication.oidc.displayname_claim"
 	configOIDCGroupsPrefix      = "authentication.oidc.groups_prefix"
 	configOIDCGroupsClaim       = "authentication.oidc.groups_claim"
 	configOIDCTenantIDClaim     = "authentication.oidc.tenantid_claim"
@@ -64,6 +66,7 @@ type OIDCOptions struct {
 	ExternalIssuerURL string
 	UsernameClaim     string
 	UsernamePrefix    string
+	DisplayNameClaim  string
 	GroupsClaim       string
 	GroupsPrefix      string
 	TenantIDClaim     string
@@ -76,8 +79,9 @@ type OIDCOptions struct {
 // NewOIDCOptions creates the default OIDCOptions object.
 func NewOIDCOptions() *OIDCOptions {
 	return &OIDCOptions{
-		UsernameClaim: "sub",
-		SigningAlgs:   []string{"RS256"},
+		UsernameClaim:    "sub",
+		DisplayNameClaim: "preferred_username",
+		SigningAlgs:      []string{"RS256"},
 	}
 }
 
@@ -94,19 +98,22 @@ func (o *OIDCOptions) AddFlags(fs *pflag.FlagSet) {
 		"If set, the OpenID server's certificate will be verified by one of the authorities "+
 		"in the oidc-ca-file, otherwise the host's root CA set will be used.")
 	_ = viper.BindPFlag(configOIDCCAFile, fs.Lookup(flagOIDCCAFile))
-	fs.String(flagOIDCUsernameClaim, o.UsernameClaim, ""+
-		"The OpenID claim to use as the user name. Note that claims other than the default ('sub') "+
-		"is not guaranteed to be unique and immutable.")
 	fs.String(flagOIDCExternalIssuerURL, o.ExternalIssuerURL, ""+
 		"The URL of the OpenID external issuer, only HTTPS scheme will be accepted.  "+
 		"is set, it will be used to verify issuer url with the OIDC provider, otherwise the oidc-issuer-url will be used.")
 	_ = viper.BindPFlag(configOIDCExternalIssuerURL, fs.Lookup(flagOIDCExternalIssuerURL))
+	fs.String(flagOIDCUsernameClaim, o.UsernameClaim, ""+
+		"The OpenID claim to use as the user name. Note that claims other than the default ('sub') "+
+		"is not guaranteed to be unique and immutable.")
 	_ = viper.BindPFlag(configOIDCUsernameClaim, fs.Lookup(flagOIDCUsernameClaim))
 	fs.String(flagOIDCUsernamePrefix, o.UsernamePrefix, ""+
 		"If provided, all usernames will be prefixed with this value. If not provided, "+
 		"username claims other than 'email' are prefixed by the issuer URL to avoid "+
 		"clashes. To skip any prefixing, provide the value '-'.")
 	_ = viper.BindPFlag(configOIDCUsernamePrefix, fs.Lookup(flagOIDCUsernamePrefix))
+	fs.String(flagOIDCDisplayNameClaim, o.DisplayNameClaim, ""+
+		"The OpenID claim to use as the user display name. Note that default claims is ('preferred_username')")
+	_ = viper.BindPFlag(configOIDCDisplayNameClaim, fs.Lookup(flagOIDCDisplayNameClaim))
 	fs.String(flagOIDCTenantIDClaim, o.TenantIDClaim,
 		"If provided, the name of a custom OpenID Connect claim for specifying user tenant id.")
 	_ = viper.BindPFlag(configOIDCTenantIDClaim, fs.Lookup(flagOIDCTenantIDClaim))
@@ -155,6 +162,7 @@ func (o *OIDCOptions) ApplyFlags() []error {
 	o.UsernameClaim = viper.GetString(configOIDCUsernameClaim)
 	o.UsernamePrefix = viper.GetString(configOIDCUsernamePrefix)
 	o.TokenReviewPath = viper.GetString(configOIDCTokenReviewPath)
+	o.DisplayNameClaim = viper.GetString(configOIDCDisplayNameClaim)
 
 	return errs
 }

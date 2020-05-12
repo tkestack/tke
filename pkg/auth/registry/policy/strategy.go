@@ -205,6 +205,7 @@ func MatchPolicy(label labels.Selector, field fields.Selector) storage.Selection
 			"spec.username",
 			"spec.displayName",
 			"spec.category",
+			"spec.scope",
 			"spec.type",
 			"spec.displayName",
 		},
@@ -218,6 +219,7 @@ func ToSelectableFields(policy *auth.Policy) fields.Set {
 		"spec.tenantID":    policy.Spec.TenantID,
 		"spec.username":    policy.Spec.Username,
 		"spec.category":    policy.Spec.Category,
+		"spec.scope":       string(policy.Spec.Scope),
 		"spec.type":        string(policy.Spec.Type),
 		"spec.displayName": policy.Spec.DisplayName,
 	}

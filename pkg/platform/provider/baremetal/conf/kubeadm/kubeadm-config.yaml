@@ -6,6 +6,8 @@ bootstrapTokens:
     ttl: "0"
 nodeRegistration:
   name: {{.NodeName}}
+localAPIEndpoint:
+  AdvertiseAddress:  {{.NodeName}}
 certificateKey: {{.CertificateKey}}
 ---
 apiVersion: kubeadm.k8s.io/v1beta2
@@ -65,3 +67,7 @@ scheduler:
       mountPath: /etc/kubernetes
 imageRepository: {{.ImageRepository}}
 clusterName: {{.ClusterName}}
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: {{ .KubeProxyMode }}

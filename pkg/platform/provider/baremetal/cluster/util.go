@@ -24,8 +24,27 @@ import (
 	"net"
 
 	"github.com/pkg/errors"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/ipallocator"
+	"tkestack.io/tke/pkg/util/ipallocator"
 )
+
+func GetNodeCIDRMaskSize(clusterCIDR string, maxNodePodNum int32) (int32, error) {
+	if maxNodePodNum <= 0 {
+		return 0, errors.New("maxNodePodNum must more than 0")
+	}
+	_, svcSubnetCIDR, err := net.ParseCIDR(clusterCIDR)
+	if err != nil {
+		return 0, errors.Wrap(err, "ParseCIDR error")
+	}
+
+	nodeCidrOccupy := math.Ceil(math.Log2(float64(maxNodePodNum)))
+	nodeCIDRMaskSize := 32 - int(nodeCidrOccupy)
+	ones, _ := svcSubnetCIDR.Mask.Size()
+	if ones > nodeCIDRMaskSize {
+		return 0, errors.New("clusterCIDR IP size is less than maxNodePodNum")
+	}
+
+	return int32(nodeCIDRMaskSize), nil
+}
 
 func GetServiceCIDRAndNodeCIDRMaskSize(clusterCIDR string, maxClusterServiceNum int32, maxNodePodNum int32) (string, int32, error) {
 	if maxClusterServiceNum <= 0 || maxNodePodNum <= 0 {

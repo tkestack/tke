@@ -9,7 +9,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Justify } from '@tencent/tea-component/lib/justify';
 
 import { resourceConfig } from '../../../../../../config';
-import { dateFormatter, downloadCsv } from '../../../../../../helpers';
+import { dateFormatter, downloadCsv, reduceNs } from '../../../../../../helpers';
 import { DisplayFiledProps, ResourceInfo } from '../../../../common/models';
 import { includes, isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
@@ -111,7 +111,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
             conditions: [
               ['tke_cluster_instance_id', '=', route.queries.clusterId],
               ['workload_kind', '=', subRoot.resourceInfo.headTitle],
-              ['namespace', '=', this.props.route.queries['np']]
+              ['namespace', '=', reduceNs(this.props.route.queries['np'])]
             ]
           }
         ],

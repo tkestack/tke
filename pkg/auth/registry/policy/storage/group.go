@@ -64,6 +64,9 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 		return nil, err
 	}
 	policy := polObj.(*auth.Policy)
+	if policy.Spec.Scope == auth.PolicyProject {
+		return nil, errors.NewBadRequest("unable list group to project-scoped policy, please use projectgroup api")
+	}
 
 	groupList := &auth.GroupList{}
 	for _, subj := range policy.Status.Groups {

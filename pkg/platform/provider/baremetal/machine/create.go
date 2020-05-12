@@ -26,13 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/util/apiclient"
-
-	platformv1 "tkestack.io/tke/api/platform/v1"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
@@ -42,7 +39,10 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/hosts"
+	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/cmdstring"
+	"tkestack.io/tke/pkg/util/hosts"
 )
 
 const (
@@ -51,10 +51,14 @@ const (
 	moduleFile       = "/etc/modules-load.d/tke.conf"
 )
 
-func (p *Provider) EnsureCopyFiles(m *Machine) error {
-	c := m.Cluster
-	for _, file := range c.Spec.Features.Files {
-		err := m.CopyFile(file.Src, file.Dst)
+func (p *Provider) EnsureCopyFiles(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	for _, file := range cluster.Spec.Features.Files {
+		err = machineSSH.CopyFile(file.Src, file.Dst)
 		if err != nil {
 			return err
 		}
@@ -63,38 +67,55 @@ func (p *Provider) EnsureCopyFiles(m *Machine) error {
 	return nil
 }
 
-func (p *Provider) EnsurePreInstallHook(m *Machine) error {
-	hook := m.Cluster.Spec.Features.Hooks[platformv1.HookPreInstall]
+func (p *Provider) EnsurePreInstallHook(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	hook := cluster.Spec.Features.Hooks[platformv1.HookPreInstall]
 	if hook == "" {
 		return nil
 	}
+
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
 	cmd := strings.Split(hook, " ")[0]
 
-	m.Execf("chmod +x %s", cmd)
-	_, stderr, exit, err := m.Exec(hook)
+	machineSSH.Execf("chmod +x %s", cmd)
+	_, stderr, exit, err := machineSSH.Exec(hook)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
 	}
 	return nil
 }
 
-func (p *Provider) EnsurePostInstallHook(m *Machine) error {
-	hook := m.Cluster.Spec.Features.Hooks[platformv1.HookPostInstall]
+func (p *Provider) EnsurePostInstallHook(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	hook := cluster.Spec.Features.Hooks[platformv1.HookPostInstall]
 	if hook == "" {
 		return nil
 	}
+
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
 	cmd := strings.Split(hook, " ")[0]
 
-	m.Execf("chmod +x %s", cmd)
-	_, stderr, exit, err := m.Exec(hook)
+	machineSSH.Execf("chmod +x %s", cmd)
+	_, stderr, exit, err := machineSSH.Exec(hook)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
 	}
 	return nil
 }
 
-func (p *Provider) EnsureClean(m *Machine) error {
-	_, err := m.CombinedOutput(fmt.Sprintf("rm -rf %s", constants.KubernetesDir))
+func (p *Provider) EnsureClean(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	_, err = machineSSH.CombinedOutput(fmt.Sprintf("rm -rf %s", constants.KubernetesDir))
 	if err != nil {
 		return err
 	}
@@ -102,8 +123,13 @@ func (p *Provider) EnsureClean(m *Machine) error {
 	return nil
 }
 
-func (p *Provider) EnsurePreflight(m *Machine) error {
-	err := preflight.RunNodeChecks(m)
+func (p *Provider) EnsurePreflight(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = preflight.RunNodeChecks(machineSSH)
 	if err != nil {
 		return err
 	}
@@ -111,18 +137,23 @@ func (p *Provider) EnsurePreflight(m *Machine) error {
 	return nil
 }
 
-func (p *Provider) EnsureRegistryHosts(m *Machine) error {
-	if !m.Registry.NeedSetHosts() {
+func (p *Provider) EnsureRegistryHosts(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	if !p.config.Registry.NeedSetHosts() {
 		return nil
+	}
+
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
 	}
 
 	domains := []string{
-		m.Registry.Domain,
-		m.Spec.TenantID + "." + m.Registry.Domain,
+		p.config.Registry.Domain,
+		machine.Spec.TenantID + "." + p.config.Registry.Domain,
 	}
 	for _, one := range domains {
-		remoteHosts := hosts.RemoteHosts{Host: one, SSH: m}
-		err := remoteHosts.Set(m.Registry.IP)
+		remoteHosts := hosts.RemoteHosts{Host: one, SSH: machineSSH}
+		err := remoteHosts.Set(p.config.Registry.IP)
 		if err != nil {
 			return err
 		}
@@ -131,19 +162,23 @@ func (p *Provider) EnsureRegistryHosts(m *Machine) error {
 	return nil
 }
 
-func (p *Provider) EnsureKernelModule(m *Machine) error {
+func (p *Provider) EnsureKernelModule(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
 	modules := []string{"iptable_nat"}
 	var data bytes.Buffer
-	s := m
 
 	for _, m := range modules {
-		_, err := s.CombinedOutput(fmt.Sprintf("modprobe %s", m))
+		_, err := machineSSH.CombinedOutput(fmt.Sprintf("modprobe %s", m))
 		if err != nil {
 			return err
 		}
 		data.WriteString(m + "\n")
 	}
-	err := s.WriteFile(strings.NewReader(data.String()), moduleFile)
+	err = machineSSH.WriteFile(strings.NewReader(data.String()), moduleFile)
 	if err != nil {
 		return err
 	}
@@ -151,41 +186,44 @@ func (p *Provider) EnsureKernelModule(m *Machine) error {
 	return nil
 }
 
-func setFileContent(file, pattern, content string) string {
-	return fmt.Sprintf("grep -Pq '%s' %s && sed -i 's;%s;%s;g' %s|| echo '%s' >> %s",
-		pattern, file,
-		pattern, content, file,
-		content, file)
-}
-
-func (p *Provider) EnsureSysctl(m *Machine) error {
-	_, err := m.CombinedOutput(setFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
+func (p *Provider) EnsureSysctl(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
-	_, err = m.CombinedOutput(setFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
+	_, err = machineSSH.CombinedOutput(cmdstring.SetFileContent(sysctlFile, "^net.ipv4.ip_forward.*", "net.ipv4.ip_forward = 1"))
+	if err != nil {
+		return err
+	}
+
+	_, err = machineSSH.CombinedOutput(cmdstring.SetFileContent(sysctlFile, "^net.bridge.bridge-nf-call-iptables.*", "net.bridge.bridge-nf-call-iptables = 1"))
 	if err != nil {
 		return err
 	}
 
 	f, err := os.Open(path.Join(constants.ConfDir, "sysctl.conf"))
 	if err == nil {
-		err = m.WriteFile(f, sysctlCustomFile)
+		err = machineSSH.WriteFile(f, sysctlCustomFile)
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = m.CombinedOutput("sysctl --system")
+	_, err = machineSSH.CombinedOutput("sysctl --system")
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *Provider) EnsureDisableSwap(m *Machine) error {
-	_, err := m.CombinedOutput("swapoff -a && sed -i 's/^[^#]*swap/#&/' /etc/fstab")
+func (p *Provider) EnsureDisableSwap(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	_, err = machineSSH.CombinedOutput("swapoff -a && sed -i 's/^[^#]*swap/#&/' /etc/fstab")
 	if err != nil {
 		return err
 	}
@@ -193,19 +231,24 @@ func (p *Provider) EnsureDisableSwap(m *Machine) error {
 	return nil
 }
 
-func (p *Provider) EnsureKubeconfig(m *Machine) error {
-	masterEndpoint, err := util.GetMasterEndpoint(m.Cluster.Status.Addresses)
+func (p *Provider) EnsureKubeconfig(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	masterEndpoint, err := util.GetMasterEndpoint(cluster.Status.Addresses)
+	if err != nil {
+		return err
+	}
+
+	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
 	option := &kubeconfig.Option{
 		MasterEndpoint: masterEndpoint,
-		ClusterName:    m.Cluster.Name,
-		CACert:         m.ClusterCredential.CACert,
-		Token:          *m.ClusterCredential.Token,
+		ClusterName:    cluster.Name,
+		CACert:         cluster.ClusterCredential.CACert,
+		Token:          *cluster.ClusterCredential.Token,
 	}
-	err = kubeconfig.Install(m, option)
+	err = kubeconfig.Install(machineSSH, option)
 	if err != nil {
 		return err
 	}
@@ -213,33 +256,50 @@ func (p *Provider) EnsureKubeconfig(m *Machine) error {
 	return nil
 }
 
-func (p *Provider) EnsureNvidiaDriver(m *Machine) error {
-	if !gpu.IsEnable(m.Spec.Labels) {
+func (p *Provider) EnsureNvidiaDriver(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	if !gpu.IsEnable(machine.Spec.Labels) {
 		return nil
 	}
-	return gpu.InstallNvidiaDriver(m, &gpu.NvidiaDriverOption{})
+
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	return gpu.InstallNvidiaDriver(machineSSH, &gpu.NvidiaDriverOption{})
 }
 
-func (p *Provider) EnsureNvidiaContainerRuntime(m *Machine) error {
-	if !gpu.IsEnable(m.Spec.Labels) {
+func (p *Provider) EnsureNvidiaContainerRuntime(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	if !gpu.IsEnable(machine.Spec.Labels) {
 		return nil
 	}
-	return gpu.InstallNvidiaContainerRuntime(m, &gpu.NvidiaContainerRuntimeOption{})
+
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	return gpu.InstallNvidiaContainerRuntime(machineSSH, &gpu.NvidiaContainerRuntimeOption{})
 }
 
-func (p *Provider) EnsureDocker(m *Machine) error {
-	insecureRegistries := fmt.Sprintf(`"%s"`, m.Registry.Domain)
-	if m.Config.Registry.NeedSetHosts() {
-		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, m.Spec.TenantID+"."+m.Registry.Domain)
+func (p *Provider) EnsureDocker(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
+	if p.config.Registry.NeedSetHosts() {
+		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 
 	option := &docker.Option{
 		InsecureRegistries: insecureRegistries,
-		RegistryDomain:     m.Registry.Domain,
-		IsGPU:              IsGPU(m.Spec.Labels),
-		ExtraArgs:          m.Cluster.Spec.DockerExtraArgs,
+		RegistryDomain:     p.config.Registry.Domain,
+		IsGPU:              gpu.IsEnable(machine.Spec.Labels),
+		ExtraArgs:          cluster.Spec.DockerExtraArgs,
 	}
-	err := docker.Install(m, option)
+	err = docker.Install(machineSSH, option)
 	if err != nil {
 		return err
 	}
@@ -247,12 +307,17 @@ func (p *Provider) EnsureDocker(m *Machine) error {
 	return nil
 }
 
-func (p *Provider) EnsureKubelet(m *Machine) error {
+func (p *Provider) EnsureKubelet(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
 	option := &kubelet.Option{
-		Version:   m.Cluster.Spec.Version,
-		ExtraArgs: m.Cluster.Spec.KubeletExtraArgs,
+		Version:   cluster.Spec.Version,
+		ExtraArgs: cluster.Spec.KubeletExtraArgs,
 	}
-	err := kubelet.Install(m, option)
+	err = kubelet.Install(machineSSH, option)
 	if err != nil {
 		return err
 	}
@@ -260,17 +325,27 @@ func (p *Provider) EnsureKubelet(m *Machine) error {
 	return nil
 }
 
-func (p *Provider) EnsureCNIPlugins(m *Machine) error {
+func (p *Provider) EnsureCNIPlugins(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
 	option := &cniplugins.Option{}
-	err := cniplugins.Install(m, option)
+	err = cniplugins.Install(machineSSH, option)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *Provider) EnsureKubeadm(m *Machine) error {
-	err := kubeadm.Install(m)
+func (p *Provider) EnsureKubeadm(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = kubeadm.Install(machineSSH)
 	if err != nil {
 		return err
 	}
@@ -278,35 +353,49 @@ func (p *Provider) EnsureKubeadm(m *Machine) error {
 	return nil
 }
 
-func (p *Provider) EnsureJoinNode(m *Machine) error {
-	masterEndpoint, err := util.GetMasterEndpoint(m.Cluster.Status.Addresses)
+func (p *Provider) EnsureJoinNode(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	host, err := cluster.Host()
+	if err != nil {
+		return err
+	}
+	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
 	option := &kubeadm.JoinNodeOption{
-		NodeName:             m.Spec.IP,
-		BootstrapToken:       *m.ClusterCredential.BootstrapToken,
-		ControlPlaneEndpoint: strings.TrimPrefix(masterEndpoint, "https://"),
+		NodeName:             machine.Spec.IP,
+		BootstrapToken:       *cluster.ClusterCredential.BootstrapToken,
+		ControlPlaneEndpoint: host,
 	}
-	err = kubeadm.JoinNode(m, option)
+	err = kubeadm.JoinNode(machineSSH, option)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *Provider) EnsureMarkNode(m *Machine) error {
-	err := apiclient.MarkNode(m.ClientSet, m.Spec.IP, m.Spec.Labels, m.Spec.Taints)
+func (p *Provider) EnsureMarkNode(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	clientset, err := cluster.Clientset()
+	if err != nil {
+		return err
+	}
+
+	err = apiclient.MarkNode(clientset, machine.Spec.IP, machine.Spec.Labels, machine.Spec.Taints)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *Provider) EnsureNodeReady(m *Machine) error {
+func (p *Provider) EnsureNodeReady(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	clientset, err := cluster.Clientset()
+	if err != nil {
+		return err
+	}
+
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		node, err := m.ClientSet.CoreV1().Nodes().Get(m.Spec.IP, metav1.GetOptions{})
+		node, err := clientset.CoreV1().Nodes().Get(machine.Spec.IP, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}

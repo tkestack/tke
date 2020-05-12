@@ -53,10 +53,25 @@ const (
             }
          ],
          "nodeCacheCapable" : false,
-         "urlPrefix" : "http://127.0.0.1:32760/v1"
+         "urlPrefix" : "http://galaxy-ipam:9040/v1"
       }
    ],
    "kind" : "Policy"
 }
+`
+
+	auditWebhookConfig = `
+apiVersion: v1
+kind: Config
+clusters:
+  - name: tke
+    cluster:
+      server: {{.AuditBackendAddress}}/apis/audit.tkestack.io/v1/events/sink/{{.ClusterName}}
+      insecure-skip-tls-verify: true
+current-context: tke
+contexts:
+  - context:
+      cluster: tke
+    name: tke
 `
 )

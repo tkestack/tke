@@ -24,13 +24,11 @@ import (
 	"path"
 	"strings"
 
-	"tkestack.io/tke/pkg/util/template"
-
-	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
-
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/util/supervisor"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/supervisor"
+	"tkestack.io/tke/pkg/util/template"
 )
 
 type Option struct {

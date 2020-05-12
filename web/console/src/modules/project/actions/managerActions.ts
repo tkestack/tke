@@ -42,7 +42,7 @@ const restActions = {
     workflowStateLocator: (state: RootState) => state.modifyAdminstrator,
     operationExecutor: WebAPI.modifyAdminstrator,
     after: {
-      [OperationTrigger.Done]: (dispatch, getState) => {
+      [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState) => {
         let { modifyAdminstrator, route } = getState();
         if (isSuccessWorkflow(modifyAdminstrator)) {
           dispatch(restActions.modifyAdminstrator.reset());

@@ -9,10 +9,10 @@ import { allActions } from '../actions';
 import { router } from '../router';
 import { RootProps } from './ProjectApp';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class NamespaceActionPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions, route } = this.props;
@@ -33,7 +33,7 @@ export class NamespaceActionPanel extends React.Component<RootProps, {}> {
             <Button
               type="primary"
               onClick={() => {
-                router.navigate({ sub: 'createNS' }, route.queries);
+                router.navigate({ sub: 'detail', tab: 'namespace', action: 'createNS' }, route.queries);
               }}
             >
               {/* <b className="icon-add" /> */}

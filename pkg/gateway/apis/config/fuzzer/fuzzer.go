@@ -73,6 +73,13 @@ func Funcs(codecs runtimeserializer.CodecFactory) []interface{} {
 					ExtraPrefixHeader: "X-Remote-Extra-",
 				},
 			}
+			obj.Components.Audit = &gatewayconfig.Component{
+				FrontProxy: &gatewayconfig.FrontProxyComponent{
+					UsernameHeader:    "X-Remote-User",
+					GroupsHeader:      "X-Remote-Groups",
+					ExtraPrefixHeader: "X-Remote-Extra-",
+				},
+			}
 		},
 	}
 }

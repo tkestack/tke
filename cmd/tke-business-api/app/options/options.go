@@ -19,6 +19,7 @@
 package options
 
 import (
+	"fmt"
 	"github.com/spf13/pflag"
 	genericapiserveroptions "k8s.io/apiserver/pkg/server/options"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
@@ -39,7 +40,9 @@ type Options struct {
 	Authorization     *apiserveroptions.AuthorizationOptions
 	PlatformAPIClient *controlleroptions.APIServerClientOptions
 	RegistryAPIClient *controlleroptions.APIServerClientOptions
+	AuthAPIClient     *controlleroptions.APIServerClientOptions
 	FeatureOptions    *FeatureOptions
+	Audit             *genericapiserveroptions.AuditOptions
 }
 
 // NewOptions creates a new Options with a default config.
@@ -54,7 +57,9 @@ func NewOptions(serverName string) *Options {
 		Authorization:     apiserveroptions.NewAuthorizationOptions(),
 		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
 		RegistryAPIClient: controlleroptions.NewAPIServerClientOptions("registry", false),
+		AuthAPIClient:     controlleroptions.NewAPIServerClientOptions("auth", false),
 		FeatureOptions:    NewFeatureOptions(),
+		Audit:             genericapiserveroptions.NewAuditOptions(),
 	}
 }
 
@@ -69,7 +74,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Authorization.AddFlags(fs)
 	o.PlatformAPIClient.AddFlags(fs)
 	o.RegistryAPIClient.AddFlags(fs)
+	o.AuthAPIClient.AddFlags(fs)
 	o.FeatureOptions.AddFlags(fs)
+	o.Audit.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -86,6 +93,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Authorization.ApplyFlags()...)
 	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
 	errs = append(errs, o.RegistryAPIClient.ApplyFlags()...)
+	errs = append(errs, o.AuthAPIClient.ApplyFlags()...)
 	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
 
 	return errs
@@ -112,6 +120,9 @@ func (o *Options) Complete() error {
 			return err
 		}
 		o.ETCD.WatchCacheSizes = watchCacheSizes
+	}
+	if (o.Audit.WebhookOptions.ConfigFile != "" || o.Audit.LogOptions.Path != "") && o.Audit.PolicyFile == "" {
+		return fmt.Errorf("audit log/webhook config specified, but audit policy file is empty")
 	}
 	return nil
 }

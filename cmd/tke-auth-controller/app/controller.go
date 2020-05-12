@@ -19,12 +19,14 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/server/mux"
+	"k8s.io/client-go/tools/cache"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -49,6 +51,7 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers := map[string]InitFunc{}
 
 	controllers["policy"] = startPolicyController
+	controllers["projectpolicy"] = startProjectPolicyController
 	controllers["localidentity"] = startLocalIdentityController
 	controllers["groups"] = startGroupController
 	controllers["roles"] = startRoleController
@@ -58,6 +61,12 @@ func NewControllerInitializers() map[string]InitFunc {
 
 // StartControllers to start the controller.
 func StartControllers(ctx ControllerContext, controllers map[string]InitFunc, unsecuredMux *mux.PathRecorderMux) error {
+	go ctx.InformerFactory.Auth().V1().Rules().Informer().Run(ctx.Stop)
+	if ok := cache.WaitForCacheSync(ctx.Stop, ctx.InformerFactory.Auth().V1().Rules().Informer().HasSynced); !ok {
+		return fmt.Errorf("failed to wait for rules caches to sync")
+	}
+	_ = ctx.Enforcer.LoadPolicy()
+
 	for controllerName, initFn := range controllers {
 		if !ctx.IsControllerEnabled(controllerName) {
 			log.Warnf("%q is disabled", controllerName)

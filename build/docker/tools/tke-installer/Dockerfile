@@ -16,6 +16,8 @@
 
 FROM alpine:3.10
 
+RUN echo "hosts: files dns" >> /etc/nsswitch.conf
+
 WORKDIR /app
 
 ENV PATH="/app/bin:$PATH"
@@ -28,7 +30,7 @@ RUN apk add --no-cache \
     docker \
     ansible
 
-RUN apk --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted add lrzsz etcd-ctl
+RUN apk --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted add lrzsz
 
 ADD . /app
 

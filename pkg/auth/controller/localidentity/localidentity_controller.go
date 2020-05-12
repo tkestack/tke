@@ -85,7 +85,7 @@ func NewController(client clientset.Interface, localIdentityInformer authv1infor
 				old, ok1 := oldObj.(*v1.LocalIdentity)
 				cur, ok2 := newObj.(*v1.LocalIdentity)
 				if ok1 && ok2 && controller.needsUpdate(old, cur) {
-					log.Info("Update enqueue")
+					log.Info("Update enqueue", log.String("localidentity", cur.Name))
 					controller.enqueue(newObj)
 				}
 			},

@@ -310,6 +310,8 @@ message GroupSpec {
   optional string tenantID = 3;
 
   optional string description = 4;
+
+  map<string, string> extra = 5;
 }
 
 // GroupStatus represents information about the status of a group.
@@ -383,6 +385,8 @@ message LocalGroupSpec {
   optional string username = 4;
 
   optional string description = 5;
+
+  map<string, string> extra = 6;
 }
 
 // LocalGroupStatus represents information about the status of a group.
@@ -511,6 +515,8 @@ message PolicySpec {
 
   optional string type = 10;
 
+  optional string scope = 11;
+
   optional string username = 2;
 
   // +optional
@@ -534,6 +540,85 @@ message PolicyStatus {
   // +optional
   // Groups represents the groups the policy applies to.
   repeated Subject groups = 3;
+}
+
+// Project contains members of projects.
+message Project {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 4;
+
+  optional string tenantID = 1;
+
+  map<string, string> members = 2;
+
+  map<string, string> groups = 3;
+}
+
+// ProjectBelongs contains projects of user belongs.
+message ProjectBelongs {
+  optional string tenantID = 1;
+
+  map<string, ExtraValue> managedProjects = 2;
+
+  map<string, ExtraValue> memberdProjects = 3;
+}
+
+// ProjectList is the whole list of all projects.
+message ProjectList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of projects.
+  repeated Project items = 2;
+}
+
+// ProjectPolicyBinding is a collection of subjects bond to policies in a project scope.
+message ProjectPolicyBinding {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  optional ProjectPolicyBindingSpec spec = 2;
+
+  optional ProjectPolicyBindingStatus status = 3;
+}
+
+// ProjectPolicyBindingList is the whole list of all ProjectPolicyBindings.
+message ProjectPolicyBindingList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of policies.
+  repeated ProjectPolicyBinding items = 2;
+}
+
+// ProjectPolicyBindingRequest references the request to bind or unbind policies to the role.
+message ProjectPolicyBindingRequest {
+  optional string tenantID = 1;
+
+  // Policies holds the policies will bind to the subjects.
+  // +optional
+  repeated string policies = 2;
+
+  repeated Subject users = 3;
+
+  repeated Subject groups = 4;
+}
+
+// ProjectPolicyBindingSpec defines the desired identities of ProjectPolicyBindingSpec document in this set.
+message ProjectPolicyBindingSpec {
+  // Spec defines the desired identities of role document in this set.
+  repeated string finalizers = 1;
+
+  optional string tenantID = 2;
+
+  optional string projectID = 3;
+
+  optional string policyID = 4;
+
+  repeated Subject users = 5;
+
+  repeated Subject groups = 6;
+}
+
+// ProjectPolicyBindingStatus represents information about the status of a ProjectPolicyBinding.
+message ProjectPolicyBindingStatus {
+  optional string phase = 1;
 }
 
 // ResourceAttributes includes the authorization attributes available for resource requests to the Authorizer interface
@@ -596,6 +681,8 @@ message RoleSpec {
   optional string displayName = 2;
 
   optional string tenantID = 3;
+
+  optional string projectID = 7;
 
   // Username is Creator
   optional string username = 4;
@@ -704,7 +791,7 @@ message SubjectAccessReviewSpec {
 
   // Groups is the groups you're testing for.
   // +optional
-  repeated string groups = 4;
+  repeated string group = 4;
 
   // Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer
   // it needs a reflection here.

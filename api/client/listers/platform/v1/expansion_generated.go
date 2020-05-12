@@ -44,10 +44,6 @@ type ConfigMapListerExpansion interface{}
 // CronHPALister.
 type CronHPAListerExpansion interface{}
 
-// GPUManagerListerExpansion allows custom methods to be added to
-// GPUManagerLister.
-type GPUManagerListerExpansion interface{}
-
 // HelmListerExpansion allows custom methods to be added to
 // HelmLister.
 type HelmListerExpansion interface{}

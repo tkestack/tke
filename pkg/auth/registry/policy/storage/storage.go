@@ -25,7 +25,6 @@ import (
 	"sync"
 
 	"github.com/casbin/casbin/v2"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -41,26 +40,29 @@ import (
 	"tkestack.io/tke/pkg/apiserver/authentication"
 
 	"tkestack.io/tke/api/auth"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/auth/registry/policy"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
-
-	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
 // Storage includes storage for policies and all sub resources.
 type Storage struct {
 	Policy *REST
 
-	Status    *StatusREST
-	Finalize  *FinalizeREST
-	Binding   *BindingREST
-	Unbinding *UnbindingREST
+	Status           *StatusREST
+	Finalize         *FinalizeREST
+	Binding          *BindingREST
+	Unbinding        *UnbindingREST
+	ProjectBinding   *ProjectBindingREST
+	ProjectUnBinding *ProjectUnBindingREST
 
-	Role  *RoleREST
-	User  *UserREST
-	Group *GroupREST
+	Role         *RoleREST
+	User         *UserREST
+	Group        *GroupREST
+	ProjectUser  *ProjectUserREST
+	ProjectGroup *ProjectGroupREST
 }
 
 // NewStorage returns a Storage object that will work against policies.
@@ -97,18 +99,22 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 	finalizeStore.ExportStrategy = policy.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		Policy:    &REST{store, privilegedUsername},
-		Status:    &StatusREST{&statusStore},
-		Finalize:  &FinalizeREST{&finalizeStore},
-		Binding:   &BindingREST{store, authClient},
-		Unbinding: &UnbindingREST{store, authClient},
-		Role:      &RoleREST{store, authClient, enforcer},
-		User:      &UserREST{store, authClient},
-		Group:     &GroupREST{store, authClient},
+		Policy:           &REST{store, privilegedUsername},
+		Status:           &StatusREST{&statusStore},
+		Finalize:         &FinalizeREST{&finalizeStore},
+		Binding:          &BindingREST{store, authClient},
+		Unbinding:        &UnbindingREST{store, authClient},
+		ProjectBinding:   &ProjectBindingREST{store, authClient},
+		ProjectUnBinding: &ProjectUnBindingREST{store, authClient},
+		Role:             &RoleREST{store, authClient, enforcer},
+		User:             &UserREST{store, authClient},
+		Group:            &GroupREST{store, authClient},
+		ProjectUser:      &ProjectUserREST{store, authClient},
+		ProjectGroup:     &ProjectGroupREST{store, authClient},
 	}
 }
 
-// ValidateGetObjectAndTenantID validate name and tenantID, if success return Policy
+// ValidateGetObjectAndTenantID validate name and tenantID, if success return ProjectPolicyBinding
 func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := store.Get(ctx, name, options)
 	if err != nil {
@@ -122,7 +128,7 @@ func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, na
 	return o, nil
 }
 
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return Policy
+// ValidateExportObjectAndTenantID validate name and tenantID, if success return ProjectPolicyBinding
 func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
 	obj, err := store.Export(ctx, name, options)
 	if err != nil {
@@ -151,8 +157,9 @@ func (r *REST) ShortNames() []string {
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	keyword := util.InterceptKeyword(options)
+	keyword := util.InterceptParam(options, auth.KeywordQueryTag)
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
+	wrappedOptions = util.PredicateProjectListOptions(ctx, wrappedOptions)
 	obj, err := r.Store.List(ctx, wrappedOptions)
 	if err != nil {
 		return obj, err
@@ -317,7 +324,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 				existingPolicy, ok := existing.(*auth.Policy)
 				if !ok {
 					// wrong type
-					return nil, fmt.Errorf("expected *auth.Policy, got %v", existing)
+					return nil, fmt.Errorf("expected *auth.ProjectPolicyBinding, got %v", existing)
 				}
 				if err := deleteValidation(ctx, existingPolicy); err != nil {
 					return nil, err

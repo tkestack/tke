@@ -4,10 +4,9 @@ import { Justify, Icon } from '@tencent/tea-component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 export class HeaderPanel extends React.Component<RootProps, {}> {
-
   goBack = () => {
     history.back();
-  }
+  };
 
   render() {
     let title = t('新建角色');

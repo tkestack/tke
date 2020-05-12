@@ -50,7 +50,7 @@ const (
 	//   deletion and prevent new objects from being created in the terminating channel
 	// * non-leader etcd servers to observe last-minute object creations in a channel
 	//   so this controller's cleanup can actually clean up all objects
-	roleDeletionGracePeriod = 5 * time.Second
+	roleDeletionGracePeriod = 2 * time.Second
 
 	controllerName = "role-controller"
 )
@@ -89,7 +89,7 @@ func NewController(client clientset.Interface, roleInformer authv1informer.RoleI
 				old, ok1 := oldObj.(*v1.Role)
 				cur, ok2 := newObj.(*v1.Role)
 				if ok1 && ok2 && controller.needsUpdate(old, cur) {
-					log.Info("Update enqueue")
+					log.Info("Update enqueue", log.String("role", cur.Name))
 					controller.enqueue(newObj)
 				}
 			},
@@ -246,12 +246,12 @@ func (c *Controller) handlePhase(key string, role *v1.Role) error {
 }
 
 func (c *Controller) handleSpec(key string, role *v1.Role) error {
-	rules, err := c.enforcer.GetRolesForUser(role.Name)
-	if err != nil {
-		return err
+	projectID := authutil.DefaultDomain
+	if role.Spec.ProjectID != "" {
+		projectID = role.Spec.ProjectID
 	}
-
-	log.Debugf("Get roles for role: %s, %v", role.Name, rules)
+	rules := c.enforcer.GetRolesForUserInDomain(role.Name, projectID)
+	log.Debugf("Get roles for role: %s, %v, %s", role.Name, rules, projectID)
 	var existsPolicies []string
 	for _, rule := range rules {
 		if strings.HasPrefix(rule, "pol-") {
@@ -270,7 +270,7 @@ func (c *Controller) handleSpec(key string, role *v1.Role) error {
 	var errs []error
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(role.Name, add); err != nil {
+			if _, err := c.enforcer.AddRoleForUserInDomain(role.Name, add, projectID); err != nil {
 				log.Errorf("Bind policy to role failed", log.String("role", role.Name), log.String("user", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -279,7 +279,7 @@ func (c *Controller) handleSpec(key string, role *v1.Role) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(role.Name, remove); err != nil {
+			if _, err := c.enforcer.DeleteRoleForUserInDomain(role.Name, remove, projectID); err != nil {
 				log.Errorf("Unbind policy to role failed", log.String("group", role.Name), log.String("user", remove), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -290,6 +290,12 @@ func (c *Controller) handleSpec(key string, role *v1.Role) error {
 }
 
 func (c *Controller) handleSubjects(key string, role *v1.Role) error {
+	projectID := authutil.DefaultDomain
+	if role.Spec.ProjectID != "" {
+		projectID = role.Spec.ProjectID
+	}
+
+	//TODO use c.enforcer.GetUsersForRoleInDomain()
 	rules := c.enforcer.GetFilteredGroupingPolicy(1, role.Name)
 	log.Debugf("Get grouping rules for role: %s, %v", role.Name, rules)
 	var existUsers []string
@@ -311,7 +317,7 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 	}
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(authutil.UserKey(role.Spec.TenantID, add), role.Name); err != nil {
+			if _, err := c.enforcer.AddRoleForUserInDomain(authutil.UserKey(role.Spec.TenantID, add), role.Name, projectID); err != nil {
 				log.Errorf("Bind user to role failed", log.String("role", role.Name), log.String("user", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -320,7 +326,7 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(authutil.UserKey(role.Spec.TenantID, remove), role.Name); err != nil {
+			if _, err := c.enforcer.DeleteRoleForUserInDomain(authutil.UserKey(role.Spec.TenantID, remove), role.Name, projectID); err != nil {
 				log.Errorf("Unbind user to role failed", log.String("role", role.Name), log.String("user", remove), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -345,7 +351,7 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 	}
 	if len(added) > 0 {
 		for _, add := range added {
-			if _, err := c.enforcer.AddRoleForUser(authutil.GroupKey(role.Spec.TenantID, add), role.Name); err != nil {
+			if _, err := c.enforcer.AddRoleForUserInDomain(authutil.GroupKey(role.Spec.TenantID, add), role.Name, projectID); err != nil {
 				log.Errorf("Bind groups to role failed", log.String("role", role.Name), log.String("group", add), log.Err(err))
 				errs = append(errs, err)
 			}
@@ -354,7 +360,7 @@ func (c *Controller) handleSubjects(key string, role *v1.Role) error {
 
 	if len(removed) > 0 {
 		for _, remove := range removed {
-			if _, err := c.enforcer.DeleteRoleForUser(authutil.GroupKey(role.Spec.TenantID, remove), role.Name); err != nil {
+			if _, err := c.enforcer.DeleteRoleForUserInDomain(authutil.GroupKey(role.Spec.TenantID, remove), role.Name, projectID); err != nil {
 				log.Errorf("Unbind group to role failed", log.String("role", role.Name), log.String("group", remove), log.Err(err))
 				errs = append(errs, err)
 			}

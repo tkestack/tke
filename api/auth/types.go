@@ -26,8 +26,11 @@ const (
 	// KeywordQueryTag is a field tag to query object that contains the keyword.
 	KeywordQueryTag string = "keyword"
 
-	// QueryLimitTag is a field tag to query a maximum number of objects for a list call.
-	QueryLimitTag string = "limit"
+	// LimitQueryTag is a field tag to query a maximum number of objects for a list call.
+	LimitQueryTag string = "limit"
+
+	// PolicyQueryTag is a field tag to query localidentities with policies in extra.
+	PolicyQueryTag string = "policy"
 
 	// IssuerName is the name of issuer location.
 	IssuerName = "oidc"
@@ -65,8 +68,11 @@ const (
 	// LocalIdentityFinalize is an internal finalizer values to LocalIdentity.
 	LocalIdentityFinalize FinalizerName = "localidentity"
 
-	// PolicyFinalize is an internal finalizer values to Policy.
+	// PolicyFinalize is an internal finalizer values to ProjectPolicyBinding.
 	PolicyFinalize FinalizerName = "policy"
+
+	// BindingFinalize is an internal finalizer values to ProjectPolicyBinding.
+	BindingFinalize FinalizerName = "projectpolicybinding"
 
 	// PolicyFinalize is an internal finalizer values to LocalGroup.
 	LocalGroupFinalize FinalizerName = "localgroup"
@@ -163,6 +169,8 @@ type LocalGroupSpec struct {
 	// Username is Creator
 	Username    string
 	Description string
+
+	Extra map[string]string
 }
 
 // LocalGroupStatus represents information about the status of a group.
@@ -196,7 +204,8 @@ type UserSpec struct {
 	Email       string
 	PhoneNumber string
 	TenantID    string
-	Extra       map[string]string
+
+	Extra map[string]string
 }
 
 // +genclient:nonNamespaced
@@ -230,6 +239,7 @@ type GroupSpec struct {
 	DisplayName string
 	TenantID    string
 	Description string
+	Extra       map[string]string
 }
 
 // GroupStatus represents information about the status of a group.
@@ -415,6 +425,12 @@ const (
 	PolicyTerminating PolicyPhase = "Terminating"
 )
 
+const (
+	ProjectOwnerPolicyID  = "pol-project-owner"
+	ProjectMemberPolicyID = "pol-project-member"
+	ProjectViewerPolicyID = "pol-project-viewer"
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -459,6 +475,14 @@ const (
 	PolicyDefault PolicyType = "default"
 )
 
+// PolicyScope defines the policy is belong to platform or project.
+type PolicyScope string
+
+const (
+	PolicyPlatform PolicyScope = "platform"
+	PolicyProject  PolicyScope = "project"
+)
+
 // PolicySpec is a description of a policy.
 type PolicySpec struct {
 	Finalizers []FinalizerName
@@ -467,6 +491,8 @@ type PolicySpec struct {
 	TenantID    string
 	Category    string
 	Type        PolicyType
+	Scope       PolicyScope
+
 	// Creator
 	Username    string
 	Description string
@@ -496,22 +522,85 @@ type PolicyStatus struct {
 	Groups []Subject
 }
 
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectPolicyBinding represents a subjects bind to a policy in a project scope.
+type ProjectPolicyBinding struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	Spec   ProjectPolicyBindingSpec
+	Status ProjectPolicyBindingStatus
+}
+
+// ProjectPolicyBindingSpec defines the desired identities of ProjectPolicyBindingSpec document in this set.
+type ProjectPolicyBindingSpec struct {
+	Finalizers []FinalizerName
+	TenantID   string
+	ProjectID  string
+	PolicyID   string
+	Users      []Subject
+	Groups     []Subject
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectPolicyBindingRequest references the request to bind or unbind project policies to the role.
+type ProjectPolicyBindingRequest struct {
+	metav1.TypeMeta
+
+	TenantID string
+	// Policies holds the policies will bind to the subjects.
+	// +optional
+	Policies []string
+
+	Users  []Subject
+	Groups []Subject
+}
+
+// BindingPhase defines the phase of ProjectPolicyBinding constructor.
+type BindingPhase string
+
+const (
+	BindingActive BindingPhase = "Active"
+	// RoleTerminating means the role is undergoing graceful termination.
+	BindingTerminating BindingPhase = "Terminating"
+)
+
+// ProjectPolicyBindingStatus represents information about the status of a ProjectPolicyBinding.
+type ProjectPolicyBindingStatus struct {
+	Phase BindingPhase
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectPolicyBindingList is the whole list of all ProjectPolicyBindings.
+type ProjectPolicyBindingList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of policies.
+	Items []ProjectPolicyBinding
+}
+
 const (
 	DefaultRuleModel = `
 [request_definition]
-r = sub, obj, act
+r = sub, dom, obj, act
 
 [policy_definition]
-p = sub, obj, act, eft
+p = sub, dom, obj, act, eft
 
 [role_definition]
-g = _, _
+g = _, _, _
 
 [policy_effect]
 e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
 
 [matchers]
-m = g(r.sub, p.sub)  && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.act)
+m = g(r.sub, p.sub, r.dom) && keyMatchCustom(r.obj, p.obj) && keyMatchCustom(r.act, p.act)
 `
 )
 
@@ -613,6 +702,7 @@ type RoleSpec struct {
 
 	DisplayName string
 	TenantID    string
+	ProjectID   string
 
 	// Username is Creator
 	Username    string
@@ -643,6 +733,43 @@ type PolicyBinding struct {
 	// Policies holds the policies will bind or unbind to the role.
 	// +optional
 	Policies []string
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectBelongs contains projects of user belongs.
+type ProjectBelongs struct {
+	metav1.TypeMeta
+
+	TenantID string
+	// project and roles in project
+	ManagedProjects map[string]ExtraValue
+	MemberdProjects map[string]ExtraValue
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Project contains members of projects.
+type Project struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	TenantID string
+	Users    map[string]string
+	Groups   map[string]string
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ProjectList is the whole list of all projects.
+type ProjectList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of projects.
+	Items []Project
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

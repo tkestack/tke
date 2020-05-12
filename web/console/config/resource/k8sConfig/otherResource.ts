@@ -133,6 +133,17 @@ export const projects = (k8sVersion: string) => {
   });
 };
 
+/** project的成员列表相关 */
+export const members = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'members',
+    requestType: {
+      list: 'projects'
+    }
+  });
+};
+
 export const portal = (k8sVersion: string) => {
   // apiVersion的配置
   return generateResourceInfo({

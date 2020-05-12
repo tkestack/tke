@@ -11,9 +11,12 @@ import { getWorkflowError } from '../../common/utils';
 import { router as notifyRouter } from '../../notify/router';
 import { validatorActions } from '../actions/validatorActions';
 import {
-    AlarmPolicyMetricsContinuePeriod, AlarmPolicyMetricsEvaluatorType,
-    AlarmPolicyMetricsEvaluatorValue, AlarmPolicyMetricsStatisticsPeriod, AlarmPolicyType,
-    MetricNameMap
+  AlarmPolicyMetricsContinuePeriod,
+  AlarmPolicyMetricsEvaluatorType,
+  AlarmPolicyMetricsEvaluatorValue,
+  AlarmPolicyMetricsStatisticsPeriod,
+  AlarmPolicyType,
+  MetricNameMap
 } from '../constants/Config';
 // import { EditAlarmPolicyReceiverTunnel } from './EditAlarmPolicyReceiverTunnel';
 import { MetricsObjectEdition } from '../models/AlarmPolicy';

@@ -6,12 +6,10 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { ContentView } from '@tencent/tea-component';
 
 import { ResetStoreAction } from '../../../../helpers';
-import { MainBodyLayout } from '../../common/layouts';
 import { allActions } from '../actions';
 import { RootState } from '../models';
 import { router } from '../router';
 import { configStore } from '../stores/RootStore';
-import { CreateNamespacePanel } from './CreateNamespacePanel';
 import { CreateProjectPanel } from './CreateProjectPanel';
 import { ProjectActionPanel } from './ProjectActionPanel';
 import { ProjectDetail } from './ProjectDetail';
@@ -39,17 +37,16 @@ export interface RootProps extends RootState {
   actions?: typeof allActions;
 }
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 @((router.serve as any)())
 class ProjectApp extends React.Component<RootProps, {}> {
   render() {
-    let { route } = this.props,
-      urlParam = router.resolve(route);
-
-    if (!urlParam['sub']) {
+    const { route } = this.props;
+    const { sub } = router.resolve(route);
+    if (!sub) {
       return (
         <ContentView>
           <ContentView.Header>
@@ -61,9 +58,9 @@ class ProjectApp extends React.Component<RootProps, {}> {
           </ContentView.Body>
         </ContentView>
       );
-    } else if (urlParam['sub'] === 'detail') {
+    } else if (sub === 'detail') {
       return <ProjectDetail {...this.props} />;
-    } else if (urlParam['sub'] === 'create') {
+    } else if (sub === 'create') {
       return (
         <ContentView>
           <ContentView.Header>
@@ -71,17 +68,6 @@ class ProjectApp extends React.Component<RootProps, {}> {
           </ContentView.Header>
           <ContentView.Body>
             <CreateProjectPanel />
-          </ContentView.Body>
-        </ContentView>
-      );
-    } else if (urlParam['sub'] === 'createNS') {
-      return (
-        <ContentView>
-          <ContentView.Header>
-            <ProjectHeadPanel isNeedBack={true} title={t('新建Namespace')} />
-          </ContentView.Header>
-          <ContentView.Body>
-            <CreateNamespacePanel />
           </ContentView.Body>
         </ContentView>
       );

@@ -36,6 +36,10 @@ import (
 	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
 )
 
+const (
+	DefaultDomain = "*"
+)
+
 // RestAdapter is the policy storage adapter for Casbin. With this library, Casbin can load policy
 // from kubernetes rest storage and save policy to it. Rest adapter support the Auto-Save feature for Casbin policy.
 // This means it can support adding a single policy rule to the storage, or removing a single policy

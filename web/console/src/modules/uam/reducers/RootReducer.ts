@@ -69,6 +69,12 @@ export const RootReducer = combineReducers({
     actionType: ActionTypes.GetCategories,
     initialData: {}
   }),
+  //
+  // platformCategoryList: generateFetcherReducer<Object>({
+  //   actionType: ActionTypes.GetPlatformCategories,
+  //   initialData: {}
+  // }),
+
   associatedUsersList: createFFListReducer(ActionTypes.GetStrategyAssociatedUsers),
   removeAssociatedUser: generateWorkflowReducer({
     actionType: ActionTypes.RemoveAssociatedUser

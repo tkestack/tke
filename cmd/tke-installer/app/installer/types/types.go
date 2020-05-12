@@ -36,8 +36,10 @@ type Config struct {
 	Registry  Registry  `json:"registry"`
 	Business  *Business `json:"business,omitempty"`
 	Monitor   *Monitor  `json:"monitor,omitempty"`
+	Logagent  *Logagent `json:"logagent,omitempty"`
 	HA        *HA       `json:"ha,omitempty"`
 	Gateway   *Gateway  `json:"gateway,omitempty"`
+	Audit     *Audit    `json:"audit,omitempty"`
 	SkipSteps []string  `json:"skipSteps,omitempty"`
 }
 
@@ -67,6 +69,17 @@ type OIDCAuth struct {
 type Registry struct {
 	TKERegistry        *TKERegistry        `json:"tke,omitempty"`
 	ThirdPartyRegistry *ThirdPartyRegistry `json:"thirdParty,omitempty"`
+}
+
+type Audit struct {
+	ElasticSearch *ElasticSearch `json:"elasticSearch,omitempty"`
+}
+
+type ElasticSearch struct {
+	Address     string `json:"address" validate:"required"`
+	ReserveDays int    `json:"reserveDays" validate:"required"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
 }
 
 func (r *Registry) Domain() string {
@@ -196,4 +209,9 @@ const (
 type Handler struct {
 	Name string
 	Func func() error
+}
+
+type Logagent struct {
+	RegistryDomain string `json:"domain,omitempty"`
+	RegistryNamespace string `json:"namespace:omitempty"`
 }

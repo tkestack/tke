@@ -68,12 +68,6 @@ func SetDefaults_HelmStatus(obj *HelmStatus) {
 	}
 }
 
-func SetDefaults_GPUManagerStatus(obj *GPUManagerStatus) {
-	if obj.Phase == "" {
-		obj.Phase = AddonPhaseInitializing
-	}
-}
-
 func SetDefaults_TappControllerStatus(obj *TappControllerStatus) {
 	if obj.Phase == "" {
 		obj.Phase = AddonPhaseInitializing
