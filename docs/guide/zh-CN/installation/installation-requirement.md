@@ -111,10 +111,10 @@
 | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | 操作系统    | Ubuntu 16.04/18.04 LTS (64-bit) <br>CentOS Linux 7.6 (64-bit)<br>Tencent Linux 2.2 | `cat /etc/redhat-release`                                    |
 | kernel 版本 | >= Kernel 3.10.0-957.10.1.el7.x86_64                         | `uname -sr`                                                  |
-| ssh         | 确保<br> Installer 节点及其容器<br>Global 集群节点及其容器<br>业务集群节点及其容器<br>之间能够 ssh 互联 | `确保在添加节点时，IP和密码输入正确`                         |
-| swap        | 关闭。如果不满足，系统会有一定几率出现 io 飙升，造成 docker 卡死 | `swapoff -a` <br/>`yes | cp /etc/fstab /etc/fstab_bak` <br/>`cat /etc/fstab_bak |grep -v swap > /etc/fstab` |
+| ssh         | 确保<br> Installer 节点及其容器<br>Global 集群节点及其容器<br>业务集群节点及其容器<br>之间能够 ssh 互联 | `确保在添加所有节点时，IP和密码输入正确`                     |
+| swap        | 关闭。如果不满足，系统会有一定几率出现 io 飙升，造成 docker 卡死。kubelet 会启动失败(可以设置 kubelet 启动参数 --fail-swap-on 为 false 关闭 swap 检查) | `swapoff -a`<br/>`sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab` |
 | 防火墙      | 关闭。Kubernetes 官方要求                                    | `systemctl stop firewalld && systemctl disable firewalld`    |
 | 端口        | 所有节点防火墙必须放通放通 SSH（默认22）、80、8080、443、6443 端口 | `firewall-cmd --zone=public --add-port=80/tcp --permanent`   |
-| SELinux     | 关闭。Kubernetes 官方要求                                    | `setenforce 0` <br/>`sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config` |
-| 时区        | 所有服务器时区必须统一，建议设置为 `Asia/Shanghai`           | `cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime`        |
-| 时间同步    | 所有服务器要求时间必须同步，误差不得超过 2 秒                | `yum install ntp`  #安装ntp服务<br/>`systemctl enable ntpd`  #开机启动服务<br/>`systemctl start ntpd` #启动服务<br/>`timedatectl set-timezone Asia/Shanghai`  #更改时区<br/>`timedatectl set-ntp yes`  #启用ntp同步<br/>`ntpq -p`  #同步时间 |
+| SELinux     | 关闭。Kubernetes 官方要求，否则 kubelet 挂载目录时可能报错 `Permission denied` | `setenforce 0` <br/>`sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config` |
+| 时区        | 所有服务器时区必须统一，建议设置为 `Asia/Shanghai`           | `timedatectl set-timezone Asia/Shanghai`                     |
+| 时间同步    | etcd 集群各机器需要时间同步，可以利用chrony 用于系统时间同步；所有服务器要求时间必须同步，误差不得超过 2 秒 | `yum install -y chronyd` <br/>`systemctl enable chronyd && systemctl start chronyd` |
