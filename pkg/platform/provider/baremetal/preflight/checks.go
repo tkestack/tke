@@ -271,7 +271,7 @@ func (fcc FileContentCheck) Check() (warnings, errorList []error) {
 	log.Infof("validating the contents of file %s", fcc.Path)
 	data, err := fcc.ReadFile(fcc.Path)
 	if err != nil {
-		return nil, []error{errors.Errorf("%s could not be read", fcc.Path)}
+		return nil, []error{err}
 	}
 
 	if !bytes.Equal(data[:len(fcc.Content)], fcc.Content) {

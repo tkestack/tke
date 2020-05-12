@@ -734,37 +734,37 @@ func (p *Provider) EnsureStoreCredential(ctx context.Context, c *v1.Cluster) err
 
 	data, err := machineSSH.ReadFile(constants.CACertName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.CACertName)
+		return err
 	}
 	c.ClusterCredential.CACert = data
 
 	data, err = machineSSH.ReadFile(constants.CAKeyName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.CAKeyName)
+		return err
 	}
 	c.ClusterCredential.CAKey = data
 
 	data, err = machineSSH.ReadFile(constants.EtcdCACertName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.EtcdCACertName)
+		return err
 	}
 	c.ClusterCredential.ETCDCACert = data
 
 	data, err = machineSSH.ReadFile(constants.EtcdCAKeyName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.EtcdCAKeyName)
+		return err
 	}
 	c.ClusterCredential.ETCDCAKey = data
 
 	data, err = machineSSH.ReadFile(constants.APIServerEtcdClientCertName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.APIServerEtcdClientCertName)
+		return err
 	}
 	c.ClusterCredential.ETCDAPIClientCert = data
 
 	data, err = machineSSH.ReadFile(constants.APIServerEtcdClientKeyName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.APIServerEtcdClientKeyName)
+		return err
 	}
 	c.ClusterCredential.ETCDAPIClientKey = data
 
