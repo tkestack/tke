@@ -38,6 +38,8 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&ImageNamespaceList{}, func(obj interface{}) { SetObjectDefaults_ImageNamespaceList(obj.(*ImageNamespaceList)) })
 	scheme.AddTypeDefaultingFunc(&Namespace{}, func(obj interface{}) { SetObjectDefaults_Namespace(obj.(*Namespace)) })
 	scheme.AddTypeDefaultingFunc(&NamespaceList{}, func(obj interface{}) { SetObjectDefaults_NamespaceList(obj.(*NamespaceList)) })
+	scheme.AddTypeDefaultingFunc(&NsEmigration{}, func(obj interface{}) { SetObjectDefaults_NsEmigration(obj.(*NsEmigration)) })
+	scheme.AddTypeDefaultingFunc(&NsEmigrationList{}, func(obj interface{}) { SetObjectDefaults_NsEmigrationList(obj.(*NsEmigrationList)) })
 	scheme.AddTypeDefaultingFunc(&Project{}, func(obj interface{}) { SetObjectDefaults_Project(obj.(*Project)) })
 	scheme.AddTypeDefaultingFunc(&ProjectList{}, func(obj interface{}) { SetObjectDefaults_ProjectList(obj.(*ProjectList)) })
 	return nil
@@ -85,6 +87,17 @@ func SetObjectDefaults_NamespaceList(in *NamespaceList) {
 	for i := range in.Items {
 		a := &in.Items[i]
 		SetObjectDefaults_Namespace(a)
+	}
+}
+
+func SetObjectDefaults_NsEmigration(in *NsEmigration) {
+	SetDefaults_NsEmigrationStatus(&in.Status)
+}
+
+func SetObjectDefaults_NsEmigrationList(in *NsEmigrationList) {
+	for i := range in.Items {
+		a := &in.Items[i]
+		SetObjectDefaults_NsEmigration(a)
 	}
 }
 

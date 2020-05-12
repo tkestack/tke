@@ -1,28 +1,27 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RootProps } from '../GroupApp';
+import { RootProps } from '../GroupPanel';
 import { TransferTableProps, TransferTable } from '../../../../common/components';
 import { UserPlain } from '../../../models';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { allActions } from '../../../actions';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch
+    dispatch,
   });
 
-interface Props extends RootProps{
+interface Props extends RootProps {
   onChange?: (selection: UserPlain[]) => void;
 }
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class UserAssociatePanel extends React.Component<Props, {}> {
-
   render() {
     let { commonUserAssociation, actions, userPlainList } = this.props;
     // 表示 ResourceSelector 里要显示和选择的数据类型是 `UserPlain`
     const TransferTableSelector = TransferTable as new () => TransferTable<UserPlain>;
-
+    console.log('userPlainList is:', userPlainList);
     // 参数配置
     const selectorProps: TransferTableProps<UserPlain> = {
       /** 要供选择的数据 */
@@ -47,10 +46,10 @@ export class UserAssociatePanel extends React.Component<Props, {}> {
         {
           key: 'name',
           header: t('ID/名称'),
-          render: (user: UserPlain) => <p>{`${user.displayName}(${user.name})`}</p>
-        }
+          render: (user: UserPlain) => <p>{`${user.displayName}(${user.name})`}</p>,
+        },
       ],
-      recordKey: 'id'
+      recordKey: 'id',
     };
     return <TransferTableSelector {...selectorProps} />;
   }

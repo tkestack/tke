@@ -34,6 +34,7 @@ import (
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
+	auditapi "tkestack.io/tke/pkg/audit/api"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 )
 
@@ -50,6 +51,7 @@ type Components struct {
 	Notify   *GroupVersion `json:"notify,omitempty"`
 	Auth     *GroupVersion `json:"auth,omitempty"`
 	Registry *GroupVersion `json:"registry,omitempty"`
+	Audit    *GroupVersion `json:"audit,omitempty"`
 }
 
 type SysInfo struct {
@@ -118,6 +120,12 @@ func handleGetSysInfoFunc(cfg *gatewayconfig.GatewayConfiguration) func(*restful
 			cmp.Registry = &GroupVersion{
 				GroupName: registryv1.GroupName,
 				Version:   registryv1.Version,
+			}
+		}
+		if cfg.Components.Audit != nil {
+			cmp.Audit = &GroupVersion{
+				GroupName: auditapi.GroupName,
+				Version:   auditapi.Version,
 			}
 		}
 		sysInfo := SysInfo{

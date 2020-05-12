@@ -63,7 +63,7 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
     if (addons['TappController']) {
       finalWorkloadTypeList.push({
         value: 'tapp',
-        label: 'Tapp'
+        label: 'TApp'
       });
     }
     let radioList: JSX.Element[] = [];

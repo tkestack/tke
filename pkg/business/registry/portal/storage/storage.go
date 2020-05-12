@@ -24,13 +24,20 @@ import (
 
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	authv1 "tkestack.io/tke/api/auth/v1"
 	"tkestack.io/tke/api/business"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/apiserver/filter"
+	authutil "tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // Storage includes storage for portal information and all sub resources.
@@ -39,10 +46,11 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against projects.
-func NewStorage(_ genericregistry.RESTOptionsGetter, businessClient *businessinternalclient.BusinessClient) *Storage {
+func NewStorage(_ genericregistry.RESTOptionsGetter, businessClient *businessinternalclient.BusinessClient, authClient authversionedclient.AuthV1Interface) *Storage {
 	return &Storage{
 		Portal: &REST{
 			businessClient: businessClient,
+			authClient:     authClient,
 		},
 	}
 }
@@ -50,6 +58,7 @@ func NewStorage(_ genericregistry.RESTOptionsGetter, businessClient *businessint
 // REST implements a RESTStorage for user setting.
 type REST struct {
 	businessClient *businessinternalclient.BusinessClient
+	authClient     authversionedclient.AuthV1Interface
 }
 
 var _ rest.ShortNamesProvider = &REST{}
@@ -99,6 +108,35 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		}
 	}
 
+	var userID string
+	if r.authClient != nil {
+		usersSelector := fields.AndSelectors(
+			fields.OneTermEqualSelector("keyword", username),
+			fields.OneTermEqualSelector("policy", "true"),
+			fields.OneTermEqualSelector("spec.tenantID", tenantID),
+		)
+
+		userListOpt := v1.ListOptions{
+			FieldSelector: usersSelector.String(),
+		}
+
+		userList, err := r.authClient.Users().List(userListOpt)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, user := range userList.Items {
+			if user.Spec.Name == username {
+				log.Info("user", log.Any("user", user))
+				userID = user.Name
+				if authutil.IsPlatformAdministrator(user) {
+					administrator = true
+				}
+				break
+			}
+		}
+	}
+
 	projectList, err := r.businessClient.Projects().List(listOpt)
 	if err != nil {
 		return nil, err
@@ -109,6 +147,30 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 			projects[project.ObjectMeta.Name] = project.Spec.DisplayName
 		}
 	}
+
+	if r.authClient != nil && userID != "" {
+		belongs := &authv1.ProjectBelongs{}
+		err := r.authClient.RESTClient().Get().
+			Resource("users").
+			Name(userID).
+			SubResource("projects").
+			SetHeader(filter.HeaderTenantID, tenantID).
+			Do().Into(belongs)
+
+		if err != nil {
+			log.Error("Get user projects failed for tke-auth-api", log.String("user", username), log.Err(err))
+		} else {
+			log.Info("project belongs for user", log.String("user", username), log.String("userID", userID), log.Any("belongs", belongs))
+			for pid := range belongs.MemberdProjects {
+				for _, project := range projectList.Items {
+					if project.Name == pid {
+						projects[project.ObjectMeta.Name] = project.Spec.DisplayName
+					}
+				}
+			}
+		}
+	}
+
 	return &business.Portal{
 		Administrator: administrator,
 		Projects:      projects,

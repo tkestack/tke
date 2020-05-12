@@ -62,7 +62,12 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 	if err != nil {
 		return nil, err
 	}
+
 	policy := polObj.(*auth.Policy)
+	if policy.Spec.Scope == auth.PolicyProject {
+		return nil, errors.NewBadRequest("unable bind subject to project-scoped policy, please use projectunbinding api")
+	}
+
 	remainedUsers := make([]auth.Subject, 0)
 	for _, sub := range policy.Status.Users {
 		if !util.InSubjects(sub, bind.Users) {
@@ -71,7 +76,6 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 	}
 
 	policy.Status.Users = remainedUsers
-
 	remainedGroups := make([]auth.Subject, 0)
 	for _, sub := range policy.Status.Groups {
 		if !util.InSubjects(sub, bind.Groups) {

@@ -31,6 +31,7 @@ type BusinessInterface interface {
 	ConfigMapsGetter
 	ImageNamespacesGetter
 	NamespacesGetter
+	NsEmigrationsGetter
 	PlatformsGetter
 	PortalsGetter
 	ProjectsGetter
@@ -55,6 +56,10 @@ func (c *BusinessClient) ImageNamespaces(namespace string) ImageNamespaceInterfa
 
 func (c *BusinessClient) Namespaces(namespace string) NamespaceInterface {
 	return newNamespaces(c, namespace)
+}
+
+func (c *BusinessClient) NsEmigrations(namespace string) NsEmigrationInterface {
+	return newNsEmigrations(c, namespace)
 }
 
 func (c *BusinessClient) Platforms() PlatformInterface {

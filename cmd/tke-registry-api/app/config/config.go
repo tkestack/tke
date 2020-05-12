@@ -20,11 +20,12 @@ package config
 
 import (
 	"fmt"
+	"path/filepath"
+	"time"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	"path/filepath"
-	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	generatedopenapi "tkestack.io/tke/api/openapi"
@@ -37,6 +38,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/handler"
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	"tkestack.io/tke/pkg/apiserver/util"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	registryconfigvalidation "tkestack.io/tke/pkg/registry/apis/config/validation"
 	"tkestack.io/tke/pkg/registry/apiserver"
@@ -94,14 +96,18 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	var ignoredAuthPathPrefixes []string
 	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, distribution.IgnoredAuthPathPrefixes()...)
 	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, chartmuseum.IgnoredAuthPathPrefixes()...)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes, nil)
 	// long running function for distribution and chartmuseum path.
 	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString("watch"), sets.NewString(), ignoredAuthPathPrefixes)
 	// increase default max post payload for distribution and chartmuseum.
 	genericAPIServerConfig.MaxRequestBodyBytes = chartmuseum.MaxUploadSize
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
+	genericAPIServerConfig.EnableProfiling = false
 
+	if err := util.SetupAuditConfig(genericAPIServerConfig, opts.Audit); err != nil {
+		return nil, err
+	}
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err
 	}

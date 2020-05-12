@@ -27,12 +27,14 @@ import (
 	"tkestack.io/tke/api/business"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/cmd/tke-business-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	chartgroupstorage "tkestack.io/tke/pkg/business/registry/chartgroup/storage"
 	configmapstorage "tkestack.io/tke/pkg/business/registry/configmap/storage"
+	emigrationstorage "tkestack.io/tke/pkg/business/registry/emigration/storage"
 	imagenamespacestorage "tkestack.io/tke/pkg/business/registry/imagenamespace/storage"
 	namespacestorage "tkestack.io/tke/pkg/business/registry/namespace/storage"
 	platformstorage "tkestack.io/tke/pkg/business/registry/platform/storage"
@@ -46,6 +48,7 @@ type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
 	PlatformClient       platformversionedclient.PlatformV1Interface
 	RegistryClient       registryversionedclient.RegistryV1Interface
+	AuthClient           authversionedclient.AuthV1Interface
 	PrivilegedUsername   string
 	Features             *options.FeatureOptions
 }
@@ -77,7 +80,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 	storageMap := make(map[string]rest.Storage)
 	{
-		projectREST := projectstorage.NewStorage(restOptionsGetter, businessClient, s.PlatformClient, s.PrivilegedUsername, features)
+		projectREST := projectstorage.NewStorage(restOptionsGetter, businessClient, s.PlatformClient, s.AuthClient, s.PrivilegedUsername, features)
 		storageMap["projects"] = projectREST.Project
 		storageMap["projects/status"] = projectREST.Status
 		storageMap["projects/finalize"] = projectREST.Finalize
@@ -91,11 +94,14 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		platformREST := platformstorage.NewStorage(restOptionsGetter, businessClient, s.PrivilegedUsername)
 		storageMap["platforms"] = platformREST.Platform
 
-		portalREST := portalstorage.NewStorage(restOptionsGetter, businessClient)
+		portalREST := portalstorage.NewStorage(restOptionsGetter, businessClient, s.AuthClient)
 		storageMap["portal"] = portalREST.Portal
 
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
+
+		emigrationREST := emigrationstorage.NewStorage(restOptionsGetter, businessClient, s.PlatformClient, s.PrivilegedUsername)
+		storageMap["nsemigrations"] = emigrationREST.Emigration
 
 		if s.RegistryClient != nil {
 			imageNamespaceREST := imagenamespacestorage.NewStorage(restOptionsGetter, businessClient, s.RegistryClient, s.PrivilegedUsername)

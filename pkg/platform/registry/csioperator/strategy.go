@@ -21,7 +21,7 @@ package csioperator
 import (
 	"context"
 
-	"tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator/images"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 
 	"tkestack.io/tke/pkg/apiserver/authentication"
 

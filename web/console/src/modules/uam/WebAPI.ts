@@ -35,6 +35,7 @@ import { resourceConfig } from '../../../config';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { METHODS } from 'http';
 
+// @ts-ignore
 const tips = seajs.require('tips');
 
 class RequestResult {
@@ -106,13 +107,18 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
   let users: User[] = [];
   const { search, filter } = query;
   let { isPolicyUser = false } = filter;
-  const queryObj = !search
-    ? {}
-    : {
-        fieldSelector: {
-          keyword: search || ''
-        }
-      };
+  const queryObj = !search ?
+    {
+      fieldSelector: {
+        policy: true
+      }
+    }
+    :
+    {
+      fieldSelector: {
+        keyword: search || ''
+      }
+    };
 
   try {
     const resourceInfo: ResourceInfo = isPolicyUser ? resourceConfig()['user'] : resourceConfig()['localidentity'];
@@ -220,16 +226,20 @@ export async function getUser(name: string) {
  * @param [userInfo] 用户数据, 这里和actions.user.addUser.start([userInfo]);的对应
  */
 export async function updateUser(user: User) {
+  console.log('updateUser user is:', user);
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
     const url = reduceK8sRestfulPath({ resourceInfo, specificName: user.metadata.name });
+    // const url = `/apis/auth.tkestack.io/v1/projects/{project-ID}/users`;
     const response = await reduceNetworkRequest({
       method: Method.put,
       url,
       data: user
     });
     if (response.code === 0) {
-      tips.success(t('修改成功'), 2000);
+      setTimeout(() => {
+        tips.success(t('修改成功'), 2000);
+      }, 1000);
       return operationResult(response.data);
     } else {
       // 是否给tip得看具体返回的数据
@@ -250,11 +260,23 @@ export async function updateUser(user: User) {
 export async function fetchStrategyList(query: QueryState<StrategyFilter>) {
   let strategys: Strategy[] = [];
   let recordCount = 0;
-  const { search, paging } = query;
+  const { search, paging, filter } = query;
+  console.log('fetchStrategyList query is:', query);
+
+  let key = 'spec.scope!';
+  if (filter.type === 'platform') {
+    key = 'spec.scope!';
+  } else if (filter.type === 'business') {
+    key = 'spec.scope';
+  }
+
   const queryObj = {
     fieldSelector: {
+      [key]: 'project',
       keyword: search || ''
-    }
+    },
+    // continue: undefined,
+    // limit: paging.pageSize
   };
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['policy'];
@@ -423,6 +445,40 @@ export async function fetchCategoryList() {
 }
 
 /**
+ * 获取平台策略
+ */
+export async function getPlatformCategories() {
+  let categories: Category[] = [];
+  try {
+    const resourceInfo: ResourceInfo = resourceConfig()['category'];
+    const url = reduceK8sRestfulPath({ resourceInfo });
+    console.log('getPlatformCategories url is: ', resourceInfo, url);
+  //   const response = await reduceNetworkRequest({
+  //     method: 'GET',
+  //     url
+  //     // url: '/api/v1/categories/'
+  //   });
+  //   if (response.code === 0) {
+  //     if (response.data.items) {
+  //       categories = response.data.items;
+  //     } else {
+  //       categories = [];
+  //     }
+  //   }
+  } catch (error) {
+    tips.error(error.response.data.message, 2000);
+  }
+  // const result: RecordSet<Category> = {
+  //   recordCount: categories.length,
+  //   records: categories
+  // };
+  //
+  // return result;
+    return;
+}
+
+
+/**
  * 增加策略关联的用户
  * @param id 策略id字符串
  * @param userNames  用户名数组
@@ -576,10 +632,27 @@ export async function updateRole([roleInfo]) {
  * @param role
  */
 export async function deleteRole([role]: Role[]) {
-  let resourceInfo: ResourceInfo = resourceConfig()['role'];
-  const url = reduceK8sRestfulPath({ resourceInfo, specificName: role.metadata.name });
-  let rr: RequestResult = await DELETE(url);
-  return operationResult(rr.data, rr.error);
+  // let resourceInfo: ResourceInfo = resourceConfig()['role'];
+  // const url = reduceK8sRestfulPath({ resourceInfo, specificName: role.metadata.name });
+  // let rr: RequestResult = await DELETE(url);
+  // return operationResult(rr.data, rr.error);
+  try {
+    let resourceInfo: ResourceInfo = resourceConfig()['role'];
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: role.metadata.name });
+    const response = await reduceNetworkRequest({
+      method: 'DELETE',
+      url
+    });
+    if (response.code === 0) {
+      tips.success('删除成功', 2000);
+      return operationResult(role);
+    } else {
+      return operationResult(role, response);
+    }
+  } catch (error) {
+    tips.error(error.response.data.message, 2000);
+    return operationResult(role, error.response);
+  }
 }
 
 /**
@@ -680,7 +753,9 @@ export async function fetchGroupList(query: QueryState<GroupFilter>) {
     ? {
         'fieldSelector=spec.displayName': keyword
       }
-    : {};
+    : {
+        'fieldSelector=policy': 'true'
+      };
 
   const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo });
@@ -732,10 +807,27 @@ export async function updateGroup([groupInfo]) {
  * @param group
  */
 export async function deleteGroup([group]: Group[]) {
-  let resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
-  const url = reduceK8sRestfulPath({ resourceInfo, specificName: group.metadata.name });
-  let rr: RequestResult = await DELETE(url);
-  return operationResult(rr.data, rr.error);
+  // let resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+  // const url = reduceK8sRestfulPath({ resourceInfo, specificName: group.metadata.name });
+  // let rr: RequestResult = await DELETE(url);
+  // return operationResult(rr.data, rr.error);
+  try {
+    let resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: group.metadata.name });
+    const response = await reduceNetworkRequest({
+      method: 'DELETE',
+      url
+    });
+    if (response.code === 0) {
+      tips.success('删除成功', 2000);
+      return operationResult(group);
+    } else {
+      return operationResult(group, response);
+    }
+  } catch (error) {
+    tips.error(error.response.data.message, 2000);
+    return operationResult(group, error.response);
+  }
 }
 
 /**
@@ -926,14 +1018,19 @@ export async function fetchPolicy(filter: PolicyInfoFilter) {
  * @param query 列表查询条件参数
  */
 export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
-  const { search, filter } = query;
+  const { search, filter, keyword } = query;
   const queryObj = {
     // 'fieldSelector=keyword': search || ''
   };
+  let queryString = '';
+  if (filter.resource === 'platform') {
+    queryString = '?fieldSelector=spec.scope!=project';
+  } else if (filter.resource === 'project') {
+    queryString = '?fieldSelector=spec.scope=project';
+  }
 
   const resourceInfo: ResourceInfo = resourceConfig()['policy'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET(url + queryString);
   let items: PolicyPlain[] =
     !rr.error && rr.data.items
@@ -943,7 +1040,8 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
             name: i.metadata && i.metadata.name,
             displayName: i.spec && i.spec.displayName,
             category: i.spec && i.spec.category,
-            description: i.spec && i.spec.description
+            description: i.spec && i.spec.description,
+            tenantID: i.sepc && i.spec.tenantID
           };
         })
       : [];

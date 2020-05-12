@@ -9,12 +9,11 @@ import { RootProps } from '../StrategyApp';
 import { GroupAssociateWorkflowDialog } from '../associate/GroupAssociateWorkflowDialog';
 import { GroupFilter } from '../../../models';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class GroupActionPanel extends React.Component<RootProps, {}> {
-
   componentWillUnmount() {
     let { actions } = this.props;
     actions.group.associate.clearGroupAssociation();
@@ -26,11 +25,12 @@ export class GroupActionPanel extends React.Component<RootProps, {}> {
     let filter: GroupFilter = {
       resource: 'policy',
       // resourceID: route.queries['roleName']
-      resourceID: router.resolve(route).sub,
+      // resourceID: router.resolve(route).sub,
+      resourceID: route.queries['id'],
       /** 关联/解关联回调函数 */
       callback: () => {
         /** 重新加载策略 */
-      }
+      },
     };
     actions.group.associate.setupGroupFilter(filter);
     /** 拉取关联用户组列表，拉取后自动更新groupAssociation */
@@ -49,10 +49,13 @@ export class GroupActionPanel extends React.Component<RootProps, {}> {
         <Table.ActionPanel>
           <Justify
             left={
-              <Button type="primary" onClick={e => {
-                /** 开始关联用户组工作流 */
-                actions.group.associate.associateGroupWorkflow.start();
-              }}>
+              <Button
+                type="primary"
+                onClick={(e) => {
+                  /** 开始关联用户组工作流 */
+                  actions.group.associate.associateGroupWorkflow.start();
+                }}
+              >
                 {t('关联用户组')}
               </Button>
             }
@@ -62,6 +65,4 @@ export class GroupActionPanel extends React.Component<RootProps, {}> {
       </React.Fragment>
     );
   }
-
 }
-

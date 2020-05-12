@@ -25,6 +25,7 @@ import (
 	monitorv1 "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1"
 	notifyv1 "tkestack.io/tke/api/client/clientset/versioned/typed/notify/v1"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	logagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
 )
 
 const (
@@ -95,6 +96,18 @@ func NewMonitor(name string, client monitorv1.MonitorV1Interface, rlc Config) In
 // NewAuth will create a lock of a given type according to the input parameters
 func NewAuth(name string, client authv1.AuthV1Interface, rlc Config) Interface {
 	return &AuthConfigMapLock{
+		ConfigMapMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Client:     client,
+		LockConfig: rlc,
+	}
+}
+
+
+// NewAuth will create a lock of a given type according to the input parameters
+func NewLogagent(name string, client logagentv1.LogagentV1Interface, rlc Config) Interface {
+	return &LogagentConfigMapLock{
 		ConfigMapMeta: metav1.ObjectMeta{
 			Name: name,
 		},

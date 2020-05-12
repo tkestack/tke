@@ -19,6 +19,9 @@
 package platform
 
 import (
+	"errors"
+	"fmt"
+	"math/rand"
 	"time"
 
 	"tkestack.io/tke/pkg/util/ssh"
@@ -36,4 +39,28 @@ func (in *ClusterMachine) SSH() (*ssh.SSH, error) {
 		Retry:       0,
 	}
 	return ssh.New(sshConfig)
+}
+
+func (in *Cluster) Host() (string, error) {
+	addrs := make(map[AddressType][]ClusterAddress)
+	for _, one := range in.Status.Addresses {
+		addrs[one.Type] = append(addrs[one.Type], one)
+	}
+
+	var address *ClusterAddress
+	if len(addrs[AddressInternal]) != 0 {
+		address = &addrs[AddressInternal][rand.Intn(len(addrs[AddressInternal]))]
+	} else if len(addrs[AddressAdvertise]) != 0 {
+		address = &addrs[AddressAdvertise][rand.Intn(len(addrs[AddressAdvertise]))]
+	} else {
+		if len(addrs[AddressReal]) != 0 {
+			address = &addrs[AddressReal][rand.Intn(len(addrs[AddressReal]))]
+		}
+	}
+
+	if address == nil {
+		return "", errors.New("can't find valid address")
+	}
+
+	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
 }

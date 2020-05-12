@@ -69,6 +69,8 @@ function install_docker() {
 
   tar xvaf "res/docker.tgz" -C /usr/bin --strip-components=1
   cp -v res/docker.service /etc/systemd/system
+  mkdir -p /etc/docker
+  cp -v res/daemon.json /etc/docker/
 
   systemctl daemon-reload
 

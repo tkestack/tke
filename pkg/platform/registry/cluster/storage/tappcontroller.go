@@ -28,6 +28,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/util/log"
 
 	corev1 "k8s.io/api/core/v1"
@@ -90,7 +91,7 @@ func (r *TappControllerREST) Connect(ctx context.Context, clusterName string, op
 	if err != nil {
 		return nil, err
 	}
-	credential, err := util.ClusterCredential(r.platformClient, cluster.Name)
+	credential, err := util.GetClusterCredential(r.platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}

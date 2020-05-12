@@ -36,8 +36,6 @@ type Interface interface {
 	ConfigMaps() ConfigMapInformer
 	// CronHPAs returns a CronHPAInformer.
 	CronHPAs() CronHPAInformer
-	// GPUManagers returns a GPUManagerInformer.
-	GPUManagers() GPUManagerInformer
 	// Helms returns a HelmInformer.
 	Helms() HelmInformer
 	// IPAMs returns a IPAMInformer.
@@ -94,11 +92,6 @@ func (v *version) ConfigMaps() ConfigMapInformer {
 // CronHPAs returns a CronHPAInformer.
 func (v *version) CronHPAs() CronHPAInformer {
 	return &cronHPAInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
-}
-
-// GPUManagers returns a GPUManagerInformer.
-func (v *version) GPUManagers() GPUManagerInformer {
-	return &gPUManagerInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // Helms returns a HelmInformer.

@@ -20,10 +20,11 @@ package config
 
 import (
 	"fmt"
+	"time"
+
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/client-go/rest"
-	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
@@ -36,6 +37,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/handler"
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	"tkestack.io/tke/pkg/apiserver/util"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	"tkestack.io/tke/pkg/notify/apiserver"
 )
@@ -63,10 +65,14 @@ type Config struct {
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(notify.Codecs)
 	ignoreAuthPathPrefixes := []string{"/webhook"}
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
+	genericAPIServerConfig.EnableProfiling = false
 
+	if err := util.SetupAuditConfig(genericAPIServerConfig, opts.Audit); err != nil {
+		return nil, err
+	}
 	if err := opts.Generic.ApplyTo(genericAPIServerConfig); err != nil {
 		return nil, err
 	}

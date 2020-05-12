@@ -25,10 +25,13 @@ import (
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+
 	v1 "tkestack.io/tke/api/auth/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
+	authutil "tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -244,6 +247,7 @@ type deleteResourceFunc func(deleter *policiedResourcesDeleter, policy *v1.Polic
 var deleteResourceFuncs = []deleteResourceFunc{
 	detachRelatedRoles,
 	deleteRelatedRules,
+	deleteRelatedProjectPolicies,
 }
 
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
@@ -271,20 +275,16 @@ func deleteRelatedRules(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 
 func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
 	log.Info("Policy controller - detachRelatedRoles", log.String("policyName", policy.Name))
+	roles := deleter.enforcer.GetUsersForRoleInDomain(policy.Name, authutil.DefaultDomain)
 
-	roles, err := deleter.enforcer.GetUsersForRole(policy.Name)
-	if err != nil {
-		return err
-	}
 	log.Info("Try removing related rules for policy", log.String("policy", policy.Name), log.Strings("rules", roles))
-
 	var errs []error
 	unbinding := v1.PolicyBinding{Policies: []string{policy.Name}}
 	for _, role := range roles {
 		switch {
 		case strings.HasPrefix(role, "rol-"):
 			rol := &v1.Role{}
-			err = deleter.authClient.RESTClient().Post().
+			err := deleter.authClient.RESTClient().Post().
 				Resource("roles").
 				Name(role).
 				SubResource("policyunbinding").
@@ -300,10 +300,36 @@ func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 			}
 		default:
 			log.Warn("Unknown role name for policy, remove it", log.String("policy", policy.Name), log.String("role", role))
-			_, err = deleter.enforcer.DeleteRoleForUser(role, policy.Name)
+			_, err := deleter.enforcer.DeleteRoleForUserInDomain(role, policy.Name, authutil.DefaultDomain)
 			if err != nil {
 				errs = append(errs, err)
 			}
+		}
+	}
+
+	return utilerrors.NewAggregate(errs)
+}
+
+func deleteRelatedProjectPolicies(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
+	log.Info("Policy controller - deleteRelatedProjectPolicies", log.String("policyName", policy.Name))
+
+	tenantUserSelector := fields.AndSelectors(
+		fields.OneTermEqualSelector("spec.policyID", policy.Name))
+
+	projectPolicyList, err := deleter.authClient.ProjectPolicyBindings().List(metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	if err != nil {
+		log.Error("List project policies for policy failed", log.String("policy", policy.Name), log.Err(err))
+		return err
+	}
+
+	var errs []error
+	for _, item := range projectPolicyList.Items {
+		log.Info("Delete project policy", log.Any("item", item))
+		err := deleter.authClient.ProjectPolicyBindings().Delete(item.Name, &metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			log.Error("Delete project policy failed", log.String("project policy", item.Name), log.Err(err))
+			errs = append(errs, err)
+			continue
 		}
 	}
 

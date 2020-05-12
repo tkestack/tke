@@ -23,21 +23,21 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	clientset "tkestack.io/tke/api/client/clientset/versioned"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/controller/machine/deletion"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
-	"tkestack.io/tke/pkg/platform/util"
+	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -46,19 +46,20 @@ const (
 	machineClientRetryCount    = 5
 	machineClientRetryInterval = 5 * time.Second
 
-	reasonFailedInit = "FailedInit"
+	reasonFailedInit   = "FailedInit"
+	reasonFailedUpdate = "FailedUpdate"
 )
 
 // Controller is responsible for performing actions dependent upon a machine phase.
 type Controller struct {
-	client       clientset.Interface
-	cache        *machineCache
-	health       *machineHealth
-	queue        workqueue.RateLimitingInterface
-	lister       platformv1lister.MachineLister
-	listerSynced cache.InformerSynced
-	stopCh       <-chan struct{}
-	deleter      deletion.MachineDeleterInterface
+	platformclient platformversionedclient.PlatformV1Interface
+	cache          *machineCache
+	health         *machineHealth
+	queue          workqueue.RateLimitingInterface
+	lister         platformv1lister.MachineLister
+	listerSynced   cache.InformerSynced
+	stopCh         <-chan struct{}
+	deleter        deletion.MachineDeleterInterface
 }
 
 // obj could be an *v1.Machine, or a DeletionFinalStateUnknown marker item.
@@ -89,24 +90,24 @@ func (c *Controller) needsUpdate(oldMachine *v1.Machine, newMachine *v1.Machine)
 
 // NewController creates a new Controller object.
 func NewController(
-	client clientset.Interface,
+	platformclient platformversionedclient.PlatformV1Interface,
 	machineInformer platformv1informer.MachineInformer,
 	resyncPeriod time.Duration,
 	finalizerToken v1.FinalizerName) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
-		client: client,
-		cache:  &machineCache{m: make(map[string]*cachedMachine)},
-		health: &machineHealth{m: make(map[string]*v1.Machine)},
-		queue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machine"),
-		deleter: deletion.NewMachineDeleter(client.PlatformV1().Machines(),
-			client.PlatformV1(),
+		platformclient: platformclient,
+		cache:          &machineCache{m: make(map[string]*cachedMachine)},
+		health:         &machineHealth{m: make(map[string]*v1.Machine)},
+		queue:          workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machine"),
+		deleter: deletion.NewMachineDeleter(platformclient.Machines(),
+			platformclient,
 			finalizerToken,
 			true),
 	}
 
-	if client != nil && client.PlatformV1().RESTClient().GetRateLimiter() != nil {
-		_ = metrics.RegisterMetricAndTrackRateLimiterUsage("machine_controller", client.PlatformV1().RESTClient().GetRateLimiter())
+	if platformclient != nil && platformclient.RESTClient().GetRateLimiter() != nil {
+		_ = metrics.RegisterMetricAndTrackRateLimiterUsage("machine_controller", platformclient.RESTClient().GetRateLimiter())
 	}
 
 	// configure the namespace informer event handlers
@@ -269,11 +270,16 @@ func (c *Controller) handlePhase(key string, cachedMachine *cachedMachine, machi
 	var err error
 	switch machine.Status.Phase {
 	case v1.MachineInitializing:
-		err = c.doInitializing(machine)
+		err = c.onCreate(machine)
+		log.Info("machine_controller.onCreate", log.String("machineName", machine.Name), log.Err(err))
 	case v1.MachineRunning, v1.MachineFailed:
-		err = c.startMachineHealthCheck(key, machine)
+		err = c.onUpdate(machine)
+		log.Info("machine_controller.onUpdate", log.String("machineName", machine.Name), log.Err(err))
+		if err == nil {
+			c.ensureHealthCheck(key, machine)
+		}
 	default:
-		err = errors.Errorf("no handler for %q", machine.Status.Phase)
+		err = fmt.Errorf("no handler for %q", machine.Status.Phase)
 	}
 
 	return err
@@ -318,7 +324,7 @@ func (c *Controller) addOrUpdateCondition(machine *v1.Machine, newCondition v1.M
 func (c *Controller) persistUpdate(machine *v1.Machine) error {
 	var err error
 	for i := 0; i < machineClientRetryCount; i++ {
-		_, err = c.client.PlatformV1().Machines().UpdateStatus(machine)
+		_, err = c.platformclient.Machines().UpdateStatus(machine)
 		if err == nil {
 			return nil
 		}
@@ -339,47 +345,68 @@ func (c *Controller) persistUpdate(machine *v1.Machine) error {
 	return err
 }
 
-func (c *Controller) doInitializing(machine *v1.Machine) error {
-	newMachine, err := c.onInitialize(machine)
+func (c *Controller) onCreate(machine *v1.Machine) error {
+	provider, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
-		machine.Status.Message = err.Error()
-		machine.Status.Reason = reasonFailedInit
-		_, _ = c.client.PlatformV1().Machines().Update(machine)
 		return err
 	}
-	condition := newMachine.Status.Conditions[len(newMachine.Status.Conditions)-1]
-	if condition.Status == v1.ConditionFalse { // means current condition run into error
-		newMachine.Status.Message = condition.Message
-		newMachine.Status.Reason = condition.Reason
-		_, _ = c.client.PlatformV1().Machines().Update(newMachine)
-		return fmt.Errorf("OnInitialize.%s [Failed] reason: %s message: %s",
-			condition.Type, condition.Reason, condition.Message)
+	cluster, err := typesv1.GetClusterByName(c.platformclient, machine.Spec.ClusterName)
+	if err != nil {
+		return err
 	}
-	newMachine.Status.Message = ""
-	newMachine.Status.Reason = ""
-	_, err = c.client.PlatformV1().Machines().Update(newMachine)
+
+	for machine.Status.Phase == platformv1.MachineInitializing {
+		err = provider.OnCreate(machine, cluster)
+		if err != nil {
+			machine.Status.Message = err.Error()
+			machine.Status.Reason = reasonFailedInit
+			_, _ = c.platformclient.Machines().Update(machine)
+			return err
+		}
+
+		condition := machine.Status.Conditions[len(machine.Status.Conditions)-1]
+		if condition.Status == v1.ConditionFalse { // means current condition run into error
+			machine.Status.Message = condition.Message
+			machine.Status.Reason = condition.Reason
+			_, _ = c.platformclient.Machines().Update(machine)
+			return fmt.Errorf("Provider.OnCreate.%s [Failed] reason: %s message: %s",
+				condition.Type, condition.Reason, condition.Message)
+		}
+		machine.Status.Message = ""
+		machine.Status.Reason = ""
+
+		machine, err = c.platformclient.Machines().Update(machine)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
-
-func (c *Controller) onInitialize(machine *v1.Machine) (*v1.Machine, error) {
-	machineProvider, err := machineprovider.GetProvider(string(machine.Spec.Type))
+func (c *Controller) onUpdate(machine *platformv1.Machine) error {
+	provider, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	cluster, err := c.client.PlatformV1().Clusters().Get(machine.Spec.ClusterName, metav1.GetOptions{})
+	cluster, err := typesv1.GetClusterByName(c.platformclient, machine.Spec.ClusterName)
 	if err != nil {
-		return nil, errors.Wrap(err, "get cluster error")
+		return err
 	}
-	clusterCredential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
+	err = provider.OnUpdate(machine, cluster)
 	if err != nil {
-		return nil, errors.Wrap(err, "get cluster credential error")
+		machine.Status.Message = err.Error()
+		machine.Status.Reason = reasonFailedUpdate
+		_, _ = c.platformclient.Machines().Update(machine)
+		return err
+	}
+	cluster.Status.Message = ""
+	cluster.Status.Reason = ""
+
+	machine, err = c.platformclient.Machines().Update(machine)
+	if err != nil {
+		return err
 	}
 
-	resp, err := machineProvider.OnInitialize(*machine, *cluster, *clusterCredential)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp, nil
+	return nil
 }

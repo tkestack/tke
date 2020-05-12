@@ -270,10 +270,11 @@ func (ClusterResource) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterSpec = map[string]string{
-	"":            "ClusterSpec is a description of a cluster.",
-	"finalizers":  "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
-	"dnsDomain":   "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
-	"serviceCIDR": "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+	"":                     "ClusterSpec is a description of a cluster.",
+	"finalizers":           "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
+	"serviceCIDR":          "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+	"dnsDomain":            "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
+	"clusterCredentialRef": "ClusterCredentialRef for isolate sensitive information. If not specified, cluster controller will create one; If specified, provider must make sure is valid.",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {
@@ -354,43 +355,6 @@ var map_CronHPAStatus = map[string]string{
 
 func (CronHPAStatus) SwaggerDoc() map[string]string {
 	return map_CronHPAStatus
-}
-
-var map_GPUManager = map[string]string{
-	"":     "GPUManager is a kind of device plugin for kubelet to help manage GPUs.",
-	"spec": "Spec defines the desired identities of clusters in this set.",
-}
-
-func (GPUManager) SwaggerDoc() map[string]string {
-	return map_GPUManager
-}
-
-var map_GPUManagerList = map[string]string{
-	"":      "GPUManagerList is the whole list of all GPUManager which owned by a tenant.",
-	"items": "List of GPUManagers",
-}
-
-func (GPUManagerList) SwaggerDoc() map[string]string {
-	return map_GPUManagerList
-}
-
-var map_GPUManagerSpec = map[string]string{
-	"": "GPUManagerSpec describes the attributes of a GPUManager.",
-}
-
-func (GPUManagerSpec) SwaggerDoc() map[string]string {
-	return map_GPUManagerSpec
-}
-
-var map_GPUManagerStatus = map[string]string{
-	"":           "GPUManagerStatus is information about the current status of a GPUManager.",
-	"phase":      "Phase is the current lifecycle phase of the GPUManager of cluster.",
-	"reason":     "Reason is a brief CamelCase string that describes any failure.",
-	"retryCount": "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-}
-
-func (GPUManagerStatus) SwaggerDoc() map[string]string {
-	return map_GPUManagerStatus
 }
 
 var map_Helm = map[string]string{

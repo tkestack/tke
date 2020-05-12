@@ -161,6 +161,8 @@ func autoConvert_v1_Components_To_config_Components(in *Components, out *config.
 	out.Monitor = (*config.Component)(unsafe.Pointer(in.Monitor))
 	out.Auth = (*config.Component)(unsafe.Pointer(in.Auth))
 	out.Registry = (*config.Component)(unsafe.Pointer(in.Registry))
+	out.LogAgent = (*config.Component)(unsafe.Pointer(in.LogAgent))
+	out.Audit = (*config.Component)(unsafe.Pointer(in.Audit))
 	return nil
 }
 
@@ -176,6 +178,8 @@ func autoConvert_config_Components_To_v1_Components(in *config.Components, out *
 	out.Monitor = (*Component)(unsafe.Pointer(in.Monitor))
 	out.Auth = (*Component)(unsafe.Pointer(in.Auth))
 	out.Registry = (*Component)(unsafe.Pointer(in.Registry))
+	out.LogAgent = (*Component)(unsafe.Pointer(in.LogAgent))
+	out.Audit = (*Component)(unsafe.Pointer(in.Audit))
 	return nil
 }
 
