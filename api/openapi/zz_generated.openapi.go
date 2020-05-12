@@ -39416,6 +39416,18 @@ func schema_tke_api_business_v1_NamespaceCert(ref common.ReferenceCallback) comm
 							Format: "byte",
 						},
 					},
+					"caCertPem": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+					"apiServer": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},

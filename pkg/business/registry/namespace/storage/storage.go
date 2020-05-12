@@ -462,6 +462,9 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 	if cluster.Spec.Type == "Imported" {
 		return nil, fmt.Errorf("prj:%s, ns:%s, cluster %s is Imported, NOT support generating certificate", ns.Namespace, ns.Name, ns.Spec.ClusterName)
 	}
+	if len(cluster.Status.Addresses) == 0 {
+		return nil, fmt.Errorf("prj:%s, ns:%s, cluster %s has NO valid addresses", ns.Namespace, ns.Name, ns.Spec.ClusterName)
+	}
 	fieldSelector := fields.OneTermEqualSelector("clusterName", ns.Spec.ClusterName).String()
 	list, err := r.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
 	if err != nil {
@@ -526,6 +529,13 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 	}
 	keyBytes := x509.MarshalPKCS1PrivateKey(private)
 
+	address := cluster.Status.Addresses[0]
+	for _, one := range cluster.Status.Addresses {
+		if one.Type == "Advertise" {
+			address = one
+			break
+		}
+	}
 	ns.Status.Certificate = &business.NamespaceCert{
 		CertPem: pem.EncodeToMemory(&pem.Block{
 			Type:  "CERTIFICATE",
@@ -535,6 +545,8 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 			Type:  "PRIVATE KEY",
 			Bytes: keyBytes,
 		}),
+		CACertPem: credential.CACert,
+		APIServer: fmt.Sprintf("https://%s:%d", address.Host, address.Port),
 	}
 	return ns, nil
 }

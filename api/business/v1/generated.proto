@@ -194,6 +194,12 @@ message NamespaceCert {
 
   // +optional
   optional bytes keyPem = 2;
+
+  // +optional
+  optional bytes caCertPem = 3;
+
+  // +optional
+  optional string apiServer = 4;
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
