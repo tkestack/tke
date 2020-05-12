@@ -232,6 +232,10 @@ type NamespaceCert struct {
 	CertPem []byte `json:"certPem,omitempty" protobuf:"bytes,1,rep,name=certPem"`
 	// +optional
 	KeyPem []byte `json:"keyPem,omitempty" protobuf:"bytes,2,rep,name=keyPem"`
+	// +optional
+	CACertPem []byte `json:"caCertPem,omitempty" protobuf:"bytes,3,rep,name=caCertPem"`
+	// +optional
+	APIServer string `json:"apiServer,omitempty" protobuf:"bytes,4,rep,name=apiServer"`
 }
 
 // NamespacePhase indicates the status of namespace in project.

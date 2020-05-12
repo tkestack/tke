@@ -231,6 +231,10 @@ type NamespaceCert struct {
 	CertPem []byte
 	// +optional
 	KeyPem []byte
+	// +optional
+	CACertPem []byte
+	// +optional
+	APIServer string
 }
 
 // NamespacePhase indicates the status of namespace in project.
