@@ -13,7 +13,7 @@ require (
 	github.com/aws/aws-sdk-go v1.29.32
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/casbin/casbin/v2 v2.2.1
+	github.com/casbin/casbin/v2 v2.1.2
 	github.com/chartmuseum/storage v0.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.38.1-0.20200506070354-4231c1d4b313
