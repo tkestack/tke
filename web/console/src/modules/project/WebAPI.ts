@@ -685,21 +685,23 @@ export async function fetchNamespaceKubectlConfig(query: QueryState<NamespaceFil
     method,
     url
   };
-  let result;
+  let result = {
+    certPem: '',
+    keyPem: '',
+    caCertPem: '',
+    apiServer: ''
+  };
   try {
     let response = await reduceNetworkRequest(params);
-    if (response.code === 0) {
+    if (response.code === 0 && response.data.status.certificate) {
       result = {
-        certPem: response.data.status.certificate ? response.data.status.certificate.certPem : '',
-        keyPem: response.data.status.certificate ? response.data.status.certificate.keyPem : ''
+        certPem: response.data.status.certificate.certPem,
+        keyPem: response.data.status.certificate.keyPem,
+        caCertPem: response.data.status.certificate.caCertPem,
+        apiServer: response.data.status.certificate.apiServer
       };
     }
-  } catch (error) {
-    result = {
-      certPem: '',
-      keyPem: ''
-    };
-  }
+  } catch (error) {}
 
   return result;
 }

@@ -282,6 +282,10 @@ const restActions = {
         payload: initNamespaceEdition
       });
     };
+  },
+  getKubectlConfig: (certInfo: NamespaceCert, clusterId: string) => {
+    let config = `apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: ${certInfo.caCertPem}\n    server: ${certInfo.apiServer}\n  name: ${clusterId}\ncontexts:\n- context:\n    cluster: ${clusterId}\n    user: ${clusterId}-admin\n  name: ${clusterId}-context-default\ncurrent-context: ${clusterId}-context-default\nkind: Config\npreferences: {}\nusers:\n- name: ${clusterId}-admin\n  user:\n    certPem: ${certInfo.certPem}\n    keyPem: ${certInfo.keyPem}\n`;
+    return config;
   }
 };
 

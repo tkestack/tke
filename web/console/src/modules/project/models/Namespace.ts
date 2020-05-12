@@ -95,4 +95,6 @@ export interface NamespaceFilter {
 export interface NamespaceCert {
   certPem: string;
   keyPem: string;
+  caCertPem: string;
+  apiServer: string;
 }

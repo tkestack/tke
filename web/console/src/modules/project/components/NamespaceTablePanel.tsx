@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
-import { Bubble, Icon, Modal, TableColumn, Text, Button, Alert } from '@tea/component';
+import { Bubble, Icon, Modal, TableColumn, Text, Button, Alert, ExternalLink } from '@tea/component';
 import { TablePanel, FormPanel } from '@tencent/ff-component';
 import { bindActionCreators, isSuccessWorkflow, OperationState, WorkflowState } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
@@ -18,6 +18,8 @@ import { router } from '../router';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
 import { RootProps } from './ProjectApp';
 import { initValidator } from '@tencent/ff-validator';
+import { downloadKubeconfig } from '@helper/downloadText';
+import { namespaceActions } from '../actions/namespaceActions';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -289,74 +291,143 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
     );
   }
   private _renderKubectlDialog() {
-    let { namespaceKubectlConfig } = this.props;
+    let {
+      namespaceKubectlConfig,
+      namespace: { selection }
+    } = this.props;
     const cancel = () => {
       this.setState({ isShowKuctlDialog: false });
     };
     let certInfo = namespaceKubectlConfig.object && namespaceKubectlConfig.object.data;
+    let clusterId = selection && selection.spec.clusterName;
+    let kubectlConfig = certInfo ? namespaceActions.getKubectlConfig(certInfo, clusterId) : '';
     return (
       <Modal visible={this.state.isShowKuctlDialog} caption={t('访问凭证')} onClose={() => cancel()} size={700}>
         <Modal.Body>
           <FormPanel isNeedCard={false}>
-            <FormPanel.Item label={t('Key')}>
-              <div className="rich-textarea hide-number">
-                <Clip target={'#key'} className="copy-btn">
-                  {t('复制')}
-                </Clip>
-                <a
-                  href="javascript:void(0)"
-                  onClick={e => downloadCrt(certInfo && certInfo.keyPem ? window.atob(certInfo.keyPem) : '')}
-                  className="copy-btn"
-                  style={{ right: '50px' }}
-                >
-                  {t('下载')}
-                </a>
-                <div className="rich-content" contentEditable={false}>
-                  <p
-                    className="rich-text"
-                    id="key"
-                    style={{
-                      width: '475px',
-                      whiteSpace: 'pre-wrap',
-                      overflow: 'auto',
-                      height: '300px'
-                    }}
+            <FormPanel.Item text label={'Kubeconfig'}>
+              <div className="form-unit">
+                <div className="rich-textarea hide-number" style={{ width: '100%' }}>
+                  <Clip target={'#kubeconfig'} className="copy-btn">
+                    {t('复制')}
+                  </Clip>
+                  <a
+                    href="javascript:void(0)"
+                    onClick={e => downloadKubeconfig(kubectlConfig, `${clusterId}&{}-config`)}
+                    className="copy-btn"
+                    style={{ right: '50px' }}
                   >
-                    {certInfo && certInfo.keyPem ? window.atob(certInfo.keyPem) : ''}
-                  </p>
-                </div>
-              </div>
-            </FormPanel.Item>
-            <FormPanel.Item label={t('Cert')}>
-              <div className="rich-textarea hide-number">
-                <Clip target={'#certificationAuthority'} className="copy-btn">
-                  {t('复制')}
-                </Clip>
-                <a
-                  href="javascript:void(0)"
-                  onClick={e => downloadCrt(certInfo && certInfo.certPem ? window.atob(certInfo.certPem) : '')}
-                  className="copy-btn"
-                  style={{ right: '50px' }}
-                >
-                  {t('下载')}
-                </a>
-                <div className="rich-content" contentEditable={false}>
-                  <p
-                    className="rich-text"
-                    id="certificationAuthority"
-                    style={{
-                      width: '475px',
-                      whiteSpace: 'pre-wrap',
-                      overflow: 'auto',
-                      height: '300px'
-                    }}
-                  >
-                    {certInfo && certInfo.certPem ? window.atob(certInfo.certPem) : ''}
-                  </p>
+                    {t('下载')}
+                  </a>
+                  <div className="rich-content">
+                    <pre
+                      className="rich-text"
+                      id="kubeconfig"
+                      style={{
+                        whiteSpace: 'pre-wrap',
+                        overflow: 'auto',
+                        height: '300px'
+                      }}
+                    >
+                      {kubectlConfig}
+                    </pre>
+                  </div>
                 </div>
               </div>
             </FormPanel.Item>
           </FormPanel>
+          <div
+            style={{
+              textAlign: 'left',
+              borderTop: '1px solid #D1D2D3',
+              paddingTop: '10px',
+              marginTop: '10px',
+              color: '#444'
+            }}
+          >
+            <h3 style={{ marginBottom: '1em' }}>通过Kubectl连接Kubernetes集群操作说明:</h3>
+            <p style={{ marginBottom: '5px' }}>
+              1. 安装 Kubectl 客户端：从
+              <ExternalLink href="https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG.md">
+                Kubernetes 版本页面
+              </ExternalLink>
+              下载最新的 kubectl 客户端，并安装和设置 kubectl 客户端，具体可参考
+              <ExternalLink href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">
+                安装和设置 kubectl
+              </ExternalLink>
+              。
+            </p>
+            <p style={{ marginBottom: '5px' }}>2. 配置 Kubeconfig：</p>
+            <ul>
+              <li style={{ listStyle: 'disc', marginLeft: '15px' }}>
+                <p style={{ marginBottom: '5px' }}>
+                  若当前访问客户端尚未配置任何集群的访问凭证，即 ~/.kube/config 内容为空，可直接复制上方 kubeconfig
+                  访问凭证内容并粘贴入 ~/.kube/config 中。
+                </p>
+              </li>
+              <li style={{ listStyle: 'disc', marginLeft: '15px' }}>
+                <p style={{ marginBottom: '5px' }}>
+                  若当前访问客户端已配置了其他集群的访问凭证，你可下载上方 kubeconfig
+                  至指定位置，并执行以下指令以合并多个集群的 config。
+                </p>
+                <div className="rich-textarea hide-number" style={{ width: '100%' }}>
+                  <div className="rich-content">
+                    <Clip target={'#kubeconfig-merge'} className="copy-btn">
+                      复制
+                    </Clip>
+                    <pre
+                      className="rich-text"
+                      id="kubeconfig-merge"
+                      style={{
+                        whiteSpace: 'pre-wrap',
+                        overflow: 'auto'
+                      }}
+                    >
+                      KUBECONFIG=~/.kube/config:~/Downloads/{clusterId}-config kubectl config view --merge --flatten
+                      &gt; ~/.kube/config
+                      <br />
+                      export KUBECONFIG=~/.kube/config
+                    </pre>
+                  </div>
+                </div>
+                <p style={{ marginBottom: '5px' }}>
+                  其中，~/Downloads/{clusterId}-config 为本集群的 kubeconfig
+                  的文件路径，请替换为下载至本地后的实际路径。
+                </p>
+              </li>
+            </ul>
+            <p style={{ marginBottom: '5px' }}>3. 访问 Kubernetes 集群：</p>
+            <ul>
+              <li style={{ marginLeft: '15px' }}>
+                <p style={{ marginBottom: '5px' }}>
+                  完成 kubeconfig 配置后，执行以下指令查看并切换 context 以访问本集群：
+                </p>
+                <div className="rich-textarea hide-number" style={{ width: '100%' }}>
+                  <div className="rich-content">
+                    <Clip target={'#kubeconfig-visit'} className="copy-btn">
+                      复制
+                    </Clip>
+                    <pre
+                      className="rich-text"
+                      id="kubeconfig-visit"
+                      style={{
+                        whiteSpace: 'pre-wrap',
+                        overflow: 'auto'
+                      }}
+                    >
+                      kubectl config get-contexts
+                      <br />
+                      kubectl config use-context {clusterId}-context-default
+                    </pre>
+                  </div>
+                </div>
+                <p style={{ marginBottom: '5px' }}>
+                  而后可执行 kubectl get node
+                  测试是否可正常访问集群。如果无法连接请查看是否已经开启公网访问或内网访问入口，并确保访问客户端在指定的网络环境内。
+                </p>
+              </li>
+            </ul>
+          </div>
         </Modal.Body>
         <Modal.Footer>
           <Button type="primary" onClick={cancel}>
