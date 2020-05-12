@@ -36,6 +36,7 @@ export const isCanCreateLogStash = (clusterInfo: Cluster, logList: Log[], isDaem
   let canCreate = false,
     tip = '',
     ifLogDaemonset = false;
+  console.log('clusterInfo@isCanCreateLogStash = ', clusterInfo, 'isDaemonsetNormal@isCanCreateLogStash = ', isDaemonsetNormal);
   if (clusterInfo) {
     canCreate = includes(canCreateLogStash, clusterInfo.status.phase);
     tip = !canCreate ? canCreateTip.canNotCreate : '';
