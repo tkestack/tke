@@ -70,7 +70,7 @@ func (h *processor) UpdateRule(ctx context.Context, clusterName, groupName, reco
 
 	groups := ruleOp.SavePromRule()
 
-	err = h.saveRule(clusterName, groups)
+	err = h.saveRule(ctx, clusterName, groups)
 	if err != nil {
 		return errors.Wrapf(err, "failed to save configmap")
 	}
