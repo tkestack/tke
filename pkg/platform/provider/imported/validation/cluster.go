@@ -48,7 +48,7 @@ func ValidateCluster(ctx context.Context, cluster *types.Cluster) field.ErrorLis
 			allErrs = append(allErrs, field.Invalid(field.NewPath("name"), cluster.Name, fmt.Sprintf("get clientset error: %v", err)))
 		}
 		if cluster.Status.Phase == platform.ClusterInitializing {
-			allErrs = append(allErrs, ValidateClusterMark(cluster.Name, field.NewPath("name"), client)...)
+			allErrs = append(allErrs, ValidateClusterMark(ctx, cluster.Name, field.NewPath("name"), client)...)
 			allErrs = append(allErrs, ValidateClusterVersion(field.NewPath("name"), client)...)
 		}
 	}
@@ -150,10 +150,10 @@ func ValidatClusterCredentialRef(ctx context.Context, cluster *types.Cluster, fl
 }
 
 // ValidateClusterMark validates a given cluster had imported already.
-func ValidateClusterMark(clusterName string, fldPath *field.Path, client kubernetes.Interface) field.ErrorList {
+func ValidateClusterMark(ctx context.Context, clusterName string, fldPath *field.Path, client kubernetes.Interface) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	_, err := mark.Get(client)
+	_, err := mark.Get(ctx, client)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			allErrs = append(allErrs, field.InternalError(fldPath, err))

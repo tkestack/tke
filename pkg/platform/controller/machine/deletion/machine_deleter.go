@@ -36,7 +36,7 @@ import (
 
 // MachineDeleterInterface to delete a machine with all resources in it.
 type MachineDeleterInterface interface {
-	Delete(name string) error
+	Delete(ctx context.Context, name string) error
 }
 
 // NewMachineDeleter creates the machineeleter object and returns it.
@@ -81,7 +81,7 @@ type machineDeleter struct {
 // Returns ResourcesRemainingError if it deleted some resources but needs
 // to wait for them to go away.
 // Caller is expected to keep calling this until it succeeds.
-func (d *machineDeleter) Delete(name string) error {
+func (d *machineDeleter) Delete(ctx context.Context, name string) error {
 	// Multiple controllers may edit a machine during termination
 	// first get the latest state of the machine before proceeding
 	// if the machine was deleted already, don't do anything
@@ -119,7 +119,7 @@ func (d *machineDeleter) Delete(name string) error {
 	}
 
 	// there may still be content for us to remove
-	err = d.deleteAllContent(machine)
+	err = d.deleteAllContent(ctx, machine)
 	if err != nil {
 		return err
 	}
@@ -236,7 +236,7 @@ func (d *machineDeleter) finalizeMachine(machine *v1.Machine) (*v1.Machine, erro
 	return machine, err
 }
 
-type deleteResourceFunc func(deleter *machineDeleter, machine *v1.Machine) error
+type deleteResourceFunc func(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteMachineProvider,
@@ -244,12 +244,12 @@ var deleteResourceFuncs = []deleteResourceFunc{
 }
 
 // deleteAllContent will use the client to delete each resource identified in machine.
-func (d *machineDeleter) deleteAllContent(machine *v1.Machine) error {
+func (d *machineDeleter) deleteAllContent(ctx context.Context, machine *v1.Machine) error {
 	log.Debug("Machine controller - deleteAllContent", log.String("machineName", machine.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
-		err := deleteFunc(d, machine)
+		err := deleteFunc(ctx, d, machine)
 		if err != nil {
 			// If there is an error, hold on to it but proceed with all the remaining resource.
 			errs = append(errs, err)
@@ -264,7 +264,7 @@ func (d *machineDeleter) deleteAllContent(machine *v1.Machine) error {
 	return nil
 }
 
-func deleteMachineProvider(deleter *machineDeleter, machine *v1.Machine) error {
+func deleteMachineProvider(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error {
 	log.Info("Machine controller - deleteMachineProvider", log.String("machineName", machine.Name))
 
 	provider, err := machineprovider.GetProvider(machine.Spec.Type)
@@ -276,10 +276,10 @@ func deleteMachineProvider(deleter *machineDeleter, machine *v1.Machine) error {
 		return err
 	}
 
-	return provider.OnDelete(machine, cluster)
+	return provider.OnDelete(ctx, machine, cluster)
 }
 
-func deleteNode(deleter *machineDeleter, machine *v1.Machine) error {
+func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error {
 	log.Debug("Machine controller - deleteNode", log.String("machineName", machine.Name))
 
 	cluster, err := typesv1.GetClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)

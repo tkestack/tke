@@ -19,6 +19,7 @@
 package tappcontroller
 
 import (
+	"context"
 	normalerrors "errors"
 	"fmt"
 	"reflect"
@@ -199,26 +200,26 @@ func (c *Controller) syncTappController(key string) error {
 	switch {
 	case errors.IsNotFound(err):
 		log.Info("Tapp controller has been deleted. Attempting to cleanup resources", log.String("tappControllerName", key))
-		err = c.processTappControllerDeletion(key)
+		err = c.processTappControllerDeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve tapp controller from store", log.String("tappControllerName", key), log.Err(err))
 	default:
 		cachedTappController := c.cache.getOrCreate(key)
-		err = c.processTappControllerUpdate(cachedTappController, tappController, key)
+		err = c.processTappControllerUpdate(context.Background(), cachedTappController, tappController, key)
 	}
 	return err
 }
 
-func (c *Controller) processTappControllerDeletion(key string) error {
+func (c *Controller) processTappControllerDeletion(ctx context.Context, key string) error {
 	cachedTappController, ok := c.cache.get(key)
 	if !ok {
 		log.Error("Tapp controller not in cache even though the watcher thought it was. Ignoring the deletion", log.String("tappControllerName", key))
 		return nil
 	}
-	return c.processTappControllerDelete(cachedTappController, key)
+	return c.processTappControllerDelete(ctx, cachedTappController, key)
 }
 
-func (c *Controller) processTappControllerDelete(cachedTappController *cachedTappController, key string) error {
+func (c *Controller) processTappControllerDelete(ctx context.Context, cachedTappController *cachedTappController, key string) error {
 	log.Info("Tapp controller will be dropped", log.String("tappControllerName", key))
 
 	if c.cache.Exist(key) {
@@ -232,19 +233,19 @@ func (c *Controller) processTappControllerDelete(cachedTappController *cachedTap
 	}
 
 	tappController := cachedTappController.state
-	return c.uninstallTappController(tappController)
+	return c.uninstallTappController(ctx, tappController)
 }
 
-func (c *Controller) processTappControllerUpdate(cachedTappController *cachedTappController, tappController *v1.TappController, key string) error {
+func (c *Controller) processTappControllerUpdate(ctx context.Context, cachedTappController *cachedTappController, tappController *v1.TappController, key string) error {
 	if cachedTappController.state != nil {
 		// exist and the cluster name changed
 		if cachedTappController.state.UID != tappController.UID {
-			if err := c.processTappControllerDelete(cachedTappController, key); err != nil {
+			if err := c.processTappControllerDelete(ctx, cachedTappController, key); err != nil {
 				return err
 			}
 		}
 	}
-	err := c.createTappControllerIfNeeded(key, cachedTappController, tappController)
+	err := c.createTappControllerIfNeeded(ctx, key, cachedTappController, tappController)
 	if err != nil {
 		return err
 	}
@@ -255,23 +256,23 @@ func (c *Controller) processTappControllerUpdate(cachedTappController *cachedTap
 	return nil
 }
 
-func (c *Controller) tappControllerReinitialize(key string, cachedTappController *cachedTappController, tappController *v1.TappController) func() (bool, error) {
+func (c *Controller) tappControllerReinitialize(ctx context.Context, key string, cachedTappController *cachedTappController, tappController *v1.TappController) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
-		err := c.installTappController(tappController)
+		err := c.installTappController(ctx, tappController)
 		if err == nil {
 			tappController = tappController.DeepCopy()
 			tappController.Status.Phase = v1.AddonPhaseChecking
 			tappController.Status.Reason = ""
 			tappController.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(tappController)
+			err = c.persistUpdate(ctx, tappController)
 			if err != nil {
 				return true, err
 			}
 			return true, nil
 		}
 		// First, rollback the tappController
-		if err := c.uninstallTappController(tappController); err != nil {
+		if err := c.uninstallTappController(ctx, tappController); err != nil {
 			log.Error("Uninstall tapp controller error.")
 			return true, err
 		}
@@ -279,7 +280,7 @@ func (c *Controller) tappControllerReinitialize(key string, cachedTappController
 			tappController = tappController.DeepCopy()
 			tappController.Status.Phase = v1.AddonPhaseFailed
 			tappController.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", maxRetryCount)
-			err := c.persistUpdate(tappController)
+			err := c.persistUpdate(ctx, tappController)
 			if err != nil {
 				log.Error("Update tapp controller error.")
 				return true, err
@@ -292,7 +293,7 @@ func (c *Controller) tappControllerReinitialize(key string, cachedTappController
 		tappController.Status.Reason = err.Error()
 		tappController.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
 		tappController.Status.RetryCount++
-		err = c.persistUpdate(tappController)
+		err = c.persistUpdate(ctx, tappController)
 		if err != nil {
 			return true, err
 		}
@@ -300,18 +301,18 @@ func (c *Controller) tappControllerReinitialize(key string, cachedTappController
 	}
 }
 
-func (c *Controller) createTappControllerIfNeeded(key string, cachedTappController *cachedTappController, tappController *v1.TappController) error {
+func (c *Controller) createTappControllerIfNeeded(ctx context.Context, key string, cachedTappController *cachedTappController, tappController *v1.TappController) error {
 	switch tappController.Status.Phase {
 	case v1.AddonPhaseInitializing:
 		log.Error("Tapp controller will be created", log.String("tappControllerName", key))
-		err := c.installTappController(tappController)
+		err := c.installTappController(ctx, tappController)
 		if err == nil {
 			tappController = tappController.DeepCopy()
 			tappController.Status.Version = tappController.Spec.Version
 			tappController.Status.Phase = v1.AddonPhaseChecking
 			tappController.Status.Reason = ""
 			tappController.Status.RetryCount = 0
-			return c.persistUpdate(tappController)
+			return c.persistUpdate(ctx, tappController)
 		}
 		tappController = tappController.DeepCopy()
 		tappController.Status.Version = tappController.Spec.Version
@@ -319,7 +320,7 @@ func (c *Controller) createTappControllerIfNeeded(key string, cachedTappControll
 		tappController.Status.Reason = err.Error()
 		tappController.Status.RetryCount = 1
 		tappController.Status.LastReInitializingTimestamp = metav1.Now()
-		return c.persistUpdate(tappController)
+		return c.persistUpdate(ctx, tappController)
 	case v1.AddonPhaseReinitializing:
 		var interval = time.Since(tappController.Status.LastReInitializingTimestamp.Time)
 		var waitTime time.Duration
@@ -328,14 +329,14 @@ func (c *Controller) createTappControllerIfNeeded(key string, cachedTappControll
 		} else {
 			waitTime = timeOut - interval
 		}
-		go wait.Poll(waitTime, timeOut, c.tappControllerReinitialize(key, cachedTappController, tappController))
+		go wait.Poll(waitTime, timeOut, c.tappControllerReinitialize(ctx, key, cachedTappController, tappController))
 	case v1.AddonPhaseChecking:
 		if _, ok := c.checking.Load(key); !ok {
 			c.checking.Store(key, true)
 			initDelay := time.Now().Add(5 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkTappControllerStatus(tappController, key, initDelay))
+				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkTappControllerStatus(ctx, tappController, key, initDelay))
 			}()
 		}
 	case v1.AddonPhaseRunning:
@@ -345,11 +346,11 @@ func (c *Controller) createTappControllerIfNeeded(key string, cachedTappControll
 			tappController.Status.Phase = v1.AddonPhaseUpgrading
 			tappController.Status.Reason = ""
 			tappController.Status.RetryCount = 0
-			return c.persistUpdate(tappController)
+			return c.persistUpdate(ctx, tappController)
 		}
 		if _, ok := c.health.Load(key); !ok {
 			c.health.Store(key, true)
-			go wait.PollImmediateUntil(5*time.Minute, c.watchTappControllerHealth(key), c.stopCh)
+			go wait.PollImmediateUntil(5*time.Minute, c.watchTappControllerHealth(ctx, key), c.stopCh)
 		}
 	case v1.AddonPhaseUpgrading:
 		if _, ok := c.upgrading.Load(key); !ok {
@@ -357,7 +358,7 @@ func (c *Controller) createTappControllerIfNeeded(key string, cachedTappControll
 			upgradeDelay := time.Now().Add(timeOut)
 			go func() {
 				defer c.upgrading.Delete(key)
-				wait.PollImmediate(5*time.Second, timeOut, c.upgradeTappController(tappController, key, upgradeDelay))
+				wait.PollImmediate(5*time.Second, timeOut, c.upgradeTappController(ctx, tappController, key, upgradeDelay))
 			}()
 		}
 	case v1.AddonPhaseFailed:
@@ -373,29 +374,29 @@ func needUpgrade(tappController *v1.TappController) bool {
 	return tappController.Spec.Version != tappController.Status.Version
 }
 
-func (c *Controller) installTappController(tappController *v1.TappController) error {
-	cluster, err := c.client.PlatformV1().Clusters().Get(tappController.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) installTappController(ctx context.Context, tappController *v1.TappController) error {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, tappController.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 	// ServiceAccount TappController
-	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccountTappController()); err != nil {
+	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountTappController(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ClusterRoleBinding TappController
-	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(crbTappController()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, crbTappController(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Deployment TappController
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deploymentTappController(images.Get(tappController.Spec.Version))); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentTappController(images.Get(tappController.Spec.Version)), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Service TappController
-	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(serviceTappController()); err != nil {
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, serviceTappController(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 
@@ -505,26 +506,26 @@ func serviceTappController() *corev1.Service {
 
 func int32Ptr(i int32) *int32 { return &i }
 
-func (c *Controller) uninstallTappController(tappController *v1.TappController) error {
-	cluster, err := c.client.PlatformV1().Clusters().Get(tappController.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) uninstallTappController(ctx context.Context, tappController *v1.TappController) error {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, tappController.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 	// Deployment TappController
-	deployTappControllerErr := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(deployTappControllerName, &metav1.DeleteOptions{})
+	deployTappControllerErr := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, deployTappControllerName, metav1.DeleteOptions{})
 	// ClusterRoleBinding TappController
-	crbTappControllerErr := kubeClient.RbacV1().ClusterRoleBindings().Delete(crbTappControllerName, &metav1.DeleteOptions{})
+	crbTappControllerErr := kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, crbTappControllerName, metav1.DeleteOptions{})
 	// ServiceAccount TappController
-	svcAccountTappControllerErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(svcAccountTappControllerName, &metav1.DeleteOptions{})
+	svcAccountTappControllerErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, svcAccountTappControllerName, metav1.DeleteOptions{})
 	// Service TappController
-	svcTappControllerErr := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(svcTappControllerName, &metav1.DeleteOptions{})
+	svcTappControllerErr := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, svcTappControllerName, metav1.DeleteOptions{})
 
 	if (deployTappControllerErr != nil && !errors.IsNotFound(deployTappControllerErr)) ||
 		(crbTappControllerErr != nil && !errors.IsNotFound(crbTappControllerErr)) ||
@@ -535,7 +536,7 @@ func (c *Controller) uninstallTappController(tappController *v1.TappController) 
 	return nil
 }
 
-func (c *Controller) watchTappControllerHealth(key string) func() (bool, error) {
+func (c *Controller) watchTappControllerHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start check tapp controller in cluster health", log.String("tappControllerName", key))
 		tappController, err := c.lister.Get(key)
@@ -543,7 +544,7 @@ func (c *Controller) watchTappControllerHealth(key string) func() (bool, error) 
 			return false, err
 		}
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(tappController.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, tappController.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -554,16 +555,16 @@ func (c *Controller) watchTappControllerHealth(key string) func() (bool, error) 
 			log.Info("Health check over.")
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
 		// TODO: check tapp controller service
-		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(deployTappControllerName, metav1.GetOptions{}); err != nil {
+		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, deployTappControllerName, metav1.GetOptions{}); err != nil {
 			tappController = tappController.DeepCopy()
 			tappController.Status.Phase = v1.AddonPhaseFailed
 			tappController.Status.Reason = "Tapp controller is not healthy."
-			if err = c.persistUpdate(tappController); err != nil {
+			if err = c.persistUpdate(ctx, tappController); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -572,10 +573,10 @@ func (c *Controller) watchTappControllerHealth(key string) func() (bool, error) 
 	}
 }
 
-func (c *Controller) checkTappControllerStatus(tappController *v1.TappController, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) checkTappControllerStatus(ctx context.Context, tappController *v1.TappController, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check tapp controller health", log.String("tappControllerName", tappController.Name))
-		cluster, err := c.client.PlatformV1().Clusters().Get(tappController.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, tappController.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -586,7 +587,7 @@ func (c *Controller) checkTappControllerStatus(tappController *v1.TappController
 			log.Debug("Checking over tapp controller addon status")
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -594,13 +595,13 @@ func (c *Controller) checkTappControllerStatus(tappController *v1.TappController
 		if err != nil {
 			return false, err
 		}
-		if deploy, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(deployTappControllerName, metav1.GetOptions{}); err != nil ||
+		if deploy, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, deployTappControllerName, metav1.GetOptions{}); err != nil ||
 			(deploy.Spec.Replicas != nil && deploy.Status.AvailableReplicas < *deploy.Spec.Replicas) {
 			if time.Now().After(initDelay) {
 				tappController = tappController.DeepCopy()
 				tappController.Status.Phase = v1.AddonPhaseFailed
 				tappController.Status.Reason = "Tapp controller is not healthy."
-				if err = c.persistUpdate(tappController); err != nil {
+				if err = c.persistUpdate(ctx, tappController); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -610,17 +611,17 @@ func (c *Controller) checkTappControllerStatus(tappController *v1.TappController
 		tappController = tappController.DeepCopy()
 		tappController.Status.Phase = v1.AddonPhaseRunning
 		tappController.Status.Reason = ""
-		if err = c.persistUpdate(tappController); err != nil {
+		if err = c.persistUpdate(ctx, tappController); err != nil {
 			return false, err
 		}
 		return true, nil
 	}
 }
 
-func (c *Controller) upgradeTappController(tappController *v1.TappController, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) upgradeTappController(ctx context.Context, tappController *v1.TappController, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to upgrade tapp controller", log.String("tappControllerName", tappController.Name))
-		cluster, err := c.client.PlatformV1().Clusters().Get(tappController.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, tappController.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -631,7 +632,7 @@ func (c *Controller) upgradeTappController(tappController *v1.TappController, ke
 			log.Debug("Upgrading tapp controller", log.String("tappControllerName", tappController.Name))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -642,12 +643,12 @@ func (c *Controller) upgradeTappController(tappController *v1.TappController, ke
 		newImage := images.Get(tappController.Spec.Version).TappController.FullName()
 
 		patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"%s"}]`, newImage)
-		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Patch(deployTappControllerName, types.JSONPatchType, []byte(patch)); err != nil {
+		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Patch(ctx, deployTappControllerName, types.JSONPatchType, []byte(patch), metav1.PatchOptions{}); err != nil {
 			if time.Now().After(initDelay) {
 				tappController = tappController.DeepCopy()
 				tappController.Status.Phase = v1.AddonPhaseFailed
 				tappController.Status.Reason = "Failed to upgrade tapp controller."
-				if err = c.persistUpdate(tappController); err != nil {
+				if err = c.persistUpdate(ctx, tappController); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -658,17 +659,17 @@ func (c *Controller) upgradeTappController(tappController *v1.TappController, ke
 		tappController.Status.Version = tappController.Spec.Version
 		tappController.Status.Phase = v1.AddonPhaseChecking
 		tappController.Status.Reason = ""
-		if err = c.persistUpdate(tappController); err != nil {
+		if err = c.persistUpdate(ctx, tappController); err != nil {
 			return false, err
 		}
 		return true, nil
 	}
 }
 
-func (c *Controller) persistUpdate(tappController *v1.TappController) error {
+func (c *Controller) persistUpdate(ctx context.Context, tappController *v1.TappController) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.PlatformV1().TappControllers().UpdateStatus(tappController)
+		_, err = c.client.PlatformV1().TappControllers().UpdateStatus(ctx, tappController, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

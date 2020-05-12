@@ -19,6 +19,7 @@
 package ipam
 
 import (
+	"context"
 	normalerrors "errors"
 	"fmt"
 	"reflect"
@@ -196,26 +197,26 @@ func (c *Controller) syncIPAM(key string) error {
 	switch {
 	case errors.IsNotFound(err):
 		log.Info("IPAM has been deleted. Attempting to cleanup resources", log.String("ipam", key))
-		err = c.processIPAMDeletion(key)
+		err = c.processIPAMDeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve ipam from store", log.String("ipam", key), log.Err(err))
 	default:
 		cachedIPAM = c.cache.getOrCreate(key)
-		err = c.processIPAMUpdate(cachedIPAM, ipam, key)
+		err = c.processIPAMUpdate(context.Background(), cachedIPAM, ipam, key)
 	}
 	return err
 }
 
-func (c *Controller) processIPAMDeletion(key string) error {
+func (c *Controller) processIPAMDeletion(ctx context.Context, key string) error {
 	cachedIPAM, ok := c.cache.get(key)
 	if !ok {
 		log.Error("ipam not in cache even though the watcher thought it was. Ignoring the deletion", log.String("ipamName", key))
 		return nil
 	}
-	return c.processIPAMDelete(cachedIPAM, key)
+	return c.processIPAMDelete(ctx, cachedIPAM, key)
 }
 
-func (c *Controller) processIPAMDelete(cachedIPAM *cachedIPAM, key string) error {
+func (c *Controller) processIPAMDelete(ctx context.Context, cachedIPAM *cachedIPAM, key string) error {
 	log.Info("ipam will be dropped", log.String("ipamName", key))
 
 	if c.cache.Exist(key) {
@@ -229,19 +230,19 @@ func (c *Controller) processIPAMDelete(cachedIPAM *cachedIPAM, key string) error
 	}
 
 	ipam := cachedIPAM.state
-	return c.uninstallIPAM(ipam)
+	return c.uninstallIPAM(ctx, ipam)
 }
 
-func (c *Controller) processIPAMUpdate(cachedIPAM *cachedIPAM, ipam *v1.IPAM, key string) error {
+func (c *Controller) processIPAMUpdate(ctx context.Context, cachedIPAM *cachedIPAM, ipam *v1.IPAM, key string) error {
 	if cachedIPAM.state != nil {
 		// exist and the cluster name changed
 		if cachedIPAM.state.UID != ipam.UID {
-			if err := c.processIPAMDelete(cachedIPAM, key); err != nil {
+			if err := c.processIPAMDelete(ctx, cachedIPAM, key); err != nil {
 				return err
 			}
 		}
 	}
-	err := c.createIPAMIfNeeded(key, cachedIPAM, ipam)
+	err := c.createIPAMIfNeeded(ctx, key, cachedIPAM, ipam)
 	if err != nil {
 		return err
 	}
@@ -252,16 +253,16 @@ func (c *Controller) processIPAMUpdate(cachedIPAM *cachedIPAM, ipam *v1.IPAM, ke
 	return nil
 }
 
-func (c *Controller) ipamReinitialize(key string, cachedIPAM *cachedIPAM, ipam *v1.IPAM) func() (bool, error) {
+func (c *Controller) ipamReinitialize(ctx context.Context, key string, cachedIPAM *cachedIPAM, ipam *v1.IPAM) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
-		err := c.installIPAM(ipam)
+		err := c.installIPAM(ctx, ipam)
 		if err == nil {
 			ipam = ipam.DeepCopy()
 			ipam.Status.Phase = v1.AddonPhaseChecking
 			ipam.Status.Reason = ""
 			ipam.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(ipam)
+			err = c.persistUpdate(ctx, ipam)
 			if err != nil {
 				return true, err
 			}
@@ -269,7 +270,7 @@ func (c *Controller) ipamReinitialize(key string, cachedIPAM *cachedIPAM, ipam *
 		}
 		log.Errorf("fail to re-install galaxy-ipam %v", err)
 		// First, rollback the ipam
-		if err := c.uninstallIPAM(ipam); err != nil {
+		if err := c.uninstallIPAM(ctx, ipam); err != nil {
 			log.Error("Uninstall ipam error.")
 			return true, err
 		}
@@ -277,7 +278,7 @@ func (c *Controller) ipamReinitialize(key string, cachedIPAM *cachedIPAM, ipam *
 			ipam = ipam.DeepCopy()
 			ipam.Status.Phase = v1.AddonPhaseFailed
 			ipam.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", ipamMaxRetryCount)
-			err := c.persistUpdate(ipam)
+			err := c.persistUpdate(ctx, ipam)
 			if err != nil {
 				log.Error("Update ipam error.")
 				return true, err
@@ -290,7 +291,7 @@ func (c *Controller) ipamReinitialize(key string, cachedIPAM *cachedIPAM, ipam *
 		ipam.Status.Reason = err.Error()
 		ipam.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
 		ipam.Status.RetryCount++
-		err = c.persistUpdate(ipam)
+		err = c.persistUpdate(ctx, ipam)
 		if err != nil {
 			return true, err
 		}
@@ -298,17 +299,17 @@ func (c *Controller) ipamReinitialize(key string, cachedIPAM *cachedIPAM, ipam *
 	}
 }
 
-func (c *Controller) createIPAMIfNeeded(key string, cachedIPAM *cachedIPAM, ipam *v1.IPAM) error {
+func (c *Controller) createIPAMIfNeeded(ctx context.Context, key string, cachedIPAM *cachedIPAM, ipam *v1.IPAM) error {
 	switch ipam.Status.Phase {
 	case v1.AddonPhaseInitializing:
 		log.Error("IPAM will be created", log.String("ipam", key))
-		err := c.installIPAM(ipam)
+		err := c.installIPAM(ctx, ipam)
 		if err == nil {
 			ipam = ipam.DeepCopy()
 			ipam.Status.Phase = v1.AddonPhaseChecking
 			ipam.Status.Reason = ""
 			ipam.Status.RetryCount = 0
-			return c.persistUpdate(ipam)
+			return c.persistUpdate(ctx, ipam)
 		}
 		log.Errorf("fail to create galaxy-ipam %v", err)
 		ipam = ipam.DeepCopy()
@@ -316,7 +317,7 @@ func (c *Controller) createIPAMIfNeeded(key string, cachedIPAM *cachedIPAM, ipam
 		ipam.Status.Reason = err.Error()
 		ipam.Status.RetryCount = 1
 		ipam.Status.LastReInitializingTimestamp = metav1.Now()
-		return c.persistUpdate(ipam)
+		return c.persistUpdate(ctx, ipam)
 	case v1.AddonPhaseReinitializing:
 		var interval = time.Since(ipam.Status.LastReInitializingTimestamp.Time)
 		var waitTime time.Duration
@@ -325,72 +326,72 @@ func (c *Controller) createIPAMIfNeeded(key string, cachedIPAM *cachedIPAM, ipam
 		} else {
 			waitTime = ipamTimeOut - interval
 		}
-		go wait.Poll(waitTime, ipamTimeOut, c.ipamReinitialize(key, cachedIPAM, ipam))
+		go wait.Poll(waitTime, ipamTimeOut, c.ipamReinitialize(ctx, key, cachedIPAM, ipam))
 	case v1.AddonPhaseChecking:
 		if !c.checking.Exist(key) {
 			c.checking.Set(key, ipam)
 			initDelay := time.Now().Add(5 * time.Minute)
-			go wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkIPAMStatus(ipam, key, initDelay))
+			go wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkIPAMStatus(ctx, ipam, key, initDelay))
 		}
 	case v1.AddonPhaseRunning:
 		if !c.health.Exist(key) {
 			c.health.Set(key, ipam)
-			go wait.PollImmediateUntil(5*time.Minute, c.watchIPAMHealth(key), c.stopCh)
+			go wait.PollImmediateUntil(5*time.Minute, c.watchIPAMHealth(ctx, key), c.stopCh)
 		}
 	case v1.AddonPhaseFailed:
 		log.Info("IPAM is error", log.String("ipam", key))
 		if !c.health.Exist(key) {
 			c.health.Set(key, ipam)
-			go wait.PollImmediateUntil(5*time.Minute, c.watchIPAMHealth(key), c.stopCh)
+			go wait.PollImmediateUntil(5*time.Minute, c.watchIPAMHealth(ctx, key), c.stopCh)
 		}
 	}
 	return nil
 }
 
-func (c *Controller) installIPAM(ipam *v1.IPAM) error {
-	cluster, err := c.client.PlatformV1().Clusters().Get(ipam.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) installIPAM(ctx context.Context, ipam *v1.IPAM) error {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, ipam.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
 	// ServiceAccount IPAM
-	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccountIPAM()); err != nil {
+	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountIPAM(), metav1.CreateOptions{}); err != nil {
 		if !errors.IsAlreadyExists(err) {
 			// flannel service account will create automatically
 			return err
 		}
 	}
 	// ClusterRole IPAM
-	if _, err := kubeClient.RbacV1().ClusterRoles().Create(crIPAM()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, crIPAM(), metav1.CreateOptions{}); err != nil {
 		if !errors.IsAlreadyExists(err) {
 			// flannel service account will create automatically
 			return err
 		}
 	}
 	// ClusterRoleBinding IPAM
-	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(crbIPAM()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, crbIPAM(), metav1.CreateOptions{}); err != nil {
 		if !errors.IsAlreadyExists(err) {
 			// flannel service account will create automatically
 			return err
 		}
 	}
 	// ConfigMap IPAM
-	if _, err := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(cmIPAM()); err != nil {
+	if _, err := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, cmIPAM(), metav1.CreateOptions{}); err != nil {
 		if !errors.IsAlreadyExists(err) {
 			// flannel service account will create automatically
 			return err
 		}
 	}
 	// Deployment IPAM
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deploymentIPAM(ipam.Spec.Version)); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentIPAM(ipam.Spec.Version), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Service IPAM
-	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(serviceIPAM()); err != nil {
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, serviceIPAM(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	log.Info("ipam installed")
@@ -642,30 +643,30 @@ func int32Ptr(i int32) *int32 { return &i }
 
 func int64Ptr(i int64) *int64 { return &i }
 
-func (c *Controller) uninstallIPAM(ipam *v1.IPAM) error {
-	cluster, err := c.client.PlatformV1().Clusters().Get(ipam.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) uninstallIPAM(ctx context.Context, ipam *v1.IPAM) error {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, ipam.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 	// Service ipam
-	svcIPAMErr := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(svcIPAMAPIName, &metav1.DeleteOptions{})
+	svcIPAMErr := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, svcIPAMAPIName, metav1.DeleteOptions{})
 	// Deployment ipam
-	deployIPAMErr := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(deployIPAMName, &metav1.DeleteOptions{})
+	deployIPAMErr := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, deployIPAMName, metav1.DeleteOptions{})
 	// configMap ipam
-	cmIPAMErr := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Delete(cmIPAMName, &metav1.DeleteOptions{})
+	cmIPAMErr := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Delete(ctx, cmIPAMName, metav1.DeleteOptions{})
 	// ClusterRoleBinding ipam
-	crbIPAMErr := kubeClient.RbacV1().ClusterRoleBindings().Delete(crbIPAMName, &metav1.DeleteOptions{})
+	crbIPAMErr := kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, crbIPAMName, metav1.DeleteOptions{})
 	// ClusterRole ipam
-	crIPAMErr := kubeClient.RbacV1().ClusterRoles().Delete(crIPAMName, &metav1.DeleteOptions{})
+	crIPAMErr := kubeClient.RbacV1().ClusterRoles().Delete(ctx, crIPAMName, metav1.DeleteOptions{})
 	// ServiceAccount ipam
-	svcAccountIPAMErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(svcAccountIPAMName, &metav1.DeleteOptions{})
+	svcAccountIPAMErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, svcAccountIPAMName, metav1.DeleteOptions{})
 
 	if (svcIPAMErr != nil && !errors.IsNotFound(svcIPAMErr)) ||
 		(deployIPAMErr != nil && !errors.IsNotFound(deployIPAMErr)) ||
@@ -678,7 +679,7 @@ func (c *Controller) uninstallIPAM(ipam *v1.IPAM) error {
 	return nil
 }
 
-func (c *Controller) watchIPAMHealth(key string) func() (bool, error) {
+func (c *Controller) watchIPAMHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start check ipam in cluster health", log.String("cluster", key))
 		ipam, err := c.lister.Get(key)
@@ -686,7 +687,7 @@ func (c *Controller) watchIPAMHealth(key string) func() (bool, error) {
 			return false, err
 		}
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(ipam.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, ipam.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -697,18 +698,18 @@ func (c *Controller) watchIPAMHealth(key string) func() (bool, error) {
 			log.Info("health check over.")
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
-		_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(deployIPAMName, metav1.GetOptions{})
+		_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, deployIPAMName, metav1.GetOptions{})
 		if err != nil {
 			log.Errorf("fail to get ipam deployment %v", err)
 			return false, err
 		}
 
 		ipam = ipam.DeepCopy()
-		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcIPAMAPIName, "9040", `/healthy`, nil).DoRaw(); err != nil {
+		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcIPAMAPIName, "9040", `/healthy`, nil).DoRaw(ctx); err != nil {
 			ipam.Status.Phase = v1.AddonPhaseFailed
 			ipam.Status.Reason = "IPAM is not healthy."
 			log.Warnf("fail to access ipam %s's /healthy, %v", ipam.Name, err)
@@ -716,17 +717,17 @@ func (c *Controller) watchIPAMHealth(key string) func() (bool, error) {
 			ipam.Status.Phase = v1.AddonPhaseRunning
 			ipam.Status.Reason = ""
 		}
-		if err = c.persistUpdate(ipam); err != nil {
+		if err = c.persistUpdate(ctx, ipam); err != nil {
 			return false, err
 		}
 		return false, nil
 	}
 }
 
-func (c *Controller) checkIPAMStatus(ipam *v1.IPAM, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) checkIPAMStatus(ctx context.Context, ipam *v1.IPAM, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check ipam health", log.String("clusterName", ipam.Spec.ClusterName))
-		cluster, err := c.client.PlatformV1().Clusters().Get(ipam.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, ipam.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -737,7 +738,7 @@ func (c *Controller) checkIPAMStatus(ipam *v1.IPAM, key string, initDelay time.T
 			log.Debug("checking over ipam addon status")
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -746,7 +747,7 @@ func (c *Controller) checkIPAMStatus(ipam *v1.IPAM, key string, initDelay time.T
 			return false, err
 		}
 
-		_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(deployIPAMName, metav1.GetOptions{})
+		_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, deployIPAMName, metav1.GetOptions{})
 		if err != nil {
 			log.Errorf("fail to create ipam %v", err)
 			return false, err
@@ -755,7 +756,7 @@ func (c *Controller) checkIPAMStatus(ipam *v1.IPAM, key string, initDelay time.T
 		ipam = ipam.DeepCopy()
 		ipam.Status.Phase = v1.AddonPhaseRunning
 		ipam.Status.Reason = ""
-		if err = c.persistUpdate(ipam); err != nil {
+		if err = c.persistUpdate(ctx, ipam); err != nil {
 			return false, err
 		}
 		c.checking.Del(key)
@@ -763,10 +764,10 @@ func (c *Controller) checkIPAMStatus(ipam *v1.IPAM, key string, initDelay time.T
 	}
 }
 
-func (c *Controller) persistUpdate(ipam *v1.IPAM) error {
+func (c *Controller) persistUpdate(ctx context.Context, ipam *v1.IPAM) error {
 	var err error
 	for i := 0; i < ipamMaxRetryCount; i++ {
-		_, err = c.client.PlatformV1().IPAMs().UpdateStatus(ipam)
+		_, err = c.client.PlatformV1().IPAMs().UpdateStatus(ctx, ipam, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

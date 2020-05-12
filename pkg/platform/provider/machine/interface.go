@@ -19,6 +19,7 @@
 package machine
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -53,14 +54,14 @@ type Provider interface {
 	PreCreate(machine *platform.Machine) error
 	AfterCreate(machine *platform.Machine) error
 
-	OnCreate(machine *platformv1.Machine, cluster *typesv1.Cluster) error
-	OnUpdate(machine *platformv1.Machine, cluster *typesv1.Cluster) error
-	OnDelete(machine *platformv1.Machine, cluster *typesv1.Cluster) error
+	OnCreate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
+	OnUpdate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
+	OnDelete(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
 }
 
 var _ Provider = &DelegateProvider{}
 
-type Handler func(*platformv1.Machine, *typesv1.Cluster) error
+type Handler func(context.Context, *platformv1.Machine, *typesv1.Cluster) error
 
 type DelegateProvider struct {
 	ProviderName string
@@ -105,7 +106,7 @@ func (p *DelegateProvider) AfterCreate(machine *platform.Machine) error {
 	return nil
 }
 
-func (p *DelegateProvider) OnCreate(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *DelegateProvider) OnCreate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	condition, err := p.getCreateCurrentCondition(machine)
 	if err != nil {
 		return err
@@ -128,7 +129,7 @@ func (p *DelegateProvider) OnCreate(machine *platformv1.Machine, cluster *typesv
 		}
 		log.Infow("OnCreate", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
 			"machineName", machine.Name)
-		err = f(machine, cluster)
+		err = f(ctx, machine, cluster)
 		if err != nil {
 			machine.SetCondition(platformv1.MachineCondition{
 				Type:          condition.Type,
@@ -167,11 +168,11 @@ func (p *DelegateProvider) OnCreate(machine *platformv1.Machine, cluster *typesv
 	return nil
 }
 
-func (p *DelegateProvider) OnUpdate(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *DelegateProvider) OnUpdate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	for _, f := range p.UpdateHandlers {
 		log.Infow("OnUpdate", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
 			"machineName", machine.Name)
-		err := f(machine, cluster)
+		err := f(ctx, machine, cluster)
 		if err != nil {
 			return err
 		}
@@ -180,11 +181,11 @@ func (p *DelegateProvider) OnUpdate(machine *platformv1.Machine, cluster *typesv
 	return nil
 }
 
-func (p *DelegateProvider) OnDelete(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *DelegateProvider) OnDelete(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	for _, f := range p.DeleteHandlers {
 		log.Infow("OnDelete", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
 			"machineName", machine.Name)
-		err := f(machine, cluster)
+		err := f(ctx, machine, cluster)
 		if err != nil {
 			return err
 		}

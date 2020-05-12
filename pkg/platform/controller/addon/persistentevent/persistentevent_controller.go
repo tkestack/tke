@@ -20,6 +20,7 @@ package persistentevent
 
 import (
 	"bytes"
+	"context"
 	normalerrors "errors"
 	"fmt"
 	"html/template"
@@ -205,28 +206,28 @@ func (c *Controller) syncPersistentEvent(key string) error {
 	case errors.IsNotFound(err):
 		// There is no persistent event named by key in etcd, it is a deletion task.
 		log.Info("Persistent Event has been deleted. Attempting to cleanup persistent event resources in backend persistentEvent", log.String("clusterName", key))
-		err = c.processPersistentEventDeletion(key)
+		err = c.processPersistentEventDeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve persistent event from store", log.String("clusterName", key), log.Err(err))
 	default:
 		// otherwise, it is a addition task or updating task
 		cachedPersistentEvent = c.cache.getOrCreate(key)
-		err = c.processPersistentEventUpdate(cachedPersistentEvent, persistentEvent, key)
+		err = c.processPersistentEventUpdate(context.Background(), cachedPersistentEvent, persistentEvent, key)
 	}
 
 	return err
 }
 
-func (c *Controller) processPersistentEventDeletion(key string) error {
+func (c *Controller) processPersistentEventDeletion(ctx context.Context, key string) error {
 	cachedPersistentEvent, ok := c.cache.get(key)
 	if !ok {
 		log.Error("PersistentEvent not in cache even though the watcher thought it was. Ignoring the deletion", log.String("namespaceSetName", key))
 		return nil
 	}
-	return c.processPersistentEventDelete(cachedPersistentEvent, key)
+	return c.processPersistentEventDelete(ctx, cachedPersistentEvent, key)
 }
 
-func (c *Controller) processPersistentEventDelete(cachedPersistentEvent *cachedPersistentEvent, key string) error {
+func (c *Controller) processPersistentEventDelete(ctx context.Context, cachedPersistentEvent *cachedPersistentEvent, key string) error {
 	log.Info("persistent event will be dropped", log.String("clusterName", key))
 
 	if c.cache.Exist(key) {
@@ -239,20 +240,20 @@ func (c *Controller) processPersistentEventDelete(cachedPersistentEvent *cachedP
 		c.health.Del(key)
 	}
 	persistentEvent := cachedPersistentEvent.state
-	return c.uninstallPersistentEventComponent(persistentEvent)
+	return c.uninstallPersistentEventComponent(ctx, persistentEvent)
 }
 
-func (c *Controller) processPersistentEventUpdate(cachedPersistentEvent *cachedPersistentEvent, persistentEvent *v1.PersistentEvent, key string) error {
+func (c *Controller) processPersistentEventUpdate(ctx context.Context, cachedPersistentEvent *cachedPersistentEvent, persistentEvent *v1.PersistentEvent, key string) error {
 	if cachedPersistentEvent.state != nil {
 		if cachedPersistentEvent.state.UID != persistentEvent.UID {
 			// TODO check logic
-			if err := c.processPersistentEventDelete(cachedPersistentEvent, key); err != nil {
+			if err := c.processPersistentEventDelete(ctx, cachedPersistentEvent, key); err != nil {
 				return err
 			}
 		}
 	}
 
-	err := c.createPersistentEventIfNeeded(key, cachedPersistentEvent, persistentEvent)
+	err := c.createPersistentEventIfNeeded(ctx, key, cachedPersistentEvent, persistentEvent)
 	if err != nil {
 		return err
 	}
@@ -264,23 +265,23 @@ func (c *Controller) processPersistentEventUpdate(cachedPersistentEvent *cachedP
 	return nil
 }
 
-func (c *Controller) persistentEventReinitialize(key string, cachedPersistentEvent *cachedPersistentEvent, persistentEvent *v1.PersistentEvent) func() (bool, error) {
+func (c *Controller) persistentEventReinitialize(ctx context.Context, key string, cachedPersistentEvent *cachedPersistentEvent, persistentEvent *v1.PersistentEvent) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
-		err := c.installPersistentEventComponent(persistentEvent)
+		err := c.installPersistentEventComponent(ctx, persistentEvent)
 		if err == nil {
 			persistentEvent = persistentEvent.DeepCopy()
 			persistentEvent.Status.Phase = v1.AddonPhaseChecking
 			persistentEvent.Status.Reason = ""
 			persistentEvent.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(persistentEvent)
+			err = c.persistUpdate(ctx, persistentEvent)
 			if err != nil {
 				return true, err
 			}
 			return true, nil
 		}
 		// First, rollback the persistentEvent
-		if err := c.uninstallPersistentEventComponent(persistentEvent); err != nil {
+		if err := c.uninstallPersistentEventComponent(ctx, persistentEvent); err != nil {
 			log.Error("Uninstall persistent event component error.")
 			return true, err
 		}
@@ -288,7 +289,7 @@ func (c *Controller) persistentEventReinitialize(key string, cachedPersistentEve
 			persistentEvent = persistentEvent.DeepCopy()
 			persistentEvent.Status.Phase = v1.AddonPhaseFailed
 			persistentEvent.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", persistentEventMaxRetryCount)
-			err := c.persistUpdate(persistentEvent)
+			err := c.persistUpdate(ctx, persistentEvent)
 			if err != nil {
 				log.Error("Update persistent event error.")
 				return true, err
@@ -301,7 +302,7 @@ func (c *Controller) persistentEventReinitialize(key string, cachedPersistentEve
 		persistentEvent.Status.Reason = err.Error()
 		persistentEvent.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
 		persistentEvent.Status.RetryCount++
-		err = c.persistUpdate(persistentEvent)
+		err = c.persistUpdate(ctx, persistentEvent)
 		if err != nil {
 			return true, err
 		}
@@ -309,7 +310,7 @@ func (c *Controller) persistentEventReinitialize(key string, cachedPersistentEve
 	}
 }
 
-func (c *Controller) createPersistentEventIfNeeded(key string, cachedPersistentEvent *cachedPersistentEvent, persistentEvent *v1.PersistentEvent) error {
+func (c *Controller) createPersistentEventIfNeeded(ctx context.Context, key string, cachedPersistentEvent *cachedPersistentEvent, persistentEvent *v1.PersistentEvent) error {
 	if persistentEvent.Status.Phase == v1.AddonPhaseRunning &&
 		cachedPersistentEvent != nil &&
 		cachedPersistentEvent.state != nil &&
@@ -318,36 +319,36 @@ func (c *Controller) createPersistentEventIfNeeded(key string, cachedPersistentE
 		if c.health.Exist(key) {
 			c.health.Del(key)
 		}
-		if err := c.uninstallPersistentEventComponent(cachedPersistentEvent.state); err != nil {
+		if err := c.uninstallPersistentEventComponent(ctx, cachedPersistentEvent.state); err != nil {
 			persistentEvent = persistentEvent.DeepCopy()
 			persistentEvent.Status.Phase = v1.AddonPhaseFailed
 			persistentEvent.Status.Reason = "Failed to delete the old storage backend"
 			persistentEvent.Status.RetryCount = 0
-			return c.persistUpdate(persistentEvent)
+			return c.persistUpdate(ctx, persistentEvent)
 		}
 		persistentEvent = persistentEvent.DeepCopy()
 		persistentEvent.Status.Phase = v1.AddonPhaseInitializing
 		persistentEvent.Status.Reason = ""
 		persistentEvent.Status.RetryCount = 0
-		return c.persistUpdate(persistentEvent)
+		return c.persistUpdate(ctx, persistentEvent)
 	}
 
 	switch persistentEvent.Status.Phase {
 	case v1.AddonPhaseInitializing:
 		log.Info("PersistentEvent will be created", log.String("persistentEvent", key))
-		if err := c.installPersistentEventComponent(persistentEvent); err != nil {
+		if err := c.installPersistentEventComponent(ctx, persistentEvent); err != nil {
 			persistentEvent = persistentEvent.DeepCopy()
 			persistentEvent.Status.Phase = v1.AddonPhaseReinitializing
 			persistentEvent.Status.Reason = err.Error()
 			persistentEvent.Status.RetryCount = 1
 			persistentEvent.Status.LastReInitializingTimestamp = metav1.Now()
-			return c.persistUpdate(persistentEvent)
+			return c.persistUpdate(ctx, persistentEvent)
 		}
 		persistentEvent = persistentEvent.DeepCopy()
 		persistentEvent.Status.Phase = v1.AddonPhaseChecking
 		persistentEvent.Status.Reason = ""
 		persistentEvent.Status.RetryCount = 0
-		return c.persistUpdate(persistentEvent)
+		return c.persistUpdate(ctx, persistentEvent)
 	case v1.AddonPhaseReinitializing:
 		var interval = time.Since(persistentEvent.Status.LastReInitializingTimestamp.Time)
 		var waitTime time.Duration
@@ -356,16 +357,16 @@ func (c *Controller) createPersistentEventIfNeeded(key string, cachedPersistentE
 		} else {
 			waitTime = persistentEventTimeOut - interval
 		}
-		go wait.Poll(waitTime, persistentEventTimeOut, c.persistentEventReinitialize(key, cachedPersistentEvent, persistentEvent))
+		go wait.Poll(waitTime, persistentEventTimeOut, c.persistentEventReinitialize(ctx, key, cachedPersistentEvent, persistentEvent))
 	case v1.AddonPhaseChecking:
 		if !c.checking.Exist(key) {
 			c.checking.Set(key, persistentEvent)
-			go wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkDeploymentStatus(persistentEvent, key))
+			go wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkDeploymentStatus(ctx, persistentEvent, key))
 		}
 	case v1.AddonPhaseRunning:
 		if !c.health.Exist(key) {
 			c.health.Set(key, persistentEvent)
-			go wait.PollImmediateUntil(5*time.Minute, c.watchPersistentEventHealth(key), c.stopCh)
+			go wait.PollImmediateUntil(5*time.Minute, c.watchPersistentEventHealth(ctx, key), c.stopCh)
 		}
 	case v1.AddonPhaseFailed:
 		log.Info("PersistentEvent is error", log.String("persistentEvent", key))
@@ -376,15 +377,15 @@ func (c *Controller) createPersistentEventIfNeeded(key string, cachedPersistentE
 	return nil
 }
 
-func (c *Controller) installPersistentEventComponent(persistentEvent *v1.PersistentEvent) error {
+func (c *Controller) installPersistentEventComponent(ctx context.Context, persistentEvent *v1.PersistentEvent) error {
 	log.Info("start to create Persistent event for the persistentEvent" + persistentEvent.Spec.ClusterName)
 
-	cluster, err := c.client.PlatformV1().Clusters().Get(persistentEvent.Spec.ClusterName, metav1.GetOptions{})
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, persistentEvent.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
@@ -393,50 +394,50 @@ func (c *Controller) installPersistentEventComponent(persistentEvent *v1.Persist
 	clusterRole := c.makeClusterRole()
 	clusterRoleBinding := c.makeClusterRoleBinding()
 	deployment := c.makeDeployment(persistentEvent.Spec.Version)
-	config, err := c.makeConfigMap(&persistentEvent.Spec.PersistentBackEnd)
+	config, err := c.makeConfigMap(ctx, &persistentEvent.Spec.PersistentBackEnd)
 	if err != nil {
 		return err
 	}
 
-	_, err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Get("tke-event-watcher", metav1.GetOptions{})
+	_, err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Get(ctx, "tke-event-watcher", metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
-		if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccount); err != nil && !errors.IsAlreadyExists(err) {
+		if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccount, metav1.CreateOptions{}); err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
 	} else if err != nil {
 		return err
 	}
 
-	_, err = kubeClient.RbacV1().ClusterRoles().Get("tke-event-watcher", metav1.GetOptions{})
+	_, err = kubeClient.RbacV1().ClusterRoles().Get(ctx, "tke-event-watcher", metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
-		if _, err := kubeClient.RbacV1().ClusterRoles().Create(clusterRole); err != nil && !errors.IsAlreadyExists(err) {
+		if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, clusterRole, metav1.CreateOptions{}); err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
 	} else if err != nil {
 		return err
 	}
 
-	_, err = kubeClient.RbacV1().ClusterRoleBindings().Get("tke-event-watcher-role-binding", metav1.GetOptions{})
+	_, err = kubeClient.RbacV1().ClusterRoleBindings().Get(ctx, "tke-event-watcher-role-binding", metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
-		if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(clusterRoleBinding); err != nil && !errors.IsAlreadyExists(err) {
+		if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, clusterRoleBinding, metav1.CreateOptions{}); err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
 	} else if err != nil {
 		return err
 	}
 
-	_, err = kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get("fluentd-config", metav1.GetOptions{})
+	_, err = kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, "fluentd-config", metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
-		if _, err := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(config); err != nil && !errors.IsAlreadyExists(err) {
+		if _, err := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, config, metav1.CreateOptions{}); err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
 	} else if err != nil {
 		return err
 	}
 
-	_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get("tke-persistent-event", metav1.GetOptions{})
+	_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, "tke-persistent-event", metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
-		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deployment); err != nil && !errors.IsAlreadyExists(err) {
+		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deployment, metav1.CreateOptions{}); err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
 	} else if err != nil {
@@ -446,41 +447,41 @@ func (c *Controller) installPersistentEventComponent(persistentEvent *v1.Persist
 	return nil
 }
 
-func (c *Controller) uninstallPersistentEventComponent(persistentEvent *v1.PersistentEvent) error {
-	cluster, err := c.client.PlatformV1().Clusters().Get(persistentEvent.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) uninstallPersistentEventComponent(ctx context.Context, persistentEvent *v1.PersistentEvent) error {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, persistentEvent.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
 	var failed = false
-	deployErr := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete("tke-persistent-event", &metav1.DeleteOptions{})
+	deployErr := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, "tke-persistent-event", metav1.DeleteOptions{})
 	if deployErr != nil && !errors.IsNotFound(deployErr) {
 		failed = true
 		log.Error("Failed to delete deployment", log.Err(deployErr))
 	}
-	configMapErr := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Delete("fluentd-config", &metav1.DeleteOptions{})
+	configMapErr := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Delete(ctx, "fluentd-config", metav1.DeleteOptions{})
 	if configMapErr != nil && !errors.IsNotFound(configMapErr) {
 		failed = true
 		log.Error("Failed to delete configmap", log.Err(configMapErr))
 	}
-	serviceAccountErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete("tke-event-watcher", &metav1.DeleteOptions{})
+	serviceAccountErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, "tke-event-watcher", metav1.DeleteOptions{})
 	if serviceAccountErr != nil && !errors.IsNotFound(serviceAccountErr) {
 		failed = true
 		log.Error("Failed to delete service account", log.Err(deployErr))
 	}
-	clusterRoleErr := kubeClient.RbacV1().ClusterRoles().Delete("tke-event-watcher", &metav1.DeleteOptions{})
+	clusterRoleErr := kubeClient.RbacV1().ClusterRoles().Delete(ctx, "tke-event-watcher", metav1.DeleteOptions{})
 	if clusterRoleErr != nil && !errors.IsNotFound(clusterRoleErr) {
 		failed = true
 		log.Error("Failed to delete cluster role", log.Err(deployErr))
 	}
-	clusterRoleBindingErr := kubeClient.RbacV1().ClusterRoleBindings().Delete("tke-event-watcher-role-binding", &metav1.DeleteOptions{})
+	clusterRoleBindingErr := kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, "tke-event-watcher-role-binding", metav1.DeleteOptions{})
 	if clusterRoleBindingErr != nil && !errors.IsNotFound(clusterRoleBindingErr) {
 		failed = true
 		log.Error("Failed to delete cluster role binding", log.Err(clusterRoleBindingErr))
@@ -493,7 +494,7 @@ func (c *Controller) uninstallPersistentEventComponent(persistentEvent *v1.Persi
 	return nil
 }
 
-func (c *Controller) watchPersistentEventHealth(key string) func() (bool, error) {
+func (c *Controller) watchPersistentEventHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start check persistent event in cluster health", log.String("cluster", key))
 		persistentEvent, err := c.lister.Get(key)
@@ -501,7 +502,7 @@ func (c *Controller) watchPersistentEventHealth(key string) func() (bool, error)
 			return false, err
 		}
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(persistentEvent.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, persistentEvent.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -513,16 +514,16 @@ func (c *Controller) watchPersistentEventHealth(key string) func() (bool, error)
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
-		_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get("tke-persistent-event", metav1.GetOptions{})
+		_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, "tke-persistent-event", metav1.GetOptions{})
 		if errors.IsNotFound(err) {
 			persistentEvent = persistentEvent.DeepCopy()
 			persistentEvent.Status.Phase = v1.AddonPhaseFailed
 			persistentEvent.Status.Reason = "Persistent event deployment do not exist."
-			if err = c.persistUpdate(persistentEvent); err != nil {
+			if err = c.persistUpdate(ctx, persistentEvent); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -534,10 +535,10 @@ func (c *Controller) watchPersistentEventHealth(key string) func() (bool, error)
 	}
 }
 
-func (c *Controller) checkDeploymentStatus(persistentEvent *v1.PersistentEvent, key string) func() (bool, error) {
+func (c *Controller) checkDeploymentStatus(ctx context.Context, persistentEvent *v1.PersistentEvent, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check the persistent event deployment health", log.String("clusterName", persistentEvent.Spec.ClusterName))
-		cluster, err := c.client.PlatformV1().Clusters().Get(persistentEvent.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, persistentEvent.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -548,7 +549,7 @@ func (c *Controller) checkDeploymentStatus(persistentEvent *v1.PersistentEvent, 
 			log.Info("checking over.")
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -556,12 +557,12 @@ func (c *Controller) checkDeploymentStatus(persistentEvent *v1.PersistentEvent, 
 		if err != nil {
 			return false, err
 		}
-		dep, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get("tke-persistent-event", metav1.GetOptions{})
+		dep, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, "tke-persistent-event", metav1.GetOptions{})
 		if errors.IsNotFound(err) {
 			persistentEvent = persistentEvent.DeepCopy()
 			persistentEvent.Status.Phase = v1.AddonPhaseFailed
 			persistentEvent.Status.Reason = "Persistent event deployment do not exist."
-			if err = c.persistUpdate(persistentEvent); err != nil {
+			if err = c.persistUpdate(ctx, persistentEvent); err != nil {
 				return false, err
 			}
 			c.checking.Del(key)
@@ -584,7 +585,7 @@ func (c *Controller) checkDeploymentStatus(persistentEvent *v1.PersistentEvent, 
 			persistentEvent = persistentEvent.DeepCopy()
 			persistentEvent.Status.Phase = v1.AddonPhaseFailed
 			persistentEvent.Status.Reason = reason
-			if err = c.persistUpdate(persistentEvent); err != nil {
+			if err = c.persistUpdate(ctx, persistentEvent); err != nil {
 				return false, err
 			}
 			c.checking.Del(key)
@@ -597,7 +598,7 @@ func (c *Controller) checkDeploymentStatus(persistentEvent *v1.PersistentEvent, 
 		persistentEvent = persistentEvent.DeepCopy()
 		persistentEvent.Status.Phase = v1.AddonPhaseRunning
 		persistentEvent.Status.Reason = ""
-		if err = c.persistUpdate(persistentEvent); err != nil {
+		if err = c.persistUpdate(ctx, persistentEvent); err != nil {
 			return false, err
 		}
 		c.checking.Del(key)
@@ -605,10 +606,10 @@ func (c *Controller) checkDeploymentStatus(persistentEvent *v1.PersistentEvent, 
 	}
 }
 
-func (c *Controller) persistUpdate(persistentEvent *v1.PersistentEvent) error {
+func (c *Controller) persistUpdate(ctx context.Context, persistentEvent *v1.PersistentEvent) error {
 	var err error
 	for i := 0; i < persistentEventClientRetryCount; i++ {
-		_, err = c.client.PlatformV1().PersistentEvents().UpdateStatus(persistentEvent)
+		_, err = c.client.PlatformV1().PersistentEvents().UpdateStatus(ctx, persistentEvent, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -759,11 +760,11 @@ func (c *Controller) makeDeployment(version string) *appsv1.Deployment {
 	}
 }
 
-func (c *Controller) makeConfigMap(backend *v1.PersistentBackEnd) (*corev1.ConfigMap, error) {
+func (c *Controller) makeConfigMap(ctx context.Context, backend *v1.PersistentBackEnd) (*corev1.ConfigMap, error) {
 	domain := ""
 	if backend.CLS != nil {
 		var err error
-		domain, err = c.getCLSDomain()
+		domain, err = c.getCLSDomain(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -830,7 +831,7 @@ func (c *Controller) makeConfigMap(backend *v1.PersistentBackEnd) (*corev1.Confi
 	}, nil
 }
 
-func (c *Controller) getCLSDomain() (string, error) {
+func (c *Controller) getCLSDomain(ctx context.Context) (string, error) {
 	f, err := ioutil.ReadFile("/etc/qcloudzone")
 	if err != nil {
 		fmt.Printf("%s\n", err)
@@ -840,7 +841,7 @@ func (c *Controller) getCLSDomain() (string, error) {
 	zone = strings.Replace(zone, "\n", "", -1)
 	domain, ok := regionToDomain[zone]
 	if !ok {
-		domain, err := c.getCLSDomainFromConfigMap(zone)
+		domain, err := c.getCLSDomainFromConfigMap(ctx, zone)
 		if err != nil {
 			return "", fmt.Errorf("unsupported region")
 		}
@@ -849,8 +850,8 @@ func (c *Controller) getCLSDomain() (string, error) {
 	return domain, nil
 }
 
-func (c *Controller) getCLSDomainFromConfigMap(zone string) (string, error) {
-	configMap, err := c.client.PlatformV1().ConfigMaps().Get("tke-controller-persistentevent", metav1.GetOptions{})
+func (c *Controller) getCLSDomainFromConfigMap(ctx context.Context, zone string) (string, error) {
+	configMap, err := c.client.PlatformV1().ConfigMaps().Get(ctx, "tke-controller-persistentevent", metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}

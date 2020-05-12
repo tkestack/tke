@@ -19,6 +19,7 @@
 package volumedecorator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -211,27 +212,27 @@ func (c *Controller) syncVolumeDecorator(key string) error {
 	switch {
 	case k8serrors.IsNotFound(err):
 		log.Info("LogCollector has been deleted. Attempting to cleanup resources", log.String("name", key))
-		err = c.processVolumeDecoratorDeletion(key)
+		err = c.processVolumeDecoratorDeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve LogCollector from store", log.String("name", key), log.Err(err))
 	default:
 		cachedDecorator := c.cache.getOrCreate(key)
-		err = c.processDecoratorUpdate(cachedDecorator, decorator, key)
+		err = c.processDecoratorUpdate(context.Background(), cachedDecorator, decorator, key)
 	}
 
 	return err
 }
 
-func (c *Controller) processVolumeDecoratorDeletion(key string) error {
+func (c *Controller) processVolumeDecoratorDeletion(ctx context.Context, key string) error {
 	cachedVolumeDecorator, ok := c.cache.get(key)
 	if !ok {
 		log.Error("LogCollector not in cache even though the watcher thought it was. Ignoring the deletion", log.String("name", key))
 		return nil
 	}
-	return c.processVolumeDecoratorDelete(cachedVolumeDecorator, key)
+	return c.processVolumeDecoratorDelete(ctx, cachedVolumeDecorator, key)
 }
 
-func (c *Controller) processVolumeDecoratorDelete(cachedDecorator *cachedVolumeDecorator, key string) error {
+func (c *Controller) processVolumeDecoratorDelete(ctx context.Context, cachedDecorator *cachedVolumeDecorator, key string) error {
 	log.Info("LogCollector will be dropped", log.String("name", key))
 
 	if c.cache.Exist(key) {
@@ -245,19 +246,19 @@ func (c *Controller) processVolumeDecoratorDelete(cachedDecorator *cachedVolumeD
 	}
 
 	decorator := cachedDecorator.state
-	return c.uninstallDecorator(decorator)
+	return c.uninstallDecorator(ctx, decorator)
 }
 
-func (c *Controller) processDecoratorUpdate(cachedDecorator *cachedVolumeDecorator, decorator *v1.VolumeDecorator, key string) error {
+func (c *Controller) processDecoratorUpdate(ctx context.Context, cachedDecorator *cachedVolumeDecorator, decorator *v1.VolumeDecorator, key string) error {
 	if cachedDecorator.state != nil {
 		// exist and the cluster name changed
 		if cachedDecorator.state.UID != decorator.UID {
-			if err := c.processVolumeDecoratorDelete(cachedDecorator, key); err != nil {
+			if err := c.processVolumeDecoratorDelete(ctx, cachedDecorator, key); err != nil {
 				return err
 			}
 		}
 	}
-	err := c.createDecoratorIfNeeded(key, cachedDecorator, decorator)
+	err := c.createDecoratorIfNeeded(ctx, key, cachedDecorator, decorator)
 	if err != nil {
 		return err
 	}
@@ -269,11 +270,12 @@ func (c *Controller) processDecoratorUpdate(cachedDecorator *cachedVolumeDecorat
 }
 
 func (c *Controller) decoratorReinitialize(
+	ctx context.Context,
 	key string,
 	decorator *v1.VolumeDecorator) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
-		_, err := c.installDecorator(decorator)
+		_, err := c.installDecorator(ctx, decorator)
 		if err == nil {
 			log.Error("Install LogCollector success",
 				log.String("name", decorator.Name),
@@ -282,7 +284,7 @@ func (c *Controller) decoratorReinitialize(
 			decorator.Status.Phase = v1.AddonPhaseChecking
 			decorator.Status.Reason = ""
 			decorator.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(decorator)
+			err = c.persistUpdate(ctx, decorator)
 			if err != nil {
 				return true, err
 			}
@@ -294,7 +296,7 @@ func (c *Controller) decoratorReinitialize(
 			log.String("name", decorator.Name),
 			log.String("clusterName", decorator.Spec.ClusterName),
 			log.Err(err))
-		if err := c.uninstallDecorator(decorator); err != nil {
+		if err := c.uninstallDecorator(ctx, decorator); err != nil {
 			log.Error("Uninstall LogCollector failed", log.Err(err))
 			return true, err
 		}
@@ -303,7 +305,7 @@ func (c *Controller) decoratorReinitialize(
 			decorator = decorator.DeepCopy()
 			decorator.Status.Phase = v1.AddonPhaseFailed
 			decorator.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", maxRetryCount)
-			err := c.persistUpdate(decorator)
+			err := c.persistUpdate(ctx, decorator)
 			if err != nil {
 				log.Error("Update LogCollector failed", log.Err(err))
 				return true, err
@@ -317,18 +319,19 @@ func (c *Controller) decoratorReinitialize(
 		decorator.Status.Reason = err.Error()
 		decorator.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
 		decorator.Status.RetryCount++
-		return true, c.persistUpdate(decorator)
+		return true, c.persistUpdate(ctx, decorator)
 	}
 }
 
 func (c *Controller) createDecoratorIfNeeded(
+	ctx context.Context,
 	key string,
 	cachedDecorator *cachedVolumeDecorator,
 	decorator *v1.VolumeDecorator) error {
 	switch decorator.Status.Phase {
 	case v1.AddonPhaseInitializing:
 		log.Error("LogCollector will be created", log.String("name", key))
-		svVersion, err := c.installDecorator(decorator)
+		svVersion, err := c.installDecorator(ctx, decorator)
 		if err == nil {
 			log.Error("Install LogCollector success",
 				log.String("name", decorator.Name),
@@ -338,7 +341,7 @@ func (c *Controller) createDecoratorIfNeeded(
 			decorator.Status.Phase = v1.AddonPhaseChecking
 			decorator.Status.Reason = ""
 			decorator.Status.RetryCount = 0
-			return c.persistUpdate(decorator)
+			return c.persistUpdate(ctx, decorator)
 		}
 		log.Error("Install LogCollector failed",
 			log.String("name", decorator.Name),
@@ -351,7 +354,7 @@ func (c *Controller) createDecoratorIfNeeded(
 		decorator.Status.Reason = err.Error()
 		decorator.Status.RetryCount = 1
 		decorator.Status.LastReInitializingTimestamp = metav1.Now()
-		return c.persistUpdate(decorator)
+		return c.persistUpdate(ctx, decorator)
 	case v1.AddonPhaseReinitializing:
 		var interval = time.Since(decorator.Status.LastReInitializingTimestamp.Time)
 		var waitTime time.Duration
@@ -362,7 +365,7 @@ func (c *Controller) createDecoratorIfNeeded(
 		}
 		go func() {
 			reInitialErr := wait.Poll(waitTime, timeOut,
-				c.decoratorReinitialize(key, decorator))
+				c.decoratorReinitialize(ctx, key, decorator))
 			if reInitialErr != nil {
 				log.Error("Reinitialize LogCollector failed",
 					log.String("name", decorator.Name),
@@ -377,7 +380,7 @@ func (c *Controller) createDecoratorIfNeeded(
 			go func() {
 				defer c.checking.Delete(key)
 				checkStatusErr := wait.PollImmediate(5*time.Second, 5*time.Minute+10*time.Second,
-					c.checkDecoratorStatus(decorator, key, initDelay))
+					c.checkDecoratorStatus(ctx, decorator, key, initDelay))
 				if checkStatusErr != nil {
 					log.Error("Check status of LogCollector failed",
 						log.String("name", decorator.Name),
@@ -387,19 +390,19 @@ func (c *Controller) createDecoratorIfNeeded(
 			}()
 		}
 	case v1.AddonPhaseRunning:
-		if c.needUpgrade(decorator) {
+		if c.needUpgrade(ctx, decorator) {
 			c.health.Delete(key)
 			decorator = decorator.DeepCopy()
 			decorator.Status.Phase = v1.AddonPhaseUpgrading
 			decorator.Status.Reason = ""
 			decorator.Status.RetryCount = 0
-			return c.persistUpdate(decorator)
+			return c.persistUpdate(ctx, decorator)
 		}
 		if _, ok := c.health.Load(key); !ok {
 			c.health.Store(key, true)
 			go func() {
 				healthErr := wait.PollImmediateUntil(5*time.Minute,
-					c.watchDecoratorHealth(key), c.stopCh)
+					c.watchDecoratorHealth(ctx, key), c.stopCh)
 				if healthErr != nil {
 					log.Error("Watch health of LogCollector failed",
 						log.String("name", decorator.Name),
@@ -415,7 +418,7 @@ func (c *Controller) createDecoratorIfNeeded(
 			go func() {
 				defer c.upgrading.Delete(key)
 				upgradeErr := wait.PollImmediate(5*time.Second, timeOut,
-					c.upgradeVolumeDecorator(decorator, key, upgradeDelay))
+					c.upgradeVolumeDecorator(ctx, decorator, key, upgradeDelay))
 				if upgradeErr != nil {
 					log.Error("Upgrade LogCollector failed",
 						log.String("name", decorator.Name),
@@ -433,7 +436,7 @@ func (c *Controller) createDecoratorIfNeeded(
 	return nil
 }
 
-func (c *Controller) needUpgrade(decorator *v1.VolumeDecorator) bool {
+func (c *Controller) needUpgrade(ctx context.Context, decorator *v1.VolumeDecorator) bool {
 	sort.Strings(decorator.Spec.VolumeTypes)
 	sort.Strings(decorator.Status.VolumeTypes)
 	if decorator.Spec.Version != decorator.Status.Version ||
@@ -442,7 +445,7 @@ func (c *Controller) needUpgrade(decorator *v1.VolumeDecorator) bool {
 		return true
 	}
 
-	version, err := storageutil.GetSVInfoVersion(c.client)
+	version, err := storageutil.GetSVInfoVersion(ctx, c.client)
 	if err != nil {
 		log.Errorf("Get ceph info failed: %v", err)
 		return true
@@ -452,17 +455,17 @@ func (c *Controller) needUpgrade(decorator *v1.VolumeDecorator) bool {
 	return version != decorator.Status.StorageVendorVersion
 }
 
-func (c *Controller) installDecorator(decorator *v1.VolumeDecorator) (string, error) {
-	cluster, err := c.client.PlatformV1().Clusters().Get(decorator.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) installDecorator(ctx context.Context, decorator *v1.VolumeDecorator) (string, error) {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, decorator.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return "", err
 	}
 
-	svInfo, err := storageutil.GetSVInfo(c.client)
+	svInfo, err := storageutil.GetSVInfo(ctx, c.client)
 	if err != nil {
 		return "", err
 	}
@@ -473,34 +476,34 @@ func (c *Controller) installDecorator(decorator *v1.VolumeDecorator) (string, er
 	}
 
 	// Create ServiceAccount.
-	if err := c.installSVCAccount(decorator, kubeClient); err != nil {
+	if err := c.installSVCAccount(ctx, decorator, kubeClient); err != nil {
 		return version, err
 	}
 
 	// Create ClusterRoleBinding.
-	if err := c.installCRB(decorator, kubeClient); err != nil {
+	if err := c.installCRB(ctx, decorator, kubeClient); err != nil {
 		return version, err
 	}
 
 	// Create ConfigMap.
-	if err := c.installConfigMap(decorator, kubeClient, svInfo); err != nil {
+	if err := c.installConfigMap(ctx, decorator, kubeClient, svInfo); err != nil {
 		return version, err
 	}
 
 	// Create Service.
-	if err := c.installSVC(decorator, kubeClient); err != nil {
+	if err := c.installSVC(ctx, decorator, kubeClient); err != nil {
 		return version, err
 	}
 
 	// Create Deployment. The decorator will create the webhook after started.
-	return version, c.installDeployment(decorator, kubeClient, svInfo)
+	return version, c.installDeployment(ctx, decorator, kubeClient, svInfo)
 }
 
-func (c *Controller) installSVCAccount(decorator *v1.VolumeDecorator, kubeClient kubernetes.Interface) error {
+func (c *Controller) installSVCAccount(ctx context.Context, decorator *v1.VolumeDecorator, kubeClient kubernetes.Interface) error {
 	account := genServiceAccount()
 	accountClient := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem)
 
-	_, err := accountClient.Get(account.Name, metav1.GetOptions{})
+	_, err := accountClient.Get(ctx, account.Name, metav1.GetOptions{})
 	if err == nil {
 		log.Info("ServiceAccount of LogCollector is already created",
 			log.String("name", decorator.Name))
@@ -508,21 +511,21 @@ func (c *Controller) installSVCAccount(decorator *v1.VolumeDecorator, kubeClient
 	}
 
 	if k8serrors.IsNotFound(err) {
-		_, err = accountClient.Create(account)
+		_, err = accountClient.Create(ctx, account, metav1.CreateOptions{})
 		return err
 	}
 
 	return fmt.Errorf("get account failed: %v", err)
 }
 
-func (c *Controller) installCRB(decorator *v1.VolumeDecorator, kubeClient kubernetes.Interface) error {
+func (c *Controller) installCRB(ctx context.Context, decorator *v1.VolumeDecorator, kubeClient kubernetes.Interface) error {
 	crb := genCRB()
 	crbClient := kubeClient.RbacV1().ClusterRoleBindings()
 
-	oldCRB, err := crbClient.Get(crb.Name, metav1.GetOptions{})
+	oldCRB, err := crbClient.Get(ctx, crb.Name, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			_, err = crbClient.Create(crb)
+			_, err = crbClient.Create(ctx, crb, metav1.CreateOptions{})
 			return err
 		}
 		return fmt.Errorf("get crb failed: %v", err)
@@ -538,12 +541,13 @@ func (c *Controller) installCRB(decorator *v1.VolumeDecorator, kubeClient kubern
 	newCRB := oldCRB.DeepCopy()
 	newCRB.RoleRef = crb.RoleRef
 	newCRB.Subjects = crb.Subjects
-	_, err = crbClient.Update(newCRB)
+	_, err = crbClient.Update(ctx, newCRB, metav1.UpdateOptions{})
 
 	return err
 }
 
 func (c *Controller) installConfigMap(
+	ctx context.Context,
 	decorator *v1.VolumeDecorator,
 	kubeClient kubernetes.Interface,
 	svInfo *storageutil.SVInfo) error {
@@ -553,10 +557,10 @@ func (c *Controller) installConfigMap(
 	}
 	cmClient := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem)
 
-	oldCM, err := cmClient.Get(cm.Name, metav1.GetOptions{})
+	oldCM, err := cmClient.Get(ctx, cm.Name, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			_, err := cmClient.Create(cm)
+			_, err := cmClient.Create(ctx, cm, metav1.CreateOptions{})
 			return err
 		}
 		return fmt.Errorf("get configMap failed: %v", err)
@@ -570,12 +574,12 @@ func (c *Controller) installConfigMap(
 
 	newSVC := oldCM.DeepCopy()
 	newSVC.Data = cm.Data
-	_, err = cmClient.Update(newSVC)
+	_, err = cmClient.Update(ctx, newSVC, metav1.UpdateOptions{})
 
 	return err
 }
 
-func (c *Controller) installSVC(decorator *v1.VolumeDecorator, kubeClient kubernetes.Interface) error {
+func (c *Controller) installSVC(ctx context.Context, decorator *v1.VolumeDecorator, kubeClient kubernetes.Interface) error {
 	if !decorator.Spec.WorkloadAdmission {
 		log.Info("Workload admission disabled, skip installing service",
 			log.String("name", decorator.Name),
@@ -586,10 +590,10 @@ func (c *Controller) installSVC(decorator *v1.VolumeDecorator, kubeClient kubern
 	svc := genService()
 	svcClient := kubeClient.CoreV1().Services(metav1.NamespaceSystem)
 
-	oldSVC, err := svcClient.Get(svc.Name, metav1.GetOptions{})
+	oldSVC, err := svcClient.Get(ctx, svc.Name, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			_, err := svcClient.Create(svc)
+			_, err := svcClient.Create(ctx, svc, metav1.CreateOptions{})
 			return err
 		}
 		return fmt.Errorf("get account failed: %v", err)
@@ -603,12 +607,13 @@ func (c *Controller) installSVC(decorator *v1.VolumeDecorator, kubeClient kubern
 
 	newSVC := oldSVC.DeepCopy()
 	newSVC.Spec = svc.Spec
-	_, err = svcClient.Update(newSVC)
+	_, err = svcClient.Update(ctx, newSVC, metav1.UpdateOptions{})
 
 	return err
 }
 
 func (c *Controller) installDeployment(
+	ctx context.Context,
 	decorator *v1.VolumeDecorator,
 	kubeClient kubernetes.Interface,
 	svInfo *storageutil.SVInfo) error {
@@ -618,10 +623,10 @@ func (c *Controller) installDeployment(
 	}
 	deployClient := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem)
 
-	oldDeploy, err := deployClient.Get(deploy.Name, metav1.GetOptions{})
+	oldDeploy, err := deployClient.Get(ctx, deploy.Name, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			_, err = deployClient.Create(deploy)
+			_, err = deployClient.Create(ctx, deploy, metav1.CreateOptions{})
 			return err
 		}
 		return fmt.Errorf("get deployment failed: %v", err)
@@ -630,7 +635,7 @@ func (c *Controller) installDeployment(
 	newDeploy := oldDeploy.DeepCopy()
 	newDeploy.Labels = deploy.Labels
 	newDeploy.Spec = deploy.Spec
-	_, err = deployClient.Update(newDeploy)
+	_, err = deployClient.Update(ctx, newDeploy, metav1.UpdateOptions{})
 
 	return err
 }
@@ -774,12 +779,12 @@ func int32Ptr(i int32) *int32 { return &i }
 
 func boolPtr(value bool) *bool { return &value }
 
-func (c *Controller) uninstallDecorator(decorator *v1.VolumeDecorator) error {
+func (c *Controller) uninstallDecorator(ctx context.Context, decorator *v1.VolumeDecorator) error {
 	log.Info("Start to uninstall LogCollector",
 		log.String("name", decorator.Name),
 		log.String("clusterName", decorator.Spec.ClusterName))
 
-	kubeClient, err := c.getKubeClient(decorator.Spec.ClusterName)
+	kubeClient, err := c.getKubeClient(ctx, decorator.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
@@ -790,22 +795,22 @@ func (c *Controller) uninstallDecorator(decorator *v1.VolumeDecorator) error {
 
 	// Delete the webhook.
 	clearWebhookErr := kubeClient.AdmissionregistrationV1beta1().
-		ValidatingWebhookConfigurations().Delete(webhookName, &metav1.DeleteOptions{})
+		ValidatingWebhookConfigurations().Delete(ctx, webhookName, metav1.DeleteOptions{})
 	// Delete the service.
 	clearSvcErr := kubeClient.CoreV1().
-		Services(metav1.NamespaceSystem).Delete(serviceName, &metav1.DeleteOptions{})
+		Services(metav1.NamespaceSystem).Delete(ctx, serviceName, metav1.DeleteOptions{})
 	// Delete the decorator deployment.
 	clearDeployErr := kubeClient.AppsV1().
-		Deployments(metav1.NamespaceSystem).Delete(deploymentName, &metav1.DeleteOptions{})
+		Deployments(metav1.NamespaceSystem).Delete(ctx, deploymentName, metav1.DeleteOptions{})
 	// Delete configMap.
 	clearCMErr := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).
-		Delete(configMapName, &metav1.DeleteOptions{})
+		Delete(ctx, configMapName, metav1.DeleteOptions{})
 	// Delete the ClusterRoleBinding.
 	clearCRBErr := kubeClient.RbacV1().
-		ClusterRoleBindings().Delete(crbName, &metav1.DeleteOptions{})
+		ClusterRoleBindings().Delete(ctx, crbName, metav1.DeleteOptions{})
 	// Delete the ServiceAccount.
 	clearSvcAccountErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).
-		Delete(svcAccountName, &metav1.DeleteOptions{})
+		Delete(ctx, svcAccountName, metav1.DeleteOptions{})
 
 	failed := false
 
@@ -864,7 +869,7 @@ func (c *Controller) uninstallDecorator(decorator *v1.VolumeDecorator) error {
 	return nil
 }
 
-func (c *Controller) watchDecoratorHealth(key string) func() (bool, error) {
+func (c *Controller) watchDecoratorHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		decorator, err := c.lister.Get(key)
 		if err != nil {
@@ -872,7 +877,7 @@ func (c *Controller) watchDecoratorHealth(key string) func() (bool, error) {
 		}
 		log.Info("Start check health of LogCollector", log.String("name", decorator.Name))
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(decorator.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, decorator.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && k8serrors.IsNotFound(err) {
 			return false, err
 		}
@@ -885,18 +890,18 @@ func (c *Controller) watchDecoratorHealth(key string) func() (bool, error) {
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
 
 		_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).
-			Get(deploymentName, metav1.GetOptions{})
+			Get(ctx, deploymentName, metav1.GetOptions{})
 		if err != nil {
 			decorator = decorator.DeepCopy()
 			decorator.Status.Phase = v1.AddonPhaseFailed
 			decorator.Status.Reason = "LogCollector is not healthy."
-			if err = c.persistUpdate(decorator); err != nil {
+			if err = c.persistUpdate(ctx, decorator); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -907,12 +912,13 @@ func (c *Controller) watchDecoratorHealth(key string) func() (bool, error) {
 }
 
 func (c *Controller) checkDecoratorStatus(
+	ctx context.Context,
 	decorator *v1.VolumeDecorator,
 	key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check LogCollector health", log.String("name", decorator.Name))
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(decorator.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, decorator.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && k8serrors.IsNotFound(err) {
 			return false, err
 		}
@@ -925,7 +931,7 @@ func (c *Controller) checkDecoratorStatus(
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -935,14 +941,14 @@ func (c *Controller) checkDecoratorStatus(
 		}
 
 		deploy, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).
-			Get(deploymentName, metav1.GetOptions{})
+			Get(ctx, deploymentName, metav1.GetOptions{})
 		if err != nil ||
 			(deploy.Spec.Replicas != nil && deploy.Status.AvailableReplicas < *deploy.Spec.Replicas) {
 			if time.Now().After(initDelay) {
 				decorator = decorator.DeepCopy()
 				decorator.Status.Phase = v1.AddonPhaseFailed
 				decorator.Status.Reason = "Volume Decorator is not healthy."
-				if err = c.persistUpdate(decorator); err != nil {
+				if err = c.persistUpdate(ctx, decorator); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -953,7 +959,7 @@ func (c *Controller) checkDecoratorStatus(
 		decorator = decorator.DeepCopy()
 		decorator.Status.Phase = v1.AddonPhaseRunning
 		decorator.Status.Reason = ""
-		if err = c.persistUpdate(decorator); err != nil {
+		if err = c.persistUpdate(ctx, decorator); err != nil {
 			return false, err
 		}
 
@@ -962,11 +968,12 @@ func (c *Controller) checkDecoratorStatus(
 }
 
 func (c *Controller) upgradeVolumeDecorator(
+	ctx context.Context,
 	decorator *v1.VolumeDecorator,
 	key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to upgrade LogCollector", log.String("name", decorator.Name))
-		cluster, err := c.client.PlatformV1().Clusters().Get(decorator.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, decorator.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && k8serrors.IsNotFound(err) {
 			return false, err
 		}
@@ -979,7 +986,7 @@ func (c *Controller) upgradeVolumeDecorator(
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -1000,7 +1007,7 @@ func (c *Controller) upgradeVolumeDecorator(
 				decorator = decorator.DeepCopy()
 				decorator.Status.Phase = v1.AddonPhaseFailed
 				decorator.Status.Reason = "Upgrade LogCollector failed."
-				if err = c.persistUpdate(decorator); err != nil {
+				if err = c.persistUpdate(ctx, decorator); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -1008,7 +1015,7 @@ func (c *Controller) upgradeVolumeDecorator(
 			return false, nil
 		}
 
-		svInfo, err := storageutil.GetSVInfo(c.client)
+		svInfo, err := storageutil.GetSVInfo(ctx, c.client)
 		if err != nil {
 			return timeoutCheck("get storage vendor info", err)
 		}
@@ -1016,19 +1023,19 @@ func (c *Controller) upgradeVolumeDecorator(
 		if !decorator.Spec.WorkloadAdmission {
 			// Delete the webhook.
 			err := kubeClient.AdmissionregistrationV1beta1().
-				ValidatingWebhookConfigurations().Delete(webhookName, &metav1.DeleteOptions{})
+				ValidatingWebhookConfigurations().Delete(ctx, webhookName, metav1.DeleteOptions{})
 			if err != nil && !k8serrors.IsNotFound(err) {
 				return timeoutCheck("delete webhook", err)
 			}
 		}
 
 		// Upgrade configMap.
-		if err := c.installConfigMap(decorator, kubeClient, svInfo); err != nil {
+		if err := c.installConfigMap(ctx, decorator, kubeClient, svInfo); err != nil {
 			return timeoutCheck("update configMap", err)
 		}
 
 		deployClient := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem)
-		oldDeploy, err := deployClient.Get(deploymentName, metav1.GetOptions{})
+		oldDeploy, err := deployClient.Get(ctx, deploymentName, metav1.GetOptions{})
 		if err != nil {
 			return timeoutCheck("get old deployment", err)
 		}
@@ -1060,7 +1067,7 @@ func (c *Controller) upgradeVolumeDecorator(
 				log.String("clusterName", decorator.Spec.ClusterName),
 				log.String("patchData", string(patchData)))
 
-			_, err = deployClient.Patch(deploymentName, types.StrategicMergePatchType, patchData)
+			_, err = deployClient.Patch(ctx, deploymentName, types.StrategicMergePatchType, patchData, metav1.PatchOptions{})
 			if err != nil {
 				return timeoutCheck("patch deployment", err)
 			}
@@ -1075,17 +1082,17 @@ func (c *Controller) upgradeVolumeDecorator(
 		fillDecoratorStatus(decorator, version)
 		decorator.Status.Phase = v1.AddonPhaseChecking
 		decorator.Status.Reason = ""
-		if err = c.persistUpdate(decorator); err != nil {
+		if err = c.persistUpdate(ctx, decorator); err != nil {
 			return false, err
 		}
 		return true, nil
 	}
 }
 
-func (c *Controller) persistUpdate(decorator *v1.VolumeDecorator) error {
+func (c *Controller) persistUpdate(ctx context.Context, decorator *v1.VolumeDecorator) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.PlatformV1().VolumeDecorators().UpdateStatus(decorator)
+		_, err = c.client.PlatformV1().VolumeDecorators().UpdateStatus(ctx, decorator, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -1110,15 +1117,15 @@ func (c *Controller) persistUpdate(decorator *v1.VolumeDecorator) error {
 	return err
 }
 
-func (c *Controller) getKubeClient(clusterName string) (kubernetes.Interface, error) {
-	cluster, err := c.client.PlatformV1().Clusters().Get(clusterName, metav1.GetOptions{})
+func (c *Controller) getKubeClient(ctx context.Context, clusterName string) (kubernetes.Interface, error) {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, clusterName, metav1.GetOptions{})
 	if err != nil && k8serrors.IsNotFound(err) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	return util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 }
 
 func (c *Controller) getImage(decorator *v1.VolumeDecorator) (string, error) {

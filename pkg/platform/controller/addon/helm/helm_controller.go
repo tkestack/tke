@@ -19,6 +19,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -180,25 +181,25 @@ func (c *Controller) sync(key string) error {
 	switch {
 	case errors.IsNotFound(err):
 		log.Info("Helm has been deleted. Attempting to cleanup resources", log.String("helm", key))
-		err = c.processHelmDeletion(key)
+		err = c.processHelmDeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve helm from store", log.String("helm", key), log.Err(err))
 	default:
-		err = c.processCreateOrUpdate(helm, key)
+		err = c.processCreateOrUpdate(context.Background(), helm, key)
 	}
 	return err
 }
 
-func (c *Controller) processHelmDeletion(key string) error {
+func (c *Controller) processHelmDeletion(ctx context.Context, key string) error {
 	cachedHelm, ok := c.cache.get(key)
 	if !ok {
 		log.Error("Helm not in cache even though the watcher thought it was. Ignoring the deletion", log.String("helmName", key))
 		return nil
 	}
-	return c.processDelete(cachedHelm, key)
+	return c.processDelete(ctx, cachedHelm, key)
 }
 
-func (c *Controller) processDelete(cachedHelm *cachedHelm, key string) error {
+func (c *Controller) processDelete(ctx context.Context, cachedHelm *cachedHelm, key string) error {
 	log.Info("helm will be dropped", log.String("helm", key))
 	if c.cache.Exist(key) {
 		c.cache.delete(key)
@@ -210,25 +211,25 @@ func (c *Controller) processDelete(cachedHelm *cachedHelm, key string) error {
 
 	var provisioner Provisioner
 	var err error
-	if provisioner, err = createProvisioner(helm, c.client); err != nil {
+	if provisioner, err = createProvisioner(ctx, helm, c.client); err != nil {
 		if errors.IsNotFound(err) {
 			return nil
 		}
 		return err
 	}
-	return provisioner.Uninstall()
+	return provisioner.Uninstall(ctx)
 }
 
-func (c *Controller) processCreateOrUpdate(holder *v1.Helm, key string) error {
+func (c *Controller) processCreateOrUpdate(ctx context.Context, holder *v1.Helm, key string) error {
 	cached := c.cache.getOrCreate(key)
 	if cached.state != nil && cached.state.UID != holder.UID {
 		// if the same key holder is created, delete it
-		if err := c.processDelete(cached, key); err != nil {
+		if err := c.processDelete(ctx, cached, key); err != nil {
 			return err
 		}
 	}
 
-	err := c.handlePhase(key, cached, holder)
+	err := c.handlePhase(ctx, key, cached, holder)
 	if err != nil {
 		return err
 	}
@@ -239,14 +240,14 @@ func (c *Controller) processCreateOrUpdate(holder *v1.Helm, key string) error {
 	return nil
 }
 
-func (c *Controller) handlePhase(key string, cachedHelm *cachedHelm, holder *v1.Helm) error {
+func (c *Controller) handlePhase(ctx context.Context, key string, cachedHelm *cachedHelm, holder *v1.Helm) error {
 	phase := holder.Status.Phase
 	log.Info(fmt.Sprintf("Helm is %s", string(phase)), log.String("helm", key))
 	switch phase {
 	case v1.AddonPhaseInitializing:
-		return c.doInitializing(key, holder)
+		return c.doInitializing(ctx, key, holder)
 	case v1.AddonPhaseReinitializing:
-		c.doReinitializing(key, holder)
+		c.doReinitializing(ctx, key, holder)
 	case v1.AddonPhaseChecking, v1.AddonPhaseRunning, v1.AddonPhaseFailed, v1.AddonPhaseUnhealthy:
 		if !c.prober.ExistByPhase(key, phase) {
 			c.prober.Set(key, phase)
@@ -255,7 +256,7 @@ func (c *Controller) handlePhase(key string, cachedHelm *cachedHelm, holder *v1.
 	return nil
 }
 
-func (c *Controller) doInitializing(key string, holder *v1.Helm) error {
+func (c *Controller) doInitializing(ctx context.Context, key string, holder *v1.Helm) error {
 	defer controllerutil.CatchPanic("doInitializing", "Helm")
 
 	if c.prober.Exist(key) {
@@ -264,22 +265,22 @@ func (c *Controller) doInitializing(key string, holder *v1.Helm) error {
 
 	var provisioner Provisioner
 	var err error
-	if provisioner, err = createProvisioner(holder, c.client); err != nil {
+	if provisioner, err = createProvisioner(ctx, holder, c.client); err != nil {
 		return err
 	}
-	if err := provisioner.Install(); err != nil {
+	if err := provisioner.Install(ctx); err != nil {
 		// if user install his own tiller, update helm status to fail
 		if errors.IsConflict(err) {
-			return updateHelmStatus(getUpdateObj(holder, v1.AddonPhaseFailed, err.Error()), c.client)
+			return updateHelmStatus(ctx, getUpdateObj(holder, v1.AddonPhaseFailed, err.Error()), c.client)
 		}
-		return updateHelmStatus(getUpdateObj(holder, v1.AddonPhaseReinitializing, err.Error()), c.client)
+		return updateHelmStatus(ctx, getUpdateObj(holder, v1.AddonPhaseReinitializing, err.Error()), c.client)
 	}
 	newObj := getUpdateObj(holder, v1.AddonPhaseChecking, "")
 	newObj.Status.LastReInitializingTimestamp = metav1.Now()
-	return updateHelmStatus(newObj, c.client)
+	return updateHelmStatus(ctx, newObj, c.client)
 }
 
-func (c *Controller) doReinitializing(key string, helm *v1.Helm) {
+func (c *Controller) doReinitializing(ctx context.Context, key string, helm *v1.Helm) {
 	var interval = time.Since(helm.Status.LastReInitializingTimestamp.Time)
 	var waitTime time.Duration
 	if interval >= helmTimeOut {
@@ -289,42 +290,42 @@ func (c *Controller) doReinitializing(key string, helm *v1.Helm) {
 	}
 	go func() {
 		defer controllerutil.CatchPanic("reinitialize", "Helm")
-		if err := wait.Poll(waitTime, helmTimeOut, c.reinitialize(key, helm)); err != nil {
+		if err := wait.Poll(waitTime, helmTimeOut, c.reinitialize(ctx, key, helm)); err != nil {
 			log.Info(fmt.Sprintf("reinitialize err: %v", err))
 		}
 	}()
 }
 
-func (c *Controller) reinitialize(key string, holder *v1.Helm) func() (bool, error) {
+func (c *Controller) reinitialize(ctx context.Context, key string, holder *v1.Helm) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
 		var provisioner Provisioner
 		var err error
-		if provisioner, err = createProvisioner(holder, c.client); err == nil {
-			_ = provisioner.Uninstall()
-			if err = provisioner.Install(); err == nil {
+		if provisioner, err = createProvisioner(ctx, holder, c.client); err == nil {
+			_ = provisioner.Uninstall(ctx)
+			if err = provisioner.Install(ctx); err == nil {
 				newObj := getUpdateObj(holder, v1.AddonPhaseChecking, "")
 				newObj.Status.LastReInitializingTimestamp = metav1.Now()
-				return true, updateHelmStatus(newObj, c.client)
+				return true, updateHelmStatus(ctx, newObj, c.client)
 			}
 			if errors.IsConflict(err) {
-				return true, updateHelmStatus(getUpdateObj(holder, v1.AddonPhaseFailed, err.Error()), c.client)
+				return true, updateHelmStatus(ctx, getUpdateObj(holder, v1.AddonPhaseFailed, err.Error()), c.client)
 			}
 		}
 		if holder.Status.RetryCount >= helmMaxRetryCount {
 			err := fmt.Sprintf("Install error and retried max(%d) times already.", helmMaxRetryCount)
-			return true, updateHelmStatus(getUpdateObj(holder, v1.AddonPhaseFailed, err), c.client)
+			return true, updateHelmStatus(ctx, getUpdateObj(holder, v1.AddonPhaseFailed, err), c.client)
 		}
-		return true, updateHelmStatus(getUpdateObj(holder, v1.AddonPhaseReinitializing, err.Error()), c.client)
+		return true, updateHelmStatus(ctx, getUpdateObj(holder, v1.AddonPhaseReinitializing, err.Error()), c.client)
 	}
 }
 
-func createProvisioner(helm *v1.Helm, client clientset.Interface) (Provisioner, error) {
-	cluster, err := client.PlatformV1().Clusters().Get(helm.Spec.ClusterName, metav1.GetOptions{})
+func createProvisioner(ctx context.Context, helm *v1.Helm, client clientset.Interface) (Provisioner, error) {
+	cluster, err := client.PlatformV1().Clusters().Get(ctx, helm.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, client.PlatformV1())
 	if err != nil {
 		return nil, err
 	}
@@ -338,9 +339,9 @@ func createProvisioner(helm *v1.Helm, client clientset.Interface) (Provisioner, 
 }
 
 // updateHelmStatus means update status to the given object
-func updateHelmStatus(obj *v1.Helm, client clientset.Interface) error {
+func updateHelmStatus(ctx context.Context, obj *v1.Helm, client clientset.Interface) error {
 	return wait.PollImmediate(time.Second, helmClientRetryCount*time.Second, func() (done bool, err error) {
-		_, err = client.PlatformV1().Helms().UpdateStatus(obj)
+		_, err = client.PlatformV1().Helms().UpdateStatus(ctx, obj, metav1.UpdateOptions{})
 		if err == nil {
 			return true, nil
 		}

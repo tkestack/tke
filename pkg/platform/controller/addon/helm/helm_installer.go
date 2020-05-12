@@ -19,13 +19,15 @@
 package helm
 
 import (
+	"context"
 	normalerrors "errors"
 	"fmt"
+	"reflect"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
-	"reflect"
 	"tkestack.io/tke/pkg/platform/controller/addon/helm/images"
 	"tkestack.io/tke/pkg/util/apiclient"
 
@@ -60,9 +62,9 @@ var selectorForHelm = metav1.LabelSelector{
 }
 
 type Provisioner interface {
-	Install() error
-	Uninstall() error
-	GetStatus() error
+	Install(ctx context.Context) error
+	Uninstall(ctx context.Context) error
+	GetStatus(ctx context.Context) error
 }
 
 type provisioner struct {
@@ -83,9 +85,9 @@ func NewProvisioner(kubeClient kubernetes.Interface, option *Option) Provisioner
 	}
 }
 
-func (p *provisioner) Install() error {
+func (p *provisioner) Install(ctx context.Context) error {
 	// if unOfficial tiller in cluster
-	err := p.isOfficialTiller()
+	err := p.isOfficialTiller(ctx)
 	if err != nil {
 		return err
 	}
@@ -95,60 +97,60 @@ func (p *provisioner) Install() error {
 	option := p.option
 
 	// ServiceAccount Helm
-	if err := apiclient.CreateOrUpdateServiceAccount(kubeClient, serviceAccountHelm()); err != nil {
+	if err := apiclient.CreateOrUpdateServiceAccount(ctx, kubeClient, serviceAccountHelm()); err != nil {
 		return err
 	}
 	// ClusterRoleBinding Helm
-	if err := apiclient.CreateOrUpdateClusterRoleBinding(kubeClient, crbHelm()); err != nil {
+	if err := apiclient.CreateOrUpdateClusterRoleBinding(ctx, kubeClient, crbHelm()); err != nil {
 		return err
 	}
 	// Deployment Tiller
 	if option.isExtensionsAPIGroup {
-		if err := apiclient.CreateOrUpdateDeploymentExtensionsV1beta1(kubeClient, deploymentTillerExtensions(option.version)); err != nil {
+		if err := apiclient.CreateOrUpdateDeploymentExtensionsV1beta1(ctx, kubeClient, deploymentTillerExtensions(option.version)); err != nil {
 			return err
 		}
 	} else {
-		if err := apiclient.CreateOrUpdateDeployment(kubeClient, deploymentTiller(option.version)); err != nil {
+		if err := apiclient.CreateOrUpdateDeployment(ctx, kubeClient, deploymentTiller(option.version)); err != nil {
 			return err
 		}
 	}
 	// Service Tiller
-	if err := apiclient.CreateOrUpdateService(kubeClient, serviceTiller()); err != nil {
+	if err := apiclient.CreateOrUpdateService(ctx, kubeClient, serviceTiller()); err != nil {
 		return err
 	}
 	// Deployment Helm-api
 	if option.isExtensionsAPIGroup {
-		if err := apiclient.CreateOrUpdateDeploymentExtensionsV1beta1(kubeClient, deploymentHelmAPIExtensions(option.version)); err != nil {
+		if err := apiclient.CreateOrUpdateDeploymentExtensionsV1beta1(ctx, kubeClient, deploymentHelmAPIExtensions(option.version)); err != nil {
 			return err
 		}
 	} else {
-		if err := apiclient.CreateOrUpdateDeployment(kubeClient, deploymentHelmAPI(option.version)); err != nil {
+		if err := apiclient.CreateOrUpdateDeployment(ctx, kubeClient, deploymentHelmAPI(option.version)); err != nil {
 			return err
 		}
 	}
 	// Service Helm-api
-	if err := apiclient.CreateOrUpdateService(kubeClient, serviceHelmAPI()); err != nil {
+	if err := apiclient.CreateOrUpdateService(ctx, kubeClient, serviceHelmAPI()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *provisioner) Uninstall() error {
+func (p *provisioner) Uninstall(ctx context.Context) error {
 	kubeClient := p.kubeClient
 	option := p.option
 
 	// Service Helm-api
-	svcHelmAPIErr := apiclient.DeleteService(kubeClient, metav1.NamespaceSystem, svcHelmAPIName)
+	svcHelmAPIErr := apiclient.DeleteService(ctx, kubeClient, metav1.NamespaceSystem, svcHelmAPIName)
 	// Deployment Helm-api
-	deployHelmAPIErr := apiclient.DeleteDeployment(kubeClient, metav1.NamespaceSystem, deployHelmAPIName, option.isExtensionsAPIGroup, selectorForHelm)
+	deployHelmAPIErr := apiclient.DeleteDeployment(ctx, kubeClient, metav1.NamespaceSystem, deployHelmAPIName, option.isExtensionsAPIGroup, selectorForHelm)
 	// Service Tiller
-	svcTillerErr := apiclient.DeleteService(kubeClient, metav1.NamespaceSystem, svcTillerName)
+	svcTillerErr := apiclient.DeleteService(ctx, kubeClient, metav1.NamespaceSystem, svcTillerName)
 	// Deployment Tiller
-	deployTillerErr := apiclient.DeleteDeployment(kubeClient, metav1.NamespaceSystem, deployTillerName, option.isExtensionsAPIGroup, selectorForOfficialTiller)
+	deployTillerErr := apiclient.DeleteDeployment(ctx, kubeClient, metav1.NamespaceSystem, deployTillerName, option.isExtensionsAPIGroup, selectorForOfficialTiller)
 	// ClusterRoleBinding Helm
-	crbHelmErr := apiclient.DeleteClusterRoleBinding(kubeClient, crbHelmName)
+	crbHelmErr := apiclient.DeleteClusterRoleBinding(ctx, kubeClient, crbHelmName)
 	// ServiceAccount Helm
-	svcAccountHelmErr := apiclient.DeleteServiceAccounts(kubeClient, metav1.NamespaceSystem, svcAccountHelmName)
+	svcAccountHelmErr := apiclient.DeleteServiceAccounts(ctx, kubeClient, metav1.NamespaceSystem, svcAccountHelmName)
 
 	if (svcHelmAPIErr != nil && !errors.IsNotFound(svcHelmAPIErr)) ||
 		(deployHelmAPIErr != nil && !errors.IsNotFound(deployHelmAPIErr)) ||
@@ -161,10 +163,10 @@ func (p *provisioner) Uninstall() error {
 	return nil
 }
 
-func (p *provisioner) GetStatus() error {
-	if _, err := p.kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcHelmAPIName, "http", `/tiller/v2/version/json`, nil).DoRaw(); err != nil {
+func (p *provisioner) GetStatus(ctx context.Context) error {
+	if _, err := p.kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcHelmAPIName, "http", `/tiller/v2/version/json`, nil).DoRaw(ctx); err != nil {
 		// get more detailed checkErr about resource
-		if checkErr := p.checkRsc(p.kubeClient); checkErr != nil {
+		if checkErr := p.checkRsc(ctx, p.kubeClient); checkErr != nil {
 			return checkErr
 		}
 		return err
@@ -546,7 +548,7 @@ func serviceHelmAPI() *corev1.Service {
 	}
 }
 
-func (p *provisioner) isOfficialTiller() error {
+func (p *provisioner) isOfficialTiller(ctx context.Context) error {
 	kubeClient := p.kubeClient
 	isExtensionsAPIGroup := p.option.isExtensionsAPIGroup
 
@@ -558,7 +560,7 @@ func (p *provisioner) isOfficialTiller() error {
 	}
 
 	if !isExtensionsAPIGroup {
-		deployList, err := kubeClient.AppsV1().Deployments(corev1.NamespaceAll).List(metav1.ListOptions{
+		deployList, err := kubeClient.AppsV1().Deployments(corev1.NamespaceAll).List(ctx, metav1.ListOptions{
 			LabelSelector: tillerLabelSelector.String(),
 		})
 		if err != nil && !errors.IsNotFound(err) {
@@ -570,7 +572,7 @@ func (p *provisioner) isOfficialTiller() error {
 		}
 		deployLabels = deployList.Items[0].Labels
 	} else {
-		deployList, err := kubeClient.ExtensionsV1beta1().Deployments(corev1.NamespaceAll).List(metav1.ListOptions{
+		deployList, err := kubeClient.ExtensionsV1beta1().Deployments(corev1.NamespaceAll).List(ctx, metav1.ListOptions{
 			LabelSelector: tillerLabelSelector.String(),
 		})
 		if err != nil && !errors.IsNotFound(err) {
@@ -593,23 +595,23 @@ func (p *provisioner) isOfficialTiller() error {
 	return conflictErr
 }
 
-func (p *provisioner) checkRsc(kubeClient kubernetes.Interface) error {
-	if _, err := apiclient.GetServiceAccount(p.kubeClient, metav1.NamespaceSystem, svcAccountHelmName); err != nil {
+func (p *provisioner) checkRsc(ctx context.Context, kubeClient kubernetes.Interface) error {
+	if _, err := apiclient.GetServiceAccount(ctx, p.kubeClient, metav1.NamespaceSystem, svcAccountHelmName); err != nil {
 		return err
 	}
-	if _, err := apiclient.GetClusterRoleBinding(p.kubeClient, crbHelmName); err != nil {
+	if _, err := apiclient.GetClusterRoleBinding(ctx, p.kubeClient, crbHelmName); err != nil {
 		return err
 	}
-	if _, err := apiclient.GetService(p.kubeClient, metav1.NamespaceSystem, svcHelmAPIName); err != nil {
+	if _, err := apiclient.GetService(ctx, p.kubeClient, metav1.NamespaceSystem, svcHelmAPIName); err != nil {
 		return err
 	}
-	if _, err := apiclient.GetService(p.kubeClient, metav1.NamespaceSystem, svcTillerName); err != nil {
+	if _, err := apiclient.GetService(ctx, p.kubeClient, metav1.NamespaceSystem, svcTillerName); err != nil {
 		return err
 	}
-	if _, err := apiclient.CheckDeployment(p.kubeClient, metav1.NamespaceSystem, deployTillerName); err != nil {
+	if _, err := apiclient.CheckDeployment(ctx, p.kubeClient, metav1.NamespaceSystem, deployTillerName); err != nil {
 		return err
 	}
-	if _, err := apiclient.CheckDeployment(p.kubeClient, metav1.NamespaceSystem, deployHelmAPIName); err != nil {
+	if _, err := apiclient.CheckDeployment(ctx, p.kubeClient, metav1.NamespaceSystem, deployHelmAPIName); err != nil {
 		return err
 	}
 	return nil
