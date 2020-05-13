@@ -20,6 +20,7 @@ package validation
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -69,7 +70,7 @@ func ValidateClusterCredential(ctx context.Context, credential *platform.Cluster
 				if credential.CACert != nil {
 					restConfig.CAData = credential.CACert
 					if err = utilvalidation.ValidateRESTConfig(ctx, restConfig); err != nil {
-						if !apierrors.IsUnauthorized(err) {
+						if status := apierrors.APIStatus(nil); !errors.As(err, &status) {
 							allErrs = append(allErrs, field.Invalid(field.NewPath("caCert"), "", err.Error()))
 						}
 					}

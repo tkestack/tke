@@ -20,6 +20,7 @@ package validation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -113,7 +114,7 @@ func ValidatClusterCredentialRef(ctx context.Context, cluster *types.Cluster, fl
 		if credential.CACert != nil {
 			restConfig.CAData = credential.CACert
 			if err = utilvalidation.ValidateRESTConfig(ctx, restConfig); err != nil {
-				if !apierrors.IsUnauthorized(err) {
+				if status := apierrors.APIStatus(nil); !errors.As(err, &status) {
 					allErrs = append(allErrs, field.Invalid(field.NewPath("caCert"), "", err.Error()))
 				}
 			}
