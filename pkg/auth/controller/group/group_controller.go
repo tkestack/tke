@@ -35,7 +35,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"tkestack.io/tke/api/auth"
 	v1 "tkestack.io/tke/api/auth/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
@@ -315,10 +314,12 @@ func (c *Controller) resyncGroups(ctx context.Context) {
 	for _, idp := range idpList.Items {
 		tenantSelector := fields.AndSelectors(
 			fields.OneTermEqualSelector("spec.tenantID", idp.Name),
-			fields.OneTermEqualSelector(auth.LimitQueryTag, "0"),
 		)
 
-		groups, err := c.client.AuthV1().Groups().List(ctx, metav1.ListOptions{FieldSelector: tenantSelector.String()})
+		groups, err := c.client.AuthV1().Groups().List(ctx, metav1.ListOptions{
+			FieldSelector: tenantSelector.String(),
+			Limit:         0,
+		})
 		if err != nil {
 			log.Error("List groups for tenant failed", log.String("tenant", idp.Name), log.Err(err))
 			continue

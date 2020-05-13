@@ -51,6 +51,9 @@ type UserREST struct {
 	authClient authinternalclient.AuthInterface
 }
 
+var _ rest.Creater = &UserREST{}
+var _ rest.Lister = &UserREST{}
+
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
 func (r *UserREST) New() runtime.Object {
@@ -60,6 +63,14 @@ func (r *UserREST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *UserREST) NewList() runtime.Object {
 	return &auth.UserList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *UserREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("users"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.

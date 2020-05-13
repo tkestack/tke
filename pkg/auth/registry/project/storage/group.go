@@ -50,6 +50,9 @@ type GroupREST struct {
 	authClient authinternalclient.AuthInterface
 }
 
+var _ rest.Creater = &GroupREST{}
+var _ rest.Lister = &GroupREST{}
+
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
 func (r *GroupREST) New() runtime.Object {
@@ -59,6 +62,14 @@ func (r *GroupREST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *GroupREST) NewList() runtime.Object {
 	return &auth.GroupList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *GroupREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("groups"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
