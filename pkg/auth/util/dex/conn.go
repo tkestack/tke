@@ -19,6 +19,7 @@
 package dex
 
 import (
+	"context"
 	"fmt"
 
 	dexstorage "github.com/dexidp/dex/storage"
@@ -39,7 +40,7 @@ func (c *conn) CreateConnector(connector dexstorage.Connector) error {
 }
 
 func (c *conn) GetConnector(id string) (conn dexstorage.Connector, err error) {
-	idp, err := c.authClient.IdentityProviders().Get(id, metav1.GetOptions{})
+	idp, err := c.authClient.IdentityProviders().Get(context.Background(), id, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return conn, dexstorage.ErrNotFound
@@ -51,7 +52,7 @@ func (c *conn) GetConnector(id string) (conn dexstorage.Connector, err error) {
 }
 
 func (c *conn) UpdateConnector(id string, updater func(s dexstorage.Connector) (dexstorage.Connector, error)) error {
-	current, err := c.authClient.IdentityProviders().Get(id, metav1.GetOptions{})
+	current, err := c.authClient.IdentityProviders().Get(context.Background(), id, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return dexstorage.ErrNotFound
@@ -69,12 +70,12 @@ func (c *conn) UpdateConnector(id string, updater func(s dexstorage.Connector) (
 
 	current.Spec = updated.Spec
 
-	_, err = c.authClient.IdentityProviders().Update(current)
+	_, err = c.authClient.IdentityProviders().Update(context.Background(), current, metav1.UpdateOptions{})
 	return err
 }
 
 func (c *conn) DeleteConnector(id string) error {
-	err := c.authClient.IdentityProviders().Delete(id, &metav1.DeleteOptions{})
+	err := c.authClient.IdentityProviders().Delete(context.Background(), id, metav1.DeleteOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return dexstorage.ErrNotFound
@@ -86,7 +87,7 @@ func (c *conn) DeleteConnector(id string) error {
 }
 
 func (c *conn) ListConnectors() (connectors []dexstorage.Connector, err error) {
-	idpList, err := c.authClient.IdentityProviders().List(metav1.ListOptions{})
+	idpList, err := c.authClient.IdentityProviders().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var cronhpasResource = schema.GroupVersionResource{Group: "platform.tkestack.io"
 var cronhpasKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "v1", Kind: "CronHPA"}
 
 // Get takes name of the cronHPA, and returns the corresponding cronHPA object, and an error if there is any.
-func (c *FakeCronHPAs) Get(name string, options v1.GetOptions) (result *platformv1.CronHPA, err error) {
+func (c *FakeCronHPAs) Get(ctx context.Context, name string, options v1.GetOptions) (result *platformv1.CronHPA, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(cronhpasResource, name), &platformv1.CronHPA{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeCronHPAs) Get(name string, options v1.GetOptions) (result *platform
 }
 
 // List takes label and field selectors, and returns the list of CronHPAs that match those selectors.
-func (c *FakeCronHPAs) List(opts v1.ListOptions) (result *platformv1.CronHPAList, err error) {
+func (c *FakeCronHPAs) List(ctx context.Context, opts v1.ListOptions) (result *platformv1.CronHPAList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(cronhpasResource, cronhpasKind, opts), &platformv1.CronHPAList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeCronHPAs) List(opts v1.ListOptions) (result *platformv1.CronHPAList
 }
 
 // Watch returns a watch.Interface that watches the requested cronHPAs.
-func (c *FakeCronHPAs) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeCronHPAs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(cronhpasResource, opts))
 }
 
 // Create takes the representation of a cronHPA and creates it.  Returns the server's representation of the cronHPA, and an error, if there is any.
-func (c *FakeCronHPAs) Create(cronHPA *platformv1.CronHPA) (result *platformv1.CronHPA, err error) {
+func (c *FakeCronHPAs) Create(ctx context.Context, cronHPA *platformv1.CronHPA, opts v1.CreateOptions) (result *platformv1.CronHPA, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(cronhpasResource, cronHPA), &platformv1.CronHPA{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeCronHPAs) Create(cronHPA *platformv1.CronHPA) (result *platformv1.C
 }
 
 // Update takes the representation of a cronHPA and updates it. Returns the server's representation of the cronHPA, and an error, if there is any.
-func (c *FakeCronHPAs) Update(cronHPA *platformv1.CronHPA) (result *platformv1.CronHPA, err error) {
+func (c *FakeCronHPAs) Update(ctx context.Context, cronHPA *platformv1.CronHPA, opts v1.UpdateOptions) (result *platformv1.CronHPA, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(cronhpasResource, cronHPA), &platformv1.CronHPA{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeCronHPAs) Update(cronHPA *platformv1.CronHPA) (result *platformv1.C
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeCronHPAs) UpdateStatus(cronHPA *platformv1.CronHPA) (*platformv1.CronHPA, error) {
+func (c *FakeCronHPAs) UpdateStatus(ctx context.Context, cronHPA *platformv1.CronHPA, opts v1.UpdateOptions) (*platformv1.CronHPA, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(cronhpasResource, "status", cronHPA), &platformv1.CronHPA{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeCronHPAs) UpdateStatus(cronHPA *platformv1.CronHPA) (*platformv1.Cr
 }
 
 // Delete takes name of the cronHPA and deletes it. Returns an error if one occurs.
-func (c *FakeCronHPAs) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeCronHPAs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(cronhpasResource, name), &platformv1.CronHPA{})
 	return err
 }
 
 // Patch applies the patch and returns the patched cronHPA.
-func (c *FakeCronHPAs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platformv1.CronHPA, err error) {
+func (c *FakeCronHPAs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platformv1.CronHPA, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(cronhpasResource, name, pt, data, subresources...), &platformv1.CronHPA{})
 	if obj == nil {

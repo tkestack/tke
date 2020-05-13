@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,15 +40,15 @@ type RolesGetter interface {
 
 // RoleInterface has methods to work with Role resources.
 type RoleInterface interface {
-	Create(*v1.Role) (*v1.Role, error)
-	Update(*v1.Role) (*v1.Role, error)
-	UpdateStatus(*v1.Role) (*v1.Role, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.Role, error)
-	List(opts metav1.ListOptions) (*v1.RoleList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Role, err error)
+	Create(ctx context.Context, role *v1.Role, opts metav1.CreateOptions) (*v1.Role, error)
+	Update(ctx context.Context, role *v1.Role, opts metav1.UpdateOptions) (*v1.Role, error)
+	UpdateStatus(ctx context.Context, role *v1.Role, opts metav1.UpdateOptions) (*v1.Role, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.Role, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.RoleList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Role, err error)
 	RoleExpansion
 }
 
@@ -64,19 +65,19 @@ func newRoles(c *AuthV1Client) *roles {
 }
 
 // Get takes name of the role, and returns the corresponding role object, and an error if there is any.
-func (c *roles) Get(name string, options metav1.GetOptions) (result *v1.Role, err error) {
+func (c *roles) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.Role, err error) {
 	result = &v1.Role{}
 	err = c.client.Get().
 		Resource("roles").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Roles that match those selectors.
-func (c *roles) List(opts metav1.ListOptions) (result *v1.RoleList, err error) {
+func (c *roles) List(ctx context.Context, opts metav1.ListOptions) (result *v1.RoleList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -86,13 +87,13 @@ func (c *roles) List(opts metav1.ListOptions) (result *v1.RoleList, err error) {
 		Resource("roles").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested roles.
-func (c *roles) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *roles) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -102,81 +103,84 @@ func (c *roles) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("roles").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a role and creates it.  Returns the server's representation of the role, and an error, if there is any.
-func (c *roles) Create(role *v1.Role) (result *v1.Role, err error) {
+func (c *roles) Create(ctx context.Context, role *v1.Role, opts metav1.CreateOptions) (result *v1.Role, err error) {
 	result = &v1.Role{}
 	err = c.client.Post().
 		Resource("roles").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(role).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a role and updates it. Returns the server's representation of the role, and an error, if there is any.
-func (c *roles) Update(role *v1.Role) (result *v1.Role, err error) {
+func (c *roles) Update(ctx context.Context, role *v1.Role, opts metav1.UpdateOptions) (result *v1.Role, err error) {
 	result = &v1.Role{}
 	err = c.client.Put().
 		Resource("roles").
 		Name(role.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(role).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *roles) UpdateStatus(role *v1.Role) (result *v1.Role, err error) {
+func (c *roles) UpdateStatus(ctx context.Context, role *v1.Role, opts metav1.UpdateOptions) (result *v1.Role, err error) {
 	result = &v1.Role{}
 	err = c.client.Put().
 		Resource("roles").
 		Name(role.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(role).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the role and deletes it. Returns an error if one occurs.
-func (c *roles) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *roles) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("roles").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *roles) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (c *roles) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("roles").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched role.
-func (c *roles) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Role, err error) {
+func (c *roles) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Role, err error) {
 	result = &v1.Role{}
 	err = c.client.Patch(pt).
 		Resource("roles").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var logagentsResource = schema.GroupVersionResource{Group: "logagent.tkestack.io
 var logagentsKind = schema.GroupVersionKind{Group: "logagent.tkestack.io", Version: "", Kind: "LogAgent"}
 
 // Get takes name of the logAgent, and returns the corresponding logAgent object, and an error if there is any.
-func (c *FakeLogAgents) Get(name string, options v1.GetOptions) (result *logagent.LogAgent, err error) {
+func (c *FakeLogAgents) Get(ctx context.Context, name string, options v1.GetOptions) (result *logagent.LogAgent, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(logagentsResource, name), &logagent.LogAgent{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeLogAgents) Get(name string, options v1.GetOptions) (result *logagen
 }
 
 // List takes label and field selectors, and returns the list of LogAgents that match those selectors.
-func (c *FakeLogAgents) List(opts v1.ListOptions) (result *logagent.LogAgentList, err error) {
+func (c *FakeLogAgents) List(ctx context.Context, opts v1.ListOptions) (result *logagent.LogAgentList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(logagentsResource, logagentsKind, opts), &logagent.LogAgentList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeLogAgents) List(opts v1.ListOptions) (result *logagent.LogAgentList
 }
 
 // Watch returns a watch.Interface that watches the requested logAgents.
-func (c *FakeLogAgents) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeLogAgents) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(logagentsResource, opts))
 }
 
 // Create takes the representation of a logAgent and creates it.  Returns the server's representation of the logAgent, and an error, if there is any.
-func (c *FakeLogAgents) Create(logAgent *logagent.LogAgent) (result *logagent.LogAgent, err error) {
+func (c *FakeLogAgents) Create(ctx context.Context, logAgent *logagent.LogAgent, opts v1.CreateOptions) (result *logagent.LogAgent, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(logagentsResource, logAgent), &logagent.LogAgent{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeLogAgents) Create(logAgent *logagent.LogAgent) (result *logagent.Lo
 }
 
 // Update takes the representation of a logAgent and updates it. Returns the server's representation of the logAgent, and an error, if there is any.
-func (c *FakeLogAgents) Update(logAgent *logagent.LogAgent) (result *logagent.LogAgent, err error) {
+func (c *FakeLogAgents) Update(ctx context.Context, logAgent *logagent.LogAgent, opts v1.UpdateOptions) (result *logagent.LogAgent, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(logagentsResource, logAgent), &logagent.LogAgent{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeLogAgents) Update(logAgent *logagent.LogAgent) (result *logagent.Lo
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeLogAgents) UpdateStatus(logAgent *logagent.LogAgent) (*logagent.LogAgent, error) {
+func (c *FakeLogAgents) UpdateStatus(ctx context.Context, logAgent *logagent.LogAgent, opts v1.UpdateOptions) (*logagent.LogAgent, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(logagentsResource, "status", logAgent), &logagent.LogAgent{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeLogAgents) UpdateStatus(logAgent *logagent.LogAgent) (*logagent.Log
 }
 
 // Delete takes name of the logAgent and deletes it. Returns an error if one occurs.
-func (c *FakeLogAgents) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeLogAgents) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(logagentsResource, name), &logagent.LogAgent{})
 	return err
 }
 
 // Patch applies the patch and returns the patched logAgent.
-func (c *FakeLogAgents) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *logagent.LogAgent, err error) {
+func (c *FakeLogAgents) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *logagent.LogAgent, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(logagentsResource, name, pt, data, subresources...), &logagent.LogAgent{})
 	if obj == nil {

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var helmsResource = schema.GroupVersionResource{Group: "platform.tkestack.io", V
 var helmsKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "", Kind: "Helm"}
 
 // Get takes name of the helm, and returns the corresponding helm object, and an error if there is any.
-func (c *FakeHelms) Get(name string, options v1.GetOptions) (result *platform.Helm, err error) {
+func (c *FakeHelms) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.Helm, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(helmsResource, name), &platform.Helm{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeHelms) Get(name string, options v1.GetOptions) (result *platform.He
 }
 
 // List takes label and field selectors, and returns the list of Helms that match those selectors.
-func (c *FakeHelms) List(opts v1.ListOptions) (result *platform.HelmList, err error) {
+func (c *FakeHelms) List(ctx context.Context, opts v1.ListOptions) (result *platform.HelmList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(helmsResource, helmsKind, opts), &platform.HelmList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeHelms) List(opts v1.ListOptions) (result *platform.HelmList, err er
 }
 
 // Watch returns a watch.Interface that watches the requested helms.
-func (c *FakeHelms) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeHelms) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(helmsResource, opts))
 }
 
 // Create takes the representation of a helm and creates it.  Returns the server's representation of the helm, and an error, if there is any.
-func (c *FakeHelms) Create(helm *platform.Helm) (result *platform.Helm, err error) {
+func (c *FakeHelms) Create(ctx context.Context, helm *platform.Helm, opts v1.CreateOptions) (result *platform.Helm, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(helmsResource, helm), &platform.Helm{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeHelms) Create(helm *platform.Helm) (result *platform.Helm, err erro
 }
 
 // Update takes the representation of a helm and updates it. Returns the server's representation of the helm, and an error, if there is any.
-func (c *FakeHelms) Update(helm *platform.Helm) (result *platform.Helm, err error) {
+func (c *FakeHelms) Update(ctx context.Context, helm *platform.Helm, opts v1.UpdateOptions) (result *platform.Helm, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(helmsResource, helm), &platform.Helm{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeHelms) Update(helm *platform.Helm) (result *platform.Helm, err erro
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeHelms) UpdateStatus(helm *platform.Helm) (*platform.Helm, error) {
+func (c *FakeHelms) UpdateStatus(ctx context.Context, helm *platform.Helm, opts v1.UpdateOptions) (*platform.Helm, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(helmsResource, "status", helm), &platform.Helm{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeHelms) UpdateStatus(helm *platform.Helm) (*platform.Helm, error) {
 }
 
 // Delete takes name of the helm and deletes it. Returns an error if one occurs.
-func (c *FakeHelms) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeHelms) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(helmsResource, name), &platform.Helm{})
 	return err
 }
 
 // Patch applies the patch and returns the patched helm.
-func (c *FakeHelms) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.Helm, err error) {
+func (c *FakeHelms) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.Helm, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(helmsResource, name, pt, data, subresources...), &platform.Helm{})
 	if obj == nil {

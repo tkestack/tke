@@ -19,6 +19,8 @@
 package cluster
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/provider/imported/validation"
@@ -54,5 +56,5 @@ func NewProvider() (*Provider, error) {
 }
 
 func (p *Provider) Validate(cluster *types.Cluster) field.ErrorList {
-	return validation.ValidateCluster(cluster)
+	return validation.ValidateCluster(context.Background(), cluster)
 }

@@ -19,6 +19,8 @@
 package projectpolicybinding
 
 import (
+	"context"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +36,7 @@ import (
 var ValidateBindingName = apiMachineryValidation.NameIsDNSLabel
 
 // ValidateProjectPolicyBinding tests if required fields in the projectpolicybinding are set.
-func ValidateProjectPolicyBinding(binding *auth.ProjectPolicyBinding, authClient authinternalclient.AuthInterface) field.ErrorList {
+func ValidateProjectPolicyBinding(ctx context.Context, binding *auth.ProjectPolicyBinding, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&binding.ObjectMeta, false, ValidateBindingName, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
@@ -42,7 +44,7 @@ func ValidateProjectPolicyBinding(binding *auth.ProjectPolicyBinding, authClient
 	if binding.Spec.PolicyID == "" {
 		allErrs = append(allErrs, field.Required(fldSpecPath.Child("policyID"), "must specify policyID"))
 	} else {
-		pol, err := authClient.Policies().Get(binding.Spec.PolicyID, metav1.GetOptions{})
+		pol, err := authClient.Policies().Get(ctx, binding.Spec.PolicyID, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				allErrs = append(allErrs, field.NotFound(fldSpecPath.Child("policyID"), binding.Spec.PolicyID))
@@ -70,7 +72,7 @@ func ValidateProjectPolicyBinding(binding *auth.ProjectPolicyBinding, authClient
 
 		switch {
 		case subj.ID != "" && subj.Name == "":
-			val, err := authClient.Users().Get(util.CombineTenantAndName(binding.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Users().Get(ctx, util.CombineTenantAndName(binding.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("user is not found, will removed it", log.String("policy", binding.Name), log.String("user", subj.ID))
@@ -86,7 +88,7 @@ func ValidateProjectPolicyBinding(binding *auth.ProjectPolicyBinding, authClient
 				}
 			}
 		case subj.ID == "" && subj.Name != "":
-			user, err := util.GetUserByName(authClient, binding.Spec.TenantID, subj.Name)
+			user, err := util.GetUserByName(ctx, authClient, binding.Spec.TenantID, subj.Name)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("user is not found in tenant, will removed it", log.String("policy", binding.Name), log.String("user", subj.Name))
@@ -115,7 +117,7 @@ func ValidateProjectPolicyBinding(binding *auth.ProjectPolicyBinding, authClient
 		}
 
 		if subj.Name == "" {
-			val, err := authClient.Groups().Get(util.CombineTenantAndName(binding.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			val, err := authClient.Groups().Get(ctx, util.CombineTenantAndName(binding.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					log.Warn("group of the policy is not found, will removed it", log.String("policy", binding.Name), log.String("group", subj.Name))
@@ -146,9 +148,9 @@ func ValidateProjectPolicyBinding(binding *auth.ProjectPolicyBinding, authClient
 
 // ValidateProjectPolicyBindingUpdate tests if required fields in the policy are set during
 // an update.
-func ValidateProjectPolicyBindingUpdate(new *auth.ProjectPolicyBinding, old *auth.ProjectPolicyBinding, authClient authinternalclient.AuthInterface) field.ErrorList {
+func ValidateProjectPolicyBindingUpdate(ctx context.Context, new *auth.ProjectPolicyBinding, old *auth.ProjectPolicyBinding, authClient authinternalclient.AuthInterface) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&new.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateProjectPolicyBinding(new, authClient)...)
+	allErrs = append(allErrs, ValidateProjectPolicyBinding(ctx, new, authClient)...)
 
 	fldSpecPath := field.NewPath("spec")
 	if new.Spec.TenantID != old.Spec.TenantID {

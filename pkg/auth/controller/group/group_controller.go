@@ -19,6 +19,7 @@
 package group
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -34,7 +35,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"tkestack.io/tke/api/auth"
 	v1 "tkestack.io/tke/api/auth/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
@@ -218,7 +218,7 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve group from store", log.String("group name", key), log.Err(err))
 	default:
 		if group.Status.Phase == v1.GroupTerminating {
-			err = c.groupedResourcesDeleter.Delete(key)
+			err = c.groupedResourcesDeleter.Delete(context.Background(), key)
 		} else {
 			err = c.processUpdate(group, key)
 		}
@@ -296,7 +296,7 @@ func (c *Controller) pollGroups(stopCh <-chan struct{}) {
 	for {
 		select {
 		case <-timerC.C:
-			c.resyncGroups()
+			c.resyncGroups(context.Background())
 		case <-stopCh:
 			timerC.Stop()
 			return
@@ -304,8 +304,8 @@ func (c *Controller) pollGroups(stopCh <-chan struct{}) {
 	}
 }
 
-func (c *Controller) resyncGroups() {
-	idpList, err := c.client.AuthV1().IdentityProviders().List(metav1.ListOptions{})
+func (c *Controller) resyncGroups(ctx context.Context) {
+	idpList, err := c.client.AuthV1().IdentityProviders().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		log.Error("List all identity providers failed", log.Err(err))
 		return
@@ -314,10 +314,12 @@ func (c *Controller) resyncGroups() {
 	for _, idp := range idpList.Items {
 		tenantSelector := fields.AndSelectors(
 			fields.OneTermEqualSelector("spec.tenantID", idp.Name),
-			fields.OneTermEqualSelector(auth.LimitQueryTag, "0"),
 		)
 
-		groups, err := c.client.AuthV1().Groups().List(metav1.ListOptions{FieldSelector: tenantSelector.String()})
+		groups, err := c.client.AuthV1().Groups().List(ctx, metav1.ListOptions{
+			FieldSelector: tenantSelector.String(),
+			Limit:         0,
+		})
 		if err != nil {
 			log.Error("List groups for tenant failed", log.String("tenant", idp.Name), log.Err(err))
 			continue
@@ -327,5 +329,4 @@ func (c *Controller) resyncGroups() {
 			_ = c.handleSubjects(grp.Name, grp.DeepCopy())
 		}
 	}
-
 }

@@ -19,11 +19,12 @@
 package app
 
 import (
+	"net/http"
+	"time"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/server/mux"
-	"net/http"
-	"time"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -42,9 +43,6 @@ func KnownControllers() []string {
 	return ret.List()
 }
 
-
-
-
 // NewControllerInitializers is a public map of named controller groups (you can start more than one in an init func)
 // paired to their InitFunc.  This allows for structured downstream composition and subdivision.
 func NewControllerInitializers() map[string]InitFunc {
@@ -53,7 +51,6 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers["logagent"] = startLogagentController
 	return controllers
 }
-
 
 // StartControllers to start the controller.
 func StartControllers(ctx ControllerContext, controllers map[string]InitFunc, unsecuredMux *mux.PathRecorderMux) error {

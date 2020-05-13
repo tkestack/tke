@@ -114,7 +114,7 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 
 // Validate validates a new ChartGroup.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateChartGroupCreate(obj.(*business.ChartGroup), s.businessClient, s.registryClient)
+	return ValidateChartGroupCreate(ctx, obj.(*business.ChartGroup), s.businessClient, s.registryClient)
 }
 
 // AllowCreateOnUpdate is false for ChartGroups.
@@ -135,7 +135,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end ChartGroup.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateChartGroupUpdate(obj.(*business.ChartGroup), old.(*business.ChartGroup), s.businessClient, s.registryClient)
+	return ValidateChartGroupUpdate(ctx, obj.(*business.ChartGroup), old.(*business.ChartGroup), s.businessClient, s.registryClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -144,7 +144,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not an ChartGroup")
 	}
-	return labels.Set(chartGroup.Labels), ToSelectableFields(chartGroup), nil
+	return chartGroup.Labels, ToSelectableFields(chartGroup), nil
 }
 
 // MatchChartGroup returns a generic matcher for a given label and field selector.
@@ -197,7 +197,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateChartGroupUpdate(obj.(*business.ChartGroup), old.(*business.ChartGroup), s.businessClient, s.registryClient)
+	return ValidateChartGroupUpdate(ctx, obj.(*business.ChartGroup), old.(*business.ChartGroup), s.businessClient, s.registryClient)
 }
 
 // FinalizeStrategy implements finalizer logic for ChartGroup.
@@ -226,5 +226,5 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateChartGroupUpdate(obj.(*business.ChartGroup), old.(*business.ChartGroup), s.businessClient, s.registryClient)
+	return ValidateChartGroupUpdate(ctx, obj.(*business.ChartGroup), old.(*business.ChartGroup), s.businessClient, s.registryClient)
 }

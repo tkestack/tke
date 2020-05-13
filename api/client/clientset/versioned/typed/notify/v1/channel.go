@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type ChannelsGetter interface {
 
 // ChannelInterface has methods to work with Channel resources.
 type ChannelInterface interface {
-	Create(*v1.Channel) (*v1.Channel, error)
-	Update(*v1.Channel) (*v1.Channel, error)
-	UpdateStatus(*v1.Channel) (*v1.Channel, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.Channel, error)
-	List(opts metav1.ListOptions) (*v1.ChannelList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Channel, err error)
+	Create(ctx context.Context, channel *v1.Channel, opts metav1.CreateOptions) (*v1.Channel, error)
+	Update(ctx context.Context, channel *v1.Channel, opts metav1.UpdateOptions) (*v1.Channel, error)
+	UpdateStatus(ctx context.Context, channel *v1.Channel, opts metav1.UpdateOptions) (*v1.Channel, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.Channel, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.ChannelList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Channel, err error)
 	ChannelExpansion
 }
 
@@ -63,19 +64,19 @@ func newChannels(c *NotifyV1Client) *channels {
 }
 
 // Get takes name of the channel, and returns the corresponding channel object, and an error if there is any.
-func (c *channels) Get(name string, options metav1.GetOptions) (result *v1.Channel, err error) {
+func (c *channels) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.Channel, err error) {
 	result = &v1.Channel{}
 	err = c.client.Get().
 		Resource("channels").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Channels that match those selectors.
-func (c *channels) List(opts metav1.ListOptions) (result *v1.ChannelList, err error) {
+func (c *channels) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ChannelList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *channels) List(opts metav1.ListOptions) (result *v1.ChannelList, err er
 		Resource("channels").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested channels.
-func (c *channels) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *channels) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *channels) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("channels").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a channel and creates it.  Returns the server's representation of the channel, and an error, if there is any.
-func (c *channels) Create(channel *v1.Channel) (result *v1.Channel, err error) {
+func (c *channels) Create(ctx context.Context, channel *v1.Channel, opts metav1.CreateOptions) (result *v1.Channel, err error) {
 	result = &v1.Channel{}
 	err = c.client.Post().
 		Resource("channels").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(channel).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a channel and updates it. Returns the server's representation of the channel, and an error, if there is any.
-func (c *channels) Update(channel *v1.Channel) (result *v1.Channel, err error) {
+func (c *channels) Update(ctx context.Context, channel *v1.Channel, opts metav1.UpdateOptions) (result *v1.Channel, err error) {
 	result = &v1.Channel{}
 	err = c.client.Put().
 		Resource("channels").
 		Name(channel.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(channel).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *channels) UpdateStatus(channel *v1.Channel) (result *v1.Channel, err error) {
+func (c *channels) UpdateStatus(ctx context.Context, channel *v1.Channel, opts metav1.UpdateOptions) (result *v1.Channel, err error) {
 	result = &v1.Channel{}
 	err = c.client.Put().
 		Resource("channels").
 		Name(channel.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(channel).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the channel and deletes it. Returns an error if one occurs.
-func (c *channels) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *channels) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("channels").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched channel.
-func (c *channels) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Channel, err error) {
+func (c *channels) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Channel, err error) {
 	result = &v1.Channel{}
 	err = c.client.Patch(pt).
 		Resource("channels").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

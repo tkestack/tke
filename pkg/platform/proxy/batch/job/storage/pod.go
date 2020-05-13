@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	batchV1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -64,7 +65,7 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	job, err := client.BatchV1().Jobs(namespaceName).Get(name, *options)
+	job, err := client.BatchV1().Jobs(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(batchV1.Resource("jobs/pods"), name)
 	}
@@ -76,7 +77,7 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 
 	// list all of the pod, by deployment labels
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}

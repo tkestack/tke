@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,15 +40,15 @@ type NsEmigrationsGetter interface {
 
 // NsEmigrationInterface has methods to work with NsEmigration resources.
 type NsEmigrationInterface interface {
-	Create(*v1.NsEmigration) (*v1.NsEmigration, error)
-	Update(*v1.NsEmigration) (*v1.NsEmigration, error)
-	UpdateStatus(*v1.NsEmigration) (*v1.NsEmigration, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.NsEmigration, error)
-	List(opts metav1.ListOptions) (*v1.NsEmigrationList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.NsEmigration, err error)
+	Create(ctx context.Context, nsEmigration *v1.NsEmigration, opts metav1.CreateOptions) (*v1.NsEmigration, error)
+	Update(ctx context.Context, nsEmigration *v1.NsEmigration, opts metav1.UpdateOptions) (*v1.NsEmigration, error)
+	UpdateStatus(ctx context.Context, nsEmigration *v1.NsEmigration, opts metav1.UpdateOptions) (*v1.NsEmigration, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.NsEmigration, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.NsEmigrationList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.NsEmigration, err error)
 	NsEmigrationExpansion
 }
 
@@ -66,20 +67,20 @@ func newNsEmigrations(c *BusinessV1Client, namespace string) *nsEmigrations {
 }
 
 // Get takes name of the nsEmigration, and returns the corresponding nsEmigration object, and an error if there is any.
-func (c *nsEmigrations) Get(name string, options metav1.GetOptions) (result *v1.NsEmigration, err error) {
+func (c *nsEmigrations) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.NsEmigration, err error) {
 	result = &v1.NsEmigration{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("nsemigrations").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of NsEmigrations that match those selectors.
-func (c *nsEmigrations) List(opts metav1.ListOptions) (result *v1.NsEmigrationList, err error) {
+func (c *nsEmigrations) List(ctx context.Context, opts metav1.ListOptions) (result *v1.NsEmigrationList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -90,13 +91,13 @@ func (c *nsEmigrations) List(opts metav1.ListOptions) (result *v1.NsEmigrationLi
 		Resource("nsemigrations").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested nsEmigrations.
-func (c *nsEmigrations) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *nsEmigrations) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -107,87 +108,90 @@ func (c *nsEmigrations) Watch(opts metav1.ListOptions) (watch.Interface, error) 
 		Resource("nsemigrations").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a nsEmigration and creates it.  Returns the server's representation of the nsEmigration, and an error, if there is any.
-func (c *nsEmigrations) Create(nsEmigration *v1.NsEmigration) (result *v1.NsEmigration, err error) {
+func (c *nsEmigrations) Create(ctx context.Context, nsEmigration *v1.NsEmigration, opts metav1.CreateOptions) (result *v1.NsEmigration, err error) {
 	result = &v1.NsEmigration{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("nsemigrations").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(nsEmigration).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a nsEmigration and updates it. Returns the server's representation of the nsEmigration, and an error, if there is any.
-func (c *nsEmigrations) Update(nsEmigration *v1.NsEmigration) (result *v1.NsEmigration, err error) {
+func (c *nsEmigrations) Update(ctx context.Context, nsEmigration *v1.NsEmigration, opts metav1.UpdateOptions) (result *v1.NsEmigration, err error) {
 	result = &v1.NsEmigration{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("nsemigrations").
 		Name(nsEmigration.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(nsEmigration).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *nsEmigrations) UpdateStatus(nsEmigration *v1.NsEmigration) (result *v1.NsEmigration, err error) {
+func (c *nsEmigrations) UpdateStatus(ctx context.Context, nsEmigration *v1.NsEmigration, opts metav1.UpdateOptions) (result *v1.NsEmigration, err error) {
 	result = &v1.NsEmigration{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("nsemigrations").
 		Name(nsEmigration.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(nsEmigration).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the nsEmigration and deletes it. Returns an error if one occurs.
-func (c *nsEmigrations) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *nsEmigrations) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("nsemigrations").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *nsEmigrations) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (c *nsEmigrations) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("nsemigrations").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched nsEmigration.
-func (c *nsEmigrations) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.NsEmigration, err error) {
+func (c *nsEmigrations) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.NsEmigration, err error) {
 	result = &v1.NsEmigration{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("nsemigrations").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

@@ -22,9 +22,6 @@ import (
 	"context"
 	"strings"
 
-	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/apiserver/filter"
-
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -59,6 +56,14 @@ func (r *ProjectREST) New() runtime.Object {
 	return &auth.ProjectBelongs{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *ProjectREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("projects"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
@@ -66,10 +71,13 @@ func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.Lis
 	}
 
 	userID := requestInfo.Name
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if tenantID == "" {
-		tenantID = filter.TenantIDFrom(ctx)
-	}
+	// todo: confirm this
+	//var tenantID string
+	//if _, t := authentication.GetUsernameAndTenantID(ctx); t == "" {
+	//	tenantID = t
+	//} else {
+	//	tenantID = filter.TenantIDFrom(ctx)
+	//}
 
 	obj, err := r.userRest.Get(ctx, userID, &metav1.GetOptions{})
 	if err != nil {

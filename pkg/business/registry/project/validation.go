@@ -19,6 +19,7 @@
 package project
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -42,7 +43,7 @@ const (
 var ValidateProjectName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateProject tests if required fields in the project are set.
-func ValidateProject(project *business.Project, old *business.Project,
+func ValidateProject(ctx context.Context, project *business.Project, old *business.Project,
 	objectGetter validation.BusinessObjectGetter, clusterGetter validation.ClusterGetter) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&project.ObjectMeta,
 		false, ValidateProjectName, field.NewPath("metadata"))
@@ -58,7 +59,7 @@ func ValidateProject(project *business.Project, old *business.Project,
 	if len(project.Spec.Clusters) > 0 {
 		for clusterName, clusterHard := range project.Spec.Clusters {
 			for k, v := range clusterHard.Hard {
-				hardErrs = append(hardErrs, validation.ValidateClusterVersioned(clusterGetter, clusterName, project.Spec.TenantID)...)
+				hardErrs = append(hardErrs, validation.ValidateClusterVersioned(ctx, clusterGetter, clusterName, project.Spec.TenantID)...)
 				resPath := fldHardPath.Key(clusterName + k)
 				hardErrs = append(hardErrs, resource.ValidateResourceQuotaResourceName(k, resPath)...)
 				hardErrs = append(hardErrs, resource.ValidateResourceQuantityValue(k, v, resPath)...)
@@ -70,11 +71,11 @@ func ValidateProject(project *business.Project, old *business.Project,
 	}
 
 	if len(project.Status.CalculatedChildProjects) != 0 || len(project.Status.CalculatedNamespaces) != 0 {
-		allErrs = append(allErrs, validateAgainstChildren(project, objectGetter)...)
+		allErrs = append(allErrs, validateAgainstChildren(ctx, project, objectGetter)...)
 	}
 
 	if project.Spec.ParentProjectName != "" {
-		allErrs = append(allErrs, validateAgainstParent(project, old, objectGetter)...) /* need hardErrs == nil */
+		allErrs = append(allErrs, validateAgainstParent(ctx, project, old, objectGetter)...) /* need hardErrs == nil */
 	}
 
 	return allErrs
@@ -82,10 +83,10 @@ func ValidateProject(project *business.Project, old *business.Project,
 
 // ValidateProjectUpdate tests if required fields in the project are set during
 // an update.
-func ValidateProjectUpdate(project *business.Project, old *business.Project,
+func ValidateProjectUpdate(ctx context.Context, project *business.Project, old *business.Project,
 	objectGetter validation.BusinessObjectGetter, clusterGetter validation.ClusterGetter) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&project.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateProject(project, old, objectGetter, clusterGetter)...)
+	allErrs = append(allErrs, ValidateProject(ctx, project, old, objectGetter, clusterGetter)...)
 
 	if project.Spec.TenantID != old.Spec.TenantID {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "tenantID"),
@@ -116,13 +117,13 @@ func ValidateProjectUpdate(project *business.Project, old *business.Project,
 	return allErrs
 }
 
-func validateAgainstChildren(project *business.Project, getter validation.BusinessObjectGetter) (allErrs field.ErrorList) {
+func validateAgainstChildren(ctx context.Context, project *business.Project, getter validation.BusinessObjectGetter) (allErrs field.ErrorList) {
 	clusterTimes := map[string]int{}          /* cluster -> times */
 	quotaTimes := map[string]map[string]int{} /* cluster -> (kind -> times) */
 
 	fldChildrenProjectsPath := field.NewPath("status").Child("calculatedChildProjects")
 	for _, name := range project.Status.CalculatedChildProjects {
-		childProject, err := getter.Project(name, metav1.GetOptions{})
+		childProject, err := getter.Project(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldChildrenProjectsPath, name,
 				fmt.Sprintf("failed to get child project '%s', for %s", name, err)))
@@ -143,7 +144,7 @@ func validateAgainstChildren(project *business.Project, getter validation.Busine
 
 	fldChildrenNamespacesPath := field.NewPath("status").Child("calculatedNamespaces")
 	for _, name := range project.Status.CalculatedNamespaces {
-		childNamespace, err := getter.Namespace(project.Name, name, metav1.GetOptions{})
+		childNamespace, err := getter.Namespace(ctx, project.Name, name, metav1.GetOptions{})
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldChildrenNamespacesPath, name,
 				fmt.Sprintf("failed to get child namespace '%s', for %s", name, err)))
@@ -188,12 +189,12 @@ func validateAgainstChildren(project *business.Project, getter validation.Busine
 	return allErrs
 }
 
-func validateAgainstParent(project *business.Project, old *business.Project, getter validation.BusinessObjectGetter) (allErrs field.ErrorList) {
+func validateAgainstParent(ctx context.Context, project *business.Project, old *business.Project, getter validation.BusinessObjectGetter) (allErrs field.ErrorList) {
 	fldSpecPath := field.NewPath("spec")
 	fldHardPath := fldSpecPath.Child("hard")
 	fldParentProjectPath := fldSpecPath.Child("parentProjectName")
 
-	parentProject, err := getter.Project(project.Spec.ParentProjectName, metav1.GetOptions{})
+	parentProject, err := getter.Project(ctx, project.Spec.ParentProjectName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return append(allErrs, field.NotFound(fldParentProjectPath, project.Spec.ParentProjectName))
@@ -249,7 +250,8 @@ func validateAgainstParent(project *business.Project, old *business.Project, get
 					fmt.Sprintf("ancestor projects formed a circle: %s", parentList)))
 		}
 		parentSet[parentName] = true
-		if parent, err := getter.Project(parentName, metav1.GetOptions{}); err != nil {
+		parent, err := getter.Project(ctx, parentName, metav1.GetOptions{})
+		if err != nil {
 			if errors.IsNotFound(err) {
 				break
 			}
@@ -257,9 +259,8 @@ func validateAgainstParent(project *business.Project, old *business.Project, get
 				field.Invalid(fldParentProjectPath,
 					project.Spec.ParentProjectName,
 					fmt.Sprintf("failed to detect ancestor circle, \"%s\", already checked: %s", err, parentList)))
-		} else {
-			parentName = parent.Spec.ParentProjectName
 		}
+		parentName = parent.Spec.ParentProjectName
 	}
 
 	return allErrs

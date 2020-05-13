@@ -20,9 +20,10 @@ package authorization
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/http"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/util/log"
@@ -49,7 +50,7 @@ func (a *authorization) apiListChart(w http.ResponseWriter, req *http.Request) {
 }
 
 func (a *authorization) validateListChart(w http.ResponseWriter, req *http.Request, tenantID, chartGroupName string) (*registry.ChartGroup, error) {
-	chartGroupList, err := a.registryClient.ChartGroups().List(metav1.ListOptions{
+	chartGroupList, err := a.registryClient.ChartGroups().List(req.Context(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartGroupName),
 	})
 	if err != nil {

@@ -86,5 +86,5 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 	policy.Status.Groups = remainedGroups
 
 	log.Info("unbind policy subjects", log.String("policy", policy.Name), log.Any("users", policy.Status.Users), log.Any("groups", policy.Status.Groups))
-	return r.authClient.Policies().UpdateStatus(policy)
+	return r.authClient.Policies().UpdateStatus(ctx, policy, metav1.UpdateOptions{})
 }

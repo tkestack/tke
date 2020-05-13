@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -36,10 +37,11 @@ import (
 
 // UserREST implements the REST endpoint.
 type UserREST struct {
-	roleStore *registry.Store
-
+	roleStore  *registry.Store
 	authClient authinternalclient.AuthInterface
 }
+
+var _ = rest.Lister(&UserREST{})
 
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
@@ -50,6 +52,14 @@ func (r *UserREST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *UserREST) NewList() runtime.Object {
 	return &auth.UserList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *UserREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("users"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -69,7 +79,7 @@ func (r *UserREST) List(ctx context.Context, options *metainternal.ListOptions) 
 	for _, subj := range role.Status.Users {
 		var user *auth.User
 		if subj.ID != "" {
-			user, err = r.authClient.Users().Get(util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			user, err = r.authClient.Users().Get(ctx, util.CombineTenantAndName(role.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				log.Error("Get user failed", log.String("id", subj.ID), log.Err(err))
 				user = constructUser(subj.ID, subj.Name)

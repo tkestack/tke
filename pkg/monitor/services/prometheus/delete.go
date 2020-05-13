@@ -19,15 +19,17 @@
 package prometheus
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-func (h *processor) DeleteGroup(clusterName, groupName string) error {
+func (h *processor) DeleteGroup(ctx context.Context, clusterName, groupName string) error {
 	h.Lock()
 	defer h.Unlock()
 
-	ruleOp, err := h.loadRule(clusterName)
+	ruleOp, err := h.loadRule(ctx, clusterName)
 	if err != nil {
 		return errors.Wrapf(err, "rule operator not found")
 	}
@@ -41,7 +43,7 @@ func (h *processor) DeleteGroup(clusterName, groupName string) error {
 
 	groups := ruleOp.SavePromRule()
 
-	err = h.saveRule(clusterName, groups)
+	err = h.saveRule(ctx, clusterName, groups)
 	if err != nil {
 		return errors.Wrapf(err, "failed to save configmap")
 	}
@@ -49,11 +51,11 @@ func (h *processor) DeleteGroup(clusterName, groupName string) error {
 	return nil
 }
 
-func (h *processor) DeleteRule(clusterName, groupName, recordName string) error {
+func (h *processor) DeleteRule(ctx context.Context, clusterName, groupName, recordName string) error {
 	h.Lock()
 	defer h.Unlock()
 
-	ruleOp, err := h.loadRule(clusterName)
+	ruleOp, err := h.loadRule(ctx, clusterName)
 	if err != nil {
 		return errors.Wrapf(err, "rule operator not found")
 	}
@@ -67,7 +69,7 @@ func (h *processor) DeleteRule(clusterName, groupName, recordName string) error 
 
 	groups := ruleOp.SavePromRule()
 
-	err = h.saveRule(clusterName, groups)
+	err = h.saveRule(ctx, clusterName, groups)
 	if err != nil {
 		return errors.Wrapf(err, "failed to save configmap")
 	}

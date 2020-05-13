@@ -19,11 +19,12 @@
 package config
 
 import (
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"reflect"
 	"strings"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestGatewayConfigurationPathFields(t *testing.T) {
@@ -153,6 +154,22 @@ var (
 		"Components.Notify.Passthrough.CAFile",
 		"Components.Platform.Passthrough.CAFile",
 		"Components.Registry.Passthrough.CAFile",
+		"Components.Audit.Address",
+		"Components.Audit.FrontProxy.CAFile",
+		"Components.Audit.FrontProxy.ClientCertFile",
+		"Components.Audit.FrontProxy.ClientKeyFile",
+		"Components.Audit.FrontProxy.ExtraPrefixHeader",
+		"Components.Audit.FrontProxy.GroupsHeader",
+		"Components.Audit.FrontProxy.UsernameHeader",
+		"Components.Audit.Passthrough.CAFile",
+		"Components.LogAgent.Address",
+		"Components.LogAgent.FrontProxy.CAFile",
+		"Components.LogAgent.FrontProxy.ClientCertFile",
+		"Components.LogAgent.FrontProxy.ClientKeyFile",
+		"Components.LogAgent.FrontProxy.ExtraPrefixHeader",
+		"Components.LogAgent.FrontProxy.GroupsHeader",
+		"Components.LogAgent.FrontProxy.UsernameHeader",
+		"Components.LogAgent.Passthrough.CAFile",
 	)
 
 	// GatewayConfiguration fields that do not contain file paths.

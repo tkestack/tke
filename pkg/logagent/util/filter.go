@@ -20,10 +20,11 @@ package util
 
 import (
 	"context"
-	"tkestack.io/tke/api/logagent"
-	"tkestack.io/tke/api/logagent/v1"
-	"tkestack.io/tke/pkg/apiserver/authentication"
+
 	"k8s.io/apimachinery/pkg/api/errors"
+	"tkestack.io/tke/api/logagent"
+	v1 "tkestack.io/tke/api/logagent/v1"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
 // FilterLogAgent is used to filter log collector that do not belong

@@ -21,6 +21,7 @@ package receivergroup
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -98,7 +99,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new receiverGroup.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateReceiverGroup(obj.(*notify.ReceiverGroup), s.notifyClient)
+	return ValidateReceiverGroup(ctx, obj.(*notify.ReceiverGroup), s.notifyClient)
 }
 
 // AllowCreateOnUpdate is false for receiverGroups.
@@ -119,7 +120,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end receiverGroup.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateReceiverGroupUpdate(obj.(*notify.ReceiverGroup), old.(*notify.ReceiverGroup), s.notifyClient)
+	return ValidateReceiverGroupUpdate(ctx, obj.(*notify.ReceiverGroup), old.(*notify.ReceiverGroup), s.notifyClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

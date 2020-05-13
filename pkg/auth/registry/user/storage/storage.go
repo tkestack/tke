@@ -66,9 +66,10 @@ func (r *REST) NamespaceScoped() bool {
 	return false
 }
 
-var _ rest.ShortNamesProvider = &REST{}
 var _ rest.Creater = &REST{}
-var _ rest.Scoper = &REST{}
+var _ rest.ShortNamesProvider = &REST{}
+var _ rest.Lister = &REST{}
+var _ rest.Getter = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
@@ -113,6 +114,14 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	}
 
 	return userLister.GetUser(ctx, name, options)
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("users"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.

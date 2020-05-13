@@ -19,6 +19,7 @@
 package apikey
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -40,7 +41,7 @@ var (
 )
 
 // ValidateAPIkey tests if required fields in the signing key are set.
-func ValidateAPIkey(apiKey *auth.APIKey, keySigner util.KeySigner, privilegedUsername string) field.ErrorList {
+func ValidateAPIkey(ctx context.Context, apiKey *auth.APIKey, keySigner util.KeySigner, privilegedUsername string) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&apiKey.ObjectMeta, false, apiMachineryValidation.NameIsDNSSubdomain, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
@@ -49,7 +50,7 @@ func ValidateAPIkey(apiKey *auth.APIKey, keySigner util.KeySigner, privilegedUse
 		allErrs = append(allErrs, field.Required(fldSpecPath.Child("apiKey"), "must specify apiKey"))
 	}
 
-	if claims, err := keySigner.Verify(apiKey.Spec.APIkey); err != nil {
+	if claims, err := keySigner.Verify(ctx, apiKey.Spec.APIkey); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("apiKey"), apiKey.Spec.APIkey, err.Error()))
 	} else {
 		// if not super admin, must specify tenantID
@@ -75,7 +76,7 @@ func ValidateAPIkey(apiKey *auth.APIKey, keySigner util.KeySigner, privilegedUse
 
 // ValidateAPIKeyUpdate tests if required fields in the session are set during
 // an update.
-func ValidateAPIKeyUpdate(apiKey *auth.APIKey, oldAPIKey *auth.APIKey) field.ErrorList {
+func ValidateAPIKeyUpdate(ctx context.Context, apiKey *auth.APIKey, oldAPIKey *auth.APIKey) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, apiMachineryValidation.ValidateObjectMetaUpdate(&apiKey.ObjectMeta, &oldAPIKey.ObjectMeta, field.NewPath("metadata"))...)
@@ -125,7 +126,7 @@ func ValidateAPIKeyReq(apiKeyReq *auth.APIKeyReq) error {
 }
 
 // ValidateAPIkeyPassword tests if required fields in the signing key are set.
-func ValidateAPIkeyPassword(apiKeyPass *auth.APIKeyReqPassword, authClient authinternalclient.AuthInterface) error {
+func ValidateAPIkeyPassword(ctx context.Context, apiKeyPass *auth.APIKeyReqPassword, authClient authinternalclient.AuthInterface) error {
 	allErrs := field.ErrorList{}
 
 	if apiKeyPass.Expire.Duration == 0 {
@@ -137,7 +138,7 @@ func ValidateAPIkeyPassword(apiKeyPass *auth.APIKeyReqPassword, authClient authi
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("expire"), apiKeyPass.Expire, err.Error()))
 	}
 
-	localIdentity, err := util.GetLocalIdentity(authClient, apiKeyPass.TenantID, apiKeyPass.Username)
+	localIdentity, err := util.GetLocalIdentity(ctx, authClient, apiKeyPass.TenantID, apiKeyPass.Username)
 	if err != nil {
 		log.Error("Get localidentity failed", log.String("localIdentity", apiKeyPass.Username), log.Err(err))
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("username"), apiKeyPass.Username, err.Error()))

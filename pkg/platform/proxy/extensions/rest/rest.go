@@ -32,7 +32,6 @@ import (
 	daemonsetstorage "tkestack.io/tke/pkg/platform/proxy/apps/daemonset/storage"
 	deploymentstorage "tkestack.io/tke/pkg/platform/proxy/apps/deployment/storage"
 	replicasetstorage "tkestack.io/tke/pkg/platform/proxy/apps/replicaset/storage"
-	controllerstorage "tkestack.io/tke/pkg/platform/proxy/extensions/controller/storage"
 	ingressstorage "tkestack.io/tke/pkg/platform/proxy/extensions/ingress/storage"
 	networkpolicystorage "tkestack.io/tke/pkg/platform/proxy/networking/networkpolicy/storage"
 	podsecuritypolicystorage "tkestack.io/tke/pkg/platform/proxy/policy/podsecuritypolicy/storage"
@@ -67,7 +66,6 @@ func (*StorageProvider) GroupName() string {
 func (s *StorageProvider) v1Beta1Storage(restOptionsGetter generic.RESTOptionsGetter, loopbackClientConfig *restclient.Config) map[string]rest.Storage {
 	platformClient := platforminternalclient.NewForConfigOrDie(loopbackClientConfig)
 
-	controllerStore := controllerstorage.NewStorageV1Beta1(restOptionsGetter, platformClient)
 	daemonSetStore := daemonsetstorage.NewStorageExtensionsV1Beta1(restOptionsGetter, platformClient)
 	deploymentStore := deploymentstorage.NewStorageExtensionsV1Beta1(restOptionsGetter, platformClient)
 	ingressStore := ingressstorage.NewStorageV1Beta1(restOptionsGetter, platformClient)
@@ -76,9 +74,6 @@ func (s *StorageProvider) v1Beta1Storage(restOptionsGetter generic.RESTOptionsGe
 	podSecurityPolicyStore := podsecuritypolicystorage.NewStorageExtensionsV1Beta1(restOptionsGetter, platformClient)
 
 	storageMap := map[string]rest.Storage{
-		"replicationcontrollers":               controllerStore.ReplicationController,
-		"replicationcontrollers/pods":          controllerStore.Pods,
-		"replicationcontrollers/scale":         controllerStore.Scale,
 		"daemonsets":                           daemonSetStore.DaemonSet,
 		"daemonsets/pods":                      daemonSetStore.Pods,
 		"daemonsets/status":                    daemonSetStore.Status,

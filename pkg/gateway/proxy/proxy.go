@@ -123,7 +123,7 @@ func componentPrefix() map[moduleName][]modulePath {
 		},
 		moduleNameLogagent: {
 			modulePath{
-				prefix: fmt.Sprintf("%s/%s/", apiPrefix, logagent.GroupName),
+				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, logagent.GroupName),
 				protected: true,
 			},
 		},

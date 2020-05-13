@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var policiesResource = schema.GroupVersionResource{Group: "auth.tkestack.io", Ve
 var policiesKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "", Kind: "Policy"}
 
 // Get takes name of the policy, and returns the corresponding policy object, and an error if there is any.
-func (c *FakePolicies) Get(name string, options v1.GetOptions) (result *auth.Policy, err error) {
+func (c *FakePolicies) Get(ctx context.Context, name string, options v1.GetOptions) (result *auth.Policy, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(policiesResource, name), &auth.Policy{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakePolicies) Get(name string, options v1.GetOptions) (result *auth.Pol
 }
 
 // List takes label and field selectors, and returns the list of Policies that match those selectors.
-func (c *FakePolicies) List(opts v1.ListOptions) (result *auth.PolicyList, err error) {
+func (c *FakePolicies) List(ctx context.Context, opts v1.ListOptions) (result *auth.PolicyList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(policiesResource, policiesKind, opts), &auth.PolicyList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakePolicies) List(opts v1.ListOptions) (result *auth.PolicyList, err e
 }
 
 // Watch returns a watch.Interface that watches the requested policies.
-func (c *FakePolicies) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakePolicies) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(policiesResource, opts))
 }
 
 // Create takes the representation of a policy and creates it.  Returns the server's representation of the policy, and an error, if there is any.
-func (c *FakePolicies) Create(policy *auth.Policy) (result *auth.Policy, err error) {
+func (c *FakePolicies) Create(ctx context.Context, policy *auth.Policy, opts v1.CreateOptions) (result *auth.Policy, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(policiesResource, policy), &auth.Policy{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakePolicies) Create(policy *auth.Policy) (result *auth.Policy, err err
 }
 
 // Update takes the representation of a policy and updates it. Returns the server's representation of the policy, and an error, if there is any.
-func (c *FakePolicies) Update(policy *auth.Policy) (result *auth.Policy, err error) {
+func (c *FakePolicies) Update(ctx context.Context, policy *auth.Policy, opts v1.UpdateOptions) (result *auth.Policy, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(policiesResource, policy), &auth.Policy{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakePolicies) Update(policy *auth.Policy) (result *auth.Policy, err err
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakePolicies) UpdateStatus(policy *auth.Policy) (*auth.Policy, error) {
+func (c *FakePolicies) UpdateStatus(ctx context.Context, policy *auth.Policy, opts v1.UpdateOptions) (*auth.Policy, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(policiesResource, "status", policy), &auth.Policy{})
 	if obj == nil {
@@ -108,22 +110,22 @@ func (c *FakePolicies) UpdateStatus(policy *auth.Policy) (*auth.Policy, error) {
 }
 
 // Delete takes name of the policy and deletes it. Returns an error if one occurs.
-func (c *FakePolicies) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakePolicies) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(policiesResource, name), &auth.Policy{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakePolicies) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(policiesResource, listOptions)
+func (c *FakePolicies) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(policiesResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &auth.PolicyList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched policy.
-func (c *FakePolicies) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.Policy, err error) {
+func (c *FakePolicies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.Policy, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(policiesResource, name, pt, data, subresources...), &auth.Policy{})
 	if obj == nil {

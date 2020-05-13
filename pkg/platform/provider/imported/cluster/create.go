@@ -19,15 +19,17 @@
 package cluster
 
 import (
+	"context"
+
 	"tkestack.io/tke/pkg/platform/provider/imported/util/mark"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 )
 
-func (p *Provider) EnsureCreateClusterMark(c *typesv1.Cluster) error {
+func (p *Provider) EnsureCreateClusterMark(ctx context.Context, c *typesv1.Cluster) error {
 	clientset, err := c.Clientset()
 	if err != nil {
 		return err
 	}
 
-	return mark.Create(clientset)
+	return mark.Create(ctx, clientset)
 }

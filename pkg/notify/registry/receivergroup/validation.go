@@ -19,7 +19,9 @@
 package receivergroup
 
 import (
+	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,7 +35,7 @@ import (
 var ValidateReceiverGroupName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateReceiverGroup tests if required fields in the receiverGroup are set.
-func ValidateReceiverGroup(receiverGroup *notify.ReceiverGroup, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
+func ValidateReceiverGroup(ctx context.Context, receiverGroup *notify.ReceiverGroup, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&receiverGroup.ObjectMeta, false, ValidateReceiverGroupName, field.NewPath("metadata"))
 
 	if receiverGroup.Spec.DisplayName == "" {
@@ -44,7 +46,7 @@ func ValidateReceiverGroup(receiverGroup *notify.ReceiverGroup, notifyClient *no
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "receivers"), "must specify a receiver"))
 	} else {
 		for _, receiverName := range receiverGroup.Spec.Receivers {
-			receiver, err := notifyClient.Receivers().Get(receiverName, metav1.GetOptions{})
+			receiver, err := notifyClient.Receivers().Get(ctx, receiverName, metav1.GetOptions{})
 			if err != nil && errors.IsNotFound(err) {
 				allErrs = append(allErrs, field.NotFound(field.NewPath("spec", "receivers").Key(receiverName), receiverName))
 			} else if err != nil {
@@ -60,9 +62,9 @@ func ValidateReceiverGroup(receiverGroup *notify.ReceiverGroup, notifyClient *no
 
 // ValidateReceiverGroupUpdate tests if required fields in the receiverGroup are set during
 // an update.
-func ValidateReceiverGroupUpdate(receiverGroup *notify.ReceiverGroup, old *notify.ReceiverGroup, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
+func ValidateReceiverGroupUpdate(ctx context.Context, receiverGroup *notify.ReceiverGroup, old *notify.ReceiverGroup, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&receiverGroup.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateReceiverGroup(receiverGroup, notifyClient)...)
+	allErrs = append(allErrs, ValidateReceiverGroup(ctx, receiverGroup, notifyClient)...)
 
 	if receiverGroup.Spec.TenantID != old.Spec.TenantID {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "tenantID"), "disallowed change the tenant"))

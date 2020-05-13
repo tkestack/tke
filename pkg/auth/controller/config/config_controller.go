@@ -19,6 +19,7 @@
 package config
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -27,6 +28,7 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/api/auth"
 
 	"github.com/howeyc/fsnotify"
@@ -127,7 +129,7 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) {
 	}
 
 	c.stopCh = stopCh
-	if err := c.loadConfig(); err != nil {
+	if err := c.loadConfig(context.Background()); err != nil {
 		log.Errorf("Preload config failed", log.Err(err))
 	}
 
@@ -215,22 +217,22 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve identityProvider from store", log.String("name", key), log.Err(err))
 	default:
 		log.Info("Init config and tenant admin for identityProvider", log.Any("name", idp.Name))
-		err = c.processConfig(idp, key)
+		err = c.processConfig(context.Background(), idp, key)
 	}
 	return err
 }
 
-func (c *Controller) processConfig(idp *v1.IdentityProvider, key string) error {
+func (c *Controller) processConfig(ctx context.Context, idp *v1.IdentityProvider, key string) error {
 	var errs []error
 
 	if c.policyFile != "" {
-		if err := c.loadPolicy(idp.Name); err != nil {
+		if err := c.loadPolicy(ctx, idp.Name); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
 	if idp.Spec.Type == local.ConnectorType {
-		if err := c.createAdmin(idp.Name); err != nil {
+		if err := c.createAdmin(ctx, idp.Name); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -249,7 +251,7 @@ func (c *Controller) pollReload(stopCh <-chan struct{}) {
 			timerC = nil
 			log.Info("Policy config directory changed, loadConfig it")
 
-			if err := c.loadConfig(); err != nil {
+			if err := c.loadConfig(context.Background()); err != nil {
 				log.Error("Load config failed after changed", log.Err(err))
 			}
 		case event := <-c.watcher.Event:
@@ -265,9 +267,9 @@ func (c *Controller) pollReload(stopCh <-chan struct{}) {
 	}
 }
 
-func (c *Controller) loadConfig() error {
+func (c *Controller) loadConfig(ctx context.Context) error {
 	if c.categoryFile != "" {
-		err := c.loadCategory()
+		err := c.loadCategory(ctx)
 		if err != nil {
 			return err
 		}
@@ -281,7 +283,7 @@ func (c *Controller) loadConfig() error {
 		}
 
 		for _, idp := range idps {
-			err := c.loadPolicy(idp.Name)
+			err := c.loadPolicy(ctx, idp.Name)
 			if err != nil {
 				return err
 			}
@@ -290,7 +292,7 @@ func (c *Controller) loadConfig() error {
 	return nil
 }
 
-func (c *Controller) loadCategory() error {
+func (c *Controller) loadCategory(ctx context.Context) error {
 	var categoryList []*v1.Category
 	bytes, err := ioutil.ReadFile(c.categoryFile)
 	if err != nil {
@@ -304,7 +306,7 @@ func (c *Controller) loadCategory() error {
 	var errs []error
 
 	for _, cat := range categoryList {
-		result, err := c.client.AuthV1().Categories().Get(cat.Name, metav1.GetOptions{})
+		result, err := c.client.AuthV1().Categories().Get(ctx, cat.Name, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			errs = append(errs, err)
 			continue
@@ -312,7 +314,7 @@ func (c *Controller) loadCategory() error {
 
 		if err != nil {
 			log.Info("Create a new policy category", log.String("id", cat.Name), log.String("displayName", cat.Spec.DisplayName))
-			_, err = c.client.AuthV1().Categories().Create(cat)
+			_, err = c.client.AuthV1().Categories().Create(ctx, cat, metav1.CreateOptions{})
 
 			if err != nil {
 				errs = append(errs, err)
@@ -321,7 +323,7 @@ func (c *Controller) loadCategory() error {
 			if !reflect.DeepEqual(result.Spec, cat.Spec) {
 				log.Info("Update policy category", log.String("id", cat.Name), log.String("displayName", cat.Spec.DisplayName))
 				result.Spec = cat.Spec
-				_, err = c.client.AuthV1().Categories().Update(result)
+				_, err = c.client.AuthV1().Categories().Update(ctx, result, metav1.UpdateOptions{})
 
 				if err != nil {
 					errs = append(errs, err)
@@ -333,7 +335,7 @@ func (c *Controller) loadCategory() error {
 	return utilerrors.NewAggregate(errs)
 }
 
-func (c *Controller) loadPolicy(tenantID string) error {
+func (c *Controller) loadPolicy(ctx context.Context, tenantID string) error {
 	log.Info("Handle default policy for tenant", log.String("tenantID", tenantID))
 	var policyList []*v1.Policy
 
@@ -366,7 +368,7 @@ func (c *Controller) loadPolicy(tenantID string) error {
 				fields.OneTermEqualSelector("spec.type", string(auth.PolicyDefault)),
 			)
 
-			result, err := c.client.AuthV1().Policies().List(metav1.ListOptions{FieldSelector: policySelector.String()})
+			result, err := c.client.AuthV1().Policies().List(ctx, metav1.ListOptions{FieldSelector: policySelector.String()})
 			if err != nil {
 				return err
 			}
@@ -376,7 +378,7 @@ func (c *Controller) loadPolicy(tenantID string) error {
 				if !reflect.DeepEqual(exists.Spec, pol.Spec) {
 					log.Info("Update default policy", log.String("displayName", pol.Spec.DisplayName))
 					exists.Spec = pol.Spec
-					_, err = c.client.AuthV1().Policies().Update(&exists)
+					_, err = c.client.AuthV1().Policies().Update(ctx, &exists, metav1.UpdateOptions{})
 
 					if err != nil {
 						errs = append(errs, err)
@@ -384,16 +386,16 @@ func (c *Controller) loadPolicy(tenantID string) error {
 				}
 			} else {
 				log.Info("Create a new default policy", log.String("displayName", pol.Spec.DisplayName))
-				_, err = c.client.AuthV1().Policies().Create(pol)
+				_, err = c.client.AuthV1().Policies().Create(ctx, pol, metav1.CreateOptions{})
 				if err != nil {
 					errs = append(errs, err)
 				}
 			}
 		} else {
 			log.Info("Create a new default policy with policy name", log.String("name", pol.Name))
-			exists, err := c.client.AuthV1().Policies().Get(pol.Name, metav1.GetOptions{})
+			exists, err := c.client.AuthV1().Policies().Get(ctx, pol.Name, metav1.GetOptions{})
 			if err != nil && apierrors.IsNotFound(err) {
-				_, err = c.client.AuthV1().Policies().Create(pol)
+				_, err = c.client.AuthV1().Policies().Create(ctx, pol, metav1.CreateOptions{})
 				if err != nil {
 					errs = append(errs, err)
 				}
@@ -403,7 +405,7 @@ func (c *Controller) loadPolicy(tenantID string) error {
 				errs = append(errs, err)
 			}
 			exists.Spec = pol.Spec
-			_, err = c.client.AuthV1().Policies().Update(exists)
+			_, err = c.client.AuthV1().Policies().Update(ctx, exists, metav1.UpdateOptions{})
 
 			if err != nil {
 				errs = append(errs, err)
@@ -415,13 +417,13 @@ func (c *Controller) loadPolicy(tenantID string) error {
 	return utilerrors.NewAggregate(errs)
 }
 
-func (c *Controller) createAdmin(tenantID string) error {
+func (c *Controller) createAdmin(ctx context.Context, tenantID string) error {
 	log.Info("Handle create admin for tenant", log.String("tenantID", tenantID))
 	tenantUserSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
 		fields.OneTermEqualSelector("spec.username", c.username))
 
-	localIdentityList, err := c.client.AuthV1().LocalIdentities().List(metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	localIdentityList, err := c.client.AuthV1().LocalIdentities().List(ctx, metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {
 		return err
 	}
@@ -430,7 +432,7 @@ func (c *Controller) createAdmin(tenantID string) error {
 		return nil
 	}
 
-	_, err = c.client.AuthV1().LocalIdentities().Create(&v1.LocalIdentity{
+	_, err = c.client.AuthV1().LocalIdentities().Create(ctx, &v1.LocalIdentity{
 		Spec: v1.LocalIdentitySpec{
 			HashedPassword: base64.StdEncoding.EncodeToString([]byte(c.password)),
 			TenantID:       tenantID,
@@ -440,7 +442,7 @@ func (c *Controller) createAdmin(tenantID string) error {
 				"platformadmin": "true",
 			},
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		log.Error("Failed to create the default admin identity for tenant", log.String("tenant", tenantID), log.Err(err))
 		return err

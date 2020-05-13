@@ -19,12 +19,12 @@
 package prometheus
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
-	prometheus_rule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	prometheusrule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 )
 
 func TestProcessor_CreateGroup(t *testing.T) {
@@ -37,7 +37,7 @@ func TestProcessor_CreateGroup(t *testing.T) {
 	expectRuleGroup := getExpectRule(exampleRuleStr)
 
 	t.Logf("With correct group name")
-	err = p.CreateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 
 	if err != nil {
 		t.Errorf("creation should success, %s", err)
@@ -45,7 +45,7 @@ func TestProcessor_CreateGroup(t *testing.T) {
 	}
 
 	t.Logf("Validate insert group information")
-	targetGroup, err := p.GetGroup(clusterName, expectRuleGroup.Groups[0].Name)
+	targetGroup, err := p.GetGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name)
 	if err != nil {
 		t.Errorf("creation should success, %s", err)
 		return
@@ -57,7 +57,7 @@ func TestProcessor_CreateGroup(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheus_rule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return
@@ -82,7 +82,7 @@ func TestProcessor_CreateRule(t *testing.T) {
 	recordName := expectRuleGroup.Groups[0].Rules[0].Alert
 
 	t.Logf("With non-existed group name")
-	err = p.CreateRule(clusterName, "non-exist-group", recordName, &expectRuleGroup.Groups[0].Rules[0])
+	err = p.CreateRule(context.Background(), clusterName, "non-exist-group", recordName, &expectRuleGroup.Groups[0].Rules[0])
 	if err == nil {
 		t.Errorf("creation should fail, code: %s", err)
 		return
@@ -92,21 +92,21 @@ func TestProcessor_CreateRule(t *testing.T) {
 	expectRuleGroup = getExpectRule(exampleRuleStr)
 	expectRuleGroup.Groups[0].Rules = nil
 
-	err = p.CreateGroup(clusterName, ruleGroupName, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, ruleGroupName, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("creation should success, %s", err)
 		return
 	}
 
 	expectRuleGroup = getExpectRule(exampleRuleStr)
-	err = p.CreateRule(clusterName, ruleGroupName, recordName, &expectRuleGroup.Groups[0].Rules[0])
+	err = p.CreateRule(context.Background(), clusterName, ruleGroupName, recordName, &expectRuleGroup.Groups[0].Rules[0])
 	if err != nil {
 		t.Errorf("creation should success, %s", err)
 		return
 	}
 
 	t.Logf("Validate insert rule")
-	targetRule, err := p.GetRule(clusterName, ruleGroupName, recordName)
+	targetRule, err := p.GetRule(context.Background(), clusterName, ruleGroupName, recordName)
 	if err != nil {
 		t.Errorf("creation should success, %s", err)
 		return
@@ -119,7 +119,7 @@ func TestProcessor_CreateRule(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheus_rule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return

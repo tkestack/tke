@@ -31,9 +31,9 @@ type Options struct {
 	Debug             *apiserveroptions.DebugOptions
 	SecureServing     *apiserveroptions.SecureServingOptions
 	Component         *controlleroptions.ComponentOptions
-	LogagentAPIClient  *controlleroptions.APIServerClientOptions
+	LogagentAPIClient *controlleroptions.APIServerClientOptions
 	PlatformAPIClient *controlleroptions.APIServerClientOptions
-	FeatureOptions *FeatureOptions
+	FeatureOptions    *FeatureOptions
 	// The Registry will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Monitor's current working directory.
 	LogagentConfig string
@@ -42,13 +42,13 @@ type Options struct {
 // NewOptions creates a new Options with a default config.
 func NewOptions(serverName string, allControllers []string, disabledByDefaultControllers []string) *Options {
 	return &Options{
-		Log:             log.NewOptions(),
-		Debug:           apiserveroptions.NewDebugOptions(),
-		SecureServing:   apiserveroptions.NewSecureServingOptions(serverName, 9998),
-		Component:       controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
+		Log:               log.NewOptions(),
+		Debug:             apiserveroptions.NewDebugOptions(),
+		SecureServing:     apiserveroptions.NewSecureServingOptions(serverName, 9998),
+		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
 		LogagentAPIClient: controlleroptions.NewAPIServerClientOptions("logagent", true),
 		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
-		FeatureOptions: NewFeatureOptions(),
+		FeatureOptions:    NewFeatureOptions(),
 	}
 }
 
@@ -78,5 +78,3 @@ func (o *Options) ApplyFlags() []error {
 
 	return errs
 }
-
-

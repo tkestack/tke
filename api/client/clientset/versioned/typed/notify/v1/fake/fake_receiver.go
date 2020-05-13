@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var receiversResource = schema.GroupVersionResource{Group: "notify.tkestack.io",
 var receiversKind = schema.GroupVersionKind{Group: "notify.tkestack.io", Version: "v1", Kind: "Receiver"}
 
 // Get takes name of the receiver, and returns the corresponding receiver object, and an error if there is any.
-func (c *FakeReceivers) Get(name string, options v1.GetOptions) (result *notifyv1.Receiver, err error) {
+func (c *FakeReceivers) Get(ctx context.Context, name string, options v1.GetOptions) (result *notifyv1.Receiver, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(receiversResource, name), &notifyv1.Receiver{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeReceivers) Get(name string, options v1.GetOptions) (result *notifyv
 }
 
 // List takes label and field selectors, and returns the list of Receivers that match those selectors.
-func (c *FakeReceivers) List(opts v1.ListOptions) (result *notifyv1.ReceiverList, err error) {
+func (c *FakeReceivers) List(ctx context.Context, opts v1.ListOptions) (result *notifyv1.ReceiverList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(receiversResource, receiversKind, opts), &notifyv1.ReceiverList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeReceivers) List(opts v1.ListOptions) (result *notifyv1.ReceiverList
 }
 
 // Watch returns a watch.Interface that watches the requested receivers.
-func (c *FakeReceivers) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeReceivers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(receiversResource, opts))
 }
 
 // Create takes the representation of a receiver and creates it.  Returns the server's representation of the receiver, and an error, if there is any.
-func (c *FakeReceivers) Create(receiver *notifyv1.Receiver) (result *notifyv1.Receiver, err error) {
+func (c *FakeReceivers) Create(ctx context.Context, receiver *notifyv1.Receiver, opts v1.CreateOptions) (result *notifyv1.Receiver, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(receiversResource, receiver), &notifyv1.Receiver{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeReceivers) Create(receiver *notifyv1.Receiver) (result *notifyv1.Re
 }
 
 // Update takes the representation of a receiver and updates it. Returns the server's representation of the receiver, and an error, if there is any.
-func (c *FakeReceivers) Update(receiver *notifyv1.Receiver) (result *notifyv1.Receiver, err error) {
+func (c *FakeReceivers) Update(ctx context.Context, receiver *notifyv1.Receiver, opts v1.UpdateOptions) (result *notifyv1.Receiver, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(receiversResource, receiver), &notifyv1.Receiver{})
 	if obj == nil {
@@ -97,14 +99,14 @@ func (c *FakeReceivers) Update(receiver *notifyv1.Receiver) (result *notifyv1.Re
 }
 
 // Delete takes name of the receiver and deletes it. Returns an error if one occurs.
-func (c *FakeReceivers) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeReceivers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(receiversResource, name), &notifyv1.Receiver{})
 	return err
 }
 
 // Patch applies the patch and returns the patched receiver.
-func (c *FakeReceivers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *notifyv1.Receiver, err error) {
+func (c *FakeReceivers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *notifyv1.Receiver, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(receiversResource, name, pt, data, subresources...), &notifyv1.Receiver{})
 	if obj == nil {

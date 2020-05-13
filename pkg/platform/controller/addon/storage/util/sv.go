@@ -19,6 +19,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -65,8 +66,8 @@ const (
 )
 
 // GetSVInfo returns the information of storage vendor.
-func GetSVInfo(client clientset.Interface) (*SVInfo, error) {
-	config, err := getConfig(client)
+func GetSVInfo(ctx context.Context, client clientset.Interface) (*SVInfo, error) {
+	config, err := getConfig(ctx, client)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +112,7 @@ func GetSVInfo(client clientset.Interface) (*SVInfo, error) {
 }
 
 func validateCephInfo(info *SVInfo) error {
-	missedConfigs := []string{}
+	var missedConfigs []string
 
 	if info.Monitors == "" {
 		missedConfigs = append(missedConfigs, "monitors")
@@ -128,7 +129,7 @@ func validateCephInfo(info *SVInfo) error {
 }
 
 func validateTencentCloudInfo(info *SVInfo) error {
-	missedConfigs := []string{}
+	var missedConfigs []string
 
 	if info.SecretKey == "" {
 		missedConfigs = append(missedConfigs, "secretID")
@@ -145,8 +146,8 @@ func validateTencentCloudInfo(info *SVInfo) error {
 }
 
 // GetSVInfoVersion returns storage vendor info ConfigMap's ResourceVersion.
-func GetSVInfoVersion(client clientset.Interface) (string, error) {
-	config, err := getConfig(client)
+func GetSVInfoVersion(ctx context.Context, client clientset.Interface) (string, error) {
+	config, err := getConfig(ctx, client)
 	if err != nil {
 		return "", err
 	}
@@ -156,8 +157,8 @@ func GetSVInfoVersion(client clientset.Interface) (string, error) {
 	return config.ResourceVersion, nil
 }
 
-func getConfig(client clientset.Interface) (*v1.ConfigMap, error) {
-	config, err := client.PlatformV1().ConfigMaps().Get(storageConfigName, metav1.GetOptions{})
+func getConfig(ctx context.Context, client clientset.Interface) (*v1.ConfigMap, error) {
+	config, err := client.PlatformV1().ConfigMaps().Get(ctx, storageConfigName, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			// Ceph cluster not enabled.

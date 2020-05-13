@@ -39,9 +39,6 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
-const _rsaKeyBits = 2048
-const _defaultCertValidDays = 365
-
 // Storage includes storage for emigration and all sub resources.
 type Storage struct {
 	Emigration *REST

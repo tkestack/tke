@@ -22,10 +22,10 @@ import (
 	"io"
 )
 
-const(
+const (
 	LogagentPort = "8090"
 )
 
 type ReaderCloserGetter interface {
-	GetReaderCloser() (io.ReadCloser,error)
+	GetReaderCloser() (io.ReadCloser, error)
 }

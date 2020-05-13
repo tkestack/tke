@@ -51,6 +51,9 @@ type UserREST struct {
 	authClient authinternalclient.AuthInterface
 }
 
+var _ rest.Creater = &UserREST{}
+var _ rest.Lister = &UserREST{}
+
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
 func (r *UserREST) New() runtime.Object {
@@ -60,6 +63,14 @@ func (r *UserREST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *UserREST) NewList() runtime.Object {
 	return &auth.UserList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *UserREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("users"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -75,7 +86,7 @@ func (r *UserREST) List(ctx context.Context, options *metainternal.ListOptions) 
 		projectID = requestInfo.Name
 	}
 
-	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(metav1.ListOptions{
+	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.projectID=%s", projectID),
 	})
 	if err != nil {
@@ -92,7 +103,7 @@ func (r *UserREST) List(ctx context.Context, options *metainternal.ListOptions) 
 	userList := &auth.UserList{}
 	policyNameMap := map[string]string{}
 	for userID, policyIDs := range userPolicyMap {
-		user, err := r.authClient.Users().Get(util.CombineTenantAndName(tenantID, userID), metav1.GetOptions{})
+		user, err := r.authClient.Users().Get(ctx, util.CombineTenantAndName(tenantID, userID), metav1.GetOptions{})
 		if err != nil {
 			log.Error("Get user failed", log.String("id", userID), log.Err(err))
 			continue
@@ -109,7 +120,7 @@ func (r *UserREST) List(ctx context.Context, options *metainternal.ListOptions) 
 			if name, ok := policyNameMap[pid]; ok {
 				m[pid] = name
 			} else {
-				pol, err := r.authClient.Policies().Get(pid, metav1.GetOptions{})
+				pol, err := r.authClient.Policies().Get(ctx, pid, metav1.GetOptions{})
 				if err != nil {
 					log.Error("Get policy failed", log.String("pid", pid), log.Err(err))
 					continue
@@ -151,7 +162,7 @@ func (r *UserREST) Create(ctx context.Context, obj runtime.Object, createValidat
 		projectID = requestInfo.Name
 	}
 
-	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(metav1.ListOptions{
+	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.projectID=%s", projectID),
 	})
 	if err != nil {
