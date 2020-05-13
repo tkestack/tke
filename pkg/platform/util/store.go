@@ -23,10 +23,13 @@ import (
 	"reflect"
 	"strings"
 
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -42,13 +45,18 @@ type Store struct {
 	// GET of a single object
 	NewFunc func() runtime.Object
 	// NewListFunc returns a new list of the type this registry
-	NewListFunc    func() runtime.Object
+	NewListFunc func() runtime.Object
+	// DefaultQualifiedResource is the pluralized name of the resource.
+	// This field is used if there is no request info present in the context.
+	// See qualifiedResourceFromContext for details.
+	DefaultQualifiedResource schema.GroupResource
+	// TableConvertor is an optional interface for transforming items or lists
+	// of items into tabular output. If unset, the default will be used.
+	TableConvertor rest.TableConvertor
+
 	Namespaced     bool
 	PlatformClient platforminternalclient.PlatformInterface
 }
-
-// var _ rest.Exporter = &Store{}
-// var _ rest.TableConvertor = &Store{}
 
 // New implements RESTStorage.New.
 func (s *Store) New() runtime.Object {
@@ -63,6 +71,15 @@ func (s *Store) NewList() runtime.Object {
 // NamespaceScoped indicates whether the resource is namespaced.
 func (s *Store) NamespaceScoped() bool {
 	return s.Namespaced
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (s *Store) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*v1.Table, error) {
+	if s.TableConvertor != nil {
+		return s.TableConvertor.ConvertToTable(ctx, object, tableOptions)
+	}
+	return rest.NewDefaultTableConvertor(s.qualifiedResourceFromContext(ctx)).ConvertToTable(ctx, object, tableOptions)
 }
 
 // List returns a list of items matching labels and field according to the
@@ -291,4 +308,14 @@ func (s *Store) DeleteCollection(ctx context.Context, options *v1.DeleteOptions,
 		return nil, err
 	}
 	return returnedObj, nil
+}
+
+// qualifiedResourceFromContext attempts to retrieve a GroupResource from the context's request info.
+// If the context has no request info, DefaultQualifiedResource is used.
+func (s *Store) qualifiedResourceFromContext(ctx context.Context) schema.GroupResource {
+	if info, ok := genericapirequest.RequestInfoFrom(ctx); ok {
+		return schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}
+	}
+	// some implementations access storage directly and thus the context has no RequestInfo
+	return s.DefaultQualifiedResource
 }
