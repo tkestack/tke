@@ -107,6 +107,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
+			p.EnsureRenewCerts,
 			p.EnsureStoreCredential,
 		},
 	}
