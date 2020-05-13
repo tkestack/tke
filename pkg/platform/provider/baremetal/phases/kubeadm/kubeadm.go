@@ -22,14 +22,18 @@ import (
 	"bytes"
 	"fmt"
 	"path"
-
-	"tkestack.io/tke/pkg/util/template"
+	"time"
 
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/template"
 )
 
 const (
@@ -175,6 +179,93 @@ func JoinNode(s ssh.Interface, option *JoinNodeOption) error {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 	log.Info(stdout)
+
+	return nil
+}
+
+func RenewCerts(s ssh.Interface) error {
+	err := fixKubeadmBug1753(s)
+	if err != nil {
+		return fmt.Errorf("fixKubeadmBug1753(https://github.com/kubernetes/kubeadm/issues/1753) error: %w", err)
+	}
+
+	cmd := fmt.Sprintf("kubeadm alpha certs renew all --config=%s", constants.KubeadmConfigFileName)
+	_, err = s.CombinedOutput(cmd)
+	if err != nil {
+		return err
+	}
+
+	err = restartControlPlane(s)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// https://github.com/kubernetes/kubeadm/issues/1753
+func fixKubeadmBug1753(s ssh.Interface) error {
+	needUpdate := false
+
+	data, err := s.ReadFile(constants.KubeletKubeConfigFileName)
+	if err != nil {
+		return err
+	}
+	kubeletKubeconfig, err := clientcmd.Load(data)
+	if err != nil {
+		return err
+	}
+	for _, info := range kubeletKubeconfig.AuthInfos {
+		if info.ClientKeyData == nil && info.ClientCertificateData == nil {
+			continue
+		}
+
+		info.ClientKeyData = []byte{}
+		info.ClientCertificateData = []byte{}
+		info.ClientKey = constants.KubeletClientCurrent
+		info.ClientCertificate = constants.KubeletClientCurrent
+
+		needUpdate = true
+	}
+
+	if needUpdate {
+		data, err := runtime.Encode(clientcmdlatest.Codec, kubeletKubeconfig)
+		if err != nil {
+			return err
+		}
+		err = s.WriteFile(bytes.NewReader(data), constants.KubeletKubeConfigFileName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func restartControlPlane(s ssh.Interface) error {
+	components := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
+	for _, component := range components {
+		cmd := fmt.Sprintf("docker rm -f $(docker ps -q -f 'label=io.kubernetes.container.name=%s')", component)
+		_, err := s.CombinedOutput(cmd)
+		if err != nil {
+			return err
+		}
+
+		err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+			cmd = fmt.Sprintf("docker ps -q -f 'label=io.kubernetes.container.name=%s'", component)
+			output, err := s.CombinedOutput(cmd)
+			if err != nil {
+				return false, nil
+			}
+			if len(output) == 0 {
+				return false, nil
+			}
+			return true, nil
+		})
+		if err != nil {
+			return fmt.Errorf("restart %s error: %w", component, err)
+		}
+	}
 
 	return nil
 }

@@ -18,7 +18,11 @@
 
 package constants
 
-import platformv1 "tkestack.io/tke/api/platform/v1"
+import (
+	"time"
+
+	platformv1 "tkestack.io/tke/api/platform/v1"
+)
 
 const (
 	// KubernetesDir is the directory Kubernetes owns for storing various configuration files
@@ -55,6 +59,10 @@ const (
 	CACertName = CertificatesDir + "ca.crt"
 	// CAKeyName defines certificate name
 	CAKeyName = CertificatesDir + "ca.key"
+	// APIServerCertName defines API's server certificate name
+	APIServerCertName = CertificatesDir + "apiserver.crt"
+	// KubeletClientCurrent defines kubelet rotate certificates
+	KubeletClientCurrent = "/var/lib/kubelet/pki/kubelet-client-current.pem"
 	// EtcdCACertName defines etcd's CA certificate name
 	EtcdCACertName = CertificatesDir + "etcd/ca.crt"
 	// EtcdCAKeyName defines etcd's CA key name
@@ -69,6 +77,10 @@ const (
 	APIServerEtcdClientKeyName = CertificatesDir + "apiserver-etcd-client.key"
 
 	KubeadmConfigFileName = KubernetesDir + "kubeadm-config.yaml"
+
+	// KubeletKubeConfigFileName defines the file name for the kubeconfig that the control-plane kubelet will use for talking
+	// to the API server
+	KubeletKubeConfigFileName = KubernetesDir + "kubelet.conf"
 
 	// LabelNodeRoleMaster specifies that a node is a control-plane
 	// This is a duplicate definition of the constant in pkg/controller/service/service_controller.go
@@ -87,4 +99,7 @@ const (
 	DNSIPIndex                   = 10
 	GPUQuotaAdmissionIPIndex     = 9
 	GPUQuotaAdmissionIPAnnotaion = platformv1.GroupName + "/gpu-quota-admission-ip"
+
+	// RenewCertsTimeThreshold control how long time left to renew certs
+	RenewCertsTimeThreshold = 30 * 24 * time.Hour
 )
