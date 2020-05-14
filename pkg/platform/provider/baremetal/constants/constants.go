@@ -61,6 +61,8 @@ const (
 	CAKeyName = CertificatesDir + "ca.key"
 	// APIServerCertName defines API's server certificate name
 	APIServerCertName = CertificatesDir + "apiserver.crt"
+	// APIServerKeyName defines API's server key name
+	APIServerKeyName = CertificatesDir + "apiserver.key"
 	// KubeletClientCurrent defines kubelet rotate certificates
 	KubeletClientCurrent = "/var/lib/kubelet/pki/kubelet-client-current.pem"
 	// EtcdCACertName defines etcd's CA certificate name

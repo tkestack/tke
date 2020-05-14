@@ -195,7 +195,7 @@ func RenewCerts(s ssh.Interface) error {
 		return err
 	}
 
-	err = restartControlPlane(s)
+	err = RestartControlPlane(s)
 	if err != nil {
 		return err
 	}
@@ -242,29 +242,42 @@ func fixKubeadmBug1753(s ssh.Interface) error {
 	return nil
 }
 
-func restartControlPlane(s ssh.Interface) error {
-	components := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
-	for _, component := range components {
-		cmd := fmt.Sprintf("docker rm -f $(docker ps -q -f 'label=io.kubernetes.container.name=%s')", component)
-		_, err := s.CombinedOutput(cmd)
+func RestartControlPlane(s ssh.Interface) error {
+	targets := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
+	for _, one := range targets {
+		err := RestartContainerByFilter(s, DockerFilterForControlPlane(one))
 		if err != nil {
 			return err
 		}
+	}
 
-		err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-			cmd = fmt.Sprintf("docker ps -q -f 'label=io.kubernetes.container.name=%s'", component)
-			output, err := s.CombinedOutput(cmd)
-			if err != nil {
-				return false, nil
-			}
-			if len(output) == 0 {
-				return false, nil
-			}
-			return true, nil
-		})
+	return nil
+}
+
+func DockerFilterForControlPlane(name string) string {
+	return fmt.Sprintf("label=io.kubernetes.container.name=%s", name)
+}
+
+func RestartContainerByFilter(s ssh.Interface, filter string) error {
+	cmd := fmt.Sprintf("docker rm -f $(docker ps -q -f '%s')", filter)
+	_, err := s.CombinedOutput(cmd)
+	if err != nil {
+		return err
+	}
+
+	err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+		cmd = fmt.Sprintf("docker ps -q -f '%s'", filter)
+		output, err := s.CombinedOutput(cmd)
 		if err != nil {
-			return fmt.Errorf("restart %s error: %w", component, err)
+			return false, nil
 		}
+		if len(output) == 0 {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("restart container(%s) error: %w", filter, err)
 	}
 
 	return nil

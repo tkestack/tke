@@ -108,6 +108,7 @@ func NewProvider() (*Provider, error) {
 		},
 		UpdateHandlers: []clusterprovider.Handler{
 			p.EnsureRenewCerts,
+			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
 		},
 	}

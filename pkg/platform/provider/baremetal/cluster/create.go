@@ -566,15 +566,6 @@ func (p *Provider) getKubeadmInitOption(c *v1.Cluster) *kubeadm.InitOption {
 		controlPlaneEndpoint = fmt.Sprintf("%s:%d", addr.Host, addr.Port)
 	}
 
-	certSANs := c.Spec.PublicAlternativeNames
-	if c.Spec.Features.HA != nil {
-		if c.Spec.Features.HA.TKEHA != nil {
-			certSANs = append(certSANs, c.Spec.Features.HA.TKEHA.VIP)
-		}
-		if c.Spec.Features.HA.ThirdPartyHA != nil {
-			certSANs = append(certSANs, c.Spec.Features.HA.ThirdPartyHA.VIP)
-		}
-	}
 	kubeProxyMode := "iptables"
 	if c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS {
 		kubeProxyMode = "ipvs"
@@ -604,7 +595,7 @@ func (p *Provider) getKubeadmInitOption(c *v1.Cluster) *kubeadm.InitOption {
 		NodeCIDRMaskSize:      c.Status.NodeCIDRMaskSize,
 		ClusterCIDR:           c.Spec.ClusterCIDR,
 		ServiceClusterIPRange: c.Status.ServiceCIDR,
-		CertSANs:              certSANs,
+		CertSANs:              GetAPIServerCertSANs(c.Cluster),
 
 		APIServerExtraArgs:         c.Spec.APIServerExtraArgs,
 		ControllerManagerExtraArgs: c.Spec.ControllerManagerExtraArgs,
