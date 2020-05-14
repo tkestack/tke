@@ -13,6 +13,7 @@ import { router } from '../router';
 import { CreateProjectPanel } from './CreateProjectPanel';
 import { EditProjectManagerPanel } from './EditProjectManagerPanel';
 import { RootProps } from './ProjectApp';
+import { PlatformTypeEnum } from '../constants/Config';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
@@ -34,34 +35,43 @@ export class DetailSubProjectActionPanel extends React.Component<RootProps, {}> 
   }
 
   render() {
-    let { actions, project, projectDetail, route } = this.props;
-
+    let { actions, project, projectDetail, route, platformType, userManagedProjects } = this.props;
+    let enableOp =
+      platformType === PlatformTypeEnum.Manager ||
+      (platformType === PlatformTypeEnum.Business &&
+        userManagedProjects.list.data.records.find(
+          item => item.name === (projectDetail ? projectDetail.metadata.name : null)
+        ));
     return (
       <div className="tc-action-grid">
         <Justify
           left={
-            <React.Fragment>
-              <Button
-                type="primary"
-                onClick={() => {
-                  actions.project.inputParentPorject(
-                    projectDetail ? projectDetail.metadata.name : route.queries['projectId']
-                  );
-                  router.navigate({ sub: 'create' });
-                }}
-              >
-                {t('新建子业务')}
-              </Button>
+            enableOp ? (
+              <React.Fragment>
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    actions.project.inputParentPorject(
+                      projectDetail ? projectDetail.metadata.name : route.queries['projectId']
+                    );
+                    router.navigate({ sub: 'create' });
+                  }}
+                >
+                  {t('新建子业务')}
+                </Button>
 
-              <Button
-                type="primary"
-                onClick={() => {
-                  actions.project.addExistMultiProject.start([]);
-                }}
-              >
-                {t('添加已有业务')}
-              </Button>
-            </React.Fragment>
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    actions.project.addExistMultiProject.start([]);
+                  }}
+                >
+                  {t('添加已有业务')}
+                </Button>
+              </React.Fragment>
+            ) : (
+              <></>
+            )
           }
           right={
             <SearchBox

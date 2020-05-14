@@ -188,6 +188,11 @@ const businessCommonRouterConfig: RouterConfig[] = [
     watchModule: ConsoleModuleEnum.PLATFORM
   },
   {
+    url: '/tkestack-project/project',
+    title: '业务管理',
+    watchModule: ConsoleModuleEnum.Business
+  },
+  {
     title: '组织资源',
     watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Auth],
     subRouterConfig: [

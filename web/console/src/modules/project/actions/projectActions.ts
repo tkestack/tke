@@ -65,7 +65,7 @@ const FFObjectProjectUserInfoActions = createFFObjectActions<ProjectUserMap, Pro
 });
 
 const restActions = {
-  projectUsrInfo: FFObjectProjectUserInfoActions,
+  projectUserInfo: FFObjectProjectUserInfoActions,
 
   poll: (filter?: ProjectFilter) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {

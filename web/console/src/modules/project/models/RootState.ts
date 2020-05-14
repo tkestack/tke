@@ -23,7 +23,8 @@ import {
   UserFilter
 } from './index';
 import { NamespaceCert } from './Namespace';
-import { ProjectUserMap } from './Project';
+import { ProjectUserMap, UserManagedProject, UserManagedProjectFilter } from './Project';
+import { UserInfo } from './User';
 
 type ProjectWorkflow = WorkflowState<Project, string>;
 type ProjectEditWorkflow = WorkflowState<ProjectEdition, void>;
@@ -34,6 +35,12 @@ type userWorkflow = WorkflowState<Member, any>;
 export interface RootState {
   /** 路由 */
   route?: RouteState;
+
+  platformType?: string;
+
+  userInfo?: FFObjectModel<UserInfo, any>;
+
+  userManagedProjects?: FFListModel<UserManagedProject, UserManagedProjectFilter>;
 
   project?: FFListModel<Project, ProjectFilter>;
 

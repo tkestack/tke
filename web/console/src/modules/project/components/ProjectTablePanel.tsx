@@ -37,7 +37,6 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
         {this._renderTablePanel()}
         {this._renderDeleteProjectDialog()}
         {this._renderEditProjectNameDialog()}
-        {this._renderEditProjectManagerDialog()}
         {this.renderMonitor()}
       </React.Fragment>
     );
@@ -263,27 +262,6 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
       >
         <DialogBodyLayout>
           <EditProjectNamePanel {...this.props} />
-        </DialogBodyLayout>
-      </WorkflowDialog>
-    );
-  }
-
-  private _renderEditProjectManagerDialog() {
-    const { actions, editProjectManager, projectEdition } = this.props;
-    return (
-      <WorkflowDialog
-        caption={t('编辑成员')}
-        workflow={editProjectManager}
-        action={actions.project.editProjectManager}
-        targets={[projectEdition]}
-        postAction={() => {
-          actions.project.clearEdition();
-        }}
-        params={{}}
-        width={600}
-      >
-        <DialogBodyLayout>
-          <EditProjectManagerPanel {...this.props} />
         </DialogBodyLayout>
       </WorkflowDialog>
     );

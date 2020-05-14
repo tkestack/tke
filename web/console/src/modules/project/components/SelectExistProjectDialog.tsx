@@ -36,7 +36,11 @@ export class SelectExistProjectDialog extends React.Component<RootProps, {}> {
       isNeedScollLoding: false,
 
       rowDisabled: item => {
-        return !!item.spec.parentProjectName || item.metadata.name === projectDetail.metadata.name;
+        return (
+          !!item.spec.parentProjectName ||
+          item.metadata.name === projectDetail.metadata.name ||
+          item.status.phase !== 'Active'
+        );
       },
 
       /** 选择器标题 */

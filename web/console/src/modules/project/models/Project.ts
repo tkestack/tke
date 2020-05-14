@@ -102,3 +102,10 @@ export interface ProjectUserMap {
     username: string;
   }[];
 }
+
+export interface UserManagedProject extends Identifiable {
+  name: string;
+}
+export interface UserManagedProjectFilter {
+  userId: string;
+}

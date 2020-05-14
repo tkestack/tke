@@ -8,11 +8,10 @@ import { t } from '@tencent/tea-app/lib/i18n';
 import { autotip } from '@tencent/tea-component/lib/table/addons';
 
 import { getWorkflowError } from '../../common';
-import { resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
+import { resourceLimitTypeToText, resourceTypeToUnit, PlatformTypeEnum } from '../constants/Config';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
 import { RootProps } from './ProjectApp';
 import { projectActions } from '../actions/projectActions';
-
 export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
   state = {
     currentClusterIndex: 0,
@@ -52,14 +51,19 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
     );
   }
   private _renderTablePanel() {
-    let { actions, namespace, projectDetail } = this.props;
+    let { actions, namespace, projectDetail, platformType, userManagedProjects } = this.props;
     let clusterKeys = projectDetail && projectDetail.spec.clusters ? Object.keys(projectDetail.spec.clusters) : [];
+    let projectId = projectDetail && projectDetail.metadata.name;
     let finalClusterList = clusterKeys.map(item => {
       return {
         name: item,
         hard: projectDetail.spec.clusters[item].hard
       };
     });
+    let enableOp =
+      platformType === PlatformTypeEnum.Manager ||
+      (platformType === PlatformTypeEnum.Business &&
+        userManagedProjects.list.data.records.find(item => item.name === projectId));
     const columns: TableColumn<{ name: string; hard: any }>[] = [
       {
         key: 'name',
@@ -81,36 +85,40 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
         width: '25%',
         key: 'operation',
         header: t('操作'),
-        render: (x, recordkey, recordIndex) => (
-          <>
-            <Button
-              type="link"
-              onClick={() => {
-                actions.project.initEdition(projectDetail);
-                this.setState({
-                  currentClusterIndex: recordIndex,
-                  isShowEditDialog: true
-                });
-                actions.project.editProjecResourceLimit.start([]);
-              }}
-            >
-              {t('编辑')}
-            </Button>
-            <Button
-              className={'tea-ml-2n'}
-              type="link"
-              onClick={() => {
-                actions.project.initEdition(projectDetail);
-                this.setState({
-                  currentClusterIndex: recordIndex,
-                  isShowDeleteDialog: clusterKeys.length
-                });
-              }}
-            >
-              {t('解除')}
-            </Button>
-          </>
-        )
+        render: (x, recordkey, recordIndex) => {
+          if (enableOp) {
+            return (
+              <>
+                <Button
+                  type="link"
+                  onClick={() => {
+                    actions.project.initEdition(projectDetail);
+                    this.setState({
+                      currentClusterIndex: recordIndex,
+                      isShowEditDialog: true
+                    });
+                    actions.project.editProjecResourceLimit.start([]);
+                  }}
+                >
+                  {t('编辑')}
+                </Button>
+                <Button
+                  className={'tea-ml-2n'}
+                  type="link"
+                  onClick={() => {
+                    actions.project.initEdition(projectDetail);
+                    this.setState({
+                      currentClusterIndex: recordIndex,
+                      isShowDeleteDialog: clusterKeys.length
+                    });
+                  }}
+                >
+                  {t('解除')}
+                </Button>
+              </>
+            );
+          }
+        }
       }
     ];
 
@@ -131,19 +139,21 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
             })
           ]}
         />
-        <Button
-          type={'link'}
-          onClick={() => {
-            actions.project.initEdition(projectDetail);
-            actions.project.addClusters();
-            this.setState({
-              isShowAddDialog: true,
-              currentClusterIndex: finalClusterList.length
-            });
-          }}
-        >
-          {t('新增关联集群')}
-        </Button>
+        {enableOp && (
+          <Button
+            type={'link'}
+            onClick={() => {
+              actions.project.initEdition(projectDetail);
+              actions.project.addClusters();
+              this.setState({
+                isShowAddDialog: true,
+                currentClusterIndex: finalClusterList.length
+              });
+            }}
+          >
+            {t('新增关联集群')}
+          </Button>
+        )}
       </div>
     );
   }

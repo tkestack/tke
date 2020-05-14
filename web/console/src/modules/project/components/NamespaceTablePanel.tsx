@@ -1,25 +1,25 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
+import { downloadKubeconfig } from '@helper/downloadText';
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
-import { Bubble, Icon, Modal, TableColumn, Text, Button, Alert, ExternalLink } from '@tea/component';
-import { TablePanel, FormPanel } from '@tencent/ff-component';
+import { Alert, Bubble, Button, ExternalLink, Icon, Modal, TableColumn, Text } from '@tea/component';
+import { FormPanel, TablePanel } from '@tencent/ff-component';
 import { bindActionCreators, isSuccessWorkflow, OperationState, WorkflowState } from '@tencent/ff-redux';
+import { initValidator } from '@tencent/ff-validator';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter, downloadCrt } from '../../../../helpers';
 import { getWorkflowError } from '../../common';
-import { GridTable, LinkButton, WorkflowDialog, Clip } from '../../common/components';
+import { Clip, GridTable, LinkButton, WorkflowDialog } from '../../common/components';
 import { DialogBodyLayout } from '../../common/layouts';
 import { allActions } from '../actions';
-import { NamespaceStatus, resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
+import { namespaceActions } from '../actions/namespaceActions';
+import { NamespaceStatus, resourceLimitTypeToText, resourceTypeToUnit, PlatformTypeEnum } from '../constants/Config';
 import { Namespace, NamespaceOperator, Project } from '../models';
 import { router } from '../router';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
 import { RootProps } from './ProjectApp';
-import { initValidator } from '@tencent/ff-validator';
-import { downloadKubeconfig } from '@helper/downloadText';
-import { namespaceActions } from '../actions/namespaceActions';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -125,9 +125,22 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
   }
 
   private _renderOperationCell(namespace: Namespace) {
-    const { actions, route, deleteNamespace, namespaceEdition, projectDetail } = this.props;
+    const {
+      actions,
+      route,
+      deleteNamespace,
+      namespaceEdition,
+      platformType,
+      projectDetail,
+      userManagedProjects
+    } = this.props;
     const urlParams = router.resolve(route);
-
+    let enableOp =
+      platformType === PlatformTypeEnum.Manager ||
+      (platformType === PlatformTypeEnum.Business &&
+        userManagedProjects.list.data.records.find(
+          item => item.name === (projectDetail ? projectDetail.metadata.name : null)
+        ));
     const matchPerformingWorkflow = (workflow: WorkflowState<Namespace, NamespaceOperator>) => {
       return (
         workflow.operationState === OperationState.Performing &&
@@ -208,12 +221,12 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
     };
 
     let buttons = [];
-    buttons.push([
-      renderDeleteButton(),
-      renderEditResourceLimitButton(),
-      renderKubctlConfigButton(),
-      renderMigartionButton()
-    ]);
+    buttons.push([renderKubctlConfigButton()]);
+
+    if (enableOp) {
+      buttons.push([renderDeleteButton(), renderEditResourceLimitButton(), renderMigartionButton()]);
+    }
+
     return buttons;
   }
   private _renderEditProjectLimitDialog() {
