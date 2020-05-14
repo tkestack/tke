@@ -26,6 +26,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"sync"
 	"time"
 
@@ -95,6 +96,11 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
+	pathInURL := requestInfo.Path
+	if h, p := util.SplitHostAndPath(host); p != "" {
+		pathInURL = path.Join(p, pathInURL)
+		host = h
+	}
 
 	token := ""
 	if credential.Token != nil {
@@ -103,7 +109,7 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 	return &url.URL{
 		Scheme: "https",
 		Host:   host,
-		Path:   requestInfo.Path,
+		Path:   pathInURL,
 	}, transport, token, nil
 }
 

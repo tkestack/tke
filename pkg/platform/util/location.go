@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
@@ -67,6 +68,11 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
+	pathInURL := requestInfo.Path
+	if h, p := SplitHostAndPath(host); p != "" {
+		pathInURL = path.Join(p, pathInURL)
+		host = h
+	}
 
 	token := ""
 	if clusterCredential.Token != nil {
@@ -77,7 +83,7 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 	return &url.URL{
 		Scheme: "https",
 		Host:   host,
-		Path:   requestInfo.Path,
+		Path:   pathInURL,
 	}, transport, token, nil
 }
 
