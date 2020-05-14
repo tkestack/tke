@@ -36,8 +36,6 @@ apiServer:
       hostPath: /etc/kubernetes
       mountPath: /etc/kubernetes
   certSANs:
-    - 127.0.0.1
-    - localhost
   {{- range $element := .CertSANs }}
     - {{ $element -}}
   {{ end }}

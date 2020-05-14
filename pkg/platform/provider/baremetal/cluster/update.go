@@ -19,9 +19,13 @@
 package cluster
 
 import (
+	"context"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/thoas/go-funk"
 	certutil "k8s.io/client-go/util/cert"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
@@ -29,7 +33,7 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
-func (p *Provider) EnsureRenewCerts(c *v1.Cluster) error {
+func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		s, err := machine.SSH()
 		if err != nil {
@@ -54,6 +58,50 @@ func (p *Provider) EnsureRenewCerts(c *v1.Cluster) error {
 		err = kubeadm.RenewCerts(s)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error {
+	initOption := p.getKubeadmInitOption(c)
+	exptectCertSANs := GetAPIServerCertSANs(c.Cluster)
+
+	for _, machine := range c.Spec.Machines {
+		s, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		data, err := s.ReadFile(constants.APIServerCertName)
+		if err != nil {
+			return err
+		}
+		certs, err := certutil.ParseCertsPEM(data)
+		if err != nil {
+			return err
+		}
+		actualCertSANs := certs[0].DNSNames
+		for _, ip := range certs[0].IPAddresses {
+			actualCertSANs = append(actualCertSANs, ip.String())
+		}
+		if reflect.DeepEqual(funk.IntersectString(actualCertSANs, exptectCertSANs), exptectCertSANs) {
+			return nil
+		}
+
+		log.Infof("EnsureAPIServerCert for %s", s.Host)
+		for _, file := range []string{constants.APIServerCertName, constants.APIServerKeyName} {
+			s.CombinedOutput(fmt.Sprintf("rm -f %s", file))
+		}
+
+		err = kubeadm.Init(s, initOption, "certs apiserver")
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+		err = kubeadm.RestartContainerByFilter(s, kubeadm.DockerFilterForControlPlane("kube-apiserver"))
+		if err != nil {
+			return err
 		}
 	}
 
