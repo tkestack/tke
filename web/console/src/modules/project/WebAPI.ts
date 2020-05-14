@@ -19,7 +19,7 @@ import {
   ProjectEdition,
   ProjectFilter
 } from './models';
-import { ProjectResourceLimit } from './models/Project';
+import { ProjectResourceLimit, UserManagedProject, UserManagedProjectFilter } from './models/Project';
 
 // 返回标准操作结果
 function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] {
@@ -726,4 +726,53 @@ export async function migrateNamesapce(namespaces: Namespace[], options: Namespa
   } catch (error) {
     return operationResult(namespaces, reduceNetworkWorkflow(error));
   }
+}
+/**
+ * 集群列表的查询
+ * @param query 集群列表查询的一些过滤条件
+ */
+export async function fetchUserManagedProjects(query: QueryState<UserManagedProjectFilter>) {
+  let { userId } = query.filter;
+  let userResourceInfo: ResourceInfo = resourceConfig().user;
+  let url = reduceK8sRestfulPath({
+    resourceInfo: userResourceInfo,
+    specificName: userId,
+    extraResource: 'projects'
+  });
+
+  /** 构建参数 */
+  let method = 'GET';
+  let params: RequestParams = {
+    method,
+    url
+  };
+
+  let response = await reduceNetworkRequest(params);
+  let managedProjects = [];
+  if (response.code === 0) {
+    let list = response.data;
+    managedProjects = Object.keys(list.managedProjects).map(item => ({ id: item, name: item }));
+  }
+
+  const result: RecordSet<UserManagedProject> = {
+    recordCount: managedProjects.length,
+    records: managedProjects
+  };
+
+  return result;
+}
+export async function fetchUserId(query: QueryState<string>) {
+  let infoResourceInfo: ResourceInfo = resourceConfig()['info'];
+  let url = reduceK8sRestfulPath({ resourceInfo: infoResourceInfo });
+  let params: RequestParams = {
+    method: Method.get,
+    url
+  };
+  let result;
+  try {
+    let response = await reduceNetworkRequest(params);
+    result = response.data;
+  } catch (error) {}
+
+  return result;
 }

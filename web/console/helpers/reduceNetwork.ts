@@ -2,6 +2,7 @@ import axios from 'axios';
 import { OperationResult } from '@tencent/ff-redux';
 import { RequestParams, ResourceInfo } from '../src/modules/common/models';
 import { changeForbiddentConfig } from '../index';
+import { parseQueryString } from './urlUtil';
 
 /** 是否展示没有权限的弹窗 */
 export let Init_Forbiddent_Config = {
@@ -77,15 +78,7 @@ export const reduceNetworkRequest = async (
   projectId?: string,
   keyword?: string
 ) => {
-  let {
-    method,
-    url,
-    userDefinedHeader = {},
-    data = {},
-    apiParams,
-    // baseURL = getConsoleAPIAddress(ConsoleModuleAddressEnum.PLATFORM)
-    baseURL = GET_CONSOLE_MODULE_BASE_URL
-  } = userParams;
+  let { method, url, userDefinedHeader = {}, data = {}, apiParams, baseURL = GET_CONSOLE_MODULE_BASE_URL } = userParams;
 
   let rsp;
   // 请求tke-apiserver的 cluster的header
@@ -94,11 +87,20 @@ export const reduceNetworkRequest = async (
       'X-TKE-ClusterName': clusterId
     });
   }
-  if (projectId) {
+
+  /// #if project
+  let searchParams;
+  try {
+    searchParams = parseQueryString(location.search);
+  } catch (error) {}
+  console.log(searchParams);
+  if (searchParams && searchParams.projectName) {
     userDefinedHeader = Object.assign({}, userDefinedHeader, {
-      'X-TKE-ProjectName': projectId
+      'X-TKE-ProjectName': searchParams.projectName
     });
   }
+  /// #endif
+
   if (keyword) {
     userDefinedHeader = Object.assign({}, userDefinedHeader, {
       'X-TKE-FuzzyResourceName': keyword

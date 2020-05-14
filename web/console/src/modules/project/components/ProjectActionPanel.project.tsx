@@ -25,8 +25,6 @@ export class ProjectActionPanel extends React.Component<RootProps, {}> {
     const { actions } = this.props;
     actions.project.poll({});
     actions.project.projectUserInfo.applyFilter({});
-    actions.manager.applyFilter({});
-    actions.manager.fetchAdminstratorInfo();
   }
   componentWillUnmount() {
     const { actions } = this.props;
@@ -39,27 +37,6 @@ export class ProjectActionPanel extends React.Component<RootProps, {}> {
     return (
       <div className="tc-action-grid">
         <Justify
-          left={
-            <React.Fragment>
-              <Button
-                type="primary"
-                onClick={() => {
-                  router.navigate({ sub: 'create' });
-                }}
-              >
-                {t('新建业务')}
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => {
-                  actions.manager.initAdminstrator();
-                  actions.manager.modifyAdminstrator.start();
-                }}
-              >
-                {t('设置管理员')}
-              </Button>
-            </React.Fragment>
-          }
           right={
             <SearchBox
               value={project.query.keyword || ''}
@@ -69,31 +46,7 @@ export class ProjectActionPanel extends React.Component<RootProps, {}> {
             />
           }
         />
-        {this._renderEditAdminstratorDialog()}
       </div>
-    );
-  }
-  private _renderEditAdminstratorDialog() {
-    const { actions, projectEdition, modifyAdminstrator } = this.props;
-    return (
-      <WorkflowDialog
-        caption={t('编辑管理员')}
-        workflow={modifyAdminstrator}
-        action={actions.manager.modifyAdminstrator}
-        targets={[projectEdition]}
-        params={{}}
-        postAction={() => {
-          actions.project.clearEdition();
-        }}
-        width={700}
-      >
-        <EditProjectManagerPanel
-          {...this.props}
-          rowDisabled={(record: Manager) => {
-            return record.name === 'admin';
-          }}
-        />
-      </WorkflowDialog>
     );
   }
 }

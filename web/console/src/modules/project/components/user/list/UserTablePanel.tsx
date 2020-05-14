@@ -11,6 +11,7 @@ import { allActions } from '../../../actions';
 import { User } from '../../../models';
 import { router } from '../../../router';
 import { RoleModifyDialog } from './RoleModifyDialog';
+import { PlatformTypeEnum } from '@src/modules/project/constants/Config';
 const { useState, useEffect } = React;
 
 export const UserTablePanel = () => {
@@ -19,7 +20,14 @@ export const UserTablePanel = () => {
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { isShowing, toggle } = useModal(false);
   const [editUser, setEditUser] = useState();
-  const { userList, route } = state;
+  const { userList, route, platformType, userManagedProjects, projectDetail } = state;
+
+  let enableOp =
+    platformType === PlatformTypeEnum.Manager ||
+    (platformType === PlatformTypeEnum.Business &&
+      userManagedProjects.list.data.records.find(
+        item => item.name === (projectDetail ? projectDetail.metadata.name : null)
+      ));
 
   useEffect(() => {
     actions.policy.associate.policyList.applyFilter({ resource: 'project', resourceID: '' });
@@ -89,7 +97,7 @@ export const UserTablePanel = () => {
         </LinkButton>
       );
     }
-    return (
+    return enableOp ? (
       <React.Fragment>
         <LinkButton
           disabled={isDisable}
@@ -101,7 +109,7 @@ export const UserTablePanel = () => {
           <Trans>删除</Trans>
         </LinkButton>
       </React.Fragment>
-    );
+    ) : null;
   }
 
   async function _removeUser(user: User) {

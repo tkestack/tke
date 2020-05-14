@@ -15,6 +15,7 @@ import { ProjectActionPanel } from './ProjectActionPanel';
 import { ProjectDetail } from './ProjectDetail';
 import { ProjectHeadPanel } from './ProjectHeadPanel';
 import { ProjectTablePanel } from './ProjectTablePanel';
+import { PlatformTypeEnum } from '../constants/Config';
 
 const store = configStore();
 
@@ -43,6 +44,17 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 @((router.serve as any)())
 class ProjectApp extends React.Component<RootProps, {}> {
+  constructor(props, context) {
+    super(props, context);
+    /// #if project
+    props.actions.bussiness.initPlatformType(PlatformTypeEnum.Business);
+    props.actions.bussiness.userInfo.fetch();
+    /// #endif
+
+    /// #if tke
+    props.actions.bussiness.initPlatformType(PlatformTypeEnum.Manager);
+    /// #endif
+  }
   render() {
     const { route } = this.props;
     const { sub } = router.resolve(route);

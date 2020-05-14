@@ -8,6 +8,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { allActions } from '../actions';
 import { router } from '../router';
 import { RootProps } from './ProjectApp';
+import { PlatformTypeEnum } from '../constants/Config';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -24,21 +25,28 @@ export class NamespaceActionPanel extends React.Component<RootProps, {}> {
     actions.namespace.performSearch('');
   }
   render() {
-    let { actions, namespace, route } = this.props;
-
+    let { actions, namespace, route, platformType, userManagedProjects, projectDetail } = this.props;
+    let enableOp =
+      platformType === PlatformTypeEnum.Manager ||
+      (platformType === PlatformTypeEnum.Business &&
+        userManagedProjects.list.data.records.find(
+          item => item.name === (projectDetail ? projectDetail.metadata.name : null)
+        ));
     return (
       <div className="tc-action-grid">
         <Justify
           left={
-            <Button
-              type="primary"
-              onClick={() => {
-                router.navigate({ sub: 'detail', tab: 'namespace', action: 'createNS' }, route.queries);
-              }}
-            >
-              {/* <b className="icon-add" /> */}
-              {t('新建Namespace')}
-            </Button>
+            enableOp && (
+              <Button
+                type="primary"
+                onClick={() => {
+                  router.navigate({ sub: 'detail', tab: 'namespace', action: 'createNS' }, route.queries);
+                }}
+              >
+                {/* <b className="icon-add" /> */}
+                {t('新建Namespace')}
+              </Button>
+            )
           }
           right={
             <SearchBox

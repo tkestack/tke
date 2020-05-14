@@ -1,3 +1,4 @@
+import { bussinessActions } from './bussinessActions';
 import { detailActions } from './detailActions';
 import { projectActions } from './projectActions';
 import { namespaceActions } from './namespaceActions';
@@ -15,5 +16,6 @@ export const allActions = {
   cluster: clusterActions,
   user: userActions,
   policy: policyActions,
-  detail: detailActions
+  detail: detailActions,
+  bussiness: bussinessActions
 };

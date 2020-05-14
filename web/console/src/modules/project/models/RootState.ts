@@ -1,5 +1,6 @@
+import { UserInfo } from './User';
 import { NamespaceCert } from './Namespace';
-import { ProjectUserMap } from './Project';
+import { ProjectUserMap, UserManagedProject, UserManagedProjectFilter } from './Project';
 import { FFObjectModel } from './../../../../lib/ff-redux/src/object/Model';
 import { FetcherState, FFListModel, OperationResult, RecordSet, WorkflowState } from '@tencent/ff-redux';
 
@@ -34,6 +35,12 @@ type userWorkflow = WorkflowState<Member, any>;
 export interface RootState {
   /** 路由 */
   route?: RouteState;
+
+  platformType?: string;
+
+  userInfo?: FFObjectModel<UserInfo, any>;
+
+  userManagedProjects?: FFListModel<UserManagedProject, UserManagedProjectFilter>;
 
   project?: FFListModel<Project, ProjectFilter>;
 

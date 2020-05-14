@@ -16,6 +16,12 @@ import { router } from '../router';
 export const RootReducer = combineReducers({
   route: router.getReducer(),
 
+  platformType: reduceToPayload(ActionType.PlatformType, 'init'),
+
+  userInfo: createFFObjectReducer(FFReduxActionName.UserInfo),
+
+  userManagedProjects: createFFListReducer(FFReduxActionName.UserManagedProjects),
+
   project: createFFListReducer('project'),
 
   projectEdition: reduceToPayload(ActionType.UpdateProjectEdition, initProjectEdition),

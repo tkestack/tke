@@ -9,7 +9,7 @@ import { Alert, Bubble, Button, Icon, Modal, Text } from '@tencent/tea-component
 import { getWorkflowError, RequestParams, ResourceInfo } from '../../common';
 import { allActions } from '../actions';
 import { projectActions } from '../actions/projectActions';
-import { resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
+import { resourceLimitTypeToText, resourceTypeToUnit, PlatformTypeEnum } from '../constants/Config';
 import { ProjectResourceLimit } from '../models/Project';
 import { router } from '../router';
 import { CreateProjectResourceLimitPanel } from './CreateProjectResourceLimitPanel';
@@ -92,7 +92,7 @@ export class CreateProjectPanel extends React.Component<
   }
 
   render() {
-    let { projectEdition, actions, project, route, createProject, cluster } = this.props;
+    let { projectEdition, actions, project, route, createProject, cluster, platformType } = this.props;
 
     let projectListOpions = project.list.data.records.map(item => {
       return { text: `${item.metadata.name}(${item.spec.displayName})`, value: item.metadata.name };
@@ -200,6 +200,7 @@ export class CreateProjectPanel extends React.Component<
             label={t('上级业务')}
             options={projectListOpions}
             value={projectEdition.parentProject}
+            disabled={platformType === PlatformTypeEnum.Business}
             onChange={value => {
               actions.project.inputParentPorject(value);
             }}

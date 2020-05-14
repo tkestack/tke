@@ -9,6 +9,7 @@ export const DeleteProject = 'DeleteProject';
 export const AddExistMultiProject = 'AddExistMultiProject';
 export const DeleteParentProject = 'DeleteParentProject';
 export const ProjectDetail = 'ProjectDetail';
+export const PlatformType = 'IsBussiness';
 
 /**命名空间 */
 export const CreateNamespace = 'CreateNamespace';
