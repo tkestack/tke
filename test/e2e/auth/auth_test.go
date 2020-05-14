@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -39,7 +40,7 @@ var _ = Describe("E2e", func() {
 			},
 		}
 
-		result, err := client.AuthV1().LocalGroups().Create(&group)
+		result, err := client.AuthV1().LocalGroups().Create(context.Background(), &group, metav1.CreateOptions{})
 		Expect(err).To(BeNil())
 		groupID = result.Name
 
@@ -52,7 +53,7 @@ var _ = Describe("E2e", func() {
 			},
 		}
 
-		localidentity, err := client.AuthV1().LocalIdentities().Create(&user)
+		localidentity, err := client.AuthV1().LocalIdentities().Create(context.Background(), &user, metav1.CreateOptions{})
 		Expect(err).To(BeNil())
 		userID = localidentity.Name
 
@@ -69,7 +70,7 @@ var _ = Describe("E2e", func() {
 			},
 		}}
 
-		pol, err := client.AuthV1().Policies().Create(&policy)
+		pol, err := client.AuthV1().Policies().Create(context.Background(), &policy, metav1.CreateOptions{})
 		Expect(err).To(BeNil())
 		policyID = pol.Name
 
@@ -81,16 +82,16 @@ var _ = Describe("E2e", func() {
 			Policies:    []string{policyID},
 		}}
 
-		rol, err := client.AuthV1().Roles().Create(&role)
+		rol, err := client.AuthV1().Roles().Create(context.Background(), &role, metav1.CreateOptions{})
 		Expect(err).To(BeNil())
 		roleID = rol.Name
 	})
 
 	AfterEach(func() {
-		_ = client.AuthV1().LocalIdentities().Delete(userID, &metav1.DeleteOptions{})
+		_ = client.AuthV1().LocalIdentities().Delete(context.Background(), userID, metav1.DeleteOptions{})
 
 		err = wait.Poll(1*time.Second, 10*time.Second, func() (bool, error) {
-			_, err = client.AuthV1().LocalIdentities().Get(userID, metav1.GetOptions{})
+			_, err = client.AuthV1().LocalIdentities().Get(context.Background(), userID, metav1.GetOptions{})
 			if err != nil && errors.IsNotFound(err) {
 				return true, nil
 			}
@@ -102,9 +103,9 @@ var _ = Describe("E2e", func() {
 		})
 		Expect(err).To(BeNil())
 
-		_ = client.AuthV1().LocalGroups().Delete(groupID, &metav1.DeleteOptions{})
+		_ = client.AuthV1().LocalGroups().Delete(context.Background(), groupID, metav1.DeleteOptions{})
 		err = wait.Poll(1*time.Second, 10*time.Second, func() (bool, error) {
-			_, err = client.AuthV1().LocalGroups().Get(groupID, metav1.GetOptions{})
+			_, err = client.AuthV1().LocalGroups().Get(context.Background(), groupID, metav1.GetOptions{})
 			if err != nil && errors.IsNotFound(err) {
 				return true, nil
 			}
@@ -117,9 +118,9 @@ var _ = Describe("E2e", func() {
 
 		Expect(err).To(BeNil())
 
-		_ = client.AuthV1().Policies().Delete(policyID, &metav1.DeleteOptions{})
+		_ = client.AuthV1().Policies().Delete(context.Background(), policyID, metav1.DeleteOptions{})
 		err = wait.Poll(1*time.Second, 10*time.Second, func() (bool, error) {
-			_, err = client.AuthV1().Policies().Get(policyID, metav1.GetOptions{})
+			_, err = client.AuthV1().Policies().Get(context.Background(), policyID, metav1.GetOptions{})
 			if err != nil && errors.IsNotFound(err) {
 				return true, nil
 			}
@@ -135,17 +136,17 @@ var _ = Describe("E2e", func() {
 
 	It("test group binding", func() {
 
-		localIdentity, err := client.AuthV1().LocalIdentities().Get(userID, metav1.GetOptions{})
+		localIdentity, err := client.AuthV1().LocalIdentities().Get(context.Background(), userID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
-		_, err = client.AuthV1().LocalGroups().Get(groupID, metav1.GetOptions{})
+		_, err = client.AuthV1().LocalGroups().Get(context.Background(), groupID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
 		var subjects []authv1.Subject
 		subjects = append(subjects, authv1.Subject{ID: userID})
 		binding := authv1.Binding{Users: subjects}
 		localGroup := &authv1.LocalGroup{}
-		err = client.AuthV1().RESTClient().Post().Resource("localgroups").SubResource("binding").Name(groupID).Body(&binding).Do().Into(localGroup)
+		err = client.AuthV1().RESTClient().Post().Resource("localgroups").SubResource("binding").Name(groupID).Body(&binding).Do(context.Background()).Into(localGroup)
 		Expect(err).To(BeNil())
 
 		found := false
@@ -161,7 +162,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var groupList = &authv1.GroupList{}
-			err := client.AuthV1().RESTClient().Get().Resource("localidentities").SubResource("groups").Name(userID).Do().Into(groupList)
+			err := client.AuthV1().RESTClient().Get().Resource("localidentities").SubResource("groups").Name(userID).Do(context.Background()).Into(groupList)
 			if err != nil {
 				return false, err
 			}
@@ -181,18 +182,18 @@ var _ = Describe("E2e", func() {
 
 	It("test policy binding", func() {
 
-		localIdentity, err := client.AuthV1().LocalIdentities().Get(userID, metav1.GetOptions{})
+		localIdentity, err := client.AuthV1().LocalIdentities().Get(context.Background(), userID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
-		group, err := client.AuthV1().LocalGroups().Get(groupID, metav1.GetOptions{})
+		group, err := client.AuthV1().LocalGroups().Get(context.Background(), groupID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
-		_, err = client.AuthV1().Policies().Get(policyID, metav1.GetOptions{})
+		_, err = client.AuthV1().Policies().Get(context.Background(), policyID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
 		binding := authv1.Binding{Users: []authv1.Subject{{ID: userID}}, Groups: []authv1.Subject{{ID: groupID}}}
 		policy := &authv1.Policy{}
-		err = client.AuthV1().RESTClient().Post().Resource("policies").SubResource("binding").Name(policyID).Body(&binding).Do().Into(policy)
+		err = client.AuthV1().RESTClient().Post().Resource("policies").SubResource("binding").Name(policyID).Body(&binding).Do(context.Background()).Into(policy)
 		Expect(err).To(BeNil())
 
 		found := false
@@ -217,7 +218,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var policyList = &authv1.PolicyList{}
-			err := client.AuthV1().RESTClient().Get().Resource("localidentities").SubResource("policies").Name(userID).Do().Into(policyList)
+			err := client.AuthV1().RESTClient().Get().Resource("localidentities").SubResource("policies").Name(userID).Do(context.Background()).Into(policyList)
 			if err != nil {
 				return false, err
 			}
@@ -236,7 +237,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var policyList = &authv1.PolicyList{}
-			err := client.AuthV1().RESTClient().Get().Resource("users").SubResource("policies").Name(util.CombineTenantAndName("default", userID)).Do().Into(policyList)
+			err := client.AuthV1().RESTClient().Get().Resource("users").SubResource("policies").Name(util.CombineTenantAndName("default", userID)).Do(context.Background()).Into(policyList)
 			if err != nil {
 				return false, err
 			}
@@ -256,7 +257,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var policyList = &authv1.PolicyList{}
-			err := client.AuthV1().RESTClient().Get().Resource("localgroups").SubResource("policies").Name(groupID).Do().Into(policyList)
+			err := client.AuthV1().RESTClient().Get().Resource("localgroups").SubResource("policies").Name(groupID).Do(context.Background()).Into(policyList)
 			if err != nil {
 				return false, err
 			}
@@ -275,7 +276,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var policyList = &authv1.PolicyList{}
-			err := client.AuthV1().RESTClient().Get().Resource("groups").SubResource("policies").Name(util.CombineTenantAndName("default", groupID)).Do().Into(policyList)
+			err := client.AuthV1().RESTClient().Get().Resource("groups").SubResource("policies").Name(util.CombineTenantAndName("default", groupID)).Do(context.Background()).Into(policyList)
 			if err != nil {
 				return false, err
 			}
@@ -294,21 +295,21 @@ var _ = Describe("E2e", func() {
 
 	It("test role binding", func() {
 
-		localIdentity, err := client.AuthV1().LocalIdentities().Get(userID, metav1.GetOptions{})
+		localIdentity, err := client.AuthV1().LocalIdentities().Get(context.Background(), userID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
-		group, err := client.AuthV1().LocalGroups().Get(groupID, metav1.GetOptions{})
+		group, err := client.AuthV1().LocalGroups().Get(context.Background(), groupID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
-		_, err = client.AuthV1().Policies().Get(policyID, metav1.GetOptions{})
+		_, err = client.AuthV1().Policies().Get(context.Background(), policyID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
-		role, err := client.AuthV1().Roles().Get(roleID, metav1.GetOptions{})
+		role, err := client.AuthV1().Roles().Get(context.Background(), roleID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
 		binding := authv1.Binding{Users: []authv1.Subject{{ID: userID}}, Groups: []authv1.Subject{{ID: groupID}}}
 		role = &authv1.Role{}
-		err = client.AuthV1().RESTClient().Post().Resource("roles").SubResource("binding").Name(roleID).Body(&binding).Do().Into(role)
+		err = client.AuthV1().RESTClient().Post().Resource("roles").SubResource("binding").Name(roleID).Body(&binding).Do(context.Background()).Into(role)
 		Expect(err).To(BeNil())
 
 		found := false
@@ -333,7 +334,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var roleList = &authv1.RoleList{}
-			err := client.AuthV1().RESTClient().Get().Resource("localidentities").SubResource("roles").Name(userID).Do().Into(roleList)
+			err := client.AuthV1().RESTClient().Get().Resource("localidentities").SubResource("roles").Name(userID).Do(context.Background()).Into(roleList)
 			if err != nil {
 				return false, err
 			}
@@ -352,7 +353,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var roleList = &authv1.RoleList{}
-			err := client.AuthV1().RESTClient().Get().Resource("users").SubResource("roles").Name(util.CombineTenantAndName("default", userID)).Do().Into(roleList)
+			err := client.AuthV1().RESTClient().Get().Resource("users").SubResource("roles").Name(util.CombineTenantAndName("default", userID)).Do(context.Background()).Into(roleList)
 			if err != nil {
 				return false, err
 			}
@@ -372,7 +373,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var roleList = &authv1.RoleList{}
-			err := client.AuthV1().RESTClient().Get().Resource("localgroups").SubResource("roles").Name(groupID).Do().Into(roleList)
+			err := client.AuthV1().RESTClient().Get().Resource("localgroups").SubResource("roles").Name(groupID).Do(context.Background()).Into(roleList)
 			if err != nil {
 				return false, err
 			}
@@ -391,7 +392,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var roleList = &authv1.RoleList{}
-			err := client.AuthV1().RESTClient().Get().Resource("groups").SubResource("roles").Name(util.CombineTenantAndName("default", groupID)).Do().Into(roleList)
+			err := client.AuthV1().RESTClient().Get().Resource("groups").SubResource("roles").Name(util.CombineTenantAndName("default", groupID)).Do(context.Background()).Into(roleList)
 			if err != nil {
 				return false, err
 			}
@@ -409,15 +410,15 @@ var _ = Describe("E2e", func() {
 	})
 
 	It("test role policybinding", func() {
-		policy, err := client.AuthV1().Policies().Get(policyID, metav1.GetOptions{})
+		policy, err := client.AuthV1().Policies().Get(context.Background(), policyID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
-		_, err = client.AuthV1().Roles().Get(roleID, metav1.GetOptions{})
+		_, err = client.AuthV1().Roles().Get(context.Background(), roleID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
 		binding := authv1.PolicyBinding{Policies: []string{policyID}}
 		role := &authv1.Role{}
-		err = client.AuthV1().RESTClient().Post().Resource("roles").SubResource("policybinding").Name(roleID).Body(&binding).Do().Into(role)
+		err = client.AuthV1().RESTClient().Post().Resource("roles").SubResource("policybinding").Name(roleID).Body(&binding).Do(context.Background()).Into(role)
 		Expect(err).To(BeNil())
 
 		found := false
@@ -433,7 +434,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var policyList = &authv1.PolicyList{}
-			err := client.AuthV1().RESTClient().Get().Resource("roles").SubResource("policies").Name(roleID).Do().Into(policyList)
+			err := client.AuthV1().RESTClient().Get().Resource("roles").SubResource("policies").Name(roleID).Do(context.Background()).Into(policyList)
 			if err != nil {
 				return false, err
 			}
@@ -450,7 +451,7 @@ var _ = Describe("E2e", func() {
 		Expect(found).To(BeTrue())
 
 		role = &authv1.Role{}
-		err = client.AuthV1().RESTClient().Post().Resource("roles").SubResource("policyunbinding").Name(roleID).Body(&binding).Do().Into(role)
+		err = client.AuthV1().RESTClient().Post().Resource("roles").SubResource("policyunbinding").Name(roleID).Body(&binding).Do(context.Background()).Into(role)
 		Expect(err).To(BeNil())
 
 		found = false
@@ -466,7 +467,7 @@ var _ = Describe("E2e", func() {
 		found = false
 		err = wait.Poll(1*time.Second, 30*time.Second, func() (bool, error) {
 			var policyList = &authv1.PolicyList{}
-			err := client.AuthV1().RESTClient().Get().Resource("roles").SubResource("policies").Name(roleID).Do().Into(policyList)
+			err := client.AuthV1().RESTClient().Get().Resource("roles").SubResource("policies").Name(roleID).Do(context.Background()).Into(policyList)
 			if err != nil {
 				return false, err
 			}

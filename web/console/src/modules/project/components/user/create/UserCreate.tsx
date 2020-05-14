@@ -58,7 +58,7 @@ export const UserCreate = props => {
       })),
       policies: role === 'custom' ? targetKeys : [role]
     };
-    // console.log('submit userInfo: ', userInfo);
+    console.log('submit userInfo: ', userInfo);
     actions.user.addUser.start([userInfo]);
     actions.user.addUser.perform();
   }

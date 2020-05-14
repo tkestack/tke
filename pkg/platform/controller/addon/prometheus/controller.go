@@ -19,6 +19,8 @@
 package prometheus
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -28,12 +30,12 @@ import (
 
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
-	promopk8sutil "github.com/coreos/prometheus-operator/pkg/k8sutil"
 	influxApi "github.com/influxdata/influxdb1-client/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,6 +57,7 @@ import (
 	monitorutil "tkestack.io/tke/pkg/monitor/util"
 	"tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/apiclient"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
@@ -125,14 +128,6 @@ const (
 	specialLabelName  = "k8s-submitter"
 	specialLabelValue = "controller"
 )
-
-var crdKinds = []monitoringv1.CrdKind{
-	monitoringv1.DefaultCrdKinds.Alertmanager,
-	monitoringv1.DefaultCrdKinds.Prometheus,
-	monitoringv1.DefaultCrdKinds.PodMonitor,
-	monitoringv1.DefaultCrdKinds.PrometheusRule,
-	monitoringv1.DefaultCrdKinds.ServiceMonitor,
-}
 
 type influxdbClient struct {
 	address string
@@ -359,30 +354,30 @@ func (c *Controller) syncPrometheus(key string) error {
 	switch {
 	case errors.IsNotFound(err):
 		log.Info("Prometheus has been deleted. Attempting to cleanup resources", log.String("prome", key))
-		err = c.processPrometheusDeletion(key)
+		err = c.processPrometheusDeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve prometheus from store", log.String("prome", key), log.Err(err))
 	default:
 		cachedPrometheus = c.cache.getOrCreate(key)
-		err = c.processPrometheusUpdate(cachedPrometheus, prometheus, key)
+		err = c.processPrometheusUpdate(context.Background(), cachedPrometheus, prometheus, key)
 	}
 	return err
 }
 
-func (c *Controller) processPrometheusDeletion(key string) error {
+func (c *Controller) processPrometheusDeletion(ctx context.Context, key string) error {
 	cachedPrometheus, ok := c.cache.get(key)
 	if !ok {
 		log.Error("Prometheus not in cache even though the watcher thought it was. Ignoring the deletion", log.String("prome", key))
 		return nil
 	}
-	return c.processPrometheusDelete(cachedPrometheus, key)
+	return c.processPrometheusDelete(ctx, cachedPrometheus, key)
 }
 
-func (c *Controller) processPrometheusDelete(cachedPrometheus *cachedPrometheus, key string) error {
+func (c *Controller) processPrometheusDelete(ctx context.Context, cachedPrometheus *cachedPrometheus, key string) error {
 	log.Info("prometheus will be dropped", log.String("prome", key))
 
 	prometheus := cachedPrometheus.state
-	err := c.uninstallPrometheus(prometheus, true)
+	err := c.uninstallPrometheus(ctx, prometheus, true)
 	if err != nil {
 		log.Errorf("Prometheus uninstall fail: %v", err)
 		return err
@@ -401,17 +396,17 @@ func (c *Controller) processPrometheusDelete(cachedPrometheus *cachedPrometheus,
 	return nil
 }
 
-func (c *Controller) processPrometheusUpdate(cachedPrometheus *cachedPrometheus, prometheus *v1.Prometheus, key string) error {
+func (c *Controller) processPrometheusUpdate(ctx context.Context, cachedPrometheus *cachedPrometheus, prometheus *v1.Prometheus, key string) error {
 	if cachedPrometheus.state != nil {
 		// exist and the cluster name changed
 		if cachedPrometheus.state.UID != prometheus.UID {
 			log.Info("Prometheus uid has chenged, just delete!", log.String("prome", key))
-			if err := c.processPrometheusDelete(cachedPrometheus, key); err != nil {
+			if err := c.processPrometheusDelete(ctx, cachedPrometheus, key); err != nil {
 				return err
 			}
 		}
 	}
-	notifyAPIConfigMap, err := c.client.PlatformV1().ConfigMaps().Get(notifyapi.NotifyApiConfigMapName, metav1.GetOptions{})
+	notifyAPIConfigMap, err := c.client.PlatformV1().ConfigMaps().Get(ctx, notifyapi.NotifyApiConfigMapName, metav1.GetOptions{})
 	if err == nil && notifyAPIConfigMap != nil {
 		if v, ok := notifyAPIConfigMap.Annotations[notifyapi.NotifyAPIAddressKey]; ok {
 			if c.notifyAPIAddress != v {
@@ -419,7 +414,7 @@ func (c *Controller) processPrometheusUpdate(cachedPrometheus *cachedPrometheus,
 			}
 		}
 	}
-	err = c.createPrometheusIfNeeded(key, cachedPrometheus, prometheus)
+	err = c.createPrometheusIfNeeded(ctx, key, cachedPrometheus, prometheus)
 	if err != nil {
 		return err
 	}
@@ -430,18 +425,18 @@ func (c *Controller) processPrometheusUpdate(cachedPrometheus *cachedPrometheus,
 	return nil
 }
 
-func (c *Controller) prometheusReinitialize(key string, cachedPrometheus *cachedPrometheus, prometheus *v1.Prometheus) func() (bool, error) {
+func (c *Controller) prometheusReinitialize(ctx context.Context, key string, cachedPrometheus *cachedPrometheus, prometheus *v1.Prometheus) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
 		log.Info("Reinitialize, try to reinstall", log.String("prome", key))
-		c.uninstallPrometheus(prometheus, false)
-		err := c.installPrometheus(prometheus)
+		c.uninstallPrometheus(ctx, prometheus, false)
+		err := c.installPrometheus(ctx, prometheus)
 		if err == nil {
 			prometheus = prometheus.DeepCopy()
 			prometheus.Status.Phase = v1.AddonPhaseChecking
 			prometheus.Status.Reason = ""
 			prometheus.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(prometheus)
+			err = c.persistUpdate(ctx, prometheus)
 			if err != nil {
 				return true, err
 			}
@@ -449,7 +444,7 @@ func (c *Controller) prometheusReinitialize(key string, cachedPrometheus *cached
 		}
 		log.Info("Reinitialize, try to uninstall", log.String("prome", key))
 		// First, rollback the prometheus
-		if err := c.uninstallPrometheus(prometheus, false); err != nil {
+		if err := c.uninstallPrometheus(ctx, prometheus, false); err != nil {
 			log.Error("Uninstall prometheus error.", log.String("prome", key))
 			return true, err
 		}
@@ -458,7 +453,7 @@ func (c *Controller) prometheusReinitialize(key string, cachedPrometheus *cached
 			prometheus = prometheus.DeepCopy()
 			prometheus.Status.Phase = v1.AddonPhaseFailed
 			prometheus.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", prometheusMaxRetryCount)
-			err := c.persistUpdate(prometheus)
+			err := c.persistUpdate(ctx, prometheus)
 			if err != nil {
 				log.Error("Update prometheus error.")
 				return true, err
@@ -471,7 +466,7 @@ func (c *Controller) prometheusReinitialize(key string, cachedPrometheus *cached
 		prometheus.Status.Reason = err.Error()
 		prometheus.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
 		prometheus.Status.RetryCount++
-		err = c.persistUpdate(prometheus)
+		err = c.persistUpdate(ctx, prometheus)
 		if err != nil {
 			return true, err
 		}
@@ -479,25 +474,25 @@ func (c *Controller) prometheusReinitialize(key string, cachedPrometheus *cached
 	}
 }
 
-func (c *Controller) createPrometheusIfNeeded(key string, cachedPrometheus *cachedPrometheus, prometheus *v1.Prometheus) error {
+func (c *Controller) createPrometheusIfNeeded(ctx context.Context, key string, cachedPrometheus *cachedPrometheus, prometheus *v1.Prometheus) error {
 	switch prometheus.Status.Phase {
 	case v1.AddonPhaseInitializing:
 		log.Info("Prometheus will be created", log.String("prome", key))
-		err := c.installPrometheus(prometheus)
+		err := c.installPrometheus(ctx, prometheus)
 		if err == nil {
 			log.Info("Prometheus created success", log.String("prome", key))
 			prometheus = prometheus.DeepCopy()
 			prometheus.Status.Phase = v1.AddonPhaseChecking
 			prometheus.Status.Reason = ""
 			prometheus.Status.RetryCount = 0
-			return c.persistUpdate(prometheus)
+			return c.persistUpdate(ctx, prometheus)
 		}
 		log.Error(fmt.Sprintf("Prometheus created failed: %v", err), log.String("prome", key))
 		prometheus = prometheus.DeepCopy()
 		prometheus.Status.Phase = v1.AddonPhaseReinitializing
 		prometheus.Status.Reason = err.Error()
 		prometheus.Status.RetryCount = 1
-		return c.persistUpdate(prometheus)
+		return c.persistUpdate(ctx, prometheus)
 	case v1.AddonPhaseReinitializing:
 		log.Info("Prometheus entry Reinitializing", log.String("prome", key))
 		var interval = time.Since(prometheus.Status.LastReInitializingTimestamp.Time)
@@ -507,7 +502,7 @@ func (c *Controller) createPrometheusIfNeeded(key string, cachedPrometheus *cach
 		} else {
 			waitTime = prometheusTimeOut - interval
 		}
-		go wait.Poll(waitTime, prometheusTimeOut, c.prometheusReinitialize(key, cachedPrometheus, prometheus))
+		go wait.Poll(waitTime, prometheusTimeOut, c.prometheusReinitialize(ctx, key, cachedPrometheus, prometheus))
 	case v1.AddonPhaseChecking:
 		log.Info("Prometheus entry Checking", log.String("prome", key))
 		if _, ok := c.checking.Load(key); !ok {
@@ -515,7 +510,7 @@ func (c *Controller) createPrometheusIfNeeded(key string, cachedPrometheus *cach
 			initDelay := time.Now().Add(5 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkPrometheusStatus(prometheus, key, initDelay))
+				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkPrometheusStatus(ctx, prometheus, key, initDelay))
 			}()
 		}
 	case v1.AddonPhaseRunning:
@@ -526,12 +521,12 @@ func (c *Controller) createPrometheusIfNeeded(key string, cachedPrometheus *cach
 			prometheus.Status.Phase = v1.AddonPhaseUpgrading
 			prometheus.Status.Reason = ""
 			prometheus.Status.RetryCount = 0
-			return c.persistUpdate(prometheus)
+			return c.persistUpdate(ctx, prometheus)
 		}
 
 		if _, ok := c.health.Load(key); !ok {
 			c.health.Store(key, prometheus)
-			go wait.PollImmediateUntil(5*time.Minute, c.watchPrometheusHealth(key), c.stopCh)
+			go wait.PollImmediateUntil(5*time.Minute, c.watchPrometheusHealth(ctx, key), c.stopCh)
 		}
 	case v1.AddonPhaseUpgrading:
 		log.Info("Prometheus entry upgrading", log.String("prome", key))
@@ -540,7 +535,7 @@ func (c *Controller) createPrometheusIfNeeded(key string, cachedPrometheus *cach
 			delay := time.Now().Add(5 * time.Minute)
 			go func() {
 				defer c.upgrading.Delete(key)
-				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkPrometheusUpgrade(prometheus, key, delay))
+				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkPrometheusUpgrade(ctx, prometheus, key, delay))
 			}()
 		}
 	case v1.AddonPhaseFailed:
@@ -555,14 +550,14 @@ func (c *Controller) createPrometheusIfNeeded(key string, cachedPrometheus *cach
 			delayTime := time.Now().Add(2 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediate(20*time.Second, 1*time.Minute, c.checkPrometheusStatus(prometheus, key, delayTime))
+				wait.PollImmediate(20*time.Second, 1*time.Minute, c.checkPrometheusStatus(ctx, prometheus, key, delayTime))
 			}()
 		}
 	}
 	return nil
 }
 
-func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
+func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prometheus) error {
 	if c.notifyAPIAddress == "" {
 		return fmt.Errorf("empty notify api address, check if notify api exists")
 	}
@@ -572,21 +567,21 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 		prometheus.Status.SubVersion = make(map[string]string)
 	}
 
-	cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
-	if err != nil {
-		return err
-	}
-
-	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
-	mclient, err := util.BuildExternalMonitoringClientSet(cluster, c.client.PlatformV1())
+	crdClient, err := util.BuildExternalExtensionClientSet(ctx, cluster, c.client.PlatformV1())
+	if err != nil {
+		return err
+	}
+
+	mclient, err := util.BuildExternalMonitoringClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
@@ -600,7 +595,7 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 			return err
 		}
 	case "elasticsearch":
-		remoteWrites, err = c.initESAdapter(kubeClient, components)
+		remoteWrites, err = c.initESAdapter(ctx, kubeClient, components)
 		if err != nil {
 			return err
 		}
@@ -622,38 +617,43 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 		remoteReads = prometheus.Spec.RemoteAddress.ReadAddr
 	}
 
-	for _, crdKind := range crdKinds {
-		crd := promopk8sutil.NewCustomResourceDefinition(crdKind, monitoring.GroupName, nil, true)
-		_, err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd)
+	crds := getCRDs()
+	for _, crd := range crds {
+		crdObj := apiextensionsv1.CustomResourceDefinition{}
+		err := json.Unmarshal([]byte(crd), &crdObj)
+		if err != nil {
+			return err
+		}
+		_, err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
 	}
 
 	// Service prometheus-operator
-	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(servicePrometheusOperator()); err != nil {
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, servicePrometheusOperator(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ServiceAccount for prometheus-operator
-	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccountPrometheusOperator()); err != nil {
+	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountPrometheusOperator(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ClusterRole for prometheus-operator
-	if _, err := kubeClient.RbacV1().ClusterRoles().Create(clusterRolePrometheusOperator()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, clusterRolePrometheusOperator(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ClusterRoleBinding prometheus-operator
-	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(clusterRoleBindingPrometheusOperator()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, clusterRoleBindingPrometheusOperator(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Deployment for prometheus-operator
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deployPrometheusOperatorApps(components, prometheus)); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deployPrometheusOperatorApps(components, prometheus), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 
 	prometheus.Status.SubVersion[PrometheusOperatorService] = components.PrometheusOperatorService.Tag
 
-	extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+	extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 
 	// get notify webhook address
 	var webhookAddr string
@@ -664,106 +664,106 @@ func (c *Controller) installPrometheus(prometheus *v1.Prometheus) error {
 	}
 
 	// secret for alertmanager
-	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForAlertmanager(webhookAddr, prometheus.Spec.AlertRepeatInterval)); err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, createSecretForAlertmanager(webhookAddr, prometheus.Spec.AlertRepeatInterval), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 
 	// ServiceAccount for alertmanager
-	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccountAlertmanager()); err != nil {
+	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountAlertmanager(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 
 	// Service for alertmanager
-	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(createServiceForAlerterManager()); err != nil {
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, createServiceForAlerterManager(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 
 	// Crd alertmanager instance
-	if _, err := mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Create(createAlertManagerCRD(components, prometheus)); err != nil {
+	if _, err := mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Create(ctx, createAlertManagerCRD(components, prometheus), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 
 	prometheus.Status.SubVersion[AlertManagerService] = components.AlertManagerService.Tag
 
 	// Secret for prometheus-etcd
-	credential, err := util.ClusterCredentialV1(c.client.PlatformV1(), cluster.Name)
+	credential, err := util.GetClusterCredentialV1(ctx, c.client.PlatformV1(), cluster)
 	if err != nil {
 		return err
 	}
-	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(secretETCDPrometheus(credential)); err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, secretETCDPrometheus(credential), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Service Prometheus
-	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(servicePrometheus()); err != nil {
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, servicePrometheus(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Secret for prometheus
-	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(createSecretForPrometheus()); err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, createSecretForPrometheus(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ServiceAccount for prometheus
-	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccountPrometheus()); err != nil {
+	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountPrometheus(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ClusterRole for prometheus
-	if _, err := kubeClient.RbacV1().ClusterRoles().Create(clusterRolePrometheus()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, clusterRolePrometheus(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ClusterRoleBinding Prometheus
-	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(clusterRoleBindingPrometheus()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, clusterRoleBindingPrometheus(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// prometheus rule record
-	if _, err := mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Create(recordsForPrometheus()); err != nil {
+	if _, err := mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Create(ctx, recordsForPrometheus(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// prometheus rule alert, empty for now, edit by tke-monitor
-	if _, err := mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Create(alertsForPrometheus()); err != nil {
+	if _, err := mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Create(ctx, alertsForPrometheus(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Crd prometheus instance
-	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(createPrometheusCRD(components, prometheus, cluster.Name, remoteWrites, remoteReads, c.remoteType)); err != nil {
+	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(ctx, createPrometheusCRD(components, prometheus, cluster.Name, remoteWrites, remoteReads, c.remoteType), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	prometheus.Status.SubVersion[PrometheusService] = components.PrometheusService.Tag
 
 	// DaemonSet for node-exporter
-	if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(createDaemonSetForNodeExporter(components)); err != nil {
+	if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, createDaemonSetForNodeExporter(components), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	prometheus.Status.SubVersion[nodeExporterService] = components.NodeExporterService.Tag
 
 	// Service for kube-state-metrics
-	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(createServiceForMetrics()); err != nil {
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, createServiceForMetrics(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ServiceAccount for kube-state-metrics
-	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(createServiceAccountForMetrics()); err != nil {
+	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, createServiceAccountForMetrics(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ClusterRole for kube-state-metrics
-	if _, err := kubeClient.RbacV1().ClusterRoles().Create(createClusterRoleForMetrics()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, createClusterRoleForMetrics(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ClusterRoleBinding for kube-state-metrics
-	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(createClusterRoleBindingForMetrics()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, createClusterRoleBindingForMetrics(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Role for kube-state-metrics
-	if _, err := kubeClient.RbacV1().Roles(metav1.NamespaceSystem).Create(createRoleForMetrics()); err != nil {
+	if _, err := kubeClient.RbacV1().Roles(metav1.NamespaceSystem).Create(ctx, createRoleForMetrics(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// RoleBinding for kube-state-metrics
-	if _, err := kubeClient.RbacV1().RoleBindings(metav1.NamespaceSystem).Create(createRoleBingdingForMetrics()); err != nil {
+	if _, err := kubeClient.RbacV1().RoleBindings(metav1.NamespaceSystem).Create(ctx, createRoleBingdingForMetrics(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Deployment for kube-state-metrics
 	if extensionsAPIGroup {
-		if _, err := kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Create(createExtensionDeploymentForMetrics(components, prometheus)); err != nil {
+		if _, err := kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Create(ctx, createExtensionDeploymentForMetrics(components, prometheus), metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	} else {
-		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(createAppsDeploymentForMetrics(components, prometheus)); err != nil {
+		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, createAppsDeploymentForMetrics(components, prometheus), metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	}
@@ -1076,7 +1076,7 @@ func clusterRoleBindingPrometheus() *rbacv1.ClusterRoleBinding {
 }
 
 func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus, clusterName string, remoteWrites, remoteReads []string, remoteType string) *monitoringv1.Prometheus {
-	remoteReadSpecs := []monitoringv1.RemoteReadSpec{}
+	var remoteReadSpecs []monitoringv1.RemoteReadSpec
 	for _, r := range remoteReads {
 		if r == "nil" {
 			continue
@@ -1086,7 +1086,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 		}
 		remoteReadSpecs = append(remoteReadSpecs, rr)
 	}
-	remoteWriteSpecs := []monitoringv1.RemoteWriteSpec{}
+	var remoteWriteSpecs []monitoringv1.RemoteWriteSpec
 	for _, w := range remoteWrites {
 		if w == "nil" {
 			continue
@@ -1115,7 +1115,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
 						SourceLabels: []string{"__name__"},
-						Regex:        "k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
+						Regex:        "k8s_(.*)|apiserver_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 						Action:       "keep",
 					},
 				}
@@ -1131,7 +1131,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
+					Regex:        "project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 					Action:       "keep",
 				},
 			}
@@ -1146,7 +1146,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
+					Regex:        "project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
 					Action:       "keep",
 				},
 			}
@@ -1174,8 +1174,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			Labels:    map[string]string{specialLabelName: specialLabelValue, "k8s-app": "prometheus", "kubernetes.io/cluster-service": "true", "addonmanager.kubernetes.io/mode": "Reconcile"},
 		},
 		Spec: monitoringv1.PrometheusSpec{
-			PodMetadata: &metav1.ObjectMeta{
-				CreationTimestamp: metav1.Now(), //For validation only: https://github.com/coreos/prometheus-operator/issues/2399
+			PodMetadata: &monitoringv1.EmbeddedObjectMetadata{
 				Annotations: map[string]string{
 					"prometheus.io/scrape": "false",
 					"prometheus.io/port":   "9090",
@@ -1387,8 +1386,7 @@ func createAlertManagerCRD(components images.Components, prometheus *v1.Promethe
 			Labels:    map[string]string{specialLabelName: specialLabelValue, "k8s-app": "alertmanager", "kubernetes.io/cluster-service": "true", "addonmanager.kubernetes.io/mode": "Reconcile"},
 		},
 		Spec: monitoringv1.AlertmanagerSpec{
-			PodMetadata: &metav1.ObjectMeta{
-				CreationTimestamp: metav1.Now(), //For validation only: https://github.com/coreos/prometheus-operator/issues/2399
+			PodMetadata: &monitoringv1.EmbeddedObjectMetadata{
 				Annotations: map[string]string{
 					"prometheus.io/scrape": "false",
 					"prometheus.io/port":   "9093",
@@ -1914,101 +1912,101 @@ func createAppsDeploymentForMetrics(components images.Components, prometheus *v1
 	return deploy
 }
 
-func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData bool) error {
+func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Prometheus, dropData bool) error {
 	var err error
 	var errs []error
 
-	cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
-	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.client.PlatformV1())
+	crdClient, err := util.BuildExternalExtensionClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
-	mclient, err := util.BuildExternalMonitoringClientSet(cluster, c.client.PlatformV1())
+	mclient, err := util.BuildExternalMonitoringClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
-	extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+	extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 
 	// delete prometheus
-	err = kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(prometheusETCDSecret, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(ctx, prometheusETCDSecret, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(prometheusSecret, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(ctx, prometheusSecret, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.RbacV1().ClusterRoleBindings().Delete(prometheusClusterRoleBinding, &metav1.DeleteOptions{})
+	err = kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, prometheusClusterRoleBinding, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.RbacV1().ClusterRoles().Delete(prometheusClusterRole, &metav1.DeleteOptions{})
+	err = kubeClient.RbacV1().ClusterRoles().Delete(ctx, prometheusClusterRole, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(PrometheusService, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, PrometheusService, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(prometheusServiceAccount, &metav1.DeleteOptions{})
-	if err != nil && !errors.IsNotFound(err) {
-		errs = append(errs, err)
-	}
-
-	err = mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Delete(prometheusRuleRecord, &metav1.DeleteOptions{})
-	if err != nil && !errors.IsNotFound(err) {
-		errs = append(errs, err)
-	}
-	err = mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Delete(PrometheusRuleAlert, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, prometheusServiceAccount, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
 
-	err = mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Delete(PrometheusCRDName, &metav1.DeleteOptions{})
+	err = mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Delete(ctx, prometheusRuleRecord, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Delete(ctx, PrometheusRuleAlert, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+
+	err = mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Delete(ctx, PrometheusCRDName, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
 
 	// delete alertmanager
-	err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(AlertManagerService, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, AlertManagerService, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(alertManagerSecret, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(ctx, alertManagerSecret, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(alertManagerServiceAccount, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, alertManagerServiceAccount, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Delete(alertManagerCRDName, &metav1.DeleteOptions{})
+	err = mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Delete(ctx, alertManagerCRDName, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
 
 	// delete node-exporter
-	err = kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Delete(nodeExporterDaemonSet, &metav1.DeleteOptions{})
+	err = kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Delete(ctx, nodeExporterDaemonSet, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
 
 	// delete kube-state-metrics
 	if extensionsAPIGroup {
-		err = kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Delete(kubeStateWorkLoad, &metav1.DeleteOptions{})
+		err = kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Delete(ctx, kubeStateWorkLoad, metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
 			errs = append(errs, err)
 		}
@@ -2021,67 +2019,73 @@ func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData boo
 			options := metav1.ListOptions{
 				LabelSelector: selector.String(),
 			}
-			err = controllerutil.DeleteReplicaSetApp(kubeClient, options)
+			err = controllerutil.DeleteReplicaSetApp(ctx, kubeClient, options)
 			if err != nil {
 				errs = append(errs, err)
 			}
 		}
 	} else {
-		err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(kubeStateWorkLoad, &metav1.DeleteOptions{})
+		err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, kubeStateWorkLoad, metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
 			errs = append(errs, err)
 		}
 	}
-	err = kubeClient.RbacV1().ClusterRoleBindings().Delete(kubeStateClusterRoleBinding, &metav1.DeleteOptions{})
+	err = kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, kubeStateClusterRoleBinding, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.RbacV1().ClusterRoles().Delete(kubeStateClusterRole, &metav1.DeleteOptions{})
+	err = kubeClient.RbacV1().ClusterRoles().Delete(ctx, kubeStateClusterRole, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.RbacV1().RoleBindings(metav1.NamespaceSystem).Delete(kubeStateRoleBinding, &metav1.DeleteOptions{})
+	err = kubeClient.RbacV1().RoleBindings(metav1.NamespaceSystem).Delete(ctx, kubeStateRoleBinding, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.RbacV1().Roles(metav1.NamespaceSystem).Delete(kubeStateRole, &metav1.DeleteOptions{})
+	err = kubeClient.RbacV1().Roles(metav1.NamespaceSystem).Delete(ctx, kubeStateRole, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(kubeStateServiceAccount, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, kubeStateServiceAccount, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(kubeStateService, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, kubeStateService, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
 
 	// delete prometheus-operator
-	err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(prometheusOperatorWorkLoad, &metav1.DeleteOptions{})
+	err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, prometheusOperatorWorkLoad, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.RbacV1().ClusterRoleBindings().Delete(prometheusOperatorClusterRoleBinding, &metav1.DeleteOptions{})
+	err = kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, prometheusOperatorClusterRoleBinding, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.RbacV1().ClusterRoles().Delete(prometheusOperatorClusterRole, &metav1.DeleteOptions{})
+	err = kubeClient.RbacV1().ClusterRoles().Delete(ctx, prometheusOperatorClusterRole, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(PrometheusOperatorService, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, PrometheusOperatorService, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
-	err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(prometheusOperatorServiceAccount, &metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, prometheusOperatorServiceAccount, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		errs = append(errs, err)
 	}
 
-	for _, crdKind := range crdKinds {
-		crd := promopk8sutil.NewCustomResourceDefinition(crdKind, monitoring.GroupName, nil, true)
-		err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(crd.Name, &metav1.DeleteOptions{})
+	crds := getCRDs()
+	for _, crd := range crds {
+		crdObj := apiextensionsv1.CustomResourceDefinition{}
+		err := json.Unmarshal([]byte(crd), &crdObj)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Delete(ctx, crdObj.Name, metav1.DeleteOptions{})
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -2095,15 +2099,15 @@ func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData boo
 	}
 
 	if c.remoteType == "elasticsearch" {
-		err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(prometheusBeatWorkLoad, &metav1.DeleteOptions{})
+		err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, prometheusBeatWorkLoad, metav1.DeleteOptions{})
 		if err != nil {
 			errs = append(errs, err)
 		}
-		err = kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Delete(PrometheusBeatConfigmap, &metav1.DeleteOptions{})
+		err = kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Delete(ctx, PrometheusBeatConfigmap, metav1.DeleteOptions{})
 		if err != nil {
 			errs = append(errs, err)
 		}
-		err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(PrometheusBeatService, &metav1.DeleteOptions{})
+		err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, PrometheusBeatService, metav1.DeleteOptions{})
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -2120,7 +2124,7 @@ func (c *Controller) uninstallPrometheus(prometheus *v1.Prometheus, dropData boo
 	return nil
 }
 
-func (c *Controller) watchPrometheusHealth(key string) func() (bool, error) {
+func (c *Controller) watchPrometheusHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start check prometheus in cluster health", log.String("prome", key))
 
@@ -2129,7 +2133,7 @@ func (c *Controller) watchPrometheusHealth(key string) func() (bool, error) {
 			return false, err
 		}
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -2140,15 +2144,15 @@ func (c *Controller) watchPrometheusHealth(key string) func() (bool, error) {
 			log.Info("Prometheus health check over", log.String("prome", key))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
-		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", PrometheusService, PrometheusServicePort, `/-/healthy`, nil).DoRaw(); err != nil {
+		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", PrometheusService, PrometheusServicePort, `/-/healthy`, nil).DoRaw(ctx); err != nil {
 			prometheus = prometheus.DeepCopy()
 			prometheus.Status.Phase = v1.AddonPhaseFailed
 			prometheus.Status.Reason = "Prometheus is not healthy."
-			if err = c.persistUpdate(prometheus); err != nil {
+			if err = c.persistUpdate(ctx, prometheus); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -2158,11 +2162,11 @@ func (c *Controller) watchPrometheusHealth(key string) func() (bool, error) {
 	}
 }
 
-func (c *Controller) checkPrometheusStatus(prometheus *v1.Prometheus, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.Prometheus, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check prometheus status", log.String("prome", key))
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -2173,7 +2177,7 @@ func (c *Controller) checkPrometheusStatus(prometheus *v1.Prometheus, key string
 			log.Info("Prometheus status checking over", log.String("prome", key))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -2182,12 +2186,12 @@ func (c *Controller) checkPrometheusStatus(prometheus *v1.Prometheus, key string
 			return false, err
 		}
 
-		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", PrometheusService, PrometheusServicePort, `/-/healthy`, nil).DoRaw(); err != nil {
+		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", PrometheusService, PrometheusServicePort, `/-/healthy`, nil).DoRaw(ctx); err != nil {
 			if time.Now().After(initDelay) {
 				prometheus = prometheus.DeepCopy()
 				prometheus.Status.Phase = v1.AddonPhaseFailed
 				prometheus.Status.Reason = "Prometheus is not healthy."
-				if err = c.persistUpdate(prometheus); err != nil {
+				if err = c.persistUpdate(ctx, prometheus); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -2198,18 +2202,18 @@ func (c *Controller) checkPrometheusStatus(prometheus *v1.Prometheus, key string
 		prometheus = prometheus.DeepCopy()
 		prometheus.Status.Phase = v1.AddonPhaseRunning
 		prometheus.Status.Reason = ""
-		if err = c.persistUpdate(prometheus); err != nil {
+		if err = c.persistUpdate(ctx, prometheus); err != nil {
 			return false, err
 		}
 		return true, nil
 	}
 }
 
-func (c *Controller) checkPrometheusUpgrade(prometheus *v1.Prometheus, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) checkPrometheusUpgrade(ctx context.Context, prometheus *v1.Prometheus, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to upgrade prometheus", log.String("prome", key))
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(prometheus.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -2220,7 +2224,7 @@ func (c *Controller) checkPrometheusUpgrade(prometheus *v1.Prometheus, key strin
 			log.Info("Prometheus upgrade over", log.String("prome", key))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -2234,13 +2238,13 @@ func (c *Controller) checkPrometheusUpgrade(prometheus *v1.Prometheus, key strin
 			if image := newComponents.Get(name); image != nil {
 				if image.Tag != version {
 					patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"%s"}]`, image.FullName())
-					err = upgradeVersion(kubeClient, name, patch)
+					err = upgradeVersion(ctx, kubeClient, name, patch)
 					if err != nil {
 						if time.Now().After(initDelay) {
 							prometheus = prometheus.DeepCopy()
 							prometheus.Status.Phase = v1.AddonPhaseUpgrading
 							prometheus.Status.Reason = fmt.Sprintf("Upgrade timeout, %v", err)
-							if err = c.persistUpdate(prometheus); err != nil {
+							if err = c.persistUpdate(ctx, prometheus); err != nil {
 								return false, err
 							}
 							return true, nil
@@ -2256,7 +2260,7 @@ func (c *Controller) checkPrometheusUpgrade(prometheus *v1.Prometheus, key strin
 		prometheus.Status.Version = prometheus.Spec.Version
 		prometheus.Status.Phase = v1.AddonPhaseChecking
 		prometheus.Status.Reason = ""
-		if err = c.persistUpdate(prometheus); err != nil {
+		if err = c.persistUpdate(ctx, prometheus); err != nil {
 			return false, err
 		}
 
@@ -2290,19 +2294,19 @@ func needUpgrade(prom *v1.Prometheus) bool {
 	return false
 }
 
-func upgradeVersion(kubeClient *kubernetes.Clientset, workLoad, patch string) error {
+func upgradeVersion(ctx context.Context, kubeClient *kubernetes.Clientset, workLoad, patch string) error {
 	var err error
 
 	switch workLoad {
 	case kubeStateWorkLoad, prometheusWorkLoad, AlertManagerWorkLoad:
-		extensionsAPIGroup := controllerutil.IsClusterVersionBefore1_9(kubeClient)
+		extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 		if extensionsAPIGroup {
-			_, err = kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Patch(workLoad, types.JSONPatchType, []byte(patch))
+			_, err = kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Patch(ctx, workLoad, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})
 		} else {
-			_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Patch(workLoad, types.JSONPatchType, []byte(patch))
+			_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Patch(ctx, workLoad, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})
 		}
 	case nodeExporterDaemonSet:
-		_, err = kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Patch(workLoad, types.JSONPatchType, []byte(patch))
+		_, err = kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Patch(ctx, workLoad, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})
 	default:
 		return fmt.Errorf("wrong workload: %s", workLoad)
 	}
@@ -2310,10 +2314,10 @@ func upgradeVersion(kubeClient *kubernetes.Clientset, workLoad, patch string) er
 	return err
 }
 
-func (c *Controller) persistUpdate(prometheus *v1.Prometheus) error {
+func (c *Controller) persistUpdate(ctx context.Context, prometheus *v1.Prometheus) error {
 	var err error
 	for i := 0; i < prometheusClientRetryCount; i++ {
-		_, err = c.client.PlatformV1().Prometheuses().UpdateStatus(prometheus)
+		_, err = c.client.PlatformV1().Prometheuses().UpdateStatus(ctx, prometheus, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -2412,7 +2416,7 @@ func (c *Controller) dropInfluxdb(dbName string) error {
 	return nil
 }
 
-func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components images.Components) ([]string, error) {
+func (c *Controller) initESAdapter(ctx context.Context, kubeClient *kubernetes.Clientset, components images.Components) ([]string, error) {
 	var (
 		remoteWrites []string
 		hosts        []string
@@ -2449,7 +2453,7 @@ func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components 
 			},
 		},
 	}
-	_, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(svc)
+	_, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, svc, metav1.CreateOptions{})
 	if err != nil {
 		return remoteWrites, err
 	}
@@ -2464,7 +2468,7 @@ func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components 
 			PrometheusBeatConfigFile: configForPrometheusBeat(hosts, user, password),
 		},
 	}
-	_, err = kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(cm)
+	_, err = kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, cm, metav1.CreateOptions{})
 	if err != nil {
 		return remoteWrites, err
 	}
@@ -2526,7 +2530,7 @@ func (c *Controller) initESAdapter(kubeClient *kubernetes.Clientset, components 
 			},
 		},
 	}
-	_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deployment)
+	_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deployment, metav1.CreateOptions{})
 	if err != nil {
 		return remoteWrites, err
 	}

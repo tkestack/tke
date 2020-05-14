@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -27,6 +27,7 @@ import (
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	auth "tkestack.io/tke/api/auth/install"
 	business "tkestack.io/tke/api/business/install"
+	logagent "tkestack.io/tke/api/logagent/install"
 	monitor "tkestack.io/tke/api/monitor/install"
 	notify "tkestack.io/tke/api/notify/install"
 	platform "tkestack.io/tke/api/platform/install"
@@ -46,6 +47,7 @@ func init() {
 func Install(scheme *runtime.Scheme) {
 	auth.Install(scheme)
 	business.Install(scheme)
+	logagent.Install(scheme)
 	monitor.Install(scheme)
 	notify.Install(scheme)
 	platform.Install(scheme)

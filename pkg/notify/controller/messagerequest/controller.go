@@ -19,6 +19,7 @@
 package messagerequest
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -187,7 +188,7 @@ func (c *Controller) syncMessageRequest(key string) error {
 		log.Warn("Unable to retrieve message request from store", log.String("messageRequestName", key), log.Err(err))
 	default:
 		cachedMessageRequest := c.cache.getOrCreate(key)
-		err = c.processMessageRequestUpdate(cachedMessageRequest, messageRequest, key)
+		err = c.processMessageRequestUpdate(context.Background(), cachedMessageRequest, messageRequest, key)
 	}
 	return err
 }
@@ -212,7 +213,7 @@ func (c *Controller) processMessageRequestDelete(cachedMessageRequest *cachedMes
 	return nil
 }
 
-func (c *Controller) processMessageRequestUpdate(cachedMessageRequest *cachedMessageRequest, messageRequest *v1.MessageRequest, key string) error {
+func (c *Controller) processMessageRequestUpdate(ctx context.Context, cachedMessageRequest *cachedMessageRequest, messageRequest *v1.MessageRequest, key string) error {
 	if cachedMessageRequest.state != nil {
 		// exist and the cluster name changed
 		if cachedMessageRequest.state.UID != messageRequest.UID {
@@ -221,7 +222,7 @@ func (c *Controller) processMessageRequestUpdate(cachedMessageRequest *cachedMes
 			}
 		}
 	}
-	err := c.createMessageRequestIfNeeded(key, cachedMessageRequest, messageRequest)
+	err := c.createMessageRequestIfNeeded(ctx, key, cachedMessageRequest, messageRequest)
 	if err != nil {
 		return err
 	}
@@ -232,18 +233,18 @@ func (c *Controller) processMessageRequestUpdate(cachedMessageRequest *cachedMes
 	return nil
 }
 
-func (c *Controller) createMessageRequestIfNeeded(key string, cachedMessageRequest *cachedMessageRequest, messageRequest *v1.MessageRequest) error {
+func (c *Controller) createMessageRequestIfNeeded(ctx context.Context, key string, cachedMessageRequest *cachedMessageRequest, messageRequest *v1.MessageRequest) error {
 	switch messageRequest.Status.Phase {
 	case v1.MessageRequestPending:
 		messageRequest = messageRequest.DeepCopy()
 		messageRequest.Status.Phase = v1.MessageRequestSending
 		messageRequest.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdate(messageRequest)
+		return c.persistUpdate(ctx, messageRequest)
 	case v1.MessageRequestSending:
 		if cachedMessageRequest.state != nil && cachedMessageRequest.state.Status.Phase == v1.MessageRequestPending {
-			sentMessages, failedReceiverErrors := c.sendMessage(messageRequest)
+			sentMessages, failedReceiverErrors := c.sendMessage(ctx, messageRequest)
 			if len(sentMessages) > 0 {
-				c.archiveMessage(messageRequest, sentMessages)
+				c.archiveMessage(ctx, messageRequest, sentMessages)
 			}
 			messageRequest = messageRequest.DeepCopy()
 			messageRequest.Status.LastTransitionTime = metav1.Now()
@@ -257,16 +258,16 @@ func (c *Controller) createMessageRequestIfNeeded(key string, cachedMessageReque
 				}
 				messageRequest.Status.Errors = failedReceiverErrors
 			}
-			return c.persistUpdate(messageRequest)
+			return c.persistUpdate(ctx, messageRequest)
 		}
 	}
 	return nil
 }
 
-func (c *Controller) persistUpdate(messageRequest *v1.MessageRequest) error {
+func (c *Controller) persistUpdate(ctx context.Context, messageRequest *v1.MessageRequest) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.NotifyV1().MessageRequests(messageRequest.ObjectMeta.Namespace).UpdateStatus(messageRequest)
+		_, err = c.client.NotifyV1().MessageRequests(messageRequest.ObjectMeta.Namespace).UpdateStatus(ctx, messageRequest, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -298,14 +299,14 @@ type sentMessage struct {
 	alarmPolicyName string
 }
 
-func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessages []sentMessage, failedReceiverErrors map[string]string) {
+func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.MessageRequest) (sentMessages []sentMessage, failedReceiverErrors map[string]string) {
 	failedReceiverErrors = make(map[string]string)
 	receiversSet := sets.NewString()
 	for _, receiverGroupName := range messageRequest.Spec.ReceiverGroups {
 		if receiverGroupName == "" {
 			continue
 		}
-		if receiverGroup, err := c.client.NotifyV1().ReceiverGroups().Get(receiverGroupName, metav1.GetOptions{}); err != nil {
+		if receiverGroup, err := c.client.NotifyV1().ReceiverGroups().Get(ctx, receiverGroupName, metav1.GetOptions{}); err != nil {
 			log.Error("Failed to retrieve the specify receiver group", log.String("receiverGroupName", receiverGroupName), log.Err(err))
 		} else {
 			if len(receiverGroup.Spec.Receivers) != 0 {
@@ -323,7 +324,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 		return
 	}
 
-	channel, err := c.client.NotifyV1().Channels().Get(messageRequest.ObjectMeta.Namespace, metav1.GetOptions{})
+	channel, err := c.client.NotifyV1().Channels().Get(ctx, messageRequest.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get channel object", log.String("channelName", messageRequest.ObjectMeta.Namespace), log.Err(err))
 		for _, receiverName := range receiversSet.List() {
@@ -331,7 +332,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 		}
 		return
 	}
-	template, err := c.client.NotifyV1().Templates(channel.ObjectMeta.Name).Get(messageRequest.Spec.TemplateName, metav1.GetOptions{})
+	template, err := c.client.NotifyV1().Templates(channel.ObjectMeta.Name).Get(ctx, messageRequest.Spec.TemplateName, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get template object", log.String("channelName", channel.ObjectMeta.Name), log.String("templateName", messageRequest.Spec.TemplateName), log.Err(err))
 		for _, receiverName := range receiversSet.List() {
@@ -340,9 +341,9 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 		return
 	}
 
-	receivers := []*v1.Receiver{}
+	var receivers []*v1.Receiver
 	for _, receiverName := range receiversSet.List() {
-		receiver, err := c.client.NotifyV1().Receivers().Get(receiverName, metav1.GetOptions{})
+		receiver, err := c.client.NotifyV1().Receivers().Get(ctx, receiverName, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				failedReceiverErrors[receiverName] = "The specified notification recipient does not exist"
@@ -460,7 +461,7 @@ func (c *Controller) sendMessage(messageRequest *v1.MessageRequest) (sentMessage
 	return
 }
 
-func (c *Controller) archiveMessage(messageRequest *v1.MessageRequest, sentMessages []sentMessage) {
+func (c *Controller) archiveMessage(ctx context.Context, messageRequest *v1.MessageRequest, sentMessages []sentMessage) {
 	for _, sentMessage := range sentMessages {
 		message := &v1.Message{
 			ObjectMeta: metav1.ObjectMeta{
@@ -481,7 +482,7 @@ func (c *Controller) archiveMessage(messageRequest *v1.MessageRequest, sentMessa
 				Phase: v1.MessageUnread,
 			},
 		}
-		if _, err := c.client.NotifyV1().Messages().Create(message); err != nil {
+		if _, err := c.client.NotifyV1().Messages().Create(ctx, message, metav1.CreateOptions{}); err != nil {
 			log.Error("Failed to create message object", log.String("messageRequestName", messageRequest.ObjectMeta.Name), log.String("receiverName", sentMessage.receiverName), log.Err(err))
 		}
 	}

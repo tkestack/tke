@@ -1,27 +1,30 @@
-import { detailActions } from './detailActions';
-import { ProjectUserMap } from './../models/Project';
-import { FFReduxActionName } from './../constants/Config';
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import {
   createFFListActions,
+  createFFObjectActions,
   deepClone,
   extend,
   generateWorkflowActionCreator,
   isSuccessWorkflow,
   OperationTrigger,
-  uuid,
-  createFFObjectActions
+  uuid
 } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { initValidator } from '../../common/models/Validation';
 import * as ActionType from '../constants/ActionType';
-import { initProjectEdition, initProjectResourceLimit, resourceTypeToUnit } from '../constants/Config';
+import {
+  FFReduxActionName,
+  initProjectEdition,
+  initProjectResourceLimit,
+  resourceTypeToUnit
+} from '../constants/Config';
 import { Project, ProjectEdition, ProjectFilter, RootState } from '../models';
 import { Manager } from '../models/Manager';
-import { ProjectResourceLimit } from '../models/Project';
+import { ProjectResourceLimit, ProjectUserMap } from '../models/Project';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
+import { detailActions } from './detailActions';
 
 type GetState = () => RootState;
 
@@ -277,6 +280,9 @@ const restActions = {
         ok = false;
       }
     });
+    if (!projectEdition.members || projectEdition.members.length === 0) {
+      ok = false;
+    }
     return ok;
   },
 

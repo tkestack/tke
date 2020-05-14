@@ -20,9 +20,11 @@ package util
 
 import (
 	"context"
+
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/fields"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/apiserver/filter"
 )
 
 // PredicateListOptions determines the query options according to the tenant
@@ -30,7 +32,10 @@ import (
 func PredicateListOptions(ctx context.Context, options *metainternal.ListOptions) *metainternal.ListOptions {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
-		return options
+		tenantID = filter.TenantIDFrom(ctx)
+		if tenantID == "" {
+			return options
+		}
 	}
 	if options == nil {
 		return &metainternal.ListOptions{

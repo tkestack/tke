@@ -21,6 +21,7 @@ package platform
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -94,7 +95,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new platform.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidatePlatform(obj.(*business.Platform), s.businessClient)
+	return ValidatePlatform(ctx, obj.(*business.Platform), s.businessClient)
 }
 
 // AllowCreateOnUpdate is false for platforms.
@@ -115,7 +116,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end platform.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidatePlatformUpdate(obj.(*business.Platform), old.(*business.Platform))
+	return ValidatePlatformUpdate(ctx, obj.(*business.Platform), old.(*business.Platform))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -124,7 +125,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a platform")
 	}
-	return labels.Set(platform.ObjectMeta.Labels), ToSelectableFields(platform), nil
+	return platform.ObjectMeta.Labels, ToSelectableFields(platform), nil
 }
 
 // MatchPlatform returns a generic matcher for a given label and field selector.

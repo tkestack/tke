@@ -18,15 +18,18 @@
 
 package cluster
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	"context"
 
-func (p *Provider) EnsureClusterReady(c *Cluster) error {
+	"tkestack.io/tke/pkg/platform/provider/imported/util/mark"
+	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+)
+
+func (p *Provider) EnsureCreateClusterMark(ctx context.Context, c *typesv1.Cluster) error {
 	clientset, err := c.Clientset()
 	if err != nil {
 		return err
 	}
 
-	_, err = clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
-
-	return err
+	return mark.Create(ctx, clientset)
 }

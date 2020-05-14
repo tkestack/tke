@@ -25,14 +25,14 @@ BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
 INSTALLER=tke-installer-x86_64-$VERSION.run
 PROVIDER_RES_VERSION=v1.16.6-4
-K8S_VERION=${PROVIDER_RES_VERSION%-*}
+K8S_VERSION=${PROVIDER_RES_VERSION%-*}
 DOCKER_VERSION=18.09.9
-TARGET_OS=linux
-TARGET_ARCH=amd64
-TARGET_PLATFORM=${TARGET_OS}-${TARGET_ARCH}
+OSS=(linux)
+ARCHS=(amd64 arm64)
 OUTPUT_DIR=_output
 DST_DIR=$(mktemp -d)
 echo "${DST_DIR}" || exit
+INSTALLER_DIR=$(mktemp -d)
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 
 function usage() {
@@ -57,14 +57,19 @@ function prepare::baremetal_provider() {
 }
 
 function prepare::tke_installer() {
+  local -r os="$1"
+  local -r arch="$2"
+
   mkdir -p "${DST_DIR}"/{bin,conf,data,hooks}
 
   ls -l "${DST_DIR}"
 
-  curl -L "https://storage.googleapis.com/kubernetes-release/release/${K8S_VERION}bin/${TARGET_OS}/${TARGET_ARCH}/kubectl" -o "${DST_DIR}/bin/kubectl"
+  curl -L "https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/${os}/${arch}/kubectl" -o "${DST_DIR}/bin/kubectl"
   chmod +x "${DST_DIR}/bin/kubectl"
 
-  cp -v "$OUTPUT_DIR/${TARGET_OS}/${TARGET_ARCH}/tke-installer" "${DST_DIR}/bin"
+  make build BINS="tke-installer" OS="${os}" ARCH="${arch}" VERSION="${VERSION}"
+
+  cp -v "$OUTPUT_DIR/${os}/${arch}/tke-installer" "${DST_DIR}/bin"
   cp -rv cmd/tke-installer/app/installer/manifests "${DST_DIR}"
   cp -rv cmd/tke-installer/app/installer/hooks "${DST_DIR}"
   cp -rv "${SCRIPT_DIR}/certs" "${DST_DIR}"
@@ -72,35 +77,42 @@ function prepare::tke_installer() {
 }
 
 function build::installer_image() {
-  docker build --pull -t "${REGISTRY_PREFIX}/tke-installer:$VERSION" -f "${SCRIPT_DIR}/Dockerfile" "${DST_DIR}"
+  local -r arch="$1"
+
+  docker build --platform="${arch}" --pull -t "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" -f "${SCRIPT_DIR}/Dockerfile" "${DST_DIR}"
 }
 
 function build::installer() {
-    installer_dir=$(mktemp -d)
-    echo "installer dir: ${installer_dir}" || exit
+    local -r os="$1"
+    local -r arch="$2"
+    local -r target_platform="${os}-${arch}"
+    local -r installer="tke-installer-${target_platform}-${VERSION}.run"
 
-    mkdir -p "${installer_dir}/res"
+    echo "build ${installer} in dir: ${INSTALLER_DIR}" || exit
 
-    cp -v build/docker/tools/tke-installer/{build.sh,init_installer.sh,install.sh} "${installer_dir}"/
-    cp -v "${DST_DIR}/provider/baremetal/res/${TARGET_PLATFORM}/docker-${TARGET_PLATFORM}-${DOCKER_VERSION}.tar.gz" \
-          "${installer_dir}/res/docker.tgz"
-    cp -v pkg/platform/provider/baremetal/conf/docker/docker.service "${installer_dir}/res/"
-    docker save "${REGISTRY_PREFIX}/tke-installer:$VERSION" | gzip -c > "${installer_dir}/res/tke-installer.tgz"
+    mkdir -p "${INSTALLER_DIR}/res"
 
-    sed -i "s;VERSION=.*;VERSION=$VERSION;g" "${installer_dir}/install.sh"
+    cp -v build/docker/tools/tke-installer/{build.sh,init_installer.sh,install.sh} "${INSTALLER_DIR}"/
 
-    "${installer_dir}/build.sh" "$INSTALLER"
-    cp -v "${installer_dir}/$INSTALLER" $OUTPUT_DIR
+    cp -v "${DST_DIR}/provider/baremetal/res/${target_platform}/docker-${target_platform}-${DOCKER_VERSION}.tar.gz" \
+          "${INSTALLER_DIR}/res/docker.tgz"
+    cp -v pkg/platform/provider/baremetal/conf/docker/docker.service "${INSTALLER_DIR}/res/"
+    cp -v build/docker/tools/tke-installer/daemon.json "${INSTALLER_DIR}/res/"
 
-    echo "build tke-installer success! OUTPUT => $OUTPUT_DIR/$INSTALLER"
-    (cd $OUTPUT_DIR && sha256sum "$INSTALLER" > "$INSTALLER.sha256")
+    docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" | gzip -c > "${INSTALLER_DIR}/res/tke-installer.tgz"
+
+    sed -i "s;VERSION=.*;VERSION=$VERSION;g" "${INSTALLER_DIR}/install.sh"
+
+    "${INSTALLER_DIR}/build.sh" "${installer}"
+    cp -v "${INSTALLER_DIR}/${installer}" $OUTPUT_DIR
+
+    echo "build tke-installer success! OUTPUT => $OUTPUT_DIR/${installer}"
+    (cd $OUTPUT_DIR && sha256sum "${installer}" > "${installer}.sha256")
 
     if [[ "${BUILDER}" == "tke" ]]; then
-      coscmd upload "${installer_dir}/$INSTALLER" "$INSTALLER"
+      coscmd upload "${INSTALLER_DIR}/$INSTALLER" "$INSTALLER"
       coscmd upload "$OUTPUT_DIR/$INSTALLER.sha256" "$INSTALLER.sha256"
     fi
-
-    rm -rf "${installer_dir}"
 }
 
 function prepare::images() {
@@ -130,15 +142,20 @@ while getopts "hq" o; do
 done
 shift $((OPTIND-1))
 
-make build BINS="tke-installer" OS=${TARGET_OS} ARCH=${TARGET_ARCH} VERSION="$VERSION"
-
-prepare::baremetal_provider
-prepare::tke_installer
 if [[ "${quick}" == "false" ]]; then
   prepare::images
 fi
 
-build::installer_image
-build::installer
+prepare::baremetal_provider
+for os in "${OSS[@]}"
+do
+  for arch in "${ARCHS[@]}"
+  do
+    prepare::tke_installer "${os}" "${arch}"
+    build::installer_image "${arch}"
+    build::installer "${os}" "${arch}"
+  done
+done
 
 rm -rf "${DST_DIR}"
+rm -rf "${INSTALLER_DIR}"

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var ipamsResource = schema.GroupVersionResource{Group: "platform.tkestack.io", V
 var ipamsKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "v1", Kind: "IPAM"}
 
 // Get takes name of the iPAM, and returns the corresponding iPAM object, and an error if there is any.
-func (c *FakeIPAMs) Get(name string, options v1.GetOptions) (result *platformv1.IPAM, err error) {
+func (c *FakeIPAMs) Get(ctx context.Context, name string, options v1.GetOptions) (result *platformv1.IPAM, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(ipamsResource, name), &platformv1.IPAM{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeIPAMs) Get(name string, options v1.GetOptions) (result *platformv1.
 }
 
 // List takes label and field selectors, and returns the list of IPAMs that match those selectors.
-func (c *FakeIPAMs) List(opts v1.ListOptions) (result *platformv1.IPAMList, err error) {
+func (c *FakeIPAMs) List(ctx context.Context, opts v1.ListOptions) (result *platformv1.IPAMList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(ipamsResource, ipamsKind, opts), &platformv1.IPAMList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeIPAMs) List(opts v1.ListOptions) (result *platformv1.IPAMList, err 
 }
 
 // Watch returns a watch.Interface that watches the requested iPAMs.
-func (c *FakeIPAMs) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeIPAMs) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(ipamsResource, opts))
 }
 
 // Create takes the representation of a iPAM and creates it.  Returns the server's representation of the iPAM, and an error, if there is any.
-func (c *FakeIPAMs) Create(iPAM *platformv1.IPAM) (result *platformv1.IPAM, err error) {
+func (c *FakeIPAMs) Create(ctx context.Context, iPAM *platformv1.IPAM, opts v1.CreateOptions) (result *platformv1.IPAM, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(ipamsResource, iPAM), &platformv1.IPAM{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeIPAMs) Create(iPAM *platformv1.IPAM) (result *platformv1.IPAM, err 
 }
 
 // Update takes the representation of a iPAM and updates it. Returns the server's representation of the iPAM, and an error, if there is any.
-func (c *FakeIPAMs) Update(iPAM *platformv1.IPAM) (result *platformv1.IPAM, err error) {
+func (c *FakeIPAMs) Update(ctx context.Context, iPAM *platformv1.IPAM, opts v1.UpdateOptions) (result *platformv1.IPAM, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(ipamsResource, iPAM), &platformv1.IPAM{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeIPAMs) Update(iPAM *platformv1.IPAM) (result *platformv1.IPAM, err 
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeIPAMs) UpdateStatus(iPAM *platformv1.IPAM) (*platformv1.IPAM, error) {
+func (c *FakeIPAMs) UpdateStatus(ctx context.Context, iPAM *platformv1.IPAM, opts v1.UpdateOptions) (*platformv1.IPAM, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(ipamsResource, "status", iPAM), &platformv1.IPAM{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeIPAMs) UpdateStatus(iPAM *platformv1.IPAM) (*platformv1.IPAM, error
 }
 
 // Delete takes name of the iPAM and deletes it. Returns an error if one occurs.
-func (c *FakeIPAMs) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeIPAMs) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(ipamsResource, name), &platformv1.IPAM{})
 	return err
 }
 
 // Patch applies the patch and returns the patched iPAM.
-func (c *FakeIPAMs) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platformv1.IPAM, err error) {
+func (c *FakeIPAMs) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platformv1.IPAM, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(ipamsResource, name, pt, data, subresources...), &platformv1.IPAM{})
 	if obj == nil {

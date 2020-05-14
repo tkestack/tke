@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -31,6 +31,8 @@ import (
 	fakeauthinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion/fake"
 	businessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	fakebusinessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion/fake"
+	logagentinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/logagent/internalversion"
+	fakelogagentinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/logagent/internalversion/fake"
 	monitorinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/monitor/internalversion"
 	fakemonitorinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/monitor/internalversion/fake"
 	notifyinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/notify/internalversion"
@@ -96,6 +98,11 @@ func (c *Clientset) Auth() authinternalversion.AuthInterface {
 // Business retrieves the BusinessClient
 func (c *Clientset) Business() businessinternalversion.BusinessInterface {
 	return &fakebusinessinternalversion.FakeBusiness{Fake: &c.Fake}
+}
+
+// Logagent retrieves the LogagentClient
+func (c *Clientset) Logagent() logagentinternalversion.LogagentInterface {
+	return &fakelogagentinternalversion.FakeLogagent{Fake: &c.Fake}
 }
 
 // Monitor retrieves the MonitorClient

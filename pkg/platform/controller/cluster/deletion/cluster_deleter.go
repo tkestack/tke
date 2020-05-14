@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -27,20 +28,21 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	v1 "tkestack.io/tke/api/platform/v1"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 // ClusterDeleterInterface to delete a cluster with all resources in it.
 type ClusterDeleterInterface interface {
-	Delete(clusterName string) error
+	Delete(ctx context.Context, clusterName string) error
 }
 
 // NewClusterDeleter creates the clusterDeleter object and returns it.
 func NewClusterDeleter(clusterClient v1clientset.ClusterInterface,
 	platformClient v1clientset.PlatformV1Interface,
-	finalizerToken v1.FinalizerName,
+	finalizerToken platformv1.FinalizerName,
 	deleteClusterWhenDone bool) ClusterDeleterInterface {
 	d := &clusterDeleter{
 		clusterClient:         clusterClient,
@@ -60,7 +62,7 @@ type clusterDeleter struct {
 	platformClient v1clientset.PlatformV1Interface
 	// The finalizer token that should be removed from the cluster
 	// when all resources in that cluster have been deleted.
-	finalizerToken v1.FinalizerName
+	finalizerToken platformv1.FinalizerName
 	// Also delete the cluster when all resources in the cluster have been deleted.
 	deleteClusterWhenDone bool
 }
@@ -79,11 +81,11 @@ type clusterDeleter struct {
 // Returns ResourcesRemainingError if it deleted some resources but needs
 // to wait for them to go away.
 // Caller is expected to keep calling this until it succeeds.
-func (d *clusterDeleter) Delete(clusterName string) error {
+func (d *clusterDeleter) Delete(ctx context.Context, clusterName string) error {
 	// Multiple controllers may edit a cluster during termination
 	// first get the latest state of the cluster before proceeding
 	// if the cluster was deleted already, don't do anything
-	cluster, err := d.clusterClient.Get(clusterName, metav1.GetOptions{})
+	cluster, err := d.clusterClient.Get(ctx, clusterName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -98,7 +100,7 @@ func (d *clusterDeleter) Delete(clusterName string) error {
 
 	// ensure that the status is up to date on the cluster
 	// if we get a not found error, we assume the cluster is truly gone
-	cluster, err = d.retryOnConflictError(cluster, d.updateClusterStatusFunc)
+	cluster, err = d.retryOnConflictError(ctx, cluster, d.updateClusterStatusFunc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -113,17 +115,17 @@ func (d *clusterDeleter) Delete(clusterName string) error {
 
 	// Delete the cluster if it is already finalized.
 	if d.deleteClusterWhenDone && finalized(cluster) {
-		return d.deleteCluster(cluster)
+		return d.deleteCluster(ctx, cluster)
 	}
 
 	// there may still be content for us to remove
-	err = d.deleteAllContent(cluster)
+	err = d.deleteAllContent(ctx, cluster)
 	if err != nil {
 		return err
 	}
 
 	// we have removed content, so mark it finalized by us
-	cluster, err = d.retryOnConflictError(cluster, d.finalizeCluster)
+	cluster, err = d.retryOnConflictError(ctx, cluster, d.finalizeCluster)
 	if err != nil {
 		// in normal practice, this should not be possible, but if a deployment is running
 		// two controllers to do cluster deletion that share a common finalizer token it's
@@ -136,19 +138,19 @@ func (d *clusterDeleter) Delete(clusterName string) error {
 
 	// Check if we can delete now.
 	if d.deleteClusterWhenDone && finalized(cluster) {
-		return d.deleteCluster(cluster)
+		return d.deleteCluster(ctx, cluster)
 	}
 	return nil
 }
 
 // Deletes the given cluster.
-func (d *clusterDeleter) deleteCluster(cluster *v1.Cluster) error {
-	var opts *metav1.DeleteOptions
+func (d *clusterDeleter) deleteCluster(ctx context.Context, cluster *platformv1.Cluster) error {
+	var opts metav1.DeleteOptions
 	uid := cluster.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.clusterClient.Delete(cluster.Name, opts)
+	err := d.clusterClient.Delete(ctx, cluster.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -156,15 +158,15 @@ func (d *clusterDeleter) deleteCluster(cluster *v1.Cluster) error {
 }
 
 // updateClusterFunc is a function that makes an update to a namespace
-type updateClusterFunc func(cluster *v1.Cluster) (*v1.Cluster, error)
+type updateClusterFunc func(ctx context.Context, cluster *platformv1.Cluster) (*platformv1.Cluster, error)
 
 // retryOnConflictError retries the specified fn if there was a conflict error
 // it will return an error if the UID for an object changes across retry operations.
 // TODO RetryOnConflict should be a generic concept in client code
-func (d *clusterDeleter) retryOnConflictError(cluster *v1.Cluster, fn updateClusterFunc) (result *v1.Cluster, err error) {
+func (d *clusterDeleter) retryOnConflictError(ctx context.Context, cluster *platformv1.Cluster, fn updateClusterFunc) (result *platformv1.Cluster, err error) {
 	latestCluster := cluster
 	for {
-		result, err = fn(latestCluster)
+		result, err = fn(ctx, latestCluster)
 		if err == nil {
 			return result, nil
 		}
@@ -172,7 +174,7 @@ func (d *clusterDeleter) retryOnConflictError(cluster *v1.Cluster, fn updateClus
 			return nil, err
 		}
 		prevCluster := latestCluster
-		latestCluster, err = d.clusterClient.Get(latestCluster.Name, metav1.GetOptions{})
+		latestCluster, err = d.clusterClient.Get(ctx, latestCluster.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -183,25 +185,25 @@ func (d *clusterDeleter) retryOnConflictError(cluster *v1.Cluster, fn updateClus
 }
 
 // updateClusterStatusFunc will verify that the status of the cluster is correct
-func (d *clusterDeleter) updateClusterStatusFunc(cluster *v1.Cluster) (*v1.Cluster, error) {
-	if cluster.DeletionTimestamp.IsZero() || cluster.Status.Phase == v1.ClusterTerminating {
+func (d *clusterDeleter) updateClusterStatusFunc(ctx context.Context, cluster *platformv1.Cluster) (*platformv1.Cluster, error) {
+	if cluster.DeletionTimestamp.IsZero() || cluster.Status.Phase == platformv1.ClusterTerminating {
 		return cluster, nil
 	}
-	newCluster := v1.Cluster{}
+	newCluster := platformv1.Cluster{}
 	newCluster.ObjectMeta = cluster.ObjectMeta
 	newCluster.Status = cluster.Status
-	newCluster.Status.Phase = v1.ClusterTerminating
-	return d.clusterClient.UpdateStatus(&newCluster)
+	newCluster.Status.Phase = platformv1.ClusterTerminating
+	return d.clusterClient.UpdateStatus(ctx, &newCluster, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the cluster.Spec.Finalizers is an empty list
-func finalized(cluster *v1.Cluster) bool {
+func finalized(cluster *platformv1.Cluster) bool {
 	return len(cluster.Spec.Finalizers) == 0
 }
 
 // finalizeCluster removes the specified finalizerToken and finalizes the cluster
-func (d *clusterDeleter) finalizeCluster(cluster *v1.Cluster) (*v1.Cluster, error) {
-	clusterFinalize := v1.Cluster{}
+func (d *clusterDeleter) finalizeCluster(ctx context.Context, cluster *platformv1.Cluster) (*platformv1.Cluster, error) {
+	clusterFinalize := platformv1.Cluster{}
 	clusterFinalize.ObjectMeta = cluster.ObjectMeta
 	clusterFinalize.Spec = cluster.Spec
 
@@ -211,18 +213,18 @@ func (d *clusterDeleter) finalizeCluster(cluster *v1.Cluster) (*v1.Cluster, erro
 			finalizerSet.Insert(string(cluster.Spec.Finalizers[i]))
 		}
 	}
-	clusterFinalize.Spec.Finalizers = make([]v1.FinalizerName, 0, len(finalizerSet))
+	clusterFinalize.Spec.Finalizers = make([]platformv1.FinalizerName, 0, len(finalizerSet))
 	for _, value := range finalizerSet.List() {
-		clusterFinalize.Spec.Finalizers = append(clusterFinalize.Spec.Finalizers, v1.FinalizerName(value))
+		clusterFinalize.Spec.Finalizers = append(clusterFinalize.Spec.Finalizers, platformv1.FinalizerName(value))
 	}
 
-	cluster = &v1.Cluster{}
+	cluster = &platformv1.Cluster{}
 	err := d.platformClient.RESTClient().Put().
 		Resource("clusters").
 		Name(clusterFinalize.Name).
 		SubResource("finalize").
 		Body(&clusterFinalize).
-		Do().
+		Do(ctx).
 		Into(cluster)
 
 	if err != nil {
@@ -234,7 +236,7 @@ func (d *clusterDeleter) finalizeCluster(cluster *v1.Cluster) (*v1.Cluster, erro
 	return cluster, err
 }
 
-type deleteResourceFunc func(deleter *clusterDeleter, cluster *v1.Cluster) error
+type deleteResourceFunc func(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error
 
 // todo: delete more addons
 var deleteResourceFuncs = []deleteResourceFunc{
@@ -246,12 +248,12 @@ var deleteResourceFuncs = []deleteResourceFunc{
 }
 
 // deleteAllContent will use the client to delete each resource identified in cluster.
-func (d *clusterDeleter) deleteAllContent(cluster *v1.Cluster) error {
-	log.Debug("Cluster controller - deleteAllContent", log.String("clusterName", cluster.ObjectMeta.Name))
+func (d *clusterDeleter) deleteAllContent(ctx context.Context, cluster *platformv1.Cluster) error {
+	log.Info("Cluster controller - deleteAllContent", log.String("clusterName", cluster.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
-		err := deleteFunc(d, cluster)
+		err := deleteFunc(ctx, d, cluster)
 		if err != nil {
 			// If there is an error, hold on to it but proceed with all the remaining resource.
 			errs = append(errs, err)
@@ -262,17 +264,17 @@ func (d *clusterDeleter) deleteAllContent(cluster *v1.Cluster) error {
 		return utilerrors.NewAggregate(errs)
 	}
 
-	log.Debug("Cluster controller - deletedAllContent", log.String("clusterName", cluster.ObjectMeta.Name))
+	log.Info("Cluster controller - deletedAllContent", log.String("clusterName", cluster.Name))
 	return nil
 }
 
-func deletePersistentEvent(deleter *clusterDeleter, cluster *v1.Cluster) error {
-	log.Debug("Cluster controller - deletePersistentEvent", log.String("clusterName", cluster.ObjectMeta.Name))
+func deletePersistentEvent(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
+	log.Info("Cluster controller - deletePersistentEvent", log.String("clusterName", cluster.Name))
 
 	listOpt := metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.ObjectMeta.Name),
+		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.Name),
 	}
-	helmList, err := deleter.platformClient.PersistentEvents().List(listOpt)
+	helmList, err := deleter.platformClient.PersistentEvents().List(ctx, listOpt)
 	if err != nil {
 		return err
 	}
@@ -280,9 +282,9 @@ func deletePersistentEvent(deleter *clusterDeleter, cluster *v1.Cluster) error {
 		return nil
 	}
 	background := metav1.DeletePropagationBackground
-	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
+	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
 	for _, pe := range helmList.Items {
-		if err := deleter.platformClient.PersistentEvents().Delete(pe.ObjectMeta.Name, deleteOpt); err != nil {
+		if err := deleter.platformClient.PersistentEvents().Delete(ctx, pe.Name, deleteOpt); err != nil {
 			if !errors.IsNotFound(err) {
 				return err
 			}
@@ -291,13 +293,13 @@ func deletePersistentEvent(deleter *clusterDeleter, cluster *v1.Cluster) error {
 	return nil
 }
 
-func deleteHelm(deleter *clusterDeleter, cluster *v1.Cluster) error {
-	log.Debug("Cluster controller - deleteHelm", log.String("clusterName", cluster.ObjectMeta.Name))
+func deleteHelm(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
+	log.Info("Cluster controller - deleteHelm", log.String("clusterName", cluster.Name))
 
 	listOpt := metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.ObjectMeta.Name),
+		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.Name),
 	}
-	helmList, err := deleter.platformClient.Helms().List(listOpt)
+	helmList, err := deleter.platformClient.Helms().List(ctx, listOpt)
 	if err != nil {
 		return err
 	}
@@ -305,9 +307,9 @@ func deleteHelm(deleter *clusterDeleter, cluster *v1.Cluster) error {
 		return nil
 	}
 	background := metav1.DeletePropagationBackground
-	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
+	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
 	for _, helm := range helmList.Items {
-		if err := deleter.platformClient.Helms().Delete(helm.ObjectMeta.Name, deleteOpt); err != nil {
+		if err := deleter.platformClient.Helms().Delete(ctx, helm.Name, deleteOpt); err != nil {
 			if !errors.IsNotFound(err) {
 				return err
 			}
@@ -316,32 +318,39 @@ func deleteHelm(deleter *clusterDeleter, cluster *v1.Cluster) error {
 	return nil
 }
 
-func deleteClusterProvider(deleter *clusterDeleter, cluster *v1.Cluster) error {
-	log.Debug("Cluster controller - deleteClusterProvider", log.String("clusterName", cluster.ObjectMeta.Name))
+func deleteClusterProvider(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
+	log.Info("Cluster controller - deleteClusterProvider", log.String("clusterName", cluster.Name))
 
-	clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		panic(err)
 	}
-
-	return clusterProvider.OnDelete(*cluster)
-}
-
-func deleteClusterCredential(deleter *clusterDeleter, cluster *v1.Cluster) error {
-	log.Debug("Cluster controller - deleteClusterCredential", log.String("clusterName", cluster.ObjectMeta.Name))
-
-	fieldSelector := fields.OneTermEqualSelector("clusterName", cluster.Name).String()
-	clusterCredentialList, err := deleter.platformClient.ClusterCredentials().List(metav1.ListOptions{FieldSelector: fieldSelector})
+	clusterWrapper, err := typesv1.GetCluster(ctx, deleter.platformClient, cluster)
 	if err != nil {
 		return err
 	}
-	if len(clusterCredentialList.Items) == 0 {
-		return nil
+
+	return provider.OnDelete(ctx, clusterWrapper)
+}
+
+func deleteClusterCredential(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
+	log.Info("Cluster controller - deleteClusterCredential", log.String("clusterName", cluster.Name))
+
+	if cluster.Spec.ClusterCredentialRef != nil {
+		if err := deleter.platformClient.ClusterCredentials().Delete(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.DeleteOptions{}); err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+		}
 	}
-	background := metav1.DeletePropagationBackground
-	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
+
+	fieldSelector := fields.OneTermEqualSelector("clusterName", cluster.Name).String()
+	clusterCredentialList, err := deleter.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+	if err != nil {
+		return err
+	}
 	for _, item := range clusterCredentialList.Items {
-		if err := deleter.platformClient.ClusterCredentials().Delete(item.ObjectMeta.Name, deleteOpt); err != nil {
+		if err := deleter.platformClient.ClusterCredentials().Delete(ctx, item.Name, metav1.DeleteOptions{}); err != nil {
 			if !errors.IsNotFound(err) {
 				return err
 			}
@@ -351,11 +360,11 @@ func deleteClusterCredential(deleter *clusterDeleter, cluster *v1.Cluster) error
 	return nil
 }
 
-func deleteMachine(deleter *clusterDeleter, cluster *v1.Cluster) error {
-	log.Debug("Cluster controller - deleteMachine", log.String("clusterName", cluster.ObjectMeta.Name))
+func deleteMachine(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
+	log.Info("Cluster controller - deleteMachine", log.String("clusterName", cluster.Name))
 
 	fieldSelector := fields.OneTermEqualSelector("spec.clusterName", cluster.Name).String()
-	machineList, err := deleter.platformClient.Machines().List(metav1.ListOptions{FieldSelector: fieldSelector})
+	machineList, err := deleter.platformClient.Machines().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
 	if err != nil {
 		return err
 	}
@@ -363,9 +372,9 @@ func deleteMachine(deleter *clusterDeleter, cluster *v1.Cluster) error {
 		return nil
 	}
 	background := metav1.DeletePropagationForeground
-	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
+	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
 	for _, machine := range machineList.Items {
-		if err := deleter.platformClient.Machines().Delete(machine.ObjectMeta.Name, deleteOpt); err != nil {
+		if err := deleter.platformClient.Machines().Delete(ctx, machine.Name, deleteOpt); err != nil {
 			if !errors.IsNotFound(err) {
 				return err
 			}

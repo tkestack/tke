@@ -19,6 +19,7 @@
 package prometheus
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -36,20 +37,20 @@ func TestProcessor_GetGroup(t *testing.T) {
 	expectRuleGroup.Groups[0].Rules = make([]v1.Rule, 0)
 
 	t.Logf("With non-existed group")
-	_, err = p.GetGroup(clusterName, "non-exist-group")
+	_, err = p.GetGroup(context.Background(), clusterName, "non-exist-group")
 	if err == nil {
 		t.Errorf("get should failed")
 		return
 	}
 
-	err = p.CreateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("creation should success, code: %s", err)
 		return
 	}
 
 	t.Logf("With correct group name")
-	targetGroup, err := p.GetGroup(clusterName, expectRuleGroup.Groups[0].Name)
+	targetGroup, err := p.GetGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name)
 	if err != nil {
 		t.Errorf("get should success, code: %s", err)
 		return
@@ -72,20 +73,20 @@ func TestProcessor_GetRule(t *testing.T) {
 	recordName := expectRuleGroup.Groups[0].Rules[0].Alert
 
 	t.Logf("With non-existed record")
-	_, err = p.GetRule(clusterName, expectRuleGroup.Groups[0].Name, "non-exist-group")
+	_, err = p.GetRule(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, "non-exist-group")
 	if err == nil {
 		t.Errorf("get should failed")
 		return
 	}
 
-	err = p.CreateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("creation should success, code: %s", err)
 		return
 	}
 
 	t.Logf("With existed record")
-	targetRule, err := p.GetRule(clusterName, expectRuleGroup.Groups[0].Name, recordName)
+	targetRule, err := p.GetRule(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, recordName)
 	if err != nil {
 		t.Errorf("get should success, code: %s", err)
 		return

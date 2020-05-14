@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -68,6 +68,14 @@ func (c *FakeAuth) LocalIdentities() internalversion.LocalIdentityInterface {
 
 func (c *FakeAuth) Policies() internalversion.PolicyInterface {
 	return &FakePolicies{c}
+}
+
+func (c *FakeAuth) Projects() internalversion.ProjectInterface {
+	return &FakeProjects{c}
+}
+
+func (c *FakeAuth) ProjectPolicyBindings() internalversion.ProjectPolicyBindingInterface {
+	return &FakeProjectPolicyBindings{c}
 }
 
 func (c *FakeAuth) Roles() internalversion.RoleInterface {

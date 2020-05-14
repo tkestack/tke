@@ -270,10 +270,17 @@ func (a AlarmPolicies) Swap(i, j int) {
 
 // ToStr converts MetricFilter to string, which is used in expr
 func (f *MetricFilter) ToStr() string {
-	filter := fmt.Sprintf("%s=\"%s\",%s=\"%s\",%s=~\"%s\"",
-		filterNamespaceKey, f.Namespace,
-		filterWorkloadKindKey, f.WorkloadKind,
-		filterWorkloadNameKey, f.WorkloadName)
+	strs := []string{}
+	if f.Namespace != "" {
+		strs = append(strs, fmt.Sprintf("%s=\"%s\"", filterNamespaceKey, f.Namespace))
+	}
+	if f.WorkloadKind != "" {
+		strs = append(strs, fmt.Sprintf("%s=\"%s\"", filterWorkloadKindKey, f.WorkloadKind))
+	}
+	if f.WorkloadName != "" {
+		strs = append(strs, fmt.Sprintf("%s=~\"%s\"", filterWorkloadNameKey, f.WorkloadName))
+	}
+	filter := strings.Join(strs, ",")
 	return filter
 }
 
@@ -328,13 +335,18 @@ func (r *AlarmMetric) GetExpr(alarmPolicy *AlarmPolicy) string {
 	case alarmPolicyTypeNode:
 		metric = r.MetricName
 	case alarmPolicyTypePod:
-		if alarmPolicy.AlarmPolicySettings.AlarmObjectsType == alarmObjectsTypePart {
+		filter := MetricFilter{}
+		if alarmPolicy.AlarmPolicySettings.AlarmObjects != "" {
 			alarmObjects := strings.Split(alarmPolicy.AlarmPolicySettings.AlarmObjects, ",")
-			filter := MetricFilter{
-				Namespace:    alarmPolicy.Namespace,
-				WorkloadKind: alarmPolicy.WorkloadType,
-				WorkloadName: strings.Join(alarmObjects, "|"),
-			}
+			filter.WorkloadName = strings.Join(alarmObjects, "|")
+		}
+		if alarmPolicy.Namespace != "" {
+			filter.Namespace = alarmPolicy.Namespace
+		}
+		if alarmPolicy.WorkloadType != "" {
+			filter.WorkloadKind = alarmPolicy.WorkloadType
+		}
+		if filter.WorkloadName != "" || filter.WorkloadKind != "" || filter.Namespace != "" {
 			metric = fmt.Sprintf("%s{%s}", r.MetricName, filter.ToStr())
 		} else {
 			metric = r.MetricName

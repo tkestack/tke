@@ -34,7 +34,6 @@ import (
 	configmapstorage "tkestack.io/tke/pkg/platform/registry/configmap/storage"
 	cronhpastorage "tkestack.io/tke/pkg/platform/registry/cronhpa/storage"
 	csioperatorstorage "tkestack.io/tke/pkg/platform/registry/csioperator/storage"
-	gmstorage "tkestack.io/tke/pkg/platform/registry/gpumanager/storage"
 	helmstorage "tkestack.io/tke/pkg/platform/registry/helm/storage"
 	ipamstorage "tkestack.io/tke/pkg/platform/registry/ipam/storage"
 	lbcfstorage "tkestack.io/tke/pkg/platform/registry/lbcf/storage"
@@ -126,10 +125,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		registryREST := registrystorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["registries"] = registryREST.Registry
-
-		gpuManagerREST := gmstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
-		storageMap["gpumanagers"] = gpuManagerREST.GPUManager
-		storageMap["gpumanagers/status"] = gpuManagerREST.Status
 
 		tappControllerREST := tappcontrollertorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["tappcontrollers"] = tappControllerREST.TappController

@@ -19,8 +19,11 @@
 package authorization
 
 import (
-	"github.com/gorilla/mux"
+	"context"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/registry/chartmuseum/model"
 	"tkestack.io/tke/pkg/util/log"
@@ -67,12 +70,12 @@ func (a *authorization) apiDeleteChartVersion(w http.ResponseWriter, req *http.R
 		log.Error("Chartmuseum server that does not meet expectations", log.ByteString("body", sw.body), log.Int("status", sw.status))
 		return
 	}
-	if err := a.afterAPIDeleteChartVersion(chartObject, chartVersion); err != nil {
+	if err := a.afterAPIDeleteChartVersion(req.Context(), chartObject, chartVersion); err != nil {
 		log.Error("Failed to delete chart version from resource", log.Err(err))
 	}
 }
 
-func (a *authorization) afterAPIDeleteChartVersion(chartObject *registry.Chart, version string) error {
+func (a *authorization) afterAPIDeleteChartVersion(ctx context.Context, chartObject *registry.Chart, version string) error {
 	i := -1
 	if len(chartObject.Status.Versions) > 0 {
 		for k, v := range chartObject.Status.Versions {
@@ -85,7 +88,7 @@ func (a *authorization) afterAPIDeleteChartVersion(chartObject *registry.Chart, 
 		return nil
 	}
 	chartObject.Status.Versions = append(chartObject.Status.Versions[:i], chartObject.Status.Versions[i+1:]...)
-	if _, err := a.registryClient.Charts(chartObject.ObjectMeta.Namespace).UpdateStatus(chartObject); err != nil {
+	if _, err := a.registryClient.Charts(chartObject.ObjectMeta.Namespace).UpdateStatus(ctx, chartObject, metav1.UpdateOptions{}); err != nil {
 		log.Error("Failed to update repository versions while deleted",
 			log.String("tenantID", chartObject.Spec.TenantID),
 			log.String("chartGroupName", chartObject.Spec.ChartGroupName),

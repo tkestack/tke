@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
@@ -69,6 +70,7 @@ type REST struct {
 }
 
 var _ rest.ShortNamesProvider = &REST{}
+var _ rest.Lister = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {

@@ -6,8 +6,8 @@ StatefulSet 主要用于管理有状态的应用，创建的 Pod 拥有根据规
 
 
 ### 创建 StatefulSet<span id="createStatefulSet"></span>
-1. 登录TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】。
-2. 选择需要创建StatefulSet的业务下相应的命名空间，展开工作负载下拉项，进入StatefulSet管理页面。如下图所示：
+1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。
+2. 选择需要创建StatefulSet的【业务】下相应的【命名空间】，展开【工作负载】下拉项，进入【StatefulSet】管理页面。如下图所示：
    ![](../../../../../../images/StatefulSet.png)
 3. 单击【新建】，进入 “新建Workload” 页面。
 根据实际需求，设置 StatefulSet 参数。关键参数信息如下：
@@ -56,8 +56,8 @@ StatefulSet 主要用于管理有状态的应用，创建的 Pod 拥有根据规
 ### 更新 StatefulSet
 
 #### 更新 YAML
-1. 登录TKEStack，切换到业务管理控制台，选择左侧导航栏中的【应用管理】。
-2. 选择需要更新的业务下相应的命名空间，展开工作负载列表，进入StatefulSet管理页面。
+1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。
+2. 选择需要更新的【业务】下相应的【命名空间】，展开【工作负载】列表，进入【StatefulSet】管理页面。
 3. 在需要更新 YAML 的 StatefulSet 行中，选择【更多】>【编辑YAML】，进入更新 StatefulSet 页面。
 4. 在 “更新StatefulSet” 页面编辑 YAML，并单击【完成】即可更新 YAML。
 

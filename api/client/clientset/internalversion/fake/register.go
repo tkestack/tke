@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -28,6 +28,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	authinternalversion "tkestack.io/tke/api/auth"
 	businessinternalversion "tkestack.io/tke/api/business"
+	logagentinternalversion "tkestack.io/tke/api/logagent"
 	monitorinternalversion "tkestack.io/tke/api/monitor"
 	notifyinternalversion "tkestack.io/tke/api/notify"
 	platforminternalversion "tkestack.io/tke/api/platform"
@@ -40,6 +41,7 @@ var parameterCodec = runtime.NewParameterCodec(scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
 	authinternalversion.AddToScheme,
 	businessinternalversion.AddToScheme,
+	logagentinternalversion.AddToScheme,
 	monitorinternalversion.AddToScheme,
 	notifyinternalversion.AddToScheme,
 	platforminternalversion.AddToScheme,

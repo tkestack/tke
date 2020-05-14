@@ -21,13 +21,13 @@ export function RoleModifyDialog(props) {
     item => ['业务管理员', '业务成员', '业务只读'].includes(item.displayName) === false
   );
   const { isShowing, toggle, user } = props;
-  // console.log('PrivateEditorDialog props user:', user);
+  console.log('PrivateEditorDialog props user:', user);
   const [targetKeys, setTargetKeys] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [tenantID, setTenantID] = useState('default');
 
   function onSubmit(values, form) {
-    // console.log('RoleModifyDialog submit values:', values, targetKeys);
+    console.log('RoleModifyDialog submit values:', values, targetKeys);
     const { role } = values;
     let userInfo = {
       id: uuid(),

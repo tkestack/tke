@@ -22,7 +22,7 @@ KUBECTL := kubectl
 NAMESPACE ?= tke
 CONTEXT ?= tkestack.dev
 
-DEPLOYS=tke-auth-api tke-auth-controller tke-registry-api tke-platform-api tke-platform-controller tke-business-api tke-business-controller tke-notify-api tke-notify-controller tke-monitor-api tke-monitor-controller tke-gateway
+DEPLOYS=tke-auth-api tke-auth-controller tke-registry-api tke-platform-api tke-platform-controller tke-business-api tke-business-controller tke-notify-api tke-notify-controller tke-monitor-api tke-monitor-controller tke-audit-api tke-gateway
 
 .PHONY: deploy.run.all
 deploy.run.all:
@@ -34,10 +34,12 @@ deploy.run: $(addprefix deploy.run., $(DEPLOYS))
 
 .PHONY: deploy.run.%
 deploy.run.%:
-	@echo "===========> Deploying $* $(VERSION)"
-	@$(KUBECTL) -n $(NAMESPACE) --context=$(CONTEXT) set image deployment/$* $*=$(REGISTRY_PREFIX)/$*:$(VERSION)
+	$(eval ARCH := $(word 2,$(subst _, ,$(PLATFORM))))
+	@echo "===========> Deploying $* $(VERSION)-$(ARCH)"
+	@$(KUBECTL) -n $(NAMESPACE) --context=$(CONTEXT) set image deployment/$* $*=$(REGISTRY_PREFIX)/$*-$(ARCH):$(VERSION)
 
 .PHONY: deploy.run.tke-gateway
 deploy.run.tke-gateway:
+	$(eval ARCH := $(word 2,$(subst _, ,$(PLATFORM))))
 	@echo "===========> Deploying tke-gateway $(VERSION)"
-	@$(KUBECTL) -n $(NAMESPACE) --context=$(CONTEXT) set image daemonset/tke-gateway tke-gateway=$(REGISTRY_PREFIX)/tke-gateway:$(VERSION)
+	@$(KUBECTL) -n $(NAMESPACE) --context=$(CONTEXT) set image daemonset/tke-gateway tke-gateway=$(REGISTRY_PREFIX)/tke-gateway-$(ARCH):$(VERSION)

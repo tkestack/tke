@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -34,6 +34,8 @@ type Interface interface {
 	ImageNamespaces() ImageNamespaceInformer
 	// Namespaces returns a NamespaceInformer.
 	Namespaces() NamespaceInformer
+	// NsEmigrations returns a NsEmigrationInformer.
+	NsEmigrations() NsEmigrationInformer
 	// Platforms returns a PlatformInformer.
 	Platforms() PlatformInformer
 	// Projects returns a ProjectInformer.
@@ -69,6 +71,11 @@ func (v *version) ImageNamespaces() ImageNamespaceInformer {
 // Namespaces returns a NamespaceInformer.
 func (v *version) Namespaces() NamespaceInformer {
 	return &namespaceInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// NsEmigrations returns a NsEmigrationInformer.
+func (v *version) NsEmigrations() NsEmigrationInformer {
+	return &nsEmigrationInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // Platforms returns a PlatformInformer.

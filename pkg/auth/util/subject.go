@@ -32,12 +32,52 @@ func InSubjects(subject auth.Subject, slice []auth.Subject) bool {
 	return false
 }
 
+func InSubjectsWithIDOrName(subject auth.Subject, slice []auth.Subject) bool {
+	for _, s := range slice {
+		if s.ID != "" {
+			if subject.ID == s.ID {
+				return true
+			}
+		}
+
+		if s.Name != "" {
+			if subject.Name == s.Name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func RemoveDuplicateSubjects(slice []auth.Subject) []auth.Subject {
 	var ret []auth.Subject
 	idSet := sets.String{}
 	for _, s := range slice {
 		if !idSet.Has(s.ID) {
 			ret = append(ret, s)
+			idSet.Insert(s.ID)
+		}
+	}
+	return ret
+}
+
+func RemoveDuplicateSubjectsByIDOrName(slice []auth.Subject) []auth.Subject {
+	var ret []auth.Subject
+	idSet := sets.String{}
+	nameSet := sets.String{}
+	for _, s := range slice {
+		if s.ID != "" {
+			if !idSet.Has(s.ID) {
+				ret = append(ret, s)
+				idSet.Insert(s.ID)
+			}
+			continue
+		}
+		if s.Name != "" {
+			if !nameSet.Has(s.Name) {
+				ret = append(ret, s)
+				nameSet.Insert(s.Name)
+			}
 		}
 	}
 	return ret

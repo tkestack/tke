@@ -19,14 +19,16 @@
 package auth
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/docker/distribution/registry/auth/token"
 	"github.com/docker/libtrust"
 	jsoniter "github.com/json-iterator/go"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	restclient "k8s.io/client-go/rest"
-	"net/http"
-	"strings"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/apikey"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
@@ -143,7 +145,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		userTenantID:  userTenantID,
 		authenticated: authenticated,
 	}
-	if err := filterAccess(access, h.filterMap, u); err != nil {
+	if err := filterAccess(req.Context(), access, h.filterMap, u); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -209,7 +211,7 @@ func (h *handler) resourceActions(scopes []string, requestTenantID string) []*to
 }
 
 // filterAccess iterate a list of resource actions and try to use the filter that matches the resource type to filter the actions.
-func filterAccess(access []*token.ResourceActions, filters map[string]accessFilter, u *userRequest) error {
+func filterAccess(ctx context.Context, access []*token.ResourceActions, filters map[string]accessFilter, u *userRequest) error {
 	var err error
 	for _, a := range access {
 		f, ok := filters[a.Type]
@@ -218,7 +220,7 @@ func filterAccess(access []*token.ResourceActions, filters map[string]accessFilt
 			log.Warnf("No filter found for access type: %s, skip filter, the access of resource '%s' will be set empty.", a.Type, a.Name)
 			continue
 		}
-		err = f.filter(a, u)
+		err = f.filter(ctx, a, u)
 		if err != nil {
 			return err
 		}

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var tappcontrollersResource = schema.GroupVersionResource{Group: "platform.tkest
 var tappcontrollersKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "v1", Kind: "TappController"}
 
 // Get takes name of the tappController, and returns the corresponding tappController object, and an error if there is any.
-func (c *FakeTappControllers) Get(name string, options v1.GetOptions) (result *platformv1.TappController, err error) {
+func (c *FakeTappControllers) Get(ctx context.Context, name string, options v1.GetOptions) (result *platformv1.TappController, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(tappcontrollersResource, name), &platformv1.TappController{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeTappControllers) Get(name string, options v1.GetOptions) (result *p
 }
 
 // List takes label and field selectors, and returns the list of TappControllers that match those selectors.
-func (c *FakeTappControllers) List(opts v1.ListOptions) (result *platformv1.TappControllerList, err error) {
+func (c *FakeTappControllers) List(ctx context.Context, opts v1.ListOptions) (result *platformv1.TappControllerList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(tappcontrollersResource, tappcontrollersKind, opts), &platformv1.TappControllerList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeTappControllers) List(opts v1.ListOptions) (result *platformv1.Tapp
 }
 
 // Watch returns a watch.Interface that watches the requested tappControllers.
-func (c *FakeTappControllers) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeTappControllers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(tappcontrollersResource, opts))
 }
 
 // Create takes the representation of a tappController and creates it.  Returns the server's representation of the tappController, and an error, if there is any.
-func (c *FakeTappControllers) Create(tappController *platformv1.TappController) (result *platformv1.TappController, err error) {
+func (c *FakeTappControllers) Create(ctx context.Context, tappController *platformv1.TappController, opts v1.CreateOptions) (result *platformv1.TappController, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(tappcontrollersResource, tappController), &platformv1.TappController{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeTappControllers) Create(tappController *platformv1.TappController) 
 }
 
 // Update takes the representation of a tappController and updates it. Returns the server's representation of the tappController, and an error, if there is any.
-func (c *FakeTappControllers) Update(tappController *platformv1.TappController) (result *platformv1.TappController, err error) {
+func (c *FakeTappControllers) Update(ctx context.Context, tappController *platformv1.TappController, opts v1.UpdateOptions) (result *platformv1.TappController, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(tappcontrollersResource, tappController), &platformv1.TappController{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeTappControllers) Update(tappController *platformv1.TappController) 
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeTappControllers) UpdateStatus(tappController *platformv1.TappController) (*platformv1.TappController, error) {
+func (c *FakeTappControllers) UpdateStatus(ctx context.Context, tappController *platformv1.TappController, opts v1.UpdateOptions) (*platformv1.TappController, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(tappcontrollersResource, "status", tappController), &platformv1.TappController{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeTappControllers) UpdateStatus(tappController *platformv1.TappContro
 }
 
 // Delete takes name of the tappController and deletes it. Returns an error if one occurs.
-func (c *FakeTappControllers) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeTappControllers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(tappcontrollersResource, name), &platformv1.TappController{})
 	return err
 }
 
 // Patch applies the patch and returns the patched tappController.
-func (c *FakeTappControllers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platformv1.TappController, err error) {
+func (c *FakeTappControllers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platformv1.TappController, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(tappcontrollersResource, name, pt, data, subresources...), &platformv1.TappController{})
 	if obj == nil {

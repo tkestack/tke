@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,15 +40,15 @@ type ChartGroupsGetter interface {
 
 // ChartGroupInterface has methods to work with ChartGroup resources.
 type ChartGroupInterface interface {
-	Create(*business.ChartGroup) (*business.ChartGroup, error)
-	Update(*business.ChartGroup) (*business.ChartGroup, error)
-	UpdateStatus(*business.ChartGroup) (*business.ChartGroup, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*business.ChartGroup, error)
-	List(opts v1.ListOptions) (*business.ChartGroupList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *business.ChartGroup, err error)
+	Create(ctx context.Context, chartGroup *business.ChartGroup, opts v1.CreateOptions) (*business.ChartGroup, error)
+	Update(ctx context.Context, chartGroup *business.ChartGroup, opts v1.UpdateOptions) (*business.ChartGroup, error)
+	UpdateStatus(ctx context.Context, chartGroup *business.ChartGroup, opts v1.UpdateOptions) (*business.ChartGroup, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*business.ChartGroup, error)
+	List(ctx context.Context, opts v1.ListOptions) (*business.ChartGroupList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *business.ChartGroup, err error)
 	ChartGroupExpansion
 }
 
@@ -66,20 +67,20 @@ func newChartGroups(c *BusinessClient, namespace string) *chartGroups {
 }
 
 // Get takes name of the chartGroup, and returns the corresponding chartGroup object, and an error if there is any.
-func (c *chartGroups) Get(name string, options v1.GetOptions) (result *business.ChartGroup, err error) {
+func (c *chartGroups) Get(ctx context.Context, name string, options v1.GetOptions) (result *business.ChartGroup, err error) {
 	result = &business.ChartGroup{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("chartgroups").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of ChartGroups that match those selectors.
-func (c *chartGroups) List(opts v1.ListOptions) (result *business.ChartGroupList, err error) {
+func (c *chartGroups) List(ctx context.Context, opts v1.ListOptions) (result *business.ChartGroupList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -90,13 +91,13 @@ func (c *chartGroups) List(opts v1.ListOptions) (result *business.ChartGroupList
 		Resource("chartgroups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested chartGroups.
-func (c *chartGroups) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *chartGroups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -107,87 +108,90 @@ func (c *chartGroups) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("chartgroups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a chartGroup and creates it.  Returns the server's representation of the chartGroup, and an error, if there is any.
-func (c *chartGroups) Create(chartGroup *business.ChartGroup) (result *business.ChartGroup, err error) {
+func (c *chartGroups) Create(ctx context.Context, chartGroup *business.ChartGroup, opts v1.CreateOptions) (result *business.ChartGroup, err error) {
 	result = &business.ChartGroup{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("chartgroups").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(chartGroup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a chartGroup and updates it. Returns the server's representation of the chartGroup, and an error, if there is any.
-func (c *chartGroups) Update(chartGroup *business.ChartGroup) (result *business.ChartGroup, err error) {
+func (c *chartGroups) Update(ctx context.Context, chartGroup *business.ChartGroup, opts v1.UpdateOptions) (result *business.ChartGroup, err error) {
 	result = &business.ChartGroup{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("chartgroups").
 		Name(chartGroup.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(chartGroup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *chartGroups) UpdateStatus(chartGroup *business.ChartGroup) (result *business.ChartGroup, err error) {
+func (c *chartGroups) UpdateStatus(ctx context.Context, chartGroup *business.ChartGroup, opts v1.UpdateOptions) (result *business.ChartGroup, err error) {
 	result = &business.ChartGroup{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("chartgroups").
 		Name(chartGroup.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(chartGroup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the chartGroup and deletes it. Returns an error if one occurs.
-func (c *chartGroups) Delete(name string, options *v1.DeleteOptions) error {
+func (c *chartGroups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("chartgroups").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *chartGroups) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *chartGroups) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("chartgroups").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched chartGroup.
-func (c *chartGroups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *business.ChartGroup, err error) {
+func (c *chartGroups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *business.ChartGroup, err error) {
 	result = &business.ChartGroup{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("chartgroups").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

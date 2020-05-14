@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var localidentitiesResource = schema.GroupVersionResource{Group: "auth.tkestack.
 var localidentitiesKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "", Kind: "LocalIdentity"}
 
 // Get takes name of the localIdentity, and returns the corresponding localIdentity object, and an error if there is any.
-func (c *FakeLocalIdentities) Get(name string, options v1.GetOptions) (result *auth.LocalIdentity, err error) {
+func (c *FakeLocalIdentities) Get(ctx context.Context, name string, options v1.GetOptions) (result *auth.LocalIdentity, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(localidentitiesResource, name), &auth.LocalIdentity{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeLocalIdentities) Get(name string, options v1.GetOptions) (result *a
 }
 
 // List takes label and field selectors, and returns the list of LocalIdentities that match those selectors.
-func (c *FakeLocalIdentities) List(opts v1.ListOptions) (result *auth.LocalIdentityList, err error) {
+func (c *FakeLocalIdentities) List(ctx context.Context, opts v1.ListOptions) (result *auth.LocalIdentityList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(localidentitiesResource, localidentitiesKind, opts), &auth.LocalIdentityList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeLocalIdentities) List(opts v1.ListOptions) (result *auth.LocalIdent
 }
 
 // Watch returns a watch.Interface that watches the requested localIdentities.
-func (c *FakeLocalIdentities) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeLocalIdentities) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(localidentitiesResource, opts))
 }
 
 // Create takes the representation of a localIdentity and creates it.  Returns the server's representation of the localIdentity, and an error, if there is any.
-func (c *FakeLocalIdentities) Create(localIdentity *auth.LocalIdentity) (result *auth.LocalIdentity, err error) {
+func (c *FakeLocalIdentities) Create(ctx context.Context, localIdentity *auth.LocalIdentity, opts v1.CreateOptions) (result *auth.LocalIdentity, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(localidentitiesResource, localIdentity), &auth.LocalIdentity{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeLocalIdentities) Create(localIdentity *auth.LocalIdentity) (result 
 }
 
 // Update takes the representation of a localIdentity and updates it. Returns the server's representation of the localIdentity, and an error, if there is any.
-func (c *FakeLocalIdentities) Update(localIdentity *auth.LocalIdentity) (result *auth.LocalIdentity, err error) {
+func (c *FakeLocalIdentities) Update(ctx context.Context, localIdentity *auth.LocalIdentity, opts v1.UpdateOptions) (result *auth.LocalIdentity, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(localidentitiesResource, localIdentity), &auth.LocalIdentity{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeLocalIdentities) Update(localIdentity *auth.LocalIdentity) (result 
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeLocalIdentities) UpdateStatus(localIdentity *auth.LocalIdentity) (*auth.LocalIdentity, error) {
+func (c *FakeLocalIdentities) UpdateStatus(ctx context.Context, localIdentity *auth.LocalIdentity, opts v1.UpdateOptions) (*auth.LocalIdentity, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(localidentitiesResource, "status", localIdentity), &auth.LocalIdentity{})
 	if obj == nil {
@@ -108,22 +110,22 @@ func (c *FakeLocalIdentities) UpdateStatus(localIdentity *auth.LocalIdentity) (*
 }
 
 // Delete takes name of the localIdentity and deletes it. Returns an error if one occurs.
-func (c *FakeLocalIdentities) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeLocalIdentities) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(localidentitiesResource, name), &auth.LocalIdentity{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeLocalIdentities) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(localidentitiesResource, listOptions)
+func (c *FakeLocalIdentities) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(localidentitiesResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &auth.LocalIdentityList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched localIdentity.
-func (c *FakeLocalIdentities) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.LocalIdentity, err error) {
+func (c *FakeLocalIdentities) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.LocalIdentity, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(localidentitiesResource, name, pt, data, subresources...), &auth.LocalIdentity{})
 	if obj == nil {

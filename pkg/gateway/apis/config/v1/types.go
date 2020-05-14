@@ -62,6 +62,14 @@ type Components struct {
 	// backend service.
 	// +optional
 	Registry *Component `json:"registry,omitempty"`
+	// logagent is used to specify the access information of the `tke-logagent-api`
+	// backend service.
+	// +optional
+	LogAgent *Component `json:"logagent,omitempty"`
+	// audit is used to specify the access information of the `tke-audit-api`
+	// backend service.
+	// +optional
+	Audit *Component `json:"audit,omitempty"`
 }
 
 type Component struct {

@@ -1,14 +1,15 @@
 import {
+  createFFListActions,
   extend,
   generateWorkflowActionCreator,
-  OperationTrigger,
   isSuccessWorkflow,
-  createFFListActions
+  OperationTrigger
 } from '@tencent/ff-redux';
-import { RootState, PolicyAssociation, PolicyPlain, PolicyFilter } from '../../models';
+
 import * as ActionTypes from '../../constants/ActionType';
-import * as WebAPI from '../../UserManageWebAPI';
 import { initPolicyAssociationState } from '../../constants/initState';
+import { PolicyAssociation, PolicyFilter, PolicyPlain, RootState } from '../../models';
+import * as WebAPI from '../../UserManageWebAPI';
 
 type GetState = () => RootState;
 
@@ -18,7 +19,7 @@ type GetState = () => RootState;
 const fetchPolicyActions = createFFListActions<PolicyPlain, PolicyFilter>({
   actionName: ActionTypes.PolicyPlainList,
   fetcher: async (query, getState: GetState) => {
-    // console.log('fetchPolicyActions query:', query);
+    console.log('fetchPolicyActions query:', query);
     let response = await WebAPI.fetchPolicyPlainList(query);
     return response;
   },

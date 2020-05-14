@@ -86,7 +86,7 @@ func (o *MachineControllerOptions) Validate() []error {
 
 // ApplyFlags parsing parameters from the command line or configuration file
 // to the options instance.
-func (o *MachineControllerOptions) ApplyFlags() []error{
+func (o *MachineControllerOptions) ApplyFlags() []error {
 	o.MachineSyncPeriod = viper.GetDuration(configMachineSyncPeriod)
 	o.ConcurrentMachineSyncs = viper.GetInt(configConcurrentMachineSyncs)
 	return nil

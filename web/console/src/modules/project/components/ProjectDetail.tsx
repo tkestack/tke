@@ -1,20 +1,22 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+
+import { CreateNamespacePanel } from '@src/modules/project/components/CreateNamespacePanel';
+import { ProjectHeadPanel } from '@src/modules/project/components/ProjectHeadPanel';
 import { ContentView, TabPanel, Tabs } from '@tea/component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
 import { allActions } from '../actions';
 import { router } from '../router';
+import { DetailSubProjectActionPanel } from './DetailSubProjectActionPanel';
+import { DetailSubProjectPanel } from './DetailSubProjectPanel';
 import { NamespaceActionPanel } from './NamespaceActionPanel';
 import { NamespaceTablePanel } from './NamespaceTablePanel';
 import { RootProps } from './ProjectApp';
 import { ProjectDetailPanel } from './ProjectDetailPanel';
 import { SubpageHeadPanel } from './SubpageHeadPanel';
-import { ProjectHeadPanel } from '@src/modules/project/components/ProjectHeadPanel';
-import { CreateNamespacePanel } from '@src/modules/project/components/CreateNamespacePanel';
 import { UserPanel } from './user/UserPanel';
-import { DetailSubProjectPanel } from './DetailSubProjectPanel';
-import { DetailSubProjectActionPanel } from './DetailSubProjectActionPanel';
 
 interface ProjectDetailState {
   /** tabKey */
@@ -47,6 +49,7 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
         id: 'info',
         label: t('业务信息')
       },
+      { id: 'member', label: t('成员列表') },
       {
         id: 'subProject',
         label: t('子业务')

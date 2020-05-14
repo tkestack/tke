@@ -1,16 +1,15 @@
-import { FFReduxActionName } from './../constants/Config';
 import { combineReducers } from 'redux';
 
 import {
   createFFListReducer,
+  createFFObjectReducer,
   generateFetcherReducer,
   generateWorkflowReducer,
-  reduceToPayload,
-  createFFObjectReducer
+  reduceToPayload
 } from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';
-import { initNamespaceEdition, initProjectEdition } from '../constants/Config';
+import { FFReduxActionName, initNamespaceEdition, initProjectEdition } from '../constants/Config';
 import { router } from '../router';
 
 export const RootReducer = combineReducers({

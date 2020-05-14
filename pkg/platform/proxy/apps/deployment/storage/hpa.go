@@ -21,6 +21,8 @@ package storage
 import (
 	"context"
 
+	"tkestack.io/tke/pkg/util/apiclient"
+
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -32,7 +34,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -68,19 +69,19 @@ func (r *HPARest) Get(ctx context.Context, name string, options *metav1.GetOptio
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	if controllerutil.IsClusterVersionBefore1_9(client) {
-		return listHPAsByExtensions(client, namespaceName, name, options)
+	if apiclient.ClusterVersionIsBefore19(client) {
+		return listHPAsByExtensions(ctx, client, namespaceName, name, options)
 	}
-	return listHPAsByApps(client, namespaceName, name, options)
+	return listHPAsByApps(ctx, client, namespaceName, name, options)
 }
 
-func listHPAsByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(name, *options)
+func listHPAsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("deployments/horizontalpodautoscalers"), name)
 	}
 
-	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(metav1.ListOptions{})
+	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -97,13 +98,13 @@ func listHPAsByExtensions(client *kubernetes.Clientset, namespaceName, name stri
 	return hpaList, nil
 }
 
-func listHPAsByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	deployment, err := client.AppsV1().Deployments(namespaceName).Get(name, *options)
+func listHPAsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.AppsV1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1.Resource("deployments/horizontalpodautoscalers"), name)
 	}
 
-	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(metav1.ListOptions{})
+	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

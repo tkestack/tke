@@ -222,7 +222,7 @@ func (h *handler) apply(ctx context.Context) *metav1.Status {
 		var ao *applyObject
 		var status *metav1.Status
 		if dynamicResource := matchCRD(h.dynamicClient, gvk.Group, gvk.Version, gvk.Kind); dynamicResource != nil {
-			ao, status = applyObjectFromDynamicClient(dynamicResource, gvk, name, namespace, h.notUpdate, h.metaAccessor, obj)
+			ao, status = applyObjectFromDynamicClient(ctx, dynamicResource, gvk, name, namespace, h.notUpdate, h.metaAccessor, obj)
 		} else {
 			ao, status = applyObjectFromClientSet(ctx, h.client, gvk, name, namespace, h.notUpdate, h.metaAccessor, obj)
 		}
@@ -237,7 +237,7 @@ func (h *handler) apply(ctx context.Context) *metav1.Status {
 		var message string
 		var status *metav1.Status
 		if applyObj.dynamicClient != nil {
-			message, status = createOrUpdateFromDynamicClient(applyObj.dynamicClient, applyObj.isCreateRequest, applyObj.name, applyObj.kind, applyObj.obj)
+			message, status = createOrUpdateFromDynamicClient(ctx, applyObj.dynamicClient, applyObj.isCreateRequest, applyObj.name, applyObj.kind, applyObj.obj)
 		} else {
 			message, status = createOrUpdateFromClientSet(ctx, applyObj.restClient, applyObj.isCreateRequest, applyObj.name, applyObj.namespace, applyObj.kind, applyObj.obj)
 		}
@@ -274,13 +274,13 @@ func objectName(metaAccessor meta.MetadataAccessor, obj runtime.Object) (string,
 	return name, namespace, nil
 }
 
-func createOrUpdateFromDynamicClient(dynamicClient dynamic.ResourceInterface, isCreate bool, name, kind string, obj runtime.Object) (string, *metav1.Status) {
+func createOrUpdateFromDynamicClient(ctx context.Context, dynamicClient dynamic.ResourceInterface, isCreate bool, name, kind string, obj runtime.Object) (string, *metav1.Status) {
 	unstructuredObj, ok := obj.(*unstructured.Unstructured)
 	if !ok {
 		return "", errorInternal
 	}
 	if isCreate {
-		_, err := dynamicClient.Create(unstructuredObj, metav1.CreateOptions{})
+		_, err := dynamicClient.Create(ctx, unstructuredObj, metav1.CreateOptions{})
 		if err != nil {
 			if statusError, ok := err.(*errors.StatusError); ok {
 				status := statusError.Status()
@@ -293,7 +293,7 @@ func createOrUpdateFromDynamicClient(dynamicClient dynamic.ResourceInterface, is
 		}
 		return fmt.Sprintf("%s generated", kind), nil
 	}
-	_, err := dynamicClient.Update(unstructuredObj, metav1.UpdateOptions{})
+	_, err := dynamicClient.Update(ctx, unstructuredObj, metav1.UpdateOptions{})
 	if err != nil {
 		if statusError, ok := err.(*errors.StatusError); ok {
 			status := statusError.Status()
@@ -308,11 +308,10 @@ func createOrUpdateFromClientSet(ctx context.Context, client clientrest.Interfac
 	if isCreate {
 		// create
 		result := client.Post().
-			Context(ctx).
 			NamespaceIfScoped(parseNamespaceIfScoped(namespace, kind)).
 			Resource(util.ResourceFromKind(kind)).
 			Body(obj).
-			Do()
+			Do(ctx)
 		err := result.Error()
 		if err != nil {
 			if statusError, ok := err.(*errors.StatusError); ok {
@@ -328,12 +327,11 @@ func createOrUpdateFromClientSet(ctx context.Context, client clientrest.Interfac
 	}
 	// update
 	result := client.Put().
-		Context(ctx).
 		NamespaceIfScoped(parseNamespaceIfScoped(namespace, kind)).
 		Resource(util.ResourceFromKind(kind)).
 		Name(name).
 		Body(obj).
-		Do()
+		Do(ctx)
 	err := result.Error()
 	if err != nil {
 		if statusError, ok := err.(*errors.StatusError); ok {
@@ -345,7 +343,7 @@ func createOrUpdateFromClientSet(ctx context.Context, client clientrest.Interfac
 	return fmt.Sprintf("%s %s configured", kind, name), nil
 }
 
-func applyObjectFromDynamicClient(dynamicClient dynamic.NamespaceableResourceInterface, gvk *schema.GroupVersionKind, name, namespace string, notUpdate bool, metaAccessor meta.MetadataAccessor, obj runtime.Object) (*applyObject, *metav1.Status) {
+func applyObjectFromDynamicClient(ctx context.Context, dynamicClient dynamic.NamespaceableResourceInterface, gvk *schema.GroupVersionKind, name, namespace string, notUpdate bool, metaAccessor meta.MetadataAccessor, obj runtime.Object) (*applyObject, *metav1.Status) {
 	var resource dynamic.ResourceInterface
 	if ns, namespaceScoped := parseNamespaceIfScoped(namespace, gvk.Kind); namespaceScoped {
 		resource = dynamicClient.Namespace(ns)
@@ -353,7 +351,7 @@ func applyObjectFromDynamicClient(dynamicClient dynamic.NamespaceableResourceInt
 		resource = dynamicClient
 	}
 	if len(name) != 0 {
-		result, err := resource.Get(name, metav1.GetOptions{})
+		result, err := resource.Get(ctx, name, metav1.GetOptions{})
 		if err != nil && !errors.IsNotFound(err) {
 			if statusError, ok := err.(*errors.StatusError); ok {
 				status := statusError.Status()
@@ -400,11 +398,10 @@ func applyObjectFromClientSet(ctx context.Context, client *kubernetes.Clientset,
 
 	if len(name) != 0 {
 		result := restClient.Get().
-			Context(ctx).
 			NamespaceIfScoped(parseNamespaceIfScoped(namespace, gvk.Kind)).
 			Resource(util.ResourceFromKind(gvk.Kind)).
 			Name(name).
-			Do()
+			Do(ctx)
 		err := result.Error()
 		if err != nil && !errors.IsNotFound(err) {
 			if statusError, ok := err.(*errors.StatusError); ok {
@@ -493,7 +490,6 @@ func parseNamespaceIfScoped(namespace string, kind string) (string, bool) {
 		kindLower == "persistentvolume" ||
 		kindLower == "storageclass" ||
 		kindLower == "volumeattachment" ||
-		kindLower == "serviceaccount" ||
 		kindLower == "clusterrole" ||
 		kindLower == "clusterrolebinding" {
 		namespaceScoped = false

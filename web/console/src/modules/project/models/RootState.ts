@@ -93,7 +93,6 @@ export interface RootState {
 
   /** 用户信息 */
   userList?: FFListModel<User, UserFilter>;
-
   addUserWorkflow?: userWorkflow;
 
   /** 关联策略相关，单独设置，不赋予任何场景相关的命名 */

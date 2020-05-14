@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var apisigningkeysResource = schema.GroupVersionResource{Group: "auth.tkestack.i
 var apisigningkeysKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "v1", Kind: "APISigningKey"}
 
 // Get takes name of the aPISigningKey, and returns the corresponding aPISigningKey object, and an error if there is any.
-func (c *FakeAPISigningKeys) Get(name string, options v1.GetOptions) (result *authv1.APISigningKey, err error) {
+func (c *FakeAPISigningKeys) Get(ctx context.Context, name string, options v1.GetOptions) (result *authv1.APISigningKey, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(apisigningkeysResource, name), &authv1.APISigningKey{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeAPISigningKeys) Get(name string, options v1.GetOptions) (result *au
 }
 
 // List takes label and field selectors, and returns the list of APISigningKeys that match those selectors.
-func (c *FakeAPISigningKeys) List(opts v1.ListOptions) (result *authv1.APISigningKeyList, err error) {
+func (c *FakeAPISigningKeys) List(ctx context.Context, opts v1.ListOptions) (result *authv1.APISigningKeyList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(apisigningkeysResource, apisigningkeysKind, opts), &authv1.APISigningKeyList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeAPISigningKeys) List(opts v1.ListOptions) (result *authv1.APISignin
 }
 
 // Watch returns a watch.Interface that watches the requested aPISigningKeys.
-func (c *FakeAPISigningKeys) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeAPISigningKeys) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(apisigningkeysResource, opts))
 }
 
 // Create takes the representation of a aPISigningKey and creates it.  Returns the server's representation of the aPISigningKey, and an error, if there is any.
-func (c *FakeAPISigningKeys) Create(aPISigningKey *authv1.APISigningKey) (result *authv1.APISigningKey, err error) {
+func (c *FakeAPISigningKeys) Create(ctx context.Context, aPISigningKey *authv1.APISigningKey, opts v1.CreateOptions) (result *authv1.APISigningKey, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(apisigningkeysResource, aPISigningKey), &authv1.APISigningKey{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeAPISigningKeys) Create(aPISigningKey *authv1.APISigningKey) (result
 }
 
 // Update takes the representation of a aPISigningKey and updates it. Returns the server's representation of the aPISigningKey, and an error, if there is any.
-func (c *FakeAPISigningKeys) Update(aPISigningKey *authv1.APISigningKey) (result *authv1.APISigningKey, err error) {
+func (c *FakeAPISigningKeys) Update(ctx context.Context, aPISigningKey *authv1.APISigningKey, opts v1.UpdateOptions) (result *authv1.APISigningKey, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(apisigningkeysResource, aPISigningKey), &authv1.APISigningKey{})
 	if obj == nil {
@@ -97,22 +99,22 @@ func (c *FakeAPISigningKeys) Update(aPISigningKey *authv1.APISigningKey) (result
 }
 
 // Delete takes name of the aPISigningKey and deletes it. Returns an error if one occurs.
-func (c *FakeAPISigningKeys) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeAPISigningKeys) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(apisigningkeysResource, name), &authv1.APISigningKey{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeAPISigningKeys) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(apisigningkeysResource, listOptions)
+func (c *FakeAPISigningKeys) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(apisigningkeysResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &authv1.APISigningKeyList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched aPISigningKey.
-func (c *FakeAPISigningKeys) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *authv1.APISigningKey, err error) {
+func (c *FakeAPISigningKeys) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *authv1.APISigningKey, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(apisigningkeysResource, name, pt, data, subresources...), &authv1.APISigningKey{})
 	if obj == nil {

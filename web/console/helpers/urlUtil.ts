@@ -119,7 +119,7 @@ interface K8sRestfulPathOptions {
  * @param clusterId: string 集群id，适用于addon 请求平台转发的场景
  */
 export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
-  let { resourceInfo, namespace = '', specificName = '', extraResource = '', clusterId = '', meshId } = options;
+  let { resourceInfo, namespace = '', middleKey = '', specificName = '', extraResource = '', clusterId = '', meshId } = options;
 
   /// #if project
   //业务侧ns eg: cls-xxx-ns 需要去除前缀

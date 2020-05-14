@@ -19,6 +19,8 @@
 package namespace
 
 import (
+	"context"
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -61,7 +63,7 @@ func (c *Controller) startNamespaceHealthCheck(key string) {
 	if !c.health.Exist(key) {
 		c.health.Set(key)
 		go func() {
-			if err := wait.PollImmediateUntil(1*time.Minute, c.watchNamespaceHealth(key), c.stopCh); err != nil {
+			if err := wait.PollImmediateUntil(1*time.Minute, c.watchNamespaceHealth(context.Background(), key), c.stopCh); err != nil {
 				log.Error("Failed to wait poll immediate until", log.Err(err))
 			}
 		}()
@@ -72,7 +74,7 @@ func (c *Controller) startNamespaceHealthCheck(key string) {
 }
 
 // for PollImmediateUntil, when return true ,an err while exit
-func (c *Controller) watchNamespaceHealth(key string) func() (bool, error) {
+func (c *Controller) watchNamespaceHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Debug("Check namespace health", log.String("namespace", key))
 
@@ -86,7 +88,7 @@ func (c *Controller) watchNamespaceHealth(key string) func() (bool, error) {
 			c.health.Del(key)
 			return true, nil
 		}
-		namespace, err := c.client.BusinessV1().Namespaces(projectName).Get(namespaceName, metav1.GetOptions{})
+		namespace, err := c.client.BusinessV1().Namespaces(projectName).Get(ctx, namespaceName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			log.Error("Namespace not found, to exit the health check loop", log.String("projectName", projectName), log.String("namespaceName", namespaceName))
 			c.health.Del(key)
@@ -96,48 +98,50 @@ func (c *Controller) watchNamespaceHealth(key string) func() (bool, error) {
 			log.Error("Check namespace health, namespace get failed", log.String("projectName", projectName), log.String("namespaceName", namespaceName), log.Err(err))
 			return false, nil
 		}
-		// if status is terminated,to exit the  health check loop
-		if namespace.Status.Phase == v1.NamespaceTerminating || namespace.Status.Phase == v1.NamespacePending {
-			log.Warn("Namespace status is terminated, to exit the health check loop", log.String("projectName", projectName), log.String("namespaceName", namespaceName))
+		if namespace.Status.Phase == v1.NamespaceTerminating ||
+			namespace.Status.Phase == v1.NamespacePending ||
+			namespace.Status.Phase == v1.NamespaceLocked {
+			log.Warn(fmt.Sprintf("Namespace status is %s, to exit the health check loop", namespace.Status.Phase),
+				log.String("projectName", projectName), log.String("namespaceName", namespaceName))
 			c.health.Del(key)
 			return true, nil
 		}
 
-		if err := c.checkNamespaceHealth(namespace); err != nil {
+		if err := c.checkNamespaceHealth(ctx, namespace); err != nil {
 			log.Error("Failed to check namespace health", log.String("projectName", projectName), log.String("namespaceName", namespaceName), log.Err(err))
 		}
 		return false, nil
 	}
 }
 
-func (c *Controller) checkNamespaceHealth(namespace *v1.Namespace) error {
+func (c *Controller) checkNamespaceHealth(ctx context.Context, namespace *v1.Namespace) error {
 	// build client
-	kubeClient, err := util.BuildExternalClientSetWithName(c.platformClient, namespace.Spec.ClusterName)
+	kubeClient, err := util.BuildExternalClientSetWithName(ctx, c.platformClient, namespace.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
-	message, reason := cls.CheckNamespaceOnCluster(kubeClient, namespace)
+	message, reason := cls.CheckNamespaceOnCluster(ctx, kubeClient, namespace)
 	if message != "" {
 		namespace.Status.Phase = v1.NamespaceFailed
 		namespace.Status.LastTransitionTime = metav1.Now()
 		namespace.Status.Message = message
 		namespace.Status.Reason = reason
-		return c.persistUpdate(namespace)
+		return c.persistUpdateNamespace(ctx, namespace)
 	}
-	message, reason, used := cls.CalculateNamespaceUsed(kubeClient, namespace)
+	message, reason, used := cls.CalculateNamespaceUsed(ctx, kubeClient, namespace)
 	if message != "" {
 		namespace.Status.Phase = v1.NamespaceFailed
 		namespace.Status.LastTransitionTime = metav1.Now()
 		namespace.Status.Message = message
 		namespace.Status.Reason = reason
-		return c.persistUpdate(namespace)
+		return c.persistUpdateNamespace(ctx, namespace)
 	}
 	if !reflect.DeepEqual(namespace.Status.Used, used) {
 		log.Infof("%s:%s update used", namespace.Namespace, namespace.Name)
 		namespace.Status.Used = used
 		namespace.Status.Message = ""
 		namespace.Status.Reason = ""
-		return c.persistUpdate(namespace)
+		return c.persistUpdateNamespace(ctx, namespace)
 	}
 	return nil
 }

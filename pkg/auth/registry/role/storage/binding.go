@@ -80,5 +80,5 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 
 	log.Info("role members", log.String("role", role.Name), log.Any("users", role.Status.Users), log.Any("groups", role.Status.Groups))
 
-	return r.authClient.Roles().UpdateStatus(role)
+	return r.authClient.Roles().UpdateStatus(ctx, role, metav1.UpdateOptions{})
 }

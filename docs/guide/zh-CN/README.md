@@ -48,7 +48,7 @@
     * [访问凭证](products/business-control-pannel/resource/credentials.md)
 * [产品特色功能](features)
   * [Galaxy](features/galaxy.md)
-  * [TAPP](/features/tapp.md)
+  * [TAPP](features/tapp.md)
   * [GPUManager](features/gpumanager.md)
   * [CronHPA](features/cron-hpa.md)
   * [LBCF](features/lbcf.md)

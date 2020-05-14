@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,15 +40,15 @@ type RepositoriesGetter interface {
 
 // RepositoryInterface has methods to work with Repository resources.
 type RepositoryInterface interface {
-	Create(*v1.Repository) (*v1.Repository, error)
-	Update(*v1.Repository) (*v1.Repository, error)
-	UpdateStatus(*v1.Repository) (*v1.Repository, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.Repository, error)
-	List(opts metav1.ListOptions) (*v1.RepositoryList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Repository, err error)
+	Create(ctx context.Context, repository *v1.Repository, opts metav1.CreateOptions) (*v1.Repository, error)
+	Update(ctx context.Context, repository *v1.Repository, opts metav1.UpdateOptions) (*v1.Repository, error)
+	UpdateStatus(ctx context.Context, repository *v1.Repository, opts metav1.UpdateOptions) (*v1.Repository, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.Repository, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.RepositoryList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Repository, err error)
 	RepositoryExpansion
 }
 
@@ -66,20 +67,20 @@ func newRepositories(c *RegistryV1Client, namespace string) *repositories {
 }
 
 // Get takes name of the repository, and returns the corresponding repository object, and an error if there is any.
-func (c *repositories) Get(name string, options metav1.GetOptions) (result *v1.Repository, err error) {
+func (c *repositories) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.Repository, err error) {
 	result = &v1.Repository{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("repositories").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Repositories that match those selectors.
-func (c *repositories) List(opts metav1.ListOptions) (result *v1.RepositoryList, err error) {
+func (c *repositories) List(ctx context.Context, opts metav1.ListOptions) (result *v1.RepositoryList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -90,13 +91,13 @@ func (c *repositories) List(opts metav1.ListOptions) (result *v1.RepositoryList,
 		Resource("repositories").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested repositories.
-func (c *repositories) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *repositories) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -107,87 +108,90 @@ func (c *repositories) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("repositories").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a repository and creates it.  Returns the server's representation of the repository, and an error, if there is any.
-func (c *repositories) Create(repository *v1.Repository) (result *v1.Repository, err error) {
+func (c *repositories) Create(ctx context.Context, repository *v1.Repository, opts metav1.CreateOptions) (result *v1.Repository, err error) {
 	result = &v1.Repository{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("repositories").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(repository).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a repository and updates it. Returns the server's representation of the repository, and an error, if there is any.
-func (c *repositories) Update(repository *v1.Repository) (result *v1.Repository, err error) {
+func (c *repositories) Update(ctx context.Context, repository *v1.Repository, opts metav1.UpdateOptions) (result *v1.Repository, err error) {
 	result = &v1.Repository{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("repositories").
 		Name(repository.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(repository).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *repositories) UpdateStatus(repository *v1.Repository) (result *v1.Repository, err error) {
+func (c *repositories) UpdateStatus(ctx context.Context, repository *v1.Repository, opts metav1.UpdateOptions) (result *v1.Repository, err error) {
 	result = &v1.Repository{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("repositories").
 		Name(repository.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(repository).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the repository and deletes it. Returns an error if one occurs.
-func (c *repositories) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *repositories) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("repositories").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *repositories) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (c *repositories) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("repositories").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched repository.
-func (c *repositories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Repository, err error) {
+func (c *repositories) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Repository, err error) {
 	result = &v1.Repository{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("repositories").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

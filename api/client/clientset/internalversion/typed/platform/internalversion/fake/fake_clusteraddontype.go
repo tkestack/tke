@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -38,7 +40,7 @@ var clusteraddontypesResource = schema.GroupVersionResource{Group: "platform.tke
 var clusteraddontypesKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "", Kind: "ClusterAddonType"}
 
 // List takes label and field selectors, and returns the list of ClusterAddonTypes that match those selectors.
-func (c *FakeClusterAddonTypes) List(opts v1.ListOptions) (result *platform.ClusterAddonTypeList, err error) {
+func (c *FakeClusterAddonTypes) List(ctx context.Context, opts v1.ListOptions) (result *platform.ClusterAddonTypeList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(clusteraddontypesResource, clusteraddontypesKind, opts), &platform.ClusterAddonTypeList{})
 	if obj == nil {

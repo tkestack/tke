@@ -28,6 +28,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/util/log"
 
 	corev1 "k8s.io/api/core/v1"
@@ -90,7 +91,7 @@ func (r *TappControllerREST) Connect(ctx context.Context, clusterName string, op
 	if err != nil {
 		return nil, err
 	}
-	credential, err := util.ClusterCredential(r.platformClient, cluster.Name)
+	credential, err := util.GetClusterCredential(ctx, r.platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -163,13 +164,13 @@ func (h *tappControllerProxyHandler) serveAction(w http.ResponseWriter, req *htt
 	}
 	switch h.action {
 	case string(Pods):
-		if podList, err := h.getPodList(); err != nil {
+		if podList, err := h.getPodList(req.Context()); err != nil {
 			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		} else {
 			responsewriters.WriteRawJSON(http.StatusOK, podList, w)
 		}
 	case string(Events):
-		if eventList, err := h.getEventList(); err != nil {
+		if eventList, err := h.getEventList(req.Context()); err != nil {
 			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		} else {
 			responsewriters.WriteRawJSON(http.StatusOK, eventList, w)
@@ -179,8 +180,8 @@ func (h *tappControllerProxyHandler) serveAction(w http.ResponseWriter, req *htt
 	}
 }
 
-func (h *tappControllerProxyHandler) getPodList() (*corev1.PodList, error) {
-	tapp, err := getTapp(h.cluster, h.clusterCredential, h.namespace, h.name)
+func (h *tappControllerProxyHandler) getPodList(ctx context.Context) (*corev1.PodList, error) {
+	tapp, err := getTapp(ctx, h.cluster, h.clusterCredential, h.namespace, h.name)
 	if err != nil {
 		return nil, err
 	}
@@ -190,11 +191,11 @@ func (h *tappControllerProxyHandler) getPodList() (*corev1.PodList, error) {
 		return nil, errors.NewInternalError(err)
 	}
 
-	kubeclient, err := util.BuildClientSet(h.cluster, h.clusterCredential)
+	kubeclient, err := util.BuildClientSet(ctx, h.cluster, h.clusterCredential)
 	if err != nil {
 		return nil, err
 	}
-	pods, err := kubeclient.CoreV1().Pods(h.namespace).List(metav1.ListOptions{LabelSelector: selector.String()})
+	pods, err := kubeclient.CoreV1().Pods(h.namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -213,18 +214,18 @@ func (h *tappControllerProxyHandler) getPodList() (*corev1.PodList, error) {
 }
 
 // Get retrieves the object from the storage. It is required to support Patch.
-func (h *tappControllerProxyHandler) getEventList() (*corev1.EventList, error) {
-	tapp, err := getTapp(h.cluster, h.clusterCredential, h.namespace, h.name)
+func (h *tappControllerProxyHandler) getEventList(ctx context.Context) (*corev1.EventList, error) {
+	tapp, err := getTapp(ctx, h.cluster, h.clusterCredential, h.namespace, h.name)
 	if err != nil {
 		return nil, err
 	}
 
-	kubeclient, err := util.BuildClientSet(h.cluster, h.clusterCredential)
+	kubeclient, err := util.BuildClientSet(ctx, h.cluster, h.clusterCredential)
 	if err != nil {
 		return nil, err
 	}
 	// Get tapp events
-	tappEvents, err := util.GetEvents(kubeclient, string(tapp.UID), tapp.Namespace, tapp.Name, "TApp")
+	tappEvents, err := util.GetEvents(ctx, kubeclient, string(tapp.UID), tapp.Namespace, tapp.Name, "TApp")
 	if err != nil {
 		return nil, err
 	}
@@ -234,14 +235,14 @@ func (h *tappControllerProxyHandler) getEventList() (*corev1.EventList, error) {
 		events = append(events, event)
 	}
 
-	podList, err := h.getPodList()
+	podList, err := h.getPodList(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get pod events
 	for _, pod := range podList.Items {
-		podEvents, err := util.GetEvents(kubeclient, string(pod.UID), pod.Namespace, pod.Name, "Pod")
+		podEvents, err := util.GetEvents(ctx, kubeclient, string(pod.UID), pod.Namespace, pod.Name, "Pod")
 		if err != nil {
 			return nil, err
 		}
@@ -258,7 +259,7 @@ func (h *tappControllerProxyHandler) getEventList() (*corev1.EventList, error) {
 	}, nil
 }
 
-func getTapp(cluster *platform.Cluster, credential *platform.ClusterCredential, namespace, name string) (*util.CustomResource, error) {
+func getTapp(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential, namespace, name string) (*util.CustomResource, error) {
 	var clusterv1 platformv1.Cluster
 	if err := platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, &clusterv1, nil); err != nil {
 		return nil, err
@@ -273,7 +274,7 @@ func getTapp(cluster *platform.Cluster, credential *platform.ClusterCredential, 
 		return nil, err
 	}
 	tappResource := schema.GroupVersionResource{Group: tappGroupName, Version: "v1", Resource: "tapps"}
-	content, err := dynamicclient.Resource(tappResource).Namespace(namespace).Get(name, metav1.GetOptions{})
+	content, err := dynamicclient.Resource(tappResource).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

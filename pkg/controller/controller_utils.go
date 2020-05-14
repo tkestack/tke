@@ -19,17 +19,16 @@
 package controller
 
 import (
+	"context"
 	"fmt"
-	"k8s.io/client-go/kubernetes"
-	"regexp"
-	"strconv"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"tkestack.io/tke/pkg/util/log"
+
 	// register auth group api scheme for api server.
 	_ "tkestack.io/tke/api/platform/install"
 )
@@ -54,38 +53,6 @@ func WaitForCacheSync(controllerName string, stopCh <-chan struct{}, cacheSyncs 
 	return true
 }
 
-// IsClusterVersionBefore1_9 to check if cluster version before v1.9.x
-// DO NOT delete it because TKE support cluster v1.8.x
-func IsClusterVersionBefore1_9(kubeClient *kubernetes.Clientset) bool {
-	return isClusterVersionBefore(kubeClient, 1, 9)
-}
-
-func isClusterVersionBefore(kubeClient *kubernetes.Clientset, majorV int, minorV int) bool {
-	version, err := kubeClient.Discovery().ServerVersion()
-	if err != nil {
-		log.Error("error in isClusterVersionBefore")
-		return false
-	}
-	valid := regexp.MustCompile("[0-9]")
-	version.Minor = strings.Join(valid.FindAllString(version.Minor, -1), "")
-
-	versionMajor, err := strconv.Atoi(version.Major)
-	if err != nil {
-		log.Error("error in isClusterVersionBefore")
-		return false
-	}
-
-	versionMinor, err := strconv.Atoi(version.Minor)
-	if err != nil {
-		log.Error("error in isClusterVersionBefore")
-		return false
-	}
-	if versionMajor < majorV || (versionMajor == majorV && versionMinor < minorV) {
-		return true
-	}
-	return false
-}
-
 // Int32Ptr translate int32 to pointer
 func Int32Ptr(i int32) *int32 {
 	o := i
@@ -103,8 +70,8 @@ func Int64Ptr(i int64) *int64 {
 }
 
 // DeleteReplicaSetApp delete the replicaset and pod additionally for deployment app with extension group
-func DeleteReplicaSetApp(kubeClient *kubernetes.Clientset, options metav1.ListOptions) error {
-	rsList, err := kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).List(options)
+func DeleteReplicaSetApp(ctx context.Context, kubeClient *kubernetes.Clientset, options metav1.ListOptions) error {
+	rsList, err := kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).List(ctx, options)
 	if err != nil {
 		return err
 	}
@@ -114,12 +81,12 @@ func DeleteReplicaSetApp(kubeClient *kubernetes.Clientset, options metav1.ListOp
 		rs := &rsList.Items[i]
 		// update replicas to zero
 		rs.Spec.Replicas = Int32Ptr(0)
-		_, err = kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).Update(rs)
+		_, err = kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).Update(ctx, rs, metav1.UpdateOptions{})
 		if err != nil {
 			errs = append(errs, err)
 		} else {
 			// delete replicaset
-			err = kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).Delete(rs.Name, &metav1.DeleteOptions{})
+			err = kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).Delete(ctx, rs.Name, metav1.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
 				errs = append(errs, err)
 			}

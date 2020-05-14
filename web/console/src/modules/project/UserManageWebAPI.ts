@@ -1,4 +1,9 @@
+import { METHODS } from 'http';
+
 import { QueryState, RecordSet } from '@tencent/ff-redux';
+import { t, Trans } from '@tencent/tea-app/lib/i18n';
+
+import { resourceConfig } from '../../../config';
 import {
   Method,
   operationResult,
@@ -6,11 +11,8 @@ import {
   reduceK8sRestfulPath,
   reduceNetworkRequest
 } from '../../../helpers';
-import { ResourceInfo, RequestParams } from '../common/models';
-import { resourceConfig } from '../../../config';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { METHODS } from 'http';
-import { User, UserFilter, PolicyFilter, PolicyPlain } from './models';
+import { RequestParams, ResourceInfo } from '../common/models';
+import { PolicyFilter, PolicyPlain, User, UserFilter } from './models';
 
 // @ts-ignore
 const tips = seajs.require('tips');
@@ -85,7 +87,7 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
   const { search, filter } = query;
   const { projectId } = filter;
   try {
-    const resourceInfo: ResourceInfo = resourceConfig().auth_project;
+    const resourceInfo: ResourceInfo = resourceConfig()['members'];
     const url = reduceK8sRestfulPath({ resourceInfo, specificName: projectId, extraResource: 'users' });
     const response = await reduceNetworkRequest(
       {
@@ -93,7 +95,6 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
         url
       },
       '',
-      projectId,
       search
     );
 
@@ -119,7 +120,7 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
 export async function addUser([userInfo]) {
   const { projectId, users, policies } = userInfo;
   try {
-    const resourceInfo: ResourceInfo = resourceConfig().auth_project;
+    const resourceInfo: ResourceInfo = resourceConfig()['members'];
     const url = reduceK8sRestfulPath({ resourceInfo, specificName: projectId, extraResource: 'users' });
     const response = await reduceNetworkRequest({
       method: Method.post,
@@ -159,7 +160,7 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['policy'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   // const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  // console.log('fetchPolicyPlainList url + queryString', url, queryString, 111, query);
+  console.log('fetchPolicyPlainList url + queryString', url, queryString, 111, query);
   let rr: RequestResult = await GET(url + queryString);
   let items: PolicyPlain[] =
     !rr.error && rr.data.items
@@ -174,7 +175,7 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
           };
         })
       : [];
-  // console.log('fetchPolicyPlainList items is:', items);
+  console.log('fetchPolicyPlainList items is:', items);
   const result: RecordSet<PolicyPlain> = {
     recordCount: items.length,
     records: items

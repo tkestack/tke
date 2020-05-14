@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,13 +40,13 @@ type ReceiversGetter interface {
 
 // ReceiverInterface has methods to work with Receiver resources.
 type ReceiverInterface interface {
-	Create(*v1.Receiver) (*v1.Receiver, error)
-	Update(*v1.Receiver) (*v1.Receiver, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.Receiver, error)
-	List(opts metav1.ListOptions) (*v1.ReceiverList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Receiver, err error)
+	Create(ctx context.Context, receiver *v1.Receiver, opts metav1.CreateOptions) (*v1.Receiver, error)
+	Update(ctx context.Context, receiver *v1.Receiver, opts metav1.UpdateOptions) (*v1.Receiver, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.Receiver, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.ReceiverList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Receiver, err error)
 	ReceiverExpansion
 }
 
@@ -62,19 +63,19 @@ func newReceivers(c *NotifyV1Client) *receivers {
 }
 
 // Get takes name of the receiver, and returns the corresponding receiver object, and an error if there is any.
-func (c *receivers) Get(name string, options metav1.GetOptions) (result *v1.Receiver, err error) {
+func (c *receivers) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.Receiver, err error) {
 	result = &v1.Receiver{}
 	err = c.client.Get().
 		Resource("receivers").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Receivers that match those selectors.
-func (c *receivers) List(opts metav1.ListOptions) (result *v1.ReceiverList, err error) {
+func (c *receivers) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ReceiverList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -84,13 +85,13 @@ func (c *receivers) List(opts metav1.ListOptions) (result *v1.ReceiverList, err 
 		Resource("receivers").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested receivers.
-func (c *receivers) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *receivers) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -100,51 +101,54 @@ func (c *receivers) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("receivers").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a receiver and creates it.  Returns the server's representation of the receiver, and an error, if there is any.
-func (c *receivers) Create(receiver *v1.Receiver) (result *v1.Receiver, err error) {
+func (c *receivers) Create(ctx context.Context, receiver *v1.Receiver, opts metav1.CreateOptions) (result *v1.Receiver, err error) {
 	result = &v1.Receiver{}
 	err = c.client.Post().
 		Resource("receivers").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(receiver).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a receiver and updates it. Returns the server's representation of the receiver, and an error, if there is any.
-func (c *receivers) Update(receiver *v1.Receiver) (result *v1.Receiver, err error) {
+func (c *receivers) Update(ctx context.Context, receiver *v1.Receiver, opts metav1.UpdateOptions) (result *v1.Receiver, err error) {
 	result = &v1.Receiver{}
 	err = c.client.Put().
 		Resource("receivers").
 		Name(receiver.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(receiver).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the receiver and deletes it. Returns an error if one occurs.
-func (c *receivers) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *receivers) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("receivers").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched receiver.
-func (c *receivers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.Receiver, err error) {
+func (c *receivers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.Receiver, err error) {
 	result = &v1.Receiver{}
 	err = c.client.Patch(pt).
 		Resource("receivers").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

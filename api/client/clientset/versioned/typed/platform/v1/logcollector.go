@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type LogCollectorsGetter interface {
 
 // LogCollectorInterface has methods to work with LogCollector resources.
 type LogCollectorInterface interface {
-	Create(*v1.LogCollector) (*v1.LogCollector, error)
-	Update(*v1.LogCollector) (*v1.LogCollector, error)
-	UpdateStatus(*v1.LogCollector) (*v1.LogCollector, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.LogCollector, error)
-	List(opts metav1.ListOptions) (*v1.LogCollectorList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.LogCollector, err error)
+	Create(ctx context.Context, logCollector *v1.LogCollector, opts metav1.CreateOptions) (*v1.LogCollector, error)
+	Update(ctx context.Context, logCollector *v1.LogCollector, opts metav1.UpdateOptions) (*v1.LogCollector, error)
+	UpdateStatus(ctx context.Context, logCollector *v1.LogCollector, opts metav1.UpdateOptions) (*v1.LogCollector, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.LogCollector, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.LogCollectorList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.LogCollector, err error)
 	LogCollectorExpansion
 }
 
@@ -63,19 +64,19 @@ func newLogCollectors(c *PlatformV1Client) *logCollectors {
 }
 
 // Get takes name of the logCollector, and returns the corresponding logCollector object, and an error if there is any.
-func (c *logCollectors) Get(name string, options metav1.GetOptions) (result *v1.LogCollector, err error) {
+func (c *logCollectors) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.LogCollector, err error) {
 	result = &v1.LogCollector{}
 	err = c.client.Get().
 		Resource("logcollectors").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of LogCollectors that match those selectors.
-func (c *logCollectors) List(opts metav1.ListOptions) (result *v1.LogCollectorList, err error) {
+func (c *logCollectors) List(ctx context.Context, opts metav1.ListOptions) (result *v1.LogCollectorList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *logCollectors) List(opts metav1.ListOptions) (result *v1.LogCollectorLi
 		Resource("logcollectors").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested logCollectors.
-func (c *logCollectors) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *logCollectors) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *logCollectors) Watch(opts metav1.ListOptions) (watch.Interface, error) 
 		Resource("logcollectors").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a logCollector and creates it.  Returns the server's representation of the logCollector, and an error, if there is any.
-func (c *logCollectors) Create(logCollector *v1.LogCollector) (result *v1.LogCollector, err error) {
+func (c *logCollectors) Create(ctx context.Context, logCollector *v1.LogCollector, opts metav1.CreateOptions) (result *v1.LogCollector, err error) {
 	result = &v1.LogCollector{}
 	err = c.client.Post().
 		Resource("logcollectors").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(logCollector).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a logCollector and updates it. Returns the server's representation of the logCollector, and an error, if there is any.
-func (c *logCollectors) Update(logCollector *v1.LogCollector) (result *v1.LogCollector, err error) {
+func (c *logCollectors) Update(ctx context.Context, logCollector *v1.LogCollector, opts metav1.UpdateOptions) (result *v1.LogCollector, err error) {
 	result = &v1.LogCollector{}
 	err = c.client.Put().
 		Resource("logcollectors").
 		Name(logCollector.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(logCollector).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *logCollectors) UpdateStatus(logCollector *v1.LogCollector) (result *v1.LogCollector, err error) {
+func (c *logCollectors) UpdateStatus(ctx context.Context, logCollector *v1.LogCollector, opts metav1.UpdateOptions) (result *v1.LogCollector, err error) {
 	result = &v1.LogCollector{}
 	err = c.client.Put().
 		Resource("logcollectors").
 		Name(logCollector.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(logCollector).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the logCollector and deletes it. Returns an error if one occurs.
-func (c *logCollectors) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *logCollectors) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("logcollectors").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched logCollector.
-func (c *logCollectors) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.LogCollector, err error) {
+func (c *logCollectors) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.LogCollector, err error) {
 	result = &v1.LogCollector{}
 	err = c.client.Patch(pt).
 		Resource("logcollectors").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

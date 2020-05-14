@@ -1,4 +1,4 @@
-import { i18n } from '@tencent/tea-app';
+import { i18n } from '@tea/app';
 import { translation } from '@i18n/translation';
 // 国际化工具的初始化
 i18n.init({ translation });
@@ -12,6 +12,7 @@ import { Wrapper, PlatformTypeEnum } from './Wrapper';
 import { Addon } from './src/modules/addon';
 import { Uam } from './src/modules/uam';
 import { PersistentEvent } from './src/modules/persistentEvent';
+import { Audit }  from './src/modules/audit';
 import { AlarmPolicy } from './src/modules/alarmPolicy';
 import { Notify } from './src/modules/notify';
 import { LogStash } from './src/modules/logStash';
@@ -79,7 +80,7 @@ class ForbiddentDialog extends React.Component<any, ForbiddentDialogState> {
   constructor(props: any) {
     super(props);
     this.state = {
-      forbiddentConfig: Init_Forbiddent_Config
+      forbiddentConfig: Init_Forbiddent_Config,
     };
 
     changeForbiddentConfig = (config: { isShow: boolean; message: string }) => {
@@ -137,7 +138,7 @@ Entry.register({
           <ForbiddentDialog />
           <Cluster />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -150,7 +151,7 @@ Entry.register({
           <ForbiddentDialog />
           <Cluster />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -163,7 +164,7 @@ Entry.register({
           <ForbiddentDialog />
           <Project />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -176,7 +177,7 @@ Entry.register({
           <ForbiddentDialog />
           <Addon />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -189,7 +190,7 @@ Entry.register({
           <ForbiddentDialog />
           <Registry />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -202,7 +203,7 @@ Entry.register({
           <ForbiddentDialog />
           <Uam />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -215,7 +216,7 @@ Entry.register({
           <ForbiddentDialog />
           <AlarmPolicy />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -228,7 +229,7 @@ Entry.register({
           <ForbiddentDialog />
           <Notify />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -241,7 +242,7 @@ Entry.register({
           <ForbiddentDialog />
           <Helm />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -254,7 +255,7 @@ Entry.register({
           <ForbiddentDialog />
           <LogStash />
         </Wrapper>
-      )
+      ),
     },
 
     /**
@@ -266,6 +267,19 @@ Entry.register({
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
           <PersistentEvent />
+        </Wrapper>
+      ),
+    },
+
+    /**
+     * @url https://{{domain}}/tkestack/audit
+     */
+    'audit': {
+      title: t('审计记录 - TKEStack'),
+      container: (
+        <Wrapper platformType={PlatformTypeEnum.Manager}>
+          <ForbiddentDialog />
+          <Audit />
         </Wrapper>
       )
     },
@@ -280,8 +294,8 @@ Entry.register({
           <ForbiddentDialog />
           <BlankPage />
         </Wrapper>
-      )
-    }
-  }
+      ),
+    },
+  },
 });
 /** ============================== end 容器服务 模块 ================================= */

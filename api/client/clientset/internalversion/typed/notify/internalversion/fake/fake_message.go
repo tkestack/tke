@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var messagesResource = schema.GroupVersionResource{Group: "notify.tkestack.io", 
 var messagesKind = schema.GroupVersionKind{Group: "notify.tkestack.io", Version: "", Kind: "Message"}
 
 // Get takes name of the message, and returns the corresponding message object, and an error if there is any.
-func (c *FakeMessages) Get(name string, options v1.GetOptions) (result *notify.Message, err error) {
+func (c *FakeMessages) Get(ctx context.Context, name string, options v1.GetOptions) (result *notify.Message, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(messagesResource, name), &notify.Message{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeMessages) Get(name string, options v1.GetOptions) (result *notify.M
 }
 
 // List takes label and field selectors, and returns the list of Messages that match those selectors.
-func (c *FakeMessages) List(opts v1.ListOptions) (result *notify.MessageList, err error) {
+func (c *FakeMessages) List(ctx context.Context, opts v1.ListOptions) (result *notify.MessageList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(messagesResource, messagesKind, opts), &notify.MessageList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeMessages) List(opts v1.ListOptions) (result *notify.MessageList, er
 }
 
 // Watch returns a watch.Interface that watches the requested messages.
-func (c *FakeMessages) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeMessages) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(messagesResource, opts))
 }
 
 // Create takes the representation of a message and creates it.  Returns the server's representation of the message, and an error, if there is any.
-func (c *FakeMessages) Create(message *notify.Message) (result *notify.Message, err error) {
+func (c *FakeMessages) Create(ctx context.Context, message *notify.Message, opts v1.CreateOptions) (result *notify.Message, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(messagesResource, message), &notify.Message{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeMessages) Create(message *notify.Message) (result *notify.Message, 
 }
 
 // Update takes the representation of a message and updates it. Returns the server's representation of the message, and an error, if there is any.
-func (c *FakeMessages) Update(message *notify.Message) (result *notify.Message, err error) {
+func (c *FakeMessages) Update(ctx context.Context, message *notify.Message, opts v1.UpdateOptions) (result *notify.Message, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(messagesResource, message), &notify.Message{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeMessages) Update(message *notify.Message) (result *notify.Message, 
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMessages) UpdateStatus(message *notify.Message) (*notify.Message, error) {
+func (c *FakeMessages) UpdateStatus(ctx context.Context, message *notify.Message, opts v1.UpdateOptions) (*notify.Message, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(messagesResource, "status", message), &notify.Message{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeMessages) UpdateStatus(message *notify.Message) (*notify.Message, e
 }
 
 // Delete takes name of the message and deletes it. Returns an error if one occurs.
-func (c *FakeMessages) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeMessages) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(messagesResource, name), &notify.Message{})
 	return err
 }
 
 // Patch applies the patch and returns the patched message.
-func (c *FakeMessages) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *notify.Message, err error) {
+func (c *FakeMessages) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *notify.Message, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(messagesResource, name, pt, data, subresources...), &notify.Message{})
 	if obj == nil {

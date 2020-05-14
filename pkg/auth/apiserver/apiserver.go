@@ -58,6 +58,8 @@ const (
 	OIDCPath           = "/oidc/"
 	AuthPath           = "/auth/"
 	APIKeyPasswordPath = "/apis/auth.tkestack.io/v1/apikeys/default/password"
+
+	APIKeyPath = "/apis/auth.tkestack.io/v1/apikeys"
 )
 
 func IgnoreAuthPathPrefixes() []string {
@@ -65,6 +67,12 @@ func IgnoreAuthPathPrefixes() []string {
 		OIDCPath,
 		AuthPath,
 		APIKeyPasswordPath,
+	}
+}
+
+func IgnoreAuthzPathPrefixes() []string {
+	return []string{
+		APIKeyPath,
 	}
 }
 
@@ -218,7 +226,7 @@ func (c completedConfig) registerHooks(dexHandler *identityprovider.DexHander, s
 
 	apiSigningKeyHook := authenticator.NewAPISigningKeyHookHandler(authClient)
 
-	localIdpHook := local.NewLocalHookHandler(authClient, c.ExtraConfig.VersionedInformers)
+	localIdpHook := local.NewLocalHookHandler(authClient)
 	ldapIdpHook := ldap.NewLdapHookHandler(authClient)
 
 	authVersionedClient := versionedclientset.NewForConfigOrDie(s.LoopbackClientConfig)

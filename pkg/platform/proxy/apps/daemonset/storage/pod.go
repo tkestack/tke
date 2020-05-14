@@ -21,6 +21,8 @@ package storage
 import (
 	"context"
 
+	"tkestack.io/tke/pkg/util/apiclient"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -32,7 +34,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -68,14 +69,14 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	if controllerutil.IsClusterVersionBefore1_9(client) {
-		return listPodsByExtensions(client, namespaceName, name, options)
+	if apiclient.ClusterVersionIsBefore19(client) {
+		return listPodsByExtensions(ctx, client, namespaceName, name, options)
 	}
-	return listPodsByApps(client, namespaceName, name, options)
+	return listPodsByApps(ctx, client, namespaceName, name, options)
 }
 
-func listPodsByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	daemonSet, err := client.ExtensionsV1beta1().DaemonSets(namespaceName).Get(name, *options)
+func listPodsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	daemonSet, err := client.ExtensionsV1beta1().DaemonSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("daemonSets/pods"), name)
 	}
@@ -87,7 +88,7 @@ func listPodsByExtensions(client *kubernetes.Clientset, namespaceName, name stri
 
 	// list all of the pod, by deployment labels
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -105,8 +106,8 @@ func listPodsByExtensions(client *kubernetes.Clientset, namespaceName, name stri
 	return podList, nil
 }
 
-func listPodsByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	daemonSet, err := client.AppsV1().DaemonSets(namespaceName).Get(name, *options)
+func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	daemonSet, err := client.AppsV1().DaemonSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1.Resource("daemonSets/pods"), name)
 	}
@@ -118,7 +119,7 @@ func listPodsByApps(client *kubernetes.Clientset, namespaceName, name string, op
 
 	// list all of the pod, by deployment labels
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}

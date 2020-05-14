@@ -19,50 +19,36 @@
 package local
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/client-go/tools/cache"
-
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
-	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
-	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 type localHookHandler struct {
 	authClient authinternalclient.AuthInterface
-
-	versionedInformers    versionedinformers.SharedInformerFactory
-	localIdentityInformer authv1informer.LocalIdentityInformer
-	localGroupInformer    authv1informer.LocalGroupInformer
 }
 
 // NewLocalHookHandler creates a new localHookHandler object.
-func NewLocalHookHandler(authClient authinternalclient.AuthInterface, versionedInformers versionedinformers.SharedInformerFactory) genericapiserver.PostStartHookProvider {
+func NewLocalHookHandler(authClient authinternalclient.AuthInterface) genericapiserver.PostStartHookProvider {
 	return &localHookHandler{
-		authClient:            authClient,
-		versionedInformers:    versionedInformers,
-		localIdentityInformer: versionedInformers.Auth().V1().LocalIdentities(),
-		localGroupInformer:    versionedInformers.Auth().V1().LocalGroups(),
+		authClient: authClient,
 	}
 }
 
 func (d *localHookHandler) PostStartHook() (string, genericapiserver.PostStartHookFunc, error) {
-	return "wait-local-sync", func(context genericapiserver.PostStartHookContext) error {
-		if ok := cache.WaitForCacheSync(context.StopCh, d.localIdentityInformer.Informer().HasSynced, d.localGroupInformer.Informer().HasSynced); !ok {
-			log.Error("Failed to wait for local identity and group caches to sync")
-		}
-
+	return "wait-local-sync", func(ctx genericapiserver.PostStartHookContext) error {
 		go wait.JitterUntil(func() {
 			tenantUserSelector := fields.AndSelectors(
 				fields.OneTermEqualSelector("spec.type", ConnectorType),
 			)
-			conns, err := d.authClient.IdentityProviders().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+			conns, err := d.authClient.IdentityProviders().List(context.Background(), v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 			if err != nil {
 				log.Error("List default idp from registry failed", log.Err(err))
 				return
@@ -73,7 +59,7 @@ func (d *localHookHandler) PostStartHook() (string, genericapiserver.PostStartHo
 					continue
 				}
 
-				idp, err := NewDefaultIdentityProvider(conn.Name, conn.Spec.Administrators, d.versionedInformers)
+				idp, err := NewDefaultIdentityProvider(conn.Name, conn.Spec.Administrators, d.authClient)
 				if err != nil {
 					log.Error("NewDefaultIdentityProvider failed", log.String("idp", conn.Spec.Name), log.Err(err))
 					continue
@@ -82,8 +68,7 @@ func (d *localHookHandler) PostStartHook() (string, genericapiserver.PostStartHo
 				identityprovider.SetIdentityProvider(conn.Name, idp)
 				log.Info("load local identity provider successfully", log.String("idp", conn.Name))
 			}
-		}, 30*time.Second, 0.0, false, context.StopCh)
-
+		}, 30*time.Second, 0.0, false, ctx.StopCh)
 		return nil
 	}, nil
 }

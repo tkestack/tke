@@ -22,6 +22,8 @@ import (
 	"context"
 	"sort"
 
+	"tkestack.io/tke/pkg/util/apiclient"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -34,7 +36,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -70,14 +71,14 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	if controllerutil.IsClusterVersionBefore1_9(client) {
-		return listEventsByExtensions(client, namespaceName, name, options)
+	if apiclient.ClusterVersionIsBefore19(client) {
+		return listEventsByExtensions(ctx, client, namespaceName, name, options)
 	}
-	return listEventsByApps(client, namespaceName, name, options)
+	return listEventsByApps(ctx, client, namespaceName, name, options)
 }
 
-func listEventsByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	daemonSet, err := client.ExtensionsV1beta1().DaemonSets(namespaceName).Get(name, *options)
+func listEventsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	daemonSet, err := client.ExtensionsV1beta1().DaemonSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("daemonsets/events"), name)
 	}
@@ -90,7 +91,7 @@ func listEventsByExtensions(client *kubernetes.Clientset, namespaceName, name st
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	daemonSetEvents, err := client.CoreV1().Events(namespaceName).List(listOptions)
+	daemonSetEvents, err := client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +108,7 @@ func listEventsByExtensions(client *kubernetes.Clientset, namespaceName, name st
 
 	// list all of the pod, by daemonset labels
 	podListOptions := metav1.ListOptions{LabelSelector: podSelector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(podListOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, podListOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -123,7 +124,7 @@ func listEventsByExtensions(client *kubernetes.Clientset, namespaceName, name st
 				podEventsListOptions := metav1.ListOptions{
 					FieldSelector: podEventsSelector.String(),
 				}
-				podEvents, err := client.CoreV1().Events(namespaceName).List(podEventsListOptions)
+				podEvents, err := client.CoreV1().Events(namespaceName).List(ctx, podEventsListOptions)
 				if err != nil {
 					return nil, err
 				}
@@ -142,8 +143,8 @@ func listEventsByExtensions(client *kubernetes.Clientset, namespaceName, name st
 	}, nil
 }
 
-func listEventsByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	daemonSet, err := client.AppsV1().DaemonSets(namespaceName).Get(name, *options)
+func listEventsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	daemonSet, err := client.AppsV1().DaemonSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1.Resource("daemonsets/events"), name)
 	}
@@ -156,7 +157,7 @@ func listEventsByApps(client *kubernetes.Clientset, namespaceName, name string, 
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	daemonSetEvents, err := client.CoreV1().Events(namespaceName).List(listOptions)
+	daemonSetEvents, err := client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +174,7 @@ func listEventsByApps(client *kubernetes.Clientset, namespaceName, name string, 
 
 	// list all of the pod, by daemonset labels
 	podListOptions := metav1.ListOptions{LabelSelector: podSelector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(podListOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, podListOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -189,7 +190,7 @@ func listEventsByApps(client *kubernetes.Clientset, namespaceName, name string, 
 				podEventsListOptions := metav1.ListOptions{
 					FieldSelector: podEventsSelector.String(),
 				}
-				podEvents, err := client.CoreV1().Events(namespaceName).List(podEventsListOptions)
+				podEvents, err := client.CoreV1().Events(namespaceName).List(ctx, podEventsListOptions)
 				if err != nil {
 					return nil, err
 				}

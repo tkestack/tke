@@ -3,13 +3,25 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { cloneDeep, LinkButton } from '@src/modules/common';
 import {
-    Button, Form, Icon, Input, Justify, Modal, Radio, RadioGroup, SearchBox, Select, Table, Transfer
+  Button,
+  Form,
+  Icon,
+  Input,
+  Justify,
+  Modal,
+  Radio,
+  RadioGroup,
+  SearchBox,
+  Select,
+  Table,
+  Transfer,
 } from '@tea/component';
 import { removeable, selectable } from '@tea/component/table/addons';
 import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { allActions } from '../../actions';
+import { router } from '@src/modules/uam/router';
 
 const { useState, useEffect } = React;
 // interface StrategyActionPanelState {
@@ -30,16 +42,16 @@ const columns = [
   {
     key: 'name',
     header: t('Action名称'),
-    render: cvm => <p>{cvm.name}</p>
+    render: (cvm) => <p>{cvm.name}</p>,
   },
   {
     key: 'description',
     header: t('描述'),
     width: 100,
-    render: cvm => {
+    render: (cvm) => {
       return cvm.description;
-    }
-  }
+    },
+  },
 ];
 
 function SourceTable({ dataSource, action, onChange }) {
@@ -52,8 +64,8 @@ function SourceTable({ dataSource, action, onChange }) {
         selectable({
           value: action,
           onChange,
-          rowSelect: true
-        })
+          rowSelect: true,
+        }),
       ]}
     />
   );
@@ -63,12 +75,13 @@ function TargetTable({ dataSource, onRemove }) {
   return <Table records={dataSource} recordKey="name" columns={columns} addons={[removeable({ onRemove })]} />;
 }
 
-export const StrategyActionPanel = () => {
-  const state = useSelector(state => state);
+export const StrategyActionPanel = (props) => {
+  const state = useSelector((state) => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
-  const { strategyList, categoryList } = state;
+  const { route, strategyList, categoryList } = state;
+  const { sub } = router.resolve(route);
   const categoryListRecords = categoryList.data.records;
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -78,18 +91,18 @@ export const StrategyActionPanel = () => {
     effect: '',
     resource: [],
     selectService: '',
-    description: ''
+    description: '',
   });
   const [actionParamsValue, setActionParamsValue] = useState({
     filterKeyword: '',
-    action: []
+    action: [],
   });
   const [messages, setMessages] = useState({
     name: '',
     effect: '',
     action: '',
     resource: [],
-    description: ''
+    description: '',
   });
 
   // 初始化创建弹窗中的服务选项
@@ -97,7 +110,7 @@ export const StrategyActionPanel = () => {
     if (!formParamsValue.selectService && categoryListRecords) {
       setFormParamsValue({
         ...formParamsValue,
-        selectService: categoryListRecords[0].name
+        selectService: categoryListRecords[0].name,
       });
     }
   }, [formParamsValue, categoryListRecords]);
@@ -110,9 +123,9 @@ export const StrategyActionPanel = () => {
     if (!name || !effect || !action.length || resource.length === 0) {
       disabled = true;
     }
-    Object.keys(messages).forEach(item => {
+    Object.keys(messages).forEach((item) => {
       if (Array.isArray(messages[item])) {
-        messages[item].forEach(m => {
+        messages[item].forEach((m) => {
           if (m) {
             disabled = true;
           }
@@ -131,10 +144,10 @@ export const StrategyActionPanel = () => {
     categoryActions = {};
 
   categoryListRecords &&
-    categoryListRecords.forEach(item => {
+    categoryListRecords.forEach((item) => {
       options.push({
         value: item.metadata.name,
-        text: item.Spec.displayName
+        text: item.Spec.displayName,
       });
       categoryActions[item.metadata.name] = Object.values(item.Spec.actions);
     });
@@ -177,7 +190,7 @@ export const StrategyActionPanel = () => {
                 placeholder={t('请输入策略名称')}
                 style={{ width: '350px' }}
                 defaultValue={name}
-                onChange={value => {
+                onChange={(value) => {
                   let msg = '';
                   if (!value) {
                     msg = '请输入策略名称';
@@ -197,7 +210,7 @@ export const StrategyActionPanel = () => {
             >
               <RadioGroup
                 value={formParamsValue.effect}
-                onChange={value => {
+                onChange={(value) => {
                   setFormParamsValue({ ...formParamsValue, effect: value });
                   setMessages({ ...messages, effect: value ? '' : '请选择效果' });
                 }}
@@ -216,7 +229,7 @@ export const StrategyActionPanel = () => {
                 size="m"
                 options={options}
                 value={formParamsValue.selectService}
-                onChange={value => {
+                onChange={(value) => {
                   // 调用action获取接口
                   setFormParamsValue({ ...formParamsValue, selectService: value });
                 }}
@@ -232,14 +245,14 @@ export const StrategyActionPanel = () => {
                     header={
                       <SearchBox
                         value={actionParamsValue.filterKeyword}
-                        onChange={value => setActionParamsValue({ ...actionParamsValue, filterKeyword: value })}
+                        onChange={(value) => setActionParamsValue({ ...actionParamsValue, filterKeyword: value })}
                       />
                     }
                   >
                     <SourceTable
-                      dataSource={actionList.filter(i => i.name.includes(actionParamsValue.filterKeyword))}
+                      dataSource={actionList.filter((i) => i.name.includes(actionParamsValue.filterKeyword))}
                       action={actionParamsValue.action}
-                      onChange={keys => {
+                      onChange={(keys) => {
                         setActionParamsValue({ ...actionParamsValue, action: keys });
                         setMessages({ ...messages, action: keys.length ? '' : '请选择Action' });
                       }}
@@ -249,9 +262,9 @@ export const StrategyActionPanel = () => {
                 rightCell={
                   <Transfer.Cell title={t(`已选择 (${actionParamsValue.action.length})个`)}>
                     <TargetTable
-                      dataSource={actionList.filter(i => actionParamsValue.action.includes(i.name))}
-                      onRemove={key => {
-                        const keys = actionParamsValue.action.filter(i => i !== key);
+                      dataSource={actionList.filter((i) => actionParamsValue.action.includes(i.name))}
+                      onRemove={(key) => {
+                        const keys = actionParamsValue.action.filter((i) => i !== key);
                         setActionParamsValue({ ...actionParamsValue, action: keys });
                         setMessages({ ...messages, action: keys.length ? '' : '请选择Action' });
                       }}
@@ -274,7 +287,7 @@ export const StrategyActionPanel = () => {
                       placeholder={t('eg. cluster:cls-123/deployment:deploy-123/*')}
                       style={{ width: '350px' }}
                       defaultValue={resource}
-                      onChange={value => {
+                      onChange={(value) => {
                         let msg = '';
                         if (!value) {
                           msg = '请输入资源名称';
@@ -313,7 +326,7 @@ export const StrategyActionPanel = () => {
                 multiline
                 placeholder={t('介绍一下这个策略')}
                 style={{ width: '350px' }}
-                onChange={value => {
+                onChange={(value) => {
                   let msg = '';
                   if (value && value.length > 255) {
                     msg = '描述不能超过255个字符';
@@ -355,12 +368,13 @@ export const StrategyActionPanel = () => {
         displayName: name,
         category: selectService,
         description,
+        scope: !sub || sub === 'platform' ? '' : 'project',
         statement: {
           resources: resource,
           effect,
-          actions: action
-        }
-      }
+          actions: action,
+        },
+      },
     };
 
     actions.strategy.addStrategy.start([strategyInfo]);

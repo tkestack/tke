@@ -13,9 +13,9 @@ import {
 
 import * as ActionTypes from '../constants/ActionType';
 import { RootState, Strategy } from '../models';
-import { User, UserFilter, Member } from '../models/index';
-import * as WebAPI from '../UserManageWebAPI';
+import { Member, User, UserFilter } from '../models/index';
 import { router } from '../router';
+import * as WebAPI from '../UserManageWebAPI';
 
 type GetState = () => RootState;
 
@@ -92,7 +92,7 @@ const addUser = generateWorkflowActionCreator<Member, void>({
 const FFModelUserActions = createFFListActions<User, UserFilter>({
   actionName: ActionTypes.UserList,
   fetcher: async (query, getState: GetState) => {
-    // console.log('ActionTypes.UserList query is:', query);
+    console.log('ActionTypes.UserList query is:', query);
     let response = await WebAPI.fetchUserList(query);
     return response;
   },

@@ -198,7 +198,7 @@ func (h *processor) Create(req *restful.Request, resp *restful.Response) {
 			ruleGroup.Rules = append(ruleGroup.Rules, rule)
 		}
 	}
-	err = h.prometheusProcessor.CreateGroup(clusterName, entityName, ruleGroup)
+	err = h.prometheusProcessor.CreateGroup(req.Request.Context(), clusterName, entityName, ruleGroup)
 	if err != nil {
 		result.Err = err.Error()
 		return
@@ -234,7 +234,7 @@ func (h *processor) Delete(req *restful.Request, resp *restful.Response) {
 
 	entityName = alarmPolicyName
 
-	err := h.prometheusProcessor.DeleteGroup(clusterName, alarmPolicyName)
+	err := h.prometheusProcessor.DeleteGroup(req.Request.Context(), clusterName, alarmPolicyName)
 	if err != nil {
 		result.Err = err.Error()
 		return
@@ -271,7 +271,7 @@ func (h *processor) Update(req *restful.Request, resp *restful.Response) {
 
 	entityName = alarmPolicyName
 
-	oldRuleGroup, err := h.prometheusProcessor.GetGroup(clusterName, alarmPolicyName)
+	oldRuleGroup, err := h.prometheusProcessor.GetGroup(req.Request.Context(), clusterName, alarmPolicyName)
 	if err != nil {
 		result.Err = err.Error()
 		return
@@ -320,7 +320,7 @@ func (h *processor) Update(req *restful.Request, resp *restful.Response) {
 		}
 	}
 
-	err = h.prometheusProcessor.UpdateGroup(clusterName, alarmPolicyName, ruleGroup)
+	err = h.prometheusProcessor.UpdateGroup(req.Request.Context(), clusterName, alarmPolicyName, ruleGroup)
 	if err != nil {
 		result.Err = err.Error()
 		return
@@ -356,7 +356,7 @@ func (h *processor) Get(req *restful.Request, resp *restful.Response) {
 	}
 	entityName = alarmPolicyName
 
-	ruleGroup, err := h.prometheusProcessor.GetGroup(clusterName, alarmPolicyName)
+	ruleGroup, err := h.prometheusProcessor.GetGroup(req.Request.Context(), clusterName, alarmPolicyName)
 	if err != nil {
 		result.Err = err.Error()
 		return
@@ -400,7 +400,7 @@ func (h *processor) List(req *restful.Request, resp *restful.Response) {
 		log.Infof("invalid page_size: %s", req.QueryParameter("page_size"))
 		pageSize = 10
 	}
-	ruleGroups, err := h.prometheusProcessor.ListGroups(clusterName)
+	ruleGroups, err := h.prometheusProcessor.ListGroups(req.Request.Context(), clusterName)
 	if err != nil {
 		result.Err = err.Error()
 		return

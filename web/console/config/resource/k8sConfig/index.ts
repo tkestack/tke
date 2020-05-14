@@ -20,6 +20,7 @@ export { node } from './node';
 export * from './addonResource';
 export * from './alarmPolicy';
 export * from './notifyChannel';
+export * from './audit';
 
 export { lbcf, lbcf_bg, lbcf_br, lbcf_driver } from './lbcf';
 

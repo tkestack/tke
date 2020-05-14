@@ -72,19 +72,27 @@ export const requestMethodForAction = (type: string) => {
  * 统一的请求处理
  * @param userParams: RequestParams
  */
-export const reduceNetworkRequest = async (
-  userParams: RequestParams,
-  clusterId?: string,
-  projectId?: string,
-  keyword?: string
-) => {
-  let { method, url, userDefinedHeader = {}, data = {}, apiParams, baseURL = GET_CONSOLE_MODULE_BASE_URL } = userParams;
+export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?: string, keyword?: string) => {
+  let {
+    method,
+    url,
+    userDefinedHeader = {},
+    data = {},
+    apiParams,
+    // baseURL = getConsoleAPIAddress(ConsoleModuleAddressEnum.PLATFORM)
+    baseURL = GET_CONSOLE_MODULE_BASE_URL
+  } = userParams;
 
   let rsp;
   // 请求tke-apiserver的 cluster的header
   if (clusterId) {
     userDefinedHeader = Object.assign({}, userDefinedHeader, {
       'X-TKE-ClusterName': clusterId
+    });
+  }
+  if (keyword) {
+    userDefinedHeader = Object.assign({}, userDefinedHeader, {
+      'X-TKE-FuzzyResourceName': keyword
     });
   }
 

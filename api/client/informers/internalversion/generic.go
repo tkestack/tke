@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -27,6 +27,7 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 	auth "tkestack.io/tke/api/auth"
 	business "tkestack.io/tke/api/business"
+	logagent "tkestack.io/tke/api/logagent"
 	monitor "tkestack.io/tke/api/monitor"
 	notify "tkestack.io/tke/api/notify"
 	platform "tkestack.io/tke/api/platform"
@@ -80,6 +81,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().LocalIdentities().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("policies"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Policies().Informer()}, nil
+	case auth.SchemeGroupVersion.WithResource("projects"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Projects().Informer()}, nil
+	case auth.SchemeGroupVersion.WithResource("projectpolicybindings"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().ProjectPolicyBindings().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("roles"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Roles().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("rules"):
@@ -96,10 +101,18 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().ImageNamespaces().Informer()}, nil
 	case business.SchemeGroupVersion.WithResource("namespaces"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().Namespaces().Informer()}, nil
+	case business.SchemeGroupVersion.WithResource("nsemigrations"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().NsEmigrations().Informer()}, nil
 	case business.SchemeGroupVersion.WithResource("platforms"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().Platforms().Informer()}, nil
 	case business.SchemeGroupVersion.WithResource("projects"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().InternalVersion().Projects().Informer()}, nil
+
+		// Group=logagent.tkestack.io, Version=internalVersion
+	case logagent.SchemeGroupVersion.WithResource("configmaps"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Logagent().InternalVersion().ConfigMaps().Informer()}, nil
+	case logagent.SchemeGroupVersion.WithResource("logagents"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Logagent().InternalVersion().LogAgents().Informer()}, nil
 
 		// Group=monitor.tkestack.io, Version=internalVersion
 	case monitor.SchemeGroupVersion.WithResource("configmaps"):
@@ -132,8 +145,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().ConfigMaps().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("cronhpas"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().CronHPAs().Informer()}, nil
-	case platform.SchemeGroupVersion.WithResource("gpumanagers"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().GPUManagers().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("helms"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().Helms().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("ipams"):

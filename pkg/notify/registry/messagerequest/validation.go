@@ -19,6 +19,8 @@
 package messagerequest
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,10 +34,10 @@ import (
 var ValidateMessageRequestName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateMessageRequest tests if required fields in the messageRequest are set.
-func ValidateMessageRequest(messageRequest *notify.MessageRequest, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
+func ValidateMessageRequest(ctx context.Context, messageRequest *notify.MessageRequest, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&messageRequest.ObjectMeta, true, ValidateMessageRequestName, field.NewPath("metadata"))
 
-	channel, err := notifyClient.Channels().Get(messageRequest.ObjectMeta.Namespace, metav1.GetOptions{})
+	channel, err := notifyClient.Channels().Get(ctx, messageRequest.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		allErrs = append(allErrs, field.NotFound(field.NewPath("metadata", "namespace"), messageRequest.ObjectMeta.Namespace))
 	} else if err != nil {
@@ -47,7 +49,7 @@ func ValidateMessageRequest(messageRequest *notify.MessageRequest, notifyClient 
 			if messageRequest.Spec.TemplateName == "" {
 				allErrs = append(allErrs, field.Required(field.NewPath("spec", "templateName"), "must specify template name"))
 			} else {
-				template, err := notifyClient.Templates(channel.ObjectMeta.Name).Get(messageRequest.Spec.TemplateName, metav1.GetOptions{})
+				template, err := notifyClient.Templates(channel.ObjectMeta.Name).Get(ctx, messageRequest.Spec.TemplateName, metav1.GetOptions{})
 				if err != nil && errors.IsNotFound(err) {
 					allErrs = append(allErrs, field.NotFound(field.NewPath("spec", "templateName"), messageRequest.Spec.TemplateName))
 				} else if err != nil {
@@ -68,9 +70,9 @@ func ValidateMessageRequest(messageRequest *notify.MessageRequest, notifyClient 
 
 // ValidateMessageRequestUpdate tests if required fields in the messageRequest are set during
 // an update.
-func ValidateMessageRequestUpdate(messageRequest *notify.MessageRequest, old *notify.MessageRequest, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
+func ValidateMessageRequestUpdate(ctx context.Context, messageRequest *notify.MessageRequest, old *notify.MessageRequest, notifyClient *notifyinternalclient.NotifyClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&messageRequest.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateMessageRequest(messageRequest, notifyClient)...)
+	allErrs = append(allErrs, ValidateMessageRequest(ctx, messageRequest, notifyClient)...)
 
 	if messageRequest.Spec.TenantID != old.Spec.TenantID {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "tenantID"), "disallowed change the tenant"))

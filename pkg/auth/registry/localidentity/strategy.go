@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/casbin/casbin/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -35,6 +36,7 @@ import (
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 
 	namesutil "tkestack.io/tke/pkg/util/names"
@@ -46,12 +48,13 @@ type Strategy struct {
 	names.NameGenerator
 
 	authClient authinternalclient.AuthInterface
+	enforcer   *casbin.SyncedEnforcer
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating identity objects.
-func NewStrategy(authClient authinternalclient.AuthInterface) *Strategy {
-	return &Strategy{auth.Scheme, namesutil.Generator, authClient}
+func NewStrategy(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer) *Strategy {
+	return &Strategy{auth.Scheme, namesutil.Generator, authClient, enforcer}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -61,7 +64,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
-func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+func (s *Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldLocalIdentity := old.(*auth.LocalIdentity)
 	localIdentity, _ := obj.(*auth.LocalIdentity)
 
@@ -74,6 +77,7 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	}
 
 	localIdentity.Status.LastUpdateTime = metav1.Now()
+	_ = util.HandleUserPoliciesUpdate(ctx, s.authClient, s.enforcer, localIdentity)
 }
 
 // NamespaceScoped is false for identities.
@@ -106,7 +110,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new identity.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateLocalIdentity(s.authClient, obj.(*auth.LocalIdentity), false)
+	return ValidateLocalIdentity(ctx, s.authClient, obj.(*auth.LocalIdentity), false)
 }
 
 // AllowCreateOnUpdate is false for identities.
@@ -127,7 +131,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an identity.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLocalIdentityUpdate(s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
+	return ValidateLocalIdentityUpdate(ctx, s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -136,7 +140,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a localIdentity")
 	}
-	return labels.Set(localIdentity.ObjectMeta.Labels), ToSelectableFields(localIdentity), nil
+	return localIdentity.ObjectMeta.Labels, ToSelectableFields(localIdentity), nil
 }
 
 // MatchLocalIdentity returns a generic matcher for a given label and field selector.
@@ -227,5 +231,5 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLocalIdentityUpdate(s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
+	return ValidateLocalIdentityUpdate(ctx, s.authClient, obj.(*auth.LocalIdentity), old.(*auth.LocalIdentity))
 }

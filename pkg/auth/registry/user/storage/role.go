@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"strings"
+	"tkestack.io/tke/pkg/apiserver/filter"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -57,6 +58,14 @@ func (r *RoleREST) New() runtime.Object {
 	return &auth.Role{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *RoleREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("roles"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
@@ -70,12 +79,8 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 		return nil, err
 	}
 	user := obj.(*auth.User)
-
-	roles, err := r.enforcer.GetRolesForUser(util.UserKey(user.Spec.TenantID, user.Spec.Name))
-	if err != nil {
-		log.Error("List roles for user failed from casbin failed", log.String("user", userID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	projectID := filter.ProjectIDFrom(ctx)
+	roles := r.enforcer.GetRolesForUserInDomain(util.UserKey(user.Spec.TenantID, user.Spec.Name), projectID)
 
 	var roleIDs []string
 	for _, r := range roles {
@@ -86,7 +91,7 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 
 	var roleList = &auth.RoleList{}
 	for _, id := range roleIDs {
-		rol, err := r.authClient.Roles().Get(id, metav1.GetOptions{})
+		rol, err := r.authClient.Roles().Get(ctx, id, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("Get pol failed", log.String("role", id), log.Err(err))
 			return nil, err
@@ -97,7 +102,10 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 			continue
 		}
 
-		roleList.Items = append(roleList.Items, *rol)
+		if rol.Spec.ProjectID == projectID {
+			roleList.Items = append(roleList.Items, *rol)
+		}
+
 	}
 
 	return roleList, nil

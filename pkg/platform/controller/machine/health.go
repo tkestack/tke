@@ -19,6 +19,8 @@
 package machine
 
 import (
+	"context"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -57,20 +59,19 @@ func (s *machineHealth) Del(name string) {
 	delete(s.m, name)
 }
 
-func (c *Controller) startMachineHealthCheck(key string, machine *v1.Machine) error {
-	if !c.health.Exist(key) {
-		c.health.Set(machine)
-		go wait.PollImmediateUntil(1*time.Minute, c.watchHealth(machine.Name), c.stopCh)
-		log.Info("Machine phase start new health check", log.String("name", key), log.String("phase", string(machine.Status.Phase)))
-	} else {
-		log.Info("Machine phase health check exit", log.String("name", key), log.String("phase", string(machine.Status.Phase)))
+func (c *Controller) ensureHealthCheck(ctx context.Context, key string, machine *v1.Machine) {
+	if c.health.Exist(key) {
+		return
 	}
 
-	return nil
+	log.Info("start health check for cluster", log.String("machineName", key), log.String("phase", string(machine.Status.Phase)))
+	c.health.Set(machine)
+	time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
+	go wait.PollImmediateUntil(5*time.Minute, c.watchHealth(ctx, machine.Name), c.stopCh)
 }
 
-func (c *Controller) checkHealth(m *v1.Machine) error {
-	clientset, err := util.BuildExternalClientSetWithName(c.client.PlatformV1(), m.Spec.ClusterName)
+func (c *Controller) checkHealth(ctx context.Context, m *v1.Machine) error {
+	clientset, err := util.BuildExternalClientSetWithName(ctx, c.platformclient, m.Spec.ClusterName)
 	if err != nil {
 		m.Status.Phase = v1.MachineFailed
 		m.Status.Message = err.Error()
@@ -84,7 +85,7 @@ func (c *Controller) checkHealth(m *v1.Machine) error {
 			LastTransitionTime: now,
 			LastProbeTime:      now,
 		})
-		if err := c.persistUpdate(m); err != nil {
+		if err := c.persistUpdate(ctx, m); err != nil {
 			log.Warn("Update machine status failed", log.String("name", m.Name), log.Err(err))
 			return err
 		}
@@ -92,7 +93,7 @@ func (c *Controller) checkHealth(m *v1.Machine) error {
 		return err
 	}
 
-	node, err := clientset.CoreV1().Nodes().Get(m.Spec.IP, metav1.GetOptions{})
+	node, err := clientset.CoreV1().Nodes().Get(ctx, m.Spec.IP, metav1.GetOptions{})
 	if err != nil {
 		m.Status.Phase = v1.MachineFailed
 		m.Status.Message = err.Error()
@@ -106,7 +107,7 @@ func (c *Controller) checkHealth(m *v1.Machine) error {
 			LastTransitionTime: now,
 			LastProbeTime:      now,
 		})
-		if err := c.persistUpdate(m); err != nil {
+		if err := c.persistUpdate(ctx, m); err != nil {
 			log.Warn("Update machine status failed", log.String("name", m.Name), log.Err(err))
 			return err
 		}
@@ -125,7 +126,7 @@ func (c *Controller) checkHealth(m *v1.Machine) error {
 		Reason:        "",
 		LastProbeTime: metav1.Now(),
 	})
-	if err := c.persistUpdate(m); err != nil {
+	if err := c.persistUpdate(ctx, m); err != nil {
 		log.Warn("Update machine status failed", log.String("name", m.Name), log.Err(err))
 		return err
 	}
@@ -134,11 +135,11 @@ func (c *Controller) checkHealth(m *v1.Machine) error {
 }
 
 // for PollImmediateUntil, when return true ,an err while exit
-func (c *Controller) watchHealth(name string) func() (bool, error) {
+func (c *Controller) watchHealth(ctx context.Context, name string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Debug("Check machine health", log.String("name", name))
 
-		m, err := c.client.PlatformV1().Machines().Get(name, metav1.GetOptions{})
+		m, err := c.platformclient.Machines().Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			// if machine is not found,to exit the health check loop
 			if errors.IsNotFound(err) {
@@ -155,7 +156,7 @@ func (c *Controller) watchHealth(name string) func() (bool, error) {
 			return true, nil
 		}
 
-		_ = c.checkHealth(m)
+		_ = c.checkHealth(ctx, m)
 		return false, nil
 	}
 }

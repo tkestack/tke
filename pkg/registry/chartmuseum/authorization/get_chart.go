@@ -19,14 +19,17 @@
 package authorization
 
 import (
+	"context"
 	"fmt"
-	"github.com/gorilla/mux"
-	"helm.sh/chartmuseum/pkg/repo"
 	"strings"
 
+	"github.com/gorilla/mux"
+	"helm.sh/chartmuseum/pkg/repo"
+
 	// "helm.sh/chartmuseum/pkg/repo"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/util/log"
@@ -64,7 +67,7 @@ func (a *authorization) getChart(w http.ResponseWriter, req *http.Request) {
 	if sw.status != http.StatusOK {
 		return
 	}
-	if err := a.afterGetChart(chartObject); err != nil {
+	if err := a.afterGetChart(req.Context(), chartObject); err != nil {
 		log.Error("Failed to update registry chart resource", log.Err(err))
 	}
 }
@@ -100,7 +103,7 @@ func (a *authorization) apiGetChartVersion(w http.ResponseWriter, req *http.Requ
 }
 
 func (a *authorization) validateGetChart(w http.ResponseWriter, req *http.Request, tenantID, chartGroupName, chartName string) (*registry.Chart, error) {
-	chartGroupList, err := a.registryClient.ChartGroups().List(metav1.ListOptions{
+	chartGroupList, err := a.registryClient.ChartGroups().List(req.Context(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartGroupName),
 	})
 	if err != nil {
@@ -121,7 +124,7 @@ func (a *authorization) validateGetChart(w http.ResponseWriter, req *http.Reques
 		a.locked(w)
 		return nil, fmt.Errorf("locked")
 	}
-	chartList, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).List(metav1.ListOptions{
+	chartList, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).List(req.Context(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartName),
 	})
 	if err != nil {
@@ -152,9 +155,9 @@ func (a *authorization) validateGetChart(w http.ResponseWriter, req *http.Reques
 	return &chartObject, nil
 }
 
-func (a *authorization) afterGetChart(chartObject *registry.Chart) error {
+func (a *authorization) afterGetChart(ctx context.Context, chartObject *registry.Chart) error {
 	chartObject.Status.PullCount = chartObject.Status.PullCount + 1
-	if _, err := a.registryClient.Charts(chartObject.ObjectMeta.Namespace).UpdateStatus(chartObject); err != nil {
+	if _, err := a.registryClient.Charts(chartObject.ObjectMeta.Namespace).UpdateStatus(ctx, chartObject, metav1.UpdateOptions{}); err != nil {
 		log.Error("Failed to update repository pull count while pulled",
 			log.String("tenantID", chartObject.Spec.TenantID),
 			log.String("chartGroupName", chartObject.Spec.ChartGroupName),

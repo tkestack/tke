@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -36,8 +36,6 @@ type Interface interface {
 	ConfigMaps() ConfigMapInformer
 	// CronHPAs returns a CronHPAInformer.
 	CronHPAs() CronHPAInformer
-	// GPUManagers returns a GPUManagerInformer.
-	GPUManagers() GPUManagerInformer
 	// Helms returns a HelmInformer.
 	Helms() HelmInformer
 	// IPAMs returns a IPAMInformer.
@@ -94,11 +92,6 @@ func (v *version) ConfigMaps() ConfigMapInformer {
 // CronHPAs returns a CronHPAInformer.
 func (v *version) CronHPAs() CronHPAInformer {
 	return &cronHPAInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
-}
-
-// GPUManagers returns a GPUManagerInformer.
-func (v *version) GPUManagers() GPUManagerInformer {
-	return &gPUManagerInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // Helms returns a HelmInformer.

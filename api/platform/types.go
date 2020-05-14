@@ -83,6 +83,9 @@ type ClusterSpec struct {
 	NetworkDevice string
 	// +optional
 	ClusterCIDR string
+	// ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+	// +optional
+	ServiceCIDR *string
 	// +optional
 	// DNSDomain is the dns domain used by k8s services. Defaults to "cluster.local".
 	DNSDomain string
@@ -106,9 +109,11 @@ type ClusterSpec struct {
 	// +optional
 	SchedulerExtraArgs map[string]string
 
-	// ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
-	// +optionals
-	ServiceCIDR *string
+	// ClusterCredentialRef for isolate sensitive information.
+	// If not specified, cluster controller will create one;
+	// If specified, provider must make sure is valid.
+	// +optional
+	ClusterCredentialRef *corev1.LocalObjectReference
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -163,19 +168,6 @@ const (
 
 // NetworkType defines the network type of cluster.
 type NetworkType string
-
-const (
-	// NetworkPhysics indicates the communication network using the physics network to establish the pod between nodes.
-	NetworkPhysics NetworkType = "Physics"
-	// NetworkVPC indicates the communication network using the VPC to establish the pod between nodes.
-	NetworkVPC NetworkType = "VPC"
-	// NetworkFlannel indicates the communication network using the flannel to establish the pod between nodes.
-	NetworkFlannel NetworkType = "Flannel"
-	// NetworkCalico indicates the communication network using the calico to establish the pod between nodes.
-	NetworkCalico NetworkType = "Calico"
-	// NetworkIPIP indicates the communication network using the IPIP to establish the pod between nodes.
-	NetworkIPIP NetworkType = "IPIP"
-)
 
 // GPUType defines the gpu type of cluster.
 type GPUType string
@@ -327,6 +319,8 @@ type ClusterFeature struct {
 	Files []File
 	// +optional
 	Hooks map[HookType]string
+	// +optional
+	CSIOperator *CSIOperatorFeature
 }
 
 type HA struct {
@@ -349,6 +343,10 @@ type File struct {
 }
 
 type HookType string
+
+type CSIOperatorFeature struct {
+	Version string
+}
 
 const (
 	HookPreInstall  HookType = "PreInstall"
@@ -926,59 +924,6 @@ type AddonSpec struct {
 	TenantID    string
 	ClusterName string
 	Version     string
-}
-
-// +genclient
-// +genclient:nonNamespaced
-// +genclient:skipVerbs=deleteCollection
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// GPUManager is a kind of device plugin for kubelet to help manage GPUs.
-type GPUManager struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ObjectMeta
-
-	// Spec defines the desired identities of clusters in this set.
-	// +optional
-	Spec GPUManagerSpec
-	// +optional
-	Status GPUManagerStatus
-}
-
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// GPUManagerList is the whole list of all GPUManager which owned by a tenant.
-type GPUManagerList struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ListMeta
-
-	// List of Helms
-	Items []GPUManager
-}
-
-// GPUManagerSpec describes the attributes of a GPUManager.
-type GPUManagerSpec struct {
-	TenantID    string
-	ClusterName string
-	Version     string
-}
-
-// GPUManagerStatus is information about the current status of a GPUManager.
-type GPUManagerStatus struct {
-	// +optional
-	Version string
-	// Phase is the current lifecycle phase of the GPUManager of cluster.
-	// +optional
-	Phase AddonPhase
-	// Reason is a brief CamelCase string that describes any failure.
-	// +optional
-	Reason string
-	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-	// +optional
-	RetryCount int32
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

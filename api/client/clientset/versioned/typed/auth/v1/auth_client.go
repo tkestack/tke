@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -38,6 +38,7 @@ type AuthV1Interface interface {
 	LocalGroupsGetter
 	LocalIdentitiesGetter
 	PoliciesGetter
+	ProjectPolicyBindingsGetter
 	RolesGetter
 	RulesGetter
 	UsersGetter
@@ -86,6 +87,10 @@ func (c *AuthV1Client) LocalIdentities() LocalIdentityInterface {
 
 func (c *AuthV1Client) Policies() PolicyInterface {
 	return newPolicies(c)
+}
+
+func (c *AuthV1Client) ProjectPolicyBindings() ProjectPolicyBindingInterface {
+	return newProjectPolicyBindings(c)
 }
 
 func (c *AuthV1Client) Roles() RoleInterface {

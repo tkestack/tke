@@ -43,7 +43,6 @@ import (
 	storageerr "k8s.io/apiserver/pkg/storage/errors"
 	"k8s.io/apiserver/pkg/util/dryrun"
 	"tkestack.io/tke/api/business"
-	businessv1 "tkestack.io/tke/api/business/v1"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -172,7 +171,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
 	obj, err := r.Store.List(ctx, wrappedOptions)
 	if err == nil && obj != nil {
-		if err := r.patchNamespaceList(obj); err != nil {
+		if err := r.patchNamespaceList(ctx, obj); err != nil {
 			return nil, err
 		}
 	}
@@ -183,7 +182,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
 	if err == nil && obj != nil {
-		if err := r.patchNamespace(obj, nil); err != nil {
+		if err := r.patchNamespace(ctx, obj, nil); err != nil {
 			return nil, err
 		}
 	}
@@ -325,6 +324,44 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 
+func (r *REST) patchNamespaceList(ctx context.Context, obj runtime.Object) error {
+	nl, ok := obj.(*business.NamespaceList)
+	if !ok {
+		return fmt.Errorf("patchNamespaceList, expect *business.NamespaceList, but got %s", reflect.TypeOf(obj))
+	}
+
+	cache := map[string]*platformv1.Cluster{}
+	for idx := range nl.Items {
+		if err := r.patchNamespace(ctx, &nl.Items[idx], cache); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *REST) patchNamespace(ctx context.Context, obj runtime.Object, cache map[string]*platformv1.Cluster) error {
+	ns, ok := obj.(*business.Namespace)
+	if !ok {
+		return fmt.Errorf("patchNamespace, expect *business.Namespace, but got %s", reflect.TypeOf(obj))
+	}
+
+	cls, has := cache[ns.Spec.ClusterName]
+	if !has {
+		var err error
+		cls, err = r.platformClient.Clusters().Get(ctx, ns.Spec.ClusterName, metav1.GetOptions{})
+		if err != nil {
+			log.Errorf("patchNamespace %s: %s", ns.Name, err)
+			return nil
+		}
+		if cache != nil {
+			cache[ns.Spec.ClusterName] = cls
+		}
+	}
+	ns.Spec.ClusterVersion = cls.Status.Version
+	ns.Spec.ClusterDisplayName = cls.Spec.DisplayName
+	return nil
+}
+
 // StatusREST implements the REST endpoint for changing the status of a replication controller
 type StatusREST struct {
 	store *registry.Store
@@ -417,7 +454,7 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 	}
 	ns := obj.(*business.Namespace)
 
-	cluster, err := r.platformClient.Clusters().Get(ns.Spec.ClusterName, metav1.GetOptions{})
+	cluster, err := r.platformClient.Clusters().Get(ctx, ns.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("prj:%s, ns:%s, get cluster %s, %s", ns.Namespace, ns.Name, ns.Spec.ClusterName, err)
 	}
@@ -425,7 +462,7 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 		return nil, fmt.Errorf("prj:%s, ns:%s, cluster %s is Imported, NOT support generating certificate", ns.Namespace, ns.Name, ns.Spec.ClusterName)
 	}
 	fieldSelector := fields.OneTermEqualSelector("clusterName", ns.Spec.ClusterName).String()
-	list, err := r.platformClient.ClusterCredentials().List(metav1.ListOptions{FieldSelector: fieldSelector})
+	list, err := r.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
 	if err != nil {
 		return nil, fmt.Errorf("prj:%s, ns:%s, get cluster credential, %s", ns.Namespace, ns.Name, err)
 	} else if len(list.Items) == 0 {
@@ -461,7 +498,7 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 	}
 	validDays, err := strconv.Atoi(options.(*business.NamespaceCertOptions).ValidDays)
 	if err != nil {
-		return nil, fmt.Errorf("prj:%s, ns:%s, query string '%s', %s", ns.Namespace, ns.Name, businessv1.CertOptionValiddays, err)
+		return nil, fmt.Errorf("prj:%s, ns:%s, query string '%s', %s", ns.Namespace, ns.Name, business.CertOptionValidDays, err)
 	}
 	user, _ := authentication.GetUsernameAndTenantID(ctx)
 	template := x509.Certificate{
@@ -471,25 +508,68 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 				fmt.Sprintf("cluster:%s", ns.Spec.ClusterName),
 				fmt.Sprintf("project:%s", ns.Namespace),
 				fmt.Sprintf("namespace:%s", ns.Spec.Namespace),
+				fmt.Sprintf("tenant:%s", ns.Spec.TenantID),
 			},
 		},
-		SerialNumber: big.NewInt(rootCert.SerialNumber.Int64() + 1),
-		NotBefore:    rootCert.NotBefore,
-		NotAfter:     time.Now().AddDate(0, 0, validDays),
-		IsCA:         false,
+		SerialNumber:          big.NewInt(rootCert.SerialNumber.Int64() + 1),
+		NotBefore:             rootCert.NotBefore,
+		NotAfter:              time.Now().AddDate(0, 0, validDays),
+		BasicConstraintsValid: true,
+		IsCA:                  false,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment,
 	}
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, rootCert, &private.PublicKey, rootKey)
+	certBytes, err := x509.CreateCertificate(rand.Reader, &template, rootCert, &private.PublicKey, rootKey)
 	if err != nil {
 		return nil, fmt.Errorf("CreateCertificate(%+v), %s", template.Subject, err)
 	}
+	keyBytes := x509.MarshalPKCS1PrivateKey(private)
 
 	ns.Status.Certificate = &business.NamespaceCert{
-		Pem: pem.EncodeToMemory(&pem.Block{
+		CertPem: pem.EncodeToMemory(&pem.Block{
 			Type:  "CERTIFICATE",
-			Bytes: derBytes,
+			Bytes: certBytes,
+		}),
+		KeyPem: pem.EncodeToMemory(&pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: keyBytes,
 		}),
 	}
 	return ns, nil
+}
+
+// EmigrateREST implements the REST endpoint for moving a namespace.
+type EmigrateREST struct {
+	store *registry.Store
+}
+
+// New returns an empty object that can be used with Create and Update after
+// request data has been put into it.
+func (r *EmigrateREST) New() runtime.Object {
+	return r.store.New()
+}
+
+// Get retrieves the object from the storage. It is required to support Patch.
+func (r *EmigrateREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
+}
+
+// Export an object.  Fields that are not user specified are stripped out
+// Returns the stripped object.
+func (r *EmigrateREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
+	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
+}
+
+// Update alters the Status.Phase and Annotations of a namespace.
+func (r *EmigrateREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo,
+	createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc,
+	forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	_, err := ValidateGetObjectAndTenantID(ctx, r.store, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
+	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
 
 func shouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {
@@ -499,42 +579,4 @@ func shouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing run
 		return false
 	}
 	return len(ns.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
-}
-
-func (r *REST) patchNamespaceList(obj runtime.Object) error {
-	nl, ok := obj.(*business.NamespaceList)
-	if !ok {
-		return fmt.Errorf("patchNamespaceList, expect *business.NamespaceList, but got %s", reflect.TypeOf(obj))
-	}
-
-	cache := map[string]*platformv1.Cluster{}
-	for idx := range nl.Items {
-		if err := r.patchNamespace(&nl.Items[idx], cache); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *REST) patchNamespace(obj runtime.Object, cache map[string]*platformv1.Cluster) error {
-	ns, ok := obj.(*business.Namespace)
-	if !ok {
-		return fmt.Errorf("patchNamespace, expect *business.Namespace, but got %s", reflect.TypeOf(obj))
-	}
-
-	cls, has := cache[ns.Spec.ClusterName]
-	if !has {
-		var err error
-		cls, err = r.platformClient.Clusters().Get(ns.Spec.ClusterName, metav1.GetOptions{})
-		if err != nil {
-			log.Errorf("patchNamespace %s: %s", ns.Name, err)
-			return nil
-		}
-		if cache != nil {
-			cache[ns.Spec.ClusterName] = cls
-		}
-	}
-	ns.Spec.ClusterVersion = cls.Status.Version
-	ns.Spec.ClusterDisplayName = cls.Spec.DisplayName
-	return nil
 }

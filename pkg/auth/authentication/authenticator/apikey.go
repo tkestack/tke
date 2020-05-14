@@ -54,7 +54,7 @@ func (h *APIKeyAuthenticator) AuthenticateToken(ctx context.Context, token strin
 		log.Debug("Finish verifying api key", log.String("api key", token), log.Duration("processTime", time.Since(startTime)))
 	}()
 
-	tokenInfo, err := h.keySigner.Verify(token)
+	tokenInfo, err := h.keySigner.Verify(ctx, token)
 	if err != nil {
 		return nil, false, err
 	}
@@ -63,8 +63,7 @@ func (h *APIKeyAuthenticator) AuthenticateToken(ctx context.Context, token strin
 		fields.OneTermEqualSelector("spec.tenantID", tokenInfo.TenantID),
 		fields.OneTermEqualSelector("spec.apiKey", token))
 
-	log.Info("apikey selector", log.String("selector", selector.String()))
-	apiKeyList, err := h.authClient.APIKeys().List(metav1.ListOptions{FieldSelector: selector.String()})
+	apiKeyList, err := h.authClient.APIKeys().List(ctx, metav1.ListOptions{FieldSelector: selector.String()})
 	if err != nil {
 		log.Error("List api keys failed", log.String("api key", token), log.Err(err))
 		return nil, false, err
@@ -83,14 +82,14 @@ func (h *APIKeyAuthenticator) AuthenticateToken(ctx context.Context, token strin
 
 	info := &user.DefaultInfo{Name: tokenInfo.UserName}
 
-	localIdentity, err := util.GetLocalIdentity(h.authClient, tokenInfo.TenantID, info.Name)
+	user, err := util.GetUserByName(ctx, h.authClient, tokenInfo.TenantID, info.Name)
 	if err != nil {
 		log.Error("Get localIdentity failed", log.String("localIdentity", info.Name), log.Err(err))
 		return nil, false, err
 	}
 
-	info.UID = localIdentity.ObjectMeta.Name
-	groups, err := util.GetGroupsForUser(h.authClient, localIdentity.ObjectMeta.Name)
+	info.UID = user.ObjectMeta.Name
+	groups, err := util.GetGroupsForUser(ctx, h.authClient, user.ObjectMeta.Name)
 	if err == nil {
 		for _, g := range groups.Items {
 			info.Groups = append(info.Groups, g.ObjectMeta.Name)

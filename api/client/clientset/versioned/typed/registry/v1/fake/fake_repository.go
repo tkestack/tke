@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,7 +43,7 @@ var repositoriesResource = schema.GroupVersionResource{Group: "registry.tkestack
 var repositoriesKind = schema.GroupVersionKind{Group: "registry.tkestack.io", Version: "v1", Kind: "Repository"}
 
 // Get takes name of the repository, and returns the corresponding repository object, and an error if there is any.
-func (c *FakeRepositories) Get(name string, options v1.GetOptions) (result *registryv1.Repository, err error) {
+func (c *FakeRepositories) Get(ctx context.Context, name string, options v1.GetOptions) (result *registryv1.Repository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(repositoriesResource, c.ns, name), &registryv1.Repository{})
 
@@ -52,7 +54,7 @@ func (c *FakeRepositories) Get(name string, options v1.GetOptions) (result *regi
 }
 
 // List takes label and field selectors, and returns the list of Repositories that match those selectors.
-func (c *FakeRepositories) List(opts v1.ListOptions) (result *registryv1.RepositoryList, err error) {
+func (c *FakeRepositories) List(ctx context.Context, opts v1.ListOptions) (result *registryv1.RepositoryList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(repositoriesResource, repositoriesKind, c.ns, opts), &registryv1.RepositoryList{})
 
@@ -74,14 +76,14 @@ func (c *FakeRepositories) List(opts v1.ListOptions) (result *registryv1.Reposit
 }
 
 // Watch returns a watch.Interface that watches the requested repositories.
-func (c *FakeRepositories) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeRepositories) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(repositoriesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a repository and creates it.  Returns the server's representation of the repository, and an error, if there is any.
-func (c *FakeRepositories) Create(repository *registryv1.Repository) (result *registryv1.Repository, err error) {
+func (c *FakeRepositories) Create(ctx context.Context, repository *registryv1.Repository, opts v1.CreateOptions) (result *registryv1.Repository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(repositoriesResource, c.ns, repository), &registryv1.Repository{})
 
@@ -92,7 +94,7 @@ func (c *FakeRepositories) Create(repository *registryv1.Repository) (result *re
 }
 
 // Update takes the representation of a repository and updates it. Returns the server's representation of the repository, and an error, if there is any.
-func (c *FakeRepositories) Update(repository *registryv1.Repository) (result *registryv1.Repository, err error) {
+func (c *FakeRepositories) Update(ctx context.Context, repository *registryv1.Repository, opts v1.UpdateOptions) (result *registryv1.Repository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(repositoriesResource, c.ns, repository), &registryv1.Repository{})
 
@@ -104,7 +106,7 @@ func (c *FakeRepositories) Update(repository *registryv1.Repository) (result *re
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeRepositories) UpdateStatus(repository *registryv1.Repository) (*registryv1.Repository, error) {
+func (c *FakeRepositories) UpdateStatus(ctx context.Context, repository *registryv1.Repository, opts v1.UpdateOptions) (*registryv1.Repository, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(repositoriesResource, "status", c.ns, repository), &registryv1.Repository{})
 
@@ -115,7 +117,7 @@ func (c *FakeRepositories) UpdateStatus(repository *registryv1.Repository) (*reg
 }
 
 // Delete takes name of the repository and deletes it. Returns an error if one occurs.
-func (c *FakeRepositories) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeRepositories) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(repositoriesResource, c.ns, name), &registryv1.Repository{})
 
@@ -123,15 +125,15 @@ func (c *FakeRepositories) Delete(name string, options *v1.DeleteOptions) error 
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeRepositories) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(repositoriesResource, c.ns, listOptions)
+func (c *FakeRepositories) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(repositoriesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &registryv1.RepositoryList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched repository.
-func (c *FakeRepositories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *registryv1.Repository, err error) {
+func (c *FakeRepositories) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *registryv1.Repository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(repositoriesResource, c.ns, name, pt, data, subresources...), &registryv1.Repository{})
 

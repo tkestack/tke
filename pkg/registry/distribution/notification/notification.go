@@ -19,14 +19,16 @@
 package notification
 
 import (
+	"context"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	restclient "k8s.io/client-go/rest"
 	"net/http"
 	"regexp"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	restclient "k8s.io/client-go/rest"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/registry/distribution/tenant"
@@ -100,7 +102,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			user = "anonymous"
 		}
 
-		if err := updateRepository(h.registryClient, tenantID, namespace, action, repoName, tag, digest); err != nil {
+		if err := updateRepository(req.Context(), h.registryClient, tenantID, namespace, action, repoName, tag, digest); err != nil {
 			log.Error("Failed to handler distribution notification event",
 				log.String("tenantID", tenantID),
 				log.String("namespace", namespace),
@@ -115,8 +117,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func updateRepository(registryClient *registryinternalclient.RegistryClient, tenantID, namespace, action, repoName, tag, digest string) error {
-	namespaceList, err := registryClient.Namespaces().List(metav1.ListOptions{
+func updateRepository(ctx context.Context, registryClient *registryinternalclient.RegistryClient, tenantID, namespace, action, repoName, tag, digest string) error {
+	namespaceList, err := registryClient.Namespaces().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, namespace),
 	})
 	if err != nil {
@@ -126,7 +128,7 @@ func updateRepository(registryClient *registryinternalclient.RegistryClient, ten
 		return fmt.Errorf("namespace %s in tenant %s not exist", namespace, tenantID)
 	}
 	namespaceObject := namespaceList.Items[0]
-	repoList, err := registryClient.Repositories(namespaceObject.ObjectMeta.Name).List(metav1.ListOptions{
+	repoList, err := registryClient.Repositories(namespaceObject.ObjectMeta.Name).List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s,spec.namespaceName=%s", tenantID, repoName, namespace),
 	})
 	if err != nil {
@@ -140,19 +142,19 @@ func updateRepository(registryClient *registryinternalclient.RegistryClient, ten
 
 	switch action {
 	case "push":
-		return pushRepository(registryClient, &namespaceObject, repoObject, repoName, tag, digest)
+		return pushRepository(ctx, registryClient, &namespaceObject, repoObject, repoName, tag, digest)
 	case "pull":
-		return pullRepository(registryClient, &namespaceObject, repoObject, repoName, tag)
+		return pullRepository(ctx, registryClient, &namespaceObject, repoObject, repoName, tag)
 	}
 
 	return fmt.Errorf("unknown action in distribution notification event handler")
 }
 
-func pushRepository(registryClient *registryinternalclient.RegistryClient, namespace *registry.Namespace, repository *registry.Repository, repoName, tag, digest string) error {
+func pushRepository(ctx context.Context, registryClient *registryinternalclient.RegistryClient, namespace *registry.Namespace, repository *registry.Repository, repoName, tag, digest string) error {
 	needIncreaseRepoCount := false
 	if repository == nil {
 		needIncreaseRepoCount = true
-		if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).Create(&registry.Repository{
+		if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).Create(ctx, &registry.Repository{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: namespace.ObjectMeta.Name,
 			},
@@ -172,7 +174,7 @@ func pushRepository(registryClient *registryinternalclient.RegistryClient, names
 					},
 				},
 			},
-		}); err != nil {
+		}, metav1.CreateOptions{}); err != nil {
 			log.Error("Failed to create repository while received notification",
 				log.String("tenantID", namespace.Spec.TenantID),
 				log.String("namespace", namespace.Spec.Name),
@@ -194,7 +196,7 @@ func pushRepository(registryClient *registryinternalclient.RegistryClient, names
 						Digest:      digest,
 						TimeCreated: metav1.Now(),
 					}
-					if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).UpdateStatus(repository); err != nil {
+					if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).UpdateStatus(ctx, repository, metav1.UpdateOptions{}); err != nil {
 						log.Error("Failed to update repository tag while received notification",
 							log.String("tenantID", namespace.Spec.TenantID),
 							log.String("namespace", namespace.Spec.Name),
@@ -214,7 +216,7 @@ func pushRepository(registryClient *registryinternalclient.RegistryClient, names
 				Digest:      digest,
 				TimeCreated: metav1.Now(),
 			})
-			if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).UpdateStatus(repository); err != nil {
+			if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).UpdateStatus(ctx, repository, metav1.UpdateOptions{}); err != nil {
 				log.Error("Failed to create repository tag while received notification",
 					log.String("tenantID", namespace.Spec.TenantID),
 					log.String("namespace", namespace.Spec.Name),
@@ -229,7 +231,7 @@ func pushRepository(registryClient *registryinternalclient.RegistryClient, names
 	if needIncreaseRepoCount {
 		// update namespace repo count
 		namespace.Status.RepoCount = namespace.Status.RepoCount + 1
-		if _, err := registryClient.Namespaces().UpdateStatus(namespace); err != nil {
+		if _, err := registryClient.Namespaces().UpdateStatus(ctx, namespace, metav1.UpdateOptions{}); err != nil {
 			log.Error("Failed to update namespace repo count while received notification",
 				log.String("tenantID", namespace.Spec.TenantID),
 				log.String("namespace", namespace.Spec.Name),
@@ -242,12 +244,12 @@ func pushRepository(registryClient *registryinternalclient.RegistryClient, names
 	return nil
 }
 
-func pullRepository(registryClient *registryinternalclient.RegistryClient, namespace *registry.Namespace, repository *registry.Repository, repoName, tag string) error {
+func pullRepository(ctx context.Context, registryClient *registryinternalclient.RegistryClient, namespace *registry.Namespace, repository *registry.Repository, repoName, tag string) error {
 	if repository == nil {
 		return fmt.Errorf("repository %s not exist", repoName)
 	}
 	repository.Status.PullCount = repository.Status.PullCount + 1
-	if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).UpdateStatus(repository); err != nil {
+	if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).UpdateStatus(ctx, repository, metav1.UpdateOptions{}); err != nil {
 		log.Error("Failed to update repository pull count while received notification",
 			log.String("tenantID", namespace.Spec.TenantID),
 			log.String("namespace", namespace.Spec.Name),

@@ -19,6 +19,7 @@
 package localidentity
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -85,7 +86,7 @@ func NewController(client clientset.Interface, localIdentityInformer authv1infor
 				old, ok1 := oldObj.(*v1.LocalIdentity)
 				cur, ok2 := newObj.(*v1.LocalIdentity)
 				if ok1 && ok2 && controller.needsUpdate(old, cur) {
-					log.Info("Update enqueue")
+					log.Info("Update enqueue", log.String("localidentity", cur.Name))
 					controller.enqueue(newObj)
 				}
 			},
@@ -206,7 +207,7 @@ func (c *Controller) syncItem(key string) error {
 	default:
 		// Only check deleting localIdentity for now
 		if localIdentity.Status.Phase == v1.LocalIdentityDeleting {
-			err = c.localIdentityedResourcesDeleter.Delete(key)
+			err = c.localIdentityedResourcesDeleter.Delete(context.Background(), key)
 		}
 
 		log.Debug("Handle localIdentity", log.Any("localIdentity", localIdentity))

@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -26,14 +27,16 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/pkg/platform/util"
+	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
+	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 // MachineDeleterInterface to delete a machine with all resources in it.
 type MachineDeleterInterface interface {
-	Delete(name string) error
+	Delete(ctx context.Context, name string) error
 }
 
 // NewMachineDeleter creates the machineeleter object and returns it.
@@ -78,11 +81,11 @@ type machineDeleter struct {
 // Returns ResourcesRemainingError if it deleted some resources but needs
 // to wait for them to go away.
 // Caller is expected to keep calling this until it succeeds.
-func (d *machineDeleter) Delete(name string) error {
+func (d *machineDeleter) Delete(ctx context.Context, name string) error {
 	// Multiple controllers may edit a machine during termination
 	// first get the latest state of the machine before proceeding
 	// if the machine was deleted already, don't do anything
-	machine, err := d.machineClient.Get(name, metav1.GetOptions{})
+	machine, err := d.machineClient.Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -116,7 +119,7 @@ func (d *machineDeleter) Delete(name string) error {
 	}
 
 	// there may still be content for us to remove
-	err = d.deleteAllContent(machine)
+	err = d.deleteAllContent(ctx, machine)
 	if err != nil {
 		return err
 	}
@@ -142,12 +145,12 @@ func (d *machineDeleter) Delete(name string) error {
 
 // Deletes the given machine.
 func (d *machineDeleter) deleteMachine(machine *v1.Machine) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := machine.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.machineClient.Delete(machine.Name, opts)
+	err := d.machineClient.Delete(context.Background(), machine.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -171,7 +174,7 @@ func (d *machineDeleter) retryOnConflictError(machine *v1.Machine, fn updateMach
 			return nil, err
 		}
 		prevMachine := latestMachine
-		latestMachine, err = d.machineClient.Get(latestMachine.Name, metav1.GetOptions{})
+		latestMachine, err = d.machineClient.Get(context.Background(), latestMachine.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +193,7 @@ func (d *machineDeleter) updateMachineStatusFunc(machine *v1.Machine) (*v1.Machi
 	newMachine.ObjectMeta = machine.ObjectMeta
 	newMachine.Status = machine.Status
 	newMachine.Status.Phase = v1.MachineTerminating
-	return d.machineClient.UpdateStatus(&newMachine)
+	return d.machineClient.UpdateStatus(context.Background(), &newMachine, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the machine.Spec.Finalizers is an empty list
@@ -221,7 +224,7 @@ func (d *machineDeleter) finalizeMachine(machine *v1.Machine) (*v1.Machine, erro
 		Name(machineFinalize.Name).
 		SubResource("finalize").
 		Body(&machineFinalize).
-		Do().
+		Do(context.Background()).
 		Into(machine)
 
 	if err != nil {
@@ -233,19 +236,20 @@ func (d *machineDeleter) finalizeMachine(machine *v1.Machine) (*v1.Machine, erro
 	return machine, err
 }
 
-type deleteResourceFunc func(deleter *machineDeleter, machine *v1.Machine) error
+type deleteResourceFunc func(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
+	deleteMachineProvider,
 	deleteNode,
 }
 
 // deleteAllContent will use the client to delete each resource identified in machine.
-func (d *machineDeleter) deleteAllContent(machine *v1.Machine) error {
-	log.Debug("Machine controller - deleteAllContent", log.String("machineName", machine.ObjectMeta.Name))
+func (d *machineDeleter) deleteAllContent(ctx context.Context, machine *v1.Machine) error {
+	log.Debug("Machine controller - deleteAllContent", log.String("machineName", machine.Name))
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
-		err := deleteFunc(d, machine)
+		err := deleteFunc(ctx, d, machine)
 		if err != nil {
 			// If there is an error, hold on to it but proceed with all the remaining resource.
 			errs = append(errs, err)
@@ -256,22 +260,41 @@ func (d *machineDeleter) deleteAllContent(machine *v1.Machine) error {
 		return utilerrors.NewAggregate(errs)
 	}
 
-	log.Debug("Machine controller - deletedAllContent", log.String("machineName", machine.ObjectMeta.Name))
+	log.Debug("Machine controller - deletedAllContent", log.String("machineName", machine.Name))
 	return nil
 }
 
-func deleteNode(deleter *machineDeleter, machine *v1.Machine) error {
-	log.Debug("Machine controller - deleteNode", log.String("machineName", machine.ObjectMeta.Name))
+func deleteMachineProvider(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error {
+	log.Info("Machine controller - deleteMachineProvider", log.String("machineName", machine.Name))
 
-	clientset, err := util.BuildExternalClientSetWithName(deleter.platformClient, machine.Spec.ClusterName)
+	provider, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-		return nil
+		panic(err)
+	}
+	cluster, err := typesv1.GetClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
+	if err != nil {
+		return err
 	}
 
-	err = clientset.CoreV1().Nodes().Delete(machine.Spec.IP, &metav1.DeleteOptions{})
+	return provider.OnDelete(ctx, machine, cluster)
+}
+
+func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error {
+	log.Debug("Machine controller - deleteNode", log.String("machineName", machine.Name))
+
+	cluster, err := typesv1.GetClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
+	if err != nil {
+		return err
+	}
+	if cluster.Status.Phase == platformv1.ClusterTerminating {
+		return nil
+	}
+	clientset, err := cluster.Clientset()
+	if err != nil {
+		return err
+	}
+
+	err = clientset.CoreV1().Nodes().Delete(context.Background(), machine.Spec.IP, metav1.DeleteOptions{})
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
