@@ -29,18 +29,7 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
 
   render() {
     let { actions, clusterCreationState, createClusterFlow, route } = this.props,
-      {
-        v_apiServer,
-        v_certFile,
-        port,
-        v_port,
-        v_name,
-        v_token,
-        apiServer,
-        certFile,
-        name,
-        token
-      } = clusterCreationState;
+      { v_apiServer, v_certFile, v_name, v_token, apiServer, certFile, name, token } = clusterCreationState;
     const workflow = createClusterFlow;
     const action = actions.workflow.createCluster;
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];
@@ -59,6 +48,20 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
     const perform = () => {
       actions.validate.clusterCreation.validateclusterCreationState();
       if (validateClusterCreationAction._validateclusterCreationState(clusterCreationState)) {
+        let tempName = apiServer.substring(8);
+        let tempSplit = tempName.split(':');
+        let host = tempSplit[0];
+        let path = '',
+          port = '';
+        if (host.indexOf('/') !== -1) {
+          path = host.substring(host.indexOf('/'));
+          port = '443';
+        } else {
+          port = tempSplit[1] ? tempSplit[1].split('/')[0] : '443';
+          if (tempSplit[1] && tempSplit[1].indexOf('/') !== -1) {
+            path = tempSplit[1] ? tempSplit[1].substring(tempSplit[1].indexOf('/')) : '';
+          }
+        }
         let certIsBase64;
         try {
           let certOrigin = window.atob(clusterCreationState.certFile);
@@ -79,9 +82,10 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
           status: {
             addresses: [
               {
-                host: clusterCreationState.apiServer,
+                host: host,
                 type: 'Advertise',
-                port: +clusterCreationState.port
+                port: port,
+                path: path
               }
             ],
             credential: {
@@ -135,15 +139,6 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
                 validator={v_apiServer}
                 onChange={value => actions.clusterCreation.updateClusterCreationState({ apiServer: value })}
                 onBlur={actions.validate.clusterCreation.validateApiServer}
-              />
-              <InputField
-                type="text"
-                value={port}
-                placeholder={t('请输入 port')}
-                tipMode="popup"
-                validator={v_port}
-                onChange={value => actions.clusterCreation.updateClusterCreationState({ port: value })}
-                onBlur={actions.validate.clusterCreation.validatePort}
               />
             </FormPanel.Item>
             <FormPanel.Item label="CertFile">
