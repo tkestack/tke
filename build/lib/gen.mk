@@ -23,6 +23,7 @@ GOGO_PROTOBUF_DIR = $(shell go list -f '{{ .Dir }}' -m github.com/gogo/protobuf)
 EXT_PB_APIS = "k8s.io/api/core/v1 k8s.io/api/apps/v1"
 # set the code generator image version
 CODE_GENERATOR_VERSION := v1.18.2
+FIND := find . ! -path './pkg/platform/provider/baremetal/apis/*'
 
 .PHONY: gen.run
 gen.run: gen.clean gen.api gen.openapi gen.gateway gen.registry gen.monitor gen.audit
@@ -109,7 +110,7 @@ gen.openapi:
 .PHONY: gen.clean
 gen.clean:
 	@rm -rf ./api/client/{clientset,informers,listers}
-	@find . -type f -name 'generated.*' -delete
-	@find . -type f -name 'zz_generated*.go' -delete
-	@find . -type f -name 'types_swagger_doc_generated.go' -delete
+	@$(FIND) -type f -name 'generated.*' -delete
+	@$(FIND) -type f -name 'zz_generated*.go' -delete
+	@$(FIND) -type f -name 'types_swagger_doc_generated.go' -delete
 

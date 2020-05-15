@@ -1,10 +1,8 @@
 /*
- * License header:
- *
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the “License”); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -18,36 +16,14 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package hash
+package json
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
-	"hash"
-	"io/ioutil"
-	"os"
-)
+import "encoding/json"
 
-func Sha256WithFile(filename string) (string, error) {
-	h := sha256.New()
-	return SumWithFile(h, filename)
-}
-
-func SumWithFile(h hash.Hash, filename string) (string, error) {
-	f, err := os.Open(filename)
+func Merge(dst interface{}, src interface{}) error {
+	data, err := json.Marshal(src)
 	if err != nil {
-		return "", err
+		return err
 	}
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		return "", err
-	}
-
-	return Sum(h, data), nil
-}
-
-func Sum(h hash.Hash, data []byte) string {
-	return hex.EncodeToString(h.Sum(data))
+	return json.Unmarshal(data, dst)
 }

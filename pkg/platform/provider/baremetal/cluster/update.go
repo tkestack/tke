@@ -65,9 +65,10 @@ func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error {
-	initOption := p.getKubeadmInitOption(c)
+	kubeadmConfig := p.getKubeadmConfig(c)
 	exptectCertSANs := GetAPIServerCertSANs(c.Cluster)
 
+	needUpload := false
 	for _, machine := range c.Spec.Machines {
 		s, err := machine.SSH()
 		if err != nil {
@@ -95,11 +96,20 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 			s.CombinedOutput(fmt.Sprintf("rm -f %s", file))
 		}
 
-		err = kubeadm.Init(s, initOption, "certs apiserver")
+		err = kubeadm.Init(s, kubeadmConfig, "certs apiserver")
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
 		err = kubeadm.RestartContainerByFilter(s, kubeadm.DockerFilterForControlPlane("kube-apiserver"))
+		if err != nil {
+			return err
+		}
+
+		needUpload = true
+	}
+
+	if needUpload {
+		err := p.EnsureKubeadmInitUploadConfigPhase(ctx, c)
 		if err != nil {
 			return err
 		}

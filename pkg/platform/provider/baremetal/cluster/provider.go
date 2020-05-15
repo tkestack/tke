@@ -25,6 +25,7 @@ import (
 	"github.com/AlekSi/pointer"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
+	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
@@ -144,6 +145,7 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	if cluster.Spec.NetworkDevice == "" {
 		cluster.Spec.NetworkDevice = "eth0"
 	}
+
 	if cluster.Spec.Features.IPVS == nil {
 		cluster.Spec.Features.IPVS = pointer.ToBool(true)
 	}
@@ -152,6 +154,7 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 			cluster.Spec.Features.CSIOperator.Version = csioperatorimage.LatestVersion
 		}
 	}
+
 	if cluster.Spec.Properties.MaxClusterServiceNum == nil && cluster.Spec.ServiceCIDR == nil {
 		cluster.Spec.Properties.MaxClusterServiceNum = pointer.ToInt32(256)
 	}
@@ -160,6 +163,10 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	}
 	if cluster.Spec.Features.SkipConditions == nil {
 		cluster.Spec.Features.SkipConditions = p.config.Feature.SkipConditions
+	}
+
+	if cluster.Spec.Etcd == nil {
+		cluster.Spec.Etcd = &platform.Etcd{Local: &platform.LocalEtcd{}}
 	}
 
 	return nil

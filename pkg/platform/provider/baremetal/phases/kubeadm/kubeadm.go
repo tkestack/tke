@@ -112,23 +112,23 @@ type InitOption struct {
 	KubeProxyMode string
 }
 
-func Init(s ssh.Interface, option *InitOption, extraCmd string) error {
-	configData, err := template.ParseFile(path.Join(constants.ConfDir, kubeadmConfigFile), option)
-	if err != nil {
-		return errors.Wrap(err, "parse kubeadm config file error")
-	}
-	err = s.WriteFile(bytes.NewReader(configData), option.KubeadmConfigFileName)
+func Init(s ssh.Interface, kubeadmConfig *Config, extraCmd string) error {
+	configData, err := kubeadmConfig.Marshal()
 	if err != nil {
 		return err
 	}
 
-	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s",
-		extraCmd, option.KubeadmConfigFileName)
-	stdout, stderr, exit, err := s.Exec(cmd)
-	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
+	if err != nil {
+		return err
 	}
-	log.Info(stdout)
+
+	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s", extraCmd, constants.KubeadmConfigFileName)
+	out, err := s.CombinedOutput(cmd)
+	if err != nil {
+		return fmt.Errorf("exec %q error: %w", cmd, err)
+	}
+	log.Info(string(out))
 
 	return nil
 }
@@ -281,4 +281,13 @@ func RestartContainerByFilter(s ssh.Interface, filter string) error {
 	}
 
 	return nil
+}
+
+func GetKubeadmConfig(option *InitOption) ([]byte, error) {
+	configData, err := template.ParseFile(path.Join(constants.ConfDir, kubeadmConfigFile), option)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse kubeadm config file error")
+	}
+
+	return configData, nil
 }

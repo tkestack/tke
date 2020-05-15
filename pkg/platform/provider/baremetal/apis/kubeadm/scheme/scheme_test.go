@@ -1,6 +1,4 @@
 /*
- * License header:
- *
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
@@ -18,36 +16,27 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package hash
+package scheme
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"hash"
-	"io/ioutil"
-	"os"
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/runtime"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 )
 
-func Sha256WithFile(filename string) (string, error) {
-	h := sha256.New()
-	return SumWithFile(h, filename)
-}
-
-func SumWithFile(h hash.Hash, filename string) (string, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return "", err
+func Test_Decode(t *testing.T) {
+	clusterConfig := &v1beta2.ClusterConfiguration{
+		KubernetesVersion: "1.18.2",
+		ClusterName:       "test",
 	}
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		return "", err
-	}
-
-	return Sum(h, data), nil
-}
-
-func Sum(h hash.Hash, data []byte) string {
-	return hex.EncodeToString(h.Sum(data))
+	const mediaType = runtime.ContentTypeYAML
+	info, ok := runtime.SerializerInfoForMediaType(Codecs.SupportedMediaTypes(), mediaType)
+	assert.True(t, ok)
+	encoder := Codecs.EncoderForVersion(info.Serializer, v1beta2.SchemeGroupVersion)
+	data, err := runtime.Encode(encoder, clusterConfig)
+	assert.Nil(t, err)
+	fmt.Println(string(data))
 }
