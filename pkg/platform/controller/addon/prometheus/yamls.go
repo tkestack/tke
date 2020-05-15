@@ -310,7 +310,7 @@ func scrapeConfigForPrometheus() string {
         regex: (.+)
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_current_inflight_requests|apiserver_dropped_requests_total|apiserver_request_total|apiserver_request_duration_seconds_(.*)|node_sockstat_TCP_inuse|node_network_transmit_bytes_total|node_network_receive_bytes_total|node_filesystem_size_bytes|node_filesystem_avail_bytes|node_disk_written_bytes_total|node_disk_read_bytes_total|node_disk_writes_completed_total|node_disk_reads_completed_total'
+        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_current_inflight_requests|apiserver_dropped_requests_total|apiserver_request_total|apiserver_request_duration_seconds_(.*)|node_sockstat_TCP_inuse|node_network_transmit_bytes_total|node_network_receive_bytes_total|node_filesystem_size_bytes|node_filesystem_avail_bytes|node_disk_written_bytes_total|node_disk_read_bytes_total|node_disk_writes_completed_total|node_disk_reads_completed_total|node_cpu_seconds_total|node_memory_Buffers_bytes|node_memory_Cached_bytes|node_memory_MemTotal_bytes|node_memory_MemFree_bytes'
         action: keep
       - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
@@ -627,14 +627,20 @@ groups:
   - record: k8s_node_status_ready
     expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role)  kube_node_labels)  without(condition, status)
 
+  - record: k8s_node_status_ready_without_node_role
+    expr: max(kube_node_status_condition{condition="Ready", status="true"})  without(condition, status)
+
   - record: k8s_node_pod_restart_total
     expr: sum(k8s_pod_restart_total) without (pod_name,workload_kind,workload_name,namespace)
 
   - record: k8s_node_cpu_usage
-    expr: sum(k8s_pod_cpu_core_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left kube_node_status_capacity_cpu_cores
+    expr: (100 - sum (irate(node_cpu_seconds_total{mode="idle"}[5m])) by (node) / count (irate(node_cpu_seconds_total{mode="idle"}[5m])) by (node) * 100) * on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_mem_usage
-    expr: sum(k8s_pod_mem_usage_bytes) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left kube_node_status_capacity_memory_bytes
+    expr: ((node_memory_MemTotal_bytes - node_memory_MemFree_bytes) * 100 / node_memory_MemTotal_bytes)  * on(node) group_left(node_role, device_type) kube_node_labels
+
+  - record: k8s_node_mem_usage_no_cache
+    expr: ((node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Cached_bytes - node_memory_Buffers_bytes) * 100 / node_memory_MemTotal_bytes)  * on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_gpu_usage
     expr: sum(k8s_pod_gpu_used) without(namespace,pod_name,workload_kind,workload_name) *100 / on(node) group_left kube_node_status_capacity_gpu
