@@ -8,7 +8,7 @@ Secret 可用于存储密码、令牌、密钥等敏感信息，降低直接对�
 2. 选择需要创建 Secret 的【业务】下相应的【命名空间】，展开【配置管理】列表，进入 Secret 管理页面。
 3. 单击【新建】，进入“新建 Secret ”页面。
 4. 在“新建 Secret ”页面，根据实际需求，进行如下参数设置。如下图所示：
-![](https://main.qcloudimg.com/raw/a0c5ec51165aa0cfff4bfbfc303246b7.png)
+![](../../../../../../images/secret.png)
  - **名称**：请输入自定义名称。
  - **Secret类型**：提供【Opaque】和【Dockercfg】两种类型，请根据实际需求进行选择。
         - **Opaque**：适用于保存秘钥证书和配置文件，Value 将以 base64 格式编码。
