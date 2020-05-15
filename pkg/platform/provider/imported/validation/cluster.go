@@ -19,6 +19,8 @@
 package validation
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -52,7 +54,15 @@ func ValidatClusterAddresses(addresses []platform.ClusterAddress, fldPath *field
 			for _, msg := range validation.IsValidPortNum(int(address.Port)) {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("port"), address.Port, msg))
 			}
-			err := utilvalidation.IsHTTPSReachle(address.Host, address.Port, 5*time.Second)
+			if address.Path != "" && !strings.HasPrefix(address.Path, "/") {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("path"), address.Path, "must start by `/`"))
+			}
+
+			url := fmt.Sprintf("https://%s:%d", address.Host, address.Port)
+			if address.Path != "" {
+				url = fmt.Sprintf("%s%s", url, address.Path)
+			}
+			err := utilvalidation.IsValiadURL(url, 5*time.Second)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath, address, err.Error()))
 			}

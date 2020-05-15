@@ -251,6 +251,7 @@ type ClusterAddress struct {
 	// The cluster address.
 	Host string `json:"host" protobuf:"bytes,2,opt,name=host"`
 	Port int32  `json:"port" protobuf:"varint,3,name=port"`
+	Path string `json:"path" protobuf:"bytes,4,opt,name=path"`
 }
 
 // +genclient

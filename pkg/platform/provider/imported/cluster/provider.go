@@ -82,10 +82,6 @@ func (p *Provider) ValidateCredential(cluster clusterprovider.InternalCluster) f
 
 	credential := cluster.ClusterCredential
 
-	if len(credential.CACert) == 0 {
-		allErrs = append(allErrs, field.Required(field.NewPath("caCert"), "must specify CA root certificate"))
-	}
-
 	if credential.Token == nil && credential.ClientKey == nil && credential.ClientCert == nil {
 		allErrs = append(allErrs, field.Required(field.NewPath(""), "must specify at least one of token or client certificate authentication"))
 	} else {
