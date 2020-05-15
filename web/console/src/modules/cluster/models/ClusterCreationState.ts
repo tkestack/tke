@@ -11,10 +11,6 @@ export interface ClusterCreationState extends Identifiable {
   apiServer?: string;
   v_apiServer?: Validation;
 
-  /** port */
-  port?: string;
-  v_port?: Validation;
-
   /**证书 */
   certFile?: string;
   v_certFile?: Validation;
