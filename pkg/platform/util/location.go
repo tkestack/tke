@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
@@ -63,7 +64,7 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
-	host, err := ClusterHost(cluster)
+	address, err := ClusterAddress(cluster)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
@@ -72,12 +73,16 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 	if clusterCredential.Token != nil {
 		token = *clusterCredential.Token
 	}
+	urlPath := requestInfo.Path
+	if address.Path != "" {
+		urlPath = path.Join(address.Path, requestInfo.Path)
+	}
 
 	// Otherwise, return the requested scheme and port, and the proxy transport
 	return &url.URL{
 		Scheme: "https",
-		Host:   host,
-		Path:   requestInfo.Path,
+		Host:   fmt.Sprintf("%v:%v", address.Host, address.Port),
+		Path:   urlPath,
 	}, transport, token, nil
 }
 

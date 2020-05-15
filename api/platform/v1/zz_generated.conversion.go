@@ -1376,6 +1376,7 @@ func autoConvert_v1_ClusterAddress_To_platform_ClusterAddress(in *ClusterAddress
 	out.Type = platform.AddressType(in.Type)
 	out.Host = in.Host
 	out.Port = in.Port
+	out.Path = in.Path
 	return nil
 }
 
@@ -1388,6 +1389,7 @@ func autoConvert_platform_ClusterAddress_To_v1_ClusterAddress(in *platform.Clust
 	out.Type = AddressType(in.Type)
 	out.Host = in.Host
 	out.Port = in.Port
+	out.Path = in.Path
 	return nil
 }
 

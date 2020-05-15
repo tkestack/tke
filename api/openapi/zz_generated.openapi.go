@@ -43248,8 +43248,14 @@ func schema_tke_api_platform_v1_ClusterAddress(ref common.ReferenceCallback) com
 							Format: "int32",
 						},
 					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
-				Required: []string{"type", "host", "port"},
+				Required: []string{"type", "host", "port", "path"},
 			},
 		},
 	}

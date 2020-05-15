@@ -248,6 +248,7 @@ type ClusterAddress struct {
 	// The cluster address.
 	Host string
 	Port int32
+	Path string
 }
 
 // +genclient
