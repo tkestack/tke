@@ -1,6 +1,4 @@
 /*
- * License header:
- *
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
@@ -18,36 +16,24 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package hash
+package kubeadm
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"hash"
-	"io/ioutil"
-	"os"
+	"fmt"
+	"testing"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 )
 
-func Sha256WithFile(filename string) (string, error) {
-	h := sha256.New()
-	return SumWithFile(h, filename)
-}
-
-func SumWithFile(h hash.Hash, filename string) (string, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return "", err
+func TestConfig_Marshal(t *testing.T) {
+	c := &Config{
+		InitConfiguration: &v1beta2.InitConfiguration{
+			TypeMeta:       metav1.TypeMeta{},
+			CertificateKey: "a",
+		},
 	}
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		return "", err
-	}
-
-	return Sum(h, data), nil
-}
-
-func Sum(h hash.Hash, data []byte) string {
-	return hex.EncodeToString(h.Sum(data))
+	data, err := c.Marshal()
+	fmt.Println(string(data), err)
 }

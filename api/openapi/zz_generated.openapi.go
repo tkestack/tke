@@ -929,6 +929,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.CronHPAProxyOptions":                         schema_tke_api_platform_v1_CronHPAProxyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPASpec":                                 schema_tke_api_platform_v1_CronHPASpec(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPAStatus":                               schema_tke_api_platform_v1_CronHPAStatus(ref),
+		"tkestack.io/tke/api/platform/v1.Etcd":                                        schema_tke_api_platform_v1_Etcd(ref),
+		"tkestack.io/tke/api/platform/v1.ExternalEtcd":                                schema_tke_api_platform_v1_ExternalEtcd(ref),
 		"tkestack.io/tke/api/platform/v1.File":                                        schema_tke_api_platform_v1_File(ref),
 		"tkestack.io/tke/api/platform/v1.HA":                                          schema_tke_api_platform_v1_HA(ref),
 		"tkestack.io/tke/api/platform/v1.Helm":                                        schema_tke_api_platform_v1_Helm(ref),
@@ -946,6 +948,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.LBCFProxyOptions":                            schema_tke_api_platform_v1_LBCFProxyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.LBCFSpec":                                    schema_tke_api_platform_v1_LBCFSpec(ref),
 		"tkestack.io/tke/api/platform/v1.LBCFStatus":                                  schema_tke_api_platform_v1_LBCFStatus(ref),
+		"tkestack.io/tke/api/platform/v1.LocalEtcd":                                   schema_tke_api_platform_v1_LocalEtcd(ref),
 		"tkestack.io/tke/api/platform/v1.LogCollector":                                schema_tke_api_platform_v1_LogCollector(ref),
 		"tkestack.io/tke/api/platform/v1.LogCollectorList":                            schema_tke_api_platform_v1_LogCollectorList(ref),
 		"tkestack.io/tke/api/platform/v1.LogCollectorProxyOptions":                    schema_tke_api_platform_v1_LogCollectorProxyOptions(ref),
@@ -43997,12 +44000,18 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							Ref:         ref("k8s.io/api/core/v1.LocalObjectReference"),
 						},
 					},
+					"etcd": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Etcd holds configuration for etcd.",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.Etcd"),
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty"},
+			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd"},
 	}
 }
 
@@ -44465,6 +44474,82 @@ func schema_tke_api_platform_v1_CronHPAStatus(ref common.ReferenceCallback) comm
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_platform_v1_Etcd(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Etcd contains elements describing Etcd configuration.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"local": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Local provides configuration knobs for configuring the local etcd instance Local and External are mutually exclusive",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.LocalEtcd"),
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "External describes how to connect to an external etcd cluster Local and External are mutually exclusive",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.ExternalEtcd"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/platform/v1.ExternalEtcd", "tkestack.io/tke/api/platform/v1.LocalEtcd"},
+	}
+}
+
+func schema_tke_api_platform_v1_ExternalEtcd(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ExternalEtcd describes an external etcd cluster. Kubeadm has no knowledge of where certificate files live and they must be supplied.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"endpoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Endpoints of etcd members. Required for ExternalEtcd.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"caFile": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CAFile is an SSL Certificate Authority file used to secure etcd communication. Required if using a TLS connection.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"certFile": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CertFile is an SSL certification file used to secure etcd communication. Required if using a TLS connection.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"keyFile": {
+						SchemaProps: spec.SchemaProps{
+							Description: "KeyFile is an SSL key file used to secure etcd communication. Required if using a TLS connection.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"endpoints", "caFile", "certFile", "keyFile"},
+			},
+		},
 	}
 }
 
@@ -45147,6 +45232,70 @@ func schema_tke_api_platform_v1_LBCFStatus(ref common.ReferenceCallback) common.
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_platform_v1_LocalEtcd(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LocalEtcd describes that kubeadm should run an etcd cluster locally",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dataDir": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DataDir is the directory etcd will place its data. Defaults to \"/var/lib/etcd\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"extraArgs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ExtraArgs are extra arguments provided to the etcd binary when run inside a static pod.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"serverCertSANs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"peerCertSANs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"dataDir"},
+			},
+		},
 	}
 }
 

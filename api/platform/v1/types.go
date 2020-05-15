@@ -119,6 +119,9 @@ type ClusterSpec struct {
 	// If specified, provider must make sure is valid.
 	// +optional
 	ClusterCredentialRef *corev1.LocalObjectReference `json:"clusterCredentialRef,omitempty" probobuf:"bytes,20,opt,name=clusterCredentialRef" protobuf:"bytes,20,opt,name=clusterCredentialRef"`
+
+	// Etcd holds configuration for etcd.
+	Etcd *Etcd `json:"etcd,omitempty" protobuf:"bytes,21,opt,name=etcd"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -366,6 +369,53 @@ type ClusterProperty struct {
 	MaxNodePodNum *int32 `json:"maxNodePodNum,omitempty" protobuf:"bytes,2,opt,name=maxNodePodNum"`
 	// +optional
 	OversoldRatio map[string]string `json:"oversoldRatio,omitempty" protobuf:"bytes,3,opt,name=oversoldRatio"`
+}
+
+// Etcd contains elements describing Etcd configuration.
+type Etcd struct {
+
+	// Local provides configuration knobs for configuring the local etcd instance
+	// Local and External are mutually exclusive
+	Local *LocalEtcd `json:"local,omitempty" protobuf:"bytes,1,opt,name=local"`
+
+	// External describes how to connect to an external etcd cluster
+	// Local and External are mutually exclusive
+	External *ExternalEtcd `json:"external,omitempty" protobuf:"bytes,2,opt,name=external"`
+}
+
+// LocalEtcd describes that kubeadm should run an etcd cluster locally
+type LocalEtcd struct {
+	// DataDir is the directory etcd will place its data.
+	// Defaults to "/var/lib/etcd".
+	DataDir string `json:"dataDir" protobuf:"bytes,1,opt,name=dataDir"`
+
+	// ExtraArgs are extra arguments provided to the etcd binary
+	// when run inside a static pod.
+	ExtraArgs map[string]string `json:"extraArgs,omitempty" protobuf:"bytes,2,rep,name=extraArgs"`
+
+	// ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.
+	ServerCertSANs []string `json:"serverCertSANs,omitempty" protobuf:"bytes,3,rep,name=serverCertSANs"`
+	// PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.
+	PeerCertSANs []string `json:"peerCertSANs,omitempty" protobuf:"bytes,4,rep,name=peerCertSANs"`
+}
+
+// ExternalEtcd describes an external etcd cluster.
+// Kubeadm has no knowledge of where certificate files live and they must be supplied.
+type ExternalEtcd struct {
+	// Endpoints of etcd members. Required for ExternalEtcd.
+	Endpoints []string `json:"endpoints" protobuf:"bytes,1,rep,name=endpoints"`
+
+	// CAFile is an SSL Certificate Authority file used to secure etcd communication.
+	// Required if using a TLS connection.
+	CAFile string `json:"caFile" protobuf:"bytes,2,opt,name=caFile"`
+
+	// CertFile is an SSL certification file used to secure etcd communication.
+	// Required if using a TLS connection.
+	CertFile string `json:"certFile" protobuf:"bytes,3,opt,name=certFile"`
+
+	// KeyFile is an SSL key file used to secure etcd communication.
+	// Required if using a TLS connection.
+	KeyFile string `json:"keyFile" protobuf:"bytes,4,opt,name=keyFile"`
 }
 
 // ResourceList is a set of (resource name, quantity) pairs.

@@ -26,10 +26,12 @@ import (
 
 const (
 	// KubernetesDir is the directory Kubernetes owns for storing various configuration files
-	KubernetesDir             = "/etc/kubernetes/"
-	KubeletPodManifestDir     = KubernetesDir + "manifests/"
+	KubernetesDir         = "/etc/kubernetes/"
+	KubeletPodManifestDir = KubernetesDir + "manifests/"
+
 	SchedulerPolicyConfigFile = KubernetesDir + "scheduler-policy-config.json"
-	AuditWebhookConfigFile    = "audit-api-client-config.yaml"
+	AuditWebhookConfigFile    = KubernetesDir + "audit-api-client-config.yaml"
+	AuditPolicyConfigFile     = KubernetesDir + "audit-policy.yaml"
 
 	EtcdPodManifestFile                  = KubeletPodManifestDir + "etcd.yaml"
 	KubeAPIServerPodManifestFile         = KubeletPodManifestDir + "kube-apiserver.yaml"
@@ -88,11 +90,10 @@ const (
 	// This is a duplicate definition of the constant in pkg/controller/service/service_controller.go
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
 
-	ProviderDir           = "provider/baremetal/"
-	SrcDir                = ProviderDir + "res/"
-	ConfDir               = ProviderDir + "conf/"
-	ConfigFile            = ConfDir + "config.yaml"
-	AuditPolicyConfigFile = "audit-policy.yaml"
+	ProviderDir = "provider/baremetal/"
+	SrcDir      = ProviderDir + "res/"
+	ConfDir     = ProviderDir + "conf/"
+	ConfigFile  = ConfDir + "config.yaml"
 
 	ManifestsDir        = ProviderDir + "manifests/"
 	GPUManagerManifest  = ManifestsDir + "gpu-manager/gpu-manager.yaml"

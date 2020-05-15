@@ -1,6 +1,4 @@
 /*
- * License header:
- *
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
@@ -18,36 +16,27 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package hash
+package apiclient
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"hash"
-	"io/ioutil"
-	"os"
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-func Sha256WithFile(filename string) (string, error) {
-	h := sha256.New()
-	return SumWithFile(h, filename)
-}
-
-func SumWithFile(h hash.Hash, filename string) (string, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		return "", err
-	}
-
-	return Sum(h, data), nil
-}
-
-func Sum(h hash.Hash, data []byte) string {
-	return hex.EncodeToString(h.Sum(data))
+func TestCreateOrUpdateNamespace(t *testing.T) {
+	cfg, err := clientcmd.BuildConfigFromFlags("", "/Users/chenglong/.kube/config")
+	assert.Nil(t, err)
+	client := kubernetes.NewForConfigOrDie(cfg)
+	CreateOrUpdateNamespace(context.Background(), client, &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "a",
+		},
+	})
 }
