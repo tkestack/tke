@@ -801,7 +801,7 @@ func (c *Controller) checkLogCollectorStatus(
 			Get(ctx, daemonSetName, metav1.GetOptions{})
 
 		if err != nil || daemon.Status.DesiredNumberScheduled == 0 ||
-			daemon.Status.NumberAvailable < daemon.Status.DesiredNumberScheduled {
+			daemon.Status.NumberAvailable < 1 {
 			if time.Now().After(initDelay) {
 				if err != nil {
 					log.Errorf("check logagent %v status failed %v", LogCollector.Name, err)
