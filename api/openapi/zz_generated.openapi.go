@@ -42014,6 +42014,18 @@ func schema_tke_api_notify_v1_MessageSpec(ref common.ReferenceCallback) common.O
 							Format: "",
 						},
 					},
+					"alarmPolicyType": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"receiverChannelName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "receiverName", "receiverChannel", "identity"},
 			},

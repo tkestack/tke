@@ -255,6 +255,12 @@ message MessageSpec {
 
   // +optional
   optional string alarmPolicyName = 9;
+
+  // +optional
+  optional string alarmPolicyType = 10;
+
+  // +optional
+  optional string receiverChannelName = 11;
 }
 
 // MessageStatus represents information about the status of a message.
