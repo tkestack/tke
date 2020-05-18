@@ -35,9 +35,6 @@ export const validateClusterCreationAction = {
     };
   },
 
-  /**
-   * 校验apiserver地址是否正确
-   */
   _validateApiServer(name: string) {
     let status = 0,
       message = '',
@@ -56,7 +53,9 @@ export const validateClusterCreationAction = {
       let path = '',
         port = '';
       if (host.indexOf('/') !== -1) {
-        path = host.substring(host.indexOf('/'));
+        let index = host.indexOf('/');
+        path = host.substring(index);
+        host = host.substring(0, index);
         port = '443';
       } else {
         port = tempSplit[1] ? tempSplit[1].split('/')[0] : '443';
@@ -91,6 +90,7 @@ export const validateClusterCreationAction = {
 
     return { status, message };
   },
+
   validateApiServer() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { apiServer } = getState().clusterCreationState;
