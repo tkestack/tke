@@ -49,7 +49,7 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var components = Components{
 	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.4.7"},
-	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.6.7"},
+	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.6.9"},
 	Pause:              containerregistry.Image{Name: "pause", Tag: "3.1"},
 	NvidiaDevicePlugin: containerregistry.Image{Name: "nvidia-device-plugin", Tag: "1.0.0-beta4"},
 	Keepalived:         containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
