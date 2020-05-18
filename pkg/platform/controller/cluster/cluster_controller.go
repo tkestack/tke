@@ -200,12 +200,6 @@ func (c *Controller) syncCluster(key string) error {
 
 	cluster, err := c.lister.Get(name)
 
-	if err == nil {
-		if err := c.ensureSyncOldClusterCredential(context.Background(), cluster); err != nil {
-			return fmt.Errorf("sync old ClusterCredential error: %w", err)
-		}
-	}
-
 	switch {
 	case apierrors.IsNotFound(err):
 		log.Info("Cluster has been deleted. Attempting to cleanup resources", log.String("clusterName", key))
@@ -277,6 +271,10 @@ func (c *Controller) processClusterDelete(key string) error {
 
 func (c *Controller) handlePhase(ctx context.Context, key string, cachedCluster *cachedCluster, cluster *platformv1.Cluster) error {
 	var err error
+
+	if err := c.ensureSyncOldClusterCredential(context.Background(), cluster); err != nil {
+		return fmt.Errorf("sync old ClusterCredential error: %w", err)
+	}
 
 	switch cluster.Status.Phase {
 	case platformv1.ClusterInitializing:
