@@ -346,7 +346,7 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machin
 		return err
 	}
 
-	err = kubeadm.Install(machineSSH)
+	err = kubeadm.Install(machineSSH, cluster.Spec.Version)
 	if err != nil {
 		return err
 	}
@@ -369,7 +369,8 @@ func (p *Provider) EnsureJoinNode(ctx context.Context, machine *platformv1.Machi
 		BootstrapToken:       *cluster.ClusterCredential.BootstrapToken,
 		ControlPlaneEndpoint: host,
 	}
-	err = kubeadm.JoinNode(machineSSH, option)
+	config := p.getKubeadmJoinConfig(cluster, machine.Spec.IP)
+	err = kubeadm.JoinNode(machineSSH, option, config)
 	if err != nil {
 		return err
 	}

@@ -84,9 +84,9 @@ var _ = Describe("bootstrap", func() {
 
 	It("should bootstrap successfuly", func() {
 		By("install installer")
-		version := os.Getenv("VERSION")
-		cmd := fmt.Sprintf("wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-%s.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-%s.run.sha256 && chmod +x tke-installer-x86_64-%s.run && ./tke-installer-x86_64-%s.run",
-			version, version, version, version)
+		name := fmt.Sprintf("tke-installer-%s-%s-%s", os.Getenv("OS"), os.Getenv("ARCH"), os.Getenv("VERSION"))
+		cmd := fmt.Sprintf("wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/%s.run{,.sha256} && sha256sum --check --status %s.run.sha256 && chmod +x %s.run && ./%s.run",
+			name, name, name, name)
 		_, err := nodesSSH[0].CombinedOutput(cmd)
 		Expect(err).To(BeNil())
 

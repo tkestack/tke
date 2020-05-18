@@ -34,14 +34,28 @@ import (
 	"tkestack.io/tke/pkg/util/json"
 )
 
-func (p *Provider) getKubeadmConfig(c *v1.Cluster) *kubeadm.Config {
-	config := new(kubeadm.Config)
+func (p *Provider) getKubeadmInitConfig(c *v1.Cluster) *kubeadm.InitConfig {
+	config := new(kubeadm.InitConfig)
 	config.InitConfiguration = p.getInitConfiguration(c)
 	config.ClusterConfiguration = p.getClusterConfiguration(c)
 	config.KubeProxyConfiguration = p.getKubeProxyConfiguration(c)
 	config.KubeletConfiguration = p.getKubeletConfiguration(c)
 
 	return config
+}
+
+func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadmv1beta2.JoinConfiguration {
+	return &kubeadmv1beta2.JoinConfiguration{
+		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
+			Name: nodeName,
+			KubeletExtraArgs: map[string]string{
+				"pod-infra-container-image": images.Get().Pause.FullName(),
+			},
+		},
+		ControlPlane: &kubeadmv1beta2.JoinControlPlane{
+			CertificateKey: *c.ClusterCredential.CertificateKey,
+		},
+	}
 }
 
 func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfiguration {
@@ -57,6 +71,9 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 		},
 		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
 			Name: c.Spec.Machines[0].IP,
+			KubeletExtraArgs: map[string]string{
+				"pod-infra-container-image": images.Get().Pause.FullName(),
+			},
 		},
 		LocalAPIEndpoint: kubeadmv1beta2.APIEndpoint{
 			AdvertiseAddress: c.Spec.Machines[0].IP,
