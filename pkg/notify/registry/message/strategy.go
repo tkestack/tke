@@ -138,6 +138,9 @@ func MatchMessage(label labels.Selector, field fields.Selector) storage.Selectio
 			"spec.channelMessageID",
 			"status.phase",
 			"metadata.name",
+			"spec.alarmPolicyName",
+			"spec.alarmPolicyType",
+			"spec.receiverChannelName",
 		},
 	}
 }
@@ -146,11 +149,14 @@ func MatchMessage(label labels.Selector, field fields.Selector) storage.Selectio
 func ToSelectableFields(message *notify.Message) fields.Set {
 	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&message.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID":         message.Spec.TenantID,
-		"spec.receiverName":     message.Spec.ReceiverName,
-		"spec.username":         message.Spec.Username,
-		"spec.channelMessageID": message.Spec.ChannelMessageID,
-		"status.phase":          string(message.Status.Phase),
+		"spec.tenantID":            message.Spec.TenantID,
+		"spec.receiverName":        message.Spec.ReceiverName,
+		"spec.username":            message.Spec.Username,
+		"spec.channelMessageID":    message.Spec.ChannelMessageID,
+		"status.phase":             string(message.Status.Phase),
+		"spec.alarmPolicyName":     message.Spec.AlarmPolicyName,
+		"spec.alarmPolicyType":     message.Spec.AlarmPolicyType,
+		"spec.receiverChannelName": message.Spec.ReceiverChannelName,
 	}
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }

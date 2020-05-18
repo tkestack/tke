@@ -289,14 +289,16 @@ func (c *Controller) persistUpdate(ctx context.Context, messageRequest *v1.Messa
 }
 
 type sentMessage struct {
-	receiverName    string
-	receiverChannel v1.ReceiverChannel
-	identity        string
-	username        string
-	header          string
-	body            string
-	messageID       string
-	alarmPolicyName string
+	receiverName        string
+	receiverChannel     v1.ReceiverChannel
+	identity            string
+	username            string
+	header              string
+	body                string
+	messageID           string
+	alarmPolicyName     string
+	alarmPolicyType     string
+	receiverChannelName string
 }
 
 func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.MessageRequest) (sentMessages []sentMessage, failedReceiverErrors map[string]string) {
@@ -354,9 +356,15 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 		}
 		receivers = append(receivers, receiver)
 	}
-	var alarmPolicyName string
+	var (
+		alarmPolicyName string
+		alarmPolicyType string
+	)
 	if v, ok := messageRequest.Spec.Variables["alarmPolicyName"]; ok {
 		alarmPolicyName = v
+	}
+	if v, ok := messageRequest.Spec.Variables["alarmPolicyType"]; ok {
+		alarmPolicyType = v
 	}
 	if channel.Spec.Webhook != nil && template.Spec.Text != nil {
 		content, err := webhook.Send(channel.Spec.Webhook, template.Spec.Text, receivers, messageRequest.Spec.Variables)
@@ -365,11 +373,13 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 			return
 		}
 		sentMessages = append(sentMessages, sentMessage{
-			receiverName:    strings.Join(receiversSet.List(), ","),
-			receiverChannel: v1.ReceiverChannelWebhook,
-			identity:        channel.Spec.Webhook.URL,
-			body:            content,
-			alarmPolicyName: alarmPolicyName,
+			receiverName:        strings.Join(receiversSet.List(), ","),
+			receiverChannel:     v1.ReceiverChannelWebhook,
+			identity:            channel.Spec.Webhook.URL,
+			body:                content,
+			alarmPolicyName:     alarmPolicyName,
+			alarmPolicyType:     alarmPolicyType,
+			receiverChannelName: channel.Name,
 		})
 		return
 	}
@@ -393,13 +403,15 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				continue
 			}
 			sentMessages = append(sentMessages, sentMessage{
-				receiverName:    receiverName,
-				receiverChannel: v1.ReceiverChannelMobile,
-				identity:        mobile,
-				username:        receiver.Spec.Username,
-				body:            body,
-				messageID:       messageID,
-				alarmPolicyName: alarmPolicyName,
+				receiverName:        receiverName,
+				receiverChannel:     v1.ReceiverChannelMobile,
+				identity:            mobile,
+				username:            receiver.Spec.Username,
+				body:                body,
+				messageID:           messageID,
+				alarmPolicyName:     alarmPolicyName,
+				alarmPolicyType:     alarmPolicyType,
+				receiverChannelName: channel.Name,
 			})
 		}
 		if template.Spec.Wechat != nil {
@@ -419,13 +431,15 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				continue
 			}
 			sentMessages = append(sentMessages, sentMessage{
-				receiverName:    receiverName,
-				username:        receiver.Spec.Username,
-				receiverChannel: v1.ReceiverChannelWechatOpenID,
-				identity:        openID,
-				body:            body,
-				messageID:       messageID,
-				alarmPolicyName: alarmPolicyName,
+				receiverName:        receiverName,
+				username:            receiver.Spec.Username,
+				receiverChannel:     v1.ReceiverChannelWechatOpenID,
+				identity:            openID,
+				body:                body,
+				messageID:           messageID,
+				alarmPolicyName:     alarmPolicyName,
+				alarmPolicyType:     alarmPolicyType,
+				receiverChannelName: channel.Name,
 			})
 		}
 		if template.Spec.Text != nil {
@@ -445,13 +459,15 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				continue
 			}
 			sentMessages = append(sentMessages, sentMessage{
-				receiverName:    receiverName,
-				username:        receiver.Spec.Username,
-				receiverChannel: v1.ReceiverChannelEmail,
-				identity:        email,
-				header:          header,
-				body:            body,
-				alarmPolicyName: alarmPolicyName,
+				receiverName:        receiverName,
+				username:            receiver.Spec.Username,
+				receiverChannel:     v1.ReceiverChannelEmail,
+				identity:            email,
+				header:              header,
+				body:                body,
+				alarmPolicyName:     alarmPolicyName,
+				alarmPolicyType:     alarmPolicyType,
+				receiverChannelName: channel.Name,
 			})
 		}
 		if templateCount == 0 {
@@ -468,15 +484,17 @@ func (c *Controller) archiveMessage(ctx context.Context, messageRequest *v1.Mess
 				Name: fmt.Sprintf("%s-%s", messageRequest.ObjectMeta.Name, strings.Split(sentMessage.receiverName, ",")[0]),
 			},
 			Spec: v1.MessageSpec{
-				TenantID:         messageRequest.Spec.TenantID,
-				ReceiverName:     sentMessage.receiverName,
-				ReceiverChannel:  sentMessage.receiverChannel,
-				Identity:         sentMessage.identity,
-				Username:         sentMessage.username,
-				Header:           sentMessage.header,
-				Body:             sentMessage.body,
-				ChannelMessageID: sentMessage.messageID,
-				AlarmPolicyName:  sentMessage.alarmPolicyName,
+				TenantID:            messageRequest.Spec.TenantID,
+				ReceiverName:        sentMessage.receiverName,
+				ReceiverChannel:     sentMessage.receiverChannel,
+				Identity:            sentMessage.identity,
+				Username:            sentMessage.username,
+				Header:              sentMessage.header,
+				Body:                sentMessage.body,
+				ChannelMessageID:    sentMessage.messageID,
+				AlarmPolicyName:     sentMessage.alarmPolicyName,
+				AlarmPolicyType:     sentMessage.alarmPolicyType,
+				ReceiverChannelName: sentMessage.receiverChannelName,
 			},
 			Status: v1.MessageStatus{
 				Phase: v1.MessageUnread,
