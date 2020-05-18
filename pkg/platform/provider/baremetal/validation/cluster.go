@@ -63,7 +63,7 @@ func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, phase p
 func ValidateClusterSpecVersion(version string, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if phase == platform.ClusterInitializing {
-		allErrs = utilvalidation.ValidateEnum(version, fldPath, spec.K8sVersions)
+		allErrs = utilvalidation.ValidateEnum(version, fldPath, spec.K8sValidVersions)
 	}
 
 	return allErrs
