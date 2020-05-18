@@ -23,8 +23,7 @@ set -o pipefail
 REGISTRY_PREFIX=${REGISTRY_PREFIX:-tkestack}
 BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
-INSTALLER=tke-installer-x86_64-$VERSION.run
-PROVIDER_RES_VERSION=v1.16.6-4
+PROVIDER_RES_VERSION=v1.18.3-1
 K8S_VERSION=${PROVIDER_RES_VERSION%-*}
 DOCKER_VERSION=18.09.9
 OSS=(linux)
@@ -110,8 +109,8 @@ function build::installer() {
     (cd $OUTPUT_DIR && sha256sum "${installer}" > "${installer}.sha256")
 
     if [[ "${BUILDER}" == "tke" ]]; then
-      coscmd upload "${INSTALLER_DIR}/$INSTALLER" "$INSTALLER"
-      coscmd upload "$OUTPUT_DIR/$INSTALLER.sha256" "$INSTALLER.sha256"
+      coscmd upload "${INSTALLER_DIR}/$installer" "$installer"
+      coscmd upload "$OUTPUT_DIR/$installer.sha256" "$installer.sha256"
     fi
 }
 

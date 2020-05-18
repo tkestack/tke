@@ -19,6 +19,17 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o xtrace
+
+SCRIPT_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+
+# PKGS for extract packages in centos:7
+PKGS="conntrack-tools"
+
+declare -A archMap=(
+  [amd64]=x86_64
+  [arm64]=arm64
+)
 
 cd "$DST_DIR" || exit
 
@@ -53,7 +64,7 @@ function download::kubernetes() {
 }
 
 function download::kubeadm() {
-  for version in ${KUBEADM_VERSIONS}; do
+  for version in ${K8S_VERSIONS}; do
     wget -c "https://storage.googleapis.com/kubernetes-release/release/${version}/bin/${os}/${arch}/kubeadm"
     chmod +x kubeadm
     GZIP=-n tar cvzf "kubeadm-${platform}-${version}.tar.gz" kubeadm
@@ -86,6 +97,18 @@ function download::nvidia_container_runtime() {
   done
 }
 
+function download::pkgs() {
+  if [ -z ${archMap[${arch}]+unset} ]; then
+    echo "ERROR: unsupport arch ${arch}"
+    exit 1
+  fi
+  docker_arch=${archMap[${arch}]}
+  docker pull --platform=${docker_arch} centos:7
+  for pkg in ${PKGS}; do
+    docker run --platform="${docker_arch}" -e OS="${os}" -e ARCH="${arch}" -e PKG="${pkg}" --rm -v"${SCRIPT_DIR}":/tmp/bin -v$(realpath $(pwd)):/output centos:7 /tmp/bin/run.sh
+  done
+}
+
 echo "Starting to download resources..."
 
 for os in ${OSS}; do
@@ -100,6 +123,7 @@ for os in ${OSS}; do
     download::kubeadm
     download::nvidia_driver
     download::nvidia_container_runtime
+    download::pkgs
 
     cd -
   done

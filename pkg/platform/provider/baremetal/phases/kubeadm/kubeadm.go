@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
+	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/util/log"
@@ -37,12 +38,11 @@ import (
 )
 
 const (
-	kubeadmConfigFile  = "kubeadm/kubeadm-config.yaml"
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
 	joinControlPlaneCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
---node-name={{.NodeName}} --token={{.BootstrapToken}} \
---control-plane --certificate-key={{.CertificateKey}} \
+--control-plane \
+--token={{.BootstrapToken}} \
 --skip-phases=control-plane-join/mark-control-plane \
 --discovery-token-unsafe-skip-ca-verification \
 --ignore-preflight-errors=ImagePull \
@@ -60,8 +60,8 @@ const (
 `
 )
 
-func Install(s ssh.Interface) error {
-	dstFile, err := res.Kubeadm.CopyToNodeWithDefault(s)
+func Install(s ssh.Interface, version string) error {
+	dstFile, err := res.Kubeadm.CopyToNode(s, version)
 	if err != nil {
 		return err
 	}
@@ -112,12 +112,11 @@ type InitOption struct {
 	KubeProxyMode string
 }
 
-func Init(s ssh.Interface, kubeadmConfig *Config, extraCmd string) error {
+func Init(s ssh.Interface, kubeadmConfig *InitConfig, extraCmd string) error {
 	configData, err := kubeadmConfig.Marshal()
 	if err != nil {
 		return err
 	}
-
 	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
 	if err != nil {
 		return err
@@ -136,17 +135,25 @@ func Init(s ssh.Interface, kubeadmConfig *Config, extraCmd string) error {
 type JoinControlPlaneOption struct {
 	NodeName             string
 	BootstrapToken       string
-	CertificateKey       string
 	ControlPlaneEndpoint string
 	OIDCCA               []byte
 }
 
-func JoinControlPlane(s ssh.Interface, option *JoinControlPlaneOption) error {
+func JoinControlPlane(s ssh.Interface, option *JoinControlPlaneOption, config *kubeadmv1beta2.JoinConfiguration) error {
 	if len(option.OIDCCA) != 0 { // ensure oidc ca exists becase kubeadm reset probably delete it!
 		err := s.WriteFile(bytes.NewReader(option.OIDCCA), constants.OIDCCACertFile)
 		if err != nil {
 			return err
 		}
+	}
+
+	configData, err := MarshalToYAML(config)
+	if err != nil {
+		return err
+	}
+	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
+	if err != nil {
+		return err
 	}
 
 	cmd, err := template.ParseString(joinControlPlaneCmd, option)
@@ -168,7 +175,16 @@ type JoinNodeOption struct {
 	ControlPlaneEndpoint string
 }
 
-func JoinNode(s ssh.Interface, option *JoinNodeOption) error {
+func JoinNode(s ssh.Interface, option *JoinNodeOption, config *kubeadmv1beta2.JoinConfiguration) error {
+	configData, err := MarshalToYAML(config)
+	if err != nil {
+		return err
+	}
+	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
+	if err != nil {
+		return err
+	}
+
 	cmd, err := template.ParseString(joinNodeCmd, option)
 	if err != nil {
 		return errors.Wrap(err, "parse joinNodeCmd error")
@@ -281,13 +297,4 @@ func RestartContainerByFilter(s ssh.Interface, filter string) error {
 	}
 
 	return nil
-}
-
-func GetKubeadmConfig(option *InitOption) ([]byte, error) {
-	configData, err := template.ParseFile(path.Join(constants.ConfDir, kubeadmConfigFile), option)
-	if err != nil {
-		return nil, errors.Wrap(err, "parse kubeadm config file error")
-	}
-
-	return configData, nil
 }

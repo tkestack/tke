@@ -44,7 +44,7 @@ var (
 
 	Kubeadm = Package{
 		Name:     "kubeadm",
-		Versions: spec.KubeadmVersions,
+		Versions: spec.K8sVersionsWithV,
 	}
 	KubernetesNode = Package{
 		Name:     "kubernetes-node",

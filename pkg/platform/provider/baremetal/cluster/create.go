@@ -442,7 +442,7 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 			return err
 		}
 
-		err = kubeadm.Install(machineSSH)
+		err = kubeadm.Install(machineSSH, c.Spec.Version)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -564,7 +564,7 @@ func (p *Provider) EnsureKubeadmInitKubeletStartPhase(ctx context.Context, c *v1
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c),
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c),
 		fmt.Sprintf("kubelet-start --node-name=%s", c.Spec.Machines[0].IP))
 }
 
@@ -573,7 +573,7 @@ func (p *Provider) EnsureKubeadmInitCertsPhase(ctx context.Context, c *v1.Cluste
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "certs all")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "certs all")
 }
 
 func (p *Provider) EnsureKubeadmInitKubeConfigPhase(ctx context.Context, c *v1.Cluster) error {
@@ -581,7 +581,7 @@ func (p *Provider) EnsureKubeadmInitKubeConfigPhase(ctx context.Context, c *v1.C
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "kubeconfig all")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "kubeconfig all")
 }
 
 func (p *Provider) EnsureKubeadmInitControlPlanePhase(ctx context.Context, c *v1.Cluster) error {
@@ -589,7 +589,7 @@ func (p *Provider) EnsureKubeadmInitControlPlanePhase(ctx context.Context, c *v1
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "control-plane all")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "control-plane all")
 }
 
 func (p *Provider) EnsureKubeadmInitEtcdPhase(ctx context.Context, c *v1.Cluster) error {
@@ -597,7 +597,7 @@ func (p *Provider) EnsureKubeadmInitEtcdPhase(ctx context.Context, c *v1.Cluster
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "etcd local")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "etcd local")
 }
 
 func (p *Provider) EnsureKubeadmInitUploadConfigPhase(ctx context.Context, c *v1.Cluster) error {
@@ -605,7 +605,7 @@ func (p *Provider) EnsureKubeadmInitUploadConfigPhase(ctx context.Context, c *v1
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "upload-config all ")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "upload-config all ")
 }
 
 func (p *Provider) EnsureKubeadmInitUploadCertsPhase(ctx context.Context, c *v1.Cluster) error {
@@ -613,7 +613,7 @@ func (p *Provider) EnsureKubeadmInitUploadCertsPhase(ctx context.Context, c *v1.
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "upload-certs --upload-certs")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "upload-certs --upload-certs")
 }
 
 func (p *Provider) EnsureKubeadmInitBootstrapTokenPhase(ctx context.Context, c *v1.Cluster) error {
@@ -621,7 +621,7 @@ func (p *Provider) EnsureKubeadmInitBootstrapTokenPhase(ctx context.Context, c *
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "bootstrap-token")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "bootstrap-token")
 }
 
 func (p *Provider) EnsureKubeadmInitAddonPhase(ctx context.Context, c *v1.Cluster) error {
@@ -629,7 +629,7 @@ func (p *Provider) EnsureKubeadmInitAddonPhase(ctx context.Context, c *v1.Cluste
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "addon all")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "addon all")
 }
 
 func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
@@ -648,7 +648,6 @@ func (p *Provider) EnsureJoinControlePlane(ctx context.Context, c *v1.Cluster) e
 	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
 	option := &kubeadm.JoinControlPlaneOption{
 		BootstrapToken:       *c.ClusterCredential.BootstrapToken,
-		CertificateKey:       *c.ClusterCredential.CertificateKey,
 		ControlPlaneEndpoint: fmt.Sprintf("%s:6443", c.Spec.Machines[0].IP),
 		OIDCCA:               oidcCa,
 	}
@@ -659,7 +658,8 @@ func (p *Provider) EnsureJoinControlePlane(ctx context.Context, c *v1.Cluster) e
 		}
 
 		option.NodeName = machine.IP
-		err = kubeadm.JoinControlPlane(machineSSH, option)
+		config := p.getKubeadmJoinConfig(c, machine.IP)
+		err = kubeadm.JoinControlPlane(machineSSH, option, config)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
