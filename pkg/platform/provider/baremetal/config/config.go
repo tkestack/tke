@@ -51,7 +51,7 @@ type Config struct {
 }
 
 func (c *Config) Save(filename string) error {
-	f, err := os.OpenFile(filename, os.O_RDWR, 0644)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
