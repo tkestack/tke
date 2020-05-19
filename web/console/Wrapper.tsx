@@ -150,7 +150,7 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维中心',
-    watchModule: [ConsoleModuleEnum.PLATFORM],
+    watchModule: [ConsoleModuleEnum.PLATFORM, ConsoleModuleEnum.Audit],
     subRouterConfig: [
       {
         url: '/tkestack/helm',
@@ -170,7 +170,7 @@ const commonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack/audit',
         title: '审计记录',
-        watchModule: ConsoleModuleEnum.PLATFORM,
+        watchModule: ConsoleModuleEnum.Audit,
       }
     ]
   }
@@ -337,6 +337,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       if (isEmpty(this.state.consoleApiMap)) {
         let response = await reduceNetworkRequest(params);
         consoleApiMap = response.data.components;
+
         // 设置全局的变量，console的值
         setConsoleAPIAddress(consoleApiMap);
         this.setState({ consoleApiMap });
@@ -353,6 +354,20 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           return routerConfig.watchModule.some((item) => moduleKeys.includes(item));
         }
         return moduleKeys.includes(routerConfig.watchModule);
+      });
+
+      // 过滤二级路由
+      currentRouterConfig.forEach(routerConfig => {
+        let subRouterConfig = routerConfig.subRouterConfig;
+        if (subRouterConfig) {
+          // 重写subRouterConfig属性
+          routerConfig.subRouterConfig = subRouterConfig.filter(subRouterConf => {
+            if (Array.isArray(subRouterConf.watchModule)) {
+              return subRouterConf.watchModule.some((item) => moduleKeys.includes(item));
+            }
+            return moduleKeys.includes(subRouterConf.watchModule);
+          });
+        }
       });
 
       // 二级路由信息的初始化
