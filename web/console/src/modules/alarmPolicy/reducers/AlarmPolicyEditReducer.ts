@@ -40,7 +40,7 @@ const TempReducer = combineReducers({
 
   alarmObjectNamespace: reduceToPayload(ActionType.InputAlarmWorkLoadNameSpace, ''),
 
-  alarmObjectWorkloadType: reduceToPayload(ActionType.InputAlarmObjectWorkloadType, 'deployment'),
+  alarmObjectWorkloadType: reduceToPayload(ActionType.InputAlarmObjectWorkloadType, 'Deployment'),
 
   /**策略指标 */
   alarmMetrics: reduceToPayload(ActionType.InputAlarmMetrics, []),

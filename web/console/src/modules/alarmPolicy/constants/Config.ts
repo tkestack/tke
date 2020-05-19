@@ -113,15 +113,15 @@ export const AlarmPolicyPhoneInterval = [
 
 export const workloadTypeList = [
   {
-    value: 'deployment',
+    value: 'Deployment',
     label: 'Deployment'
   },
   {
-    value: 'daemonset',
+    value: 'DaemonSet',
     label: 'DaemonSet'
   },
   {
-    value: 'statefulset',
+    value: 'StatefulSet',
     label: 'StatefulSet'
   }
 ];
