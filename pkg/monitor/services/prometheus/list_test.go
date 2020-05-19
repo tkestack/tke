@@ -19,6 +19,7 @@
 package prometheus
 
 import (
+	"context"
 	"reflect"
 	"testing"
 )
@@ -31,14 +32,14 @@ func TestProcessor_ListGroup(t *testing.T) {
 	}
 
 	expectRuleGroup := getExpectRule(exampleRuleStr)
-	err = p.CreateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("creation should success, code: %s", err)
 		return
 	}
 
 	t.Logf("List all groups")
-	targetGroups, err := p.ListGroups(clusterName)
+	targetGroups, err := p.ListGroups(context.Background(), clusterName)
 	if err != nil {
 		t.Errorf("list should success, code: %s", err)
 		return
@@ -63,21 +64,21 @@ func TestProcessor_ListRules(t *testing.T) {
 	}
 
 	expectRuleGroup := getExpectRule(exampleRuleStr)
-	err = p.CreateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("creation should success, code: %s", err)
 		return
 	}
 
 	t.Logf("List non-existed group")
-	_, err = p.ListRules(clusterName, "non-exist-group")
+	_, err = p.ListRules(context.Background(), clusterName, "non-exist-group")
 	if err == nil {
 		t.Errorf("list should failed")
 		return
 	}
 
 	t.Logf("List correct group")
-	targetRules, err := p.ListRules(clusterName, expectRuleGroup.Groups[0].Name)
+	targetRules, err := p.ListRules(context.Background(), clusterName, expectRuleGroup.Groups[0].Name)
 	if err != nil {
 		t.Errorf("list should success, code: %s", err)
 		return

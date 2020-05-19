@@ -123,7 +123,7 @@ func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, use
 	}
 
 	log.Debug("Check user login", log.String("tenantID", p.tenantID), log.String("username", username), log.String("password", password))
-	localIdentity, err := util.GetLocalIdentity(authClient, p.tenantID, username)
+	localIdentity, err := util.GetLocalIdentity(ctx, authClient, p.tenantID, username)
 	if err != nil {
 		log.Error("Get user failed", log.String("user", username), log.Err(err))
 		return ident, false, nil
@@ -152,7 +152,7 @@ func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, use
 
 	ident.UserID = localIdentity.ObjectMeta.Name
 	ident.Username = localIdentity.Spec.Username
-	groups, err := util.GetGroupsForUser(authClient, localIdentity.ObjectMeta.Name)
+	groups, err := util.GetGroupsForUser(ctx, authClient, localIdentity.ObjectMeta.Name)
 	if err == nil {
 		for _, g := range groups.Items {
 			ident.Groups = append(ident.Groups, g.ObjectMeta.Name)
@@ -172,7 +172,7 @@ func (p *localConnector) Login(ctx context.Context, scopes connector.Scopes, use
 
 func (p *localConnector) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
 	// If the user has been deleted, the refresh token will be rejected.
-	ident, err := util.GetLocalIdentity(p.authClient, p.tenantID, identity.Username)
+	ident, err := util.GetLocalIdentity(ctx, p.authClient, p.tenantID, identity.Username)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return connector.Identity{}, errors.New("user not found")
@@ -195,7 +195,7 @@ func (c *identityProvider) GetUser(ctx context.Context, name string, options *me
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
 
-	localIdentity, err := c.authClient.LocalIdentities().Get(name, *options)
+	localIdentity, err := c.authClient.LocalIdentities().Get(ctx, name, *options)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func (c *identityProvider) ListUsers(ctx context.Context, options *metainternal.
 	}
 
 	v1Opt := util.PredicateV1ListOptions(c.tenantID, options)
-	localIdentityList, err := c.authClient.LocalIdentities().List(*v1Opt)
+	localIdentityList, err := c.authClient.LocalIdentities().List(ctx, *v1Opt)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +253,7 @@ func (c *identityProvider) GetGroup(ctx context.Context, name string, options *m
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
 
-	localGroup, err := c.authClient.LocalGroups().Get(name, *options)
+	localGroup, err := c.authClient.LocalGroups().Get(ctx, name, *options)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (c *identityProvider) ListGroups(ctx context.Context, options *metainternal
 
 	v1Opt := util.PredicateV1ListOptions(c.tenantID, options)
 
-	localGroupList, err := c.authClient.LocalGroups().List(*v1Opt)
+	localGroupList, err := c.authClient.LocalGroups().List(ctx, *v1Opt)
 	if err != nil {
 		return nil, err
 	}

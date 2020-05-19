@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -38,7 +40,7 @@ var clusteraddonsResource = schema.GroupVersionResource{Group: "platform.tkestac
 var clusteraddonsKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "v1", Kind: "ClusterAddon"}
 
 // Get takes name of the clusterAddon, and returns the corresponding clusterAddon object, and an error if there is any.
-func (c *FakeClusterAddons) Get(name string, options v1.GetOptions) (result *platformv1.ClusterAddon, err error) {
+func (c *FakeClusterAddons) Get(ctx context.Context, name string, options v1.GetOptions) (result *platformv1.ClusterAddon, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(clusteraddonsResource, name), &platformv1.ClusterAddon{})
 	if obj == nil {
@@ -48,7 +50,7 @@ func (c *FakeClusterAddons) Get(name string, options v1.GetOptions) (result *pla
 }
 
 // List takes label and field selectors, and returns the list of ClusterAddons that match those selectors.
-func (c *FakeClusterAddons) List(opts v1.ListOptions) (result *platformv1.ClusterAddonList, err error) {
+func (c *FakeClusterAddons) List(ctx context.Context, opts v1.ListOptions) (result *platformv1.ClusterAddonList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(clusteraddonsResource, clusteraddonsKind, opts), &platformv1.ClusterAddonList{})
 	if obj == nil {

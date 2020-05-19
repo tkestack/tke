@@ -19,6 +19,7 @@
 package imagenamespace
 
 import (
+	"context"
 	"fmt"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
@@ -34,12 +35,12 @@ import (
 var _validateImageNamespaceName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateImageNamespaceCreate tests if required fields in the ImageNamespace are set correctly.
-func ValidateImageNamespaceCreate(imageNamespace *business.ImageNamespace,
+func ValidateImageNamespaceCreate(ctx context.Context, imageNamespace *business.ImageNamespace,
 	businessClient *businessinternalclient.BusinessClient, registryClient registryversionedclient.RegistryV1Interface) field.ErrorList {
 	allErrs := validateImageNamespace(imageNamespace, businessClient, registryClient)
 
 	fldName := field.NewPath("spec", "name")
-	namespaceList, err := registryClient.Namespaces().List(metav1.ListOptions{
+	namespaceList, err := registryClient.Namespaces().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", imageNamespace.Spec.TenantID, imageNamespace.Name),
 	})
 	if err != nil {
@@ -53,7 +54,7 @@ func ValidateImageNamespaceCreate(imageNamespace *business.ImageNamespace,
 
 // ValidateImageNamespaceUpdate tests if required fields in the ImageNamespace are set during
 // an update.
-func ValidateImageNamespaceUpdate(imageNamespace *business.ImageNamespace, old *business.ImageNamespace,
+func ValidateImageNamespaceUpdate(ctx context.Context, imageNamespace *business.ImageNamespace, old *business.ImageNamespace,
 	businessClient *businessinternalclient.BusinessClient, registryClient registryversionedclient.RegistryV1Interface) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&imageNamespace.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 	allErrs = append(allErrs, validateImageNamespace(imageNamespace, businessClient, registryClient)...)

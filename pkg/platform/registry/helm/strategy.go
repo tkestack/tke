@@ -105,7 +105,7 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 
 // Validate validates a new helm.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateHelm(obj.(*platform.Helm), s.platformClient)
+	return ValidateHelm(ctx, obj.(*platform.Helm), s.platformClient)
 }
 
 // AllowCreateOnUpdate is false for persistent events
@@ -126,13 +126,13 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end namespace set.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateHelmUpdate(obj.(*platform.Helm), old.(*platform.Helm), s.platformClient)
+	return ValidateHelmUpdate(ctx, obj.(*platform.Helm), old.(*platform.Helm), s.platformClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	helm, _ := obj.(*platform.Helm)
-	return labels.Set(helm.ObjectMeta.Labels), ToSelectableFields(helm), nil
+	return helm.ObjectMeta.Labels, ToSelectableFields(helm), nil
 }
 
 // MatchHelm returns a generic matcher for a given label and field selector.

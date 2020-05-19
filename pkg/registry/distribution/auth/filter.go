@@ -19,10 +19,12 @@
 package auth
 
 import (
+	"context"
 	"fmt"
+	"strings"
+
 	"github.com/docker/distribution/registry/auth/token"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strings"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/util/log"
@@ -36,13 +38,13 @@ type userRequest struct {
 
 // An accessFilter will filter access based on userinfo
 type accessFilter interface {
-	filter(a *token.ResourceActions, u *userRequest) error
+	filter(ctx context.Context, a *token.ResourceActions, u *userRequest) error
 }
 
 type registryFilter struct {
 }
 
-func (reg *registryFilter) filter(a *token.ResourceActions, _ *userRequest) error {
+func (reg *registryFilter) filter(ctx context.Context, a *token.ResourceActions, _ *userRequest) error {
 	// Do not filter if the request is to access registry catalog
 	if a.Name != "catalog" {
 		return fmt.Errorf("unable to handle, type: %s, name: %s", a.Type, a.Name)
@@ -58,7 +60,7 @@ type repositoryFilter struct {
 	adminUsername  string
 }
 
-func (r *repositoryFilter) filter(a *token.ResourceActions, u *userRequest) error {
+func (r *repositoryFilter) filter(ctx context.Context, a *token.ResourceActions, u *userRequest) error {
 	// clear action list to assign to new access element after perm check.
 	img, err := r.parser.parse(a.Name)
 	if err != nil {
@@ -82,7 +84,7 @@ func (r *repositoryFilter) filter(a *token.ResourceActions, u *userRequest) erro
 		return nil
 	}
 
-	namespaceList, err := r.registryClient.Namespaces().List(metav1.ListOptions{
+	namespaceList, err := r.registryClient.Namespaces().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", img.tenantID, img.namespace),
 	})
 	if err != nil {

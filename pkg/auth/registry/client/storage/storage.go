@@ -57,6 +57,9 @@ func (r *REST) NamespaceScoped() bool {
 var _ rest.ShortNamesProvider = &REST{}
 var _ rest.Creater = &REST{}
 var _ rest.Scoper = &REST{}
+var _ rest.Lister = &REST{}
+var _ rest.GracefulDeleter = &REST{}
+var _ rest.Getter = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
@@ -71,6 +74,14 @@ func (r *REST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *REST) NewList() runtime.Object {
 	return &auth.ClientList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("clients"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // Create creates a new version of a resource.

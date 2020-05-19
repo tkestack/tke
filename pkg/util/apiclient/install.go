@@ -19,6 +19,7 @@
 package apiclient
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -44,131 +45,131 @@ type object struct {
 	Kind string `yaml:"kind"`
 }
 
-var handlers map[string]func(kubernetes.Interface, []byte) error
+var handlers map[string]func(context.Context, kubernetes.Interface, []byte) error
 
 func init() {
-	handlers = make(map[string]func(kubernetes.Interface, []byte) error)
+	handlers = make(map[string]func(context.Context, kubernetes.Interface, []byte) error)
 
 	// core
-	handlers["ConfigMap"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["ConfigMap"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(corev1.ConfigMap)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateConfigMap(client, obj)
+		err := CreateOrUpdateConfigMap(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["Endpoints"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["Endpoints"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(corev1.Endpoints)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateEndpoints(client, obj)
+		err := CreateOrUpdateEndpoints(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["Namespace"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["Namespace"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(corev1.Namespace)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateNamespace(client, obj)
+		err := CreateOrUpdateNamespace(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["Secret"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["Secret"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(corev1.Secret)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateSecret(client, obj)
+		err := CreateOrUpdateSecret(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["Service"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["Service"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(corev1.Service)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateService(client, obj)
+		err := CreateOrUpdateService(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["ServiceAccount"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["ServiceAccount"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(corev1.ServiceAccount)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateServiceAccount(client, obj)
+		err := CreateOrUpdateServiceAccount(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	// batch
-	handlers["Job"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["Job"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(batchv1.Job)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateJob(client, obj)
+		err := CreateOrUpdateJob(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	// batchv1beta1
-	handlers["CronJob"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["CronJob"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(batchv1beta1.CronJob)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateCronJob(client, obj)
+		err := CreateOrUpdateCronJob(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	// apps
-	handlers["DaemonSet"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["DaemonSet"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(appsv1.DaemonSet)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateDaemonSet(client, obj)
+		err := CreateOrUpdateDaemonSet(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["Deployment"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["Deployment"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(appsv1.Deployment)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateDeployment(client, obj)
+		err := CreateOrUpdateDeployment(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["StatefulSet"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["StatefulSet"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(appsv1.StatefulSet)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateStatefulSet(client, obj)
+		err := CreateOrUpdateStatefulSet(ctx, client, obj)
 		if err != nil {
 			return err
 		}
@@ -176,12 +177,12 @@ func init() {
 	}
 
 	// extentions
-	handlers["Ingress"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["Ingress"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(extensionsv1beta1.Ingress)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateIngress(client, obj)
+		err := CreateOrUpdateIngress(ctx, client, obj)
 		if err != nil {
 			return err
 		}
@@ -189,68 +190,68 @@ func init() {
 	}
 
 	// rbac
-	handlers["Role"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["Role"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(rbacv1.Role)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateRole(client, obj)
+		err := CreateOrUpdateRole(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["RoleBinding"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["RoleBinding"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(rbacv1.RoleBinding)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateRoleBinding(client, obj)
+		err := CreateOrUpdateRoleBinding(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["ClusterRole"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["ClusterRole"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(rbacv1.ClusterRole)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateClusterRole(client, obj)
+		err := CreateOrUpdateClusterRole(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["ClusterRoleBinding"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["ClusterRoleBinding"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(rbacv1.ClusterRoleBinding)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateClusterRoleBinding(client, obj)
+		err := CreateOrUpdateClusterRoleBinding(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 	// admissionregistration
-	handlers["ValidatingWebhookConfiguration"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["ValidatingWebhookConfiguration"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(admissionv1beta1.ValidatingWebhookConfiguration)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateValidatingWebhookConfiguration(client, obj)
+		err := CreateOrUpdateValidatingWebhookConfiguration(ctx, client, obj)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers["MutatingWebhookConfiguration"] = func(client kubernetes.Interface, data []byte) error {
+	handlers["MutatingWebhookConfiguration"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
 		obj := new(admissionv1beta1.MutatingWebhookConfiguration)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
-		err := CreateOrUpdateMutatingWebhookConfiguration(client, obj)
+		err := CreateOrUpdateMutatingWebhookConfiguration(ctx, client, obj)
 		if err != nil {
 			return err
 		}
@@ -259,7 +260,7 @@ func init() {
 }
 
 // CreateResourceWithDir create k8s resource with dir
-func CreateResourceWithDir(client kubernetes.Interface, pattern string, option interface{}) error {
+func CreateResourceWithDir(ctx context.Context, client kubernetes.Interface, pattern string, option interface{}) error {
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return err
@@ -268,7 +269,7 @@ func CreateResourceWithDir(client kubernetes.Interface, pattern string, option i
 		return errors.New("no matches found")
 	}
 	for _, filename := range matches {
-		err := CreateResourceWithFile(client, filename, option)
+		err := CreateResourceWithFile(ctx, client, filename, option)
 		if err != nil {
 			return errors.Wrapf(err, "filename: %s", filename)
 		}
@@ -278,7 +279,7 @@ func CreateResourceWithDir(client kubernetes.Interface, pattern string, option i
 }
 
 // CreateResourceWithFile create k8s resource with file
-func CreateResourceWithFile(client kubernetes.Interface, filename string, option interface{}) error {
+func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, filename string, option interface{}) error {
 	var (
 		data []byte
 		err  error
@@ -309,7 +310,7 @@ func CreateResourceWithFile(client kubernetes.Interface, filename string, option
 		if !ok {
 			return errors.Errorf("unsupport kind %q", obj.Kind)
 		}
-		err = f(client, objBytes)
+		err = f(ctx, client, objBytes)
 		if err != nil {
 			return err
 		}

@@ -343,12 +343,10 @@ func compare(a authorizer.Attributes, b authorizer.Attributes) bool {
 }
 
 const (
-	clusterContextKey   = "clusterName"
-	clusterName         = "cls-82qkvzgp"
-	projectID           = "prj-82qkvzgp"
-	projectContextKey   = "projectID"
-	namespace           = "ns-1"
-	namespaceContextKey = "namespace"
+	clusterContextKey = "clusterName"
+	clusterName       = "cls-82qkvzgp"
+	projectID         = "prj-82qkvzgp"
+	projectContextKey = "projectID"
 )
 
 func contextWithCluster(ctx context.Context) context.Context {
@@ -357,8 +355,4 @@ func contextWithCluster(ctx context.Context) context.Context {
 
 func contextWithProject(ctx context.Context) context.Context {
 	return genericrequest.WithValue(ctx, projectContextKey, projectID)
-}
-
-func contextWithNamespace(ctx context.Context) context.Context {
-	return genericrequest.WithValue(ctx, namespaceContextKey, namespace)
 }

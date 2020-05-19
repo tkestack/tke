@@ -70,13 +70,13 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 	}
 
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return listPodsByExtensions(client, namespaceName, name, options)
+		return listPodsByExtensions(ctx, client, namespaceName, name, options)
 	}
-	return listPodsByApps(client, namespaceName, name, options)
+	return listPodsByApps(ctx, client, namespaceName, name, options)
 }
 
-func listPodsByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	daemonSet, err := client.ExtensionsV1beta1().DaemonSets(namespaceName).Get(name, *options)
+func listPodsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	daemonSet, err := client.ExtensionsV1beta1().DaemonSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("daemonSets/pods"), name)
 	}
@@ -88,7 +88,7 @@ func listPodsByExtensions(client *kubernetes.Clientset, namespaceName, name stri
 
 	// list all of the pod, by deployment labels
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -106,8 +106,8 @@ func listPodsByExtensions(client *kubernetes.Clientset, namespaceName, name stri
 	return podList, nil
 }
 
-func listPodsByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	daemonSet, err := client.AppsV1().DaemonSets(namespaceName).Get(name, *options)
+func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	daemonSet, err := client.AppsV1().DaemonSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1.Resource("daemonSets/pods"), name)
 	}
@@ -119,7 +119,7 @@ func listPodsByApps(client *kubernetes.Clientset, namespaceName, name string, op
 
 	// list all of the pod, by deployment labels
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}

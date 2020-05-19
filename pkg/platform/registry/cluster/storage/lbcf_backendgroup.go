@@ -83,7 +83,7 @@ func (r *LBCFBackendGroupREST) Connect(ctx context.Context, clusterName string, 
 	if err != nil {
 		return nil, err
 	}
-	credential, err := util.GetClusterCredential(r.platformClient, cluster)
+	credential, err := util.GetClusterCredential(ctx, r.platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (h *lbcfBackendGroupProxyHandler) serveAction(w http.ResponseWriter, req *h
 	}
 	switch h.action {
 	case string(LBCFGetBackendRecords):
-		if recordList, err := h.getBackendRecords(); err != nil {
+		if recordList, err := h.getBackendRecords(req.Context()); err != nil {
 			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		} else {
 			responsewriters.WriteRawJSON(http.StatusOK, recordList, w)
@@ -169,7 +169,7 @@ func (h *lbcfBackendGroupProxyHandler) serveAction(w http.ResponseWriter, req *h
 	}
 }
 
-func (h *lbcfBackendGroupProxyHandler) getBackendRecords() ([]unstructured.Unstructured, error) {
+func (h *lbcfBackendGroupProxyHandler) getBackendRecords(ctx context.Context) ([]unstructured.Unstructured, error) {
 	var cluster platformv1.Cluster
 	if err := apiplatformv1.Convert_platform_Cluster_To_v1_Cluster(h.cluster, &cluster, nil); err != nil {
 		return nil, err
@@ -184,10 +184,10 @@ func (h *lbcfBackendGroupProxyHandler) getBackendRecords() ([]unstructured.Unstr
 		return nil, err
 	}
 
-	selector := labels.SelectorFromValidatedSet(labels.Set(map[string]string{
+	selector := labels.SelectorFromValidatedSet(map[string]string{
 		"lbcf.tkestack.io/backend-group": h.name,
-	}))
-	recordList, err := dynamicClient.Resource(recordResource).Namespace(h.namespace).List(metav1.ListOptions{
+	})
+	recordList, err := dynamicClient.Resource(recordResource).Namespace(h.namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: selector.String(),
 	})
 	if err != nil {

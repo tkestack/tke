@@ -120,13 +120,12 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 	result := &corev1.Binding{}
 	if err := client.
 		Post().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		VersionedParams(options, platform.ParameterCodec).
 		Body(obj).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}

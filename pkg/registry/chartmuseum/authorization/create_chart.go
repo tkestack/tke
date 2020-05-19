@@ -19,12 +19,15 @@
 package authorization
 
 import (
+	"context"
 	"fmt"
-	"github.com/gorilla/mux"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"io/ioutil"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"helm.sh/helm/v3/pkg/chart"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/registry/chartmuseum/model"
@@ -65,16 +68,17 @@ func (a *authorization) doAPICreateProvenance(w http.ResponseWriter, req *http.R
 		log.Error("Failed to retrieve chart file from request", log.Err(err))
 		return
 	}
-	ct, err := chartutil.LoadArchive(file)
+	bs, err := ioutil.ReadAll(file)
 	if err != nil {
-		log.Error("Failed to load chart from request body", log.Err(err))
+		log.Error("Failed to read all content from chart file", log.Err(err))
 		return
 	}
-	if ct.Metadata == nil {
-		log.Error("Chart metadata is nil after parsed", log.Any("chart", ct))
+	ct := new(chart.Metadata)
+	if err := yaml.Unmarshal(bs, ct); err != nil {
+		log.Error("Failed to unmarshal chart file", log.Err(err))
 		return
 	}
-	if err := a.afterAPICreateChart(chartGroup, ct, header.Size); err != nil {
+	if err := a.afterAPICreateChart(req.Context(), chartGroup, ct, header.Size); err != nil {
 		log.Error("Failed to update registry chart resource", log.Err(err))
 	}
 }
@@ -91,7 +95,7 @@ func (a *authorization) validateAPICreateChart(w http.ResponseWriter, req *http.
 		a.notFound(w)
 		return nil, fmt.Errorf("not found")
 	}
-	chartGroupList, err := a.registryClient.ChartGroups().List(metav1.ListOptions{
+	chartGroupList, err := a.registryClient.ChartGroups().List(req.Context(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartGroupName),
 	})
 	if err != nil {
@@ -133,9 +137,9 @@ func (a *authorization) validateAPICreateChart(w http.ResponseWriter, req *http.
 	return &chartGroup, nil
 }
 
-func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, ct *chart.Chart, ctSize int64) error {
-	chartList, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).List(metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s,spec.chartGroupName=%s", chartGroup.Spec.TenantID, ct.Metadata.Name, chartGroup.Spec.Name),
+func (a *authorization) afterAPICreateChart(ctx context.Context, chartGroup *registry.ChartGroup, chartMeta *chart.Metadata, ctSize int64) error {
+	chartList, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s,spec.chartGroupName=%s", chartGroup.Spec.TenantID, chartMeta.Name, chartGroup.Spec.Name),
 	})
 	if err != nil {
 		return err
@@ -144,12 +148,12 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, ct 
 	needIncreaseChartCount := false
 	if len(chartList.Items) == 0 {
 		needIncreaseChartCount = true
-		if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).Create(&registry.Chart{
+		if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).Create(ctx, &registry.Chart{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: chartGroup.ObjectMeta.Name,
 			},
 			Spec: registry.ChartSpec{
-				Name:           ct.Metadata.Name,
+				Name:           chartMeta.Name,
 				TenantID:       chartGroup.Spec.TenantID,
 				ChartGroupName: chartGroup.Spec.Name,
 				Visibility:     chartGroup.Spec.Visibility,
@@ -158,18 +162,18 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, ct 
 				PullCount: 0,
 				Versions: []registry.ChartVersion{
 					{
-						Version:     ct.Metadata.Version,
+						Version:     chartMeta.Version,
 						ChartSize:   ctSize,
 						TimeCreated: metav1.Now(),
 					},
 				},
 			},
-		}); err != nil {
+		}, metav1.CreateOptions{}); err != nil {
 			log.Error("Failed to create chart while pushed chart",
 				log.String("tenantID", chartGroup.Spec.TenantID),
 				log.String("chartGroupName", chartGroup.Spec.Name),
-				log.String("chartName", ct.Metadata.Name),
-				log.String("version", ct.Metadata.Version),
+				log.String("chartName", chartMeta.Name),
+				log.String("version", chartMeta.Version),
 				log.Err(err))
 			return err
 		}
@@ -180,19 +184,19 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, ct 
 			needIncreaseChartCount = true
 		} else {
 			for k, v := range chartObject.Status.Versions {
-				if v.Version == ct.Metadata.Version {
+				if v.Version == chartMeta.Version {
 					existVersion = true
 					chartObject.Status.Versions[k] = registry.ChartVersion{
-						Version:     ct.Metadata.Version,
+						Version:     chartMeta.Version,
 						ChartSize:   ctSize,
 						TimeCreated: metav1.Now(),
 					}
-					if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(&chartObject); err != nil {
+					if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(ctx, &chartObject, metav1.UpdateOptions{}); err != nil {
 						log.Error("Failed to update chart version while chart pushed",
 							log.String("tenantID", chartGroup.Spec.TenantID),
 							log.String("chartGroupName", chartGroup.Spec.Name),
-							log.String("chartName", ct.Metadata.Name),
-							log.String("version", ct.Metadata.Version),
+							log.String("chartName", chartMeta.Name),
+							log.String("version", chartMeta.Version),
 							log.Err(err))
 						return err
 					}
@@ -203,16 +207,16 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, ct 
 
 		if !existVersion {
 			chartObject.Status.Versions = append(chartObject.Status.Versions, registry.ChartVersion{
-				Version:     ct.Metadata.Version,
+				Version:     chartMeta.Version,
 				ChartSize:   ctSize,
 				TimeCreated: metav1.Now(),
 			})
-			if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(&chartObject); err != nil {
+			if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(ctx, &chartObject, metav1.UpdateOptions{}); err != nil {
 				log.Error("Failed to create repository tag while received notification",
 					log.String("tenantID", chartGroup.Spec.TenantID),
 					log.String("chartGroupName", chartGroup.Spec.Name),
-					log.String("chartName", ct.Metadata.Name),
-					log.String("version", ct.Metadata.Version),
+					log.String("chartName", chartMeta.Name),
+					log.String("version", chartMeta.Version),
 					log.Err(err))
 				return err
 			}
@@ -222,12 +226,12 @@ func (a *authorization) afterAPICreateChart(chartGroup *registry.ChartGroup, ct 
 	if needIncreaseChartCount {
 		// update chart group's chart count
 		chartGroup.Status.ChartCount = chartGroup.Status.ChartCount + 1
-		if _, err := a.registryClient.ChartGroups().UpdateStatus(chartGroup); err != nil {
+		if _, err := a.registryClient.ChartGroups().UpdateStatus(ctx, chartGroup, metav1.UpdateOptions{}); err != nil {
 			log.Error("Failed to update chart group's chart count while pushed",
 				log.String("tenantID", chartGroup.Spec.TenantID),
 				log.String("chartGroupName", chartGroup.Spec.Name),
-				log.String("chartName", ct.Metadata.Name),
-				log.String("version", ct.Metadata.Version),
+				log.String("chartName", chartMeta.Name),
+				log.String("version", chartMeta.Version),
 				log.Err(err))
 			return err
 		}

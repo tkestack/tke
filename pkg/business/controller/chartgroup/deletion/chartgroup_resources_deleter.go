@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -84,7 +85,7 @@ func (d *chartGroupResourcesDeleter) Delete(projectName, chartGroupName string) 
 	// Multiple controllers may edit a chartGroup during termination
 	// first get the latest state of the chartGroup before proceeding
 	// if the chartGroup was deleted already, don't do anything
-	chartGroup, err := d.businessClient.ChartGroups(projectName).Get(chartGroupName, metav1.GetOptions{})
+	chartGroup, err := d.businessClient.ChartGroups(projectName).Get(context.Background(), chartGroupName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -144,12 +145,12 @@ func (d *chartGroupResourcesDeleter) Delete(projectName, chartGroupName string) 
 
 // Deletes the given chartGroup.
 func (d *chartGroupResourcesDeleter) deleteChartGroup(chartGroup *businessv1.ChartGroup) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := chartGroup.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.businessClient.ChartGroups(chartGroup.Namespace).Delete(chartGroup.Name, opts)
+	err := d.businessClient.ChartGroups(chartGroup.Namespace).Delete(context.Background(), chartGroup.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -173,7 +174,7 @@ func (d *chartGroupResourcesDeleter) retryOnConflictError(chartGroup *businessv1
 			return nil, err
 		}
 		prevChartGroup := latestChartGroup
-		latestChartGroup, err = d.businessClient.ChartGroups(latestChartGroup.Namespace).Get(latestChartGroup.Name, metav1.GetOptions{})
+		latestChartGroup, err = d.businessClient.ChartGroups(latestChartGroup.Namespace).Get(context.Background(), latestChartGroup.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -192,7 +193,7 @@ func (d *chartGroupResourcesDeleter) updateChartGroupStatusFunc(chartGroup *busi
 	newChartGroup.ObjectMeta = chartGroup.ObjectMeta
 	newChartGroup.Status = chartGroup.Status
 	newChartGroup.Status.Phase = businessv1.ChartGroupTerminating
-	return d.businessClient.ChartGroups(chartGroup.Namespace).UpdateStatus(&newChartGroup)
+	return d.businessClient.ChartGroups(chartGroup.Namespace).UpdateStatus(context.Background(), &newChartGroup, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the chartGroup.Spec.Finalizers is an empty list
@@ -223,7 +224,7 @@ func (d *chartGroupResourcesDeleter) finalizeChartGroup(chartGroup *businessv1.C
 		Name(chartGroupFinalize.Name).
 		SubResource("finalize").
 		Body(&chartGroupFinalize).
-		Do().
+		Do(context.Background()).
 		Into(chartGroup)
 
 	if err != nil {
@@ -265,7 +266,7 @@ func (d *chartGroupResourcesDeleter) deleteAllContent(chartGroup *businessv1.Cha
 }
 
 func deleteChartGroup(deleter *chartGroupResourcesDeleter, chartGroup *businessv1.ChartGroup) error {
-	chartGroupList, err := deleter.registryClient.ChartGroups().List(metav1.ListOptions{
+	chartGroupList, err := deleter.registryClient.ChartGroups().List(context.Background(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chartGroup.Spec.TenantID, chartGroup.Name),
 	})
 	if err != nil {
@@ -276,7 +277,7 @@ func deleteChartGroup(deleter *chartGroupResourcesDeleter, chartGroup *businessv
 	}
 	chartGroupObject := chartGroupList.Items[0]
 
-	err = deleter.registryClient.ChartGroups().Delete(chartGroupObject.Name, &metav1.DeleteOptions{})
+	err = deleter.registryClient.ChartGroups().Delete(context.Background(), chartGroupObject.Name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return fmt.Errorf("deleteChartGroup(%s), %s", chartGroup.Name, err)
 	}

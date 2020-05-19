@@ -26,19 +26,19 @@ import (
 type ErrorCode string
 
 const (
-	ErrorNone                  ErrorCode = ""
-	ErrorInternalError         ErrorCode = "InternalError"
-	ErrorInvalidParameter      ErrorCode = "InvalidParameter"
+	ErrorNone             ErrorCode = ""
+	ErrorInternalError    ErrorCode = "InternalError"
+	ErrorInvalidParameter ErrorCode = "InvalidParameter"
 )
 
 type ResponseError struct {
-	Code ErrorCode `json:"Code,omitempty"`
-	Message string `json:"Message,omitempty"`
+	Code    ErrorCode `json:"Code,omitempty"`
+	Message string    `json:"Message,omitempty"`
 }
 
 func WriteResponseError(rw http.ResponseWriter, code ErrorCode, message string) {
 	e := ResponseError{
-		Code: code,
+		Code:    code,
 		Message: message,
 	}
 	res, err := json.Marshal(e)

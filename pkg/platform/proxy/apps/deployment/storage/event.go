@@ -98,15 +98,15 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	ef := newEventsFinder(ctx, namespaceName, *client, r.platformClient)
 
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return ef.listEventsByExtensions(client, namespaceName, name, options)
+		return ef.listEventsByExtensions(ctx, client, namespaceName, name, options)
 	}
-	return ef.listEventsByApps(client, namespaceName, name, options)
+	return ef.listEventsByApps(ctx, client, namespaceName, name, options)
 }
 
-func (ef *eventsFinder) getEvents(listOptions metav1.ListOptions) {
+func (ef *eventsFinder) getEvents(ctx context.Context, listOptions metav1.ListOptions) {
 	defer ef.wg.Done()
 
-	events, err := ef.client.CoreV1().Events(ef.namespaceName).List(listOptions)
+	events, err := ef.client.CoreV1().Events(ef.namespaceName).List(ctx, listOptions)
 	if err != nil {
 		ef.mutex.Lock()
 		ef.errors = append(ef.errors, err)
@@ -124,8 +124,8 @@ func (ef *eventsFinder) getEvents(listOptions metav1.ListOptions) {
 	ef.mutex.Unlock()
 }
 
-func (ef *eventsFinder) listEventsByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(name, *options)
+func (ef *eventsFinder) listEventsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("deployments/events"), name)
 	}
@@ -140,7 +140,7 @@ func (ef *eventsFinder) listEventsByExtensions(client *kubernetes.Clientset, nam
 	}
 
 	ef.wg.Add(1)
-	go ef.getEvents(deploymentListOptions)
+	go ef.getEvents(ctx, deploymentListOptions)
 
 	rsSelector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
 	if err != nil {
@@ -148,7 +148,7 @@ func (ef *eventsFinder) listEventsByExtensions(client *kubernetes.Clientset, nam
 	}
 
 	rsListOptions := metav1.ListOptions{LabelSelector: rsSelector.String()}
-	rsList, err := client.ExtensionsV1beta1().ReplicaSets(namespaceName).List(rsListOptions)
+	rsList, err := client.ExtensionsV1beta1().ReplicaSets(namespaceName).List(ctx, rsListOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -178,7 +178,7 @@ func (ef *eventsFinder) listEventsByExtensions(client *kubernetes.Clientset, nam
 			FieldSelector: rsEventsSelector.String(),
 		}
 		ef.wg.Add(1)
-		go ef.getEvents(rsEventsListOptions)
+		go ef.getEvents(ctx, rsEventsListOptions)
 
 		for _, references := range rs.ObjectMeta.OwnerReferences {
 			if (references.Kind == "Deployment") && (references.Name == name) {
@@ -187,7 +187,7 @@ func (ef *eventsFinder) listEventsByExtensions(client *kubernetes.Clientset, nam
 					return nil, errors.NewInternalError(err)
 				}
 				podListOptions := metav1.ListOptions{LabelSelector: podSelector.String()}
-				podListByRS, err := client.CoreV1().Pods(namespaceName).List(podListOptions)
+				podListByRS, err := client.CoreV1().Pods(namespaceName).List(ctx, podListOptions)
 				if err != nil {
 					return nil, err
 				}
@@ -203,7 +203,7 @@ func (ef *eventsFinder) listEventsByExtensions(client *kubernetes.Clientset, nam
 								FieldSelector: podEventsSelector.String(),
 							}
 							ef.wg.Add(1)
-							go ef.getEvents(podEventsListOptions)
+							go ef.getEvents(ctx, podEventsListOptions)
 						}
 					}
 				}
@@ -223,8 +223,8 @@ func (ef *eventsFinder) listEventsByExtensions(client *kubernetes.Clientset, nam
 	}, nil
 }
 
-func (ef *eventsFinder) listEventsByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	deployment, err := client.AppsV1().Deployments(namespaceName).Get(name, *options)
+func (ef *eventsFinder) listEventsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.AppsV1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1.Resource("deployments/events"), name)
 	}
@@ -239,7 +239,7 @@ func (ef *eventsFinder) listEventsByApps(client *kubernetes.Clientset, namespace
 	}
 
 	ef.wg.Add(1)
-	go ef.getEvents(deploymentListOptions)
+	go ef.getEvents(ctx, deploymentListOptions)
 
 	rsSelector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
 	if err != nil {
@@ -247,7 +247,7 @@ func (ef *eventsFinder) listEventsByApps(client *kubernetes.Clientset, namespace
 	}
 
 	rsListOptions := metav1.ListOptions{LabelSelector: rsSelector.String()}
-	rsList, err := client.AppsV1().ReplicaSets(namespaceName).List(rsListOptions)
+	rsList, err := client.AppsV1().ReplicaSets(namespaceName).List(ctx, rsListOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -277,7 +277,7 @@ func (ef *eventsFinder) listEventsByApps(client *kubernetes.Clientset, namespace
 			FieldSelector: rsEventsSelector.String(),
 		}
 		ef.wg.Add(1)
-		go ef.getEvents(rsEventsListOptions)
+		go ef.getEvents(ctx, rsEventsListOptions)
 
 		for _, references := range rs.ObjectMeta.OwnerReferences {
 			if (references.Kind == "Deployment") && (references.Name == name) {
@@ -286,7 +286,7 @@ func (ef *eventsFinder) listEventsByApps(client *kubernetes.Clientset, namespace
 					return nil, errors.NewInternalError(err)
 				}
 				podListOptions := metav1.ListOptions{LabelSelector: podSelector.String()}
-				podListByRS, err := client.CoreV1().Pods(namespaceName).List(podListOptions)
+				podListByRS, err := client.CoreV1().Pods(namespaceName).List(ctx, podListOptions)
 				if err != nil {
 					return nil, err
 				}
@@ -302,7 +302,7 @@ func (ef *eventsFinder) listEventsByApps(client *kubernetes.Clientset, namespace
 								FieldSelector: podEventsSelector.String(),
 							}
 							ef.wg.Add(1)
-							go ef.getEvents(podEventsListOptions)
+							go ef.getEvents(ctx, podEventsListOptions)
 						}
 					}
 				}

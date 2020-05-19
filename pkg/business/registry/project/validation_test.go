@@ -17,6 +17,7 @@
 package project
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -129,7 +130,7 @@ func TestClusterLimitation(t *testing.T) {
 	}
 
 	hasError := false
-	errors := ValidateProjectUpdate(&_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
+	errors := ValidateProjectUpdate(context.Background(), &_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), _clusterLimitErrorInfo) {
 			hasError = true
@@ -145,7 +146,7 @@ func TestClusterLimitation(t *testing.T) {
 		InvalidCluster: {},
 		ClusterName:    {},
 	}
-	errors = ValidateProjectUpdate(&_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
+	errors = ValidateProjectUpdate(context.Background(), &_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		t.Errorf("Unexpected: %s", err.Error())
 	}
@@ -166,7 +167,7 @@ func TestQuotaLimitation(t *testing.T) {
 	}
 
 	hasError := false
-	errors := ValidateProjectUpdate(&_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
+	errors := ValidateProjectUpdate(context.Background(), &_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), resource.QuotaLimitErrorInfo) {
 			hasError = true
@@ -199,7 +200,7 @@ func TestCreateAllocatable(t *testing.T) {
 	}
 
 	hasError := false
-	errors := ValidateProjectUpdate(&_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
+	errors := ValidateProjectUpdate(context.Background(), &_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), resource.AllocatableErrorInfo) {
 			hasError = true
@@ -213,7 +214,7 @@ func TestCreateAllocatable(t *testing.T) {
 
 	quota, _ = apimachineryresource.ParseQuantity("1")
 	_childProject.Spec.Clusters[ClusterName].Hard["requests.cpu"] = quota
-	errors = ValidateProjectUpdate(&_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
+	errors = ValidateProjectUpdate(context.Background(), &_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		t.Errorf("Unexpected: %s", err.Error())
 	}
@@ -258,7 +259,7 @@ func TestUpdateAllocatable(t *testing.T) {
 	}
 
 	hasError := false
-	errors := ValidateProjectUpdate(&_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
+	errors := ValidateProjectUpdate(context.Background(), &_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), resource.AllocatableErrorInfo) {
 			hasError = true
@@ -272,7 +273,7 @@ func TestUpdateAllocatable(t *testing.T) {
 
 	quota, _ = apimachineryresource.ParseQuantity("6")
 	_childProject.Spec.Clusters[ClusterName].Hard["requests.cpu"] = quota
-	errors = ValidateProjectUpdate(&_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
+	errors = ValidateProjectUpdate(context.Background(), &_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		t.Errorf("Unexpected: %s", err.Error())
 	}
@@ -300,7 +301,7 @@ func TestUpdateQuota(t *testing.T) {
 	}
 
 	hasError := false
-	errors := ValidateProjectUpdate(&_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
+	errors := ValidateProjectUpdate(context.Background(), &_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), resource.UpdateQuotaErrorInfo) {
 			hasError = true
@@ -314,7 +315,7 @@ func TestUpdateQuota(t *testing.T) {
 
 	quota, _ = apimachineryresource.ParseQuantity("7")
 	_childProject.Spec.Clusters[ClusterName].Hard["requests.cpu"] = quota
-	errors = ValidateProjectUpdate(&_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
+	errors = ValidateProjectUpdate(context.Background(), &_childProject, &_oldChildProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		t.Errorf("Unexpected: %s", err.Error())
 	}
@@ -344,7 +345,7 @@ func TestNewQuota(t *testing.T) {
 
 	_parentProject.Status.CalculatedChildProjects = []string{_childProject.Name}
 	hasError := false
-	errors := ValidateProjectUpdate(&_parentProject, &_parentProject, newObjectGetter(), newClusterGetter())
+	errors := ValidateProjectUpdate(context.Background(), &_parentProject, &_parentProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), _addNewQuotaErrorInfo) {
 			hasError = true
@@ -363,14 +364,14 @@ func TestNewQuota(t *testing.T) {
 			},
 		},
 	}
-	errors = ValidateProjectUpdate(&_parentProject, &_parentProject, newObjectGetter(), newClusterGetter())
+	errors = ValidateProjectUpdate(context.Background(), &_parentProject, &_parentProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		t.Errorf("Unexpected: %s", err.Error())
 	}
 
 	_parentProject.Status.CalculatedNamespaces = []string{_childNamespace.Name}
 	hasError = false
-	errors = ValidateProjectUpdate(&_parentProject, &_parentProject, newObjectGetter(), newClusterGetter())
+	errors = ValidateProjectUpdate(context.Background(), &_parentProject, &_parentProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), _addNewQuotaErrorInfo) {
 			hasError = true
@@ -385,7 +386,7 @@ func TestNewQuota(t *testing.T) {
 		"pods":         quota,
 		"requests.cpu": quota,
 	}
-	errors = ValidateProjectUpdate(&_parentProject, &_parentProject, newObjectGetter(), newClusterGetter())
+	errors = ValidateProjectUpdate(context.Background(), &_parentProject, &_parentProject, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		t.Errorf("Unexpected: %s", err.Error())
 	}
@@ -401,7 +402,7 @@ func newClusterGetter() validation.ClusterGetter {
 
 type testObjectGetter struct{}
 
-func (getter testObjectGetter) Project(name string, options apimachinerymetav1.GetOptions) (*business.Project, error) {
+func (getter testObjectGetter) Project(ctx context.Context, name string, options apimachinerymetav1.GetOptions) (*business.Project, error) {
 	project, has := _projectMap[name]
 	if has {
 		return project, nil
@@ -409,7 +410,7 @@ func (getter testObjectGetter) Project(name string, options apimachinerymetav1.G
 	return nil, fmt.Errorf("failed to get project by name '%s'", name)
 }
 
-func (getter testObjectGetter) Namespace(project, name string, options apimachinerymetav1.GetOptions) (*business.Namespace, error) {
+func (getter testObjectGetter) Namespace(ctx context.Context, project, name string, options apimachinerymetav1.GetOptions) (*business.Namespace, error) {
 	namespace, has := _namespaceMap[name]
 	if has {
 		return namespace, nil
@@ -419,7 +420,7 @@ func (getter testObjectGetter) Namespace(project, name string, options apimachin
 
 type testClusterGetter struct{}
 
-func (getter testClusterGetter) Cluster(name string, options apimachinerymetav1.GetOptions) (*platformv1.Cluster, error) {
+func (getter testClusterGetter) Cluster(ctx context.Context, name string, options apimachinerymetav1.GetOptions) (*platformv1.Cluster, error) {
 	cluster, has := _clusterMap[name]
 	if has {
 		return cluster, nil

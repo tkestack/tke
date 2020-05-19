@@ -270,13 +270,12 @@ func (r *ScaleREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	result := &autoscalingv1.Scale{}
 	if err := client.
 		Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		Name(name).
 		VersionedParams(options, metav1.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}
@@ -298,13 +297,12 @@ func (r *ScaleREST) Update(ctx context.Context, name string, objInfo rest.Update
 	result := &autoscalingv1.Scale{}
 	if err := client.
 		Put().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		Name(name).
 		Body(obj).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, false, err
 	}
@@ -346,13 +344,12 @@ func (r *RollbackREST) Create(ctx context.Context, obj runtime.Object, createVal
 	result := &metav1.Status{}
 	if err := client.
 		Post().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		Name(requestInfo.Name).
 		Body(obj).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}

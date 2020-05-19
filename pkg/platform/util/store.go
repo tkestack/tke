@@ -20,16 +20,20 @@ package util
 
 import (
 	"context"
+	"reflect"
+	"strings"
+
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	clientrest "k8s.io/client-go/rest"
-	"reflect"
-	"strings"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
@@ -41,13 +45,18 @@ type Store struct {
 	// GET of a single object
 	NewFunc func() runtime.Object
 	// NewListFunc returns a new list of the type this registry
-	NewListFunc    func() runtime.Object
+	NewListFunc func() runtime.Object
+	// DefaultQualifiedResource is the pluralized name of the resource.
+	// This field is used if there is no request info present in the context.
+	// See qualifiedResourceFromContext for details.
+	DefaultQualifiedResource schema.GroupResource
+	// TableConvertor is an optional interface for transforming items or lists
+	// of items into tabular output. If unset, the default will be used.
+	TableConvertor rest.TableConvertor
+
 	Namespaced     bool
 	PlatformClient platforminternalclient.PlatformInterface
 }
-
-// var _ rest.Exporter = &Store{}
-// var _ rest.TableConvertor = &Store{}
 
 // New implements RESTStorage.New.
 func (s *Store) New() runtime.Object {
@@ -64,20 +73,13 @@ func (s *Store) NamespaceScoped() bool {
 	return s.Namespaced
 }
 
-func listOptions(o *metainternalversion.ListOptions) *v1.ListOptions {
-	if o == nil {
-		return &v1.ListOptions{}
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (s *Store) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*v1.Table, error) {
+	if s.TableConvertor != nil {
+		return s.TableConvertor.ConvertToTable(ctx, object, tableOptions)
 	}
-	return &v1.ListOptions{
-		LabelSelector:       o.LabelSelector.String(),
-		FieldSelector:       o.FieldSelector.String(),
-		Watch:               o.Watch,
-		AllowWatchBookmarks: o.AllowWatchBookmarks,
-		ResourceVersion:     o.ResourceVersion,
-		TimeoutSeconds:      o.TimeoutSeconds,
-		Limit:               o.Limit,
-		Continue:            o.Continue,
-	}
+	return rest.NewDefaultTableConvertor(s.qualifiedResourceFromContext(ctx)).ConvertToTable(ctx, object, tableOptions)
 }
 
 // List returns a list of items matching labels and field according to the
@@ -104,12 +106,11 @@ func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptio
 	result := s.NewListFunc()
 	if err := client.
 		Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		SpecificallyVersionedParams(options, platform.ParameterCodec, v1.SchemeGroupVersion).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}
@@ -153,13 +154,12 @@ func (s *Store) Get(ctx context.Context, name string, options *v1.GetOptions) (r
 	result := s.New()
 	if err := client.
 		Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		Name(name).
 		VersionedParams(options, platform.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}
@@ -179,12 +179,11 @@ func (s *Store) Watch(ctx context.Context, options *metainternalversion.ListOpti
 	options.Watch = true
 
 	return client.Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		SpecificallyVersionedParams(options, platform.ParameterCodec, v1.SchemeGroupVersion).
-		Watch()
+		Watch(ctx)
 }
 
 // Create inserts a new item according to the unique key from the object.
@@ -202,14 +201,13 @@ func (s *Store) Create(ctx context.Context, obj runtime.Object, createValidation
 	result := s.New()
 	if err := client.
 		Post().
-		Context(ctx).
 		SetHeader("Content-Type", requestBody.ContentType).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		VersionedParams(options, platform.ParameterCodec).
 		Body(requestBody.Data).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}
@@ -240,7 +238,6 @@ func (s *Store) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		return nil, false, errors.NewBadRequest("unsupported request method")
 	}
 	if err := req.
-		Context(ctx).
 		SetHeader("Content-Type", requestBody.ContentType).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
@@ -248,7 +245,7 @@ func (s *Store) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		VersionedParams(options, platform.ParameterCodec).
 		Name(name).
 		Body(requestBody.Data).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, false, err
 	}
@@ -265,14 +262,13 @@ func (s *Store) Delete(ctx context.Context, name string, deleteValidation rest.V
 
 	result := client.
 		Delete().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		VersionedParams(options, platform.ParameterCodec).
 		Name(name).
 		Body(options).
-		Do()
+		Do(ctx)
 	resultErr := result.Error()
 	if resultErr != nil {
 		return nil, false, resultErr
@@ -297,12 +293,11 @@ func (s *Store) DeleteCollection(ctx context.Context, options *v1.DeleteOptions,
 
 	result := client.
 		Delete().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "" && requestInfo.Resource != "namespaces").
 		Resource(requestInfo.Resource).
 		SpecificallyVersionedParams(listOptions, platform.ParameterCodec, v1.SchemeGroupVersion).
 		Body(options).
-		Do()
+		Do(ctx)
 
 	resultErr := result.Error()
 	if resultErr != nil {
@@ -313,4 +308,14 @@ func (s *Store) DeleteCollection(ctx context.Context, options *v1.DeleteOptions,
 		return nil, err
 	}
 	return returnedObj, nil
+}
+
+// qualifiedResourceFromContext attempts to retrieve a GroupResource from the context's request info.
+// If the context has no request info, DefaultQualifiedResource is used.
+func (s *Store) qualifiedResourceFromContext(ctx context.Context) schema.GroupResource {
+	if info, ok := genericapirequest.RequestInfoFrom(ctx); ok {
+		return schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}
+	}
+	// some implementations access storage directly and thus the context has no RequestInfo
+	return s.DefaultQualifiedResource
 }

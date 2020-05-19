@@ -102,7 +102,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new machine
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return validation.ValidateMachine(obj.(*platform.Machine), s.platformClient)
+	return validation.ValidateMachine(ctx, obj.(*platform.Machine), s.platformClient)
 }
 
 // AllowCreateOnUpdate is false for machines
@@ -123,7 +123,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end cluster.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return validation.ValidateMachineUpdate(obj.(*platform.Machine), old.(*platform.Machine))
+	return validation.ValidateMachineUpdate(ctx, obj.(*platform.Machine), old.(*platform.Machine))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -132,7 +132,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a machine")
 	}
-	return labels.Set(machine.ObjectMeta.Labels), ToSelectableFields(machine), nil
+	return machine.ObjectMeta.Labels, ToSelectableFields(machine), nil
 }
 
 // SelectionPredicate returns a generic matcher for a given label and field selector.

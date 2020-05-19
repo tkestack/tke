@@ -19,6 +19,7 @@
 package util
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -66,7 +67,7 @@ func GetPoliciesFromGroupExtra(group *auth.LocalGroup) ([]string, bool) {
 	return policies, true
 }
 
-func BindGroupPolicies(authClient authinternalclient.AuthInterface, group *auth.LocalGroup, policies []string) error {
+func BindGroupPolicies(ctx context.Context, authClient authinternalclient.AuthInterface, group *auth.LocalGroup, policies []string) error {
 	var errs []error
 	for _, p := range policies {
 		binding := auth.Binding{}
@@ -77,7 +78,7 @@ func BindGroupPolicies(authClient authinternalclient.AuthInterface, group *auth.
 			Name(p).
 			SubResource("binding").
 			Body(&binding).
-			Do().Into(pol)
+			Do(ctx).Into(pol)
 		if err != nil {
 			log.Error("bind policy for group failed", log.String("group", group.Name),
 				log.String("policy", p), log.Err(err))
@@ -88,7 +89,7 @@ func BindGroupPolicies(authClient authinternalclient.AuthInterface, group *auth.
 	return errors.NewAggregate(errs)
 }
 
-func UnBindGroupPolicies(authClient authinternalclient.AuthInterface, group *auth.LocalGroup, policies []string) error {
+func UnBindGroupPolicies(ctx context.Context, authClient authinternalclient.AuthInterface, group *auth.LocalGroup, policies []string) error {
 	var errs []error
 	for _, p := range policies {
 		binding := auth.Binding{}
@@ -99,7 +100,7 @@ func UnBindGroupPolicies(authClient authinternalclient.AuthInterface, group *aut
 			Name(p).
 			SubResource("unbinding").
 			Body(&binding).
-			Do().Into(pol)
+			Do(ctx).Into(pol)
 		if err != nil {
 			log.Error("unbind policy for group failed", log.String("group", group.Spec.DisplayName),
 				log.String("policy", p), log.Err(err))
@@ -110,7 +111,7 @@ func UnBindGroupPolicies(authClient authinternalclient.AuthInterface, group *aut
 	return errors.NewAggregate(errs)
 }
 
-func HandleGroupPoliciesUpdate(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, group *auth.LocalGroup) error {
+func HandleGroupPoliciesUpdate(ctx context.Context, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, group *auth.LocalGroup) error {
 	newPolicies, needHandlePolicy := GetPoliciesFromGroupExtra(group)
 	if !needHandlePolicy {
 		return nil
@@ -127,12 +128,12 @@ func HandleGroupPoliciesUpdate(authClient authinternalclient.AuthInterface, enfo
 	added, removed := util.DiffStringSlice(oldPolicies, newPolicies)
 
 	log.Info("handler group policies ", log.Strings("added", added), log.Strings("removed", removed))
-	berr := BindGroupPolicies(authClient, group, added)
+	berr := BindGroupPolicies(ctx, authClient, group, added)
 	if berr != nil {
 		log.Error("bind group policies failed", log.String("group", group.Spec.Username), log.Strings("policies", added), log.Err(berr))
 	}
 
-	uerr := UnBindGroupPolicies(authClient, group, removed)
+	uerr := UnBindGroupPolicies(ctx, authClient, group, removed)
 	if berr != nil {
 		log.Error("un bind group policies failed", log.String("group", group.Spec.Username), log.Strings("policies", removed), log.Err(uerr))
 	}
@@ -140,7 +141,7 @@ func HandleGroupPoliciesUpdate(authClient authinternalclient.AuthInterface, enfo
 	return errors.NewAggregate([]error{berr, uerr})
 }
 
-func FillGroupPolicies(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, groupList *auth.LocalGroupList) {
+func FillGroupPolicies(ctx context.Context, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, groupList *auth.LocalGroupList) {
 	if enforcer == nil || enforcer.GetRoleManager() == nil || enforcer.GetAdapter() == nil {
 		return
 	}
@@ -161,7 +162,7 @@ func FillGroupPolicies(authClient authinternalclient.AuthInterface, enforcer *ca
 			if ok {
 				m[p] = displayName
 			} else {
-				pol, err := authClient.Policies().Get(p, v1.GetOptions{})
+				pol, err := authClient.Policies().Get(ctx, p, v1.GetOptions{})
 				if err != nil {
 					log.Error("get policy failed", log.String("policy", p), log.Err(err))
 					continue

@@ -59,6 +59,7 @@ version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 4. **Enjoy TKEStack:**  Open your browser to http://console.tke.com
 
 > TKEStack use tke-installer tool to deploy. Please refer to [tke-installer](docs/user/tke-installer/README.md) for more information.
+> 
 > If you encounter problems during installation, you can refer to [FAQ installation](docs/guide/zh-CN/FAQ/installation.md)
 
 
@@ -90,7 +91,7 @@ Other active channels:
 
 - WeChat Group
 
-![TKEStack](docs/images/wechat.png)
+![TKEStack](docs/images/wechat.jpeg)
 
 ## Licensing
 

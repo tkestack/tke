@@ -19,14 +19,16 @@
 package util
 
 import (
+	"context"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
 	influxclient "github.com/influxdata/influxdb1-client/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"strings"
-	"sync"
-	"time"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	esclient "tkestack.io/tke/pkg/monitor/storage/es/client"
 	"tkestack.io/tke/pkg/platform/util"
@@ -46,19 +48,19 @@ var ClusterNameToClient sync.Map
 var ClusterNameToMonitor sync.Map
 
 // GetClusterClient get kubernetes client via cluster name
-func GetClusterClient(clusterName string, platformClient platformversionedclient.PlatformV1Interface) (kubernetes.Interface, error) {
+func GetClusterClient(ctx context.Context, clusterName string, platformClient platformversionedclient.PlatformV1Interface) (kubernetes.Interface, error) {
 	// First check from cache
 	if item, ok := ClusterNameToClient.Load(clusterName); ok {
 		// Check if is available
 		kubeClient := item.(kubernetes.Interface)
-		_, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).List(metav1.ListOptions{})
+		_, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).List(ctx, metav1.ListOptions{})
 		if err == nil {
 			return kubeClient, nil
 		}
 		ClusterNameToClient.Delete(clusterName)
 	}
 
-	kubeClient, err := util.BuildExternalClientSetWithName(platformClient, clusterName)
+	kubeClient, err := util.BuildExternalClientSetWithName(ctx, platformClient, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -69,19 +71,19 @@ func GetClusterClient(clusterName string, platformClient platformversionedclient
 }
 
 // GetMonitoringClient get monitoring client via cluster name
-func GetMonitoringClient(clusterName string, platformClient platformversionedclient.PlatformV1Interface) (monitoringclient.Interface, error) {
+func GetMonitoringClient(ctx context.Context, clusterName string, platformClient platformversionedclient.PlatformV1Interface) (monitoringclient.Interface, error) {
 	// First check from cache
 	if item, ok := ClusterNameToMonitor.Load(clusterName); ok {
 		// Check if is available
 		monitoringClient := item.(monitoringclient.Interface)
-		_, err := monitoringClient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).List(metav1.ListOptions{})
+		_, err := monitoringClient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).List(ctx, metav1.ListOptions{})
 		if err == nil {
 			return monitoringClient, nil
 		}
 		ClusterNameToClient.Delete(clusterName)
 	}
 
-	monitoringClient, err := util.BuildExternalMonitoringClientSetWithName(platformClient, clusterName)
+	monitoringClient, err := util.BuildExternalMonitoringClientSetWithName(ctx, platformClient, clusterName)
 	if err != nil {
 		return nil, err
 	}

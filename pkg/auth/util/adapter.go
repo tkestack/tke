@@ -19,6 +19,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -107,7 +108,7 @@ func (a *RestAdapter) loadPolicy(rule *authv1.Rule, model model.Model) {
 // SavePolicy will rewrite all of policies in ETCD with the current data in Casbin
 func (a *RestAdapter) SavePolicy(model model.Model) error {
 	// clean old rule data
-	err := a.destroy()
+	err := a.destroy(context.Background())
 	if err != nil {
 		return err
 	}
@@ -126,12 +127,12 @@ func (a *RestAdapter) SavePolicy(model model.Model) error {
 		}
 	}
 
-	return a.savePolicy(rules)
+	return a.savePolicy(context.Background(), rules)
 }
 
 // destroy or clean all of policy
-func (a *RestAdapter) destroy() error {
-	err := a.ruleClient.DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{})
+func (a *RestAdapter) destroy(ctx context.Context) error {
+	err := a.ruleClient.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{})
 	return err
 }
 
@@ -164,9 +165,9 @@ func ConvertRule(ptype string, line []string) (rule authv1.Rule) {
 	return rule
 }
 
-func (a *RestAdapter) savePolicy(rules []authv1.Rule) error {
+func (a *RestAdapter) savePolicy(ctx context.Context, rules []authv1.Rule) error {
 	for _, rule := range rules {
-		if _, err := a.ruleClient.Create(&rule); err != nil && !apierrors.IsAlreadyExists(err) {
+		if _, err := a.ruleClient.Create(ctx, &rule, metav1.CreateOptions{}); err != nil && !apierrors.IsAlreadyExists(err) {
 			return err
 		}
 	}
@@ -177,7 +178,7 @@ func (a *RestAdapter) savePolicy(rules []authv1.Rule) error {
 // Part of the Auto-Save feature.
 func (a *RestAdapter) AddPolicy(sec string, ptype string, line []string) error {
 	rule := ConvertRule(ptype, line)
-	if _, err := a.ruleClient.Create(&rule); !apierrors.IsAlreadyExists(err) {
+	if _, err := a.ruleClient.Create(context.Background(), &rule, metav1.CreateOptions{}); !apierrors.IsAlreadyExists(err) {
 		return err
 	}
 
@@ -190,7 +191,7 @@ func (a *RestAdapter) RemovePolicy(sec string, ptype string, line []string) erro
 	rule := ConvertRule(ptype, line)
 	filter := a.constructRemoveSelector(rule)
 
-	return a.removeFilteredPolicy(filter)
+	return a.removeFilteredPolicy(context.Background(), filter)
 }
 
 func (a *RestAdapter) constructRemoveSelector(rule authv1.Rule) string {
@@ -236,11 +237,10 @@ func (a *RestAdapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex 
 
 	filter := a.constructFilterSelector(rule)
 
-	return a.removeFilteredPolicy(filter)
+	return a.removeFilteredPolicy(context.Background(), filter)
 }
 
 func (a *RestAdapter) constructFilterSelector(rule authv1.Rule) string {
-
 	ruleFieldSet := fields.Set{}
 	if rule.Spec.PType != "" {
 		ruleFieldSet["spec.ptype"] = rule.Spec.PType
@@ -277,7 +277,7 @@ func (a *RestAdapter) constructFilterSelector(rule authv1.Rule) string {
 	return fields.SelectorFromSet(ruleFieldSet).String()
 }
 
-func (a *RestAdapter) removeFilteredPolicy(filter string) error {
+func (a *RestAdapter) removeFilteredPolicy(ctx context.Context, filter string) error {
 	log.Info("RemoveFilterPolicy", log.String("filter", filter))
-	return a.ruleClient.DeleteCollection(&metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: filter})
+	return a.ruleClient.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: filter})
 }

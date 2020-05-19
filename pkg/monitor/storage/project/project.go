@@ -19,7 +19,9 @@
 package project
 
 import (
+	"context"
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	resourceutil "tkestack.io/tke/pkg/monitor/storage/util"
@@ -27,8 +29,9 @@ import (
 )
 
 func (s *Storage) Collect() {
+	ctx := context.Background()
 	// Maybe should use lister, get projects from cache
-	projectList, err := s.businessClient.Projects().List(metav1.ListOptions{})
+	projectList, err := s.businessClient.Projects().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		log.Errorf("List project failed: %v", err)
 		return
@@ -60,7 +63,7 @@ func (s *Storage) Collect() {
 		projectNamespaceCapacity := map[string]map[string]businessv1.ResourceList{}
 		projectNamespaceAllocated := map[string]map[string]businessv1.ResourceList{}
 
-		namespacesLists, err := s.businessClient.Namespaces(pro.Name).List(metav1.ListOptions{})
+		namespacesLists, err := s.businessClient.Namespaces(pro.Name).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			log.Errorf("Get(%s) namespace list failed: %v", pro.Name, err)
 			continue

@@ -19,6 +19,7 @@
 package chartgroup
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -55,11 +56,11 @@ func (s *chartGroupHealth) Set(key string) {
 	s.chartGroups.Insert(key)
 }
 
-func (c *Controller) startChartGroupHealthCheck(key string) {
+func (c *Controller) startChartGroupHealthCheck(ctx context.Context, key string) {
 	if !c.health.Exist(key) {
 		c.health.Set(key)
 		go func() {
-			if err := wait.PollImmediateUntil(1*time.Minute, c.watchChartGroupHealth(key), c.stopCh); err != nil {
+			if err := wait.PollImmediateUntil(1*time.Minute, c.watchChartGroupHealth(ctx, key), c.stopCh); err != nil {
 				log.Error("Failed to wait poll immediate until", log.Err(err))
 			}
 		}()
@@ -70,7 +71,7 @@ func (c *Controller) startChartGroupHealthCheck(key string) {
 }
 
 // for PollImmediateUntil, when return true ,an err while exit
-func (c *Controller) watchChartGroupHealth(key string) func() (bool, error) {
+func (c *Controller) watchChartGroupHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Debug("Check chartGroup health", log.String("key", key))
 
@@ -85,7 +86,7 @@ func (c *Controller) watchChartGroupHealth(key string) func() (bool, error) {
 			return true, nil
 		}
 
-		chartGroup, err := c.client.BusinessV1().ChartGroups(projectName).Get(chartGroupName, metav1.GetOptions{})
+		chartGroup, err := c.client.BusinessV1().ChartGroups(projectName).Get(ctx, chartGroupName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			log.Error("ChartGroup not found, to exit the health check loop",
 				log.String("projectName", projectName), log.String("chartGroupName", chartGroupName))
@@ -105,7 +106,7 @@ func (c *Controller) watchChartGroupHealth(key string) func() (bool, error) {
 			return true, nil
 		}
 
-		if err := c.checkChartGroupHealth(chartGroup); err != nil {
+		if err := c.checkChartGroupHealth(ctx, chartGroup); err != nil {
 			log.Error("Failed to check chartGroup health",
 				log.String("projectName", projectName), log.String("chartGroupName", chartGroupName), log.Err(err))
 		}
@@ -113,8 +114,8 @@ func (c *Controller) watchChartGroupHealth(key string) func() (bool, error) {
 	}
 }
 
-func (c *Controller) checkChartGroupHealth(chartGroup *businessv1.ChartGroup) error {
-	chartGroupList, err := c.registryClient.ChartGroups().List(metav1.ListOptions{
+func (c *Controller) checkChartGroupHealth(ctx context.Context, chartGroup *businessv1.ChartGroup) error {
+	chartGroupList, err := c.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chartGroup.Spec.TenantID, chartGroup.Spec.Name),
 	})
 	if err != nil {
@@ -128,7 +129,7 @@ func (c *Controller) checkChartGroupHealth(chartGroup *businessv1.ChartGroup) er
 			chartGroup.Status.Message = "ListChartGroup failed"
 			chartGroup.Status.Reason = "ChartGroup may have been removed."
 			chartGroup.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(chartGroup)
+			return c.persistUpdate(ctx, chartGroup)
 		}
 		chartGroupObject := chartGroupList.Items[0]
 		if chartGroupObject.Status.Locked != nil && *chartGroupObject.Status.Locked {
@@ -136,7 +137,7 @@ func (c *Controller) checkChartGroupHealth(chartGroup *businessv1.ChartGroup) er
 			chartGroup.Status.Message = "ChartGroup locked"
 			chartGroup.Status.Reason = "ChartGroup has been locked."
 			chartGroup.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(chartGroup)
+			return c.persistUpdate(ctx, chartGroup)
 		}
 	case businessv1.ChartGroupLocked:
 		if len(chartGroupList.Items) == 0 {
@@ -144,7 +145,7 @@ func (c *Controller) checkChartGroupHealth(chartGroup *businessv1.ChartGroup) er
 			chartGroup.Status.Message = "ListChartGroup failed"
 			chartGroup.Status.Reason = "ChartGroup may have been removed."
 			chartGroup.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(chartGroup)
+			return c.persistUpdate(ctx, chartGroup)
 		}
 		chartGroupObject := chartGroupList.Items[0]
 		if chartGroupObject.Status.Locked == nil || !*chartGroupObject.Status.Locked {
@@ -152,7 +153,7 @@ func (c *Controller) checkChartGroupHealth(chartGroup *businessv1.ChartGroup) er
 			chartGroup.Status.Message = ""
 			chartGroup.Status.Reason = ""
 			chartGroup.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(chartGroup)
+			return c.persistUpdate(ctx, chartGroup)
 		}
 	default:
 		return fmt.Errorf("internal error, checkChartGroupHealth(%s/%s) found unexpected status %s",

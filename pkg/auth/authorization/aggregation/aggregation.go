@@ -39,7 +39,7 @@ func NewAuthorizer(authClient authinternalclient.AuthInterface, authorizationOpt
 		webhookAuthorizer, err := webhook.New(authorizationOpts.WebhookConfigFile,
 			authorizationOpts.WebhookVersion,
 			authorizationOpts.WebhookCacheAuthorizedTTL,
-			authorizationOpts.WebhookCacheUnauthorizedTTL)
+			authorizationOpts.WebhookCacheUnauthorizedTTL, nil)
 		if err != nil {
 			return nil, err
 		}

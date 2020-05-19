@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var volumedecoratorsResource = schema.GroupVersionResource{Group: "platform.tkes
 var volumedecoratorsKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "v1", Kind: "VolumeDecorator"}
 
 // Get takes name of the volumeDecorator, and returns the corresponding volumeDecorator object, and an error if there is any.
-func (c *FakeVolumeDecorators) Get(name string, options v1.GetOptions) (result *platformv1.VolumeDecorator, err error) {
+func (c *FakeVolumeDecorators) Get(ctx context.Context, name string, options v1.GetOptions) (result *platformv1.VolumeDecorator, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(volumedecoratorsResource, name), &platformv1.VolumeDecorator{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeVolumeDecorators) Get(name string, options v1.GetOptions) (result *
 }
 
 // List takes label and field selectors, and returns the list of VolumeDecorators that match those selectors.
-func (c *FakeVolumeDecorators) List(opts v1.ListOptions) (result *platformv1.VolumeDecoratorList, err error) {
+func (c *FakeVolumeDecorators) List(ctx context.Context, opts v1.ListOptions) (result *platformv1.VolumeDecoratorList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(volumedecoratorsResource, volumedecoratorsKind, opts), &platformv1.VolumeDecoratorList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeVolumeDecorators) List(opts v1.ListOptions) (result *platformv1.Vol
 }
 
 // Watch returns a watch.Interface that watches the requested volumeDecorators.
-func (c *FakeVolumeDecorators) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeVolumeDecorators) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(volumedecoratorsResource, opts))
 }
 
 // Create takes the representation of a volumeDecorator and creates it.  Returns the server's representation of the volumeDecorator, and an error, if there is any.
-func (c *FakeVolumeDecorators) Create(volumeDecorator *platformv1.VolumeDecorator) (result *platformv1.VolumeDecorator, err error) {
+func (c *FakeVolumeDecorators) Create(ctx context.Context, volumeDecorator *platformv1.VolumeDecorator, opts v1.CreateOptions) (result *platformv1.VolumeDecorator, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(volumedecoratorsResource, volumeDecorator), &platformv1.VolumeDecorator{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeVolumeDecorators) Create(volumeDecorator *platformv1.VolumeDecorato
 }
 
 // Update takes the representation of a volumeDecorator and updates it. Returns the server's representation of the volumeDecorator, and an error, if there is any.
-func (c *FakeVolumeDecorators) Update(volumeDecorator *platformv1.VolumeDecorator) (result *platformv1.VolumeDecorator, err error) {
+func (c *FakeVolumeDecorators) Update(ctx context.Context, volumeDecorator *platformv1.VolumeDecorator, opts v1.UpdateOptions) (result *platformv1.VolumeDecorator, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(volumedecoratorsResource, volumeDecorator), &platformv1.VolumeDecorator{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeVolumeDecorators) Update(volumeDecorator *platformv1.VolumeDecorato
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeVolumeDecorators) UpdateStatus(volumeDecorator *platformv1.VolumeDecorator) (*platformv1.VolumeDecorator, error) {
+func (c *FakeVolumeDecorators) UpdateStatus(ctx context.Context, volumeDecorator *platformv1.VolumeDecorator, opts v1.UpdateOptions) (*platformv1.VolumeDecorator, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(volumedecoratorsResource, "status", volumeDecorator), &platformv1.VolumeDecorator{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeVolumeDecorators) UpdateStatus(volumeDecorator *platformv1.VolumeDe
 }
 
 // Delete takes name of the volumeDecorator and deletes it. Returns an error if one occurs.
-func (c *FakeVolumeDecorators) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeVolumeDecorators) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(volumedecoratorsResource, name), &platformv1.VolumeDecorator{})
 	return err
 }
 
 // Patch applies the patch and returns the patched volumeDecorator.
-func (c *FakeVolumeDecorators) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platformv1.VolumeDecorator, err error) {
+func (c *FakeVolumeDecorators) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platformv1.VolumeDecorator, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(volumedecoratorsResource, name, pt, data, subresources...), &platformv1.VolumeDecorator{})
 	if obj == nil {

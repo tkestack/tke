@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -479,6 +479,9 @@ message ClusterSpec {
   // If specified, provider must make sure is valid.
   // +optional
   optional k8s.io.api.core.v1.LocalObjectReference clusterCredentialRef = 20;
+
+  // Etcd holds configuration for etcd.
+  optional Etcd etcd = 21;
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -621,6 +624,36 @@ message CronHPAStatus {
   // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
+}
+
+// Etcd contains elements describing Etcd configuration.
+message Etcd {
+  // Local provides configuration knobs for configuring the local etcd instance
+  // Local and External are mutually exclusive
+  optional LocalEtcd local = 1;
+
+  // External describes how to connect to an external etcd cluster
+  // Local and External are mutually exclusive
+  optional ExternalEtcd external = 2;
+}
+
+// ExternalEtcd describes an external etcd cluster.
+// Kubeadm has no knowledge of where certificate files live and they must be supplied.
+message ExternalEtcd {
+  // Endpoints of etcd members. Required for ExternalEtcd.
+  repeated string endpoints = 1;
+
+  // CAFile is an SSL Certificate Authority file used to secure etcd communication.
+  // Required if using a TLS connection.
+  optional string caFile = 2;
+
+  // CertFile is an SSL certification file used to secure etcd communication.
+  // Required if using a TLS connection.
+  optional string certFile = 3;
+
+  // KeyFile is an SSL key file used to secure etcd communication.
+  // Required if using a TLS connection.
+  optional string keyFile = 4;
 }
 
 message File {
@@ -816,6 +849,23 @@ message LBCFStatus {
   // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
+}
+
+// LocalEtcd describes that kubeadm should run an etcd cluster locally
+message LocalEtcd {
+  // DataDir is the directory etcd will place its data.
+  // Defaults to "/var/lib/etcd".
+  optional string dataDir = 1;
+
+  // ExtraArgs are extra arguments provided to the etcd binary
+  // when run inside a static pod.
+  map<string, string> extraArgs = 2;
+
+  // ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.
+  repeated string serverCertSANs = 3;
+
+  // PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.
+  repeated string peerCertSANs = 4;
 }
 
 // LogCollector is a manager to collect logs of workload.

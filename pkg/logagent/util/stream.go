@@ -21,19 +21,19 @@ package util
 import (
 	"context"
 	"io"
+	"net/http"
+	"net/url"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericrest "k8s.io/apiserver/pkg/registry/generic/rest"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"net/http"
-	"net/url"
 )
-
 
 // LocationStreamer is a resource that streams the contents of a particular
 // location URL.
 type LocationStreamer struct {
-	Ip              string
+	IP              string
 	Request         ReaderCloserGetter
 	Location        *url.URL
 	Transport       http.RoundTripper
@@ -46,10 +46,10 @@ type LocationStreamer struct {
 // a LocationStreamer must implement a rest.ResourceStreamer
 var _ rest.ResourceStreamer = &LocationStreamer{}
 
-func (obj *LocationStreamer) GetObjectKind() schema.ObjectKind {
+func (s *LocationStreamer) GetObjectKind() schema.ObjectKind {
 	return schema.EmptyObjectKind
 }
-func (obj *LocationStreamer) DeepCopyObject() runtime.Object {
+func (s *LocationStreamer) DeepCopyObject() runtime.Object {
 	panic("rest.LocationStreamer does not implement DeepCopyObject")
 }
 

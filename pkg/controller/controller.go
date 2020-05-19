@@ -19,13 +19,15 @@
 package controller
 
 import (
+	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	runtimeutil "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"math/rand"
 	"net/http"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	runtimeutil "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	"tkestack.io/tke/pkg/controller/options"
 	"tkestack.io/tke/pkg/util/log"
@@ -64,7 +66,7 @@ func WaitForAPIServer(client versionedclientset.Interface, timeout time.Duration
 
 	err := wait.PollImmediate(time.Second, timeout, func() (bool, error) {
 		healthStatus := 0
-		result := client.Discovery().RESTClient().Get().AbsPath("/healthz").Do().StatusCode(&healthStatus)
+		result := client.Discovery().RESTClient().Get().AbsPath("/healthz").Do(context.Background()).StatusCode(&healthStatus)
 		if result.Error() != nil {
 			lastErr = fmt.Errorf("failed to get apiserver /healthz status: %v", result.Error())
 			return false, nil

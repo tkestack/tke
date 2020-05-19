@@ -19,7 +19,9 @@
 package namespace
 
 import (
+	"context"
 	"fmt"
+
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -33,14 +35,14 @@ import (
 var ValidateNamespaceName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateNamespace tests if required fields in the namespace are set.
-func ValidateNamespace(namespace *registry.Namespace, registryClient *registryinternalclient.RegistryClient) field.ErrorList {
+func ValidateNamespace(ctx context.Context, namespace *registry.Namespace, registryClient *registryinternalclient.RegistryClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&namespace.ObjectMeta, false, ValidateNamespaceName, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
 	if namespace.Spec.Name == "" {
 		allErrs = append(allErrs, field.Required(fldSpecPath.Child("name"), "must specify name"))
 	} else {
-		namespaceList, err := registryClient.Namespaces().List(metav1.ListOptions{
+		namespaceList, err := registryClient.Namespaces().List(ctx, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", namespace.Spec.TenantID, namespace.Spec.Name),
 		})
 		if err != nil {
@@ -60,7 +62,7 @@ func ValidateNamespace(namespace *registry.Namespace, registryClient *registryin
 
 // ValidateNamespaceUpdate tests if required fields in the namespace are set during
 // an update.
-func ValidateNamespaceUpdate(namespace *registry.Namespace, old *registry.Namespace) field.ErrorList {
+func ValidateNamespaceUpdate(ctx context.Context, namespace *registry.Namespace, old *registry.Namespace) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&namespace.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 
 	if namespace.Spec.TenantID != old.Spec.TenantID {

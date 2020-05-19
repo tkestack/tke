@@ -88,12 +88,11 @@ func (r *REST) List(ctx context.Context, options *metaInternalVersion.ListOption
 	result := r.NewList()
 	if err := client.
 		Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		SpecificallyVersionedParams(options, metav1.ParameterCodec, metaInternalVersion.SchemeGroupVersion).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}
@@ -110,13 +109,12 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	result := r.New()
 	if err := client.
 		Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		Name(name).
 		VersionedParams(options, metav1.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}

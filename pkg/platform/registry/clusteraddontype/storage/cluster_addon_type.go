@@ -94,6 +94,14 @@ func (r *REST) NewList() runtime.Object {
 	return &platform.ClusterAddonTypeList{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(platform.Resource("clusteraddons"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	l := &platform.ClusterAddonTypeList{

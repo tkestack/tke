@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var apikeysResource = schema.GroupVersionResource{Group: "auth.tkestack.io", Ver
 var apikeysKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "v1", Kind: "APIKey"}
 
 // Get takes name of the aPIKey, and returns the corresponding aPIKey object, and an error if there is any.
-func (c *FakeAPIKeys) Get(name string, options v1.GetOptions) (result *authv1.APIKey, err error) {
+func (c *FakeAPIKeys) Get(ctx context.Context, name string, options v1.GetOptions) (result *authv1.APIKey, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(apikeysResource, name), &authv1.APIKey{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeAPIKeys) Get(name string, options v1.GetOptions) (result *authv1.AP
 }
 
 // List takes label and field selectors, and returns the list of APIKeys that match those selectors.
-func (c *FakeAPIKeys) List(opts v1.ListOptions) (result *authv1.APIKeyList, err error) {
+func (c *FakeAPIKeys) List(ctx context.Context, opts v1.ListOptions) (result *authv1.APIKeyList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(apikeysResource, apikeysKind, opts), &authv1.APIKeyList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeAPIKeys) List(opts v1.ListOptions) (result *authv1.APIKeyList, err 
 }
 
 // Watch returns a watch.Interface that watches the requested aPIKeys.
-func (c *FakeAPIKeys) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeAPIKeys) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(apikeysResource, opts))
 }
 
 // Create takes the representation of a aPIKey and creates it.  Returns the server's representation of the aPIKey, and an error, if there is any.
-func (c *FakeAPIKeys) Create(aPIKey *authv1.APIKey) (result *authv1.APIKey, err error) {
+func (c *FakeAPIKeys) Create(ctx context.Context, aPIKey *authv1.APIKey, opts v1.CreateOptions) (result *authv1.APIKey, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(apikeysResource, aPIKey), &authv1.APIKey{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeAPIKeys) Create(aPIKey *authv1.APIKey) (result *authv1.APIKey, err 
 }
 
 // Update takes the representation of a aPIKey and updates it. Returns the server's representation of the aPIKey, and an error, if there is any.
-func (c *FakeAPIKeys) Update(aPIKey *authv1.APIKey) (result *authv1.APIKey, err error) {
+func (c *FakeAPIKeys) Update(ctx context.Context, aPIKey *authv1.APIKey, opts v1.UpdateOptions) (result *authv1.APIKey, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(apikeysResource, aPIKey), &authv1.APIKey{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeAPIKeys) Update(aPIKey *authv1.APIKey) (result *authv1.APIKey, err 
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeAPIKeys) UpdateStatus(aPIKey *authv1.APIKey) (*authv1.APIKey, error) {
+func (c *FakeAPIKeys) UpdateStatus(ctx context.Context, aPIKey *authv1.APIKey, opts v1.UpdateOptions) (*authv1.APIKey, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(apikeysResource, "status", aPIKey), &authv1.APIKey{})
 	if obj == nil {
@@ -108,22 +110,22 @@ func (c *FakeAPIKeys) UpdateStatus(aPIKey *authv1.APIKey) (*authv1.APIKey, error
 }
 
 // Delete takes name of the aPIKey and deletes it. Returns an error if one occurs.
-func (c *FakeAPIKeys) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeAPIKeys) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(apikeysResource, name), &authv1.APIKey{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeAPIKeys) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(apikeysResource, listOptions)
+func (c *FakeAPIKeys) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(apikeysResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &authv1.APIKeyList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched aPIKey.
-func (c *FakeAPIKeys) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *authv1.APIKey, err error) {
+func (c *FakeAPIKeys) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *authv1.APIKey, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(apikeysResource, name, pt, data, subresources...), &authv1.APIKey{})
 	if obj == nil {

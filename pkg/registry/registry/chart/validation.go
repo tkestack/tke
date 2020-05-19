@@ -19,7 +19,9 @@
 package chart
 
 import (
+	"context"
 	"fmt"
+
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -33,7 +35,7 @@ import (
 var ValidateChartName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateChart tests if required fields in the message are set.
-func ValidateChart(chart *registry.Chart, registryClient *registryinternalclient.RegistryClient) field.ErrorList {
+func ValidateChart(ctx context.Context, chart *registry.Chart, registryClient *registryinternalclient.RegistryClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&chart.ObjectMeta, true, ValidateChartName, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
@@ -45,7 +47,7 @@ func ValidateChart(chart *registry.Chart, registryClient *registryinternalclient
 	}
 
 	if chart.Spec.ChartGroupName != "" && chart.Spec.Name != "" {
-		chartGroupList, err := registryClient.ChartGroups().List(metav1.ListOptions{
+		chartGroupList, err := registryClient.ChartGroups().List(ctx, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chart.Spec.TenantID, chart.Spec.ChartGroupName),
 		})
 		if err != nil {
@@ -58,7 +60,7 @@ func ValidateChart(chart *registry.Chart, registryClient *registryinternalclient
 				allErrs = append(allErrs, field.NotFound(field.NewPath("metadata", "namespace"), chart.ObjectMeta.Namespace))
 			}
 
-			chartList, err := registryClient.Charts(chartGroup.ObjectMeta.Name).List(metav1.ListOptions{
+			chartList, err := registryClient.Charts(chartGroup.ObjectMeta.Name).List(ctx, metav1.ListOptions{
 				FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s,spec.chartGroupName=%s", chart.Spec.TenantID, chart.Spec.Name, chart.Spec.ChartGroupName),
 			})
 			if err != nil {
@@ -79,7 +81,7 @@ func ValidateChart(chart *registry.Chart, registryClient *registryinternalclient
 
 // ValidateChartUpdate tests if required fields in the chart are set
 // during an update.
-func ValidateChartUpdate(chart *registry.Chart, old *registry.Chart) field.ErrorList {
+func ValidateChartUpdate(ctx context.Context, chart *registry.Chart, old *registry.Chart) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&chart.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 
 	if chart.Spec.TenantID != old.Spec.TenantID {

@@ -20,19 +20,20 @@ package app
 
 import (
 	"fmt"
-	cacheddiscovery "k8s.io/client-go/discovery/cached"
-	"k8s.io/client-go/rest"
 	"net/http"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
+	cacheddiscovery "k8s.io/client-go/discovery/cached"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-logagent-controller/app/config"
 	"tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/controller/util"
-	"k8s.io/client-go/restmapper"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // InitFunc is used to launch a particular controller.  It may run additional "should I activate checks".
@@ -70,7 +71,6 @@ type ControllerContext struct {
 	// with list requests simultaneously.
 	ResyncPeriod            func() time.Duration
 	ControllerStartInterval time.Duration
-
 }
 
 // IsControllerEnabled returns whether the controller has been enabled
@@ -111,7 +111,7 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 
 	ctx := ControllerContext{
 		ClientBuilder:           rootClientBuilder,
-		PlatformClient: 		 platformClient.PlatformV1(),
+		PlatformClient:          platformClient.PlatformV1(),
 		InformerFactory:         sharedInformers,
 		RESTMapper:              restMapper,
 		AvailableResources:      availableResources,

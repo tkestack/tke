@@ -19,6 +19,7 @@
 package imagenamespace
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -59,7 +60,7 @@ func (c *Controller) startImageNamespaceHealthCheck(key string) {
 	if !c.health.Exist(key) {
 		c.health.Set(key)
 		go func() {
-			if err := wait.PollImmediateUntil(1*time.Minute, c.watchImageNamespaceHealth(key), c.stopCh); err != nil {
+			if err := wait.PollImmediateUntil(1*time.Minute, c.watchImageNamespaceHealth(context.Background(), key), c.stopCh); err != nil {
 				log.Error("Failed to wait poll immediate until", log.Err(err))
 			}
 		}()
@@ -70,7 +71,7 @@ func (c *Controller) startImageNamespaceHealthCheck(key string) {
 }
 
 // for PollImmediateUntil, when return true ,an err while exit
-func (c *Controller) watchImageNamespaceHealth(key string) func() (bool, error) {
+func (c *Controller) watchImageNamespaceHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Debug("Check imageNamespace health", log.String("key", key))
 
@@ -85,7 +86,7 @@ func (c *Controller) watchImageNamespaceHealth(key string) func() (bool, error) 
 			return true, nil
 		}
 
-		imageNamespace, err := c.client.BusinessV1().ImageNamespaces(projectName).Get(imageNamespaceName, metav1.GetOptions{})
+		imageNamespace, err := c.client.BusinessV1().ImageNamespaces(projectName).Get(ctx, imageNamespaceName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			log.Error("ImageNamespace not found, to exit the health check loop",
 				log.String("projectName", projectName), log.String("imageNamespaceName", imageNamespaceName))
@@ -105,7 +106,7 @@ func (c *Controller) watchImageNamespaceHealth(key string) func() (bool, error) 
 			return true, nil
 		}
 
-		if err := c.checkImageNamespaceHealth(imageNamespace); err != nil {
+		if err := c.checkImageNamespaceHealth(ctx, imageNamespace); err != nil {
 			log.Error("Failed to check imageNamespace health",
 				log.String("projectName", projectName), log.String("imageNamespaceName", imageNamespaceName), log.Err(err))
 		}
@@ -113,8 +114,8 @@ func (c *Controller) watchImageNamespaceHealth(key string) func() (bool, error) 
 	}
 }
 
-func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageNamespace) error {
-	imageNamespaceList, err := c.registryClient.Namespaces().List(metav1.ListOptions{
+func (c *Controller) checkImageNamespaceHealth(ctx context.Context, imageNamespace *businessv1.ImageNamespace) error {
+	imageNamespaceList, err := c.registryClient.Namespaces().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", imageNamespace.Spec.TenantID, imageNamespace.Spec.Name),
 	})
 	if err != nil {
@@ -128,7 +129,7 @@ func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageN
 			imageNamespace.Status.Message = "ListRegistryNamespace failed"
 			imageNamespace.Status.Reason = "RegistryNamespace may have been removed."
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(imageNamespace)
+			return c.persistUpdate(ctx, imageNamespace)
 		}
 		imageNamespaceObject := imageNamespaceList.Items[0]
 		if imageNamespaceObject.Status.Locked != nil && *imageNamespaceObject.Status.Locked {
@@ -136,7 +137,7 @@ func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageN
 			imageNamespace.Status.Message = "RegistryNamespace locked"
 			imageNamespace.Status.Reason = "RegistryNamespace has been locked."
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(imageNamespace)
+			return c.persistUpdate(ctx, imageNamespace)
 		}
 	case businessv1.ImageNamespaceLocked:
 		if len(imageNamespaceList.Items) == 0 {
@@ -144,7 +145,7 @@ func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageN
 			imageNamespace.Status.Message = "ListRegistryNamespace failed"
 			imageNamespace.Status.Reason = "RegistryNamespace may have been removed."
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(imageNamespace)
+			return c.persistUpdate(ctx, imageNamespace)
 		}
 		imageNamespaceObject := imageNamespaceList.Items[0]
 		if imageNamespaceObject.Status.Locked == nil || !*imageNamespaceObject.Status.Locked {
@@ -152,7 +153,7 @@ func (c *Controller) checkImageNamespaceHealth(imageNamespace *businessv1.ImageN
 			imageNamespace.Status.Message = ""
 			imageNamespace.Status.Reason = ""
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(imageNamespace)
+			return c.persistUpdate(ctx, imageNamespace)
 		}
 	default:
 		return fmt.Errorf("internal error, checkImageNamespaceHealth(%s/%s) found unexpected status %s",

@@ -21,6 +21,8 @@ package storage
 import (
 	"context"
 
+	"k8s.io/apiserver/pkg/registry/rest"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,6 +42,8 @@ type UserREST struct {
 	authClient authinternalclient.AuthInterface
 }
 
+var _ = rest.Lister(&UserREST{})
+
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
 func (r *UserREST) New() runtime.Object {
@@ -49,6 +53,14 @@ func (r *UserREST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *UserREST) NewList() runtime.Object {
 	return &auth.LocalIdentityList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *UserREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("users"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -68,7 +80,7 @@ func (r *UserREST) List(ctx context.Context, options *metainternal.ListOptions) 
 	for _, subj := range group.Status.Users {
 		var localIdentity *auth.LocalIdentity
 		if subj.ID != "" {
-			localIdentity, err = r.authClient.LocalIdentities().Get(subj.ID, metav1.GetOptions{})
+			localIdentity, err = r.authClient.LocalIdentities().Get(ctx, subj.ID, metav1.GetOptions{})
 			if err != nil {
 				log.Error("Get localIdentity failed", log.String("id", subj.ID), log.Err(err))
 				localIdentity = constructLocalIdentity(subj.ID, subj.Name)

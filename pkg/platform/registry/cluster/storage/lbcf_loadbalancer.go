@@ -85,7 +85,7 @@ func (r *LBCFLoadBalancerREST) Connect(ctx context.Context, clusterName string, 
 	if err != nil {
 		return nil, err
 	}
-	credential, err := util.GetClusterCredential(r.platformClient, cluster)
+	credential, err := util.GetClusterCredential(ctx, r.platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -159,13 +159,13 @@ func (h *lbcfLoadBalancerProxyHandler) serveAction(w http.ResponseWriter, req *h
 	}
 	switch h.action {
 	case string(LBCFEvents):
-		if eventList, err := h.getEventList(); err != nil {
+		if eventList, err := h.getEventList(req.Context()); err != nil {
 			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		} else {
 			responsewriters.WriteRawJSON(http.StatusOK, eventList, w)
 		}
 	case string(LBCFGetBackendGroup):
-		if groupList, err := h.getBackendGroups(); err != nil {
+		if groupList, err := h.getBackendGroups(req.Context()); err != nil {
 			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		} else {
 			responsewriters.WriteRawJSON(http.StatusOK, groupList, w)
@@ -181,11 +181,11 @@ var (
 	recordResource = schema.GroupVersionResource{Group: "lbcf.tkestack.io", Version: "v1beta1", Resource: "backendrecords"}
 )
 
-func (h *lbcfLoadBalancerProxyHandler) getEventList() (*corev1.EventList, error) {
-	return getLBCFEvents(h.cluster, h.clusterCredential, lbResource, "LoadBalancer", h.namespace, h.name)
+func (h *lbcfLoadBalancerProxyHandler) getEventList(ctx context.Context) (*corev1.EventList, error) {
+	return getLBCFEvents(ctx, h.cluster, h.clusterCredential, lbResource, "LoadBalancer", h.namespace, h.name)
 }
 
-func (h *lbcfLoadBalancerProxyHandler) getBackendGroups() ([]unstructured.Unstructured, error) {
+func (h *lbcfLoadBalancerProxyHandler) getBackendGroups(ctx context.Context) ([]unstructured.Unstructured, error) {
 	var clusterv1 platformv1.Cluster
 	if err := apiplatformv1.Convert_platform_Cluster_To_v1_Cluster(h.cluster, &clusterv1, nil); err != nil {
 		return nil, err
@@ -199,10 +199,10 @@ func (h *lbcfLoadBalancerProxyHandler) getBackendGroups() ([]unstructured.Unstru
 		return nil, err
 	}
 
-	selector := labels.SelectorFromValidatedSet(labels.Set(map[string]string{
+	selector := labels.SelectorFromValidatedSet(map[string]string{
 		"lbcf.tkestack.io/lb-name": h.name,
-	}))
-	groupList, err := dynamicClient.Resource(bgResource).Namespace(h.namespace).List(metav1.ListOptions{
+	})
+	groupList, err := dynamicClient.Resource(bgResource).Namespace(h.namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: selector.String(),
 	})
 	if err != nil {

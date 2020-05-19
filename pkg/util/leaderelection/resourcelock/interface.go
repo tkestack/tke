@@ -18,6 +18,8 @@
 
 package resourcelock
 
+import "context"
+
 // Interface offers a common interface for locking on arbitrary
 // resources used in leader election.  The Interface is used
 // to hide the details on specific implementations in order to allow
@@ -25,13 +27,13 @@ package resourcelock
 // by the leaderelection code.
 type Interface interface {
 	// Get returns the LeaderElectionRecord
-	Get() (*LeaderElectionRecord, error)
+	Get(ctx context.Context) (*LeaderElectionRecord, error)
 
 	// Create attempts to create a LeaderElectionRecord
-	Create(ler LeaderElectionRecord) error
+	Create(ctx context.Context, ler LeaderElectionRecord) error
 
 	// Update will update and existing LeaderElectionRecord
-	Update(ler LeaderElectionRecord) error
+	Update(ctx context.Context, ler LeaderElectionRecord) error
 
 	// Identity will return the locks Identity
 	Identity() string

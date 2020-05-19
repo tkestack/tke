@@ -19,6 +19,7 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -63,12 +64,12 @@ func ValidateEnum(value interface{}, fldPath *field.Path, values interface{}) fi
 }
 
 // ValidateRESTConfig validates a given rest.Config.
-func ValidateRESTConfig(config *rest.Config) error {
+func ValidateRESTConfig(ctx context.Context, config *rest.Config) error {
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return err
 	}
-	_, err = clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+	_, err = clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}

@@ -19,6 +19,7 @@
 package util
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -45,12 +46,12 @@ const (
 	administratorPolicyPattern = "pol-%s-administrator"
 )
 
-func GetLocalIdentity(authClient authinternalclient.AuthInterface, tenantID, username string) (auth.LocalIdentity, error) {
+func GetLocalIdentity(ctx context.Context, authClient authinternalclient.AuthInterface, tenantID, username string) (auth.LocalIdentity, error) {
 	tenantUserSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
 		fields.OneTermEqualSelector("spec.username", username))
 
-	localIdentityList, err := authClient.LocalIdentities().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	localIdentityList, err := authClient.LocalIdentities().List(ctx, v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {
 		return auth.LocalIdentity{}, err
 	}
@@ -62,12 +63,12 @@ func GetLocalIdentity(authClient authinternalclient.AuthInterface, tenantID, use
 	return localIdentityList.Items[0], nil
 }
 
-func GetUserByName(authClient authinternalclient.AuthInterface, tenantID, username string) (auth.User, error) {
+func GetUserByName(ctx context.Context, authClient authinternalclient.AuthInterface, tenantID, username string) (auth.User, error) {
 	tenantUserSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
 		fields.OneTermEqualSelector("spec.username", username))
 
-	userList, err := authClient.Users().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	userList, err := authClient.Users().List(ctx, v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {
 		return auth.User{}, err
 	}
@@ -92,12 +93,12 @@ func ProjectPolicyName(projectID string, policyID string) string {
 	return fmt.Sprintf("%s-%s", projectID, policyID)
 }
 
-func GetGroupsForUser(authClient authinternalclient.AuthInterface, userID string) (auth.LocalGroupList, error) {
+func GetGroupsForUser(ctx context.Context, authClient authinternalclient.AuthInterface, userID string) (auth.LocalGroupList, error) {
 	groupList := auth.LocalGroupList{}
 	err := authClient.RESTClient().Get().
 		Resource("localidentities").
 		Name(userID).
-		SubResource("groups").Do().Into(&groupList)
+		SubResource("groups").Do(ctx).Into(&groupList)
 
 	return groupList, err
 }
@@ -141,7 +142,7 @@ func GetPoliciesFromUserExtra(localIdentity *auth.LocalIdentity) ([]string, bool
 	return policies, true
 }
 
-func BindUserPolicies(authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, policies []string) error {
+func BindUserPolicies(ctx context.Context, authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, policies []string) error {
 	var errs []error
 	for _, p := range policies {
 		binding := auth.Binding{}
@@ -152,7 +153,7 @@ func BindUserPolicies(authClient authinternalclient.AuthInterface, localIdentity
 			Name(p).
 			SubResource("binding").
 			Body(&binding).
-			Do().Into(pol)
+			Do(ctx).Into(pol)
 		if err != nil {
 			log.Error("bind policy for user failed", log.String("user", localIdentity.Spec.Username),
 				log.String("policy", p), log.Err(err))
@@ -163,7 +164,7 @@ func BindUserPolicies(authClient authinternalclient.AuthInterface, localIdentity
 	return errors.NewAggregate(errs)
 }
 
-func UnBindUserPolicies(authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, policies []string) error {
+func UnBindUserPolicies(ctx context.Context, authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, policies []string) error {
 	var errs []error
 	for _, p := range policies {
 		binding := auth.Binding{}
@@ -174,7 +175,7 @@ func UnBindUserPolicies(authClient authinternalclient.AuthInterface, localIdenti
 			Name(p).
 			SubResource("unbinding").
 			Body(&binding).
-			Do().Into(pol)
+			Do(ctx).Into(pol)
 		if err != nil {
 			log.Error("unbind policy for user failed", log.String("user", localIdentity.Spec.Username),
 				log.String("policy", p), log.Err(err))
@@ -185,7 +186,7 @@ func UnBindUserPolicies(authClient authinternalclient.AuthInterface, localIdenti
 	return errors.NewAggregate(errs)
 }
 
-func HandleUserPoliciesUpdate(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, localIdentity *auth.LocalIdentity) error {
+func HandleUserPoliciesUpdate(ctx context.Context, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, localIdentity *auth.LocalIdentity) error {
 	newPolicies, needHandlePolicy := GetPoliciesFromUserExtra(localIdentity)
 	if !needHandlePolicy {
 		return nil
@@ -202,12 +203,12 @@ func HandleUserPoliciesUpdate(authClient authinternalclient.AuthInterface, enfor
 	added, removed := util.DiffStringSlice(oldPolicies, newPolicies)
 
 	log.Info("handler user policies ", log.Strings("added", added), log.Strings("removed", removed))
-	berr := BindUserPolicies(authClient, localIdentity, added)
+	berr := BindUserPolicies(ctx, authClient, localIdentity, added)
 	if berr != nil {
 		log.Error("bind user policies failed", log.String("user", localIdentity.Spec.Username), log.Strings("policies", added), log.Err(berr))
 	}
 
-	uerr := UnBindUserPolicies(authClient, localIdentity, removed)
+	uerr := UnBindUserPolicies(ctx, authClient, localIdentity, removed)
 	if berr != nil {
 		log.Error("un bind user policies failed", log.String("user", localIdentity.Spec.Username), log.Strings("policies", removed), log.Err(uerr))
 	}
@@ -215,7 +216,7 @@ func HandleUserPoliciesUpdate(authClient authinternalclient.AuthInterface, enfor
 	return errors.NewAggregate([]error{berr, uerr})
 }
 
-func SetAdministrator(enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity) {
+func SetAdministrator(ctx context.Context, enforcer *casbin.SyncedEnforcer, authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity) {
 	if localIdentity.Spec.Extra == nil {
 		localIdentity.Spec.Extra = make(map[string]string)
 	}
@@ -234,7 +235,7 @@ func SetAdministrator(enforcer *casbin.SyncedEnforcer, authClient authinternalcl
 		}
 	}
 
-	idp, err := authClient.IdentityProviders().Get(localIdentity.Spec.TenantID, v1.GetOptions{})
+	idp, err := authClient.IdentityProviders().Get(ctx, localIdentity.Spec.TenantID, v1.GetOptions{})
 	if err != nil {
 		log.Error("get idp for tenant failed", log.String("tenantID", localIdentity.Spec.TenantID))
 		return
@@ -255,14 +256,14 @@ func IsPlatformAdministrator(user authv1.User) bool {
 	return false
 }
 
-func FillUserPolicies(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, localidentityList *auth.LocalIdentityList) {
+func FillUserPolicies(ctx context.Context, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, localidentityList *auth.LocalIdentityList) {
 	if enforcer == nil || enforcer.GetRoleManager() == nil || enforcer.GetAdapter() == nil {
 		return
 	}
 
 	policyDisplayNameMap := make(map[string]string)
 	for i, item := range localidentityList.Items {
-		SetAdministrator(enforcer, authClient, &localidentityList.Items[i])
+		SetAdministrator(ctx, enforcer, authClient, &localidentityList.Items[i])
 
 		// Use direct roles to fill policies
 		roles := enforcer.GetRolesForUserInDomain(UserKey(item.Spec.TenantID, item.Spec.Username), "")
@@ -279,7 +280,7 @@ func FillUserPolicies(authClient authinternalclient.AuthInterface, enforcer *cas
 			if ok {
 				m[p] = displayName
 			} else {
-				pol, err := authClient.Policies().Get(p, v1.GetOptions{})
+				pol, err := authClient.Policies().Get(ctx, p, v1.GetOptions{})
 				if err != nil {
 					log.Error("get policy failed", log.String("policy", p), log.Err(err))
 					continue

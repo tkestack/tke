@@ -20,6 +20,7 @@ package machine
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -51,7 +52,7 @@ const (
 	moduleFile       = "/etc/modules-load.d/tke.conf"
 )
 
-func (p *Provider) EnsureCopyFiles(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureCopyFiles(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -67,7 +68,7 @@ func (p *Provider) EnsureCopyFiles(machine *platformv1.Machine, cluster *typesv1
 	return nil
 }
 
-func (p *Provider) EnsurePreInstallHook(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsurePreInstallHook(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	hook := cluster.Spec.Features.Hooks[platformv1.HookPreInstall]
 	if hook == "" {
 		return nil
@@ -88,7 +89,7 @@ func (p *Provider) EnsurePreInstallHook(machine *platformv1.Machine, cluster *ty
 	return nil
 }
 
-func (p *Provider) EnsurePostInstallHook(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsurePostInstallHook(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	hook := cluster.Spec.Features.Hooks[platformv1.HookPostInstall]
 	if hook == "" {
 		return nil
@@ -109,7 +110,7 @@ func (p *Provider) EnsurePostInstallHook(machine *platformv1.Machine, cluster *t
 	return nil
 }
 
-func (p *Provider) EnsureClean(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureClean(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -123,7 +124,7 @@ func (p *Provider) EnsureClean(machine *platformv1.Machine, cluster *typesv1.Clu
 	return nil
 }
 
-func (p *Provider) EnsurePreflight(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsurePreflight(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -137,7 +138,7 @@ func (p *Provider) EnsurePreflight(machine *platformv1.Machine, cluster *typesv1
 	return nil
 }
 
-func (p *Provider) EnsureRegistryHosts(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureRegistryHosts(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	if !p.config.Registry.NeedSetHosts() {
 		return nil
 	}
@@ -162,7 +163,7 @@ func (p *Provider) EnsureRegistryHosts(machine *platformv1.Machine, cluster *typ
 	return nil
 }
 
-func (p *Provider) EnsureKernelModule(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureKernelModule(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -186,7 +187,7 @@ func (p *Provider) EnsureKernelModule(machine *platformv1.Machine, cluster *type
 	return nil
 }
 
-func (p *Provider) EnsureSysctl(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureSysctl(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -217,7 +218,7 @@ func (p *Provider) EnsureSysctl(machine *platformv1.Machine, cluster *typesv1.Cl
 	return nil
 }
 
-func (p *Provider) EnsureDisableSwap(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureDisableSwap(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -231,7 +232,7 @@ func (p *Provider) EnsureDisableSwap(machine *platformv1.Machine, cluster *types
 	return nil
 }
 
-func (p *Provider) EnsureKubeconfig(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureKubeconfig(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	masterEndpoint, err := util.GetMasterEndpoint(cluster.Status.Addresses)
 	if err != nil {
 		return err
@@ -256,7 +257,7 @@ func (p *Provider) EnsureKubeconfig(machine *platformv1.Machine, cluster *typesv
 	return nil
 }
 
-func (p *Provider) EnsureNvidiaDriver(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureNvidiaDriver(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	if !gpu.IsEnable(machine.Spec.Labels) {
 		return nil
 	}
@@ -269,7 +270,7 @@ func (p *Provider) EnsureNvidiaDriver(machine *platformv1.Machine, cluster *type
 	return gpu.InstallNvidiaDriver(machineSSH, &gpu.NvidiaDriverOption{})
 }
 
-func (p *Provider) EnsureNvidiaContainerRuntime(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	if !gpu.IsEnable(machine.Spec.Labels) {
 		return nil
 	}
@@ -282,7 +283,7 @@ func (p *Provider) EnsureNvidiaContainerRuntime(machine *platformv1.Machine, clu
 	return gpu.InstallNvidiaContainerRuntime(machineSSH, &gpu.NvidiaContainerRuntimeOption{})
 }
 
-func (p *Provider) EnsureDocker(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureDocker(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -307,7 +308,7 @@ func (p *Provider) EnsureDocker(machine *platformv1.Machine, cluster *typesv1.Cl
 	return nil
 }
 
-func (p *Provider) EnsureKubelet(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureKubelet(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -325,7 +326,7 @@ func (p *Provider) EnsureKubelet(machine *platformv1.Machine, cluster *typesv1.C
 	return nil
 }
 
-func (p *Provider) EnsureCNIPlugins(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureCNIPlugins(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -339,7 +340,7 @@ func (p *Provider) EnsureCNIPlugins(machine *platformv1.Machine, cluster *typesv
 	return nil
 }
 
-func (p *Provider) EnsureKubeadm(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -353,7 +354,7 @@ func (p *Provider) EnsureKubeadm(machine *platformv1.Machine, cluster *typesv1.C
 	return nil
 }
 
-func (p *Provider) EnsureJoinNode(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureJoinNode(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	host, err := cluster.Host()
 	if err != nil {
 		return err
@@ -375,27 +376,27 @@ func (p *Provider) EnsureJoinNode(machine *platformv1.Machine, cluster *typesv1.
 	return nil
 }
 
-func (p *Provider) EnsureMarkNode(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureMarkNode(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	clientset, err := cluster.Clientset()
 	if err != nil {
 		return err
 	}
 
-	err = apiclient.MarkNode(clientset, machine.Spec.IP, machine.Spec.Labels, machine.Spec.Taints)
+	err = apiclient.MarkNode(ctx, clientset, machine.Spec.IP, machine.Spec.Labels, machine.Spec.Taints)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *Provider) EnsureNodeReady(machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureNodeReady(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	clientset, err := cluster.Clientset()
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		node, err := clientset.CoreV1().Nodes().Get(machine.Spec.IP, metav1.GetOptions{})
+		node, err := clientset.CoreV1().Nodes().Get(ctx, machine.Spec.IP, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}

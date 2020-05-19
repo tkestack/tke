@@ -19,13 +19,13 @@
 package prometheus
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
-	prometheus_rule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
-
 	v1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	prometheusrule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 )
 
 func TestProcessor_DeleteGroup(t *testing.T) {
@@ -39,34 +39,34 @@ func TestProcessor_DeleteGroup(t *testing.T) {
 	expectRuleGroup.Groups[0].Rules = make([]v1.Rule, 0)
 
 	t.Logf("With non-existed group")
-	err = p.DeleteGroup(clusterName, "non-exist-group")
+	err = p.DeleteGroup(context.Background(), clusterName, "non-exist-group")
 	if err == nil {
 		t.Errorf("deletion should failed")
 		return
 	}
 
-	err = p.CreateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("creation should success, code: %s", err)
 		return
 	}
 
 	t.Logf("With correct group name")
-	err = p.DeleteGroup(clusterName, expectRuleGroup.Groups[0].Name)
+	err = p.DeleteGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name)
 	if err != nil {
 		t.Errorf("delete should success, code: %s", err)
 		return
 	}
 
 	t.Logf("Validate deletion")
-	_, err = p.GetGroup(clusterName, expectRuleGroup.Groups[0].Name)
+	_, err = p.GetGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name)
 	if err == nil {
 		t.Errorf("get should failed")
 		return
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheus_rule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return
@@ -91,34 +91,34 @@ func TestProcessor_DeleteRule(t *testing.T) {
 	recordName := expectRuleGroup.Groups[0].Rules[0].Alert
 
 	t.Logf("With non-existed record name")
-	err = p.DeleteRule(clusterName, expectRuleGroup.Groups[0].Name, "non-exist-record")
+	err = p.DeleteRule(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, "non-exist-record")
 	if err == nil {
 		t.Errorf("delete should failed")
 		return
 	}
 
-	err = p.CreateGroup(clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
+	err = p.CreateGroup(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, &expectRuleGroup.Groups[0])
 	if err != nil {
 		t.Errorf("creation should success, code: %s", err)
 		return
 	}
 
 	t.Logf("With existed record")
-	err = p.DeleteRule(clusterName, expectRuleGroup.Groups[0].Name, recordName)
+	err = p.DeleteRule(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, recordName)
 	if err != nil {
 		t.Errorf("should not fail, code: %s", err)
 		return
 	}
 
 	t.Logf("Validate deletion")
-	_, err = p.GetRule(clusterName, expectRuleGroup.Groups[0].Name, recordName)
+	_, err = p.GetRule(context.Background(), clusterName, expectRuleGroup.Groups[0].Name, recordName)
 	if err == nil {
 		t.Errorf("get should failed")
 		return
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(prometheus_rule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return

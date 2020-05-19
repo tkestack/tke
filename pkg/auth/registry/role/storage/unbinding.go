@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -79,5 +80,5 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 
 	role.Status.Groups = remainedGroups
 	log.Info("unbind role subjects", log.String("role", role.Name), log.Any("users", role.Status.Users), log.Any("groups", role.Status.Groups))
-	return r.authClient.Roles().UpdateStatus(role)
+	return r.authClient.Roles().UpdateStatus(ctx, role, metav1.UpdateOptions{})
 }

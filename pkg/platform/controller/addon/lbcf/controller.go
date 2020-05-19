@@ -19,6 +19,7 @@
 package lbcf
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -235,26 +236,26 @@ func (c *Controller) syncLBCF(key string) error {
 	switch {
 	case errors.IsNotFound(err):
 		log.Info("LBCF has been deleted. Attempting to cleanup resources", log.String("LBCF", key))
-		err = c.processLBCFDeletion(key)
+		err = c.processLBCFDeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve LBCF from store", log.String("LBCF", key), log.Err(err))
 	default:
 		cachedLBCF = c.cache.getOrCreate(key)
-		err = c.processLBCFUpdate(cachedLBCF, lbcf, key)
+		err = c.processLBCFUpdate(context.Background(), cachedLBCF, lbcf, key)
 	}
 	return err
 }
 
-func (c *Controller) processLBCFDeletion(key string) error {
+func (c *Controller) processLBCFDeletion(ctx context.Context, key string) error {
 	cachedLBCF, ok := c.cache.get(key)
 	if !ok {
 		log.Error("LBCF not in cache even though the watcher thought it was. Ignoring the deletion", log.String("lbcfName", key))
 		return nil
 	}
-	return c.processLBCFDelete(cachedLBCF, key)
+	return c.processLBCFDelete(ctx, cachedLBCF, key)
 }
 
-func (c *Controller) processLBCFDelete(cachedLBCF *cachedLBCF, key string) error {
+func (c *Controller) processLBCFDelete(ctx context.Context, cachedLBCF *cachedLBCF, key string) error {
 	log.Info("LBCF will be dropped", log.String("LBCFName", key))
 
 	if c.cache.Exist(key) {
@@ -268,19 +269,19 @@ func (c *Controller) processLBCFDelete(cachedLBCF *cachedLBCF, key string) error
 	}
 
 	lbcf := cachedLBCF.state
-	return c.uninstallLBCF(lbcf)
+	return c.uninstallLBCF(ctx, lbcf)
 }
 
-func (c *Controller) processLBCFUpdate(cachedLBCF *cachedLBCF, lbcf *v1.LBCF, key string) error {
+func (c *Controller) processLBCFUpdate(ctx context.Context, cachedLBCF *cachedLBCF, lbcf *v1.LBCF, key string) error {
 	if cachedLBCF.state != nil {
 		// exist and the cluster name changed
 		if cachedLBCF.state.UID != lbcf.UID {
-			if err := c.processLBCFDelete(cachedLBCF, key); err != nil {
+			if err := c.processLBCFDelete(ctx, cachedLBCF, key); err != nil {
 				return err
 			}
 		}
 	}
-	err := c.createLBCFIfNeeded(key, cachedLBCF, lbcf)
+	err := c.createLBCFIfNeeded(ctx, key, cachedLBCF, lbcf)
 	if err != nil {
 		return err
 	}
@@ -291,23 +292,23 @@ func (c *Controller) processLBCFUpdate(cachedLBCF *cachedLBCF, lbcf *v1.LBCF, ke
 	return nil
 }
 
-func (c *Controller) lbcfReinitialize(key string, cachedLBCF *cachedLBCF, lbcf *v1.LBCF) func() (bool, error) {
+func (c *Controller) lbcfReinitialize(ctx context.Context, key string, cachedLBCF *cachedLBCF, lbcf *v1.LBCF) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
-		err := c.installLBCF(lbcf)
+		err := c.installLBCF(ctx, lbcf)
 		if err == nil {
 			lbcf = lbcf.DeepCopy()
 			lbcf.Status.Phase = v1.AddonPhaseChecking
 			lbcf.Status.Reason = ""
 			lbcf.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(lbcf)
+			err = c.persistUpdate(ctx, lbcf)
 			if err != nil {
 				return true, err
 			}
 			return true, nil
 		}
 		// First, rollback the lbcf
-		if err := c.uninstallLBCF(lbcf); err != nil {
+		if err := c.uninstallLBCF(ctx, lbcf); err != nil {
 			log.Errorf("Uninstall lbcf error: %v", err)
 			return true, err
 		}
@@ -315,7 +316,7 @@ func (c *Controller) lbcfReinitialize(key string, cachedLBCF *cachedLBCF, lbcf *
 			lbcf = lbcf.DeepCopy()
 			lbcf.Status.Phase = v1.AddonPhaseFailed
 			lbcf.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", lbcfMaxRetryCount)
-			err := c.persistUpdate(lbcf)
+			err := c.persistUpdate(ctx, lbcf)
 			if err != nil {
 				log.Errorf("Update lbcf error: %v", err)
 				return true, err
@@ -328,7 +329,7 @@ func (c *Controller) lbcfReinitialize(key string, cachedLBCF *cachedLBCF, lbcf *
 		lbcf.Status.Reason = err.Error()
 		lbcf.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
 		lbcf.Status.RetryCount++
-		err = c.persistUpdate(lbcf)
+		err = c.persistUpdate(ctx, lbcf)
 		if err != nil {
 			return true, err
 		}
@@ -336,17 +337,17 @@ func (c *Controller) lbcfReinitialize(key string, cachedLBCF *cachedLBCF, lbcf *
 	}
 }
 
-func (c *Controller) createLBCFIfNeeded(key string, cachedLBCF *cachedLBCF, lbcf *v1.LBCF) error {
+func (c *Controller) createLBCFIfNeeded(ctx context.Context, key string, cachedLBCF *cachedLBCF, lbcf *v1.LBCF) error {
 	switch lbcf.Status.Phase {
 	case v1.AddonPhaseInitializing:
 		log.Error("LBCF will be created", log.String("lbcf", key))
-		err := c.installLBCF(lbcf)
+		err := c.installLBCF(ctx, lbcf)
 		if err == nil {
 			lbcf = lbcf.DeepCopy()
 			lbcf.Status.Phase = v1.AddonPhaseChecking
 			lbcf.Status.Reason = ""
 			lbcf.Status.RetryCount = 0
-			return c.persistUpdate(lbcf)
+			return c.persistUpdate(ctx, lbcf)
 		}
 		log.Errorf("installLBCF err: %v", err)
 		lbcf = lbcf.DeepCopy()
@@ -354,7 +355,7 @@ func (c *Controller) createLBCFIfNeeded(key string, cachedLBCF *cachedLBCF, lbcf
 		lbcf.Status.Reason = err.Error()
 		lbcf.Status.RetryCount = 1
 		lbcf.Status.LastReInitializingTimestamp = metav1.Now()
-		return c.persistUpdate(lbcf)
+		return c.persistUpdate(ctx, lbcf)
 	case v1.AddonPhaseReinitializing:
 		var interval = time.Since(lbcf.Status.LastReInitializingTimestamp.Time)
 		var waitTime time.Duration
@@ -363,17 +364,17 @@ func (c *Controller) createLBCFIfNeeded(key string, cachedLBCF *cachedLBCF, lbcf
 		} else {
 			waitTime = lbcfTimeOut - interval
 		}
-		go wait.Poll(waitTime, lbcfTimeOut, c.lbcfReinitialize(key, cachedLBCF, lbcf))
+		go wait.Poll(waitTime, lbcfTimeOut, c.lbcfReinitialize(ctx, key, cachedLBCF, lbcf))
 	case v1.AddonPhaseChecking:
 		if _, ok := c.checking.Load(key); !ok {
 			c.checking.Store(key, true)
 			initDelay := time.Now().Add(5 * time.Minute)
-			go wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkLBCFStatus(lbcf, key, initDelay))
+			go wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkLBCFStatus(ctx, lbcf, key, initDelay))
 		}
 	case v1.AddonPhaseRunning:
 		if _, ok := c.health.Load(key); !ok {
 			c.health.Store(key, true)
-			go wait.PollImmediateUntil(5*time.Minute, c.watchLBCFHealth(key), c.stopCh)
+			go wait.PollImmediateUntil(5*time.Minute, c.watchLBCFHealth(ctx, key), c.stopCh)
 		}
 	case v1.AddonPhaseFailed:
 		log.Info("LBCF is error", log.String("LBCF ", key))
@@ -384,47 +385,47 @@ func (c *Controller) createLBCFIfNeeded(key string, cachedLBCF *cachedLBCF, lbcf
 	return nil
 }
 
-func (c *Controller) installLBCF(lbcf *v1.LBCF) error {
-	cluster, err := c.client.PlatformV1().Clusters().Get(lbcf.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) installLBCF(ctx context.Context, lbcf *v1.LBCF) error {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, lbcf.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
-	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.client.PlatformV1())
+	crdClient, err := util.BuildExternalExtensionClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 
-	if _, err := kubeClient.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Create(validatingWebhook()); err != nil {
+	if _, err := kubeClient.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Create(ctx, validatingWebhook(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if _, err := kubeClient.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Create(mutatingWebhook()); err != nil {
+	if _, err := kubeClient.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Create(ctx, mutatingWebhook(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	for _, crd := range crds() {
-		if _, err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd); err != nil {
+		if _, err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(ctx, crd, metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	}
-	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccount()); err != nil {
+	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccount(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if _, err := kubeClient.RbacV1().ClusterRoles().Create(clusterRole()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, clusterRole(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(clusterRoleBinding()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, clusterRoleBinding(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(secret()); err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, secret(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deployment(lbcf.Spec.Version)); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deployment(lbcf.Spec.Version), metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(service()); err != nil {
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, service(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	return nil
@@ -437,22 +438,22 @@ var (
 	backendGroupRes = schema.GroupVersionResource{Group: lbcfAPIGroup, Version: "v1beta1", Resource: "backendgroups"}
 )
 
-func (c *Controller) uninstallLBCF(lbcf *v1.LBCF) error {
-	cluster, err := c.client.PlatformV1().Clusters().Get(lbcf.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) uninstallLBCF(ctx context.Context, lbcf *v1.LBCF) error {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, lbcf.Spec.ClusterName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return nil
 	} else if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
-	crdClient, err := util.BuildExternalExtensionClientSet(cluster, c.client.PlatformV1())
+	crdClient, err := util.BuildExternalExtensionClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
-	credential, err := util.GetClusterCredentialV1(c.client.PlatformV1(), cluster)
+	credential, err := util.GetClusterCredentialV1(ctx, c.client.PlatformV1(), cluster)
 	if err != nil {
 		return err
 	}
@@ -462,63 +463,63 @@ func (c *Controller) uninstallLBCF(lbcf *v1.LBCF) error {
 		return err
 	}
 
-	if err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(svcLBCFHealthCheckName, &metav1.DeleteOptions{}); err != nil {
+	if err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, svcLBCFHealthCheckName, metav1.DeleteOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	}
-	if err := kubeClient.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Delete(validatingWebhookName, &metav1.DeleteOptions{}); err != nil {
+	if err := kubeClient.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Delete(ctx, validatingWebhookName, metav1.DeleteOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	}
-	if err := kubeClient.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Delete(mutatingWebhookName, &metav1.DeleteOptions{}); err != nil {
+	if err := kubeClient.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Delete(ctx, mutatingWebhookName, metav1.DeleteOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	}
-	if err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(svcLBCFHealthCheckName, &metav1.DeleteOptions{}); err != nil {
+	if err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, svcLBCFHealthCheckName, metav1.DeleteOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	}
-	if err := kubeClient.RbacV1().ClusterRoles().Delete(svcLBCFHealthCheckName, &metav1.DeleteOptions{}); err != nil {
+	if err := kubeClient.RbacV1().ClusterRoles().Delete(ctx, svcLBCFHealthCheckName, metav1.DeleteOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	}
-	if err := kubeClient.RbacV1().ClusterRoleBindings().Delete(svcLBCFHealthCheckName, &metav1.DeleteOptions{}); err != nil {
+	if err := kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, svcLBCFHealthCheckName, metav1.DeleteOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	}
-	if err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(svcLBCFHealthCheckName, &metav1.DeleteOptions{}); err != nil {
+	if err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, svcLBCFHealthCheckName, metav1.DeleteOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	}
-	if err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(svcLBCFHealthCheckName, &metav1.DeleteOptions{}); err != nil {
+	if err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Delete(ctx, svcLBCFHealthCheckName, metav1.DeleteOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	}
 
-	if err := removeFinalizers(dynamicClient, driverRes); err != nil {
+	if err := removeFinalizers(ctx, dynamicClient, driverRes); err != nil {
 		return err
 	}
-	if err := removeFinalizers(dynamicClient, lbRes); err != nil {
+	if err := removeFinalizers(ctx, dynamicClient, lbRes); err != nil {
 		return err
 	}
-	if err := removeFinalizers(dynamicClient, backendGroupRes); err != nil {
+	if err := removeFinalizers(ctx, dynamicClient, backendGroupRes); err != nil {
 		return err
 	}
-	if err := removeFinalizers(dynamicClient, backendRes); err != nil {
+	if err := removeFinalizers(ctx, dynamicClient, backendRes); err != nil {
 		return err
 	}
-	return deleteCRDWithTimeout(crdClient)
+	return deleteCRDWithTimeout(ctx, crdClient)
 }
 
-func (c *Controller) watchLBCFHealth(key string) func() (bool, error) {
+func (c *Controller) watchLBCFHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start check LBCF in cluster health", log.String("cluster", key))
 		lbcf, err := c.lister.Get(key)
@@ -526,7 +527,7 @@ func (c *Controller) watchLBCFHealth(key string) func() (bool, error) {
 			return false, err
 		}
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(lbcf.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, lbcf.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -537,15 +538,15 @@ func (c *Controller) watchLBCFHealth(key string) func() (bool, error) {
 			log.Info("health check over.")
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
-		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcLBCFHealthCheckName, strconv.Itoa(svcLBCFHealthCheckPort), svcLBCFHealthCheckPath, nil).DoRaw(); err != nil {
+		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcLBCFHealthCheckName, strconv.Itoa(svcLBCFHealthCheckPort), svcLBCFHealthCheckPath, nil).DoRaw(ctx); err != nil {
 			lbcf = lbcf.DeepCopy()
 			lbcf.Status.Phase = v1.AddonPhaseFailed
 			lbcf.Status.Reason = "LBCF is not healthy."
-			if err = c.persistUpdate(lbcf); err != nil {
+			if err = c.persistUpdate(ctx, lbcf); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -554,10 +555,10 @@ func (c *Controller) watchLBCFHealth(key string) func() (bool, error) {
 	}
 }
 
-func (c *Controller) checkLBCFStatus(lbcf *v1.LBCF, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) checkLBCFStatus(ctx context.Context, lbcf *v1.LBCF, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check LBCF health", log.String("clusterName", lbcf.Spec.ClusterName))
-		cluster, err := c.client.PlatformV1().Clusters().Get(lbcf.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, lbcf.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			log.Infof("checkLBCFStatus: lbcf not found")
 			return false, err
@@ -570,16 +571,16 @@ func (c *Controller) checkLBCFStatus(lbcf *v1.LBCF, key string, initDelay time.T
 			log.Infof("checking over LBCF addon status")
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
-		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcLBCFHealthCheckName, strconv.Itoa(svcLBCFHealthCheckPort), svcLBCFHealthCheckPath, nil).DoRaw(); err != nil {
+		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcLBCFHealthCheckName, strconv.Itoa(svcLBCFHealthCheckPort), svcLBCFHealthCheckPath, nil).DoRaw(ctx); err != nil {
 			if time.Now().After(initDelay) {
 				lbcf = lbcf.DeepCopy()
 				lbcf.Status.Phase = v1.AddonPhaseFailed
 				lbcf.Status.Reason = "LBCF is not healthy."
-				if err = c.persistUpdate(lbcf); err != nil {
+				if err = c.persistUpdate(ctx, lbcf); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -589,7 +590,7 @@ func (c *Controller) checkLBCFStatus(lbcf *v1.LBCF, key string, initDelay time.T
 		lbcf = lbcf.DeepCopy()
 		lbcf.Status.Phase = v1.AddonPhaseRunning
 		lbcf.Status.Reason = ""
-		if err = c.persistUpdate(lbcf); err != nil {
+		if err = c.persistUpdate(ctx, lbcf); err != nil {
 			return false, err
 		}
 		c.checking.Delete(key)
@@ -597,10 +598,10 @@ func (c *Controller) checkLBCFStatus(lbcf *v1.LBCF, key string, initDelay time.T
 	}
 }
 
-func (c *Controller) persistUpdate(lbcf *v1.LBCF) error {
+func (c *Controller) persistUpdate(ctx context.Context, lbcf *v1.LBCF) error {
 	var err error
 	for i := 0; i < lbcfClientRetryCount; i++ {
-		_, err = c.client.PlatformV1().LBCFs().UpdateStatus(lbcf)
+		_, err = c.client.PlatformV1().LBCFs().UpdateStatus(ctx, lbcf, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -1064,8 +1065,8 @@ func service() *corev1.Service {
 	}
 }
 
-func removeFinalizers(dynamicClient dynamic.Interface, resource schema.GroupVersionResource) error {
-	list, err := dynamicClient.Resource(resource).Namespace(metav1.NamespaceAll).List(metav1.ListOptions{})
+func removeFinalizers(ctx context.Context, dynamicClient dynamic.Interface, resource schema.GroupVersionResource) error {
+	list, err := dynamicClient.Resource(resource).Namespace(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -1073,7 +1074,7 @@ func removeFinalizers(dynamicClient dynamic.Interface, resource schema.GroupVers
 		if len(obj.GetFinalizers()) > 0 {
 			cpy := obj.DeepCopy()
 			cpy.SetFinalizers(nil)
-			if _, err := dynamicClient.Resource(resource).Namespace(cpy.GetNamespace()).Update(cpy, metav1.UpdateOptions{}); err != nil {
+			if _, err := dynamicClient.Resource(resource).Namespace(cpy.GetNamespace()).Update(ctx, cpy, metav1.UpdateOptions{}); err != nil {
 				return err
 			}
 		}
@@ -1081,14 +1082,14 @@ func removeFinalizers(dynamicClient dynamic.Interface, resource schema.GroupVers
 	return nil
 }
 
-func deleteCRDWithTimeout(crdClient *apiextensionsclient.Clientset) error {
+func deleteCRDWithTimeout(ctx context.Context, crdClient *apiextensionsclient.Clientset) error {
 	ch := make(chan error)
 	defer close(ch)
 
 	go func() {
 		for _, crd := range crds() {
 			log.Infof("Start delete LBCF crd %s", crd.Name)
-			if err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(crd.Name, &metav1.DeleteOptions{}); err != nil {
+			if err := crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(ctx, crd.Name, metav1.DeleteOptions{}); err != nil {
 				log.Errorf("delete LBCF crd failed: %v", err)
 				if !errors.IsNotFound(err) {
 					ch <- err

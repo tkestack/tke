@@ -20,8 +20,8 @@ package configfiles
 
 import (
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"path/filepath"
 	auditconfig "tkestack.io/tke/pkg/audit/apis/config"
 	auditscheme "tkestack.io/tke/pkg/audit/apis/config/scheme"
 	"tkestack.io/tke/pkg/audit/config/codec"
@@ -76,15 +76,4 @@ func (loader *fsLoader) Load() (*auditconfig.AuditConfiguration, error) {
 
 	// make all paths absolute
 	return kc, nil
-}
-
-// resolveRelativePaths makes relative paths absolute by resolving them against `root`
-func resolveRelativePaths(paths []*string, root string) {
-	for _, path := range paths {
-		// leave empty paths alone, "no path" is a valid input
-		// do not attempt to resolve paths that are already absolute
-		if len(*path) > 0 && !filepath.IsAbs(*path) {
-			*path = filepath.Join(root, *path)
-		}
-	}
 }

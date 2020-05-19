@@ -19,6 +19,7 @@
 package cluster
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -56,14 +57,14 @@ type Provider interface {
 	PreCreate(cluster *types.Cluster) error
 	AfterCreate(cluster *types.Cluster) error
 
-	OnCreate(cluster *v1.Cluster) error
-	OnUpdate(cluster *v1.Cluster) error
-	OnDelete(cluster *v1.Cluster) error
+	OnCreate(ctx context.Context, cluster *v1.Cluster) error
+	OnUpdate(ctx context.Context, cluster *v1.Cluster) error
+	OnDelete(ctx context.Context, cluster *v1.Cluster) error
 }
 
 var _ Provider = &DelegateProvider{}
 
-type Handler func(*v1.Cluster) error
+type Handler func(context.Context, *v1.Cluster) error
 
 type DelegateProvider struct {
 	ProviderName string
@@ -111,7 +112,7 @@ func (p *DelegateProvider) AfterCreate(cluster *types.Cluster) error {
 	return nil
 }
 
-func (p *DelegateProvider) OnCreate(cluster *v1.Cluster) error {
+func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) error {
 	condition, err := p.getCreateCurrentCondition(cluster)
 	if err != nil {
 		return err
@@ -132,9 +133,9 @@ func (p *DelegateProvider) OnCreate(cluster *v1.Cluster) error {
 		if f == nil {
 			return fmt.Errorf("can't get handler by %s", condition.Type)
 		}
-		log.Infow("OnUpdate", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
+		log.Infow("OnCreate", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
 			"clusterName", cluster.Name)
-		err = f(cluster)
+		err = f(ctx, cluster)
 		if err != nil {
 			cluster.SetCondition(platformv1.ClusterCondition{
 				Type:          condition.Type,
@@ -174,11 +175,11 @@ func (p *DelegateProvider) OnCreate(cluster *v1.Cluster) error {
 	return nil
 }
 
-func (p *DelegateProvider) OnUpdate(cluster *v1.Cluster) error {
+func (p *DelegateProvider) OnUpdate(ctx context.Context, cluster *v1.Cluster) error {
 	for _, f := range p.UpdateHandlers {
 		log.Infow("OnUpdate", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
 			"clusterName", cluster.Name)
-		err := f(cluster)
+		err := f(ctx, cluster)
 		if err != nil {
 			return err
 		}
@@ -187,11 +188,11 @@ func (p *DelegateProvider) OnUpdate(cluster *v1.Cluster) error {
 	return nil
 }
 
-func (p *DelegateProvider) OnDelete(cluster *v1.Cluster) error {
+func (p *DelegateProvider) OnDelete(ctx context.Context, cluster *v1.Cluster) error {
 	for _, f := range p.DeleteHandlers {
 		log.Infow("OnDelete", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
 			"clusterName", cluster.Name)
-		err := f(cluster)
+		err := f(ctx, cluster)
 		if err != nil {
 			return err
 		}

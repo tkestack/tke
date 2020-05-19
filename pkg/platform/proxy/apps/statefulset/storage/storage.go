@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	appsV1 "k8s.io/api/apps/v1"
 	appsV1Beta1 "k8s.io/api/apps/v1beta1"
 	appsV1Beta2 "k8s.io/api/apps/v1beta2"
@@ -212,13 +213,12 @@ func (r *ScaleREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	result := &autoscalingV1API.Scale{}
 	if err := client.
 		Get().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		Name(name).
 		VersionedParams(options, metav1.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, err
 	}
@@ -240,13 +240,12 @@ func (r *ScaleREST) Update(ctx context.Context, name string, objInfo rest.Update
 	result := &autoscalingV1API.Scale{}
 	if err := client.
 		Put().
-		Context(ctx).
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
 		Resource(requestInfo.Resource).
 		SubResource(requestInfo.Subresource).
 		Name(name).
 		Body(obj).
-		Do().
+		Do(ctx).
 		Into(result); err != nil {
 		return nil, false, err
 	}

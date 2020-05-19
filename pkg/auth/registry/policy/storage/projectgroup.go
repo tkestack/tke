@@ -21,6 +21,8 @@ package storage
 import (
 	"context"
 
+	"k8s.io/apiserver/pkg/registry/rest"
+
 	"tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/auth/util"
 
@@ -43,6 +45,8 @@ type ProjectGroupREST struct {
 	authClient authinternalclient.AuthInterface
 }
 
+var _ rest.Lister = &ProjectGroupREST{}
+
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
 func (r *ProjectGroupREST) New() runtime.Object {
@@ -52,6 +56,14 @@ func (r *ProjectGroupREST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *ProjectGroupREST) NewList() runtime.Object {
 	return &auth.GroupList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *ProjectGroupREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("projectgroups"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -77,7 +89,7 @@ func (r *ProjectGroupREST) List(ctx context.Context, options *metainternal.ListO
 		return nil, errors.NewBadRequest("must specify projectID header")
 	}
 
-	proBinding, err := r.authClient.ProjectPolicyBindings().Get(util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
+	proBinding, err := r.authClient.ProjectPolicyBindings().Get(ctx, util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +98,7 @@ func (r *ProjectGroupREST) List(ctx context.Context, options *metainternal.ListO
 	for _, subj := range proBinding.Spec.Groups {
 		var group *auth.Group
 		if subj.ID != "" {
-			group, err = r.authClient.Groups().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			group, err = r.authClient.Groups().Get(ctx, util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				log.Error("Get group failed", log.String("id", subj.ID), log.Err(err))
 				group = constructGroup(subj.ID, subj.Name)

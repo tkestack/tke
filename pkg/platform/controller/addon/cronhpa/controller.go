@@ -19,6 +19,7 @@
 package cronhpa
 
 import (
+	"context"
 	normalerrors "errors"
 	"fmt"
 	"reflect"
@@ -198,26 +199,26 @@ func (c *Controller) syncCronHPA(key string) error {
 	switch {
 	case errors.IsNotFound(err):
 		log.Info("CronHPA has been deleted. Attempting to cleanup resources", log.String("CronHPA", key))
-		err = c.processCronHPADeletion(key)
+		err = c.processCronHPADeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve CronHPA from store", log.String("CronHPA", key), log.Err(err))
 	default:
 		cachedCronHPA := c.cache.getOrCreate(key)
-		err = c.processCronHPAUpdate(cachedCronHPA, cronHPA, key)
+		err = c.processCronHPAUpdate(context.Background(), cachedCronHPA, cronHPA, key)
 	}
 	return err
 }
 
-func (c *Controller) processCronHPADeletion(key string) error {
+func (c *Controller) processCronHPADeletion(ctx context.Context, key string) error {
 	cachedCronHPA, ok := c.cache.get(key)
 	if !ok {
 		log.Error("CronHPA not in cache even though the watcher thought it was. Ignoring the deletion", log.String("CronHPA", key))
 		return nil
 	}
-	return c.processCronHPADelete(cachedCronHPA, key)
+	return c.processCronHPADelete(ctx, cachedCronHPA, key)
 }
 
-func (c *Controller) processCronHPADelete(cachedCronHPA *cachedCronHPA, key string) error {
+func (c *Controller) processCronHPADelete(ctx context.Context, cachedCronHPA *cachedCronHPA, key string) error {
 	log.Info("CronHPA will be dropped", log.String("CronHPA", key))
 
 	if c.cache.Exist(key) {
@@ -231,19 +232,19 @@ func (c *Controller) processCronHPADelete(cachedCronHPA *cachedCronHPA, key stri
 	}
 
 	cronHPA := cachedCronHPA.state
-	return c.uninstallCronHPA(cronHPA)
+	return c.uninstallCronHPA(ctx, cronHPA)
 }
 
-func (c *Controller) processCronHPAUpdate(cachedCronHPA *cachedCronHPA, cronHPA *v1.CronHPA, key string) error {
+func (c *Controller) processCronHPAUpdate(ctx context.Context, cachedCronHPA *cachedCronHPA, cronHPA *v1.CronHPA, key string) error {
 	if cachedCronHPA.state != nil {
 		// exist and the cluster name changed
 		if cachedCronHPA.state.UID != cronHPA.UID {
-			if err := c.processCronHPADelete(cachedCronHPA, key); err != nil {
+			if err := c.processCronHPADelete(ctx, cachedCronHPA, key); err != nil {
 				return err
 			}
 		}
 	}
-	err := c.createCronHPAIfNeeded(key, cachedCronHPA, cronHPA)
+	err := c.createCronHPAIfNeeded(ctx, key, cachedCronHPA, cronHPA)
 	if err != nil {
 		return err
 	}
@@ -254,23 +255,23 @@ func (c *Controller) processCronHPAUpdate(cachedCronHPA *cachedCronHPA, cronHPA 
 	return nil
 }
 
-func (c *Controller) cronHPAReinitialize(key string, cachedCronHPA *cachedCronHPA, cronHPA *v1.CronHPA) func() (bool, error) {
+func (c *Controller) cronHPAReinitialize(ctx context.Context, key string, cachedCronHPA *cachedCronHPA, cronHPA *v1.CronHPA) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
-		err := c.installCronHPA(cronHPA)
+		err := c.installCronHPA(ctx, cronHPA)
 		if err == nil {
 			cronHPA = cronHPA.DeepCopy()
 			cronHPA.Status.Phase = v1.AddonPhaseChecking
 			cronHPA.Status.Reason = ""
 			cronHPA.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(cronHPA)
+			err = c.persistUpdate(ctx, cronHPA)
 			if err != nil {
 				return true, err
 			}
 			return true, nil
 		}
 		// First, rollback the cronHPA
-		if err := c.uninstallCronHPA(cronHPA); err != nil {
+		if err := c.uninstallCronHPA(ctx, cronHPA); err != nil {
 			log.Error("Uninstall CronHPA error.")
 			return true, err
 		}
@@ -278,7 +279,7 @@ func (c *Controller) cronHPAReinitialize(key string, cachedCronHPA *cachedCronHP
 			cronHPA = cronHPA.DeepCopy()
 			cronHPA.Status.Phase = v1.AddonPhaseFailed
 			cronHPA.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", maxRetryCount)
-			err := c.persistUpdate(cronHPA)
+			err := c.persistUpdate(ctx, cronHPA)
 			if err != nil {
 				log.Error("Update CronHPA error.")
 				return true, err
@@ -291,7 +292,7 @@ func (c *Controller) cronHPAReinitialize(key string, cachedCronHPA *cachedCronHP
 		cronHPA.Status.Reason = err.Error()
 		cronHPA.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
 		cronHPA.Status.RetryCount++
-		err = c.persistUpdate(cronHPA)
+		err = c.persistUpdate(ctx, cronHPA)
 		if err != nil {
 			return true, err
 		}
@@ -299,18 +300,18 @@ func (c *Controller) cronHPAReinitialize(key string, cachedCronHPA *cachedCronHP
 	}
 }
 
-func (c *Controller) createCronHPAIfNeeded(key string, cachedCronHPA *cachedCronHPA, cronHPA *v1.CronHPA) error {
+func (c *Controller) createCronHPAIfNeeded(ctx context.Context, key string, cachedCronHPA *cachedCronHPA, cronHPA *v1.CronHPA) error {
 	switch cronHPA.Status.Phase {
 	case v1.AddonPhaseInitializing:
 		log.Error("CronHPA will be created", log.String("CronHPA", key))
-		err := c.installCronHPA(cronHPA)
+		err := c.installCronHPA(ctx, cronHPA)
 		if err == nil {
 			cronHPA = cronHPA.DeepCopy()
 			cronHPA.Status.Version = cronHPA.Spec.Version
 			cronHPA.Status.Phase = v1.AddonPhaseChecking
 			cronHPA.Status.Reason = ""
 			cronHPA.Status.RetryCount = 0
-			return c.persistUpdate(cronHPA)
+			return c.persistUpdate(ctx, cronHPA)
 		}
 		cronHPA = cronHPA.DeepCopy()
 		cronHPA.Status.Version = cronHPA.Spec.Version
@@ -318,7 +319,7 @@ func (c *Controller) createCronHPAIfNeeded(key string, cachedCronHPA *cachedCron
 		cronHPA.Status.Reason = err.Error()
 		cronHPA.Status.RetryCount = 1
 		cronHPA.Status.LastReInitializingTimestamp = metav1.Now()
-		return c.persistUpdate(cronHPA)
+		return c.persistUpdate(ctx, cronHPA)
 	case v1.AddonPhaseReinitializing:
 		var interval = time.Since(cronHPA.Status.LastReInitializingTimestamp.Time)
 		var waitTime time.Duration
@@ -327,14 +328,14 @@ func (c *Controller) createCronHPAIfNeeded(key string, cachedCronHPA *cachedCron
 		} else {
 			waitTime = timeOut - interval
 		}
-		go wait.Poll(waitTime, timeOut, c.cronHPAReinitialize(key, cachedCronHPA, cronHPA))
+		go wait.Poll(waitTime, timeOut, c.cronHPAReinitialize(ctx, key, cachedCronHPA, cronHPA))
 	case v1.AddonPhaseChecking:
 		if _, ok := c.checking.Load(key); !ok {
 			c.checking.Store(key, true)
 			initDelay := time.Now().Add(5 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkCronHPAStatus(cronHPA, key, initDelay))
+				wait.PollImmediate(5*time.Second, 5*time.Minute, c.checkCronHPAStatus(ctx, cronHPA, key, initDelay))
 			}()
 		}
 	case v1.AddonPhaseRunning:
@@ -344,11 +345,11 @@ func (c *Controller) createCronHPAIfNeeded(key string, cachedCronHPA *cachedCron
 			cronHPA.Status.Phase = v1.AddonPhaseUpgrading
 			cronHPA.Status.Reason = ""
 			cronHPA.Status.RetryCount = 0
-			return c.persistUpdate(cronHPA)
+			return c.persistUpdate(ctx, cronHPA)
 		}
 		if _, ok := c.health.Load(key); !ok {
 			c.health.Store(key, true)
-			go wait.PollImmediateUntil(5*time.Minute, c.watchCronHPAHealth(key), c.stopCh)
+			go wait.PollImmediateUntil(5*time.Minute, c.watchCronHPAHealth(ctx, key), c.stopCh)
 		}
 	case v1.AddonPhaseUpgrading:
 		if _, ok := c.upgrading.Load(key); !ok {
@@ -356,7 +357,7 @@ func (c *Controller) createCronHPAIfNeeded(key string, cachedCronHPA *cachedCron
 			upgradeDelay := time.Now().Add(timeOut)
 			go func() {
 				defer c.upgrading.Delete(key)
-				wait.PollImmediate(5*time.Second, timeOut, c.upgradeCronHPA(cronHPA, key, upgradeDelay))
+				wait.PollImmediate(5*time.Second, timeOut, c.upgradeCronHPA(ctx, cronHPA, key, upgradeDelay))
 			}()
 		}
 	case v1.AddonPhaseFailed:
@@ -372,29 +373,29 @@ func needUpgrade(cronHPA *v1.CronHPA) bool {
 	return cronHPA.Spec.Version != cronHPA.Status.Version
 }
 
-func (c *Controller) installCronHPA(cronHPA *v1.CronHPA) error {
-	cluster, err := c.client.PlatformV1().Clusters().Get(cronHPA.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) installCronHPA(ctx context.Context, cronHPA *v1.CronHPA) error {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, cronHPA.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 	// ServiceAccount CronHPA
-	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccountCronHPA()); err != nil {
+	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountCronHPA(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ClusterRoleBinding CronHPA
-	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(crbCronHPA()); err != nil {
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, crbCronHPA(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Deployment CronHPA
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deploymentCronHPA(cronHPA.Spec.Version)); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentCronHPA(cronHPA.Spec.Version), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Service CronHPA
-	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(serviceCronHPA()); err != nil {
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, serviceCronHPA(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 
@@ -504,26 +505,26 @@ func serviceCronHPA() *corev1.Service {
 
 func int32Ptr(i int32) *int32 { return &i }
 
-func (c *Controller) uninstallCronHPA(cronHPA *v1.CronHPA) error {
-	cluster, err := c.client.PlatformV1().Clusters().Get(cronHPA.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) uninstallCronHPA(ctx context.Context, cronHPA *v1.CronHPA) error {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, cronHPA.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 	// Deployment CronHPA
-	deployCronHPAErr := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(deployCronHPAName, &metav1.DeleteOptions{})
+	deployCronHPAErr := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, deployCronHPAName, metav1.DeleteOptions{})
 	// ClusterRoleBinding CronHPA
-	crbCronHPAErr := kubeClient.RbacV1().ClusterRoleBindings().Delete(crbCronHPAName, &metav1.DeleteOptions{})
+	crbCronHPAErr := kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, crbCronHPAName, metav1.DeleteOptions{})
 	// ServiceAccount CronHPA
-	svcAccountCronHPAErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(svcAccountCronHPAName, &metav1.DeleteOptions{})
+	svcAccountCronHPAErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, svcAccountCronHPAName, metav1.DeleteOptions{})
 	// Service CronHPA
-	svcCronHPAErr := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(svcCronHPAName, &metav1.DeleteOptions{})
+	svcCronHPAErr := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, svcCronHPAName, metav1.DeleteOptions{})
 
 	if (deployCronHPAErr != nil && !errors.IsNotFound(deployCronHPAErr)) ||
 		(crbCronHPAErr != nil && !errors.IsNotFound(crbCronHPAErr)) ||
@@ -534,7 +535,7 @@ func (c *Controller) uninstallCronHPA(cronHPA *v1.CronHPA) error {
 	return nil
 }
 
-func (c *Controller) watchCronHPAHealth(key string) func() (bool, error) {
+func (c *Controller) watchCronHPAHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start check CronHPA in cluster health", log.String("CronHPA", key))
 		cronHPA, err := c.lister.Get(key)
@@ -542,7 +543,7 @@ func (c *Controller) watchCronHPAHealth(key string) func() (bool, error) {
 			return false, err
 		}
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(cronHPA.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, cronHPA.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -553,16 +554,16 @@ func (c *Controller) watchCronHPAHealth(key string) func() (bool, error) {
 			log.Info("Health check over.")
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
 		// TODO: check CronHPA controller service
-		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(deployCronHPAName, metav1.GetOptions{}); err != nil {
+		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, deployCronHPAName, metav1.GetOptions{}); err != nil {
 			cronHPA = cronHPA.DeepCopy()
 			cronHPA.Status.Phase = v1.AddonPhaseFailed
 			cronHPA.Status.Reason = "CronHPA is not healthy."
-			if err = c.persistUpdate(cronHPA); err != nil {
+			if err = c.persistUpdate(ctx, cronHPA); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -571,10 +572,10 @@ func (c *Controller) watchCronHPAHealth(key string) func() (bool, error) {
 	}
 }
 
-func (c *Controller) checkCronHPAStatus(cronHPA *v1.CronHPA, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) checkCronHPAStatus(ctx context.Context, cronHPA *v1.CronHPA, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check CronHPA health", log.String("CronHPA", cronHPA.Name))
-		cluster, err := c.client.PlatformV1().Clusters().Get(cronHPA.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, cronHPA.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -585,7 +586,7 @@ func (c *Controller) checkCronHPAStatus(cronHPA *v1.CronHPA, key string, initDel
 			log.Debug("Checking over CronHPA addon status")
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -593,13 +594,13 @@ func (c *Controller) checkCronHPAStatus(cronHPA *v1.CronHPA, key string, initDel
 		if err != nil {
 			return false, err
 		}
-		if deploy, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(deployCronHPAName, metav1.GetOptions{}); err != nil ||
+		if deploy, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, deployCronHPAName, metav1.GetOptions{}); err != nil ||
 			(deploy.Spec.Replicas != nil && deploy.Status.AvailableReplicas < *deploy.Spec.Replicas) {
 			if time.Now().After(initDelay) {
 				cronHPA = cronHPA.DeepCopy()
 				cronHPA.Status.Phase = v1.AddonPhaseFailed
 				cronHPA.Status.Reason = "CronHPA is not healthy."
-				if err = c.persistUpdate(cronHPA); err != nil {
+				if err = c.persistUpdate(ctx, cronHPA); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -609,17 +610,17 @@ func (c *Controller) checkCronHPAStatus(cronHPA *v1.CronHPA, key string, initDel
 		cronHPA = cronHPA.DeepCopy()
 		cronHPA.Status.Phase = v1.AddonPhaseRunning
 		cronHPA.Status.Reason = ""
-		if err = c.persistUpdate(cronHPA); err != nil {
+		if err = c.persistUpdate(ctx, cronHPA); err != nil {
 			return false, err
 		}
 		return true, nil
 	}
 }
 
-func (c *Controller) upgradeCronHPA(cronHPA *v1.CronHPA, key string, initDelay time.Time) func() (bool, error) {
+func (c *Controller) upgradeCronHPA(ctx context.Context, cronHPA *v1.CronHPA, key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to upgrade CronHPA", log.String("CronHPA", cronHPA.Name))
-		cluster, err := c.client.PlatformV1().Clusters().Get(cronHPA.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, cronHPA.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
 		}
@@ -630,7 +631,7 @@ func (c *Controller) upgradeCronHPA(cronHPA *v1.CronHPA, key string, initDelay t
 			log.Debug("Upgrading CronHPA", log.String("CronHPA", cronHPA.Name))
 			return true, nil
 		}
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -641,12 +642,12 @@ func (c *Controller) upgradeCronHPA(cronHPA *v1.CronHPA, key string, initDelay t
 		newImage := images.Get(cronHPA.Spec.Version).CronHPA.FullName()
 
 		patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"%s"}]`, newImage)
-		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Patch(deployCronHPAName, types.JSONPatchType, []byte(patch)); err != nil {
+		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Patch(ctx, deployCronHPAName, types.JSONPatchType, []byte(patch), metav1.PatchOptions{}); err != nil {
 			if time.Now().After(initDelay) {
 				cronHPA = cronHPA.DeepCopy()
 				cronHPA.Status.Phase = v1.AddonPhaseFailed
 				cronHPA.Status.Reason = "Failed to upgrade CronHPA."
-				if err = c.persistUpdate(cronHPA); err != nil {
+				if err = c.persistUpdate(ctx, cronHPA); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -657,17 +658,17 @@ func (c *Controller) upgradeCronHPA(cronHPA *v1.CronHPA, key string, initDelay t
 		cronHPA.Status.Version = cronHPA.Spec.Version
 		cronHPA.Status.Phase = v1.AddonPhaseChecking
 		cronHPA.Status.Reason = ""
-		if err = c.persistUpdate(cronHPA); err != nil {
+		if err = c.persistUpdate(ctx, cronHPA); err != nil {
 			return false, err
 		}
 		return true, nil
 	}
 }
 
-func (c *Controller) persistUpdate(cronHPA *v1.CronHPA) error {
+func (c *Controller) persistUpdate(ctx context.Context, cronHPA *v1.CronHPA) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.PlatformV1().CronHPAs().UpdateStatus(cronHPA)
+		_, err = c.client.PlatformV1().CronHPAs().UpdateStatus(ctx, cronHPA, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

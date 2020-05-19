@@ -24,6 +24,7 @@ import (
 	"net"
 
 	"github.com/pkg/errors"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/util/ipallocator"
 )
 
@@ -89,4 +90,26 @@ func GetIndexedIP(subnet string, index int) (net.IP, error) {
 	}
 
 	return dnsIP, nil
+}
+
+// GetAPIServerCertSANs returns extra APIServer's certSANs need to pass kubeadm
+func GetAPIServerCertSANs(c *platformv1.Cluster) []string {
+	certSANs := []string{
+		"127.0.0.1",
+		"localhost",
+	}
+	certSANs = append(certSANs, c.Spec.PublicAlternativeNames...)
+	if c.Spec.Features.HA != nil {
+		if c.Spec.Features.HA.TKEHA != nil {
+			certSANs = append(certSANs, c.Spec.Features.HA.TKEHA.VIP)
+		}
+		if c.Spec.Features.HA.ThirdPartyHA != nil {
+			certSANs = append(certSANs, c.Spec.Features.HA.ThirdPartyHA.VIP)
+		}
+	}
+	for _, address := range c.Status.Addresses {
+		certSANs = append(certSANs, address.Host)
+	}
+
+	return certSANs
 }

@@ -72,5 +72,5 @@ func (r *UnbindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 	group.Status.Users = remained
 
 	log.Info("group members", log.String("group", group.Name), log.Any("members", group.Status.Users))
-	return r.authClient.LocalGroups().UpdateStatus(group)
+	return r.authClient.LocalGroups().UpdateStatus(ctx, group, metav1.UpdateOptions{})
 }

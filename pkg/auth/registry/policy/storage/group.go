@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"tkestack.io/tke/pkg/auth/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -28,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -37,9 +39,10 @@ import (
 // GroupREST implements the REST endpoint.
 type GroupREST struct {
 	policyStore *registry.Store
-
-	authClient authinternalclient.AuthInterface
+	authClient  authinternalclient.AuthInterface
 }
+
+var _ = rest.Lister(&GroupREST{})
 
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
@@ -50,6 +53,14 @@ func (r *GroupREST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *GroupREST) NewList() runtime.Object {
 	return &auth.GroupList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *GroupREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert group list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("groups"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -72,7 +83,7 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 	for _, subj := range policy.Status.Groups {
 		var group *auth.Group
 		if subj.ID != "" {
-			group, err = r.authClient.Groups().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			group, err = r.authClient.Groups().Get(ctx, util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				log.Error("Get group failed", log.String("id", subj.ID), log.Err(err))
 				group = constructGroup(subj.ID, subj.Name)

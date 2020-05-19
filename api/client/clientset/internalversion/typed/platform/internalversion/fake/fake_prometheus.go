@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var prometheusesResource = schema.GroupVersionResource{Group: "platform.tkestack
 var prometheusesKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "", Kind: "Prometheus"}
 
 // Get takes name of the prometheus, and returns the corresponding prometheus object, and an error if there is any.
-func (c *FakePrometheuses) Get(name string, options v1.GetOptions) (result *platform.Prometheus, err error) {
+func (c *FakePrometheuses) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.Prometheus, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(prometheusesResource, name), &platform.Prometheus{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakePrometheuses) Get(name string, options v1.GetOptions) (result *plat
 }
 
 // List takes label and field selectors, and returns the list of Prometheuses that match those selectors.
-func (c *FakePrometheuses) List(opts v1.ListOptions) (result *platform.PrometheusList, err error) {
+func (c *FakePrometheuses) List(ctx context.Context, opts v1.ListOptions) (result *platform.PrometheusList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(prometheusesResource, prometheusesKind, opts), &platform.PrometheusList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakePrometheuses) List(opts v1.ListOptions) (result *platform.Prometheu
 }
 
 // Watch returns a watch.Interface that watches the requested prometheuses.
-func (c *FakePrometheuses) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakePrometheuses) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(prometheusesResource, opts))
 }
 
 // Create takes the representation of a prometheus and creates it.  Returns the server's representation of the prometheus, and an error, if there is any.
-func (c *FakePrometheuses) Create(prometheus *platform.Prometheus) (result *platform.Prometheus, err error) {
+func (c *FakePrometheuses) Create(ctx context.Context, prometheus *platform.Prometheus, opts v1.CreateOptions) (result *platform.Prometheus, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(prometheusesResource, prometheus), &platform.Prometheus{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakePrometheuses) Create(prometheus *platform.Prometheus) (result *plat
 }
 
 // Update takes the representation of a prometheus and updates it. Returns the server's representation of the prometheus, and an error, if there is any.
-func (c *FakePrometheuses) Update(prometheus *platform.Prometheus) (result *platform.Prometheus, err error) {
+func (c *FakePrometheuses) Update(ctx context.Context, prometheus *platform.Prometheus, opts v1.UpdateOptions) (result *platform.Prometheus, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(prometheusesResource, prometheus), &platform.Prometheus{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakePrometheuses) Update(prometheus *platform.Prometheus) (result *plat
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakePrometheuses) UpdateStatus(prometheus *platform.Prometheus) (*platform.Prometheus, error) {
+func (c *FakePrometheuses) UpdateStatus(ctx context.Context, prometheus *platform.Prometheus, opts v1.UpdateOptions) (*platform.Prometheus, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(prometheusesResource, "status", prometheus), &platform.Prometheus{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakePrometheuses) UpdateStatus(prometheus *platform.Prometheus) (*platf
 }
 
 // Delete takes name of the prometheus and deletes it. Returns an error if one occurs.
-func (c *FakePrometheuses) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakePrometheuses) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(prometheusesResource, name), &platform.Prometheus{})
 	return err
 }
 
 // Patch applies the patch and returns the patched prometheus.
-func (c *FakePrometheuses) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.Prometheus, err error) {
+func (c *FakePrometheuses) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.Prometheus, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(prometheusesResource, name, pt, data, subresources...), &platform.Prometheus{})
 	if obj == nil {

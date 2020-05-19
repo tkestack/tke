@@ -90,7 +90,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 
 	// Second check if user is a admin of the identity provider for tenant.
 	if tenantID != "" {
-		idp, err := a.authClient.IdentityProviders().Get(tenantID, metav1.GetOptions{})
+		idp, err := a.authClient.IdentityProviders().Get(ctx, tenantID, metav1.GetOptions{})
 		if err != nil {
 			log.Error("Get identity provider for tenant failed", log.String("tenant", tenantID), log.Err(err))
 			return authorizer.DecisionDeny, "", err

@@ -113,7 +113,7 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 
 // Validate validates a new emigration.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateNsEmigrationCreate(obj.(*business.NsEmigration), s.businessClient)
+	return ValidateNsEmigrationCreate(ctx, obj.(*business.NsEmigration), s.businessClient)
 }
 
 // AllowCreateOnUpdate is false for emigrations.
@@ -134,7 +134,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end emigration.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateNsEmigrationUpdate(obj.(*business.NsEmigration), old.(*business.NsEmigration), s.businessClient)
+	return ValidateNsEmigrationUpdate(ctx, obj.(*business.NsEmigration), old.(*business.NsEmigration), s.businessClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -143,7 +143,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a emigration")
 	}
-	return labels.Set(emigration.ObjectMeta.Labels), ToSelectableFields(emigration), nil
+	return emigration.ObjectMeta.Labels, ToSelectableFields(emigration), nil
 }
 
 // MatchNsEmigration returns a generic matcher for a given label and field selector.

@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,7 +65,7 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	rc, err := client.CoreV1().ReplicationControllers(namespaceName).Get(name, *options)
+	rc, err := client.CoreV1().ReplicationControllers(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(corev1.Resource("replicationControllers/pods"), name)
 	}
@@ -77,7 +78,7 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 
 	//list all of the pod, by deployment labels
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}

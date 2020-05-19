@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var clientsResource = schema.GroupVersionResource{Group: "auth.tkestack.io", Ver
 var clientsKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "v1", Kind: "Client"}
 
 // Get takes name of the client, and returns the corresponding client object, and an error if there is any.
-func (c *FakeClients) Get(name string, options v1.GetOptions) (result *authv1.Client, err error) {
+func (c *FakeClients) Get(ctx context.Context, name string, options v1.GetOptions) (result *authv1.Client, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(clientsResource, name), &authv1.Client{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeClients) Get(name string, options v1.GetOptions) (result *authv1.Cl
 }
 
 // List takes label and field selectors, and returns the list of Clients that match those selectors.
-func (c *FakeClients) List(opts v1.ListOptions) (result *authv1.ClientList, err error) {
+func (c *FakeClients) List(ctx context.Context, opts v1.ListOptions) (result *authv1.ClientList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(clientsResource, clientsKind, opts), &authv1.ClientList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeClients) List(opts v1.ListOptions) (result *authv1.ClientList, err 
 }
 
 // Watch returns a watch.Interface that watches the requested clients.
-func (c *FakeClients) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeClients) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(clientsResource, opts))
 }
 
 // Create takes the representation of a client and creates it.  Returns the server's representation of the client, and an error, if there is any.
-func (c *FakeClients) Create(client *authv1.Client) (result *authv1.Client, err error) {
+func (c *FakeClients) Create(ctx context.Context, client *authv1.Client, opts v1.CreateOptions) (result *authv1.Client, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(clientsResource, client), &authv1.Client{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeClients) Create(client *authv1.Client) (result *authv1.Client, err 
 }
 
 // Update takes the representation of a client and updates it. Returns the server's representation of the client, and an error, if there is any.
-func (c *FakeClients) Update(client *authv1.Client) (result *authv1.Client, err error) {
+func (c *FakeClients) Update(ctx context.Context, client *authv1.Client, opts v1.UpdateOptions) (result *authv1.Client, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(clientsResource, client), &authv1.Client{})
 	if obj == nil {
@@ -97,22 +99,22 @@ func (c *FakeClients) Update(client *authv1.Client) (result *authv1.Client, err 
 }
 
 // Delete takes name of the client and deletes it. Returns an error if one occurs.
-func (c *FakeClients) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeClients) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(clientsResource, name), &authv1.Client{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeClients) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(clientsResource, listOptions)
+func (c *FakeClients) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(clientsResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &authv1.ClientList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched client.
-func (c *FakeClients) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *authv1.Client, err error) {
+func (c *FakeClients) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *authv1.Client, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(clientsResource, name, pt, data, subresources...), &authv1.Client{})
 	if obj == nil {

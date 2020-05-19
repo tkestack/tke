@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/casbin/casbin/v2"
@@ -91,7 +92,7 @@ func (d *roledResourcesDeleter) Delete(roleName string) error {
 	// Multiple controllers may edit a role during termination
 	// first get the latest state of the role before proceeding
 	// if the role was deleted already, don't do anything
-	role, err := d.roleClient.Get(roleName, metav1.GetOptions{})
+	role, err := d.roleClient.Get(context.Background(), roleName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -152,12 +153,12 @@ func (d *roledResourcesDeleter) Delete(roleName string) error {
 
 // Deletes the given role.
 func (d *roledResourcesDeleter) deleteRole(role *v1.Role) error {
-	var opts *metav1.DeleteOptions
+	var opts metav1.DeleteOptions
 	uid := role.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.roleClient.Delete(role.Name, opts)
+	err := d.roleClient.Delete(context.Background(), role.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))
 		return err
@@ -182,7 +183,7 @@ func (d *roledResourcesDeleter) retryOnConflictError(role *v1.Role, fn updateRol
 			return nil, err
 		}
 		prevRole := latestRole
-		latestRole, err = d.roleClient.Get(latestRole.Name, metav1.GetOptions{})
+		latestRole, err = d.roleClient.Get(context.Background(), latestRole.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -201,7 +202,7 @@ func (d *roledResourcesDeleter) updateRoleStatusFunc(role *v1.Role) (*v1.Role, e
 	newRole.ObjectMeta = role.ObjectMeta
 	newRole.Status = role.Status
 	newRole.Status.Phase = v1.RoleTerminating
-	return d.roleClient.UpdateStatus(&newRole)
+	return d.roleClient.UpdateStatus(context.Background(), &newRole, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the role.Spec.Finalizers is an empty list
@@ -231,7 +232,7 @@ func (d *roledResourcesDeleter) finalizeRole(role *v1.Role) (*v1.Role, error) {
 		Name(roleFinalize.Name).
 		SubResource("finalize").
 		Body(&roleFinalize).
-		Do().
+		Do(context.Background()).
 		Into(updated)
 
 	if err != nil {

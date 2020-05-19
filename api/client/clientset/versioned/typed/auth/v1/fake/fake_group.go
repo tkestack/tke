@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var groupsResource = schema.GroupVersionResource{Group: "auth.tkestack.io", Vers
 var groupsKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "v1", Kind: "Group"}
 
 // Get takes name of the group, and returns the corresponding group object, and an error if there is any.
-func (c *FakeGroups) Get(name string, options v1.GetOptions) (result *authv1.Group, err error) {
+func (c *FakeGroups) Get(ctx context.Context, name string, options v1.GetOptions) (result *authv1.Group, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(groupsResource, name), &authv1.Group{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeGroups) Get(name string, options v1.GetOptions) (result *authv1.Gro
 }
 
 // List takes label and field selectors, and returns the list of Groups that match those selectors.
-func (c *FakeGroups) List(opts v1.ListOptions) (result *authv1.GroupList, err error) {
+func (c *FakeGroups) List(ctx context.Context, opts v1.ListOptions) (result *authv1.GroupList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(groupsResource, groupsKind, opts), &authv1.GroupList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeGroups) List(opts v1.ListOptions) (result *authv1.GroupList, err er
 }
 
 // Watch returns a watch.Interface that watches the requested groups.
-func (c *FakeGroups) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeGroups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(groupsResource, opts))
 }
 
 // Create takes the representation of a group and creates it.  Returns the server's representation of the group, and an error, if there is any.
-func (c *FakeGroups) Create(group *authv1.Group) (result *authv1.Group, err error) {
+func (c *FakeGroups) Create(ctx context.Context, group *authv1.Group, opts v1.CreateOptions) (result *authv1.Group, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(groupsResource, group), &authv1.Group{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeGroups) Create(group *authv1.Group) (result *authv1.Group, err erro
 }
 
 // Update takes the representation of a group and updates it. Returns the server's representation of the group, and an error, if there is any.
-func (c *FakeGroups) Update(group *authv1.Group) (result *authv1.Group, err error) {
+func (c *FakeGroups) Update(ctx context.Context, group *authv1.Group, opts v1.UpdateOptions) (result *authv1.Group, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(groupsResource, group), &authv1.Group{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeGroups) Update(group *authv1.Group) (result *authv1.Group, err erro
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeGroups) UpdateStatus(group *authv1.Group) (*authv1.Group, error) {
+func (c *FakeGroups) UpdateStatus(ctx context.Context, group *authv1.Group, opts v1.UpdateOptions) (*authv1.Group, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(groupsResource, "status", group), &authv1.Group{})
 	if obj == nil {
@@ -108,22 +110,22 @@ func (c *FakeGroups) UpdateStatus(group *authv1.Group) (*authv1.Group, error) {
 }
 
 // Delete takes name of the group and deletes it. Returns an error if one occurs.
-func (c *FakeGroups) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeGroups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(groupsResource, name), &authv1.Group{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeGroups) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(groupsResource, listOptions)
+func (c *FakeGroups) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(groupsResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &authv1.GroupList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched group.
-func (c *FakeGroups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *authv1.Group, err error) {
+func (c *FakeGroups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *authv1.Group, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(groupsResource, name, pt, data, subresources...), &authv1.Group{})
 	if obj == nil {
