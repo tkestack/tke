@@ -56,7 +56,9 @@ export const validateClusterCreationAction = {
       let path = '',
         port = '';
       if (host.indexOf('/') !== -1) {
-        path = host.substring(host.indexOf('/'));
+        let index = host.indexOf('/');
+        path = host.substring(index);
+        host = host.substring(0, index);
         port = '443';
       } else {
         port = tempSplit[1] ? tempSplit[1].split('/')[0] : '443';
