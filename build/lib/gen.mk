@@ -42,7 +42,7 @@ gen.api:
 	 	$(ROOT_PACKAGE)/api/client \
 	 	$(ROOT_PACKAGE)/api \
 	 	$(ROOT_PACKAGE)/api \
-		"platform:v1 business:v1 notify:v1 registry:v1 monitor:v1 auth:v1 logagent:v1"
+		"platform:v1 business:v1 notify:v1 registry:v1 monitor:v1 auth:v1 logagent:v1 application:v1"
 
 .PHONY: gen.gateway
 gen.gateway:

@@ -39,6 +39,7 @@ import (
 
 const (
 	DefaultDomain = "*"
+	DefaultAll    = "*"
 )
 
 // RestAdapter is the policy storage adapter for Casbin. With this library, Casbin can load policy

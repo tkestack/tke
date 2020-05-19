@@ -65,11 +65,31 @@ func (ChartGroupSpec) SwaggerDoc() map[string]string {
 }
 
 var map_ChartGroupStatus = map[string]string{
-	"": "ChartGroupStatus represents information about the status of a chart group.",
+	"":                   "ChartGroupStatus represents information about the status of a chart group.",
+	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
+	"reason":             "The reason for the condition's last transition.",
+	"message":            "A human readable message indicating details about the transition.",
 }
 
 func (ChartGroupStatus) SwaggerDoc() map[string]string {
 	return map_ChartGroupStatus
+}
+
+var map_ChartInfo = map[string]string{
+	"":     "ChartInfo describes detail of a chart version.",
+	"spec": "Spec defines the desired identities of a chart.",
+}
+
+func (ChartInfo) SwaggerDoc() map[string]string {
+	return map_ChartInfo
+}
+
+var map_ChartInfoSpec = map[string]string{
+	"": "ChartInfoSpec is a description of a ChartInfo.",
+}
+
+func (ChartInfoSpec) SwaggerDoc() map[string]string {
+	return map_ChartInfoSpec
 }
 
 var map_ChartList = map[string]string{
@@ -79,6 +99,24 @@ var map_ChartList = map[string]string{
 
 func (ChartList) SwaggerDoc() map[string]string {
 	return map_ChartList
+}
+
+var map_ChartProxyOptions = map[string]string{
+	"": "ChartProxyOptions is the query options to a ChartInfo proxy call.",
+}
+
+func (ChartProxyOptions) SwaggerDoc() map[string]string {
+	return map_ChartProxyOptions
+}
+
+var map_ChartStatus = map[string]string{
+	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
+	"reason":             "The reason for the condition's last transition.",
+	"message":            "A human readable message indicating details about the transition.",
+}
+
+func (ChartStatus) SwaggerDoc() map[string]string {
+	return map_ChartStatus
 }
 
 var map_ConfigMap = map[string]string{

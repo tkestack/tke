@@ -32,6 +32,14 @@ type ChartNamespaceListerExpansion interface{}
 // ChartGroupLister.
 type ChartGroupListerExpansion interface{}
 
+// ChartInfoListerExpansion allows custom methods to be added to
+// ChartInfoLister.
+type ChartInfoListerExpansion interface{}
+
+// ChartInfoNamespaceListerExpansion allows custom methods to be added to
+// ChartInfoNamespaceLister.
+type ChartInfoNamespaceListerExpansion interface{}
+
 // ConfigMapListerExpansion allows custom methods to be added to
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}

@@ -218,6 +218,39 @@ func (ConfigMapList) SwaggerDoc() map[string]string {
 	return map_ConfigMapList
 }
 
+var map_CustomPolicyBinding = map[string]string{
+	"": "CustomPolicyBinding is a collection of subjects bond to policies in a custom scope.",
+}
+
+func (CustomPolicyBinding) SwaggerDoc() map[string]string {
+	return map_CustomPolicyBinding
+}
+
+var map_CustomPolicyBindingList = map[string]string{
+	"":      "CustomPolicyBindingList is the whole list of all CustomPolicyBindings.",
+	"items": "List of CustomPolicyBinding.",
+}
+
+func (CustomPolicyBindingList) SwaggerDoc() map[string]string {
+	return map_CustomPolicyBindingList
+}
+
+var map_CustomPolicyBindingSpec = map[string]string{
+	"": "CustomPolicyBindingSpec defines the desired identities of CustomPolicyBindingSpec document in this set.",
+}
+
+func (CustomPolicyBindingSpec) SwaggerDoc() map[string]string {
+	return map_CustomPolicyBindingSpec
+}
+
+var map_CustomPolicyBindingStatus = map[string]string{
+	"": "CustomPolicyBindingStatus represents information about the status of a CustomPolicyBinding.",
+}
+
+func (CustomPolicyBindingStatus) SwaggerDoc() map[string]string {
+	return map_CustomPolicyBindingStatus
+}
+
 var map_Group = map[string]string{
 	"":     "Group is an object that contains the metadata about identify about tke local idp or third-party idp.",
 	"spec": "Spec defines the desired identities of group in this set.",

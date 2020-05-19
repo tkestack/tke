@@ -30,6 +30,7 @@ type RegistryV1Interface interface {
 	RESTClient() rest.Interface
 	ChartsGetter
 	ChartGroupsGetter
+	ChartInfosGetter
 	ConfigMapsGetter
 	NamespacesGetter
 	RepositoriesGetter
@@ -46,6 +47,10 @@ func (c *RegistryV1Client) Charts(namespace string) ChartInterface {
 
 func (c *RegistryV1Client) ChartGroups() ChartGroupInterface {
 	return newChartGroups(c)
+}
+
+func (c *RegistryV1Client) ChartInfos(namespace string) ChartInfoInterface {
+	return newChartInfos(c, namespace)
 }
 
 func (c *RegistryV1Client) ConfigMaps() ConfigMapInterface {

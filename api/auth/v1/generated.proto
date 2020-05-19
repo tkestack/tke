@@ -274,6 +274,49 @@ message ConfigMapList {
   repeated ConfigMap items = 2;
 }
 
+// CustomPolicyBinding is a collection of subjects bond to policies in a custom scope.
+message CustomPolicyBinding {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  optional CustomPolicyBindingSpec spec = 2;
+
+  optional CustomPolicyBindingStatus status = 3;
+}
+
+// CustomPolicyBindingList is the whole list of all CustomPolicyBindings.
+message CustomPolicyBindingList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of CustomPolicyBinding.
+  repeated CustomPolicyBinding items = 2;
+}
+
+// CustomPolicyBindingSpec defines the desired identities of CustomPolicyBindingSpec document in this set.
+message CustomPolicyBindingSpec {
+  repeated string finalizers = 1;
+
+  optional string tenantID = 2;
+
+  optional string domain = 3;
+
+  optional string lastDomain = 4;
+
+  optional string policyID = 5;
+
+  repeated string resources = 6;
+
+  optional string rulePrefix = 7;
+
+  repeated Subject users = 8;
+
+  repeated Subject groups = 9;
+}
+
+// CustomPolicyBindingStatus represents information about the status of a CustomPolicyBinding.
+message CustomPolicyBindingStatus {
+  optional string phase = 1;
+}
+
 // ExtraValue masks the value so protobuf can generate
 // +protobuf.nullable=true
 // +protobuf.options.(gogoproto.goproto_stringer)=false
