@@ -39,7 +39,7 @@ var (
 	K8sVersionConstraint = ">= 1.10"
 
 	DockerVersions                 = []string{"18.09.9"}
-	CNIPluginsVersions             = []string{"v0.8.5"}
+	CNIPluginsVersions             = []string{"v0.8.6"}
 	NvidiaDriverVersions           = []string{"440.31"}
 	NvidiaContainerRuntimeVersions = []string{"3.1.4"}
 )
