@@ -17,7 +17,7 @@ const { expandable } = Table.addons;
 
 insertCSS(
   'auditPanelDatePicker',
-  `.tea-form__item { display: inline }
+  `.auditPanelFilter .tea-form__item { display: inline }
 `
 );
 export const AuditPanel = () => {
@@ -121,7 +121,7 @@ export const AuditPanel = () => {
   return (
     <>
       <Card>
-        <Form style={{ padding: '20px' }}>
+        <Form className="auditPanelFilter" style={{ padding: '20px' }}>
           <Form.Item label={t('操作集群')}>
             <Select
               boxSizeSync
