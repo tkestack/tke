@@ -25,7 +25,7 @@ import (
 	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/registry"
-	"tkestack.io/tke/pkg/apiserver/authentication"
+	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -71,16 +71,35 @@ func (a *authorization) validateListChart(w http.ResponseWriter, req *http.Reque
 		a.locked(w)
 		return nil, fmt.Errorf("locked")
 	}
-	if chartGroup.Spec.Visibility == registry.VisibilityPrivate {
-		username, userTenantID := authentication.UsernameAndTenantID(req.Context())
-		if username == "" && userTenantID == "" {
-			a.notAuthenticated(w, req)
-			return nil, fmt.Errorf("not authenticated")
-		}
-		if userTenantID != tenantID {
-			a.forbidden(w)
-			return nil, fmt.Errorf("forbidden")
-		}
+
+	if a.isAdmin(w, req) {
+		return &chartGroup, nil
 	}
+
+	var cg = &registryv1.ChartGroup{}
+	err = registryv1.Convert_registry_ChartGroup_To_v1_ChartGroup(&chartGroup, cg, nil)
+	if err != nil {
+		log.Error("Failed to convert ChartGroup",
+			log.String("tenantID", tenantID),
+			log.String("chartGroupName", chartGroupName),
+			log.Err(err))
+		a.internalError(w)
+		return nil, err
+	}
+
+	authorized, err := AuthorizeForChartGroup(w, req, a.authorizer, "get", *cg)
+	if err != nil {
+		log.Error("Failed to get resourceAttributes",
+			log.String("tenantID", tenantID),
+			log.String("chartGroupName", chartGroupName),
+			log.Err(err))
+		a.internalError(w)
+		return nil, err
+	}
+	if !authorized {
+		a.notAuthenticated(w, req)
+		return nil, fmt.Errorf("not authenticated")
+	}
+
 	return &chartGroup, nil
 }

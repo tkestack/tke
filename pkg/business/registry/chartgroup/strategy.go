@@ -98,7 +98,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		chartGroup.GenerateName = ""
 		chartGroup.Name = chartGroup.Spec.Name
 	} else {
-		chartGroup.GenerateName = "imn-"
+		chartGroup.GenerateName = "rcg-"
 	}
 
 	chartGroup.Spec.Finalizers = []business.FinalizerName{

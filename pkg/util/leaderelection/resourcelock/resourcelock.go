@@ -20,12 +20,14 @@ package resourcelock
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	applicationv1 "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	logagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
 	monitorv1 "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1"
 	notifyv1 "tkestack.io/tke/api/client/clientset/versioned/typed/notify/v1"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	registryv1 "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 )
 
 const (
@@ -104,9 +106,31 @@ func NewAuth(name string, client authv1.AuthV1Interface, rlc Config) Interface {
 	}
 }
 
-// NewAuth will create a lock of a given type according to the input parameters
+// NewRegistry will create a lock of a given type according to the input parameters
+func NewRegistry(name string, client registryv1.RegistryV1Interface, rlc Config) Interface {
+	return &RegistryConfigMapLock{
+		ConfigMapMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Client:     client,
+		LockConfig: rlc,
+	}
+}
+
+// NewLogagent will create a lock of a given type according to the input parameters
 func NewLogagent(name string, client logagentv1.LogagentV1Interface, rlc Config) Interface {
 	return &LogagentConfigMapLock{
+		ConfigMapMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Client:     client,
+		LockConfig: rlc,
+	}
+}
+
+// NewApplication will create a lock of a given type according to the input parameters
+func NewApplication(name string, client applicationv1.ApplicationV1Interface, rlc Config) Interface {
+	return &ApplicationConfigMapLock{
 		ConfigMapMeta: metav1.ObjectMeta{
 			Name: name,
 		},

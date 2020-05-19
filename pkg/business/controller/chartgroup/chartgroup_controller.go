@@ -28,6 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
@@ -36,7 +37,6 @@ import (
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	businessv1informer "tkestack.io/tke/api/client/informers/externalversions/business/v1"
 	businessv1lister "tkestack.io/tke/api/client/listers/business/v1"
-	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/business/controller/chartgroup/deletion"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/util/log"
@@ -230,7 +230,7 @@ func (c *Controller) syncItem(key string) error {
 			log.Info("ChartGroup has been terminated. Attempting to cleanup resources",
 				log.String("projectName", projectName), log.String("chartGroupName", chartGroupName))
 			_ = c.processDeletion(key)
-			err = c.chartGroupResourcesDeleter.Delete(projectName, chartGroupName)
+			err = c.chartGroupResourcesDeleter.Delete(context.Background(), projectName, chartGroupName)
 		} else {
 			log.Debug(fmt.Sprintf("ChartGroup %s status is %s, not to process", key, chartGroup.Status.Phase))
 		}
@@ -286,7 +286,7 @@ func (c *Controller) processUpdate(ctx context.Context, cachedChartGroup *cached
 func (c *Controller) handlePhase(ctx context.Context, key string, cachedChartGroup *cachedChartGroup, chartGroup *businessv1.ChartGroup) error {
 	switch chartGroup.Status.Phase {
 	case businessv1.ChartGroupPending:
-		err := c.createChartGroup(ctx, chartGroup)
+		err := c.checkChartGroup(ctx, chartGroup)
 		if err != nil {
 			chartGroup.Status.Phase = businessv1.ChartGroupFailed
 			chartGroup.Status.Message = "createChartGroup failed"
@@ -305,20 +305,16 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedChartGro
 	return nil
 }
 
-func (c *Controller) createChartGroup(ctx context.Context, chartGroup *businessv1.ChartGroup) error {
-	_, err := c.registryClient.ChartGroups().Create(ctx, &registryv1.ChartGroup{
-		ObjectMeta: metav1.ObjectMeta{
-			Annotations: map[string]string{
-				"projectName": chartGroup.Namespace,
-			},
-		},
-		Spec: registryv1.ChartGroupSpec{
-			Name:        chartGroup.Name,
-			DisplayName: chartGroup.Spec.DisplayName,
-			TenantID:    chartGroup.Spec.TenantID,
-		}}, metav1.CreateOptions{})
+func (c *Controller) checkChartGroup(ctx context.Context, chartGroup *businessv1.ChartGroup) error {
+	chartGroupList, err := c.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chartGroup.Spec.TenantID, chartGroup.Name),
+	})
+	fldName := field.NewPath("spec", "name")
+
 	if err != nil {
 		return err
+	} else if len(chartGroupList.Items) == 0 {
+		return field.Invalid(fldName, chartGroup.Name, "no chart group exists with the specified name")
 	}
 
 	return nil

@@ -30,6 +30,8 @@ type ClientExpansion interface{}
 
 type ConfigMapExpansion interface{}
 
+type CustomPolicyBindingExpansion interface{}
+
 type GroupExpansion interface{}
 
 type IdentityProviderExpansion interface{}

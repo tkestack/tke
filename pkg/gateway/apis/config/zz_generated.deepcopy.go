@@ -111,6 +111,11 @@ func (in *Components) DeepCopyInto(out *Components) {
 		*out = new(Component)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Application != nil {
+		in, out := &in.Application, &out.Application
+		*out = new(Component)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

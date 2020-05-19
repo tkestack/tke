@@ -24,6 +24,8 @@ type ChartExpansion interface{}
 
 type ChartGroupExpansion interface{}
 
+type ChartInfoExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type NamespaceExpansion interface{}

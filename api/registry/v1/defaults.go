@@ -54,16 +54,50 @@ func SetDefaults_ChartGroupSpec(obj *ChartGroupSpec) {
 	if obj.Visibility == "" {
 		obj.Visibility = VisibilityPrivate
 	}
+	if obj.Type == "" {
+		obj.Type = RepoTypeProject
+	}
+	if obj.Projects == nil {
+		obj.Projects = make([]string, 0)
+	}
+	if obj.Finalizers == nil || len(obj.Finalizers) == 0 {
+		obj.Finalizers = []FinalizerName{
+			ChartGroupFinalize,
+		}
+	}
+}
+
+func SetDefaults_ChartGroupStatus(obj *ChartGroupStatus) {
+	if obj.Phase == "" {
+		obj.Phase = ChartGroupPending
+	}
 }
 
 func SetDefaults_ChartSpec(obj *ChartSpec) {
 	if obj.Visibility == "" {
 		obj.Visibility = VisibilityPrivate
 	}
+	if obj.Finalizers == nil || len(obj.Finalizers) == 0 {
+		obj.Finalizers = []FinalizerName{
+			ChartFinalize,
+		}
+	}
 }
 
 func SetDefaults_ChartStatus(obj *ChartStatus) {
 	if obj.Versions == nil {
 		obj.Versions = make([]ChartVersion, 0)
+	}
+	if obj.Phase == "" {
+		obj.Phase = ChartPending
+	}
+}
+
+func SetDefaults_ChartInfoSpec(obj *ChartInfoSpec) {
+	if obj.Values == nil {
+		obj.Values = make(map[string]string)
+	}
+	if obj.Readme == nil {
+		obj.Readme = make(map[string]string)
 	}
 }
