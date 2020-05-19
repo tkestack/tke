@@ -34,7 +34,7 @@ var (
 	K8sVersionsWithV = funk.Map(K8sVersions, func(s string) string {
 		return "v" + s
 	}).([]string)
-	KubeadmVersions = []string{K8sVersions[len(K8sVersions)-1]}
+	KubeadmVersions = []string{K8sVersionsWithV[len(K8sVersionsWithV)-1]}
 
 	K8sVersionConstraint = ">= 1.10"
 
