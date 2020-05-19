@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"tkestack.io/tke/pkg/auth/controller/config"
+	"tkestack.io/tke/pkg/auth/controller/custompolicybinding"
 	"tkestack.io/tke/pkg/auth/controller/group"
 	"tkestack.io/tke/pkg/auth/controller/localidentity"
 	"tkestack.io/tke/pkg/auth/controller/projectpolicybinding"
@@ -39,6 +40,9 @@ const (
 
 	projectPolicySyncPeriod      = 5 * time.Minute
 	concurrentProjectPolicySyncs = 10
+
+	customPolicySyncPeriod      = 5 * time.Minute
+	concurrentCustomPolicySyncs = 10
 
 	localIdentitySyncPeriod      = 5 * time.Minute
 	concurrentLocalIdentitySyncs = 5
@@ -87,6 +91,25 @@ func startProjectPolicyController(ctx ControllerContext) (http.Handler, bool, er
 	)
 
 	go ctrl.Run(concurrentProjectPolicySyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startCustomPolicyController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: v1.Version, Resource: "custompolicybindings"}] {
+		return nil, false, nil
+	}
+
+	ctrl := custompolicybinding.NewController(
+		ctx.ClientBuilder.ClientOrDie("custompolicybinding-controller"),
+		ctx.InformerFactory.Auth().V1().CustomPolicyBindings(),
+		ctx.InformerFactory.Auth().V1().Rules(),
+		ctx.Enforcer,
+		customPolicySyncPeriod,
+		v1.CustomPolicyBindingFinalize,
+	)
+
+	go ctrl.Run(concurrentCustomPolicySyncs, ctx.Stop)
 
 	return nil, true, nil
 }

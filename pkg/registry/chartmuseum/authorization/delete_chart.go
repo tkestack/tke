@@ -20,11 +20,13 @@ package authorization
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/registry"
+	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/registry/chartmuseum/model"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -52,7 +54,7 @@ func (a *authorization) apiDeleteChartVersion(w http.ResponseWriter, req *http.R
 		a.notFound(w)
 		return
 	}
-	chartObject, err := a.validateGetChart(w, req, tenantID, chartGroupName, chartName)
+	chartObject, err := a.validateDeleteChart(w, req, tenantID, chartGroupName, chartName)
 	if err != nil {
 		return
 	}
@@ -73,6 +75,80 @@ func (a *authorization) apiDeleteChartVersion(w http.ResponseWriter, req *http.R
 	if err := a.afterAPIDeleteChartVersion(req.Context(), chartObject, chartVersion); err != nil {
 		log.Error("Failed to delete chart version from resource", log.Err(err))
 	}
+}
+
+func (a *authorization) validateDeleteChart(w http.ResponseWriter, req *http.Request, tenantID, chartGroupName, chartName string) (*registry.Chart, error) {
+	chartGroupList, err := a.registryClient.ChartGroups().List(req.Context(), metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartGroupName),
+	})
+	if err != nil {
+		log.Error("Failed to list chart group by tenantID and name",
+			log.String("tenantID", tenantID),
+			log.String("name", chartGroupName),
+			log.Err(err))
+		a.internalError(w)
+		return nil, err
+	}
+	if len(chartGroupList.Items) == 0 {
+		a.notFound(w)
+		return nil, fmt.Errorf("not found")
+	}
+	chartGroup := chartGroupList.Items[0]
+	if chartGroup.Status.Locked != nil && *chartGroup.Status.Locked {
+		// Chart group is locked
+		a.locked(w)
+		return nil, fmt.Errorf("locked")
+	}
+	chartList, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).List(req.Context(), metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartName),
+	})
+	if err != nil {
+		log.Error("Failed to list chart by tenantID and name of group",
+			log.String("tenantID", tenantID),
+			log.String("chartGroupName", chartGroupName),
+			log.String("name", chartName),
+			log.Err(err))
+		a.internalError(w)
+		return nil, err
+	}
+	if len(chartList.Items) == 0 {
+		a.notFound(w)
+		return nil, fmt.Errorf("not found")
+	}
+	chartObject := chartList.Items[0]
+
+	if a.isAdmin(w, req) {
+		return &chartObject, nil
+	}
+
+	var cg = &registryv1.ChartGroup{}
+	err = registryv1.Convert_registry_ChartGroup_To_v1_ChartGroup(&chartGroup, cg, nil)
+	if err != nil {
+		log.Error("Failed to convert ChartGroup",
+			log.String("tenantID", tenantID),
+			log.String("chartGroupName", chartGroupName),
+			log.String("chartName", chartName),
+			log.Err(err))
+		a.internalError(w)
+		return nil, err
+	}
+
+	authorized, err := AuthorizeForChart(w, req, a.authorizer, "delete", *cg, chartObject.Name)
+	if err != nil {
+		log.Error("Failed to get resourceAttributes",
+			log.String("tenantID", tenantID),
+			log.String("chartGroupName", chartGroupName),
+			log.String("chartName", chartName),
+			log.Err(err))
+		a.internalError(w)
+		return nil, err
+	}
+	if !authorized {
+		a.notAuthenticated(w, req)
+		return nil, fmt.Errorf("not authenticated")
+	}
+
+	return &chartObject, nil
 }
 
 func (a *authorization) afterAPIDeleteChartVersion(ctx context.Context, chartObject *registry.Chart, version string) error {

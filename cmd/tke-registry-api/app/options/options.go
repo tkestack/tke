@@ -20,11 +20,13 @@ package options
 
 import (
 	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	genericapiserveroptions "k8s.io/apiserver/pkg/server/options"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
+	controlleroptions "tkestack.io/tke/pkg/controller/options"
 	"tkestack.io/tke/pkg/util/cachesize"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -45,21 +47,27 @@ type Options struct {
 	Authorization  *apiserveroptions.AuthorizationOptions
 	// The Registry will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Registry's current working directory.
-	RegistryConfig string
-	Audit          *genericapiserveroptions.AuditOptions
+	RegistryConfig    string
+	Audit             *genericapiserveroptions.AuditOptions
+	AuthAPIClient     *controlleroptions.APIServerClientOptions
+	BusinessAPIClient *controlleroptions.APIServerClientOptions
+	PlatformAPIClient *controlleroptions.APIServerClientOptions
 }
 
 // NewOptions creates a new Options with a default config.
 func NewOptions(serverName string) *Options {
 	return &Options{
-		Log:            log.NewOptions(),
-		SecureServing:  apiserveroptions.NewSecureServingOptions(serverName, 9453),
-		Debug:          apiserveroptions.NewDebugOptions(),
-		ETCD:           storageoptions.NewETCDStorageOptions("/tke/registry"),
-		Generic:        apiserveroptions.NewGenericOptions(),
-		Authentication: apiserveroptions.NewAuthenticationWithAPIOptions(),
-		Authorization:  apiserveroptions.NewAuthorizationOptions(),
-		Audit:          genericapiserveroptions.NewAuditOptions(),
+		Log:               log.NewOptions(),
+		SecureServing:     apiserveroptions.NewSecureServingOptions(serverName, 9453),
+		Debug:             apiserveroptions.NewDebugOptions(),
+		ETCD:              storageoptions.NewETCDStorageOptions("/tke/registry"),
+		Generic:           apiserveroptions.NewGenericOptions(),
+		Authentication:    apiserveroptions.NewAuthenticationWithAPIOptions(),
+		Authorization:     apiserveroptions.NewAuthorizationOptions(),
+		Audit:             genericapiserveroptions.NewAuditOptions(),
+		AuthAPIClient:     controlleroptions.NewAPIServerClientOptions("auth", true),
+		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", true),
+		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
 	}
 }
 
@@ -73,6 +81,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Authentication.AddFlags(fs)
 	o.Authorization.AddFlags(fs)
 	o.Audit.AddFlags(fs)
+	o.AuthAPIClient.AddFlags(fs)
+	o.BusinessAPIClient.AddFlags(fs)
+	o.PlatformAPIClient.AddFlags(fs)
 
 	fs.String(flagRegistryConfig, o.RegistryConfig,
 		"The Registry will load its initial configuration from this file. The path may be absolute or relative; relative paths start at the Registry's current working directory. Omit this flag to use the built-in default configuration values.")
@@ -91,6 +102,9 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Generic.ApplyFlags()...)
 	errs = append(errs, o.Authentication.ApplyFlags()...)
 	errs = append(errs, o.Authorization.ApplyFlags()...)
+	errs = append(errs, o.AuthAPIClient.ApplyFlags()...)
+	errs = append(errs, o.BusinessAPIClient.ApplyFlags()...)
+	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
 
 	o.RegistryConfig = viper.GetString(configRegistryConfig)
 

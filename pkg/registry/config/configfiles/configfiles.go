@@ -20,8 +20,9 @@ package configfiles
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"path/filepath"
+
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	registryscheme "tkestack.io/tke/pkg/registry/apis/config/scheme"
 	"tkestack.io/tke/pkg/registry/config/codec"
@@ -42,6 +43,25 @@ type fsLoader struct {
 	registryCodecs *serializer.CodecFactory
 	// registryFile is an absolute path to the file containing a serialized RegistryConfiguration
 	registryFile string
+}
+
+// LoadConfigFile returns a RegistryConfiguration from the `registryFile`
+func LoadConfigFile(name string) (*registryconfig.RegistryConfiguration, error) {
+	const errFmt = "failed to load Registry config file %s, error %v"
+	// compute absolute path based on current working dir
+	registryConfigFile, err := filepath.Abs(name)
+	if err != nil {
+		return nil, fmt.Errorf(errFmt, name, err)
+	}
+	loader, err := NewFsLoader(utilfs.DefaultFs{}, registryConfigFile)
+	if err != nil {
+		return nil, fmt.Errorf(errFmt, name, err)
+	}
+	kc, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf(errFmt, name, err)
+	}
+	return kc, err
 }
 
 // NewFsLoader returns a Loader that loads a RegistryConfiguration from the `registryFile`

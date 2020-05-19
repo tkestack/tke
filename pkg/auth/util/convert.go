@@ -36,3 +36,15 @@ func ConvertPolicyToRuleArray(policy *auth.Policy) [][]string {
 
 	return rules
 }
+
+func ConvertPolicyToRuleArrayUsingRuleName(roleName string, policy *auth.Policy) [][]string {
+	var rules [][]string
+	for _, act := range policy.Spec.Statement.Actions {
+		for _, res := range policy.Spec.Statement.Resources {
+			rule := []string{roleName, "*", res, act, string(policy.Spec.Statement.Effect)}
+			rules = append(rules, rule)
+		}
+	}
+
+	return rules
+}

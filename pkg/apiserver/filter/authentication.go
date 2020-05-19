@@ -176,6 +176,10 @@ func GetClusterFromGroups(groups []string) string {
 	return ""
 }
 
+func GroupWithProject(project string) string {
+	return fmt.Sprintf("project:%s", project)
+}
+
 func GetValueFromGroups(groups []string, key string) string {
 	prefix := fmt.Sprintf("%s:", key)
 	for _, group := range groups {

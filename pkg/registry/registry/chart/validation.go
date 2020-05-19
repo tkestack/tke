@@ -66,7 +66,7 @@ func ValidateChart(ctx context.Context, chart *registry.Chart, registryClient *r
 			if err != nil {
 				allErrs = append(allErrs, field.InternalError(fldSpecPath.Child("name"), err))
 			} else if len(chartList.Items) > 0 {
-				allErrs = append(allErrs, field.Duplicate(fldSpecPath.Child("name"), chart.Spec.TenantID))
+				allErrs = append(allErrs, field.Duplicate(fldSpecPath.Child("name"), chart.Spec.Name))
 			}
 		}
 	}

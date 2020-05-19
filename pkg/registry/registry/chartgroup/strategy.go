@@ -90,6 +90,9 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	}
 	chartGroup.ObjectMeta.GenerateName = "rcg-"
 	chartGroup.ObjectMeta.Name = ""
+	chartGroup.Spec.Finalizers = []registry.FinalizerName{
+		registry.ChartGroupFinalize,
+	}
 }
 
 // Validate validates a new chart group.
@@ -136,6 +139,8 @@ func MatchChartGroup(label labels.Selector, field fields.Selector) storage.Selec
 		IndexFields: []string{
 			"spec.tenantID",
 			"spec.name",
+			"spec.type",
+			"spec.visibility",
 			"metadata.name",
 		},
 	}
@@ -145,8 +150,10 @@ func MatchChartGroup(label labels.Selector, field fields.Selector) storage.Selec
 func ToSelectableFields(chartGroup *registry.ChartGroup) fields.Set {
 	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&chartGroup.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID": chartGroup.Spec.TenantID,
-		"spec.name":     chartGroup.Spec.Name,
+		"spec.tenantID":   chartGroup.Spec.TenantID,
+		"spec.name":       chartGroup.Spec.Name,
+		"spec.type":       string(chartGroup.Spec.Type),
+		"spec.visibility": string(chartGroup.Spec.Visibility),
 	}
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
@@ -177,5 +184,34 @@ func (StatusStrategy) PrepareForUpdate(_ context.Context, obj, old runtime.Objec
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateChartGroupUpdate(ctx, obj.(*registry.ChartGroup), old.(*registry.ChartGroup))
+}
+
+// FinalizeStrategy implements finalizer logic for ChartGroup.
+type FinalizeStrategy struct {
+	*Strategy
+}
+
+var _ rest.RESTUpdateStrategy = &FinalizeStrategy{}
+
+// NewFinalizerStrategy create the FinalizeStrategy object by given strategy.
+func NewFinalizerStrategy(strategy *Strategy) *FinalizeStrategy {
+	return &FinalizeStrategy{strategy}
+}
+
+// PrepareForUpdate is invoked on update before validation to normalize
+// the object.  For example: remove fields that are not to be persisted,
+// sort order-insensitive list fields, etc.  This should not remove fields
+// whose presence would be considered a validation error.
+func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	newChartGroup := obj.(*registry.ChartGroup)
+	oldChartGroup := old.(*registry.ChartGroup)
+	newChartGroup.Status = oldChartGroup.Status
+}
+
+// ValidateUpdate is invoked after default fields in the object have been
+// filled in before the object is persisted.  This method should not mutate
+// the object.
+func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return ValidateChartGroupUpdate(ctx, obj.(*registry.ChartGroup), old.(*registry.ChartGroup))
 }

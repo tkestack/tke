@@ -49,3 +49,39 @@ func PredicateListOptions(ctx context.Context, options *metainternal.ListOptions
 	options.FieldSelector = fields.AndSelectors(options.FieldSelector, fields.OneTermEqualSelector("spec.tenantID", tenantID))
 	return options
 }
+
+// FullListOptionsFieldSelector fill options fieldSelector.
+func FullListOptionsFieldSelector(options *metainternal.ListOptions, fieldSelector fields.Selector) *metainternal.ListOptions {
+	if options == nil {
+		return &metainternal.ListOptions{
+			FieldSelector: fieldSelector,
+		}
+	}
+	if options.FieldSelector == nil {
+		options.FieldSelector = fieldSelector
+		return options
+	}
+	options.FieldSelector = fields.AndSelectors(options.FieldSelector, fieldSelector)
+	return options
+}
+
+// InterceptFuzzyResourceNameFromListOptions determines the query options according to the fuzzyResourceName.
+func InterceptFuzzyResourceNameFromListOptions(options *metainternal.ListOptions, fuzzyResourceName string) (*metainternal.ListOptions, string) {
+	return InterceptCustomSelectorFromListOptions(options, "metadata.name", fuzzyResourceName)
+}
+
+// InterceptCustomSelectorFromListOptions determines the query options according to the selector.
+func InterceptCustomSelectorFromListOptions(options *metainternal.ListOptions, selector, defaultValue string) (*metainternal.ListOptions, string) {
+	if options != nil && options.FieldSelector != nil {
+		if name, ok := options.FieldSelector.RequiresExactMatch(selector); ok {
+			options.FieldSelector, _ = options.FieldSelector.Transform(func(k, v string) (string, string, error) {
+				if k == selector {
+					return "", "", nil
+				}
+				return k, v, nil
+			})
+			defaultValue = name
+		}
+	}
+	return options, defaultValue
+}

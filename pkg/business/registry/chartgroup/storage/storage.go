@@ -126,7 +126,7 @@ var _ rest.ShortNamesProvider = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
-	return []string{"ns"}
+	return []string{"rcg"}
 }
 
 // DeleteCollection selects all resources in the storage matching given 'listOptions'

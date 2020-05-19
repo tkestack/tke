@@ -36,6 +36,8 @@ type Interface interface {
 	Clients() ClientInformer
 	// ConfigMaps returns a ConfigMapInformer.
 	ConfigMaps() ConfigMapInformer
+	// CustomPolicyBindings returns a CustomPolicyBindingInformer.
+	CustomPolicyBindings() CustomPolicyBindingInformer
 	// Groups returns a GroupInformer.
 	Groups() GroupInformer
 	// IdentityProviders returns a IdentityProviderInformer.
@@ -90,6 +92,11 @@ func (v *version) Clients() ClientInformer {
 // ConfigMaps returns a ConfigMapInformer.
 func (v *version) ConfigMaps() ConfigMapInformer {
 	return &configMapInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// CustomPolicyBindings returns a CustomPolicyBindingInformer.
+func (v *version) CustomPolicyBindings() CustomPolicyBindingInformer {
+	return &customPolicyBindingInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // Groups returns a GroupInformer.

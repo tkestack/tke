@@ -20,6 +20,7 @@ package v1
 
 import (
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -83,6 +84,9 @@ func AddFieldLabelConversionsForChartGroup(scheme *runtime.Scheme) error {
 			switch label {
 			case "spec.tenantID",
 				"spec.name",
+				"spec.type",
+				"spec.visibility",
+				"repoType", //custom label
 				"metadata.name":
 				return label, value, nil
 			default:
@@ -101,6 +105,7 @@ func AddFieldLabelConversionsForChart(scheme *runtime.Scheme) error {
 			case "spec.tenantID",
 				"spec.name",
 				"spec.chartGroupName",
+				"repoType", //custom label
 				"metadata.name":
 				return label, value, nil
 			default:

@@ -27,6 +27,8 @@ import (
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/testing"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
+	applicationv1 "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
+	fakeapplicationv1 "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1/fake"
 	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	fakeauthv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1/fake"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
@@ -89,6 +91,11 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 }
 
 var _ clientset.Interface = &Clientset{}
+
+// ApplicationV1 retrieves the ApplicationV1Client
+func (c *Clientset) ApplicationV1() applicationv1.ApplicationV1Interface {
+	return &fakeapplicationv1.FakeApplicationV1{Fake: &c.Fake}
+}
 
 // AuthV1 retrieves the AuthV1Client
 func (c *Clientset) AuthV1() authv1.AuthV1Interface {

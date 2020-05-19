@@ -38,6 +38,10 @@ func (c *FakeRegistry) ChartGroups() internalversion.ChartGroupInterface {
 	return &FakeChartGroups{c}
 }
 
+func (c *FakeRegistry) ChartInfos(namespace string) internalversion.ChartInfoInterface {
+	return &FakeChartInfos{c, namespace}
+}
+
 func (c *FakeRegistry) ConfigMaps() internalversion.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }
