@@ -42,6 +42,16 @@ OPTIONS="--name tke-installer -d --privileged --net=host
 -v tke-installer-bin:/app/bin
 "
 
+declare -A archMap=(
+  [x86_64]=amd64
+  [aarch64]=arm64
+)
+
+if [ -z ${archMap[$(arch)]+unset} ]; then
+    echo "ERROR: unsupport arch $(arch)"
+fi
+ARCH=${archMap[$(arch)]}
+
 function prefight() {
   echo "Step.1 prefight"
 
@@ -111,7 +121,7 @@ function clean_old_data() {
 function start_installer() {
   echo "Step.5 start tke-installer [doing]"
 
-  docker run $OPTIONS tkestack/tke-installer:$VERSION
+  docker run $OPTIONS "tkestack/tke-installer-${ARCH}:$VERSION"
 
   echo "Step.5 start tke-installer [ok]"
 }

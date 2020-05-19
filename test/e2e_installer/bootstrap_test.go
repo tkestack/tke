@@ -54,7 +54,7 @@ var _ = Describe("bootstrap", func() {
 			s, err := ssh.New(&ssh.Config{
 				User:     one.Username,
 				Password: one.Password,
-				Host:     one.InternalIP,
+				Host:     one.PublicIP,
 				Port:     int(one.Port),
 			})
 			Expect(err).To(BeNil())

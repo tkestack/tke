@@ -835,7 +835,7 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 	var data []byte
 	apiStatus := func() errors.APIStatus {
 		clusterName := request.PathParameter("name")
-		if t.Cluster == nil {
+		if t.Cluster.Cluster == nil {
 			return errors.NewBadRequest("no cluater available")
 		}
 		if t.Cluster.Name != clusterName {
