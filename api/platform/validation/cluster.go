@@ -155,7 +155,10 @@ func ValidateClusterFeature(feature *platform.ClusterFeature, fldPath *field.Pat
 
 // ValidateGPUType validates a given GPUType.
 func ValidateGPUType(gpuType *platform.GPUType, fldPath *field.Path) field.ErrorList {
-	return utilvalidation.ValidateEnum(gpuType, fldPath.Child("gpuType"),
+	if gpuType == nil {
+		return field.ErrorList{}
+	}
+	return utilvalidation.ValidateEnum(*gpuType, fldPath.Child("gpuType"),
 		[]interface{}{
 			platform.GPUPhysical,
 			platform.GPUVirtual,
