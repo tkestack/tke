@@ -27,6 +27,8 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -337,6 +339,20 @@ func (p *Provider) EnsureCNIPlugins(ctx context.Context, machine *platformv1.Mac
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (p *Provider) EnsureConntrackTools(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = res.ConntrackTools.InstallWithDefault(machineSSH)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
