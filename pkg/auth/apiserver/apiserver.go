@@ -226,7 +226,7 @@ func (c completedConfig) registerHooks(dexHandler *identityprovider.DexHander, s
 
 	apiSigningKeyHook := authenticator.NewAPISigningKeyHookHandler(authClient)
 
-	localIdpHook := local.NewLocalHookHandler(authClient, c.ExtraConfig.VersionedInformers)
+	localIdpHook := local.NewLocalHookHandler(authClient)
 	ldapIdpHook := ldap.NewLdapHookHandler(authClient)
 
 	authVersionedClient := versionedclientset.NewForConfigOrDie(s.LoopbackClientConfig)

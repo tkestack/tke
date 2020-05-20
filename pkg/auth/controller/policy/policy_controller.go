@@ -19,6 +19,7 @@
 package policy
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -213,7 +214,7 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve policy from store", log.String("policy name", key), log.Err(err))
 	default:
 		if policy.Status.Phase == v1.PolicyTerminating {
-			err = c.policiedResourcesDeleter.Delete(key)
+			err = c.policiedResourcesDeleter.Delete(context.Background(), key)
 		} else {
 			err = c.processUpdate(policy, key)
 		}

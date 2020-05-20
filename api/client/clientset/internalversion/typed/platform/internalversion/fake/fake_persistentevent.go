@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var persistenteventsResource = schema.GroupVersionResource{Group: "platform.tkes
 var persistenteventsKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "", Kind: "PersistentEvent"}
 
 // Get takes name of the persistentEvent, and returns the corresponding persistentEvent object, and an error if there is any.
-func (c *FakePersistentEvents) Get(name string, options v1.GetOptions) (result *platform.PersistentEvent, err error) {
+func (c *FakePersistentEvents) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.PersistentEvent, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(persistenteventsResource, name), &platform.PersistentEvent{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakePersistentEvents) Get(name string, options v1.GetOptions) (result *
 }
 
 // List takes label and field selectors, and returns the list of PersistentEvents that match those selectors.
-func (c *FakePersistentEvents) List(opts v1.ListOptions) (result *platform.PersistentEventList, err error) {
+func (c *FakePersistentEvents) List(ctx context.Context, opts v1.ListOptions) (result *platform.PersistentEventList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(persistenteventsResource, persistenteventsKind, opts), &platform.PersistentEventList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakePersistentEvents) List(opts v1.ListOptions) (result *platform.Persi
 }
 
 // Watch returns a watch.Interface that watches the requested persistentEvents.
-func (c *FakePersistentEvents) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakePersistentEvents) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(persistenteventsResource, opts))
 }
 
 // Create takes the representation of a persistentEvent and creates it.  Returns the server's representation of the persistentEvent, and an error, if there is any.
-func (c *FakePersistentEvents) Create(persistentEvent *platform.PersistentEvent) (result *platform.PersistentEvent, err error) {
+func (c *FakePersistentEvents) Create(ctx context.Context, persistentEvent *platform.PersistentEvent, opts v1.CreateOptions) (result *platform.PersistentEvent, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(persistenteventsResource, persistentEvent), &platform.PersistentEvent{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakePersistentEvents) Create(persistentEvent *platform.PersistentEvent)
 }
 
 // Update takes the representation of a persistentEvent and updates it. Returns the server's representation of the persistentEvent, and an error, if there is any.
-func (c *FakePersistentEvents) Update(persistentEvent *platform.PersistentEvent) (result *platform.PersistentEvent, err error) {
+func (c *FakePersistentEvents) Update(ctx context.Context, persistentEvent *platform.PersistentEvent, opts v1.UpdateOptions) (result *platform.PersistentEvent, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(persistenteventsResource, persistentEvent), &platform.PersistentEvent{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakePersistentEvents) Update(persistentEvent *platform.PersistentEvent)
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakePersistentEvents) UpdateStatus(persistentEvent *platform.PersistentEvent) (*platform.PersistentEvent, error) {
+func (c *FakePersistentEvents) UpdateStatus(ctx context.Context, persistentEvent *platform.PersistentEvent, opts v1.UpdateOptions) (*platform.PersistentEvent, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(persistenteventsResource, "status", persistentEvent), &platform.PersistentEvent{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakePersistentEvents) UpdateStatus(persistentEvent *platform.Persistent
 }
 
 // Delete takes name of the persistentEvent and deletes it. Returns an error if one occurs.
-func (c *FakePersistentEvents) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakePersistentEvents) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(persistenteventsResource, name), &platform.PersistentEvent{})
 	return err
 }
 
 // Patch applies the patch and returns the patched persistentEvent.
-func (c *FakePersistentEvents) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.PersistentEvent, err error) {
+func (c *FakePersistentEvents) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.PersistentEvent, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(persistenteventsResource, name, pt, data, subresources...), &platform.PersistentEvent{})
 	if obj == nil {

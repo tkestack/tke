@@ -21,6 +21,8 @@ package storage
 import (
 	"context"
 
+	"k8s.io/apiserver/pkg/registry/rest"
+
 	"tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/auth/util"
 
@@ -43,6 +45,8 @@ type ProjectUserREST struct {
 	authClient authinternalclient.AuthInterface
 }
 
+var _ rest.Lister = &ProjectUserREST{}
+
 // New returns an empty object that can be used with Create after request data
 // has been put into it.
 func (r *ProjectUserREST) New() runtime.Object {
@@ -52,6 +56,14 @@ func (r *ProjectUserREST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *ProjectUserREST) NewList() runtime.Object {
 	return &auth.UserList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *ProjectUserREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("projectusers"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
@@ -77,7 +89,7 @@ func (r *ProjectUserREST) List(ctx context.Context, options *metainternal.ListOp
 		return nil, errors.NewBadRequest("must specify projectID")
 	}
 
-	proBinding, err := r.authClient.ProjectPolicyBindings().Get(util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
+	proBinding, err := r.authClient.ProjectPolicyBindings().Get(ctx, util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +97,7 @@ func (r *ProjectUserREST) List(ctx context.Context, options *metainternal.ListOp
 	for _, subj := range proBinding.Spec.Users {
 		var user *auth.User
 		if subj.ID != "" {
-			user, err = r.authClient.Users().Get(util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
+			user, err = r.authClient.Users().Get(ctx, util.CombineTenantAndName(policy.Spec.TenantID, subj.ID), metav1.GetOptions{})
 			if err != nil {
 				log.Error("Get user failed", log.String("id", subj.ID), log.Err(err))
 				user = constructUser(subj.ID, subj.Name)

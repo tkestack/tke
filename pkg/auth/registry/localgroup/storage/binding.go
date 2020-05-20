@@ -71,5 +71,5 @@ func (r *BindingREST) Create(ctx context.Context, obj runtime.Object, createVali
 
 	log.Info("group members", log.String("group", group.Name), log.Any("members", group.Status.Users))
 
-	return r.authClient.LocalGroups().UpdateStatus(group)
+	return r.authClient.LocalGroups().UpdateStatus(ctx, group, metav1.UpdateOptions{})
 }

@@ -20,11 +20,12 @@ package config
 
 import (
 	"fmt"
+	"net"
+
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	apiserver "k8s.io/apiserver/pkg/server"
 	restclient "k8s.io/client-go/rest"
-	"net"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	"tkestack.io/tke/cmd/tke-logagent-controller/app/options"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
@@ -46,10 +47,8 @@ type Config struct {
 	PlatformAPIServerClientConfig *restclient.Config
 	// the rest config for the logagent apiserver
 	LogagentAPIServerClientConfig *restclient.Config
-	Component                   controlleroptions.ComponentConfiguration
-
+	Component                     controlleroptions.ComponentConfiguration
 }
-
 
 // CreateConfigFromOptions creates a running configuration instance based
 // on a given TKE apiserver command line or configuration file option.
@@ -80,8 +79,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	leaderElectionClient := versionedclientset.NewForConfigOrDie(restclient.AddUserAgent(&config, "leader-election"))
 
 	controllerManagerConfig := &Config{
-		ServerName:                  serverName,
-		LeaderElectionClient:        leaderElectionClient,
+		ServerName:                    serverName,
+		LeaderElectionClient:          leaderElectionClient,
 		PlatformAPIServerClientConfig: platformAPIServerClientConfig,
 		LogagentAPIServerClientConfig: logagentAPIServerClientConfig,
 		Authorization: apiserver.AuthorizationInfo{

@@ -61,7 +61,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, err
 	}
 
-	storageClass, err := client.StorageV1beta1().StorageClasses().Get(name, *options)
+	storageClass, err := client.StorageV1beta1().StorageClasses().Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("storageclasses/events"), name)
 	}
@@ -73,5 +73,5 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	return client.CoreV1().Events("").List(listOptions)
+	return client.CoreV1().Events("").List(ctx, listOptions)
 }

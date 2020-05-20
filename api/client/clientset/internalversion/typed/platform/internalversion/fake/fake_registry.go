@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var registriesResource = schema.GroupVersionResource{Group: "platform.tkestack.i
 var registriesKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "", Kind: "Registry"}
 
 // Get takes name of the registry, and returns the corresponding registry object, and an error if there is any.
-func (c *FakeRegistries) Get(name string, options v1.GetOptions) (result *platform.Registry, err error) {
+func (c *FakeRegistries) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.Registry, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(registriesResource, name), &platform.Registry{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeRegistries) Get(name string, options v1.GetOptions) (result *platfo
 }
 
 // List takes label and field selectors, and returns the list of Registries that match those selectors.
-func (c *FakeRegistries) List(opts v1.ListOptions) (result *platform.RegistryList, err error) {
+func (c *FakeRegistries) List(ctx context.Context, opts v1.ListOptions) (result *platform.RegistryList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(registriesResource, registriesKind, opts), &platform.RegistryList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeRegistries) List(opts v1.ListOptions) (result *platform.RegistryLis
 }
 
 // Watch returns a watch.Interface that watches the requested registries.
-func (c *FakeRegistries) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeRegistries) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(registriesResource, opts))
 }
 
 // Create takes the representation of a registry and creates it.  Returns the server's representation of the registry, and an error, if there is any.
-func (c *FakeRegistries) Create(registry *platform.Registry) (result *platform.Registry, err error) {
+func (c *FakeRegistries) Create(ctx context.Context, registry *platform.Registry, opts v1.CreateOptions) (result *platform.Registry, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(registriesResource, registry), &platform.Registry{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeRegistries) Create(registry *platform.Registry) (result *platform.R
 }
 
 // Update takes the representation of a registry and updates it. Returns the server's representation of the registry, and an error, if there is any.
-func (c *FakeRegistries) Update(registry *platform.Registry) (result *platform.Registry, err error) {
+func (c *FakeRegistries) Update(ctx context.Context, registry *platform.Registry, opts v1.UpdateOptions) (result *platform.Registry, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(registriesResource, registry), &platform.Registry{})
 	if obj == nil {
@@ -97,14 +99,14 @@ func (c *FakeRegistries) Update(registry *platform.Registry) (result *platform.R
 }
 
 // Delete takes name of the registry and deletes it. Returns an error if one occurs.
-func (c *FakeRegistries) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeRegistries) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(registriesResource, name), &platform.Registry{})
 	return err
 }
 
 // Patch applies the patch and returns the patched registry.
-func (c *FakeRegistries) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.Registry, err error) {
+func (c *FakeRegistries) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.Registry, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(registriesResource, name, pt, data, subresources...), &platform.Registry{})
 	if obj == nil {

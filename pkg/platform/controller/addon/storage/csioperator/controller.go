@@ -19,6 +19,7 @@
 package csioperator
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -192,27 +193,27 @@ func (c *Controller) syncCSIOperator(key string) error {
 	switch {
 	case k8serrors.IsNotFound(err):
 		log.Info("CSIOperator has been deleted. Attempting to cleanup resources", log.String("name", key))
-		err = c.processCSIOperatorDeletion(key)
+		err = c.processCSIOperatorDeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve CSIOperator from store", log.String("name", key), log.Err(err))
 	default:
 		cachedCSIOperator := c.cache.getOrCreate(key)
-		err = c.processCSIOperatorUpdate(cachedCSIOperator, csiOperator, key)
+		err = c.processCSIOperatorUpdate(context.Background(), cachedCSIOperator, csiOperator, key)
 	}
 
 	return err
 }
 
-func (c *Controller) processCSIOperatorDeletion(key string) error {
+func (c *Controller) processCSIOperatorDeletion(ctx context.Context, key string) error {
 	cachedCSIOperator, ok := c.cache.get(key)
 	if !ok {
 		log.Error("CSIOperator not in cache even though the watcher thought it was. Ignoring the deletion", log.String("name", key))
 		return nil
 	}
-	return c.processCSIOperatorDelete(cachedCSIOperator, key)
+	return c.processCSIOperatorDelete(ctx, cachedCSIOperator, key)
 }
 
-func (c *Controller) processCSIOperatorDelete(cachedCSIOperator *cachedCSIOperator, key string) error {
+func (c *Controller) processCSIOperatorDelete(ctx context.Context, cachedCSIOperator *cachedCSIOperator, key string) error {
 	log.Info("CSIOperator will be dropped", log.String("name", key))
 
 	if c.cache.Exist(key) {
@@ -226,19 +227,19 @@ func (c *Controller) processCSIOperatorDelete(cachedCSIOperator *cachedCSIOperat
 	}
 
 	csiOperator := cachedCSIOperator.state
-	return c.uninstallCSIOperator(csiOperator)
+	return c.uninstallCSIOperator(ctx, csiOperator)
 }
 
-func (c *Controller) processCSIOperatorUpdate(cachedCSIOperator *cachedCSIOperator, csiOperator *v1.CSIOperator, key string) error {
+func (c *Controller) processCSIOperatorUpdate(ctx context.Context, cachedCSIOperator *cachedCSIOperator, csiOperator *v1.CSIOperator, key string) error {
 	if cachedCSIOperator.state != nil {
 		// exist and the cluster name changed
 		if cachedCSIOperator.state.UID != csiOperator.UID {
-			if err := c.processCSIOperatorDelete(cachedCSIOperator, key); err != nil {
+			if err := c.processCSIOperatorDelete(ctx, cachedCSIOperator, key); err != nil {
 				return err
 			}
 		}
 	}
-	err := c.createCSIOperatorIfNeeded(key, cachedCSIOperator, csiOperator)
+	err := c.createCSIOperatorIfNeeded(ctx, key, cachedCSIOperator, csiOperator)
 	if err != nil {
 		return err
 	}
@@ -250,18 +251,19 @@ func (c *Controller) processCSIOperatorUpdate(cachedCSIOperator *cachedCSIOperat
 }
 
 func (c *Controller) csiOperatorReinitialize(
+	ctx context.Context,
 	key string,
 	cachedCSIOperator *cachedCSIOperator,
 	csiOperator *v1.CSIOperator) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
-		_, err := c.installCSIOperator(csiOperator)
+		_, err := c.installCSIOperator(ctx, csiOperator)
 		if err == nil {
 			csiOperator = csiOperator.DeepCopy()
 			csiOperator.Status.Phase = v1.AddonPhaseChecking
 			csiOperator.Status.Reason = ""
 			csiOperator.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(csiOperator)
+			err = c.persistUpdate(ctx, csiOperator)
 			if err != nil {
 				return true, err
 			}
@@ -272,7 +274,7 @@ func (c *Controller) csiOperatorReinitialize(
 		log.Info("Rollback CSIOperator",
 			log.String("name", csiOperator.Name),
 			log.String("clusterName", csiOperator.Spec.ClusterName))
-		if err := c.uninstallCSIOperator(csiOperator); err != nil {
+		if err := c.uninstallCSIOperator(ctx, csiOperator); err != nil {
 			log.Error("Uninstall CSIOperator failed", log.Err(err))
 			return true, err
 		}
@@ -281,7 +283,7 @@ func (c *Controller) csiOperatorReinitialize(
 			csiOperator = csiOperator.DeepCopy()
 			csiOperator.Status.Phase = v1.AddonPhaseFailed
 			csiOperator.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", maxRetryCount)
-			err := c.persistUpdate(csiOperator)
+			err := c.persistUpdate(ctx, csiOperator)
 			if err != nil {
 				log.Error("Update CSIOperator failed", log.Err(err))
 				return true, err
@@ -295,25 +297,26 @@ func (c *Controller) csiOperatorReinitialize(
 		csiOperator.Status.Reason = err.Error()
 		csiOperator.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
 		csiOperator.Status.RetryCount++
-		return true, c.persistUpdate(csiOperator)
+		return true, c.persistUpdate(ctx, csiOperator)
 	}
 }
 
 func (c *Controller) createCSIOperatorIfNeeded(
+	ctx context.Context,
 	key string,
 	cachedCSIOperator *cachedCSIOperator,
 	csiOperator *v1.CSIOperator) error {
 	switch csiOperator.Status.Phase {
 	case v1.AddonPhaseInitializing:
 		log.Info("CSIOperator will be created", log.String("name", key))
-		svVersion, err := c.installCSIOperator(csiOperator)
+		svVersion, err := c.installCSIOperator(ctx, csiOperator)
 		if err == nil {
 			csiOperator = csiOperator.DeepCopy()
 			fillOperatorStatus(csiOperator, svVersion)
 			csiOperator.Status.Phase = v1.AddonPhaseChecking
 			csiOperator.Status.Reason = ""
 			csiOperator.Status.RetryCount = 0
-			return c.persistUpdate(csiOperator)
+			return c.persistUpdate(ctx, csiOperator)
 		}
 		// Install CSIOperator failed.
 		csiOperator = csiOperator.DeepCopy()
@@ -322,7 +325,7 @@ func (c *Controller) createCSIOperatorIfNeeded(
 		csiOperator.Status.Reason = err.Error()
 		csiOperator.Status.RetryCount = 1
 		csiOperator.Status.LastReInitializingTimestamp = metav1.Now()
-		return c.persistUpdate(csiOperator)
+		return c.persistUpdate(ctx, csiOperator)
 	case v1.AddonPhaseReinitializing:
 		var interval = time.Since(csiOperator.Status.LastReInitializingTimestamp.Time)
 		var waitTime time.Duration
@@ -333,7 +336,7 @@ func (c *Controller) createCSIOperatorIfNeeded(
 		}
 		go func() {
 			reInitialErr := wait.Poll(waitTime, timeOut,
-				c.csiOperatorReinitialize(key, cachedCSIOperator, csiOperator))
+				c.csiOperatorReinitialize(ctx, key, cachedCSIOperator, csiOperator))
 			if reInitialErr != nil {
 				log.Error("Reinitialize CSIOperator failed",
 					log.String("name", csiOperator.Name),
@@ -348,7 +351,7 @@ func (c *Controller) createCSIOperatorIfNeeded(
 			go func() {
 				defer c.checking.Delete(key)
 				checkStatusErr := wait.PollImmediate(5*time.Second, 5*time.Minute+10*time.Second,
-					c.checkCSIOperatorStatus(csiOperator, key, initDelay))
+					c.checkCSIOperatorStatus(ctx, csiOperator, key, initDelay))
 				if checkStatusErr != nil {
 					log.Error("Check status of CSIOperator failed",
 						log.String("name", csiOperator.Name),
@@ -358,19 +361,19 @@ func (c *Controller) createCSIOperatorIfNeeded(
 			}()
 		}
 	case v1.AddonPhaseRunning:
-		if c.needUpgrade(csiOperator) {
+		if c.needUpgrade(ctx, csiOperator) {
 			c.health.Delete(key)
 			csiOperator = csiOperator.DeepCopy()
 			csiOperator.Status.Phase = v1.AddonPhaseUpgrading
 			csiOperator.Status.Reason = ""
 			csiOperator.Status.RetryCount = 0
-			return c.persistUpdate(csiOperator)
+			return c.persistUpdate(ctx, csiOperator)
 		}
 		if _, ok := c.health.Load(key); !ok {
 			c.health.Store(key, true)
 			go func() {
 				healthErr := wait.PollImmediateUntil(5*time.Minute,
-					c.watchCSIOperatorHealth(key), c.stopCh)
+					c.watchCSIOperatorHealth(ctx, key), c.stopCh)
 				if healthErr != nil {
 					log.Error("Watch health of CSIOperator failed",
 						log.String("name", csiOperator.Name),
@@ -386,7 +389,7 @@ func (c *Controller) createCSIOperatorIfNeeded(
 			go func() {
 				defer c.upgrading.Delete(key)
 				upgradeErr := wait.PollImmediate(5*time.Second, timeOut,
-					c.upgradeCSIOperator(csiOperator, key, upgradeDelay))
+					c.upgradeCSIOperator(ctx, csiOperator, key, upgradeDelay))
 				if upgradeErr != nil {
 					log.Error("Upgrade CSIOperator failed",
 						log.String("name", csiOperator.Name),
@@ -404,26 +407,26 @@ func (c *Controller) createCSIOperatorIfNeeded(
 	return nil
 }
 
-func (c *Controller) needUpgrade(csiOperator *v1.CSIOperator) bool {
+func (c *Controller) needUpgrade(ctx context.Context, csiOperator *v1.CSIOperator) bool {
 	if csiOperator.Spec.Version != csiOperator.Status.Version {
 		return true
 	}
 
-	svVersion, err := storageutil.GetSVInfoVersion(c.client)
+	svVersion, err := storageutil.GetSVInfoVersion(ctx, c.client)
 	return err != nil || svVersion != csiOperator.Status.StorageVendorVersion
 }
 
-func (c *Controller) installCSIOperator(csiOperator *v1.CSIOperator) (string, error) {
-	cluster, err := c.client.PlatformV1().Clusters().Get(csiOperator.Spec.ClusterName, metav1.GetOptions{})
+func (c *Controller) installCSIOperator(ctx context.Context, csiOperator *v1.CSIOperator) (string, error) {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, csiOperator.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return "", err
 	}
 
-	svInfo, err := storageutil.GetSVInfo(c.client)
+	svInfo, err := storageutil.GetSVInfo(ctx, c.client)
 	if err != nil {
 		return "", err
 	}
@@ -434,24 +437,24 @@ func (c *Controller) installCSIOperator(csiOperator *v1.CSIOperator) (string, er
 	}
 
 	// Create ServiceAccount.
-	if err := c.installSVC(csiOperator, kubeClient); err != nil {
+	if err := c.installSVC(ctx, csiOperator, kubeClient); err != nil {
 		return version, err
 	}
 
 	// Create ClusterRoleBinding.
-	if err := c.installCRB(csiOperator, kubeClient); err != nil {
+	if err := c.installCRB(ctx, csiOperator, kubeClient); err != nil {
 		return version, err
 	}
 
 	// Create Deployment.
-	return version, c.installDeployment(csiOperator, kubeClient, svInfo)
+	return version, c.installDeployment(ctx, csiOperator, kubeClient, svInfo)
 }
 
-func (c *Controller) installSVC(csiOperator *v1.CSIOperator, kubeClient kubernetes.Interface) error {
+func (c *Controller) installSVC(ctx context.Context, csiOperator *v1.CSIOperator, kubeClient kubernetes.Interface) error {
 	svc := genServiceAccount()
 	svcClient := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem)
 
-	_, err := svcClient.Get(svc.Name, metav1.GetOptions{})
+	_, err := svcClient.Get(ctx, svc.Name, metav1.GetOptions{})
 	if err == nil {
 		log.Info("ServiceAccount of CSIOperator is already created",
 			log.String("name", csiOperator.Name))
@@ -459,21 +462,21 @@ func (c *Controller) installSVC(csiOperator *v1.CSIOperator, kubeClient kubernet
 	}
 
 	if k8serrors.IsNotFound(err) {
-		_, err = svcClient.Create(svc)
+		_, err = svcClient.Create(ctx, svc, metav1.CreateOptions{})
 		return err
 	}
 
 	return fmt.Errorf("get svc failed: %v", err)
 }
 
-func (c *Controller) installCRB(csiOperator *v1.CSIOperator, kubeClient kubernetes.Interface) error {
+func (c *Controller) installCRB(ctx context.Context, csiOperator *v1.CSIOperator, kubeClient kubernetes.Interface) error {
 	crb := genCRB()
 	crbClient := kubeClient.RbacV1().ClusterRoleBindings()
 
-	oldCRB, err := crbClient.Get(crb.Name, metav1.GetOptions{})
+	oldCRB, err := crbClient.Get(ctx, crb.Name, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			_, err = crbClient.Create(crb)
+			_, err = crbClient.Create(ctx, crb, metav1.CreateOptions{})
 			return err
 		}
 		return fmt.Errorf("get crb failed: %v", err)
@@ -489,22 +492,23 @@ func (c *Controller) installCRB(csiOperator *v1.CSIOperator, kubeClient kubernet
 	newCRB := oldCRB.DeepCopy()
 	newCRB.RoleRef = crb.RoleRef
 	newCRB.Subjects = crb.Subjects
-	_, err = crbClient.Update(newCRB)
+	_, err = crbClient.Update(ctx, newCRB, metav1.UpdateOptions{})
 
 	return err
 }
 
 func (c *Controller) installDeployment(
+	ctx context.Context,
 	csiOperator *v1.CSIOperator,
 	kubeClient kubernetes.Interface,
 	svInfo *storageutil.SVInfo) error {
 	deploy := c.genDeployment(images.Get(csiOperator.Spec.Version).CSIOperator.FullName(), svInfo)
 	deployClient := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem)
 
-	oldDeploy, err := deployClient.Get(deploy.Name, metav1.GetOptions{})
+	oldDeploy, err := deployClient.Get(ctx, deploy.Name, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			_, err = deployClient.Create(deploy)
+			_, err = deployClient.Create(ctx, deploy, metav1.CreateOptions{})
 			return err
 		}
 		return fmt.Errorf("get deployment failed: %v", err)
@@ -513,7 +517,7 @@ func (c *Controller) installDeployment(
 	newDeploy := oldDeploy.DeepCopy()
 	newDeploy.Labels = deploy.Labels
 	newDeploy.Spec = deploy.Spec
-	_, err = deployClient.Update(newDeploy)
+	_, err = deployClient.Update(ctx, newDeploy, metav1.UpdateOptions{})
 
 	return err
 }
@@ -631,31 +635,31 @@ func genContainerArgs(svInfo *storageutil.SVInfo) []string {
 
 func int32Ptr(i int32) *int32 { return &i }
 
-func (c *Controller) uninstallCSIOperator(csiOperator *v1.CSIOperator) error {
+func (c *Controller) uninstallCSIOperator(ctx context.Context, csiOperator *v1.CSIOperator) error {
 	log.Info("Start to uninstall CSIOperator",
 		log.String("name", csiOperator.Name),
 		log.String("clusterName", csiOperator.Spec.ClusterName))
 
-	cluster, err := c.client.PlatformV1().Clusters().Get(csiOperator.Spec.ClusterName, metav1.GetOptions{})
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, csiOperator.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil && k8serrors.IsNotFound(err) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
 	// Delete the operator deployment.
 	clearDeployErr := kubeClient.AppsV1().
-		Deployments(metav1.NamespaceSystem).Delete(deploymentName, &metav1.DeleteOptions{})
+		Deployments(metav1.NamespaceSystem).Delete(ctx, deploymentName, metav1.DeleteOptions{})
 	// Delete the ClusterRoleBinding.
 	clearCRBErr := kubeClient.RbacV1().
-		ClusterRoleBindings().Delete(crbName, &metav1.DeleteOptions{})
+		ClusterRoleBindings().Delete(ctx, crbName, metav1.DeleteOptions{})
 	// Delete the ServiceAccount.
 	clearSVCErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).
-		Delete(svcAccountName, &metav1.DeleteOptions{})
+		Delete(ctx, svcAccountName, metav1.DeleteOptions{})
 
 	failed := false
 
@@ -690,7 +694,7 @@ func (c *Controller) uninstallCSIOperator(csiOperator *v1.CSIOperator) error {
 	return nil
 }
 
-func (c *Controller) watchCSIOperatorHealth(key string) func() (bool, error) {
+func (c *Controller) watchCSIOperatorHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		csiOperator, err := c.lister.Get(key)
 		if err != nil {
@@ -698,7 +702,7 @@ func (c *Controller) watchCSIOperatorHealth(key string) func() (bool, error) {
 		}
 		log.Info("Start check health of CSIOperator", log.String("name", csiOperator.Name))
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(csiOperator.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, csiOperator.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && k8serrors.IsNotFound(err) {
 			return false, err
 		}
@@ -711,18 +715,18 @@ func (c *Controller) watchCSIOperatorHealth(key string) func() (bool, error) {
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
 
 		_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).
-			Get(deploymentName, metav1.GetOptions{})
+			Get(ctx, deploymentName, metav1.GetOptions{})
 		if err != nil {
 			csiOperator = csiOperator.DeepCopy()
 			csiOperator.Status.Phase = v1.AddonPhaseFailed
 			csiOperator.Status.Reason = "CSIOperator is not healthy."
-			if err = c.persistUpdate(csiOperator); err != nil {
+			if err = c.persistUpdate(ctx, csiOperator); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -733,12 +737,13 @@ func (c *Controller) watchCSIOperatorHealth(key string) func() (bool, error) {
 }
 
 func (c *Controller) checkCSIOperatorStatus(
+	ctx context.Context,
 	csiOperator *v1.CSIOperator,
 	key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check CSIOperator health", log.String("name", csiOperator.Name))
 
-		cluster, err := c.client.PlatformV1().Clusters().Get(csiOperator.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, csiOperator.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && k8serrors.IsNotFound(err) {
 			return false, err
 		}
@@ -751,7 +756,7 @@ func (c *Controller) checkCSIOperatorStatus(
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -761,14 +766,14 @@ func (c *Controller) checkCSIOperatorStatus(
 		}
 
 		deploy, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).
-			Get(deploymentName, metav1.GetOptions{})
+			Get(ctx, deploymentName, metav1.GetOptions{})
 		if err != nil ||
 			(deploy.Spec.Replicas != nil && deploy.Status.AvailableReplicas < *deploy.Spec.Replicas) {
 			if time.Now().After(initDelay) {
 				csiOperator = csiOperator.DeepCopy()
 				csiOperator.Status.Phase = v1.AddonPhaseFailed
 				csiOperator.Status.Reason = "CSI Operator is not healthy."
-				if err = c.persistUpdate(csiOperator); err != nil {
+				if err = c.persistUpdate(ctx, csiOperator); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -779,7 +784,7 @@ func (c *Controller) checkCSIOperatorStatus(
 		csiOperator = csiOperator.DeepCopy()
 		csiOperator.Status.Phase = v1.AddonPhaseRunning
 		csiOperator.Status.Reason = ""
-		if err = c.persistUpdate(csiOperator); err != nil {
+		if err = c.persistUpdate(ctx, csiOperator); err != nil {
 			return false, err
 		}
 
@@ -788,11 +793,12 @@ func (c *Controller) checkCSIOperatorStatus(
 }
 
 func (c *Controller) upgradeCSIOperator(
+	ctx context.Context,
 	csiOperator *v1.CSIOperator,
 	key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to upgrade CSIOperator", log.String("name", csiOperator.Name))
-		cluster, err := c.client.PlatformV1().Clusters().Get(csiOperator.Spec.ClusterName, metav1.GetOptions{})
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, csiOperator.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && k8serrors.IsNotFound(err) {
 			return false, err
 		}
@@ -805,7 +811,7 @@ func (c *Controller) upgradeCSIOperator(
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
+		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -823,7 +829,7 @@ func (c *Controller) upgradeCSIOperator(
 				csiOperator = csiOperator.DeepCopy()
 				csiOperator.Status.Phase = v1.AddonPhaseFailed
 				csiOperator.Status.Reason = "Upgrade CSIOperator failed."
-				if err = c.persistUpdate(csiOperator); err != nil {
+				if err = c.persistUpdate(ctx, csiOperator); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -831,13 +837,13 @@ func (c *Controller) upgradeCSIOperator(
 			return false, nil
 		}
 
-		svInfo, err := storageutil.GetSVInfo(c.client)
+		svInfo, err := storageutil.GetSVInfo(ctx, c.client)
 		if err != nil {
 			return timeoutCheck("get storage vendor info", err)
 		}
 
 		deployClient := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem)
-		oldDeploy, err := deployClient.Get(deploymentName, metav1.GetOptions{})
+		oldDeploy, err := deployClient.Get(ctx, deploymentName, metav1.GetOptions{})
 		if err != nil {
 			return timeoutCheck("get deployment", err)
 		}
@@ -853,7 +859,7 @@ func (c *Controller) upgradeCSIOperator(
 			return false, err
 		}
 
-		_, err = deployClient.Patch(deploymentName, types.StrategicMergePatchType, patchData)
+		_, err = deployClient.Patch(ctx, deploymentName, types.StrategicMergePatchType, patchData, metav1.PatchOptions{})
 		if err != nil {
 			return timeoutCheck("update deployment", err)
 		}
@@ -867,17 +873,17 @@ func (c *Controller) upgradeCSIOperator(
 		fillOperatorStatus(csiOperator, version)
 		csiOperator.Status.Phase = v1.AddonPhaseChecking
 		csiOperator.Status.Reason = ""
-		if err = c.persistUpdate(csiOperator); err != nil {
+		if err = c.persistUpdate(ctx, csiOperator); err != nil {
 			return false, err
 		}
 		return true, nil
 	}
 }
 
-func (c *Controller) persistUpdate(csiOperator *v1.CSIOperator) error {
+func (c *Controller) persistUpdate(ctx context.Context, csiOperator *v1.CSIOperator) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.PlatformV1().CSIOperators().UpdateStatus(csiOperator)
+		_, err = c.client.PlatformV1().CSIOperators().UpdateStatus(ctx, csiOperator, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

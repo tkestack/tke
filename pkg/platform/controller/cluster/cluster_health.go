@@ -19,6 +19,7 @@
 package cluster
 
 import (
+	"context"
 	"math/rand"
 	"sync"
 	"time"
@@ -60,21 +61,21 @@ func (s *clusterHealth) Del(key string) {
 	delete(s.clusterMap, key)
 }
 
-func (c *Controller) ensureHealthCheck(key string, cluster *v1.Cluster) {
+func (c *Controller) ensureHealthCheck(ctx context.Context, key string, cluster *v1.Cluster) {
 	if c.health.Exist(key) {
 		return
 	}
 	log.Info("start health check for cluster", log.String("clusterName", key), log.String("phase", string(cluster.Status.Phase)))
 	c.health.Set(key, cluster)
 	time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
-	go wait.PollImmediateUntil(5*time.Minute, c.watchClusterHealth(cluster.Name), c.stopCh)
+	go wait.PollImmediateUntil(5*time.Minute, c.watchClusterHealth(ctx, cluster.Name), c.stopCh)
 }
 
-func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
+func (c *Controller) checkClusterHealth(ctx context.Context, cluster *v1.Cluster) error {
 	// wait for create clustercredential, optimize first health check for user experience
 	if cluster.Status.Phase == v1.ClusterInitializing {
 		err := wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
-			_, err := util.GetClusterCredentialV1(c.platformClient, cluster)
+			_, err := util.GetClusterCredentialV1(ctx, c.platformClient, cluster)
 			if err != nil {
 				return false, nil
 			}
@@ -84,7 +85,7 @@ func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
 			log.Warn("wait for create clustercredential error", log.String("clusterName", cluster.Name))
 		}
 	}
-	kubeClient, err := util.BuildExternalClientSet(cluster, c.platformClient)
+	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.platformClient)
 	if err != nil {
 		cluster.Status.Phase = v1.ClusterFailed
 		cluster.Status.Message = err.Error()
@@ -98,7 +99,7 @@ func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
 			LastTransitionTime: now,
 			LastProbeTime:      now,
 		})
-		if err1 := c.persistUpdate(cluster); err1 != nil {
+		if err1 := c.persistUpdate(ctx, cluster); err1 != nil {
 			log.Warn("Update cluster status failed", log.String("clusterName", cluster.Name), log.Err(err1))
 			return err1
 		}
@@ -106,7 +107,7 @@ func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
 		return err
 	}
 
-	_, err = kubeClient.CoreV1().Namespaces().List(metav1.ListOptions{})
+	_, err = kubeClient.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		cluster.Status.Phase = v1.ClusterFailed
 		cluster.Status.Message = err.Error()
@@ -154,7 +155,7 @@ func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
 		}
 	}
 
-	if err := c.persistUpdate(cluster); err != nil {
+	if err := c.persistUpdate(ctx, cluster); err != nil {
 		log.Error("Update cluster status failed", log.String("clusterName", cluster.Name), log.Err(err))
 		return err
 	}
@@ -244,11 +245,11 @@ func (c *Controller) checkClusterHealth(cluster *v1.Cluster) error {
 // }
 
 // for PollImmediateUntil, when return true ,an err while exit
-func (c *Controller) watchClusterHealth(clusterName string) func() (bool, error) {
+func (c *Controller) watchClusterHealth(ctx context.Context, clusterName string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Check cluster health", log.String("clusterName", clusterName))
 
-		cluster, err := c.platformClient.Clusters().Get(clusterName, metav1.GetOptions{})
+		cluster, err := c.platformClient.Clusters().Get(ctx, clusterName, metav1.GetOptions{})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				log.Warn("Cluster not found, to exit the health check loop", log.String("clusterName", clusterName))
@@ -263,7 +264,7 @@ func (c *Controller) watchClusterHealth(clusterName string) func() (bool, error)
 			return true, nil
 		}
 
-		_ = c.checkClusterHealth(cluster)
+		_ = c.checkClusterHealth(ctx, cluster)
 		return false, nil
 	}
 }

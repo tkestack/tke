@@ -19,11 +19,12 @@
 package config
 
 import (
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"reflect"
 	"strings"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestMonitorConfigurationPathFields(t *testing.T) {
@@ -141,5 +142,6 @@ var (
 		"Storage.InfluxDB.Servers[*].Password",
 		"Storage.InfluxDB.Servers[*].TimeoutSeconds",
 		"Storage.InfluxDB.Servers[*].Username",
+		"Storage.Thanos.Servers[*].Address",
 	)
 )

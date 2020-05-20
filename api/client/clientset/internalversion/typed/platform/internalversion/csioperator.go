@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type CSIOperatorsGetter interface {
 
 // CSIOperatorInterface has methods to work with CSIOperator resources.
 type CSIOperatorInterface interface {
-	Create(*platform.CSIOperator) (*platform.CSIOperator, error)
-	Update(*platform.CSIOperator) (*platform.CSIOperator, error)
-	UpdateStatus(*platform.CSIOperator) (*platform.CSIOperator, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	Get(name string, options v1.GetOptions) (*platform.CSIOperator, error)
-	List(opts v1.ListOptions) (*platform.CSIOperatorList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.CSIOperator, err error)
+	Create(ctx context.Context, cSIOperator *platform.CSIOperator, opts v1.CreateOptions) (*platform.CSIOperator, error)
+	Update(ctx context.Context, cSIOperator *platform.CSIOperator, opts v1.UpdateOptions) (*platform.CSIOperator, error)
+	UpdateStatus(ctx context.Context, cSIOperator *platform.CSIOperator, opts v1.UpdateOptions) (*platform.CSIOperator, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*platform.CSIOperator, error)
+	List(ctx context.Context, opts v1.ListOptions) (*platform.CSIOperatorList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.CSIOperator, err error)
 	CSIOperatorExpansion
 }
 
@@ -63,19 +64,19 @@ func newCSIOperators(c *PlatformClient) *cSIOperators {
 }
 
 // Get takes name of the cSIOperator, and returns the corresponding cSIOperator object, and an error if there is any.
-func (c *cSIOperators) Get(name string, options v1.GetOptions) (result *platform.CSIOperator, err error) {
+func (c *cSIOperators) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.CSIOperator, err error) {
 	result = &platform.CSIOperator{}
 	err = c.client.Get().
 		Resource("csioperators").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of CSIOperators that match those selectors.
-func (c *cSIOperators) List(opts v1.ListOptions) (result *platform.CSIOperatorList, err error) {
+func (c *cSIOperators) List(ctx context.Context, opts v1.ListOptions) (result *platform.CSIOperatorList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *cSIOperators) List(opts v1.ListOptions) (result *platform.CSIOperatorLi
 		Resource("csioperators").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested cSIOperators.
-func (c *cSIOperators) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *cSIOperators) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *cSIOperators) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("csioperators").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a cSIOperator and creates it.  Returns the server's representation of the cSIOperator, and an error, if there is any.
-func (c *cSIOperators) Create(cSIOperator *platform.CSIOperator) (result *platform.CSIOperator, err error) {
+func (c *cSIOperators) Create(ctx context.Context, cSIOperator *platform.CSIOperator, opts v1.CreateOptions) (result *platform.CSIOperator, err error) {
 	result = &platform.CSIOperator{}
 	err = c.client.Post().
 		Resource("csioperators").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(cSIOperator).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a cSIOperator and updates it. Returns the server's representation of the cSIOperator, and an error, if there is any.
-func (c *cSIOperators) Update(cSIOperator *platform.CSIOperator) (result *platform.CSIOperator, err error) {
+func (c *cSIOperators) Update(ctx context.Context, cSIOperator *platform.CSIOperator, opts v1.UpdateOptions) (result *platform.CSIOperator, err error) {
 	result = &platform.CSIOperator{}
 	err = c.client.Put().
 		Resource("csioperators").
 		Name(cSIOperator.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(cSIOperator).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *cSIOperators) UpdateStatus(cSIOperator *platform.CSIOperator) (result *platform.CSIOperator, err error) {
+func (c *cSIOperators) UpdateStatus(ctx context.Context, cSIOperator *platform.CSIOperator, opts v1.UpdateOptions) (result *platform.CSIOperator, err error) {
 	result = &platform.CSIOperator{}
 	err = c.client.Put().
 		Resource("csioperators").
 		Name(cSIOperator.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(cSIOperator).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the cSIOperator and deletes it. Returns an error if one occurs.
-func (c *cSIOperators) Delete(name string, options *v1.DeleteOptions) error {
+func (c *cSIOperators) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("csioperators").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched cSIOperator.
-func (c *cSIOperators) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.CSIOperator, err error) {
+func (c *cSIOperators) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.CSIOperator, err error) {
 	result = &platform.CSIOperator{}
 	err = c.client.Patch(pt).
 		Resource("csioperators").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

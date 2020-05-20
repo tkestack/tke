@@ -76,6 +76,8 @@ func (r *REST) NamespaceScoped() bool {
 }
 
 var _ rest.Scoper = &REST{}
+var _ rest.Lister = &REST{}
+var _ rest.Getter = &REST{}
 
 // New returns an empty object that can be used with Create and Update after request data has been put into it.
 func (r *REST) New() runtime.Object {
@@ -85,6 +87,14 @@ func (r *REST) New() runtime.Object {
 // NewList returns an empty object that can be used with the List call.
 func (r *REST) NewList() runtime.Object {
 	return &auth.ProjectList{}
+}
+
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("projects"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 // Get finds a resource in the storage by name and returns it.
@@ -99,7 +109,7 @@ func (r *REST) Get(ctx context.Context, projectName string, options *metav1.GetO
 		projectID = requestInfo.Name
 	}
 
-	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(metav1.ListOptions{
+	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.projectID=%s", projectID),
 	})
 	if err != nil {
@@ -145,7 +155,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		v1opts = util.PredicateV1ListOptions(tenantID, options)
 	}
 
-	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(*v1opts)
+	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, *v1opts)
 	if err != nil {
 		log.Error("list project policies failed", log.Err(err))
 		return nil, err

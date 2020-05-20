@@ -20,6 +20,7 @@ package cluster
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -65,7 +66,7 @@ const (
 	moduleFile       = "/etc/modules-load.d/tke.conf"
 )
 
-func (p *Provider) EnsureCopyFiles(c *v1.Cluster) error {
+func (p *Provider) EnsureCopyFiles(ctx context.Context, c *v1.Cluster) error {
 	for _, file := range c.Spec.Features.Files {
 		for _, machine := range c.Spec.Machines {
 			machineSSH, err := machine.SSH()
@@ -83,7 +84,7 @@ func (p *Provider) EnsureCopyFiles(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsurePreInstallHook(c *v1.Cluster) error {
+func (p *Provider) EnsurePreInstallHook(ctx context.Context, c *v1.Cluster) error {
 	hook := c.Spec.Features.Hooks[platformv1.HookPreInstall]
 	if hook == "" {
 		return nil
@@ -105,7 +106,7 @@ func (p *Provider) EnsurePreInstallHook(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsurePostInstallHook(c *v1.Cluster) error {
+func (p *Provider) EnsurePostInstallHook(ctx context.Context, c *v1.Cluster) error {
 	hook := c.Spec.Features.Hooks[platformv1.HookPostInstall]
 	if hook == "" {
 		return nil
@@ -127,7 +128,7 @@ func (p *Provider) EnsurePostInstallHook(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsurePreflight(c *v1.Cluster) error {
+func (p *Provider) EnsurePreflight(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
@@ -143,7 +144,7 @@ func (p *Provider) EnsurePreflight(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureRegistryHosts(c *v1.Cluster) error {
+func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error {
 	if !p.config.Registry.NeedSetHosts() {
 		return nil
 	}
@@ -170,7 +171,7 @@ func (p *Provider) EnsureRegistryHosts(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureKernelModule(c *v1.Cluster) error {
+func (p *Provider) EnsureKernelModule(ctx context.Context, c *v1.Cluster) error {
 	modules := []string{"iptable_nat"}
 	var data bytes.Buffer
 	for _, machine := range c.Spec.Machines {
@@ -195,7 +196,7 @@ func (p *Provider) EnsureKernelModule(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureSysctl(c *v1.Cluster) error {
+func (p *Provider) EnsureSysctl(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
@@ -229,7 +230,7 @@ func (p *Provider) EnsureSysctl(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureDisableSwap(c *v1.Cluster) error {
+func (p *Provider) EnsureDisableSwap(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
@@ -247,7 +248,7 @@ func (p *Provider) EnsureDisableSwap(c *v1.Cluster) error {
 
 // 因为validate那里没法更新对象（不能存储）
 // PreCrete，在api中错误只能panic，响应不会有报错提示，所以只能挪到这里处理
-func (p *Provider) EnsureClusterComplete(cluster *v1.Cluster) error {
+func (p *Provider) EnsureClusterComplete(ctx context.Context, cluster *v1.Cluster) error {
 	funcs := []func(cluster *v1.Cluster) error{
 		completeNetworking,
 		completeDNS,
@@ -348,7 +349,7 @@ func completeCredential(cluster *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureKubeconfig(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeconfig(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
@@ -370,7 +371,7 @@ func (p *Provider) EnsureKubeconfig(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureNvidiaDriver(c *v1.Cluster) error {
+func (p *Provider) EnsureNvidiaDriver(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		if !gpu.IsEnable(machine.Labels) {
 			continue
@@ -389,7 +390,7 @@ func (p *Provider) EnsureNvidiaDriver(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureNvidiaContainerRuntime(c *v1.Cluster) error {
+func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		if !gpu.IsEnable(machine.Labels) {
 			continue
@@ -408,7 +409,7 @@ func (p *Provider) EnsureNvidiaContainerRuntime(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureDocker(c *v1.Cluster) error {
+func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
 	if p.config.Registry.NeedSetHosts() {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
@@ -434,7 +435,7 @@ func (p *Provider) EnsureDocker(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureKubeadm(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
@@ -450,7 +451,7 @@ func (p *Provider) EnsureKubeadm(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsurePrepareForControlplane(c *v1.Cluster) error {
+func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
 	auditPolicyData, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.AuditPolicyConfigFile))
 	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
@@ -558,150 +559,92 @@ func (p *Provider) EnsurePrepareForControlplane(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) getKubeadmInitOption(c *v1.Cluster) *kubeadm.InitOption {
-	controlPlaneEndpoint := fmt.Sprintf("%s:6443", c.Spec.Machines[0].IP)
-	addr := c.Address(platformv1.AddressAdvertise)
-	if addr != nil {
-		controlPlaneEndpoint = fmt.Sprintf("%s:%d", addr.Host, addr.Port)
-	}
-
-	certSANs := c.Spec.PublicAlternativeNames
-	if c.Spec.Features.HA != nil {
-		if c.Spec.Features.HA.TKEHA != nil {
-			certSANs = append(certSANs, c.Spec.Features.HA.TKEHA.VIP)
-		}
-		if c.Spec.Features.HA.ThirdPartyHA != nil {
-			certSANs = append(certSANs, c.Spec.Features.HA.ThirdPartyHA.VIP)
-		}
-	}
-	kubeProxyMode := "iptables"
-	if c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS {
-		kubeProxyMode = "ipvs"
-	}
-	apiserverExtraArgs := c.Spec.APIServerExtraArgs
-	if apiserverExtraArgs == nil {
-		apiserverExtraArgs = make(map[string]string)
-	}
-	if p.config.Audit.Address != "" {
-		apiserverExtraArgs["audit-policy-file"] = path.Join(constants.KubernetesDir, constants.AuditPolicyConfigFile)
-		apiserverExtraArgs["audit-webhook-config-file"] = path.Join(constants.KubernetesDir, constants.AuditWebhookConfigFile)
-	}
-
-	return &kubeadm.InitOption{
-		KubeadmConfigFileName: constants.KubeadmConfigFileName,
-		NodeName:              c.Spec.Machines[0].IP,
-		BootstrapToken:        *c.ClusterCredential.BootstrapToken,
-		CertificateKey:        *c.ClusterCredential.CertificateKey,
-
-		ETCDImageTag:         images.Get().ETCD.Tag,
-		CoreDNSImageTag:      images.Get().CoreDNS.Tag,
-		KubernetesVersion:    c.Spec.Version,
-		ControlPlaneEndpoint: controlPlaneEndpoint,
-
-		DNSDomain:             c.Spec.DNSDomain,
-		ServiceSubnet:         c.Status.ServiceCIDR,
-		NodeCIDRMaskSize:      c.Status.NodeCIDRMaskSize,
-		ClusterCIDR:           c.Spec.ClusterCIDR,
-		ServiceClusterIPRange: c.Status.ServiceCIDR,
-		CertSANs:              certSANs,
-
-		APIServerExtraArgs:         c.Spec.APIServerExtraArgs,
-		ControllerManagerExtraArgs: c.Spec.ControllerManagerExtraArgs,
-		SchedulerExtraArgs:         c.Spec.SchedulerExtraArgs,
-
-		ImageRepository: p.config.Registry.Prefix,
-		ClusterName:     c.Name,
-
-		KubeProxyMode: kubeProxyMode,
-	}
-}
-
-func (p *Provider) EnsureKubeadmInitKubeletStartPhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitKubeletStartPhase(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitOption(c),
+	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c),
 		fmt.Sprintf("kubelet-start --node-name=%s", c.Spec.Machines[0].IP))
 }
 
-func (p *Provider) EnsureKubeadmInitCertsPhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitCertsPhase(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitOption(c), "certs all")
+	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "certs all")
 }
 
-func (p *Provider) EnsureKubeadmInitKubeConfigPhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitKubeConfigPhase(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitOption(c), "kubeconfig all")
+	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "kubeconfig all")
 }
 
-func (p *Provider) EnsureKubeadmInitControlPlanePhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitControlPlanePhase(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitOption(c), "control-plane all")
+	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "control-plane all")
 }
 
-func (p *Provider) EnsureKubeadmInitEtcdPhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitEtcdPhase(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitOption(c), "etcd local")
+	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "etcd local")
 }
 
-func (p *Provider) EnsureKubeadmInitUploadConfigPhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitUploadConfigPhase(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitOption(c), "upload-config all ")
+	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "upload-config all ")
 }
 
-func (p *Provider) EnsureKubeadmInitUploadCertsPhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitUploadCertsPhase(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitOption(c), "upload-certs --upload-certs")
+	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "upload-certs --upload-certs")
 }
 
-func (p *Provider) EnsureKubeadmInitBootstrapTokenPhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitBootstrapTokenPhase(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitOption(c), "bootstrap-token")
+	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "bootstrap-token")
 }
 
-func (p *Provider) EnsureKubeadmInitAddonPhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitAddonPhase(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitOption(c), "addon all")
+	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "addon all")
 }
 
-func (p *Provider) EnsureGalaxy(c *v1.Cluster) error {
+func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 	clientset, err := c.ClientsetForBootstrap()
 	if err != nil {
 		return err
 	}
-	return galaxy.Install(clientset, &galaxy.Option{
+	return galaxy.Install(ctx, clientset, &galaxy.Option{
 		Version:   galaxyimages.LatestVersion,
 		NodeCIDR:  c.Cluster.Spec.ClusterCIDR,
 		NetDevice: c.Cluster.Spec.NetworkDevice,
 	})
 }
 
-func (p *Provider) EnsureJoinControlePlane(c *v1.Cluster) error {
+func (p *Provider) EnsureJoinControlePlane(ctx context.Context, c *v1.Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
 	option := &kubeadm.JoinControlPlaneOption{
 		BootstrapToken:       *c.ClusterCredential.BootstrapToken,
@@ -725,7 +668,7 @@ func (p *Provider) EnsureJoinControlePlane(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureStoreCredential(c *v1.Cluster) error {
+func (p *Provider) EnsureStoreCredential(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -733,44 +676,44 @@ func (p *Provider) EnsureStoreCredential(c *v1.Cluster) error {
 
 	data, err := machineSSH.ReadFile(constants.CACertName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.CACertName)
+		return err
 	}
 	c.ClusterCredential.CACert = data
 
 	data, err = machineSSH.ReadFile(constants.CAKeyName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.CAKeyName)
+		return err
 	}
 	c.ClusterCredential.CAKey = data
 
 	data, err = machineSSH.ReadFile(constants.EtcdCACertName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.EtcdCACertName)
+		return err
 	}
 	c.ClusterCredential.ETCDCACert = data
 
 	data, err = machineSSH.ReadFile(constants.EtcdCAKeyName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.EtcdCAKeyName)
+		return err
 	}
 	c.ClusterCredential.ETCDCAKey = data
 
 	data, err = machineSSH.ReadFile(constants.APIServerEtcdClientCertName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.APIServerEtcdClientCertName)
+		return err
 	}
 	c.ClusterCredential.ETCDAPIClientCert = data
 
 	data, err = machineSSH.ReadFile(constants.APIServerEtcdClientKeyName)
 	if err != nil {
-		return errors.Wrapf(err, "read %s error", constants.APIServerEtcdClientKeyName)
+		return err
 	}
 	c.ClusterCredential.ETCDAPIClientKey = data
 
 	return nil
 }
 
-func (p *Provider) EnsurePatchAnnotation(c *v1.Cluster) error {
+func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) error {
 	fileData := map[string]string{
 		constants.EtcdPodManifestFile:                  `  annotations:\n    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "2379"`,
 		constants.KubeAPIServerPodManifestFile:         `  annotations:\n    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "6443"`,
@@ -795,7 +738,7 @@ func (p *Provider) EnsurePatchAnnotation(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureKubelet(c *v1.Cluster) error {
+func (p *Provider) EnsureKubelet(ctx context.Context, c *v1.Cluster) error {
 	option := &kubelet.Option{
 		Version:   c.Spec.Version,
 		ExtraArgs: c.Spec.KubeletExtraArgs,
@@ -815,7 +758,7 @@ func (p *Provider) EnsureKubelet(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureCNIPlugins(c *v1.Cluster) error {
+func (p *Provider) EnsureCNIPlugins(ctx context.Context, c *v1.Cluster) error {
 	option := &cniplugins.Option{}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -832,7 +775,7 @@ func (p *Provider) EnsureCNIPlugins(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureKubeadmInitWaitControlPlanePhase(c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitWaitControlPlanePhase(ctx context.Context, c *v1.Cluster) error {
 	start := time.Now()
 
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
@@ -842,7 +785,7 @@ func (p *Provider) EnsureKubeadmInitWaitControlPlanePhase(c *v1.Cluster) error {
 			log.Warn(err.Error())
 			return false, nil
 		}
-		clientset.Discovery().RESTClient().Get().AbsPath("/healthz").Do().StatusCode(&healthStatus)
+		clientset.Discovery().RESTClient().Get().AbsPath("/healthz").Do(ctx).StatusCode(&healthStatus)
 		if healthStatus != http.StatusOK {
 			return false, nil
 		}
@@ -852,7 +795,7 @@ func (p *Provider) EnsureKubeadmInitWaitControlPlanePhase(c *v1.Cluster) error {
 	})
 }
 
-func (p *Provider) EnsureMarkControlPlane(c *v1.Cluster) error {
+func (p *Provider) EnsureMarkControlPlane(ctx context.Context, c *v1.Cluster) error {
 	clientset, err := c.ClientsetForBootstrap()
 	if err != nil {
 		return err
@@ -873,7 +816,7 @@ func (p *Provider) EnsureMarkControlPlane(c *v1.Cluster) error {
 				machine.Taints = append(machine.Taints, taint)
 			}
 		}
-		err := apiclient.MarkNode(clientset, machine.IP, machine.Labels, machine.Taints)
+		err := apiclient.MarkNode(ctx, clientset, machine.IP, machine.Labels, machine.Taints)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -882,7 +825,7 @@ func (p *Provider) EnsureMarkControlPlane(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureNvidiaDevicePlugin(c *v1.Cluster) error {
+func (p *Provider) EnsureNvidiaDevicePlugin(ctx context.Context, c *v1.Cluster) error {
 	if c.Cluster.Spec.Features.GPUType == nil {
 		return nil
 	}
@@ -894,7 +837,7 @@ func (p *Provider) EnsureNvidiaDevicePlugin(c *v1.Cluster) error {
 	option := &gpu.NvidiaDevicePluginOption{
 		Image: images.Get().NvidiaDevicePlugin.FullName(),
 	}
-	err = gpu.InstallNvidiaDevicePlugin(client, option)
+	err = gpu.InstallNvidiaDevicePlugin(ctx, client, option)
 	if err != nil {
 		return err
 	}
@@ -902,7 +845,7 @@ func (p *Provider) EnsureNvidiaDevicePlugin(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureGPUManager(c *v1.Cluster) error {
+func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 	if c.Cluster.Spec.Features.GPUType == nil {
 		return nil
 	}
@@ -922,7 +865,7 @@ func (p *Provider) EnsureGPUManager(c *v1.Cluster) error {
 		"GPUQuotaAdmissionImage": images.Get().GPUQuotaAdmission.FullName(),
 	}
 
-	err = apiclient.CreateResourceWithFile(client, constants.GPUManagerManifest, option)
+	err = apiclient.CreateResourceWithFile(ctx, client, constants.GPUManagerManifest, option)
 	if err != nil {
 		return errors.Wrap(err, "install gpu manager error")
 	}
@@ -930,7 +873,7 @@ func (p *Provider) EnsureGPUManager(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureCSIOperator(c *v1.Cluster) error {
+func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 	if c.Cluster.Spec.Features.CSIOperator == nil {
 		return nil
 	}
@@ -947,7 +890,7 @@ func (p *Provider) EnsureCSIOperator(c *v1.Cluster) error {
 		"RegistryDomain":   containerregistryutil.GetPrefix(),
 	}
 
-	err = apiclient.CreateResourceWithFile(client, constants.CSIOperatorManifest, option)
+	err = apiclient.CreateResourceWithFile(ctx, client, constants.CSIOperatorManifest, option)
 	if err != nil {
 		return errors.Wrap(err, "install csi operator error")
 	}
@@ -957,7 +900,7 @@ func (p *Provider) EnsureCSIOperator(c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureCleanup(c *v1.Cluster) error {
+func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
 	for i, machine := range c.Spec.Machines {
 		s, err := machine.SSH()
 		if err != nil {

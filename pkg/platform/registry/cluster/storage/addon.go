@@ -60,7 +60,7 @@ func (r *AddonREST) Get(ctx context.Context, clusterName string, options *metav1
 		return nil, err
 	}
 	af := newAddonFinder(clusterName, r.platformClient)
-	return af.findAll()
+	return af.findAll(ctx)
 }
 
 type addonFinder struct {
@@ -81,7 +81,7 @@ func newAddonFinder(clusterName string, platformClient platforminternalclient.Pl
 	}
 }
 
-type addonFinderFunc func(a *addonFinder)
+type addonFinderFunc func(ctx context.Context, a *addonFinder)
 
 var (
 	allAddonFinders = []addonFinderFunc{
@@ -98,10 +98,10 @@ var (
 	}
 )
 
-func (a *addonFinder) findAll() (*platform.ClusterAddonList, error) {
+func (a *addonFinder) findAll(ctx context.Context) (*platform.ClusterAddonList, error) {
 	a.wg.Add(len(allAddonFinders))
 	for _, f := range allAddonFinders {
-		go f(a)
+		go f(ctx, a)
 	}
 	a.wg.Wait()
 	if len(a.errors) > 0 {
@@ -112,9 +112,9 @@ func (a *addonFinder) findAll() (*platform.ClusterAddonList, error) {
 	}, nil
 }
 
-func helm(a *addonFinder) {
+func helm(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.Helms().List(metav1.ListOptions{
+	l, err := a.platformClient.Helms().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {
@@ -146,9 +146,9 @@ func helm(a *addonFinder) {
 	a.mutex.Unlock()
 }
 
-func persistentEvent(a *addonFinder) {
+func persistentEvent(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.PersistentEvents().List(metav1.ListOptions{
+	l, err := a.platformClient.PersistentEvents().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {
@@ -180,9 +180,9 @@ func persistentEvent(a *addonFinder) {
 	a.mutex.Unlock()
 }
 
-func tappcontroller(a *addonFinder) {
+func tappcontroller(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.TappControllers().List(metav1.ListOptions{
+	l, err := a.platformClient.TappControllers().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {
@@ -214,9 +214,9 @@ func tappcontroller(a *addonFinder) {
 	a.mutex.Unlock()
 }
 
-func csiOperator(a *addonFinder) {
+func csiOperator(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.CSIOperators().List(metav1.ListOptions{
+	l, err := a.platformClient.CSIOperators().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {
@@ -248,9 +248,9 @@ func csiOperator(a *addonFinder) {
 	a.mutex.Unlock()
 }
 
-func volumeDecorator(a *addonFinder) {
+func volumeDecorator(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.VolumeDecorators().List(metav1.ListOptions{
+	l, err := a.platformClient.VolumeDecorators().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {
@@ -282,9 +282,9 @@ func volumeDecorator(a *addonFinder) {
 	a.mutex.Unlock()
 }
 
-func logCollector(a *addonFinder) {
+func logCollector(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.LogCollectors().List(metav1.ListOptions{
+	l, err := a.platformClient.LogCollectors().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {
@@ -316,9 +316,9 @@ func logCollector(a *addonFinder) {
 	a.mutex.Unlock()
 }
 
-func cronHPA(a *addonFinder) {
+func cronHPA(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.CronHPAs().List(metav1.ListOptions{
+	l, err := a.platformClient.CronHPAs().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {
@@ -350,9 +350,9 @@ func cronHPA(a *addonFinder) {
 	a.mutex.Unlock()
 }
 
-func prometheus(a *addonFinder) {
+func prometheus(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.Prometheuses().List(metav1.ListOptions{
+	l, err := a.platformClient.Prometheuses().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {
@@ -384,9 +384,9 @@ func prometheus(a *addonFinder) {
 	a.mutex.Unlock()
 }
 
-func ipam(a *addonFinder) {
+func ipam(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.IPAMs().List(metav1.ListOptions{
+	l, err := a.platformClient.IPAMs().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {
@@ -418,9 +418,9 @@ func ipam(a *addonFinder) {
 	a.mutex.Unlock()
 }
 
-func lbcf(a *addonFinder) {
+func lbcf(ctx context.Context, a *addonFinder) {
 	defer a.wg.Done()
-	l, err := a.platformClient.LBCFs().List(metav1.ListOptions{
+	l, err := a.platformClient.LBCFs().List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
 	})
 	if err != nil {

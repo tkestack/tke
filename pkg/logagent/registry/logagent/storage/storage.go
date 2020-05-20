@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,12 +38,12 @@ import (
 )
 
 type Storage struct {
-	LogAgent *REST
-	LogFileTree *FileNodeREST
-	LogFileContent *FileContentREST
+	LogAgent        *REST
+	LogFileTree     *FileNodeREST
+	LogFileContent  *FileContentREST
 	LogFileDownload *FileDownloadREST
-	LogagentProxy *LogagentProxyREST
-	Status   *StatusREST
+	LogagentProxy   *LogagentProxyREST
+	Status          *StatusREST
 }
 
 // NewStorage returns a Storage object that will work against channels.
@@ -75,12 +76,12 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 	statusStore.ExportStrategy = registrylogagent.NewStatusStrategy(strategy)
 
 	return &Storage{
-		LogAgent:     &REST{store, privilegedUsername},
-		LogFileTree:  &FileNodeREST{store, platformClient},
-		LogFileContent: &FileContentREST{store, platformClient},
+		LogAgent:        &REST{store, privilegedUsername},
+		LogFileTree:     &FileNodeREST{store, platformClient},
+		LogFileContent:  &FileContentREST{store, platformClient},
 		LogFileDownload: &FileDownloadREST{store, platformClient},
-		LogagentProxy: &LogagentProxyREST{store, platformClient},
-		Status:       &StatusREST{&statusStore},
+		LogagentProxy:   &LogagentProxyREST{store, platformClient},
+		Status:          &StatusREST{&statusStore},
 	}
 
 }
@@ -112,13 +113,11 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 	return logCollector, nil
 }
 
-
 // REST implements a RESTStorage for channels against etcd.
 type REST struct {
 	*registry.Store
 	privilegedUsername string
 }
-
 
 var _ rest.ShortNamesProvider = &REST{}
 
@@ -129,11 +128,10 @@ func (r *REST) ShortNames() []string {
 }
 
 //No need to implement TODO: remove this function
-func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error){
+func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	//la := obj.(*logagent.LogAgent)
 	return r.Store.Create(ctx, obj, createValidation, options)
 }
-
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
@@ -181,8 +179,6 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 	return r.Store.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
 
-
-
 // StatusREST implements the REST endpoint for changing the status of a LogAgent.
 type StatusREST struct {
 	store *registry.Store
@@ -218,4 +214,3 @@ func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.Updat
 	}
 	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }
-

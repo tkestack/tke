@@ -3,10 +3,11 @@
 #
 # KEEP THIS FILE SORTED. Order is important. Last match takes precedence.
 
-* @choujimmy
+* @choujimmy @QianChenglong
+/web/ @Yacent
 /api/ @choujimmy
 /build/ @QianChenglong
-/docs/ @interstallers
+/docs/ @interstallers @perfey-he @ruyingzhe
 /hack/ @perfey-he
 /pkg/auth/ @yadzhang
 /pkg/business/ @defydahui
@@ -15,8 +16,3 @@
 /pkg/registry/ @choujimmy
 /pkg/platform/ @QianChenglong
 /pkg/gateway/ @choujimmy
-/web/console/ @Yacent
-/web/installer/ @Tim-Ju
-go.mod @choujimmy
-go.sum @choujimmy
-

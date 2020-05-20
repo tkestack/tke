@@ -4,7 +4,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -653,6 +653,8 @@ func Convert_business_Namespace_To_v1_Namespace(in *business.Namespace, out *Nam
 func autoConvert_v1_NamespaceCert_To_business_NamespaceCert(in *NamespaceCert, out *business.NamespaceCert, s conversion.Scope) error {
 	out.CertPem = *(*[]byte)(unsafe.Pointer(&in.CertPem))
 	out.KeyPem = *(*[]byte)(unsafe.Pointer(&in.KeyPem))
+	out.CACertPem = *(*[]byte)(unsafe.Pointer(&in.CACertPem))
+	out.APIServer = in.APIServer
 	return nil
 }
 
@@ -664,6 +666,8 @@ func Convert_v1_NamespaceCert_To_business_NamespaceCert(in *NamespaceCert, out *
 func autoConvert_business_NamespaceCert_To_v1_NamespaceCert(in *business.NamespaceCert, out *NamespaceCert, s conversion.Scope) error {
 	out.CertPem = *(*[]byte)(unsafe.Pointer(&in.CertPem))
 	out.KeyPem = *(*[]byte)(unsafe.Pointer(&in.KeyPem))
+	out.CACertPem = *(*[]byte)(unsafe.Pointer(&in.CACertPem))
+	out.APIServer = in.APIServer
 	return nil
 }
 
@@ -718,6 +722,7 @@ func autoConvert_v1_NamespaceSpec_To_business_NamespaceSpec(in *NamespaceSpec, o
 	out.Finalizers = *(*[]business.FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
+	out.ClusterType = in.ClusterType
 	out.ClusterVersion = in.ClusterVersion
 	out.ClusterDisplayName = in.ClusterDisplayName
 	out.Namespace = in.Namespace
@@ -734,6 +739,7 @@ func autoConvert_business_NamespaceSpec_To_v1_NamespaceSpec(in *business.Namespa
 	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
+	out.ClusterType = in.ClusterType
 	out.ClusterVersion = in.ClusterVersion
 	out.ClusterDisplayName = in.ClusterDisplayName
 	out.Namespace = in.Namespace

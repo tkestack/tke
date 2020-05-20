@@ -19,6 +19,7 @@
 package chartgroup
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -224,7 +225,7 @@ func (c *Controller) syncItem(key string) error {
 			chartGroup.Status.Phase == businessv1.ChartGroupAvailable ||
 			chartGroup.Status.Phase == businessv1.ChartGroupLocked {
 			cachedChartGroup := c.cache.getOrCreate(key)
-			err = c.processUpdate(cachedChartGroup, chartGroup, key)
+			err = c.processUpdate(context.Background(), cachedChartGroup, chartGroup, key)
 		} else if chartGroup.Status.Phase == businessv1.ChartGroupTerminating {
 			log.Info("ChartGroup has been terminated. Attempting to cleanup resources",
 				log.String("projectName", projectName), log.String("chartGroupName", chartGroupName))
@@ -262,7 +263,7 @@ func (c *Controller) processDelete(cachedChartGroup *cachedChartGroup, key strin
 	return nil
 }
 
-func (c *Controller) processUpdate(cachedChartGroup *cachedChartGroup, chartGroup *businessv1.ChartGroup, key string) error {
+func (c *Controller) processUpdate(ctx context.Context, cachedChartGroup *cachedChartGroup, chartGroup *businessv1.ChartGroup, key string) error {
 	if cachedChartGroup.state != nil {
 		// exist and the chartGroup name changed
 		if cachedChartGroup.state.UID != chartGroup.UID {
@@ -272,7 +273,7 @@ func (c *Controller) processUpdate(cachedChartGroup *cachedChartGroup, chartGrou
 		}
 	}
 	// start update machine if needed
-	err := c.handlePhase(key, cachedChartGroup, chartGroup)
+	err := c.handlePhase(ctx, key, cachedChartGroup, chartGroup)
 	if err != nil {
 		return err
 	}
@@ -282,30 +283,30 @@ func (c *Controller) processUpdate(cachedChartGroup *cachedChartGroup, chartGrou
 	return nil
 }
 
-func (c *Controller) handlePhase(key string, cachedChartGroup *cachedChartGroup, chartGroup *businessv1.ChartGroup) error {
+func (c *Controller) handlePhase(ctx context.Context, key string, cachedChartGroup *cachedChartGroup, chartGroup *businessv1.ChartGroup) error {
 	switch chartGroup.Status.Phase {
 	case businessv1.ChartGroupPending:
-		err := c.createChartGroup(chartGroup)
+		err := c.createChartGroup(ctx, chartGroup)
 		if err != nil {
 			chartGroup.Status.Phase = businessv1.ChartGroupFailed
 			chartGroup.Status.Message = "createChartGroup failed"
 			chartGroup.Status.Reason = err.Error()
 			chartGroup.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(chartGroup)
+			return c.persistUpdate(ctx, chartGroup)
 		}
 		chartGroup.Status.Phase = businessv1.ChartGroupAvailable
 		chartGroup.Status.Message = ""
 		chartGroup.Status.Reason = ""
 		chartGroup.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdate(chartGroup)
+		return c.persistUpdate(ctx, chartGroup)
 	case businessv1.ChartGroupAvailable, businessv1.ChartGroupLocked:
-		c.startChartGroupHealthCheck(key)
+		c.startChartGroupHealthCheck(ctx, key)
 	}
 	return nil
 }
 
-func (c *Controller) createChartGroup(chartGroup *businessv1.ChartGroup) error {
-	_, err := c.registryClient.ChartGroups().Create(&registryv1.ChartGroup{
+func (c *Controller) createChartGroup(ctx context.Context, chartGroup *businessv1.ChartGroup) error {
+	_, err := c.registryClient.ChartGroups().Create(ctx, &registryv1.ChartGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
 				"projectName": chartGroup.Namespace,
@@ -315,7 +316,7 @@ func (c *Controller) createChartGroup(chartGroup *businessv1.ChartGroup) error {
 			Name:        chartGroup.Name,
 			DisplayName: chartGroup.Spec.DisplayName,
 			TenantID:    chartGroup.Spec.TenantID,
-		}})
+		}}, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -323,10 +324,10 @@ func (c *Controller) createChartGroup(chartGroup *businessv1.ChartGroup) error {
 	return nil
 }
 
-func (c *Controller) persistUpdate(chartGroup *businessv1.ChartGroup) error {
+func (c *Controller) persistUpdate(ctx context.Context, chartGroup *businessv1.ChartGroup) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().ChartGroups(chartGroup.Namespace).UpdateStatus(chartGroup)
+		_, err = c.client.BusinessV1().ChartGroups(chartGroup.Namespace).UpdateStatus(ctx, chartGroup, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

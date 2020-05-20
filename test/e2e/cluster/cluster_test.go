@@ -19,6 +19,7 @@
 package cluster_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -84,7 +85,7 @@ var _ = Describe("cluster lifecycle", func() {
 				TenantID:    "default",
 				Version:     "1.14.6",
 				ClusterCIDR: "10.244.0.0/16",
-				Type:        platformv1.ClusterBaremetal,
+				Type:        "Baremetal",
 				Features:    platformv1.ClusterFeature{EnableMasterSchedule: true},
 			}}
 		for _, one := range masterNodes {
@@ -97,13 +98,13 @@ var _ = Describe("cluster lifecycle", func() {
 		}
 
 		By("create cluster")
-		cluster, err = client.PlatformV1().Clusters().Create(cluster)
+		cluster, err = client.PlatformV1().Clusters().Create(context.Background(), cluster, metav1.CreateOptions{})
 		Expect(err).To(BeNil())
 		clusterName := cluster.Name
 
 		By(fmt.Sprintf("wait cluster(%s) status is running", clusterName))
 		err = wait.Poll(5*time.Second, 5*time.Minute, func() (bool, error) {
-			cluster, err = client.PlatformV1().Clusters().Get(clusterName, metav1.GetOptions{})
+			cluster, err = client.PlatformV1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
 			if err != nil {
 				return false, nil
 			}
@@ -114,7 +115,7 @@ var _ = Describe("cluster lifecycle", func() {
 			machine := &platformv1.Machine{
 				Spec: platformv1.MachineSpec{
 					ClusterName: clusterName,
-					Type:        platformv1.BaremetalMachine,
+					Type:        "Baremetal",
 					IP:          one.InternalIP,
 					Port:        one.Port,
 					Username:    one.Username,
@@ -123,13 +124,13 @@ var _ = Describe("cluster lifecycle", func() {
 			}
 
 			By(fmt.Sprintf("add work nodes(%s) to cluster", one.InternalIP))
-			machine, err = client.PlatformV1().Machines().Create(machine)
+			machine, err = client.PlatformV1().Machines().Create(context.Background(), machine, metav1.CreateOptions{})
 			Expect(err).To(BeNil())
 			machineName := machine.Name
 
 			By(fmt.Sprintf("wait worker node(%s) status is running", one.InternalIP))
 			err = wait.Poll(5*time.Second, 5*time.Minute, func() (bool, error) {
-				machine, err = client.PlatformV1().Machines().Get(machineName, metav1.GetOptions{})
+				machine, err = client.PlatformV1().Machines().Get(context.Background(), machineName, metav1.GetOptions{})
 				if err != nil {
 					return false, nil
 				}
@@ -137,10 +138,10 @@ var _ = Describe("cluster lifecycle", func() {
 			})
 
 			By(fmt.Sprintf("delete work nodes(%s) from cluster", one.InternalIP))
-			err = client.PlatformV1().Machines().Delete(machineName, &metav1.DeleteOptions{})
+			err = client.PlatformV1().Machines().Delete(context.Background(), machineName, metav1.DeleteOptions{})
 			Expect(err).To(BeNil())
 			err = wait.Poll(5*time.Second, 5*time.Minute, func() (bool, error) {
-				_, err = client.PlatformV1().Machines().Get(machineName, metav1.GetOptions{})
+				_, err = client.PlatformV1().Machines().Get(context.Background(), machineName, metav1.GetOptions{})
 				if errors.IsNotFound(err) {
 					return true, nil
 				}
@@ -149,10 +150,10 @@ var _ = Describe("cluster lifecycle", func() {
 		}
 
 		By(fmt.Sprintf("delete cluster(%s)", clusterName))
-		err = client.PlatformV1().Clusters().Delete(clusterName, &metav1.DeleteOptions{})
+		err = client.PlatformV1().Clusters().Delete(context.Background(), clusterName, metav1.DeleteOptions{})
 		Expect(err).To(BeNil())
 		err = wait.Poll(5*time.Second, 5*time.Minute, func() (bool, error) {
-			_, err = client.PlatformV1().Clusters().Get(clusterName, metav1.GetOptions{})
+			_, err = client.PlatformV1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
 			if errors.IsNotFound(err) {
 				return true, nil
 			}

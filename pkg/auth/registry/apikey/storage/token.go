@@ -57,7 +57,7 @@ func (r *TokenREST) Create(ctx context.Context, obj runtime.Object, createValida
 		return nil, apierrors.NewBadRequest(err.Error())
 	}
 
-	apiKey, err := r.keySigner.Generate(userName, tenantID, apikeyReq.Expire.Duration)
+	apiKey, err := r.keySigner.Generate(ctx, userName, tenantID, apikeyReq.Expire.Duration)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
 	}

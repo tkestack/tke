@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,15 +40,15 @@ type PoliciesGetter interface {
 
 // PolicyInterface has methods to work with Policy resources.
 type PolicyInterface interface {
-	Create(*auth.Policy) (*auth.Policy, error)
-	Update(*auth.Policy) (*auth.Policy, error)
-	UpdateStatus(*auth.Policy) (*auth.Policy, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*auth.Policy, error)
-	List(opts v1.ListOptions) (*auth.PolicyList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.Policy, err error)
+	Create(ctx context.Context, policy *auth.Policy, opts v1.CreateOptions) (*auth.Policy, error)
+	Update(ctx context.Context, policy *auth.Policy, opts v1.UpdateOptions) (*auth.Policy, error)
+	UpdateStatus(ctx context.Context, policy *auth.Policy, opts v1.UpdateOptions) (*auth.Policy, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*auth.Policy, error)
+	List(ctx context.Context, opts v1.ListOptions) (*auth.PolicyList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.Policy, err error)
 	PolicyExpansion
 }
 
@@ -64,19 +65,19 @@ func newPolicies(c *AuthClient) *policies {
 }
 
 // Get takes name of the policy, and returns the corresponding policy object, and an error if there is any.
-func (c *policies) Get(name string, options v1.GetOptions) (result *auth.Policy, err error) {
+func (c *policies) Get(ctx context.Context, name string, options v1.GetOptions) (result *auth.Policy, err error) {
 	result = &auth.Policy{}
 	err = c.client.Get().
 		Resource("policies").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Policies that match those selectors.
-func (c *policies) List(opts v1.ListOptions) (result *auth.PolicyList, err error) {
+func (c *policies) List(ctx context.Context, opts v1.ListOptions) (result *auth.PolicyList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -86,13 +87,13 @@ func (c *policies) List(opts v1.ListOptions) (result *auth.PolicyList, err error
 		Resource("policies").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested policies.
-func (c *policies) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *policies) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -102,81 +103,84 @@ func (c *policies) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("policies").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a policy and creates it.  Returns the server's representation of the policy, and an error, if there is any.
-func (c *policies) Create(policy *auth.Policy) (result *auth.Policy, err error) {
+func (c *policies) Create(ctx context.Context, policy *auth.Policy, opts v1.CreateOptions) (result *auth.Policy, err error) {
 	result = &auth.Policy{}
 	err = c.client.Post().
 		Resource("policies").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(policy).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a policy and updates it. Returns the server's representation of the policy, and an error, if there is any.
-func (c *policies) Update(policy *auth.Policy) (result *auth.Policy, err error) {
+func (c *policies) Update(ctx context.Context, policy *auth.Policy, opts v1.UpdateOptions) (result *auth.Policy, err error) {
 	result = &auth.Policy{}
 	err = c.client.Put().
 		Resource("policies").
 		Name(policy.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(policy).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *policies) UpdateStatus(policy *auth.Policy) (result *auth.Policy, err error) {
+func (c *policies) UpdateStatus(ctx context.Context, policy *auth.Policy, opts v1.UpdateOptions) (result *auth.Policy, err error) {
 	result = &auth.Policy{}
 	err = c.client.Put().
 		Resource("policies").
 		Name(policy.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(policy).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the policy and deletes it. Returns an error if one occurs.
-func (c *policies) Delete(name string, options *v1.DeleteOptions) error {
+func (c *policies) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("policies").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *policies) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *policies) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("policies").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched policy.
-func (c *policies) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.Policy, err error) {
+func (c *policies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.Policy, err error) {
 	result = &auth.Policy{}
 	err = c.client.Patch(pt).
 		Resource("policies").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

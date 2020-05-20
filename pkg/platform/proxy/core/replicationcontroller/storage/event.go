@@ -67,7 +67,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	rc, err := client.CoreV1().ReplicationControllers(namespaceName).Get(name, *options)
+	rc, err := client.CoreV1().ReplicationControllers(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("replicationcontrollers/events"), name)
 	}
@@ -80,5 +80,5 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	return client.CoreV1().Events(namespaceName).List(listOptions)
+	return client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 }

@@ -1,12 +1,14 @@
 package resourcelock
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logagentv1client "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
-	"tkestack.io/tke/api/logagent/v1"
+	v1 "tkestack.io/tke/api/logagent/v1"
 )
 
 // NotifyConfigMapLock defines the structure of using configmap resources to implement
@@ -20,12 +22,11 @@ type LogagentConfigMapLock struct {
 	cm            *v1.ConfigMap
 }
 
-
 // Get returns the election record from a ConfigMap Annotation
-func (cml *LogagentConfigMapLock) Get() (*LeaderElectionRecord, error) {
+func (cml *LogagentConfigMapLock) Get(ctx context.Context) (*LeaderElectionRecord, error) {
 	var record LeaderElectionRecord
 	var err error
-	cml.cm, err = cml.Client.ConfigMaps().Get(cml.ConfigMapMeta.Name, metav1.GetOptions{})
+	cml.cm, err = cml.Client.ConfigMaps().Get(ctx, cml.ConfigMapMeta.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -40,15 +41,14 @@ func (cml *LogagentConfigMapLock) Get() (*LeaderElectionRecord, error) {
 	return &record, nil
 }
 
-
 // Create attempts to create a LeaderElectionRecord annotation
-func (cml *LogagentConfigMapLock) Create(ler LeaderElectionRecord) error {
+func (cml *LogagentConfigMapLock) Create(ctx context.Context, ler LeaderElectionRecord) error {
 	recordBytes, err := json.Marshal(ler)
 	if err != nil {
 		return err
 	}
 
-	cml.cm, err = cml.Client.ConfigMaps().Create(&v1.ConfigMap{
+	cml.cm, err = cml.Client.ConfigMaps().Create(ctx, &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cml.ConfigMapMeta.Name,
 			Namespace: cml.ConfigMapMeta.Namespace,
@@ -56,13 +56,12 @@ func (cml *LogagentConfigMapLock) Create(ler LeaderElectionRecord) error {
 				LeaderElectionRecordAnnotationKey: string(recordBytes),
 			},
 		},
-	})
+	}, metav1.CreateOptions{})
 	return err
 }
 
-
 // Update will update an existing annotation on a given resource.
-func (cml *LogagentConfigMapLock) Update(ler LeaderElectionRecord) error {
+func (cml *LogagentConfigMapLock) Update(ctx context.Context, ler LeaderElectionRecord) error {
 	if cml.cm == nil {
 		return errors.New("endpoint not initialized, call get or create first")
 	}
@@ -71,7 +70,7 @@ func (cml *LogagentConfigMapLock) Update(ler LeaderElectionRecord) error {
 		return err
 	}
 	cml.cm.Annotations[LeaderElectionRecordAnnotationKey] = string(recordBytes)
-	cml.cm, err = cml.Client.ConfigMaps().Update(cml.cm)
+	cml.cm, err = cml.Client.ConfigMaps().Update(ctx, cml.cm, metav1.UpdateOptions{})
 	return err
 }
 
@@ -80,7 +79,6 @@ func (cml *LogagentConfigMapLock) Update(ler LeaderElectionRecord) error {
 func (cml *LogagentConfigMapLock) Describe() string {
 	return fmt.Sprintf("%v/%v", cml.ConfigMapMeta.Namespace, cml.ConfigMapMeta.Name)
 }
-
 
 // Identity returns the Identity of the lock
 func (cml *LogagentConfigMapLock) Identity() string {

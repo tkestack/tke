@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var receivergroupsResource = schema.GroupVersionResource{Group: "notify.tkestack
 var receivergroupsKind = schema.GroupVersionKind{Group: "notify.tkestack.io", Version: "", Kind: "ReceiverGroup"}
 
 // Get takes name of the receiverGroup, and returns the corresponding receiverGroup object, and an error if there is any.
-func (c *FakeReceiverGroups) Get(name string, options v1.GetOptions) (result *notify.ReceiverGroup, err error) {
+func (c *FakeReceiverGroups) Get(ctx context.Context, name string, options v1.GetOptions) (result *notify.ReceiverGroup, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(receivergroupsResource, name), &notify.ReceiverGroup{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeReceiverGroups) Get(name string, options v1.GetOptions) (result *no
 }
 
 // List takes label and field selectors, and returns the list of ReceiverGroups that match those selectors.
-func (c *FakeReceiverGroups) List(opts v1.ListOptions) (result *notify.ReceiverGroupList, err error) {
+func (c *FakeReceiverGroups) List(ctx context.Context, opts v1.ListOptions) (result *notify.ReceiverGroupList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(receivergroupsResource, receivergroupsKind, opts), &notify.ReceiverGroupList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeReceiverGroups) List(opts v1.ListOptions) (result *notify.ReceiverG
 }
 
 // Watch returns a watch.Interface that watches the requested receiverGroups.
-func (c *FakeReceiverGroups) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeReceiverGroups) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(receivergroupsResource, opts))
 }
 
 // Create takes the representation of a receiverGroup and creates it.  Returns the server's representation of the receiverGroup, and an error, if there is any.
-func (c *FakeReceiverGroups) Create(receiverGroup *notify.ReceiverGroup) (result *notify.ReceiverGroup, err error) {
+func (c *FakeReceiverGroups) Create(ctx context.Context, receiverGroup *notify.ReceiverGroup, opts v1.CreateOptions) (result *notify.ReceiverGroup, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(receivergroupsResource, receiverGroup), &notify.ReceiverGroup{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeReceiverGroups) Create(receiverGroup *notify.ReceiverGroup) (result
 }
 
 // Update takes the representation of a receiverGroup and updates it. Returns the server's representation of the receiverGroup, and an error, if there is any.
-func (c *FakeReceiverGroups) Update(receiverGroup *notify.ReceiverGroup) (result *notify.ReceiverGroup, err error) {
+func (c *FakeReceiverGroups) Update(ctx context.Context, receiverGroup *notify.ReceiverGroup, opts v1.UpdateOptions) (result *notify.ReceiverGroup, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(receivergroupsResource, receiverGroup), &notify.ReceiverGroup{})
 	if obj == nil {
@@ -97,14 +99,14 @@ func (c *FakeReceiverGroups) Update(receiverGroup *notify.ReceiverGroup) (result
 }
 
 // Delete takes name of the receiverGroup and deletes it. Returns an error if one occurs.
-func (c *FakeReceiverGroups) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeReceiverGroups) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(receivergroupsResource, name), &notify.ReceiverGroup{})
 	return err
 }
 
 // Patch applies the patch and returns the patched receiverGroup.
-func (c *FakeReceiverGroups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *notify.ReceiverGroup, err error) {
+func (c *FakeReceiverGroups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *notify.ReceiverGroup, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(receivergroupsResource, name, pt, data, subresources...), &notify.ReceiverGroup{})
 	if obj == nil {

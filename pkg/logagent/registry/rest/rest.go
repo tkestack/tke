@@ -31,12 +31,13 @@ import (
 	configmapstorage "tkestack.io/tke/pkg/logagent/registry/configmap/storage"
 	logagentstorage "tkestack.io/tke/pkg/logagent/registry/logagent/storage"
 )
+
 // StorageProvider is a REST type for core resources storage that implement
 // RestStorageProvider interface
 type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
 	PrivilegedUsername   string
-	PlatformClient          platformversionedclient.PlatformV1Interface //used by structs like logfile tree to get cluster client and then communicate with clusters
+	PlatformClient       platformversionedclient.PlatformV1Interface //used by structs like logfile tree to get cluster client and then communicate with clusters
 }
 
 // Implement RESTStorageProvider
@@ -45,7 +46,7 @@ var _ storage.RESTStorageProvider = &StorageProvider{}
 func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (genericserver.APIGroupInfo, bool) {
 	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(logagent.GroupName, logagent.Scheme, logagent.ParameterCodec, logagent.Codecs)
 
-	if apiResourceConfigSource.VersionEnabled(v1.SchemeGroupVersion) {//what is version enabled??
+	if apiResourceConfigSource.VersionEnabled(v1.SchemeGroupVersion) { //what is version enabled??
 		apiGroupInfo.VersionedResourcesStorageMap[v1.SchemeGroupVersion.Version] = s.v1Storage(apiResourceConfigSource, restOptionsGetter, s.LoopbackClientConfig)
 	}
 

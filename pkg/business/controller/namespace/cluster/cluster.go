@@ -19,6 +19,7 @@
 package namespace
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -32,9 +33,9 @@ import (
 	"tkestack.io/tke/pkg/util/resource"
 )
 
-func CalculateNamespaceUsed(kubeClient *kubernetes.Clientset, namespace *v1.Namespace) (message, reason string, list v1.ResourceList) {
+func CalculateNamespaceUsed(ctx context.Context, kubeClient *kubernetes.Clientset, namespace *v1.Namespace) (message, reason string, list v1.ResourceList) {
 	list = make(v1.ResourceList)
-	resourceQuotaList, err := kubeClient.CoreV1().ResourceQuotas(namespace.Spec.Namespace).List(metav1.ListOptions{Limit: 1})
+	resourceQuotaList, err := kubeClient.CoreV1().ResourceQuotas(namespace.Spec.Namespace).List(ctx, metav1.ListOptions{Limit: 1})
 	if err != nil {
 		message = "ConnectClusterError"
 		reason = err.Error()
@@ -51,8 +52,8 @@ func CalculateNamespaceUsed(kubeClient *kubernetes.Clientset, namespace *v1.Name
 	return
 }
 
-func CheckNamespaceOnCluster(kubeClient *kubernetes.Clientset, namespace *v1.Namespace) (message, reason string) {
-	ns, err := kubeClient.CoreV1().Namespaces().Get(namespace.Spec.Namespace, metav1.GetOptions{})
+func CheckNamespaceOnCluster(ctx context.Context, kubeClient *kubernetes.Clientset, namespace *v1.Namespace) (message, reason string) {
+	ns, err := kubeClient.CoreV1().Namespaces().Get(ctx, namespace.Spec.Namespace, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		message = "NamespaceNotFound"
 		reason = "The namespace on the business cluster does not exist, it may have been deleted"
@@ -84,8 +85,8 @@ func CheckNamespaceOnCluster(kubeClient *kubernetes.Clientset, namespace *v1.Nam
 	return
 }
 
-func EnsureNamespaceOnCluster(kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
-	ns, err := kubeClient.CoreV1().Namespaces().Get(namespace.Spec.Namespace, metav1.GetOptions{})
+func EnsureNamespaceOnCluster(ctx context.Context, kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
+	ns, err := kubeClient.CoreV1().Namespaces().Get(ctx, namespace.Spec.Namespace, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		// create namespace
 		nsOnCluster := &corev1.Namespace{
@@ -97,7 +98,7 @@ func EnsureNamespaceOnCluster(kubeClient *kubernetes.Clientset, namespace *v1.Na
 				},
 			},
 		}
-		_, err := kubeClient.CoreV1().Namespaces().Create(nsOnCluster)
+		_, err := kubeClient.CoreV1().Namespaces().Create(ctx, nsOnCluster, metav1.CreateOptions{})
 		if err != nil {
 			log.Error("Failed to create the namespace on cluster", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 			return err
@@ -115,7 +116,7 @@ func EnsureNamespaceOnCluster(kubeClient *kubernetes.Clientset, namespace *v1.Na
 		}
 		ns.Labels[util.LabelProjectName] = namespace.ObjectMeta.Namespace
 		ns.Labels[util.LabelNamespaceName] = namespace.ObjectMeta.Name
-		_, err := kubeClient.CoreV1().Namespaces().Update(ns)
+		_, err := kubeClient.CoreV1().Namespaces().Update(ctx, ns, metav1.UpdateOptions{})
 		if err != nil {
 			log.Error("Failed to update the namespace on cluster", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 			return err
@@ -129,8 +130,8 @@ func EnsureNamespaceOnCluster(kubeClient *kubernetes.Clientset, namespace *v1.Na
 	return nil
 }
 
-func EnsureResourceQuotaOnCluster(kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
-	resourceQuota, err := kubeClient.CoreV1().ResourceQuotas(namespace.Spec.Namespace).Get(namespace.Spec.Namespace, metav1.GetOptions{})
+func EnsureResourceQuotaOnCluster(ctx context.Context, kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
+	resourceQuota, err := kubeClient.CoreV1().ResourceQuotas(namespace.Spec.Namespace).Get(ctx, namespace.Spec.Namespace, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		// create resource quota
 		resourceList := resource.ConvertToCoreV1ResourceList(namespace.Spec.Hard)
@@ -143,7 +144,7 @@ func EnsureResourceQuotaOnCluster(kubeClient *kubernetes.Clientset, namespace *v
 				Hard: resourceList,
 			},
 		}
-		_, err := kubeClient.CoreV1().ResourceQuotas(namespace.Spec.Namespace).Create(rq)
+		_, err := kubeClient.CoreV1().ResourceQuotas(namespace.Spec.Namespace).Create(ctx, rq, metav1.CreateOptions{})
 		if err != nil {
 			log.Error("Failed to create the resource quota on cluster", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 			return err
@@ -157,7 +158,7 @@ func EnsureResourceQuotaOnCluster(kubeClient *kubernetes.Clientset, namespace *v
 	resourceList := resource.ConvertToCoreV1ResourceList(namespace.Spec.Hard)
 	if !reflect.DeepEqual(resourceQuota.Spec.Hard, resourceList) {
 		resourceQuota.Spec.Hard = resourceList
-		_, err := kubeClient.CoreV1().ResourceQuotas(namespace.Spec.Namespace).Update(resourceQuota)
+		_, err := kubeClient.CoreV1().ResourceQuotas(namespace.Spec.Namespace).Update(ctx, resourceQuota, metav1.UpdateOptions{})
 		if err != nil {
 			log.Error("Failed to update the resource quota on cluster", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 			return err
@@ -166,8 +167,8 @@ func EnsureResourceQuotaOnCluster(kubeClient *kubernetes.Clientset, namespace *v
 	return nil
 }
 
-func DetachFromClusterNamespace(kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
-	ns, err := kubeClient.CoreV1().Namespaces().Get(namespace.Spec.Namespace, metav1.GetOptions{})
+func DetachFromClusterNamespace(ctx context.Context, kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
+	ns, err := kubeClient.CoreV1().Namespaces().Get(ctx, namespace.Spec.Namespace, metav1.GetOptions{})
 	if ns == nil || errors.IsNotFound(err) {
 		return nil
 	}
@@ -175,7 +176,7 @@ func DetachFromClusterNamespace(kubeClient *kubernetes.Clientset, namespace *v1.
 	if ok {
 		delete(ns.Labels, util.LabelProjectName)
 		delete(ns.Labels, util.LabelNamespaceName)
-		_, err := kubeClient.CoreV1().Namespaces().Update(ns)
+		_, err := kubeClient.CoreV1().Namespaces().Update(ctx, ns, metav1.UpdateOptions{})
 		if err != nil {
 			log.Error("Failed to update the namespace on cluster", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 			return err
@@ -184,8 +185,8 @@ func DetachFromClusterNamespace(kubeClient *kubernetes.Clientset, namespace *v1.
 	return nil
 }
 
-func DeleteNamespaceFromCluster(kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
-	ns, err := kubeClient.CoreV1().Namespaces().Get(namespace.Spec.Namespace, metav1.GetOptions{})
+func DeleteNamespaceFromCluster(ctx context.Context, kubeClient *kubernetes.Clientset, namespace *v1.Namespace) error {
+	ns, err := kubeClient.CoreV1().Namespaces().Get(ctx, namespace.Spec.Namespace, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -202,8 +203,8 @@ func DeleteNamespaceFromCluster(kubeClient *kubernetes.Clientset, namespace *v1.
 		return nil
 	}
 	background := metav1.DeletePropagationBackground
-	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
-	if err := kubeClient.CoreV1().Namespaces().Delete(namespace.Spec.Namespace, deleteOpt); err != nil {
+	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+	if err := kubeClient.CoreV1().Namespaces().Delete(ctx, namespace.Spec.Namespace, deleteOpt); err != nil {
 		log.Error("Failed to delete the namespace in the business cluster", log.String("clusterName", namespace.Spec.ClusterName), log.String("namespace", namespace.Spec.Namespace), log.Err(err))
 		return err
 	}

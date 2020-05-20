@@ -19,6 +19,7 @@
 package galaxy
 
 import (
+	"context"
 	"io"
 	"net"
 	"os/exec"
@@ -55,25 +56,25 @@ type Option struct {
 }
 
 // Install to install the galaxy workload
-func Install(clientset kubernetes.Interface, option *Option) error {
+func Install(ctx context.Context, clientset kubernetes.Interface, option *Option) error {
 	// old flannel interface should be deleted
 	if err := cleanFlannelInterfaces(); err != nil {
 		return err
 	}
 	// in private cloud, flannel must be installed
-	if _, err := clientset.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccountFlannel()); err != nil {
+	if _, err := clientset.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountFlannel(), metav1.CreateOptions{}); err != nil {
 		if !errors.IsAlreadyExists(err) {
 			// flannel service account will create automatically
 			return err
 		}
 	}
-	if _, err := clientset.RbacV1().ClusterRoles().Create(crFlannel()); err != nil {
+	if _, err := clientset.RbacV1().ClusterRoles().Create(ctx, crFlannel(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if _, err := clientset.RbacV1().ClusterRoleBindings().Create(crbFlannel()); err != nil {
+	if _, err := clientset.RbacV1().ClusterRoleBindings().Create(ctx, crbFlannel(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(cmFlannel, metav1.GetOptions{}); err != nil {
+	if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, cmFlannel, metav1.GetOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
@@ -81,7 +82,7 @@ func Install(clientset kubernetes.Interface, option *Option) error {
 		if err != nil {
 			return err
 		}
-		if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(cm); err != nil {
+		if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, cm, metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	}
@@ -90,20 +91,20 @@ func Install(clientset kubernetes.Interface, option *Option) error {
 	if err != nil {
 		return err
 	}
-	if _, err := clientset.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(flannelObj); err != nil {
+	if _, err := clientset.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, flannelObj, metav1.CreateOptions{}); err != nil {
 		log.Errorf("create daemonset with err: %v", err)
 		return err
 	}
 	// flannel installation finished, begin to install galaxy-daemon
-	if _, err := clientset.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(serviceAccountGalaxy()); err != nil {
+	if _, err := clientset.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountGalaxy(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// ClusterRoleBinding Galaxy
-	if _, err := clientset.RbacV1().ClusterRoleBindings().Create(crbGalaxy()); err != nil {
+	if _, err := clientset.RbacV1().ClusterRoleBindings().Create(ctx, crbGalaxy(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// init galaxy configMap
-	if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(cmGalaxy, metav1.GetOptions{}); err != nil {
+	if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, cmGalaxy, metav1.GetOptions{}); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
@@ -112,7 +113,7 @@ func Install(clientset kubernetes.Interface, option *Option) error {
 			return err
 		}
 		for _, cm := range cms {
-			if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(cm); err != nil {
+			if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, cm, metav1.CreateOptions{}); err != nil {
 				return err
 			}
 		}
@@ -122,7 +123,7 @@ func Install(clientset kubernetes.Interface, option *Option) error {
 	if err != nil {
 		return err
 	}
-	if _, err := clientset.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(galaxyObj); err != nil {
+	if _, err := clientset.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, galaxyObj, metav1.CreateOptions{}); err != nil {
 		log.Errorf("create daemonset with err: %v", err)
 		return err
 	}

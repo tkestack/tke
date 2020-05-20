@@ -133,7 +133,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new policy.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateProjectPolicyBinding(obj.(*auth.ProjectPolicyBinding), s.authClient)
+	return ValidateProjectPolicyBinding(ctx, obj.(*auth.ProjectPolicyBinding), s.authClient)
 }
 
 // AllowCreateOnUpdate is false for policies.
@@ -154,7 +154,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end policy.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateProjectPolicyBindingUpdate(obj.(*auth.ProjectPolicyBinding), old.(*auth.ProjectPolicyBinding), s.authClient)
+	return ValidateProjectPolicyBindingUpdate(ctx, obj.(*auth.ProjectPolicyBinding), old.(*auth.ProjectPolicyBinding), s.authClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -163,7 +163,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a projectpolicybinding")
 	}
-	return labels.Set(binding.ObjectMeta.Labels), ToSelectableFields(binding), nil
+	return binding.ObjectMeta.Labels, ToSelectableFields(binding), nil
 }
 
 // MatchPolicy returns a generic matcher for a given label and field selector.
@@ -226,7 +226,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateProjectPolicyBindingUpdate(obj.(*auth.ProjectPolicyBinding), old.(*auth.ProjectPolicyBinding), s.authClient)
+	return ValidateProjectPolicyBindingUpdate(ctx, obj.(*auth.ProjectPolicyBinding), old.(*auth.ProjectPolicyBinding), s.authClient)
 }
 
 // FinalizeStrategy implements finalizer logic for Machine.

@@ -1,16 +1,14 @@
 #  安装步骤
 
-## 平台安装
-
-### 1. 需求检查
+## 1. 需求检查
 
 仔细检查每个节点的硬件和软件需求：[installation requirements](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
 
-### 2. Installer安装
+## 2. Installer安装
 
 为了简化平台安装过程，容器服务开源版基于 tke-installer 安装器提供了一个向导式的图形化安装指引界面。
 
-登录到您的 Installer 节点，执行如下脚本：
+在您 Installer 节点的终端，执行如下脚本：
 
 ```shell
 version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
@@ -28,7 +26,9 @@ version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 
 
-## 控制台安装
+## 3. 控制台安装
+
+> 注意：控制台是运行在global集群之上，控制台安装就是在安装global集群。
 
 1. 填写 TKEStack 控制台基本配置信息
 
@@ -36,7 +36,7 @@ version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 - **用户名**：TKEStack 控制台管理员名称（**例如：admin**）
 - **密码**：TKEStack 控制台管理员密码
-- **高可用设置**（按需使用，可直接选择**不设置**）
+- **高可用设置**（按需使用，可直接选择【**不设置**】）
   - **TKE提供**：在所有 master 节点额外安装 Keepalived 完成 VIP 的配置与连接
   - **使用已有**：对接配置好的外部 LB 实例
   - **不设置**：访问第一台 master 节点 APIServer
@@ -47,7 +47,7 @@ version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 - **网卡名称**：集群节点使用的网卡，根据实际环境填写正确的网卡名称，默认为eth0（**建议使用默认值**）
 
-- **GPU 类型**：（按需使用，可直接选择**不设置**）
+- **GPU 类型**：（按需使用，可直接选择【**不设置**】）
   - **不使用**：不安装 Nvidia GPU 相关驱动
   - **Virtual**：平台会自动为集群安装 [GPUManager](https://github.com/tkestack/docs/blob/master/features/gpumanager.md)  扩展组件
   - **Physical**：平台会自动为集群安装 [Nvidia-k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)
@@ -58,16 +58,16 @@ version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
   - **Service数量上限/集群**：决定分配给 Sevice 的 CIDR 大小
 
 - **master 节点：** 输入目标机器信息后单击保存，若保存按钮是灰色，单击网页空白处即可变蓝
-  - **访问地址：** Master 节点**内网 IP**，请配置**至少 8 Cores & 16G内存** 及以上的机型
+  - **访问地址：** Master 节点**内网 IP**，请配置**至少 8 Cores & 16G内存** 及以上的机型，**否则会部署失败**
   - **SSH 端口**：请确保目标机器安全组开放 SSH 端口和 ICMP 协议，否则无法远程登录和 PING 服务器（建议使用**22**）
   - **用户名和密码：** 均为添加的节点的用户名和密码
-  - 可以通过节点下面的**添加机器**蓝色字体增加master节点（**按需添加**）
+  - 可以通过节点下面的【添加机器】蓝色字体增加master节点（**按需添加**）
 
 ![img](../../../images/step-3-2.png)
 
 * **高级设置**（非必须）：可以自定义 Global 集群的 Docker、kube-apiserver、kube-controller-manager、kube-scheduler、kubelet 运行参数
 
-1. 填写 TKEStack 控制台认证信息。（建议使用**TKE提供**）
+3. 填写 TKEStack 控制台认证信息。（建议使用**TKE提供**）
 
 ![img](../../../images/step-3-1.png)
 
@@ -109,19 +109,26 @@ version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.
 
 ![img](../../../images/step-8.png)
 
-9. 开始安装 TKEStack 控制台，安装成功后界面如下
+9. 开始安装 TKEStack 控制台，安装成功后界面如下，最下面出现【查看指引】的按钮。
 
 ![img](../../../images/step-9.png)
 
-10. 按照指引，在本地主机上添加域名解析，以访问 TKEStack 控制台。
-
-    > 注意：这里域名的IP地址默认为**内网地址**，如果本地主机不在集群内网，域名的IP地址应该填该内网地址所对应的**外网地址**。
+10. 点击【查看指引】，按照指引，在本地主机上添加域名解析，以访问 TKEStack 控制台。
+    
 
 ![img](../../../images/step-10.png)
 
-11. 在本地主机的浏览器地址输入http://console.tke.com，可访问Global集群的控制台界面，输入步骤1中创建的用户名和密码后即可使用TKEStack。
+* **以Linux/MacOS为例**: 在`/etc/hosts`文件中加入以下两行域名解析
+  * 【IP】 console.tke.com
+  * 【IP】 registry.tke.com
 
-## 安装常见问题
+  > 注意：这里域名的【IP】地址默认为**内网地址**，如果本地主机不在集群内网，域名的IP地址应该填该内网地址所对应的**外网地址**。
+
+## 4. 访问控制台
+
+在本地主机的浏览器地址输入http://console.tke.com，可访问Global集群的控制台界面，输入控制台安装创建的用户名和密码后即可使用TKEStack。
+
+# 安装常见问题
 
 安装失败请首先检查硬件和软件需求：[installation requirements](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
 

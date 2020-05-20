@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var identityprovidersResource = schema.GroupVersionResource{Group: "auth.tkestac
 var identityprovidersKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "v1", Kind: "IdentityProvider"}
 
 // Get takes name of the identityProvider, and returns the corresponding identityProvider object, and an error if there is any.
-func (c *FakeIdentityProviders) Get(name string, options v1.GetOptions) (result *authv1.IdentityProvider, err error) {
+func (c *FakeIdentityProviders) Get(ctx context.Context, name string, options v1.GetOptions) (result *authv1.IdentityProvider, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(identityprovidersResource, name), &authv1.IdentityProvider{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeIdentityProviders) Get(name string, options v1.GetOptions) (result 
 }
 
 // List takes label and field selectors, and returns the list of IdentityProviders that match those selectors.
-func (c *FakeIdentityProviders) List(opts v1.ListOptions) (result *authv1.IdentityProviderList, err error) {
+func (c *FakeIdentityProviders) List(ctx context.Context, opts v1.ListOptions) (result *authv1.IdentityProviderList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(identityprovidersResource, identityprovidersKind, opts), &authv1.IdentityProviderList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeIdentityProviders) List(opts v1.ListOptions) (result *authv1.Identi
 }
 
 // Watch returns a watch.Interface that watches the requested identityProviders.
-func (c *FakeIdentityProviders) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeIdentityProviders) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(identityprovidersResource, opts))
 }
 
 // Create takes the representation of a identityProvider and creates it.  Returns the server's representation of the identityProvider, and an error, if there is any.
-func (c *FakeIdentityProviders) Create(identityProvider *authv1.IdentityProvider) (result *authv1.IdentityProvider, err error) {
+func (c *FakeIdentityProviders) Create(ctx context.Context, identityProvider *authv1.IdentityProvider, opts v1.CreateOptions) (result *authv1.IdentityProvider, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(identityprovidersResource, identityProvider), &authv1.IdentityProvider{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeIdentityProviders) Create(identityProvider *authv1.IdentityProvider
 }
 
 // Update takes the representation of a identityProvider and updates it. Returns the server's representation of the identityProvider, and an error, if there is any.
-func (c *FakeIdentityProviders) Update(identityProvider *authv1.IdentityProvider) (result *authv1.IdentityProvider, err error) {
+func (c *FakeIdentityProviders) Update(ctx context.Context, identityProvider *authv1.IdentityProvider, opts v1.UpdateOptions) (result *authv1.IdentityProvider, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(identityprovidersResource, identityProvider), &authv1.IdentityProvider{})
 	if obj == nil {
@@ -97,22 +99,22 @@ func (c *FakeIdentityProviders) Update(identityProvider *authv1.IdentityProvider
 }
 
 // Delete takes name of the identityProvider and deletes it. Returns an error if one occurs.
-func (c *FakeIdentityProviders) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeIdentityProviders) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(identityprovidersResource, name), &authv1.IdentityProvider{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeIdentityProviders) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(identityprovidersResource, listOptions)
+func (c *FakeIdentityProviders) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(identityprovidersResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &authv1.IdentityProviderList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched identityProvider.
-func (c *FakeIdentityProviders) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *authv1.IdentityProvider, err error) {
+func (c *FakeIdentityProviders) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *authv1.IdentityProvider, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(identityprovidersResource, name, pt, data, subresources...), &authv1.IdentityProvider{})
 	if obj == nil {

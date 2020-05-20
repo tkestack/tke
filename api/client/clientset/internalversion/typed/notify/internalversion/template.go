@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type TemplatesGetter interface {
 
 // TemplateInterface has methods to work with Template resources.
 type TemplateInterface interface {
-	Create(*notify.Template) (*notify.Template, error)
-	Update(*notify.Template) (*notify.Template, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*notify.Template, error)
-	List(opts v1.ListOptions) (*notify.TemplateList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *notify.Template, err error)
+	Create(ctx context.Context, template *notify.Template, opts v1.CreateOptions) (*notify.Template, error)
+	Update(ctx context.Context, template *notify.Template, opts v1.UpdateOptions) (*notify.Template, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*notify.Template, error)
+	List(ctx context.Context, opts v1.ListOptions) (*notify.TemplateList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *notify.Template, err error)
 	TemplateExpansion
 }
 
@@ -65,20 +66,20 @@ func newTemplates(c *NotifyClient, namespace string) *templates {
 }
 
 // Get takes name of the template, and returns the corresponding template object, and an error if there is any.
-func (c *templates) Get(name string, options v1.GetOptions) (result *notify.Template, err error) {
+func (c *templates) Get(ctx context.Context, name string, options v1.GetOptions) (result *notify.Template, err error) {
 	result = &notify.Template{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("templates").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Templates that match those selectors.
-func (c *templates) List(opts v1.ListOptions) (result *notify.TemplateList, err error) {
+func (c *templates) List(ctx context.Context, opts v1.ListOptions) (result *notify.TemplateList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -89,13 +90,13 @@ func (c *templates) List(opts v1.ListOptions) (result *notify.TemplateList, err 
 		Resource("templates").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested templates.
-func (c *templates) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *templates) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -106,71 +107,74 @@ func (c *templates) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("templates").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a template and creates it.  Returns the server's representation of the template, and an error, if there is any.
-func (c *templates) Create(template *notify.Template) (result *notify.Template, err error) {
+func (c *templates) Create(ctx context.Context, template *notify.Template, opts v1.CreateOptions) (result *notify.Template, err error) {
 	result = &notify.Template{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("templates").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(template).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a template and updates it. Returns the server's representation of the template, and an error, if there is any.
-func (c *templates) Update(template *notify.Template) (result *notify.Template, err error) {
+func (c *templates) Update(ctx context.Context, template *notify.Template, opts v1.UpdateOptions) (result *notify.Template, err error) {
 	result = &notify.Template{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("templates").
 		Name(template.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(template).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the template and deletes it. Returns an error if one occurs.
-func (c *templates) Delete(name string, options *v1.DeleteOptions) error {
+func (c *templates) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("templates").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *templates) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *templates) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("templates").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched template.
-func (c *templates) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *notify.Template, err error) {
+func (c *templates) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *notify.Template, err error) {
 	result = &notify.Template{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("templates").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

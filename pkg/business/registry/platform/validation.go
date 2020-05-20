@@ -19,6 +19,7 @@
 package platform
 
 import (
+	"context"
 	"fmt"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
@@ -34,11 +35,11 @@ import (
 var ValidatePlatformName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidatePlatform tests if required fields in the platform are set.
-func ValidatePlatform(platform *business.Platform, businessClient *businessinternalclient.BusinessClient) field.ErrorList {
+func ValidatePlatform(ctx context.Context, platform *business.Platform, businessClient *businessinternalclient.BusinessClient) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&platform.ObjectMeta, false, ValidatePlatformName, field.NewPath("metadata"))
 
 	if platform.Spec.TenantID != "" && platform.Name != options.DefaultPlatform {
-		platformList, err := businessClient.Platforms().List(metav1.ListOptions{
+		platformList, err := businessClient.Platforms().List(ctx, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.tenantID=%s", platform.Spec.TenantID),
 		})
 		if err != nil {
@@ -53,7 +54,7 @@ func ValidatePlatform(platform *business.Platform, businessClient *businessinter
 
 // ValidatePlatformUpdate tests if required fields in the platform are set during
 // an update.
-func ValidatePlatformUpdate(platform *business.Platform, old *business.Platform) field.ErrorList {
+func ValidatePlatformUpdate(ctx context.Context, platform *business.Platform, old *business.Platform) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&platform.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 
 	return allErrs

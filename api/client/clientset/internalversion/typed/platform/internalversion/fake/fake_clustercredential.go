@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var clustercredentialsResource = schema.GroupVersionResource{Group: "platform.tk
 var clustercredentialsKind = schema.GroupVersionKind{Group: "platform.tkestack.io", Version: "", Kind: "ClusterCredential"}
 
 // Get takes name of the clusterCredential, and returns the corresponding clusterCredential object, and an error if there is any.
-func (c *FakeClusterCredentials) Get(name string, options v1.GetOptions) (result *platform.ClusterCredential, err error) {
+func (c *FakeClusterCredentials) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.ClusterCredential, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(clustercredentialsResource, name), &platform.ClusterCredential{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeClusterCredentials) Get(name string, options v1.GetOptions) (result
 }
 
 // List takes label and field selectors, and returns the list of ClusterCredentials that match those selectors.
-func (c *FakeClusterCredentials) List(opts v1.ListOptions) (result *platform.ClusterCredentialList, err error) {
+func (c *FakeClusterCredentials) List(ctx context.Context, opts v1.ListOptions) (result *platform.ClusterCredentialList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(clustercredentialsResource, clustercredentialsKind, opts), &platform.ClusterCredentialList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeClusterCredentials) List(opts v1.ListOptions) (result *platform.Clu
 }
 
 // Watch returns a watch.Interface that watches the requested clusterCredentials.
-func (c *FakeClusterCredentials) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeClusterCredentials) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(clustercredentialsResource, opts))
 }
 
 // Create takes the representation of a clusterCredential and creates it.  Returns the server's representation of the clusterCredential, and an error, if there is any.
-func (c *FakeClusterCredentials) Create(clusterCredential *platform.ClusterCredential) (result *platform.ClusterCredential, err error) {
+func (c *FakeClusterCredentials) Create(ctx context.Context, clusterCredential *platform.ClusterCredential, opts v1.CreateOptions) (result *platform.ClusterCredential, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(clustercredentialsResource, clusterCredential), &platform.ClusterCredential{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeClusterCredentials) Create(clusterCredential *platform.ClusterCrede
 }
 
 // Update takes the representation of a clusterCredential and updates it. Returns the server's representation of the clusterCredential, and an error, if there is any.
-func (c *FakeClusterCredentials) Update(clusterCredential *platform.ClusterCredential) (result *platform.ClusterCredential, err error) {
+func (c *FakeClusterCredentials) Update(ctx context.Context, clusterCredential *platform.ClusterCredential, opts v1.UpdateOptions) (result *platform.ClusterCredential, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(clustercredentialsResource, clusterCredential), &platform.ClusterCredential{})
 	if obj == nil {
@@ -97,14 +99,14 @@ func (c *FakeClusterCredentials) Update(clusterCredential *platform.ClusterCrede
 }
 
 // Delete takes name of the clusterCredential and deletes it. Returns an error if one occurs.
-func (c *FakeClusterCredentials) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeClusterCredentials) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(clustercredentialsResource, name), &platform.ClusterCredential{})
 	return err
 }
 
 // Patch applies the patch and returns the patched clusterCredential.
-func (c *FakeClusterCredentials) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.ClusterCredential, err error) {
+func (c *FakeClusterCredentials) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.ClusterCredential, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(clustercredentialsResource, name, pt, data, subresources...), &platform.ClusterCredential{})
 	if obj == nil {

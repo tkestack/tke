@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type VolumeDecoratorsGetter interface {
 
 // VolumeDecoratorInterface has methods to work with VolumeDecorator resources.
 type VolumeDecoratorInterface interface {
-	Create(*v1.VolumeDecorator) (*v1.VolumeDecorator, error)
-	Update(*v1.VolumeDecorator) (*v1.VolumeDecorator, error)
-	UpdateStatus(*v1.VolumeDecorator) (*v1.VolumeDecorator, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.VolumeDecorator, error)
-	List(opts metav1.ListOptions) (*v1.VolumeDecoratorList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.VolumeDecorator, err error)
+	Create(ctx context.Context, volumeDecorator *v1.VolumeDecorator, opts metav1.CreateOptions) (*v1.VolumeDecorator, error)
+	Update(ctx context.Context, volumeDecorator *v1.VolumeDecorator, opts metav1.UpdateOptions) (*v1.VolumeDecorator, error)
+	UpdateStatus(ctx context.Context, volumeDecorator *v1.VolumeDecorator, opts metav1.UpdateOptions) (*v1.VolumeDecorator, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.VolumeDecorator, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.VolumeDecoratorList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.VolumeDecorator, err error)
 	VolumeDecoratorExpansion
 }
 
@@ -63,19 +64,19 @@ func newVolumeDecorators(c *PlatformV1Client) *volumeDecorators {
 }
 
 // Get takes name of the volumeDecorator, and returns the corresponding volumeDecorator object, and an error if there is any.
-func (c *volumeDecorators) Get(name string, options metav1.GetOptions) (result *v1.VolumeDecorator, err error) {
+func (c *volumeDecorators) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.VolumeDecorator, err error) {
 	result = &v1.VolumeDecorator{}
 	err = c.client.Get().
 		Resource("volumedecorators").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of VolumeDecorators that match those selectors.
-func (c *volumeDecorators) List(opts metav1.ListOptions) (result *v1.VolumeDecoratorList, err error) {
+func (c *volumeDecorators) List(ctx context.Context, opts metav1.ListOptions) (result *v1.VolumeDecoratorList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *volumeDecorators) List(opts metav1.ListOptions) (result *v1.VolumeDecor
 		Resource("volumedecorators").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested volumeDecorators.
-func (c *volumeDecorators) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *volumeDecorators) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *volumeDecorators) Watch(opts metav1.ListOptions) (watch.Interface, erro
 		Resource("volumedecorators").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a volumeDecorator and creates it.  Returns the server's representation of the volumeDecorator, and an error, if there is any.
-func (c *volumeDecorators) Create(volumeDecorator *v1.VolumeDecorator) (result *v1.VolumeDecorator, err error) {
+func (c *volumeDecorators) Create(ctx context.Context, volumeDecorator *v1.VolumeDecorator, opts metav1.CreateOptions) (result *v1.VolumeDecorator, err error) {
 	result = &v1.VolumeDecorator{}
 	err = c.client.Post().
 		Resource("volumedecorators").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(volumeDecorator).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a volumeDecorator and updates it. Returns the server's representation of the volumeDecorator, and an error, if there is any.
-func (c *volumeDecorators) Update(volumeDecorator *v1.VolumeDecorator) (result *v1.VolumeDecorator, err error) {
+func (c *volumeDecorators) Update(ctx context.Context, volumeDecorator *v1.VolumeDecorator, opts metav1.UpdateOptions) (result *v1.VolumeDecorator, err error) {
 	result = &v1.VolumeDecorator{}
 	err = c.client.Put().
 		Resource("volumedecorators").
 		Name(volumeDecorator.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(volumeDecorator).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *volumeDecorators) UpdateStatus(volumeDecorator *v1.VolumeDecorator) (result *v1.VolumeDecorator, err error) {
+func (c *volumeDecorators) UpdateStatus(ctx context.Context, volumeDecorator *v1.VolumeDecorator, opts metav1.UpdateOptions) (result *v1.VolumeDecorator, err error) {
 	result = &v1.VolumeDecorator{}
 	err = c.client.Put().
 		Resource("volumedecorators").
 		Name(volumeDecorator.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(volumeDecorator).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the volumeDecorator and deletes it. Returns an error if one occurs.
-func (c *volumeDecorators) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *volumeDecorators) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("volumedecorators").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched volumeDecorator.
-func (c *volumeDecorators) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.VolumeDecorator, err error) {
+func (c *volumeDecorators) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.VolumeDecorator, err error) {
 	result = &v1.VolumeDecorator{}
 	err = c.client.Patch(pt).
 		Resource("volumedecorators").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

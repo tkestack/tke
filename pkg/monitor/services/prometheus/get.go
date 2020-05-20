@@ -19,16 +19,18 @@
 package prometheus
 
 import (
+	"context"
+
 	v1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-func (h *processor) GetGroup(clusterName, groupName string) (*v1.RuleGroup, error) {
+func (h *processor) GetGroup(ctx context.Context, clusterName, groupName string) (*v1.RuleGroup, error) {
 	h.Lock()
 	defer h.Unlock()
 
-	ruleOp, err := h.loadRule(clusterName)
+	ruleOp, err := h.loadRule(ctx, clusterName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "rule operator not found")
 	}
@@ -43,11 +45,11 @@ func (h *processor) GetGroup(clusterName, groupName string) (*v1.RuleGroup, erro
 	return ruleGroup, nil
 }
 
-func (h *processor) GetRule(clusterName, groupName, recordName string) (*v1.Rule, error) {
+func (h *processor) GetRule(ctx context.Context, clusterName, groupName, recordName string) (*v1.Rule, error) {
 	h.Lock()
 	defer h.Unlock()
 
-	ruleOp, err := h.loadRule(clusterName)
+	ruleOp, err := h.loadRule(ctx, clusterName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "rule operator not found")
 	}

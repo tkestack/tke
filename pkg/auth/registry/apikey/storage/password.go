@@ -53,10 +53,10 @@ func (r *PasswordREST) Create(ctx context.Context, obj runtime.Object, createVal
 
 	apikeyReq := obj.(*auth.APIKeyReqPassword)
 
-	if err := apikey.ValidateAPIkeyPassword(apikeyReq, r.authClient); err != nil {
+	if err := apikey.ValidateAPIkeyPassword(ctx, apikeyReq, r.authClient); err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
 	}
-	apiKey, err := r.keySigner.Generate(apikeyReq.Username, apikeyReq.TenantID, apikeyReq.Expire.Duration)
+	apiKey, err := r.keySigner.Generate(ctx, apikeyReq.Username, apikeyReq.TenantID, apikeyReq.Expire.Duration)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
 	}

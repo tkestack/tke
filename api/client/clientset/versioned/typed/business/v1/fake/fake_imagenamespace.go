@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,7 +43,7 @@ var imagenamespacesResource = schema.GroupVersionResource{Group: "business.tkest
 var imagenamespacesKind = schema.GroupVersionKind{Group: "business.tkestack.io", Version: "v1", Kind: "ImageNamespace"}
 
 // Get takes name of the imageNamespace, and returns the corresponding imageNamespace object, and an error if there is any.
-func (c *FakeImageNamespaces) Get(name string, options v1.GetOptions) (result *businessv1.ImageNamespace, err error) {
+func (c *FakeImageNamespaces) Get(ctx context.Context, name string, options v1.GetOptions) (result *businessv1.ImageNamespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(imagenamespacesResource, c.ns, name), &businessv1.ImageNamespace{})
 
@@ -52,7 +54,7 @@ func (c *FakeImageNamespaces) Get(name string, options v1.GetOptions) (result *b
 }
 
 // List takes label and field selectors, and returns the list of ImageNamespaces that match those selectors.
-func (c *FakeImageNamespaces) List(opts v1.ListOptions) (result *businessv1.ImageNamespaceList, err error) {
+func (c *FakeImageNamespaces) List(ctx context.Context, opts v1.ListOptions) (result *businessv1.ImageNamespaceList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(imagenamespacesResource, imagenamespacesKind, c.ns, opts), &businessv1.ImageNamespaceList{})
 
@@ -74,14 +76,14 @@ func (c *FakeImageNamespaces) List(opts v1.ListOptions) (result *businessv1.Imag
 }
 
 // Watch returns a watch.Interface that watches the requested imageNamespaces.
-func (c *FakeImageNamespaces) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeImageNamespaces) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(imagenamespacesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a imageNamespace and creates it.  Returns the server's representation of the imageNamespace, and an error, if there is any.
-func (c *FakeImageNamespaces) Create(imageNamespace *businessv1.ImageNamespace) (result *businessv1.ImageNamespace, err error) {
+func (c *FakeImageNamespaces) Create(ctx context.Context, imageNamespace *businessv1.ImageNamespace, opts v1.CreateOptions) (result *businessv1.ImageNamespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(imagenamespacesResource, c.ns, imageNamespace), &businessv1.ImageNamespace{})
 
@@ -92,7 +94,7 @@ func (c *FakeImageNamespaces) Create(imageNamespace *businessv1.ImageNamespace) 
 }
 
 // Update takes the representation of a imageNamespace and updates it. Returns the server's representation of the imageNamespace, and an error, if there is any.
-func (c *FakeImageNamespaces) Update(imageNamespace *businessv1.ImageNamespace) (result *businessv1.ImageNamespace, err error) {
+func (c *FakeImageNamespaces) Update(ctx context.Context, imageNamespace *businessv1.ImageNamespace, opts v1.UpdateOptions) (result *businessv1.ImageNamespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(imagenamespacesResource, c.ns, imageNamespace), &businessv1.ImageNamespace{})
 
@@ -104,7 +106,7 @@ func (c *FakeImageNamespaces) Update(imageNamespace *businessv1.ImageNamespace) 
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeImageNamespaces) UpdateStatus(imageNamespace *businessv1.ImageNamespace) (*businessv1.ImageNamespace, error) {
+func (c *FakeImageNamespaces) UpdateStatus(ctx context.Context, imageNamespace *businessv1.ImageNamespace, opts v1.UpdateOptions) (*businessv1.ImageNamespace, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(imagenamespacesResource, "status", c.ns, imageNamespace), &businessv1.ImageNamespace{})
 
@@ -115,7 +117,7 @@ func (c *FakeImageNamespaces) UpdateStatus(imageNamespace *businessv1.ImageNames
 }
 
 // Delete takes name of the imageNamespace and deletes it. Returns an error if one occurs.
-func (c *FakeImageNamespaces) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeImageNamespaces) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(imagenamespacesResource, c.ns, name), &businessv1.ImageNamespace{})
 
@@ -123,15 +125,15 @@ func (c *FakeImageNamespaces) Delete(name string, options *v1.DeleteOptions) err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeImageNamespaces) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(imagenamespacesResource, c.ns, listOptions)
+func (c *FakeImageNamespaces) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(imagenamespacesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &businessv1.ImageNamespaceList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched imageNamespace.
-func (c *FakeImageNamespaces) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *businessv1.ImageNamespace, err error) {
+func (c *FakeImageNamespaces) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *businessv1.ImageNamespace, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(imagenamespacesResource, c.ns, name, pt, data, subresources...), &businessv1.ImageNamespace{})
 

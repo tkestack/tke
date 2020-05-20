@@ -110,7 +110,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if err != nil {
 		return // avoid panic validate will be report error
 	}
-	clusterWrapper, err := types.GetCluster(s.platformClient, cluster)
+	clusterWrapper, err := types.GetCluster(ctx, s.platformClient, cluster)
 	if err != nil {
 		panic(err)
 	}
@@ -128,7 +128,7 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 	if err != nil {
 		return err
 	}
-	clusterWrapper, err := types.GetCluster(s.platformClient, cluster)
+	clusterWrapper, err := types.GetCluster(context.Background(), s.platformClient, cluster)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 // Validate validates a new cluster
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
 	cluster, _ := obj.(*platform.Cluster)
-	clusterWrapper, err := types.GetCluster(s.platformClient, cluster)
+	clusterWrapper, err := types.GetCluster(ctx, s.platformClient, cluster)
 	if err != nil {
 		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}
@@ -170,11 +170,11 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	cluster, _ := obj.(*platform.Cluster)
 	oldCluster, _ := old.(*platform.Cluster)
-	clusterWrapper, err := types.GetCluster(s.platformClient, cluster)
+	clusterWrapper, err := types.GetCluster(ctx, s.platformClient, cluster)
 	if err != nil {
 		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}
-	oldClusterWrapper, err := types.GetCluster(s.platformClient, oldCluster)
+	oldClusterWrapper, err := types.GetCluster(ctx, s.platformClient, oldCluster)
 	if err != nil {
 		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}

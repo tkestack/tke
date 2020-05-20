@@ -17,6 +17,7 @@
 package gpu
 
 import (
+	"context"
 	"fmt"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
@@ -86,8 +87,8 @@ type NvidiaDevicePluginOption struct {
 	Image string
 }
 
-func InstallNvidiaDevicePlugin(clientset clientset.Interface, option *NvidiaDevicePluginOption) error {
-	err := apiclient.CreateResourceWithFile(clientset, constants.ManifestsDir+"gpu/nvidia-device-plugin.yaml", option)
+func InstallNvidiaDevicePlugin(ctx context.Context, clientset clientset.Interface, option *NvidiaDevicePluginOption) error {
+	err := apiclient.CreateResourceWithFile(ctx, clientset, constants.ManifestsDir+"gpu/nvidia-device-plugin.yaml", option)
 	if err != nil {
 		return err
 	}

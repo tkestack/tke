@@ -21,16 +21,17 @@ package storage
 import (
 	"context"
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	netutil "k8s.io/apimachinery/pkg/util/net"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
-	"k8s.io/apiserver/pkg/registry/rest"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	netutil "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/registry/rest"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/logagent"
 	"tkestack.io/tke/pkg/logagent/util"
@@ -38,13 +39,12 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
-//TODO: replace this with logRule api and controller
-
+// TODO: replace this with logRule api and controller
 
 // TokenREST implements the REST endpoint.
 type LogagentProxyREST struct {
 	//rest.Storage
-	store *registry.Store
+	store          *registry.Store
 	platformClient platformversionedclient.PlatformV1Interface
 }
 
@@ -80,6 +80,7 @@ func (r *LogagentProxyREST) Connect(ctx context.Context, clusterName string, opt
 		name:      proxyOpts.Name,
 	}, nil
 }
+
 //
 // New creates a new LogCollector proxy options object
 func (r *LogagentProxyREST) New() runtime.Object {

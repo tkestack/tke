@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var projectsResource = schema.GroupVersionResource{Group: "business.tkestack.io"
 var projectsKind = schema.GroupVersionKind{Group: "business.tkestack.io", Version: "", Kind: "Project"}
 
 // Get takes name of the project, and returns the corresponding project object, and an error if there is any.
-func (c *FakeProjects) Get(name string, options v1.GetOptions) (result *business.Project, err error) {
+func (c *FakeProjects) Get(ctx context.Context, name string, options v1.GetOptions) (result *business.Project, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(projectsResource, name), &business.Project{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeProjects) Get(name string, options v1.GetOptions) (result *business
 }
 
 // List takes label and field selectors, and returns the list of Projects that match those selectors.
-func (c *FakeProjects) List(opts v1.ListOptions) (result *business.ProjectList, err error) {
+func (c *FakeProjects) List(ctx context.Context, opts v1.ListOptions) (result *business.ProjectList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(projectsResource, projectsKind, opts), &business.ProjectList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeProjects) List(opts v1.ListOptions) (result *business.ProjectList, 
 }
 
 // Watch returns a watch.Interface that watches the requested projects.
-func (c *FakeProjects) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeProjects) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(projectsResource, opts))
 }
 
 // Create takes the representation of a project and creates it.  Returns the server's representation of the project, and an error, if there is any.
-func (c *FakeProjects) Create(project *business.Project) (result *business.Project, err error) {
+func (c *FakeProjects) Create(ctx context.Context, project *business.Project, opts v1.CreateOptions) (result *business.Project, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(projectsResource, project), &business.Project{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeProjects) Create(project *business.Project) (result *business.Proje
 }
 
 // Update takes the representation of a project and updates it. Returns the server's representation of the project, and an error, if there is any.
-func (c *FakeProjects) Update(project *business.Project) (result *business.Project, err error) {
+func (c *FakeProjects) Update(ctx context.Context, project *business.Project, opts v1.UpdateOptions) (result *business.Project, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(projectsResource, project), &business.Project{})
 	if obj == nil {
@@ -98,7 +100,7 @@ func (c *FakeProjects) Update(project *business.Project) (result *business.Proje
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeProjects) UpdateStatus(project *business.Project) (*business.Project, error) {
+func (c *FakeProjects) UpdateStatus(ctx context.Context, project *business.Project, opts v1.UpdateOptions) (*business.Project, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(projectsResource, "status", project), &business.Project{})
 	if obj == nil {
@@ -108,14 +110,14 @@ func (c *FakeProjects) UpdateStatus(project *business.Project) (*business.Projec
 }
 
 // Delete takes name of the project and deletes it. Returns an error if one occurs.
-func (c *FakeProjects) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeProjects) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(projectsResource, name), &business.Project{})
 	return err
 }
 
 // Patch applies the patch and returns the patched project.
-func (c *FakeProjects) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *business.Project, err error) {
+func (c *FakeProjects) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *business.Project, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(projectsResource, name, pt, data, subresources...), &business.Project{})
 	if obj == nil {

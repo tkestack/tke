@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,15 +40,15 @@ type ProjectPolicyBindingsGetter interface {
 
 // ProjectPolicyBindingInterface has methods to work with ProjectPolicyBinding resources.
 type ProjectPolicyBindingInterface interface {
-	Create(*auth.ProjectPolicyBinding) (*auth.ProjectPolicyBinding, error)
-	Update(*auth.ProjectPolicyBinding) (*auth.ProjectPolicyBinding, error)
-	UpdateStatus(*auth.ProjectPolicyBinding) (*auth.ProjectPolicyBinding, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*auth.ProjectPolicyBinding, error)
-	List(opts v1.ListOptions) (*auth.ProjectPolicyBindingList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.ProjectPolicyBinding, err error)
+	Create(ctx context.Context, projectPolicyBinding *auth.ProjectPolicyBinding, opts v1.CreateOptions) (*auth.ProjectPolicyBinding, error)
+	Update(ctx context.Context, projectPolicyBinding *auth.ProjectPolicyBinding, opts v1.UpdateOptions) (*auth.ProjectPolicyBinding, error)
+	UpdateStatus(ctx context.Context, projectPolicyBinding *auth.ProjectPolicyBinding, opts v1.UpdateOptions) (*auth.ProjectPolicyBinding, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*auth.ProjectPolicyBinding, error)
+	List(ctx context.Context, opts v1.ListOptions) (*auth.ProjectPolicyBindingList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.ProjectPolicyBinding, err error)
 	ProjectPolicyBindingExpansion
 }
 
@@ -64,19 +65,19 @@ func newProjectPolicyBindings(c *AuthClient) *projectPolicyBindings {
 }
 
 // Get takes name of the projectPolicyBinding, and returns the corresponding projectPolicyBinding object, and an error if there is any.
-func (c *projectPolicyBindings) Get(name string, options v1.GetOptions) (result *auth.ProjectPolicyBinding, err error) {
+func (c *projectPolicyBindings) Get(ctx context.Context, name string, options v1.GetOptions) (result *auth.ProjectPolicyBinding, err error) {
 	result = &auth.ProjectPolicyBinding{}
 	err = c.client.Get().
 		Resource("projectpolicybindings").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of ProjectPolicyBindings that match those selectors.
-func (c *projectPolicyBindings) List(opts v1.ListOptions) (result *auth.ProjectPolicyBindingList, err error) {
+func (c *projectPolicyBindings) List(ctx context.Context, opts v1.ListOptions) (result *auth.ProjectPolicyBindingList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -86,13 +87,13 @@ func (c *projectPolicyBindings) List(opts v1.ListOptions) (result *auth.ProjectP
 		Resource("projectpolicybindings").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested projectPolicyBindings.
-func (c *projectPolicyBindings) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *projectPolicyBindings) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -102,81 +103,84 @@ func (c *projectPolicyBindings) Watch(opts v1.ListOptions) (watch.Interface, err
 		Resource("projectpolicybindings").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a projectPolicyBinding and creates it.  Returns the server's representation of the projectPolicyBinding, and an error, if there is any.
-func (c *projectPolicyBindings) Create(projectPolicyBinding *auth.ProjectPolicyBinding) (result *auth.ProjectPolicyBinding, err error) {
+func (c *projectPolicyBindings) Create(ctx context.Context, projectPolicyBinding *auth.ProjectPolicyBinding, opts v1.CreateOptions) (result *auth.ProjectPolicyBinding, err error) {
 	result = &auth.ProjectPolicyBinding{}
 	err = c.client.Post().
 		Resource("projectpolicybindings").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(projectPolicyBinding).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a projectPolicyBinding and updates it. Returns the server's representation of the projectPolicyBinding, and an error, if there is any.
-func (c *projectPolicyBindings) Update(projectPolicyBinding *auth.ProjectPolicyBinding) (result *auth.ProjectPolicyBinding, err error) {
+func (c *projectPolicyBindings) Update(ctx context.Context, projectPolicyBinding *auth.ProjectPolicyBinding, opts v1.UpdateOptions) (result *auth.ProjectPolicyBinding, err error) {
 	result = &auth.ProjectPolicyBinding{}
 	err = c.client.Put().
 		Resource("projectpolicybindings").
 		Name(projectPolicyBinding.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(projectPolicyBinding).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *projectPolicyBindings) UpdateStatus(projectPolicyBinding *auth.ProjectPolicyBinding) (result *auth.ProjectPolicyBinding, err error) {
+func (c *projectPolicyBindings) UpdateStatus(ctx context.Context, projectPolicyBinding *auth.ProjectPolicyBinding, opts v1.UpdateOptions) (result *auth.ProjectPolicyBinding, err error) {
 	result = &auth.ProjectPolicyBinding{}
 	err = c.client.Put().
 		Resource("projectpolicybindings").
 		Name(projectPolicyBinding.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(projectPolicyBinding).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the projectPolicyBinding and deletes it. Returns an error if one occurs.
-func (c *projectPolicyBindings) Delete(name string, options *v1.DeleteOptions) error {
+func (c *projectPolicyBindings) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("projectpolicybindings").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *projectPolicyBindings) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *projectPolicyBindings) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("projectpolicybindings").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched projectPolicyBinding.
-func (c *projectPolicyBindings) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.ProjectPolicyBinding, err error) {
+func (c *projectPolicyBindings) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.ProjectPolicyBinding, err error) {
 	result = &auth.ProjectPolicyBinding{}
 	err = c.client.Patch(pt).
 		Resource("projectpolicybindings").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

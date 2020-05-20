@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var platformsResource = schema.GroupVersionResource{Group: "business.tkestack.io
 var platformsKind = schema.GroupVersionKind{Group: "business.tkestack.io", Version: "v1", Kind: "Platform"}
 
 // Get takes name of the platform, and returns the corresponding platform object, and an error if there is any.
-func (c *FakePlatforms) Get(name string, options v1.GetOptions) (result *businessv1.Platform, err error) {
+func (c *FakePlatforms) Get(ctx context.Context, name string, options v1.GetOptions) (result *businessv1.Platform, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(platformsResource, name), &businessv1.Platform{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakePlatforms) Get(name string, options v1.GetOptions) (result *busines
 }
 
 // List takes label and field selectors, and returns the list of Platforms that match those selectors.
-func (c *FakePlatforms) List(opts v1.ListOptions) (result *businessv1.PlatformList, err error) {
+func (c *FakePlatforms) List(ctx context.Context, opts v1.ListOptions) (result *businessv1.PlatformList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(platformsResource, platformsKind, opts), &businessv1.PlatformList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakePlatforms) List(opts v1.ListOptions) (result *businessv1.PlatformLi
 }
 
 // Watch returns a watch.Interface that watches the requested platforms.
-func (c *FakePlatforms) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakePlatforms) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(platformsResource, opts))
 }
 
 // Create takes the representation of a platform and creates it.  Returns the server's representation of the platform, and an error, if there is any.
-func (c *FakePlatforms) Create(platform *businessv1.Platform) (result *businessv1.Platform, err error) {
+func (c *FakePlatforms) Create(ctx context.Context, platform *businessv1.Platform, opts v1.CreateOptions) (result *businessv1.Platform, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(platformsResource, platform), &businessv1.Platform{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakePlatforms) Create(platform *businessv1.Platform) (result *businessv
 }
 
 // Update takes the representation of a platform and updates it. Returns the server's representation of the platform, and an error, if there is any.
-func (c *FakePlatforms) Update(platform *businessv1.Platform) (result *businessv1.Platform, err error) {
+func (c *FakePlatforms) Update(ctx context.Context, platform *businessv1.Platform, opts v1.UpdateOptions) (result *businessv1.Platform, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(platformsResource, platform), &businessv1.Platform{})
 	if obj == nil {
@@ -97,14 +99,14 @@ func (c *FakePlatforms) Update(platform *businessv1.Platform) (result *businessv
 }
 
 // Delete takes name of the platform and deletes it. Returns an error if one occurs.
-func (c *FakePlatforms) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakePlatforms) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(platformsResource, name), &businessv1.Platform{})
 	return err
 }
 
 // Patch applies the patch and returns the patched platform.
-func (c *FakePlatforms) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *businessv1.Platform, err error) {
+func (c *FakePlatforms) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *businessv1.Platform, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(platformsResource, name, pt, data, subresources...), &businessv1.Platform{})
 	if obj == nil {

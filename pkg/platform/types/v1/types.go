@@ -19,6 +19,7 @@
 package v1
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -42,15 +43,15 @@ type Cluster struct {
 	ClusterCredential *platformv1.ClusterCredential
 }
 
-func GetClusterByName(platformClient platformversionedclient.PlatformV1Interface, name string) (*Cluster, error) {
+func GetClusterByName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (*Cluster, error) {
 	result := new(Cluster)
-	cluster, err := platformClient.Clusters().Get(name, metav1.GetOptions{})
+	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	result.Cluster = cluster
 	if cluster.Spec.ClusterCredentialRef != nil {
-		clusterCredential, err := platformClient.ClusterCredentials().Get(cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
+		clusterCredential, err := platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("get cluster's credential error: %w", err)
 		}
@@ -60,11 +61,11 @@ func GetClusterByName(platformClient platformversionedclient.PlatformV1Interface
 	return result, nil
 }
 
-func GetCluster(platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*Cluster, error) {
+func GetCluster(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*Cluster, error) {
 	result := new(Cluster)
 	result.Cluster = cluster
 	if cluster.Spec.ClusterCredentialRef != nil {
-		clusterCredential, err := platformClient.ClusterCredentials().Get(cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
+		clusterCredential, err := platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("get cluster's credential error: %w", err)
 		}

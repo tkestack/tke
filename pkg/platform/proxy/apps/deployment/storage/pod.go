@@ -70,14 +70,14 @@ func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptio
 	}
 
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return listPodByExtensions(client, namespaceName, name, options)
+		return listPodByExtensions(ctx, client, namespaceName, name, options)
 	}
 
-	return listPodByApps(client, namespaceName, name, options)
+	return listPodByApps(ctx, client, namespaceName, name, options)
 }
 
-func listPodByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(name, *options)
+func listPodByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("deployments/pods"), name)
 	}
@@ -88,13 +88,13 @@ func listPodByExtensions(client *kubernetes.Clientset, namespaceName, name strin
 	}
 
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	rsList, err := client.ExtensionsV1beta1().ReplicaSets(namespaceName).List(listOptions)
+	rsList, err := client.ExtensionsV1beta1().ReplicaSets(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
 
 	// list all of the pod, by deployment labels
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -118,8 +118,8 @@ func listPodByExtensions(client *kubernetes.Clientset, namespaceName, name strin
 	return podList, nil
 }
 
-func listPodByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	deployment, err := client.AppsV1().Deployments(namespaceName).Get(name, *options)
+func listPodByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.AppsV1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1.Resource("deployments/pods"), name)
 	}
@@ -130,13 +130,13 @@ func listPodByApps(client *kubernetes.Clientset, namespaceName, name string, opt
 	}
 
 	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	rsList, err := client.AppsV1().ReplicaSets(namespaceName).List(listOptions)
+	rsList, err := client.AppsV1().ReplicaSets(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
 
 	// list all of the pod, by deployment labels
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(listOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
