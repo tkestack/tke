@@ -159,7 +159,12 @@ const commonRouterConfig: RouterConfig[] = [
       },
       {
         url: '/tkestack/log',
-        title: '日志',
+        title: '日志采集',
+        watchModule: ConsoleModuleEnum.PLATFORM,
+      },
+      {
+        url: '/tkestack/log/setting',
+        title: '日志组件',
         watchModule: ConsoleModuleEnum.PLATFORM,
       },
       {

@@ -1,10 +1,10 @@
-import { createFFListActions, extend } from '@tencent/ff-redux';
+import { createFFListActions, extend, uuid } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
 import {
-    Cluster, ClusterFilter, Resource, ResourceFilter, ResourceInfo
+  Cluster, ClusterFilter, CreateResource, Resource, ResourceFilter, ResourceInfo
 } from '../../common/models';
 import { CommonAPI } from '../../common/webapi';
 import * as ActionType from '../constants/ActionType';
@@ -15,6 +15,7 @@ import { editLogStashActions } from './editLogStashActions';
 import { logActions } from './logActions';
 import { logDaemonsetActions } from './logDaemonsetActions';
 import { namespaceActions } from './namespaceActions';
+import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
 
@@ -65,6 +66,14 @@ const fetchClusterActions = generateFetcherActionCreator({
     let resourceInfo = resourceConfig()['cluster'];
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
     let response = await CommonAPI.fetchResourceList({ query: clusterQuery, resourceInfo, isClearData });
+    let agents = await WebAPI.fetchLogagents();
+    let clusterHasLogAgent = {};
+    for (let agent of agents.records) {
+      clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
+    }
+    for (let cluster of response.records) {
+      cluster.spec.logAgentName = clusterHasLogAgent[cluster.metadata.name];
+    }
     return response;
   },
   finish: (dispatch: Redux.Dispatch, getState: GetState) => {
@@ -171,7 +180,33 @@ const restActions = {
         payload: k8sVersion
       });
     };
-  }
+  },
+
+  enableLogAgent: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { clusterQuery } = getState();
+      let resourceInfo = resourceConfig()['logagent'];
+      let resource: CreateResource = {
+        id: uuid(),
+        resourceInfo,
+        clusterId: cluster.metadata.name
+      };
+      let response = await WebAPI.createLogAgent(resource);
+    };
+  },
+
+  disableLogAgent: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { clusterQuery } = getState();
+      let resourceInfo = resourceConfig()['logagent'];
+      let resource: CreateResource = {
+        id: uuid(),
+        resourceInfo,
+        clusterId: cluster.metadata.name
+      };
+      let response = await WebAPI.deleteLogAgent(resource, cluster.spec.logAgentName);
+    };
+  },
 };
 
 export const clusterActions = extend({}, queryClusterActions, fetchClusterActions, restActions);

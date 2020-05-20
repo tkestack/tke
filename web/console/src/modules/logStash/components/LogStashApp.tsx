@@ -17,6 +17,7 @@ import { LogStashHeadPanel } from './LogStashHeadPanel';
 import { LogStashSubHeadPanel } from './LogStashSubHeadPanel';
 import { LogStashTablePanel } from './LogStashTablePanel';
 import { OpenLogStashDialog } from './OpenLogStashDialog';
+import { LogSettingTablePanel } from './LogSettingTablePanel';
 
 const store = configStore();
 
@@ -93,14 +94,14 @@ class LogStashApp extends React.Component<RootProps, any> {
       );
     } else if (mode === 'update') {
       content = (
-        <React.Fragment>
+        <ContentView>
           <ContentView.Header>
             <LogStashSubHeadPanel />
           </ContentView.Header>
           <ContentView.Body>
             <EditLogStashPanel />
           </ContentView.Body>
-        </React.Fragment>
+        </ContentView>
       );
     } else if (mode === 'detail') {
       content = (
@@ -112,6 +113,10 @@ class LogStashApp extends React.Component<RootProps, any> {
             <LogStashDetailPanel />
           </ContentView.Body>
         </ContentView>
+      );
+    } else if (mode === 'setting') {
+      content = (
+        <LogSettingTablePanel />
       );
     }
 

@@ -52,6 +52,14 @@ const mapDispatchToProps = dispatch =>
 
 @connect(state => state, mapDispatchToProps)
 export class EditOriginContainerPanel extends React.Component<RootProps, any> {
+  componentDidMount(): void {
+    let { actions } = this.props;
+    if (window.location.href.includes('/tkestack-project')) {
+      // 业务侧不显示"所有容器"
+      actions.editLogStash.selectAllNamespace('selectOne');
+    }
+  }
+
   render() {
     let { actions, logStashEdit, namespaceList } = this.props,
       { isSelectedAllNamespace, logMode, containerLogs } = logStashEdit;
@@ -71,11 +79,12 @@ export class EditOriginContainerPanel extends React.Component<RootProps, any> {
         isShow={logMode === logModeList.container.value}
         message={originModeTip[isSelectedAllNamespace]}
       >
-        <Segment
-          options={originModeListSegments}
-          value={selectedOriginMode.value}
-          onChange={value => actions.editLogStash.selectAllNamespace(value)}
-        />
+        {window.location.href.includes('/tkestack-project') ||
+          <Segment
+            options={originModeListSegments}
+            value={selectedOriginMode.value}
+            onChange={value => actions.editLogStash.selectAllNamespace(value)}
+          />}
 
         {isSelectedAllNamespace === 'selectOne' && this._renderContainerLogList()}
 

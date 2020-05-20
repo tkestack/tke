@@ -1,10 +1,11 @@
 import { extend, FetchOptions, generateFetcherActionCreator, ReduxAction } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
+import { LogAgent } from 'src/modules/common/models';
 import { resourceConfig } from '../../../../config/resourceConfig';
 import * as ActionType from '../constants/ActionType';
 import { PollEventName } from '../constants/Config';
-import { PodLogFilter, RootState, LogHierarchyQuery, LogContentQuery, LogAgent, DownloadLogQuery } from '../models';
+import { PodLogFilter, RootState, LogHierarchyQuery, LogContentQuery, DownloadLogQuery } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
 

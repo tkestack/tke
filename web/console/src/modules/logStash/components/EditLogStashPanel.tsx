@@ -57,6 +57,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
   }
 
   render() {
+    console.log('render@EditLogStashPanel');
     let {
         actions,
         logStashEdit,
@@ -104,6 +105,10 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         text: logModeList[mode].name
       };
     });
+    // 如果是在业务侧，去掉"节点文件路径"
+    if (window.location.href.includes('/tkestack-project')) {
+      logModeSegments.pop();
+    }
     return (
       <FormPanel>
         {!isCreateMode ? (
@@ -267,8 +272,9 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
   }
 
   private async _handleSubmit(mode) {
-    let { actions, route, logStashEdit, isOpenLogStash, clusterVersion, logSelection } = this.props;
+    let { actions, route, logStashEdit, isOpenLogStash, clusterVersion, logSelection, clusterSelection } = this.props;
     let { rid, clusterId } = route.queries;
+    let { logAgentName } = clusterSelection[0].spec;
     let {
       logStashName,
       logMode,
@@ -444,6 +450,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         mode: mode === 'update' ? 'modify' : mode, //更新方式为put，不是patch，update对应的为patch，modify对应为put
         namespace,
         clusterId,
+        logAgentName,
         jsonData,
         isStrategic: false,
         resourceIns: mode === 'update' ? logStashName : '' //更新的需要需要带上具体的name

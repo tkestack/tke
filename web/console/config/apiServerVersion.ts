@@ -64,3 +64,12 @@ export const auditServerVersion = {
   group: 'audit.tkestack.io',
   version: 'v1'
 };
+
+/**
+ * 新日志模块
+ */
+export const logAgentServiceVersion = {
+  basicUrl: 'apis',
+  group: 'logagent.tkestack.io',
+  version: 'v1'
+};
