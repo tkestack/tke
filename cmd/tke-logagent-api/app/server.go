@@ -29,6 +29,7 @@ import (
 // CreateServerChain creates the apiserver connected via delegation.
 func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, error) {
 	apiServerConfig := createAPIServerConfig(cfg)
+
 	apiServer, err := CreateAPIServer(apiServerConfig, genericapiserver.NewEmptyDelegate())
 	if err != nil {
 		return nil, err

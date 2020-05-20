@@ -19,11 +19,10 @@
 package filter
 
 import (
-	"net/http"
-	"strings"
-
 	"k8s.io/apimachinery/pkg/util/sets"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"net/http"
+	"strings"
 )
 
 // LongRunningRequestCheck returns true if the given request has one of the
