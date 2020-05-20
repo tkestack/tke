@@ -21,16 +21,18 @@ package storage
 import (
 	"context"
 
-	autoscalingV1API "k8s.io/api/autoscaling/v1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/scale/scheme/extensionsv1beta1"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -135,13 +137,13 @@ func (r *ScaleREST) GroupVersionKind(containingGV schema.GroupVersion) schema.Gr
 	case extensionsv1beta1.SchemeGroupVersion:
 		return extensionsv1beta1.SchemeGroupVersion.WithKind("Scale")
 	default:
-		return autoscalingV1API.SchemeGroupVersion.WithKind("Scale")
+		return autoscalingv1.SchemeGroupVersion.WithKind("Scale")
 	}
 }
 
 // New creates a new Scale object
 func (r *ScaleREST) New() runtime.Object {
-	return &autoscalingV1API.Scale{}
+	return &autoscalingv1.Scale{}
 }
 
 // Get finds a resource in the storage by name and returns it.
@@ -151,7 +153,7 @@ func (r *ScaleREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, err
 	}
 
-	result := &autoscalingV1API.Scale{}
+	result := &autoscalingv1.Scale{}
 	if err := client.
 		Get().
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
@@ -173,12 +175,32 @@ func (r *ScaleREST) Update(ctx context.Context, name string, objInfo rest.Update
 		return nil, false, err
 	}
 
+	if requestInfo.Verb == "patch" {
+		requestBody, ok := filter.RequestBodyFrom(ctx)
+		if !ok {
+			return nil, false, errors.NewBadRequest("request body is required")
+		}
+		result := &autoscalingv1.Scale{}
+		if err := client.
+			Patch(types.PatchType(requestBody.ContentType)).
+			NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
+			Resource(requestInfo.Resource).
+			SubResource(requestInfo.Subresource).
+			Name(name).
+			Body(requestBody.Data).
+			Do(ctx).
+			Into(result); err != nil {
+			return nil, false, err
+		}
+		return result, true, nil
+	}
+
 	obj, err := objInfo.UpdatedObject(ctx, nil)
 	if err != nil {
 		return nil, false, errors.NewInternalError(err)
 	}
 
-	result := &autoscalingV1API.Scale{}
+	result := &autoscalingv1.Scale{}
 	if err := client.
 		Put().
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
