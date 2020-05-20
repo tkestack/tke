@@ -74,6 +74,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureDocker,
 			p.EnsureKubelet,
 			p.EnsureCNIPlugins,
+			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
 
 			p.EnsureJoinNode,

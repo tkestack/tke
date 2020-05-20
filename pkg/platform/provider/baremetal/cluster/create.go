@@ -31,6 +31,8 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
+
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
@@ -427,6 +429,22 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 
 		option.IsGPU = gpu.IsEnable(machine.Labels)
 		err = docker.Install(machineSSH, option)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureConntrackTools(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		err = res.ConntrackTools.InstallWithDefault(machineSSH)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

@@ -28,7 +28,7 @@ import (
 )
 
 func main() {
-	var env []string
+	env := os.Environ()
 	env = append(env, fmt.Sprintf("ARCHS=%s", strings.Join(spec.Archs, " ")))
 	env = append(env, fmt.Sprintf("OSS=%s", strings.Join(spec.OSs, " ")))
 	env = append(env, fmt.Sprintf("K8S_VERSIONS=%s", strings.Join(spec.K8sValidVersionsWithV, " ")))

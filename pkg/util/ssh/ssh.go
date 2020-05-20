@@ -124,10 +124,10 @@ func (s *SSH) Ping() error {
 func (s *SSH) CombinedOutput(cmd string) ([]byte, error) {
 	stdout, stderr, exit, err := s.Exec(cmd)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("exec cmd %q eror: %w", cmd, err)
 	}
 	if exit != 0 {
-		return nil, fmt.Errorf("exit error %d:%s", exit, stderr)
+		return nil, fmt.Errorf("exec cmd %q eror: exit code %d: stderr %s", cmd, exit, stderr)
 	}
 	return []byte(stdout), nil
 }

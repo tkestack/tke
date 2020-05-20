@@ -22,7 +22,7 @@ COMMON_SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 ROOT_DIR := $(abspath $(shell cd $(COMMON_SELF_DIR)/../../../.. && pwd -P))
 
 .PHONY: all
-all: image
+all: manifest.multiarch
 
 # ==============================================================================
 # Includes
