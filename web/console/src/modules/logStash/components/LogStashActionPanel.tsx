@@ -40,8 +40,9 @@ export const isCanCreateLogStash = (clusterInfo: Cluster, logList: Log[], isDaem
     canCreate = includes(canCreateLogStash, clusterInfo.status.phase);
     tip = !canCreate ? canCreateTip.canNotCreate : '';
     if (canCreate) {
-      canCreate = includes(canCreateLogStashInLogDaemonset, isDaemonsetNormal.phase);
-      tip = canCreateTip.canNotCreateInLogDaemonset(isDaemonsetNormal.phase);
+      // 兼容新旧日志组件并存
+      canCreate = clusterInfo.spec.logAgentName || includes(canCreateLogStashInLogDaemonset, isDaemonsetNormal.phase);
+      !canCreate && (tip = canCreateTip.canNotCreateInLogDaemonset(isDaemonsetNormal.phase));
       ifLogDaemonset = !canCreate; //标记是否是因为logDaemonset的状态不是runnig所以才不能创建的
     }
   } else {
@@ -75,6 +76,10 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
       namespaceSelection
     } = this.props;
 
+    let logAgentName = '';
+    if (clusterSelection && clusterSelection[0]) {
+      logAgentName = clusterSelection[0].spec.logAgentName;
+    }
     // 判断当前是否能够新建日志收集规则
     let { canCreate, tip } = isCanCreateLogStash(clusterSelection[0], logList.data.records, isDaemonsetNormal);
     let ifFetchLogList = includes(canFetchLogList, isDaemonsetNormal.phase);
@@ -108,6 +113,7 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
                     if (ifFetchLogList) {
                       actions.log.applyFilter({
                         clusterId: route.queries['clusterId'],
+                        logAgentName,
                         namespace: value
                       });
                     } else {
@@ -172,9 +178,9 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
 
   /** 处理新建按钮的button */
   private _handleCreate() {
-    let { actions, isOpenLogStash, route } = this.props,
+    let { actions, isOpenLogStash, route, clusterSelection } = this.props,
       urlParams = router.resolve(route);
-    if (isOpenLogStash) {
+    if (clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName || isOpenLogStash) {
       router.navigate(Object.assign({}, urlParams, { mode: 'create' }), route.queries);
     } else {
       actions.workflow.authorizeOpenLog.start();

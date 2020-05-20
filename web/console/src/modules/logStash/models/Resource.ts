@@ -24,6 +24,8 @@ export interface ResourceFilter {
   /** 集群id */
   clusterId?: string;
 
+  logAgentName?: string;
+
   /** 地域id */
   regionId?: number;
 

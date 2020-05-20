@@ -21,6 +21,7 @@ import { ResourceDeleteDialog } from './resourceTableOperation/ResourceDeleteDia
 import { ResourceEventPanel } from './resourceTableOperation/ResourceEventPanel';
 import { ResourceLogPanel } from './resourceTableOperation/ResourceLogPanel';
 import { ResourceTablePanel } from './resourceTableOperation/ResourceTablePanel';
+import { LogStash } from '@src/modules/logStash';
 
 const loadingElement: JSX.Element = (
   <div>
@@ -56,7 +57,7 @@ export class ResourceListPanel extends React.Component<ResourceListPanelProps, {
 
       case 'log':
         content = <ResourceLogPanel />;
-        headTitle = t('日志');
+        headTitle = t('日志检索');
         break;
 
       case 'event':
@@ -76,18 +77,25 @@ export class ResourceListPanel extends React.Component<ResourceListPanelProps, {
         break;
     }
 
+    const _renderContent = () => {
+      if (resource === 'logagent') {
+        return <LogStash />;
+      }
+      return (
+        <ContentView>
+          <ContentView.Header>
+            <Justify left={<h2 className="tea-h2">{headTitle || ''}</h2>} />
+          </ContentView.Header>
+          <ContentView.Body>{content}</ContentView.Body>
+        </ContentView>
+      );
+    };
+
     return (
       <React.Fragment>
         <ContentView>
           <ContentView.Body sidebar={<ResourceSidebarPanel subRouterList={subRouterList} />}>
-            {namespaceList.fetched ? (
-              <ContentView>
-                <ContentView.Header>
-                  <Justify left={<h2 className="tea-h2">{headTitle || ''}</h2>} />
-                </ContentView.Header>
-                <ContentView.Body>{content}</ContentView.Body>
-              </ContentView>
-            ) : (
+            {namespaceList.fetched ? _renderContent() : (
               <ContentView>
                 <ContentView.Body>
                   <div style={{ marginTop: '20px' }}>

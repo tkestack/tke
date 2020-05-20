@@ -92,7 +92,16 @@ export const subRouterConfig = () => {
     {
       name: t('日志'),
       path: 'k8sLog',
-      basicUrl: 'log'
+      sub: [
+        {
+          name: '日志检索',
+          path: 'log'
+        },
+        {
+          name: '日志采集',
+          path: 'logagent'
+        }
+      ]
     },
     {
       name: t('事件'),
