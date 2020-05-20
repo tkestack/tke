@@ -36,6 +36,9 @@ export interface LogFilter {
   /** 日志收集器所属的集群ID*/
   clusterId?: string;
 
+  /** 日志组件名称 */
+  logAgentName?: string;
+
   /** 根据状态进行复选 */
   status?: string;
 
