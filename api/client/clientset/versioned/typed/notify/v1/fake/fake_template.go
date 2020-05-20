@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,7 +43,7 @@ var templatesResource = schema.GroupVersionResource{Group: "notify.tkestack.io",
 var templatesKind = schema.GroupVersionKind{Group: "notify.tkestack.io", Version: "v1", Kind: "Template"}
 
 // Get takes name of the template, and returns the corresponding template object, and an error if there is any.
-func (c *FakeTemplates) Get(name string, options v1.GetOptions) (result *notifyv1.Template, err error) {
+func (c *FakeTemplates) Get(ctx context.Context, name string, options v1.GetOptions) (result *notifyv1.Template, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(templatesResource, c.ns, name), &notifyv1.Template{})
 
@@ -52,7 +54,7 @@ func (c *FakeTemplates) Get(name string, options v1.GetOptions) (result *notifyv
 }
 
 // List takes label and field selectors, and returns the list of Templates that match those selectors.
-func (c *FakeTemplates) List(opts v1.ListOptions) (result *notifyv1.TemplateList, err error) {
+func (c *FakeTemplates) List(ctx context.Context, opts v1.ListOptions) (result *notifyv1.TemplateList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(templatesResource, templatesKind, c.ns, opts), &notifyv1.TemplateList{})
 
@@ -74,14 +76,14 @@ func (c *FakeTemplates) List(opts v1.ListOptions) (result *notifyv1.TemplateList
 }
 
 // Watch returns a watch.Interface that watches the requested templates.
-func (c *FakeTemplates) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeTemplates) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(templatesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a template and creates it.  Returns the server's representation of the template, and an error, if there is any.
-func (c *FakeTemplates) Create(template *notifyv1.Template) (result *notifyv1.Template, err error) {
+func (c *FakeTemplates) Create(ctx context.Context, template *notifyv1.Template, opts v1.CreateOptions) (result *notifyv1.Template, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(templatesResource, c.ns, template), &notifyv1.Template{})
 
@@ -92,7 +94,7 @@ func (c *FakeTemplates) Create(template *notifyv1.Template) (result *notifyv1.Te
 }
 
 // Update takes the representation of a template and updates it. Returns the server's representation of the template, and an error, if there is any.
-func (c *FakeTemplates) Update(template *notifyv1.Template) (result *notifyv1.Template, err error) {
+func (c *FakeTemplates) Update(ctx context.Context, template *notifyv1.Template, opts v1.UpdateOptions) (result *notifyv1.Template, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(templatesResource, c.ns, template), &notifyv1.Template{})
 
@@ -103,7 +105,7 @@ func (c *FakeTemplates) Update(template *notifyv1.Template) (result *notifyv1.Te
 }
 
 // Delete takes name of the template and deletes it. Returns an error if one occurs.
-func (c *FakeTemplates) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeTemplates) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(templatesResource, c.ns, name), &notifyv1.Template{})
 
@@ -111,15 +113,15 @@ func (c *FakeTemplates) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeTemplates) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(templatesResource, c.ns, listOptions)
+func (c *FakeTemplates) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(templatesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &notifyv1.TemplateList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched template.
-func (c *FakeTemplates) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *notifyv1.Template, err error) {
+func (c *FakeTemplates) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *notifyv1.Template, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(templatesResource, c.ns, name, pt, data, subresources...), &notifyv1.Template{})
 

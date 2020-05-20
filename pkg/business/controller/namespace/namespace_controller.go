@@ -19,6 +19,7 @@
 package namespace
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -112,10 +113,10 @@ func NewController(platformClient platformversionedclient.PlatformV1Interface, c
 	return controller
 }
 
-func PersistUpdateNamesapce(client clientset.Interface, namespace *v1.Namespace) error {
+func PersistUpdateNamesapce(ctx context.Context, client clientset.Interface, namespace *v1.Namespace) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = client.BusinessV1().Namespaces(namespace.ObjectMeta.Namespace).UpdateStatus(namespace)
+		_, err = client.BusinessV1().Namespaces(namespace.ObjectMeta.Namespace).UpdateStatus(ctx, namespace, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -250,11 +251,11 @@ func (c *Controller) syncItem(key string) error {
 			namespace.Status.Phase == v1.NamespaceAvailable ||
 			namespace.Status.Phase == v1.NamespaceFailed {
 			cachedNamespace := c.cache.getOrCreate(key, namespace)
-			err = c.processUpdate(cachedNamespace, namespace, key)
+			err = c.processUpdate(context.Background(), cachedNamespace, namespace, key)
 		} else if namespace.Status.Phase == v1.NamespaceTerminating {
 			log.Info("Namespace has been terminated. Attempting to cleanup resources", log.String("projectName", projectName), log.String("namespaceName", namespaceName))
 			_ = c.processDeletion(key)
-			err = c.namespacedResourcesDeleter.Delete(projectName, namespaceName)
+			err = c.namespacedResourcesDeleter.Delete(context.Background(), projectName, namespaceName)
 		} else {
 			log.Debug(fmt.Sprintf("Namespace %s status is %s, not to process", key, namespace.Status.Phase))
 		}
@@ -287,7 +288,7 @@ func (c *Controller) processDelete(cachedNamespace *cachedNamespace, key string)
 	return nil
 }
 
-func (c *Controller) processUpdate(cachedNamespace *cachedNamespace, namespace *v1.Namespace, key string) error {
+func (c *Controller) processUpdate(ctx context.Context, cachedNamespace *cachedNamespace, namespace *v1.Namespace, key string) error {
 	if cachedNamespace.state != nil {
 		// exist and the namespace name changed
 		if cachedNamespace.state.UID != namespace.UID {
@@ -297,7 +298,7 @@ func (c *Controller) processUpdate(cachedNamespace *cachedNamespace, namespace *
 		}
 	}
 	// start update machine if needed
-	err := c.handlePhase(key, cachedNamespace, namespace)
+	err := c.handlePhase(ctx, key, cachedNamespace, namespace)
 	if err != nil {
 		return err
 	}
@@ -307,47 +308,47 @@ func (c *Controller) processUpdate(cachedNamespace *cachedNamespace, namespace *
 	return nil
 }
 
-func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, namespace *v1.Namespace) error {
+func (c *Controller) handlePhase(ctx context.Context, key string, cachedNamespace *cachedNamespace, namespace *v1.Namespace) error {
 	switch namespace.Status.Phase {
 	case v1.NamespacePending:
-		if err := c.calculateProjectUsed(cachedNamespace, namespace); err != nil {
+		if err := c.calculateProjectUsed(ctx, cachedNamespace, namespace); err != nil {
 			// Since it's pending now, no need to set v1.NamespaceFailed.
 			return err
 		}
 		// Once project has been updated, try our best update namespace CachedSpecHard.
 		namespace.Status.CachedSpecHard = namespace.Spec.Hard
-		if err := c.ensureNamespaceOnCluster(namespace); err != nil {
+		if err := c.ensureNamespaceOnCluster(ctx, namespace); err != nil {
 			namespace.Status.Phase = v1.NamespaceFailed
 			namespace.Status.Message = "ensureNamespaceOnCluster failed"
 			namespace.Status.Reason = err.Error()
 			namespace.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdateNamespace(namespace)
+			return c.persistUpdateNamespace(ctx, namespace)
 		}
 		namespace.Status.Phase = v1.NamespaceAvailable
 		namespace.Status.Message = ""
 		namespace.Status.Reason = ""
 		namespace.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdateNamespace(namespace)
+		return c.persistUpdateNamespace(ctx, namespace)
 	case v1.NamespaceAvailable:
-		if err := c.calculateProjectUsed(cachedNamespace, namespace); err != nil {
+		if err := c.calculateProjectUsed(ctx, cachedNamespace, namespace); err != nil {
 			namespace.Status.Phase = v1.NamespaceFailed
 			namespace.Status.Message = "calculateProjectUsed failed"
 			namespace.Status.Reason = err.Error()
 			namespace.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdateNamespace(namespace)
+			return c.persistUpdateNamespace(ctx, namespace)
 		}
 		// Once project has been updated, try our best update namespace CachedSpecHard.
 		cachedHard := namespace.Status.CachedSpecHard
 		namespace.Status.CachedSpecHard = namespace.Spec.Hard
-		if err := c.ensureNamespaceOnCluster(namespace); err != nil {
+		if err := c.ensureNamespaceOnCluster(ctx, namespace); err != nil {
 			namespace.Status.Phase = v1.NamespaceFailed
 			namespace.Status.Message = "ensureNamespaceOnCluster failed"
 			namespace.Status.Reason = err.Error()
 			namespace.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdateNamespace(namespace)
+			return c.persistUpdateNamespace(ctx, namespace)
 		}
 		if !reflect.DeepEqual(namespace.Spec.Hard, cachedHard) {
-			_ = c.persistUpdateNamespace(namespace)
+			_ = c.persistUpdateNamespace(ctx, namespace)
 		}
 		c.startNamespaceHealthCheck(key)
 	case v1.NamespaceFailed:
@@ -356,8 +357,8 @@ func (c *Controller) handlePhase(key string, cachedNamespace *cachedNamespace, n
 	return nil
 }
 
-func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, namespace *v1.Namespace) error {
-	project, err := c.client.BusinessV1().Projects().Get(namespace.ObjectMeta.Namespace, metav1.GetOptions{})
+func (c *Controller) calculateProjectUsed(ctx context.Context, cachedNamespace *cachedNamespace, namespace *v1.Namespace) error {
+	project, err := c.client.BusinessV1().Projects().Get(ctx, namespace.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get the project", log.String("projectName", namespace.ObjectMeta.Namespace), log.Err(err))
 		return err
@@ -376,7 +377,7 @@ func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, name
 					Hard: namespace.Spec.Hard,
 				},
 			})
-		return c.persistUpdateProject(project)
+		return c.persistUpdateProject(ctx, project)
 	} else if cachedNamespace.state != nil && !reflect.DeepEqual(cachedNamespace.state.Spec.Hard, namespace.Spec.Hard) {
 		if project.Status.Clusters == nil {
 			project.Status.Clusters = make(v1.ClusterUsed)
@@ -395,40 +396,31 @@ func (c *Controller) calculateProjectUsed(cachedNamespace *cachedNamespace, name
 					Hard: namespace.Spec.Hard,
 				},
 			})
-		return c.persistUpdateProject(project)
+		return c.persistUpdateProject(ctx, project)
 	}
 	return nil
 }
 
-func (c *Controller) ensureNamespaceOnCluster(namespace *v1.Namespace) error {
-	kubeClient, err := util.BuildExternalClientSetWithName(c.platformClient, namespace.Spec.ClusterName)
+func (c *Controller) ensureNamespaceOnCluster(ctx context.Context, namespace *v1.Namespace) error {
+	kubeClient, err := util.BuildExternalClientSetWithName(ctx, c.platformClient, namespace.Spec.ClusterName)
 	if err != nil {
 		log.Error("Failed to create the kubernetes client", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
 		return err
 	}
-	if err := cls.EnsureNamespaceOnCluster(kubeClient, namespace); err != nil {
+	if err := cls.EnsureNamespaceOnCluster(ctx, kubeClient, namespace); err != nil {
 		return err
 	}
-	return cls.EnsureResourceQuotaOnCluster(kubeClient, namespace)
+	return cls.EnsureResourceQuotaOnCluster(ctx, kubeClient, namespace)
 }
 
-func (c *Controller) detachFromClusterNamespace(namespace *v1.Namespace) error {
-	kubeClient, err := util.BuildExternalClientSetWithName(c.platformClient, namespace.Spec.ClusterName)
-	if err != nil {
-		log.Error("Failed to create the kubernetes client", log.String("namespaceName", namespace.ObjectMeta.Name), log.String("clusterName", namespace.Spec.ClusterName), log.Err(err))
-		return err
-	}
-	return cls.DetachFromClusterNamespace(kubeClient, namespace)
+func (c *Controller) persistUpdateNamespace(ctx context.Context, namespace *v1.Namespace) error {
+	return PersistUpdateNamesapce(ctx, c.client, namespace)
 }
 
-func (c *Controller) persistUpdateNamespace(namespace *v1.Namespace) error {
-	return PersistUpdateNamesapce(c.client, namespace)
-}
-
-func (c *Controller) persistUpdateProject(project *v1.Project) error {
+func (c *Controller) persistUpdateProject(ctx context.Context, project *v1.Project) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().Projects().UpdateStatus(project)
+		_, err = c.client.BusinessV1().Projects().UpdateStatus(ctx, project, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

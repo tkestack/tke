@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,8 @@
 package fake
 
 import (
+	"context"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,7 +42,7 @@ var categoriesResource = schema.GroupVersionResource{Group: "auth.tkestack.io", 
 var categoriesKind = schema.GroupVersionKind{Group: "auth.tkestack.io", Version: "v1", Kind: "Category"}
 
 // Get takes name of the category, and returns the corresponding category object, and an error if there is any.
-func (c *FakeCategories) Get(name string, options v1.GetOptions) (result *authv1.Category, err error) {
+func (c *FakeCategories) Get(ctx context.Context, name string, options v1.GetOptions) (result *authv1.Category, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(categoriesResource, name), &authv1.Category{})
 	if obj == nil {
@@ -50,7 +52,7 @@ func (c *FakeCategories) Get(name string, options v1.GetOptions) (result *authv1
 }
 
 // List takes label and field selectors, and returns the list of Categories that match those selectors.
-func (c *FakeCategories) List(opts v1.ListOptions) (result *authv1.CategoryList, err error) {
+func (c *FakeCategories) List(ctx context.Context, opts v1.ListOptions) (result *authv1.CategoryList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(categoriesResource, categoriesKind, opts), &authv1.CategoryList{})
 	if obj == nil {
@@ -71,13 +73,13 @@ func (c *FakeCategories) List(opts v1.ListOptions) (result *authv1.CategoryList,
 }
 
 // Watch returns a watch.Interface that watches the requested categories.
-func (c *FakeCategories) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeCategories) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(categoriesResource, opts))
 }
 
 // Create takes the representation of a category and creates it.  Returns the server's representation of the category, and an error, if there is any.
-func (c *FakeCategories) Create(category *authv1.Category) (result *authv1.Category, err error) {
+func (c *FakeCategories) Create(ctx context.Context, category *authv1.Category, opts v1.CreateOptions) (result *authv1.Category, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(categoriesResource, category), &authv1.Category{})
 	if obj == nil {
@@ -87,7 +89,7 @@ func (c *FakeCategories) Create(category *authv1.Category) (result *authv1.Categ
 }
 
 // Update takes the representation of a category and updates it. Returns the server's representation of the category, and an error, if there is any.
-func (c *FakeCategories) Update(category *authv1.Category) (result *authv1.Category, err error) {
+func (c *FakeCategories) Update(ctx context.Context, category *authv1.Category, opts v1.UpdateOptions) (result *authv1.Category, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(categoriesResource, category), &authv1.Category{})
 	if obj == nil {
@@ -97,22 +99,22 @@ func (c *FakeCategories) Update(category *authv1.Category) (result *authv1.Categ
 }
 
 // Delete takes name of the category and deletes it. Returns an error if one occurs.
-func (c *FakeCategories) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeCategories) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(categoriesResource, name), &authv1.Category{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeCategories) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(categoriesResource, listOptions)
+func (c *FakeCategories) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(categoriesResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &authv1.CategoryList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched category.
-func (c *FakeCategories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *authv1.Category, err error) {
+func (c *FakeCategories) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *authv1.Category, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(categoriesResource, name, pt, data, subresources...), &authv1.Category{})
 	if obj == nil {

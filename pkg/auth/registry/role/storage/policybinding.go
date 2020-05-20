@@ -71,5 +71,5 @@ func (r *PolicyBindingREST) Create(ctx context.Context, obj runtime.Object, crea
 	}
 
 	log.Info("PolicyBinding: role policies", log.String("role", role.Name), log.Any("policies", role.Spec.Policies))
-	return r.authClient.Roles().Update(role)
+	return r.authClient.Roles().Update(ctx, role, metav1.UpdateOptions{})
 }

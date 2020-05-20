@@ -64,6 +64,7 @@ type REST struct {
 var _ rest.ShortNamesProvider = &REST{}
 var _ rest.Scoper = &REST{}
 var _ rest.Storage = &REST{}
+var _ rest.Lister = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
@@ -86,6 +87,13 @@ func (r *REST) NewList() runtime.Object {
 	return &business.Portal{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*v1.Table, error) {
+	tableConvertor := rest.NewDefaultTableConvertor(business.Resource("portals"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
@@ -96,7 +104,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		}, nil
 	}
 	listOpt := v1.ListOptions{FieldSelector: fmt.Sprintf("spec.tenantID=%s", tenantID)}
-	platformList, err := r.businessClient.Platforms().List(listOpt)
+	platformList, err := r.businessClient.Platforms().List(ctx, listOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +128,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 			FieldSelector: usersSelector.String(),
 		}
 
-		userList, err := r.authClient.Users().List(userListOpt)
+		userList, err := r.authClient.Users().List(ctx, userListOpt)
 		if err != nil {
 			return nil, err
 		}
@@ -137,7 +145,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		}
 	}
 
-	projectList, err := r.businessClient.Projects().List(listOpt)
+	projectList, err := r.businessClient.Projects().List(ctx, listOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +163,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 			Name(userID).
 			SubResource("projects").
 			SetHeader(filter.HeaderTenantID, tenantID).
-			Do().Into(belongs)
+			Do(ctx).Into(belongs)
 
 		if err != nil {
 			log.Error("Get user projects failed for tke-auth-api", log.String("user", username), log.Err(err))

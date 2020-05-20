@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type CategoriesGetter interface {
 
 // CategoryInterface has methods to work with Category resources.
 type CategoryInterface interface {
-	Create(*auth.Category) (*auth.Category, error)
-	Update(*auth.Category) (*auth.Category, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*auth.Category, error)
-	List(opts v1.ListOptions) (*auth.CategoryList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.Category, err error)
+	Create(ctx context.Context, category *auth.Category, opts v1.CreateOptions) (*auth.Category, error)
+	Update(ctx context.Context, category *auth.Category, opts v1.UpdateOptions) (*auth.Category, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*auth.Category, error)
+	List(ctx context.Context, opts v1.ListOptions) (*auth.CategoryList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.Category, err error)
 	CategoryExpansion
 }
 
@@ -63,19 +64,19 @@ func newCategories(c *AuthClient) *categories {
 }
 
 // Get takes name of the category, and returns the corresponding category object, and an error if there is any.
-func (c *categories) Get(name string, options v1.GetOptions) (result *auth.Category, err error) {
+func (c *categories) Get(ctx context.Context, name string, options v1.GetOptions) (result *auth.Category, err error) {
 	result = &auth.Category{}
 	err = c.client.Get().
 		Resource("categories").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Categories that match those selectors.
-func (c *categories) List(opts v1.ListOptions) (result *auth.CategoryList, err error) {
+func (c *categories) List(ctx context.Context, opts v1.ListOptions) (result *auth.CategoryList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *categories) List(opts v1.ListOptions) (result *auth.CategoryList, err e
 		Resource("categories").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested categories.
-func (c *categories) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *categories) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *categories) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("categories").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a category and creates it.  Returns the server's representation of the category, and an error, if there is any.
-func (c *categories) Create(category *auth.Category) (result *auth.Category, err error) {
+func (c *categories) Create(ctx context.Context, category *auth.Category, opts v1.CreateOptions) (result *auth.Category, err error) {
 	result = &auth.Category{}
 	err = c.client.Post().
 		Resource("categories").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(category).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a category and updates it. Returns the server's representation of the category, and an error, if there is any.
-func (c *categories) Update(category *auth.Category) (result *auth.Category, err error) {
+func (c *categories) Update(ctx context.Context, category *auth.Category, opts v1.UpdateOptions) (result *auth.Category, err error) {
 	result = &auth.Category{}
 	err = c.client.Put().
 		Resource("categories").
 		Name(category.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(category).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the category and deletes it. Returns an error if one occurs.
-func (c *categories) Delete(name string, options *v1.DeleteOptions) error {
+func (c *categories) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("categories").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *categories) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *categories) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("categories").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched category.
-func (c *categories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.Category, err error) {
+func (c *categories) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.Category, err error) {
 	result = &auth.Category{}
 	err = c.client.Patch(pt).
 		Resource("categories").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

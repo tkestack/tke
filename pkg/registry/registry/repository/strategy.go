@@ -21,6 +21,7 @@ package repository
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -93,7 +94,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new repository.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateRepository(obj.(*registry.Repository), s.registryClient)
+	return ValidateRepository(ctx, obj.(*registry.Repository), s.registryClient)
 }
 
 // AllowCreateOnUpdate is false for repositories.
@@ -114,7 +115,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end repository.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRepositoryUpdate(obj.(*registry.Repository), old.(*registry.Repository))
+	return ValidateRepositoryUpdate(ctx, obj.(*registry.Repository), old.(*registry.Repository))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -177,6 +178,6 @@ func (StatusStrategy) PrepareForUpdate(_ context.Context, obj, old runtime.Objec
 // ValidateUpdate is invoked after default fields in the object have been
 // filled in before the object is persisted.  This method should not mutate
 // the object.
-func (s *StatusStrategy) ValidateUpdate(_ context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRepositoryUpdate(obj.(*registry.Repository), old.(*registry.Repository))
+func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateRepositoryUpdate(ctx, obj.(*registry.Repository), old.(*registry.Repository))
 }

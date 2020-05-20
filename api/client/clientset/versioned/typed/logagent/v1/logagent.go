@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type LogAgentsGetter interface {
 
 // LogAgentInterface has methods to work with LogAgent resources.
 type LogAgentInterface interface {
-	Create(*v1.LogAgent) (*v1.LogAgent, error)
-	Update(*v1.LogAgent) (*v1.LogAgent, error)
-	UpdateStatus(*v1.LogAgent) (*v1.LogAgent, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.LogAgent, error)
-	List(opts metav1.ListOptions) (*v1.LogAgentList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.LogAgent, err error)
+	Create(ctx context.Context, logAgent *v1.LogAgent, opts metav1.CreateOptions) (*v1.LogAgent, error)
+	Update(ctx context.Context, logAgent *v1.LogAgent, opts metav1.UpdateOptions) (*v1.LogAgent, error)
+	UpdateStatus(ctx context.Context, logAgent *v1.LogAgent, opts metav1.UpdateOptions) (*v1.LogAgent, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.LogAgent, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.LogAgentList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.LogAgent, err error)
 	LogAgentExpansion
 }
 
@@ -63,19 +64,19 @@ func newLogAgents(c *LogagentV1Client) *logAgents {
 }
 
 // Get takes name of the logAgent, and returns the corresponding logAgent object, and an error if there is any.
-func (c *logAgents) Get(name string, options metav1.GetOptions) (result *v1.LogAgent, err error) {
+func (c *logAgents) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.LogAgent, err error) {
 	result = &v1.LogAgent{}
 	err = c.client.Get().
 		Resource("logagents").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of LogAgents that match those selectors.
-func (c *logAgents) List(opts metav1.ListOptions) (result *v1.LogAgentList, err error) {
+func (c *logAgents) List(ctx context.Context, opts metav1.ListOptions) (result *v1.LogAgentList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *logAgents) List(opts metav1.ListOptions) (result *v1.LogAgentList, err 
 		Resource("logagents").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested logAgents.
-func (c *logAgents) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *logAgents) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *logAgents) Watch(opts metav1.ListOptions) (watch.Interface, error) {
 		Resource("logagents").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a logAgent and creates it.  Returns the server's representation of the logAgent, and an error, if there is any.
-func (c *logAgents) Create(logAgent *v1.LogAgent) (result *v1.LogAgent, err error) {
+func (c *logAgents) Create(ctx context.Context, logAgent *v1.LogAgent, opts metav1.CreateOptions) (result *v1.LogAgent, err error) {
 	result = &v1.LogAgent{}
 	err = c.client.Post().
 		Resource("logagents").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(logAgent).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a logAgent and updates it. Returns the server's representation of the logAgent, and an error, if there is any.
-func (c *logAgents) Update(logAgent *v1.LogAgent) (result *v1.LogAgent, err error) {
+func (c *logAgents) Update(ctx context.Context, logAgent *v1.LogAgent, opts metav1.UpdateOptions) (result *v1.LogAgent, err error) {
 	result = &v1.LogAgent{}
 	err = c.client.Put().
 		Resource("logagents").
 		Name(logAgent.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(logAgent).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *logAgents) UpdateStatus(logAgent *v1.LogAgent) (result *v1.LogAgent, err error) {
+func (c *logAgents) UpdateStatus(ctx context.Context, logAgent *v1.LogAgent, opts metav1.UpdateOptions) (result *v1.LogAgent, err error) {
 	result = &v1.LogAgent{}
 	err = c.client.Put().
 		Resource("logagents").
 		Name(logAgent.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(logAgent).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the logAgent and deletes it. Returns an error if one occurs.
-func (c *logAgents) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *logAgents) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("logagents").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched logAgent.
-func (c *logAgents) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.LogAgent, err error) {
+func (c *logAgents) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.LogAgent, err error) {
 	result = &v1.LogAgent{}
 	err = c.client.Patch(pt).
 		Resource("logagents").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

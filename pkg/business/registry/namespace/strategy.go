@@ -118,7 +118,7 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 
 // Validate validates a new namespace.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateNamespace(obj.(*business.Namespace), nil,
+	return ValidateNamespace(ctx, obj.(*business.Namespace), nil,
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
 
@@ -140,7 +140,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end namespace.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateNamespaceUpdate(obj.(*business.Namespace), old.(*business.Namespace),
+	return ValidateNamespaceUpdate(ctx, obj.(*business.Namespace), old.(*business.Namespace),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
 
@@ -150,7 +150,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a namespace")
 	}
-	return labels.Set(namespace.ObjectMeta.Labels), ToSelectableFields(namespace), nil
+	return namespace.ObjectMeta.Labels, ToSelectableFields(namespace), nil
 }
 
 // MatchNamespace returns a generic matcher for a given label and field selector.
@@ -203,7 +203,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateNamespaceUpdate(obj.(*business.Namespace), old.(*business.Namespace),
+	return ValidateNamespaceUpdate(ctx, obj.(*business.Namespace), old.(*business.Namespace),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
 
@@ -233,6 +233,6 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateNamespaceUpdate(obj.(*business.Namespace), old.(*business.Namespace),
+	return ValidateNamespaceUpdate(ctx, obj.(*business.Namespace), old.(*business.Namespace),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }

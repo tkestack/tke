@@ -160,7 +160,7 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 					Name: project.Name,
 				},
 			}
-			_, err = client.CoreV1().Namespaces().Create(ns)
+			_, err = client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
 			if err != nil && !errors.IsAlreadyExists(err) {
 				return err
 			}
@@ -189,7 +189,7 @@ func (s *Strategy) AfterDelete(obj runtime.Object) error {
 			if err != nil {
 				return err
 			}
-			err = client.CoreV1().Namespaces().Delete(project.Name, &metav1.DeleteOptions{})
+			err = client.CoreV1().Namespaces().Delete(context.Background(), project.Name, metav1.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
 				return err
 			}
@@ -204,7 +204,7 @@ func (s *Strategy) AfterDelete(obj runtime.Object) error {
 
 // Validate validates a new project.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateProject(obj.(*business.Project), nil,
+	return ValidateProject(ctx, obj.(*business.Project), nil,
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
 
@@ -226,7 +226,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end project.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateProjectUpdate(obj.(*business.Project), old.(*business.Project),
+	return ValidateProjectUpdate(ctx, obj.(*business.Project), old.(*business.Project),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
 
@@ -236,7 +236,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a project")
 	}
-	return labels.Set(project.ObjectMeta.Labels), ToSelectableFields(project), nil
+	return project.ObjectMeta.Labels, ToSelectableFields(project), nil
 }
 
 // MatchProject returns a generic matcher for a given label and field selector.
@@ -291,7 +291,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateProjectUpdate(obj.(*business.Project), old.(*business.Project),
+	return ValidateProjectUpdate(ctx, obj.(*business.Project), old.(*business.Project),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }
 
@@ -330,6 +330,6 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateProjectUpdate(obj.(*business.Project), old.(*business.Project),
+	return ValidateProjectUpdate(ctx, obj.(*business.Project), old.(*business.Project),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
 }

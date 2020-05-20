@@ -19,6 +19,7 @@
 package imagenamespace
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -224,7 +225,7 @@ func (c *Controller) syncItem(key string) error {
 			imageNamespace.Status.Phase == businessv1.ImageNamespaceAvailable ||
 			imageNamespace.Status.Phase == businessv1.ImageNamespaceLocked {
 			cachedImageNamespace := c.cache.getOrCreate(key)
-			err = c.processUpdate(cachedImageNamespace, imageNamespace, key)
+			err = c.processUpdate(context.Background(), cachedImageNamespace, imageNamespace, key)
 		} else if imageNamespace.Status.Phase == businessv1.ImageNamespaceTerminating {
 			log.Info("ImageNamespace has been terminated. Attempting to cleanup resources",
 				log.String("projectName", projectName), log.String("imageNamespaceName", imageNamespaceName))
@@ -262,7 +263,7 @@ func (c *Controller) processDelete(cachedImageNamespace *cachedImageNamespace, k
 	return nil
 }
 
-func (c *Controller) processUpdate(cachedImageNamespace *cachedImageNamespace, imageNamespace *businessv1.ImageNamespace, key string) error {
+func (c *Controller) processUpdate(ctx context.Context, cachedImageNamespace *cachedImageNamespace, imageNamespace *businessv1.ImageNamespace, key string) error {
 	if cachedImageNamespace.state != nil {
 		// exist and the imageNamespace name changed
 		if cachedImageNamespace.state.UID != imageNamespace.UID {
@@ -272,7 +273,7 @@ func (c *Controller) processUpdate(cachedImageNamespace *cachedImageNamespace, i
 		}
 	}
 	// start update machine if needed
-	err := c.handlePhase(key, cachedImageNamespace, imageNamespace)
+	err := c.handlePhase(ctx, key, cachedImageNamespace, imageNamespace)
 	if err != nil {
 		return err
 	}
@@ -282,30 +283,30 @@ func (c *Controller) processUpdate(cachedImageNamespace *cachedImageNamespace, i
 	return nil
 }
 
-func (c *Controller) handlePhase(key string, cachedImageNamespace *cachedImageNamespace, imageNamespace *businessv1.ImageNamespace) error {
+func (c *Controller) handlePhase(ctx context.Context, key string, cachedImageNamespace *cachedImageNamespace, imageNamespace *businessv1.ImageNamespace) error {
 	switch imageNamespace.Status.Phase {
 	case businessv1.ImageNamespacePending:
-		err := c.createRegistryNamespace(imageNamespace)
+		err := c.createRegistryNamespace(ctx, imageNamespace)
 		if err != nil {
 			imageNamespace.Status.Phase = businessv1.ImageNamespaceFailed
 			imageNamespace.Status.Message = "CreateRegistryNamespace failed"
 			imageNamespace.Status.Reason = err.Error()
 			imageNamespace.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdate(imageNamespace)
+			return c.persistUpdate(ctx, imageNamespace)
 		}
 		imageNamespace.Status.Phase = businessv1.ImageNamespaceAvailable
 		imageNamespace.Status.Message = ""
 		imageNamespace.Status.Reason = ""
 		imageNamespace.Status.LastTransitionTime = metav1.Now()
-		return c.persistUpdate(imageNamespace)
+		return c.persistUpdate(ctx, imageNamespace)
 	case businessv1.ImageNamespaceAvailable, businessv1.ImageNamespaceLocked:
 		c.startImageNamespaceHealthCheck(key)
 	}
 	return nil
 }
 
-func (c *Controller) createRegistryNamespace(imageNamespace *businessv1.ImageNamespace) error {
-	_, err := c.registryClient.Namespaces().Create(&registryv1.Namespace{
+func (c *Controller) createRegistryNamespace(ctx context.Context, imageNamespace *businessv1.ImageNamespace) error {
+	_, err := c.registryClient.Namespaces().Create(ctx, &registryv1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
 				"projectName": imageNamespace.Namespace,
@@ -315,7 +316,7 @@ func (c *Controller) createRegistryNamespace(imageNamespace *businessv1.ImageNam
 			Name:        imageNamespace.Name,
 			DisplayName: imageNamespace.Spec.DisplayName,
 			TenantID:    imageNamespace.Spec.TenantID,
-		}})
+		}}, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -323,10 +324,10 @@ func (c *Controller) createRegistryNamespace(imageNamespace *businessv1.ImageNam
 	return nil
 }
 
-func (c *Controller) persistUpdate(imageNamespace *businessv1.ImageNamespace) error {
+func (c *Controller) persistUpdate(ctx context.Context, imageNamespace *businessv1.ImageNamespace) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().ImageNamespaces(imageNamespace.Namespace).UpdateStatus(imageNamespace)
+		_, err = c.client.BusinessV1().ImageNamespaces(imageNamespace.Namespace).UpdateStatus(ctx, imageNamespace, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}

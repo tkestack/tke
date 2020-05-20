@@ -3,13 +3,13 @@ package main
 import (
 	"io/ioutil"
 	"os"
+
 	"tkestack.io/tke/cmd/tke-upgrade/app/options"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/template"
 )
 
 var (
-	Dir       string
 	DataDir   string
 	Manifests string
 	Output    string
@@ -17,8 +17,6 @@ var (
 )
 
 func main() {
-
-	Dir = os.Getenv("DIR")
 	DataDir = os.Getenv("DATADIR")
 	Manifests = os.Getenv("MANIFESTS")
 	Output = os.Getenv("OUTPUT")

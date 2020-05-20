@@ -4,7 +4,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -758,6 +758,8 @@ func autoConvert_v1_MessageSpec_To_notify_MessageSpec(in *MessageSpec, out *noti
 	out.Body = in.Body
 	out.ChannelMessageID = in.ChannelMessageID
 	out.AlarmPolicyName = in.AlarmPolicyName
+	out.AlarmPolicyType = in.AlarmPolicyType
+	out.ReceiverChannelName = in.ReceiverChannelName
 	return nil
 }
 
@@ -776,6 +778,8 @@ func autoConvert_notify_MessageSpec_To_v1_MessageSpec(in *notify.MessageSpec, ou
 	out.Body = in.Body
 	out.ChannelMessageID = in.ChannelMessageID
 	out.AlarmPolicyName = in.AlarmPolicyName
+	out.AlarmPolicyType = in.AlarmPolicyType
+	out.ReceiverChannelName = in.ReceiverChannelName
 	return nil
 }
 

@@ -20,8 +20,10 @@ package util
 
 import (
 	"fmt"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
+	"os"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/audit"
 	"k8s.io/apiserver/pkg/audit/policy"
@@ -32,7 +34,6 @@ import (
 	pluginlog "k8s.io/apiserver/plugin/pkg/audit/log"
 	plugintruncate "k8s.io/apiserver/plugin/pkg/audit/truncate"
 	pluginwebhook "k8s.io/apiserver/plugin/pkg/audit/webhook"
-	"os"
 )
 
 func SetupAuditConfig(genericAPIServerConfig *genericapiserver.Config, auditOptions *genericapiserveroptions.AuditOptions) error {
@@ -84,7 +85,7 @@ func buildWebhookAuditBackend(o apiserveroptions.AuditWebhookOptions) (audit.Bac
 		return nil, nil
 	}
 	groupVersion, _ := schema.ParseGroupVersion(o.GroupVersionString)
-	webhook, err := pluginwebhook.NewBackend(o.ConfigFile, groupVersion, o.InitialBackoff)
+	webhook, err := pluginwebhook.NewBackend(o.ConfigFile, groupVersion, o.InitialBackoff, nil)
 	if err != nil {
 		return nil, fmt.Errorf("initializing audit webhook: %v", err)
 	}

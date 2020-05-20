@@ -19,6 +19,7 @@
 package projectpolicybinding
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -212,7 +213,7 @@ func (c *Controller) syncItem(key string) error {
 	default:
 		if projectPolicy.Status.Phase == v1.BindingTerminating {
 			log.Info("Delete project policy", log.String("key", key))
-			err = c.projectpolicyedResourcesDeleter.Delete(key)
+			err = c.projectpolicyedResourcesDeleter.Delete(context.Background(), key)
 		} else {
 			err = c.processUpdate(projectPolicy, key)
 		}

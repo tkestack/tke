@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -38,7 +39,7 @@ import (
 // PoliciedResourcesDeleterInterface to delete a policy with all resources in
 // it.
 type PoliciedResourcesDeleterInterface interface {
-	Delete(policyName string) error
+	Delete(ctx context.Context, policyName string) error
 }
 
 // NewPoliciedResourcesDeleter to create the policiedResourcesDeleter that
@@ -89,11 +90,11 @@ type policiedResourcesDeleter struct {
 // Returns ResourcesRemainingError if it deleted some resources but needs
 // to wait for them to go away.
 // Caller is expected to keep calling this until it succeeds.
-func (d *policiedResourcesDeleter) Delete(policyName string) error {
+func (d *policiedResourcesDeleter) Delete(ctx context.Context, policyName string) error {
 	// Multiple controllers may edit a policy during termination
 	// first get the latest state of the policy before proceeding
 	// if the policy was deleted already, don't do anything
-	policy, err := d.policyClient.Get(policyName, metav1.GetOptions{})
+	policy, err := d.policyClient.Get(ctx, policyName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -108,7 +109,7 @@ func (d *policiedResourcesDeleter) Delete(policyName string) error {
 
 	// ensure that the status is up to date on the policy
 	// if we get a not found error, we assume the policy is truly gone
-	policy, err = d.retryOnConflictError(policy, d.updatePolicyStatusFunc)
+	policy, err = d.retryOnConflictError(ctx, policy, d.updatePolicyStatusFunc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -123,17 +124,17 @@ func (d *policiedResourcesDeleter) Delete(policyName string) error {
 
 	// Delete the policy if it is already finalized.
 	if d.deletePolicyWhenDone && finalized(policy) {
-		return d.deletePolicy(policy)
+		return d.deletePolicy(ctx, policy)
 	}
 
 	// there may still be content for us to remove
-	err = d.deleteAllContent(policy)
+	err = d.deleteAllContent(ctx, policy)
 	if err != nil {
 		return err
 	}
 
 	// we have removed content, so mark it finalized by us
-	policy, err = d.retryOnConflictError(policy, d.finalizePolicy)
+	policy, err = d.retryOnConflictError(ctx, policy, d.finalizePolicy)
 	if err != nil {
 		// in normal practice, this should not be possible, but if a deployment is running
 		// two controllers to do policy deletion that share a common finalizer token it's
@@ -146,20 +147,20 @@ func (d *policiedResourcesDeleter) Delete(policyName string) error {
 
 	// Check if we can delete now.
 	if d.deletePolicyWhenDone && finalized(policy) {
-		return d.deletePolicy(policy)
+		return d.deletePolicy(ctx, policy)
 	}
 
 	return nil
 }
 
 // Deletes the given policy.
-func (d *policiedResourcesDeleter) deletePolicy(policy *v1.Policy) error {
-	var opts *metav1.DeleteOptions
+func (d *policiedResourcesDeleter) deletePolicy(ctx context.Context, policy *v1.Policy) error {
+	var opts metav1.DeleteOptions
 	uid := policy.UID
 	if len(uid) > 0 {
-		opts = &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
-	err := d.policyClient.Delete(policy.Name, opts)
+	err := d.policyClient.Delete(ctx, policy.Name, opts)
 	if err != nil && !errors.IsNotFound(err) {
 		log.Error("error", log.Err(err))
 		return err
@@ -168,15 +169,15 @@ func (d *policiedResourcesDeleter) deletePolicy(policy *v1.Policy) error {
 }
 
 // updatePolicyFunc is a function that makes an update to a policy
-type updatePolicyFunc func(policy *v1.Policy) (*v1.Policy, error)
+type updatePolicyFunc func(ctx context.Context, policy *v1.Policy) (*v1.Policy, error)
 
 // retryOnConflictError retries the specified fn if there was a conflict error
 // it will return an error if the UID for an object changes across retry operations.
 // TODO RetryOnConflict should be a generic concept in client code
-func (d *policiedResourcesDeleter) retryOnConflictError(policy *v1.Policy, fn updatePolicyFunc) (result *v1.Policy, err error) {
+func (d *policiedResourcesDeleter) retryOnConflictError(ctx context.Context, policy *v1.Policy, fn updatePolicyFunc) (result *v1.Policy, err error) {
 	latestPolicy := policy
 	for {
-		result, err = fn(latestPolicy)
+		result, err = fn(ctx, latestPolicy)
 		if err == nil {
 			return result, nil
 		}
@@ -184,7 +185,7 @@ func (d *policiedResourcesDeleter) retryOnConflictError(policy *v1.Policy, fn up
 			return nil, err
 		}
 		prevPolicy := latestPolicy
-		latestPolicy, err = d.policyClient.Get(latestPolicy.Name, metav1.GetOptions{})
+		latestPolicy, err = d.policyClient.Get(ctx, latestPolicy.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +196,7 @@ func (d *policiedResourcesDeleter) retryOnConflictError(policy *v1.Policy, fn up
 }
 
 // updatePolicyStatusFunc will verify that the status of the policy is correct
-func (d *policiedResourcesDeleter) updatePolicyStatusFunc(policy *v1.Policy) (*v1.Policy, error) {
+func (d *policiedResourcesDeleter) updatePolicyStatusFunc(ctx context.Context, policy *v1.Policy) (*v1.Policy, error) {
 	if policy.DeletionTimestamp.IsZero() || policy.Status.Phase == v1.PolicyTerminating {
 		return policy, nil
 	}
@@ -203,7 +204,7 @@ func (d *policiedResourcesDeleter) updatePolicyStatusFunc(policy *v1.Policy) (*v
 	newPolicy.ObjectMeta = policy.ObjectMeta
 	newPolicy.Status = policy.Status
 	newPolicy.Status.Phase = v1.PolicyTerminating
-	return d.policyClient.UpdateStatus(&newPolicy)
+	return d.policyClient.UpdateStatus(ctx, &newPolicy, metav1.UpdateOptions{})
 }
 
 // finalized returns true if the policy.Spec.Finalizers is an empty list
@@ -212,7 +213,7 @@ func finalized(policy *v1.Policy) bool {
 }
 
 // finalizePolicy removes the specified finalizerToken and finalizes the policy
-func (d *policiedResourcesDeleter) finalizePolicy(policy *v1.Policy) (*v1.Policy, error) {
+func (d *policiedResourcesDeleter) finalizePolicy(ctx context.Context, policy *v1.Policy) (*v1.Policy, error) {
 	policyFinalize := v1.Policy{}
 	policyFinalize.ObjectMeta = policy.ObjectMeta
 	policyFinalize.Spec = policy.Spec
@@ -233,7 +234,7 @@ func (d *policiedResourcesDeleter) finalizePolicy(policy *v1.Policy) (*v1.Policy
 		Name(policyFinalize.Name).
 		SubResource("finalize").
 		Body(&policyFinalize).
-		Do().
+		Do(ctx).
 		Into(updated)
 
 	if err != nil {
@@ -242,7 +243,7 @@ func (d *policiedResourcesDeleter) finalizePolicy(policy *v1.Policy) (*v1.Policy
 	return updated, err
 }
 
-type deleteResourceFunc func(deleter *policiedResourcesDeleter, policy *v1.Policy) error
+type deleteResourceFunc func(ctx context.Context, deleter *policiedResourcesDeleter, policy *v1.Policy) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	detachRelatedRoles,
@@ -253,11 +254,11 @@ var deleteResourceFuncs = []deleteResourceFunc{
 // deleteAllContent will use the dynamic client to delete each resource identified in groupVersionResources.
 // It returns an estimate of the time remaining before the remaining resources are deleted.
 // If estimate > 0, not all resources are guaranteed to be gone.
-func (d *policiedResourcesDeleter) deleteAllContent(policy *v1.Policy) error {
+func (d *policiedResourcesDeleter) deleteAllContent(ctx context.Context, policy *v1.Policy) error {
 	log.Debug("Policy controller - deleteAllContent", log.String("policyName", policy.Name))
 
 	for _, deleteFunc := range deleteResourceFuncs {
-		err := deleteFunc(d, policy)
+		err := deleteFunc(ctx, d, policy)
 		if err != nil {
 			// If there is an error, return directly, in case delete roles failed in next try if rule has been deleted.
 			return err
@@ -267,13 +268,13 @@ func (d *policiedResourcesDeleter) deleteAllContent(policy *v1.Policy) error {
 	return nil
 }
 
-func deleteRelatedRules(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
+func deleteRelatedRules(ctx context.Context, deleter *policiedResourcesDeleter, policy *v1.Policy) error {
 	log.Info("Policy controller - deleteRelatedRules", log.String("policyName", policy.Name))
 	_, err := deleter.enforcer.DeleteRole(policy.Name)
 	return err
 }
 
-func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
+func detachRelatedRoles(ctx context.Context, deleter *policiedResourcesDeleter, policy *v1.Policy) error {
 	log.Info("Policy controller - detachRelatedRoles", log.String("policyName", policy.Name))
 	roles := deleter.enforcer.GetUsersForRoleInDomain(policy.Name, authutil.DefaultDomain)
 
@@ -289,7 +290,8 @@ func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 				Name(role).
 				SubResource("policyunbinding").
 				Body(&unbinding).
-				Do().Into(rol)
+				Do(ctx).
+				Into(rol)
 			if err != nil {
 				if errors.IsNotFound(err) {
 					continue
@@ -310,13 +312,13 @@ func detachRelatedRoles(deleter *policiedResourcesDeleter, policy *v1.Policy) er
 	return utilerrors.NewAggregate(errs)
 }
 
-func deleteRelatedProjectPolicies(deleter *policiedResourcesDeleter, policy *v1.Policy) error {
+func deleteRelatedProjectPolicies(ctx context.Context, deleter *policiedResourcesDeleter, policy *v1.Policy) error {
 	log.Info("Policy controller - deleteRelatedProjectPolicies", log.String("policyName", policy.Name))
 
 	tenantUserSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.policyID", policy.Name))
 
-	projectPolicyList, err := deleter.authClient.ProjectPolicyBindings().List(metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	projectPolicyList, err := deleter.authClient.ProjectPolicyBindings().List(ctx, metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {
 		log.Error("List project policies for policy failed", log.String("policy", policy.Name), log.Err(err))
 		return err
@@ -325,7 +327,7 @@ func deleteRelatedProjectPolicies(deleter *policiedResourcesDeleter, policy *v1.
 	var errs []error
 	for _, item := range projectPolicyList.Items {
 		log.Info("Delete project policy", log.Any("item", item))
-		err := deleter.authClient.ProjectPolicyBindings().Delete(item.Name, &metav1.DeleteOptions{})
+		err := deleter.authClient.ProjectPolicyBindings().Delete(ctx, item.Name, metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
 			log.Error("Delete project policy failed", log.String("project policy", item.Name), log.Err(err))
 			errs = append(errs, err)

@@ -19,6 +19,8 @@
 package mark
 
 import (
+	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -30,11 +32,11 @@ const (
 	Namespace = metav1.NamespaceSystem
 )
 
-func Get(clientset kubernetes.Interface) (*corev1.ConfigMap, error) {
-	return clientset.CoreV1().ConfigMaps(Namespace).Get(Name, metav1.GetOptions{})
+func Get(ctx context.Context, clientset kubernetes.Interface) (*corev1.ConfigMap, error) {
+	return clientset.CoreV1().ConfigMaps(Namespace).Get(ctx, Name, metav1.GetOptions{})
 }
 
-func Create(clientset kubernetes.Interface) error {
+func Create(ctx context.Context, clientset kubernetes.Interface) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      Name,
@@ -42,5 +44,5 @@ func Create(clientset kubernetes.Interface) error {
 		},
 	}
 
-	return apiclient.CreateOrUpdateConfigMap(clientset, cm)
+	return apiclient.CreateOrUpdateConfigMap(ctx, clientset, cm)
 }

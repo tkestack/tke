@@ -142,6 +142,13 @@ type REST struct {
 }
 
 var _ rest.ShortNamesProvider = &REST{}
+var _ rest.Lister = &REST{}
+var _ rest.Updater = &REST{}
+var _ rest.Getter = &REST{}
+var _ rest.CollectionDeleter = &REST{}
+var _ rest.Exporter = &REST{}
+var _ rest.GracefulDeleter = &REST{}
+var _ rest.Scoper = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
@@ -202,7 +209,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	}
 
 	apiKey := obj.(*auth.APIKey)
-	tokenInfo, err := r.keySigner.Verify(apiKey.Spec.APIkey)
+	tokenInfo, err := r.keySigner.Verify(ctx, apiKey.Spec.APIkey)
 	if tokenInfo != nil {
 		if tokenInfo.UserName != userName {
 			return nil, false, apierrors.NewForbidden(auth.Resource("apiKeys"), name, fmt.Errorf("forbid to delete"))

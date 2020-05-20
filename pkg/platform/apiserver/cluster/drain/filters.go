@@ -19,6 +19,7 @@
 package drain
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -47,7 +48,7 @@ type podDeleteList struct {
 }
 
 func (l *podDeleteList) Pods() []corev1.Pod {
-	pods := []corev1.Pod{}
+	var pods []corev1.Pod
 	for _, i := range l.items {
 		if i.status.delete {
 			pods = append(pods, i.pod)
@@ -64,7 +65,7 @@ func (l *podDeleteList) Warnings() string {
 		}
 	}
 
-	msgs := []string{}
+	var msgs []string
 	for key, pods := range ps {
 		msgs = append(msgs, fmt.Sprintf("%s: %s", key, strings.Join(pods, ", ")))
 	}
@@ -96,7 +97,7 @@ type podDeleteStatus struct {
 }
 
 // Takes a pod and returns a PodDeleteStatus
-type podFilter func(corev1.Pod) podDeleteStatus
+type podFilter func(context.Context, corev1.Pod) podDeleteStatus
 
 const (
 	podDeleteStatusTypeOkay    = "Okay"
@@ -154,7 +155,7 @@ func hasLocalStorage(pod corev1.Pod) bool {
 	return false
 }
 
-func (d *Helper) daemonSetFilter(pod corev1.Pod) podDeleteStatus {
+func (d *Helper) daemonSetFilter(ctx context.Context, pod corev1.Pod) podDeleteStatus {
 	// Note that we return false in cases where the pod is DaemonSet managed,
 	// regardless of flags.
 	//
@@ -170,7 +171,7 @@ func (d *Helper) daemonSetFilter(pod corev1.Pod) podDeleteStatus {
 		return makePodDeleteStatusOkay()
 	}
 
-	if _, err := d.Client.AppsV1().DaemonSets(pod.Namespace).Get(controllerRef.Name, metav1.GetOptions{}); err != nil {
+	if _, err := d.Client.AppsV1().DaemonSets(pod.Namespace).Get(ctx, controllerRef.Name, metav1.GetOptions{}); err != nil {
 		// remove orphaned pods with a warning if --force is used
 		if apierrors.IsNotFound(err) && d.Force {
 			return makePodDeleteStatusWithWarning(true, err.Error())
@@ -186,14 +187,14 @@ func (d *Helper) daemonSetFilter(pod corev1.Pod) podDeleteStatus {
 	return makePodDeleteStatusWithWarning(false, daemonSetWarning)
 }
 
-func (d *Helper) mirrorPodFilter(pod corev1.Pod) podDeleteStatus {
+func (d *Helper) mirrorPodFilter(ctx context.Context, pod corev1.Pod) podDeleteStatus {
 	if _, found := pod.ObjectMeta.Annotations[corev1.MirrorPodAnnotationKey]; found {
 		return makePodDeleteStatusSkip()
 	}
 	return makePodDeleteStatusOkay()
 }
 
-func (d *Helper) localStorageFilter(pod corev1.Pod) podDeleteStatus {
+func (d *Helper) localStorageFilter(ctx context.Context, pod corev1.Pod) podDeleteStatus {
 	if !hasLocalStorage(pod) {
 		return makePodDeleteStatusOkay()
 	}
@@ -208,7 +209,7 @@ func (d *Helper) localStorageFilter(pod corev1.Pod) podDeleteStatus {
 	return makePodDeleteStatusWithWarning(true, localStorageWarning)
 }
 
-func (d *Helper) unreplicatedFilter(pod corev1.Pod) podDeleteStatus {
+func (d *Helper) unreplicatedFilter(ctx context.Context, pod corev1.Pod) podDeleteStatus {
 	// any finished pod can be removed
 	if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 		return makePodDeleteStatusOkay()

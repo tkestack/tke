@@ -19,17 +19,17 @@
 package alertmanager
 
 import (
+	"context"
 	"time"
-
-	"tkestack.io/tke/pkg/monitor/services"
-	"tkestack.io/tke/pkg/monitor/util"
-	alertmanager_config "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
-	"tkestack.io/tke/pkg/util/log"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"tkestack.io/tke/pkg/monitor/services"
+	"tkestack.io/tke/pkg/monitor/util"
+	alertmanagerconfig "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
@@ -89,15 +89,15 @@ func createProcessorServer() (kubernetes.Interface, services.RouteProcessor, str
 	k8sClient := fake.NewSimpleClientset()
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: alertmanager_config.AlertManagerConfigMap,
+			Name: alertmanagerconfig.AlertManagerConfigMap,
 		},
 		Data: map[string]string{
-			alertmanager_config.AlertManagerConfigName: exampleAlertConfig,
+			alertmanagerconfig.AlertManagerConfigName: exampleAlertConfig,
 		},
 	}
 
 	util.ClusterNameToClient.Store(testClusterName, k8sClient)
-	_, _ = k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(configMap)
+	_, _ = k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(context.Background(), configMap, metav1.CreateOptions{})
 	// Because we have set kubernetes client, so set nil is ok
 	p := NewProcessor(nil)
 

@@ -75,19 +75,19 @@ func (r *ProjectBindingREST) Create(ctx context.Context, obj runtime.Object, cre
 	}
 
 	bind := obj.(*auth.Binding)
-	projectPolicy, err := r.authClient.ProjectPolicyBindings().Get(util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
+	projectPolicy, err := r.authClient.ProjectPolicyBindings().Get(ctx, util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
 		// if projectPolicy not exist, create a new one
-		projectPolicy, err = r.authClient.ProjectPolicyBindings().Create(&auth.ProjectPolicyBinding{
+		projectPolicy, err = r.authClient.ProjectPolicyBindings().Create(ctx, &auth.ProjectPolicyBinding{
 			Spec: auth.ProjectPolicyBindingSpec{
 				TenantID:  policy.Spec.TenantID,
 				ProjectID: projectID,
 				PolicyID:  policyID,
 			},
-		})
+		}, metav1.CreateOptions{})
 		if err != nil {
 			if apierrors.IsAlreadyExists(err) {
-				projectPolicy, err = r.authClient.ProjectPolicyBindings().Get(util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
+				projectPolicy, err = r.authClient.ProjectPolicyBindings().Get(ctx, util.ProjectPolicyName(projectID, policyID), metav1.GetOptions{})
 			}
 		}
 	}
@@ -110,5 +110,5 @@ func (r *ProjectBindingREST) Create(ctx context.Context, obj runtime.Object, cre
 	}
 
 	log.Info("bind project policy subjects", log.String("policy", policyID), log.Any("users", projectPolicy.Spec.Users), log.Any("groups", projectPolicy.Spec.Groups))
-	return r.authClient.ProjectPolicyBindings().Update(projectPolicy)
+	return r.authClient.ProjectPolicyBindings().Update(ctx, projectPolicy, metav1.UpdateOptions{})
 }

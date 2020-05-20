@@ -15,7 +15,13 @@ const fetchWorkloadActions = generateFetcherActionCreator({
   fetcher: async (getState: GetState, fetchOptions, dispatch: Redux.Dispatch) => {
     let { workloadQuery, clusterVersion } = getState();
     let { filter } = workloadQuery;
-    let resourceInfo = resourceConfig(clusterVersion)[filter.workloadType];
+    let workloadTypeMap = {
+      Deployment: 'deployment',
+      StatefulSet: 'statefulset',
+      DaemonSet: 'daemonset',
+      TApp: 'tapp'
+    };
+    let resourceInfo = resourceConfig(clusterVersion)[workloadTypeMap[filter.workloadType]];
     let response = await WebAPI.fetchResourceList(getState().workloadQuery, { resourceInfo });
     return response;
   }

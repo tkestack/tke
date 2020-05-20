@@ -70,18 +70,18 @@ func (r *HPARest) Get(ctx context.Context, name string, options *metav1.GetOptio
 	}
 
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return listHPAsByExtensions(client, namespaceName, name, options)
+		return listHPAsByExtensions(ctx, client, namespaceName, name, options)
 	}
-	return listHPAsByApps(client, namespaceName, name, options)
+	return listHPAsByApps(ctx, client, namespaceName, name, options)
 }
 
-func listHPAsByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(name, *options)
+func listHPAsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("deployments/horizontalpodautoscalers"), name)
 	}
 
-	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(metav1.ListOptions{})
+	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -98,13 +98,13 @@ func listHPAsByExtensions(client *kubernetes.Clientset, namespaceName, name stri
 	return hpaList, nil
 }
 
-func listHPAsByApps(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	deployment, err := client.AppsV1().Deployments(namespaceName).Get(name, *options)
+func listHPAsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	deployment, err := client.AppsV1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1.Resource("deployments/horizontalpodautoscalers"), name)
 	}
 
-	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(metav1.ListOptions{})
+	hpas, err := client.AutoscalingV1().HorizontalPodAutoscalers(namespaceName).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

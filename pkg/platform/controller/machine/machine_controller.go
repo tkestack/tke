@@ -19,6 +19,7 @@
 package machine
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -211,11 +212,11 @@ func (c *Controller) syncMachine(key string) error {
 	default:
 		if (machine.Status.Phase == v1.MachineRunning) || (machine.Status.Phase == v1.MachineFailed) || (machine.Status.Phase == v1.MachineInitializing) {
 			cachedMachine = c.cache.getOrCreate(key)
-			err = c.processMachineUpdate(cachedMachine, machine, key)
+			err = c.processMachineUpdate(context.Background(), cachedMachine, machine, key)
 		} else if machine.Status.Phase == v1.MachineTerminating {
 			log.Info("Machine has been terminated. Attempting to cleanup resources", log.String("machineName", key))
 			_ = c.processMachineDeletion(key, machine)
-			err = c.deleter.Delete(key)
+			err = c.deleter.Delete(context.Background(), key)
 		} else {
 			log.Debug(fmt.Sprintf("Machine %s status is %s, not to process", key, machine.Status.Phase), log.String("machineName", key))
 		}
@@ -223,7 +224,7 @@ func (c *Controller) syncMachine(key string) error {
 	return err
 }
 
-func (c *Controller) processMachineUpdate(cachedMachine *cachedMachine, machine *v1.Machine, key string) error {
+func (c *Controller) processMachineUpdate(ctx context.Context, cachedMachine *cachedMachine, machine *v1.Machine, key string) error {
 	if cachedMachine.state != nil {
 		if cachedMachine.state.UID != machine.UID {
 			err := c.processMachineDelete(key, machine)
@@ -234,7 +235,7 @@ func (c *Controller) processMachineUpdate(cachedMachine *cachedMachine, machine 
 	}
 
 	// start update machine if needed
-	err := c.handlePhase(key, cachedMachine, machine)
+	err := c.handlePhase(ctx, key, cachedMachine, machine)
 	if err != nil {
 		return err
 	}
@@ -266,17 +267,17 @@ func (c *Controller) processMachineDelete(key string, machine *v1.Machine) error
 	return nil
 }
 
-func (c *Controller) handlePhase(key string, cachedMachine *cachedMachine, machine *v1.Machine) error {
+func (c *Controller) handlePhase(ctx context.Context, key string, cachedMachine *cachedMachine, machine *v1.Machine) error {
 	var err error
 	switch machine.Status.Phase {
 	case v1.MachineInitializing:
-		err = c.onCreate(machine)
+		err = c.onCreate(ctx, machine)
 		log.Info("machine_controller.onCreate", log.String("machineName", machine.Name), log.Err(err))
 	case v1.MachineRunning, v1.MachineFailed:
-		err = c.onUpdate(machine)
+		err = c.onUpdate(ctx, machine)
 		log.Info("machine_controller.onUpdate", log.String("machineName", machine.Name), log.Err(err))
 		if err == nil {
-			c.ensureHealthCheck(key, machine)
+			c.ensureHealthCheck(ctx, key, machine)
 		}
 	default:
 		err = fmt.Errorf("no handler for %q", machine.Status.Phase)
@@ -321,10 +322,10 @@ func (c *Controller) addOrUpdateCondition(machine *v1.Machine, newCondition v1.M
 	machine.Status.Conditions = conditions
 }
 
-func (c *Controller) persistUpdate(machine *v1.Machine) error {
+func (c *Controller) persistUpdate(ctx context.Context, machine *v1.Machine) error {
 	var err error
 	for i := 0; i < machineClientRetryCount; i++ {
-		_, err = c.platformclient.Machines().UpdateStatus(machine)
+		_, err = c.platformclient.Machines().UpdateStatus(ctx, machine, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -345,22 +346,22 @@ func (c *Controller) persistUpdate(machine *v1.Machine) error {
 	return err
 }
 
-func (c *Controller) onCreate(machine *v1.Machine) error {
+func (c *Controller) onCreate(ctx context.Context, machine *v1.Machine) error {
 	provider, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
 		return err
 	}
-	cluster, err := typesv1.GetClusterByName(c.platformclient, machine.Spec.ClusterName)
+	cluster, err := typesv1.GetClusterByName(ctx, c.platformclient, machine.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
 
 	for machine.Status.Phase == platformv1.MachineInitializing {
-		err = provider.OnCreate(machine, cluster)
+		err = provider.OnCreate(ctx, machine, cluster)
 		if err != nil {
 			machine.Status.Message = err.Error()
 			machine.Status.Reason = reasonFailedInit
-			_, _ = c.platformclient.Machines().Update(machine)
+			_, _ = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 			return err
 		}
 
@@ -368,14 +369,14 @@ func (c *Controller) onCreate(machine *v1.Machine) error {
 		if condition.Status == v1.ConditionFalse { // means current condition run into error
 			machine.Status.Message = condition.Message
 			machine.Status.Reason = condition.Reason
-			_, _ = c.platformclient.Machines().Update(machine)
+			_, _ = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 			return fmt.Errorf("Provider.OnCreate.%s [Failed] reason: %s message: %s",
 				condition.Type, condition.Reason, condition.Message)
 		}
 		machine.Status.Message = ""
 		machine.Status.Reason = ""
 
-		machine, err = c.platformclient.Machines().Update(machine)
+		machine, err = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
@@ -383,27 +384,27 @@ func (c *Controller) onCreate(machine *v1.Machine) error {
 
 	return err
 }
-func (c *Controller) onUpdate(machine *platformv1.Machine) error {
+func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) error {
 	provider, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
 		return err
 	}
 
-	cluster, err := typesv1.GetClusterByName(c.platformclient, machine.Spec.ClusterName)
+	cluster, err := typesv1.GetClusterByName(ctx, c.platformclient, machine.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
-	err = provider.OnUpdate(machine, cluster)
+	err = provider.OnUpdate(ctx, machine, cluster)
 	if err != nil {
 		machine.Status.Message = err.Error()
 		machine.Status.Reason = reasonFailedUpdate
-		_, _ = c.platformclient.Machines().Update(machine)
+		_, _ = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 		return err
 	}
 	cluster.Status.Message = ""
 	cluster.Status.Reason = ""
 
-	machine, err = c.platformclient.Machines().Update(machine)
+	_, err = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}

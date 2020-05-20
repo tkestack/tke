@@ -72,13 +72,13 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	}
 
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return listEventsByExtensions(client, namespaceName, name, options)
+		return listEventsByExtensions(ctx, client, namespaceName, name, options)
 	}
-	return listEventsByNetworkings(client, namespaceName, name, options)
+	return listEventsByNetworkings(ctx, client, namespaceName, name, options)
 }
 
-func listEventsByExtensions(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ingress, err := client.ExtensionsV1beta1().Ingresses(namespaceName).Get(name, *options)
+func listEventsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ingress, err := client.ExtensionsV1beta1().Ingresses(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("ingresses/events"), name)
 	}
@@ -91,11 +91,11 @@ func listEventsByExtensions(client *kubernetes.Clientset, namespaceName, name st
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	return client.CoreV1().Events(namespaceName).List(listOptions)
+	return client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 }
 
-func listEventsByNetworkings(client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ingress, err := client.NetworkingV1beta1().Ingresses(namespaceName).Get(name, *options)
+func listEventsByNetworkings(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ingress, err := client.NetworkingV1beta1().Ingresses(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(networkingv1beta1.Resource("ingresses/events"), name)
 	}
@@ -108,5 +108,5 @@ func listEventsByNetworkings(client *kubernetes.Clientset, namespaceName, name s
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	return client.CoreV1().Events(namespaceName).List(listOptions)
+	return client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 }

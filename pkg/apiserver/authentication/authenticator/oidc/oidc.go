@@ -409,7 +409,7 @@ func (r *claimResolver) Verifier(iss string) (*oidc.IDTokenVerifier, error) {
 //     },
 //   },
 // }
-func (r *claimResolver) expand(c claims) error {
+func (r *claimResolver) expand(ctx context.Context, c claims) error {
 	const (
 		// The claim containing a map of endpoint references per claim.
 		// OIDC Connect Core 1.0, section 5.6.2.
@@ -461,12 +461,12 @@ func (r *claimResolver) expand(c claims) error {
 		// This is maybe an aggregated claim (ep.JWT != "").
 		return nil
 	}
-	return r.resolve(ep, c)
+	return r.resolve(ctx, ep, c)
 }
 
 // resolve requests distributed claims from all endpoints passed in,
 // and inserts the lookup results into allClaims.
-func (r *claimResolver) resolve(endpoint endpoint, allClaims claims) error {
+func (r *claimResolver) resolve(ctx context.Context, endpoint endpoint, allClaims claims) error {
 	// TODO: cache resolved claims.
 	jwt, err := getClaimJWT(r.client, endpoint.URL, endpoint.AccessToken)
 	if err != nil {
@@ -480,7 +480,7 @@ func (r *claimResolver) resolve(endpoint endpoint, allClaims claims) error {
 	if err != nil {
 		return fmt.Errorf("verifying untrusted issuer %v failed: %v", untrustedIss, err)
 	}
-	t, err := v.Verify(context.Background(), jwt)
+	t, err := v.Verify(ctx, jwt)
 	if err != nil {
 		return fmt.Errorf("verify distributed claim token: %v", err)
 	}
@@ -518,7 +518,7 @@ func (a *Authenticator) AuthenticateToken(ctx context.Context, token string) (*a
 		return nil, false, fmt.Errorf("oidc: parse claims: %v", err)
 	}
 	if a.resolver != nil {
-		if err := a.resolver.expand(c); err != nil {
+		if err := a.resolver.expand(ctx, c); err != nil {
 			return nil, false, fmt.Errorf("oidc: could not expand distributed claims: %v", err)
 		}
 	}

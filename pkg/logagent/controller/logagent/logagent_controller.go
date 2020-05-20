@@ -19,8 +19,14 @@
 package logagent
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"path"
+	"reflect"
+	"sync"
+	"time"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -34,10 +40,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"path"
-	"reflect"
-	"sync"
-	"time"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	logagentv1informer "tkestack.io/tke/api/client/informers/externalversions/logagent/v1"
@@ -72,28 +74,27 @@ const (
 // Controller is responsible for performing actions dependent upon a LogCollector phase.
 type Controller struct {
 	platformClient platformversionedclient.PlatformV1Interface
-	client       clientset.Interface
-	cache        *logcollectorCache
-	health       sync.Map
-	checking     sync.Map
-	upgrading    sync.Map
-	queue        workqueue.RateLimitingInterface
-	lister       logagentv1lister.LogAgentLister
-	listerSynced cache.InformerSynced
-	stopCh       <-chan struct{}
+	client         clientset.Interface
+	cache          *logcollectorCache
+	health         sync.Map
+	checking       sync.Map
+	upgrading      sync.Map
+	queue          workqueue.RateLimitingInterface
+	lister         logagentv1lister.LogAgentLister
+	listerSynced   cache.InformerSynced
+	stopCh         <-chan struct{}
 }
 
-
 // NewController creates a new LogCollector Controller object.
-func NewController(platformClient platformversionedclient.PlatformV1Interface,client clientset.Interface,
+func NewController(platformClient platformversionedclient.PlatformV1Interface, client clientset.Interface,
 	informer logagentv1informer.LogAgentInformer,
 	resyncPeriod time.Duration) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
-		platformClient:  platformClient,
-		client: client,
-		cache:  &logcollectorCache{lcMap: make(map[string]*cachedLogCollector)},
-		queue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
+		platformClient: platformClient,
+		client:         client,
+		cache:          &logcollectorCache{lcMap: make(map[string]*cachedLogCollector)},
+		queue:          workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
 	}
 
 	if client != nil && client.LogagentV1().RESTClient().GetRateLimiter() != nil {
@@ -121,8 +122,6 @@ func NewController(platformClient platformversionedclient.PlatformV1Interface,cl
 	return controller
 }
 
-
-
 func (c *Controller) enqueueLogAgent(obj interface{}) {
 	key, err := controllerutil.KeyFunc(obj)
 	if err != nil {
@@ -134,11 +133,9 @@ func (c *Controller) enqueueLogAgent(obj interface{}) {
 	log.Infof("enqueue logagent with key %v current queue size is %v", key, c.queue.Len())
 }
 
-
 func (c *Controller) needsUpdate(old *v1.LogAgent, new *v1.LogAgent) bool {
 	return !reflect.DeepEqual(old, new)
 }
-
 
 // Run will set up the event handlers for types we are interested in, as well
 // as syncing informer caches and starting workers.
@@ -189,10 +186,8 @@ func (c *Controller) processNextWorkItem() bool {
 	runtime.HandleError(fmt.Errorf("error processing Logagent %s (will retry): %v", key, err))
 	c.queue.AddRateLimited(key)
 
-
 	return true
 }
-
 
 // syncLogCollector will sync the LogCollector with the given key if it has had
 // its expectations fulfilled, meaning it did not expect to see any more of its
@@ -214,27 +209,27 @@ func (c *Controller) syncLogCollector(key string) error {
 	switch {
 	case k8serrors.IsNotFound(err):
 		log.Info("LogCollector has been deleted. Attempting to cleanup resources", log.String("name", key))
-		err = c.processLogCollectorDeletion(key)
+		err = c.processLogCollectorDeletion(context.Background(), key)
 	case err != nil:
 		log.Warn("Unable to retrieve LogCollector from store", log.String("name", key), log.Err(err))
 	default:
 		cachedLogCollector := c.cache.getOrCreate(key)
-		err = c.processLogCollectorUpdate(cachedLogCollector, LogCollector, key)
+		err = c.processLogCollectorUpdate(context.Background(), cachedLogCollector, LogCollector, key)
 	}
 
 	return err
 }
 
-func (c *Controller) processLogCollectorDeletion(key string) error {
+func (c *Controller) processLogCollectorDeletion(ctx context.Context, key string) error {
 	cachedLogCollector, ok := c.cache.get(key)
 	if !ok {
 		log.Error("LogCollector not in cache even though the watcher thought it was. Ignoring the deletion", log.String("name", key))
 		return nil
 	}
-	return c.processLogCollectorDelete(cachedLogCollector, key)
+	return c.processLogCollectorDelete(ctx, cachedLogCollector, key)
 }
 
-func (c *Controller) processLogCollectorDelete(cachedLogCollector *cachedLogCollector, key string) error {
+func (c *Controller) processLogCollectorDelete(ctx context.Context, cachedLogCollector *cachedLogCollector, key string) error {
 	log.Info("LogCollector will be dropped", log.String("name", key))
 
 	if c.cache.Exist(key) {
@@ -248,15 +243,15 @@ func (c *Controller) processLogCollectorDelete(cachedLogCollector *cachedLogColl
 	}
 
 	LogCollector := cachedLogCollector.state
-	return c.uninstallLogCollector(LogCollector)
+	return c.uninstallLogCollector(ctx, LogCollector)
 }
 
-func (c *Controller) uninstallLogCollector(LogCollector *v1.LogAgent) error {
+func (c *Controller) uninstallLogCollector(ctx context.Context, LogCollector *v1.LogAgent) error {
 	log.Info("Start to uninstall LogCollector",
 		log.String("name", LogCollector.Name),
 		log.String("clusterName", LogCollector.Spec.ClusterName))
 
-	kubeClient, err := util.GetClusterClient(LogCollector.Spec.ClusterName,c.platformClient)
+	kubeClient, err := util.GetClusterClient(ctx, LogCollector.Spec.ClusterName, c.platformClient)
 	if err != nil {
 		log.Errorf("unable to get cluster client")
 		return err
@@ -264,13 +259,13 @@ func (c *Controller) uninstallLogCollector(LogCollector *v1.LogAgent) error {
 
 	// Delete the operator daemonSet.
 	clearDaemonSetErr := kubeClient.AppsV1().
-		DaemonSets(metav1.NamespaceSystem).Delete(daemonSetName, &metav1.DeleteOptions{})
+		DaemonSets(metav1.NamespaceSystem).Delete(ctx, daemonSetName, metav1.DeleteOptions{})
 	// Delete the ClusterRoleBinding.
 	clearCRBErr := kubeClient.RbacV1().
-		ClusterRoleBindings().Delete(crbName, &metav1.DeleteOptions{})
+		ClusterRoleBindings().Delete(ctx, crbName, metav1.DeleteOptions{})
 	// Delete the ServiceAccount.
 	clearSVCErr := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).
-		Delete(svcAccountName, &metav1.DeleteOptions{})
+		Delete(ctx, svcAccountName, metav1.DeleteOptions{})
 
 	failed := false
 
@@ -305,18 +300,16 @@ func (c *Controller) uninstallLogCollector(LogCollector *v1.LogAgent) error {
 	return nil
 }
 
-
-
-func (c *Controller) processLogCollectorUpdate(cachedLogCollector *cachedLogCollector, LogCollector *v1.LogAgent, key string) error {
+func (c *Controller) processLogCollectorUpdate(ctx context.Context, cachedLogCollector *cachedLogCollector, LogCollector *v1.LogAgent, key string) error {
 	if cachedLogCollector.state != nil {
 		// exist and the cluster name changed
 		if cachedLogCollector.state.UID != LogCollector.UID {
-			if err := c.processLogCollectorDelete(cachedLogCollector, key); err != nil {
+			if err := c.processLogCollectorDelete(ctx, cachedLogCollector, key); err != nil {
 				return err
 			}
 		}
 	}
-	err := c.createLogCollectorIfNeeded(key, cachedLogCollector, LogCollector)
+	err := c.createLogCollectorIfNeeded(ctx, key, cachedLogCollector, LogCollector)
 	if err != nil {
 		return err
 	}
@@ -327,8 +320,8 @@ func (c *Controller) processLogCollectorUpdate(cachedLogCollector *cachedLogColl
 	return nil
 }
 
-
 func (c *Controller) createLogCollectorIfNeeded(
+	ctx context.Context,
 	key string,
 	cachedLogCollector *cachedLogCollector,
 	LogCollector *v1.LogAgent) error {
@@ -336,17 +329,17 @@ func (c *Controller) createLogCollectorIfNeeded(
 	switch LogCollector.Status.Phase {
 	case v1.AddonPhaseInitializing:
 		log.Info("LogCollector will be created", log.String("name", key))
-		err := c.installLogCollector(LogCollector)
+		err := c.installLogCollector(ctx, LogCollector)
 		if err == nil {
 			LogCollector = LogCollector.DeepCopy()
 			fillOperatorStatus(LogCollector)
 			LogCollector.Status.Phase = v1.AddonPhaseChecking
 			LogCollector.Status.Reason = ""
 			LogCollector.Status.RetryCount = 0
-			return c.persistUpdate(LogCollector)
-		} else {
-			log.Errorf("LogCollector install error %v %v", err, log.String("name", key))
+			return c.persistUpdate(ctx, LogCollector)
 		}
+		log.Errorf("LogCollector install error %v %v", err, log.String("name", key))
+
 		// Install LogCollector failed.
 		LogCollector = LogCollector.DeepCopy()
 		fillOperatorStatus(LogCollector)
@@ -354,7 +347,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 		LogCollector.Status.Reason = err.Error()
 		LogCollector.Status.RetryCount = 1
 		LogCollector.Status.LastReInitializingTimestamp = metav1.Now()
-		return c.persistUpdate(LogCollector)
+		return c.persistUpdate(ctx, LogCollector)
 	case v1.AddonPhaseReinitializing:
 		log.Info("LogCollector will be reinitialized", log.String("name", key))
 		var interval = time.Since(LogCollector.Status.LastReInitializingTimestamp.Time)
@@ -366,7 +359,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 		}
 		go func() {
 			reInitialErr := wait.Poll(waitTime, timeOut,
-				c.logCollectorReinitialize(key, cachedLogCollector, LogCollector))
+				c.logCollectorReinitialize(ctx, key, cachedLogCollector, LogCollector))
 			if reInitialErr != nil {
 				log.Error("Reinitialize LogCollector failed",
 					log.String("name", LogCollector.Name),
@@ -382,7 +375,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 			go func() {
 				defer c.checking.Delete(key)
 				checkStatusErr := wait.PollImmediate(5*time.Second, 5*time.Minute+10*time.Second,
-					c.checkLogCollectorStatus(LogCollector, key, initDelay))
+					c.checkLogCollectorStatus(ctx, LogCollector, key, initDelay))
 				if checkStatusErr != nil {
 					log.Error("Check status of LogCollector failed",
 						log.String("name", LogCollector.Name),
@@ -399,14 +392,14 @@ func (c *Controller) createLogCollectorIfNeeded(
 			LogCollector.Status.Phase = v1.AddonPhaseUpgrading
 			LogCollector.Status.Reason = ""
 			LogCollector.Status.RetryCount = 0
-			return c.persistUpdate(LogCollector)
+			return c.persistUpdate(ctx, LogCollector)
 		}
 		if _, ok := c.health.Load(key); !ok {
 			c.health.Store(key, true)
 			go func() {
 				defer c.health.Delete(key)
 				healthErr := wait.PollImmediateUntil(5*time.Minute,
-					c.watchLogCollectorHealth(key), c.stopCh)
+					c.watchLogCollectorHealth(ctx, key), c.stopCh)
 				if healthErr != nil {
 					log.Error("Watch health of LogCollector failed",
 						log.String("name", LogCollector.Name),
@@ -423,7 +416,7 @@ func (c *Controller) createLogCollectorIfNeeded(
 			go func() {
 				defer c.upgrading.Delete(key)
 				upgradeErr := wait.PollImmediate(5*time.Second, timeOut,
-					c.upgradeLogCollector(LogCollector, key, upgradeDelay))
+					c.upgradeLogCollector(ctx, LogCollector, key, upgradeDelay))
 				if upgradeErr != nil {
 					log.Error("Upgrade LogCollector failed",
 						log.String("name", LogCollector.Name),
@@ -441,10 +434,8 @@ func (c *Controller) createLogCollectorIfNeeded(
 	return nil
 }
 
-
-
-func (c *Controller) installLogCollector(LogCollector *v1.LogAgent) error {
-	kubeClient, err := util.GetClusterClient(LogCollector.Spec.ClusterName,c.platformClient)
+func (c *Controller) installLogCollector(ctx context.Context, LogCollector *v1.LogAgent) error {
+	kubeClient, err := util.GetClusterClient(ctx, LogCollector.Spec.ClusterName, c.platformClient)
 
 	if err != nil {
 		log.Infof("unable to get cluster client %v", err)
@@ -452,26 +443,24 @@ func (c *Controller) installLogCollector(LogCollector *v1.LogAgent) error {
 	}
 
 	// Create ServiceAccount.
-	if err := c.installSVC(LogCollector, kubeClient); err != nil {
+	if err := c.installSVC(ctx, LogCollector, kubeClient); err != nil {
 		return err
 	}
 
 	// Create ClusterRoleBinding.
-	if err := c.installCRB(LogCollector, kubeClient); err != nil {
+	if err := c.installCRB(ctx, LogCollector, kubeClient); err != nil {
 		return err
 	}
 
 	// Create Deployment.
-	return c.installDaemonSet(LogCollector, kubeClient)
+	return c.installDaemonSet(ctx, LogCollector, kubeClient)
 }
 
-
-
-func (c *Controller) installSVC(LogCollector *v1.LogAgent, kubeClient kubernetes.Interface) error {
+func (c *Controller) installSVC(ctx context.Context, LogCollector *v1.LogAgent, kubeClient kubernetes.Interface) error {
 	svc := genServiceAccount()
 	svcClient := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem)
 
-	_, err := svcClient.Get(svc.Name, metav1.GetOptions{})
+	_, err := svcClient.Get(ctx, svc.Name, metav1.GetOptions{})
 	if err == nil {
 		log.Info("ServiceAccount of LogCollector is already created",
 			log.String("name", LogCollector.Name))
@@ -479,21 +468,21 @@ func (c *Controller) installSVC(LogCollector *v1.LogAgent, kubeClient kubernetes
 	}
 
 	if k8serrors.IsNotFound(err) {
-		_, err = svcClient.Create(svc)
+		_, err = svcClient.Create(ctx, svc, metav1.CreateOptions{})
 		return err
 	}
 
 	return fmt.Errorf("get svc failed: %v", err)
 }
 
-func (c *Controller) installCRB(LogCollector *v1.LogAgent, kubeClient kubernetes.Interface) error {
+func (c *Controller) installCRB(ctx context.Context, LogCollector *v1.LogAgent, kubeClient kubernetes.Interface) error {
 	crb := genCRB()
 	crbClient := kubeClient.RbacV1().ClusterRoleBindings()
 
-	oldCRB, err := crbClient.Get(crb.Name, metav1.GetOptions{})
+	oldCRB, err := crbClient.Get(ctx, crb.Name, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			_, err = crbClient.Create(crb)
+			_, err = crbClient.Create(ctx, crb, metav1.CreateOptions{})
 			return err
 		}
 		return fmt.Errorf("get crb failed: %v", err)
@@ -509,21 +498,22 @@ func (c *Controller) installCRB(LogCollector *v1.LogAgent, kubeClient kubernetes
 	newCRB := oldCRB.DeepCopy()
 	newCRB.RoleRef = crb.RoleRef
 	newCRB.Subjects = crb.Subjects
-	_, err = crbClient.Update(newCRB)
+	_, err = crbClient.Update(ctx, newCRB, metav1.UpdateOptions{})
 
 	return err
 }
 
 func (c *Controller) installDaemonSet(
+	ctx context.Context,
 	LogCollector *v1.LogAgent,
 	kubeClient kubernetes.Interface) error {
 	daemon := c.genDaemonSet(LogCollector.Spec.Version)
 	daemonClient := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem)
 
-	oldDaemon, err := daemonClient.Get(daemon.Name, metav1.GetOptions{})
+	oldDaemon, err := daemonClient.Get(ctx, daemon.Name, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			_, err = daemonClient.Create(daemon)
+			_, err = daemonClient.Create(ctx, daemon, metav1.CreateOptions{})
 			return err
 		}
 		return fmt.Errorf("get daemonSet failed: %v", err)
@@ -538,12 +528,10 @@ func (c *Controller) installDaemonSet(
 		newDaemon.Spec.Template.Spec.Containers[1].Resources = oldDaemon.Spec.Template.Spec.Containers[1].Resources
 	}
 
-	_, err = daemonClient.Update(newDaemon)
+	_, err = daemonClient.Update(ctx, newDaemon, metav1.UpdateOptions{})
 
 	return err
 }
-
-
 
 func genServiceAccount() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
@@ -702,11 +690,10 @@ func boolPtr(value bool) *bool {
 	return &value
 }
 
-
-func (c *Controller) persistUpdate(LogCollector *v1.LogAgent) error {
+func (c *Controller) persistUpdate(ctx context.Context, LogCollector *v1.LogAgent) error {
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.LogagentV1().LogAgents().UpdateStatus(LogCollector)
+		_, err = c.client.LogagentV1().LogAgents().UpdateStatus(ctx, LogCollector, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -731,24 +718,25 @@ func (c *Controller) persistUpdate(LogCollector *v1.LogAgent) error {
 	return err
 }
 
-func fillOperatorStatus(LogCollector *v1.LogAgent) {//what's the purpose of this?
+func fillOperatorStatus(LogCollector *v1.LogAgent) { //what's the purpose of this?
 	log.Infof("spec.version is %v, status.version is %v", LogCollector.Spec.Version, LogCollector.Status.Version)
 	LogCollector.Status.Version = LogCollector.Spec.Version
 }
 
 func (c *Controller) logCollectorReinitialize(
+	ctx context.Context,
 	key string,
 	cachedLogCollector *cachedLogCollector,
 	LogCollector *v1.LogAgent) func() (bool, error) {
 	// this func will always return true that keeps the poll once
 	return func() (bool, error) {
-		err := c.installLogCollector(LogCollector)
+		err := c.installLogCollector(ctx, LogCollector)
 		if err == nil {
 			LogCollector = LogCollector.DeepCopy()
 			LogCollector.Status.Phase = v1.AddonPhaseChecking
 			LogCollector.Status.Reason = ""
 			LogCollector.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
-			err = c.persistUpdate(LogCollector)
+			err = c.persistUpdate(ctx, LogCollector)
 			if err != nil {
 				return true, err
 			}
@@ -759,7 +747,7 @@ func (c *Controller) logCollectorReinitialize(
 		log.Info("Rollback LogCollector",
 			log.String("name", LogCollector.Name),
 			log.String("clusterName", LogCollector.Spec.ClusterName))
-		if err := c.uninstallLogCollector(LogCollector); err != nil {
+		if err := c.uninstallLogCollector(ctx, LogCollector); err != nil {
 			log.Error("Uninstall LogCollector failed", log.Err(err))
 			return true, err
 		}
@@ -768,7 +756,7 @@ func (c *Controller) logCollectorReinitialize(
 			LogCollector = LogCollector.DeepCopy()
 			LogCollector.Status.Phase = v1.AddonPhaseFailed
 			LogCollector.Status.Reason = fmt.Sprintf("Install error and retried max(%d) times already.", maxRetryCount)
-			err := c.persistUpdate(LogCollector)
+			err := c.persistUpdate(ctx, LogCollector)
 			if err != nil {
 				log.Error("Update LogCollector failed", log.Err(err))
 				return true, err
@@ -782,20 +770,20 @@ func (c *Controller) logCollectorReinitialize(
 		LogCollector.Status.Reason = err.Error()
 		LogCollector.Status.LastReInitializingTimestamp = metav1.NewTime(time.Now())
 		LogCollector.Status.RetryCount++
-		return true, c.persistUpdate(LogCollector)
+		return true, c.persistUpdate(ctx, LogCollector)
 	}
 }
 
-
 func (c *Controller) checkLogCollectorStatus(
+	ctx context.Context,
 	LogCollector *v1.LogAgent,
 	key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check LogCollector health", log.String("name", LogCollector.Name))
 
-		kubeClient, err := util.GetClusterClient(LogCollector.Spec.ClusterName,c.platformClient)
+		kubeClient, err := util.GetClusterClient(ctx, LogCollector.Spec.ClusterName, c.platformClient)
 
-		if err != nil {//what if cluster does not exists?
+		if err != nil { //what if cluster does not exists?
 			return false, err
 		}
 
@@ -804,17 +792,16 @@ func (c *Controller) checkLogCollectorStatus(
 			return true, nil
 		}
 
-
 		LogCollector, err := c.lister.Get(key)
 		if err != nil {
 			return false, err
 		}
 
 		daemon, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).
-			Get(daemonSetName, metav1.GetOptions{})
+			Get(ctx, daemonSetName, metav1.GetOptions{})
 
 		if err != nil || daemon.Status.DesiredNumberScheduled == 0 ||
-			daemon.Status.NumberAvailable < daemon.Status.DesiredNumberScheduled {
+			daemon.Status.NumberAvailable < 1 {
 			if time.Now().After(initDelay) {
 				if err != nil {
 					log.Errorf("check logagent %v status failed %v", LogCollector.Name, err)
@@ -824,7 +811,7 @@ func (c *Controller) checkLogCollectorStatus(
 				LogCollector = LogCollector.DeepCopy()
 				LogCollector.Status.Phase = v1.AddonPhaseChecking
 				LogCollector.Status.Reason = fmt.Sprintf("Log Collector is not healthy in status check")
-				if err = c.persistUpdate(LogCollector); err != nil {
+				if err = c.persistUpdate(ctx, LogCollector); err != nil {
 					return false, err
 				}
 			}
@@ -834,7 +821,7 @@ func (c *Controller) checkLogCollectorStatus(
 		LogCollector = LogCollector.DeepCopy()
 		LogCollector.Status.Phase = v1.AddonPhaseRunning
 		LogCollector.Status.Reason = ""
-		if err = c.persistUpdate(LogCollector); err != nil {
+		if err = c.persistUpdate(ctx, LogCollector); err != nil {
 			return false, err
 		}
 
@@ -842,14 +829,11 @@ func (c *Controller) checkLogCollectorStatus(
 	}
 }
 
-
 func (c *Controller) needUpgrade(LogCollector *v1.LogAgent) bool {
 	return LogCollector.Spec.Version != LogCollector.Status.Version
 }
 
-
-
-func (c *Controller) watchLogCollectorHealth(key string) func() (bool, error) {
+func (c *Controller) watchLogCollectorHealth(ctx context.Context, key string) func() (bool, error) {
 	return func() (bool, error) {
 		LogCollector, err := c.lister.Get(key)
 		if err != nil {
@@ -857,7 +841,7 @@ func (c *Controller) watchLogCollectorHealth(key string) func() (bool, error) {
 		}
 		log.Info("Start check health of LogCollector", log.String("name", LogCollector.Name))
 
-		kubeClient, err := util.GetClusterClient(LogCollector.Spec.ClusterName,c.platformClient)
+		kubeClient, err := util.GetClusterClient(ctx, LogCollector.Spec.ClusterName, c.platformClient)
 		if err != nil {
 			return false, err
 		}
@@ -868,13 +852,13 @@ func (c *Controller) watchLogCollectorHealth(key string) func() (bool, error) {
 		}
 
 		_, err = kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).
-			Get(daemonSetName, metav1.GetOptions{})
+			Get(ctx, daemonSetName, metav1.GetOptions{})
 		if err != nil {
 			log.Errorf("watch logagent %v status failed %v", LogCollector.Name, err)
 			LogCollector = LogCollector.DeepCopy()
 			LogCollector.Status.Phase = v1.AddonPhaseChecking
 			LogCollector.Status.Reason = "LogCollector is not healthy in watch."
-			if err = c.persistUpdate(LogCollector); err != nil {
+			if err = c.persistUpdate(ctx, LogCollector); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -884,13 +868,13 @@ func (c *Controller) watchLogCollectorHealth(key string) func() (bool, error) {
 	}
 }
 
-
 func (c *Controller) upgradeLogCollector(
+	ctx context.Context,
 	LogCollector *v1.LogAgent,
 	key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to upgrade LogCollector", log.String("name", LogCollector.Name))
-		kubeClient, err := util.GetClusterClient(LogCollector.Spec.ClusterName,c.platformClient)
+		kubeClient, err := util.GetClusterClient(ctx, LogCollector.Spec.ClusterName, c.platformClient)
 		if err != nil {
 			return false, err
 		}
@@ -907,13 +891,13 @@ func (c *Controller) upgradeLogCollector(
 		patch := fmt.Sprintf(upgradePatchTemplate, images.Get(LogCollector.Spec.Version).LogCollector.FullName())
 
 		_, err = kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).
-			Patch(daemonSetName, types.JSONPatchType, []byte(patch))
+			Patch(ctx, daemonSetName, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})
 		if err != nil {
 			if time.Now().After(initDelay) {
 				LogCollector = LogCollector.DeepCopy()
 				LogCollector.Status.Phase = v1.AddonPhaseFailed
 				LogCollector.Status.Reason = "Failed to upgrade LogCollector."
-				if err = c.persistUpdate(LogCollector); err != nil {
+				if err = c.persistUpdate(ctx, LogCollector); err != nil {
 					return false, err
 				}
 				return true, nil
@@ -925,7 +909,7 @@ func (c *Controller) upgradeLogCollector(
 		fillOperatorStatus(LogCollector)
 		LogCollector.Status.Phase = v1.AddonPhaseChecking
 		LogCollector.Status.Reason = ""
-		if err = c.persistUpdate(LogCollector); err != nil {
+		if err = c.persistUpdate(ctx, LogCollector); err != nil {
 			return false, err
 		}
 		return true, nil

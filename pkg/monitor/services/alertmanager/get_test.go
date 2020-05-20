@@ -19,10 +19,11 @@
 package alertmanager
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
-	alert_config "github.com/prometheus/alertmanager/config"
+	alertconfig "github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v2"
 )
 
@@ -34,20 +35,20 @@ func TestProcessor_Get(t *testing.T) {
 	}
 
 	t.Logf("With non-existed label")
-	_, err = p.Get(clusterName, "non-exist-label")
+	_, err = p.Get(context.Background(), clusterName, "non-exist-label")
 	if err == nil {
 		t.Errorf("get should failed")
 		return
 	}
 
 	t.Logf("With correct label")
-	targetRoute, err := p.Get(clusterName, "test")
+	targetRoute, err := p.Get(context.Background(), clusterName, "test")
 	if err != nil {
 		t.Errorf("get should success, code: %s", err)
 		return
 	}
 
-	expectConfig := &alert_config.Config{}
+	expectConfig := &alertconfig.Config{}
 	_ = yaml.Unmarshal([]byte(exampleAlertConfig), expectConfig)
 
 	if !reflect.DeepEqual(targetRoute, expectConfig.Route.Routes[0]) {

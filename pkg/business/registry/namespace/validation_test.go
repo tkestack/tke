@@ -17,6 +17,7 @@
 package namespace
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -109,7 +110,7 @@ func TestClusterLimitation(t *testing.T) {
 	_testNamespace.Spec.ClusterName = ClusterName
 
 	hasError := false
-	errors := ValidateNamespaceUpdate(&_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
+	errors := ValidateNamespaceUpdate(context.Background(), &_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), _clusterLimitErrorInfo) {
 			hasError = true
@@ -124,7 +125,7 @@ func TestClusterLimitation(t *testing.T) {
 	_testProject.Spec.Clusters = business.ClusterHard{
 		ClusterName: {},
 	}
-	errors = ValidateNamespaceUpdate(&_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
+	errors = ValidateNamespaceUpdate(context.Background(), &_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		t.Errorf("Unexpected: %s", err.Error())
 	}
@@ -143,7 +144,7 @@ func TestQuotaLimitation(t *testing.T) {
 	_testNamespace.Spec.Hard = business.ResourceList{}
 
 	hasError := false
-	errors := ValidateNamespaceUpdate(&_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
+	errors := ValidateNamespaceUpdate(context.Background(), &_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), resource.QuotaLimitErrorInfo) {
 			hasError = true
@@ -172,7 +173,7 @@ func TestCreateAllocatable(t *testing.T) {
 	}
 
 	hasError := false
-	errors := ValidateNamespaceUpdate(&_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
+	errors := ValidateNamespaceUpdate(context.Background(), &_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), resource.AllocatableErrorInfo) {
 			hasError = true
@@ -186,7 +187,7 @@ func TestCreateAllocatable(t *testing.T) {
 
 	quota, _ = apimachineryresource.ParseQuantity("1")
 	_testNamespace.Spec.Hard["requests.cpu"] = quota
-	errors = ValidateNamespaceUpdate(&_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
+	errors = ValidateNamespaceUpdate(context.Background(), &_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		t.Errorf("Unexpected: %s", err.Error())
 	}
@@ -223,7 +224,7 @@ func TestUpdateAllocatable(t *testing.T) {
 	}
 
 	hasError := false
-	errors := ValidateNamespaceUpdate(&_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
+	errors := ValidateNamespaceUpdate(context.Background(), &_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		if strings.Contains(err.Error(), resource.AllocatableErrorInfo) {
 			hasError = true
@@ -237,7 +238,7 @@ func TestUpdateAllocatable(t *testing.T) {
 
 	quota, _ = apimachineryresource.ParseQuantity("6")
 	_testNamespace.Spec.Hard["requests.cpu"] = quota
-	errors = ValidateNamespaceUpdate(&_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
+	errors = ValidateNamespaceUpdate(context.Background(), &_testNamespace, &_oldNamespace, newObjectGetter(), newClusterGetter())
 	for _, err := range errors {
 		t.Errorf("Unexpected: %s", err.Error())
 	}
@@ -253,7 +254,7 @@ func newClusterGetter() validation.ClusterGetter {
 
 type testObjectGetter struct{}
 
-func (getter testObjectGetter) Project(name string, options apimachinerymetav1.GetOptions) (*business.Project, error) {
+func (getter testObjectGetter) Project(ctx context.Context, name string, options apimachinerymetav1.GetOptions) (*business.Project, error) {
 	project, has := _projectMap[name]
 	if has {
 		return project, nil
@@ -261,7 +262,7 @@ func (getter testObjectGetter) Project(name string, options apimachinerymetav1.G
 	return nil, fmt.Errorf("failed to get project by name '%s'", name)
 }
 
-func (getter testObjectGetter) Namespace(project, name string, options apimachinerymetav1.GetOptions) (*business.Namespace, error) {
+func (getter testObjectGetter) Namespace(ctx context.Context, project, name string, options apimachinerymetav1.GetOptions) (*business.Namespace, error) {
 	namespace, has := _namespaceMap[name]
 	if has {
 		return namespace, nil
@@ -271,7 +272,7 @@ func (getter testObjectGetter) Namespace(project, name string, options apimachin
 
 type testClusterGetter struct{}
 
-func (getter testClusterGetter) Cluster(name string, options apimachinerymetav1.GetOptions) (*platformv1.Cluster, error) {
+func (getter testClusterGetter) Cluster(ctx context.Context, name string, options apimachinerymetav1.GetOptions) (*platformv1.Cluster, error) {
 	cluster, has := _clusterMap[name]
 	if has {
 		return cluster, nil

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type MachinesGetter interface {
 
 // MachineInterface has methods to work with Machine resources.
 type MachineInterface interface {
-	Create(*platform.Machine) (*platform.Machine, error)
-	Update(*platform.Machine) (*platform.Machine, error)
-	UpdateStatus(*platform.Machine) (*platform.Machine, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	Get(name string, options v1.GetOptions) (*platform.Machine, error)
-	List(opts v1.ListOptions) (*platform.MachineList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.Machine, err error)
+	Create(ctx context.Context, machine *platform.Machine, opts v1.CreateOptions) (*platform.Machine, error)
+	Update(ctx context.Context, machine *platform.Machine, opts v1.UpdateOptions) (*platform.Machine, error)
+	UpdateStatus(ctx context.Context, machine *platform.Machine, opts v1.UpdateOptions) (*platform.Machine, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*platform.Machine, error)
+	List(ctx context.Context, opts v1.ListOptions) (*platform.MachineList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.Machine, err error)
 	MachineExpansion
 }
 
@@ -63,19 +64,19 @@ func newMachines(c *PlatformClient) *machines {
 }
 
 // Get takes name of the machine, and returns the corresponding machine object, and an error if there is any.
-func (c *machines) Get(name string, options v1.GetOptions) (result *platform.Machine, err error) {
+func (c *machines) Get(ctx context.Context, name string, options v1.GetOptions) (result *platform.Machine, err error) {
 	result = &platform.Machine{}
 	err = c.client.Get().
 		Resource("machines").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Machines that match those selectors.
-func (c *machines) List(opts v1.ListOptions) (result *platform.MachineList, err error) {
+func (c *machines) List(ctx context.Context, opts v1.ListOptions) (result *platform.MachineList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *machines) List(opts v1.ListOptions) (result *platform.MachineList, err 
 		Resource("machines").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested machines.
-func (c *machines) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *machines) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *machines) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("machines").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a machine and creates it.  Returns the server's representation of the machine, and an error, if there is any.
-func (c *machines) Create(machine *platform.Machine) (result *platform.Machine, err error) {
+func (c *machines) Create(ctx context.Context, machine *platform.Machine, opts v1.CreateOptions) (result *platform.Machine, err error) {
 	result = &platform.Machine{}
 	err = c.client.Post().
 		Resource("machines").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(machine).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a machine and updates it. Returns the server's representation of the machine, and an error, if there is any.
-func (c *machines) Update(machine *platform.Machine) (result *platform.Machine, err error) {
+func (c *machines) Update(ctx context.Context, machine *platform.Machine, opts v1.UpdateOptions) (result *platform.Machine, err error) {
 	result = &platform.Machine{}
 	err = c.client.Put().
 		Resource("machines").
 		Name(machine.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(machine).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *machines) UpdateStatus(machine *platform.Machine) (result *platform.Machine, err error) {
+func (c *machines) UpdateStatus(ctx context.Context, machine *platform.Machine, opts v1.UpdateOptions) (result *platform.Machine, err error) {
 	result = &platform.Machine{}
 	err = c.client.Put().
 		Resource("machines").
 		Name(machine.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(machine).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the machine and deletes it. Returns an error if one occurs.
-func (c *machines) Delete(name string, options *v1.DeleteOptions) error {
+func (c *machines) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("machines").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched machine.
-func (c *machines) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *platform.Machine, err error) {
+func (c *machines) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *platform.Machine, err error) {
 	result = &platform.Machine{}
 	err = c.client.Patch(pt).
 		Resource("machines").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

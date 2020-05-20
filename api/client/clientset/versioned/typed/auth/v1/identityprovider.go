@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,14 +40,14 @@ type IdentityProvidersGetter interface {
 
 // IdentityProviderInterface has methods to work with IdentityProvider resources.
 type IdentityProviderInterface interface {
-	Create(*v1.IdentityProvider) (*v1.IdentityProvider, error)
-	Update(*v1.IdentityProvider) (*v1.IdentityProvider, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.IdentityProvider, error)
-	List(opts metav1.ListOptions) (*v1.IdentityProviderList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.IdentityProvider, err error)
+	Create(ctx context.Context, identityProvider *v1.IdentityProvider, opts metav1.CreateOptions) (*v1.IdentityProvider, error)
+	Update(ctx context.Context, identityProvider *v1.IdentityProvider, opts metav1.UpdateOptions) (*v1.IdentityProvider, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.IdentityProvider, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.IdentityProviderList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.IdentityProvider, err error)
 	IdentityProviderExpansion
 }
 
@@ -63,19 +64,19 @@ func newIdentityProviders(c *AuthV1Client) *identityProviders {
 }
 
 // Get takes name of the identityProvider, and returns the corresponding identityProvider object, and an error if there is any.
-func (c *identityProviders) Get(name string, options metav1.GetOptions) (result *v1.IdentityProvider, err error) {
+func (c *identityProviders) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.IdentityProvider, err error) {
 	result = &v1.IdentityProvider{}
 	err = c.client.Get().
 		Resource("identityproviders").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of IdentityProviders that match those selectors.
-func (c *identityProviders) List(opts metav1.ListOptions) (result *v1.IdentityProviderList, err error) {
+func (c *identityProviders) List(ctx context.Context, opts metav1.ListOptions) (result *v1.IdentityProviderList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -85,13 +86,13 @@ func (c *identityProviders) List(opts metav1.ListOptions) (result *v1.IdentityPr
 		Resource("identityproviders").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested identityProviders.
-func (c *identityProviders) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *identityProviders) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -101,66 +102,69 @@ func (c *identityProviders) Watch(opts metav1.ListOptions) (watch.Interface, err
 		Resource("identityproviders").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a identityProvider and creates it.  Returns the server's representation of the identityProvider, and an error, if there is any.
-func (c *identityProviders) Create(identityProvider *v1.IdentityProvider) (result *v1.IdentityProvider, err error) {
+func (c *identityProviders) Create(ctx context.Context, identityProvider *v1.IdentityProvider, opts metav1.CreateOptions) (result *v1.IdentityProvider, err error) {
 	result = &v1.IdentityProvider{}
 	err = c.client.Post().
 		Resource("identityproviders").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(identityProvider).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a identityProvider and updates it. Returns the server's representation of the identityProvider, and an error, if there is any.
-func (c *identityProviders) Update(identityProvider *v1.IdentityProvider) (result *v1.IdentityProvider, err error) {
+func (c *identityProviders) Update(ctx context.Context, identityProvider *v1.IdentityProvider, opts metav1.UpdateOptions) (result *v1.IdentityProvider, err error) {
 	result = &v1.IdentityProvider{}
 	err = c.client.Put().
 		Resource("identityproviders").
 		Name(identityProvider.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(identityProvider).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the identityProvider and deletes it. Returns an error if one occurs.
-func (c *identityProviders) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *identityProviders) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("identityproviders").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *identityProviders) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+func (c *identityProviders) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("identityproviders").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched identityProvider.
-func (c *identityProviders) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.IdentityProvider, err error) {
+func (c *identityProviders) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.IdentityProvider, err error) {
 	result = &v1.IdentityProvider{}
 	err = c.client.Patch(pt).
 		Resource("identityproviders").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

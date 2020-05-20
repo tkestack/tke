@@ -19,6 +19,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -69,8 +70,8 @@ func Int64Ptr(i int64) *int64 {
 }
 
 // DeleteReplicaSetApp delete the replicaset and pod additionally for deployment app with extension group
-func DeleteReplicaSetApp(kubeClient *kubernetes.Clientset, options metav1.ListOptions) error {
-	rsList, err := kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).List(options)
+func DeleteReplicaSetApp(ctx context.Context, kubeClient *kubernetes.Clientset, options metav1.ListOptions) error {
+	rsList, err := kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).List(ctx, options)
 	if err != nil {
 		return err
 	}
@@ -80,12 +81,12 @@ func DeleteReplicaSetApp(kubeClient *kubernetes.Clientset, options metav1.ListOp
 		rs := &rsList.Items[i]
 		// update replicas to zero
 		rs.Spec.Replicas = Int32Ptr(0)
-		_, err = kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).Update(rs)
+		_, err = kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).Update(ctx, rs, metav1.UpdateOptions{})
 		if err != nil {
 			errs = append(errs, err)
 		} else {
 			// delete replicaset
-			err = kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).Delete(rs.Name, &metav1.DeleteOptions{})
+			err = kubeClient.ExtensionsV1beta1().ReplicaSets(metav1.NamespaceSystem).Delete(ctx, rs.Name, metav1.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
 				errs = append(errs, err)
 			}

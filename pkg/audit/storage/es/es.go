@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/parnurzeal/gorequest"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sync"
 	"time"
+
+	"github.com/parnurzeal/gorequest"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"tkestack.io/tke/pkg/audit/apis/config"
 	"tkestack.io/tke/pkg/audit/storage"
 	"tkestack.io/tke/pkg/audit/storage/types"
@@ -116,7 +117,7 @@ func (s *es) indicesTypeCreate() error {
 	if len(err) > 0 {
 		return fmt.Errorf("indicesTypeCreate failed: %v", err)
 	} else if resp.StatusCode >= 300 {
-		return fmt.Errorf("indicesTypeCreate failed code %d, body %s", resp.StatusCode, string(body))
+		return fmt.Errorf("indicesTypeCreate failed code %d, body %s", resp.StatusCode, body)
 	}
 	return nil
 }
@@ -175,7 +176,7 @@ func (s *es) Query(param *storage.QueryParameter) ([]*types.Event, int, error) {
 	} else if resp.StatusCode >= 300 {
 		return nil, 0, fmt.Errorf("failed search document: %s", body)
 	}
-	res := EsResult{}
+	res := Result{}
 	err := json.Unmarshal([]byte(body), &res)
 	if err != nil {
 		return nil, 0, err
@@ -187,16 +188,16 @@ func (s *es) Query(param *storage.QueryParameter) ([]*types.Event, int, error) {
 	return events, res.Hits.Total, nil
 }
 
-type EsResult struct {
-	Hits EsHits `json:"hits"`
+type Result struct {
+	Hits Hits `json:"hits"`
 }
 
-type EsHits struct {
-	Total int           `json:"total"`
-	Hits  []*EsDocument `json:"hits"`
+type Hits struct {
+	Total int         `json:"total"`
+	Hits  []*Document `json:"hits"`
 }
 
-type EsDocument struct {
+type Document struct {
 	Event *types.Event `json:"_source"`
 }
 
@@ -258,13 +259,6 @@ func (s *es) cleanup() {
 	if len(errs) != 0 {
 		log.Errorf("failed cleanup older audit events: %v", errs)
 	}
-	return
-}
-
-func (s *es) enumField(field string) []string {
-	lock.Lock()
-	defer lock.Unlock()
-	return fieldEnumCache[field]
 }
 
 func (s *es) updateFieldEnumCache() {

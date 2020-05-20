@@ -74,7 +74,7 @@ func (r *UnBindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 	projectPolicyList := &auth.ProjectPolicyBindingList{}
 	var errs []error
 	for _, policyID := range bind.Policies {
-		policy, err := r.authClient.Policies().Get(policyID, metav1.GetOptions{})
+		policy, err := r.authClient.Policies().Get(ctx, policyID, metav1.GetOptions{})
 		if err != nil {
 			log.Error("Get policy failed", log.String("policy", policyID), log.Err(err))
 			errs = append(errs, err)
@@ -86,19 +86,19 @@ func (r *UnBindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 			continue
 		}
 
-		projectPolicy, err := r.authClient.ProjectPolicyBindings().Get(util.ProjectPolicyName(projectID, policy.Name), metav1.GetOptions{})
+		projectPolicy, err := r.authClient.ProjectPolicyBindings().Get(ctx, util.ProjectPolicyName(projectID, policy.Name), metav1.GetOptions{})
 		if err != nil && apierrors.IsNotFound(err) {
 			// if projectPolicy not exist, create a new one
-			projectPolicy, err = r.authClient.ProjectPolicyBindings().Create(&auth.ProjectPolicyBinding{
+			projectPolicy, err = r.authClient.ProjectPolicyBindings().Create(ctx, &auth.ProjectPolicyBinding{
 				Spec: auth.ProjectPolicyBindingSpec{
 					TenantID:  policy.Spec.TenantID,
 					ProjectID: projectID,
 					PolicyID:  policy.Name,
 				},
-			})
+			}, metav1.CreateOptions{})
 			if err != nil {
 				if apierrors.IsAlreadyExists(err) {
-					projectPolicy, err = r.authClient.ProjectPolicyBindings().Get(util.ProjectPolicyName(projectID, policy.Name), metav1.GetOptions{})
+					projectPolicy, err = r.authClient.ProjectPolicyBindings().Get(ctx, util.ProjectPolicyName(projectID, policy.Name), metav1.GetOptions{})
 				}
 			}
 		}
@@ -131,7 +131,7 @@ func (r *UnBindingREST) Create(ctx context.Context, obj runtime.Object, createVa
 		projectPolicy.Spec.Groups = remainedGroups
 
 		log.Info("unbind policy subjects", log.String("policy", projectPolicy.Name), log.Any("users", projectPolicy.Spec.Users), log.Any("groups", projectPolicy.Spec.Groups))
-		projectPolicy, err = r.authClient.ProjectPolicyBindings().Update(projectPolicy)
+		projectPolicy, err = r.authClient.ProjectPolicyBindings().Update(ctx, projectPolicy, metav1.UpdateOptions{})
 		if err != nil {
 			log.Error("Update project policy failed", log.String("policyID", projectPolicy.Name), log.Err(err))
 			errs = append(errs, err)

@@ -24,7 +24,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"hash"
-	"io"
+	"io/ioutil"
 	"os"
 )
 
@@ -40,13 +40,14 @@ func SumWithFile(h hash.Hash, filename string) (string, error) {
 	}
 	defer f.Close()
 
-	return Sum(h, f)
-}
-
-func Sum(h hash.Hash, r io.Reader) (string, error) {
-	if _, err := io.Copy(h, r); err != nil {
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
 		return "", err
 	}
 
-	return hex.EncodeToString(h.Sum(nil)), nil
+	return Sum(h, data), nil
+}
+
+func Sum(h hash.Hash, data []byte) string {
+	return hex.EncodeToString(h.Sum(data))
 }

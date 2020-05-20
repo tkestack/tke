@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +38,7 @@ type ClusterAddonTypesGetter interface {
 
 // ClusterAddonTypeInterface has methods to work with ClusterAddonType resources.
 type ClusterAddonTypeInterface interface {
-	List(opts v1.ListOptions) (*platform.ClusterAddonTypeList, error)
+	List(ctx context.Context, opts v1.ListOptions) (*platform.ClusterAddonTypeList, error)
 	ClusterAddonTypeExpansion
 }
 
@@ -54,7 +55,7 @@ func newClusterAddonTypes(c *PlatformClient) *clusterAddonTypes {
 }
 
 // List takes label and field selectors, and returns the list of ClusterAddonTypes that match those selectors.
-func (c *clusterAddonTypes) List(opts v1.ListOptions) (result *platform.ClusterAddonTypeList, err error) {
+func (c *clusterAddonTypes) List(ctx context.Context, opts v1.ListOptions) (result *platform.ClusterAddonTypeList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -64,7 +65,7 @@ func (c *clusterAddonTypes) List(opts v1.ListOptions) (result *platform.ClusterA
 		Resource("clusteraddontypes").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

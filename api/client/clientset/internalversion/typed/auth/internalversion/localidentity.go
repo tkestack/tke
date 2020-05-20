@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,15 +40,15 @@ type LocalIdentitiesGetter interface {
 
 // LocalIdentityInterface has methods to work with LocalIdentity resources.
 type LocalIdentityInterface interface {
-	Create(*auth.LocalIdentity) (*auth.LocalIdentity, error)
-	Update(*auth.LocalIdentity) (*auth.LocalIdentity, error)
-	UpdateStatus(*auth.LocalIdentity) (*auth.LocalIdentity, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*auth.LocalIdentity, error)
-	List(opts v1.ListOptions) (*auth.LocalIdentityList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.LocalIdentity, err error)
+	Create(ctx context.Context, localIdentity *auth.LocalIdentity, opts v1.CreateOptions) (*auth.LocalIdentity, error)
+	Update(ctx context.Context, localIdentity *auth.LocalIdentity, opts v1.UpdateOptions) (*auth.LocalIdentity, error)
+	UpdateStatus(ctx context.Context, localIdentity *auth.LocalIdentity, opts v1.UpdateOptions) (*auth.LocalIdentity, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*auth.LocalIdentity, error)
+	List(ctx context.Context, opts v1.ListOptions) (*auth.LocalIdentityList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.LocalIdentity, err error)
 	LocalIdentityExpansion
 }
 
@@ -64,19 +65,19 @@ func newLocalIdentities(c *AuthClient) *localIdentities {
 }
 
 // Get takes name of the localIdentity, and returns the corresponding localIdentity object, and an error if there is any.
-func (c *localIdentities) Get(name string, options v1.GetOptions) (result *auth.LocalIdentity, err error) {
+func (c *localIdentities) Get(ctx context.Context, name string, options v1.GetOptions) (result *auth.LocalIdentity, err error) {
 	result = &auth.LocalIdentity{}
 	err = c.client.Get().
 		Resource("localidentities").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of LocalIdentities that match those selectors.
-func (c *localIdentities) List(opts v1.ListOptions) (result *auth.LocalIdentityList, err error) {
+func (c *localIdentities) List(ctx context.Context, opts v1.ListOptions) (result *auth.LocalIdentityList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -86,13 +87,13 @@ func (c *localIdentities) List(opts v1.ListOptions) (result *auth.LocalIdentityL
 		Resource("localidentities").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested localIdentities.
-func (c *localIdentities) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *localIdentities) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -102,81 +103,84 @@ func (c *localIdentities) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("localidentities").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a localIdentity and creates it.  Returns the server's representation of the localIdentity, and an error, if there is any.
-func (c *localIdentities) Create(localIdentity *auth.LocalIdentity) (result *auth.LocalIdentity, err error) {
+func (c *localIdentities) Create(ctx context.Context, localIdentity *auth.LocalIdentity, opts v1.CreateOptions) (result *auth.LocalIdentity, err error) {
 	result = &auth.LocalIdentity{}
 	err = c.client.Post().
 		Resource("localidentities").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(localIdentity).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a localIdentity and updates it. Returns the server's representation of the localIdentity, and an error, if there is any.
-func (c *localIdentities) Update(localIdentity *auth.LocalIdentity) (result *auth.LocalIdentity, err error) {
+func (c *localIdentities) Update(ctx context.Context, localIdentity *auth.LocalIdentity, opts v1.UpdateOptions) (result *auth.LocalIdentity, err error) {
 	result = &auth.LocalIdentity{}
 	err = c.client.Put().
 		Resource("localidentities").
 		Name(localIdentity.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(localIdentity).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *localIdentities) UpdateStatus(localIdentity *auth.LocalIdentity) (result *auth.LocalIdentity, err error) {
+func (c *localIdentities) UpdateStatus(ctx context.Context, localIdentity *auth.LocalIdentity, opts v1.UpdateOptions) (result *auth.LocalIdentity, err error) {
 	result = &auth.LocalIdentity{}
 	err = c.client.Put().
 		Resource("localidentities").
 		Name(localIdentity.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(localIdentity).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the localIdentity and deletes it. Returns an error if one occurs.
-func (c *localIdentities) Delete(name string, options *v1.DeleteOptions) error {
+func (c *localIdentities) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("localidentities").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *localIdentities) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *localIdentities) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Resource("localidentities").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched localIdentity.
-func (c *localIdentities) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *auth.LocalIdentity, err error) {
+func (c *localIdentities) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *auth.LocalIdentity, err error) {
 	result = &auth.LocalIdentity{}
 	err = c.client.Patch(pt).
 		Resource("localidentities").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
