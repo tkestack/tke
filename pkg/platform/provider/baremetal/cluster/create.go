@@ -153,7 +153,9 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 
 	domains := []string{
 		p.config.Registry.Domain,
-		c.Spec.TenantID + "." + p.config.Registry.Domain,
+	}
+	if c.Spec.TenantID != "" {
+		domains = append(domains, c.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -413,7 +415,7 @@ func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, c *v1.Clust
 
 func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
-	if p.config.Registry.NeedSetHosts() {
+	if p.config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 	option := &docker.Option{

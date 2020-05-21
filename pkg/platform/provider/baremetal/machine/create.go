@@ -152,7 +152,9 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, machine *platformv1.
 
 	domains := []string{
 		p.config.Registry.Domain,
-		machine.Spec.TenantID + "." + p.config.Registry.Domain,
+	}
+	if machine.Spec.TenantID != "" {
+		domains = append(domains, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 	for _, one := range domains {
 		remoteHosts := hosts.RemoteHosts{Host: one, SSH: machineSSH}
@@ -292,7 +294,7 @@ func (p *Provider) EnsureDocker(ctx context.Context, machine *platformv1.Machine
 	}
 
 	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
-	if p.config.Registry.NeedSetHosts() {
+	if p.config.Registry.NeedSetHosts() && machine.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 
