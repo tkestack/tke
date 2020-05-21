@@ -146,6 +146,11 @@ const commonRouterConfig: RouterConfig[] = [
         title: '通知设置',
         watchModule: ConsoleModuleEnum.Notify,
       },
+      {
+        url: '/tkestack/alarm-record',
+        title: '告警记录',
+        watchModule: ConsoleModuleEnum.Notify,
+      }
     ],
   },
   {

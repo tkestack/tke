@@ -14,6 +14,7 @@ import { Uam } from './src/modules/uam';
 import { PersistentEvent } from './src/modules/persistentEvent';
 import { Audit }  from './src/modules/audit';
 import { AlarmPolicy } from './src/modules/alarmPolicy';
+import { AlarmRecord } from './src/modules/alarmRecord';
 import { Notify } from './src/modules/notify';
 import { LogStash } from './src/modules/logStash';
 import { Helm } from './src/modules/helm';
@@ -228,6 +229,19 @@ Entry.register({
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
           <Notify />
+        </Wrapper>
+      ),
+    },
+
+    /**
+     * @url https://{{domain}}/tkestack/alarm-record
+     */
+    'alarm-record': {
+      title: t('告警记录 - TKEStack'),
+      container: (
+        <Wrapper platformType={PlatformTypeEnum.Manager}>
+          <ForbiddentDialog />
+          <AlarmRecord />
         </Wrapper>
       ),
     },
