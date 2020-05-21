@@ -19,6 +19,7 @@ export * from './otherResource';
 export { node } from './node';
 export * from './addonResource';
 export * from './alarmPolicy';
+export * from './alarmRecord';
 export * from './notifyChannel';
 export * from './audit';
 

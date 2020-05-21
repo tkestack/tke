@@ -47,6 +47,7 @@ import {
   addon_volumedecorator,
   addon_ipam,
   alarmPolicy,
+  alarmRecord,
   helm,
   notifyChannel,
   notifyTemplate,
@@ -185,6 +186,7 @@ export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey =
     /** 告警配置 */
     prometheus: getResourceConfig(prometheus, finalK8sVersion),
     alarmPolicy: getResourceConfig(alarmPolicy, finalK8sVersion),
+    alarmRecord: getResourceConfig(alarmRecord, finalK8sVersion),
 
     /** 告警通知 */
     channel: getResourceConfig(notifyChannel, finalK8sVersion),
