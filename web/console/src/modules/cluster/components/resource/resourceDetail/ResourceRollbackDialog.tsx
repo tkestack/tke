@@ -24,7 +24,7 @@ export class ResourceRollbackDialog extends React.Component<RootProps, {}> {
 
     let jsonData: RsEditJSONYaml = {
       kind: 'DeploymentRollback',
-      apiVersion: 'extensions/v1beta1',
+      apiVersion: 'apps/v1beta1',
       name: route.queries['resourceIns'],
       rollbackTo: {
         revision: rsVersion
