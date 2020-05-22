@@ -25,9 +25,11 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"sort"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/util/log"
 
 	corev1 "k8s.io/api/core/v1"
@@ -134,11 +136,11 @@ func (h *tappControllerProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.
 	}
 
 	if len(h.namespace) == 0 && len(h.name) == 0 {
-		loc.Path = fmt.Sprintf("%s/tapps", prefix)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/tapps", prefix))
 	} else if len(h.name) == 0 {
-		loc.Path = fmt.Sprintf("%s/namespaces/%s/tapps", prefix, h.namespace)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/namespaces/%s/tapps", prefix, h.namespace))
 	} else {
-		loc.Path = fmt.Sprintf("%s/namespaces/%s/tapps/%s", prefix, h.namespace, h.name)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/namespaces/%s/tapps/%s", prefix, h.namespace, h.name))
 	}
 
 	// WithContext creates a shallow clone of the request with the new context.
