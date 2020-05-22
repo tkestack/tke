@@ -24,8 +24,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 
@@ -95,7 +97,7 @@ func (h *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	loc := *h.location
 	loc.RawQuery = req.URL.RawQuery
 
-	loc.Path = "/api/v1/namespaces/kube-system/services/helm-api:http/proxy"
+	loc.Path = path.Join(loc.Path, "/api/v1/namespaces/kube-system/services/helm-api:http/proxy")
 	if !strings.HasSuffix(h.requestPath, "/") {
 		loc.Path += "/"
 	}
