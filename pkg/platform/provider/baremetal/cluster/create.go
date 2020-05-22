@@ -665,21 +665,13 @@ func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureJoinControlePlane(ctx context.Context, c *v1.Cluster) error {
-	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
-	option := &kubeadm.JoinControlPlaneOption{
-		BootstrapToken:       *c.ClusterCredential.BootstrapToken,
-		ControlPlaneEndpoint: fmt.Sprintf("%s:6443", c.Spec.Machines[0].IP),
-		OIDCCA:               oidcCa,
-	}
 	for _, machine := range c.Spec.Machines[1:] {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
 		}
 
-		option.NodeName = machine.IP
-		config := p.getKubeadmJoinConfig(c, machine.IP)
-		err = kubeadm.JoinControlPlane(machineSSH, option, config)
+		err = kubeadm.JoinControlPlane(machineSSH, p.getKubeadmJoinConfig(c, machine.IP))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

@@ -373,22 +373,12 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machin
 }
 
 func (p *Provider) EnsureJoinNode(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	host, err := cluster.Host()
-	if err != nil {
-		return err
-	}
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
-	option := &kubeadm.JoinNodeOption{
-		NodeName:             machine.Spec.IP,
-		BootstrapToken:       *cluster.ClusterCredential.BootstrapToken,
-		ControlPlaneEndpoint: host,
-	}
-	config := p.getKubeadmJoinConfig(cluster, machine.Spec.IP)
-	err = kubeadm.JoinNode(machineSSH, option, config)
+	err = kubeadm.JoinNode(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP))
 	if err != nil {
 		return err
 	}
