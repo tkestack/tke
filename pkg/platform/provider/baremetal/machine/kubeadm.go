@@ -25,6 +25,11 @@ import (
 )
 
 func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadmv1beta2.JoinConfiguration {
+	apiServerEndpoint, err := c.Host()
+	if err != nil {
+		panic(err)
+	}
+
 	return &kubeadmv1beta2.JoinConfiguration{
 		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
 			Name: nodeName,
@@ -32,8 +37,13 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadm
 				"pod-infra-container-image": images.Get().Pause.FullName(),
 			},
 		},
-		ControlPlane: &kubeadmv1beta2.JoinControlPlane{
-			CertificateKey: *c.ClusterCredential.CertificateKey,
+		Discovery: kubeadmv1beta2.Discovery{
+			BootstrapToken: &kubeadmv1beta2.BootstrapTokenDiscovery{
+				Token:                    *c.ClusterCredential.BootstrapToken,
+				APIServerEndpoint:        apiServerEndpoint,
+				UnsafeSkipCAVerification: true,
+			},
+			TLSBootstrapToken: *c.ClusterCredential.BootstrapToken,
 		},
 	}
 }

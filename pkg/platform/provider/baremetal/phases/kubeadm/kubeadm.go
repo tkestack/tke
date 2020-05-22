@@ -40,20 +40,19 @@ import (
 const (
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
-	joinControlPlaneCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
---control-plane \
---token={{.BootstrapToken}} \
+	initCmd = `kubeadm init phase {{.Phase}} \
+--config={{.Config}}
+`
+	joinControlPlaneCmd = `kubeadm join \
+--config={{.Config}} \
 --skip-phases=control-plane-join/mark-control-plane \
---discovery-token-unsafe-skip-ca-verification \
 --ignore-preflight-errors=ImagePull \
 --ignore-preflight-errors=Port-10250 \
 --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
 --ignore-preflight-errors=DirAvailable--etc-kubernetes-manifests
 `
-	joinNodeCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
---node-name={{.NodeName}} \
---token={{.BootstrapToken}} \
---discovery-token-unsafe-skip-ca-verification \
+	joinNodeCmd = `kubeadm join \
+--config={{.Config}} \
 --ignore-preflight-errors=ImagePull \
 --ignore-preflight-errors=Port-10250 \
 --ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
@@ -84,35 +83,7 @@ func Install(s ssh.Interface, version string) error {
 	return nil
 }
 
-type InitOption struct {
-	KubeadmConfigFileName string
-	NodeName              string
-	BootstrapToken        string
-	CertificateKey        string
-
-	ETCDImageTag         string
-	CoreDNSImageTag      string
-	KubernetesVersion    string
-	ControlPlaneEndpoint string
-
-	DNSDomain             string
-	ServiceSubnet         string
-	NodeCIDRMaskSize      int32
-	ClusterCIDR           string
-	ServiceClusterIPRange string
-	CertSANs              []string
-
-	APIServerExtraArgs         map[string]string
-	ControllerManagerExtraArgs map[string]string
-	SchedulerExtraArgs         map[string]string
-
-	ImageRepository string
-	ClusterName     string
-
-	KubeProxyMode string
-}
-
-func Init(s ssh.Interface, kubeadmConfig *InitConfig, extraCmd string) error {
+func Init(s ssh.Interface, kubeadmConfig *InitConfig, phase string) error {
 	configData, err := kubeadmConfig.Marshal()
 	if err != nil {
 		return err
@@ -122,31 +93,20 @@ func Init(s ssh.Interface, kubeadmConfig *InitConfig, extraCmd string) error {
 		return err
 	}
 
-	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s", extraCmd, constants.KubeadmConfigFileName)
-	out, err := s.CombinedOutput(cmd)
+	cmd, err := template.ParseString(initCmd, map[string]interface{}{
+		"Phase":  phase,
+		"Config": constants.KubeadmConfigFileName,
+	})
+	out, err := s.CombinedOutput(string(cmd))
 	if err != nil {
-		return fmt.Errorf("exec %q error: %w", cmd, err)
+		return fmt.Errorf("kubeadm.Init error: %w", err)
 	}
 	log.Info(string(out))
 
 	return nil
 }
 
-type JoinControlPlaneOption struct {
-	NodeName             string
-	BootstrapToken       string
-	ControlPlaneEndpoint string
-	OIDCCA               []byte
-}
-
-func JoinControlPlane(s ssh.Interface, option *JoinControlPlaneOption, config *kubeadmv1beta2.JoinConfiguration) error {
-	if len(option.OIDCCA) != 0 { // ensure oidc ca exists becase kubeadm reset probably delete it!
-		err := s.WriteFile(bytes.NewReader(option.OIDCCA), constants.OIDCCACertFile)
-		if err != nil {
-			return err
-		}
-	}
-
+func JoinControlPlane(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration) error {
 	configData, err := MarshalToYAML(config)
 	if err != nil {
 		return err
@@ -156,26 +116,22 @@ func JoinControlPlane(s ssh.Interface, option *JoinControlPlaneOption, config *k
 		return err
 	}
 
-	cmd, err := template.ParseString(joinControlPlaneCmd, option)
+	cmd, err := template.ParseString(joinControlPlaneCmd, map[string]interface{}{
+		"Config": constants.KubeadmConfigFileName,
+	})
 	if err != nil {
 		return errors.Wrap(err, "parse joinControlePlaneCmd error")
 	}
-	stdout, stderr, exit, err := s.Exec(string(cmd))
-	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+	out, err := s.CombinedOutput(string(cmd))
+	if err != nil {
+		return fmt.Errorf("kubeadm.JoinControlPlane error: %w", err)
 	}
-	log.Info(stdout)
+	log.Info(string(out))
 
 	return nil
 }
 
-type JoinNodeOption struct {
-	NodeName             string
-	BootstrapToken       string
-	ControlPlaneEndpoint string
-}
-
-func JoinNode(s ssh.Interface, option *JoinNodeOption, config *kubeadmv1beta2.JoinConfiguration) error {
+func JoinNode(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration) error {
 	configData, err := MarshalToYAML(config)
 	if err != nil {
 		return err
@@ -185,16 +141,17 @@ func JoinNode(s ssh.Interface, option *JoinNodeOption, config *kubeadmv1beta2.Jo
 		return err
 	}
 
-	cmd, err := template.ParseString(joinNodeCmd, option)
+	cmd, err := template.ParseString(joinNodeCmd, map[string]interface{}{
+		"Config": constants.KubeadmConfigFileName,
+	})
 	if err != nil {
 		return errors.Wrap(err, "parse joinNodeCmd error")
 	}
-	stdout, stderr, exit, err := s.Exec(string(cmd))
-	if err != nil || exit != 0 {
-		_, _, _, _ = s.Exec("kubeadm reset -f")
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+	out, err := s.CombinedOutput(string(cmd))
+	if err != nil {
+		return fmt.Errorf("kubeadm.JoinNode error: %w", err)
 	}
-	log.Info(stdout)
+	log.Info(string(out))
 
 	return nil
 }
