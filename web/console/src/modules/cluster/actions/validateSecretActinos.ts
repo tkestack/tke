@@ -206,9 +206,6 @@ export const validateSecretActions = {
     if (!password) {
       status = 2;
       message = t('密码不能为空');
-    } else if (password.length > 128) {
-      status = 2;
-      message = t('密码长度不能超过128个字符');
     } else {
       status = 1;
       message = '';
