@@ -38,11 +38,6 @@ import (
 // APIServerLocationByCluster returns a URL and transport which one can use to
 // send traffic for the specified cluster api server.
 func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (*url.URL, http.RoundTripper, string, error) {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return nil, nil, "", errors.NewBadRequest("unable to get request info from context")
-	}
-
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, nil, "", errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
@@ -73,16 +68,12 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 	if clusterCredential.Token != nil {
 		token = *clusterCredential.Token
 	}
-	urlPath := requestInfo.Path
-	if address.Path != "" {
-		urlPath = path.Join(address.Path, requestInfo.Path)
-	}
 
 	// Otherwise, return the requested scheme and port, and the proxy transport
 	return &url.URL{
 		Scheme: "https",
 		Host:   fmt.Sprintf("%v:%v", address.Host, address.Port),
-		Path:   urlPath,
+		Path:   address.Path,
 	}, transport, token, nil
 }
 
@@ -94,10 +85,20 @@ func APIServerLocation(ctx context.Context, platformClient platforminternalclien
 		return nil, nil, "", errors.NewBadRequest("clusterName is required")
 	}
 
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return nil, nil, "", errors.NewBadRequest("unable to get request info from context")
+	}
 	cluster, err := platformClient.Clusters().Get(ctx, clusterName, metav1.GetOptions{})
+
 	if err != nil {
 		return nil, nil, "", err
 	}
 
-	return APIServerLocationByCluster(ctx, cluster, platformClient)
+	location, transport, token, err := APIServerLocationByCluster(ctx, cluster, platformClient)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	location.Path = path.Join(location.Path, requestInfo.Path)
+	return location, transport, token, nil
 }
