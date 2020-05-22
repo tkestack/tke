@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"fmt"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -40,23 +41,17 @@ import (
 const (
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
-	initCmd = `kubeadm init phase {{.Phase}} \
---config={{.Config}}
-`
-	joinControlPlaneCmd = `kubeadm join \
---config={{.Config}} \
---skip-phases=control-plane-join/mark-control-plane \
---ignore-preflight-errors=ImagePull \
---ignore-preflight-errors=Port-10250 \
---ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
---ignore-preflight-errors=DirAvailable--etc-kubernetes-manifests
-`
-	joinNodeCmd = `kubeadm join \
---config={{.Config}} \
---ignore-preflight-errors=ImagePull \
---ignore-preflight-errors=Port-10250 \
---ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
-`
+	initCmd = `kubeadm init phase {{.Phase}} --config={{.Config}}`
+	joinCmd = `kubeadm join phase {{.Phase}} --config={{.Config}}`
+)
+
+var (
+	ignoreErrors = []string{
+		"ImagePull",
+		"Port-10250",
+		"FileContent--proc-sys-net-bridge-bridge-nf-call-iptables",
+		"DirAvailable--etc-kubernetes-manifests",
+	}
 )
 
 func Install(s ssh.Interface, version string) error {
@@ -97,6 +92,9 @@ func Init(s ssh.Interface, kubeadmConfig *InitConfig, phase string) error {
 		"Phase":  phase,
 		"Config": constants.KubeadmConfigFileName,
 	})
+	if err != nil {
+		return errors.Wrap(err, "parse initCmd error")
+	}
 	out, err := s.CombinedOutput(string(cmd))
 	if err != nil {
 		return fmt.Errorf("kubeadm.Init error: %w", err)
@@ -106,7 +104,7 @@ func Init(s ssh.Interface, kubeadmConfig *InitConfig, phase string) error {
 	return nil
 }
 
-func JoinControlPlane(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration) error {
+func Join(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration, phase string) error {
 	configData, err := MarshalToYAML(config)
 	if err != nil {
 		return err
@@ -115,41 +113,20 @@ func JoinControlPlane(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration)
 	if err != nil {
 		return err
 	}
+	if phase == "preflight" {
+		phase = fmt.Sprintf("preflight --ignore-preflight-errors=%s", strings.Join(ignoreErrors, ","))
+	}
 
-	cmd, err := template.ParseString(joinControlPlaneCmd, map[string]interface{}{
+	cmd, err := template.ParseString(joinCmd, map[string]interface{}{
+		"Phase":  phase,
 		"Config": constants.KubeadmConfigFileName,
 	})
 	if err != nil {
-		return errors.Wrap(err, "parse joinControlePlaneCmd error")
+		return errors.Wrap(err, "parse joinCmd error")
 	}
 	out, err := s.CombinedOutput(string(cmd))
 	if err != nil {
-		return fmt.Errorf("kubeadm.JoinControlPlane error: %w", err)
-	}
-	log.Info(string(out))
-
-	return nil
-}
-
-func JoinNode(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration) error {
-	configData, err := MarshalToYAML(config)
-	if err != nil {
-		return err
-	}
-	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
-	if err != nil {
-		return err
-	}
-
-	cmd, err := template.ParseString(joinNodeCmd, map[string]interface{}{
-		"Config": constants.KubeadmConfigFileName,
-	})
-	if err != nil {
-		return errors.Wrap(err, "parse joinNodeCmd error")
-	}
-	out, err := s.CombinedOutput(string(cmd))
-	if err != nil {
-		return fmt.Errorf("kubeadm.JoinNode error: %w", err)
+		return fmt.Errorf("kubeadm.Join error: %w", err)
 	}
 	log.Info(string(out))
 

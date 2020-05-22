@@ -108,7 +108,7 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 	}
 
 	if needUpload {
-		err := p.EnsureKubeadmInitUploadConfigPhase(ctx, c)
+		err := p.EnsureKubeadmInitPhaseUploadConfig(ctx, c)
 		if err != nil {
 			return err
 		}

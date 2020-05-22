@@ -372,13 +372,27 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machin
 	return nil
 }
 
-func (p *Provider) EnsureJoinNode(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
-	err = kubeadm.JoinNode(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP))
+	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "preflight")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureJoinPhaseKubeletStart(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "kubelet-start")
 	if err != nil {
 		return err
 	}
