@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/registry/rest"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 
 	"tkestack.io/tke/api/auth"
@@ -68,6 +69,15 @@ func NewStorage(optsGetter generic.RESTOptionsGetter) *Storage {
 type REST struct {
 	*registry.Store
 }
+
+var _ rest.Creater = &REST{}
+var _ rest.ShortNamesProvider = &REST{}
+var _ rest.Lister = &REST{}
+var _ rest.Getter = &REST{}
+var _ rest.Updater = &REST{}
+var _ rest.CollectionDeleter = &REST{}
+var _ rest.GracefulDeleter = &REST{}
+var _ rest.Exporter = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {

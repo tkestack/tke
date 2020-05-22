@@ -24,6 +24,8 @@ import (
 	"strings"
 	"unicode"
 
+	"tkestack.io/tke/api/business"
+
 	"github.com/go-openapi/inflect"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,7 +36,6 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"tkestack.io/tke/api/business"
 	"tkestack.io/tke/api/registry"
 	commonapiserverfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
@@ -220,10 +221,20 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 				tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", tkeAttribs.Namespace, tkeAttribs.Resource)
 			}
 		}
+	} else {
+		// for /apis/platform.tkestack.io/v1/clusters/cls-xxx/lbcfbackendgroups?namespace=ns
+		ns := filter.NamespaceFrom(ctx)
+		if ns != "" {
+			tkeAttribs.Resource = fmt.Sprintf("namespace:%s/%s", ns, tkeAttribs.Resource)
+		}
 	}
 
 	if ctx != nil && len(filter.ClusterFrom(ctx)) != 0 {
 		clusterName = filter.ClusterFrom(ctx)
+	}
+
+	if clusterName == "" && attr.GetUser() != nil {
+		clusterName = commonapiserverfilter.GetClusterFromGroups(attr.GetUser().GetGroups())
 	}
 
 	if clusterName != "" && resourceTypeSingle != "cluster" {

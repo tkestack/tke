@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux';
 
-import { createFFListReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
+import { createFFListReducer, generateFetcherReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';
 import { initNamespaceEdition, initProjectEdition } from '../constants/Config';
@@ -61,5 +61,14 @@ export const RootReducer = combineReducers({
   }),
 
   /**当前管理员 */
-  adminstratorInfo: reduceToPayload(ActionType.FetchAdminstratorInfo, {})
+  adminstratorInfo: reduceToPayload(ActionType.FetchAdminstratorInfo, {}),
+
+  /** 用户相关*/
+  userList: createFFListReducer(ActionType.UserList),
+  addUserWorkflow: generateWorkflowReducer({
+    actionType: ActionType.AddUser
+  }),
+
+  /** 关联策略相关 */
+  policyPlainList: createFFListReducer(ActionType.PolicyPlainList),
 });

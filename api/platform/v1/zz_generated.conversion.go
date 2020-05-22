@@ -4,7 +4,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -55,6 +55,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*platform.CSIOperator)(nil), (*CSIOperator)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_platform_CSIOperator_To_v1_CSIOperator(a.(*platform.CSIOperator), b.(*CSIOperator), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*CSIOperatorFeature)(nil), (*platform.CSIOperatorFeature)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_CSIOperatorFeature_To_platform_CSIOperatorFeature(a.(*CSIOperatorFeature), b.(*platform.CSIOperatorFeature), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.CSIOperatorFeature)(nil), (*CSIOperatorFeature)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_CSIOperatorFeature_To_v1_CSIOperatorFeature(a.(*platform.CSIOperatorFeature), b.(*CSIOperatorFeature), scope)
 	}); err != nil {
 		return err
 	}
@@ -378,6 +388,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*Etcd)(nil), (*platform.Etcd)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_Etcd_To_platform_Etcd(a.(*Etcd), b.(*platform.Etcd), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.Etcd)(nil), (*Etcd)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_Etcd_To_v1_Etcd(a.(*platform.Etcd), b.(*Etcd), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ExternalEtcd)(nil), (*platform.ExternalEtcd)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ExternalEtcd_To_platform_ExternalEtcd(a.(*ExternalEtcd), b.(*platform.ExternalEtcd), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.ExternalEtcd)(nil), (*ExternalEtcd)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_ExternalEtcd_To_v1_ExternalEtcd(a.(*platform.ExternalEtcd), b.(*ExternalEtcd), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*File)(nil), (*platform.File)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_File_To_platform_File(a.(*File), b.(*platform.File), scope)
 	}); err != nil {
@@ -385,46 +415,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*platform.File)(nil), (*File)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_platform_File_To_v1_File(a.(*platform.File), b.(*File), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*GPUManager)(nil), (*platform.GPUManager)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_GPUManager_To_platform_GPUManager(a.(*GPUManager), b.(*platform.GPUManager), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.GPUManager)(nil), (*GPUManager)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_GPUManager_To_v1_GPUManager(a.(*platform.GPUManager), b.(*GPUManager), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*GPUManagerList)(nil), (*platform.GPUManagerList)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_GPUManagerList_To_platform_GPUManagerList(a.(*GPUManagerList), b.(*platform.GPUManagerList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.GPUManagerList)(nil), (*GPUManagerList)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_GPUManagerList_To_v1_GPUManagerList(a.(*platform.GPUManagerList), b.(*GPUManagerList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*GPUManagerSpec)(nil), (*platform.GPUManagerSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_GPUManagerSpec_To_platform_GPUManagerSpec(a.(*GPUManagerSpec), b.(*platform.GPUManagerSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.GPUManagerSpec)(nil), (*GPUManagerSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_GPUManagerSpec_To_v1_GPUManagerSpec(a.(*platform.GPUManagerSpec), b.(*GPUManagerSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*GPUManagerStatus)(nil), (*platform.GPUManagerStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_GPUManagerStatus_To_platform_GPUManagerStatus(a.(*GPUManagerStatus), b.(*platform.GPUManagerStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.GPUManagerStatus)(nil), (*GPUManagerStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_GPUManagerStatus_To_v1_GPUManagerStatus(a.(*platform.GPUManagerStatus), b.(*GPUManagerStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -585,6 +575,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*platform.LBCFStatus)(nil), (*LBCFStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_platform_LBCFStatus_To_v1_LBCFStatus(a.(*platform.LBCFStatus), b.(*LBCFStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*LocalEtcd)(nil), (*platform.LocalEtcd)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_LocalEtcd_To_platform_LocalEtcd(a.(*LocalEtcd), b.(*platform.LocalEtcd), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.LocalEtcd)(nil), (*LocalEtcd)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_LocalEtcd_To_v1_LocalEtcd(a.(*platform.LocalEtcd), b.(*LocalEtcd), scope)
 	}); err != nil {
 		return err
 	}
@@ -1045,6 +1045,26 @@ func autoConvert_platform_CSIOperator_To_v1_CSIOperator(in *platform.CSIOperator
 // Convert_platform_CSIOperator_To_v1_CSIOperator is an autogenerated conversion function.
 func Convert_platform_CSIOperator_To_v1_CSIOperator(in *platform.CSIOperator, out *CSIOperator, s conversion.Scope) error {
 	return autoConvert_platform_CSIOperator_To_v1_CSIOperator(in, out, s)
+}
+
+func autoConvert_v1_CSIOperatorFeature_To_platform_CSIOperatorFeature(in *CSIOperatorFeature, out *platform.CSIOperatorFeature, s conversion.Scope) error {
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_v1_CSIOperatorFeature_To_platform_CSIOperatorFeature is an autogenerated conversion function.
+func Convert_v1_CSIOperatorFeature_To_platform_CSIOperatorFeature(in *CSIOperatorFeature, out *platform.CSIOperatorFeature, s conversion.Scope) error {
+	return autoConvert_v1_CSIOperatorFeature_To_platform_CSIOperatorFeature(in, out, s)
+}
+
+func autoConvert_platform_CSIOperatorFeature_To_v1_CSIOperatorFeature(in *platform.CSIOperatorFeature, out *CSIOperatorFeature, s conversion.Scope) error {
+	out.Version = in.Version
+	return nil
+}
+
+// Convert_platform_CSIOperatorFeature_To_v1_CSIOperatorFeature is an autogenerated conversion function.
+func Convert_platform_CSIOperatorFeature_To_v1_CSIOperatorFeature(in *platform.CSIOperatorFeature, out *CSIOperatorFeature, s conversion.Scope) error {
+	return autoConvert_platform_CSIOperatorFeature_To_v1_CSIOperatorFeature(in, out, s)
 }
 
 func autoConvert_v1_CSIOperatorList_To_platform_CSIOperatorList(in *CSIOperatorList, out *platform.CSIOperatorList, s conversion.Scope) error {
@@ -1535,6 +1555,7 @@ func autoConvert_v1_ClusterFeature_To_platform_ClusterFeature(in *ClusterFeature
 	out.SkipConditions = *(*[]string)(unsafe.Pointer(&in.SkipConditions))
 	out.Files = *(*[]platform.File)(unsafe.Pointer(&in.Files))
 	out.Hooks = *(*map[platform.HookType]string)(unsafe.Pointer(&in.Hooks))
+	out.CSIOperator = (*platform.CSIOperatorFeature)(unsafe.Pointer(in.CSIOperator))
 	return nil
 }
 
@@ -1553,6 +1574,7 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 	out.SkipConditions = *(*[]string)(unsafe.Pointer(&in.SkipConditions))
 	out.Files = *(*[]File)(unsafe.Pointer(&in.Files))
 	out.Hooks = *(*map[HookType]string)(unsafe.Pointer(&in.Hooks))
+	out.CSIOperator = (*CSIOperatorFeature)(unsafe.Pointer(in.CSIOperator))
 	return nil
 }
 
@@ -1674,6 +1696,7 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	out.NetworkType = platform.NetworkType(in.NetworkType)
 	out.NetworkDevice = in.NetworkDevice
 	out.ClusterCIDR = in.ClusterCIDR
+	out.ServiceCIDR = (*string)(unsafe.Pointer(in.ServiceCIDR))
 	out.DNSDomain = in.DNSDomain
 	out.PublicAlternativeNames = *(*[]string)(unsafe.Pointer(&in.PublicAlternativeNames))
 	if err := Convert_v1_ClusterFeature_To_platform_ClusterFeature(&in.Features, &out.Features, s); err != nil {
@@ -1688,7 +1711,8 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	out.APIServerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.APIServerExtraArgs))
 	out.ControllerManagerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.ControllerManagerExtraArgs))
 	out.SchedulerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.SchedulerExtraArgs))
-	out.ServiceCIDR = (*string)(unsafe.Pointer(in.ServiceCIDR))
+	out.ClusterCredentialRef = (*corev1.LocalObjectReference)(unsafe.Pointer(in.ClusterCredentialRef))
+	out.Etcd = (*platform.Etcd)(unsafe.Pointer(in.Etcd))
 	return nil
 }
 
@@ -1706,6 +1730,7 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	out.NetworkType = NetworkType(in.NetworkType)
 	out.NetworkDevice = in.NetworkDevice
 	out.ClusterCIDR = in.ClusterCIDR
+	out.ServiceCIDR = (*string)(unsafe.Pointer(in.ServiceCIDR))
 	out.DNSDomain = in.DNSDomain
 	out.PublicAlternativeNames = *(*[]string)(unsafe.Pointer(&in.PublicAlternativeNames))
 	if err := Convert_platform_ClusterFeature_To_v1_ClusterFeature(&in.Features, &out.Features, s); err != nil {
@@ -1720,7 +1745,8 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	out.APIServerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.APIServerExtraArgs))
 	out.ControllerManagerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.ControllerManagerExtraArgs))
 	out.SchedulerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.SchedulerExtraArgs))
-	out.ServiceCIDR = (*string)(unsafe.Pointer(in.ServiceCIDR))
+	out.ClusterCredentialRef = (*corev1.LocalObjectReference)(unsafe.Pointer(in.ClusterCredentialRef))
+	out.Etcd = (*Etcd)(unsafe.Pointer(in.Etcd))
 	return nil
 }
 
@@ -1951,6 +1977,54 @@ func Convert_platform_CronHPAStatus_To_v1_CronHPAStatus(in *platform.CronHPAStat
 	return autoConvert_platform_CronHPAStatus_To_v1_CronHPAStatus(in, out, s)
 }
 
+func autoConvert_v1_Etcd_To_platform_Etcd(in *Etcd, out *platform.Etcd, s conversion.Scope) error {
+	out.Local = (*platform.LocalEtcd)(unsafe.Pointer(in.Local))
+	out.External = (*platform.ExternalEtcd)(unsafe.Pointer(in.External))
+	return nil
+}
+
+// Convert_v1_Etcd_To_platform_Etcd is an autogenerated conversion function.
+func Convert_v1_Etcd_To_platform_Etcd(in *Etcd, out *platform.Etcd, s conversion.Scope) error {
+	return autoConvert_v1_Etcd_To_platform_Etcd(in, out, s)
+}
+
+func autoConvert_platform_Etcd_To_v1_Etcd(in *platform.Etcd, out *Etcd, s conversion.Scope) error {
+	out.Local = (*LocalEtcd)(unsafe.Pointer(in.Local))
+	out.External = (*ExternalEtcd)(unsafe.Pointer(in.External))
+	return nil
+}
+
+// Convert_platform_Etcd_To_v1_Etcd is an autogenerated conversion function.
+func Convert_platform_Etcd_To_v1_Etcd(in *platform.Etcd, out *Etcd, s conversion.Scope) error {
+	return autoConvert_platform_Etcd_To_v1_Etcd(in, out, s)
+}
+
+func autoConvert_v1_ExternalEtcd_To_platform_ExternalEtcd(in *ExternalEtcd, out *platform.ExternalEtcd, s conversion.Scope) error {
+	out.Endpoints = *(*[]string)(unsafe.Pointer(&in.Endpoints))
+	out.CAFile = in.CAFile
+	out.CertFile = in.CertFile
+	out.KeyFile = in.KeyFile
+	return nil
+}
+
+// Convert_v1_ExternalEtcd_To_platform_ExternalEtcd is an autogenerated conversion function.
+func Convert_v1_ExternalEtcd_To_platform_ExternalEtcd(in *ExternalEtcd, out *platform.ExternalEtcd, s conversion.Scope) error {
+	return autoConvert_v1_ExternalEtcd_To_platform_ExternalEtcd(in, out, s)
+}
+
+func autoConvert_platform_ExternalEtcd_To_v1_ExternalEtcd(in *platform.ExternalEtcd, out *ExternalEtcd, s conversion.Scope) error {
+	out.Endpoints = *(*[]string)(unsafe.Pointer(&in.Endpoints))
+	out.CAFile = in.CAFile
+	out.CertFile = in.CertFile
+	out.KeyFile = in.KeyFile
+	return nil
+}
+
+// Convert_platform_ExternalEtcd_To_v1_ExternalEtcd is an autogenerated conversion function.
+func Convert_platform_ExternalEtcd_To_v1_ExternalEtcd(in *platform.ExternalEtcd, out *ExternalEtcd, s conversion.Scope) error {
+	return autoConvert_platform_ExternalEtcd_To_v1_ExternalEtcd(in, out, s)
+}
+
 func autoConvert_v1_File_To_platform_File(in *File, out *platform.File, s conversion.Scope) error {
 	out.Src = in.Src
 	out.Dst = in.Dst
@@ -1971,110 +2045,6 @@ func autoConvert_platform_File_To_v1_File(in *platform.File, out *File, s conver
 // Convert_platform_File_To_v1_File is an autogenerated conversion function.
 func Convert_platform_File_To_v1_File(in *platform.File, out *File, s conversion.Scope) error {
 	return autoConvert_platform_File_To_v1_File(in, out, s)
-}
-
-func autoConvert_v1_GPUManager_To_platform_GPUManager(in *GPUManager, out *platform.GPUManager, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_v1_GPUManagerSpec_To_platform_GPUManagerSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_v1_GPUManagerStatus_To_platform_GPUManagerStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_v1_GPUManager_To_platform_GPUManager is an autogenerated conversion function.
-func Convert_v1_GPUManager_To_platform_GPUManager(in *GPUManager, out *platform.GPUManager, s conversion.Scope) error {
-	return autoConvert_v1_GPUManager_To_platform_GPUManager(in, out, s)
-}
-
-func autoConvert_platform_GPUManager_To_v1_GPUManager(in *platform.GPUManager, out *GPUManager, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_platform_GPUManagerSpec_To_v1_GPUManagerSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_platform_GPUManagerStatus_To_v1_GPUManagerStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_platform_GPUManager_To_v1_GPUManager is an autogenerated conversion function.
-func Convert_platform_GPUManager_To_v1_GPUManager(in *platform.GPUManager, out *GPUManager, s conversion.Scope) error {
-	return autoConvert_platform_GPUManager_To_v1_GPUManager(in, out, s)
-}
-
-func autoConvert_v1_GPUManagerList_To_platform_GPUManagerList(in *GPUManagerList, out *platform.GPUManagerList, s conversion.Scope) error {
-	out.ListMeta = in.ListMeta
-	out.Items = *(*[]platform.GPUManager)(unsafe.Pointer(&in.Items))
-	return nil
-}
-
-// Convert_v1_GPUManagerList_To_platform_GPUManagerList is an autogenerated conversion function.
-func Convert_v1_GPUManagerList_To_platform_GPUManagerList(in *GPUManagerList, out *platform.GPUManagerList, s conversion.Scope) error {
-	return autoConvert_v1_GPUManagerList_To_platform_GPUManagerList(in, out, s)
-}
-
-func autoConvert_platform_GPUManagerList_To_v1_GPUManagerList(in *platform.GPUManagerList, out *GPUManagerList, s conversion.Scope) error {
-	out.ListMeta = in.ListMeta
-	out.Items = *(*[]GPUManager)(unsafe.Pointer(&in.Items))
-	return nil
-}
-
-// Convert_platform_GPUManagerList_To_v1_GPUManagerList is an autogenerated conversion function.
-func Convert_platform_GPUManagerList_To_v1_GPUManagerList(in *platform.GPUManagerList, out *GPUManagerList, s conversion.Scope) error {
-	return autoConvert_platform_GPUManagerList_To_v1_GPUManagerList(in, out, s)
-}
-
-func autoConvert_v1_GPUManagerSpec_To_platform_GPUManagerSpec(in *GPUManagerSpec, out *platform.GPUManagerSpec, s conversion.Scope) error {
-	out.TenantID = in.TenantID
-	out.ClusterName = in.ClusterName
-	out.Version = in.Version
-	return nil
-}
-
-// Convert_v1_GPUManagerSpec_To_platform_GPUManagerSpec is an autogenerated conversion function.
-func Convert_v1_GPUManagerSpec_To_platform_GPUManagerSpec(in *GPUManagerSpec, out *platform.GPUManagerSpec, s conversion.Scope) error {
-	return autoConvert_v1_GPUManagerSpec_To_platform_GPUManagerSpec(in, out, s)
-}
-
-func autoConvert_platform_GPUManagerSpec_To_v1_GPUManagerSpec(in *platform.GPUManagerSpec, out *GPUManagerSpec, s conversion.Scope) error {
-	out.TenantID = in.TenantID
-	out.ClusterName = in.ClusterName
-	out.Version = in.Version
-	return nil
-}
-
-// Convert_platform_GPUManagerSpec_To_v1_GPUManagerSpec is an autogenerated conversion function.
-func Convert_platform_GPUManagerSpec_To_v1_GPUManagerSpec(in *platform.GPUManagerSpec, out *GPUManagerSpec, s conversion.Scope) error {
-	return autoConvert_platform_GPUManagerSpec_To_v1_GPUManagerSpec(in, out, s)
-}
-
-func autoConvert_v1_GPUManagerStatus_To_platform_GPUManagerStatus(in *GPUManagerStatus, out *platform.GPUManagerStatus, s conversion.Scope) error {
-	out.Version = in.Version
-	out.Phase = platform.AddonPhase(in.Phase)
-	out.Reason = in.Reason
-	out.RetryCount = in.RetryCount
-	return nil
-}
-
-// Convert_v1_GPUManagerStatus_To_platform_GPUManagerStatus is an autogenerated conversion function.
-func Convert_v1_GPUManagerStatus_To_platform_GPUManagerStatus(in *GPUManagerStatus, out *platform.GPUManagerStatus, s conversion.Scope) error {
-	return autoConvert_v1_GPUManagerStatus_To_platform_GPUManagerStatus(in, out, s)
-}
-
-func autoConvert_platform_GPUManagerStatus_To_v1_GPUManagerStatus(in *platform.GPUManagerStatus, out *GPUManagerStatus, s conversion.Scope) error {
-	out.Version = in.Version
-	out.Phase = AddonPhase(in.Phase)
-	out.Reason = in.Reason
-	out.RetryCount = in.RetryCount
-	return nil
-}
-
-// Convert_platform_GPUManagerStatus_To_v1_GPUManagerStatus is an autogenerated conversion function.
-func Convert_platform_GPUManagerStatus_To_v1_GPUManagerStatus(in *platform.GPUManagerStatus, out *GPUManagerStatus, s conversion.Scope) error {
-	return autoConvert_platform_GPUManagerStatus_To_v1_GPUManagerStatus(in, out, s)
 }
 
 func autoConvert_v1_HA_To_platform_HA(in *HA, out *platform.HA, s conversion.Scope) error {
@@ -2479,6 +2449,32 @@ func autoConvert_platform_LBCFStatus_To_v1_LBCFStatus(in *platform.LBCFStatus, o
 // Convert_platform_LBCFStatus_To_v1_LBCFStatus is an autogenerated conversion function.
 func Convert_platform_LBCFStatus_To_v1_LBCFStatus(in *platform.LBCFStatus, out *LBCFStatus, s conversion.Scope) error {
 	return autoConvert_platform_LBCFStatus_To_v1_LBCFStatus(in, out, s)
+}
+
+func autoConvert_v1_LocalEtcd_To_platform_LocalEtcd(in *LocalEtcd, out *platform.LocalEtcd, s conversion.Scope) error {
+	out.DataDir = in.DataDir
+	out.ExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.ExtraArgs))
+	out.ServerCertSANs = *(*[]string)(unsafe.Pointer(&in.ServerCertSANs))
+	out.PeerCertSANs = *(*[]string)(unsafe.Pointer(&in.PeerCertSANs))
+	return nil
+}
+
+// Convert_v1_LocalEtcd_To_platform_LocalEtcd is an autogenerated conversion function.
+func Convert_v1_LocalEtcd_To_platform_LocalEtcd(in *LocalEtcd, out *platform.LocalEtcd, s conversion.Scope) error {
+	return autoConvert_v1_LocalEtcd_To_platform_LocalEtcd(in, out, s)
+}
+
+func autoConvert_platform_LocalEtcd_To_v1_LocalEtcd(in *platform.LocalEtcd, out *LocalEtcd, s conversion.Scope) error {
+	out.DataDir = in.DataDir
+	out.ExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.ExtraArgs))
+	out.ServerCertSANs = *(*[]string)(unsafe.Pointer(&in.ServerCertSANs))
+	out.PeerCertSANs = *(*[]string)(unsafe.Pointer(&in.PeerCertSANs))
+	return nil
+}
+
+// Convert_platform_LocalEtcd_To_v1_LocalEtcd is an autogenerated conversion function.
+func Convert_platform_LocalEtcd_To_v1_LocalEtcd(in *platform.LocalEtcd, out *LocalEtcd, s conversion.Scope) error {
+	return autoConvert_platform_LocalEtcd_To_v1_LocalEtcd(in, out, s)
 }
 
 func autoConvert_v1_LogCollector_To_platform_LogCollector(in *LogCollector, out *platform.LogCollector, s conversion.Scope) error {

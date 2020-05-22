@@ -1,0 +1,172 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-logagent-controller
+  name: tke-logagent-controller
+  namespace: tke
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: tke-logagent-controller
+  template:
+    metadata:
+      labels:
+        app: tke-logagent-controller
+    spec:
+      containers:
+        - name: tke-logagent-controller
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-logagent-controller.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-logagent-controller-volume
+              mountPath: /app/conf
+          ports:
+            - containerPort: 9998
+          livenessProbe:
+            httpGet:
+              port: 9998
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-logagent-controller-volume
+          configMap:
+            name: tke-logagent-controller
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-logagent-controller
+  namespace: tke
+data:
+  tke-logagent-controller.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [client]
+
+      [client.platform]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+
+      [client.logagent]
+      api_server = "https://tke-logagent-api"
+      api_server_client_config = "/app/conf/tke-logagent-config.yaml"
+
+{{- if .EnableRegistry }}
+      [client.registry]
+      api_server = "https://tke-registry-api"
+      api_server_client_config = "/app/conf/tke-registry-config.yaml"
+{{- end }}
+
+{{- if .EnableAuth }}
+      [client.auth]
+      api_server = "https://tke-auth-api"
+      api_server_client_config = "/app/conf/tke-auth-config.yaml"
+{{- end }}
+    [features]
+    domain = "{{ .RegistryDomain }}"
+    namespace = "{{ .RegistryNamespace }}"
+
+
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-platform-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+
+  tke-logagent-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-logagent-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+
+{{- if .EnableRegistry }}
+  tke-registry-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-registry-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+{{- end }}
+
+{{- if .EnableAuth }}
+  tke-auth-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-auth-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+{{- end }}

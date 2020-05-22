@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -59,6 +59,14 @@ type LocalIdentityListerExpansion interface{}
 // PolicyListerExpansion allows custom methods to be added to
 // PolicyLister.
 type PolicyListerExpansion interface{}
+
+// ProjectListerExpansion allows custom methods to be added to
+// ProjectLister.
+type ProjectListerExpansion interface{}
+
+// ProjectPolicyBindingListerExpansion allows custom methods to be added to
+// ProjectPolicyBindingLister.
+type ProjectPolicyBindingListerExpansion interface{}
 
 // RoleListerExpansion allows custom methods to be added to
 // RoleLister.

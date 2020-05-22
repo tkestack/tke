@@ -24,6 +24,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+
 	"tkestack.io/tke/pkg/spec"
 
 	pkgerrors "github.com/pkg/errors"
@@ -212,7 +213,7 @@ func (d *Docker) RemoveImage(image string) error {
 }
 
 // RemoveContainers forces to remove one or more running containers.
-func (d *Docker) RemoveContainers(containers... string) error {
+func (d *Docker) RemoveContainers(containers ...string) error {
 	// Force the removal of containers. Do not return error.
 	cmdString := fmt.Sprintf("docker rm -f %s 2> /dev/null || true", strings.Join(containers, " "))
 	err := d.runCmd(cmdString)

@@ -22,6 +22,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/casbin/casbin/v2"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,15 +48,17 @@ type Strategy struct {
 	names.NameGenerator
 
 	authClient authinternalclient.AuthInterface
+	enforcer   *casbin.SyncedEnforcer
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating group objects.
-func NewStrategy(authClient authinternalclient.AuthInterface) *Strategy {
+func NewStrategy(authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer) *Strategy {
 	return &Strategy{
 		ObjectTyper:   auth.Scheme,
 		NameGenerator: namesutil.Generator,
 		authClient:    authClient,
+		enforcer:      enforcer,
 	}
 }
 
@@ -65,7 +69,7 @@ func (Strategy) DefaultGarbageCollectionGroup(ctx context.Context) rest.GarbageC
 
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
-func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+func (s *Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	oldGroup := old.(*auth.LocalGroup)
 	group, _ := obj.(*auth.LocalGroup)
@@ -83,6 +87,8 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	} else {
 		group.Status.Users = oldGroup.Status.Users
 	}
+
+	_ = util.HandleGroupPoliciesUpdate(ctx, s.authClient, s.enforcer, group)
 }
 
 // NamespaceScoped is false for policies.
@@ -123,7 +129,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new group.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateLocalGroup(obj.(*auth.LocalGroup), s.authClient)
+	return ValidateLocalGroup(ctx, obj.(*auth.LocalGroup), s.authClient)
 }
 
 // AllowCreateOnUpdate is false for policies.
@@ -144,7 +150,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end group.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLocalGroupUpdate(obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
+	return ValidateLocalGroupUpdate(ctx, obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -153,7 +159,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a group")
 	}
-	return labels.Set(group.ObjectMeta.Labels), ToSelectableFields(group), nil
+	return group.ObjectMeta.Labels, ToSelectableFields(group), nil
 }
 
 // MatchGroup returns a generic matcher for a given label and field selector.
@@ -216,7 +222,7 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLocalGroupUpdate(obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
+	return ValidateLocalGroupUpdate(ctx, obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
 }
 
 // FinalizeStrategy implements finalizer logic for Machine.
@@ -245,5 +251,5 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateLocalGroupUpdate(obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
+	return ValidateLocalGroupUpdate(ctx, obj.(*auth.LocalGroup), old.(*auth.LocalGroup), s.authClient)
 }

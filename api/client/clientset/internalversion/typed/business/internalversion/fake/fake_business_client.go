@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -44,6 +44,10 @@ func (c *FakeBusiness) ImageNamespaces(namespace string) internalversion.ImageNa
 
 func (c *FakeBusiness) Namespaces(namespace string) internalversion.NamespaceInterface {
 	return &FakeNamespaces{c, namespace}
+}
+
+func (c *FakeBusiness) NsEmigrations(namespace string) internalversion.NsEmigrationInterface {
+	return &FakeNsEmigrations{c, namespace}
 }
 
 func (c *FakeBusiness) Platforms() internalversion.PlatformInterface {

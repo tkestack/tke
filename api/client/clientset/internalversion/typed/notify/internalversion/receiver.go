@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package internalversion
 
 import (
+	"context"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,13 +40,13 @@ type ReceiversGetter interface {
 
 // ReceiverInterface has methods to work with Receiver resources.
 type ReceiverInterface interface {
-	Create(*notify.Receiver) (*notify.Receiver, error)
-	Update(*notify.Receiver) (*notify.Receiver, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	Get(name string, options v1.GetOptions) (*notify.Receiver, error)
-	List(opts v1.ListOptions) (*notify.ReceiverList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *notify.Receiver, err error)
+	Create(ctx context.Context, receiver *notify.Receiver, opts v1.CreateOptions) (*notify.Receiver, error)
+	Update(ctx context.Context, receiver *notify.Receiver, opts v1.UpdateOptions) (*notify.Receiver, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*notify.Receiver, error)
+	List(ctx context.Context, opts v1.ListOptions) (*notify.ReceiverList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *notify.Receiver, err error)
 	ReceiverExpansion
 }
 
@@ -62,19 +63,19 @@ func newReceivers(c *NotifyClient) *receivers {
 }
 
 // Get takes name of the receiver, and returns the corresponding receiver object, and an error if there is any.
-func (c *receivers) Get(name string, options v1.GetOptions) (result *notify.Receiver, err error) {
+func (c *receivers) Get(ctx context.Context, name string, options v1.GetOptions) (result *notify.Receiver, err error) {
 	result = &notify.Receiver{}
 	err = c.client.Get().
 		Resource("receivers").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of Receivers that match those selectors.
-func (c *receivers) List(opts v1.ListOptions) (result *notify.ReceiverList, err error) {
+func (c *receivers) List(ctx context.Context, opts v1.ListOptions) (result *notify.ReceiverList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -84,13 +85,13 @@ func (c *receivers) List(opts v1.ListOptions) (result *notify.ReceiverList, err 
 		Resource("receivers").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested receivers.
-func (c *receivers) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *receivers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -100,51 +101,54 @@ func (c *receivers) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("receivers").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a receiver and creates it.  Returns the server's representation of the receiver, and an error, if there is any.
-func (c *receivers) Create(receiver *notify.Receiver) (result *notify.Receiver, err error) {
+func (c *receivers) Create(ctx context.Context, receiver *notify.Receiver, opts v1.CreateOptions) (result *notify.Receiver, err error) {
 	result = &notify.Receiver{}
 	err = c.client.Post().
 		Resource("receivers").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(receiver).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a receiver and updates it. Returns the server's representation of the receiver, and an error, if there is any.
-func (c *receivers) Update(receiver *notify.Receiver) (result *notify.Receiver, err error) {
+func (c *receivers) Update(ctx context.Context, receiver *notify.Receiver, opts v1.UpdateOptions) (result *notify.Receiver, err error) {
 	result = &notify.Receiver{}
 	err = c.client.Put().
 		Resource("receivers").
 		Name(receiver.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(receiver).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the receiver and deletes it. Returns an error if one occurs.
-func (c *receivers) Delete(name string, options *v1.DeleteOptions) error {
+func (c *receivers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("receivers").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched receiver.
-func (c *receivers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *notify.Receiver, err error) {
+func (c *receivers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *notify.Receiver, err error) {
 	result = &notify.Receiver{}
 	err = c.client.Patch(pt).
 		Resource("receivers").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

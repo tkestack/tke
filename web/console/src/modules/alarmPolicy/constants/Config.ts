@@ -113,15 +113,15 @@ export const AlarmPolicyPhoneInterval = [
 
 export const workloadTypeList = [
   {
-    value: 'deployment',
+    value: 'Deployment',
     label: 'Deployment'
   },
   {
-    value: 'daemonset',
+    value: 'DaemonSet',
     label: 'DaemonSet'
   },
   {
-    value: 'statefulset',
+    value: 'StatefulSet',
     label: 'StatefulSet'
   }
 ];
@@ -247,8 +247,8 @@ export const AlarmPolicyMetrics = {
       measurement: 'k8s_component',
       statisticsPeriod: 1,
       metricName: 'k8s_component_apiserver_ready',
-      evaluatorType: 'lt',
-      evaluatorValue: '1',
+      evaluatorType: 'eq',
+      evaluatorValue: AlarmPolicyMetricsEvaluatorValue[1].value,
       metricDisplayName: t('API Server正常'),
       continuePeriod: 5,
       type: 'boolean',
@@ -261,8 +261,8 @@ export const AlarmPolicyMetrics = {
       measurement: 'k8s_component',
       statisticsPeriod: 1,
       metricName: 'k8s_component_etcd_ready',
-      evaluatorType: 'lt',
-      evaluatorValue: '1',
+      evaluatorType: 'eq',
+      evaluatorValue: AlarmPolicyMetricsEvaluatorValue[1].value,
       metricDisplayName: t('Etcd正常'),
       continuePeriod: 5,
       type: 'boolean',
@@ -275,8 +275,8 @@ export const AlarmPolicyMetrics = {
       measurement: 'k8s_component',
       statisticsPeriod: 1,
       metricName: 'k8s_component_scheduler_ready',
-      evaluatorType: 'lt',
-      evaluatorValue: '1',
+      evaluatorType: 'eq',
+      evaluatorValue: AlarmPolicyMetricsEvaluatorValue[1].value,
       metricDisplayName: t('Scheduler正常'),
       continuePeriod: 5,
       type: 'boolean',
@@ -289,8 +289,8 @@ export const AlarmPolicyMetrics = {
       measurement: 'k8s_component',
       statisticsPeriod: 1,
       metricName: 'k8s_component_controller_manager_ready',
-      evaluatorType: 'lt',
-      evaluatorValue: '1',
+      evaluatorType: 'eq',
+      evaluatorValue: AlarmPolicyMetricsEvaluatorValue[1].value,
       metricDisplayName: t('Controll Manager正常'),
       continuePeriod: 5,
       type: 'boolean',
@@ -347,8 +347,8 @@ export const AlarmPolicyMetrics = {
       measurement: 'k8s_node',
       statisticsPeriod: 1,
       metricName: 'k8s_node_status_ready',
-      // evaluatorType: 'lt',
-      evaluatorValue: AlarmPolicyMetricsEvaluatorValue[0].value,
+      evaluatorType: 'eq',
+      evaluatorValue: AlarmPolicyMetricsEvaluatorValue[1].value,
       metricDisplayName: 'Node Ready',
       continuePeriod: 5,
       type: 'boolean',
@@ -461,9 +461,8 @@ export const AlarmPolicyMetrics = {
       measurement: 'k8s_pod',
       statisticsPeriod: 1,
       metricName: 'k8s_pod_status_ready',
-      // evaluatorType: 'lt',
-      // evaluatorValue: '1',
-      evaluatorValue: AlarmPolicyMetricsEvaluatorValue[0].value,
+      evaluatorType: 'eq',
+      evaluatorValue: AlarmPolicyMetricsEvaluatorValue[1].value,
       metricDisplayName: 'Pod Ready',
       continuePeriod: 5,
       type: 'boolean',

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,13 +40,13 @@ type ReceiverGroupsGetter interface {
 
 // ReceiverGroupInterface has methods to work with ReceiverGroup resources.
 type ReceiverGroupInterface interface {
-	Create(*v1.ReceiverGroup) (*v1.ReceiverGroup, error)
-	Update(*v1.ReceiverGroup) (*v1.ReceiverGroup, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.ReceiverGroup, error)
-	List(opts metav1.ListOptions) (*v1.ReceiverGroupList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.ReceiverGroup, err error)
+	Create(ctx context.Context, receiverGroup *v1.ReceiverGroup, opts metav1.CreateOptions) (*v1.ReceiverGroup, error)
+	Update(ctx context.Context, receiverGroup *v1.ReceiverGroup, opts metav1.UpdateOptions) (*v1.ReceiverGroup, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.ReceiverGroup, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.ReceiverGroupList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ReceiverGroup, err error)
 	ReceiverGroupExpansion
 }
 
@@ -62,19 +63,19 @@ func newReceiverGroups(c *NotifyV1Client) *receiverGroups {
 }
 
 // Get takes name of the receiverGroup, and returns the corresponding receiverGroup object, and an error if there is any.
-func (c *receiverGroups) Get(name string, options metav1.GetOptions) (result *v1.ReceiverGroup, err error) {
+func (c *receiverGroups) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.ReceiverGroup, err error) {
 	result = &v1.ReceiverGroup{}
 	err = c.client.Get().
 		Resource("receivergroups").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of ReceiverGroups that match those selectors.
-func (c *receiverGroups) List(opts metav1.ListOptions) (result *v1.ReceiverGroupList, err error) {
+func (c *receiverGroups) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ReceiverGroupList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -84,13 +85,13 @@ func (c *receiverGroups) List(opts metav1.ListOptions) (result *v1.ReceiverGroup
 		Resource("receivergroups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested receiverGroups.
-func (c *receiverGroups) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *receiverGroups) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -100,51 +101,54 @@ func (c *receiverGroups) Watch(opts metav1.ListOptions) (watch.Interface, error)
 		Resource("receivergroups").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a receiverGroup and creates it.  Returns the server's representation of the receiverGroup, and an error, if there is any.
-func (c *receiverGroups) Create(receiverGroup *v1.ReceiverGroup) (result *v1.ReceiverGroup, err error) {
+func (c *receiverGroups) Create(ctx context.Context, receiverGroup *v1.ReceiverGroup, opts metav1.CreateOptions) (result *v1.ReceiverGroup, err error) {
 	result = &v1.ReceiverGroup{}
 	err = c.client.Post().
 		Resource("receivergroups").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(receiverGroup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a receiverGroup and updates it. Returns the server's representation of the receiverGroup, and an error, if there is any.
-func (c *receiverGroups) Update(receiverGroup *v1.ReceiverGroup) (result *v1.ReceiverGroup, err error) {
+func (c *receiverGroups) Update(ctx context.Context, receiverGroup *v1.ReceiverGroup, opts metav1.UpdateOptions) (result *v1.ReceiverGroup, err error) {
 	result = &v1.ReceiverGroup{}
 	err = c.client.Put().
 		Resource("receivergroups").
 		Name(receiverGroup.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(receiverGroup).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the receiverGroup and deletes it. Returns an error if one occurs.
-func (c *receiverGroups) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *receiverGroups) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("receivergroups").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched receiverGroup.
-func (c *receiverGroups) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.ReceiverGroup, err error) {
+func (c *receiverGroups) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ReceiverGroup, err error) {
 	result = &v1.ReceiverGroup{}
 	err = c.client.Patch(pt).
 		Resource("receivergroups").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

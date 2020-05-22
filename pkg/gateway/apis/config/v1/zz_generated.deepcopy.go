@@ -4,7 +4,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -98,6 +98,16 @@ func (in *Components) DeepCopyInto(out *Components) {
 	}
 	if in.Registry != nil {
 		in, out := &in.Registry, &out.Registry
+		*out = new(Component)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.LogAgent != nil {
+		in, out := &in.LogAgent, &out.LogAgent
+		*out = new(Component)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Audit != nil {
+		in, out := &in.Audit, &out.Audit
 		*out = new(Component)
 		(*in).DeepCopyInto(*out)
 	}

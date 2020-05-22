@@ -19,16 +19,18 @@
 package prometheus
 
 import (
+	"context"
+
 	v1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-func (h *processor) UpdateGroup(clusterName, groupName string, entity *v1.RuleGroup) error {
+func (h *processor) UpdateGroup(ctx context.Context, clusterName, groupName string, entity *v1.RuleGroup) error {
 	h.Lock()
 	defer h.Unlock()
 
-	ruleOp, err := h.loadRule(clusterName)
+	ruleOp, err := h.loadRule(ctx, clusterName)
 	if err != nil {
 		return errors.Wrapf(err, "rule operator not found")
 	}
@@ -42,7 +44,7 @@ func (h *processor) UpdateGroup(clusterName, groupName string, entity *v1.RuleGr
 
 	groups := ruleOp.SavePromRule()
 
-	err = h.saveRule(clusterName, groups)
+	err = h.saveRule(ctx, clusterName, groups)
 	if err != nil {
 		return errors.Wrapf(err, "failed to save configmap")
 	}
@@ -50,11 +52,11 @@ func (h *processor) UpdateGroup(clusterName, groupName string, entity *v1.RuleGr
 	return nil
 }
 
-func (h *processor) UpdateRule(clusterName, groupName, recordName string, entity *v1.Rule) error {
+func (h *processor) UpdateRule(ctx context.Context, clusterName, groupName, recordName string, entity *v1.Rule) error {
 	h.Lock()
 	defer h.Unlock()
 
-	ruleOp, err := h.loadRule(clusterName)
+	ruleOp, err := h.loadRule(ctx, clusterName)
 	if err != nil {
 		return errors.Wrapf(err, "rule operator not found")
 	}
@@ -68,7 +70,7 @@ func (h *processor) UpdateRule(clusterName, groupName, recordName string, entity
 
 	groups := ruleOp.SavePromRule()
 
-	err = h.saveRule(clusterName, groups)
+	err = h.saveRule(ctx, clusterName, groups)
 	if err != nil {
 		return errors.Wrapf(err, "failed to save configmap")
 	}

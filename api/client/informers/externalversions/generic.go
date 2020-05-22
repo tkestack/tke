@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -27,6 +27,7 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 	v1 "tkestack.io/tke/api/auth/v1"
 	businessv1 "tkestack.io/tke/api/business/v1"
+	logagentv1 "tkestack.io/tke/api/logagent/v1"
 	monitorv1 "tkestack.io/tke/api/monitor/v1"
 	notifyv1 "tkestack.io/tke/api/notify/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -80,6 +81,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().LocalIdentities().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("policies"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Policies().Informer()}, nil
+	case v1.SchemeGroupVersion.WithResource("projectpolicybindings"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().ProjectPolicyBindings().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("roles"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().V1().Roles().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("rules"):
@@ -96,10 +99,18 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().ImageNamespaces().Informer()}, nil
 	case businessv1.SchemeGroupVersion.WithResource("namespaces"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().Namespaces().Informer()}, nil
+	case businessv1.SchemeGroupVersion.WithResource("nsemigrations"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().NsEmigrations().Informer()}, nil
 	case businessv1.SchemeGroupVersion.WithResource("platforms"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().Platforms().Informer()}, nil
 	case businessv1.SchemeGroupVersion.WithResource("projects"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Business().V1().Projects().Informer()}, nil
+
+		// Group=logagent.tkestack.io, Version=v1
+	case logagentv1.SchemeGroupVersion.WithResource("configmaps"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Logagent().V1().ConfigMaps().Informer()}, nil
+	case logagentv1.SchemeGroupVersion.WithResource("logagents"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Logagent().V1().LogAgents().Informer()}, nil
 
 		// Group=monitor.tkestack.io, Version=v1
 	case monitorv1.SchemeGroupVersion.WithResource("configmaps"):
@@ -132,8 +143,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().ConfigMaps().Informer()}, nil
 	case platformv1.SchemeGroupVersion.WithResource("cronhpas"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().CronHPAs().Informer()}, nil
-	case platformv1.SchemeGroupVersion.WithResource("gpumanagers"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().GPUManagers().Informer()}, nil
 	case platformv1.SchemeGroupVersion.WithResource("helms"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().Helms().Informer()}, nil
 	case platformv1.SchemeGroupVersion.WithResource("ipams"):

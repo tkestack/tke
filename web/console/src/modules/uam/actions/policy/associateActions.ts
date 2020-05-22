@@ -14,6 +14,7 @@ type GetState = () => RootState;
 const fetchPolicyActions = createFFListActions<PolicyPlain, PolicyFilter>({
   actionName: ActionTypes.PolicyPlainList,
   fetcher: async (query, getState: GetState) => {
+    console.log('fetchPolicyActions query:', query);
     let response = await WebAPI.fetchPolicyPlainList(query);
     return response;
   },

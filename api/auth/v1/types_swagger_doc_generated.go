@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -346,7 +346,7 @@ func (LocalIdentitySpec) SwaggerDoc() map[string]string {
 
 var map_LocalIdentityStatus = map[string]string{
 	"":               "LocalIdentityStatus is a description of an identity status.",
-	"LastUpdateTime": "The last time the local identity was updated.",
+	"lastUpdateTime": "The last time the local identity was updated.",
 }
 
 func (LocalIdentityStatus) SwaggerDoc() map[string]string {
@@ -414,6 +414,74 @@ var map_PolicyStatus = map[string]string{
 
 func (PolicyStatus) SwaggerDoc() map[string]string {
 	return map_PolicyStatus
+}
+
+var map_Project = map[string]string{
+	"": "Project contains members of projects.",
+}
+
+func (Project) SwaggerDoc() map[string]string {
+	return map_Project
+}
+
+var map_ProjectBelongs = map[string]string{
+	"": "ProjectBelongs contains projects of user belongs.",
+}
+
+func (ProjectBelongs) SwaggerDoc() map[string]string {
+	return map_ProjectBelongs
+}
+
+var map_ProjectList = map[string]string{
+	"":      "ProjectList is the whole list of all projects.",
+	"items": "List of projects.",
+}
+
+func (ProjectList) SwaggerDoc() map[string]string {
+	return map_ProjectList
+}
+
+var map_ProjectPolicyBinding = map[string]string{
+	"": "ProjectPolicyBinding is a collection of subjects bond to policies in a project scope.",
+}
+
+func (ProjectPolicyBinding) SwaggerDoc() map[string]string {
+	return map_ProjectPolicyBinding
+}
+
+var map_ProjectPolicyBindingList = map[string]string{
+	"":      "ProjectPolicyBindingList is the whole list of all ProjectPolicyBindings.",
+	"items": "List of policies.",
+}
+
+func (ProjectPolicyBindingList) SwaggerDoc() map[string]string {
+	return map_ProjectPolicyBindingList
+}
+
+var map_ProjectPolicyBindingRequest = map[string]string{
+	"":         "ProjectPolicyBindingRequest references the request to bind or unbind policies to the role.",
+	"policies": "Policies holds the policies will bind to the subjects.",
+}
+
+func (ProjectPolicyBindingRequest) SwaggerDoc() map[string]string {
+	return map_ProjectPolicyBindingRequest
+}
+
+var map_ProjectPolicyBindingSpec = map[string]string{
+	"":           "ProjectPolicyBindingSpec defines the desired identities of ProjectPolicyBindingSpec document in this set.",
+	"finalizers": "Spec defines the desired identities of role document in this set.",
+}
+
+func (ProjectPolicyBindingSpec) SwaggerDoc() map[string]string {
+	return map_ProjectPolicyBindingSpec
+}
+
+var map_ProjectPolicyBindingStatus = map[string]string{
+	"": "ProjectPolicyBindingStatus represents information about the status of a ProjectPolicyBinding.",
+}
+
+func (ProjectPolicyBindingStatus) SwaggerDoc() map[string]string {
+	return map_ProjectPolicyBindingStatus
 }
 
 var map_ResourceAttributes = map[string]string{
@@ -527,7 +595,7 @@ var map_SubjectAccessReviewSpec = map[string]string{
 	"resourceAttributesList": "ResourceAttributesList describes information for multi resource access request.",
 	"nonResourceAttributes":  "NonResourceAttributes describes information for a non-resource access request",
 	"user":                   "User is the user you're testing for. If you specify \"User\" but not \"Groups\", then is it interpreted as \"What if User were not a member of any groups",
-	"groups":                 "Groups is the groups you're testing for.",
+	"group":                  "Groups is the groups you're testing for.",
 	"extra":                  "Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer it needs a reflection here.",
 	"uid":                    "UID information about the requesting user.",
 }

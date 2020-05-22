@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -51,6 +51,10 @@ message CSIOperator {
 
   // +optional
   optional CSIOperatorStatus status = 3;
+}
+
+message CSIOperatorFeature {
+  optional string version = 1;
 }
 
 // CSIOperatorList is the whole list of all storage operators which owned by a tenant.
@@ -345,6 +349,9 @@ message ClusterFeature {
 
   // +optional
   map<string, string> hooks = 9;
+
+  // +optional
+  optional CSIOperatorFeature csiOperator = 10;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.
@@ -433,6 +440,10 @@ message ClusterSpec {
   // +optional
   optional string clusterCIDR = 8;
 
+  // ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+  // +optional
+  optional string serviceCIDR = 19;
+
   // DNSDomain is the dns domain used by k8s services. Defaults to "cluster.local".
   optional string dnsDomain = 9;
 
@@ -463,9 +474,14 @@ message ClusterSpec {
   // +optional
   map<string, string> schedulerExtraArgs = 18;
 
-  // ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+  // ClusterCredentialRef for isolate sensitive information.
+  // If not specified, cluster controller will create one;
+  // If specified, provider must make sure is valid.
   // +optional
-  optional string serviceCIDR = 19;
+  optional k8s.io.api.core.v1.LocalObjectReference clusterCredentialRef = 20;
+
+  // Etcd holds configuration for etcd.
+  optional Etcd etcd = 21;
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -610,60 +626,41 @@ message CronHPAStatus {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
 }
 
+// Etcd contains elements describing Etcd configuration.
+message Etcd {
+  // Local provides configuration knobs for configuring the local etcd instance
+  // Local and External are mutually exclusive
+  optional LocalEtcd local = 1;
+
+  // External describes how to connect to an external etcd cluster
+  // Local and External are mutually exclusive
+  optional ExternalEtcd external = 2;
+}
+
+// ExternalEtcd describes an external etcd cluster.
+// Kubeadm has no knowledge of where certificate files live and they must be supplied.
+message ExternalEtcd {
+  // Endpoints of etcd members. Required for ExternalEtcd.
+  repeated string endpoints = 1;
+
+  // CAFile is an SSL Certificate Authority file used to secure etcd communication.
+  // Required if using a TLS connection.
+  optional string caFile = 2;
+
+  // CertFile is an SSL certification file used to secure etcd communication.
+  // Required if using a TLS connection.
+  optional string certFile = 3;
+
+  // KeyFile is an SSL key file used to secure etcd communication.
+  // Required if using a TLS connection.
+  optional string keyFile = 4;
+}
+
 message File {
   optional string src = 1;
 
   // Only support regular file
   optional string dst = 2;
-}
-
-// GPUManager is a kind of device plugin for kubelet to help manage GPUs.
-message GPUManager {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-
-  // Spec defines the desired identities of clusters in this set.
-  // +optional
-  optional GPUManagerSpec spec = 2;
-
-  // +optional
-  optional GPUManagerStatus status = 3;
-}
-
-// GPUManagerList is the whole list of all GPUManager which owned by a tenant.
-message GPUManagerList {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
-
-  // List of GPUManagers
-  repeated GPUManager items = 2;
-}
-
-// GPUManagerSpec describes the attributes of a GPUManager.
-message GPUManagerSpec {
-  optional string tenantID = 1;
-
-  optional string clusterName = 2;
-
-  optional string version = 3;
-}
-
-// GPUManagerStatus is information about the current status of a GPUManager.
-message GPUManagerStatus {
-  // +optional
-  optional string version = 1;
-
-  // Phase is the current lifecycle phase of the GPUManager of cluster.
-  // +optional
-  optional string phase = 2;
-
-  // Reason is a brief CamelCase string that describes any failure.
-  // +optional
-  optional string reason = 3;
-
-  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-  // +optional
-  optional int32 retryCount = 4;
 }
 
 message HA {
@@ -852,6 +849,23 @@ message LBCFStatus {
   // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
+}
+
+// LocalEtcd describes that kubeadm should run an etcd cluster locally
+message LocalEtcd {
+  // DataDir is the directory etcd will place its data.
+  // Defaults to "/var/lib/etcd".
+  optional string dataDir = 1;
+
+  // ExtraArgs are extra arguments provided to the etcd binary
+  // when run inside a static pod.
+  map<string, string> extraArgs = 2;
+
+  // ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.
+  repeated string serverCertSANs = 3;
+
+  // PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.
+  repeated string peerCertSANs = 4;
 }
 
 // LogCollector is a manager to collect logs of workload.

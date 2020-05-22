@@ -80,9 +80,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Registry{},
 		&RegistryList{},
 
-		&GPUManager{},
-		&GPUManagerList{},
-
 		&TappController{},
 		&TappControllerList{},
 		&TappControllerProxyOptions{},

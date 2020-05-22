@@ -7,4 +7,4 @@ import { Router } from '../../../helpers/Router';
  * @param resourceName  资源的名称  deployment 等
  * @param tab   tab页面
  */
-export const router = new Router('/tkestack/project(/:sub)(/:tab)', { sub: '', tab: '' });
+export const router = new Router('/tkestack/project(/:sub)(/:tab)(/:action)', { sub: '', tab: '', action: '' });

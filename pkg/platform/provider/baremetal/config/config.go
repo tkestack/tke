@@ -46,6 +46,7 @@ func New(filename string) (*Config, error) {
 
 type Config struct {
 	Registry Registry `yaml:"registry"`
+	Audit    Audit    `yaml:"audit"`
 	Feature  Feature  `yaml:"feature"`
 }
 
@@ -69,6 +70,10 @@ type Registry struct {
 
 func (r *Registry) NeedSetHosts() bool {
 	return r.IP != ""
+}
+
+type Audit struct {
+	Address string `yaml:"address"`
 }
 
 type Feature struct {

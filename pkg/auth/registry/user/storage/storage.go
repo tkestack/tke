@@ -32,6 +32,7 @@ import (
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -39,17 +40,20 @@ import (
 
 // Storage includes storage for configmap and all sub resources.
 type Storage struct {
-	User   *REST
-	Policy *PolicyREST
-	Role   *RoleREST
+	User    *REST
+	Policy  *PolicyREST
+	Role    *RoleREST
+	Project *ProjectREST
 }
 
 // NewStorage returns a Storage object that will work against configmap.
 func NewStorage(_ genericregistry.RESTOptionsGetter, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer) *Storage {
 	return &Storage{
-		User:   &REST{},
-		Policy: &PolicyREST{&REST{}, authClient, enforcer},
-		Role:   &RoleREST{&REST{}, authClient, enforcer},
+		User: &REST{},
+
+		Policy:  &PolicyREST{&REST{}, authClient, enforcer},
+		Role:    &RoleREST{&REST{}, authClient, enforcer},
+		Project: &ProjectREST{&REST{}, authClient, enforcer},
 	}
 }
 
@@ -62,9 +66,10 @@ func (r *REST) NamespaceScoped() bool {
 	return false
 }
 
-var _ rest.ShortNamesProvider = &REST{}
 var _ rest.Creater = &REST{}
-var _ rest.Scoper = &REST{}
+var _ rest.ShortNamesProvider = &REST{}
+var _ rest.Lister = &REST{}
+var _ rest.Getter = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
@@ -90,7 +95,10 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
-		tenantID, name = util.ParseTenantAndName(name)
+		tenantID = filter.TenantIDFrom(ctx)
+		if tenantID == "" {
+			tenantID, name = util.ParseTenantAndName(name)
+		}
 	}
 
 	idp, ok := identityprovider.GetIdentityProvider(tenantID)
@@ -108,10 +116,18 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	return userLister.GetUser(ctx, name, options)
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("users"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
-	if tenantID == "" {
+	if tenantID == "" && options != nil && options.FieldSelector != nil {
 		tenantID, _ = options.FieldSelector.RequiresExactMatch("spec.tenantID")
 		if tenantID == "" {
 			return &auth.UserList{}, nil

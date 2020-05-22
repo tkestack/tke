@@ -1,0 +1,124 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: tke-audit-api
+  namespace: tke
+  annotations:
+    tke.prometheus.io/scrape: "true"
+    prometheus.io/scheme: https
+spec:
+  selector:
+    app: tke-audit-api
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 9461
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-audit-api
+  name: tke-audit-api
+  namespace: tke
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: tke-audit-api
+  template:
+    metadata:
+      labels:
+        app: tke-audit-api
+    spec:
+      containers:
+        - name: tke-audit-api
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-audit-api.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-audit-api-volume
+              mountPath: /app/conf
+          ports:
+            - containerPort: 9461
+          readinessProbe:
+            httpGet:
+              port: 9461
+              path: /healthz/ping
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 9461
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-audit-api-volume
+          configMap:
+            name: tke-audit-api
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-audit-api
+  namespace: tke
+data:
+  tke-audit-api.toml: |
+    audit_config = "/app/conf/tke-audit-api-config.yaml"
+
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [authentication]
+    token_auth_file = "/app/certs/token.csv"
+
+      [authentication.oidc]
+{{- if .EnableAuth }}
+      client_id = "default"
+      issuer_url = "https://tke-auth-api/oidc"
+      external_issuer_url = "https://tke-auth-api/oidc"
+      ca_file = "/app/certs/ca.crt"
+      username_prefix ="-"
+      username_claim = "name"
+      groups_claim = "groups"
+      tenantid_claim = "federated_claims"
+{{- else }}
+      client_id = {{ .OIDCClientID }}
+      issuer_url = {{ .OIDCIssuerURL }}
+{{- if .UseOIDCCA }}
+      ca_file = "/app/certs/oidc-ca.crt"
+{{- end}}
+{{- end }}
+
+      [authentication.requestheader]
+      client_ca_file = "/app/certs/ca.crt"
+      username_headers = "X-Remote-User"
+      group_headers = "X-Remote-Group"
+      extra_headers_prefix = "X-Remote-Extra-"
+
+  tke-audit-api-config.yaml: |
+    kind: AuditConfiguration
+    apiVersion: audit.config.tkestack.io/v1
+    storage:
+      elasticSearch:
+        address: "{{ .StorageAddress }}"
+        reserveDays: {{ .ReserveDays }}
+        username: "{{ .Username }}"
+        password: "{{ .Password }}"

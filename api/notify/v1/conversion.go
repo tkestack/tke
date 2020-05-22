@@ -136,7 +136,10 @@ func AddFieldLabelConversionsForMessage(scheme *runtime.Scheme) error {
 				"spec.username",
 				"spec.channelMessageID",
 				"status.phase",
-				"metadata.name":
+				"metadata.name",
+				"spec.alarmPolicyName",
+				"spec.alarmPolicyType",
+				"spec.receiverChannelName":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported: %s", label)

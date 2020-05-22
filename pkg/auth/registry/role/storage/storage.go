@@ -106,7 +106,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		PolicyUnbinding: &PolicyUnbindingREST{store, authClient},
 		User:            &UserREST{store, authClient},
 		Group:           &GroupREST{store, authClient},
-		Policy:          &PolicyREST{store, authClient, enforcer},
+		Policy:          &PolicyREST{store, authClient},
 	}
 }
 
@@ -146,6 +146,15 @@ type REST struct {
 	privilegedUsername string
 }
 
+var _ rest.Creater = &REST{}
+var _ rest.ShortNamesProvider = &REST{}
+var _ rest.Lister = &REST{}
+var _ rest.Getter = &REST{}
+var _ rest.Updater = &REST{}
+var _ rest.CollectionDeleter = &REST{}
+var _ rest.GracefulDeleter = &REST{}
+var _ rest.Exporter = &REST{}
+
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
 	return []string{"rol"}
@@ -153,8 +162,9 @@ func (r *REST) ShortNames() []string {
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	keyword := util.InterceptKeyword(options)
+	keyword := util.InterceptParam(options, auth.KeywordQueryTag)
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
+	wrappedOptions = util.PredicateProjectIDListOptions(ctx, wrappedOptions)
 	obj, err := r.Store.List(ctx, wrappedOptions)
 	if err != nil {
 		return obj, err

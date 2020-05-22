@@ -20,6 +20,9 @@ package storage
 
 import (
 	"context"
+	"net/http"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,8 +31,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
-	"net/http"
-	"strings"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
@@ -88,7 +89,7 @@ type drainHandler struct {
 
 func (h *drainHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	nodeName := strings.Trim(h.requestPath, "/")
-	node, err := h.clientset.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	node, err := h.clientset.CoreV1().Nodes().Get(req.Context(), nodeName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			responsewriters.WriteRawJSON(http.StatusNotFound, errors.NewNotFound(corev1.Resource("Node"), nodeName), w)
@@ -98,7 +99,7 @@ func (h *drainHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = cluster.DrainNode(h.clientset, node)
+	err = cluster.DrainNode(req.Context(), h.clientset, node)
 	if err != nil {
 		responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		return

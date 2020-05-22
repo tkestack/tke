@@ -89,6 +89,9 @@ type ClusterSpec struct {
 	NetworkDevice string `json:"networkDevice,omitempty" protobuf:"bytes,7,opt,name=networkDevice"`
 	// +optional
 	ClusterCIDR string `json:"clusterCIDR,omitempty" protobuf:"bytes,8,opt,name=clusterCIDR"`
+	// ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+	// +optional
+	ServiceCIDR *string `json:"serviceCIDR,omitempty" protobuf:"bytes,19,opt,name=serviceCIDR"`
 	// DNSDomain is the dns domain used by k8s services. Defaults to "cluster.local".
 	DNSDomain string `json:"dnsDomain,omitempty" protobuf:"bytes,9,opt,name=dnsDomain"`
 	// +optional
@@ -111,9 +114,14 @@ type ClusterSpec struct {
 	// +optional
 	SchedulerExtraArgs map[string]string `json:"schedulerExtraArgs,omitempty" protobuf:"bytes,18,name=schedulerExtraArgs"`
 
-	// ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.
+	// ClusterCredentialRef for isolate sensitive information.
+	// If not specified, cluster controller will create one;
+	// If specified, provider must make sure is valid.
 	// +optional
-	ServiceCIDR *string `json:"serviceCIDR,omitempty" protobuf:"bytes,19,opt,name=serviceCIDR"`
+	ClusterCredentialRef *corev1.LocalObjectReference `json:"clusterCredentialRef,omitempty" probobuf:"bytes,20,opt,name=clusterCredentialRef" protobuf:"bytes,20,opt,name=clusterCredentialRef"`
+
+	// Etcd holds configuration for etcd.
+	Etcd *Etcd `json:"etcd,omitempty" protobuf:"bytes,21,opt,name=etcd"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -168,19 +176,6 @@ const (
 
 // NetworkType defines the network type of cluster.
 type NetworkType string
-
-const (
-	// NetworkPhysics indicates the communication network using the physics network to establish the pod between nodes.
-	NetworkPhysics NetworkType = "Physics"
-	// NetworkVPC indicates the communication network using the VPC to establish the pod between nodes.
-	NetworkVPC NetworkType = "VPC"
-	// NetworkFlannel indicates the communication network using the flannel to establish the pod between nodes.
-	NetworkFlannel NetworkType = "Flannel"
-	// NetworkCalico indicates the communication network using the calico to establish the pod between nodes.
-	NetworkCalico NetworkType = "Calico"
-	// NetworkIPIP indicates the communication network using the IPIP to establish the pod between nodes.
-	NetworkIPIP NetworkType = "IPIP"
-)
 
 // GPUType defines the gpu type of cluster.
 type GPUType string
@@ -332,6 +327,8 @@ type ClusterFeature struct {
 	Files []File `json:"files,omitempty" protobuf:"bytes,8,opt,name=files"`
 	// +optional
 	Hooks map[HookType]string `json:"hooks,omitempty" protobuf:"bytes,9,opt,name=hooks"`
+	// +optional
+	CSIOperator *CSIOperatorFeature `json:"csiOperator,omitempty" protobuf:"bytes,10,opt,name=csiOperator"`
 }
 
 type HA struct {
@@ -355,6 +352,10 @@ type File struct {
 
 type HookType string
 
+type CSIOperatorFeature struct {
+	Version string `json:"version" protobuf:"bytes,1,name=version"`
+}
+
 const (
 	HookPreInstall  HookType = "PreInstall"
 	HookPostInstall HookType = "PostInstall"
@@ -368,6 +369,53 @@ type ClusterProperty struct {
 	MaxNodePodNum *int32 `json:"maxNodePodNum,omitempty" protobuf:"bytes,2,opt,name=maxNodePodNum"`
 	// +optional
 	OversoldRatio map[string]string `json:"oversoldRatio,omitempty" protobuf:"bytes,3,opt,name=oversoldRatio"`
+}
+
+// Etcd contains elements describing Etcd configuration.
+type Etcd struct {
+
+	// Local provides configuration knobs for configuring the local etcd instance
+	// Local and External are mutually exclusive
+	Local *LocalEtcd `json:"local,omitempty" protobuf:"bytes,1,opt,name=local"`
+
+	// External describes how to connect to an external etcd cluster
+	// Local and External are mutually exclusive
+	External *ExternalEtcd `json:"external,omitempty" protobuf:"bytes,2,opt,name=external"`
+}
+
+// LocalEtcd describes that kubeadm should run an etcd cluster locally
+type LocalEtcd struct {
+	// DataDir is the directory etcd will place its data.
+	// Defaults to "/var/lib/etcd".
+	DataDir string `json:"dataDir" protobuf:"bytes,1,opt,name=dataDir"`
+
+	// ExtraArgs are extra arguments provided to the etcd binary
+	// when run inside a static pod.
+	ExtraArgs map[string]string `json:"extraArgs,omitempty" protobuf:"bytes,2,rep,name=extraArgs"`
+
+	// ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.
+	ServerCertSANs []string `json:"serverCertSANs,omitempty" protobuf:"bytes,3,rep,name=serverCertSANs"`
+	// PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.
+	PeerCertSANs []string `json:"peerCertSANs,omitempty" protobuf:"bytes,4,rep,name=peerCertSANs"`
+}
+
+// ExternalEtcd describes an external etcd cluster.
+// Kubeadm has no knowledge of where certificate files live and they must be supplied.
+type ExternalEtcd struct {
+	// Endpoints of etcd members. Required for ExternalEtcd.
+	Endpoints []string `json:"endpoints" protobuf:"bytes,1,rep,name=endpoints"`
+
+	// CAFile is an SSL Certificate Authority file used to secure etcd communication.
+	// Required if using a TLS connection.
+	CAFile string `json:"caFile" protobuf:"bytes,2,opt,name=caFile"`
+
+	// CertFile is an SSL certification file used to secure etcd communication.
+	// Required if using a TLS connection.
+	CertFile string `json:"certFile" protobuf:"bytes,3,opt,name=certFile"`
+
+	// KeyFile is an SSL key file used to secure etcd communication.
+	// Required if using a TLS connection.
+	KeyFile string `json:"keyFile" protobuf:"bytes,4,opt,name=keyFile"`
 }
 
 // ResourceList is a set of (resource name, quantity) pairs.
@@ -938,59 +986,6 @@ type AddonSpec struct {
 	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
 	ClusterName string `json:"clusterName" protobuf:"bytes,2,opt,name=clusterName"`
 	Version     string `json:"version,omitempty" protobuf:"bytes,3,opt,name=version"`
-}
-
-// +genclient
-// +genclient:nonNamespaced
-// +genclient:skipVerbs=deleteCollection
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// GPUManager is a kind of device plugin for kubelet to help manage GPUs.
-type GPUManager struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-
-	// Spec defines the desired identities of clusters in this set.
-	// +optional
-	Spec GPUManagerSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
-	// +optional
-	Status GPUManagerStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
-}
-
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// GPUManagerList is the whole list of all GPUManager which owned by a tenant.
-type GPUManagerList struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-
-	// List of GPUManagers
-	Items []GPUManager `json:"items" protobuf:"bytes,2,rep,name=items"`
-}
-
-// GPUManagerSpec describes the attributes of a GPUManager.
-type GPUManagerSpec struct {
-	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
-	ClusterName string `json:"clusterName" protobuf:"bytes,2,opt,name=clusterName"`
-	Version     string `json:"version,omitempty" protobuf:"bytes,3,opt,name=version"`
-}
-
-// GPUManagerStatus is information about the current status of a GPUManager.
-type GPUManagerStatus struct {
-	// +optional
-	Version string `json:"version,omitempty" protobuf:"bytes,1,opt,name=version"`
-	// Phase is the current lifecycle phase of the GPUManager of cluster.
-	// +optional
-	Phase AddonPhase `json:"phase,omitempty" protobuf:"bytes,2,opt,name=phase"`
-	// Reason is a brief CamelCase string that describes any failure.
-	// +optional
-	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
-	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-	// +optional
-	RetryCount int32 `json:"retryCount" protobuf:"varint,4,name=retryCount"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

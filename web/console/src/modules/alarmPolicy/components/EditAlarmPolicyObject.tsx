@@ -28,10 +28,6 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
       // 根据 PodList 初始化 checkedList
       let checkedList = [];
       let checkboxList = workloadList.data.records.map(workload => {
-        // let checkboxItem = {
-        //   value: workload.metadata.name,
-        //   label: workload.metadata.name
-        // };
         let checkbox = <Checkbox name={workload.metadata.name}>{workload.metadata.name}</Checkbox>;
         if (alarmPolicyEdition.alarmObjects.find(object => object === workload.metadata.name)) {
           checkedList.push(workload.metadata.name);
@@ -55,9 +51,31 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
   }
 
   renderRadioList(type) {
-    let { alarmPolicyEdition, actions, namespaceList } = this.props;
+    let { alarmPolicyEdition, actions, namespaceList, addons } = this.props;
     if (type === 'cluster' || type === '') {
       return <noscript />;
+    }
+    let finalWorkloadTypeList = workloadTypeList.slice();
+    let finalWorkloadNsList = namespaceList.data.records.map(ns => ({
+      value: ns.name,
+      label: ns.name
+    }));
+    if (addons['TappController']) {
+      finalWorkloadTypeList.push({
+        value: 'TApp',
+        label: 'TApp'
+      });
+    }
+
+    if (type === 'pod' && alarmPolicyEdition.alarmObjectsType === 'all') {
+      finalWorkloadTypeList.unshift({
+        value: 'ALL',
+        label: 'ALL'
+      });
+      finalWorkloadNsList.unshift({
+        value: 'ALL',
+        label: 'ALL'
+      });
     }
     let radioList: JSX.Element[] = [];
     AlarmObjectsType[type].forEach((item, index) => {
@@ -70,63 +88,71 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
             </Radio>
           </div>
           <div className="alarm-write">
-            {item.value === 'part' && alarmPolicyEdition.alarmObjectsType === 'part' && (
-              <ul className="form-list fixed-layout">
-                <FormItem label="Namespace">
-                  <SelectList
-                    value={alarmPolicyEdition.alarmObjectNamespace + ''}
-                    recordList={namespaceList.data.records}
-                    valueField="name"
-                    textField="name"
-                    textFields={['name']}
-                    textFormat={`\${name}`}
-                    className="tc-15-select m"
-                    style={{ marginRight: '5px' }}
-                    onSelect={value => {
-                      actions.namespace.selectNamespace(value);
-                    }}
-                    isUnshiftDefaultItem={false}
-                  />
-                </FormItem>
-                <FormItem label="WorkloadType" isNeedFormInput={false}>
-                  <SelectList
-                    value={alarmPolicyEdition.alarmObjectWorkloadType + ''}
-                    recordList={workloadTypeList}
-                    valueField="value"
-                    textField="name"
-                    textFields={['label']}
-                    textFormat={`\${label}`}
-                    className="tc-15-select m"
-                    style={{ marginRight: '5px' }}
-                    onSelect={value => actions.alarmPolicy.inputAlarmObjectWorkloadType(value)}
-                    isUnshiftDefaultItem={false}
-                  />
-                  <div
-                    className="param-box"
-                    style={{
-                      backgroundColor: '#fff',
-                      padding: '5px 10px',
-                      marginTop: '5px',
-                      marginBottom: '10px',
-                      width: '250px'
-                    }}
-                  >
-                    <div className="param-bd">
-                      <ul>
-                        <div className="tc-g-u-1-3" style={{ width: '100%', maxHeight: '180px', overflowY: 'auto' }}>
-                          <div className="colony-list">{this.renderPodList()}</div>
+            {alarmPolicyEdition.alarmPolicyType === 'pod' &&
+              ((item.value === 'part' && alarmPolicyEdition.alarmObjectsType === 'part') ||
+                (item.value === 'all' && alarmPolicyEdition.alarmObjectsType === 'all')) && (
+                <ul className="form-list fixed-layout">
+                  <FormItem label="Namespace">
+                    <SelectList
+                      value={alarmPolicyEdition.alarmObjectNamespace + ''}
+                      recordList={finalWorkloadNsList}
+                      valueField="value"
+                      textFields={['label']}
+                      textFormat={`\${label}`}
+                      className="tc-15-select m"
+                      style={{ marginRight: '5px' }}
+                      onSelect={value => {
+                        actions.namespace.selectNamespace(value);
+                      }}
+                      isUnshiftDefaultItem={false}
+                    />
+                  </FormItem>
+                  <FormItem label="WorkloadType" isNeedFormInput={false}>
+                    <SelectList
+                      value={alarmPolicyEdition.alarmObjectWorkloadType + ''}
+                      recordList={finalWorkloadTypeList}
+                      valueField="value"
+                      textFields={['label']}
+                      textFormat={`\${label}`}
+                      className="tc-15-select m"
+                      style={{ marginRight: '5px' }}
+                      onSelect={value => actions.alarmPolicy.inputAlarmObjectWorkloadType(value)}
+                      isUnshiftDefaultItem={false}
+                    />
+                    {alarmPolicyEdition.alarmObjectsType === 'part' && (
+                      <>
+                        <div
+                          className="param-box"
+                          style={{
+                            backgroundColor: '#fff',
+                            padding: '5px 10px',
+                            marginTop: '5px',
+                            marginBottom: '10px',
+                            width: '250px'
+                          }}
+                        >
+                          <div className="param-bd">
+                            <ul>
+                              <div
+                                className="tc-g-u-1-3"
+                                style={{ width: '100%', maxHeight: '180px', overflowY: 'auto' }}
+                              >
+                                <div className="colony-list">{this.renderPodList()}</div>
+                              </div>
+                            </ul>
+                          </div>
                         </div>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="is-error">
-                    <p className="form-input-help" style={{ fontSize: '12px' }}>
-                      {alarmPolicyEdition.v_alarmObjects.status === 2 && alarmPolicyEdition.v_alarmObjects.message}
-                    </p>
-                  </div>
-                </FormItem>
-              </ul>
-            )}
+                        <div className="is-error">
+                          <p className="form-input-help" style={{ fontSize: '12px' }}>
+                            {alarmPolicyEdition.v_alarmObjects.status === 2 &&
+                              alarmPolicyEdition.v_alarmObjects.message}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </FormItem>
+                </ul>
+              )}
           </div>
         </div>
       );

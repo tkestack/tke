@@ -6,6 +6,7 @@ import { initGroupEditorState } from '../../constants/initState';
 import { router } from '../../router';
 import { createValidatorActions, getValidatorActionType } from '@tencent/ff-validator';
 import { GroupValidateSchema } from '../../constants/GroupValidateConfig';
+import { listActions } from './listActions';
 type GetState = () => RootState;
 
 /**
@@ -16,7 +17,7 @@ const updateGroupWorkflow = generateWorkflowActionCreator<Group, void>({
   workflowStateLocator: (state: RootState) => state.groupUpdateWorkflow,
   operationExecutor: WebAPI.updateGroup,
   after: {
-    [OperationTrigger.Done]: (dispatch, getState: GetState) => {
+    [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState: GetState) => {
       if (isSuccessWorkflow(getState().groupUpdateWorkflow)) {
         //表示编辑模式结束
         let { groupEditor } = getState();
@@ -27,6 +28,14 @@ const updateGroupWorkflow = generateWorkflowActionCreator<Group, void>({
       }
       /** 结束工作流 */
       dispatch(detailActions.updateGroupWorkflow.reset());
+      let count = 0;
+      const timer = setInterval(() => {
+        dispatch(listActions.poll());
+        ++count;
+        if (count >= 3) {
+          clearInterval(timer);
+        }
+      }, 1500);
     }
   }
 });

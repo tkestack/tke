@@ -142,19 +142,20 @@ func registerMeta(scheme *runtime.Scheme) error {
 	if err := scheme.AddIgnoredConversionType(&metav1.TypeMeta{}, &metav1.TypeMeta{}); err != nil {
 		return err
 	}
-	_ = scheme.AddConversionFuncs(
-		metav1.Convert_string_To_labels_Selector,
-		metav1.Convert_labels_Selector_To_string,
-
-		metav1.Convert_string_To_fields_Selector,
-		metav1.Convert_fields_Selector_To_string,
-
-		metainternal.Convert_v1_List_To_internalversion_List,
-		metainternal.Convert_internalversion_List_To_v1_List,
-
-		metainternal.Convert_internalversion_ListOptions_To_v1_ListOptions,
-		metainternal.Convert_v1_ListOptions_To_internalversion_ListOptions,
-	)
+	// todo?
+	//_ = scheme.AddConversionFuncs(
+	//	metav1.Convert_string_To_labels_Selector,
+	//	metav1.Convert_labels_Selector_To_string,
+	//
+	//	metav1.Convert_string_To_fields_Selector,
+	//	metav1.Convert_fields_Selector_To_string,
+	//
+	//	metainternal.Convert_v1_List_To_internalversion_List,
+	//	metainternal.Convert_internalversion_List_To_v1_List,
+	//
+	//	metainternal.Convert_internalversion_ListOptions_To_v1_ListOptions,
+	//	metainternal.Convert_v1_ListOptions_To_internalversion_ListOptions,
+	//)
 	// ListOptions is the onl y options struct which needs conversion (it exposes labels and fields
 	// as selectors for convenience). The other types have only a single representation today.
 	scheme.AddKnownTypes(schemaGroupVersion,

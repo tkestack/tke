@@ -19,6 +19,7 @@
 package namespace
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -48,46 +49,16 @@ var (
 // subdomain.
 var ValidateNamespaceName = apimachineryvalidation.NameIsDNSLabel
 
-// ValidateNamespace tests if required fields in the namespace are set.
-func ValidateNamespace(namespace *business.Namespace, old *business.Namespace,
-	objectGetter validation.BusinessObjectGetter, clusterGetter validation.ClusterGetter) field.ErrorList {
-	allErrs := apimachineryvalidation.ValidateObjectMeta(&namespace.ObjectMeta,
-		true, ValidateNamespaceName, field.NewPath("metadata"))
-	allErrs = append(allErrs,
-		validation.ValidateClusterVersioned(clusterGetter, namespace.Spec.ClusterName, namespace.Spec.TenantID)...)
-
-	fldSpecPath := field.NewPath("spec")
-
-	hardErrs := field.ErrorList{}
-	fldHardPath := fldSpecPath.Child("hard")
-	for k, v := range namespace.Spec.Hard {
-		resPath := fldHardPath.Key(k)
-		hardErrs = append(hardErrs, resource.ValidateResourceQuotaResourceName(k, resPath)...)
-		hardErrs = append(hardErrs, resource.ValidateResourceQuantityValue(k, v, resPath)...)
-	}
-	if len(hardErrs) != 0 {
-		return append(allErrs, hardErrs...)
-	}
-
-	fldProject := field.NewPath("metadata", "namespace")
-	project, err := objectGetter.Project(namespace.ObjectMeta.Namespace, metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return append(allErrs, field.NotFound(fldProject, namespace.ObjectMeta.Namespace))
-		}
-		return append(allErrs, field.InternalError(fldProject, err))
-	}
+// ValidateAgainstProject validates namespace against project.
+func ValidateAgainstProject(namespace, old *business.Namespace, project *business.Project, fldProject, fldHard *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
 	if project.Spec.TenantID != namespace.Spec.TenantID {
 		return append(allErrs, field.NotFound(fldProject, namespace.ObjectMeta.Namespace))
 	}
 	if project.Status.Locked != nil && *project.Status.Locked {
-		return append(allErrs,
-			field.Invalid(fldProject,
-				namespace.ObjectMeta.Namespace,
-				"parent project has been locked"))
+		return append(allErrs, field.Invalid(fldProject, namespace.ObjectMeta.Namespace, "project has been locked"))
 	}
-	clusterHard, clusterHardExist := project.Spec.Clusters[namespace.Spec.ClusterName]
-	if !clusterHardExist {
+	if clusterHard, clusterHardExist := project.Spec.Clusters[namespace.Spec.ClusterName]; !clusterHardExist {
 		allErrs = append(
 			allErrs,
 			field.Invalid(fldProject,
@@ -108,8 +79,44 @@ func ValidateNamespace(namespace *business.Namespace, old *business.Namespace,
 		}
 		allErrs = append(allErrs,
 			resource.ValidateAllocatableResources(namespace.Spec.Hard, oldSpecHard,
-				clusterHard.Hard, clusterUsed.Used, fldHardPath)...)
+				clusterHard.Hard, clusterUsed.Used, fldHard)...)
 	}
+	return allErrs
+}
+
+// ValidateNamespace tests if required fields in the namespace are set.
+func ValidateNamespace(ctx context.Context, namespace *business.Namespace, old *business.Namespace,
+	objectGetter validation.BusinessObjectGetter, clusterGetter validation.ClusterGetter) field.ErrorList {
+	allErrs := apimachineryvalidation.ValidateObjectMeta(&namespace.ObjectMeta,
+		true, ValidateNamespaceName, field.NewPath("metadata"))
+	if old == nil { // Only validate cluster when creating namespaces.
+		allErrs = append(allErrs,
+			validation.ValidateClusterVersioned(ctx, clusterGetter, namespace.Spec.ClusterName, namespace.Spec.TenantID)...)
+	}
+
+	fldSpecPath := field.NewPath("spec")
+
+	hardErrs := field.ErrorList{}
+	fldHardPath := fldSpecPath.Child("hard")
+	for k, v := range namespace.Spec.Hard {
+		resPath := fldHardPath.Key(k)
+		hardErrs = append(hardErrs, resource.ValidateResourceQuotaResourceName(k, resPath)...)
+		hardErrs = append(hardErrs, resource.ValidateResourceQuantityValue(k, v, resPath)...)
+	}
+	if len(hardErrs) != 0 {
+		return append(allErrs, hardErrs...)
+	}
+
+	fldProject := field.NewPath("metadata", "namespace")
+	project, err := objectGetter.Project(ctx, namespace.ObjectMeta.Namespace, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return append(allErrs, field.NotFound(fldProject, namespace.ObjectMeta.Namespace))
+		}
+		return append(allErrs, field.InternalError(fldProject, err))
+	}
+
+	allErrs = append(allErrs, ValidateAgainstProject(namespace, old, project, fldProject, fldHardPath)...)
 
 	fldNamespacePath := fldSpecPath.Child("namespace")
 	if namespace.Spec.Namespace == "" {
@@ -128,10 +135,10 @@ func ValidateNamespace(namespace *business.Namespace, old *business.Namespace,
 
 // ValidateNamespaceUpdate tests if required fields in the namespace are set during
 // an update.
-func ValidateNamespaceUpdate(namespace *business.Namespace, old *business.Namespace,
+func ValidateNamespaceUpdate(ctx context.Context, namespace *business.Namespace, old *business.Namespace,
 	objectGetter validation.BusinessObjectGetter, clusterGetter validation.ClusterGetter) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&namespace.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateNamespace(namespace, old, objectGetter, clusterGetter)...)
+	allErrs = append(allErrs, ValidateNamespace(ctx, namespace, old, objectGetter, clusterGetter)...)
 
 	if namespace.Spec.ClusterName != old.Spec.ClusterName {
 		allErrs = append(allErrs,
@@ -156,6 +163,12 @@ func ValidateNamespaceUpdate(namespace *business.Namespace, old *business.Namesp
 			field.Required(field.NewPath("status", "phase"), "must specify a phase"))
 	}
 
+	if old.Status.Phase != business.NamespaceAvailable && namespace.Status.Phase == business.NamespaceLocked {
+		allErrs = append(allErrs,
+			field.Required(field.NewPath("status", "phase"),
+				fmt.Sprintf("can only lock namespaces in phase %s", business.NamespaceAvailable)))
+	}
+
 	fldPath := field.NewPath("status", "used")
 	for k, v := range namespace.Status.Used {
 		resPath := fldPath.Key(k)
@@ -168,4 +181,24 @@ func ValidateNamespaceUpdate(namespace *business.Namespace, old *business.Namesp
 			field.NewPath("spec", "hard"))...)
 
 	return allErrs
+}
+
+func ValidateNamespaceEmigrate(namespace *business.Namespace, old *business.Namespace) field.ErrorList {
+	if namespace.Status.Phase != business.NamespaceLocked {
+		return append(field.ErrorList{},
+			field.Invalid(field.NewPath("status", "phase"), namespace.Status.Phase,
+				fmt.Sprintf("valid value should be %s", business.NamespaceLocked)))
+	}
+
+	if old.Status.Phase != business.NamespaceAvailable {
+		var msg string
+		if old.Status.Phase == business.NamespaceLocked {
+			msg = fmt.Sprintf("namespace is already in %s, can NOT emigrate again!", old.Status.Phase)
+		} else {
+			msg = fmt.Sprintf("namespace is in phase %s, can NOT emigrate!", old.Status.Phase)
+		}
+		return append(field.ErrorList{}, field.Invalid(field.NewPath("status", "phase"), old.Status.Phase, msg))
+	}
+
+	return nil
 }

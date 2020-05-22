@@ -4,7 +4,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -444,6 +444,86 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*auth.PolicyStatus)(nil), (*PolicyStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_auth_PolicyStatus_To_v1_PolicyStatus(a.(*auth.PolicyStatus), b.(*PolicyStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*Project)(nil), (*auth.Project)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_Project_To_auth_Project(a.(*Project), b.(*auth.Project), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.Project)(nil), (*Project)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_Project_To_v1_Project(a.(*auth.Project), b.(*Project), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ProjectBelongs)(nil), (*auth.ProjectBelongs)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ProjectBelongs_To_auth_ProjectBelongs(a.(*ProjectBelongs), b.(*auth.ProjectBelongs), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ProjectBelongs)(nil), (*ProjectBelongs)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ProjectBelongs_To_v1_ProjectBelongs(a.(*auth.ProjectBelongs), b.(*ProjectBelongs), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ProjectList)(nil), (*auth.ProjectList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ProjectList_To_auth_ProjectList(a.(*ProjectList), b.(*auth.ProjectList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ProjectList)(nil), (*ProjectList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ProjectList_To_v1_ProjectList(a.(*auth.ProjectList), b.(*ProjectList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ProjectPolicyBinding)(nil), (*auth.ProjectPolicyBinding)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ProjectPolicyBinding_To_auth_ProjectPolicyBinding(a.(*ProjectPolicyBinding), b.(*auth.ProjectPolicyBinding), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ProjectPolicyBinding)(nil), (*ProjectPolicyBinding)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ProjectPolicyBinding_To_v1_ProjectPolicyBinding(a.(*auth.ProjectPolicyBinding), b.(*ProjectPolicyBinding), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ProjectPolicyBindingList)(nil), (*auth.ProjectPolicyBindingList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ProjectPolicyBindingList_To_auth_ProjectPolicyBindingList(a.(*ProjectPolicyBindingList), b.(*auth.ProjectPolicyBindingList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ProjectPolicyBindingList)(nil), (*ProjectPolicyBindingList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ProjectPolicyBindingList_To_v1_ProjectPolicyBindingList(a.(*auth.ProjectPolicyBindingList), b.(*ProjectPolicyBindingList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ProjectPolicyBindingRequest)(nil), (*auth.ProjectPolicyBindingRequest)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ProjectPolicyBindingRequest_To_auth_ProjectPolicyBindingRequest(a.(*ProjectPolicyBindingRequest), b.(*auth.ProjectPolicyBindingRequest), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ProjectPolicyBindingRequest)(nil), (*ProjectPolicyBindingRequest)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ProjectPolicyBindingRequest_To_v1_ProjectPolicyBindingRequest(a.(*auth.ProjectPolicyBindingRequest), b.(*ProjectPolicyBindingRequest), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ProjectPolicyBindingSpec)(nil), (*auth.ProjectPolicyBindingSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ProjectPolicyBindingSpec_To_auth_ProjectPolicyBindingSpec(a.(*ProjectPolicyBindingSpec), b.(*auth.ProjectPolicyBindingSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ProjectPolicyBindingSpec)(nil), (*ProjectPolicyBindingSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ProjectPolicyBindingSpec_To_v1_ProjectPolicyBindingSpec(a.(*auth.ProjectPolicyBindingSpec), b.(*ProjectPolicyBindingSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ProjectPolicyBindingStatus)(nil), (*auth.ProjectPolicyBindingStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ProjectPolicyBindingStatus_To_auth_ProjectPolicyBindingStatus(a.(*ProjectPolicyBindingStatus), b.(*auth.ProjectPolicyBindingStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*auth.ProjectPolicyBindingStatus)(nil), (*ProjectPolicyBindingStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_auth_ProjectPolicyBindingStatus_To_v1_ProjectPolicyBindingStatus(a.(*auth.ProjectPolicyBindingStatus), b.(*ProjectPolicyBindingStatus), scope)
 	}); err != nil {
 		return err
 	}
@@ -1143,6 +1223,7 @@ func autoConvert_v1_GroupSpec_To_auth_GroupSpec(in *GroupSpec, out *auth.GroupSp
 	out.DisplayName = in.DisplayName
 	out.TenantID = in.TenantID
 	out.Description = in.Description
+	out.Extra = *(*map[string]string)(unsafe.Pointer(&in.Extra))
 	return nil
 }
 
@@ -1156,6 +1237,7 @@ func autoConvert_auth_GroupSpec_To_v1_GroupSpec(in *auth.GroupSpec, out *GroupSp
 	out.DisplayName = in.DisplayName
 	out.TenantID = in.TenantID
 	out.Description = in.Description
+	out.Extra = *(*map[string]string)(unsafe.Pointer(&in.Extra))
 	return nil
 }
 
@@ -1318,6 +1400,7 @@ func autoConvert_v1_LocalGroupSpec_To_auth_LocalGroupSpec(in *LocalGroupSpec, ou
 	out.TenantID = in.TenantID
 	out.Username = in.Username
 	out.Description = in.Description
+	out.Extra = *(*map[string]string)(unsafe.Pointer(&in.Extra))
 	return nil
 }
 
@@ -1332,6 +1415,7 @@ func autoConvert_auth_LocalGroupSpec_To_v1_LocalGroupSpec(in *auth.LocalGroupSpe
 	out.TenantID = in.TenantID
 	out.Username = in.Username
 	out.Description = in.Description
+	out.Extra = *(*map[string]string)(unsafe.Pointer(&in.Extra))
 	return nil
 }
 
@@ -1620,6 +1704,7 @@ func autoConvert_v1_PolicySpec_To_auth_PolicySpec(in *PolicySpec, out *auth.Poli
 	out.TenantID = in.TenantID
 	out.Category = in.Category
 	out.Type = auth.PolicyType(in.Type)
+	out.Scope = auth.PolicyScope(in.Scope)
 	out.Username = in.Username
 	out.Description = in.Description
 	if err := Convert_v1_Statement_To_auth_Statement(&in.Statement, &out.Statement, s); err != nil {
@@ -1640,6 +1725,7 @@ func autoConvert_auth_PolicySpec_To_v1_PolicySpec(in *auth.PolicySpec, out *Poli
 	out.TenantID = in.TenantID
 	out.Category = in.Category
 	out.Type = PolicyType(in.Type)
+	out.Scope = PolicyScope(in.Scope)
 	out.Username = in.Username
 	out.Description = in.Description
 	if err := Convert_auth_Statement_To_v1_Statement(&in.Statement, &out.Statement, s); err != nil {
@@ -1676,6 +1762,208 @@ func autoConvert_auth_PolicyStatus_To_v1_PolicyStatus(in *auth.PolicyStatus, out
 // Convert_auth_PolicyStatus_To_v1_PolicyStatus is an autogenerated conversion function.
 func Convert_auth_PolicyStatus_To_v1_PolicyStatus(in *auth.PolicyStatus, out *PolicyStatus, s conversion.Scope) error {
 	return autoConvert_auth_PolicyStatus_To_v1_PolicyStatus(in, out, s)
+}
+
+func autoConvert_v1_Project_To_auth_Project(in *Project, out *auth.Project, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.TenantID = in.TenantID
+	out.Users = *(*map[string]string)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*map[string]string)(unsafe.Pointer(&in.Groups))
+	return nil
+}
+
+// Convert_v1_Project_To_auth_Project is an autogenerated conversion function.
+func Convert_v1_Project_To_auth_Project(in *Project, out *auth.Project, s conversion.Scope) error {
+	return autoConvert_v1_Project_To_auth_Project(in, out, s)
+}
+
+func autoConvert_auth_Project_To_v1_Project(in *auth.Project, out *Project, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.TenantID = in.TenantID
+	out.Users = *(*map[string]string)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*map[string]string)(unsafe.Pointer(&in.Groups))
+	return nil
+}
+
+// Convert_auth_Project_To_v1_Project is an autogenerated conversion function.
+func Convert_auth_Project_To_v1_Project(in *auth.Project, out *Project, s conversion.Scope) error {
+	return autoConvert_auth_Project_To_v1_Project(in, out, s)
+}
+
+func autoConvert_v1_ProjectBelongs_To_auth_ProjectBelongs(in *ProjectBelongs, out *auth.ProjectBelongs, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.ManagedProjects = *(*map[string]auth.ExtraValue)(unsafe.Pointer(&in.ManagedProjects))
+	out.MemberdProjects = *(*map[string]auth.ExtraValue)(unsafe.Pointer(&in.MemberdProjects))
+	return nil
+}
+
+// Convert_v1_ProjectBelongs_To_auth_ProjectBelongs is an autogenerated conversion function.
+func Convert_v1_ProjectBelongs_To_auth_ProjectBelongs(in *ProjectBelongs, out *auth.ProjectBelongs, s conversion.Scope) error {
+	return autoConvert_v1_ProjectBelongs_To_auth_ProjectBelongs(in, out, s)
+}
+
+func autoConvert_auth_ProjectBelongs_To_v1_ProjectBelongs(in *auth.ProjectBelongs, out *ProjectBelongs, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.ManagedProjects = *(*map[string]ExtraValue)(unsafe.Pointer(&in.ManagedProjects))
+	out.MemberdProjects = *(*map[string]ExtraValue)(unsafe.Pointer(&in.MemberdProjects))
+	return nil
+}
+
+// Convert_auth_ProjectBelongs_To_v1_ProjectBelongs is an autogenerated conversion function.
+func Convert_auth_ProjectBelongs_To_v1_ProjectBelongs(in *auth.ProjectBelongs, out *ProjectBelongs, s conversion.Scope) error {
+	return autoConvert_auth_ProjectBelongs_To_v1_ProjectBelongs(in, out, s)
+}
+
+func autoConvert_v1_ProjectList_To_auth_ProjectList(in *ProjectList, out *auth.ProjectList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]auth.Project)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_ProjectList_To_auth_ProjectList is an autogenerated conversion function.
+func Convert_v1_ProjectList_To_auth_ProjectList(in *ProjectList, out *auth.ProjectList, s conversion.Scope) error {
+	return autoConvert_v1_ProjectList_To_auth_ProjectList(in, out, s)
+}
+
+func autoConvert_auth_ProjectList_To_v1_ProjectList(in *auth.ProjectList, out *ProjectList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]Project)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_auth_ProjectList_To_v1_ProjectList is an autogenerated conversion function.
+func Convert_auth_ProjectList_To_v1_ProjectList(in *auth.ProjectList, out *ProjectList, s conversion.Scope) error {
+	return autoConvert_auth_ProjectList_To_v1_ProjectList(in, out, s)
+}
+
+func autoConvert_v1_ProjectPolicyBinding_To_auth_ProjectPolicyBinding(in *ProjectPolicyBinding, out *auth.ProjectPolicyBinding, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_ProjectPolicyBindingSpec_To_auth_ProjectPolicyBindingSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1_ProjectPolicyBindingStatus_To_auth_ProjectPolicyBindingStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_ProjectPolicyBinding_To_auth_ProjectPolicyBinding is an autogenerated conversion function.
+func Convert_v1_ProjectPolicyBinding_To_auth_ProjectPolicyBinding(in *ProjectPolicyBinding, out *auth.ProjectPolicyBinding, s conversion.Scope) error {
+	return autoConvert_v1_ProjectPolicyBinding_To_auth_ProjectPolicyBinding(in, out, s)
+}
+
+func autoConvert_auth_ProjectPolicyBinding_To_v1_ProjectPolicyBinding(in *auth.ProjectPolicyBinding, out *ProjectPolicyBinding, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_auth_ProjectPolicyBindingSpec_To_v1_ProjectPolicyBindingSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_auth_ProjectPolicyBindingStatus_To_v1_ProjectPolicyBindingStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_auth_ProjectPolicyBinding_To_v1_ProjectPolicyBinding is an autogenerated conversion function.
+func Convert_auth_ProjectPolicyBinding_To_v1_ProjectPolicyBinding(in *auth.ProjectPolicyBinding, out *ProjectPolicyBinding, s conversion.Scope) error {
+	return autoConvert_auth_ProjectPolicyBinding_To_v1_ProjectPolicyBinding(in, out, s)
+}
+
+func autoConvert_v1_ProjectPolicyBindingList_To_auth_ProjectPolicyBindingList(in *ProjectPolicyBindingList, out *auth.ProjectPolicyBindingList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]auth.ProjectPolicyBinding)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_ProjectPolicyBindingList_To_auth_ProjectPolicyBindingList is an autogenerated conversion function.
+func Convert_v1_ProjectPolicyBindingList_To_auth_ProjectPolicyBindingList(in *ProjectPolicyBindingList, out *auth.ProjectPolicyBindingList, s conversion.Scope) error {
+	return autoConvert_v1_ProjectPolicyBindingList_To_auth_ProjectPolicyBindingList(in, out, s)
+}
+
+func autoConvert_auth_ProjectPolicyBindingList_To_v1_ProjectPolicyBindingList(in *auth.ProjectPolicyBindingList, out *ProjectPolicyBindingList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]ProjectPolicyBinding)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_auth_ProjectPolicyBindingList_To_v1_ProjectPolicyBindingList is an autogenerated conversion function.
+func Convert_auth_ProjectPolicyBindingList_To_v1_ProjectPolicyBindingList(in *auth.ProjectPolicyBindingList, out *ProjectPolicyBindingList, s conversion.Scope) error {
+	return autoConvert_auth_ProjectPolicyBindingList_To_v1_ProjectPolicyBindingList(in, out, s)
+}
+
+func autoConvert_v1_ProjectPolicyBindingRequest_To_auth_ProjectPolicyBindingRequest(in *ProjectPolicyBindingRequest, out *auth.ProjectPolicyBindingRequest, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.Policies = *(*[]string)(unsafe.Pointer(&in.Policies))
+	out.Users = *(*[]auth.Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]auth.Subject)(unsafe.Pointer(&in.Groups))
+	return nil
+}
+
+// Convert_v1_ProjectPolicyBindingRequest_To_auth_ProjectPolicyBindingRequest is an autogenerated conversion function.
+func Convert_v1_ProjectPolicyBindingRequest_To_auth_ProjectPolicyBindingRequest(in *ProjectPolicyBindingRequest, out *auth.ProjectPolicyBindingRequest, s conversion.Scope) error {
+	return autoConvert_v1_ProjectPolicyBindingRequest_To_auth_ProjectPolicyBindingRequest(in, out, s)
+}
+
+func autoConvert_auth_ProjectPolicyBindingRequest_To_v1_ProjectPolicyBindingRequest(in *auth.ProjectPolicyBindingRequest, out *ProjectPolicyBindingRequest, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.Policies = *(*[]string)(unsafe.Pointer(&in.Policies))
+	out.Users = *(*[]Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]Subject)(unsafe.Pointer(&in.Groups))
+	return nil
+}
+
+// Convert_auth_ProjectPolicyBindingRequest_To_v1_ProjectPolicyBindingRequest is an autogenerated conversion function.
+func Convert_auth_ProjectPolicyBindingRequest_To_v1_ProjectPolicyBindingRequest(in *auth.ProjectPolicyBindingRequest, out *ProjectPolicyBindingRequest, s conversion.Scope) error {
+	return autoConvert_auth_ProjectPolicyBindingRequest_To_v1_ProjectPolicyBindingRequest(in, out, s)
+}
+
+func autoConvert_v1_ProjectPolicyBindingSpec_To_auth_ProjectPolicyBindingSpec(in *ProjectPolicyBindingSpec, out *auth.ProjectPolicyBindingSpec, s conversion.Scope) error {
+	out.Finalizers = *(*[]auth.FinalizerName)(unsafe.Pointer(&in.Finalizers))
+	out.TenantID = in.TenantID
+	out.ProjectID = in.ProjectID
+	out.PolicyID = in.PolicyID
+	out.Users = *(*[]auth.Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]auth.Subject)(unsafe.Pointer(&in.Groups))
+	return nil
+}
+
+// Convert_v1_ProjectPolicyBindingSpec_To_auth_ProjectPolicyBindingSpec is an autogenerated conversion function.
+func Convert_v1_ProjectPolicyBindingSpec_To_auth_ProjectPolicyBindingSpec(in *ProjectPolicyBindingSpec, out *auth.ProjectPolicyBindingSpec, s conversion.Scope) error {
+	return autoConvert_v1_ProjectPolicyBindingSpec_To_auth_ProjectPolicyBindingSpec(in, out, s)
+}
+
+func autoConvert_auth_ProjectPolicyBindingSpec_To_v1_ProjectPolicyBindingSpec(in *auth.ProjectPolicyBindingSpec, out *ProjectPolicyBindingSpec, s conversion.Scope) error {
+	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
+	out.TenantID = in.TenantID
+	out.ProjectID = in.ProjectID
+	out.PolicyID = in.PolicyID
+	out.Users = *(*[]Subject)(unsafe.Pointer(&in.Users))
+	out.Groups = *(*[]Subject)(unsafe.Pointer(&in.Groups))
+	return nil
+}
+
+// Convert_auth_ProjectPolicyBindingSpec_To_v1_ProjectPolicyBindingSpec is an autogenerated conversion function.
+func Convert_auth_ProjectPolicyBindingSpec_To_v1_ProjectPolicyBindingSpec(in *auth.ProjectPolicyBindingSpec, out *ProjectPolicyBindingSpec, s conversion.Scope) error {
+	return autoConvert_auth_ProjectPolicyBindingSpec_To_v1_ProjectPolicyBindingSpec(in, out, s)
+}
+
+func autoConvert_v1_ProjectPolicyBindingStatus_To_auth_ProjectPolicyBindingStatus(in *ProjectPolicyBindingStatus, out *auth.ProjectPolicyBindingStatus, s conversion.Scope) error {
+	out.Phase = auth.BindingPhase(in.Phase)
+	return nil
+}
+
+// Convert_v1_ProjectPolicyBindingStatus_To_auth_ProjectPolicyBindingStatus is an autogenerated conversion function.
+func Convert_v1_ProjectPolicyBindingStatus_To_auth_ProjectPolicyBindingStatus(in *ProjectPolicyBindingStatus, out *auth.ProjectPolicyBindingStatus, s conversion.Scope) error {
+	return autoConvert_v1_ProjectPolicyBindingStatus_To_auth_ProjectPolicyBindingStatus(in, out, s)
+}
+
+func autoConvert_auth_ProjectPolicyBindingStatus_To_v1_ProjectPolicyBindingStatus(in *auth.ProjectPolicyBindingStatus, out *ProjectPolicyBindingStatus, s conversion.Scope) error {
+	out.Phase = BindingPhase(in.Phase)
+	return nil
+}
+
+// Convert_auth_ProjectPolicyBindingStatus_To_v1_ProjectPolicyBindingStatus is an autogenerated conversion function.
+func Convert_auth_ProjectPolicyBindingStatus_To_v1_ProjectPolicyBindingStatus(in *auth.ProjectPolicyBindingStatus, out *ProjectPolicyBindingStatus, s conversion.Scope) error {
+	return autoConvert_auth_ProjectPolicyBindingStatus_To_v1_ProjectPolicyBindingStatus(in, out, s)
 }
 
 func autoConvert_v1_ResourceAttributes_To_auth_ResourceAttributes(in *ResourceAttributes, out *auth.ResourceAttributes, s conversion.Scope) error {
@@ -1768,6 +2056,7 @@ func autoConvert_v1_RoleSpec_To_auth_RoleSpec(in *RoleSpec, out *auth.RoleSpec, 
 	out.Finalizers = *(*[]auth.FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.DisplayName = in.DisplayName
 	out.TenantID = in.TenantID
+	out.ProjectID = in.ProjectID
 	out.Username = in.Username
 	out.Description = in.Description
 	out.Policies = *(*[]string)(unsafe.Pointer(&in.Policies))
@@ -1783,6 +2072,7 @@ func autoConvert_auth_RoleSpec_To_v1_RoleSpec(in *auth.RoleSpec, out *RoleSpec, 
 	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.DisplayName = in.DisplayName
 	out.TenantID = in.TenantID
+	out.ProjectID = in.ProjectID
 	out.Username = in.Username
 	out.Description = in.Description
 	out.Policies = *(*[]string)(unsafe.Pointer(&in.Policies))

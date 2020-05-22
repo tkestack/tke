@@ -63,19 +63,30 @@ CMD ["apache2-foreground"]
 ```
 
 通过上述 Dockerfile 文件可以了解到，内置执行了许多的 Linux 命令来安装和部署软件。
-在终端创建一个文件夹来保存该 Dockerfile 文件，并通过 docker build 命令来构建镜像。
+
+## 操作步骤
+
+在终端创建一个名为worldpress的文件夹，在该文件夹下创建 Dockerfile 文件，文件内容即以上代码。通过 `docker build ./`命令来构建镜像。
 
 ```shell
-[root@VM_88_88_centos worldpress]# docker build ./
-Sending build context to Docker daemon 3.072 kB
-Step 1 : FROM php:5.6-apache
-Trying to pull repository docker.io/library/php ... 
-5.6-apache: Pulling from docker.io/library/php
-386a066cd84a: Pull complete 
-269e95c6053a: Pull complete 
-......
+[root@VM_1_98_centos ~]# mkdir worldpress
+[root@VM_1_98_centos ~]# ls
+worldpress
+[root@VM_1_98_centos ~]# cd worldpress/
+[root@VM_1_98_centos worldpress]# vi Dockerfile
+[root@VM_1_98_centos worldpress]# ls
+Dockerfile
+[root@VM_1_98_centos worldpress]# docker build ./
+Sending build context to Docker daemon  3.072kB
+Step 1/12 : FROM php:5.6-apache
+5.6-apache: Pulling from library/php
+5e6ec7f28fb7: Pull complete
+cf165947b5b7: Pull complete
+7bd37682846d: Pull complete
+······
 ```
 通过 docker images 命令即可查看到构建完成的镜像。
+
 ```shell
 [root@VM_88_88_centos worldpress]# docker images
 REPOSITORY                                     TAG                 IMAGE ID            CREATED             SIZE

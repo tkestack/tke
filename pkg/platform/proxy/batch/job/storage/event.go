@@ -68,7 +68,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	job, err := client.BatchV1().Jobs(namespaceName).Get(name, *options)
+	job, err := client.BatchV1().Jobs(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(batchV1.Resource("jobs/events"), name)
 	}
@@ -81,7 +81,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	jobEvents, err := client.CoreV1().Events(namespaceName).List(listOptions)
+	jobEvents, err := client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 
 	// list all of the pod, by job labels
 	podListOptions := metav1.ListOptions{LabelSelector: podSelector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(podListOptions)
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, podListOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -114,7 +114,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 				podEventsListOptions := metav1.ListOptions{
 					FieldSelector: podEventsSelector.String(),
 				}
-				podEvents, err := client.CoreV1().Events(namespaceName).List(podEventsListOptions)
+				podEvents, err := client.CoreV1().Events(namespaceName).List(ctx, podEventsListOptions)
 				if err != nil {
 					return nil, err
 				}

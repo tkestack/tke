@@ -19,16 +19,16 @@ import { EditProjectManagerPanel } from './EditProjectManagerPanel';
 import { EditProjectNamePanel } from './EditProjectNamePanel';
 import { RootProps } from './ProjectApp';
 
-const mapDispatchToProps = dispatch =>
+const mapDispatchToProps = (dispatch) =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch
+    dispatch,
   });
 
-@connect(state => state, mapDispatchToProps)
+@connect((state) => state, mapDispatchToProps)
 export class ProjectTablePanel extends React.Component<RootProps, any> {
   state = {
     monitorPanelProps: undefined,
-    isShowMonitor: false
+    isShowMonitor: false,
   };
 
   render() {
@@ -67,7 +67,7 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
       {
         key: 'name',
         header: t('ID/名称'),
-        render: x => (
+        render: (x) => (
           <div>
             {x.status.phase === 'Terminating' ? (
               <Text parent="div" overflow>
@@ -78,7 +78,7 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
                 <Text parent="div" overflow>
                   <a
                     href="javascript:;"
-                    onClick={e => {
+                    onClick={(e) => {
                       router.navigate({ sub: 'detail', tab: 'info' }, { projectId: x.metadata.name });
                     }}
                   >
@@ -103,13 +103,13 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
               </React.Fragment>
             )}
           </div>
-        )
+        ),
       },
       {
         key: 'monitor',
         header: t('监控'),
         width: '10%',
-        render: x => (
+        render: (x) => (
           <div>
             <p className="text-overflow m-width">
               <i
@@ -123,74 +123,81 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
               />
             </p>
           </div>
-        )
+        ),
       },
       {
         key: 'parentProject',
         header: t('上级业务'),
-        render: x => (
+        render: (x) => (
           <Text parent="div" overflow>
             {x.spec.parentProjectName ? x.spec.parentProjectName : '无'}
           </Text>
-        )
+        ),
       },
       {
         key: 'phase',
         header: t('状态'),
-        render: x => (
+        render: (x) => (
           <React.Fragment>
             <Text parent="div" overflow theme={projectStatus[x.status.phase]}>
               {x.status.phase}
             </Text>
           </React.Fragment>
-        )
+        ),
       },
       {
         key: 'managers',
         header: t('成员'),
-        render: x => (
+        render: (x) => (
           <div>
-            <Bubble placement="left" content={this.formatManager(x.spec.members) || null}>
-              <span className="text">
-                {this.formatManager(x.spec.members ? x.spec.members.slice(0, 1) : [])}
-                <Text parent="div" overflow>
-                  {x.spec.members && x.spec.members.length > 1 ? '...' : ''}
-                </Text>
-              </span>
-            </Bubble>
+            {/*<Bubble placement="left" content={this.formatManager(x.spec.members) || null}>*/}
+            {/*  <span className="text">*/}
+            {/*    {this.formatManager(x.spec.members ? x.spec.members.slice(0, 1) : [])}*/}
+            {/*    <Text parent="div" overflow>*/}
+            {/*      {x.spec.members && x.spec.members.length > 1 ? '...' : ''}*/}
+            {/*    </Text>*/}
+            {/*  </span>*/}
+            {/*</Bubble>*/}
             {x.status.phase === 'Terminating' ? (
               <noscript />
             ) : (
-              <span className="hover-icon">
+              <span>
                 <a
                   href="javascript:;"
-                  className="pencil-icon hover-icon"
-                  onClick={() => {
-                    actions.project.initEdition(x);
-                    actions.project.editProjectManager.start([]);
+                  className="pencil-icon"
+                  onClick={(e) => {
+                    router.navigate({ sub: 'detail', tab: 'member' }, { projectId: x.metadata.name });
                   }}
                 />
+                {/*<a*/}
+                {/*  href="javascript:;"*/}
+                {/*  className="pencil-icon hover-icon"*/}
+                {/*  onClick={() => {*/}
+                {/*    actions.project.initEdition(x);*/}
+                {/*    actions.project.editProjectManager.start([]);*/}
+                {/*  }}*/}
+                {/*/>*/}
               </span>
             )}
           </div>
-        )
+        ),
       },
 
       {
         key: 'createdTime',
         header: t('创建时间'),
-        render: x => (
+        render: (x) => (
           <Text parent="div" overflow>
             <span className="text">{dateFormatter(new Date(x.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}</span>
           </Text>
-        )
+        ),
       },
       {
         key: 'operation',
         header: t('操作'),
         width: '18%',
-        render: x => this._renderOperationCell(x)
-      }
+        render: (x) => this._renderOperationCell(x),
+      },
     ];
 
     return (
@@ -199,7 +206,7 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
         emptyTips={<div className="text-center">{t('业务列表为空')}</div>}
         listModel={{
           list: project.list,
-          query: project.query
+          query: project.query,
         }}
         actionOptions={actions.project}
       />
@@ -297,7 +304,7 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
         params={{}}
         confirmMode={{
           label: t('业务Id'),
-          value: deleteProject.targets ? deleteProject.targets[0].metadata.name : ''
+          value: deleteProject.targets ? deleteProject.targets[0].metadata.name : '',
         }}
       >
         <DialogBodyLayout>
@@ -305,7 +312,7 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
             <strong className="tip-top">
               {t('确定要删除业务{{displayName}}({{name}})么？', {
                 displayName: deleteProject.targets ? deleteProject.targets[0].spec.displayName : '',
-                name: deleteProject.targets ? deleteProject.targets[0].id : ''
+                name: deleteProject.targets ? deleteProject.targets[0].id : '',
               })}
             </strong>
           </p>
@@ -325,11 +332,11 @@ export class ProjectTablePanel extends React.Component<RootProps, any> {
           {
             table: 'k8s_project',
             fields: projectFields,
-            conditions: [['project_name', '=', project.metadata.name]]
-          }
+            conditions: [['project_name', '=', project.metadata.name]],
+          },
         ],
-        groupBy: []
-      }
+        groupBy: [],
+      },
     });
   }
 

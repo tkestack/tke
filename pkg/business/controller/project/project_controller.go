@@ -19,6 +19,7 @@
 package project
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"time"
@@ -30,10 +31,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+
+	av1 "tkestack.io/tke/api/auth/v1"
 	v1 "tkestack.io/tke/api/business/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	businessv1informer "tkestack.io/tke/api/client/informers/externalversions/business/v1"
 	businessv1lister "tkestack.io/tke/api/client/listers/business/v1"
+	authutil "tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/business/controller/project/deletion"
 	businessUtil "tkestack.io/tke/pkg/business/util"
 	controllerutil "tkestack.io/tke/pkg/controller"
@@ -69,18 +74,21 @@ type Controller struct {
 	listerSynced cache.InformerSynced
 	// helper to delete all resources in the project when the project is deleted.
 	projectedResourcesDeleter deletion.ProjectedResourcesDeleterInterface
+
+	authClient authversionedclient.AuthV1Interface
 }
 
 // NewController creates a new Project object.
 func NewController(client clientset.Interface, projectInformer businessv1informer.ProjectInformer,
-	resyncPeriod time.Duration, finalizerToken v1.FinalizerName, registryEnabled bool) *Controller {
+	resyncPeriod time.Duration, finalizerToken v1.FinalizerName, registryEnabled bool, authClient authversionedclient.AuthV1Interface) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
 		client: client,
 		cache:  &projectCache{m: make(map[string]*cachedProject)},
 		queue:  workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
 		projectedResourcesDeleter: deletion.NewProjectedResourcesDeleter(client.BusinessV1().Projects(),
-			client.BusinessV1(), finalizerToken, true, registryEnabled),
+			client.BusinessV1(), finalizerToken, true, registryEnabled, authClient),
+		authClient: authClient,
 	}
 
 	if client != nil && client.BusinessV1().RESTClient().GetRateLimiter() != nil {
@@ -211,13 +219,13 @@ func (c *Controller) syncItem(key string) error {
 	case err != nil:
 		log.Warn("Unable to retrieve project from store", log.String("projectName", key), log.Err(err))
 	default:
-		if project.Status.Phase == v1.ProjectActive {
+		if project.Status.Phase == v1.ProjectPending || project.Status.Phase == v1.ProjectActive {
 			cachedProject = c.cache.getOrCreate(key, project)
-			err = c.processUpdate(cachedProject, project, key)
+			err = c.processUpdate(context.Background(), cachedProject, project, key)
 		} else if project.Status.Phase == v1.ProjectTerminating {
 			log.Info("Project has been terminated. Attempting to cleanup resources", log.String("projectName", key))
 			_ = c.processDeletion(key)
-			err = c.projectedResourcesDeleter.Delete(key)
+			err = c.projectedResourcesDeleter.Delete(context.Background(), key)
 		} else {
 			log.Debug(fmt.Sprintf("Project %s status is %s, not to process", key, project.Status.Phase))
 		}
@@ -225,7 +233,7 @@ func (c *Controller) syncItem(key string) error {
 	return err
 }
 
-func (c *Controller) processUpdate(cachedProject *cachedProject, project *v1.Project, key string) error {
+func (c *Controller) processUpdate(ctx context.Context, cachedProject *cachedProject, project *v1.Project, key string) error {
 	if cachedProject.state != nil {
 		// exist and the project name changed
 		if cachedProject.state.UID != project.UID {
@@ -235,7 +243,7 @@ func (c *Controller) processUpdate(cachedProject *cachedProject, project *v1.Pro
 		}
 	}
 	// start update machine if needed
-	err := c.handlePhase(key, cachedProject, project)
+	err := c.handlePhase(ctx, key, cachedProject, project)
 	if err != nil {
 		return err
 	}
@@ -265,11 +273,69 @@ func (c *Controller) processDelete(cachedProject *cachedProject, key string) err
 	return nil
 }
 
-func (c *Controller) handlePhase(key string, cachedProject *cachedProject, project *v1.Project) error {
+func (c *Controller) handlePhase(ctx context.Context, key string, cachedProject *cachedProject, project *v1.Project) error {
+	switch project.Status.Phase {
+	case v1.ProjectPending:
+		return c.processPending(ctx, key, cachedProject, project)
+	case v1.ProjectActive:
+		return c.processActive(ctx, key, cachedProject, project)
+	default:
+		log.Infof("%s, do NOT process phase: %s", project.Name, project.Status.Phase)
+		return nil
+	}
+}
+
+func (c *Controller) processPending(ctx context.Context, key string, cachedProject *cachedProject, project *v1.Project) error {
+	if project.Status.Phase != v1.ProjectPending {
+		panic(fmt.Sprintf("%s != %s", project.Status.Phase, v1.ProjectPending))
+	}
+
+	if c.authClient != nil && len(project.Spec.Members) > 0 {
+		bindingRequest := av1.ProjectPolicyBindingRequest{
+			TenantID: project.Spec.TenantID,
+			Policies: []string{authutil.ProjectOwnerPolicyID(project.Spec.TenantID)},
+			Users:    []av1.Subject{},
+		}
+
+		for _, name := range project.Spec.Members {
+			bindingRequest.Users = append(bindingRequest.Users, av1.Subject{Name: name})
+		}
+
+		result := &av1.ProjectPolicyBindingList{}
+		if err := c.authClient.RESTClient().Post().
+			Resource("projects").
+			Name(project.Name).
+			SubResource("binding").
+			Body(&bindingRequest).
+			Do(ctx).
+			Into(result); err != nil {
+			project.Status.Phase = v1.ProjectFailed
+			project.Status.LastTransitionTime = metav1.Now()
+			project.Status.Reason = err.Error()
+			project.Status.Message = "failed to add business member"
+			_, err = c.persistUpdate(ctx, project)
+			return err
+		}
+	}
+	project.Status.Phase = v1.ProjectActive
+	project.Status.Locked = nil
+	var err error
+	if project, err = c.persistUpdate(ctx, project); err != nil || project == nil {
+		return err
+	}
+
+	return c.processActive(ctx, key, cachedProject, project)
+}
+
+func (c *Controller) processActive(ctx context.Context, key string, cachedProject *cachedProject, project *v1.Project) error {
+	if project.Status.Phase != v1.ProjectActive {
+		panic(fmt.Sprintf("%s != %s", project.Status.Phase, v1.ProjectActive))
+	}
+
 	if cachedProject.state != nil &&
 		cachedProject.state.Spec.ParentProjectName != "" &&
 		cachedProject.state.Spec.ParentProjectName != project.Spec.ParentProjectName {
-		preParentProject, err := c.client.BusinessV1().Projects().Get(cachedProject.state.Spec.ParentProjectName, metav1.GetOptions{})
+		preParentProject, err := c.client.BusinessV1().Projects().Get(ctx, cachedProject.state.Spec.ParentProjectName, metav1.GetOptions{})
 		if err != nil {
 			if !errors.IsNotFound(err) {
 				log.Error("Failed to get the previous parent project", log.String("projectName", key),
@@ -284,14 +350,14 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 				if preParentProject.Status.Clusters != nil {
 					businessUtil.SubClusterHardFromUsed(&preParentProject.Status.Clusters, cachedProject.state.Spec.Clusters)
 				}
-				if err := c.persistUpdate(preParentProject); err != nil && !errors.IsNotFound(err) {
+				if _, err := c.persistUpdate(ctx, preParentProject); err != nil && !errors.IsNotFound(err) {
 					return err
 				}
 			}
 		}
 	}
 	if project.Spec.ParentProjectName != "" {
-		parentProject, err := c.client.BusinessV1().Projects().Get(project.Spec.ParentProjectName, metav1.GetOptions{})
+		parentProject, err := c.client.BusinessV1().Projects().Get(ctx, project.Spec.ParentProjectName, metav1.GetOptions{})
 		if err != nil {
 			log.Error("Failed to get the parent project", log.String("projectName", key), log.Err(err))
 			return err
@@ -303,7 +369,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 				parentProject.Status.Clusters = make(v1.ClusterUsed)
 			}
 			businessUtil.AddClusterHardToUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
-			if err := c.persistUpdate(parentProject); err != nil {
+			if _, err := c.persistUpdate(ctx, parentProject); err != nil {
 				return err
 			}
 		} else if cachedProject.state != nil && !reflect.DeepEqual(cachedProject.state.Spec.Clusters, project.Spec.Clusters) {
@@ -314,7 +380,7 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 			businessUtil.SubClusterHardFromUsed(&parentProject.Status.Clusters, cachedProject.state.Spec.Clusters)
 			// add new
 			businessUtil.AddClusterHardToUsed(&parentProject.Status.Clusters, project.Spec.Clusters)
-			if err := c.persistUpdate(parentProject); err != nil {
+			if _, err := c.persistUpdate(ctx, parentProject); err != nil {
 				return err
 			}
 		}
@@ -322,41 +388,42 @@ func (c *Controller) handlePhase(key string, cachedProject *cachedProject, proje
 		if project.Status.CachedParent == nil ||
 			project.Spec.ParentProjectName != *project.Status.CachedParent ||
 			!reflect.DeepEqual(project.Spec.Clusters, project.Status.CachedSpecClusters) {
-			return c.updateCachedStatus(project, project.Spec.Clusters, project.Spec.ParentProjectName)
+			return c.updateCachedStatus(ctx, project, project.Spec.Clusters, project.Spec.ParentProjectName)
 		}
 	} else if project.Status.CachedParent != nil && project.Spec.ParentProjectName != *project.Status.CachedParent {
-		return c.updateCachedStatus(project, nil, project.Spec.ParentProjectName)
+		return c.updateCachedStatus(ctx, project, nil, project.Spec.ParentProjectName)
 	}
 
 	return nil
 }
 
-func (c *Controller) persistUpdate(project *v1.Project) error {
+func (c *Controller) persistUpdate(ctx context.Context, project *v1.Project) (*v1.Project, error) {
+	var prj *v1.Project
 	var err error
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().Projects().UpdateStatus(project)
+		prj, err = c.client.BusinessV1().Projects().UpdateStatus(ctx, project, metav1.UpdateOptions{})
 		if err == nil {
-			return nil
+			return prj, nil
 		}
 		if errors.IsNotFound(err) {
-			log.Info("Not persisting update to projects that no longer exists", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
-			return nil
+			log.Errorf("Not persisting update to projects that no longer exists", log.String("projectName", project.ObjectMeta.Name), log.Err(err))
+			return nil, err
 		}
 		if errors.IsConflict(err) {
-			return fmt.Errorf("not persisting update to projects '%s' that has been changed since we received it: %v", project.ObjectMeta.Name, err)
+			return nil, fmt.Errorf("not persisting update to projects '%s' that has been changed since we received it: %v", project.ObjectMeta.Name, err)
 		}
 		log.Warn(fmt.Sprintf("Failed to persist updated status of project %s", project.ObjectMeta.Name), log.String("projectName", project.ObjectMeta.Name), log.Err(err))
 		time.Sleep(clientRetryInterval)
 	}
-	return err
+	return nil, err
 }
 
-func (c *Controller) updateCachedStatus(project *v1.Project, newCachedClusters v1.ClusterHard, newCachedParent string) error {
+func (c *Controller) updateCachedStatus(ctx context.Context, project *v1.Project, newCachedClusters v1.ClusterHard, newCachedParent string) error {
 	var err error
 	project.Status.CachedParent = &newCachedParent
 	project.Status.CachedSpecClusters = newCachedClusters
 	for i := 0; i < clientRetryCount; i++ {
-		_, err = c.client.BusinessV1().Projects().UpdateStatus(project)
+		_, err = c.client.BusinessV1().Projects().UpdateStatus(ctx, project, metav1.UpdateOptions{})
 		if err == nil {
 			return nil
 		}
@@ -365,7 +432,7 @@ func (c *Controller) updateCachedStatus(project *v1.Project, newCachedClusters v
 			return nil
 		}
 		if errors.IsConflict(err) {
-			newProject, newErr := c.client.BusinessV1().Projects().Get(project.ObjectMeta.Name, metav1.GetOptions{})
+			newProject, newErr := c.client.BusinessV1().Projects().Get(ctx, project.ObjectMeta.Name, metav1.GetOptions{})
 			if newErr == nil {
 				project = newProject
 				project.Status.CachedParent = &newCachedParent

@@ -144,12 +144,13 @@ func WithAuthentication(handler http.Handler, auth authenticator.Request, failed
 			}
 			clusterName := req.Header.Get(filter.ClusterNameHeaderKey)
 			if clusterName != "" {
-				userInfo.Groups = append(userInfo.Groups, fmt.Sprintf("cluster:%s", clusterName))
+				userInfo.Groups = append(userInfo.Groups, GroupWithCluster(clusterName))
 			}
 			projectName := req.Header.Get(filter.ProjectNameHeaderKey)
 			if projectName != "" {
-				userInfo.Groups = append(userInfo.Groups, fmt.Sprintf("project:%s", projectName))
+				userInfo.Groups = append(userInfo.Groups, GroupWithProject(projectName))
 			}
+
 			req = req.WithContext(genericapirequest.WithUser(req.Context(), userInfo))
 		} else {
 			req = req.WithContext(genericapirequest.WithUser(req.Context(), resp.User))
@@ -160,6 +161,32 @@ func WithAuthentication(handler http.Handler, auth authenticator.Request, failed
 
 		handler.ServeHTTP(w, req)
 	})
+}
+
+func GroupWithCluster(cluster string) string {
+	return fmt.Sprintf("cluster:%s", cluster)
+}
+
+func GetClusterFromGroups(groups []string) string {
+	for _, group := range groups {
+		if strings.HasPrefix(group, "cluster:") {
+			return strings.TrimPrefix(group, "cluster:")
+		}
+	}
+	return ""
+}
+
+func GroupWithProject(project string) string {
+	return fmt.Sprintf("project:%s", project)
+}
+
+func GetProjectFromGroups(groups []string) string {
+	for _, group := range groups {
+		if strings.HasPrefix(group, "project:") {
+			return strings.TrimPrefix(group, "project:")
+		}
+	}
+	return ""
 }
 
 func MakeAllIgnoreAuthPathPrefixes(pathPrefixes []string) []string {

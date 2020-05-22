@@ -19,12 +19,14 @@
 package helm
 
 import (
+	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"sync"
-	"time"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	lister "tkestack.io/tke/api/client/listers/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
@@ -115,16 +117,16 @@ func (p *prober) runProbe(phase v1.AddonPhase, duration time.Duration, ch <-chan
 	log.Info(fmt.Sprintf("Helm %s prober begin running", phase))
 	defer controllerUtil.CatchPanic(fmt.Sprintf("%s prober", phase), "Helm")
 
-	p.periodHealthCheck(phase, duration, ch)
+	p.periodHealthCheck(context.Background(), phase, duration, ch)
 }
 
-func (p *prober) periodHealthCheck(phase v1.AddonPhase, duration time.Duration, ch <-chan struct{}) {
+func (p *prober) periodHealthCheck(ctx context.Context, phase v1.AddonPhase, duration time.Duration, ch <-chan struct{}) {
 	wait.Until(func() {
 		p.fetchSyncMap(phase).Range(
 			func(k, v interface{}) bool {
 				key := k.(string)
 				log.Info(fmt.Sprintf("Probe check"), log.String("helm", key), log.String("phase", string(phase)))
-				curPhase, err := p.checkAddonHealthz(key, phase)
+				curPhase, err := p.checkAddonHealthz(ctx, key, phase)
 				if curPhase == "" || (curPhase != phase && err == nil) {
 					p.fetchSyncMap(phase).Delete(key)
 					return true
@@ -150,7 +152,7 @@ func (p *prober) fetchSyncMap(phase v1.AddonPhase) *sync.Map {
 	return &sync.Map{}
 }
 
-func (p *prober) checkAddonHealthz(key string, oldPhase v1.AddonPhase) (v1.AddonPhase, error) {
+func (p *prober) checkAddonHealthz(ctx context.Context, key string, oldPhase v1.AddonPhase) (v1.AddonPhase, error) {
 	// 判断 key 没有被删除
 	obj, err := p.lister.Get(key)
 	if err != nil {
@@ -159,58 +161,58 @@ func (p *prober) checkAddonHealthz(key string, oldPhase v1.AddonPhase) (v1.Addon
 	}
 	// 创建 provisioner 与用户集群交互
 	var provisioner Provisioner
-	if provisioner, err = createProvisioner(obj, p.client); err != nil {
+	if provisioner, err = createProvisioner(ctx, obj, p.client); err != nil {
 		if errors.IsNotFound(err) {
-			uptErr := updateHelmStatus(getUpdateObj(obj, v1.AddonPhaseFailed, err.Error()), p.client)
+			uptErr := updateHelmStatus(ctx, getUpdateObj(obj, v1.AddonPhaseFailed, err.Error()), p.client)
 			return v1.AddonPhaseFailed, uptErr
 		}
 		if isCheckOrUnhealthyTimeout(obj.Status.LastReInitializingTimestamp.Time, oldPhase) {
 			if err.Error() == "" {
-				uptErr := updateHelmStatus(getUpdateObj(obj, v1.AddonPhaseFailed, string(oldPhase)+" timeout: fail to connect to tiller"), p.client)
+				uptErr := updateHelmStatus(ctx, getUpdateObj(obj, v1.AddonPhaseFailed, string(oldPhase)+" timeout: fail to connect to tiller"), p.client)
 				return v1.AddonPhaseFailed, uptErr
 			}
-			uptErr := updateHelmStatus(getUpdateObj(obj, v1.AddonPhaseFailed, err.Error()), p.client)
+			uptErr := updateHelmStatus(ctx, getUpdateObj(obj, v1.AddonPhaseFailed, err.Error()), p.client)
 			return v1.AddonPhaseFailed, uptErr
 		}
 		if oldPhase == v1.AddonPhaseUnhealthy && obj.Status.Reason != err.Error() {
-			uptErr := updateHelmStatus(getUpdateObj(obj, v1.AddonPhaseUnhealthy, err.Error()), p.client)
+			uptErr := updateHelmStatus(ctx, getUpdateObj(obj, v1.AddonPhaseUnhealthy, err.Error()), p.client)
 			return oldPhase, uptErr
 		}
 		return v1.AddonPhaseUnhealthy, nil
 	}
 	// 获取 addon 状态
-	err = provisioner.GetStatus()
+	err = provisioner.GetStatus(ctx)
 	if err != nil && errors.IsNotFound(err) {
-		uptErr := updateHelmStatus(getUpdateObj(obj, v1.AddonPhaseFailed, err.Error()), p.client)
+		uptErr := updateHelmStatus(ctx, getUpdateObj(obj, v1.AddonPhaseFailed, err.Error()), p.client)
 		return v1.AddonPhaseFailed, uptErr
 	}
 	if err != nil {
 		// checking timeout or unhealthy timeout
 		if isCheckOrUnhealthyTimeout(obj.Status.LastReInitializingTimestamp.Time, oldPhase) {
 			if err.Error() == "" {
-				uptErr := updateHelmStatus(getUpdateObj(obj, v1.AddonPhaseFailed, string(oldPhase)+" timeout: fail to connect to tiller"), p.client)
+				uptErr := updateHelmStatus(ctx, getUpdateObj(obj, v1.AddonPhaseFailed, string(oldPhase)+" timeout: fail to connect to tiller"), p.client)
 				return v1.AddonPhaseFailed, uptErr
 			}
-			uptErr := updateHelmStatus(getUpdateObj(obj, v1.AddonPhaseFailed, err.Error()), p.client)
+			uptErr := updateHelmStatus(ctx, getUpdateObj(obj, v1.AddonPhaseFailed, err.Error()), p.client)
 			return v1.AddonPhaseFailed, uptErr
 		}
 		// running -> unhealthy
 		if oldPhase == v1.AddonPhaseRunning {
 			newObj := getUpdateObj(obj, v1.AddonPhaseUnhealthy, err.Error())
 			newObj.Status.LastReInitializingTimestamp = metav1.Now()
-			uptErr := updateHelmStatus(newObj, p.client)
+			uptErr := updateHelmStatus(ctx, newObj, p.client)
 			return v1.AddonPhaseUnhealthy, uptErr
 		}
 		// change reason, stay old phase
 		if obj.Status.Reason != err.Error() {
-			uptErr := updateHelmStatus(getUpdateObj(obj, oldPhase, err.Error()), p.client)
+			uptErr := updateHelmStatus(ctx, getUpdateObj(obj, oldPhase, err.Error()), p.client)
 			return oldPhase, uptErr
 		}
 		return oldPhase, nil
 	}
 	// other phases -> running
 	if oldPhase != v1.AddonPhaseRunning {
-		uptErr := updateHelmStatus(getUpdateObj(obj, v1.AddonPhaseRunning, ""), p.client)
+		uptErr := updateHelmStatus(ctx, getUpdateObj(obj, v1.AddonPhaseRunning, ""), p.client)
 		return v1.AddonPhaseRunning, uptErr
 	}
 	// stay running

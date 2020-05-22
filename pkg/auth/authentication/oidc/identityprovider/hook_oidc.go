@@ -24,6 +24,8 @@ import (
 	"fmt"
 	"net/http"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	gooidc "github.com/coreos/go-oidc"
 	dexserver "github.com/dexidp/dex/server"
 	dexstorage "github.com/dexidp/dex/storage"
@@ -65,7 +67,7 @@ func NewDexHookHandler(ctx context.Context, authClient authinternalclient.AuthIn
 
 // PostStartHook provides a function that is called after the server has started.
 func (d *dexHookHandler) PostStartHook() (string, genericapiserver.PostStartHookFunc, error) {
-	return "create-dex-server", func(context genericapiserver.PostStartHookContext) error {
+	return "create-dex-server", func(ctx genericapiserver.PostStartHookContext) error {
 		log.Info("start create dex server")
 		// Ensure all identity providers defined exists in dex.
 		idpMap := GetAllIdentityProviderMap()
@@ -81,7 +83,7 @@ func (d *dexHookHandler) PostStartHook() (string, genericapiserver.PostStartHook
 				continue
 			}
 
-			if _, err := d.authClient.IdentityProviders().Create(idp); err != nil && !errors.IsAlreadyExists(err) {
+			if _, err := d.authClient.IdentityProviders().Create(context.Background(), idp, metav1.CreateOptions{}); err != nil && !errors.IsAlreadyExists(err) {
 				log.Error("Create idp for tenant failed", log.String("tenantID", tenantID), log.Any("idp", *idp), log.Err(err))
 			}
 		}

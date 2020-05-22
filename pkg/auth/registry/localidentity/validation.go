@@ -19,6 +19,7 @@
 package localidentity
 
 import (
+	"context"
 	"fmt"
 
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
@@ -38,7 +39,7 @@ var (
 )
 
 // ValidateLocalIdentity tests if required fields in the identity are set.
-func ValidateLocalIdentity(authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, updateCheck bool) field.ErrorList {
+func ValidateLocalIdentity(ctx context.Context, authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, updateCheck bool) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&localIdentity.ObjectMeta, false, apiMachineryValidation.NameIsDNSSubdomain, field.NewPath("metadata"))
 
 	fldSpecPath := field.NewPath("spec")
@@ -54,7 +55,7 @@ func ValidateLocalIdentity(authClient authinternalclient.AuthInterface, localIde
 		}
 
 		if !updateCheck {
-			if exists, err := localIdentityExists(authClient, localIdentity.Spec.TenantID, localIdentity.Spec.Username); err != nil {
+			if exists, err := localIdentityExists(ctx, authClient, localIdentity.Spec.TenantID, localIdentity.Spec.Username); err != nil {
 				allErrs = append(allErrs, field.InternalError(fldSpecPath.Child("username"), err))
 			} else if exists {
 				allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("username"), localIdentity.Spec.Username,
@@ -102,10 +103,10 @@ func ValidateLocalIdentity(authClient authinternalclient.AuthInterface, localIde
 
 // ValidateLocalIdentityUpdate tests if required fields in the localIdentity are set
 // during an update.
-func ValidateLocalIdentityUpdate(authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, oldLocalIdentity *auth.LocalIdentity) field.ErrorList {
+func ValidateLocalIdentityUpdate(ctx context.Context, authClient authinternalclient.AuthInterface, localIdentity *auth.LocalIdentity, oldLocalIdentity *auth.LocalIdentity) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, ValidateLocalIdentity(authClient, localIdentity, true)...)
+	allErrs = append(allErrs, ValidateLocalIdentity(ctx, authClient, localIdentity, true)...)
 	allErrs = append(allErrs, apiMachineryValidation.ValidateObjectMetaUpdate(&localIdentity.ObjectMeta, &oldLocalIdentity.ObjectMeta, field.NewPath("metadata"))...)
 
 	fldSpecPath := field.NewPath("spec")
@@ -146,12 +147,12 @@ func ValidateLocalIdentityPasswordUpdate(localIdentity *auth.LocalIdentity, pass
 	return nil
 }
 
-func localIdentityExists(authClient authinternalclient.AuthInterface, tenantID, username string) (bool, error) {
+func localIdentityExists(ctx context.Context, authClient authinternalclient.AuthInterface, tenantID, username string) (bool, error) {
 	tenantUserSelector := fields.AndSelectors(
 		fields.OneTermEqualSelector("spec.tenantID", tenantID),
 		fields.OneTermEqualSelector("spec.username", username))
 
-	localIdentityList, err := authClient.LocalIdentities().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+	localIdentityList, err := authClient.LocalIdentities().List(ctx, v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 	if err != nil {
 		return false, err
 	}

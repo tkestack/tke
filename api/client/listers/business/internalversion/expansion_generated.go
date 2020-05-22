@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -47,6 +47,14 @@ type NamespaceListerExpansion interface{}
 // NamespaceNamespaceListerExpansion allows custom methods to be added to
 // NamespaceNamespaceLister.
 type NamespaceNamespaceListerExpansion interface{}
+
+// NsEmigrationListerExpansion allows custom methods to be added to
+// NsEmigrationLister.
+type NsEmigrationListerExpansion interface{}
+
+// NsEmigrationNamespaceListerExpansion allows custom methods to be added to
+// NsEmigrationNamespaceLister.
+type NsEmigrationNamespaceListerExpansion interface{}
 
 // PlatformListerExpansion allows custom methods to be added to
 // PlatformLister.

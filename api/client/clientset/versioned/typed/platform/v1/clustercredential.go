@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -21,6 +21,7 @@
 package v1
 
 import (
+	"context"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,13 +40,13 @@ type ClusterCredentialsGetter interface {
 
 // ClusterCredentialInterface has methods to work with ClusterCredential resources.
 type ClusterCredentialInterface interface {
-	Create(*v1.ClusterCredential) (*v1.ClusterCredential, error)
-	Update(*v1.ClusterCredential) (*v1.ClusterCredential, error)
-	Delete(name string, options *metav1.DeleteOptions) error
-	Get(name string, options metav1.GetOptions) (*v1.ClusterCredential, error)
-	List(opts metav1.ListOptions) (*v1.ClusterCredentialList, error)
-	Watch(opts metav1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.ClusterCredential, err error)
+	Create(ctx context.Context, clusterCredential *v1.ClusterCredential, opts metav1.CreateOptions) (*v1.ClusterCredential, error)
+	Update(ctx context.Context, clusterCredential *v1.ClusterCredential, opts metav1.UpdateOptions) (*v1.ClusterCredential, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.ClusterCredential, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v1.ClusterCredentialList, error)
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ClusterCredential, err error)
 	ClusterCredentialExpansion
 }
 
@@ -62,19 +63,19 @@ func newClusterCredentials(c *PlatformV1Client) *clusterCredentials {
 }
 
 // Get takes name of the clusterCredential, and returns the corresponding clusterCredential object, and an error if there is any.
-func (c *clusterCredentials) Get(name string, options metav1.GetOptions) (result *v1.ClusterCredential, err error) {
+func (c *clusterCredentials) Get(ctx context.Context, name string, options metav1.GetOptions) (result *v1.ClusterCredential, err error) {
 	result = &v1.ClusterCredential{}
 	err = c.client.Get().
 		Resource("clustercredentials").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of ClusterCredentials that match those selectors.
-func (c *clusterCredentials) List(opts metav1.ListOptions) (result *v1.ClusterCredentialList, err error) {
+func (c *clusterCredentials) List(ctx context.Context, opts metav1.ListOptions) (result *v1.ClusterCredentialList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -84,13 +85,13 @@ func (c *clusterCredentials) List(opts metav1.ListOptions) (result *v1.ClusterCr
 		Resource("clustercredentials").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested clusterCredentials.
-func (c *clusterCredentials) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+func (c *clusterCredentials) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -100,51 +101,54 @@ func (c *clusterCredentials) Watch(opts metav1.ListOptions) (watch.Interface, er
 		Resource("clustercredentials").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a clusterCredential and creates it.  Returns the server's representation of the clusterCredential, and an error, if there is any.
-func (c *clusterCredentials) Create(clusterCredential *v1.ClusterCredential) (result *v1.ClusterCredential, err error) {
+func (c *clusterCredentials) Create(ctx context.Context, clusterCredential *v1.ClusterCredential, opts metav1.CreateOptions) (result *v1.ClusterCredential, err error) {
 	result = &v1.ClusterCredential{}
 	err = c.client.Post().
 		Resource("clustercredentials").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(clusterCredential).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a clusterCredential and updates it. Returns the server's representation of the clusterCredential, and an error, if there is any.
-func (c *clusterCredentials) Update(clusterCredential *v1.ClusterCredential) (result *v1.ClusterCredential, err error) {
+func (c *clusterCredentials) Update(ctx context.Context, clusterCredential *v1.ClusterCredential, opts metav1.UpdateOptions) (result *v1.ClusterCredential, err error) {
 	result = &v1.ClusterCredential{}
 	err = c.client.Put().
 		Resource("clustercredentials").
 		Name(clusterCredential.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(clusterCredential).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the clusterCredential and deletes it. Returns an error if one occurs.
-func (c *clusterCredentials) Delete(name string, options *metav1.DeleteOptions) error {
+func (c *clusterCredentials) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.client.Delete().
 		Resource("clustercredentials").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched clusterCredential.
-func (c *clusterCredentials) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1.ClusterCredential, err error) {
+func (c *clusterCredentials) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.ClusterCredential, err error) {
 	result = &v1.ClusterCredential{}
 	err = c.client.Patch(pt).
 		Resource("clustercredentials").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

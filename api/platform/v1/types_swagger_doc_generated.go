@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -270,10 +270,12 @@ func (ClusterResource) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterSpec = map[string]string{
-	"":            "ClusterSpec is a description of a cluster.",
-	"finalizers":  "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
-	"dnsDomain":   "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
-	"serviceCIDR": "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+	"":                     "ClusterSpec is a description of a cluster.",
+	"finalizers":           "Finalizers is an opaque list of values that must be empty to permanently remove object from storage.",
+	"serviceCIDR":          "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+	"dnsDomain":            "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
+	"clusterCredentialRef": "ClusterCredentialRef for isolate sensitive information. If not specified, cluster controller will create one; If specified, provider must make sure is valid.",
+	"etcd":                 "Etcd holds configuration for etcd.",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {
@@ -356,41 +358,26 @@ func (CronHPAStatus) SwaggerDoc() map[string]string {
 	return map_CronHPAStatus
 }
 
-var map_GPUManager = map[string]string{
-	"":     "GPUManager is a kind of device plugin for kubelet to help manage GPUs.",
-	"spec": "Spec defines the desired identities of clusters in this set.",
+var map_Etcd = map[string]string{
+	"":         "Etcd contains elements describing Etcd configuration.",
+	"local":    "Local provides configuration knobs for configuring the local etcd instance Local and External are mutually exclusive",
+	"external": "External describes how to connect to an external etcd cluster Local and External are mutually exclusive",
 }
 
-func (GPUManager) SwaggerDoc() map[string]string {
-	return map_GPUManager
+func (Etcd) SwaggerDoc() map[string]string {
+	return map_Etcd
 }
 
-var map_GPUManagerList = map[string]string{
-	"":      "GPUManagerList is the whole list of all GPUManager which owned by a tenant.",
-	"items": "List of GPUManagers",
+var map_ExternalEtcd = map[string]string{
+	"":          "ExternalEtcd describes an external etcd cluster. Kubeadm has no knowledge of where certificate files live and they must be supplied.",
+	"endpoints": "Endpoints of etcd members. Required for ExternalEtcd.",
+	"caFile":    "CAFile is an SSL Certificate Authority file used to secure etcd communication. Required if using a TLS connection.",
+	"certFile":  "CertFile is an SSL certification file used to secure etcd communication. Required if using a TLS connection.",
+	"keyFile":   "KeyFile is an SSL key file used to secure etcd communication. Required if using a TLS connection.",
 }
 
-func (GPUManagerList) SwaggerDoc() map[string]string {
-	return map_GPUManagerList
-}
-
-var map_GPUManagerSpec = map[string]string{
-	"": "GPUManagerSpec describes the attributes of a GPUManager.",
-}
-
-func (GPUManagerSpec) SwaggerDoc() map[string]string {
-	return map_GPUManagerSpec
-}
-
-var map_GPUManagerStatus = map[string]string{
-	"":           "GPUManagerStatus is information about the current status of a GPUManager.",
-	"phase":      "Phase is the current lifecycle phase of the GPUManager of cluster.",
-	"reason":     "Reason is a brief CamelCase string that describes any failure.",
-	"retryCount": "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-}
-
-func (GPUManagerStatus) SwaggerDoc() map[string]string {
-	return map_GPUManagerStatus
+func (ExternalEtcd) SwaggerDoc() map[string]string {
+	return map_ExternalEtcd
 }
 
 var map_Helm = map[string]string{
@@ -531,6 +518,18 @@ var map_LBCFStatus = map[string]string{
 
 func (LBCFStatus) SwaggerDoc() map[string]string {
 	return map_LBCFStatus
+}
+
+var map_LocalEtcd = map[string]string{
+	"":               "LocalEtcd describes that kubeadm should run an etcd cluster locally",
+	"dataDir":        "DataDir is the directory etcd will place its data. Defaults to \"/var/lib/etcd\".",
+	"extraArgs":      "ExtraArgs are extra arguments provided to the etcd binary when run inside a static pod.",
+	"serverCertSANs": "ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.",
+	"peerCertSANs":   "PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.",
+}
+
+func (LocalEtcd) SwaggerDoc() map[string]string {
+	return map_LocalEtcd
 }
 
 var map_LogCollector = map[string]string{

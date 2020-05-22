@@ -65,6 +65,8 @@ export const initGroupCreationState = {
     displayName: '',
     /** 描述 */
     description: '',
+    /** 额外信息 */
+    extra: {}
   },
   status: {
     /** 用户 */

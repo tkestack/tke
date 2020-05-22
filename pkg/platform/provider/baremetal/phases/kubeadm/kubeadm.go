@@ -22,14 +22,18 @@ import (
 	"bytes"
 	"fmt"
 	"path"
-
-	"tkestack.io/tke/pkg/util/template"
+	"time"
 
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/template"
 )
 
 const (
@@ -108,23 +112,23 @@ type InitOption struct {
 	KubeProxyMode string
 }
 
-func Init(s ssh.Interface, option *InitOption, extraCmd string) error {
-	configData, err := template.ParseFile(path.Join(constants.ConfDir, kubeadmConfigFile), option)
-	if err != nil {
-		return errors.Wrap(err, "parse kubeadm config file error")
-	}
-	err = s.WriteFile(bytes.NewReader(configData), option.KubeadmConfigFileName)
+func Init(s ssh.Interface, kubeadmConfig *Config, extraCmd string) error {
+	configData, err := kubeadmConfig.Marshal()
 	if err != nil {
 		return err
 	}
 
-	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s",
-		extraCmd, option.KubeadmConfigFileName)
-	stdout, stderr, exit, err := s.Exec(cmd)
-	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
+	if err != nil {
+		return err
 	}
-	log.Info(stdout)
+
+	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s", extraCmd, constants.KubeadmConfigFileName)
+	out, err := s.CombinedOutput(cmd)
+	if err != nil {
+		return fmt.Errorf("exec %q error: %w", cmd, err)
+	}
+	log.Info(string(out))
 
 	return nil
 }
@@ -177,4 +181,113 @@ func JoinNode(s ssh.Interface, option *JoinNodeOption) error {
 	log.Info(stdout)
 
 	return nil
+}
+
+func RenewCerts(s ssh.Interface) error {
+	err := fixKubeadmBug1753(s)
+	if err != nil {
+		return fmt.Errorf("fixKubeadmBug1753(https://github.com/kubernetes/kubeadm/issues/1753) error: %w", err)
+	}
+
+	cmd := fmt.Sprintf("kubeadm alpha certs renew all --config=%s", constants.KubeadmConfigFileName)
+	_, err = s.CombinedOutput(cmd)
+	if err != nil {
+		return err
+	}
+
+	err = RestartControlPlane(s)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// https://github.com/kubernetes/kubeadm/issues/1753
+func fixKubeadmBug1753(s ssh.Interface) error {
+	needUpdate := false
+
+	data, err := s.ReadFile(constants.KubeletKubeConfigFileName)
+	if err != nil {
+		return err
+	}
+	kubeletKubeconfig, err := clientcmd.Load(data)
+	if err != nil {
+		return err
+	}
+	for _, info := range kubeletKubeconfig.AuthInfos {
+		if info.ClientKeyData == nil && info.ClientCertificateData == nil {
+			continue
+		}
+
+		info.ClientKeyData = []byte{}
+		info.ClientCertificateData = []byte{}
+		info.ClientKey = constants.KubeletClientCurrent
+		info.ClientCertificate = constants.KubeletClientCurrent
+
+		needUpdate = true
+	}
+
+	if needUpdate {
+		data, err := runtime.Encode(clientcmdlatest.Codec, kubeletKubeconfig)
+		if err != nil {
+			return err
+		}
+		err = s.WriteFile(bytes.NewReader(data), constants.KubeletKubeConfigFileName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func RestartControlPlane(s ssh.Interface) error {
+	targets := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
+	for _, one := range targets {
+		err := RestartContainerByFilter(s, DockerFilterForControlPlane(one))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func DockerFilterForControlPlane(name string) string {
+	return fmt.Sprintf("label=io.kubernetes.container.name=%s", name)
+}
+
+func RestartContainerByFilter(s ssh.Interface, filter string) error {
+	cmd := fmt.Sprintf("docker rm -f $(docker ps -q -f '%s')", filter)
+	_, err := s.CombinedOutput(cmd)
+	if err != nil {
+		return err
+	}
+
+	err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+		cmd = fmt.Sprintf("docker ps -q -f '%s'", filter)
+		output, err := s.CombinedOutput(cmd)
+		if err != nil {
+			return false, nil
+		}
+		if len(output) == 0 {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("restart container(%s) error: %w", filter, err)
+	}
+
+	return nil
+}
+
+func GetKubeadmConfig(option *InitOption) ([]byte, error) {
+	configData, err := template.ParseFile(path.Join(constants.ConfDir, kubeadmConfigFile), option)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse kubeadm config file error")
+	}
+
+	return configData, nil
 }

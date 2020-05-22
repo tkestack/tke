@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -46,6 +46,8 @@ type Interface interface {
 	LocalIdentities() LocalIdentityInformer
 	// Policies returns a PolicyInformer.
 	Policies() PolicyInformer
+	// ProjectPolicyBindings returns a ProjectPolicyBindingInformer.
+	ProjectPolicyBindings() ProjectPolicyBindingInformer
 	// Roles returns a RoleInformer.
 	Roles() RoleInformer
 	// Rules returns a RuleInformer.
@@ -113,6 +115,11 @@ func (v *version) LocalIdentities() LocalIdentityInformer {
 // Policies returns a PolicyInformer.
 func (v *version) Policies() PolicyInformer {
 	return &policyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// ProjectPolicyBindings returns a ProjectPolicyBindingInformer.
+func (v *version) ProjectPolicyBindings() ProjectPolicyBindingInformer {
+	return &projectPolicyBindingInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // Roles returns a RoleInformer.

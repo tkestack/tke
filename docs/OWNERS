@@ -1,0 +1,10 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
+reviewers:
+  - interstallers
+  - perfey-he
+  - ruyingzhe
+approvers:
+  - interstallers
+  - perfey-he
+  - ruyingzhe

@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"strings"
+	"tkestack.io/tke/pkg/apiserver/filter"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -57,6 +58,14 @@ func (r *PolicyREST) New() runtime.Object {
 	return &auth.Policy{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *PolicyREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("policies"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
@@ -70,12 +79,8 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 		return nil, err
 	}
 	grp := obj.(*auth.Group)
-
-	roles, err := r.enforcer.GetRolesForUser(util.GroupKey(grp.Spec.TenantID, grp.Spec.ID))
-	if err != nil {
-		log.Error("List roles for group failed from casbin failed", log.String("group", groupID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	projectID := filter.ProjectIDFrom(ctx)
+	roles := r.enforcer.GetRolesForUserInDomain(util.GroupKey(grp.Spec.TenantID, grp.Spec.ID), projectID)
 
 	var policyIDs []string
 	for _, r := range roles {
@@ -86,7 +91,7 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 
 	var policyList = &auth.PolicyList{}
 	for _, id := range policyIDs {
-		pol, err := r.authClient.Policies().Get(id, metav1.GetOptions{})
+		pol, err := r.authClient.Policies().Get(ctx, id, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("Get pol failed", log.String("policy", id), log.Err(err))
 			return nil, err

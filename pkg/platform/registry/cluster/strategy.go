@@ -22,14 +22,14 @@ import (
 	"context"
 	"fmt"
 
+	"tkestack.io/tke/pkg/platform/types"
+
 	"tkestack.io/tke/api/platform/validation"
 
-	"github.com/jinzhu/copier"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
@@ -37,7 +37,6 @@ import (
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -111,13 +110,12 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if err != nil {
 		return // avoid panic validate will be report error
 	}
-	user, _ := request.UserFrom(ctx)
-	userInfo := filter.ToClusterProviderUser(user)
-	resp, err := clusterProvider.PreCreate(userInfo, *cluster)
+	clusterWrapper, err := types.GetCluster(ctx, s.platformClient, cluster)
 	if err != nil {
 		panic(err)
 	}
-	if err := copier.Copy(cluster, resp); err != nil {
+	err = clusterProvider.PreCreate(clusterWrapper)
+	if err != nil {
 		panic(err)
 	}
 }
@@ -126,13 +124,15 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 // created and before it is decorated, optional.
 func (s *Strategy) AfterCreate(obj runtime.Object) error {
 	cluster, _ := obj.(*platform.Cluster)
-
 	clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return err
 	}
-
-	_, err = clusterProvider.AfterCreate(*cluster)
+	clusterWrapper, err := types.GetCluster(context.Background(), s.platformClient, cluster)
+	if err != nil {
+		return err
+	}
+	err = clusterProvider.AfterCreate(clusterWrapper)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,12 @@ func (s *Strategy) AfterCreate(obj runtime.Object) error {
 
 // Validate validates a new cluster
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return validation.ValidateCluster(obj.(*platform.Cluster), s.platformClient)
+	cluster, _ := obj.(*platform.Cluster)
+	clusterWrapper, err := types.GetCluster(ctx, s.platformClient, cluster)
+	if err != nil {
+		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
+	}
+	return validation.ValidateCluster(clusterWrapper)
 }
 
 // AllowCreateOnUpdate is false for clusters
@@ -163,7 +168,18 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end cluster.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return validation.ValidateClusterUpdate(obj.(*platform.Cluster), old.(*platform.Cluster), s.platformClient)
+	cluster, _ := obj.(*platform.Cluster)
+	oldCluster, _ := old.(*platform.Cluster)
+	clusterWrapper, err := types.GetCluster(ctx, s.platformClient, cluster)
+	if err != nil {
+		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
+	}
+	oldClusterWrapper, err := types.GetCluster(ctx, s.platformClient, oldCluster)
+	if err != nil {
+		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
+	}
+
+	return validation.ValidateClusterUpdate(clusterWrapper, oldClusterWrapper)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

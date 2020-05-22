@@ -26,26 +26,26 @@ import (
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	"tkestack.io/tke/pkg/platform/types"
 	utilmath "tkestack.io/tke/pkg/util/math"
 	"tkestack.io/tke/pkg/util/ssh"
 	utilvalidation "tkestack.io/tke/pkg/util/validation"
 )
 
 // ValidateCluster validates a given Cluster.
-func ValidateCluster(cluster *platform.Cluster, platformClient internalversion.PlatformInterface) field.ErrorList {
+func ValidateCluster(cluster *types.Cluster) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&cluster.ObjectMeta, false, apimachineryvalidation.NameIsDNSLabel, field.NewPath("metadata"))
 
-	allErrs = append(allErrs, ValidatClusterSpec(&cluster.Spec, field.NewPath("spec"), platformClient)...)
+	allErrs = append(allErrs, ValidatClusterSpec(&cluster.Spec, field.NewPath("spec"))...)
 	allErrs = append(allErrs, ValidateClusterByProvider(cluster)...)
 
 	return allErrs
 }
 
 // ValidateClusterUpdate tests if an update to a cluster is valid.
-func ValidateClusterUpdate(cluster *platform.Cluster, oldCluster *platform.Cluster, platformClient internalversion.PlatformInterface) field.ErrorList {
+func ValidateClusterUpdate(cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList {
 	fldPath := field.NewPath("spec")
 
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&cluster.ObjectMeta, &oldCluster.ObjectMeta, field.NewPath("metadata"))
@@ -54,20 +54,19 @@ func ValidateClusterUpdate(cluster *platform.Cluster, oldCluster *platform.Clust
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.NetworkDevice, oldCluster.Spec.NetworkDevice, fldPath.Child("networkDevice"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.ClusterCIDR, oldCluster.Spec.ClusterCIDR, fldPath.Child("clusterCIDR"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.DNSDomain, oldCluster.Spec.DNSDomain, fldPath.Child("dnsDomain"))...)
-	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.PublicAlternativeNames, oldCluster.Spec.PublicAlternativeNames, fldPath.Child("publicAlternativeNames"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.DockerExtraArgs, oldCluster.Spec.DockerExtraArgs, fldPath.Child("dockerExtraArgs"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.KubeletExtraArgs, oldCluster.Spec.KubeletExtraArgs, fldPath.Child("kubeletExtraArgs"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.APIServerExtraArgs, oldCluster.Spec.APIServerExtraArgs, fldPath.Child("apiServerExtraArgs"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.ControllerManagerExtraArgs, oldCluster.Spec.ControllerManagerExtraArgs, fldPath.Child("controllerManagerExtraArgs"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.SchedulerExtraArgs, oldCluster.Spec.SchedulerExtraArgs, fldPath.Child("schedulerExtraArgs"))...)
 
-	allErrs = append(allErrs, ValidateCluster(cluster, platformClient)...)
+	allErrs = append(allErrs, ValidateCluster(cluster)...)
 
 	return allErrs
 }
 
 // ValidateCluster validates a given ClusterSpec.
-func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, platformClient internalversion.PlatformInterface) field.ErrorList {
+func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, ValidateClusteType(spec.Type, fldPath.Child("type"))...)
 	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
@@ -82,7 +81,7 @@ func ValidateClusteType(clusterType string, fldPath *field.Path) field.ErrorList
 }
 
 // ValidateClusterByProvider validates a given cluster by cluster provider.
-func ValidateClusterByProvider(cluster *platform.Cluster) field.ErrorList {
+func ValidateClusterByProvider(cluster *types.Cluster) field.ErrorList {
 	p, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return nil
@@ -156,7 +155,10 @@ func ValidateClusterFeature(feature *platform.ClusterFeature, fldPath *field.Pat
 
 // ValidateGPUType validates a given GPUType.
 func ValidateGPUType(gpuType *platform.GPUType, fldPath *field.Path) field.ErrorList {
-	return utilvalidation.ValidateEnum(gpuType, fldPath.Child("gpuType"),
+	if gpuType == nil {
+		return field.ErrorList{}
+	}
+	return utilvalidation.ValidateEnum(*gpuType, fldPath.Child("gpuType"),
 		[]interface{}{
 			platform.GPUPhysical,
 			platform.GPUVirtual,

@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -31,6 +31,8 @@ import (
 	fakeauthv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1/fake"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	fakebusinessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1/fake"
+	logagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
+	fakelogagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1/fake"
 	monitorv1 "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1"
 	fakemonitorv1 "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1/fake"
 	notifyv1 "tkestack.io/tke/api/client/clientset/versioned/typed/notify/v1"
@@ -96,6 +98,11 @@ func (c *Clientset) AuthV1() authv1.AuthV1Interface {
 // BusinessV1 retrieves the BusinessV1Client
 func (c *Clientset) BusinessV1() businessv1.BusinessV1Interface {
 	return &fakebusinessv1.FakeBusinessV1{Fake: &c.Fake}
+}
+
+// LogagentV1 retrieves the LogagentV1Client
+func (c *Clientset) LogagentV1() logagentv1.LogagentV1Interface {
+	return &fakelogagentv1.FakeLogagentV1{Fake: &c.Fake}
 }
 
 // MonitorV1 retrieves the MonitorV1Client

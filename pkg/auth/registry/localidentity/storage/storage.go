@@ -60,7 +60,7 @@ type Storage struct {
 
 // NewStorage returns a Storage object that will work against identify.
 func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalclient.AuthInterface, enforcer *casbin.SyncedEnforcer, privilegedUsername string) *Storage {
-	strategy := localidentity.NewStrategy(authClient)
+	strategy := localidentity.NewStrategy(authClient, enforcer)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &auth.LocalIdentity{} },
 		NewListFunc:              func() runtime.Object { return &auth.LocalIdentityList{} },
@@ -93,7 +93,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 	finalizeStore.ExportStrategy = localidentity.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		LocalIdentity: &REST{store, privilegedUsername},
+		LocalIdentity: &REST{store, authClient, enforcer, privilegedUsername},
 		Password:      &PasswordREST{store, authClient},
 		Status:        &StatusREST{&statusStore},
 		Policy:        &PolicyREST{store, authClient, enforcer},
@@ -134,7 +134,7 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 
 // ValidateListObject validate if list by admin, if true not return hashed password.
 func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, options *metainternal.ListOptions) (runtime.Object, error) {
-	keyword := util.InterceptKeyword(options)
+	keyword := util.InterceptParam(options, auth.KeywordQueryTag)
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
 	obj, err := store.List(ctx, wrappedOptions)
 	if err != nil {
@@ -167,19 +167,61 @@ func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, o
 // REST implements a RESTStorage for identities against etcd.
 type REST struct {
 	*registry.Store
+	authClient authinternalclient.AuthInterface
+	enforcer   *casbin.SyncedEnforcer
+
 	privilegedUsername string
 }
 
 var _ rest.ShortNamesProvider = &REST{}
+var _ rest.Creater = &REST{}
+var _ rest.Lister = &REST{}
+var _ rest.Getter = &REST{}
+var _ rest.Updater = &REST{}
+var _ rest.CollectionDeleter = &REST{}
+var _ rest.GracefulDeleter = &REST{}
+var _ rest.Exporter = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
 	return []string{"usr"}
 }
 
+// Create creates a new version of a resource.
+func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+
+	localIdentity := obj.(*auth.LocalIdentity)
+	policies, needBind := util.GetPoliciesFromUserExtra(localIdentity)
+	result, err := r.Store.Create(ctx, localIdentity, createValidation, options)
+	if err != nil {
+		return nil, err
+	}
+	localIdentity = result.(*auth.LocalIdentity)
+
+	if needBind {
+		err = util.BindUserPolicies(ctx, r.authClient, localIdentity, policies)
+		if err != nil {
+			log.Error("bind init policies failed", log.Err(err))
+		}
+	}
+
+	return result, nil
+}
+
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	return ValidateListObjectAndTenantID(ctx, r.Store, options)
+	policy := util.InterceptParam(options, util.PolicyTag)
+	obj, err := ValidateListObjectAndTenantID(ctx, r.Store, options)
+	if err != nil {
+		return obj, err
+	}
+
+	identityList := obj.(*auth.LocalIdentityList)
+	if policy == "true" {
+		util.FillUserPolicies(ctx, r.authClient, r.enforcer, identityList)
+	}
+
+	return identityList, nil
 }
 
 // DeleteCollection selects all resources in the storage matching given 'listOptions'
@@ -265,7 +307,13 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 
 // Get finds a resource in the storage by name and returns it.
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
+	obj, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
+	if err != nil {
+		return obj, err
+	}
+	localIdentity := obj.(*auth.LocalIdentity)
+	util.SetAdministrator(ctx, r.enforcer, r.authClient, localIdentity)
+	return localIdentity, nil
 }
 
 // Export an object.  Fields that are not user specified are stripped out

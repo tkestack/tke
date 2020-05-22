@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"strings"
+	"tkestack.io/tke/pkg/apiserver/filter"
 
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 
@@ -59,6 +60,14 @@ func (r *PolicyREST) New() runtime.Object {
 	return &auth.Policy{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *PolicyREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("policies"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
@@ -72,12 +81,8 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 		return nil, err
 	}
 	localGroup := obj.(*auth.LocalGroup)
-
-	roles, err := r.enforcer.GetRolesForUser(util.GroupKey(localGroup.Spec.TenantID, localGroup.Name))
-	if err != nil {
-		log.Error("List roles for group failed from casbin failed", log.String("group", groupID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	projectID := filter.ProjectIDFrom(ctx)
+	roles := r.enforcer.GetRolesForUserInDomain(util.GroupKey(localGroup.Spec.TenantID, localGroup.Name), projectID)
 
 	var policyIDs []string
 	for _, r := range roles {
@@ -88,7 +93,7 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 
 	var policyList = &auth.PolicyList{}
 	for _, id := range policyIDs {
-		pol, err := r.authClient.Policies().Get(id, metav1.GetOptions{})
+		pol, err := r.authClient.Policies().Get(ctx, id, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("Get pol failed", log.String("policy", id), log.Err(err))
 			return nil, err
@@ -99,7 +104,9 @@ func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.List
 			continue
 		}
 
-		policyList.Items = append(policyList.Items, *pol)
+		if projectID == "" || (projectID != "" && pol.Spec.Scope == auth.PolicyProject) {
+			policyList.Items = append(policyList.Items, *pol)
+		}
 	}
 
 	return policyList, nil

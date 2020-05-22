@@ -20,18 +20,21 @@ package app
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	domainrolemanager "github.com/dovics/domain-role-manager"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cacheddiscovery "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
-	"net/http"
-	"time"
+
 	"tkestack.io/tke/api/auth"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
-	"tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
+	v1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-auth-controller/app/config"
 	util2 "tkestack.io/tke/pkg/auth/util"
@@ -139,6 +142,8 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		}
 	}
 
+	rm := domainrolemanager.NewRoleManager(10)
+	enforcer.SetRoleManager(rm)
 	enforcer.StartAutoLoadPolicy(cfg.CasbinReloadInterval)
 
 	ctx := ControllerContext{

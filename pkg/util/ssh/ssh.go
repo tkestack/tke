@@ -32,12 +32,11 @@ import (
 	"path"
 	"time"
 
-	"tkestack.io/tke/pkg/util/hash"
-
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/go-playground/validator.v9"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"tkestack.io/tke/pkg/util/hash"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -326,29 +325,33 @@ func (s *SSH) ReadFile(filename string) ([]byte, error) {
 	if err != nil {
 		err = wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
 			if client, err = s.dialer.Dial("tcp", s.addr, config); err != nil {
-				return false, err
+				return false, fmt.Errorf("read file %s error: %w", filename, err)
 			}
 			return true, nil
 		})
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read file %s error: %w", filename, err)
 	}
 	defer client.Close()
 
 	sftpClient, err := sftp.NewClient(client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read file %s error: %w", filename, err)
 	}
 	defer sftpClient.Close()
 
 	f, err := sftpClient.Open(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read file %s error: %w", filename, err)
 	}
 	data := new(bytes.Buffer)
 	_, err = f.WriteTo(data)
-	return data.Bytes(), err
+	if err != nil {
+		return nil, fmt.Errorf("read file %s error: %w", filename, err)
+	}
+
+	return data.Bytes(), nil
 }
 
 func (s *SSH) LookPath(file string) (string, error) {

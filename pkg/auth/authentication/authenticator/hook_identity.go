@@ -19,6 +19,7 @@
 package authenticator
 
 import (
+	"context"
 	"encoding/base64"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,12 +50,12 @@ func NewAdminIdentityHookHandler(authClient authinternalclient.AuthInterface, te
 }
 
 func (d *adminIdentityHookHandler) PostStartHook() (string, genericapiserver.PostStartHookFunc, error) {
-	return "generate-default-admin-identity", func(context genericapiserver.PostStartHookContext) error {
+	return "generate-default-admin-identity", func(ctx genericapiserver.PostStartHookContext) error {
 		tenantUserSelector := fields.AndSelectors(
 			fields.OneTermEqualSelector("spec.tenantID", d.tenantID),
 			fields.OneTermEqualSelector("spec.username", d.userName))
 
-		localIdentityList, err := d.authClient.LocalIdentities().List(metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
+		localIdentityList, err := d.authClient.LocalIdentities().List(context.Background(), metav1.ListOptions{FieldSelector: tenantUserSelector.String()})
 		if err != nil {
 			return err
 		}
@@ -63,7 +64,7 @@ func (d *adminIdentityHookHandler) PostStartHook() (string, genericapiserver.Pos
 			return nil
 		}
 
-		_, err = d.authClient.LocalIdentities().Create(&auth.LocalIdentity{
+		_, err = d.authClient.LocalIdentities().Create(context.Background(), &auth.LocalIdentity{
 			Spec: auth.LocalIdentitySpec{
 				HashedPassword: base64.StdEncoding.EncodeToString([]byte(d.password)),
 				TenantID:       d.tenantID,
@@ -73,7 +74,7 @@ func (d *adminIdentityHookHandler) PostStartHook() (string, genericapiserver.Pos
 					"platformadmin": "true",
 				},
 			},
-		})
+		}, metav1.CreateOptions{})
 		if err != nil {
 			log.Error("Failed to create the default admin identity", log.Err(err))
 			return err

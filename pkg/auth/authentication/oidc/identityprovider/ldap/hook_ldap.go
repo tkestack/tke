@@ -19,6 +19,7 @@
 package ldap
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -45,13 +46,12 @@ func NewLdapHookHandler(authClient authinternalclient.AuthInterface) genericapis
 }
 
 func (d *ldapHookHandler) PostStartHook() (string, genericapiserver.PostStartHookFunc, error) {
-	return "load-ldap-idp", func(context genericapiserver.PostStartHookContext) error {
-
+	return "load-ldap-idp", func(ctx genericapiserver.PostStartHookContext) error {
 		go wait.JitterUntil(func() {
 			tenantUserSelector := fields.AndSelectors(
 				fields.OneTermEqualSelector("spec.type", ConnectorType),
 			)
-			conns, err := d.authClient.IdentityProviders().List(v1.ListOptions{FieldSelector: tenantUserSelector.String()})
+			conns, err := d.authClient.IdentityProviders().List(context.Background(), v1.ListOptions{FieldSelector: tenantUserSelector.String()})
 			if err != nil {
 				log.Error("List ldap idp from registry failed", log.Err(err))
 				return
@@ -79,7 +79,7 @@ func (d *ldapHookHandler) PostStartHook() (string, genericapiserver.PostStartHoo
 				log.Info("load ldap identity provider successfully", log.String("idp", conn.Name))
 			}
 
-		}, 30*time.Second, 0.0, false, context.StopCh)
+		}, 30*time.Second, 0.0, false, ctx.StopCh)
 
 		return nil
 	}, nil

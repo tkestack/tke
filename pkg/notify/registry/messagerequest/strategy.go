@@ -21,6 +21,7 @@ package messagerequest
 import (
 	"context"
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -87,7 +88,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if len(tenantID) != 0 {
 		messageRequest.Spec.TenantID = tenantID
 	} else {
-		channel, err := s.notifyClient.Channels().Get(messageRequest.ObjectMeta.Namespace, metav1.GetOptions{})
+		channel, err := s.notifyClient.Channels().Get(ctx, messageRequest.ObjectMeta.Namespace, metav1.GetOptions{})
 		if err == nil && channel != nil {
 			messageRequest.Spec.TenantID = channel.Spec.TenantID
 		} else {
@@ -102,7 +103,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new message request.
 func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateMessageRequest(obj.(*notify.MessageRequest), s.notifyClient)
+	return ValidateMessageRequest(ctx, obj.(*notify.MessageRequest), s.notifyClient)
 }
 
 // AllowCreateOnUpdate is false for message requests.
@@ -123,7 +124,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end message request.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateMessageRequestUpdate(obj.(*notify.MessageRequest), old.(*notify.MessageRequest), s.notifyClient)
+	return ValidateMessageRequestUpdate(ctx, obj.(*notify.MessageRequest), old.(*notify.MessageRequest), s.notifyClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
@@ -132,7 +133,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a message request")
 	}
-	return labels.Set(messageRequest.ObjectMeta.Labels), ToSelectableFields(messageRequest), nil
+	return messageRequest.ObjectMeta.Labels, ToSelectableFields(messageRequest), nil
 }
 
 // MatchMessageRequest returns a generic matcher for a given label and field selector.
@@ -185,5 +186,5 @@ func (StatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Obj
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateMessageRequestUpdate(obj.(*notify.MessageRequest), old.(*notify.MessageRequest), s.notifyClient)
+	return ValidateMessageRequestUpdate(ctx, obj.(*notify.MessageRequest), old.(*notify.MessageRequest), s.notifyClient)
 }

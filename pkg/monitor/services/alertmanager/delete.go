@@ -20,12 +20,14 @@ package alertmanager
 
 import (
 	"bytes"
+	"context"
+
 	"tkestack.io/tke/pkg/util/log"
 
 	"github.com/pkg/errors"
 )
 
-func (h *processor) Delete(clusterName string, alertValue string) error {
+func (h *processor) Delete(ctx context.Context, clusterName string, alertValue string) error {
 	h.Lock()
 	defer h.Unlock()
 
@@ -37,7 +39,7 @@ func (h *processor) Delete(clusterName string, alertValue string) error {
 		return errors.New("empty alertValue")
 	}
 
-	routeOp, err := h.loadConfig(clusterName)
+	routeOp, err := h.loadConfig(ctx, clusterName)
 	if err != nil {
 		return errors.Wrapf(err, "route operator not found")
 	}
@@ -54,7 +56,7 @@ func (h *processor) Delete(clusterName string, alertValue string) error {
 		return errors.Wrapf(err, "failed to save")
 	}
 
-	err = h.saveConfig(clusterName, output.String())
+	err = h.saveConfig(ctx, clusterName, output.String())
 	if err != nil {
 		return errors.Wrapf(err, "failed to save configmap")
 	}

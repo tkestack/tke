@@ -67,7 +67,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	pvc, err := client.CoreV1().PersistentVolumeClaims(namespaceName).Get(name, *options)
+	pvc, err := client.CoreV1().PersistentVolumeClaims(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("persistentvolumeclaims/events"), name)
 	}
@@ -80,5 +80,5 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	listOptions := metav1.ListOptions{
 		FieldSelector: selector.String(),
 	}
-	return client.CoreV1().Events(namespaceName).List(listOptions)
+	return client.CoreV1().Events(namespaceName).List(ctx, listOptions)
 }

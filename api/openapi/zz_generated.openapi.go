@@ -4,7 +4,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -218,7 +218,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/api/autoscaling/v2beta2.CrossVersionObjectReference":                  schema_k8sio_api_autoscaling_v2beta2_CrossVersionObjectReference(ref),
 		"k8s.io/api/autoscaling/v2beta2.ExternalMetricSource":                         schema_k8sio_api_autoscaling_v2beta2_ExternalMetricSource(ref),
 		"k8s.io/api/autoscaling/v2beta2.ExternalMetricStatus":                         schema_k8sio_api_autoscaling_v2beta2_ExternalMetricStatus(ref),
+		"k8s.io/api/autoscaling/v2beta2.HPAScalingPolicy":                             schema_k8sio_api_autoscaling_v2beta2_HPAScalingPolicy(ref),
+		"k8s.io/api/autoscaling/v2beta2.HPAScalingRules":                              schema_k8sio_api_autoscaling_v2beta2_HPAScalingRules(ref),
 		"k8s.io/api/autoscaling/v2beta2.HorizontalPodAutoscaler":                      schema_k8sio_api_autoscaling_v2beta2_HorizontalPodAutoscaler(ref),
+		"k8s.io/api/autoscaling/v2beta2.HorizontalPodAutoscalerBehavior":              schema_k8sio_api_autoscaling_v2beta2_HorizontalPodAutoscalerBehavior(ref),
 		"k8s.io/api/autoscaling/v2beta2.HorizontalPodAutoscalerCondition":             schema_k8sio_api_autoscaling_v2beta2_HorizontalPodAutoscalerCondition(ref),
 		"k8s.io/api/autoscaling/v2beta2.HorizontalPodAutoscalerList":                  schema_k8sio_api_autoscaling_v2beta2_HorizontalPodAutoscalerList(ref),
 		"k8s.io/api/autoscaling/v2beta2.HorizontalPodAutoscalerSpec":                  schema_k8sio_api_autoscaling_v2beta2_HorizontalPodAutoscalerSpec(ref),
@@ -523,7 +526,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/api/extensions/v1beta1.ReplicaSetList":                                schema_k8sio_api_extensions_v1beta1_ReplicaSetList(ref),
 		"k8s.io/api/extensions/v1beta1.ReplicaSetSpec":                                schema_k8sio_api_extensions_v1beta1_ReplicaSetSpec(ref),
 		"k8s.io/api/extensions/v1beta1.ReplicaSetStatus":                              schema_k8sio_api_extensions_v1beta1_ReplicaSetStatus(ref),
-		"k8s.io/api/extensions/v1beta1.ReplicationControllerDummy":                    schema_k8sio_api_extensions_v1beta1_ReplicationControllerDummy(ref),
 		"k8s.io/api/extensions/v1beta1.RollbackConfig":                                schema_k8sio_api_extensions_v1beta1_RollbackConfig(ref),
 		"k8s.io/api/extensions/v1beta1.RollingUpdateDaemonSet":                        schema_k8sio_api_extensions_v1beta1_RollingUpdateDaemonSet(ref),
 		"k8s.io/api/extensions/v1beta1.RollingUpdateDeployment":                       schema_k8sio_api_extensions_v1beta1_RollingUpdateDeployment(ref),
@@ -573,6 +575,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/api/networking/v1beta1.HTTPIngressRuleValue":                          schema_k8sio_api_networking_v1beta1_HTTPIngressRuleValue(ref),
 		"k8s.io/api/networking/v1beta1.Ingress":                                       schema_k8sio_api_networking_v1beta1_Ingress(ref),
 		"k8s.io/api/networking/v1beta1.IngressBackend":                                schema_k8sio_api_networking_v1beta1_IngressBackend(ref),
+		"k8s.io/api/networking/v1beta1.IngressClass":                                  schema_k8sio_api_networking_v1beta1_IngressClass(ref),
+		"k8s.io/api/networking/v1beta1.IngressClassList":                              schema_k8sio_api_networking_v1beta1_IngressClassList(ref),
+		"k8s.io/api/networking/v1beta1.IngressClassSpec":                              schema_k8sio_api_networking_v1beta1_IngressClassSpec(ref),
 		"k8s.io/api/networking/v1beta1.IngressList":                                   schema_k8sio_api_networking_v1beta1_IngressList(ref),
 		"k8s.io/api/networking/v1beta1.IngressRule":                                   schema_k8sio_api_networking_v1beta1_IngressRule(ref),
 		"k8s.io/api/networking/v1beta1.IngressRuleValue":                              schema_k8sio_api_networking_v1beta1_IngressRuleValue(ref),
@@ -652,6 +657,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/api/settings/v1alpha1.PodPreset":                                      schema_k8sio_api_settings_v1alpha1_PodPreset(ref),
 		"k8s.io/api/settings/v1alpha1.PodPresetList":                                  schema_k8sio_api_settings_v1alpha1_PodPresetList(ref),
 		"k8s.io/api/settings/v1alpha1.PodPresetSpec":                                  schema_k8sio_api_settings_v1alpha1_PodPresetSpec(ref),
+		"k8s.io/api/storage/v1.CSIDriver":                                             schema_k8sio_api_storage_v1_CSIDriver(ref),
+		"k8s.io/api/storage/v1.CSIDriverList":                                         schema_k8sio_api_storage_v1_CSIDriverList(ref),
+		"k8s.io/api/storage/v1.CSIDriverSpec":                                         schema_k8sio_api_storage_v1_CSIDriverSpec(ref),
 		"k8s.io/api/storage/v1.CSINode":                                               schema_k8sio_api_storage_v1_CSINode(ref),
 		"k8s.io/api/storage/v1.CSINodeDriver":                                         schema_k8sio_api_storage_v1_CSINodeDriver(ref),
 		"k8s.io/api/storage/v1.CSINodeList":                                           schema_k8sio_api_storage_v1_CSINodeList(ref),
@@ -783,6 +791,14 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/auth/v1.PolicyList":                                      schema_tke_api_auth_v1_PolicyList(ref),
 		"tkestack.io/tke/api/auth/v1.PolicySpec":                                      schema_tke_api_auth_v1_PolicySpec(ref),
 		"tkestack.io/tke/api/auth/v1.PolicyStatus":                                    schema_tke_api_auth_v1_PolicyStatus(ref),
+		"tkestack.io/tke/api/auth/v1.Project":                                         schema_tke_api_auth_v1_Project(ref),
+		"tkestack.io/tke/api/auth/v1.ProjectBelongs":                                  schema_tke_api_auth_v1_ProjectBelongs(ref),
+		"tkestack.io/tke/api/auth/v1.ProjectList":                                     schema_tke_api_auth_v1_ProjectList(ref),
+		"tkestack.io/tke/api/auth/v1.ProjectPolicyBinding":                            schema_tke_api_auth_v1_ProjectPolicyBinding(ref),
+		"tkestack.io/tke/api/auth/v1.ProjectPolicyBindingList":                        schema_tke_api_auth_v1_ProjectPolicyBindingList(ref),
+		"tkestack.io/tke/api/auth/v1.ProjectPolicyBindingRequest":                     schema_tke_api_auth_v1_ProjectPolicyBindingRequest(ref),
+		"tkestack.io/tke/api/auth/v1.ProjectPolicyBindingSpec":                        schema_tke_api_auth_v1_ProjectPolicyBindingSpec(ref),
+		"tkestack.io/tke/api/auth/v1.ProjectPolicyBindingStatus":                      schema_tke_api_auth_v1_ProjectPolicyBindingStatus(ref),
 		"tkestack.io/tke/api/auth/v1.ResourceAttributes":                              schema_tke_api_auth_v1_ResourceAttributes(ref),
 		"tkestack.io/tke/api/auth/v1.Role":                                            schema_tke_api_auth_v1_Role(ref),
 		"tkestack.io/tke/api/auth/v1.RoleList":                                        schema_tke_api_auth_v1_RoleList(ref),
@@ -816,6 +832,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/business/v1.NamespaceList":                               schema_tke_api_business_v1_NamespaceList(ref),
 		"tkestack.io/tke/api/business/v1.NamespaceSpec":                               schema_tke_api_business_v1_NamespaceSpec(ref),
 		"tkestack.io/tke/api/business/v1.NamespaceStatus":                             schema_tke_api_business_v1_NamespaceStatus(ref),
+		"tkestack.io/tke/api/business/v1.NsEmigration":                                schema_tke_api_business_v1_NsEmigration(ref),
+		"tkestack.io/tke/api/business/v1.NsEmigrationList":                            schema_tke_api_business_v1_NsEmigrationList(ref),
+		"tkestack.io/tke/api/business/v1.NsEmigrationSpec":                            schema_tke_api_business_v1_NsEmigrationSpec(ref),
+		"tkestack.io/tke/api/business/v1.NsEmigrationStatus":                          schema_tke_api_business_v1_NsEmigrationStatus(ref),
 		"tkestack.io/tke/api/business/v1.Platform":                                    schema_tke_api_business_v1_Platform(ref),
 		"tkestack.io/tke/api/business/v1.PlatformList":                                schema_tke_api_business_v1_PlatformList(ref),
 		"tkestack.io/tke/api/business/v1.PlatformSpec":                                schema_tke_api_business_v1_PlatformSpec(ref),
@@ -825,6 +845,19 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/business/v1.ProjectSpec":                                 schema_tke_api_business_v1_ProjectSpec(ref),
 		"tkestack.io/tke/api/business/v1.ProjectStatus":                               schema_tke_api_business_v1_ProjectStatus(ref),
 		"tkestack.io/tke/api/business/v1.UsedQuantity":                                schema_tke_api_business_v1_UsedQuantity(ref),
+		"tkestack.io/tke/api/logagent/v1.ConfigMap":                                   schema_tke_api_logagent_v1_ConfigMap(ref),
+		"tkestack.io/tke/api/logagent/v1.ConfigMapList":                               schema_tke_api_logagent_v1_ConfigMapList(ref),
+		"tkestack.io/tke/api/logagent/v1.LogAgent":                                    schema_tke_api_logagent_v1_LogAgent(ref),
+		"tkestack.io/tke/api/logagent/v1.LogAgentList":                                schema_tke_api_logagent_v1_LogAgentList(ref),
+		"tkestack.io/tke/api/logagent/v1.LogAgentProxyOptions":                        schema_tke_api_logagent_v1_LogAgentProxyOptions(ref),
+		"tkestack.io/tke/api/logagent/v1.LogAgentSpec":                                schema_tke_api_logagent_v1_LogAgentSpec(ref),
+		"tkestack.io/tke/api/logagent/v1.LogAgentStatus":                              schema_tke_api_logagent_v1_LogAgentStatus(ref),
+		"tkestack.io/tke/api/logagent/v1.LogFileContent":                              schema_tke_api_logagent_v1_LogFileContent(ref),
+		"tkestack.io/tke/api/logagent/v1.LogFileContentSpec":                          schema_tke_api_logagent_v1_LogFileContentSpec(ref),
+		"tkestack.io/tke/api/logagent/v1.LogFileDownload":                             schema_tke_api_logagent_v1_LogFileDownload(ref),
+		"tkestack.io/tke/api/logagent/v1.LogFileDownloadSpec":                         schema_tke_api_logagent_v1_LogFileDownloadSpec(ref),
+		"tkestack.io/tke/api/logagent/v1.LogFileTree":                                 schema_tke_api_logagent_v1_LogFileTree(ref),
+		"tkestack.io/tke/api/logagent/v1.LogFileTreeSpec":                             schema_tke_api_logagent_v1_LogFileTreeSpec(ref),
 		"tkestack.io/tke/api/monitor/v1.ConfigMap":                                    schema_tke_api_monitor_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/monitor/v1.ConfigMapList":                                schema_tke_api_monitor_v1_ConfigMapList(ref),
 		"tkestack.io/tke/api/monitor/v1.Metric":                                       schema_tke_api_monitor_v1_Metric(ref),
@@ -863,6 +896,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/notify/v1.TemplateWechat":                                schema_tke_api_notify_v1_TemplateWechat(ref),
 		"tkestack.io/tke/api/platform/v1.AddonSpec":                                   schema_tke_api_platform_v1_AddonSpec(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperator":                                 schema_tke_api_platform_v1_CSIOperator(ref),
+		"tkestack.io/tke/api/platform/v1.CSIOperatorFeature":                          schema_tke_api_platform_v1_CSIOperatorFeature(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperatorList":                             schema_tke_api_platform_v1_CSIOperatorList(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperatorSpec":                             schema_tke_api_platform_v1_CSIOperatorSpec(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperatorStatus":                           schema_tke_api_platform_v1_CSIOperatorStatus(ref),
@@ -895,11 +929,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.CronHPAProxyOptions":                         schema_tke_api_platform_v1_CronHPAProxyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPASpec":                                 schema_tke_api_platform_v1_CronHPASpec(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPAStatus":                               schema_tke_api_platform_v1_CronHPAStatus(ref),
+		"tkestack.io/tke/api/platform/v1.Etcd":                                        schema_tke_api_platform_v1_Etcd(ref),
+		"tkestack.io/tke/api/platform/v1.ExternalEtcd":                                schema_tke_api_platform_v1_ExternalEtcd(ref),
 		"tkestack.io/tke/api/platform/v1.File":                                        schema_tke_api_platform_v1_File(ref),
-		"tkestack.io/tke/api/platform/v1.GPUManager":                                  schema_tke_api_platform_v1_GPUManager(ref),
-		"tkestack.io/tke/api/platform/v1.GPUManagerList":                              schema_tke_api_platform_v1_GPUManagerList(ref),
-		"tkestack.io/tke/api/platform/v1.GPUManagerSpec":                              schema_tke_api_platform_v1_GPUManagerSpec(ref),
-		"tkestack.io/tke/api/platform/v1.GPUManagerStatus":                            schema_tke_api_platform_v1_GPUManagerStatus(ref),
 		"tkestack.io/tke/api/platform/v1.HA":                                          schema_tke_api_platform_v1_HA(ref),
 		"tkestack.io/tke/api/platform/v1.Helm":                                        schema_tke_api_platform_v1_Helm(ref),
 		"tkestack.io/tke/api/platform/v1.HelmList":                                    schema_tke_api_platform_v1_HelmList(ref),
@@ -916,6 +948,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.LBCFProxyOptions":                            schema_tke_api_platform_v1_LBCFProxyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.LBCFSpec":                                    schema_tke_api_platform_v1_LBCFSpec(ref),
 		"tkestack.io/tke/api/platform/v1.LBCFStatus":                                  schema_tke_api_platform_v1_LBCFStatus(ref),
+		"tkestack.io/tke/api/platform/v1.LocalEtcd":                                   schema_tke_api_platform_v1_LocalEtcd(ref),
 		"tkestack.io/tke/api/platform/v1.LogCollector":                                schema_tke_api_platform_v1_LogCollector(ref),
 		"tkestack.io/tke/api/platform/v1.LogCollectorList":                            schema_tke_api_platform_v1_LogCollectorList(ref),
 		"tkestack.io/tke/api/platform/v1.LogCollectorProxyOptions":                    schema_tke_api_platform_v1_LogCollectorProxyOptions(ref),
@@ -9808,6 +9841,83 @@ func schema_k8sio_api_autoscaling_v2beta2_ExternalMetricStatus(ref common.Refere
 	}
 }
 
+func schema_k8sio_api_autoscaling_v2beta2_HPAScalingPolicy(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "HPAScalingPolicy is a single policy which must hold true for a specified past interval.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Type is used to specify the scaling policy.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Value contains the amount of change which is permitted by the policy. It must be greater than zero",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"periodSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PeriodSeconds specifies the window of time for which the policy should hold true. PeriodSeconds must be greater than zero and less than or equal to 1800 (30 min).",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+				Required: []string{"type", "value", "periodSeconds"},
+			},
+		},
+	}
+}
+
+func schema_k8sio_api_autoscaling_v2beta2_HPAScalingRules(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "HPAScalingRules configures the scaling behavior for one direction. These Rules are applied after calculating DesiredReplicas from metrics for the HPA. They can limit the scaling velocity by specifying scaling policies. They can prevent flapping by specifying the stabilization window, so that the number of replicas is not set instantly, instead, the safest value from the stabilization window is chosen.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"stabilizationWindowSeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "StabilizationWindowSeconds is the number of seconds for which past recommendations should be considered while scaling up or scaling down. StabilizationWindowSeconds must be greater than or equal to zero and less than or equal to 3600 (one hour). If not set, use the default values: - For scale up: 0 (i.e. no stabilization is done). - For scale down: 300 (i.e. the stabilization window is 300 seconds long).",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"selectPolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "selectPolicy is used to specify which policy should be used. If not set, the default value MaxPolicySelect is used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"policies": {
+						SchemaProps: spec.SchemaProps{
+							Description: "policies is a list of potential scaling polices which can be used during scaling. At least one policy must be specified, otherwise the HPAScalingRules will be discarded as invalid",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/autoscaling/v2beta2.HPAScalingPolicy"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/autoscaling/v2beta2.HPAScalingPolicy"},
+	}
+}
+
 func schema_k8sio_api_autoscaling_v2beta2_HorizontalPodAutoscaler(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -9852,6 +9962,33 @@ func schema_k8sio_api_autoscaling_v2beta2_HorizontalPodAutoscaler(ref common.Ref
 		},
 		Dependencies: []string{
 			"k8s.io/api/autoscaling/v2beta2.HorizontalPodAutoscalerSpec", "k8s.io/api/autoscaling/v2beta2.HorizontalPodAutoscalerStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_k8sio_api_autoscaling_v2beta2_HorizontalPodAutoscalerBehavior(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "HorizontalPodAutoscalerBehavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively).",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"scaleUp": {
+						SchemaProps: spec.SchemaProps{
+							Description: "scaleUp is scaling policy for scaling Up. If not set, the default value is the higher of:\n  * increase no more than 4 pods per 60 seconds\n  * double the number of pods per 60 seconds\nNo stabilization is used.",
+							Ref:         ref("k8s.io/api/autoscaling/v2beta2.HPAScalingRules"),
+						},
+					},
+					"scaleDown": {
+						SchemaProps: spec.SchemaProps{
+							Description: "scaleDown is scaling policy for scaling Down. If not set, the default value is to allow to scale down to minReplicas pods, with a 300 second stabilization window (i.e., the highest recommendation for the last 300sec is used).",
+							Ref:         ref("k8s.io/api/autoscaling/v2beta2.HPAScalingRules"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/autoscaling/v2beta2.HPAScalingRules"},
 	}
 }
 
@@ -9994,12 +10131,18 @@ func schema_k8sio_api_autoscaling_v2beta2_HorizontalPodAutoscalerSpec(ref common
 							},
 						},
 					},
+					"behavior": {
+						SchemaProps: spec.SchemaProps{
+							Description: "behavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively). If not set, the default HPAScalingRules for scale up and scale down are used.",
+							Ref:         ref("k8s.io/api/autoscaling/v2beta2.HorizontalPodAutoscalerBehavior"),
+						},
+					},
 				},
 				Required: []string{"scaleTargetRef", "maxReplicas"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/autoscaling/v2beta2.CrossVersionObjectReference", "k8s.io/api/autoscaling/v2beta2.MetricSpec"},
+			"k8s.io/api/autoscaling/v2beta2.CrossVersionObjectReference", "k8s.io/api/autoscaling/v2beta2.HorizontalPodAutoscalerBehavior", "k8s.io/api/autoscaling/v2beta2.MetricSpec"},
 	}
 }
 
@@ -11412,6 +11555,13 @@ func schema_k8sio_api_certificates_v1beta1_CertificateSigningRequestSpec(ref com
 							Format:      "byte",
 						},
 					},
+					"signerName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Requested signer for the request. It is a qualified name in the form: `scope-hostname.io/name`. If empty, it will be defaulted:\n 1. If it's a kubelet client certificate, it is assigned\n    \"kubernetes.io/kube-apiserver-client-kubelet\".\n 2. If it's a kubelet serving certificate, it is assigned\n    \"kubernetes.io/kubelet-serving\".\n 3. Otherwise, it is assigned \"kubernetes.io/legacy-unknown\".\nDistribution of trust for signers happens out of band. You can select on this field using `spec.signerName`.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"usages": {
 						SchemaProps: spec.SchemaProps{
 							Description: "allowedUsages specifies a set of usage contexts the key will be valid for. See: https://tools.ietf.org/html/rfc5280#section-4.2.1.3\n     https://tools.ietf.org/html/rfc5280#section-4.2.1.12",
@@ -12687,6 +12837,13 @@ func schema_k8sio_api_core_v1_ConfigMap(ref common.ReferenceCallback) common.Ope
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
+					"immutable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil. This is an alpha field enabled by ImmutableEphemeralVolumes feature gate.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"data": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
@@ -13121,7 +13278,7 @@ func schema_k8sio_api_core_v1_Container(ref common.ReferenceCallback) common.Ope
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "volumeDevices is the list of block devices to be used by the container. This is a beta feature.",
+							Description: "volumeDevices is the list of block devices to be used by the container.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -13146,7 +13303,7 @@ func schema_k8sio_api_core_v1_Container(ref common.ReferenceCallback) common.Ope
 					},
 					"startupProbe": {
 						SchemaProps: spec.SchemaProps{
-							Description: "StartupProbe indicates that the Pod has successfully initialized. If specified, no other probes are executed until this completes successfully. If this probe fails, the Pod will be restarted, just as if the livenessProbe failed. This can be used to provide different probe parameters at the beginning of a Pod's lifecycle, when it might take a long time to load data or warm a cache, than during steady-state operation. This cannot be updated. This is an alpha feature enabled by the StartupProbe feature flag. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+							Description: "StartupProbe indicates that the Pod has successfully initialized. If specified, no other probes are executed until this completes successfully. If this probe fails, the Pod will be restarted, just as if the livenessProbe failed. This can be used to provide different probe parameters at the beginning of a Pod's lifecycle, when it might take a long time to load data or warm a cache, than during steady-state operation. This cannot be updated. This is a beta feature enabled by the StartupProbe feature flag. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
 							Ref:         ref("k8s.io/api/core/v1.Probe"),
 						},
 					},
@@ -13743,6 +13900,13 @@ func schema_k8sio_api_core_v1_EndpointPort(ref common.ReferenceCallback) common.
 							Format:      "",
 						},
 					},
+					"appProtocol": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The application protocol for this port. This field follows standard Kubernetes label syntax. Un-prefixed names are reserved for IANA standard service names (as per RFC-6335 and http://www.iana.org/assignments/service-names). Non-standard protocols should use prefixed names such as mycompany.com/my-custom-protocol. Field can be enabled with ServiceAppProtocol feature gate.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"port"},
 			},
@@ -14144,7 +14308,7 @@ func schema_k8sio_api_core_v1_EphemeralContainer(ref common.ReferenceCallback) c
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "volumeDevices is the list of block devices to be used by the container. This is a beta feature.",
+							Description: "volumeDevices is the list of block devices to be used by the container.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -14377,7 +14541,7 @@ func schema_k8sio_api_core_v1_EphemeralContainerCommon(ref common.ReferenceCallb
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "volumeDevices is the list of block devices to be used by the container. This is a beta feature.",
+							Description: "volumeDevices is the list of block devices to be used by the container.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -15712,6 +15876,7 @@ func schema_k8sio_api_core_v1_LimitRangeItem(ref common.ReferenceCallback) commo
 						},
 					},
 				},
+				Required: []string{"type"},
 			},
 		},
 		Dependencies: []string{
@@ -17314,14 +17479,14 @@ func schema_k8sio_api_core_v1_PersistentVolumeClaimSpec(ref common.ReferenceCall
 					},
 					"volumeMode": {
 						SchemaProps: spec.SchemaProps{
-							Description: "volumeMode defines what type of volume is required by the claim. Value of Filesystem is implied when not included in claim spec. This is a beta feature.",
+							Description: "volumeMode defines what type of volume is required by the claim. Value of Filesystem is implied when not included in claim spec.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"dataSource": {
 						SchemaProps: spec.SchemaProps{
-							Description: "This field requires the VolumeSnapshotDataSource alpha feature gate to be enabled and currently VolumeSnapshot is the only supported data source. If the provisioner can support VolumeSnapshot data source, it will create a new volume and data will be restored to the volume at the same time. If the provisioner does not support VolumeSnapshot data source, volume will not be created and the failure will be reported as an event. In the future, we plan to support more data source types and the behavior of the provisioner may change.",
+							Description: "This field can be used to specify either: * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot - Beta) * An existing PVC (PersistentVolumeClaim) * An existing custom resource/object that implements data population (Alpha) In order to use VolumeSnapshot object types, the appropriate feature gate must be enabled (VolumeSnapshotDataSource or AnyVolumeDataSource) If the provisioner or an external controller can support the specified data source, it will create a new volume based on the contents of the specified data source. If the specified data source is not supported, the volume will not be created and the failure will be reported as an event. In the future, we plan to support more data source types and the behavior of the provisioner may change.",
 							Ref:         ref("k8s.io/api/core/v1.TypedLocalObjectReference"),
 						},
 					},
@@ -17829,7 +17994,7 @@ func schema_k8sio_api_core_v1_PersistentVolumeSpec(ref common.ReferenceCallback)
 					},
 					"volumeMode": {
 						SchemaProps: spec.SchemaProps{
-							Description: "volumeMode defines if a volume is intended to be used with a formatted filesystem or to remain in raw block state. Value of Filesystem is implied when not included in spec. This is a beta feature.",
+							Description: "volumeMode defines if a volume is intended to be used with a formatted filesystem or to remain in raw block state. Value of Filesystem is implied when not included in spec.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -18689,6 +18854,13 @@ func schema_k8sio_api_core_v1_PodSecurityContext(ref common.ReferenceCallback) c
 							},
 						},
 					},
+					"fsGroupChangePolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "fsGroupChangePolicy defines behavior of changing ownership and permission of the volume before being exposed inside Pod. This field will only apply to volume types which support fsGroup based ownership(and permissions). It will have no effect on ephemeral volume types such as: secret, configmaps and emptydir. Valid values are \"OnRootMismatch\" and \"Always\". If not specified defaults to \"Always\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -19065,7 +19237,7 @@ func schema_k8sio_api_core_v1_PodSpec(ref common.ReferenceCallback) common.OpenA
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "TopologySpreadConstraints describes how a group of pods ought to spread across topology domains. Scheduler will schedule pods in a way which abides by the constraints. This field is alpha-level and is only honored by clusters that enables the EvenPodsSpread feature. All topologySpreadConstraints are ANDed.",
+							Description: "TopologySpreadConstraints describes how a group of pods ought to spread across topology domains. Scheduler will schedule pods in a way which abides by the constraints. This field is only honored by clusters that enable the EvenPodsSpread feature. All topologySpreadConstraints are ANDed.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -20703,6 +20875,13 @@ func schema_k8sio_api_core_v1_Secret(ref common.ReferenceCallback) common.OpenAP
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
+					"immutable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Immutable, if set to true, ensures that data stored in the Secret cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil. This is an alpha field enabled by ImmutableEphemeralVolumes feature gate.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"data": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Data contains the secret data. Each key must consist of alphanumeric characters, '-', '_' or '.'. The serialized form of the secret data is a base64 encoded string, representing the arbitrary (possibly non-string) data value here. Described in https://tools.ietf.org/html/rfc4648#section-4",
@@ -21369,6 +21548,13 @@ func schema_k8sio_api_core_v1_ServicePort(ref common.ReferenceCallback) common.O
 							Format:      "",
 						},
 					},
+					"appProtocol": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The application protocol for this port. This field follows standard Kubernetes label syntax. Un-prefixed names are reserved for IANA standard service names (as per RFC-6335 and http://www.iana.org/assignments/service-names). Non-standard protocols should use prefixed names such as mycompany.com/my-custom-protocol. Field can be enabled with ServiceAppProtocol feature gate.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"port": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The port that will be exposed by this service.",
@@ -21810,7 +21996,7 @@ func schema_k8sio_api_core_v1_Taint(ref common.ReferenceCallback) common.OpenAPI
 					},
 					"value": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Required. The taint value corresponding to the taint key.",
+							Description: "The taint value corresponding to the taint key.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -22624,21 +22810,21 @@ func schema_k8sio_api_core_v1_WindowsSecurityContextOptions(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"gmsaCredentialSpecName": {
 						SchemaProps: spec.SchemaProps{
-							Description: "GMSACredentialSpecName is the name of the GMSA credential spec to use. This field is alpha-level and is only honored by servers that enable the WindowsGMSA feature flag.",
+							Description: "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"gmsaCredentialSpec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field. This field is alpha-level and is only honored by servers that enable the WindowsGMSA feature flag.",
+							Description: "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"runAsUserName": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. This field is beta-level and may be disabled with the WindowsRunAsUserName feature flag.",
+							Description: "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -23031,7 +23217,7 @@ func schema_k8sio_api_discovery_v1beta1_EndpointPort(ref common.ReferenceCallbac
 					},
 					"appProtocol": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The application protocol for this port. This field follows standard Kubernetes label syntax. Un-prefixed names are reserved for IANA standard service names (as per RFC-6335 and http://www.iana.org/assignments/service-names). Non-standard protocols should use prefixed names. Default is empty string.",
+							Description: "The application protocol for this port. This field follows standard Kubernetes label syntax. Un-prefixed names are reserved for IANA standard service names (as per RFC-6335 and http://www.iana.org/assignments/service-names). Non-standard protocols should use prefixed names such as mycompany.com/my-custom-protocol.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -24221,12 +24407,19 @@ func schema_k8sio_api_extensions_v1beta1_HTTPIngressPath(ref common.ReferenceCal
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "HTTPIngressPath associates a path regex with a backend. Incoming urls matching the path are forwarded to the backend.",
+				Description: "HTTPIngressPath associates a path with a backend. Incoming urls matching the path are forwarded to the backend.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Path is an extended POSIX regex as defined by IEEE Std 1003.1, (i.e this follows the egrep/unix syntax, not the perl syntax) matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/'. If unspecified, the path defaults to a catch all sending traffic to the backend.",
+							Description: "Path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/'. When unspecified, all paths from incoming requests are matched.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pathType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PathType determines the interpretation of the Path matching. PathType can be one of the following values: * Exact: Matches the URL path exactly. * Prefix: Matches based on a URL path prefix split by '/'. Matching is\n  done on a path element by element basis. A path element refers is the\n  list of labels in the path split by the '/' separator. A request is a\n  match for path p if every p is an element-wise prefix of p of the\n  request path. Note that if the last element of the path is a substring\n  of the last element in request path, it is not a match (e.g. /foo/bar\n  matches /foo/bar/baz, but does not match /foo/barbaz).\n* ImplementationSpecific: Interpretation of the Path matching is up to\n  the IngressClass. Implementations can treat this as a separate PathType\n  or treat it identically to Prefix or Exact path types.\nImplementations are required to support all path types. Defaults to ImplementationSpecific.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -24335,19 +24528,19 @@ func schema_k8sio_api_extensions_v1beta1_IPBlock(ref common.ReferenceCallback) c
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "DEPRECATED 1.9 - This group version of IPBlock is deprecated by networking/v1/IPBlock. IPBlock describes a particular CIDR (Ex. \"192.168.1.1/24\") that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The except entry describes CIDRs that should not be included within this rule.",
+				Description: "DEPRECATED 1.9 - This group version of IPBlock is deprecated by networking/v1/IPBlock. IPBlock describes a particular CIDR (Ex. \"192.168.1.1/24\",\"2001:db9::/64\") that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The except entry describes CIDRs that should not be included within this rule.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"cidr": {
 						SchemaProps: spec.SchemaProps{
-							Description: "CIDR is a string representing the IP Block Valid examples are \"192.168.1.1/24\"",
+							Description: "CIDR is a string representing the IP Block Valid examples are \"192.168.1.1/24\" or \"2001:db9::/64\"",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"except": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Except is a slice of CIDRs that should not be included within an IP Block Valid examples are \"192.168.1.1/24\" Except values will be rejected if they are outside the CIDR range",
+							Description: "Except is a slice of CIDRs that should not be included within an IP Block Valid examples are \"192.168.1.1/24\" or \"2001:db9::/64\" Except values will be rejected if they are outside the CIDR range",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -24433,12 +24626,17 @@ func schema_k8sio_api_extensions_v1beta1_IngressBackend(ref common.ReferenceCall
 							Ref:         ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
 						},
 					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, serviceName and servicePort must not be specified.",
+							Ref:         ref("k8s.io/api/core/v1.TypedLocalObjectReference"),
+						},
+					},
 				},
-				Required: []string{"serviceName", "servicePort"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/util/intstr.IntOrString"},
+			"k8s.io/api/core/v1.TypedLocalObjectReference", "k8s.io/apimachinery/pkg/util/intstr.IntOrString"},
 	}
 }
 
@@ -24500,7 +24698,7 @@ func schema_k8sio_api_extensions_v1beta1_IngressRule(ref common.ReferenceCallbac
 				Properties: map[string]spec.Schema{
 					"host": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in the RFC: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to the\n\t  IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.",
+							Description: "Host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to\n   the IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.\n\nHost can be \"precise\" which is a domain name without the terminating dot of a network host (e.g. \"foo.bar.com\") or \"wildcard\", which is a domain name prefixed with a single wildcard label (e.g. \"*.foo.com\"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == \"*\"). Requests will be matched against the Host field in the following way: 1. If Host is precise, the request matches this rule if the http host header is equal to Host. 2. If Host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -24545,6 +24743,13 @@ func schema_k8sio_api_extensions_v1beta1_IngressSpec(ref common.ReferenceCallbac
 				Description: "IngressSpec describes the Ingress the user wishes to exist.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"ingressClassName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "IngressClassName is the name of the IngressClass cluster resource. The associated IngressClass defines which controller will implement the resource. This replaces the deprecated `kubernetes.io/ingress.class` annotation. For backwards compatibility, when that annotation is set, it must be given precedence over this field. The controller may emit a warning if the field and annotation have different values. Implementations of this API should ignore Ingresses without a class specified. An IngressClass resource may be marked as default, which can be used to set a default value for this field. For more information, refer to the IngressClass documentation.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"backend": {
 						SchemaProps: spec.SchemaProps{
 							Description: "A default backend capable of servicing requests that don't match any rule. At least one of 'backend' or 'rules' must be specified. This field is optional to allow the loadbalancer controller or defaulting logic to specify a global default.",
@@ -25533,33 +25738,6 @@ func schema_k8sio_api_extensions_v1beta1_ReplicaSetStatus(ref common.ReferenceCa
 	}
 }
 
-func schema_k8sio_api_extensions_v1beta1_ReplicationControllerDummy(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Dummy definition",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 func schema_k8sio_api_extensions_v1beta1_RollbackConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -26056,7 +26234,7 @@ func schema_k8sio_api_flowcontrol_v1alpha1_FlowSchemaList(ref common.ReferenceCa
 					"items": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -26095,7 +26273,7 @@ func schema_k8sio_api_flowcontrol_v1alpha1_FlowSchemaSpec(ref common.ReferenceCa
 					},
 					"matchingPrecedence": {
 						SchemaProps: spec.SchemaProps{
-							Description: "`matchingPrecedence` is used to choose among the FlowSchemas that match a given request. The chosen FlowSchema is among those with the numerically lowest (which we take to be logically highest) MatchingPrecedence.  Each MatchingPrecedence value must be non-negative. Note that if the precedence is not specified or zero, it will be set to 1000 as default.",
+							Description: "`matchingPrecedence` is used to choose among the FlowSchemas that match a given request. The chosen FlowSchema is among those with the numerically lowest (which we take to be logically highest) MatchingPrecedence.  Each MatchingPrecedence value must be ranged in [1,10000]. Note that if the precedence is not specified, it will be set to 1000 as default.",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
@@ -26109,7 +26287,7 @@ func schema_k8sio_api_flowcontrol_v1alpha1_FlowSchemaSpec(ref common.ReferenceCa
 					"rules": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -26321,7 +26499,7 @@ func schema_k8sio_api_flowcontrol_v1alpha1_PolicyRulesWithSubjects(ref common.Re
 					"subjects": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -26339,7 +26517,7 @@ func schema_k8sio_api_flowcontrol_v1alpha1_PolicyRulesWithSubjects(ref common.Re
 					"resourceRules": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -26357,7 +26535,7 @@ func schema_k8sio_api_flowcontrol_v1alpha1_PolicyRulesWithSubjects(ref common.Re
 					"nonResourceRules": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -26507,7 +26685,7 @@ func schema_k8sio_api_flowcontrol_v1alpha1_PriorityLevelConfigurationList(ref co
 					"items": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "set",
+								"x-kubernetes-list-type": "atomic",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
@@ -27025,19 +27203,19 @@ func schema_k8sio_api_networking_v1_IPBlock(ref common.ReferenceCallback) common
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "IPBlock describes a particular CIDR (Ex. \"192.168.1.1/24\") that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The except entry describes CIDRs that should not be included within this rule.",
+				Description: "IPBlock describes a particular CIDR (Ex. \"192.168.1.1/24\",\"2001:db9::/64\") that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The except entry describes CIDRs that should not be included within this rule.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"cidr": {
 						SchemaProps: spec.SchemaProps{
-							Description: "CIDR is a string representing the IP Block Valid examples are \"192.168.1.1/24\"",
+							Description: "CIDR is a string representing the IP Block Valid examples are \"192.168.1.1/24\" or \"2001:db9::/64\"",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"except": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Except is a slice of CIDRs that should not be included within an IP Block Valid examples are \"192.168.1.1/24\" Except values will be rejected if they are outside the CIDR range",
+							Description: "Except is a slice of CIDRs that should not be included within an IP Block Valid examples are \"192.168.1.1/24\" or \"2001:db9::/64\" Except values will be rejected if they are outside the CIDR range",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -27355,12 +27533,19 @@ func schema_k8sio_api_networking_v1beta1_HTTPIngressPath(ref common.ReferenceCal
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "HTTPIngressPath associates a path regex with a backend. Incoming urls matching the path are forwarded to the backend.",
+				Description: "HTTPIngressPath associates a path with a backend. Incoming urls matching the path are forwarded to the backend.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Path is an extended POSIX regex as defined by IEEE Std 1003.1, (i.e this follows the egrep/unix syntax, not the perl syntax) matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/'. If unspecified, the path defaults to a catch all sending traffic to the backend.",
+							Description: "Path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/'. When unspecified, all paths from incoming requests are matched.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"pathType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PathType determines the interpretation of the Path matching. PathType can be one of the following values: * Exact: Matches the URL path exactly. * Prefix: Matches based on a URL path prefix split by '/'. Matching is\n  done on a path element by element basis. A path element refers is the\n  list of labels in the path split by the '/' separator. A request is a\n  match for path p if every p is an element-wise prefix of p of the\n  request path. Note that if the last element of the path is a substring\n  of the last element in request path, it is not a match (e.g. /foo/bar\n  matches /foo/bar/baz, but does not match /foo/barbaz).\n* ImplementationSpecific: Interpretation of the Path matching is up to\n  the IngressClass. Implementations can treat this as a separate PathType\n  or treat it identically to Prefix or Exact path types.\nImplementations are required to support all path types. Defaults to ImplementationSpecific.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -27476,12 +27661,140 @@ func schema_k8sio_api_networking_v1beta1_IngressBackend(ref common.ReferenceCall
 							Ref:         ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
 						},
 					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, serviceName and servicePort must not be specified.",
+							Ref:         ref("k8s.io/api/core/v1.TypedLocalObjectReference"),
+						},
+					},
 				},
-				Required: []string{"serviceName", "servicePort"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/util/intstr.IntOrString"},
+			"k8s.io/api/core/v1.TypedLocalObjectReference", "k8s.io/apimachinery/pkg/util/intstr.IntOrString"},
+	}
+}
+
+func schema_k8sio_api_networking_v1beta1_IngressClass(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "IngressClass represents the class of the Ingress, referenced by the Ingress Spec. The `ingressclass.kubernetes.io/is-default-class` annotation can be used to indicate that an IngressClass should be considered default. When a single IngressClass resource has this annotation set to true, new Ingress resources without a class specified will be assigned this default class.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the desired state of the IngressClass. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
+							Ref:         ref("k8s.io/api/networking/v1beta1.IngressClassSpec"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/networking/v1beta1.IngressClassSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_k8sio_api_networking_v1beta1_IngressClassList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "IngressClassList is a collection of IngressClasses.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Standard list metadata.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Items is the list of IngressClasses.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/networking/v1beta1.IngressClass"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/networking/v1beta1.IngressClass", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_k8sio_api_networking_v1beta1_IngressClassSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "IngressClassSpec provides information about the class of an Ingress.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"controller": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Controller refers to the name of the controller that should handle this class. This allows for different \"flavors\" that are controlled by the same controller. For example, you may have different Parameters for the same implementing controller. This should be specified as a domain-prefixed path no more than 250 characters in length, e.g. \"acme.io/ingress-controller\". This field is immutable.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"parameters": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Parameters is a link to a custom resource containing additional configuration for the controller. This is optional if the controller does not require extra parameters.",
+							Ref:         ref("k8s.io/api/core/v1.TypedLocalObjectReference"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.TypedLocalObjectReference"},
 	}
 }
 
@@ -27543,7 +27856,7 @@ func schema_k8sio_api_networking_v1beta1_IngressRule(ref common.ReferenceCallbac
 				Properties: map[string]spec.Schema{
 					"host": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in the RFC: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to the\n\t  IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.",
+							Description: "Host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to\n   the IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.\n\nHost can be \"precise\" which is a domain name without the terminating dot of a network host (e.g. \"foo.bar.com\") or \"wildcard\", which is a domain name prefixed with a single wildcard label (e.g. \"*.foo.com\"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == \"*\"). Requests will be matched against the Host field in the following way: 1. If Host is precise, the request matches this rule if the http host header is equal to Host. 2. If Host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -27588,6 +27901,13 @@ func schema_k8sio_api_networking_v1beta1_IngressSpec(ref common.ReferenceCallbac
 				Description: "IngressSpec describes the Ingress the user wishes to exist.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"ingressClassName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "IngressClassName is the name of the IngressClass cluster resource. The associated IngressClass defines which controller will implement the resource. This replaces the deprecated `kubernetes.io/ingress.class` annotation. For backwards compatibility, when that annotation is set, it must be given precedence over this field. The controller may emit a warning if the field and annotation have different values. Implementations of this API should ignore Ingresses without a class specified. An IngressClass resource may be marked as default, which can be used to set a default value for this field. For more information, refer to the IngressClass documentation.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"backend": {
 						SchemaProps: spec.SchemaProps{
 							Description: "A default backend capable of servicing requests that don't match any rule. At least one of 'backend' or 'rules' must be specified. This field is optional to allow the loadbalancer controller or defaulting logic to specify a global default.",
@@ -27672,7 +27992,7 @@ func schema_k8sio_api_networking_v1beta1_IngressTLS(ref common.ReferenceCallback
 					},
 					"secretName": {
 						SchemaProps: spec.SchemaProps{
-							Description: "SecretName is the name of the secret used to terminate SSL traffic on 443. Field is left optional to allow SSL routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the Host header is used for routing.",
+							Description: "SecretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the Host header is used for routing.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -28403,7 +28723,7 @@ func schema_k8sio_api_policy_v1beta1_PodDisruptionBudgetStatus(ref common.Refere
 				Properties: map[string]spec.Schema{
 					"observedGeneration": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Most recent generation observed when updating this PDB status. PodDisruptionsAllowed and other status information is valid only if observedGeneration equals to PDB's object generation.",
+							Description: "Most recent generation observed when updating this PDB status. DisruptionsAllowed and other status information is valid only if observedGeneration equals to PDB's object generation.",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
@@ -29868,7 +30188,7 @@ func schema_k8sio_api_rbac_v1alpha1_PolicyRule(ref common.ReferenceCallback) com
 					},
 					"nonResourceURLs": {
 						SchemaProps: spec.SchemaProps{
-							Description: "NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path This name is intentionally different than the internal type so that the DefaultConvert works nicely and because the ordering may be different. Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding. Rules can either apply to API resources (such as \"pods\" or \"secrets\") or non-resource URL paths (such as \"/api\"),  but not both.",
+							Description: "NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding. Rules can either apply to API resources (such as \"pods\" or \"secrets\") or non-resource URL paths (such as \"/api\"),  but not both.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -31259,6 +31579,143 @@ func schema_k8sio_api_settings_v1alpha1_PodPresetSpec(ref common.ReferenceCallba
 		},
 		Dependencies: []string{
 			"k8s.io/api/core/v1.EnvFromSource", "k8s.io/api/core/v1.EnvVar", "k8s.io/api/core/v1.Volume", "k8s.io/api/core/v1.VolumeMount", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"},
+	}
+}
+
+func schema_k8sio_api_storage_v1_CSIDriver(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CSIDriver captures information about a Container Storage Interface (CSI) volume driver deployed on the cluster. Kubernetes attach detach controller uses this object to determine whether attach is required. Kubelet uses this object to determine whether pod information needs to be passed on mount. CSIDriver objects are non-namespaced.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Standard object metadata. metadata.Name indicates the name of the CSI driver that this object refers to; it MUST be the same name returned by the CSI GetPluginName() call for that driver. The driver name must be 63 characters or less, beginning and ending with an alphanumeric character ([a-z0-9A-Z]) with dashes (-), dots (.), and alphanumerics between. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Specification of the CSI Driver.",
+							Ref:         ref("k8s.io/api/storage/v1.CSIDriverSpec"),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/storage/v1.CSIDriverSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_k8sio_api_storage_v1_CSIDriverList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CSIDriverList is a collection of CSIDriver objects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Standard list metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "items is the list of CSIDriver",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/storage/v1.CSIDriver"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/storage/v1.CSIDriver", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_k8sio_api_storage_v1_CSIDriverSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CSIDriverSpec is the specification of a CSIDriver.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"attachRequired": {
+						SchemaProps: spec.SchemaProps{
+							Description: "attachRequired indicates this CSI volume driver requires an attach operation (because it implements the CSI ControllerPublishVolume() method), and that the Kubernetes attach detach controller should call the attach volume interface which checks the volumeattachment status and waits until the volume is attached before proceeding to mounting. The CSI external-attacher coordinates with CSI volume driver and updates the volumeattachment status when the attach operation is complete. If the CSIDriverRegistry feature gate is enabled and the value is specified to false, the attach operation will be skipped. Otherwise the attach operation will be called.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"podInfoOnMount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If set to true, podInfoOnMount indicates this CSI volume driver requires additional pod information (like podName, podUID, etc.) during mount operations. If set to false, pod information will not be passed on mount. Default is false. The CSI driver specifies podInfoOnMount as part of driver deployment. If true, Kubelet will pass pod information as VolumeContext in the CSI NodePublishVolume() calls. The CSI driver is responsible for parsing and validating the information passed in as VolumeContext. The following VolumeConext will be passed if podInfoOnMount is set to true. This list might grow, but the prefix will be used. \"csi.storage.k8s.io/pod.name\": pod.Name \"csi.storage.k8s.io/pod.namespace\": pod.Namespace \"csi.storage.k8s.io/pod.uid\": string(pod.UID) \"csi.storage.k8s.io/ephemeral\": \"true\" iff the volume is an ephemeral inline volume\n                                defined by a CSIVolumeSource, otherwise \"false\"\n\n\"csi.storage.k8s.io/ephemeral\" is a new feature in Kubernetes 1.16. It is only required for drivers which support both the \"Persistent\" and \"Ephemeral\" VolumeLifecycleMode. Other drivers can leave pod info disabled and/or ignore this field. As Kubernetes 1.15 doesn't support this field, drivers can only support one mode when deployed on such a cluster and the deployment determines which mode that is, for example via a command line parameter of the driver.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"volumeLifecycleModes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "volumeLifecycleModes defines what kind of volumes this CSI volume driver supports. The default if the list is empty is \"Persistent\", which is the usage defined by the CSI specification and implemented in Kubernetes via the usual PV/PVC mechanism. The other mode is \"Ephemeral\". In this mode, volumes are defined inline inside the pod spec with CSIVolumeSource and their lifecycle is tied to the lifecycle of that pod. A driver has to be aware of this because it is only going to get a NodePublishVolume call for such a volume. For more information about implementing this mode, see https://kubernetes-csi.github.io/docs/ephemeral-local-volumes.html A driver can support one or more of these modes and more modes may be added in the future. This field is beta.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -36178,8 +36635,22 @@ func schema_tke_api_auth_v1_GroupSpec(ref common.ReferenceCallback) common.OpenA
 							Format: "",
 						},
 					},
+					"extra": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"id", "displayName", "tenantID", "description"},
+				Required: []string{"id", "displayName", "tenantID", "description", "extra"},
 			},
 		},
 	}
@@ -36488,8 +36959,22 @@ func schema_tke_api_auth_v1_LocalGroupSpec(ref common.ReferenceCallback) common.
 							Format: "",
 						},
 					},
+					"extra": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"displayName", "tenantID", "username", "description"},
+				Required: []string{"displayName", "tenantID", "username", "description", "extra"},
 			},
 		},
 	}
@@ -36732,7 +37217,7 @@ func schema_tke_api_auth_v1_LocalIdentityStatus(ref common.ReferenceCallback) co
 							Format: "",
 						},
 					},
-					"LastUpdateTime": {
+					"lastUpdateTime": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The last time the local identity was updated.",
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
@@ -36990,6 +37475,12 @@ func schema_tke_api_auth_v1_PolicySpec(ref common.ReferenceCallback) common.Open
 							Format: "",
 						},
 					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"username": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -37014,7 +37505,7 @@ func schema_tke_api_auth_v1_PolicySpec(ref common.ReferenceCallback) common.Open
 						},
 					},
 				},
-				Required: []string{"displayName", "tenantID", "category", "type", "username", "statement"},
+				Required: []string{"displayName", "tenantID", "category", "type", "scope", "username", "statement"},
 			},
 		},
 		Dependencies: []string{
@@ -37066,6 +37557,458 @@ func schema_tke_api_auth_v1_PolicyStatus(ref common.ReferenceCallback) common.Op
 		},
 		Dependencies: []string{
 			"tkestack.io/tke/api/auth/v1.Subject"},
+	}
+}
+
+func schema_tke_api_auth_v1_Project(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Project contains members of projects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"tenantID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"members": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"groups": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"tenantID", "members", "groups"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_tke_api_auth_v1_ProjectBelongs(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ProjectBelongs contains projects of user belongs.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tenantID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"managedProjects": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"string"},
+													Format: "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"memberdProjects": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:   []string{"string"},
+													Format: "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"tenantID", "managedProjects", "memberdProjects"},
+			},
+		},
+	}
+}
+
+func schema_tke_api_auth_v1_ProjectList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ProjectList is the whole list of all projects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of projects.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Project"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/auth/v1.Project"},
+	}
+}
+
+func schema_tke_api_auth_v1_ProjectPolicyBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ProjectPolicyBinding is a collection of subjects bond to policies in a project scope.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/auth/v1.ProjectPolicyBindingSpec"),
+						},
+					},
+					"Status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/auth/v1.ProjectPolicyBindingStatus"),
+						},
+					},
+				},
+				Required: []string{"spec", "Status"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/auth/v1.ProjectPolicyBindingSpec", "tkestack.io/tke/api/auth/v1.ProjectPolicyBindingStatus"},
+	}
+}
+
+func schema_tke_api_auth_v1_ProjectPolicyBindingList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ProjectPolicyBindingList is the whole list of all ProjectPolicyBindings.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of policies.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.ProjectPolicyBinding"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/auth/v1.ProjectPolicyBinding"},
+	}
+}
+
+func schema_tke_api_auth_v1_ProjectPolicyBindingRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ProjectPolicyBindingRequest references the request to bind or unbind policies to the role.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"tenantID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"policies": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Policies holds the policies will bind to the subjects.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"users": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Subject"),
+									},
+								},
+							},
+						},
+					},
+					"groups": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Subject"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"users", "groups"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/auth/v1.Subject"},
+	}
+}
+
+func schema_tke_api_auth_v1_ProjectPolicyBindingSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ProjectPolicyBindingSpec defines the desired identities of ProjectPolicyBindingSpec document in this set.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"finalizers": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec defines the desired identities of role document in this set.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"tenantID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"projectID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"policyID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"users": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Subject"),
+									},
+								},
+							},
+						},
+					},
+					"groups": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/auth/v1.Subject"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"tenantID", "projectID", "policyID", "users", "groups"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/auth/v1.Subject"},
+	}
+}
+
+func schema_tke_api_auth_v1_ProjectPolicyBindingStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ProjectPolicyBindingStatus represents information about the status of a ProjectPolicyBinding.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"phase"},
+			},
+		},
 	}
 }
 
@@ -37256,6 +38199,12 @@ func schema_tke_api_auth_v1_RoleSpec(ref common.ReferenceCallback) common.OpenAP
 							Format: "",
 						},
 					},
+					"projectID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"username": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Username is Creator",
@@ -37283,7 +38232,7 @@ func schema_tke_api_auth_v1_RoleSpec(ref common.ReferenceCallback) common.OpenAP
 						},
 					},
 				},
-				Required: []string{"displayName", "tenantID", "username", "description", "policies"},
+				Required: []string{"displayName", "tenantID", "projectID", "username", "description", "policies"},
 			},
 		},
 	}
@@ -37645,7 +38594,7 @@ func schema_tke_api_auth_v1_SubjectAccessReviewSpec(ref common.ReferenceCallback
 							Format:      "",
 						},
 					},
-					"groups": {
+					"group": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Groups is the groups you're testing for.",
 							Type:        []string{"array"},
@@ -38458,10 +39407,28 @@ func schema_tke_api_business_v1_NamespaceCert(ref common.ReferenceCallback) comm
 				Description: "NamespaceCert represents a x509 certificate of a namespace in project.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"pem": {
+					"certPem": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "byte",
+						},
+					},
+					"keyPem": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+					"caCertPem": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+					"apiServer": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
@@ -38585,6 +39552,12 @@ func schema_tke_api_business_v1_NamespaceSpec(ref common.ReferenceCallback) comm
 							Format: "",
 						},
 					},
+					"clusterType": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"clusterVersion": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -38618,7 +39591,7 @@ func schema_tke_api_business_v1_NamespaceSpec(ref common.ReferenceCallback) comm
 						},
 					},
 				},
-				Required: []string{"tenantID", "clusterName", "clusterVersion", "clusterDisplayName", "namespace"},
+				Required: []string{"tenantID", "clusterName", "clusterType", "clusterVersion", "clusterDisplayName", "namespace"},
 			},
 		},
 		Dependencies: []string{
@@ -38702,6 +39675,178 @@ func schema_tke_api_business_v1_NamespaceStatus(ref common.ReferenceCallback) co
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/api/resource.Quantity", "k8s.io/apimachinery/pkg/apis/meta/v1.Time", "tkestack.io/tke/api/business/v1.NamespaceCert"},
+	}
+}
+
+func schema_tke_api_business_v1_NsEmigration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NsEmigration is an namespace emigration.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec defines the desired identities of emigrations in this set.",
+							Ref:         ref("tkestack.io/tke/api/business/v1.NsEmigrationSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/business/v1.NsEmigrationStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/business/v1.NsEmigrationSpec", "tkestack.io/tke/api/business/v1.NsEmigrationStatus"},
+	}
+}
+
+func schema_tke_api_business_v1_NsEmigrationList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NsEmigrationList is the whole list of all namespace emigrations which owned by a tenant.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of namespace emigrations",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/business/v1.NsEmigration"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/business/v1.NsEmigration"},
+	}
+}
+
+func schema_tke_api_business_v1_NsEmigrationSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NsEmigrationSpec represents a namespace emigration.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tenantID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"nsShowName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"destination": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"tenantID", "namespace", "nsShowName", "destination"},
+			},
+		},
+	}
+}
+
+func schema_tke_api_business_v1_NsEmigrationStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NsEmigrationStatus represents information about the status of a namespace emigration.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"lastTransitionTime": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The last time the condition transitioned from one status to another.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The reason for the condition's last transition.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A human readable message indicating details about the transition.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 
@@ -39131,11 +40276,31 @@ func schema_tke_api_business_v1_ProjectStatus(ref common.ReferenceCallback) comm
 							Format: "",
 						},
 					},
+					"lastTransitionTime": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The last time the condition transitioned from one status to another.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The reason for the condition's last transition.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A human readable message indicating details about the transition.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/business/v1.HardQuantity", "tkestack.io/tke/api/business/v1.UsedQuantity"},
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Time", "tkestack.io/tke/api/business/v1.HardQuantity", "tkestack.io/tke/api/business/v1.UsedQuantity"},
 	}
 }
 
@@ -39164,6 +40329,579 @@ func schema_tke_api_business_v1_UsedQuantity(ref common.ReferenceCallback) commo
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/api/resource.Quantity"},
+	}
+}
+
+func schema_tke_api_logagent_v1_ConfigMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigMap holds configuration data for tke to consume.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"data": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"binaryData": {
+						SchemaProps: spec.SchemaProps{
+							Description: "BinaryData contains the binary data. Each key must consist of alphanumeric characters, '-', '_' or '.'. BinaryData can contain byte sequences that are not in the UTF-8 range. The keys stored in BinaryData must not overlap with the ones in the Data field, this is enforced during validation process.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "byte",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_tke_api_logagent_v1_ConfigMapList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConfigMapList is a resource containing a list of ConfigMap objects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Items is the list of ConfigMaps.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/logagent/v1.ConfigMap"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/logagent/v1.ConfigMap"},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogAgent(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogAgent is a manager to collect logs of workload.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec defines the desired identities of LogCollector.",
+							Ref:         ref("tkestack.io/tke/api/logagent/v1.LogAgentSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/logagent/v1.LogAgentStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/logagent/v1.LogAgentSpec", "tkestack.io/tke/api/logagent/v1.LogAgentStatus"},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogAgentList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogAgentList is the whole list of all logagents which owned by a tenant.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of volume decorators.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/logagent/v1.LogAgent"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/logagent/v1.LogAgent"},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogAgentProxyOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogAgentProxyOptions is the query options to a kube-apiserver proxy call for LogAgent crd object.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogAgentSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogAgentSpec describes the attributes of a Logagent.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tenantID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"clusterName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"tenantID", "clusterName"},
+			},
+		},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogAgentStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogAgentStatus is information about the current status of a Logagent.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Phase is the current lifecycle phase of the LogCollector of cluster.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reason is a brief CamelCase string that describes any failure.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"retryCount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"lastReInitializingTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogFileContent(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogFileContent",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/logagent/v1.LogFileContentSpec"),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/logagent/v1.LogFileContentSpec"},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogFileContentSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clusterId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"container": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"pod": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"start": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"length": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"filepath": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogFileDownload(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogFileDownload",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/logagent/v1.LogFileDownloadSpec"),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/logagent/v1.LogFileDownloadSpec"},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogFileDownloadSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clusterId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"container": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"pod": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"start": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"length": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"filepath": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogFileTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogFileTree",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/logagent/v1.LogFileTreeSpec"),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/logagent/v1.LogFileTreeSpec"},
+	}
+}
+
+func schema_tke_api_logagent_v1_LogFileTreeSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clusterId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"container": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"pod": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -40276,6 +42014,18 @@ func schema_tke_api_notify_v1_MessageSpec(ref common.ReferenceCallback) common.O
 							Format: "",
 						},
 					},
+					"alarmPolicyType": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"receiverChannelName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "receiverName", "receiverChannel", "identity"},
 			},
@@ -40895,6 +42645,25 @@ func schema_tke_api_platform_v1_CSIOperator(ref common.ReferenceCallback) common
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/platform/v1.CSIOperatorSpec", "tkestack.io/tke/api/platform/v1.CSIOperatorStatus"},
+	}
+}
+
+func schema_tke_api_platform_v1_CSIOperatorFeature(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"version"},
+			},
+		},
 	}
 }
 
@@ -41838,11 +43607,16 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"csiOperator": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.CSIOperatorFeature"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA"},
+			"tkestack.io/tke/api/platform/v1.CSIOperatorFeature", "tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA"},
 	}
 }
 
@@ -42131,6 +43905,13 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							Format: "",
 						},
 					},
+					"serviceCIDR": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"dnsDomain": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
@@ -42243,11 +44024,16 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
-					"serviceCIDR": {
+					"clusterCredentialRef": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "ClusterCredentialRef for isolate sensitive information. If not specified, cluster controller will create one; If specified, provider must make sure is valid.",
+							Ref:         ref("k8s.io/api/core/v1.LocalObjectReference"),
+						},
+					},
+					"etcd": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Etcd holds configuration for etcd.",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.Etcd"),
 						},
 					},
 				},
@@ -42255,7 +44041,7 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty"},
+			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd"},
 	}
 }
 
@@ -42721,6 +44507,82 @@ func schema_tke_api_platform_v1_CronHPAStatus(ref common.ReferenceCallback) comm
 	}
 }
 
+func schema_tke_api_platform_v1_Etcd(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Etcd contains elements describing Etcd configuration.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"local": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Local provides configuration knobs for configuring the local etcd instance Local and External are mutually exclusive",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.LocalEtcd"),
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "External describes how to connect to an external etcd cluster Local and External are mutually exclusive",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.ExternalEtcd"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/platform/v1.ExternalEtcd", "tkestack.io/tke/api/platform/v1.LocalEtcd"},
+	}
+}
+
+func schema_tke_api_platform_v1_ExternalEtcd(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ExternalEtcd describes an external etcd cluster. Kubeadm has no knowledge of where certificate files live and they must be supplied.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"endpoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Endpoints of etcd members. Required for ExternalEtcd.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"caFile": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CAFile is an SSL Certificate Authority file used to secure etcd communication. Required if using a TLS connection.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"certFile": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CertFile is an SSL certification file used to secure etcd communication. Required if using a TLS connection.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"keyFile": {
+						SchemaProps: spec.SchemaProps{
+							Description: "KeyFile is an SSL key file used to secure etcd communication. Required if using a TLS connection.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"endpoints", "caFile", "certFile", "keyFile"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_platform_v1_File(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -42742,171 +44604,6 @@ func schema_tke_api_platform_v1_File(ref common.ReferenceCallback) common.OpenAP
 					},
 				},
 				Required: []string{"src", "dst"},
-			},
-		},
-	}
-}
-
-func schema_tke_api_platform_v1_GPUManager(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "GPUManager is a kind of device plugin for kubelet to help manage GPUs.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Spec defines the desired identities of clusters in this set.",
-							Ref:         ref("tkestack.io/tke/api/platform/v1.GPUManagerSpec"),
-						},
-					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("tkestack.io/tke/api/platform/v1.GPUManagerStatus"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/platform/v1.GPUManagerSpec", "tkestack.io/tke/api/platform/v1.GPUManagerStatus"},
-	}
-}
-
-func schema_tke_api_platform_v1_GPUManagerList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "GPUManagerList is the whole list of all GPUManager which owned by a tenant.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Description: "List of GPUManagers",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref("tkestack.io/tke/api/platform/v1.GPUManager"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/platform/v1.GPUManager"},
-	}
-}
-
-func schema_tke_api_platform_v1_GPUManagerSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "GPUManagerSpec describes the attributes of a GPUManager.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"tenantID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"clusterName": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"tenantID", "clusterName"},
-			},
-		},
-	}
-}
-
-func schema_tke_api_platform_v1_GPUManagerStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "GPUManagerStatus is information about the current status of a GPUManager.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"phase": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Phase is the current lifecycle phase of the GPUManager of cluster.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"reason": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Reason is a brief CamelCase string that describes any failure.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"retryCount": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-				},
 			},
 		},
 	}
@@ -43565,6 +45262,70 @@ func schema_tke_api_platform_v1_LBCFStatus(ref common.ReferenceCallback) common.
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_platform_v1_LocalEtcd(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LocalEtcd describes that kubeadm should run an etcd cluster locally",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dataDir": {
+						SchemaProps: spec.SchemaProps{
+							Description: "DataDir is the directory etcd will place its data. Defaults to \"/var/lib/etcd\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"extraArgs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ExtraArgs are extra arguments provided to the etcd binary when run inside a static pod.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"serverCertSANs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"peerCertSANs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"dataDir"},
+			},
+		},
 	}
 }
 

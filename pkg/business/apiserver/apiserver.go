@@ -19,14 +19,17 @@
 package apiserver
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	business "tkestack.io/tke/api/business"
+	"tkestack.io/tke/api/business"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
@@ -44,6 +47,7 @@ type ExtraConfig struct {
 	VersionedInformers      versionedinformers.SharedInformerFactory
 	PlatformClient          platformversionedclient.PlatformV1Interface
 	RegistryClient          registryversionedclient.RegistryV1Interface
+	AuthClient              authversionedclient.AuthV1Interface
 	PrivilegedUsername      string
 	FeatureOptions          *options.FeatureOptions
 }
@@ -99,6 +103,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
 			PlatformClient:       c.ExtraConfig.PlatformClient,
 			RegistryClient:       c.ExtraConfig.RegistryClient,
+			AuthClient:           c.ExtraConfig.AuthClient,
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
 			Features:             c.ExtraConfig.FeatureOptions,
 		},
@@ -155,27 +160,27 @@ func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
 }
 
 func (c completedConfig) postStartHookFunc() genericapiserver.PostStartHookFunc {
-	return func(context genericapiserver.PostStartHookContext) error {
+	return func(ctx genericapiserver.PostStartHookContext) error {
 		client := businessinternalclient.NewForConfigOrDie(c.GenericConfig.LoopbackClientConfig)
 
 		tenant := c.ExtraConfig.FeatureOptions.TenantOfInitialAdministrator
 		user := c.ExtraConfig.FeatureOptions.UserOfInitialAdministrator
 
-		_, err := client.Platforms().Get(options.DefaultPlatform, metaV1.GetOptions{})
+		_, err := client.Platforms().Get(context.Background(), options.DefaultPlatform, metav1.GetOptions{})
 		if err != nil && !errors.IsNotFound(err) {
 			log.Errorf("addAdministrator(tenant:%s, user:%s) failed, for %s", tenant, user, err)
 			return err
 		}
 
-		_, err = client.Platforms().Create(&business.Platform{
-			ObjectMeta: metaV1.ObjectMeta{
+		_, err = client.Platforms().Create(context.Background(), &business.Platform{
+			ObjectMeta: metav1.ObjectMeta{
 				Name: options.DefaultPlatform,
 			},
 			Spec: business.PlatformSpec{
 				TenantID:       tenant,
 				Administrators: []string{user},
 			},
-		})
+		}, metav1.CreateOptions{})
 		if err != nil {
 			if errors.IsAlreadyExists(err) {
 				log.Infof("addAdministrator(tenant:%s, user:%s) found %s", tenant, user, options.DefaultPlatform)

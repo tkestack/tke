@@ -3,6 +3,7 @@ export const FetchRegion = 'FetchRegion';
 export const QueryRegion = 'QueryRegion';
 export const SelectRegion = 'SelectRegion';
 export const InitClusterVersion = 'InitClusterVersion';
+export const FetchClusterAddons = 'FetchClusterAddons';
 // export const QueryAlarmPolicy = 'QueryAlarmPolicy';
 // export const FetchAlarmPolicyList = 'FetchAlarmPolicyList';
 // export const SelectAlarmPolicy = 'SelectAlarmPolicy';

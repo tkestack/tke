@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"strings"
+	"tkestack.io/tke/pkg/apiserver/filter"
 
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 
@@ -59,6 +60,14 @@ func (r *RoleREST) New() runtime.Object {
 	return &auth.Role{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *RoleREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert role list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("roles"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
@@ -73,12 +82,9 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 	}
 	localIdentity := obj.(*auth.LocalIdentity)
 
-	roles, err := r.enforcer.GetRolesForUser(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username))
-	if err != nil {
-		log.Error("List roles for user failed from casbin failed", log.String("user", userID), log.Err(err))
-		return nil, apierrors.NewInternalError(err)
-	}
+	projectID := filter.ProjectIDFrom(ctx)
 
+	roles := r.enforcer.GetRolesForUserInDomain(util.UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), projectID)
 	var roleIDs []string
 	for _, r := range roles {
 		if strings.HasPrefix(r, "rol-") {
@@ -88,7 +94,7 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 
 	var roleList = &auth.RoleList{}
 	for _, id := range roleIDs {
-		rol, err := r.authClient.Roles().Get(id, metav1.GetOptions{})
+		rol, err := r.authClient.Roles().Get(ctx, id, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("Get role failed", log.String("role", id), log.Err(err))
 			return nil, err
@@ -99,7 +105,10 @@ func (r *RoleREST) List(ctx context.Context, options *metainternalversion.ListOp
 			continue
 		}
 
-		roleList.Items = append(roleList.Items, *rol)
+		// empty or project equal
+		if rol.Spec.ProjectID == projectID {
+			roleList.Items = append(roleList.Items, *rol)
+		}
 	}
 
 	return roleList, nil
