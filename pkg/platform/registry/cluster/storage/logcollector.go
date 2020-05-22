@@ -24,8 +24,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/util/log"
 
 	"tkestack.io/tke/pkg/platform/util"
@@ -102,11 +104,11 @@ func (h *logCollectorProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 	prefix := "/apis/tke.cloud.tencent.com/v1"
 
 	if len(h.namespace) == 0 && len(h.name) == 0 {
-		loc.Path = fmt.Sprintf("%s/logcollectors", prefix)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/logcollectors", prefix))
 	} else if len(h.name) == 0 {
-		loc.Path = fmt.Sprintf("%s/namespaces/%s/logcollectors", prefix, h.namespace)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/namespaces/%s/logcollectors", prefix, h.namespace))
 	} else {
-		loc.Path = fmt.Sprintf("%s/namespaces/%s/logcollectors/%s", prefix, h.namespace, h.name)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/namespaces/%s/logcollectors/%s", prefix, h.namespace, h.name))
 	}
 
 	// WithContext creates a shallow clone of the request with the new context.
