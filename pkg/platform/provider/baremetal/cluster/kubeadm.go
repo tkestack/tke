@@ -45,7 +45,7 @@ func (p *Provider) getKubeadmInitConfig(c *v1.Cluster) *kubeadm.InitConfig {
 }
 
 func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadmv1beta2.JoinConfiguration {
-	apiServerEndpoint, err := c.Host()
+	apiServerEndpoint, err := c.HostForBootstrap()
 	if err != nil {
 		panic(err)
 	}
