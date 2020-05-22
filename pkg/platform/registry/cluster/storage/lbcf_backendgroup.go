@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -130,11 +131,11 @@ func (h *lbcfBackendGroupProxyHandler) ServeHTTP(w http.ResponseWriter, req *htt
 	}
 
 	if len(h.namespace) == 0 && len(h.name) == 0 {
-		loc.Path = fmt.Sprintf("%s/backendgroups", prefix)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/backendgroups", prefix))
 	} else if len(h.name) == 0 {
-		loc.Path = fmt.Sprintf("%s/namespaces/%s/backendgroups", prefix, h.namespace)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/namespaces/%s/backendgroups", prefix, h.namespace))
 	} else {
-		loc.Path = fmt.Sprintf("%s/namespaces/%s/backendgroups/%s", prefix, h.namespace, h.name)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/namespaces/%s/backendgroups/%s", prefix, h.namespace, h.name))
 	}
 
 	// WithContext creates a shallow clone of the request with the new context.

@@ -24,8 +24,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/util/log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -105,11 +107,11 @@ func (h *cronHPAProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 	prefix := fmt.Sprintf("/apis/%s/v1", cronHPAGroupName)
 
 	if len(h.namespace) == 0 && len(h.name) == 0 {
-		loc.Path = fmt.Sprintf("%s/cronhpas", prefix)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/cronhpas", prefix))
 	} else if len(h.name) == 0 {
-		loc.Path = fmt.Sprintf("%s/namespaces/%s/cronhpas", prefix, h.namespace)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/namespaces/%s/cronhpas", prefix, h.namespace))
 	} else {
-		loc.Path = fmt.Sprintf("%s/namespaces/%s/cronhpas/%s", prefix, h.namespace, h.name)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/namespaces/%s/cronhpas/%s", prefix, h.namespace, h.name))
 	}
 
 	// WithContext creates a shallow clone of the request with the new context.
