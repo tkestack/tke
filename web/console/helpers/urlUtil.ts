@@ -126,7 +126,7 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
 
   /// #if project
   //业务侧ns eg: cls-xxx-ns 需要去除前缀
-  if (namespace && !logAgentName) {
+  if (namespace && window.location.href.includes('tkestack-project')) {
     namespace = namespace.startsWith('global')
       ? namespace.split('-').splice(1).join('-')
       : namespace.split('-').splice(2).join('-');

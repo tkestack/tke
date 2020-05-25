@@ -66,7 +66,7 @@ const fetchClusterActions = generateFetcherActionCreator({
     let resourceInfo = resourceConfig()['cluster'];
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
     let response = await CommonAPI.fetchResourceList({ query: clusterQuery, resourceInfo, isClearData });
-    let agents = await WebAPI.fetchLogagents();
+    let agents = await CommonAPI.fetchLogagents();
     let clusterHasLogAgent = {};
     for (let agent of agents.records) {
       clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
@@ -106,7 +106,7 @@ const restActions = {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { clusterList, route, regionList } = getState(),
         urlParams = router.resolve(route),
-        { rid } = route.queries,
+        { rid, projectName } = route.queries,
         { mode } = urlParams,
         isCreate = mode === 'create',
         isUpdate = mode === 'update',
@@ -140,7 +140,7 @@ const restActions = {
           dispatch(clusterActions.initClusterVersion(clusterSelection.status.version, clusterId));
         }
 
-        dispatch(namespaceActions.applyFilter({ clusterId, regionId: +rid }));
+        dispatch(namespaceActions.applyFilter({ projectName, clusterId, regionId: +rid }));
 
         // 拉取已经开通的addon的列表
         dispatch(
@@ -184,27 +184,25 @@ const restActions = {
 
   enableLogAgent: (cluster: Cluster) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { clusterQuery } = getState();
       let resourceInfo = resourceConfig()['logagent'];
       let resource: CreateResource = {
         id: uuid(),
         resourceInfo,
         clusterId: cluster.metadata.name
       };
-      let response = await WebAPI.createLogAgent(resource);
+      let response = await CommonAPI.createLogAgent(resource);
     };
   },
 
   disableLogAgent: (cluster: Cluster) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { clusterQuery } = getState();
       let resourceInfo = resourceConfig()['logagent'];
       let resource: CreateResource = {
         id: uuid(),
         resourceInfo,
         clusterId: cluster.metadata.name
       };
-      let response = await WebAPI.deleteLogAgent(resource, cluster.spec.logAgentName);
+      let response = await CommonAPI.deleteLogAgent(resource, cluster.spec.logAgentName);
     };
   },
 };

@@ -20,6 +20,9 @@ export interface Namespace extends Identifiable {
 }
 
 export interface NamespaceFilter {
+  /**业务 */
+  projectName?: string;
+
   /**集群Id */
   clusterId?: string;
 

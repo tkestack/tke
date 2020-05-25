@@ -448,9 +448,15 @@ export async function fetchResourceLogList(
 /**
  * 获取日志组件的组件名称
  */
-export async function fetchLogagents(clusterId: string) {
+export async function fetchLogagentName(
+  resourceInfo: ResourceInfo,
+  clusterId: string,
+  k8sQueryObj: any = {}
+) {
   let logAgent = {};
-  let url = `/apis/logagent.tkestack.io/v1/logagents?fieldSelector=spec.clusterName=${clusterId}`;
+  let k8sUrl = reduceK8sRestfulPath({ resourceInfo });
+  let queryString = reduceK8sQueryString({ k8sQueryObj, restfulPath: k8sUrl });
+  let url = k8sUrl + queryString;
   // 构建参数
   let params: RequestParams = {
     method: Method.get,
@@ -483,12 +489,11 @@ export async function fetchResourceLogHierarchy(query: LogHierarchyQuery) {
     apiVersion: 'logagent.tkestack.io/v1',
     spec: {
       clusterId,
-      namespace,
+      namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
       container,
       pod
     }
   };
-  // 构建参数
   let params: RequestParams = {
     method: Method.post,
     url,
@@ -523,7 +528,6 @@ export async function fetchResourceLogHierarchy(query: LogHierarchyQuery) {
  * 获取日志内容
  */
 export async function fetchResourceLogContent(query: LogContentQuery) {
-  // let logList = [];
   let content = '';
   let { agentName, clusterId, namespace, pod, container, start, length, filepath } = query;
 
@@ -533,7 +537,7 @@ export async function fetchResourceLogContent(query: LogContentQuery) {
     apiVersion: 'logagent.tkestack.io/v1',
     spec: {
       clusterId,
-      namespace,
+      namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
       container,
       pod,
       start,
@@ -541,7 +545,6 @@ export async function fetchResourceLogContent(query: LogContentQuery) {
       filepath,
     }
   };
-  // 构建参数
   let params: RequestParams = {
     method: Method.post,
     url,
@@ -570,7 +573,7 @@ export async function downloadLogFile(query) {
   let url = `/apis/logagent.tkestack.io/v1/logagents/${agentName}/filedownload`;
   const payload = {
     pod,
-    namespace,
+    namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
     container,
     path: filepath,
   };

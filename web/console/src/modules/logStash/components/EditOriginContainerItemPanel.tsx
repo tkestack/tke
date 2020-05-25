@@ -227,7 +227,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
     return (
       <div className="configuration-box" style={{ width: '600px', marginTop: '10px' }}>
         {this._renderLeftSide(containerLog.workloadType, containerLogIndex)}
-        <div className="rich-textarea simple-mod">
+        <div className="rich-textarea simple-mod" style={{ overflow: 'auto' }}>
           <div className="permission-code-editor">
             <strong className="code-title" style={{ border: 'none' }}>
               {t('列表')}

@@ -12,7 +12,9 @@ import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { YamlEditorPanel } from '../YamlEditorPanel';
 import * as WebAPI from '../../../WebAPI';
-import { DownloadLogQuery } from '../../../models';
+import { CreateResource, DownloadLogQuery } from '../../../models';
+import { resourceConfig } from '@config/resourceConfig';
+import { ResourceInfo } from '@src/modules/common';
 
 // 加载中的样式
 const loadingElement: JSX.Element = (
@@ -50,9 +52,16 @@ export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
   async componentDidMount() {
     let { route, subRoot, actions } = this.props,
       { podName, containerName, logFile, tailLines } = subRoot.resourceDetailState.logOption;
+    let clusterId = route.queries['clusterId'];
 
     // 获取集群日志组件名称
-    let logAgent = await WebAPI.fetchLogagents(route.queries['clusterId']);
+    let resourceInfo: ResourceInfo = resourceConfig()['logagent'];
+    let k8sQueryObj = {
+      fieldSelector: `spec.clusterName=${clusterId}`
+    };
+
+    k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
+    let logAgent = await WebAPI.fetchLogagentName(resourceInfo, clusterId, k8sQueryObj);
     actions.resourceDetail.log.setLogAgent(logAgent);
 
     if (podName !== '' && containerName !== '') {

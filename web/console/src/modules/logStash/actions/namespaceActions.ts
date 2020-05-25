@@ -18,8 +18,8 @@ const fetchNamespaceListActions = generateFetcherActionCreator({
   actionType: ActionType.FetchNamespaceList,
   fetcher: async (getState: GetState, fetchOptions, dispatch: Redux.Dispatch) => {
     let { clusterVersion, namespaceQuery } = getState();
-    // 获取当前的资源配置
-    let namesapceInfo = resourceConfig(clusterVersion)['ns'];
+    // 获取当前的资源配置，兼容业务侧和平台侧
+    let namesapceInfo = resourceConfig(clusterVersion)[namespaceQuery && namespaceQuery.filter && namespaceQuery.filter.projectName ? 'namespaces' : 'ns'];
     let isClearData = fetchOptions && fetchOptions.noCache;
     let response = await WebAPI.fetchNamespaceList(namespaceQuery, namesapceInfo, isClearData);
     return response;
