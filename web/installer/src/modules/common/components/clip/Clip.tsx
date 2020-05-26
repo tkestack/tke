@@ -1,7 +1,9 @@
-import * as React from 'react';
-import { BaseReactProps } from '@tencent/qcloud-lib';
 import * as Clipboard from 'clipboard';
-import { Tooltip, Button, Icon } from '@tencent/tea-component';
+import * as React from 'react';
+
+import { BaseReactProps } from '@tencent/ff-redux';
+import { Button, Icon, Tooltip } from '@tencent/tea-component';
+
 import { TopTips } from '../toptips';
 
 export interface ClipProps extends BaseReactProps {

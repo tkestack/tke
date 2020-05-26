@@ -1,6 +1,8 @@
 import * as React from 'react';
+
+import { Button, Form, Switch, Input, InputNumber } from '@tencent/tea-component';
+
 import { RootProps } from './InstallerApp';
-import { Button, Input, Form, Segment } from '@tencent/tea-component';
 import { getValidateStatus } from '../../common/utils';
 import { validateActions } from '../actions/validateActions';
 
@@ -10,103 +12,65 @@ export class Step6 extends React.Component<RootProps> {
     return step === 'step6' ? (
       <section>
         <Form>
-          <Form.Item label="监控存储类型">
-            <Segment
-              value={editState.monitorType}
-              options={[
-                { text: 'TKE提供', value: 'tke-influxdb' },
-                { text: '外部InfluxDB', value: 'external-influxdb' },
-                { text: '外部ES', value: 'es' },
-                { text: '不使用', value: 'none' }
-              ]}
-              onChange={value => actions.installer.updateEdit({ monitorType: value })}
+          <Form.Item label="是否开启业务模块" message="关闭业务模块，平台将不安装业务管理相关的功能，建议默认开启">
+            <Switch
+              value={editState.openBusiness}
+              onChange={value => actions.installer.updateEdit({ openBusiness: value })}
             />
-            <div className="tea-form__help-text">
-              {editState.monitorType === 'tke-influxdb'
-                ? 'TKE默认将安装InfluxDB作为监控数据存储'
-                : editState.monitorType === 'external-influxdb'
-                ? '使用您提供的InfluxDB作为监控数据存储，TKE将不再安装监控存储组件'
-                : editState.monitorType === 'es'
-                ? '使用您提供的Elasticsearch作为监控数据的存储，TKE将不再安装监控存储组件'
-                : '不安装监控存储组件，将导致平台不提供监控服务，请谨慎选择'}
-            </div>
-            {editState.monitorType === 'es' ? (
+          </Form.Item>
+          <Form.Item
+            label="是否开启审计功能"
+            message="审计模块为平台提供了操作记录,用户可以在平台管理进行查询，需用用户提供ES资源"
+          >
+            <Switch
+              value={editState.openAudit}
+              onChange={value => actions.installer.updateEdit({ openAudit: value })}
+            />
+            {editState.openAudit && (
               <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
                 <Form>
                   <Form.Item
                     label="ES地址"
                     required
-                    status={getValidateStatus(editState.v_esUrl)}
-                    message={editState.v_esUrl.message}
-                  >
-                    <Input value={editState.esUrl} onChange={value => actions.installer.updateEdit({ esUrl: value })} />
-                  </Form.Item>
-                  <Form.Item
-                    label="用户名"
-                    required
-                    status={getValidateStatus(editState.v_esUsername)}
-                    message={editState.v_esUsername.message}
+                    status={getValidateStatus(editState.v_auditEsUrl)}
+                    message={editState.v_auditEsUrl.message}
                   >
                     <Input
-                      value={editState.esUsername}
-                      onChange={value => actions.installer.updateEdit({ esUsername: value })}
+                      value={editState.auditEsUrl}
+                      onChange={value => actions.installer.updateEdit({ auditEsUrl: value })}
                     />
                   </Form.Item>
-                  <Form.Item
-                    label="密码"
-                    required
-                    status={getValidateStatus(editState.v_esPassword)}
-                    message={editState.v_esPassword.message}
-                  >
-                    <Input
-                      type="password"
-                      value={editState.esPassword}
-                      onChange={value => actions.installer.updateEdit({ esPassword: value })}
-                    />
-                  </Form.Item>
-                </Form>
-              </div>
-            ) : editState.monitorType === 'external-influxdb' ? (
-              <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
-                <Form>
-                  <Form.Item
-                    label="InfluxDB地址"
-                    required
-                    status={getValidateStatus(editState.v_influxDBUrl)}
-                    message={editState.v_influxDBUrl.message}
-                  >
-                    <Input
-                      value={editState.influxDBUrl}
-                      onChange={value => actions.installer.updateEdit({ influxDBUrl: value })}
+                  <Form.Item label="保留数据时间" required>
+                    <InputNumber
+                      value={editState.auditEsReserveDays}
+                      onChange={value => actions.installer.updateEdit({ auditEsReserveDays: value })}
                     />
                   </Form.Item>
                   <Form.Item
                     label="用户名"
                     required
-                    status={getValidateStatus(editState.v_influxDBUsername)}
-                    message={editState.v_influxDBUsername.message}
+                    status={getValidateStatus(editState.v_auditEsUsername)}
+                    message={editState.v_auditEsUsername.message}
                   >
                     <Input
-                      value={editState.influxDBUsername}
-                      onChange={value => actions.installer.updateEdit({ influxDBUsername: value })}
+                      value={editState.auditEsUsername}
+                      onChange={value => actions.installer.updateEdit({ auditEsUsername: value })}
                     />
                   </Form.Item>
                   <Form.Item
                     label="密码"
                     required
-                    status={getValidateStatus(editState.v_influxDBPassword)}
-                    message={editState.v_influxDBPassword.message}
+                    status={getValidateStatus(editState.v_auditEsPassword)}
+                    message={editState.v_auditEsPassword.message}
                   >
                     <Input
                       type="password"
-                      value={editState.influxDBPassword}
-                      onChange={value => actions.installer.updateEdit({ influxDBPassword: value })}
+                      value={editState.auditEsPassword}
+                      onChange={value => actions.installer.updateEdit({ auditEsPassword: value })}
                     />
                   </Form.Item>
                 </Form>
               </div>
-            ) : (
-              <noscript />
             )}
           </Form.Item>
         </Form>

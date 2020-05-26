@@ -1,6 +1,8 @@
 import * as React from 'react';
-import { RootProps } from './InstallerApp';
+
 import { Bubble } from '@tencent/tea-component';
+
+import { RootProps } from './InstallerApp';
 
 export interface CIDRProps extends RootProps {
   /**

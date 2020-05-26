@@ -1,8 +1,10 @@
-import { Record } from '../common/models';
 import axios from 'axios';
-import { EditState } from './models';
-import { OperationResult } from '@tencent/ff-redux';
 import { Base64 } from 'js-base64';
+
+import { OperationResult } from '@tencent/ff-redux';
+
+import { Record } from '../common/models';
+import { EditState } from './models';
 
 const host = location.host;
 export async function fetchCluster() {
@@ -255,6 +257,18 @@ export async function createCluster(edits: Array<EditState>) {
         //未开启业务模块
       }
 
+      if (edits[0].openAudit) {
+        params.config['audit'] = {
+          elasticSearch: {
+            address: edits[0].auditEsUrl,
+            username: edits[0].auditEsUsername ? edits[0].auditEsUsername : undefined,
+            password: edits[0].auditEsPassword ? Base64.encode(edits[0].auditEsPassword) : undefined,
+            reserveDays: edits[0].auditEsReserveDays
+          }
+        };
+        params.config['audit'] = JSON.parse(JSON.stringify(params.config['audit']));
+      }
+
       // 监控模块设置
       if (edits[0].monitorType === 'es') {
         params.config['monitor'] = {
@@ -294,7 +308,8 @@ export async function createCluster(edits: Array<EditState>) {
       } else if (edits[0].haType === 'thirdParty') {
         params.config['ha'] = {
           thirdParty: {
-            vip: edits[0].haThirdVip
+            vip: edits[0].haThirdVip,
+            vport: +edits[0].haThirdVipPort || '6443'
           }
         };
       } else {

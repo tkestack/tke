@@ -19,13 +19,14 @@
       "@tea/app/*": ["./node_modules/@tencent/tea-app/lib/*"],
       "@tea/component": ["./node_modules/@tencent/tea-component/lib"],
       "@tea/component/*": ["./node_modules/@tencent/tea-component/lib/*"],
-      "@tencent/qcloud-lib": ["./lib/qcloud-lib/"],
-      "@tencent/qcloud-lib/*": ["./lib/qcloud-lib/*"],
-      "@tencent/qcloud-redux-fetcher": ["./lib/qcloud-redux-fetcher/"],
-      "@tencent/qcloud-redux-query": ["./lib/qcloud-redux-query/"],
-      "@tencent/qcloud-redux-workflow": ["./lib/qcloud-redux-workflow/"]
+      "@tencent/ff-validator": ["./lib/ff-validator"],
+      "@tencent/ff-validator/*": ["./lib/ff-validator/*"],
+      "@tencent/ff-redux": ["./lib/ff-redux"],
+      "@tencent/ff-redux/*": ["./lib/ff-redux/*"],
+      "@tencent/ff-component": ["./lib/ff-component/"],
+      "@tencent/ff-component/*": ["./lib/ff-component/*"]
     }
   },
-  "exclude": ["node_modules", "dist", "build"],
+  "exclude": ["node_modules", "dist", "build", "lib"],
   "compoileOnSave": false
 }
