@@ -63,6 +63,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureCopyFiles,
 			p.EnsurePreInstallHook,
 
+			// configure system
 			p.EnsureRegistryHosts,
 			p.EnsureKernelModule,
 			p.EnsureSysctl,
@@ -72,33 +73,42 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsureClusterComplete,
 
+			// insatll packages
 			p.EnsureNvidiaDriver,
 			p.EnsureNvidiaContainerRuntime,
 			p.EnsureDocker,
 			p.EnsureKubelet,
 			p.EnsureCNIPlugins,
+			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
 
 			p.EnsurePrepareForControlplane,
 
-			p.EnsureKubeadmInitKubeletStartPhase,
-			p.EnsureKubeadmInitCertsPhase,
+			p.EnsureKubeadmInitPhaseKubeletStart,
+			p.EnsureKubeadmInitPhaseCerts,
 			p.EnsureStoreCredential,
-			p.EnsureKubeconfig,
-			p.EnsureKubeadmInitKubeConfigPhase,
-			p.EnsureKubeadmInitControlPlanePhase,
-			p.EnsureKubeadmInitEtcdPhase,
-			p.EnsureKubeadmInitWaitControlPlanePhase,
-			p.EnsureKubeadmInitUploadConfigPhase,
-			p.EnsureKubeadmInitUploadCertsPhase,
-			p.EnsureKubeadmInitBootstrapTokenPhase,
-			p.EnsureKubeadmInitAddonPhase,
+			p.EnsureKubeconfig, // for upload
+			p.EnsureKubeadmInitPhaseKubeConfig,
+			p.EnsureKubeadmInitPhaseControlPlane,
+			p.EnsureKubeadmInitPhaseETCD,
+			p.EnsureKubeadmInitPhaseWaitControlPlane,
+			p.EnsureKubeadmInitPhaseUploadConfig,
+			p.EnsureKubeadmInitPhaseUploadCerts,
+			p.EnsureKubeadmInitPhaseBootstrapToken,
+			p.EnsureKubeadmInitPhaseAddon,
+
 			p.EnsureGalaxy,
 
-			p.EnsureJoinControlePlane,
+			p.EnsureJoinPhasePreflight,
+			p.EnsureJoinPhaseControlPlanePrepare,
+			p.EnsureJoinPhaseKubeletStart,
+			p.EnsureJoinPhaseControlPlaneJoinETCD,
+			p.EnsureJoinPhaseControlPlaneJoinUpdateStatus,
+
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
 
+			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
 			p.EnsureCSIOperator,
@@ -167,6 +177,11 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 
 	if cluster.Spec.Etcd == nil {
 		cluster.Spec.Etcd = &platform.Etcd{Local: &platform.LocalEtcd{}}
+	}
+
+	if cluster.Spec.Etcd.Local != nil {
+		// reuse global etcd for tke components which create `etcd` service.
+		cluster.Spec.Etcd.Local.ServerCertSANs = append(cluster.Spec.Etcd.Local.ServerCertSANs, "etcd")
 	}
 
 	return nil

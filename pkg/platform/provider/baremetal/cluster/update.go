@@ -65,7 +65,7 @@ func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error {
-	kubeadmConfig := p.getKubeadmConfig(c)
+	kubeadmConfig := p.getKubeadmInitConfig(c)
 	exptectCertSANs := GetAPIServerCertSANs(c.Cluster)
 
 	needUpload := false
@@ -76,19 +76,18 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 		}
 
 		data, err := s.ReadFile(constants.APIServerCertName)
-		if err != nil {
-			return err
-		}
-		certs, err := certutil.ParseCertsPEM(data)
-		if err != nil {
-			return err
-		}
-		actualCertSANs := certs[0].DNSNames
-		for _, ip := range certs[0].IPAddresses {
-			actualCertSANs = append(actualCertSANs, ip.String())
-		}
-		if reflect.DeepEqual(funk.IntersectString(actualCertSANs, exptectCertSANs), exptectCertSANs) {
-			return nil
+		if err == nil {
+			certs, err := certutil.ParseCertsPEM(data)
+			if err != nil {
+				return err
+			}
+			actualCertSANs := certs[0].DNSNames
+			for _, ip := range certs[0].IPAddresses {
+				actualCertSANs = append(actualCertSANs, ip.String())
+			}
+			if reflect.DeepEqual(funk.IntersectString(actualCertSANs, exptectCertSANs), exptectCertSANs) {
+				return nil
+			}
 		}
 
 		log.Infof("EnsureAPIServerCert for %s", s.Host)
@@ -109,7 +108,7 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 	}
 
 	if needUpload {
-		err := p.EnsureKubeadmInitUploadConfigPhase(ctx, c)
+		err := p.EnsureKubeadmInitPhaseUploadConfig(ctx, c)
 		if err != nil {
 			return err
 		}

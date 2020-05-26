@@ -30,9 +30,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -287,6 +289,26 @@ func (r *ScaleREST) Update(ctx context.Context, name string, objInfo rest.Update
 	client, requestInfo, err := util.RESTClient(ctx, r.platformClient)
 	if err != nil {
 		return nil, false, err
+	}
+
+	if requestInfo.Verb == "patch" {
+		requestBody, ok := filter.RequestBodyFrom(ctx)
+		if !ok {
+			return nil, false, errors.NewBadRequest("request body is required")
+		}
+		result := &autoscalingv1.Scale{}
+		if err := client.
+			Patch(types.PatchType(requestBody.ContentType)).
+			NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
+			Resource(requestInfo.Resource).
+			SubResource(requestInfo.Subresource).
+			Name(name).
+			Body(requestBody.Data).
+			Do(ctx).
+			Into(result); err != nil {
+			return nil, false, err
+		}
+		return result, true, nil
 	}
 
 	obj, err := objInfo.UpdatedObject(ctx, nil)

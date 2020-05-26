@@ -23,6 +23,9 @@ WORKDIR /data
 COPY linux-amd64/cni-*.tar.gz          res/linux-amd64/
 COPY linux-arm64/cni-*.tar.gz          res/linux-arm64/
 
+COPY linux-amd64/conntrack-tools-*.tar.gz          res/linux-amd64/
+COPY linux-arm64/conntrack-tools-*.tar.gz          res/linux-arm64/
+
 COPY linux-amd64/docker-*.tar.gz       res/linux-amd64/
 COPY linux-arm64/docker-*.tar.gz       res/linux-arm64/
 

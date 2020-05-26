@@ -570,7 +570,7 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
-	cluster.Spec.Version = spec.K8sVersions[len(spec.K8sVersions)-1] // use newest version
+	cluster.Spec.Version = spec.K8sVersions[0] // use newest version
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
@@ -835,7 +835,7 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 	var data []byte
 	apiStatus := func() errors.APIStatus {
 		clusterName := request.PathParameter("name")
-		if t.Cluster == nil {
+		if t.Cluster.Cluster == nil {
 			return errors.NewBadRequest("no cluater available")
 		}
 		if t.Cluster.Name != clusterName {
@@ -987,12 +987,16 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 	}
 	t.completeWithProvider()
 
-	t.Cluster.ClusterCredential = &platformv1.ClusterCredential{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("cc-%s", t.Cluster.Name),
-		},
-		TenantID:    t.Cluster.Spec.TenantID,
-		ClusterName: t.Cluster.Name,
+	if t.Cluster.Spec.ClusterCredentialRef == nil {
+		credential := &platformv1.ClusterCredential{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("cc-%s", t.Cluster.Name),
+			},
+			TenantID:    t.Cluster.Spec.TenantID,
+			ClusterName: t.Cluster.Name,
+		}
+		t.Cluster.ClusterCredential = credential
+		t.Cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
 	}
 
 	var errCount int

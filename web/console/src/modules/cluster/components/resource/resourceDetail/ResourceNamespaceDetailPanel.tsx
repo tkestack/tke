@@ -39,7 +39,7 @@ export class ResourceNamespaceDetailPanel extends React.Component<RootProps, {}>
     let isNeedLoading =
       ffResourceList.list.fetched !== true ||
       ffResourceList.list.fetchState === FetchState.Fetching ||
-      ffResourceList.selection;
+      ffResourceList.selection === null;
 
     return isNeedLoading ? (
       loadingElement

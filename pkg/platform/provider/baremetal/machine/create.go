@@ -27,6 +27,8 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -150,7 +152,9 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, machine *platformv1.
 
 	domains := []string{
 		p.config.Registry.Domain,
-		machine.Spec.TenantID + "." + p.config.Registry.Domain,
+	}
+	if machine.Spec.TenantID != "" {
+		domains = append(domains, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 	for _, one := range domains {
 		remoteHosts := hosts.RemoteHosts{Host: one, SSH: machineSSH}
@@ -290,7 +294,7 @@ func (p *Provider) EnsureDocker(ctx context.Context, machine *platformv1.Machine
 	}
 
 	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
-	if p.config.Registry.NeedSetHosts() {
+	if p.config.Registry.NeedSetHosts() && machine.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 
@@ -340,13 +344,13 @@ func (p *Provider) EnsureCNIPlugins(ctx context.Context, machine *platformv1.Mac
 	return nil
 }
 
-func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureConntrackTools(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
-	err = kubeadm.Install(machineSSH)
+	err = res.ConntrackTools.InstallWithDefault(machineSSH)
 	if err != nil {
 		return err
 	}
@@ -354,22 +358,41 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machin
 	return nil
 }
 
-func (p *Provider) EnsureJoinNode(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	host, err := cluster.Host()
-	if err != nil {
-		return err
-	}
+func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
-	option := &kubeadm.JoinNodeOption{
-		NodeName:             machine.Spec.IP,
-		BootstrapToken:       *cluster.ClusterCredential.BootstrapToken,
-		ControlPlaneEndpoint: host,
+	err = kubeadm.Install(machineSSH, cluster.Spec.Version)
+	if err != nil {
+		return err
 	}
-	err = kubeadm.JoinNode(machineSSH, option)
+
+	return nil
+}
+
+func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "preflight")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureJoinPhaseKubeletStart(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "kubelet-start")
 	if err != nil {
 		return err
 	}

@@ -24,11 +24,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"tkestack.io/tke/pkg/spec"
-
 	"github.com/thoas/go-funk"
-
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
@@ -41,10 +39,15 @@ var (
 		Name:     "cni-plugins",
 		Versions: spec.CNIPluginsVersions,
 	}
+	ConntrackTools = Package{
+		Name:      "conntrack-tools",
+		Versions:  spec.ConntrackToolsVersions,
+		TargetDir: "/",
+	}
 
 	Kubeadm = Package{
 		Name:     "kubeadm",
-		Versions: spec.KubeadmVersions,
+		Versions: spec.K8sVersionsWithV,
 	}
 	KubernetesNode = Package{
 		Name:     "kubernetes-node",
@@ -61,8 +64,34 @@ var (
 )
 
 type Package struct {
+	// Name to package must ends with .tag.gz
 	Name     string
 	Versions []string
+	// TargetDir for untar working dir
+	TargetDir string
+}
+
+func (p *Package) InstallWithDefault(s ssh.Interface) error {
+	return p.Install(s, p.DefaultVersion())
+
+}
+
+func (p *Package) Install(s ssh.Interface, version string) error {
+	dstFile, err := p.CopyToNode(s, version)
+	if err != nil {
+		return err
+	}
+
+	if p.TargetDir == "" {
+		return errors.New("package TargetDir required")
+	}
+	cmd := fmt.Sprintf("tar xvaf %s -C %s ", dstFile, p.TargetDir)
+	_, err = s.CombinedOutput(cmd)
+	if err != nil {
+		return fmt.Errorf("untar error: %w", err)
+	}
+
+	return nil
 }
 
 // CopyToNode copy package which use default version to node and return dst filename
