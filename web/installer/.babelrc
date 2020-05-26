@@ -33,8 +33,7 @@
       ]
     },
     "production": {
-      "presets": ["es2015"],
-      "plugins": ["transform-remove-console"]
+      "presets": ["es2015"]
     }
   }
 }
