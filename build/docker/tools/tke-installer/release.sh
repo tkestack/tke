@@ -73,6 +73,9 @@ function prepare::tke_installer() {
   cp -rv cmd/tke-installer/app/installer/hooks "${DST_DIR}"
   cp -rv "${SCRIPT_DIR}/certs" "${DST_DIR}"
   cp -rv "${SCRIPT_DIR}/.docker" "${DST_DIR}"
+
+  make build.web.installer
+  cp -rv web/installer/build  "${DST_DIR}/assets"
 }
 
 function build::installer_image() {
