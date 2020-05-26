@@ -17,7 +17,7 @@
 ASSETS_GENERATOR_VERSION := v1.0.0
 
 .PHONY: asset.build
-asset.build: asset.build.addon asset.build.web.console asset.build.web.installer
+asset.build: asset.build.addon
 
 .PHONY: asset.build.addon
 asset.build.addon:
