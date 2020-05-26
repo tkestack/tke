@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { RootProps } from './InstallerApp';
-import { Button, Input, Form, Switch, Segment } from '@tencent/tea-component';
+
+import { Button, Form, Input, Segment } from '@tencent/tea-component';
+
 import { getValidateStatus } from '../../common/utils';
 import { validateActions } from '../actions/validateActions';
+import { RootProps } from './InstallerApp';
 
 export class Step7 extends React.Component<RootProps> {
   render() {
@@ -10,68 +12,105 @@ export class Step7 extends React.Component<RootProps> {
     return step === 'step7' ? (
       <section>
         <Form>
-          <Form.Item label="是否开启" message="建议默认开启，否则平台将不会安装控制台，仅可使用命令行工具或API管理集群">
-            <Switch
-              value={editState.openConsole}
-              onChange={value => actions.installer.updateEdit({ openConsole: value })}
+          <Form.Item label="监控存储类型">
+            <Segment
+              value={editState.monitorType}
+              options={[
+                { text: 'TKE提供', value: 'tke-influxdb' },
+                { text: '外部InfluxDB', value: 'external-influxdb' },
+                { text: '外部ES', value: 'es' },
+                { text: '不使用', value: 'none' }
+              ]}
+              onChange={value => actions.installer.updateEdit({ monitorType: value })}
             />
+            <div className="tea-form__help-text">
+              {editState.monitorType === 'tke-influxdb'
+                ? 'TKE默认将安装InfluxDB作为监控数据存储'
+                : editState.monitorType === 'external-influxdb'
+                ? '使用您提供的InfluxDB作为监控数据存储，TKE将不再安装监控存储组件'
+                : editState.monitorType === 'es'
+                ? '使用您提供的Elasticsearch作为监控数据的存储，TKE将不再安装监控存储组件'
+                : '不安装监控存储组件，将导致平台不提供监控服务，请谨慎选择'}
+            </div>
+            {editState.monitorType === 'es' ? (
+              <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
+                <Form>
+                  <Form.Item
+                    label="ES地址"
+                    required
+                    status={getValidateStatus(editState.v_esUrl)}
+                    message={editState.v_esUrl.message}
+                  >
+                    <Input value={editState.esUrl} onChange={value => actions.installer.updateEdit({ esUrl: value })} />
+                  </Form.Item>
+                  <Form.Item
+                    label="用户名"
+                    required
+                    status={getValidateStatus(editState.v_esUsername)}
+                    message={editState.v_esUsername.message}
+                  >
+                    <Input
+                      value={editState.esUsername}
+                      onChange={value => actions.installer.updateEdit({ esUsername: value })}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="密码"
+                    required
+                    status={getValidateStatus(editState.v_esPassword)}
+                    message={editState.v_esPassword.message}
+                  >
+                    <Input
+                      type="password"
+                      value={editState.esPassword}
+                      onChange={value => actions.installer.updateEdit({ esPassword: value })}
+                    />
+                  </Form.Item>
+                </Form>
+              </div>
+            ) : editState.monitorType === 'external-influxdb' ? (
+              <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
+                <Form>
+                  <Form.Item
+                    label="InfluxDB地址"
+                    required
+                    status={getValidateStatus(editState.v_influxDBUrl)}
+                    message={editState.v_influxDBUrl.message}
+                  >
+                    <Input
+                      value={editState.influxDBUrl}
+                      onChange={value => actions.installer.updateEdit({ influxDBUrl: value })}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="用户名"
+                    required
+                    status={getValidateStatus(editState.v_influxDBUsername)}
+                    message={editState.v_influxDBUsername.message}
+                  >
+                    <Input
+                      value={editState.influxDBUsername}
+                      onChange={value => actions.installer.updateEdit({ influxDBUsername: value })}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="密码"
+                    required
+                    status={getValidateStatus(editState.v_influxDBPassword)}
+                    message={editState.v_influxDBPassword.message}
+                  >
+                    <Input
+                      type="password"
+                      value={editState.influxDBPassword}
+                      onChange={value => actions.installer.updateEdit({ influxDBPassword: value })}
+                    />
+                  </Form.Item>
+                </Form>
+              </div>
+            ) : (
+              <noscript />
+            )}
           </Form.Item>
-          {editState.openConsole ? (
-            [
-              <Form.Item label="控制台域名">
-                <Input
-                  value={editState.consoleDomain}
-                  onChange={value => actions.installer.updateEdit({ consoleDomain: value })}
-                />
-              </Form.Item>,
-              <Form.Item label="证书类型">
-                <Segment
-                  value={editState.certType}
-                  options={[
-                    { text: '自签名证书', value: 'selfSigned' },
-                    { text: '指定服务端证书', value: 'thirdParty' }
-                  ]}
-                  onChange={value => actions.installer.updateEdit({ certType: value })}
-                />
-                {editState.certType === 'thirdParty' ? (
-                  <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
-                    <Form>
-                      <Form.Item
-                        label="证书"
-                        required
-                        status={getValidateStatus(editState.v_certificate)}
-                        message={editState.v_certificate.message}
-                      >
-                        <Input
-                          style={{ width: '400px' }}
-                          multiline
-                          value={editState.certificate}
-                          onChange={value => actions.installer.updateEdit({ certificate: value })}
-                        />
-                      </Form.Item>
-                      <Form.Item
-                        label="私钥"
-                        required
-                        status={getValidateStatus(editState.v_privateKey)}
-                        message={editState.v_privateKey.message}
-                      >
-                        <Input
-                          style={{ width: '400px' }}
-                          multiline
-                          value={editState.privateKey}
-                          onChange={value => actions.installer.updateEdit({ privateKey: value })}
-                        />
-                      </Form.Item>
-                    </Form>
-                  </div>
-                ) : (
-                  <noscript />
-                )}
-              </Form.Item>
-            ]
-          ) : (
-            <noscript />
-          )}
         </Form>
         <Form.Action style={{ position: 'absolute', bottom: '20px', left: '20px', width: '960px' }}>
           <Button style={{ marginRight: '10px' }} type="weak" onClick={() => actions.installer.stepNext('step6')}>

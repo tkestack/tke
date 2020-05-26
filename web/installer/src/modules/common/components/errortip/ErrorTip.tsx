@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { BaseReactProps } from '@tencent/qcloud-lib';
-import { WorkflowState } from '@tencent/ff-redux';
+
+import { BaseReactProps, WorkflowState } from '@tencent/ff-redux';
+
+import { LinkHref, TipInfo } from '..';
 import { Link } from '../../models';
-import { TipInfo, LinkHref } from '..';
 import { getWorkflowError, getWorkflowErrorCode } from '../../utils';
 
 export interface ErrorGuide {

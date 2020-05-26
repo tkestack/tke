@@ -1,6 +1,6 @@
-import * as path from "path";
-import * as express from "express";
-import * as webpack from "webpack";
+import * as express from 'express';
+import * as path from 'path';
+import * as webpack from 'webpack';
 
 export function serve(newport?: number) {
   let port = newport || process.env.PORT;
@@ -9,8 +9,8 @@ export function serve(newport?: number) {
 
   setupWebpackDevelopServer(app);
 
-  app.use("*", express.static(path.resolve(__dirname, "../../index.html")));
-  app.use("/static", express.static(path.resolve(__dirname, "../../dist")));
+  app.use('*', express.static(path.resolve(__dirname, '../../index.html')));
+  app.use('/static', express.static(path.resolve(__dirname, '../../dist')));
 
   app.listen(port, (err: Error) => {
     if (err) {
@@ -18,19 +18,17 @@ export function serve(newport?: number) {
       return;
     }
 
-    console.log(
-      `\nTencent Kubernetes Engine server served at http://localhost:${port}\n\n`
-    );
+    console.log(`\nTencent Kubernetes Engine server served at http://localhost:${port}\n\n`);
   });
 
   return app;
 }
 
 function setupWebpackDevelopServer(app: express.Express) {
-  let config = require("../../webpack/webpack.config.js");
+  let config = require('../../webpack/webpack.config.js');
   let compiler = webpack(config);
 
-  let devMiddleware = require("webpack-dev-middleware")(compiler, {
+  let devMiddleware = require('webpack-dev-middleware')(compiler, {
     publicPath: config.output.publicPath,
     noInfo: true,
     stats: { colors: true },
@@ -39,7 +37,7 @@ function setupWebpackDevelopServer(app: express.Express) {
     reload: true
   });
 
-  let hotMiddleware = require("webpack-hot-middleware")(compiler, {
+  let hotMiddleware = require('webpack-hot-middleware')(compiler, {
     reload: true
   });
 

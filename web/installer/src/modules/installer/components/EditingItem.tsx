@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { RootProps } from './InstallerApp';
-import { Button, Input, Form, Justify, Segment, Text } from '@tencent/tea-component';
-import { validateActions } from '../actions/validateActions';
+
+import { Button, Form, Input, Justify, Segment, Text } from '@tencent/tea-component';
+
 import { getValidateStatus } from '../../common/utils/getValidateStatus';
+import { validateActions } from '../actions/validateActions';
+import { RootProps } from './InstallerApp';
 
 interface EditingItemProps extends RootProps {
   id?: string | number;

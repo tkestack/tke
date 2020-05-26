@@ -16,10 +16,25 @@
             ]
           }
         ]
+      ],
+      "plugins": [
+        [
+          "react-transform",
+          {
+            "transforms": [
+              {
+                "transform": "react-transform-hmr",
+                "imports": ["react"],
+                "locals": ["module"]
+              }
+            ]
+          }
+        ]
       ]
     },
     "production": {
-      "presets": ["es2015"]
+      "presets": ["es2015"],
+      "plugins": ["transform-remove-console"]
     }
   }
 }
