@@ -1,5 +1,4 @@
-import { FetcherState, FetchState } from '@tencent/qcloud-redux-fetcher';
-import { RecordSet } from '@tencent/qcloud-lib';
+import { FetcherState, FetchState, RecordSet } from '@tencent/ff-redux';
 
 export const getQueryStatus = (fetcher: FetcherState<RecordSet<any>>, search?: any) => {
   let status: any = null;

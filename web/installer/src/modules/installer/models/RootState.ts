@@ -1,7 +1,6 @@
-import { Identifiable } from '@tencent/qcloud-lib';
-import { FetcherState } from '@tencent/qcloud-redux-fetcher';
+import { FetcherState, Identifiable, WorkflowState } from '@tencent/ff-redux';
+
 import { Record, Validation } from '../../common/models';
-import { WorkflowState } from '@tencent/ff-redux';
 
 type ClusterEditWorkflow = WorkflowState<EditState, void>;
 
@@ -23,7 +22,7 @@ export interface RootState {
 
 export interface Arg extends Identifiable {
   key: string;
-  v_key?: string;
+  v_key?: Validation;
   value: string;
   v_value?: Validation;
 }
@@ -43,6 +42,8 @@ export interface EditState extends Identifiable {
   v_haTkeVip?: Validation;
   haThirdVip?: string;
   v_haThirdVip?: Validation;
+  haThirdVipPort?: string;
+  v_haThirdVipPort?: Validation;
 
   //集群设置
   networkDevice?: string;
@@ -72,7 +73,7 @@ export interface EditState extends Identifiable {
   v_caCert?: Validation;
 
   //镜像仓库设置
-  repoType?: 'tke' | 'thirdParty';
+  repoType?: string;
   repoTenantID?: string;
   v_repoTenantID?: Validation;
   repoSuffix?: string;
@@ -88,6 +89,14 @@ export interface EditState extends Identifiable {
 
   //业务模块设置
   openBusiness?: boolean;
+  openAudit?: boolean;
+  auditEsUrl?: string;
+  auditEsReserveDays?: number;
+  v_auditEsUrl?: Validation;
+  auditEsUsername?: string;
+  v_auditEsUsername?: Validation;
+  auditEsPassword?: string;
+  v_auditEsPassword?: Validation;
 
   //监控模块设置
   monitorType?: string;

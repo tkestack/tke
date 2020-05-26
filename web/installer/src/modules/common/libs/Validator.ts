@@ -1,6 +1,6 @@
 // import { Validation } from '../models';
 // import { isEmpty } from '../utils';
-// import { ReduxAction } from '@tencent/qcloud-lib';
+// import { ReduxAction } from '@tencent/ff-redux';
 
 // export enum ValidateState {
 //   /** 数据为初始状态 */
