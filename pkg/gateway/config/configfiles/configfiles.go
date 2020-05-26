@@ -20,8 +20,9 @@ package configfiles
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"path/filepath"
+
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 	gatewayscheme "tkestack.io/tke/pkg/gateway/apis/config/scheme"
 	"tkestack.io/tke/pkg/gateway/config/codec"
@@ -74,8 +75,6 @@ func (loader *fsLoader) Load() (*gatewayconfig.GatewayConfiguration, error) {
 		return nil, err
 	}
 
-	// make all paths absolute
-	resolveRelativePaths(gatewayconfig.GatewayConfigurationPathRefs(kc), filepath.Dir(loader.gatewayFile))
 	return kc, nil
 }
 
