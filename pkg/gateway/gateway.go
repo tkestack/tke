@@ -20,14 +20,15 @@ package gateway
 
 import (
 	"net/http"
-	"tkestack.io/tke/pkg/gateway/webtty"
 
 	"golang.org/x/oauth2"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/gateway/api"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
+	"tkestack.io/tke/pkg/gateway/assets"
 	"tkestack.io/tke/pkg/gateway/proxy"
+	"tkestack.io/tke/pkg/gateway/webtty"
 )
 
 // ExtraConfig contains the additional configuration of apiserver.
@@ -101,12 +102,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		return nil, err
 	}
 
-	if !c.ExtraConfig.HeaderRequest {
-		registerStaticRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.OAuthConfig, c.ExtraConfig.GatewayConfig.DisableOIDCProxy)
-	} else {
-		registerStaticRoute(s.Handler.NonGoRestfulMux, nil, c.ExtraConfig.GatewayConfig.DisableOIDCProxy)
-
-	}
+	assets.RegisterRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.OAuthConfig, c.ExtraConfig.GatewayConfig.DisableOIDCProxy)
 
 	m := &Gateway{
 		GenericAPIServer: s,
