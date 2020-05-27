@@ -764,17 +764,11 @@ func (p *Provider) EnsureCleanup(c *Cluster) error {
 			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 {
 				cmd := fmt.Sprintf("iptables -t nat -D PREROUTING -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
 					c.Spec.Machines[0].IP)
-				_, stderr, exit, err := s.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
+				s.Exec(cmd)
 
 				cmd = fmt.Sprintf("iptables -t nat -D POSTROUTING -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
 					c.Spec.Machines[0].IP, machine.IP)
-				_, stderr, exit, err = s.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
+				s.Exec(cmd)
 			}
 		}
 
