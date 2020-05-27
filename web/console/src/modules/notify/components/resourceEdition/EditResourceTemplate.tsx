@@ -46,6 +46,7 @@ export class EditResourceTemplate extends EditResource {
       <Form>
         <Form.Item label={t('名称')} required>
           <Input
+            size="l"
             placeholder={t('请填写名称')}
             value={resource.properties.spec.properties.displayName.value}
             onChange={onChange(resource.properties.spec.properties.displayName)}
@@ -54,6 +55,7 @@ export class EditResourceTemplate extends EditResource {
 
         <Form.Item label={t('渠道')} required>
           <Select
+            size="l"
             placeholder={t('请选择渠道')}
             options={namespaceOptions}
             value={resource.properties.metadata.properties.namespace.value}
