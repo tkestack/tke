@@ -11,7 +11,7 @@ export const initMachine = {
   port: '',
   v_port: initValidation,
   authWay: 'password',
-  user: '',
+  user: 'root',
   v_user: initValidation,
   password: '',
   v_password: initValidation,
