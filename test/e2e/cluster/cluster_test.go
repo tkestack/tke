@@ -24,21 +24,15 @@ import (
 	"os"
 	"time"
 
-	"tkestack.io/tke/test/util/cloudprovider/tencent"
-
-	apiclient "tkestack.io/tke/test/util/tkeclient"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"k8s.io/apimachinery/pkg/util/wait"
-
-	platformv1 "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/test/util/cloudprovider"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	platformv1 "tkestack.io/tke/api/platform/v1"
+	testclient "tkestack.io/tke/test/util/client"
+	"tkestack.io/tke/test/util/cloudprovider"
+	"tkestack.io/tke/test/util/cloudprovider/tencent"
 )
 
 var _ = Describe("cluster lifecycle", func() {
@@ -77,7 +71,7 @@ var _ = Describe("cluster lifecycle", func() {
 
 	It("complete cluster lifecycle", func() {
 		By("prepare platform client")
-		client, err := apiclient.LoadOrSetupTKE()
+		client, err := testclient.LoadOrSetupTKE()
 		Expect(err).To(BeNil())
 
 		cluster := &platformv1.Cluster{

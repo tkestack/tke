@@ -16,18 +16,24 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package apiclient
+package client
 
 import (
 	"encoding/base64"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"time"
 
 	"github.com/pkg/errors"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
+
+	// env for load env
+	_ "tkestack.io/tke/test/util/env"
 )
 
 const (
@@ -71,4 +77,25 @@ func GetTKEClient(kubeconfig []byte) (tkeclientset.Interface, error) {
 	}
 
 	return tkeclientset.NewForConfig(restConfig)
+}
+
+func GetRESTConfig() *rest.Config {
+	data := os.Getenv(kubeconfigEnv)
+	if data == "" {
+		panic(fmt.Sprintf("%s not set", kubeconfigEnv))
+	}
+	kubeconfig, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		panic(err)
+	}
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	if err != nil {
+		panic(err)
+	}
+
+	return restConfig
+}
+
+func GetClientSet() *kubernetes.Clientset {
+	return kubernetes.NewForConfigOrDie(GetRESTConfig())
 }

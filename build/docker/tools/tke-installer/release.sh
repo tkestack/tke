@@ -25,7 +25,7 @@ BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
 PROVIDER_RES_VERSION=v1.18.3-1
 K8S_VERSION=${PROVIDER_RES_VERSION%-*}
-DOCKER_VERSION=18.09.9
+DOCKER_VERSION=19.03.9
 OSS=(linux)
 ARCHS=(amd64 arm64)
 OUTPUT_DIR=_output
@@ -74,7 +74,7 @@ function prepare::tke_installer() {
   cp -rv "${SCRIPT_DIR}/certs" "${DST_DIR}"
   cp -rv "${SCRIPT_DIR}/.docker" "${DST_DIR}"
 
-  make build.web.installer
+  make web.build.installer
   cp -rv web/installer/build  "${DST_DIR}/assets"
 }
 
