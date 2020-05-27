@@ -37,7 +37,7 @@ func Install(s ssh.Interface, option *Option) error {
 
 	_, stderr, exit, err := s.Execf("[ -d %s ] || mkdir -p %s", constants.CNIBinDir, constants.CNIBinDir)
 	if exit != 0 || err != nil {
-		return fmt.Errorf("clean %s failed:exit %d:stderr %s:error %s", constants.EtcdDataDir, exit, stderr, err)
+		return fmt.Errorf("clean %s failed:exit %d:stderr %s:error %s", constants.CNIBinDir, exit, stderr, err)
 	}
 
 	cmd := "tar xvaf %s -C %s"
