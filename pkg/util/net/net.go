@@ -18,7 +18,9 @@
 
 package net
 
-import "net"
+import (
+	"net"
+)
 
 // GetSourceIP return srouce ip to target ip.
 func GetSourceIP(target string) (string, error) {
@@ -58,7 +60,8 @@ func InterfaceAddrs() ([]string, error) {
 		return nil, err
 	}
 	for _, addr := range addrs {
-		result = append(result, addr.String())
+		ip, _, _ := net.ParseCIDR(addr.String())
+		result = append(result, ip.String())
 	}
 
 	return result, nil

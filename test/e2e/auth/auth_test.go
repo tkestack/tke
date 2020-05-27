@@ -5,18 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
-	authv1 "tkestack.io/tke/api/auth/v1"
-	"tkestack.io/tke/pkg/util/names"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	authv1 "tkestack.io/tke/api/auth/v1"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	"tkestack.io/tke/pkg/auth/util"
-	apiclient "tkestack.io/tke/test/util/tkeclient"
+	"tkestack.io/tke/pkg/util/names"
+	testclient "tkestack.io/tke/test/util/client"
 )
 
 var _ = Describe("E2e", func() {
@@ -27,7 +25,7 @@ var _ = Describe("E2e", func() {
 	var roleID string
 	var err error
 	BeforeEach(func() {
-		client, err = apiclient.LoadOrSetupTKE()
+		client, err = testclient.LoadOrSetupTKE()
 		Expect(err).To(BeNil())
 	})
 

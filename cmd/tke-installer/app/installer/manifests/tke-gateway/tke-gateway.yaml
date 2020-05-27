@@ -35,6 +35,8 @@ spec:
       labels:
         app: tke-gateway
     spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
       nodeSelector:
         node-role.kubernetes.io/master: ""
       containers:
@@ -47,21 +49,16 @@ spec:
               mountPath: /app/certs
             - name: tke-gateway-volume
               mountPath: /app/conf
-          ports:
-            - containerPort: 9441
-              hostPort: 443
-            - containerPort: 9442
-              hostPort: 80
           readinessProbe:
             httpGet:
-              port: 9442
+              port: 80
               path: /healthz
               scheme: HTTP
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              port: 9442
+              port: 80
               path: /healthz
               scheme: HTTP
             initialDelaySeconds: 15
@@ -102,7 +99,11 @@ data:
       groups_claim = "groups"
       tenantid_claim = "federated_claims"
 
+    [insecure_serving]
+    port = 80
+
     [secure_serving]
+    port = 443
 {{- if .SelfSigned }}
     tls_cert_file = "/app/certs/server.crt"
     tls_private_key_file = "/app/certs/server.key"
