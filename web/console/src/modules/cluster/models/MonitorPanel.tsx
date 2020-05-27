@@ -401,18 +401,6 @@ export const projectFields = [
     alias: t('业务在所有集群的gpu memory已分配给业务的总量(分配给pod)')
   },
   {
-    expr: 'mean(project_cluster_capacity_cpu)',
-    alias: t('业务在各个集群的cpu总量之和(分配给namespace)'),
-    unit: t('核')
-  },
-  {
-    expr: 'mean(project_cluster_capacity_memory)',
-    unit: 'B',
-    thousands: 1024,
-    valueLabels: valueLabels1024,
-    alias: t('业务在各个集群的内存总量之和(分配给namespace)')
-  },
-  {
     expr: 'mean(project_cluster_capacity_gpu)',
     alias: t('业务在各个集群的gpu总量之和(分配给namespace)'),
     unit: t('卡')
@@ -422,14 +410,6 @@ export const projectFields = [
     unit: t('块'),
     // thousands: 1024, valueLabels:valueLabels1024,
     alias: t('业务在各个集群的gpu memory总量之和(分配给namespace)')
-  },
-  { expr: 'mean(project_cluster_allocated_cpu)', alias: t('业务在各个集群的cpu分配量之和(分配给pod)'), unit: t('核') },
-  {
-    expr: 'mean(project_cluster_allocated_memory)',
-    unit: 'B',
-    thousands: 1024,
-    valueLabels: valueLabels1024,
-    alias: t('业务在各个集群的内存分配量之和(分配给pod)')
   },
   { expr: 'mean(project_cluster_allocated_gpu)', alias: t('业务在各个集群的gpu分配量之和(分配给pod)'), unit: t('卡') },
   {
