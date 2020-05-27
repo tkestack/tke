@@ -20,7 +20,6 @@ package cluster
 
 import (
 	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -30,7 +29,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
-	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/json"
 )
 

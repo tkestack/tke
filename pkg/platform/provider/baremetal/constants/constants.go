@@ -30,8 +30,10 @@ const (
 	KubeletPodManifestDir = KubernetesDir + "manifests/"
 
 	SchedulerPolicyConfigFile = KubernetesDir + "scheduler-policy-config.json"
-	AuditWebhookConfigFile    = KubernetesDir + "audit-api-client-config.yaml"
-	AuditPolicyConfigFile     = KubernetesDir + "audit-policy.yaml"
+
+	AuditWebhookConfigFile = KubernetesDir + "audit-api-client-config.yaml"
+	AuditPolicyConfigName  = "audit-policy.yaml"
+	AuditPolicyConfigFile  = KubernetesDir + AuditPolicyConfigName
 
 	EtcdPodManifestFile                  = KubeletPodManifestDir + "etcd.yaml"
 	KubeAPIServerPodManifestFile         = KubeletPodManifestDir + "kube-apiserver.yaml"
