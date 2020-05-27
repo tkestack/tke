@@ -472,8 +472,8 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
-	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
-	auditPolicyData, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.AuditPolicyConfigFile))
+	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
+	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigName)
 	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
 	if GPUQuotaAdmissionHost == "" {
 		GPUQuotaAdmissionHost = "gpu-quota-admission"
@@ -503,7 +503,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			return errors.Wrap(err, machine.IP)
 		}
 
-		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.SchedulerPolicyConfigFile)
+		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.KuberentesSchedulerPolicyConfigFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -564,11 +564,11 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 
 		if p.config.Audit.Address != "" {
 			if len(auditPolicyData) != 0 {
-				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), path.Join(constants.KubernetesDir, constants.AuditPolicyConfigFile))
+				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), constants.KuberentesAuditPolicyConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
-				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), path.Join(constants.KubernetesDir, constants.AuditWebhookConfigFile))
+				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KuberentesAuditWebhookConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
