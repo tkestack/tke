@@ -21,8 +21,8 @@ package assets
 import (
 	"net/http"
 	"path"
+	"regexp"
 
-	"github.com/thoas/go-funk"
 	"golang.org/x/oauth2"
 	"k8s.io/apiserver/pkg/server/mux"
 	"tkestack.io/tke/pkg/gateway/auth"
@@ -34,7 +34,7 @@ const (
 )
 
 var (
-	indexPaths = []string{"/tkestack", "/tkestack-project"}
+	indexReg = regexp.MustCompile(`/tkestack.*`)
 )
 
 func RegisterRoute(m *mux.PathRecorderMux, oauthConfig *oauth2.Config, disableOIDCProxy bool) {
@@ -47,7 +47,8 @@ func RegisterRoute(m *mux.PathRecorderMux, oauthConfig *oauth2.Config, disableOI
 					return
 				}
 			}
-			if funk.ContainsString(indexPaths, request.URL.Path) {
+
+			if indexReg.MatchString(request.URL.Path) {
 				request.URL.Path = "/"
 			}
 			http.ServeFile(
