@@ -52,4 +52,3 @@ class AlarmRecordApp extends React.Component<RootProps, {}> {
     );
   }
 }
-

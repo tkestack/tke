@@ -11,7 +11,6 @@ import { AlarmRecord } from '../models';
 import { dateFormatter } from '@helper/dateFormatter';
 const { useState, useEffect } = React;
 
-
 export const AlarmRecordPanel = () => {
   const state = useSelector(state => state);
   const dispatch = useDispatch();
@@ -22,7 +21,7 @@ export const AlarmRecordPanel = () => {
     actions.alarmRecord.applyFilter({});
   }, []);
 
-  const formatManager = (managers) => {
+  const formatManager = managers => {
     if (managers) {
       return managers.map((m, index) => {
         return (
@@ -38,7 +37,9 @@ export const AlarmRecordPanel = () => {
     {
       key: 'metadata.creationTimestamp',
       header: t('发生时间'),
-      render: item => <Text parent="div">{dateFormatter(new Date(item.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}</Text>
+      render: item => (
+        <Text parent="div">{dateFormatter(new Date(item.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}</Text>
+      )
     },
     {
       key: 'spec.alarmPolicyName',
@@ -85,38 +86,39 @@ export const AlarmRecordPanel = () => {
           </Bubble>
         );
       }
-    }];
+    }
+  ];
 
-    return (
-      <>
-        <Table.ActionPanel>
-          <Justify
-            left={<React.Fragment />}
-            right={
-              <SearchBox
-                value={alarmRecord.query.keyword || ''}
-                onChange={actions.alarmRecord.changeKeyword}
-                onSearch={actions.alarmRecord.performSearch}
-                onClear={() => {
-                      actions.alarmRecord.performSearch('');
-                    }}
-                placeholder={t('请输入告警策略名')}
-              />
-            }
-          />
-        </Table.ActionPanel>
-        <TablePanel
-          recordKey={record => {
-            return record.id;
-          }}
-          columns={columns}
-          model={alarmRecord}
-          action={actions.alarmRecord}
-          rowDisabled={record => record.status['phase'] === 'Terminating'}
-          emptyTips={emptyTips}
-          isNeedContinuePagination={true}
-          bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
+  return (
+    <>
+      <Table.ActionPanel>
+        <Justify
+          left={<React.Fragment />}
+          right={
+            <SearchBox
+              value={alarmRecord.query.keyword || ''}
+              onChange={actions.alarmRecord.changeKeyword}
+              onSearch={actions.alarmRecord.performSearch}
+              onClear={() => {
+                actions.alarmRecord.performSearch('');
+              }}
+              placeholder={t('请输入告警策略名')}
+            />
+          }
         />
-      </>
-     );
+      </Table.ActionPanel>
+      <TablePanel
+        recordKey={record => {
+          return record.id;
+        }}
+        columns={columns}
+        model={alarmRecord}
+        action={actions.alarmRecord}
+        rowDisabled={record => record.status['phase'] === 'Terminating'}
+        emptyTips={emptyTips}
+        isNeedContinuePagination={true}
+        bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
+      />
+    </>
+  );
 };
