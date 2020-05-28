@@ -2309,13 +2309,13 @@ export const validateWorkloadActions = {
   },
 
   /** 校验 maxUnavailable */
-  validateMaxUnavaiable() {
+  validateMaxUnavaiable(noZero?: boolean) {
     return async (dispatch, getState: GetState) => {
       let { maxUnavailable, workloadType } = getState().subRoot.workloadEdit;
       let isTapp = workloadType === 'tapp';
       let result;
       if (isTapp) {
-        result = validateWorkloadActions._validateMaxUnavaiableForTapp(maxUnavailable);
+        result = validateWorkloadActions._validateMaxUnavaiableForTapp(maxUnavailable, noZero);
       } else {
         result = validateWorkloadActions._validateBatchSize(maxUnavailable);
       }
@@ -2327,13 +2327,16 @@ export const validateWorkloadActions = {
     };
   },
 
-  _validateMaxUnavaiableForTapp(size: string) {
+  _validateMaxUnavaiableForTapp(size: string, noZero?: boolean) {
     let reg = /^\d+$/,
       status = 0,
       message = '';
     if (!size) {
       status = 2;
       message = '数值不能为空';
+    } else if (noZero && (size === '0' || !reg.test(size))) {
+      status = 2;
+      message = '数值不正确，必须为正整数';
     } else if (!reg.test(size)) {
       status = 2;
       message = '数值格式不正确，必须为0或者正整数';
