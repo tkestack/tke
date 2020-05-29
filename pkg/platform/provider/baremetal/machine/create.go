@@ -173,7 +173,7 @@ func (p *Provider) EnsureKernelModule(ctx context.Context, machine *platformv1.M
 		return err
 	}
 
-	modules := []string{"iptable_nat"}
+	modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
 	var data bytes.Buffer
 
 	for _, m := range modules {

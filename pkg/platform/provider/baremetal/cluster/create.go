@@ -176,7 +176,7 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 }
 
 func (p *Provider) EnsureKernelModule(ctx context.Context, c *v1.Cluster) error {
-	modules := []string{"iptable_nat"}
+	modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
 	var data bytes.Buffer
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
