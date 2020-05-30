@@ -261,6 +261,9 @@ message MessageSpec {
 
   // +optional
   optional string receiverChannelName = 11;
+
+  // +optional
+  optional string clusterID = 12;
 }
 
 // MessageStatus represents information about the status of a message.
