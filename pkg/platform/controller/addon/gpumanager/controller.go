@@ -26,6 +26,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/time/rate"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -44,6 +45,7 @@ import (
 
 // Controller is responsible for performing actions dependent upon a gpu manager phase.
 type Controller struct {
+	client       tkeclientset.Interface
 	operator     operator.ObjectOperator
 	cache        *gmCache
 	health       health.Prober
@@ -93,6 +95,7 @@ func NewController(tkeClient tkeclientset.Interface, gmInformer platformv1inform
 	controller.lister = gmInformer.Lister()
 	controller.listerSynced = gmInformer.Informer().HasSynced
 	controller.health = health.NewHealthProber(gmInformer.Lister(), controller.operator)
+	controller.client = tkeClient
 
 	return controller
 }
@@ -275,6 +278,18 @@ func (c *Controller) delete(item *gmCachedItem, key string) error {
 
 	log.Info(fmt.Sprintf("Delete the GPUManager %s health store", key))
 	c.health.Del(key)
+
+	cluster, err := c.client.PlatformV1().Clusters().Get(item.holder.Spec.ClusterName, metav1.GetOptions{})
+	if err != nil && apierror.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if cluster.Status.Phase == v1.ClusterTerminating {
+		log.Info(fmt.Sprintf("Keep the components of GPUManager %s when deleting the cluster", key))
+		return nil
+	}
 
 	log.Info(fmt.Sprintf("Delete service of GPUManager %s", key))
 	if err := c.operator.DeleteService(item.holder.Spec.ClusterName); err != nil {

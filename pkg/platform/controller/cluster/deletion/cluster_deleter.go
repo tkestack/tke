@@ -240,6 +240,9 @@ type deleteResourceFunc func(deleter *clusterDeleter, cluster *v1.Cluster) error
 var deleteResourceFuncs = []deleteResourceFunc{
 	deletePersistentEvent,
 	deleteHelm,
+	deleteGPUManager,
+	deleteIPAM,
+	deleteTappControllers,
 	deleteClusterProvider,
 	deleteMachine,
 	deleteClusterCredential,
@@ -308,6 +311,81 @@ func deleteHelm(deleter *clusterDeleter, cluster *v1.Cluster) error {
 	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
 	for _, helm := range helmList.Items {
 		if err := deleter.platformClient.Helms().Delete(helm.ObjectMeta.Name, deleteOpt); err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func deleteGPUManager(deleter *clusterDeleter, cluster *v1.Cluster) error {
+	log.Debug("Cluster controller - deleteGPUManager", log.String("clusterName", cluster.ObjectMeta.Name))
+
+	listOpt := metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.ObjectMeta.Name),
+	}
+	gpuManagerList, err := deleter.platformClient.GPUManagers().List(listOpt)
+	if err != nil {
+		return err
+	}
+	if len(gpuManagerList.Items) == 0 {
+		return nil
+	}
+	background := metav1.DeletePropagationBackground
+	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
+	for _, gpuManager := range gpuManagerList.Items {
+		if err := deleter.platformClient.GPUManagers().Delete(gpuManager.ObjectMeta.Name, deleteOpt); err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func deleteIPAM(deleter *clusterDeleter, cluster *v1.Cluster) error {
+	log.Debug("Cluster controller - deleteIPAM", log.String("clusterName", cluster.ObjectMeta.Name))
+
+	listOpt := metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.ObjectMeta.Name),
+	}
+	ipamList, err := deleter.platformClient.IPAMs().List(listOpt)
+	if err != nil {
+		return err
+	}
+	if len(ipamList.Items) == 0 {
+		return nil
+	}
+	background := metav1.DeletePropagationBackground
+	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
+	for _, ipam := range ipamList.Items {
+		if err := deleter.platformClient.IPAMs().Delete(ipam.ObjectMeta.Name, deleteOpt); err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func deleteTappControllers(deleter *clusterDeleter, cluster *v1.Cluster) error {
+	log.Debug("Cluster controller - deleteTappControllers", log.String("clusterName", cluster.ObjectMeta.Name))
+
+	listOpt := metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.ObjectMeta.Name),
+	}
+	tappControllerList, err := deleter.platformClient.TappControllers().List(listOpt)
+	if err != nil {
+		return err
+	}
+	if len(tappControllerList.Items) == 0 {
+		return nil
+	}
+	background := metav1.DeletePropagationBackground
+	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
+	for _, tappController := range tappControllerList.Items {
+		if err := deleter.platformClient.TappControllers().Delete(tappController.ObjectMeta.Name, deleteOpt); err != nil {
 			if !errors.IsNotFound(err) {
 				return err
 			}
