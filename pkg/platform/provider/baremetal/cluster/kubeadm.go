@@ -155,7 +155,8 @@ func (p *Provider) getKubeProxyConfiguration(c *v1.Cluster) *kubeproxyv1alpha1.K
 	}
 
 	return &kubeproxyv1alpha1.KubeProxyConfiguration{
-		Mode: kubeproxyv1alpha1.ProxyMode(kubeProxyMode),
+		Mode:        kubeproxyv1alpha1.ProxyMode(kubeProxyMode),
+		ClusterCIDR: c.Spec.ClusterCIDR,
 	}
 }
 
