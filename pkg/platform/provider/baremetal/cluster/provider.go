@@ -156,9 +156,6 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 		cluster.Spec.NetworkDevice = "eth0"
 	}
 
-	if cluster.Spec.Features.IPVS == nil {
-		cluster.Spec.Features.IPVS = pointer.ToBool(true)
-	}
 	if cluster.Spec.Features.CSIOperator != nil {
 		if cluster.Spec.Features.CSIOperator.Version == "" {
 			cluster.Spec.Features.CSIOperator.Version = csioperatorimage.LatestVersion
