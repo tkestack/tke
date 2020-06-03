@@ -107,7 +107,7 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
-
+			p.EnsureKeepalived,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
