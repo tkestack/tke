@@ -48,6 +48,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy"
 	galaxyimages "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/keepalived"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
@@ -59,7 +60,6 @@ import (
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/template"
 )
 
@@ -474,6 +474,41 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
+// make sure all master node has cleaning iptable table so in kubeadm join time apiserver may not join it self.
+// keepalived only installs in master node 0 before kubeadm init phase to prevet from vip failover in kubeadm join(etcd phase)
+func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
+		return nil
+	}
+
+	for i, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		keepalived.ClearLoadBalance(machineSSH, c.Spec.Features.HA.TKEHA.VIP, kubernetesSvcIP(c))
+
+		if i == 0 {
+			option := &keepalived.Option{
+				IP:              machine.IP,
+				VIP:             c.Spec.Features.HA.TKEHA.VIP,
+				LoadBalance:     false,
+				IPVS:            false,
+				KubernetesSvcIP: kubernetesSvcIP(c),
+			}
+
+			err := keepalived.Install(machineSSH, option)
+			if err != nil {
+				return err
+			}
+
+			log.Info("keepalived install without loadbalance success.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
+		}
+	}
+
+	return nil
+}
 func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
 	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigName)
@@ -519,36 +554,24 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 		}
 
 		if c.Spec.Features.HA != nil {
-			if c.Spec.Features.HA.TKEHA != nil {
-				networkInterface := ssh.GetNetworkInterface(machineSSH, machine.IP)
-				if networkInterface == "" {
-					return fmt.Errorf("can't get network interface by %s", machine.IP)
+
+			if c.Spec.Features.HA.TKEHA != nil && i == 0 {
+				// vip may move to other master node in kubeadm join phase, so keepalived only installs in node 0 in present phase
+				option := &keepalived.Option{
+					IP:  machine.IP,
+					VIP: c.Spec.Features.HA.TKEHA.VIP,
 				}
 
-				data, err := template.ParseFile(constants.ManifestsDir+"keepalived/keepalived.conf", map[string]interface{}{
-					"Interface": networkInterface,
-					"VIP":       c.Spec.Features.HA.TKEHA.VIP,
-				})
+				err := keepalived.Install(machineSSH, option)
 				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-				err = machineSSH.WriteFile(bytes.NewReader(data), constants.KeepavliedConfigFile)
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
+					return err
 				}
 
-				data, err = template.ParseFile(constants.ManifestsDir+"keepalived/keepalived.yaml", map[string]interface{}{
-					"Image": images.Get().Keepalived.FullName(),
-				})
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-				err = machineSSH.WriteFile(bytes.NewReader(data), constants.KeepavlivedManifestFile)
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
+				log.Info("keepalived created success.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
 			}
+
 			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 { // forward rest control-plane to first master
+				// solve request roll back problem by rediect request to local host
 				cmd := fmt.Sprintf("iptables -t nat -I PREROUTING 1 -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
 					c.Spec.Machines[0].IP)
 				_, stderr, exit, err := machineSSH.Exec(cmd)
@@ -974,6 +997,33 @@ func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 	}
 
 	log.Info("csi-perator in feature already created.", log.String("name", c.Cluster.Name))
+
+	return nil
+}
+
+func (p *Provider) EnsureKeepalivedWithLB(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
+		return nil
+	}
+
+	for _, machine := range c.Spec.Machines {
+		s, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		option := &keepalived.Option{
+			IP:  machine.IP,
+			VIP: c.Spec.Features.HA.TKEHA.VIP,
+		}
+
+		err = keepalived.Install(s, option)
+		if err != nil {
+			return err
+		}
+
+		log.Info("keepalived created success.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
+	}
 
 	return nil
 }
