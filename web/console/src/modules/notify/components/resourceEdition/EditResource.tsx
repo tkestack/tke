@@ -36,9 +36,11 @@ export class EditResource extends React.Component<Props, State> {
       : getState(schema, this);
 
     // 转化webhook中headers的值为字符串
-    if (state.resource.properties.spec.pick === 'webhook') {
-      let headers = state.resource.properties.spec.properties.webhook.properties.headers;
-      if (headers.value) {
+    const theSpec = state.resource.properties.spec;
+    if (theSpec.pick === 'webhook') {
+      const headers = theSpec.properties.webhook.properties.headers;
+      // let headers = state.resource.properties.spec.properties.webhook.properties.headers;
+      if (headers && headers.value) {
         let headerArr = [];
         Object.keys(headers.value).forEach(key => {
           headerArr.push(key + ':' + headers.value[key]);
@@ -46,7 +48,7 @@ export class EditResource extends React.Component<Props, State> {
         headers.value = headerArr.join(';');
       }
     }
-    console.log('EditResource state: ', state);
+
     this.state = state;
   }
 
@@ -167,7 +169,7 @@ export class EditResource extends React.Component<Props, State> {
     }
 
     // 将headers字符串转换为对象
-    if (json.spec && json.spec.webhook) {
+    if (json.spec && json.spec.webhook && json.spec.webhook.headers) {
       let headersObj = {};
       json.spec.webhook.headers.split(';').forEach(headerStr => {
         if (headerStr) {

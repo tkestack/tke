@@ -2395,7 +2395,7 @@ export const validateWorkloadActions = {
       }
     }
     if (workloadType === 'tapp') {
-      result = result && validateWorkloadActions._validateMaxUnavaiableForTapp(maxUnavailable).status === 1;
+      result = result && validateWorkloadActions._validateMaxUnavaiableForTapp(maxUnavailable, true).status === 1;
     }
     containers.forEach(container => {
       result = result && validateWorkloadActions._validateRegistrySelection(container.registry).status === 1;
@@ -2427,7 +2427,7 @@ export const validateWorkloadActions = {
       }
 
       if (isTapp) {
-        dispatch(validateWorkloadActions.validateMaxUnavaiable());
+        dispatch(validateWorkloadActions.validateMaxUnavaiable(true));
       }
 
       containers.forEach(container => {

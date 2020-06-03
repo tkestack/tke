@@ -33,14 +33,16 @@ export async function fetchAlarmRecord(
     let { continueToken = undefined } = options;
     let queryObj = {
         limit,
-        ...filter
     };
+    if (filter.clusterID || search) {
+        queryObj['fieldSelector'] = {};
+    }
+    if (filter.clusterID) {
+        queryObj['fieldSelector']['spec.clusterID'] = filter.clusterID;
+    }
     if (search) {
         delete queryObj.limit;
-        queryObj['fieldSelector'] = {
-            'spec.alarmPolicyName': search
-        };
-        // queryObj['fieldSelector=spec.alarmPolicyName'] = search;
+        queryObj['fieldSelector']['spec.alarmPolicyName'] = search;
         continueToken = undefined;
     }
     if (continueToken) {

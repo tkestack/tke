@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect, Provider } from 'react-redux';
-
+import { t } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { Layout, Card } from '@tea/component';
 import { ResetStoreAction } from '../../../../helpers';
@@ -9,6 +9,7 @@ import { RootState } from '../models';
 import { router } from '../router';
 import { configStore } from '../stores/RootStore';
 import { AlarmRecordPanel } from './AlarmRecordPanel';
+import { AlarmRecordHeadPanel } from './AlarmHeaderPanel';
 
 const { useState, useEffect } = React;
 const { Body, Content } = Layout;
@@ -42,7 +43,9 @@ class AlarmRecordApp extends React.Component<RootProps, {}> {
       <Layout>
         <Body>
           <Content>
-            <Content.Header title="历史告警记录"></Content.Header>
+            <Content.Header title={t('历史告警记录')}>
+              <AlarmRecordHeadPanel />
+            </Content.Header>
             <Content.Body>
               <AlarmRecordPanel />
             </Content.Body>

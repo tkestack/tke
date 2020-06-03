@@ -17,7 +17,7 @@ export class ResourceDetailTempalte extends ResourceDetail {
         <FormPanel.Item text label={t('渠道')}>
           {this.renderChannel(ins)}
         </FormPanel.Item>
-        {['text', 'tencentCloudSMS', 'wechat']
+        {['text', 'tencentCloudSMS', 'wechat', 'webhook']
           .filter(key => ins.spec[key])
           .map(key => {
             return Object.keys(ins.spec[key]).map(property => (
