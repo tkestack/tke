@@ -98,6 +98,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKubeadmInitPhaseAddon,
 
 			p.EnsureGalaxy,
+			p.EnsureKeepalivedInit,
 
 			p.EnsureJoinPhasePreflight,
 			p.EnsureJoinPhaseControlPlanePrepare,
@@ -107,20 +108,20 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
-
+			p.EnsureKeepalivedWithLB,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
 			p.EnsureCSIOperator,
 
 			p.EnsureCleanup,
-
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
 			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
+			p.EnsureKeepalivedWithLB,
 		},
 	}
 
