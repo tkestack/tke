@@ -15,11 +15,16 @@ export const AlarmRecordPanel = () => {
   const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
-  const { alarmRecord } = state;
+  const { alarmRecord, route } = state;
+  const selectedClusterId = route.queries.clusterId;
 
   useEffect(() => {
-    actions.alarmRecord.applyFilter({});
-  }, []);
+    if (selectedClusterId) {
+      actions.alarmRecord.applyFilter({ clusterID: selectedClusterId });
+    } else {
+      actions.alarmRecord.clear();
+    }
+  }, [selectedClusterId]);
 
   const formatManager = managers => {
     if (managers) {

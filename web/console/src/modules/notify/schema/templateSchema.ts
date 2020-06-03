@@ -40,7 +40,13 @@ export const templateSchema = {
             miniProgramPagePath: { ...TYPES.string, placeholder: '请输入小程序页面地址' },
             url: { ...TYPES.string, placeholder: '请输入消息中的跳转链接' }
           }
-        }
+        },
+        webhook: {
+          properties: {
+            body: { ...TYPES.string, required: true, placeholder: '请输入body', bodyTip: true, value: '{{.summary}}' },
+            header: { ...TYPES.string, required: true, placeholder: '请输入消息头' }
+          }
+        },
       }
     }
   }
