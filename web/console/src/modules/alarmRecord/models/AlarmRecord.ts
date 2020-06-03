@@ -20,5 +20,8 @@ export interface AlarmRecord extends Identifiable {
 export interface AlarmRecordFilter {
     /** 告警策略名字 */
     alarmPolicyName?: string;
+
+    /** 集群ID */
+    clusterID?: string;
 }
 

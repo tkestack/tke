@@ -90,9 +90,9 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
         header: t('地址'),
         render: (x: ChartIns) => (
           <Text parent="div" overflow>
-            <span className="text" id={`_${x.spec.name}`}>
+            <Text className="text" overflow style={{ width: '80%' }} id={`_${x.spec.name}`}>
               {`http://${this.props.dockerRegistryUrl.data}/chart/${this.props.route.queries['cgName']}/${x.spec.name}.tgz`}
-            </span>{' '}
+            </Text>{' '}
             <Clip target={`#_${x.spec.name}`} />
           </Text>
         )

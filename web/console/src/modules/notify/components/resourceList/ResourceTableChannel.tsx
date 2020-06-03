@@ -19,6 +19,9 @@ export class ResourceTableChannel extends ResourceTable {
           if (x.spec.wechat) {
             return t('微信公众号');
           }
+          if (x.spec.webhook) {
+            return 'webhook';
+          }
 
           return '-';
         }
