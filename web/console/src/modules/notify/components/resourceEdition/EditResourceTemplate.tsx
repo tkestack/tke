@@ -38,10 +38,12 @@ export class EditResourceTemplate extends EditResource {
         if (channel.spec.wechat) {
           type = 'wechat';
         }
+        if (channel.spec.webhook) {
+          type = 'webhook';
+        }
       }
       resource.properties.spec.pick = type;
     }
-
     return (
       <Form>
         <Form.Item label={t('名称')} required>

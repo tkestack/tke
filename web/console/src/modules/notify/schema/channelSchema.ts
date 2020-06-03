@@ -44,8 +44,8 @@ export const channelSchema = {
         },
         webhook: {
           properties: {
-            url: TYPES.string,
-            headers: { ...TYPES.string, required: true, placeholder: '自定义Header，仅支持Key:Value格式，中间用;号分割。eg param1:1;param2:2' }
+            url: { ...TYPES.string, required: true },
+            headers: { ...TYPES.string, placeholder: '自定义Header，仅支持Key:Value格式，中间用;号分割。eg param1:1;param2:2' }
           }
         }
       }
