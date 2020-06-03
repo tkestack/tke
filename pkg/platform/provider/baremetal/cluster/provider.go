@@ -114,7 +114,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureCSIOperator,
 
 			p.EnsureCleanup,
-
+			p.EnsureLoadBalance,
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
