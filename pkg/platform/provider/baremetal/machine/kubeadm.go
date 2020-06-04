@@ -19,6 +19,8 @@
 package machine
 
 import (
+	"github.com/imdario/mergo"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -32,10 +34,8 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadm
 
 	return &kubeadmv1beta2.JoinConfiguration{
 		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
-			Name: nodeName,
-			KubeletExtraArgs: map[string]string{
-				"pod-infra-container-image": images.Get().Pause.FullName(),
-			},
+			Name:             nodeName,
+			KubeletExtraArgs: p.getKubeletExtraArgs(c),
 		},
 		Discovery: kubeadmv1beta2.Discovery{
 			BootstrapToken: &kubeadmv1beta2.BootstrapTokenDiscovery{
@@ -46,4 +46,15 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadm
 			TLSBootstrapToken: *c.ClusterCredential.BootstrapToken,
 		},
 	}
+}
+
+func (p *Provider) getKubeletExtraArgs(c *v1.Cluster) map[string]string {
+	args := map[string]string{
+		"pod-infra-container-image": images.Get().Pause.FullName(),
+	}
+
+	utilruntime.Must(mergo.Merge(&args, c.Spec.KubeletExtraArgs))
+	utilruntime.Must(mergo.Merge(&args, p.config.Kubelet.ExtraArgs))
+
+	return args
 }
