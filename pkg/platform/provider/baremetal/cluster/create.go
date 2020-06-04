@@ -176,7 +176,7 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 }
 
 func (p *Provider) EnsureKernelModule(ctx context.Context, c *v1.Cluster) error {
-	modules := []string{"iptable_nat"}
+	modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
 	var data bytes.Buffer
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -472,8 +472,8 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
-	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
-	auditPolicyData, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.AuditPolicyConfigFile))
+	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
+	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigName)
 	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
 	if GPUQuotaAdmissionHost == "" {
 		GPUQuotaAdmissionHost = "gpu-quota-admission"
@@ -503,7 +503,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			return errors.Wrap(err, machine.IP)
 		}
 
-		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.SchedulerPolicyConfigFile)
+		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.KuberentesSchedulerPolicyConfigFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -564,11 +564,11 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 
 		if p.config.Audit.Address != "" {
 			if len(auditPolicyData) != 0 {
-				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), path.Join(constants.KubernetesDir, constants.AuditPolicyConfigFile))
+				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), constants.KuberentesAuditPolicyConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
-				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), path.Join(constants.KubernetesDir, constants.AuditWebhookConfigFile))
+				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KuberentesAuditWebhookConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
@@ -987,17 +987,11 @@ func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
 			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 {
 				cmd := fmt.Sprintf("iptables -t nat -D PREROUTING -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
 					c.Spec.Machines[0].IP)
-				_, stderr, exit, err := s.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
+				s.Exec(cmd)
 
 				cmd = fmt.Sprintf("iptables -t nat -D POSTROUTING -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
 					c.Spec.Machines[0].IP, machine.IP)
-				_, stderr, exit, err = s.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
+				s.Exec(cmd)
 			}
 		}
 

@@ -21,13 +21,14 @@ package passthrough
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
-	netutil "k8s.io/apimachinery/pkg/util/net"
-	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	netutil "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 	"tkestack.io/tke/pkg/gateway/token"
 	"tkestack.io/tke/pkg/util/log"

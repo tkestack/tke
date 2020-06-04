@@ -155,7 +155,8 @@ func (p *Provider) getKubeProxyConfiguration(c *v1.Cluster) *kubeproxyv1alpha1.K
 	}
 
 	return &kubeproxyv1alpha1.KubeProxyConfiguration{
-		Mode: kubeproxyv1alpha1.ProxyMode(kubeProxyMode),
+		Mode:        kubeproxyv1alpha1.ProxyMode(kubeProxyMode),
+		ClusterCIDR: c.Spec.ClusterCIDR,
 	}
 }
 
@@ -177,8 +178,8 @@ func (p *Provider) getAPIServerExtraArgs(c *v1.Cluster) map[string]string {
 		"token-auth-file": constants.TokenFile,
 	}
 	if p.config.Audit.Address != "" {
-		args["audit-policy-file"] = constants.AuditPolicyConfigFile
-		args["audit-webhook-config-file"] = constants.AuditWebhookConfigFile
+		args["audit-policy-file"] = constants.KuberentesAuditPolicyConfigFile
+		args["audit-webhook-config-file"] = constants.KuberentesAuditWebhookConfigFile
 	}
 	for k, v := range c.Spec.APIServerExtraArgs {
 		args[k] = v
@@ -204,7 +205,7 @@ func (p *Provider) getControllerManagerExtraArgs(c *v1.Cluster) map[string]strin
 func (p *Provider) getSchedulerExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{
 		"use-legacy-policy-config": "true",
-		"policy-config-file":       constants.SchedulerPolicyConfigFile,
+		"policy-config-file":       constants.KuberentesSchedulerPolicyConfigFile,
 	}
 	for k, v := range c.Spec.SchedulerExtraArgs {
 		args[k] = v
