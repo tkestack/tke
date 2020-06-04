@@ -31,12 +31,12 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
-
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -52,6 +52,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/cmdstring"
@@ -418,10 +419,12 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	if p.config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
+	extraArgs := c.Spec.DockerExtraArgs
+	utilruntime.Must(mergo.Merge(&extraArgs, p.config.Docker.ExtraArgs))
 	option := &docker.Option{
 		InsecureRegistries: insecureRegistries,
 		RegistryDomain:     p.config.Registry.Domain,
-		ExtraArgs:          c.Spec.DockerExtraArgs,
+		ExtraArgs:          extraArgs,
 	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -816,8 +819,7 @@ func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) err
 
 func (p *Provider) EnsureKubelet(ctx context.Context, c *v1.Cluster) error {
 	option := &kubelet.Option{
-		Version:   c.Spec.Version,
-		ExtraArgs: c.Spec.KubeletExtraArgs,
+		Version: c.Spec.Version,
 	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
