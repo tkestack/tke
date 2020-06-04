@@ -585,20 +585,21 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 				log.Info("keepalived created success.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
 			}
 
-			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 { // forward rest control-plane to first master
-				cmd := fmt.Sprintf("iptables -t nat -I PREROUTING 1 -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
-					c.Spec.Machines[0].IP)
+			if c.Spec.Features.HA.ThirdPartyHA != nil && i == 0 {
+				// solve request roll back problem by rediect request to local host
+				cmd := fmt.Sprintf("iptables -t nat -D OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
+					c.Spec.Features.HA.ThirdPartyHA.VIP, c.Spec.Features.HA.ThirdPartyHA.VPort)
+				machineSSH.Exec(cmd)
+
+				// redirect clb request to local port
+				cmd = fmt.Sprintf("iptables -t nat -I OUTPUT 1 -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
+					c.Spec.Features.HA.ThirdPartyHA.VIP, c.Spec.Features.HA.ThirdPartyHA.VPort)
 				_, stderr, exit, err := machineSSH.Exec(cmd)
 				if err != nil || exit != 0 {
 					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 				}
 
-				cmd = fmt.Sprintf("iptables -t nat -I POSTROUTING 1 -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
-					c.Spec.Machines[0].IP, machine.IP)
-				_, stderr, exit, err = machineSSH.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
+				log.Info("redirect vip:vport request to local host and local port.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
 			}
 		}
 
@@ -1054,17 +1055,13 @@ func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
 		}
 
 		if c.Spec.Features.HA != nil {
-			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 {
-				cmd := fmt.Sprintf("iptables -t nat -D PREROUTING -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
-					c.Spec.Machines[0].IP)
-				s.Exec(cmd)
-
-				cmd = fmt.Sprintf("iptables -t nat -D POSTROUTING -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
-					c.Spec.Machines[0].IP, machine.IP)
+			if c.Spec.Features.HA.ThirdPartyHA != nil && i == 0 {
+				cmd := fmt.Sprintf("iptables -t nat -D OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
+					c.Spec.Features.HA.ThirdPartyHA.VIP, c.Spec.Features.HA.ThirdPartyHA.VPort)
 				s.Exec(cmd)
 			}
 		}
-
 	}
+
 	return nil
 }
