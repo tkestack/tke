@@ -651,6 +651,11 @@ func (c *Controller) uninstallIPAM(ctx context.Context, ipam *v1.IPAM) error {
 	if err != nil {
 		return err
 	}
+	if cluster.Status.Phase == v1.ClusterTerminating {
+		log.Info(fmt.Sprintf("Keep the components of IPAM %s when deleting the cluster", ipam.Name))
+		return nil
+	}
+
 	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err

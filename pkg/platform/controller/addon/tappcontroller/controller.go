@@ -514,6 +514,11 @@ func (c *Controller) uninstallTappController(ctx context.Context, tappController
 	if err != nil {
 		return err
 	}
+	if cluster.Status.Phase == v1.ClusterTerminating {
+		log.Info(fmt.Sprintf("Keep the components of TappController %s when deleting the cluster", tappController.Name))
+		return nil
+	}
+
 	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
