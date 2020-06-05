@@ -294,13 +294,13 @@ func completeNetworking(cluster *v1.Cluster) error {
 	return nil
 }
 
-func kubernetesSvcIP(cluster *v1.Cluster) string {
+func kubernetesSvcIP(cluster *v1.Cluster) (string, error) {
 	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.KUBERNETES)
 	if err != nil {
-		return ""
+		return "", errors.Wrap(err, "get kubernetesSvcIP error")
 	}
 
-	return ip.String()
+	return ip.String(), nil
 }
 
 func completeDNS(cluster *v1.Cluster) error {
@@ -483,37 +483,43 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
-// make sure all master node has cleaning iptable table so in kubeadm join time apiserver may not join it self.
+// EnsureKeepalivedInit make sure all master node has cleaning iptable table so in kubeadm join time apiserver may not join it self.
 // keepalived only installs in master node 0 before kubeadm init phase to prevet from vip failover in kubeadm join(etcd phase)
 func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) error {
 	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
 		return nil
 	}
 
-	for i, machine := range c.Spec.Machines {
+	kubernetesSvcIP, err := kubernetesSvcIP(c)
+	if err != nil {
+		return err
+	}
+
+	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
 		}
 
-		keepalived.ClearLoadBalance(machineSSH, c.Spec.Features.HA.TKEHA.VIP, kubernetesSvcIP(c))
+		keepalived.ClearLoadBalance(machineSSH, c.Spec.Features.HA.TKEHA.VIP, kubernetesSvcIP)
+	}
 
-		if i == 0 {
-			option := &keepalived.Option{
-				IP:              machine.IP,
-				VIP:             c.Spec.Features.HA.TKEHA.VIP,
-				LoadBalance:     false,
-				IPVS:            false,
-				KubernetesSvcIP: kubernetesSvcIP(c),
-			}
+	option := &keepalived.Option{
+		IP:              c.Spec.Machines[0].IP,
+		VIP:             c.Spec.Features.HA.TKEHA.VIP,
+		LoadBalance:     false,
+		IPVS:            false,
+		KubernetesSvcIP: kubernetesSvcIP,
+	}
 
-			err := keepalived.Install(machineSSH, option)
-			if err != nil {
-				return err
-			}
+	machineSSH, err := c.Spec.Machines[0].SSH()
+	if err != nil {
+		return err
+	}
 
-			log.Info("keepalived install without loadbalance success.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
-		}
+	err = keepalived.Install(machineSSH, option)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -563,28 +569,6 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 		}
 
 		if c.Spec.Features.HA != nil {
-			if c.Spec.Features.HA.TKEHA != nil {
-				keepalived.ClearLoadBalance(machineSSH, c.Spec.Features.HA.TKEHA.VIP, kubernetesSvcIP(c))
-			}
-
-			if c.Spec.Features.HA.TKEHA != nil && i == 0 {
-				// vip may move to other master node in kubeadm join phase, so keepalived only installs in node 0 in present phase
-				option := &keepalived.Option{
-					IP:              machine.IP,
-					VIP:             c.Spec.Features.HA.TKEHA.VIP,
-					LoadBalance:     false,
-					IPVS:            false,
-					KubernetesSvcIP: kubernetesSvcIP(c),
-				}
-
-				err := keepalived.Install(machineSSH, option)
-				if err != nil {
-					return err
-				}
-
-				log.Info("keepalived created success.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
-			}
-
 			if c.Spec.Features.HA.ThirdPartyHA != nil && i == 0 {
 				// solve request roll back problem by rediect request to local host
 				cmd := fmt.Sprintf("iptables -t nat -D OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
@@ -1021,19 +1005,24 @@ func (p *Provider) EnsureKeepalivedWithLB(ctx context.Context, c *v1.Cluster) er
 		return nil
 	}
 
+	ipvs := c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS
+	kubernetesSvcIP, err := kubernetesSvcIP(c)
+	if err != nil {
+		return err
+	}
+
 	for _, machine := range c.Spec.Machines {
 		s, err := machine.SSH()
 		if err != nil {
 			return err
 		}
 
-		ipvs := c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS
 		option := &keepalived.Option{
 			IP:              machine.IP,
 			VIP:             c.Spec.Features.HA.TKEHA.VIP,
 			LoadBalance:     true,
 			IPVS:            ipvs,
-			KubernetesSvcIP: kubernetesSvcIP(c),
+			KubernetesSvcIP: kubernetesSvcIP,
 		}
 
 		err = keepalived.Install(s, option)

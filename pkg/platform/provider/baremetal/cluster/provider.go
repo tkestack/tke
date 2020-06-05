@@ -81,6 +81,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureCNIPlugins,
 			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
+			p.EnsureKeepalivedInit,
 
 			p.EnsurePrepareForControlplane,
 
@@ -98,7 +99,6 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKubeadmInitPhaseAddon,
 
 			p.EnsureGalaxy,
-			p.EnsureKeepalivedInit,
 
 			p.EnsureJoinPhasePreflight,
 			p.EnsureJoinPhaseControlPlanePrepare,

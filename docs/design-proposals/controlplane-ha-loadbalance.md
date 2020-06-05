@@ -169,6 +169,7 @@ ipvs模式缺点：
 综合上述考虑，vip dnat to kubernetes service 方案在负载均衡规则上更接近k8s原生实现，且无需附带额外的辅助均衡软件haproxy。
 故第一版本先实现基于iptable mode 和ipvs mode的负载均衡方案，后续若有其他负载均衡方案的需求，评估合理性后再继续跟进
 
-备注：采用keepalived保证高可用需在局域网（包括腾讯云vpc）内开启组播功能，keepalived方案中vrid可能在vpc内冲突，采用ip地址最后一个字节作为vrid，可保证同网络内多自建集群的vrid唯一性
+备注：采用keepalived保证高可用需在局域网（包括腾讯云vpc）内开启组播功能，keepalived方案中vrid可能在vpc内冲突，采用ip地址最后一个字节+1作为vrid，可保证同网络内多自建集群的vrid唯一性
+最后一个byte+1的操作是为了防止vip最后一位为0，该方案前提为：一般情况下，vip最后一位不可能为255
 
 
