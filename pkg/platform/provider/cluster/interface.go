@@ -61,6 +61,9 @@ type ControllerProvider interface {
 	OnCreate(ctx context.Context, cluster *v1.Cluster) error
 	OnUpdate(ctx context.Context, cluster *v1.Cluster) error
 	OnDelete(ctx context.Context, cluster *v1.Cluster) error
+
+	// OnRunning call on first running.
+	OnRunning(ctx context.Context, cluster *v1.Cluster) error
 }
 
 // Provider defines a set of response interfaces for specific cluster
@@ -179,6 +182,9 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 	nextConditionType := p.getNextConditionType(condition.Type)
 	if nextConditionType == ConditionTypeDone {
 		cluster.Status.Phase = platformv1.ClusterRunning
+		if err := p.OnRunning(ctx, cluster); err != nil {
+			return fmt.Errorf("%s.OnRunning error: %w", p.Name(), err)
+		}
 	} else {
 		cluster.SetCondition(platformv1.ClusterCondition{
 			Type:               nextConditionType,
@@ -216,6 +222,10 @@ func (p *DelegateProvider) OnDelete(ctx context.Context, cluster *v1.Cluster) er
 		}
 	}
 
+	return nil
+}
+
+func (p *DelegateProvider) OnRunning(ctx context.Context, cluster *v1.Cluster) error {
 	return nil
 }
 
