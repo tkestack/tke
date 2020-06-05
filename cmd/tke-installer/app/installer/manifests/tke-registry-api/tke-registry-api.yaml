@@ -68,11 +68,11 @@ spec:
             periodSeconds: 20
           resources:
             limits:
-              cpu: 500m
-              memory: 1Gi
-            requests:
-              cpu: 250m
+              cpu: 100m
               memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
       nodeName: {{ .NodeName }}
       volumes:
         - name: certs-volume
