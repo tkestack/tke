@@ -187,6 +187,7 @@ export class EditResource extends React.Component<Props, State> {
       resourceInfo,
       mode,
       namespace: (json.metadata && json.metadata.namespace) || route.queries['np'] || 'default',
+      isSpetialNamespace: true,
       jsonData,
       clusterId: route.queries['clusterId'],
       resourceIns: mode === 'modify' ? this.props.instance.metadata.name : ''
