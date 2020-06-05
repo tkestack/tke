@@ -141,6 +141,10 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) error {
 	log.Info("Starting cluster controller")
 	defer log.Info("Shutting down cluster controller")
 
+	if err := clusterprovider.Setup(); err != nil {
+		return err
+	}
+
 	if ok := cache.WaitForCacheSync(stopCh, c.listerSynced); !ok {
 		return fmt.Errorf("failed to wait for cluster caches to sync")
 	}
@@ -152,6 +156,11 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) error {
 	}
 
 	<-stopCh
+
+	if err := clusterprovider.Teardown(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
