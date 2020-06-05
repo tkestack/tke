@@ -45,21 +45,31 @@ const (
 	ConditionTypeDone = "EnsureDone"
 )
 
+type APIProvider interface {
+	RegisterHandler(mux *mux.PathRecorderMux)
+	Validate(cluster *types.Cluster) field.ErrorList
+	PreCreate(cluster *types.Cluster) error
+	AfterCreate(cluster *types.Cluster) error
+}
+
+type ControllerProvider interface {
+	// Setup called by controller to give an chance for plugin do some init work.
+	Setup() error
+	// Teardown called by controller for plugin do some clean job.
+	Teardown() error
+
+	OnCreate(ctx context.Context, cluster *v1.Cluster) error
+	OnUpdate(ctx context.Context, cluster *v1.Cluster) error
+	OnDelete(ctx context.Context, cluster *v1.Cluster) error
+}
+
 // Provider defines a set of response interfaces for specific cluster
 // types in cluster management.
 type Provider interface {
 	Name() string
 
-	RegisterHandler(mux *mux.PathRecorderMux)
-
-	Validate(cluster *types.Cluster) field.ErrorList
-
-	PreCreate(cluster *types.Cluster) error
-	AfterCreate(cluster *types.Cluster) error
-
-	OnCreate(ctx context.Context, cluster *v1.Cluster) error
-	OnUpdate(ctx context.Context, cluster *v1.Cluster) error
-	OnDelete(ctx context.Context, cluster *v1.Cluster) error
+	APIProvider
+	ControllerProvider
 }
 
 var _ Provider = &DelegateProvider{}
@@ -83,6 +93,14 @@ func (p *DelegateProvider) Name() string {
 		return "unknown"
 	}
 	return p.ProviderName
+}
+
+func (p *DelegateProvider) Setup() error {
+	return nil
+}
+
+func (p *DelegateProvider) Teardown() error {
+	return nil
 }
 
 func (p *DelegateProvider) RegisterHandler(mux *mux.PathRecorderMux) {
