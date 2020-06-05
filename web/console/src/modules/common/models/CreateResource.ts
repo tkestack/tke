@@ -9,6 +9,8 @@ export interface CreateResource extends Identifiable {
   /** 用户当前选择的命名空间 */
   namespace?: string;
 
+  isSpetialNamespace?: boolean;
+
   /** yaml的数据 */
   yamlData?: string;
 
