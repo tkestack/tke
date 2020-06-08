@@ -8,7 +8,7 @@ ConfigMap 有两种使用方式，创建负载时做为数据卷挂载到容器�
 
 ### 创建 ConfigMap
 1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。
-2. 选择需要创建ConfigMap的【业务】下相应的【命名空间】，展开【配置管理】列表，进入ConfigMap管理页面。 
+2. 选择需要创建ConfigMap的【业务】下相应的【命名空间】，展开【配置管理】列表，进入“ConfigMap”管理页面。 
 5. 单击【新建】，进入 “新建ConfigMap” 页面。如下图所示：
 ![新建ConfigMap](../../../../../../images/new-config-map.png)
 1. 根据实际需求，设置 ConfigMap 参数。关键参数信息如下：

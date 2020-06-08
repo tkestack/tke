@@ -2,19 +2,17 @@
 
 **Request**：容器使用的最小资源需求，作为容器调度时资源分配的判断依赖。只有当节点上可分配资源量 >= 容器资源请求数时才允许将容器调度到该节点。但 Request 参数不限制容器的最大可使用资源值。
 **Limit**： 容器能使用的资源最大值。
->! 更多 **Limit** 和 **Request** 参数介绍，单击 [查看详情](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/)。
+>更多 **Limit** 和 **Request** 参数介绍，单击 [查看详情](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/)。
 
 ## CPU 限制说明
 CPU 资源允许设置 CPU 请求和 CPU 限制的资源量，以核（U）为单位，允许为小数。
->!
-> - CPU Request 作为调度时的依据，在创建时为该容器在节点上分配 CPU 使用资源，称为 “已分配 CPU” 资源。
+>- CPU Request 作为调度时的依据，在创建时为该容器在节点上分配 CPU 使用资源，称为 “已分配 CPU” 资源。
 > - CPU Limit 限制容器 CPU 资源的上限，不设置表示不做限制（CPU Limit >= CPU Request）。
 
 ## 内存限制说明
 
 内存资源只允许限制容器最大可使用内存量。以 MiB 为单位，允许为小数。
->!
-> - 内存 Request 作为调度时的依据，在创建时为该容器在节点上分配内存，称为 “已分配内存” 资源。
+>- 内存 Request 作为调度时的依据，在创建时为该容器在节点上分配内存，称为 “已分配内存” 资源。
 > - 内存资源为不可伸缩资源。当节点上所有容器使用内存均超量时，存在 OOM 的风险。因此不设置 Limit 时，默认 Limit = Request，保证容器的正常运作。
 
 ## CPU 使用量和 CPU 使用率
@@ -49,7 +47,6 @@ Limit = Request * 2
 1. 当前数据并不满足计算的需求，我们需要待计算的样本数量（实际负载）大于1440个，即有一天的数据。
 2. 推荐值小于您当前容器已经配置的 Request 或者 Limit。
 
->!
 1. 由于推荐值是根据历史负载来计算的，原则上，容器镜像运行真实业务的时间越长，推荐的值越准确。
 2. 使用推荐值创建服务，可能会因为集群资源不足造成容器无法调度成功。在保存时，须确认当前集群的剩余资源。
 3. 推荐值是建议值，您可以根据自己业务的实际情况做相应的调整。

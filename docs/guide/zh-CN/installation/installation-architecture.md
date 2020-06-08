@@ -11,9 +11,15 @@ TKEStack 产品架构如下图所示：
 
 ## 架构说明
 
-TKEStack 采用了 Kubernetes on Kubernetes 的设计理念。即节点仅运行 Kubelet 进程，其他组件均采用容器化部署，由 Kubernetes 进行管理。
+TKEStack 采用了 Kubernetes on Kubernetes 的设计理念。
 
-架构上分为 Global 集群和业务集群。Global 集群运行整个容器服务开源版平台自身所需要的组件，业务集群运行用户业务。在实际的部署过程中，可根据实际情况进行调整。
+* 节点仅运行 Kubelet 进程
+* 其他组件均采用容器化部署，由 Kubernetes 进行管理
+
+架构上分为 Global 集群和业务集群。在实际的部署过程中，可根据实际情况进行调整。
+
+* **Global 集群**：运行整个容器服务开源版平台自身所需要的组件
+* **业务集群**： 运行用户业务
 
 
 

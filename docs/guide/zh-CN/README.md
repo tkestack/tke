@@ -13,13 +13,11 @@
     * [如何构建 Docker 镜像](QuickStart/examples/%E5%A6%82%E4%BD%95%E6%9E%84%E5%BB%BAdocker%E9%95%9C%E5%83%8F.md)
   
 * [产品使用指南](products)
-  
+
   [切换控制台](products/controlpannel.md)
-  
+
   * [平台侧](products/platform)
     * [集群管理](products/platform/cluster.md)
-      * 基本信息
-      * 节点管理
     * [业务管理](products/platform/business.md)
     * [扩展组件](products/platform/extender.md)
     * [组织资源](products/platform/resource.md)
@@ -55,7 +53,7 @@
     * [监控与告警](products/business-control-pannel/monitor-alert)
       * [设置告警](products/business-control-pannel/monitor-alert/alert.md)
       * [通知管理](products/business-control-pannel/monitor-alert/notifition.md)
-  
+
 * [产品特色功能](features)
   * [Galaxy](features/galaxy.md)
   * [TAPP](features/tapp.md)

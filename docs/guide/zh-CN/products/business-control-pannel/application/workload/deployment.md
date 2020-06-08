@@ -4,7 +4,6 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
 
 ## Deployment 控制台操作指引
 
-<span id="creatDeployment"></span>
 ### 创建 Deployment
 1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。
 2. 选择需要创建Deployment的【业务】下相应的【命名空间】，展开【工作负载】下拉项，进入【Deployment】管理页面。如下图所示：
@@ -27,7 +26,7 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
    - **PVC**：用户在业务namespace下创建的[PVC](../storage/persistent-volume-claim.md)
    
  - **实例内容器**：根据实际需求，为 Deployment 的一个 Pod 设置一个或多个不同的容器。
-    
+   
     - **名称**：自定义
     - **镜像**：根据实际需求进行选择
       - **镜像版本（Tag）**：根据实际需求进行填写，不填默认为`latest`
