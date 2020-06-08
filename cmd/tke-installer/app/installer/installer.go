@@ -604,7 +604,9 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
-	cluster.Spec.Version = spec.K8sVersions[0] // use newest version
+	if cluster.Spec.Version == "" {
+		cluster.Spec.Version = spec.K8sVersions[0] // use newest version
+	}
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
@@ -1424,13 +1426,12 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 
 func (t *TKE) installTKELogagentAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":                   t.Config.Replicas,
-		"Image":                      images.Get().TKELogagentAPI.FullName(),
-		"TenantID":                   t.Para.Config.Auth.TKEAuth.TenantID,
-		"Username":                   t.Para.Config.Auth.TKEAuth.Username,
-		"SyncProjectsWithNamespaces": t.Config.SyncProjectsWithNamespaces,
-		"EnableAuth":                 t.Para.Config.Auth.TKEAuth != nil,
-		"EnableRegistry":             t.Para.Config.Registry.TKERegistry != nil,
+		"Replicas":       t.Config.Replicas,
+		"Image":          images.Get().TKELogagentAPI.FullName(),
+		"TenantID":       t.Para.Config.Auth.TKEAuth.TenantID,
+		"Username":       t.Para.Config.Auth.TKEAuth.Username,
+		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID

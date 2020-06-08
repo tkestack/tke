@@ -31,12 +31,12 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
-
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -48,17 +48,18 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy"
 	galaxyimages "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/keepalived"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/cmdstring"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/template"
 )
 
@@ -293,6 +294,15 @@ func completeNetworking(cluster *v1.Cluster) error {
 	return nil
 }
 
+func kubernetesSvcIP(cluster *v1.Cluster) (string, error) {
+	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.KUBERNETES)
+	if err != nil {
+		return "", errors.Wrap(err, "get kubernetesSvcIP error")
+	}
+
+	return ip.String(), nil
+}
+
 func completeDNS(cluster *v1.Cluster) error {
 	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.DNSIPIndex)
 	if err != nil {
@@ -418,10 +428,12 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	if p.config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
+	extraArgs := c.Spec.DockerExtraArgs
+	utilruntime.Must(mergo.Merge(&extraArgs, p.config.Docker.ExtraArgs))
 	option := &docker.Option{
 		InsecureRegistries: insecureRegistries,
 		RegistryDomain:     p.config.Registry.Domain,
-		ExtraArgs:          c.Spec.DockerExtraArgs,
+		ExtraArgs:          extraArgs,
 	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -471,6 +483,47 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
+// EnsureKeepalivedInit make sure all master node has cleaning iptable table so in kubeadm join time apiserver may not join it self.
+// keepalived only installs in master node 0 before kubeadm init phase to prevet from vip failover in kubeadm join(etcd phase)
+func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
+		return nil
+	}
+
+	kubernetesSvcIP, err := kubernetesSvcIP(c)
+	if err != nil {
+		return err
+	}
+
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		keepalived.ClearLoadBalance(machineSSH, c.Spec.Features.HA.TKEHA.VIP, kubernetesSvcIP)
+	}
+
+	option := &keepalived.Option{
+		IP:              c.Spec.Machines[0].IP,
+		VIP:             c.Spec.Features.HA.TKEHA.VIP,
+		LoadBalance:     false,
+		IPVS:            false,
+		KubernetesSvcIP: kubernetesSvcIP,
+	}
+
+	machineSSH, err := c.Spec.Machines[0].SSH()
+	if err != nil {
+		return err
+	}
+
+	err = keepalived.Install(machineSSH, option)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
 	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigName)
@@ -516,49 +569,21 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 		}
 
 		if c.Spec.Features.HA != nil {
-			if c.Spec.Features.HA.TKEHA != nil {
-				networkInterface := ssh.GetNetworkInterface(machineSSH, machine.IP)
-				if networkInterface == "" {
-					return fmt.Errorf("can't get network interface by %s", machine.IP)
-				}
+			if c.Spec.Features.HA.ThirdPartyHA != nil && i == 0 {
+				// solve request roll back problem by rediect request to local host
+				cmd := fmt.Sprintf("iptables -t nat -D OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
+					c.Spec.Features.HA.ThirdPartyHA.VIP, c.Spec.Features.HA.ThirdPartyHA.VPort)
+				machineSSH.Exec(cmd)
 
-				data, err := template.ParseFile(constants.ManifestsDir+"keepalived/keepalived.conf", map[string]interface{}{
-					"Interface": networkInterface,
-					"VIP":       c.Spec.Features.HA.TKEHA.VIP,
-				})
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-				err = machineSSH.WriteFile(bytes.NewReader(data), constants.KeepavliedConfigFile)
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-
-				data, err = template.ParseFile(constants.ManifestsDir+"keepalived/keepalived.yaml", map[string]interface{}{
-					"Image": images.Get().Keepalived.FullName(),
-				})
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-				err = machineSSH.WriteFile(bytes.NewReader(data), constants.KeepavlivedManifestFile)
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-			}
-			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 { // forward rest control-plane to first master
-				cmd := fmt.Sprintf("iptables -t nat -I PREROUTING 1 -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
-					c.Spec.Machines[0].IP)
+				// redirect clb request to local port
+				cmd = fmt.Sprintf("iptables -t nat -I OUTPUT 1 -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
+					c.Spec.Features.HA.ThirdPartyHA.VIP, c.Spec.Features.HA.ThirdPartyHA.VPort)
 				_, stderr, exit, err := machineSSH.Exec(cmd)
 				if err != nil || exit != 0 {
 					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 				}
 
-				cmd = fmt.Sprintf("iptables -t nat -I POSTROUTING 1 -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
-					c.Spec.Machines[0].IP, machine.IP)
-				_, stderr, exit, err = machineSSH.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
+				log.Info("redirect vip:vport request to local host and local port.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
 			}
 		}
 
@@ -816,8 +841,7 @@ func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) err
 
 func (p *Provider) EnsureKubelet(ctx context.Context, c *v1.Cluster) error {
 	option := &kubelet.Option{
-		Version:   c.Spec.Version,
-		ExtraArgs: c.Spec.KubeletExtraArgs,
+		Version: c.Spec.Version,
 	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -976,6 +1000,42 @@ func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
+func (p *Provider) EnsureKeepalivedWithLB(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
+		return nil
+	}
+
+	ipvs := c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS
+	kubernetesSvcIP, err := kubernetesSvcIP(c)
+	if err != nil {
+		return err
+	}
+
+	for _, machine := range c.Spec.Machines {
+		s, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		option := &keepalived.Option{
+			IP:              machine.IP,
+			VIP:             c.Spec.Features.HA.TKEHA.VIP,
+			LoadBalance:     true,
+			IPVS:            ipvs,
+			KubernetesSvcIP: kubernetesSvcIP,
+		}
+
+		err = keepalived.Install(s, option)
+		if err != nil {
+			return err
+		}
+
+		log.Info("keepalived created success.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
 	for i, machine := range c.Spec.Machines {
 		s, err := machine.SSH()
@@ -984,17 +1044,13 @@ func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
 		}
 
 		if c.Spec.Features.HA != nil {
-			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 {
-				cmd := fmt.Sprintf("iptables -t nat -D PREROUTING -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
-					c.Spec.Machines[0].IP)
-				s.Exec(cmd)
-
-				cmd = fmt.Sprintf("iptables -t nat -D POSTROUTING -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
-					c.Spec.Machines[0].IP, machine.IP)
+			if c.Spec.Features.HA.ThirdPartyHA != nil && i == 0 {
+				cmd := fmt.Sprintf("iptables -t nat -D OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
+					c.Spec.Features.HA.ThirdPartyHA.VIP, c.Spec.Features.HA.ThirdPartyHA.VPort)
 				s.Exec(cmd)
 			}
 		}
-
 	}
+
 	return nil
 }
