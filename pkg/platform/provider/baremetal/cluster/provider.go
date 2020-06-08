@@ -81,6 +81,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureCNIPlugins,
 			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
+			p.EnsureKeepalivedInit,
 
 			p.EnsurePrepareForControlplane,
 
@@ -107,20 +108,20 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
-
+			p.EnsureKeepalivedWithLB,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
 			p.EnsureCSIOperator,
 
 			p.EnsureCleanup,
-
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
 			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
+			p.EnsureKeepalivedWithLB,
 		},
 	}
 
@@ -156,9 +157,6 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 		cluster.Spec.NetworkDevice = "eth0"
 	}
 
-	if cluster.Spec.Features.IPVS == nil {
-		cluster.Spec.Features.IPVS = pointer.ToBool(true)
-	}
 	if cluster.Spec.Features.CSIOperator != nil {
 		if cluster.Spec.Features.CSIOperator.Version == "" {
 			cluster.Spec.Features.CSIOperator.Version = csioperatorimage.LatestVersion

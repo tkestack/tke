@@ -27,10 +27,10 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
-
+	"github.com/imdario/mergo"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
@@ -41,6 +41,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
@@ -173,7 +174,7 @@ func (p *Provider) EnsureKernelModule(ctx context.Context, machine *platformv1.M
 		return err
 	}
 
-	modules := []string{"iptable_nat"}
+	modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
 	var data bytes.Buffer
 
 	for _, m := range modules {
@@ -298,11 +299,13 @@ func (p *Provider) EnsureDocker(ctx context.Context, machine *platformv1.Machine
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 
+	extraArgs := cluster.Spec.DockerExtraArgs
+	utilruntime.Must(mergo.Merge(&extraArgs, p.config.Docker.ExtraArgs))
 	option := &docker.Option{
 		InsecureRegistries: insecureRegistries,
 		RegistryDomain:     p.config.Registry.Domain,
 		IsGPU:              gpu.IsEnable(machine.Spec.Labels),
-		ExtraArgs:          cluster.Spec.DockerExtraArgs,
+		ExtraArgs:          extraArgs,
 	}
 	err = docker.Install(machineSSH, option)
 	if err != nil {
@@ -319,8 +322,7 @@ func (p *Provider) EnsureKubelet(ctx context.Context, machine *platformv1.Machin
 	}
 
 	option := &kubelet.Option{
-		Version:   cluster.Spec.Version,
-		ExtraArgs: cluster.Spec.KubeletExtraArgs,
+		Version: cluster.Spec.Version,
 	}
 	err = kubelet.Install(machineSSH, option)
 	if err != nil {

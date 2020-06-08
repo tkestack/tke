@@ -84,11 +84,15 @@ import (
 	_ "tkestack.io/tke/api/platform/install"
 )
 
+const namespace = "tke"
+
 type TKE struct {
 	Config  *config.Config           `json:"config"`
 	Para    *types.CreateClusterPara `json:"para"`
 	Cluster *v1.Cluster              `json:"cluster"`
 	Step    int                      `json:"step"`
+	// IncludeSelf means installer is using one of cluster's machines
+	IncludeSelf bool `json:"includeSelf"`
 
 	log             *stdlog.Logger
 	steps           []types.Handler
@@ -312,15 +316,6 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if t.Para.Config.Gateway != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-gateway",
-				Func: t.installTKEGateway,
-			},
-		}...)
-	}
-
 	if t.Para.Config.Logagent != nil {
 		t.steps = append(t.steps, []types.Handler{
 			{
@@ -330,6 +325,30 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Install tke-logagent-controller",
 				Func: t.installTKELogagentController,
+			},
+		}...)
+	}
+
+	// others
+
+	// Add more tke component before THIS!!!
+	if t.Para.Config.Gateway != nil {
+		if t.IncludeSelf {
+			t.steps = append(t.steps, []types.Handler{
+				{
+					Name: "Prepare images before stop local registry",
+					Func: t.prepareImages,
+				},
+				{
+					Name: "Stop local registry to give up 80/443 for tke-gateway",
+					Func: t.stopLocalRegistry,
+				},
+			}...)
+		}
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke-gateway",
+				Func: t.installTKEGateway,
 			},
 		}...)
 	}
@@ -373,6 +392,11 @@ func (t *TKE) initSteps() {
 	t.steps = funk.Filter(t.steps, func(step types.Handler) bool {
 		return !funk.ContainsString(t.Para.Config.SkipSteps, step.Name)
 	}).([]types.Handler)
+
+	t.log.Println("Steps:")
+	for i, step := range t.steps {
+		t.log.Printf("%d %s", i, step.Name)
+	}
 }
 
 func (t *TKE) Run() {
@@ -510,6 +534,16 @@ func (t *TKE) prepare() errors.APIStatus {
 	}
 
 	t.Cluster.Cluster = v1Cluster
+	for _, one := range t.Cluster.Spec.Machines {
+		ok, err := utilnet.InterfaceHasAddr(one.IP)
+		if err != nil {
+			return errors.NewInternalError(err)
+		}
+		if ok {
+			t.IncludeSelf = true
+			break
+		}
+	}
 	t.backup()
 
 	return nil
@@ -570,7 +604,9 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
-	cluster.Spec.Version = spec.K8sVersions[0] // use newest version
+	if cluster.Spec.Version == "" {
+		cluster.Spec.Version = spec.K8sVersions[0] // use newest version
+	}
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
@@ -1062,7 +1098,7 @@ func (t *TKE) loadImages(ctx context.Context) error {
 			t.log.Printf("invalid image name:name=%s", image)
 			continue
 		}
-		name, _, err := t.docker.SplitImageNameAndTag(imageNames[1])
+		name, _, _, err := t.docker.GetNameArchTag(imageNames[1])
 		if err != nil {
 			t.log.Printf("skip invalid image: %s", image)
 			continue
@@ -1112,7 +1148,7 @@ func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 }
 
 func (t *TKE) startLocalRegistry() error {
-	err := t.docker.RemoveContainers("registry-http", "registry-https")
+	err := t.stopLocalRegistry(context.Background())
 	if err != nil {
 		return err
 	}
@@ -1165,7 +1201,7 @@ func (t *TKE) initDataForDeployTKE() error {
 		}
 	}
 
-	t.namespace = "tke"
+	t.namespace = namespace
 
 	return nil
 }
@@ -1315,6 +1351,43 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 	return nil
 }
 
+func (t *TKE) prepareImages(ctx context.Context) error {
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tke-gateway",
+			Namespace: t.namespace,
+		},
+		Spec: corev1.PodSpec{
+			NodeSelector: map[string]string{
+				"node-role.kubernetes.io/master": "",
+			},
+			Containers: []corev1.Container{
+				{
+					Name:  "tke-gateway",
+					Image: images.Get().TKEGateway.FullName(),
+				},
+			},
+		},
+	}
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	err := apiclient.PullImageWithPod(ctx, t.globalClient, pod)
+	if err != nil {
+		return fmt.Errorf("prepare image error: %w", err)
+	}
+
+	return nil
+}
+
+func (t *TKE) stopLocalRegistry(ctx context.Context) error {
+	err := t.docker.RemoveContainers("registry-http", "registry-https")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (t *TKE) installTKEGateway(ctx context.Context) error {
 	option := map[string]interface{}{
 		"Image":            images.Get().TKEGateway.FullName(),
@@ -1353,13 +1426,12 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 
 func (t *TKE) installTKELogagentAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":                   t.Config.Replicas,
-		"Image":                      images.Get().TKELogagentAPI.FullName(),
-		"TenantID":                   t.Para.Config.Auth.TKEAuth.TenantID,
-		"Username":                   t.Para.Config.Auth.TKEAuth.Username,
-		"SyncProjectsWithNamespaces": t.Config.SyncProjectsWithNamespaces,
-		"EnableAuth":                 t.Para.Config.Auth.TKEAuth != nil,
-		"EnableRegistry":             t.Para.Config.Registry.TKERegistry != nil,
+		"Replicas":       t.Config.Replicas,
+		"Image":          images.Get().TKELogagentAPI.FullName(),
+		"TenantID":       t.Para.Config.Auth.TKEAuth.TenantID,
+		"Username":       t.Para.Config.Auth.TKEAuth.Username,
+		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID

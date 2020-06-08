@@ -760,6 +760,7 @@ func autoConvert_v1_MessageSpec_To_notify_MessageSpec(in *MessageSpec, out *noti
 	out.AlarmPolicyName = in.AlarmPolicyName
 	out.AlarmPolicyType = in.AlarmPolicyType
 	out.ReceiverChannelName = in.ReceiverChannelName
+	out.ClusterID = in.ClusterID
 	return nil
 }
 
@@ -780,6 +781,7 @@ func autoConvert_notify_MessageSpec_To_v1_MessageSpec(in *notify.MessageSpec, ou
 	out.AlarmPolicyName = in.AlarmPolicyName
 	out.AlarmPolicyType = in.AlarmPolicyType
 	out.ReceiverChannelName = in.ReceiverChannelName
+	out.ClusterID = in.ClusterID
 	return nil
 }
 

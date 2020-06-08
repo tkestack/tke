@@ -141,6 +141,7 @@ func MatchMessage(label labels.Selector, field fields.Selector) storage.Selectio
 			"spec.alarmPolicyName",
 			"spec.alarmPolicyType",
 			"spec.receiverChannelName",
+			"spec.clusterID",
 		},
 	}
 }
@@ -157,6 +158,7 @@ func ToSelectableFields(message *notify.Message) fields.Set {
 		"spec.alarmPolicyName":     message.Spec.AlarmPolicyName,
 		"spec.alarmPolicyType":     message.Spec.AlarmPolicyType,
 		"spec.receiverChannelName": message.Spec.ReceiverChannelName,
+		"spec.clusterID":           message.Spec.ClusterID,
 	}
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }

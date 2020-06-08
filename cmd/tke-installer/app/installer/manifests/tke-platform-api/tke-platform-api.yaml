@@ -59,7 +59,7 @@ spec:
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
             - name: csi-operator-manifests-volume
-                mountPath: /app/provider/baremetal/manifests/csi-operator/
+              mountPath: /app/provider/baremetal/manifests/csi-operator/
             - name: keepalived-manifests-volume
               mountPath: /app/provider/baremetal/manifests/keepalived/
           ports:
@@ -80,11 +80,11 @@ spec:
             periodSeconds: 20
           resources:
             limits:
-              cpu: 500m
-              memory: 1Gi
-            requests:
-              cpu: 250m
+              cpu: 100m
               memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
       volumes:
         - name: certs-volume
           configMap:
@@ -110,8 +110,8 @@ spec:
           configMap:
             name: gpu-manifests
         - name: csi-operator-manifests-volume
-            configMap:
-              name: csi-operator-manifests
+          configMap:
+            name: csi-operator-manifests
         - name: keepalived-manifests-volume
           configMap:
             name: keepalived-manifests

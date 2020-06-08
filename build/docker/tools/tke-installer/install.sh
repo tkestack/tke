@@ -111,9 +111,9 @@ function load_image() {
 function clean_old_data() {
   echo "Step.4 clean old data [doing]"
 
-  rm -rf $DATA_DIR || :
-  docker rm -f tke-installer || :
-  docker volume prune -f || :
+  rm -rf $DATA_DIR >/dev/null 2>&1 || :
+  docker rm -f tke-installer >/dev/null 2>&1 || :
+  docker volume prune -f >/dev/null 2>&1 || :
 
   echo "Step.4 clean old data [ok]"
 }

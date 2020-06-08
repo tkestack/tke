@@ -299,6 +299,7 @@ type sentMessage struct {
 	alarmPolicyName     string
 	alarmPolicyType     string
 	receiverChannelName string
+	clusterID           string
 }
 
 func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.MessageRequest) (sentMessages []sentMessage, failedReceiverErrors map[string]string) {
@@ -359,12 +360,16 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 	var (
 		alarmPolicyName string
 		alarmPolicyType string
+		clusterID       string
 	)
 	if v, ok := messageRequest.Spec.Variables["alarmPolicyName"]; ok {
 		alarmPolicyName = v
 	}
 	if v, ok := messageRequest.Spec.Variables["alarmPolicyType"]; ok {
 		alarmPolicyType = v
+	}
+	if v, ok := messageRequest.Spec.Variables["clusterID"]; ok {
+		clusterID = v
 	}
 	if channel.Spec.Webhook != nil && template.Spec.Text != nil {
 		content, err := webhook.Send(channel.Spec.Webhook, template.Spec.Text, receivers, messageRequest.Spec.Variables)
@@ -380,6 +385,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 			alarmPolicyName:     alarmPolicyName,
 			alarmPolicyType:     alarmPolicyType,
 			receiverChannelName: channel.Name,
+			clusterID:           clusterID,
 		})
 		return
 	}
@@ -412,6 +418,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				alarmPolicyName:     alarmPolicyName,
 				alarmPolicyType:     alarmPolicyType,
 				receiverChannelName: channel.Name,
+				clusterID:           clusterID,
 			})
 		}
 		if template.Spec.Wechat != nil {
@@ -440,6 +447,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				alarmPolicyName:     alarmPolicyName,
 				alarmPolicyType:     alarmPolicyType,
 				receiverChannelName: channel.Name,
+				clusterID:           clusterID,
 			})
 		}
 		if template.Spec.Text != nil {
@@ -468,6 +476,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				alarmPolicyName:     alarmPolicyName,
 				alarmPolicyType:     alarmPolicyType,
 				receiverChannelName: channel.Name,
+				clusterID:           clusterID,
 			})
 		}
 		if templateCount == 0 {
@@ -495,6 +504,7 @@ func (c *Controller) archiveMessage(ctx context.Context, messageRequest *v1.Mess
 				AlarmPolicyName:     sentMessage.alarmPolicyName,
 				AlarmPolicyType:     sentMessage.alarmPolicyType,
 				ReceiverChannelName: sentMessage.receiverChannelName,
+				ClusterID:           sentMessage.clusterID,
 			},
 			Status: v1.MessageStatus{
 				Phase: v1.MessageUnread,

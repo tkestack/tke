@@ -21,14 +21,20 @@ package apiclient
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+	toolswatch "k8s.io/client-go/tools/watch"
 )
 
 // GetClientset return clientset
@@ -161,4 +167,45 @@ func getPodConditionFromList(conditions []corev1.PodCondition, conditionType cor
 		}
 	}
 	return -1, nil
+}
+
+// PullImageWithPod pull image for pod
+func PullImageWithPod(ctx context.Context, clientset kubernetes.Interface, pod *corev1.Pod) error {
+	clientset.CoreV1().Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{})
+
+	pod, err := clientset.CoreV1().Pods(pod.Namespace).Create(ctx, pod, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+
+	fieldSelector := fields.OneTermEqualSelector("metadata.name", pod.Name).String()
+	lw := &cache.ListWatch{
+		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+			options.FieldSelector = fieldSelector
+			return clientset.CoreV1().Pods(pod.Namespace).List(context.TODO(), options)
+		},
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			options.FieldSelector = fieldSelector
+			return clientset.CoreV1().Pods(pod.Namespace).Watch(context.TODO(), options)
+		},
+	}
+
+	_, err = toolswatch.ListWatchUntil(ctx, lw, func(event watch.Event) (bool, error) {
+		if event.Type != watch.Modified {
+			return false, nil
+		}
+		pod := event.Object.(*corev1.Pod)
+		for _, one := range pod.Status.ContainerStatuses {
+			if one.ImageID == "" {
+				return false, nil
+			}
+		}
+
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("pull image error: %w", err)
+	}
+
+	return clientset.CoreV1().Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{})
 }
