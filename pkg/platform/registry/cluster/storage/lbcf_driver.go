@@ -30,15 +30,22 @@ import (
 
 	"tkestack.io/tke/pkg/util/log"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	netutil "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/util"
+)
+
+const (
+	// LBCFDriverProxyAction sends request to driver via kube-apiserver
+	LBCFDriverProxyAction LBCFAction = "driverProxy"
 )
 
 // LBCFDriverREST implements proxy LBCF LoadBalancerDriver request to cluster of user.
@@ -80,6 +87,7 @@ func (r *LBCFDriverREST) Connect(ctx context.Context, clusterName string, opts r
 		token:     token,
 		namespace: proxyOpts.Namespace,
 		name:      proxyOpts.Name,
+		action:    proxyOpts.Action,
 	}, nil
 }
 
@@ -94,6 +102,7 @@ type lbcfDriverProxyHandler struct {
 	token     string
 	namespace string
 	name      string
+	action    string
 }
 
 func (h *lbcfDriverProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -103,6 +112,10 @@ func (h *lbcfDriverProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 	// todo: Change the apigroup here once the integration pipeline configuration is complete using the tapp in the tkestack group
 	prefix := "/apis/lbcf.tkestack.io/v1beta1"
 
+	if len(h.action) > 0 {
+		h.serveAction(w, req)
+		return
+	}
 	if len(h.namespace) == 0 && len(h.name) == 0 {
 		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/loadbalancerdrivers", prefix))
 	} else if len(h.name) == 0 {
@@ -124,4 +137,56 @@ func (h *lbcfDriverProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 	reverseProxy.FlushInterval = 100 * time.Millisecond
 	reverseProxy.ErrorLog = log.StdErrLogger()
 	reverseProxy.ServeHTTP(w, newReq)
+}
+
+func (h *lbcfDriverProxyHandler) serveAction(w http.ResponseWriter, req *http.Request) {
+	if len(h.namespace) == 0 || len(h.name) == 0 {
+		responsewriters.WriteRawJSON(http.StatusBadRequest, errors.NewBadRequest("namespace and name must be specified"), w)
+		return
+	}
+
+	switch h.action {
+	case string(LBCFDriverProxyAction):
+		loc := *h.location
+		loc.RawQuery = req.URL.RawQuery
+		queries := req.URL.Query()
+		apiPath, apiPort := getDriverAPI(queries)
+		loc.Path = path.Join(loc.Path, fmt.Sprintf("/api/v1/namespaces/%s/services/%s:%s/proxy/%s",
+			h.namespace, h.name, apiPort, apiPath))
+
+		// delete lbcf query paramaters before send to kube-apiserver
+		queries.Del("namespace")
+		queries.Del("name")
+		queries.Del("action")
+		queries.Del("api")
+		queries.Del("apiPort")
+		loc.RawQuery = queries.Encode()
+
+		newReq := req.WithContext(context.Background())
+		newReq.Header = netutil.CloneHeader(req.Header)
+		newReq.URL = &loc
+		if h.token != "" {
+			newReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", strings.TrimSpace(h.token)))
+		}
+		reverseProxy := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: h.location.Scheme, Host: h.location.Host})
+		reverseProxy.Transport = h.transport
+		reverseProxy.FlushInterval = 100 * time.Millisecond
+		reverseProxy.ErrorLog = log.StdErrLogger()
+		reverseProxy.ServeHTTP(w, newReq)
+	}
+}
+
+func getDriverAPI(queries url.Values) (apiPath, apiPort string) {
+	apiPath = "/"
+	driverAPI := queries["api"]
+	if len(driverAPI) > 0 {
+		apiPath = driverAPI[0]
+	}
+
+	apiPort = "443"
+	p := queries["apiPort"]
+	if len(p) > 0 {
+		apiPort = p[0]
+	}
+	return
 }
