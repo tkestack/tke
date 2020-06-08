@@ -89,8 +89,8 @@ You are encouraged to communicate most things via [GitHub issues](https://github
 
 Other active channels:
 
+- WeChat Group
 - Please scan the following WeChat QRcode and note **TKEStack**, he will pull you into the TKEStack WeChat Group.
-
 ![TKEStack](docs/images/wechat.jpeg)
 
 ## Licensing
