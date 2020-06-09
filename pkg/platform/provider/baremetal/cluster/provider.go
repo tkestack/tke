@@ -82,6 +82,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
 			p.EnsureKeepalivedInit,
+			p.EnsureThirdPartyHAInit,
 
 			p.EnsurePrepareForControlplane,
 
@@ -109,6 +110,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
 			p.EnsureKeepalivedWithLB,
+			p.EnsureThirdPartyHA,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
@@ -122,6 +124,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
 			p.EnsureKeepalivedWithLB,
+			p.EnsureThirdPartyHA,
 		},
 	}
 
