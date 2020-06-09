@@ -44,21 +44,11 @@ type Cluster struct {
 }
 
 func GetClusterByName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (*Cluster, error) {
-	result := new(Cluster)
 	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	result.Cluster = cluster
-	if cluster.Spec.ClusterCredentialRef != nil {
-		clusterCredential, err := platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("get cluster's credential error: %w", err)
-		}
-		result.ClusterCredential = clusterCredential
-	}
-
-	return result, nil
+	return GetCluster(ctx, platformClient, cluster)
 }
 
 func GetCluster(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*Cluster, error) {
@@ -70,6 +60,14 @@ func GetCluster(ctx context.Context, platformClient platformversionedclient.Plat
 			return nil, fmt.Errorf("get cluster's credential error: %w", err)
 		}
 		result.ClusterCredential = clusterCredential
+	} else {
+		clusterCredentials, err := platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("clusterName=%s", cluster.Name)})
+		if err != nil {
+			return nil, fmt.Errorf("get cluster's credential error: %w", err)
+		}
+		if len(clusterCredentials.Items) > 0 {
+			result.ClusterCredential = &clusterCredentials.Items[0]
+		}
 	}
 
 	return result, nil
