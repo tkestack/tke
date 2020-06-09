@@ -245,7 +245,7 @@ func (p *DelegateProvider) getNextConditionType(conditionType string) string {
 	)
 	for i, f = range p.CreateHandlers {
 		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-		if strings.Contains(name, conditionType) {
+		if strings.Contains(name, conditionType+"-fm") {
 			break
 		}
 	}
