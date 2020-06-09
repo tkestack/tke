@@ -119,17 +119,17 @@ func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
 		config.Burst = defaultBurst
 	}
 
-	if c.ClusterCredential.CACert != nil {
+	if c.ClusterCredential != nil && c.ClusterCredential.CACert != nil {
 		config.TLSClientConfig.CAData = c.ClusterCredential.CACert
 	} else {
 		config.TLSClientConfig.Insecure = true
 	}
-	if c.ClusterCredential.ClientCert != nil && c.ClusterCredential.ClientKey != nil {
+	if c.ClusterCredential != nil && c.ClusterCredential.ClientCert != nil && c.ClusterCredential.ClientKey != nil {
 		config.TLSClientConfig.CertData = c.ClusterCredential.ClientCert
 		config.TLSClientConfig.KeyData = c.ClusterCredential.ClientKey
 	}
 
-	if c.ClusterCredential.Token != nil {
+	if c.ClusterCredential != nil && c.ClusterCredential.Token != nil {
 		config.BearerToken = *c.ClusterCredential.Token
 	}
 
