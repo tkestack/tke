@@ -31,6 +31,8 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/thirdpartyha"
+
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -524,6 +526,45 @@ func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) erro
 
 	return nil
 }
+
+func (p *Provider) EnsureThirdPartyHAInit(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.ThirdPartyHA == nil {
+		return nil
+	}
+
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		option := thirdpartyha.Option{
+			IP:    machine.IP,
+			VIP:   c.Spec.Features.HA.ThirdPartyHA.VIP,
+			VPort: c.Spec.Features.HA.ThirdPartyHA.VPort,
+		}
+
+		thirdpartyha.Clear(machineSSH, &option)
+	}
+
+	machineSSH, err := c.Spec.Machines[0].SSH()
+	if err != nil {
+		return err
+	}
+
+	option := thirdpartyha.Option{
+		IP:    c.Spec.Machines[0].IP,
+		VIP:   c.Spec.Features.HA.ThirdPartyHA.VIP,
+		VPort: c.Spec.Features.HA.ThirdPartyHA.VPort,
+	}
+
+	err = thirdpartyha.Install(machineSSH, &option)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
 	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigName)
@@ -544,7 +585,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 	if err != nil {
 		return errors.Wrap(err, "parse auditWebhookConfig error")
 	}
-	for i, machine := range c.Spec.Machines {
+	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -565,25 +606,6 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			err = machineSSH.WriteFile(bytes.NewReader(oidcCa), constants.OIDCCACertFile)
 			if err != nil {
 				return errors.Wrap(err, machine.IP)
-			}
-		}
-
-		if c.Spec.Features.HA != nil {
-			if c.Spec.Features.HA.ThirdPartyHA != nil && i == 0 {
-				// solve request roll back problem by rediect request to local host
-				cmd := fmt.Sprintf("iptables -t nat -D OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
-					c.Spec.Features.HA.ThirdPartyHA.VIP, c.Spec.Features.HA.ThirdPartyHA.VPort)
-				machineSSH.Exec(cmd)
-
-				// redirect clb request to local port
-				cmd = fmt.Sprintf("iptables -t nat -I OUTPUT 1 -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
-					c.Spec.Features.HA.ThirdPartyHA.VIP, c.Spec.Features.HA.ThirdPartyHA.VPort)
-				_, stderr, exit, err := machineSSH.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
-
-				log.Info("redirect vip:vport request to local host and local port.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
 			}
 		}
 
@@ -1036,19 +1058,37 @@ func (p *Provider) EnsureKeepalivedWithLB(ctx context.Context, c *v1.Cluster) er
 	return nil
 }
 
-func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
-	for i, machine := range c.Spec.Machines {
+func (p *Provider) EnsureThirdPartyHA(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.ThirdPartyHA == nil {
+		return nil
+	}
+
+	for _, machine := range c.Spec.Machines {
 		s, err := machine.SSH()
 		if err != nil {
 			return err
 		}
 
-		if c.Spec.Features.HA != nil {
-			if c.Spec.Features.HA.ThirdPartyHA != nil && i == 0 {
-				cmd := fmt.Sprintf("iptables -t nat -D OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
-					c.Spec.Features.HA.ThirdPartyHA.VIP, c.Spec.Features.HA.ThirdPartyHA.VPort)
-				s.Exec(cmd)
-			}
+		option := thirdpartyha.Option{
+			IP:    machine.IP,
+			VIP:   c.Spec.Features.HA.ThirdPartyHA.VIP,
+			VPort: c.Spec.Features.HA.ThirdPartyHA.VPort,
+		}
+
+		err = thirdpartyha.Install(s, &option)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.Machines {
+		_, err := machine.SSH()
+		if err != nil {
+			return err
 		}
 	}
 
