@@ -24,19 +24,14 @@ import (
 
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	authv1 "tkestack.io/tke/api/auth/v1"
 	"tkestack.io/tke/api/business"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/apiserver/filter"
-	authutil "tkestack.io/tke/pkg/auth/util"
-	"tkestack.io/tke/pkg/util"
+	registryUtil "tkestack.io/tke/pkg/business/registry/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -96,7 +91,8 @@ func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableO
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	log.Debugf("business portal list, ctx %v", ctx)
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return &business.Portal{
 			Administrator: true,
@@ -104,83 +100,25 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 		}, nil
 	}
 	listOpt := v1.ListOptions{FieldSelector: fmt.Sprintf("spec.tenantID=%s", tenantID)}
-	platformList, err := r.businessClient.Platforms().List(ctx, listOpt)
-	if err != nil {
-		return nil, err
-	}
-	administrator := false
-	for _, platform := range platformList.Items {
-		if util.InStringSlice(platform.Spec.Administrators, username) {
-			administrator = true
-			break
-		}
-	}
-
-	var userID string
-	if r.authClient != nil {
-		usersSelector := fields.AndSelectors(
-			fields.OneTermEqualSelector("keyword", username),
-			fields.OneTermEqualSelector("policy", "true"),
-			fields.OneTermEqualSelector("spec.tenantID", tenantID),
-		)
-
-		userListOpt := v1.ListOptions{
-			FieldSelector: usersSelector.String(),
-		}
-
-		userList, err := r.authClient.Users().List(ctx, userListOpt)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, user := range userList.Items {
-			if user.Spec.Name == username {
-				log.Info("user", log.Any("user", user))
-				userID = user.Name
-				if authutil.IsPlatformAdministrator(user) {
-					administrator = true
-				}
-				break
-			}
-		}
-	}
-
 	projectList, err := r.businessClient.Projects().List(ctx, listOpt)
 	if err != nil {
 		return nil, err
 	}
-	projects := make(map[string]string)
-	for _, project := range projectList.Items {
-		if util.InStringSlice(project.Spec.Members, username) {
-			projects[project.ObjectMeta.Name] = project.Spec.DisplayName
-		}
+
+	log.Debugf("business portal list, before FilterWithUser: %v", projectList)
+	isAdmin, projectList, err := registryUtil.FilterWithUser(ctx, projectList, r.authClient, r.businessClient, false)
+	log.Debugf("business portal list, after FilterWithUser: %v", projectList)
+	if err != nil {
+		return nil, err
 	}
 
-	if r.authClient != nil && userID != "" {
-		belongs := &authv1.ProjectBelongs{}
-		err := r.authClient.RESTClient().Get().
-			Resource("users").
-			Name(userID).
-			SubResource("projects").
-			SetHeader(filter.HeaderTenantID, tenantID).
-			Do(ctx).Into(belongs)
-
-		if err != nil {
-			log.Error("Get user projects failed for tke-auth-api", log.String("user", username), log.Err(err))
-		} else {
-			log.Info("project belongs for user", log.String("user", username), log.String("userID", userID), log.Any("belongs", belongs))
-			for pid := range belongs.MemberdProjects {
-				for _, project := range projectList.Items {
-					if project.Name == pid {
-						projects[project.ObjectMeta.Name] = project.Spec.DisplayName
-					}
-				}
-			}
-		}
+	projects := make(map[string]string)
+	for _, project := range projectList.Items {
+		projects[project.ObjectMeta.Name] = project.Spec.DisplayName
 	}
 
 	return &business.Portal{
-		Administrator: administrator,
+		Administrator: isAdmin,
 		Projects:      projects,
 	}, nil
 }

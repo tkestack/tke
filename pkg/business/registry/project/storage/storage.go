@@ -22,7 +22,7 @@ import (
 	"context"
 	"fmt"
 
-	"tkestack.io/tke/pkg/apiserver/authentication"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -39,8 +39,10 @@ import (
 	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/cmd/tke-business-api/app/options"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	projectstrategy "tkestack.io/tke/pkg/business/registry/project"
+	registryUtil "tkestack.io/tke/pkg/business/registry/util"
 	"tkestack.io/tke/pkg/business/util"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -75,12 +77,11 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 
 		ShouldDeleteDuringUpdate: shouldDeleteDuringUpdate,
 	}
-	options := &genericregistry.StoreOptions{
+
+	if err := store.CompleteWithOptions(&genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    projectstrategy.GetAttrs,
-	}
-
-	if err := store.CompleteWithOptions(options); err != nil {
+	}); err != nil {
 		log.Panic("Failed to create project etcd rest storage", log.Err(err))
 	}
 
@@ -93,7 +94,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 	finalizeStore.ExportStrategy = projectstrategy.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		Project:  &REST{store, authClient, privilegedUsername},
+		Project:  &REST{store, authClient, businessClient, privilegedUsername},
 		Status:   &StatusREST{&statusStore},
 		Finalize: &FinalizeREST{&finalizeStore},
 	}
@@ -133,6 +134,7 @@ type REST struct {
 	*registry.Store
 
 	authClient         authversionedclient.AuthV1Interface
+	businessClient     *businessinternalclient.BusinessClient
 	privilegedUsername string
 }
 
@@ -145,8 +147,21 @@ func (r *REST) ShortNames() []string {
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
+	log.Debugf("business project list, ctx %v", ctx)
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
-	return r.Store.List(ctx, wrappedOptions)
+	obj, err := r.Store.List(ctx, wrappedOptions)
+	if err != nil || obj == nil {
+		return obj, err
+	}
+	user, ok := request.UserFrom(ctx)
+	log.Debugf("business project list, user %v", user)
+	if ok && user.GetName() == "system:apiserver" {
+		return obj, nil
+	}
+	log.Debugf("business project list, before FilterWithUser: %v", obj.(*business.ProjectList).Items)
+	_, list, err := registryUtil.FilterWithUser(ctx, obj.(*business.ProjectList), r.authClient, r.businessClient, true)
+	log.Debugf("business project list, after FilterWithUser: %v", list)
+	return list, err
 }
 
 // DeleteCollection selects all resources in the storage matching given 'listOptions'
