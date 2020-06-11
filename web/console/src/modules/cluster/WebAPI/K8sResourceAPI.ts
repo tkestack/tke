@@ -792,9 +792,9 @@ export async function modifyMultiResourceIns(resource: CreateResource[], regionI
  */
 export async function deleteResourceIns(resource: CreateResource[], regionId: number) {
   try {
-    let { resourceIns, clusterId, resourceInfo, namespace, meshId } = resource[0];
+    let { resourceIns, clusterId, resourceInfo, namespace, meshId, isSpetialNamespace = true } = resource[0];
 
-    let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, meshId });
+    let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, meshId, isSpetialNamespace });
     let url = k8sUrl;
 
     // 是用于后台去异步的删除resource当中的pod
