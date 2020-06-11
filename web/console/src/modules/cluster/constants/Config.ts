@@ -8,7 +8,7 @@ export const FFReduxActionName = {
   DETAILEVENT: 'DETAILEVENT',
 
   Resource_Workload: 'Resource_Workload',
-  LBCF_DRIVER: 'LBCF_DRIVER',
+  LBCF_DRIVER: 'LBCF_DRIVER'
 };
 /** ========================= end FFRedux的相关配置 ======================== */
 
@@ -16,7 +16,7 @@ export const FFReduxActionName = {
 /** 集群的类型 */
 export const ClusterTypeMap = {
   imported: '导入集群',
-  baremetal: '独立集群',
+  baremetal: '独立集群'
 };
 /** ========================= end 集群的相关配置 ======================== */
 
@@ -33,55 +33,55 @@ export const ContainerMinNumLimit = 0;
 export const NamespaceStatus = {
   Active: {
     text: 'Active',
-    classname: 'text-success',
+    classname: 'text-success'
   },
   Available: {
     text: 'Active',
-    classname: 'text-success',
+    classname: 'text-success'
   },
   Terminating: {
     text: 'Terminating',
-    classname: 'text-restart',
-  },
+    classname: 'text-restart'
+  }
 };
 
 export const PvcStatus = {
   Available: {
     text: 'Available',
-    classname: 'text-success',
+    classname: 'text-success'
   },
   Bound: {
     text: 'Bound',
-    classname: 'text-success',
+    classname: 'text-success'
   },
   Released: {
     text: 'Released',
-    classname: 'text-restart',
+    classname: 'text-restart'
   },
   Failed: {
     text: 'Failed',
-    classname: 'text-danger',
+    classname: 'text-danger'
   },
   Pending: {
     text: 'Pending',
-    classname: 'text-danger',
+    classname: 'text-danger'
   },
   Lost: {
     text: 'Lost',
-    classname: 'text-danger',
-  },
+    classname: 'text-danger'
+  }
 };
 
 export const ResourceStatus = {
   np: NamespaceStatus,
   pvc: PvcStatus,
-  pv: PvcStatus,
+  pv: PvcStatus
 };
 /** end --- 各种resource的状态展示，在这里做一个统一的入口，因为resourceTablePanel里面去区分类型 */
 
 /** 是否需要展示resourceLoading */
 export const ResourceLoadingIcon = {
-  npDelete: ['Terminating'],
+  npDelete: ['Terminating']
 };
 
 /** 是否需要判断loading状态 */
@@ -93,7 +93,7 @@ export const ResourceNeedJudgeLoading = [
   'pvc',
   'statefulset',
   'daemonset',
-  'tapp',
+  'tapp'
 ];
 
 /** 创建pvc页面的 云盘数据类型的映射  */
@@ -101,121 +101,121 @@ export const DiskTypeName = {
   CLOUD_BASIC: t('普通云硬盘'),
   CLOUD_PREMIUM: t('高性能云硬盘'),
   CLOUD_SSD: t('SSD云硬盘'),
-  cbs: t('普通云硬盘'),
+  cbs: t('普通云硬盘')
 };
 
 /** container的状态 */
 export const ContainerStatusMap = {
   running: {
     text: 'Running',
-    classname: 'text-success',
+    classname: 'text-success'
   },
   terminated: {
     text: 'Terminated',
-    classname: 'text-danger',
+    classname: 'text-danger'
   },
   waiting: {
     text: 'Waiting',
-    classname: 'text-restart',
-  },
+    classname: 'text-restart'
+  }
 };
 
 /** resource detail当中 日志的 tailList */
 export const TailList = [
   {
     value: '100',
-    label: t('100条数据'),
+    label: t('100条数据')
   },
   {
     value: '200',
-    label: t('200条数据'),
+    label: t('200条数据')
   },
   {
     value: '500',
-    label: t('500条数据'),
+    label: t('500条数据')
   },
   {
     value: '1000',
-    label: t('1000条数据'),
-  },
+    label: t('1000条数据')
+  }
 ];
 
 /** resource 当中的类型 */
 export const ResourceTypeList = [
   {
     value: 'deployment',
-    label: t('Deployment（可扩展的部署Pod）'),
+    label: t('Deployment（可扩展的部署Pod）')
   },
   {
     value: 'daemonset',
-    label: t('DaemonSet（在每个主机上运行Pod）'),
+    label: t('DaemonSet（在每个主机上运行Pod）')
   },
   {
     value: 'statefulset',
-    label: t('StatefulSet（有状态集的运行Pod）'),
+    label: t('StatefulSet（有状态集的运行Pod）')
   },
   {
     value: 'cronjob',
-    label: t('CronJob（按照Cron的计划定时运行）'),
+    label: t('CronJob（按照Cron的计划定时运行）')
   },
   {
     value: 'job',
-    label: t('Job（单次任务）'),
+    label: t('Job（单次任务）')
   },
   {
     value: 'tapp',
-    label: t('TApp（可对指定pod进行删除、原地升级、独立挂盘等）'),
-  },
+    label: t('TApp（可对指定pod进行删除、原地升级、独立挂盘等）')
+  }
 ];
 
 /** 创建workload，hpa的指标选项列表 */
 export const HpaMetricsTypeList = [
   {
     value: 'cpuUtilization',
-    label: t('CPU利用率'),
+    label: t('CPU利用率')
   },
   {
     value: 'memoryUtilization',
-    label: t('内存利用率'),
+    label: t('内存利用率')
   },
   {
     value: 'cpuAverage',
-    label: t('CPU使用量'),
+    label: t('CPU使用量')
   },
   {
     value: 'memoryAverage',
-    label: t('内存使用量'),
+    label: t('内存使用量')
   },
   {
     value: 'inBandwidth',
-    label: t('入带宽'),
+    label: t('入带宽')
   },
   {
     value: 'outBandwidth',
-    label: t('出带宽'),
-  },
+    label: t('出带宽')
+  }
 ];
 /**tapp - 节点异常策略 */
 export const NodeAbnormalStrategy = [
   {
     value: 'true',
-    text: t('迁移'),
+    text: t('迁移')
   },
   {
     value: 'false',
-    text: t('不迁移'),
-  },
+    text: t('不迁移')
+  }
 ];
 /** 创建workload，重启策略的类型 */
 export const RestartPolicyTypeList = [
   {
     value: 'OnFailure',
-    label: 'OnFailure',
+    label: 'OnFailure'
   },
   {
     value: 'Never',
-    label: 'Never',
-  },
+    label: 'Never'
+  }
 ];
 
 /**亲和性调度操作符 */
@@ -226,7 +226,7 @@ export const affinityOperator = {
   Exists: 'Exists',
   DoesNotExits: 'DoesNotExits',
   Gt: 'Gt',
-  Lt: 'Lt',
+  Lt: 'Lt'
 };
 
 //**亲和性调度方式："node" 指定节点调度 "rule" 自定义规则 "unset"
@@ -234,7 +234,7 @@ export const affinityOperator = {
 export const affinityType = {
   node: 'node',
   rule: 'rule',
-  unset: 'unset',
+  unset: 'unset'
 };
 /**
  * 服务调度的操作符
@@ -242,72 +242,72 @@ export const affinityType = {
 export const affinityRuleOperator = [
   {
     value: 'In',
-    tip: t('Label的value在列表中'),
+    tip: t('Label的value在列表中')
   },
   {
     value: 'NotIn',
-    tip: t('Label的value不在列表中'),
+    tip: t('Label的value不在列表中')
   },
   {
     value: 'Exists',
-    tip: t('Label的key存在'),
+    tip: t('Label的key存在')
   },
   {
     value: 'DoesNotExist',
-    tip: t('Labe的key不存在'),
+    tip: t('Labe的key不存在')
   },
   {
     value: 'Gt',
-    tip: t('Label的值大于列表值（字符串匹配）'),
+    tip: t('Label的值大于列表值（字符串匹配）')
   },
   {
     value: 'Lt',
-    tip: t('Label的值小于列表值（字符串匹配）'),
-  },
+    tip: t('Label的值小于列表值（字符串匹配）')
+  }
 ];
 
 /** 创建 pv的来源设置的列表 */
 export const PvCreateSourceList = [
   {
     value: 'static',
-    name: t('静态创建'),
+    name: t('静态创建')
   },
   {
     value: 'dynamic',
-    name: t('动态创建'),
-  },
+    name: t('动态创建')
+  }
 ];
 
 /** 创建pv的 文件系统 */
 export const PvFsTypeList = [
   {
     value: 'ext4',
-    label: 'ext4',
-  },
+    label: 'ext4'
+  }
 ];
 
 /** 创建service的时候，workload的列表 */
 export const ServiceWorkloadList = [
   {
     value: 'deployment',
-    name: 'Deploymemt',
+    name: 'Deploymemt'
   },
   {
     value: 'statefulset',
-    name: 'Statefulset',
-  },
+    name: 'Statefulset'
+  }
 ];
 
 /** 创建storageClass，云盘的计费方式 */
 export const StorageClassCbsPayModeList = [
   {
     value: 'POSTPAID',
-    name: t('按量计费'),
+    name: t('按量计费')
   },
   {
     value: 'PREPAID',
-    name: t('包年包月'),
-  },
+    name: t('包年包月')
+  }
 ];
 
 /** 创建storageclass，回收策略 */
@@ -315,32 +315,32 @@ export const ReclaimPolicyTypeList = [
   {
     value: 'Delete',
     name: t('删除'),
-    disabled: false,
+    disabled: false
   },
   {
     value: 'Retain',
-    name: t('保留'),
-  },
+    name: t('保留')
+  }
 ];
 
 /** 创建secret 的类型列表 */
 export const SecretTypeList = [
   {
     value: 'Opaque',
-    name: 'Opaque',
+    name: 'Opaque'
   },
   {
     value: 'kubernetes.io/dockercfg',
-    name: 'Dockercfg',
-  },
+    name: 'Dockercfg'
+  }
 ];
 
 /** 创建pvc 读写权限 */
 export const PvcAndpvAccessModeList = [
   {
     value: 'ReadWriteOnce',
-    name: t('单机读写'),
-  },
+    name: t('单机读写')
+  }
   // {
   //     value: 'ReadOnlyMany',
   //     name: t('多机只读')
@@ -355,88 +355,88 @@ export const PvcAndpvAccessModeList = [
 export const VolumeTypeList = [
   {
     value: 'emptyDir',
-    label: t('使用临时目录'),
+    label: t('使用临时目录')
   },
   {
     value: 'hostPath',
-    label: t('使用主机路径'),
+    label: t('使用主机路径')
   },
   {
     value: 'nfsDisk',
-    label: t('使用NFS盘'),
+    label: t('使用NFS盘')
   },
   {
     value: 'pvc',
-    label: t('使用已有PVC'),
+    label: t('使用已有PVC')
   },
   {
     value: 'configMap',
-    label: t('使用ConfigMap'),
+    label: t('使用ConfigMap')
   },
   {
     value: 'secret',
-    label: t('使用Secret'),
-  },
+    label: t('使用Secret')
+  }
 ];
 
 /** 创建workload，挂载点的 模式选择 */
 export const VolumeMountModeList = [
   {
     value: 'rw',
-    label: t('读写'),
+    label: t('读写')
   },
   {
     value: 'ro',
-    label: t('只读'),
-  },
+    label: t('只读')
+  }
 ];
 
 /** 创建workload，健康检查方法 */
 export const HealthCheckMethodList = [
   {
     value: 'methodTcp',
-    label: t('TCP端口检查'),
+    label: t('TCP端口检查')
   },
   {
     value: 'methodHttp',
-    label: t('HTTP请求检查'),
+    label: t('HTTP请求检查')
   },
   {
     value: 'methodCmd',
-    label: t('执行命令检查'),
-  },
+    label: t('执行命令检查')
+  }
 ];
 
 /** 创建workload，健康检查协议 */
 export const HttpProtocolTypeList = [
   {
     value: 'HTTP',
-    label: 'HTTP',
+    label: 'HTTP'
   },
   {
     value: 'HTTPS',
-    label: 'HTTPS',
-  },
+    label: 'HTTPS'
+  }
 ];
 
 /** 节点状态 */
 export const NodeStatus = {
   AllNormal: {
     text: t('全部正常'),
-    classname: 'text-success',
+    classname: 'text-success'
   },
   AllAbnormal: {
     text: t('全部异常'),
-    classname: 'text-danger',
+    classname: 'text-danger'
   },
   PartialAbnormal: {
     text: t('部分异常'),
-    classname: 'text-danger',
+    classname: 'text-danger'
   },
   '-': {
     text: '-',
-    classname: 'text-restart',
-  },
+    classname: 'text-restart'
+  }
 };
 
 /** 全局轮询事件，写在配置文件中，不需要每次手打，容易打错 */
@@ -446,7 +446,7 @@ export const PollEventName = {
   resourceLog: 'pollResourceLog',
   resourceEvent: 'pollResourceEvent',
   resourceList: 'pollResourceList',
-  resourcePodList: 'pollResourcePodList',
+  resourcePodList: 'pollResourcePodList'
 };
 
 /** 创建service当中的 访问方式 */
@@ -456,52 +456,52 @@ export const CommunicationTypeList = [
     label: t('仅在集群内访问'),
     tip: t(
       '将提供一个可以被集群内其他服务或容器访问的入口，支持TCP/UDP协议，数据库类服务如Mysql可以选择集群内访问,来保证服务网络隔离性。'
-    ),
+    )
   },
   {
     value: 'NodePort',
     label: t('主机端口访问'),
-    tip: t('提供一个主机端口映射到容器的访问方式，支持TCP&UDP， 可用于业务定制上层LB转发到Node。'),
-  },
+    tip: t('提供一个主机端口映射到容器的访问方式，支持TCP&UDP， 可用于业务定制上层LB转发到Node。')
+  }
 ];
 
 /**externalTrafficPolicy */
 export const ExternalTrafficPolicy = {
   Cluster: 'Cluster',
-  Local: 'Local',
+  Local: 'Local'
 };
 
 export const SessionAffinity = {
   ClientIP: 'ClientIP',
-  None: 'None',
+  None: 'None'
 };
 
 /** 协议列表 */
 export const ProtocolList = [
   {
     value: 'TCP',
-    label: 'TCP',
+    label: 'TCP'
   },
   {
     value: 'UDP',
-    label: 'UDP',
-  },
+    label: 'UDP'
+  }
 ];
 
 /** 镜像的更新策略 */
 export const ImagePullPolicyList = [
   {
     value: 'Always',
-    text: t('Always（总是拉取）'),
+    text: t('Always（总是拉取）')
   },
   {
     value: 'Never',
-    text: t('Never（不拉取）'),
+    text: t('Never（不拉取）')
   },
   {
     value: 'IfNotPresent',
-    text: t('IfNotPresent（镜像不存在时拉取）'),
-  },
+    text: t('IfNotPresent（镜像不存在时拉取）')
+  }
 ];
 
 /** 创建workload的网络模式 */
@@ -509,41 +509,41 @@ export enum WorkloadNetworkTypeEnum {
   Overlay = 'overlay',
   FloatingIP = 'floatingip',
   Nat = 'nat',
-  Host = 'host',
+  Host = 'host'
 }
 
 export const WorkloadNetworkType = [
   {
     value: WorkloadNetworkTypeEnum.Overlay,
-    text: t('Overlay（虚拟网络）'),
+    text: t('Overlay（虚拟网络）')
   },
   {
     value: WorkloadNetworkTypeEnum.FloatingIP,
-    text: t('FloatingIP（浮动IP）'),
+    text: t('FloatingIP（浮动IP）')
   },
   {
     value: WorkloadNetworkTypeEnum.Nat,
-    text: t('Nat（端口映射）'),
+    text: t('Nat（端口映射）')
   },
   {
     value: WorkloadNetworkTypeEnum.Host,
-    text: t('Host（主机网络）'),
-  },
+    text: t('Host（主机网络）')
+  }
 ];
 
 export const FloatingIPReleasePolicy = [
   {
     value: 'immutable',
-    text: t('缩容或删除APP时回收'),
+    text: t('缩容或删除APP时回收')
   },
   {
     value: 'never',
-    text: t('永不回收'),
+    text: t('永不回收')
   },
   {
     value: 'always',
-    text: t('随时回收'),
-  },
+    text: t('随时回收')
+  }
 ];
 /** ========================= resource的相关配置 -end ======================== */
 
@@ -552,29 +552,29 @@ export const k8sVersionList = [
   { text: '1.14.1', value: '1.14.1' },
   {
     text: '1.12.8',
-    value: '1.12.8',
-  },
+    value: '1.12.8'
+  }
 ];
 export const computerRoleList = [
   {
     text: 'Master&Etcd',
-    value: 'master_etcd',
-  },
+    value: 'master_etcd'
+  }
 ];
 
 export const authTypeMapping = {
   password: 'password',
-  cert: 'cert',
+  cert: 'cert'
 };
 export const authTypeList = [
   {
     text: t('密码认证'),
-    value: 'password',
+    value: 'password'
   },
   {
     text: t('密钥认证'),
-    value: 'cert',
-  },
+    value: 'cert'
+  }
 ];
 /** ========================= 创建独立集群 的相关配置 end ======================== */
 
@@ -582,12 +582,12 @@ export const authTypeList = [
 export const LbcfProtocolList = [
   {
     value: 'TCP',
-    text: 'TCP',
+    text: 'TCP'
   },
   {
     value: 'UDP',
-    text: 'UDP',
-  },
+    text: 'UDP'
+  }
 ];
 
 export const LbcfConfig = [
@@ -595,8 +595,8 @@ export const LbcfConfig = [
     text: 'CLBID',
     value: 'loadBalancerID',
     input: {
-      placeholder: t('不填则自动创建'),
-    },
+      placeholder: t('不填则自动创建')
+    }
   },
   {
     text: t('CLB类型'),
@@ -606,27 +606,27 @@ export const LbcfConfig = [
       options: [
         {
           text: t('公网CLB'),
-          value: 'OPEN',
+          value: 'OPEN'
         },
         {
           text: t('内网CLB'),
-          value: 'INTERNAL',
-        },
-      ],
+          value: 'INTERNAL'
+        }
+      ]
     },
-    defaultValue: 'OPEN',
+    defaultValue: 'OPEN'
   },
   {
     text: 'VPCID',
-    value: 'vpcID',
+    value: 'vpcID'
   },
   {
     text: t('子网ID'),
-    value: 'subnetID',
+    value: 'subnetID'
   },
   {
     text: t('监听器端口'),
-    value: 'listenerPort',
+    value: 'listenerPort'
   },
   {
     text: t('监听器端口类型'),
@@ -636,39 +636,39 @@ export const LbcfConfig = [
       options: [
         {
           text: 'TCP',
-          value: 'TCP',
+          value: 'TCP'
         },
         {
           text: 'UDP',
-          value: 'UDP',
+          value: 'UDP'
         },
         {
           text: 'HTTP',
-          value: 'HTTP',
+          value: 'HTTP'
         },
         {
           text: 'HTTPS',
-          value: 'HTTPS',
-        },
-      ],
+          value: 'HTTPS'
+        }
+      ]
     },
-    defaultValue: 'TCP',
+    defaultValue: 'TCP'
   },
   {
     text: t('域名'),
-    value: 'domain',
+    value: 'domain'
   },
   {
     text: t('路径'),
-    value: 'url',
-  },
+    value: 'url'
+  }
 ];
 
 export const LbcfArgsConfig = [
   {
     text: '证书ID',
-    value: 'listenerCertID',
-  },
+    value: 'listenerCertID'
+  }
 ];
 
 export const clearNodeSH = `#!/bin/bash
@@ -690,38 +690,38 @@ systemctl start docker 2>/dev/null`;
 
 export enum GPUTYPE {
   PGPU = 'Physical',
-  VGPU = 'Virtual',
+  VGPU = 'Virtual'
 }
 
 export enum BackendType {
   Pods = 'Pods',
   Service = 'Service',
-  Static = 'Static',
+  Static = 'Static'
 }
 
 export const BackendTypeList = [
   { text: BackendType.Pods, value: BackendType.Pods },
   { text: BackendType.Service, value: BackendType.Service },
-  { text: BackendType.Static, value: BackendType.Static },
+  { text: BackendType.Static, value: BackendType.Static }
 ];
 
 export enum CreateICVipType {
   unuse = 'unuse',
   existed = 'existed',
-  tke = 'tke',
+  tke = 'tke'
 }
 
 export const CreateICVipTypeOptions = [
   { text: '不使用', value: CreateICVipType.unuse },
   { text: '使用已有', value: CreateICVipType.existed },
-  { text: 'TKE提供', value: CreateICVipType.tke },
+  { text: 'TKE提供', value: CreateICVipType.tke }
 ];
 
 export enum MachineStatus {
   Running = 'Running',
   Initializing = 'Initializing',
   Failed = 'Failed',
-  Terminating = 'Terminating',
+  Terminating = 'Terminating'
 }
 
 /** 增加 Capabilities 选项 */
@@ -749,7 +749,7 @@ export const AddCapabilitiesList = [
   'LEASE',
   'WAKE_ALARM',
   'BLOCK_SUSPEND',
-  'all',
+  'all'
 ];
 
 /** 删除 Capabilities 选项 */
@@ -768,5 +768,21 @@ export const DropCapabilitiesList = [
   'NET_BIND_SERVICE',
   'SYS_CHROOT',
   'SETFCAP',
-  'all',
+  'all'
+];
+
+/** pod远程登录的选项 */
+export const podRemoteShellOptions = [
+  {
+    value: '/bin/bash',
+    text: '/bin/bash'
+  },
+  {
+    value: '/bin/zsh',
+    text: '/bin/zsh'
+  },
+  {
+    value: '/bin/sh',
+    text: '/bin/sh'
+  }
 ];
