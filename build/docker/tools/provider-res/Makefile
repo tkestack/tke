@@ -15,14 +15,14 @@
 # specific language governing permissions and limitations under the License.
 
 IMAGE = provider-res
-VERSION = v1.16.6-4
+VERSION = v1.18.3-1
 REGISTRY_PREFIX ?= tkestack
 
 COMMON_SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 ROOT_DIR := $(abspath $(shell cd $(COMMON_SELF_DIR)/../../../.. && pwd -P))
 
 .PHONY: all
-all: image
+all: manifest.multiarch
 
 # ==============================================================================
 # Includes

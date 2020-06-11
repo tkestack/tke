@@ -141,6 +141,10 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) error {
 	log.Info("Starting cluster controller")
 	defer log.Info("Shutting down cluster controller")
 
+	if err := clusterprovider.Setup(); err != nil {
+		return err
+	}
+
 	if ok := cache.WaitForCacheSync(stopCh, c.listerSynced); !ok {
 		return fmt.Errorf("failed to wait for cluster caches to sync")
 	}
@@ -152,6 +156,11 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) error {
 	}
 
 	<-stopCh
+
+	if err := clusterprovider.Teardown(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -199,12 +208,6 @@ func (c *Controller) syncCluster(key string) error {
 	}
 
 	cluster, err := c.lister.Get(name)
-
-	if err == nil {
-		if err := c.ensureSyncOldClusterCredential(context.Background(), cluster); err != nil {
-			return fmt.Errorf("sync old ClusterCredential error: %w", err)
-		}
-	}
 
 	switch {
 	case apierrors.IsNotFound(err):
@@ -277,6 +280,10 @@ func (c *Controller) processClusterDelete(key string) error {
 
 func (c *Controller) handlePhase(ctx context.Context, key string, cachedCluster *cachedCluster, cluster *platformv1.Cluster) error {
 	var err error
+
+	if err := c.ensureSyncOldClusterCredential(context.Background(), cluster); err != nil {
+		return fmt.Errorf("sync old ClusterCredential error: %w", err)
+	}
 
 	switch cluster.Status.Phase {
 	case platformv1.ClusterInitializing:

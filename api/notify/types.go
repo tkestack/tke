@@ -419,6 +419,12 @@ type MessageSpec struct {
 	ChannelMessageID string
 	// +optional
 	AlarmPolicyName string
+	// +optional
+	AlarmPolicyType string
+	// +optional
+	ReceiverChannelName string
+	// +optional
+	ClusterID string
 }
 
 // MessageStatus represents information about the status of a message.

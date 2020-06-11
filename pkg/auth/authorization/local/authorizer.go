@@ -22,6 +22,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	genericfilter "tkestack.io/tke/pkg/apiserver/filter"
 
 	"github.com/casbin/casbin/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +32,6 @@ import (
 
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
-	genericfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/auth/filter"
 	authutil "tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util"
@@ -82,9 +84,16 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 			}
 		}
 	}
+	if tenantID == "" {
+		tenantID = genericfilter.GetValueFromGroups(attr.GetUser().GetGroups(), "tenant")
+	}
+	projectID = genericfilter.GetValueFromGroups(attr.GetUser().GetGroups(), "project")
+	log.Debug("Authorize", log.String("subject", subject), log.String("action", action),
+		log.String("resource", resource), log.String("project", projectID), log.String("tenant", tenantID))
 
 	// First check if user is privileged
 	if subject == a.privilegedUsername {
+		log.Debug("privileged user", log.String("subject", subject))
 		return authorizer.DecisionAllow, "", nil
 	}
 
@@ -103,10 +112,10 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 
 	authorized = filter.UnprotectedAuthorized(attr)
 	if authorized == authorizer.DecisionAllow {
+		log.Debug("UnprotectedAuthorized", log.String("action", action))
 		return authorizer.DecisionAllow, "", nil
 	}
 
-	projectID = genericfilter.GetProjectFromGroups(attr.GetUser().GetGroups())
 	if debug {
 		perms, err := a.enforcer.GetImplicitPermissionsForUser(authutil.UserKey(tenantID, subject), projectID)
 		if err != nil {
@@ -115,6 +124,18 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 			log.Info("Authorize get user perms", log.String("user", authutil.UserKey(tenantID, subject)), log.Any("user perm", perms))
 			data, _ := json.Marshal(perms)
 			reason = string(data)
+		}
+	}
+
+	if projectID != "" && attr.GetName() != "*" && resource == fmt.Sprintf("project:%s", attr.GetName()) && attr.GetName() != projectID {
+		return authorizer.DecisionDeny, fmt.Sprintf("unmatched projectIDs: %v %v", attr.GetName(), projectID), nil
+	}
+
+	if !strings.HasPrefix(resource, "/api") {
+		ns := genericfilter.GetValueFromGroups(attr.GetUser().GetGroups(), "namespace")
+		if ns != "" && ns != attr.GetNamespace() {
+			log.Errorf("want to access namespace '%s', but only allowed to access %s, attr: %v", attr.GetNamespace(), ns, attr)
+			return authorizer.DecisionDeny, fmt.Sprintf("can NOT access namespace other than %v", ns), nil
 		}
 	}
 
@@ -130,7 +151,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		}
 		return authorizer.DecisionDeny, fmt.Sprintf("permission for %s on %s not verify", action, resource), nil
 	}
-
 	log.Debug("Casbin enforcer: ", log.Any("att", attr), log.String("projectID", projectID), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "true"))
+
 	return authorizer.DecisionAllow, reason, nil
 }

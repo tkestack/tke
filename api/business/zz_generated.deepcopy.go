@@ -413,6 +413,11 @@ func (in *NamespaceCert) DeepCopyInto(out *NamespaceCert) {
 		*out = make([]byte, len(*in))
 		copy(*out, *in)
 	}
+	if in.CACertPem != nil {
+		in, out := &in.CACertPem, &out.CACertPem
+		*out = make([]byte, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

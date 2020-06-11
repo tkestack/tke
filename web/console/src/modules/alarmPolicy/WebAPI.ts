@@ -1,3 +1,4 @@
+import { reduceNs } from '@helper';
 import { OperationResult, QueryState, RecordSet, uuid } from '@tencent/ff-redux';
 
 import { resourceConfig } from '../../../config';
@@ -107,12 +108,7 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
   }
 
   // let response = await sendCapiRequest('tke', 'DescribeAlarmPolicies', params, query.filter.regionId);
-  let workloadTypeMap = {
-    Deployment: 'deployment',
-    StatefulSet: 'statefulset',
-    DaemonSet: 'daemonset',
-    TApp: 'tapp'
-  };
+
   alarmPolicyList = items.map(item => {
     let alarmPolicyMetricsConfig =
       (item.AlarmPolicySettings.AlarmPolicyType === 'cluster'
@@ -128,7 +124,7 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
       alarmPolicyType: item.AlarmPolicySettings.AlarmPolicyType,
       statisticsPeriod: item.AlarmPolicySettings.statisticsPeriod,
       alarmMetrics: [] as MetricsObject[],
-      alarmObjectWorkloadType: item.WorkloadType && workloadTypeMap[item.WorkloadType],
+      alarmObjectWorkloadType: item.WorkloadType,
       alarmObjectNamespace: item.Namespace,
       alarmObjetcsType: item.AlarmPolicySettings.AlarmObjectsType,
       alarmObjetcs: [],
@@ -186,12 +182,6 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
 }
 
 function getAlarmPolicyParams(alarmPolicyEdition: AlarmPolicyEdition[], opreator: AlarmPolicyOperator, receiverGroups) {
-  let workloadTypeMap = {
-    deployment: 'Deployment',
-    statefulset: 'StatefulSet',
-    daemonset: 'DaemonSet',
-    tapp: 'TApp'
-  };
   let params = {
     ClusterInstanceId: opreator.clusterId,
     AlarmPolicyId: alarmPolicyEdition[0].alarmPolicyId,
@@ -215,18 +205,20 @@ function getAlarmPolicyParams(alarmPolicyEdition: AlarmPolicyEdition[], opreator
       EnableShield: false
     }
   };
-  if (alarmPolicyEdition[0].alarmObjectsType === 'part') {
-    /// #if project
-    //业务侧的namespace需要做前缀处理
-    alarmPolicyEdition[0].alarmObjectNamespace = alarmPolicyEdition[0].alarmObjectNamespace
-      .split('-')
-      .splice(2)
-      .join('-');
-    /// #endif
-    params['Namespace'] = alarmPolicyEdition[0].alarmObjectNamespace;
-
-    params['WorkloadType'] = workloadTypeMap[alarmPolicyEdition[0].alarmObjectWorkloadType];
+  if (alarmPolicyEdition[0].alarmPolicyType === 'pod') {
+    if (alarmPolicyEdition[0].alarmObjectsType === 'all') {
+      if (alarmPolicyEdition[0].alarmObjectNamespace !== 'ALL') {
+        params['Namespace'] = reduceNs(alarmPolicyEdition[0].alarmObjectNamespace);
+      }
+      if (alarmPolicyEdition[0].alarmObjectWorkloadType !== 'ALL') {
+        params['WorkloadType'] = alarmPolicyEdition[0].alarmObjectWorkloadType;
+      }
+    } else {
+      params['Namespace'] = reduceNs(alarmPolicyEdition[0].alarmObjectNamespace);
+      params['WorkloadType'] = alarmPolicyEdition[0].alarmObjectWorkloadType;
+    }
   }
+
   alarmPolicyEdition[0].alarmMetrics.forEach(item => {
     if (item.enable) {
       let metrics = {

@@ -48,7 +48,7 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var versionMap = map[string]Components{
 	LatestVersion: {
-		IPAM: containerregistry.Image{Name: "galaxy-ipam", Tag: "v1.0.3"},
+		IPAM: containerregistry.Image{Name: "galaxy-ipam", Tag: "v1.0.4"},
 	},
 }
 

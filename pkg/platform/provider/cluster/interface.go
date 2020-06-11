@@ -45,21 +45,34 @@ const (
 	ConditionTypeDone = "EnsureDone"
 )
 
+type APIProvider interface {
+	RegisterHandler(mux *mux.PathRecorderMux)
+	Validate(cluster *types.Cluster) field.ErrorList
+	PreCreate(cluster *types.Cluster) error
+	AfterCreate(cluster *types.Cluster) error
+}
+
+type ControllerProvider interface {
+	// Setup called by controller to give an chance for plugin do some init work.
+	Setup() error
+	// Teardown called by controller for plugin do some clean job.
+	Teardown() error
+
+	OnCreate(ctx context.Context, cluster *v1.Cluster) error
+	OnUpdate(ctx context.Context, cluster *v1.Cluster) error
+	OnDelete(ctx context.Context, cluster *v1.Cluster) error
+
+	// OnRunning call on first running.
+	OnRunning(ctx context.Context, cluster *v1.Cluster) error
+}
+
 // Provider defines a set of response interfaces for specific cluster
 // types in cluster management.
 type Provider interface {
 	Name() string
 
-	RegisterHandler(mux *mux.PathRecorderMux)
-
-	Validate(cluster *types.Cluster) field.ErrorList
-
-	PreCreate(cluster *types.Cluster) error
-	AfterCreate(cluster *types.Cluster) error
-
-	OnCreate(ctx context.Context, cluster *v1.Cluster) error
-	OnUpdate(ctx context.Context, cluster *v1.Cluster) error
-	OnDelete(ctx context.Context, cluster *v1.Cluster) error
+	APIProvider
+	ControllerProvider
 }
 
 var _ Provider = &DelegateProvider{}
@@ -83,6 +96,14 @@ func (p *DelegateProvider) Name() string {
 		return "unknown"
 	}
 	return p.ProviderName
+}
+
+func (p *DelegateProvider) Setup() error {
+	return nil
+}
+
+func (p *DelegateProvider) Teardown() error {
+	return nil
 }
 
 func (p *DelegateProvider) RegisterHandler(mux *mux.PathRecorderMux) {
@@ -133,7 +154,7 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 		if f == nil {
 			return fmt.Errorf("can't get handler by %s", condition.Type)
 		}
-		log.Infow("OnUpdate", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
+		log.Infow("OnCreate", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
 			"clusterName", cluster.Name)
 		err = f(ctx, cluster)
 		if err != nil {
@@ -161,6 +182,9 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 	nextConditionType := p.getNextConditionType(condition.Type)
 	if nextConditionType == ConditionTypeDone {
 		cluster.Status.Phase = platformv1.ClusterRunning
+		if err := p.OnRunning(ctx, cluster); err != nil {
+			return fmt.Errorf("%s.OnRunning error: %w", p.Name(), err)
+		}
 	} else {
 		cluster.SetCondition(platformv1.ClusterCondition{
 			Type:               nextConditionType,
@@ -201,6 +225,10 @@ func (p *DelegateProvider) OnDelete(ctx context.Context, cluster *v1.Cluster) er
 	return nil
 }
 
+func (p *DelegateProvider) OnRunning(ctx context.Context, cluster *v1.Cluster) error {
+	return nil
+}
+
 func (h Handler) name() string {
 	name := runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()
 	i := strings.Index(name, "Ensure")
@@ -217,7 +245,7 @@ func (p *DelegateProvider) getNextConditionType(conditionType string) string {
 	)
 	for i, f = range p.CreateHandlers {
 		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-		if strings.Contains(name, conditionType) {
+		if strings.Contains(name, conditionType+"-fm") {
 			break
 		}
 	}

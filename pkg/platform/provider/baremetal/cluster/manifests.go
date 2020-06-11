@@ -45,7 +45,6 @@ const (
          "filterVerb" : "filter",
          "BindVerb": "bind",
          "weight": 1,
-         "enableHttps": false,
          "managedResources" : [
             {
                "ignoredByScheduler" : true,

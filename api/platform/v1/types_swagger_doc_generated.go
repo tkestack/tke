@@ -275,6 +275,7 @@ var map_ClusterSpec = map[string]string{
 	"serviceCIDR":          "ServiceCIDR is used to set a separated CIDR for k8s service, it's exclusive with MaxClusterServiceNum.",
 	"dnsDomain":            "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
 	"clusterCredentialRef": "ClusterCredentialRef for isolate sensitive information. If not specified, cluster controller will create one; If specified, provider must make sure is valid.",
+	"etcd":                 "Etcd holds configuration for etcd.",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {
@@ -355,6 +356,28 @@ var map_CronHPAStatus = map[string]string{
 
 func (CronHPAStatus) SwaggerDoc() map[string]string {
 	return map_CronHPAStatus
+}
+
+var map_Etcd = map[string]string{
+	"":         "Etcd contains elements describing Etcd configuration.",
+	"local":    "Local provides configuration knobs for configuring the local etcd instance Local and External are mutually exclusive",
+	"external": "External describes how to connect to an external etcd cluster Local and External are mutually exclusive",
+}
+
+func (Etcd) SwaggerDoc() map[string]string {
+	return map_Etcd
+}
+
+var map_ExternalEtcd = map[string]string{
+	"":          "ExternalEtcd describes an external etcd cluster. Kubeadm has no knowledge of where certificate files live and they must be supplied.",
+	"endpoints": "Endpoints of etcd members. Required for ExternalEtcd.",
+	"caFile":    "CAFile is an SSL Certificate Authority file used to secure etcd communication. Required if using a TLS connection.",
+	"certFile":  "CertFile is an SSL certification file used to secure etcd communication. Required if using a TLS connection.",
+	"keyFile":   "KeyFile is an SSL key file used to secure etcd communication. Required if using a TLS connection.",
+}
+
+func (ExternalEtcd) SwaggerDoc() map[string]string {
+	return map_ExternalEtcd
 }
 
 var map_Helm = map[string]string{
@@ -495,6 +518,18 @@ var map_LBCFStatus = map[string]string{
 
 func (LBCFStatus) SwaggerDoc() map[string]string {
 	return map_LBCFStatus
+}
+
+var map_LocalEtcd = map[string]string{
+	"":               "LocalEtcd describes that kubeadm should run an etcd cluster locally",
+	"dataDir":        "DataDir is the directory etcd will place its data. Defaults to \"/var/lib/etcd\".",
+	"extraArgs":      "ExtraArgs are extra arguments provided to the etcd binary when run inside a static pod.",
+	"serverCertSANs": "ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.",
+	"peerCertSANs":   "PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.",
+}
+
+func (LocalEtcd) SwaggerDoc() map[string]string {
+	return map_LocalEtcd
 }
 
 var map_LogCollector = map[string]string{

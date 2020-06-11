@@ -18,21 +18,30 @@
 
 package spec
 
-import "github.com/thoas/go-funk"
+import (
+	"github.com/thoas/go-funk"
+)
 
 var (
-	Archs            = []string{"amd64", "arm64"}
-	Arm64            = "arm64"
-	Arm64Variants    = []string{"v8", "unknown"}
-	OSs              = []string{"linux"}
-	K8sVersions      = []string{"1.14.10", "1.16.6"}
-	K8sVersionsWithV = funk.Map(K8sVersions, func(s string) string {
+	Archs         = []string{"amd64", "arm64"}
+	Arm64         = "arm64"
+	Arm64Variants = []string{"v8", "unknown"}
+	OSs           = []string{"linux"}
+
+	K8sVersionConstraint = ">= 1.10"
+	K8sVersions          = []string{"1.18.3", "1.16.9"}
+	K8sVersionsWithV     = funk.Map(K8sVersions, func(s string) string {
 		return "v" + s
 	}).([]string)
-	K8sVersionConstraint           = ">= 1.10"
-	DockerVersions                 = []string{"18.09.9"}
-	CNIPluginsVersions             = []string{"v0.8.5"}
-	KubeadmVersions                = []string{"v1.15.1"}
+	// K8sValidVersions for backward compatibility.
+	K8sValidVersions      = append(K8sVersions, []string{"1.16.6", "1.14.10"}...)
+	K8sValidVersionsWithV = funk.Map(K8sValidVersions, func(s string) string {
+		return "v" + s
+	}).([]string)
+
+	DockerVersions                 = []string{"19.03.9"}
+	CNIPluginsVersions             = []string{"v0.8.6"}
+	ConntrackToolsVersions         = []string{"1.4.4"}
 	NvidiaDriverVersions           = []string{"440.31"}
 	NvidiaContainerRuntimeVersions = []string{"3.1.4"}
 )

@@ -631,8 +631,8 @@ func serviceIPAM() *corev1.Service {
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"app": "galaxy-ipam"},
 			Ports: []corev1.ServicePort{
-				{Name: "scheduler-port", Port: 9040, TargetPort: intstr.FromInt(9040), NodePort: 32760},
-				{Name: "api-port", Port: 9041, TargetPort: intstr.FromInt(9041), NodePort: 32761},
+				{Name: "scheduler-port", Port: 9040, TargetPort: intstr.FromInt(9040)},
+				{Name: "api-port", Port: 9041, TargetPort: intstr.FromInt(9041)},
 			},
 			Type: corev1.ServiceTypeClusterIP,
 		},
@@ -651,6 +651,11 @@ func (c *Controller) uninstallIPAM(ctx context.Context, ipam *v1.IPAM) error {
 	if err != nil {
 		return err
 	}
+	if cluster.Status.Phase == v1.ClusterTerminating {
+		log.Info(fmt.Sprintf("Keep the components of IPAM %s when deleting the cluster", ipam.Name))
+		return nil
+	}
+
 	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err

@@ -21,16 +21,9 @@ import (
 	"sort"
 	"strings"
 
-	"tkestack.io/tke/pkg/spec"
-
 	"github.com/thoas/go-funk"
-
 	installer "tkestack.io/tke/cmd/tke-installer/app/installer/images"
-
-	baremetal "tkestack.io/tke/pkg/platform/provider/baremetal/images"
-
-	galaxy "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
-
+	logagent "tkestack.io/tke/pkg/logagent/controller/logagent/images"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
 	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
 	ipam "tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
@@ -38,23 +31,20 @@ import (
 	logcollector "tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
 	persistentevent "tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
 	prometheus "tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
-
 	volumedecorator "tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
-
-	logagent "tkestack.io/tke/pkg/logagent/controller/logagent/images"
-
+	baremetal "tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	csioperator "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
+	galaxy "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
+	"tkestack.io/tke/pkg/spec"
+)
+
+var (
+	specialUnsupportMultiArch = []string{"nvidia-device-plugin", "gpu"}
 )
 
 func main() {
-	funcs := []func() []string{
-		//installer.List,
-
-		//baremetal.List,
-
-		//galaxy.List,
-
+	unsupportMultiArchImages := []func() []string{
 		cronhpa.List,
 		helm.List,
 		ipam.List,
@@ -67,23 +57,36 @@ func main() {
 		tappcontroller.List,
 		logagent.List,
 	}
+
 	var result []string
-	for _, f := range funcs {
+	for _, one := range append(baremetal.List(), append(installer.List(), galaxy.List()...)...) {
+		if IsUnsupportMultiArch(one) {
+			result = append(result, one)
+		} else {
+			for _, arch := range spec.Archs {
+				result = append(result, strings.ReplaceAll(one, ":", "-"+arch+":"))
+			}
+		}
+	}
+
+	for _, f := range unsupportMultiArchImages {
 		images := f()
 		result = append(result, images...)
 	}
+
 	result = funk.UniqString(result)
-	for _, one := range append(baremetal.List(), append(installer.List(), galaxy.List()...)...) {
-		if strings.HasPrefix(one, "nvidia-device-plugin") {
-			fmt.Println(one)
-			continue
-		}
-		for _, arch := range spec.Archs {
-			fmt.Println(strings.ReplaceAll(one, ":", "-"+arch+":"))
-		}
-	}
 	sort.Strings(result)
 	for _, one := range result {
 		fmt.Println(one)
 	}
+}
+
+func IsUnsupportMultiArch(name string) bool {
+	for _, one := range specialUnsupportMultiArch {
+		if strings.HasPrefix(name, one) {
+			return true
+		}
+	}
+
+	return false
 }

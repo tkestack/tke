@@ -22,42 +22,40 @@ import (
 	"bytes"
 	"fmt"
 	"path"
-
-	"tkestack.io/tke/pkg/util/template"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
+	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/template"
 )
 
 const (
-	kubeadmConfigFile  = "kubeadm/kubeadm-config.yaml"
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
-	joinControlPlaneCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
---node-name={{.NodeName}} --token={{.BootstrapToken}} \
---control-plane --certificate-key={{.CertificateKey}} \
---skip-phases=control-plane-join/mark-control-plane \
---discovery-token-unsafe-skip-ca-verification \
---ignore-preflight-errors=ImagePull \
---ignore-preflight-errors=Port-10250 \
---ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables \
---ignore-preflight-errors=DirAvailable--etc-kubernetes-manifests
-`
-	joinNodeCmd = `kubeadm join {{.ControlPlaneEndpoint}} \
---node-name={{.NodeName}} \
---token={{.BootstrapToken}} \
---discovery-token-unsafe-skip-ca-verification \
---ignore-preflight-errors=ImagePull \
---ignore-preflight-errors=Port-10250 \
---ignore-preflight-errors=FileContent--proc-sys-net-bridge-bridge-nf-call-iptables
-`
+	initCmd = `kubeadm init phase {{.Phase}} --config={{.Config}}`
+	joinCmd = `kubeadm join phase {{.Phase}} --config={{.Config}}`
 )
 
-func Install(s ssh.Interface) error {
-	dstFile, err := res.Kubeadm.CopyToNodeWithDefault(s)
+var (
+	ignoreErrors = []string{
+		"ImagePull",
+		"Port-10250",
+		"FileContent--proc-sys-net-bridge-bridge-nf-call-iptables",
+		"DirAvailable--etc-kubernetes-manifests",
+	}
+)
+
+func Install(s ssh.Interface, version string) error {
+	dstFile, err := res.Kubeadm.CopyToNode(s, version)
 	if err != nil {
 		return err
 	}
@@ -80,101 +78,157 @@ func Install(s ssh.Interface) error {
 	return nil
 }
 
-type InitOption struct {
-	KubeadmConfigFileName string
-	NodeName              string
-	BootstrapToken        string
-	CertificateKey        string
-
-	ETCDImageTag         string
-	CoreDNSImageTag      string
-	KubernetesVersion    string
-	ControlPlaneEndpoint string
-
-	DNSDomain             string
-	ServiceSubnet         string
-	NodeCIDRMaskSize      int32
-	ClusterCIDR           string
-	ServiceClusterIPRange string
-	CertSANs              []string
-
-	APIServerExtraArgs         map[string]string
-	ControllerManagerExtraArgs map[string]string
-	SchedulerExtraArgs         map[string]string
-
-	ImageRepository string
-	ClusterName     string
-
-	KubeProxyMode string
-}
-
-func Init(s ssh.Interface, option *InitOption, extraCmd string) error {
-	configData, err := template.ParseFile(path.Join(constants.ConfDir, kubeadmConfigFile), option)
+func Init(s ssh.Interface, kubeadmConfig *InitConfig, phase string) error {
+	configData, err := kubeadmConfig.Marshal()
 	if err != nil {
-		return errors.Wrap(err, "parse kubeadm config file error")
+		return err
 	}
-	err = s.WriteFile(bytes.NewReader(configData), option.KubeadmConfigFileName)
+	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
 	if err != nil {
 		return err
 	}
 
-	cmd := fmt.Sprintf("kubeadm init phase %s --config=%s",
-		extraCmd, option.KubeadmConfigFileName)
-	stdout, stderr, exit, err := s.Exec(cmd)
-	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+	cmd, err := template.ParseString(initCmd, map[string]interface{}{
+		"Phase":  phase,
+		"Config": constants.KubeadmConfigFileName,
+	})
+	if err != nil {
+		return errors.Wrap(err, "parse initCmd error")
 	}
-	log.Info(stdout)
+	out, err := s.CombinedOutput(string(cmd))
+	if err != nil {
+		return fmt.Errorf("kubeadm.Init error: %w", err)
+	}
+	log.Info(string(out))
 
 	return nil
 }
 
-type JoinControlPlaneOption struct {
-	NodeName             string
-	BootstrapToken       string
-	CertificateKey       string
-	ControlPlaneEndpoint string
-	OIDCCA               []byte
+func Join(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration, phase string) error {
+	configData, err := MarshalToYAML(config)
+	if err != nil {
+		return err
+	}
+	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
+	if err != nil {
+		return err
+	}
+	if phase == "preflight" {
+		phase = fmt.Sprintf("preflight --ignore-preflight-errors=%s", strings.Join(ignoreErrors, ","))
+	}
+
+	cmd, err := template.ParseString(joinCmd, map[string]interface{}{
+		"Phase":  phase,
+		"Config": constants.KubeadmConfigFileName,
+	})
+	if err != nil {
+		return errors.Wrap(err, "parse joinCmd error")
+	}
+	out, err := s.CombinedOutput(string(cmd))
+	if err != nil {
+		return fmt.Errorf("kubeadm.Join error: %w", err)
+	}
+	log.Info(string(out))
+
+	return nil
 }
 
-func JoinControlPlane(s ssh.Interface, option *JoinControlPlaneOption) error {
-	if len(option.OIDCCA) != 0 { // ensure oidc ca exists becase kubeadm reset probably delete it!
-		err := s.WriteFile(bytes.NewReader(option.OIDCCA), constants.OIDCCACertFile)
+func RenewCerts(s ssh.Interface) error {
+	err := fixKubeadmBug1753(s)
+	if err != nil {
+		return fmt.Errorf("fixKubeadmBug1753(https://github.com/kubernetes/kubeadm/issues/1753) error: %w", err)
+	}
+
+	cmd := fmt.Sprintf("kubeadm alpha certs renew all --config=%s", constants.KubeadmConfigFileName)
+	_, err = s.CombinedOutput(cmd)
+	if err != nil {
+		return err
+	}
+
+	err = RestartControlPlane(s)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// https://github.com/kubernetes/kubeadm/issues/1753
+func fixKubeadmBug1753(s ssh.Interface) error {
+	needUpdate := false
+
+	data, err := s.ReadFile(constants.KubeletKubeConfigFileName)
+	if err != nil {
+		return err
+	}
+	kubeletKubeconfig, err := clientcmd.Load(data)
+	if err != nil {
+		return err
+	}
+	for _, info := range kubeletKubeconfig.AuthInfos {
+		if info.ClientKeyData == nil && info.ClientCertificateData == nil {
+			continue
+		}
+
+		info.ClientKeyData = []byte{}
+		info.ClientCertificateData = []byte{}
+		info.ClientKey = constants.KubeletClientCurrent
+		info.ClientCertificate = constants.KubeletClientCurrent
+
+		needUpdate = true
+	}
+
+	if needUpdate {
+		data, err := runtime.Encode(clientcmdlatest.Codec, kubeletKubeconfig)
+		if err != nil {
+			return err
+		}
+		err = s.WriteFile(bytes.NewReader(data), constants.KubeletKubeConfigFileName)
 		if err != nil {
 			return err
 		}
 	}
 
-	cmd, err := template.ParseString(joinControlPlaneCmd, option)
-	if err != nil {
-		return errors.Wrap(err, "parse joinControlePlaneCmd error")
+	return nil
+}
+
+func RestartControlPlane(s ssh.Interface) error {
+	targets := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
+	for _, one := range targets {
+		err := RestartContainerByFilter(s, DockerFilterForControlPlane(one))
+		if err != nil {
+			return err
+		}
 	}
-	stdout, stderr, exit, err := s.Exec(string(cmd))
-	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-	}
-	log.Info(stdout)
 
 	return nil
 }
 
-type JoinNodeOption struct {
-	NodeName             string
-	BootstrapToken       string
-	ControlPlaneEndpoint string
+func DockerFilterForControlPlane(name string) string {
+	return fmt.Sprintf("label=io.kubernetes.container.name=%s", name)
 }
 
-func JoinNode(s ssh.Interface, option *JoinNodeOption) error {
-	cmd, err := template.ParseString(joinNodeCmd, option)
+func RestartContainerByFilter(s ssh.Interface, filter string) error {
+	cmd := fmt.Sprintf("docker rm -f $(docker ps -q -f '%s')", filter)
+	_, err := s.CombinedOutput(cmd)
 	if err != nil {
-		return errors.Wrap(err, "parse joinNodeCmd error")
+		return err
 	}
-	stdout, stderr, exit, err := s.Exec(string(cmd))
-	if err != nil || exit != 0 {
-		_, _, _, _ = s.Exec("kubeadm reset -f")
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+
+	err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+		cmd = fmt.Sprintf("docker ps -q -f '%s'", filter)
+		output, err := s.CombinedOutput(cmd)
+		if err != nil {
+			return false, nil
+		}
+		if len(output) == 0 {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("restart container(%s) error: %w", filter, err)
 	}
-	log.Info(stdout)
 
 	return nil
 }

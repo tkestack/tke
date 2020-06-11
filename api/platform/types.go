@@ -114,6 +114,9 @@ type ClusterSpec struct {
 	// If specified, provider must make sure is valid.
 	// +optional
 	ClusterCredentialRef *corev1.LocalObjectReference
+
+	// Etcd holds configuration for etcd.
+	Etcd *Etcd
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -361,6 +364,48 @@ type ClusterProperty struct {
 	MaxNodePodNum *int32
 	// +optional
 	OversoldRatio map[string]string
+}
+
+// Etcd contains elements describing Etcd configuration.
+type Etcd struct {
+
+	// Local provides configuration knobs for configuring the local etcd instance
+	// Local and External are mutually exclusive
+	Local *LocalEtcd
+
+	// External describes how to connect to an external etcd cluster
+	// Local and External are mutually exclusive
+	External *ExternalEtcd
+}
+
+// LocalEtcd describes that kubeadm should run an etcd cluster locally
+type LocalEtcd struct {
+	// DataDir is the directory etcd will place its data.
+	// Defaults to "/var/lib/etcd".
+	DataDir string
+
+	// ExtraArgs are extra arguments provided to the etcd binary
+	// when run inside a static pod.
+	ExtraArgs map[string]string
+
+	// ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.
+	ServerCertSANs []string
+	// PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.
+	PeerCertSANs []string
+}
+
+// ExternalEtcd describes an external etcd cluster
+type ExternalEtcd struct {
+
+	// Endpoints of etcd members. Useful for using external etcd.
+	// If not provided, kubeadm will run etcd in a static pod.
+	Endpoints []string
+	// CAFile is an SSL Certificate Authority file used to secure etcd communication.
+	CAFile string
+	// CertFile is an SSL certification file used to secure etcd communication.
+	CertFile string
+	// KeyFile is an SSL key file used to secure etcd communication.
+	KeyFile string
 }
 
 // ResourceList is a set of (resource name, quantity) pairs.

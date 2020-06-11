@@ -242,6 +242,8 @@ type deleteResourceFunc func(ctx context.Context, deleter *clusterDeleter, clust
 var deleteResourceFuncs = []deleteResourceFunc{
 	deletePersistentEvent,
 	deleteHelm,
+	deleteIPAM,
+	deleteTappControllers,
 	deleteClusterProvider,
 	deleteMachine,
 	deleteClusterCredential,
@@ -310,6 +312,56 @@ func deleteHelm(ctx context.Context, deleter *clusterDeleter, cluster *platformv
 	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
 	for _, helm := range helmList.Items {
 		if err := deleter.platformClient.Helms().Delete(ctx, helm.Name, deleteOpt); err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func deleteIPAM(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
+	log.Info("Cluster controller - deleteIPAM", log.String("clusterName", cluster.Name))
+
+	listOpt := metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.Name),
+	}
+	ipamList, err := deleter.platformClient.IPAMs().List(ctx, listOpt)
+	if err != nil {
+		return err
+	}
+	if len(ipamList.Items) == 0 {
+		return nil
+	}
+	background := metav1.DeletePropagationBackground
+	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+	for _, ipam := range ipamList.Items {
+		if err := deleter.platformClient.IPAMs().Delete(ctx, ipam.ObjectMeta.Name, deleteOpt); err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func deleteTappControllers(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
+	log.Info("Cluster controller - deleteTappControllers", log.String("clusterName", cluster.Name))
+
+	listOpt := metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.Name),
+	}
+	tappControllerList, err := deleter.platformClient.TappControllers().List(ctx, listOpt)
+	if err != nil {
+		return err
+	}
+	if len(tappControllerList.Items) == 0 {
+		return nil
+	}
+	background := metav1.DeletePropagationBackground
+	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+	for _, item := range tappControllerList.Items {
+		if err := deleter.platformClient.TappControllers().Delete(ctx, item.Name, deleteOpt); err != nil {
 			if !errors.IsNotFound(err) {
 				return err
 			}

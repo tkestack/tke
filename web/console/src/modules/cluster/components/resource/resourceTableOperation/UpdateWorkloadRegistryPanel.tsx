@@ -271,12 +271,12 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
                   <InputField
                     type="text"
                     style={{ minWidth: '240px' }}
-                    placeholder={t('0或者正整数')}
+                    placeholder={t('正整数')}
                     tipMode="popup"
                     validator={v_maxUnavailable}
                     value={maxUnavailable}
                     onChange={actions.editWorkload.inputMaxUnavaiable}
-                    onBlur={actions.validate.workload.validateMaxUnavaiable}
+                    onBlur={() => actions.validate.workload.validateMaxUnavaiable(true)}
                   />
                   <p className="text-label">{t('允许最大不可用数量，可限制更新并发数')}</p>
                 </FormItem>

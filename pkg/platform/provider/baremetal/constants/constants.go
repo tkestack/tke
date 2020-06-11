@@ -18,15 +18,26 @@
 
 package constants
 
-import platformv1 "tkestack.io/tke/api/platform/v1"
+import (
+	"time"
+
+	platformv1 "tkestack.io/tke/api/platform/v1"
+)
 
 const (
-	// KubernetesDir is the directory Kubernetes owns for storing various configuration files
-	KubernetesDir             = "/etc/kubernetes/"
-	KubeletPodManifestDir     = KubernetesDir + "manifests/"
-	SchedulerPolicyConfigFile = KubernetesDir + "scheduler-policy-config.json"
-	AuditWebhookConfigFile    = "audit-api-client-config.yaml"
+	AuditPolicyConfigBaseName = "audit-policy.yaml"
+	OIDCCACertName            = "oidc-ca.crt"
 
+	// Kubernetes Config
+	KubernetesDir                       = "/etc/kubernetes/"
+	KuberentesSchedulerPolicyConfigFile = KubernetesDir + "scheduler-policy-config.json"
+	KuberentesAuditWebhookConfigFile    = KubernetesDir + "audit-api-client-config.yaml"
+	TokenFile                           = KubernetesDir + "known_tokens.csv"
+	KuberentesAuditPolicyConfigFile     = KubernetesDir + AuditPolicyConfigBaseName
+	KubeadmConfigFileName               = KubernetesDir + "kubeadm-config.yaml"
+	KubeletKubeConfigFileName           = KubernetesDir + "kubelet.conf"
+
+	KubeletPodManifestDir                = KubernetesDir + "manifests/"
 	EtcdPodManifestFile                  = KubeletPodManifestDir + "etcd.yaml"
 	KubeAPIServerPodManifestFile         = KubeletPodManifestDir + "kube-apiserver.yaml"
 	KubeControllerManagerPodManifestFile = KubeletPodManifestDir + "kube-controller-manager.yaml"
@@ -39,22 +50,25 @@ const (
 	CNIDataDir = "/var/lib/cni/"
 	CNIConfDIr = "/etc/cni"
 
-	CertificatesDir = KubernetesDir + "pki/"
-	EtcdDataDir     = "/var/lib/etcd"
-
-	TokenFile = KubernetesDir + "known_tokens.csv"
-
-	KubectlConfigFile = "/root/.kube/config"
-
+	// ETC
+	EtcdDataDir          = "/var/lib/etcd"
+	KubectlConfigFile    = "/root/.kube/config"
 	KeepavliedConfigFile = "/etc/keepalived/keepalived.conf"
 
-	OIDCCACertName = "oidc-ca.crt"
-	OIDCCACertFile = CertificatesDir + OIDCCACertName
+	// PKI
+	CertificatesDir = KubernetesDir + "pki/"
+	OIDCCACertFile  = CertificatesDir + OIDCCACertName
 
 	// CACertName defines certificate name
 	CACertName = CertificatesDir + "ca.crt"
 	// CAKeyName defines certificate name
 	CAKeyName = CertificatesDir + "ca.key"
+	// APIServerCertName defines API's server certificate name
+	APIServerCertName = CertificatesDir + "apiserver.crt"
+	// APIServerKeyName defines API's server key name
+	APIServerKeyName = CertificatesDir + "apiserver.key"
+	// KubeletClientCurrent defines kubelet rotate certificates
+	KubeletClientCurrent = "/var/lib/kubelet/pki/kubelet-client-current.pem"
 	// EtcdCACertName defines etcd's CA certificate name
 	EtcdCACertName = CertificatesDir + "etcd/ca.crt"
 	// EtcdCAKeyName defines etcd's CA key name
@@ -68,23 +82,27 @@ const (
 	// APIServerEtcdClientKeyName defines apiserver's etcd client key name
 	APIServerEtcdClientKeyName = CertificatesDir + "apiserver-etcd-client.key"
 
-	KubeadmConfigFileName = KubernetesDir + "kubeadm-config.yaml"
-
 	// LabelNodeRoleMaster specifies that a node is a control-plane
 	// This is a duplicate definition of the constant in pkg/controller/service/service_controller.go
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
 
+	// Provider
 	ProviderDir           = "provider/baremetal/"
 	SrcDir                = ProviderDir + "res/"
 	ConfDir               = ProviderDir + "conf/"
 	ConfigFile            = ConfDir + "config.yaml"
-	AuditPolicyConfigFile = "audit-policy.yaml"
+	AuditPolicyConfigName = ConfDir + AuditPolicyConfigBaseName
+	OIDCConfigFile        = ConfDir + OIDCCACertName
 
 	ManifestsDir        = ProviderDir + "manifests/"
 	GPUManagerManifest  = ManifestsDir + "gpu-manager/gpu-manager.yaml"
 	CSIOperatorManifest = ManifestsDir + "csi-operator/csi-operator.yaml"
 
+	KUBERNETES                   = 1
 	DNSIPIndex                   = 10
 	GPUQuotaAdmissionIPIndex     = 9
 	GPUQuotaAdmissionIPAnnotaion = platformv1.GroupName + "/gpu-quota-admission-ip"
+
+	// RenewCertsTimeThreshold control how long time left to renew certs
+	RenewCertsTimeThreshold = 30 * 24 * time.Hour
 )

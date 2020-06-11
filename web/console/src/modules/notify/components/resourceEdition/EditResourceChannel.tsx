@@ -19,6 +19,7 @@ export class EditResourceChannel extends EditResource {
       <Form>
         <Form.Item label={t('名称')} required>
           <Input
+            size="l"
             placeholder={t('请填写名称')}
             value={resource.properties.spec.properties.displayName.value}
             onChange={onChange(resource.properties.spec.properties.displayName)}
@@ -30,6 +31,7 @@ export class EditResourceChannel extends EditResource {
             <Radio name="smtp">{t('邮件')}</Radio>
             <Radio name="tencentCloudSMS">{t('短信')}</Radio>
             <Radio name="wechat">{t('微信公众号')}</Radio>
+            <Radio name="webhook">{t('webhook')}</Radio>
           </Radio.Group>
         </Form.Item>
         {this.renderFields(resource.properties.spec.properties[resource.properties.spec['pick']])}

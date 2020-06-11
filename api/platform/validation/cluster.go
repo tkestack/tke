@@ -54,7 +54,6 @@ func ValidateClusterUpdate(cluster *types.Cluster, oldCluster *types.Cluster) fi
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.NetworkDevice, oldCluster.Spec.NetworkDevice, fldPath.Child("networkDevice"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.ClusterCIDR, oldCluster.Spec.ClusterCIDR, fldPath.Child("clusterCIDR"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.DNSDomain, oldCluster.Spec.DNSDomain, fldPath.Child("dnsDomain"))...)
-	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.PublicAlternativeNames, oldCluster.Spec.PublicAlternativeNames, fldPath.Child("publicAlternativeNames"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.DockerExtraArgs, oldCluster.Spec.DockerExtraArgs, fldPath.Child("dockerExtraArgs"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.KubeletExtraArgs, oldCluster.Spec.KubeletExtraArgs, fldPath.Child("kubeletExtraArgs"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.APIServerExtraArgs, oldCluster.Spec.APIServerExtraArgs, fldPath.Child("apiServerExtraArgs"))...)
@@ -156,7 +155,10 @@ func ValidateClusterFeature(feature *platform.ClusterFeature, fldPath *field.Pat
 
 // ValidateGPUType validates a given GPUType.
 func ValidateGPUType(gpuType *platform.GPUType, fldPath *field.Path) field.ErrorList {
-	return utilvalidation.ValidateEnum(gpuType, fldPath.Child("gpuType"),
+	if gpuType == nil {
+		return field.ErrorList{}
+	}
+	return utilvalidation.ValidateEnum(*gpuType, fldPath.Child("gpuType"),
 		[]interface{}{
 			platform.GPUPhysical,
 			platform.GPUVirtual,
