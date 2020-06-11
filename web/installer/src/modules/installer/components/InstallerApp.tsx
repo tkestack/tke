@@ -8,7 +8,6 @@ import { ResetStoreAction } from '../../../../helpers';
 import { actions } from '../actions';
 import { RootState } from '../models';
 import { configStore } from '../stores/RootStore';
-import { Step1 } from './Step1';
 import { Step10 } from './Step10';
 import { Step2 } from './Step2';
 import { Step3 } from './Step3';
@@ -54,7 +53,7 @@ class InstallerApp extends React.Component<RootProps> {
   render() {
     const { step } = this.props;
     const steps = [
-      { id: 'step1', label: '准备工作' },
+      // { id: 'step1', label: '准备工作' },
       { id: 'step2', label: '基本设置' },
       { id: 'step3', label: '集群设置' },
       { id: 'step4', label: '认证设置' },
@@ -104,7 +103,7 @@ class InstallerApp extends React.Component<RootProps> {
                             backgroundColor: '#fff'
                           }}
                         >
-                          <Step1 {...this.props} />
+                          {/* <Step1 {...this.props} /> */}
                           <Step2 {...this.props} />
                           <Step3 {...this.props} />
                           <Step4 {...this.props} />

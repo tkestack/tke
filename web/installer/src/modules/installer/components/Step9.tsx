@@ -119,6 +119,26 @@ export class Step9 extends React.Component<RootProps> {
           </Form.Item>
         </Form>
         <hr />
+        <Form.Title>审计模块设置</Form.Title>
+        <Form>
+          <Form.Item label="是否开启">
+            <Form.Text>{editState.openAudit ? '是' : '否'}</Form.Text>
+          </Form.Item>
+          <Form.Item label="ES地址">
+            <Form.Text>{editState.auditEsUrl}</Form.Text>
+          </Form.Item>
+          {(editState.auditEsUsername || editState.auditEsPassword) && (
+            <>
+              <Form.Item label="用户名">
+                <Form.Text>{editState.auditEsUsername}</Form.Text>
+              </Form.Item>
+              <Form.Item label="密码">
+                <Form.Text>{editState.auditEsPassword}</Form.Text>
+              </Form.Item>
+            </>
+          )}
+        </Form>
+        <hr />
         <Form.Title>监控模块设置</Form.Title>
         <Form>
           <Form.Item label="监控存储类型">
@@ -129,12 +149,16 @@ export class Step9 extends React.Component<RootProps> {
               <Form.Item label="ES地址">
                 <Form.Text>{editState.esUrl}</Form.Text>
               </Form.Item>
-              <Form.Item label="用户名">
-                <Form.Text>{editState.esUsername}</Form.Text>
-              </Form.Item>
-              <Form.Item label="密码">
-                <Form.Text>{editState.esPassword}</Form.Text>
-              </Form.Item>
+              {(editState.esUsername || editState.esPassword) && (
+                <>
+                  <Form.Item label="用户名">
+                    <Form.Text>{editState.esUsername}</Form.Text>
+                  </Form.Item>
+                  <Form.Item label="密码">
+                    <Form.Text>{editState.esPassword}</Form.Text>
+                  </Form.Item>
+                </>
+              )}
             </>
           ) : editState.monitorType === 'external-inflexdb' ? (
             <>
@@ -165,7 +189,6 @@ export class Step9 extends React.Component<RootProps> {
             <Form.Text>{editState.certType}</Form.Text>
           </Form.Item>
         </Form>
-
         <Form.Action style={{ position: 'absolute', bottom: '20px', left: '20px', width: '960px' }}>
           <Button style={{ marginRight: '10px' }} type="weak" onClick={() => actions.installer.stepNext('step8')}>
             上一步

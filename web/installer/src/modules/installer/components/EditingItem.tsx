@@ -57,7 +57,7 @@ export class EditingItem extends React.Component<EditingItemProps> {
             message={machine.v_host.message}
           >
             <Input
-              placeholder="请输入目标机器访问地址"
+              placeholder="请输入访问地址,eg:ip1;ip2;ip3"
               value={machine.host}
               onChange={value => actions.installer.updateMachine({ host: value }, id)}
             />
