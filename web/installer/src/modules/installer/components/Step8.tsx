@@ -26,7 +26,6 @@ export class Step8 extends React.Component<RootProps> {
                   onChange={value => actions.installer.updateEdit({ consoleDomain: value })}
                 />
               </Form.Item>
-              ,
               <Form.Item label="证书类型">
                 <Segment
                   value={editState.certType}

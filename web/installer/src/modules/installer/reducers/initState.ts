@@ -38,7 +38,7 @@ export const initEdit: EditState = {
   v_confirmPassword: initValidation,
 
   //高可用设置
-  haType: 'tke',
+  haType: 'none',
   haTkeVip: '',
   v_haTkeVip: initValidation,
   haThirdVip: '',

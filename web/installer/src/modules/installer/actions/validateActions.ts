@@ -183,7 +183,7 @@ export const validateActions = {
   },
 
   _validateHost(host: string) {
-    let reg = /^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$/,
+    let reg = /^\d{1,3}(\.\d{1,3}){3}(;\d{1,3}(\.\d{1,3}){3})*$/,
       status = 0,
       message = '';
 
@@ -221,6 +221,9 @@ export const validateActions = {
     } else if (!reg.test(port)) {
       status = 2;
       message = '访问端口格式不正确';
+    } else if (+port < 1 || +port > 65535) {
+      status = 2;
+      message = '访问端口范围不正确';
     } else {
       status = 1;
       message = '';
@@ -698,10 +701,14 @@ export const validateActions = {
     if (editState.openAudit) {
       result =
         validateActions._validateESUrl(editState.auditEsUrl, 'es').status === 1 &&
-        validateActions._validateESUsername(editState.auditEsUsername, editState.auditEsUrl === '' ? null : 'es')
-          .status === 1 &&
-        validateActions._validateESPassword(editState.auditEsPassword, editState.auditEsUrl === '' ? null : 'es')
-          .status === 1;
+        validateActions._validateESUsername(
+          editState.auditEsUsername,
+          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
+        ).status === 1 &&
+        validateActions._validateESPassword(
+          editState.auditEsPassword,
+          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
+        ).status === 1;
     }
 
     return result;
@@ -712,11 +719,11 @@ export const validateActions = {
       const v_auditEsUrl = validateActions._validateESUrl(editState.auditEsUrl, 'es'),
         v_auditEsUsername = validateActions._validateESUsername(
           editState.auditEsUsername,
-          editState.auditEsUrl === '' ? null : 'es'
+          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
         ),
         v_auditEsPassword = validateActions._validateESPassword(
           editState.auditEsPassword,
-          editState.auditEsUrl === '' ? null : 'es'
+          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
         );
 
       dispatch(
@@ -894,8 +901,14 @@ export const validateActions = {
   _validateStep7(editState: EditState) {
     let result =
       validateActions._validateESUrl(editState.esUrl, editState.monitorType).status === 1 &&
-      validateActions._validateESUsername(editState.esUsername, editState.monitorType).status === 1 &&
-      validateActions._validateESPassword(editState.esPassword, editState.monitorType).status === 1 &&
+      validateActions._validateESUsername(
+        editState.esUsername,
+        editState.esUsername || editState.esPassword ? editState.monitorType : null
+      ).status === 1 &&
+      validateActions._validateESPassword(
+        editState.esPassword,
+        editState.esUsername || editState.esPassword ? editState.monitorType : null
+      ).status === 1 &&
       validateActions._validateInfluxDBUrl(editState.influxDBUrl, editState.monitorType).status === 1 &&
       validateActions._validateInfluxDBUsername(editState.influxDBUsername, editState.monitorType).status === 1 &&
       validateActions._validateInfluxDBPassword(editState.influxDBPassword, editState.monitorType).status === 1;

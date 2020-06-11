@@ -32,31 +32,50 @@ export class Step3 extends React.Component<RootProps> {
     const actionsMap = {
       dockerExtraArgs: {
         update: actions.installer.updateDockerExtraArgs,
-        remove: actions.installer.removeDockerExtraArgs
+        remove: actions.installer.removeDockerExtraArgs,
+        keyPlaceholder: 'dns-search',
+        valuePlaceholder: 'example.com'
       },
       apiServerExtraArgs: {
         update: actions.installer.updateApiServerExtraArgs,
-        remove: actions.installer.removeApiServerExtraArgs
+        remove: actions.installer.removeApiServerExtraArgs,
+        keyPlaceholder: 'etcd-prefix',
+        valuePlaceholder: '/k8s-registry'
       },
       controllerManagerExtraArgs: {
         update: actions.installer.updateControllerManagerExtraArgs,
-        remove: actions.installer.removeControllerManagerExtraArgs
+        remove: actions.installer.removeControllerManagerExtraArgs,
+        keyPlaceholder: 'secure-port',
+        valuePlaceholder: '10257'
       },
       schedulerExtraArgs: {
         update: actions.installer.updateSchedulerExtraArgs,
-        remove: actions.installer.removeSchedulerExtraArgs
+        remove: actions.installer.removeSchedulerExtraArgs,
+        keyPlaceholder: 'port',
+        valuePlaceholder: '10251'
       },
       kubeletExtraArgs: {
         update: actions.installer.updateKubeletExtraArgs,
-        remove: actions.installer.removeKubeletExtraArgs
+        remove: actions.installer.removeKubeletExtraArgs,
+        keyPlaceholder: 'config',
+        valuePlaceholder: '/etc/kubernetes/kubelet.config'
       }
     };
 
-    return args.map(arg => (
-      <section style={{ marginBottom: '10px' }}>
-        <Input size="s" value={arg.key} onChange={value => actionsMap[type].update({ key: value }, arg.id)} />
+    return args.map((arg, index) => (
+      <section style={{ marginBottom: '10px' }} key={index}>
+        <Input
+          size="s"
+          value={arg.key}
+          onChange={value => actionsMap[type].update({ key: value }, arg.id)}
+          placeholder={actionsMap[type].keyPlaceholder}
+        />
         <Text style={{ margin: '0px 10px', fontSize: '12px' }}>=</Text>
-        <Input value={arg.value} onChange={value => actionsMap[type].update({ value: value }, arg.id)} />
+        <Input
+          value={arg.value}
+          onChange={value => actionsMap[type].update({ value: value }, arg.id)}
+          placeholder={actionsMap[type].valuePlaceholder}
+        />
         <Button type="link" onClick={() => actionsMap[type].remove(arg.id)}>
           <i className="icon-cancel-icon" />
         </Button>
@@ -73,14 +92,41 @@ export class Step3 extends React.Component<RootProps> {
             label="网卡名称"
             required
             status={getValidateStatus(editState.v_networkDevice)}
-            message={editState.v_networkDevice.message || '设置集群使用的网卡，如无特殊情况，一般为eth0'}
+            message={
+              editState.v_networkDevice.message ||
+              '设置集群节点使用的网卡，Galaxy插件的floating IP功能会使用该网卡做桥接，如无特殊情况，一般为eth0'
+            }
           >
             <Input
               value={editState.networkDevice}
               onChange={value => actions.installer.updateEdit({ networkDevice: value })}
             />
           </Form.Item>
-          <Form.Item label="GPU类型" message="选择GPU类型后，平台将自动为节点安装相应的GPU驱动和运行时工具">
+          <Form.Item
+            label="GPU类型"
+            message={
+              editState.gpuType === 'none' ? (
+                '选择GPU类型后，平台将自动为节点安装相应的GPU驱动和运行时工具'
+              ) : editState.gpuType === 'Virtual' ? (
+                <>
+                  平台会自动为集群安装
+                  <ExternalLink
+                    href={'https://github.com/tkestack/tke/blob/master/docs/guide/zh-CN/features/gpumanager.md'}
+                  >
+                    GPUManager
+                  </ExternalLink>
+                  扩展组件
+                </>
+              ) : (
+                <>
+                  平台会自动为集群安装
+                  <ExternalLink href={'https://github.com/NVIDIA/k8s-device-plugin%EF%BC%89'}>
+                    nvidia-k8s-plugin
+                  </ExternalLink>
+                </>
+              )
+            }
+          >
             <Segment
               value={editState.gpuType}
               options={[
@@ -146,7 +192,7 @@ export class Step3 extends React.Component<RootProps> {
                   <Form.Item label="docker设置">
                     {this.renderArg(editState.dockerExtraArgs, 'dockerExtraArgs')}
                     <Form.Text>
-                      为docker运行设置自定义参数，默认不需要添加，详细请参考
+                      为docker(19.03.9)运行设置自定义参数，默认不需要添加，详细请参考
                       <ExternalLink href="https://docs.docker.com/engine/reference/commandline/run/">
                         帮助文档
                       </ExternalLink>
@@ -156,9 +202,9 @@ export class Step3 extends React.Component<RootProps> {
                     </Button>
                   </Form.Item>
                   <Form.Item label="kube-apiserver设置">
-                    {this.renderArg(editState.apiServerExtraArgs, 'apiServerExtraArgs')}}
+                    {this.renderArg(editState.apiServerExtraArgs, 'apiServerExtraArgs')}
                     <Form.Text>
-                      为kube-apiserver运行设置自定义参数，默认不需要添加，详细请参考
+                      为kube-apiserver(1.18.3)运行设置自定义参数，默认不需要添加，详细请参考
                       <ExternalLink href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/">
                         帮助文档
                       </ExternalLink>
@@ -168,9 +214,9 @@ export class Step3 extends React.Component<RootProps> {
                     </Button>
                   </Form.Item>
                   <Form.Item label="kube-controller-manager设置">
-                    {this.renderArg(editState.controllerManagerExtraArgs, 'controllerManagerExtraArgs')}}
+                    {this.renderArg(editState.controllerManagerExtraArgs, 'controllerManagerExtraArgs')}
                     <Form.Text>
-                      为kube-controller-manager运行设置自定义参数，默认不需要添加，详细请参考
+                      为kube-controller-manager(1.18.3)运行设置自定义参数，默认不需要添加，详细请参考
                       <ExternalLink href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/">
                         帮助文档
                       </ExternalLink>
@@ -180,9 +226,9 @@ export class Step3 extends React.Component<RootProps> {
                     </Button>
                   </Form.Item>
                   <Form.Item label="kube-scheduler设置">
-                    {this.renderArg(editState.schedulerExtraArgs, 'schedulerExtraArgs')}}
+                    {this.renderArg(editState.schedulerExtraArgs, 'schedulerExtraArgs')}
                     <Form.Text>
-                      为kube-scheduler运行设置自定义参数，默认不需要添加，详细请参考
+                      为kube-scheduler(1.18.3)运行设置自定义参数，默认不需要添加，详细请参考
                       <ExternalLink href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/">
                         帮助文档
                       </ExternalLink>
@@ -194,7 +240,7 @@ export class Step3 extends React.Component<RootProps> {
                   <Form.Item label="kubelet设置">
                     {this.renderArg(editState.kubeletExtraArgs, 'kubeletExtraArgs')}
                     <Form.Text>
-                      为kubelet运行设置自定义参数，默认不需要添加，详细请参考
+                      为kubelet(1.18.3)运行设置自定义参数，默认不需要添加，详细请参考
                       <ExternalLink href="https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/">
                         帮助文档
                       </ExternalLink>
