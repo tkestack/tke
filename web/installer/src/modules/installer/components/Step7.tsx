@@ -41,11 +41,14 @@ export class Step7 extends React.Component<RootProps> {
                     status={getValidateStatus(editState.v_esUrl)}
                     message={editState.v_esUrl.message}
                   >
-                    <Input value={editState.esUrl} onChange={value => actions.installer.updateEdit({ esUrl: value })} />
+                    <Input
+                      value={editState.esUrl}
+                      onChange={value => actions.installer.updateEdit({ esUrl: value })}
+                      placeholder={'http://10.0.0.1:9200'}
+                    />
                   </Form.Item>
                   <Form.Item
                     label="用户名"
-                    required
                     status={getValidateStatus(editState.v_esUsername)}
                     message={editState.v_esUsername.message}
                   >
@@ -56,7 +59,6 @@ export class Step7 extends React.Component<RootProps> {
                   </Form.Item>
                   <Form.Item
                     label="密码"
-                    required
                     status={getValidateStatus(editState.v_esPassword)}
                     message={editState.v_esPassword.message}
                   >

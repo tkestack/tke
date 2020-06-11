@@ -64,9 +64,9 @@ export class Step2 extends React.Component<RootProps> {
             <Segment
               value={editState.haType}
               options={[
+                { value: 'none', text: '不设置' },
                 { value: 'tke', text: 'TKE提供' },
-                { value: 'thirdParty', text: '使用已有' },
-                { value: 'none', text: '不设置' }
+                { value: 'thirdParty', text: '使用已有' }
               ]}
               onChange={value => actions.installer.updateEdit({ haType: value })}
             />
@@ -77,17 +77,21 @@ export class Step2 extends React.Component<RootProps> {
                     label="VIP地址"
                     required
                     status={getValidateStatus(editState.v_haTkeVip)}
-                    message={editState.v_haTkeVip.message}
+                    message={
+                      <>
+                        {editState.v_haTkeVip.message}{' '}
+                        <p>
+                          <Text theme={'label'} reset>
+                            {'用户提供可用的IP地址，TKE部署Keepalive，配置该IP为Master集群的VIP'}
+                          </Text>
+                        </p>
+                      </>
+                    }
                   >
                     <Input
                       value={editState.haTkeVip}
                       onChange={value => actions.installer.updateEdit({ haTkeVip: value })}
                     />
-                    <Text theme={'weak'}>
-                      {
-                        '用户需要提供一个可用的IP地址，保证该IP和各master节点可以正常联通，TKE会为集群部署keepalived并配置该IP为VIP'
-                      }
-                    </Text>
                   </Form.Item>
                 </Form>
               </div>
@@ -98,15 +102,29 @@ export class Step2 extends React.Component<RootProps> {
                     label="VIP地址"
                     required
                     status={getValidateStatus(editState.v_haThirdVip)}
-                    message={editState.v_haThirdVip.message}
+                    message={
+                      <>
+                        {editState.v_haThirdVip.message}{' '}
+                        <p>
+                          <Text theme={'label'} reset>
+                            <p>
+                              VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）端口，
+                            </p>
+                            <p>同时确保该VIP有至少两个LB后端（Master节点），以避免LB单后端不可用风险</p>
+                          </Text>
+                        </p>
+                      </>
+                    }
                   >
                     <Input
                       value={editState.haThirdVip}
+                      placeholder={'请输入ip地址'}
                       onChange={value => actions.installer.updateEdit({ haThirdVip: value })}
                     />
                     <React.Fragment>
                       <Input
                         size={'s'}
+                        placeholder={'请输入端口'}
                         value={editState.haThirdVipPort}
                         onChange={value => actions.installer.updateEdit({ haThirdVipPort: value })}
                       />
@@ -114,12 +132,6 @@ export class Step2 extends React.Component<RootProps> {
                         <Icon type="info" />
                       </Bubble>
                     </React.Fragment>
-                    <Text theme={'weak'}>
-                      <p>
-                        在用户自定义VIP情况下，VIP后端需要绑定6443（kube-apiserver端口）端口，同时请确保该VIP有至少两个LB后端（master),
-                      </p>
-                      <p>由于LB自身路由问题，单LB后端情况下存在集群不可用风险。</p>
-                    </Text>
                   </Form.Item>
                 </Form>
               </div>
@@ -129,9 +141,6 @@ export class Step2 extends React.Component<RootProps> {
           </Form.Item>
         </Form>
         <Form.Action style={{ position: 'absolute', bottom: '20px', left: '20px', width: '960px' }}>
-          <Button style={{ marginRight: '10px' }} type="weak" onClick={() => actions.installer.stepNext('step1')}>
-            上一步
-          </Button>
           <Button
             type="primary"
             onClick={() => {

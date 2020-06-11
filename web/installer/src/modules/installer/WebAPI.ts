@@ -134,6 +134,25 @@ export async function createCluster(edits: Array<EditState>) {
     if (!isVerified) {
       return operationResult(edits, error);
     } else {
+      let machines = [];
+      edits[0].machines.forEach(m => {
+        m.host.split(';').forEach(ip => {
+          let mac = {
+            ip: ip,
+            port: +m.port,
+            username: m.user
+          };
+          if (m.authWay === 'password') {
+            mac['password'] = Base64.encode(m.password);
+          } else {
+            if (m.password) {
+              mac['privatePassword'] = Base64.encode(m.password);
+            }
+            mac['privateKey'] = Base64.encode(m.cert);
+          }
+          machines.push(mac);
+        });
+      });
       let params = {
         cluster: {
           apiVersion: 'platform.tkestack.io/v1',
@@ -182,22 +201,7 @@ export async function createCluster(edits: Array<EditState>) {
               maxNodePodNum: +edits[0].podNumLimit
             },
             type: 'Baremetal',
-            machines: edits[0].machines.map(m => {
-              let mac = {
-                ip: m.host,
-                port: +m.port,
-                username: m.user
-              };
-              if (m.authWay === 'password') {
-                mac['password'] = Base64.encode(m.password);
-              } else {
-                if (m.password) {
-                  mac['privatePassword'] = Base64.encode(m.password);
-                }
-                mac['privateKey'] = Base64.encode(m.cert);
-              }
-              return mac;
-            })
+            machines: machines
           }
         },
         config: {

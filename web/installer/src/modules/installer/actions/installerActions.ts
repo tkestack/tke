@@ -28,7 +28,7 @@ const fetchClusterActions = generateFetcherActionCreator({
     const { cluster } = getState();
     switch (cluster.data.record['progress']['status']) {
       case 'Unknown':
-        dispatch(restActions.stepNext('step1'));
+        dispatch(restActions.stepNext('step2'));
         break;
       case 'Doing':
       case 'Success':
@@ -36,7 +36,7 @@ const fetchClusterActions = generateFetcherActionCreator({
         dispatch(restActions.stepNext('step10'));
         break;
       default:
-        dispatch(restActions.stepNext('step1'));
+        dispatch(restActions.stepNext('step2'));
     }
   }
 });
