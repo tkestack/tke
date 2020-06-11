@@ -1170,7 +1170,7 @@ export const validateWorkloadActions = {
 
   /** 校验容器的 环境变量是否正确 */
   _validateEnvName(name: string, envs: EnvItem[]) {
-    let reg = /^[A-Za-z_][A-Za-z0-9_]*$/,
+    let reg = /^[-._a-zA-Z][-._a-zA-Z0-9]*$/,
       status = 0,
       message = '';
 
