@@ -50,24 +50,26 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
           : valueLabels1000(resourceLimit[item], K8SUNIT.unit)
       }${resourceTypeToUnit[item]}`}</Text>
     ));
-    return <Bubble content={content}>{content.filter((item, index) => index < 3)}</Bubble>;
+    return (
+      <Bubble content={content}>
+        <p style={{ display: 'inline-block' }}>{content.filter((item, index) => index < 3)}</p>
+      </Bubble>
+    );
   }
   private _renderTablePanel() {
-    let { actions, namespace } = this.props;
-
+    let { actions, namespace, namespaceEdition } = this.props;
     const columns: TableColumn<Namespace>[] = [
       {
         key: 'name',
         header: t('名称'),
-        render: x => (
-          <div>
-            <span className="text-overflow">
-              {x.metadata.name.includes('cls')
-                ? x.metadata.name.split('-').splice(2).join('-')
-                : x.metadata.name.split('-').splice(1).join('-')}
-            </span>
-          </div>
-        )
+        render: x => {
+          let disabledOp = x.status.phase === 'Terminating';
+          let url = `/tkestack/cluster/sub/list/resource/deployment?rid=1&clusterId=${x.spec.clusterName}&np=${x.spec.namespace}`;
+          /// #if project
+          url = `/tkestack-project/cluster/sub/list/resource/deployment?rid=1&clusterId=${x.spec.clusterName}&np=${x.spec.namespace}`;
+          /// #endif
+          return <Text overflow>{!disabledOp ? <a href={url}>{x.spec.namespace}</a> : x.spec.namespace}</Text>;
+        }
       },
       {
         key: 'clusterName',
@@ -98,7 +100,25 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
       {
         key: 'resourceLimit',
         header: t('资源配额'),
-        render: x => <React.Fragment>{x.spec.hard ? this.formatResourceLimit(x.spec.hard) : '无限制'}</React.Fragment>
+        render: x => {
+          let disabledOp = x.status.phase === 'Terminating';
+          return (
+            <React.Fragment>
+              {x.spec.hard ? this.formatResourceLimit(x.spec.hard) : '无限制'}
+              {!disabledOp && (
+                <Icon
+                  onClick={() => {
+                    this.setState({ isShowDialog: true });
+                    actions.namespace.initNamespaceEdition(x);
+                    actions.namespace.editNamespaceResourceLimit.start([namespaceEdition]);
+                  }}
+                  style={{ cursor: 'pointer' }}
+                  type="pencil"
+                />
+              )}
+            </React.Fragment>
+          );
+        }
       },
       {
         key: 'createdTime',
@@ -154,6 +174,8 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
 
     let disabledOp = namespace.status.phase === 'Terminating';
     let disabledMigartion = namespace.status.phase !== 'Available';
+    let disabledCert = namespace.spec.clusterType === 'Imported';
+
     const renderDeleteButton = () => {
       return (
         <LinkButton
@@ -168,28 +190,11 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
       );
     };
 
-    const renderEditResourceLimitButton = () => {
-      return (
-        <LinkButton
-          key={'edit'}
-          disabled={isDeleting || disabledOp}
-          tipDirection="right"
-          onClick={() => {
-            this.setState({ isShowDialog: true });
-            actions.namespace.initNamespaceEdition(namespace);
-            actions.namespace.editNamespaceResourceLimit.start([namespaceEdition]);
-          }}
-        >
-          {t('编辑资源限制')}
-        </LinkButton>
-      );
-    };
-
     const renderKubctlConfigButton = () => {
       return (
         <LinkButton
           key={'kubectl'}
-          disabled={isDeleting || disabledOp}
+          disabled={isDeleting || disabledOp || disabledCert}
           tipDirection="right"
           onClick={() => {
             this.setState({ isShowKuctlDialog: true });
@@ -224,7 +229,7 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
     buttons.push([renderKubctlConfigButton()]);
 
     if (enableOp) {
-      buttons.push([renderDeleteButton(), renderEditResourceLimitButton(), renderMigartionButton()]);
+      buttons.push([renderDeleteButton(), renderMigartionButton()]);
     }
 
     return buttons;

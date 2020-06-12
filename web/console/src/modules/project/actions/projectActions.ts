@@ -147,8 +147,7 @@ const restActions = {
     operationExecutor: WebAPI.editProject,
     after: {
       [OperationTrigger.Done]: (dispatch, getState) => {
-        let { editProjecResourceLimit, route } = getState(),
-          urlParams = router.resolve(route);
+        let { editProjecResourceLimit, route } = getState();
         if (isSuccessWorkflow(editProjecResourceLimit)) {
           dispatch(restActions.editProjecResourceLimit.reset());
           dispatch(restActions.clearEdition());

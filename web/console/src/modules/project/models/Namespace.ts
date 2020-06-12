@@ -47,6 +47,10 @@ interface NamespaceSpec {
   /**集群名称 */
   clusterName?: string;
 
+  clusterVersion?: string;
+
+  clusterType: string;
+
   hard?: {
     [props: string]: string;
   };

@@ -51,7 +51,6 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
         id: 'subProject',
         label: t('子业务')
       },
-      { id: 'member', label: t('成员列表') },
       {
         id: 'namespace',
         label: t('Namespace列表')

@@ -24,22 +24,6 @@ export class ProjectDetailPanel extends React.Component<RootProps, {}> {
     }
   }
 
-  formatResourceLimit(resourceLimit) {
-    let resourceLimitKeys = resourceLimit ? Object.keys(resourceLimit) : [];
-    let content = resourceLimitKeys.map((item, index) => (
-      <Text parent="p" key={index}>{`${resourceLimitTypeToText[item]}:${
-        resourceTypeToUnit[item] === 'MiB'
-          ? valueLabels1024(resourceLimit[item], K8SUNIT.Mi)
-          : valueLabels1000(resourceLimit[item], K8SUNIT.unit)
-      }${resourceTypeToUnit[item]}`}</Text>
-    ));
-    return resourceLimit ? (
-      <Bubble content={content}>{content.filter((item, index) => index < 2)}</Bubble>
-    ) : (
-      <Text parent="p">{t('无限制')}</Text>
-    );
-  }
-
   render() {
     let { actions, projectDetail } = this.props;
 
