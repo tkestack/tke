@@ -1,22 +1,22 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Modal, Alert, Drawer, TableColumn, Text, Button } from '@tea/component';
-import { TablePanel, FormPanel } from '@tencent/ff-component';
-import { bindActionCreators, OperationState, WorkflowState, isSuccessWorkflow } from '@tencent/ff-redux';
+import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
+import { Alert, Bubble, Button, Drawer, Modal, StatusTip, Table, TableColumn, Text } from '@tea/component';
+import { FormPanel, TablePanel } from '@tencent/ff-component';
+import { bindActionCreators, isSuccessWorkflow, OperationState, WorkflowState } from '@tencent/ff-redux';
 import ChartPanel from '@tencent/tchart';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter } from '../../../../helpers';
 import { projectFields } from '../../cluster/models/MonitorPanel';
-import { GridTable, LinkButton, WorkflowDialog } from '../../common/components';
+import { getWorkflowError } from '../../common';
 import { allActions } from '../actions';
-import { projectActions } from '../actions/projectActions';
-import { projectStatus } from '../constants/Config';
+import { projectStatus, resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
 import { Project } from '../models';
 import { RootProps } from './ProjectApp';
 import { SelectExistProjectDialog } from './SelectExistProjectDialog';
-import { getWorkflowError } from '@src/modules/common';
+import { router } from '../router';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
@@ -29,7 +29,21 @@ export class DetailSubProjectPanel extends React.Component<RootProps, any> {
     monitorPanelProps: undefined,
     isShowMonitor: false
   };
-
+  formatResourceLimit(resourceLimit) {
+    let resourceLimitKeys = resourceLimit ? Object.keys(resourceLimit) : [];
+    let content = resourceLimitKeys.map((item, index) => (
+      <Text parent="p" key={index}>{`${resourceLimitTypeToText[item]}:${
+        resourceTypeToUnit[item] === 'MiB'
+          ? valueLabels1024(resourceLimit[item], K8SUNIT.Mi)
+          : valueLabels1000(resourceLimit[item], K8SUNIT.unit)
+      }${resourceTypeToUnit[item]}`}</Text>
+    ));
+    return resourceLimit ? (
+      <Bubble content={content}>{content.filter((item, index) => index < 2)}</Bubble>
+    ) : (
+      <Text parent="p">{t('无限制')}</Text>
+    );
+  }
   render() {
     return (
       <React.Fragment>
@@ -43,6 +57,11 @@ export class DetailSubProjectPanel extends React.Component<RootProps, any> {
 
   private _renderTablePanel() {
     let { actions, detailProject } = this.props;
+    let hostPrefix = 'tkestack';
+    /// #if project
+    hostPrefix = 'tkestack-project';
+    /// #endif
+
     const columns: TableColumn<Project>[] = [
       {
         key: 'name',
@@ -50,7 +69,9 @@ export class DetailSubProjectPanel extends React.Component<RootProps, any> {
         render: x => (
           <div>
             <Text parent="div" overflow>
-              {`${x.metadata.name}(${x.spec.displayName ? x.spec.displayName : '未命名'})`}
+              <a href={`/${hostPrefix}/project/detail/info?projectId=${x.metadata.name}`}>
+                {`${x.metadata.name}(${x.spec.displayName ? x.spec.displayName : '未命名'})`}
+              </a>
             </Text>
           </div>
         )
@@ -74,6 +95,22 @@ export class DetailSubProjectPanel extends React.Component<RootProps, any> {
             </p>
           </div>
         )
+      },
+      {
+        width: '25%',
+        key: 'resourceLimit',
+        header: t('集群配额'),
+        render: x => {
+          let clusterKeys = x && x.spec.clusters ? Object.keys(x.spec.clusters) : [];
+          let content = clusterKeys.map((key, index) => (
+            <p key={index}>{this.formatResourceLimit(x.spec.clusters[key].hard)}</p>
+          ));
+          return (
+            <Bubble placement={'top-start'} content={content}>
+              <>{content.slice().splice(0, 1)}</>
+            </Bubble>
+          );
+        }
       },
       {
         key: 'phase',

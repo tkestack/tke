@@ -213,7 +213,10 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
   private _renderDeleteProjectLimitDialog() {
     const { actions, project, projectEdition, editProjecResourceLimit } = this.props;
     let { currentClusterIndex } = this.state;
-    let clusterName = projectEdition.clusters.length ? projectEdition.clusters[currentClusterIndex].name : '-';
+    let clusterName =
+      projectEdition.clusters.length && projectEdition.clusters[currentClusterIndex]
+        ? projectEdition.clusters[currentClusterIndex].name
+        : '-';
 
     let failed =
       editProjecResourceLimit.operationState === OperationState.Done && !isSuccessWorkflow(editProjecResourceLimit);
@@ -246,6 +249,7 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
               projectEdition.clusters.splice(currentClusterIndex, 1);
               actions.project.editProjecResourceLimit.start([projectEdition]);
               actions.project.editProjecResourceLimit.perform();
+              cancel();
             }}
           >
             {failed ? t('重试') : t('完成')}
