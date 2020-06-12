@@ -1326,6 +1326,10 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 			File: baremetalconstants.ManifestsDir + "/gpu/*",
 		},
 		{
+			Name: "gpu-manager-manifests",
+			File: baremetalconstants.ManifestsDir + "/gpu-manager/*",
+		},
+		{
 			Name: "csi-operator-manifests",
 			File: baremetalconstants.ManifestsDir + "/csi-operator/*",
 		},
