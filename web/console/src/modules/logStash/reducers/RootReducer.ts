@@ -33,6 +33,10 @@ export const RootReducer = combineReducers({
 
   regionSelection: reduceToPayload(ActionType.SelectRegion, initRegionInfo),
 
+  projectList: reduceToPayload(ActionType.InitProjectList, []),
+
+  projectSelection: reduceToPayload(ActionType.ProjectSelection, ''),
+
   clusterQuery: generateQueryReducer({
     actionType: ActionType.QueryClusterList
   }),

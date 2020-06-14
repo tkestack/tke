@@ -16,6 +16,7 @@ import { logActions } from './logActions';
 import { logDaemonsetActions } from './logDaemonsetActions';
 import { namespaceActions } from './namespaceActions';
 import * as WebAPI from '../WebAPI';
+import { projectNamespaceActions } from '@src/modules/cluster/actions/projectNamespaceActions.project';
 
 type GetState = () => RootState;
 
@@ -98,6 +99,54 @@ const queryClusterActions = generateQueryActionCreator<ClusterFilter>({
 });
 
 const restActions = {
+  initProjectList: () => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { route, projectSelection } = getState();
+      let portalResourceInfo = resourceConfig()['portal'];
+      let portal = await WebAPI.fetchUserPortal(portalResourceInfo);
+      let userProjectList = Object.keys(portal.projects).map(key => {
+        return {
+          name: key,
+          displayName: portal.projects[key]
+        };
+      });
+      dispatch({
+        type: ActionType.InitProjectList,
+        payload: userProjectList
+      });
+      let defaultProjectName = projectSelection
+        ? projectSelection
+        : route.queries['projectName']
+          ? route.queries['projectName']
+          : userProjectList.length
+            ? userProjectList[0].name
+            : '';
+      defaultProjectName && dispatch(clusterActions.selectProject(defaultProjectName));
+    };
+  },
+
+  /** 选择业务 */
+  selectProject: (project: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { route, projectNamespaceQuery } = getState(),
+        urlParams = router.resolve(route);
+      dispatch({
+        type: ActionType.ProjectSelection,
+        payload: project
+      });
+      console.log('project@selectProject = ', project);
+      // dispatch(namespaceActions.applyFilter({ specificName: project }));
+      dispatch(namespaceActions.applyFilter({ projectName: project }));
+      // let { mode, type, resourceName } = urlParams;
+      // router.navigate(
+      //   mode && type && resourceName ? urlParams : { mode: 'list', type: 'namespace', resourceName: 'np' },
+      //   Object.assign({}, route.queries, {
+      //     projectName: project
+      //   })
+      // );
+    };
+  },
+
   /** 集群的选择
    * @params clusterId: string  集群Id
    * @params isNeedInitClusterVersion: boolean | number 是否需要初始化集群的版本

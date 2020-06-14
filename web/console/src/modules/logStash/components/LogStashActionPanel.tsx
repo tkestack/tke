@@ -83,6 +83,10 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
     // 判断当前是否能够新建日志收集规则
     let { canCreate, tip } = isCanCreateLogStash(clusterSelection[0], logList.data.records, isDaemonsetNormal);
     let ifFetchLogList = includes(canFetchLogList, isDaemonsetNormal.phase);
+    let handleNamespaceSwitched = namespaceSelection => {
+      let namespaceFound = namespaceList.data.records.find(item => item.metadata && item.metadata.name === namespaceSelection);
+      console.log('namespaceFound = ', namespaceFound);
+    };
     return (
       <Table.ActionPanel>
         <Justify
@@ -110,6 +114,7 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
                   className="tc-15-select m"
                   onSelect={value => {
                     actions.namespace.selectNamespace(value);
+                    handleNamespaceSwitched(value);
                     if (ifFetchLogList) {
                       actions.log.applyFilter({
                         clusterId: route.queries['clusterId'],

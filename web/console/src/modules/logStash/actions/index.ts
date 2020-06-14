@@ -8,6 +8,7 @@ import { resourceActions } from './resourceActions';
 import { namespaceActions } from './namespaceActions';
 import { podActions } from './podActions';
 import { logDaemonsetActions } from './logDaemonsetActions';
+import { projectNamespaceActions } from '@src/modules/helm/actions/projectNamespaceActions.project';
 export const allActions = {
   region: regionActions,
   cluster: clusterActions,
