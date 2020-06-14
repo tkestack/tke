@@ -27,6 +27,18 @@ export interface RootState {
   /** 地域的选择 */
   regionSelection?: Region;
 
+  /** namespacesetQuery */
+  projectNamespaceQuery?: QueryState<ResourceFilter>;
+
+  /** namespaceset */
+  projectNamespaceList?: FetcherState<RecordSet<Resource>>;
+
+  /** projectList */
+  projectList?: any[];
+
+  /** projectSelection */
+  projectSelection?: string;
+
   /** 集群列表的查询的查询 */
   clusterQuery?: QueryState<ClusterFilter>;
 

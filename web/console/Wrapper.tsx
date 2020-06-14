@@ -225,6 +225,17 @@ const businessCommonRouterConfig: RouterConfig[] = [
       },
     ],
   },
+  {
+    title: '运维中心',
+    watchModule: [ConsoleModuleEnum.PLATFORM],
+    subRouterConfig: [
+      {
+        url: '/tkestack-project/log',
+        title: '日志',
+        watchModule: ConsoleModuleEnum.PLATFORM,
+      }
+    ]
+  },
 ];
 
 interface ConsoleWrapperProps {
