@@ -3,6 +3,7 @@ import { OperationResult } from '@tencent/ff-redux';
 import { RequestParams, ResourceInfo } from '../src/modules/common/models';
 import { changeForbiddentConfig } from '../index';
 import { parseQueryString } from './urlUtil';
+import { getProjectName } from './appUtil';
 
 /** 是否展示没有权限的弹窗 */
 export let Init_Forbiddent_Config = {
@@ -93,12 +94,15 @@ export const reduceNetworkRequest = async (
   try {
     searchParams = parseQueryString(location.search);
   } catch (error) {}
-  console.log(searchParams);
-  if (searchParams && searchParams.projectName) {
-    userDefinedHeader = Object.assign({}, userDefinedHeader, {
-      'X-TKE-ProjectName': searchParams.projectName
-    });
+  let projectId = '';
+  if (searchParams && (searchParams.projectName || searchParams.projectId)) {
+    projectId = searchParams.projectName || searchParams.projectId;
+  } else {
+    projectId = getProjectName();
   }
+  userDefinedHeader = Object.assign({}, userDefinedHeader, {
+    'X-TKE-ProjectName': projectId
+  });
   /// #endif
 
   if (keyword) {

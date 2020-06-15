@@ -1,3 +1,4 @@
+import { setProjectName } from '@helper';
 import { extend, FetchOptions, generateFetcherActionCreator, RecordSet } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
@@ -74,13 +75,14 @@ const restActions = {
         type: ActionType.ProjectSelection,
         payload: project
       });
-      dispatch(projectNamespaceActions.applyFilter({ specificName: project }));
       router.navigate(
         urlParams,
         Object.assign(route.queries, {
           projectName: project
         })
       );
+      setProjectName(project);
+      dispatch(projectNamespaceActions.applyFilter({ specificName: project }));
     };
   },
 

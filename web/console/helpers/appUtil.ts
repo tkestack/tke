@@ -56,13 +56,24 @@ export function getClusterId(): string {
 /**
  * 设置默认集群
  */
+export function setProjectName(projectId: string) {
+  util.cookie.set('projectId', projectId);
+}
+
+export function getProjectName(): string {
+  let rId = util.cookie.get('projectId');
+  return rId;
+}
+
+/**
+ * 设置默认集群
+ */
 export function setClusterId(clusterId: string) {
   util.cookie.set('clusterId', clusterId);
   if (window.localStorage) {
     localStorage[util.getUin() + '_clusterId'] = clusterId;
   }
 }
-
 /**
  * 获取当前默认的集群命名空间
  */

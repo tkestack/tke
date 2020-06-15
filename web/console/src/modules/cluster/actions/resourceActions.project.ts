@@ -4,6 +4,7 @@ import {
   generateFetcherActionCreator,
   RecordSet,
   ReduxAction,
+  uuid,
   createFFListActions
 } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
@@ -44,6 +45,7 @@ const listResourceActions = createFFListActions<Resource, ResourceFilter>({
       let list = [];
       projectNamespaceList.data.records.forEach(item => {
         list.push({
+          id: uuid(),
           metadata: { name: item.spec.namespace, creationTimestamp: item.metadata.creationTimestamp },
           spec: {
             clusterId: item.spec.clusterName,
