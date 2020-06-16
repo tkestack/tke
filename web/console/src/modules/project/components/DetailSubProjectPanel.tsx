@@ -96,6 +96,18 @@ export class DetailSubProjectPanel extends React.Component<RootProps, any> {
           </div>
         )
       },
+
+      {
+        key: 'phase',
+        header: t('状态'),
+        render: x => (
+          <React.Fragment>
+            <Text parent="div" overflow theme={projectStatus[x.status.phase]}>
+              {x.status.phase}
+            </Text>
+          </React.Fragment>
+        )
+      },
       {
         width: '25%',
         key: 'resourceLimit',
@@ -111,17 +123,6 @@ export class DetailSubProjectPanel extends React.Component<RootProps, any> {
             </Bubble>
           );
         }
-      },
-      {
-        key: 'phase',
-        header: t('状态'),
-        render: x => (
-          <React.Fragment>
-            <Text parent="div" overflow theme={projectStatus[x.status.phase]}>
-              {x.status.phase}
-            </Text>
-          </React.Fragment>
-        )
       },
       {
         key: 'createdTime',

@@ -60,10 +60,7 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
         hard: projectDetail.spec.clusters[item].hard
       };
     });
-    let enableOp =
-      platformType === PlatformTypeEnum.Manager ||
-      (platformType === PlatformTypeEnum.Business &&
-        userManagedProjects.list.data.records.find(item => item.name === projectId));
+    let enableOp = platformType === PlatformTypeEnum.Manager;
     const columns: TableColumn<{ name: string; hard: any }>[] = [
       {
         key: 'name',
@@ -324,7 +321,7 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
         <FormPanel>
           <FormPanel.Item label={t('集群')}>
             <FormPanel.Select
-              label={t('资源限制')}
+              label={t('集群')}
               value={item.name}
               validator={item.v_name}
               model={finalClusterList}
@@ -338,7 +335,7 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
               style={{ marginRight: 5 }}
             ></FormPanel.Select>
           </FormPanel.Item>
-          <FormPanel.Item label={t('集群')}>
+          <FormPanel.Item label={t('限额')}>
             <CreateProjectResourceLimitPanel
               parentResourceLimits={parentResourceLimits}
               onCancel={() => cancel()}

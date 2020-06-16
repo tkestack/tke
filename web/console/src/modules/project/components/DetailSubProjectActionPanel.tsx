@@ -36,43 +36,45 @@ export class DetailSubProjectActionPanel extends React.Component<RootProps, {}> 
 
   render() {
     let { actions, project, projectDetail, route, platformType, userManagedProjects } = this.props;
-    let enableOp =
+    let buttons = [];
+    if (
       platformType === PlatformTypeEnum.Manager ||
       (platformType === PlatformTypeEnum.Business &&
         userManagedProjects.list.data.records.find(
           item => item.name === (projectDetail ? projectDetail.metadata.name : null)
-        ));
+        ))
+    ) {
+      buttons.push(
+        <Button
+          type="primary"
+          onClick={() => {
+            actions.project.inputParentPorject(
+              projectDetail ? projectDetail.metadata.name : route.queries['projectId']
+            );
+            router.navigate({ sub: 'create' });
+          }}
+        >
+          {t('新建子业务')}
+        </Button>
+      );
+    }
+    if (platformType === PlatformTypeEnum.Manager) {
+      buttons.push(
+        <Button
+          type="primary"
+          onClick={() => {
+            actions.project.addExistMultiProject.start([]);
+          }}
+        >
+          {t('导入子业务')}
+        </Button>
+      );
+    }
+
     return (
       <div className="tc-action-grid">
         <Justify
-          left={
-            enableOp ? (
-              <React.Fragment>
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    actions.project.inputParentPorject(
-                      projectDetail ? projectDetail.metadata.name : route.queries['projectId']
-                    );
-                    router.navigate({ sub: 'create' });
-                  }}
-                >
-                  {t('新建子业务')}
-                </Button>
-
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    actions.project.addExistMultiProject.start([]);
-                  }}
-                >
-                  {t('添加已有业务')}
-                </Button>
-              </React.Fragment>
-            ) : (
-              <></>
-            )
-          }
+          left={<React.Fragment>{buttons}</React.Fragment>}
           right={
             <SearchBox
               value={project.query.keyword || ''}
