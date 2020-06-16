@@ -1,4 +1,15 @@
-import { extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid } from '@tencent/ff-redux';
+import { ResourceInfo } from '@src/modules/common';
+import { FFReduxActionName } from './../constants/Config';
+import { Computer, ComputerFilter } from './../models/Computer';
+import {
+  extend,
+  FetchOptions,
+  generateFetcherActionCreator,
+  ReduxAction,
+  uuid,
+  createFFListActions,
+  deepClone
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
@@ -179,7 +190,48 @@ const cronHpaActions = {
   }
 };
 /** ============================== end cronhpa的相关操作 ============================== */
+/** ============================== start computer的相关操作 ============================== */
+const FFModelComputerActions = createFFListActions<Computer, ComputerFilter>({
+  actionName: FFReduxActionName.COMPUTER_WORKLOAD,
+  fetcher: async (query, getState: GetState) => {
+    let { clusterVersion } = getState();
+    let nodeInfo: ResourceInfo = resourceConfig(clusterVersion)['node'];
+    let newQuery = deepClone(query);
+    let { searchFilter } = newQuery;
+    if (searchFilter && searchFilter.instanceId) {
+      newQuery.search = searchFilter.instanceId;
+    }
 
+    let nodeItems = await WebAPI.fetchResourceList(newQuery, {
+      resourceInfo: nodeInfo,
+      isNeedSpecific: query.searchFilter && query.searchFilter.instanceId ? true : false,
+      isContinue: true
+    });
+    nodeItems.records = nodeItems.records.map(item => {
+      if (
+        Object.keys(item.metadata.labels).findIndex(key => key.indexOf('node-role.kubernetes.io/master') !== -1) !== -1
+      ) {
+        item.metadata.role = 'Master&Etcd';
+      } else {
+        item.metadata.role = 'Worker';
+      }
+      let phase;
+      if (item.status.conditions) {
+        let nodeStatus = item.status.conditions.find(item => item.type === 'Ready');
+        phase = nodeStatus.status === 'True' ? 'Running' : 'Failed';
+      }
+      item.status.phase = phase;
+      item.id = item.metadata.name;
+      return item;
+    });
+    return nodeItems;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().subRoot.workloadEdit.computer;
+  }
+});
+
+/** ============================== end computer的相关操作 ============================== */
 export const workloadEditActions = {
   /** hpa的相关操作 */
   hpa: hpaActions,
@@ -195,6 +247,8 @@ export const workloadEditActions = {
 
   /* cronhpa的相关操作 */
   cronhpa: cronHpaActions,
+
+  computer: FFModelComputerActions,
 
   /** 更新workload名称 */
   inputWorkloadName: (name: string) => {
@@ -906,15 +960,6 @@ export const workloadEditActions = {
     };
   },
 
-  /**选择亲和性调度指定节点调度 */
-  selectNodeSelector: computers => {
-    return async (dispatch, getState: GetState) => {
-      dispatch({
-        type: ActionType.W_SelectNodeSelector,
-        payload: computers
-      });
-    };
-  },
   deleteAffinityRule: (type?: string, id?: string) => {
     return async (dispatch, getState: GetState) => {
       let { nodeAffinityRule } = getState().subRoot.workloadEdit;

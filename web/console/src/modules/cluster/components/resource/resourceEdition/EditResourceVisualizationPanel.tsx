@@ -523,7 +523,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         imagePullSecrets,
         nodeAffinityType,
         nodeAffinityRule,
-        nodeSelection,
+        computer,
         workloadAnnotations,
         nodeAbnormalMigratePolicy,
         networkType,
@@ -575,7 +575,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       // node亲和性调度的相关信息
       let affinityInfo =
         nodeAffinityType !== affinityType.unset
-          ? this._reduceNodeAffinityInfo(nodeAffinityType, nodeAffinityRule, nodeSelection)
+          ? this._reduceNodeAffinityInfo(nodeAffinityType, nodeAffinityRule, computer.selections)
           : '';
 
       // 如果选择了网络模式，需要把网络模式写在annotations当中

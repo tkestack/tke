@@ -246,7 +246,8 @@ export async function fetchResourceList(
   const result: RecordSet<Resource> = {
     recordCount: resourceList.length,
     records: isNeedDes && resourceList.length > 1 ? resourceList.reverse() : resourceList,
-    continueToken: nextContinueToken
+    continueToken: nextContinueToken,
+    continue: nextContinueToken ? true : false
   };
 
   return result;

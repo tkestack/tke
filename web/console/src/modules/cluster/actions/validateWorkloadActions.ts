@@ -2161,7 +2161,7 @@ export const validateWorkloadActions = {
     if (workloadEdit.nodeAffinityType === affinityType.rule) {
       result = result && validateWorkloadActions._validateAllNodeAffinityRule(workloadEdit.nodeAffinityRule);
     } else if (workloadEdit.nodeAffinityType === affinityType.node) {
-      result = result && workloadEdit.nodeSelection.length !== 0;
+      result = result && workloadEdit.computer.selections.length !== 0;
     }
 
     return result;
@@ -2635,10 +2635,10 @@ export const validateWorkloadActions = {
 
   validateNodeAffinitySelector() {
     return async (dispatch, getState: GetState) => {
-      let { nodeSelection } = getState().subRoot.workloadEdit;
+      let { computer } = getState().subRoot.workloadEdit;
       let status = 0,
         message = '';
-      if (nodeSelection.length === 0) {
+      if (computer.selections.length === 0) {
         status = 2;
         message = t('选择节点不能为空');
       } else {
