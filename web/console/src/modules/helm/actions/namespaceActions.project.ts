@@ -48,18 +48,22 @@ const restActions = {
         urlParams = router.resolve(route);
 
       let finder = projectNamespaceList.data.records.find(item => item.spec.namespace === namespace);
+      if (!finder) {
+        finder = projectNamespaceList.data.records.length ? projectNamespaceList.data.records[0] : null;
+      }
 
-      router.navigate(
-        urlParams,
-        Object.assign(route.queries, {
-          np: namespace
-        })
-      );
-      dispatch({
-        type: ActionType.SelectNamespace,
-        payload: namespace
-      });
       if (finder) {
+        router.navigate(
+          urlParams,
+          Object.assign(route.queries, {
+            np: finder.spec.namespace
+          })
+        );
+        dispatch({
+          type: ActionType.SelectNamespace,
+          payload: finder.spec.namespace
+        });
+
         dispatch(
           clusterActions.selectCluster({
             id: finder.spec.clusterName,

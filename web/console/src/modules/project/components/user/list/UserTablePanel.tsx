@@ -22,12 +22,7 @@ export const UserTablePanel = () => {
   const [editUser, setEditUser] = useState();
   const { userList, route, platformType, userManagedProjects, projectDetail } = state;
 
-  let enableOp =
-    platformType === PlatformTypeEnum.Manager ||
-    (platformType === PlatformTypeEnum.Business &&
-      userManagedProjects.list.data.records.find(
-        item => item.name === (projectDetail ? projectDetail.metadata.name : null)
-      ));
+  let enableOp = platformType === PlatformTypeEnum.Manager;
 
   useEffect(() => {
     actions.policy.associate.policyList.applyFilter({ resource: 'project', resourceID: '' });

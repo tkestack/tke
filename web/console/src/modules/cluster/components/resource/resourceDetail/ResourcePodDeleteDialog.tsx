@@ -22,7 +22,7 @@ export class ResourcePodDeleteDialog extends React.Component<RootProps, {}> {
 
     let podResourceInfo = resourceConfig(clusterVersion)['pods'];
     let deleteResourceIns = podSelection[0] ? podSelection[0].metadata.name : '';
-    let namespace = podSelection[0] ? podSelection[0].metadata.namespace : 'default';
+    let namespace = route.queries['np'];
 
     // 需要提交的数据
     let resource: CreateResource = {

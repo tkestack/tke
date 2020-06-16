@@ -229,7 +229,10 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
     buttons.push([renderKubctlConfigButton()]);
 
     if (enableOp) {
-      buttons.push([renderDeleteButton(), renderMigartionButton()]);
+      buttons.push([renderDeleteButton()]);
+    }
+    if (platformType === PlatformTypeEnum.Manager) {
+      buttons.push([renderMigartionButton()]);
     }
 
     return buttons;
