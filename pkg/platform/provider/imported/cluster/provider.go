@@ -51,6 +51,9 @@ func NewProvider() (*Provider, error) {
 		CreateHandlers: []clusterprovider.Handler{
 			p.EnsureCreateClusterMark,
 		},
+		DeleteHandlers: []clusterprovider.Handler{
+			p.EnsureCleanClusterMark,
+		},
 	}
 	return p, nil
 }
