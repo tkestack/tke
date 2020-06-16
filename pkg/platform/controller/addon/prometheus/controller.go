@@ -722,7 +722,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		return err
 	}
 	// Crd prometheus instance
-	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(ctx, createPrometheusCRD(components, prometheus, cluster.Name, remoteWrites, remoteReads, c.remoteType), metav1.CreateOptions{}); err != nil {
+	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(ctx, createPrometheusCRD(components, prometheus, cluster, remoteWrites, remoteReads, c.remoteType), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	prometheus.Status.SubVersion[PrometheusService] = components.PrometheusService.Tag
@@ -1075,7 +1075,7 @@ func clusterRoleBindingPrometheus() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus, clusterName string, remoteWrites, remoteReads []string, remoteType string) *monitoringv1.Prometheus {
+func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus, cluster *v1.Cluster, remoteWrites, remoteReads []string, remoteType string) *monitoringv1.Prometheus {
 	var remoteReadSpecs []monitoringv1.RemoteReadSpec
 	for _, r := range remoteReads {
 		if r == "nil" {
@@ -1180,7 +1180,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 					"prometheus.io/port":   "9090",
 				},
 			},
-			ExternalLabels:     map[string]string{"cluster_id": clusterName},
+			ExternalLabels:     map[string]string{"cluster_id": cluster.Name, "tenant_id": prometheus.Spec.TenantID, "cluster_display_name": cluster.Spec.DisplayName},
 			ScrapeInterval:     "60s",
 			RemoteRead:         remoteReadSpecs,
 			RemoteWrite:        remoteWriteSpecs,
