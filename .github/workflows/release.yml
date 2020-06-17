@@ -3,9 +3,8 @@ name: release
 on:
   repository_dispatch:
     types: [release]
-
-env:
-  VERSION: ${{ github.event.client_payload.version }}
+  schedule:
+    - cron:  '0 0 * * *'
 
 jobs:
   release:
@@ -23,6 +22,8 @@ jobs:
       - name: Build and test
         id: build
         run: |
+          export VERSION=$(git describe --dirty --always --tags | sed 's/-/./g')
+
           curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
              -H 'Content-Type: application/json' \
              -d '
@@ -35,19 +36,23 @@ jobs:
                           "
                   }
              }'
-          make release
-          curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+
+          make release.build && make release
+
+          (
+          cat <<EOF
+          {
+            "msgtype": "markdown",
+            "markdown": {
+              "content": "<font color=\"info\">${{ github.repository }}</font>：build release success.
+          > version: $VERSION"
+            }
+          }
+          EOF
+          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
              -H 'Content-Type: application/json' \
-             -d '
-             {
-                  "msgtype": "markdown",
-                  "markdown": {
-                      "content": "
-          <font color=\"info\">${{ github.repository }}</font>：
-          make release success
-                          "
-                  }
-             }'
+             -d @-
+
           make release-test
 
       - name: Notify
