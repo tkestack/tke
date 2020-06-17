@@ -4,6 +4,6 @@ set -o xtrace
 
 pwd
 
-make build.web.console
+make web.build.console
 
 cp -rv web/console/build "$DST_DIR/assets"
