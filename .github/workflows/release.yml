@@ -29,7 +29,7 @@ jobs:
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>
+              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
           >version: <font color=\"comment\">$VERSION</font>"
             }
           }
@@ -45,8 +45,7 @@ jobs:
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>
-
+              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
           >version: <font color=\"comment\">$VERSION</font>
           "
             }
@@ -64,8 +63,7 @@ jobs:
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>
-
+              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
           >version: <font color=\"comment\">$VERSION</font>
           "
             }
@@ -84,8 +82,7 @@ jobs:
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>
-
+              "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>\n
           >version: <font color=\"comment\">$VERSION</font>
           >status:  <font color=\"comment\">${{ job.status }}</font>
           >committer: <font color=\"comment\">${{ github.actor }}</font>
