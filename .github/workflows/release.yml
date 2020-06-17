@@ -7,7 +7,7 @@ on:
     - cron:  '0 0 * * *'
 
 env:
-  VERSION: ${{ github.event.sha }}
+  VERSION: ${{ github.sha }}
 
 jobs:
   release:
@@ -46,7 +46,9 @@ jobs:
             "msgtype": "markdown",
             "markdown": {
               "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>
-          >version: <font color=\"comment\">$VERSION</font>"
+
+          >version: <font color=\"comment\">$VERSION</font>
+          "
             }
           }
           EOF
@@ -63,7 +65,9 @@ jobs:
             "msgtype": "markdown",
             "markdown": {
               "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>
-          >version: <font color=\"comment\">$VERSION</font>"
+
+          >version: <font color=\"comment\">$VERSION</font>
+          "
             }
           }
           EOF
@@ -81,9 +85,11 @@ jobs:
             "msgtype": "markdown",
             "markdown": {
               "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>
-          >version: <font color=\"comment\">$VERSION</font>"
+
+          >version: <font color=\"comment\">$VERSION</font>
           >status:  <font color=\"comment\">${{ job.status }}</font>
           >committer: <font color=\"comment\">${{ github.actor }}</font>
+          "
             }
           }
           EOF
