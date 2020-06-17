@@ -54,7 +54,7 @@ var components = Components{
 	NvidiaDevicePlugin: containerregistry.Image{Name: "nvidia-device-plugin", Tag: "1.0.0-beta4"},
 	Keepalived:         containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
 
-	GPUManager:        containerregistry.Image{Name: "gpu-manager", Tag: "v1.0.0"},
+	GPUManager:        containerregistry.Image{Name: "gpu-manager", Tag: "v1.0.4"},
 	Busybox:           containerregistry.Image{Name: "busybox", Tag: "1.31.0"},
 	GPUQuotaAdmission: containerregistry.Image{Name: "gpu-quota-admission", Tag: "v1.0.0"},
 }
