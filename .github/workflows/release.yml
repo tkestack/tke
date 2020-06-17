@@ -6,6 +6,9 @@ on:
   schedule:
     - cron:  '0 0 * * *'
 
+env:
+  VERSION: ${{ github.event.sha }}
+
 jobs:
   release:
 
@@ -19,17 +22,14 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Build and test
-        id: build
+      - name: Build release
         run: |
-          export VERSION=$(git describe --dirty --always --tags | sed 's/-/./g')
-
           (
           cat <<EOF
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}</font>：start build release
+              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>
           >version: <font color=\"comment\">$VERSION</font>"
             }
           }
@@ -45,7 +45,7 @@ jobs:
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}</font>：build release success.
+              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>
           >version: <font color=\"comment\">$VERSION</font>"
             }
           }
@@ -54,12 +54,15 @@ jobs:
              -H 'Content-Type: application/json' \
              -d @-
 
+      - name: Test release
+        if: ${{ success() }}
+        run: |
           (
           cat <<EOF
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}</font>：start test release
+              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>
           >version: <font color=\"comment\">$VERSION</font>"
             }
           }
@@ -69,14 +72,15 @@ jobs:
              -d @-
           make release-test
 
-      - name: Notify
+      - name: Report status
+        if: ${{ always() }}
         run: |
           (
           cat <<EOF
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}</font>：build release finished.
+              "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>
           >version: <font color=\"comment\">$VERSION</font>"
           >status:  <font color=\"comment\">${{ job.status }}</font>
           >committer: <font color=\"comment\">${{ github.actor }}</font>
