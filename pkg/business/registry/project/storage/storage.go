@@ -22,8 +22,6 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apiserver/pkg/endpoints/request"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,7 +40,6 @@ import (
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	projectstrategy "tkestack.io/tke/pkg/business/registry/project"
-	registryUtil "tkestack.io/tke/pkg/business/registry/util"
 	"tkestack.io/tke/pkg/business/util"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -147,21 +144,8 @@ func (r *REST) ShortNames() []string {
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	log.Debugf("business project list, ctx %v", ctx)
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
-	obj, err := r.Store.List(ctx, wrappedOptions)
-	if err != nil || obj == nil {
-		return obj, err
-	}
-	user, ok := request.UserFrom(ctx)
-	log.Debugf("business project list, user %v", user)
-	if ok && user.GetName() == "system:apiserver" {
-		return obj, nil
-	}
-	log.Debugf("business project list, before FilterWithUser: %v", obj.(*business.ProjectList).Items)
-	_, list, err := registryUtil.FilterWithUser(ctx, obj.(*business.ProjectList), r.authClient, r.businessClient, true)
-	log.Debugf("business project list, after FilterWithUser: %v", list)
-	return list, err
+	return r.Store.List(ctx, wrappedOptions)
 }
 
 // DeleteCollection selects all resources in the storage matching given 'listOptions'

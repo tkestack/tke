@@ -38,7 +38,7 @@ import (
 func FilterWithUser(ctx context.Context,
 	projectList *business.ProjectList,
 	authClient authversionedclient.AuthV1Interface,
-	businessClient *businessinternalclient.BusinessClient, all4Admin bool) (bool, *business.ProjectList, error) {
+	businessClient *businessinternalclient.BusinessClient) (bool, *business.ProjectList, error) {
 
 	userName, tenantID := authentication.GetUsernameAndTenantID(ctx)
 
@@ -77,7 +77,7 @@ func FilterWithUser(ctx context.Context,
 			}
 		}
 	}
-	if (isAdmin && all4Admin) || projectList == nil || projectList.Items == nil {
+	if projectList == nil || projectList.Items == nil {
 		return isAdmin, projectList, nil
 	}
 

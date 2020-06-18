@@ -90,7 +90,7 @@ func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableO
 }
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
-func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
+func (r *REST) List(ctx context.Context, _ *metainternal.ListOptions) (runtime.Object, error) {
 	log.Debugf("business portal list, ctx %v", ctx)
 	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
 	if tenantID == "" {
@@ -106,7 +106,7 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 	}
 
 	log.Debugf("business portal list, before FilterWithUser: %v", projectList)
-	isAdmin, projectList, err := registryUtil.FilterWithUser(ctx, projectList, r.authClient, r.businessClient, false)
+	isAdmin, projectList, err := registryUtil.FilterWithUser(ctx, projectList, r.authClient, r.businessClient)
 	log.Debugf("business portal list, after FilterWithUser: %v", projectList)
 	if err != nil {
 		return nil, err
