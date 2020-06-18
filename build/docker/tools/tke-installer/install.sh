@@ -86,13 +86,14 @@ function install_docker() {
 
   # becuase first start docker may be restart some times
   systemctl start docker || :
-  for i in {1..60}; do
+  secs=60
+  for i in `seq 1 $secs`; do
     if systemctl is-active --quiet docker; then
       break
     fi
     sleep 1
   done
-  if (( i == 10)); then
+  if (( i == secs )); then
     echo "start docker failed, please check docker service."
     exit 1
   fi
