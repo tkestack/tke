@@ -231,7 +231,7 @@ const businessCommonRouterConfig: RouterConfig[] = [
     subRouterConfig: [
       {
         url: '/tkestack-project/log',
-        title: '日志',
+        title: '日志采集',
         watchModule: ConsoleModuleEnum.PLATFORM,
       }
     ]

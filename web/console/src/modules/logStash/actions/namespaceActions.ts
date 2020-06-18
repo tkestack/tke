@@ -3,7 +3,7 @@ import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
-import { cloneDeep } from '../../common/';
+import { cloneDeep, CommonAPI } from '../../common/';
 import { NamespaceFilter } from '../../common/models';
 import * as ActionType from '../constants/ActionType';
 import { ContainerLogs, RootState } from '../models';
@@ -22,6 +22,15 @@ const fetchNamespaceListActions = generateFetcherActionCreator({
     let namesapceInfo = resourceConfig(clusterVersion)[namespaceQuery && namespaceQuery.filter && namespaceQuery.filter.projectName ? 'namespaces' : 'ns'];
     let isClearData = fetchOptions && fetchOptions.noCache;
     let response = await WebAPI.fetchNamespaceList(namespaceQuery, namesapceInfo, isClearData);
+    // 给cluster注入logAgent信息
+    let agents = await CommonAPI.fetchLogagents();
+    let clusterHasLogAgent = {};
+    for (let agent of agents.records) {
+      clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
+    }
+    for (let ns of response.records) {
+      ns.cluster.spec.logAgentName = clusterHasLogAgent[ns.cluster.metadata.name];
+    }
     return response;
   },
   finish: (dispatch: Redux.Dispatch, getState: GetState) => {

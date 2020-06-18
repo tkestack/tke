@@ -134,8 +134,6 @@ const restActions = {
         type: ActionType.ProjectSelection,
         payload: project
       });
-      console.log('project@selectProject = ', project);
-      // dispatch(namespaceActions.applyFilter({ specificName: project }));
       dispatch(namespaceActions.applyFilter({ projectName: project }));
       // let { mode, type, resourceName } = urlParams;
       // router.navigate(
@@ -146,8 +144,31 @@ const restActions = {
       // );
     };
   },
+  selectClusterFromNamespace: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { clusterList, route, regionList } = getState(),
+        urlParams = router.resolve(route),
+        { rid, projectName } = route.queries,
+        { mode } = urlParams,
+        isCreate = mode === 'create',
+        isUpdate = mode === 'update',
+        isDetail = mode === 'datail';
+      dispatch({
+        type: ActionType.SelectCluster,
+        payload: cluster ? [cluster] : []
+      });
+      let clusterId = cluster.metadata.name;
+      router.navigate(urlParams, Object.assign({}, route.queries, { clusterId }));
+      // 拉取已经开通的addon的列表
+      dispatch(
+        ListAddonActions.applyFilter({
+          specificName: clusterId
+        })
+      );
+    };
+  },
 
-  /** 集群的选择
+  /** 集群的选择-平台侧
    * @params clusterId: string  集群Id
    * @params isNeedInitClusterVersion: boolean | number 是否需要初始化集群的版本
    */

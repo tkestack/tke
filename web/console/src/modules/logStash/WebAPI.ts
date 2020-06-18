@@ -71,7 +71,7 @@ export async function fetchNamespaceList(
         return {};
       }
       let clusterInfo: Cluster = {
-        id:
+        id: uuid(),
         metadata: {
           name: item.spec.clusterName,
         },
@@ -80,8 +80,10 @@ export async function fetchNamespaceList(
         },
         status: {
           version: item.spec.clusterVersion,
+          phase: 'Running', // TODO: 让namespace接口返回集群的phase
         }
       };
+      return clusterInfo;
     };
     try {
       let response = await reduceNetworkRequest(params, clusterId);
@@ -99,7 +101,7 @@ export async function fetchNamespaceList(
         } else {
           namespaceList.push({
             clusterId,
-            cluster: getCluster(item),
+            cluster: getCluster(list),
             id: uuid(),
             name: list.metadata.name
           });
