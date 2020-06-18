@@ -21,12 +21,16 @@ package machine
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
@@ -34,59 +38,32 @@ import (
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	v1 "tkestack.io/tke/api/platform/v1"
-	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/controller/machine/deletion"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
+	"tkestack.io/tke/pkg/util/strategicpatch"
 )
 
 const (
-	machineClientRetryCount    = 5
-	machineClientRetryInterval = 5 * time.Second
+	conditionTypeHealthCheck = "HealthCheck"
+	failedHealthCheckReason  = "FailedHealthCheck"
 
-	reasonFailedInit   = "FailedInit"
-	reasonFailedUpdate = "FailedUpdate"
+	healthCheckInterval = 5 * time.Minute
 )
 
 // Controller is responsible for performing actions dependent upon a machine phase.
 type Controller struct {
-	platformclient platformversionedclient.PlatformV1Interface
-	cache          *machineCache
-	health         *machineHealth
-	queue          workqueue.RateLimitingInterface
-	lister         platformv1lister.MachineLister
-	listerSynced   cache.InformerSynced
-	stopCh         <-chan struct{}
+	queue        workqueue.RateLimitingInterface
+	lister       platformv1lister.MachineLister
+	listerSynced cache.InformerSynced
+
+	log            log.Logger
+	platformClient platformversionedclient.PlatformV1Interface
+	healthCache    mapset.Set
 	deleter        deletion.MachineDeleterInterface
-}
-
-// obj could be an *v1.Machine, or a DeletionFinalStateUnknown marker item.
-func (c *Controller) enqueue(obj interface{}) {
-	key, err := controllerutil.KeyFunc(obj)
-	if err != nil {
-		runtime.HandleError(fmt.Errorf("couldn't get key for object %+v: %v", obj, err))
-		return
-	}
-	c.queue.Add(key)
-}
-
-func (c *Controller) needsUpdate(oldMachine *v1.Machine, newMachine *v1.Machine) bool {
-	if oldMachine.UID != newMachine.UID {
-		return true
-	}
-
-	if !reflect.DeepEqual(oldMachine.Spec, newMachine.Spec) {
-		return true
-	}
-
-	if !reflect.DeepEqual(oldMachine.Status, newMachine.Status) {
-		return true
-	}
-
-	return false
 }
 
 // NewController creates a new Controller object.
@@ -94,43 +71,64 @@ func NewController(
 	platformclient platformversionedclient.PlatformV1Interface,
 	machineInformer platformv1informer.MachineInformer,
 	resyncPeriod time.Duration,
-	finalizerToken v1.FinalizerName) *Controller {
-	// create the controller so we can inject the enqueue function
-	controller := &Controller{
-		platformclient: platformclient,
-		cache:          &machineCache{m: make(map[string]*cachedMachine)},
-		health:         &machineHealth{m: make(map[string]*v1.Machine)},
-		queue:          workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machine"),
-		deleter: deletion.NewMachineDeleter(platformclient.Machines(),
-			platformclient,
-			finalizerToken,
-			true),
+	finalizerToken platformv1.FinalizerName) *Controller {
+	c := &Controller{
+		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machine"),
+
+		log:            log.WithName("machine-controller"),
+		platformClient: platformclient,
+		healthCache:    mapset.NewSet(),
+		deleter:        deletion.NewMachineDeleter(platformclient.Machines(), platformclient, finalizerToken, true),
 	}
 
 	if platformclient != nil && platformclient.RESTClient().GetRateLimiter() != nil {
 		_ = metrics.RegisterMetricAndTrackRateLimiterUsage("machine_controller", platformclient.RESTClient().GetRateLimiter())
 	}
 
-	// configure the namespace informer event handlers
 	machineInformer.Informer().AddEventHandlerWithResyncPeriod(
 		cache.ResourceEventHandlerFuncs{
-			AddFunc: controller.enqueue,
-			UpdateFunc: func(oldObj, newObj interface{}) {
-				oldMachine, ok1 := oldObj.(*v1.Machine)
-				curMachine, ok2 := newObj.(*v1.Machine)
-				if ok1 && ok2 && controller.needsUpdate(oldMachine, curMachine) {
-					controller.enqueue(newObj)
-				} else {
-					log.Debug("Update new machine not to add", log.String("machineName", curMachine.Name), log.String("resourceversion", curMachine.ResourceVersion), log.String("old-resourceversion", oldMachine.ResourceVersion), log.String("cur-resourceversion", curMachine.ResourceVersion))
-				}
-			},
+			AddFunc:    c.addMachine,
+			UpdateFunc: c.updateMachine,
 		},
 		resyncPeriod,
 	)
-	controller.lister = machineInformer.Lister()
-	controller.listerSynced = machineInformer.Informer().HasSynced
+	c.lister = machineInformer.Lister()
+	c.listerSynced = machineInformer.Informer().HasSynced
 
-	return controller
+	return c
+}
+
+func (c *Controller) addMachine(obj interface{}) {
+	machine := obj.(*platformv1.Machine)
+	c.log.Info("Adding machine", "machine", machine.Name)
+	c.enqueue(machine)
+}
+
+func (c *Controller) updateMachine(old, obj interface{}) {
+	oldMachine := old.(*platformv1.Machine)
+	machine := obj.(*platformv1.Machine)
+	if !c.needsUpdate(oldMachine, machine) {
+		return
+	}
+	c.log.Info("Updating machine", "machine", machine.Name)
+	c.enqueue(machine)
+}
+
+func (c *Controller) needsUpdate(oldMachine *platformv1.Machine, newMachine *platformv1.Machine) bool {
+	if !reflect.DeepEqual(oldMachine.Spec, newMachine.Spec) {
+		return true
+	}
+
+	return false
+}
+
+func (c *Controller) enqueue(obj *platformv1.Machine) {
+	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+	if err != nil {
+		runtime.HandleError(fmt.Errorf("couldn't get key for object %+v: %v", obj, err))
+		return
+	}
+	c.queue.Add(key)
 }
 
 // Run will set up the event handlers for types we are interested in, as well
@@ -146,8 +144,6 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) error {
 	if ok := cache.WaitForCacheSync(stopCh, c.listerSynced); !ok {
 		return fmt.Errorf("failed to wait for machine caches to sync")
 	}
-
-	c.stopCh = stopCh
 
 	for i := 0; i < workers; i++ {
 		go wait.Until(c.worker, time.Second, stopCh)
@@ -189,10 +185,11 @@ func (c *Controller) processNextWorkItem() bool {
 // namespaces created or deleted. This function is not meant to be invoked
 // concurrently with the same key.
 func (c *Controller) syncMachine(key string) error {
+	logger := c.log.WithValues("machine", key)
+
 	startTime := time.Now()
-	var cachedMachine *cachedMachine
 	defer func() {
-		log.Info("Finished syncing machine", log.String("machineName", key), log.Duration("processTime", time.Since(startTime)))
+		logger.Info("Finished syncing machine", "processTime", time.Since(startTime).String())
 	}()
 
 	_, name, err := cache.SplitMetaNamespaceKey(key)
@@ -200,183 +197,54 @@ func (c *Controller) syncMachine(key string) error {
 		return err
 	}
 
-	// machine holds the latest machine info from apiserver
 	machine, err := c.lister.Get(name)
-
-	switch {
-	case apierrors.IsNotFound(err):
-		log.Info("Machine has been deleted. Attempting to cleanup resources", log.String("machineName", key))
-		err = c.processMachineDeletion(key, machine)
-	case err != nil:
-		log.Warn("Unable to retrieve machine from store", log.String("machineName", key), log.Err(err))
-	default:
-		if (machine.Status.Phase == v1.MachineRunning) || (machine.Status.Phase == v1.MachineFailed) || (machine.Status.Phase == v1.MachineInitializing) {
-			cachedMachine = c.cache.getOrCreate(key)
-			err = c.processMachineUpdate(context.Background(), cachedMachine, machine, key)
-		} else if machine.Status.Phase == v1.MachineTerminating {
-			log.Info("Machine has been terminated. Attempting to cleanup resources", log.String("machineName", key))
-			_ = c.processMachineDeletion(key, machine)
-			err = c.deleter.Delete(context.Background(), key)
-		} else {
-			log.Debug(fmt.Sprintf("Machine %s status is %s, not to process", key, machine.Status.Phase), log.String("machineName", key))
-		}
+	if apierrors.IsNotFound(err) {
+		logger.Info("Machine has been deleted")
 	}
-	return err
-}
-
-func (c *Controller) processMachineUpdate(ctx context.Context, cachedMachine *cachedMachine, machine *v1.Machine, key string) error {
-	if cachedMachine.state != nil {
-		if cachedMachine.state.UID != machine.UID {
-			err := c.processMachineDelete(key, machine)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// start update machine if needed
-	err := c.handlePhase(ctx, key, cachedMachine, machine)
 	if err != nil {
+		utilruntime.HandleError(fmt.Errorf("unable to retrieve machine %v from store: %v", key, err))
 		return err
 	}
 
-	cachedMachine.state = machine
-	// Always update the cache upon success.
-	c.cache.set(key, cachedMachine)
-
-	return nil
+	return c.reconcile(context.Background(), key, machine)
 }
 
-func (c *Controller) processMachineDeletion(key string, machine *v1.Machine) error {
-	return c.processMachineDelete(key, machine)
-}
+func (c *Controller) reconcile(ctx context.Context, key string, machine *platformv1.Machine) error {
+	logger := c.log.WithValues("machine", machine.Name)
 
-func (c *Controller) processMachineDelete(key string, machine *v1.Machine) error {
-	log.Info("Machine will be dropped", log.String("machineName", key))
-
-	if c.cache.Exist(key) {
-		log.Info("Delete the machine cache", log.String("machineName", key))
-		c.cache.delete(key)
-	}
-
-	if c.health.Exist(key) {
-		log.Info("Delete the machine health cache", log.String("machineName", key))
-		c.health.Del(key)
-	}
-
-	return nil
-}
-
-func (c *Controller) handlePhase(ctx context.Context, key string, cachedMachine *cachedMachine, machine *v1.Machine) error {
 	var err error
 	switch machine.Status.Phase {
-	case v1.MachineInitializing:
+	case platformv1.MachineInitializing:
 		err = c.onCreate(ctx, machine)
-		log.Info("machine_controller.onCreate", log.String("machineName", machine.Name), log.Err(err))
-	case v1.MachineRunning, v1.MachineFailed:
+	case platformv1.MachineRunning, platformv1.MachineFailed:
 		err = c.onUpdate(ctx, machine)
-		log.Info("machine_controller.onUpdate", log.String("machineName", machine.Name), log.Err(err))
+	case platformv1.MachineTerminating:
+		logger.Info("Machine has been terminated. Attempting to cleanup resources")
+		err = c.deleter.Delete(context.Background(), key)
 		if err == nil {
-			c.ensureHealthCheck(ctx, key, machine)
+			logger.Info("Machine has been successfully deleted")
 		}
 	default:
-		err = fmt.Errorf("no handler for %q", machine.Status.Phase)
+		logger.Info("unknown machine phase", "status.phase", machine.Status.Phase)
 	}
 
 	return err
 }
 
-func (c *Controller) addOrUpdateCondition(machine *v1.Machine, newCondition v1.MachineCondition) {
-	var conditions []v1.MachineCondition
-	exist := false
-	for _, condition := range machine.Status.Conditions {
-		if condition.Type == newCondition.Type {
-			exist = true
-			if newCondition.Status != condition.Status {
-				condition.Status = newCondition.Status
-			}
-			if newCondition.Message != condition.Message {
-				condition.Message = newCondition.Message
-			}
-			if newCondition.Reason != condition.Reason {
-				condition.Reason = newCondition.Reason
-			}
-			if !newCondition.LastProbeTime.IsZero() && newCondition.LastProbeTime != condition.LastProbeTime {
-				condition.LastProbeTime = newCondition.LastProbeTime
-			}
-			if !newCondition.LastTransitionTime.IsZero() && newCondition.LastTransitionTime != condition.LastTransitionTime {
-				condition.LastTransitionTime = newCondition.LastTransitionTime
-			}
-		}
-		conditions = append(conditions, condition)
-	}
-	if !exist {
-		if newCondition.LastProbeTime.IsZero() {
-			newCondition.LastProbeTime = metav1.Now()
-		}
-		if newCondition.LastTransitionTime.IsZero() {
-			newCondition.LastTransitionTime = metav1.Now()
-		}
-		conditions = append(conditions, newCondition)
-	}
-	machine.Status.Conditions = conditions
-}
-
-func (c *Controller) persistUpdate(ctx context.Context, machine *v1.Machine) error {
-	var err error
-	for i := 0; i < machineClientRetryCount; i++ {
-		_, err = c.platformclient.Machines().UpdateStatus(ctx, machine, metav1.UpdateOptions{})
-		if err == nil {
-			return nil
-		}
-		// if the object no longer exists, we don't want to recreate it. Just bail
-		// out so that we can process the delete, which we should soon be receiving
-		// if we haven't already
-		if apierrors.IsNotFound(err) {
-			log.Info("Not persisting update to machine set that no longer exists", log.String("machineName", machine.Name), log.Err(err))
-			return nil
-		}
-		if apierrors.IsConflict(err) {
-			return fmt.Errorf("not persisting update to machine '%s' that has been changed since we received it: %v", machine.Name, err)
-		}
-		log.Warn("Failed to persist updated status of machine", log.String("machineName", machine.Name), log.Err(err))
-		time.Sleep(machineClientRetryInterval)
-	}
-
-	return err
-}
-
-func (c *Controller) onCreate(ctx context.Context, machine *v1.Machine) error {
+func (c *Controller) onCreate(ctx context.Context, machine *platformv1.Machine) error {
 	provider, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
 		return err
 	}
-	cluster, err := typesv1.GetClusterByName(ctx, c.platformclient, machine.Spec.ClusterName)
+	cluster, err := typesv1.GetClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
 
 	for machine.Status.Phase == platformv1.MachineInitializing {
+		// if OnCreate returns error or Update returns error, return error for retry.
 		err = provider.OnCreate(ctx, machine, cluster)
-		if err != nil {
-			machine.Status.Message = err.Error()
-			machine.Status.Reason = reasonFailedInit
-			_, _ = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
-			return err
-		}
-
-		condition := machine.Status.Conditions[len(machine.Status.Conditions)-1]
-		if condition.Status == v1.ConditionFalse { // means current condition run into error
-			machine.Status.Message = condition.Message
-			machine.Status.Reason = condition.Reason
-			_, _ = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
-			return fmt.Errorf("Provider.OnCreate.%s [Failed] reason: %s message: %s",
-				condition.Type, condition.Reason, condition.Message)
-		}
-		machine.Status.Message = ""
-		machine.Status.Reason = ""
-
-		machine, err = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
+		_, err = c.platformClient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
@@ -384,29 +252,105 @@ func (c *Controller) onCreate(ctx context.Context, machine *v1.Machine) error {
 
 	return err
 }
+
 func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) error {
+	c.ensureStartHealthCheck(ctx, machine.Name)
+
 	provider, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
 		return err
 	}
 
-	cluster, err := typesv1.GetClusterByName(ctx, c.platformclient, machine.Spec.ClusterName)
+	cluster, err := typesv1.GetClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
-	err = provider.OnUpdate(ctx, machine, cluster)
-	if err != nil {
-		machine.Status.Message = err.Error()
-		machine.Status.Reason = reasonFailedUpdate
-		_, _ = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
-		return err
-	}
-	cluster.Status.Message = ""
-	cluster.Status.Reason = ""
 
-	_, err = c.platformclient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
+	// if OnUpdate returns error or Update returns error, return error for retry.
+	err = provider.OnUpdate(ctx, machine, cluster)
+	_, err = c.platformClient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (c *Controller) ensureStartHealthCheck(ctx context.Context, key string) {
+	if c.healthCache.Contains(key) {
+		return
+	}
+	logger := c.log.WithValues("machine", key)
+	logger.Info("Start health check loop")
+	time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
+	go wait.PollImmediateInfinite(healthCheckInterval, c.watchHealth(ctx, key))
+	c.healthCache.Add(key)
+}
+
+func (c *Controller) watchHealth(ctx context.Context, key string) func() (bool, error) {
+	return func() (bool, error) {
+		logger := c.log.WithName("health-check").WithValues("machine", key)
+
+		machine, err := c.lister.Get(key)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.Info("Stop health check because machine has been deleted")
+				c.healthCache.Remove(key)
+				return true, nil
+			}
+			return false, nil
+		}
+
+		if !(machine.Status.Phase == platformv1.MachineRunning || machine.Status.Phase == platformv1.MachineFailed) {
+			return false, nil
+		}
+
+		err = c.checkHealth(ctx, machine)
+		if err != nil {
+			logger.Error(err, "Check health error")
+		}
+
+		return false, nil
+	}
+}
+
+func (c *Controller) checkHealth(ctx context.Context, machine *platformv1.Machine) error {
+	oldMachine := machine.DeepCopy()
+
+	healthCheckCondition := platformv1.MachineCondition{
+		Type:   conditionTypeHealthCheck,
+		Status: platformv1.ConditionFalse,
+	}
+
+	clientset, err := util.BuildExternalClientSetWithName(ctx, c.platformClient, machine.Spec.ClusterName)
+	if err != nil {
+		machine.Status.Phase = platformv1.MachineFailed
+
+		healthCheckCondition.Reason = failedHealthCheckReason
+		healthCheckCondition.Message = err.Error()
+	} else {
+		_, err = clientset.CoreV1().Nodes().Get(ctx, machine.Spec.IP, metav1.GetOptions{})
+		if err != nil {
+			machine.Status.Phase = platformv1.MachineFailed
+
+			healthCheckCondition.Reason = failedHealthCheckReason
+			healthCheckCondition.Message = err.Error()
+		} else {
+			machine.Status.Phase = platformv1.MachineRunning
+
+			healthCheckCondition.Status = platformv1.ConditionTrue
+		}
+	}
+
+	machine.SetCondition(healthCheckCondition)
+
+	patchBytes, err := strategicpatch.GetPatchBytes(oldMachine, machine)
+	if err != nil {
+		return fmt.Errorf("GetPatchBytes error: %w", err)
+	}
+	_, err = c.platformClient.Machines().Patch(ctx, machine.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
+	if err != nil {
+		return fmt.Errorf("update health status error: %w", err)
 	}
 
 	return nil
