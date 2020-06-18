@@ -47,7 +47,6 @@ func main() {
 	unsupportMultiArchImages := []func() []string{
 		cronhpa.List,
 		helm.List,
-		ipam.List,
 		lbcf.List,
 		logcollector.List,
 		persistentevent.List,
@@ -57,14 +56,22 @@ func main() {
 		tappcontroller.List,
 		logagent.List,
 	}
+	supportMultiArchImages := []func() []string{
+		baremetal.List,
+		installer.List,
+		galaxy.List,
+		ipam.List,
+	}
 
 	var result []string
-	for _, one := range append(baremetal.List(), append(installer.List(), galaxy.List()...)...) {
-		if IsUnsupportMultiArch(one) {
-			result = append(result, one)
-		} else {
-			for _, arch := range spec.Archs {
-				result = append(result, strings.ReplaceAll(one, ":", "-"+arch+":"))
+	for _, f := range supportMultiArchImages {
+		for _, one := range f() {
+			if IsUnsupportMultiArch(one) {
+				result = append(result, one)
+			} else {
+				for _, arch := range spec.Archs {
+					result = append(result, strings.ReplaceAll(one, ":", "-"+arch+":"))
+				}
 			}
 		}
 	}
