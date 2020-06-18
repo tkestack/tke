@@ -39,63 +39,114 @@ export async function fetchProjectList(query: QueryState<ProjectFilter>) {
     filter: { parentProject },
     searchFilter: { projectId }
   } = query;
-
-  let projectResourceInfo: ResourceInfo = resourceConfig()['projects'];
-  let k8sQueryObj = {
-    fieldSelector: {
-      'spec.parentProjectName': parentProject ? parentProject : undefined
-    }
-  };
-  k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-
-  let k8sUrl = reduceK8sRestfulPath({ resourceInfo: projectResourceInfo, specificName: projectId ? projectId : null });
-
-  let queryString = reduceK8sQueryString({ k8sQueryObj, restfulPath: k8sUrl });
-
-  let url = k8sUrl + queryString;
-
-  let params: RequestParams = {
-    method: Method.get,
-    url
-  };
   let projectList = [],
     total = 0;
-  try {
-    let response = await reduceNetworkRequest(params);
+  let projectResourceInfo: ResourceInfo = resourceConfig().projects;
 
-    if (response.code === 0) {
-      let listItems = response.data;
-      if (listItems.items) {
-        projectList = listItems.items.map(item => {
-          return Object.assign({}, item, { id: item.metadata.name });
-        });
-      } else {
-        // 这里是拉取某个具体的resource的时候，没有items属性
-        projectList.push({
-          id: listItems.metadata.name,
-          metadata: listItems.metadata,
-          spec: listItems.spec,
-          status: listItems.status
-        });
+  let userResourceInfo: ResourceInfo = resourceConfig().portal;
+  let portalUrl = reduceK8sRestfulPath({ resourceInfo: userResourceInfo });
+  let portalparams: RequestParams = {
+    method: Method.get,
+    url: portalUrl
+  };
+  let response = await reduceNetworkRequest(portalparams);
+  let isAdmin = true,
+    userProjects = [];
+  if (response.code === 0) {
+    userProjects = Object.keys(response.data.projects).map(key => key);
+    isAdmin = response.data.administrator;
+  }
+
+  if (isAdmin || parentProject) {
+    let k8sQueryObj = {
+      fieldSelector: {
+        'spec.parentProjectName': parentProject ? parentProject : undefined
+      }
+    };
+    k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
+
+    let k8sUrl = reduceK8sRestfulPath({
+      resourceInfo: projectResourceInfo,
+      specificName: projectId ? projectId : null
+    });
+
+    let queryString = reduceK8sQueryString({ k8sQueryObj, restfulPath: k8sUrl });
+
+    let url = k8sUrl + queryString;
+
+    let params: RequestParams = {
+      method: Method.get,
+      url
+    };
+
+    try {
+      let response = await reduceNetworkRequest(params);
+
+      if (response.code === 0) {
+        let listItems = response.data;
+        if (listItems.items) {
+          projectList = listItems.items.map(item => {
+            return Object.assign({}, item, { id: item.metadata.name });
+          });
+        } else {
+          // 这里是拉取某个具体的resource的时候，没有items属性
+          projectList.push({
+            id: listItems.metadata.name,
+            metadata: listItems.metadata,
+            spec: listItems.spec,
+            status: listItems.status
+          });
+        }
+      }
+    } catch (error) {
+      // 这里是搜索的时候，如果搜索不到的话，会报404的错误，只有在 resourceNotFound的时候，不把错误抛出去
+      if (+error.response.status !== 404) {
+        throw error;
       }
     }
-  } catch (error) {
-    // 这里是搜索的时候，如果搜索不到的话，会报404的错误，只有在 resourceNotFound的时候，不把错误抛出去
-    if (+error.response.status !== 404) {
-      throw error;
-    }
+  } else {
+    let requests = userProjects.map(projectId => {
+      let url = reduceK8sRestfulPath({
+        resourceInfo: projectResourceInfo,
+        specificName: projectId
+      });
+
+      let params: RequestParams = {
+        method: Method.get,
+        url
+      };
+      return reduceNetworkRequest(params).catch(e => null);
+    });
+    let response = await Promise.all(requests);
+    response.forEach(r => {
+      if (r && r.code === 0) {
+        let listItems = r.data;
+        if (listItems.items) {
+          projectList = listItems.items.map(item => {
+            return Object.assign({}, item, { id: item.metadata.name });
+          });
+        } else {
+          // 这里是拉取某个具体的resource的时候，没有items属性
+          projectList.push({
+            id: listItems.metadata.name,
+            metadata: listItems.metadata,
+            spec: listItems.spec,
+            status: listItems.status
+          });
+        }
+      }
+    });
+    total = projectList.length;
   }
 
   if (search) {
     projectList = projectList.filter(x => x.spec.displayName.includes(query.search));
   }
   total = projectList.length;
-
   const result: RecordSet<Project> = {
     recordCount: total,
     records: projectList
   };
-
   return result;
 }
 
@@ -212,7 +263,10 @@ export async function deleteProject(projects: Project[]) {
     let url = reduceK8sRestfulPath({ resourceInfo: projectResourceInfo, specificName: projects[0].id + '' });
     let params: RequestParams = {
       method: Method.delete,
-      url
+      url,
+      userDefinedHeader: {
+        'X-TKE-ProjectName': projects[0].id + ''
+      }
     };
 
     let response = await reduceNetworkRequest(params);

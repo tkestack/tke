@@ -108,16 +108,14 @@ export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?
   } else {
     projectId = getProjectName();
   }
-  userDefinedHeader = Object.assign({}, userDefinedHeader, {
-    'X-TKE-ProjectName': projectId
-  });
+  userDefinedHeader = Object.assign(
+    {},
+    {
+      'X-TKE-ProjectName': projectId
+    },
+    userDefinedHeader
+  );
   /// #endif
-
-  if (keyword) {
-    userDefinedHeader = Object.assign({}, userDefinedHeader, {
-      'X-TKE-FuzzyResourceName': keyword
-    });
-  }
 
   let params = {
     method,

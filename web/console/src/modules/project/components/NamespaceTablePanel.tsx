@@ -238,13 +238,12 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
     return buttons;
   }
   private _renderEditProjectLimitDialog() {
-    const { actions, project, editNamespaceResourceLimit, namespaceEdition } = this.props;
+    const { actions, project, editNamespaceResourceLimit, namespaceEdition, projectDetail } = this.props;
     let isShowDialog = this.state.isShowDialog;
-    let projectSelection = project.selections[0] ? project.selections[0] : null;
 
     let parentResourceLimits =
-      projectSelection && namespaceEdition.clusterName
-        ? projectSelection.spec.clusters[namespaceEdition.clusterName].hard
+      projectDetail && namespaceEdition.clusterName
+        ? projectDetail.spec.clusters[namespaceEdition.clusterName].hard
         : {};
 
     let failed =
@@ -275,7 +274,7 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
           onSubmit={resourceLimits => {
             namespaceEdition.resourceLimits = resourceLimits;
             actions.namespace.editNamespaceResourceLimit.start([namespaceEdition], {
-              projectId: projectSelection.metadata.name
+              projectId: projectDetail.metadata.name
             });
             actions.namespace.editNamespaceResourceLimit.perform();
             cancel();
