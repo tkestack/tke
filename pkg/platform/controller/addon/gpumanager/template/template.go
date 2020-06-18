@@ -82,7 +82,6 @@ spec:
               mountPath: /var/log/gpu-manager
             - name: rundir
               mountPath: /var/run
-              readOnly: true
             - name: cgroup
               mountPath: /sys/fs/cgroup
               readOnly: true
