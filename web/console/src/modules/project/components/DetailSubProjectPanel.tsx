@@ -12,7 +12,7 @@ import { dateFormatter } from '../../../../helpers';
 import { projectFields } from '../../cluster/models/MonitorPanel';
 import { getWorkflowError } from '../../common';
 import { allActions } from '../actions';
-import { projectStatus, resourceLimitTypeToText, resourceTypeToUnit } from '../constants/Config';
+import { projectStatus, resourceLimitTypeToText, resourceTypeToUnit, PlatformTypeEnum } from '../constants/Config';
 import { Project } from '../models';
 import { RootProps } from './ProjectApp';
 import { SelectExistProjectDialog } from './SelectExistProjectDialog';
@@ -152,8 +152,8 @@ export class DetailSubProjectPanel extends React.Component<RootProps, any> {
   }
 
   private _renderOperationCell(project: Project) {
-    const { actions } = this.props;
-
+    const { actions, platformType } = this.props;
+    let enableOp = platformType === PlatformTypeEnum.Manager;
     const renderDeleteButton = () => {
       return (
         <Button
@@ -168,7 +168,7 @@ export class DetailSubProjectPanel extends React.Component<RootProps, any> {
       );
     };
 
-    return <div>{renderDeleteButton()}</div>;
+    return <div>{enableOp ? renderDeleteButton() : null}</div>;
   }
 
   private _handleMonitor(project: Project) {

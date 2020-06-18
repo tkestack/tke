@@ -3,18 +3,11 @@ import { Button } from '@tea/component/button';
 import { Blank, BlankTheme } from '@tea/component/blank';
 import { Card } from '@tea/component/card';
 import { Layout } from '@tea/component/layout';
-import { ExternalLink } from '@tea/component/link';
-import { Radio } from '@tea/component/radio';
 import { ContentView } from '@tencent/tea-component';
 
 const { Body, Content } = Layout;
 
 function BlankExample() {
-  /**
-   * @type [any, any]
-   */
-  const [theme, setTheme] = useState('permission');
-
   return (
     <ContentView>
       <ContentView.Body>
