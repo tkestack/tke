@@ -3,7 +3,7 @@ import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { resourceConfig } from '../../../../config';
-import { assureRegion, reduceNs } from '../../../../helpers';
+import { assureRegion } from '../../../../helpers';
 import { Region, RegionFilter, Resource, ResourceFilter, ResourceInfo } from '../../common/models';
 import { CommonAPI } from '../../common/webapi';
 import * as ActionType from '../constants/ActionType';
@@ -131,15 +131,13 @@ export const createActions = {
           helmName: name,
           resource: resourceSelection,
           chart_url: otherChartUrl,
-          kvs
+          kvs,
+          namespace: getState().namespaceSelection
         };
         if (otherTypeSelection === OtherType.Private) {
           options['username'] = otherUserName;
           options['password'] = otherPassword;
         }
-        /// #if project
-        kvs.push({ key: 'NAMESPACE', value: reduceNs(getState().namespaceSelection) });
-        /// #endif
         let response = await WebAPI.createHelmByOther(options, region.selection.value, clusterSelection);
       }
 
@@ -150,7 +148,8 @@ export const createActions = {
         {},
         {
           rid: region.selection.value + '',
-          clusterId: clusterSelection
+          clusterId: clusterSelection,
+          np: getState().namespaceSelection
         }
       );
     };
