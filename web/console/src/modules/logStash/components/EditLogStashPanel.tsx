@@ -57,7 +57,6 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
   }
 
   render() {
-    console.log('render@EditLogStashPanel');
     let {
         actions,
         logStashEdit,

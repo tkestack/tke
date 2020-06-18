@@ -84,8 +84,8 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
     let { canCreate, tip } = isCanCreateLogStash(clusterSelection[0], logList.data.records, isDaemonsetNormal);
     let ifFetchLogList = includes(canFetchLogList, isDaemonsetNormal.phase);
     let handleNamespaceSwitched = namespaceSelection => {
-      let namespaceFound = namespaceList.data.records.find(item => item.metadata && item.metadata.name === namespaceSelection);
-      console.log('namespaceFound = ', namespaceFound);
+      let namespaceFound = namespaceList.data.records.find(item => item.namespace === namespaceSelection);
+      actions.cluster.selectClusterFromNamespace(namespaceFound.cluster);
     };
     return (
       <Table.ActionPanel>

@@ -50,7 +50,6 @@ export class LogStashHeadPanel extends React.Component<RootProps, any> {
           value: p.name
         }));
 
-        console.log('projectSelection@LogStashHeadPanel = ', projectSelection);
         return (<>
           <FormPanel.InlineText>{t('业务：')}</FormPanel.InlineText>
           <FormPanel.Select
