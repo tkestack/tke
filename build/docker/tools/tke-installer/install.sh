@@ -48,17 +48,37 @@ declare -A archMap=(
 )
 
 if [ -z ${archMap[$(arch)]+unset} ]; then
-    echo "ERROR: unsupport arch $(arch)"
+  echo "ERROR: unsupport arch $(arch)"
 fi
 ARCH=${archMap[$(arch)]}
 
 function prefight() {
   echo "Step.1 prefight"
 
+  check::root
+  check::disk '/opt' 30
+  check::disk '/var/lib' 20
+}
+
+function check::root() {
   if [ "root" != "$(whoami)" ]; then
     echo "only root can execute this script"
     exit 1
   fi
+  echo "root: yes"
+}
+
+function check::disk() {
+  local -r path=$1
+  local -r size=$2
+
+    disk_avail=$(df -BG "$path" | tail -1 | awk '{print $4}' | grep -oP '\d+')
+  if ((disk_avail < size)); then
+    echo "available disk space for $path needs be greater than $size GiB"
+    exit 1
+  fi
+
+  echo "available disk space($path):  $disk_avail GiB"
 }
 
 function ensure_docker() {
@@ -86,14 +106,14 @@ function install_docker() {
 
   # becuase first start docker may be restart some times
   systemctl start docker || :
-  secs=60
-  for i in `seq 1 $secs`; do
+  maxSecond=60
+  for i in $(seq 1 $maxSecond); do
     if systemctl is-active --quiet docker; then
       break
     fi
     sleep 1
   done
-  if (( i == secs )); then
+  if ((i == maxSecond)); then
     echo "start docker failed, please check docker service."
     exit 1
   fi
@@ -132,7 +152,7 @@ function check_installer() {
 
   ip=$(ip route get 1 | awk '{print $NF;exit}')
   url="http://$ip:8080/index.html"
-  if ! curl -sSf $url  >/dev/null; then
+  if ! curl -sSf "$url" >/dev/null; then
     echo "check installer status error"
     docker logs tke-installer
     exit 1
