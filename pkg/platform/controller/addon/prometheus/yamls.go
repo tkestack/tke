@@ -667,10 +667,10 @@ groups:
     expr: (100 - sum (node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"}) by (node) / sum (node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"}) by (node) *100) *on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_node_filesystem_avail_bytes
-    expr: node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"}
+    expr: (node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"} *on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_filesystem_size_bytes
-    expr: node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"}
+    expr: (node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"} *on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_network_receive_bytes_bw
     expr: (sum by (node) (irate(node_network_receive_bytes_total{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role) kube_node_labels
