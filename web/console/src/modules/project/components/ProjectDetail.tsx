@@ -13,47 +13,54 @@ import { SubpageHeadPanel } from './SubpageHeadPanel';
 import { ProjectHeadPanel } from '@src/modules/project/components/ProjectHeadPanel';
 import { CreateNamespacePanel } from '@src/modules/project/components/CreateNamespacePanel';
 import { UserPanel } from './user/UserPanel';
+import { DetailSubProjectPanel } from './DetailSubProjectPanel';
+import { DetailSubProjectActionPanel } from './DetailSubProjectActionPanel';
 
 interface ProjectDetailState {
   /** tabKey */
   tabId?: string;
 }
 
-const mapDispatchToProps = (dispatch) =>
+const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect((state) => state, mapDispatchToProps)
+@connect(state => state, mapDispatchToProps)
 export class ProjectDetail extends React.Component<RootProps, ProjectDetailState> {
   constructor(props, context) {
     super(props, context);
     let { route } = props;
     let urlParams = router.resolve(route);
     this.state = {
-      tabId: urlParams['tab'] || 'info',
+      tabId: urlParams['tab'] || 'info'
     };
   }
 
   componentDidMount() {
     let { actions, route } = this.props;
     actions.project.fetchDetail(route.queries['projectId']);
+    actions.project.fetch();
   }
 
   render() {
     let tabs = [
       {
         id: 'info',
-        label: t('业务信息'),
+        label: t('业务信息')
       },
       { id: 'member', label: t('成员列表') },
       {
-        id: 'namespace',
-        label: t('Namespace列表'),
+        id: 'subProject',
+        label: t('子业务')
       },
+      {
+        id: 'namespace',
+        label: t('Namespace列表')
+      }
     ];
 
     /** 默认选中第一个tab */
     let selected = tabs[0];
-    let finder = tabs.find((x) => x.id === this.state.tabId);
+    let finder = tabs.find(x => x.id === this.state.tabId);
     if (finder) {
       selected = finder;
     }
@@ -76,7 +83,7 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
             ceiling
             tabs={tabs}
             activeId={selected.id}
-            onActive={(tab) => {
+            onActive={tab => {
               router.navigate(Object.assign({}, urlParams, { tab: tab.id, action: '' }), route.queries);
               this.setState({ tabId: tab.id });
             }}
@@ -93,6 +100,10 @@ export class ProjectDetail extends React.Component<RootProps, ProjectDetailState
             </TabPanel>
             <TabPanel id="member">
               <UserPanel />
+            </TabPanel>
+            <TabPanel id="subProject">
+              <DetailSubProjectActionPanel />
+              <DetailSubProjectPanel />
             </TabPanel>
             <TabPanel id="info">
               <ProjectDetailPanel {...this.props} />

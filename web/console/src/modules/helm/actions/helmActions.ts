@@ -20,7 +20,13 @@ const fetchHelmActions = generateFetcherActionCreator({
     let {
       listState: { helmQuery, region, cluster }
     } = getState();
-    let response = await WebAPI.fetchHelmList(helmQuery, region.selection.value, cluster.selection.metadata.name);
+
+    let response = await WebAPI.fetchHelmList(
+      helmQuery,
+      region.selection.value,
+      cluster.selection.metadata.name,
+      getState().namespaceSelection || 'default'
+    );
 
     return response;
   },

@@ -253,7 +253,8 @@ export async function fetchResourceList(
   const result: RecordSet<Resource> = {
     recordCount: resourceList.length,
     records: isNeedDes && resourceList.length > 1 ? resourceList.reverse() : resourceList,
-    continueToken: nextContinueToken
+    continueToken: nextContinueToken,
+    continue: nextContinueToken ? true : false
   };
 
   return result;
@@ -766,7 +767,7 @@ export async function modifyMultiResourceIns(resource: CreateResource[], regionI
           }
         }
       };
-      let response = await reduceNetworkRequest(param, clusterId);
+      let response = reduceNetworkRequest(param, clusterId);
       return response;
     });
     // 构建参数
@@ -947,7 +948,7 @@ export async function updateMultiResourceIns(resource: CreateResource[], regionI
         }
       };
 
-      let response = await reduceNetworkRequest(params, clusterId);
+      let response = reduceNetworkRequest(params, clusterId);
       return response;
     });
     let response = await Promise.all(requests);

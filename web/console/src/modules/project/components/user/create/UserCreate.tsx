@@ -12,17 +12,17 @@ import { getStatus } from '../../../../common/validate';
 const { useState, useEffect, useRef } = React;
 const { scrollable, selectable, removeable } = Table.addons;
 
-export const UserCreate = (props) => {
-  const state = useSelector((state) => state);
+export const UserCreate = props => {
+  const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { route, manager, policyPlainList } = state;
   const userList = manager.list.data.records || [];
   let strategyList = policyPlainList.list.data.records || [];
   strategyList = strategyList.filter(
-    (item) => ['业务管理员', '业务成员', '业务只读'].includes(item.displayName) === false
+    item => ['业务管理员', '业务成员', '业务只读'].includes(item.displayName) === false
   );
-  const tenantID = strategyList.filter((item) => item.displayName === '业务管理员').tenantID;
+  const tenantID = strategyList.filter(item => item.displayName === '业务管理员').tenantID;
 
   const [inputValue, setInputValue] = useState('');
   const [targetKeys, setTargetKeys] = useState([]);
@@ -53,10 +53,10 @@ export const UserCreate = (props) => {
     let userInfo = {
       id: uuid(),
       projectId: route.queries.projectId,
-      users: userTargetKeys.map((id) => ({
-        id,
+      users: userTargetKeys.map(id => ({
+        id
       })),
-      policies: role === 'custom' ? targetKeys : [role],
+      policies: role === 'custom' ? targetKeys : [role]
     };
     console.log('submit userInfo: ', userInfo);
     actions.user.addUser.start([userInfo]);
@@ -74,7 +74,7 @@ export const UserCreate = (props) => {
     initialValues: { role: '' },
     validate: ({ displayName, description, role }) => {
       const errors = {
-        role: undefined,
+        role: undefined
       };
 
       if (!role) {
@@ -82,7 +82,7 @@ export const UserCreate = (props) => {
       }
 
       return errors;
-    },
+    }
   });
 
   const role = useField('role', form);
@@ -115,12 +115,12 @@ export const UserCreate = (props) => {
                     header={
                       <SearchBox
                         value={userInputValue}
-                        onChange={(keyword) => {
+                        onChange={keyword => {
                           setUserInputValue(keyword);
                           // actions.manager.changeKeyword((keyword || '').trim());
                           actions.manager.performSearch((keyword || '').trim());
                         }}
-                        onSearch={(keyword) => {
+                        onSearch={keyword => {
                           actions.manager.performSearch((keyword || '').trim());
                         }}
                         onClear={() => {
@@ -134,15 +134,15 @@ export const UserCreate = (props) => {
                       dataSource={userList}
                       // dataSource={userList.filter((i) => i.displayName.includes(userInputValue))}
                       targetKeys={userTargetKeys}
-                      onChange={(keys) => setUserTargetKeys(keys)}
+                      onChange={keys => setUserTargetKeys(keys)}
                     />
                   </Transfer.Cell>
                 }
                 rightCell={
                   <Transfer.Cell title={`已选择 (${userTargetKeys.length})`}>
                     <UserAssociateTargetTable
-                      dataSource={userList.filter((i) => userTargetKeys.includes(i.id))}
-                      onRemove={(key) => setUserTargetKeys(userTargetKeys.filter((i) => i !== key))}
+                      dataSource={userList.filter(i => userTargetKeys.includes(i.id))}
+                      onRemove={key => setUserTargetKeys(userTargetKeys.filter(i => i !== key))}
                     />
                   </Transfer.Cell>
                 }
@@ -175,20 +175,20 @@ export const UserCreate = (props) => {
                         scrollable={false}
                         title="为这个用户选择单个角色"
                         tip="支持按住 shift 键进行多选"
-                        header={<SearchBox value={inputValue} onChange={(value) => setInputValue(value)} />}
+                        header={<SearchBox value={inputValue} onChange={value => setInputValue(value)} />}
                       >
                         <SourceTable
-                          dataSource={strategyList.filter((i) => i.displayName.includes(inputValue))}
+                          dataSource={strategyList.filter(i => i.displayName.includes(inputValue))}
                           targetKeys={targetKeys}
-                          onChange={(keys) => setTargetKeys(keys)}
+                          onChange={keys => setTargetKeys(keys)}
                         />
                       </Transfer.Cell>
                     }
                     rightCell={
                       <Transfer.Cell title={`已选择 (${targetKeys.length})`}>
                         <TargetTable
-                          dataSource={strategyList.filter((i) => targetKeys.includes(i.id))}
-                          onRemove={(key) => setTargetKeys(targetKeys.filter((i) => i !== key))}
+                          dataSource={strategyList.filter(i => targetKeys.includes(i.id))}
+                          onRemove={key => setTargetKeys(targetKeys.filter(i => i !== key))}
                         />
                       </Transfer.Cell>
                     }
@@ -205,7 +205,7 @@ export const UserCreate = (props) => {
             <Form.Action style={{ borderTop: 0, marginTop: 0, paddingTop: 0 }}>
               <Button type="primary">保存</Button>
               <Button
-                onClick={(e) => {
+                onClick={e => {
                   e.preventDefault();
                   history.back();
                 }}
@@ -224,8 +224,8 @@ const userAssociateColumns = [
   {
     key: 'name',
     header: t('ID/名称'),
-    render: (user: UserPlain) => <p>{`${user.displayName}(${user.name})`}</p>,
-  },
+    render: (user: UserPlain) => <p>{`${user.displayName}(${user.name})`}</p>
+  }
 ];
 
 function UserAssociateSourceTable({ dataSource, targetKeys, onChange }) {
@@ -237,13 +237,13 @@ function UserAssociateSourceTable({ dataSource, targetKeys, onChange }) {
       addons={[
         scrollable({
           maxHeight: 310,
-          onScrollBottom: () => console.log('到达底部'),
+          onScrollBottom: () => console.log('到达底部')
         }),
         selectable({
           value: targetKeys,
           onChange,
-          rowSelect: true,
-        }),
+          rowSelect: true
+        })
       ]}
     />
   );
@@ -259,14 +259,14 @@ const columns = [
   {
     key: 'displayName',
     header: '策略名称',
-    render: (strategy) => <p>{strategy.displayName}</p>,
+    render: strategy => <p>{strategy.displayName}</p>
   },
   {
     key: 'description',
     header: '描述',
     width: 300,
-    render: (strategy) => <p>{strategy.description || '-'}</p>,
-  },
+    render: strategy => <p>{strategy.description || '-'}</p>
+  }
 ];
 
 function SourceTable({ dataSource, targetKeys, onChange }) {
@@ -278,13 +278,13 @@ function SourceTable({ dataSource, targetKeys, onChange }) {
       addons={[
         scrollable({
           maxHeight: 310,
-          onScrollBottom: () => console.log('到达底部'),
+          onScrollBottom: () => console.log('到达底部')
         }),
         selectable({
           value: targetKeys,
           onChange,
-          rowSelect: true,
-        }),
+          rowSelect: true
+        })
       ]}
     />
   );

@@ -51,6 +51,7 @@ const restActions = {
     return async (dispatch, getState: GetState) => {
       let { route, cluster, projectNamespaceList } = getState(),
         urlParams = router.resolve(route);
+
       router.navigate(
         urlParams,
         Object.assign(route.queries, {
@@ -64,7 +65,21 @@ const restActions = {
 
       if (namespace) {
         let finder = projectNamespaceList.data.records.find(item => item.metadata.name === namespace);
+        if (!finder) {
+          finder = projectNamespaceList.data.records.length ? projectNamespaceList.data.records[0] : null;
+        }
         if (finder) {
+          router.navigate(
+            urlParams,
+            Object.assign(route.queries, {
+              np: finder.metadata.name
+            })
+          );
+          dispatch({
+            type: ActionType.SelectNamespace,
+            payload: finder.metadata.name
+          });
+
           let clusterId = finder.spec.clusterName;
           let clusterFinder = cluster.list.data.records.find(cluster => cluster.metadata.name === clusterId);
           if (clusterFinder) {
@@ -80,7 +95,7 @@ const restActions = {
             );
           }
         }
-        dispatch(alarmPolicyActions.selectsWorkLoadNamespace(namespace));
+        dispatch(alarmPolicyActions.selectsWorkLoadNamespace(finder.metadata.name));
       } else {
         dispatch(clusterActions.selectCluster(undefined));
         dispatch(clusterActions.select(null));
