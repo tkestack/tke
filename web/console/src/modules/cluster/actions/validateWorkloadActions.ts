@@ -5,15 +5,14 @@ import {
   WorkloadEdit,
   MountItem,
   LimitItem,
-  EnvItem,
   HealthCheckItem,
   WorkloadLabel,
   HpaMetrics,
-  ValueFrom,
   VolumeItem,
   ContainerItem,
   ImagePullSecrets,
-  ServiceEdit
+  ServiceEdit,
+  ContainerEnv
 } from '../models';
 import { cloneDeep } from '../../common/utils';
 import { workloadEditActions } from './workloadEditActions';
@@ -1169,8 +1168,8 @@ export const validateWorkloadActions = {
   },
 
   /** 校验容器的 环境变量是否正确 */
-  _validateEnvName(name: string, envs: EnvItem[]) {
-    let reg = /^[-._a-zA-Z][-._a-zA-Z0-9]*$/,
+  _validateEnvName(name: string, envs: ContainerEnv.ItemWithId[]) {
+    let reg = /^[A-Za-z][-A-Za-z0-9_\.]*$/,
       status = 0,
       message = '';
 
@@ -1180,7 +1179,7 @@ export const validateWorkloadActions = {
     } else if (!reg.test(name)) {
       status = 2;
       message = t('环境变量名称格式不对');
-    } else if (name && envs.filter(e => e.envName === name).length > 1) {
+    } else if (name && envs.filter(e => e.name === name).length > 1) {
       status = 2;
       message = t('环境变量不可重复');
     } else {
@@ -1191,14 +1190,14 @@ export const validateWorkloadActions = {
   },
 
   validateEnvName(name: string, cId: string, eId: string) {
-    return async (dispatch, getState: GetState) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
         cIndex = containers.findIndex(c => c.id === cId),
-        envs: EnvItem[] = containers[cIndex].envs,
+        envs: ContainerEnv.ItemWithId[] = containers[cIndex].envItems,
         eIndex = envs.findIndex(e => e.id === eId),
         result = validateWorkloadActions._validateEnvName(name, envs);
 
-      containers[cIndex]['envs'][eIndex]['v_envName'] = result;
+      containers[cIndex]['envItems'][eIndex]['v_name'] = result;
       dispatch({
         type: ActionType.W_UpdateContainers,
         payload: containers
@@ -1206,46 +1205,45 @@ export const validateWorkloadActions = {
     };
   },
 
-  _validateAllEnvName(envs: EnvItem[]) {
+  _validateAllEnvName(envs: ContainerEnv.ItemWithId[]) {
     let result = true;
     envs.forEach(e => {
-      result = result && validateWorkloadActions._validateEnvName(e.envName, envs).status === 1;
+      result = result && validateWorkloadActions._validateEnvName(e.name, envs).status === 1;
     });
     return result;
   },
 
   validateAllEnvName(container: ContainerItem) {
-    return async (dispatch, getState: GetState) => {
-      container.envs.forEach(e => {
-        dispatch(validateWorkloadActions.validateEnvName(e.envName, container.id + '', e.id + ''));
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      container.envItems.forEach(e => {
+        dispatch(validateWorkloadActions.validateEnvName(e.name, container.id + '', e.id + ''));
       });
     };
   },
 
-  /** 校验容器的环境变量：valueFrom 的key 是否正确 */
-  _validateValueFromKey(name: string) {
-    let status = 0,
+  /** 校验envItem的内容是否正确 */
+  _validateNewEnvItemValue(value: string) {
+    let status = 1,
       message = '';
 
-    if (!name) {
+    if (!value) {
       status = 2;
-      message = t('请选择Key');
-    } else {
-      status = 1;
-      message = '';
+      message = t('请选择下拉项');
     }
     return { status, message };
   },
 
-  validateValueFromKey(keyName: string, cId: string, vId: string) {
-    return async (dispatch, getState: GetState) => {
+  validateNewEnvItemValue(keyNames: (keyof ContainerEnv.Item)[], cId: string, eId: string) {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
         cIndex = containers.findIndex(c => c.id === cId),
-        valueFrom: ValueFrom[] = containers[cIndex].valueFrom,
-        vIndex = valueFrom.findIndex(v => v.id === vId),
-        result = validateWorkloadActions._validateValueFromKey(keyName);
+        newEnvItems: ContainerEnv.ItemWithId[] = containers[cIndex]['envItems'],
+        vIndex = newEnvItems.findIndex(e => e.id === eId);
 
-      containers[cIndex]['valueFrom'][vIndex]['v_key'] = result;
+      keyNames.forEach(keyName => {
+        let result = validateWorkloadActions._validateNewEnvItemValue(newEnvItems[vIndex][keyName] as string);
+        containers[cIndex]['envItems'][vIndex][`v_${keyName}`] = result;
+      });
       dispatch({
         type: ActionType.W_UpdateContainers,
         payload: containers
@@ -1253,72 +1251,35 @@ export const validateWorkloadActions = {
     };
   },
 
-  _validateAllValueFromKey(valueFrom: ValueFrom[]) {
+  /** 校验所有的EnvItem */
+  _validateAllNewEnvItemValue(envItems: ContainerEnv.ItemWithId[]) {
     let result = true;
-    valueFrom.forEach(v => {
-      result = result && validateWorkloadActions._validateValueFromKey(v.key).status === 1;
+    envItems.forEach(envItem => {
+      if (envItem.type === ContainerEnv.EnvTypeEnum.ConfigMapRef) {
+        result =
+          result &&
+          validateWorkloadActions._validateNewEnvItemValue(envItem.configMapName).status === 1 &&
+          validateWorkloadActions._validateNewEnvItemValue(envItem.configMapDataKey).status === 1;
+      } else if (envItem.type === ContainerEnv.EnvTypeEnum.SecretKeyRef) {
+        result =
+          result &&
+          validateWorkloadActions._validateNewEnvItemValue(envItem.secretName).status === 1 &&
+          validateWorkloadActions._validateNewEnvItemValue(envItem.secretDataKey).status === 1;
+      }
     });
     return result;
   },
 
-  validateAllValueFromKey(container: ContainerItem) {
-    return async (dispatch, getState: GetState) => {
-      container.valueFrom.forEach(v => {
-        dispatch(validateWorkloadActions.validateValueFromKey(v.key, container.id + '', v.id + ''));
-      });
-    };
-  },
-
-  /** 校验环境变量 valueFrom: 别名 */
-  _validateValueFromAlias(alias: string, valueFrom: ValueFrom[]) {
-    let status = 0,
-      message = '',
-      reg = /^[a-zA-Z_][a-zA-Z_0-9]*$/;
-
-    if (!alias) {
-      status = 2;
-      message = t('别名不能为空');
-    } else if (!reg.test(alias)) {
-      status = 2;
-      message = t('格式不正确，别名只能由字母、数字和"_"组成，并且只能以字母或"_"开头');
-    } else if (valueFrom.filter(item => item.aliasName === alias).length > 1) {
-      status = 2;
-      message = t('别名不可重复');
-    } else {
-      status = 1;
-      message = '';
-    }
-    return { status, message };
-  },
-
-  validateValueFromAlias(alias: string, cId: string, vId: string) {
-    return async (dispatch, getState: GetState) => {
-      let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
-        cIndex = containers.findIndex(c => c.id === cId),
-        valueFrom: ValueFrom[] = containers[cIndex].valueFrom,
-        vIndex = valueFrom.findIndex(v => v.id === vId),
-        result = validateWorkloadActions._validateValueFromAlias(alias, valueFrom);
-
-      containers[cIndex]['valueFrom'][vIndex]['v_aliasName'] = result;
-      dispatch({
-        type: ActionType.W_UpdateContainers,
-        payload: containers
-      });
-    };
-  },
-
-  _validateAllValueFromAlias(valueFrom: ValueFrom[]) {
-    let result = true;
-    valueFrom.forEach(v => {
-      result = result && validateWorkloadActions._validateValueFromAlias(v.aliasName, valueFrom).status === 1;
-    });
-    return result;
-  },
-
-  validateAllValueFromAlias(container: ContainerItem) {
-    return async (dispatch, getState: GetState) => {
-      container.valueFrom.forEach(v => {
-        dispatch(validateWorkloadActions.validateValueFromAlias(v.aliasName, container.id + '', v.id + ''));
+  validateAllNewEnvItemValue(container: ContainerItem) {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      container.envItems.forEach(envItem => {
+        let cId = container.id + '';
+        let eId = envItem.id + '';
+        if (envItem.type === ContainerEnv.EnvTypeEnum.ConfigMapRef) {
+          dispatch(validateWorkloadActions.validateNewEnvItemValue(['configMapName', 'configMapDataKey'], cId, eId));
+        } else if (envItem.type === ContainerEnv.EnvTypeEnum.SecretKeyRef) {
+          dispatch(validateWorkloadActions.validateNewEnvItemValue(['secretName', 'secretDataKey'], cId, eId));
+        }
       });
     };
   },
@@ -1665,9 +1626,15 @@ export const validateWorkloadActions = {
     });
 
     // 如果有环境变量，则判断环境变量是否ok
-    if (container.envs.length) {
-      container.envs.forEach(env => {
-        state = state || env.v_envName.status === 2;
+    if (container.envItems.length) {
+      container.envItems.forEach(env => {
+        state =
+          state ||
+          env.v_name.status === 2 ||
+          env.v_configMapName.status === 2 ||
+          env.v_configMapDataKey.status === 2 ||
+          env.v_secretName.status === 2 ||
+          env.v_secretDataKey.status === 2;
       });
     }
 
@@ -1713,15 +1680,11 @@ export const validateWorkloadActions = {
       validateWorkloadActions._validateAllMemLimit(container.memLimit) &&
       validateWorkloadActions._validateWorkingDir(container.workingDir).status === 1;
 
-    if (container.envs.length) {
-      result = result && validateWorkloadActions._validateAllEnvName(container.envs);
-    }
-
-    if (container.valueFrom.length) {
+    if (container.envItems.length) {
       result =
         result &&
-        validateWorkloadActions._validateAllValueFromKey(container.valueFrom) &&
-        validateWorkloadActions._validateAllValueFromAlias(container.valueFrom);
+        validateWorkloadActions._validateAllEnvName(container.envItems) &&
+        validateWorkloadActions._validateAllNewEnvItemValue(container.envItems);
     }
 
     // 校验挂载业务
@@ -1765,14 +1728,9 @@ export const validateWorkloadActions = {
         dispatch(validateWorkloadActions.validateWorkingDir(container.workingDir, cKey));
 
         // 校验环境变量是否都ok
-        if (container.envs.length) {
+        if (container.envItems.length) {
           dispatch(validateWorkloadActions.validateAllEnvName(container));
-        }
-
-        // 校验valuerFrom是否都ok
-        if (container.valueFrom.length) {
-          dispatch(validateWorkloadActions.validateAllValueFromKey(container));
-          dispatch(validateWorkloadActions.validateAllValueFromAlias(container));
+          dispatch(validateWorkloadActions.validateAllNewEnvItemValue(container));
         }
 
         // 校验挂载项是否都ok

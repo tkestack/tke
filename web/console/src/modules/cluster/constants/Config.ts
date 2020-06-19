@@ -8,6 +8,7 @@ export const FFReduxActionName = {
   DETAILEVENT: 'DETAILEVENT',
 
   Resource_Workload: 'Resource_Workload',
+  Resource_Detail_Info: 'Resource_Detail_Info',
   LBCF_DRIVER: 'LBCF_DRIVER'
 };
 /** ========================= end FFRedux的相关配置 ======================== */

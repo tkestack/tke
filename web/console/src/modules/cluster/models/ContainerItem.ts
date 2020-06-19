@@ -1,6 +1,7 @@
 import { Identifiable } from '@tencent/ff-redux';
 
 import { Validation } from '../../common/models';
+import { ContainerEnv } from './ContainerEnv';
 
 export interface ContainerItem extends Identifiable {
   /** 状态 */
@@ -27,9 +28,7 @@ export interface ContainerItem extends Identifiable {
   cpuLimit?: LimitItem[];
 
   /** 环境变量 */
-  envs?: EnvItem[];
-
-  valueFrom?: ValueFrom[];
+  envItems?: ContainerEnv.ItemWithId[];
 
   /** 是否开启高级设置 */
   isOpenAdvancedSetting?: boolean;
@@ -102,34 +101,6 @@ export interface MountItem extends Identifiable {
   /** 权限 */
   mode?: string;
   v_mode?: Validation;
-}
-
-/** 环境变量当中搞得valueFrom */
-export interface ValueFrom extends Identifiable {
-  /** configMap、secret */
-  type?: string;
-
-  /** 具体资源的名称 */
-  name?: string;
-
-  /** 具体的key */
-  key?: string;
-  v_key?: Validation;
-
-  /** aliasName */
-  aliasName?: string;
-  v_aliasName?: Validation;
-}
-
-/** 环境变量的item */
-export interface EnvItem extends Identifiable {
-  /** 变量名 */
-  envName?: string;
-  v_envName?: Validation;
-
-  /** 变量值 */
-  envValue?: string;
-  v_envValue?: Validation;
 }
 
 /** 健康检查项 */

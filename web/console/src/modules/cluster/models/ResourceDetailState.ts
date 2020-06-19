@@ -4,10 +4,14 @@ import { FetcherState, FFListModel, QueryState, RecordSet, WorkflowState } from 
 
 import { CreateResource, Event, Pod, Replicaset, ResourceFilter } from './';
 import { PodFilterInNode } from './Pod';
+import { Resource } from './ResourceOption';
 
 type ResourceModifyWorkflow = WorkflowState<CreateResource, number>;
 
 export interface ResourceDetailState {
+  /** 拉取资源的详情信息 */
+  resourceDetailInfo?: FFListModel<Resource, ResourceFilter>;
+
   /** yaml 的数据列表 */
   yamlList?: FetcherState<RecordSet<string>>;
 
