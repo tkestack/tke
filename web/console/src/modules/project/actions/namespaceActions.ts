@@ -135,12 +135,6 @@ const restActions = {
     }
   }),
 
-  select: (namespaces: Namespace[]) => {
-    return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      dispatch(FFModelNamespaceActions.selects(namespaces));
-    };
-  },
-
   selectCluster: (value: string | number) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       dispatch({
@@ -283,8 +277,8 @@ const restActions = {
       });
     };
   },
-  getKubectlConfig: (certInfo: NamespaceCert, clusterId: string) => {
-    let config = `apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: ${certInfo.caCertPem}\n    server: ${certInfo.apiServer}\n  name: ${clusterId}\ncontexts:\n- context:\n    cluster: ${clusterId}\n    user: ${clusterId}-admin\n  name: ${clusterId}-context-default\ncurrent-context: ${clusterId}-context-default\nkind: Config\npreferences: {}\nusers:\n- name: ${clusterId}-admin\n  user:\n    certPem: ${certInfo.certPem}\n    keyPem: ${certInfo.keyPem}\n`;
+  getKubectlConfig: (certInfo: NamespaceCert, clusterId: string, np: string, userName: string) => {
+    let config = `apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: ${certInfo.caCertPem}\n    server: ${certInfo.apiServer}\n  name: ${clusterId}\ncontexts:\n- context:\n    cluster: ${clusterId}\n    user: ${userName}\n  name: ${clusterId}-${np}\ncurrent-context: ${clusterId}-${np}\nkind: Config\npreferences: {}\nusers:\n- name: ${userName}\n  user:\n    client-certificate-data: ${certInfo.certPem}\n    client-key-data: ${certInfo.keyPem}\n`;
     return config;
   }
 };

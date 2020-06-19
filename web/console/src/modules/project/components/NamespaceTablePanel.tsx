@@ -198,6 +198,7 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
           tipDirection="right"
           onClick={() => {
             this.setState({ isShowKuctlDialog: true });
+            actions.namespace.select(namespace);
             actions.namespace.namespaceKubectlConfig.applyFilter({
               projectId: projectDetail ? projectDetail.metadata.name : route.queries['projectId'],
               np: namespace.metadata.name
@@ -313,14 +314,17 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
   private _renderKubectlDialog() {
     let {
       namespaceKubectlConfig,
-      namespace: { selection }
+      namespace: { selection },
+      userInfo
     } = this.props;
     const cancel = () => {
       this.setState({ isShowKuctlDialog: false });
     };
     let certInfo = namespaceKubectlConfig.object && namespaceKubectlConfig.object.data;
     let clusterId = selection && selection.spec.clusterName;
-    let kubectlConfig = certInfo ? namespaceActions.getKubectlConfig(certInfo, clusterId) : '';
+    let np = selection && selection.spec.namespace;
+    let userName = userInfo.object.data ? userInfo.object.data.name : '';
+    let kubectlConfig = certInfo ? namespaceActions.getKubectlConfig(certInfo, clusterId, np, userName) : '';
     return (
       <Modal visible={this.state.isShowKuctlDialog} caption={t('访问凭证')} onClose={() => cancel()} size={700}>
         <Modal.Body>
@@ -333,7 +337,7 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
                   </Clip>
                   <a
                     href="javascript:void(0)"
-                    onClick={e => downloadKubeconfig(kubectlConfig, `${clusterId}&{}-config`)}
+                    onClick={e => downloadKubeconfig(kubectlConfig, `config`)}
                     className="copy-btn"
                     style={{ right: '50px' }}
                   >
@@ -385,68 +389,11 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
                   访问凭证内容并粘贴入 ~/.kube/config 中。
                 </p>
               </li>
-              <li style={{ listStyle: 'disc', marginLeft: '15px' }}>
-                <p style={{ marginBottom: '5px' }}>
-                  若当前访问客户端已配置了其他集群的访问凭证，你可下载上方 kubeconfig
-                  至指定位置，并执行以下指令以合并多个集群的 config。
-                </p>
-                <div className="rich-textarea hide-number" style={{ width: '100%' }}>
-                  <div className="rich-content">
-                    <Clip target={'#kubeconfig-merge'} className="copy-btn">
-                      复制
-                    </Clip>
-                    <pre
-                      className="rich-text"
-                      id="kubeconfig-merge"
-                      style={{
-                        whiteSpace: 'pre-wrap',
-                        overflow: 'auto'
-                      }}
-                    >
-                      KUBECONFIG=~/.kube/config:~/Downloads/{clusterId}-config kubectl config view --merge --flatten
-                      &gt; ~/.kube/config
-                      <br />
-                      export KUBECONFIG=~/.kube/config
-                    </pre>
-                  </div>
-                </div>
-                <p style={{ marginBottom: '5px' }}>
-                  其中，~/Downloads/{clusterId}-config 为本集群的 kubeconfig
-                  的文件路径，请替换为下载至本地后的实际路径。
-                </p>
-              </li>
             </ul>
-            <p style={{ marginBottom: '5px' }}>3. 访问 Kubernetes 集群：</p>
-            <ul>
-              <li style={{ marginLeft: '15px' }}>
-                <p style={{ marginBottom: '5px' }}>
-                  完成 kubeconfig 配置后，执行以下指令查看并切换 context 以访问本集群：
-                </p>
-                <div className="rich-textarea hide-number" style={{ width: '100%' }}>
-                  <div className="rich-content">
-                    <Clip target={'#kubeconfig-visit'} className="copy-btn">
-                      复制
-                    </Clip>
-                    <pre
-                      className="rich-text"
-                      id="kubeconfig-visit"
-                      style={{
-                        whiteSpace: 'pre-wrap',
-                        overflow: 'auto'
-                      }}
-                    >
-                      kubectl config get-contexts
-                      <br />
-                      kubectl config use-context {clusterId}-context-default
-                    </pre>
-                  </div>
-                </div>
-                <p style={{ marginBottom: '5px' }}>
-                  而后可执行 kubectl get node
-                  测试是否可正常访问集群。如果无法连接请查看是否已经开启公网访问或内网访问入口，并确保访问客户端在指定的网络环境内。
-                </p>
-              </li>
-            </ul>
+            <p style={{ marginBottom: '5px' }}>
+              3. 可执行 kubectl get node
+              测试是否可正常访问集群。如果无法连接请查看是否已经开启公网访问或内网访问入口，并确保访问客户端在指定的网络环境内。
+            </p>
           </div>
         </Modal.Body>
         <Modal.Footer>
