@@ -19,6 +19,7 @@
 package ssh
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -69,4 +70,20 @@ func NumCPU(s Interface) (int, error) {
 	}
 
 	return cpu, nil
+}
+
+// DiskAvail returns available disk space in GiB.
+func DiskAvail(s Interface, path string) (int, error) {
+	cmd := fmt.Sprintf(`df -BG %s | tail -1 | awk '{print $4}' | grep -oP '\d+'`, path)
+	stdout, err := s.CombinedOutput(cmd)
+	if err != nil {
+		return 0, err
+	}
+
+	disk, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
+	if err != nil {
+		return 0, err
+	}
+
+	return disk, nil
 }
