@@ -69,7 +69,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	oldPolicy, _ := old.(*auth.Policy)
 	policy, _ := obj.(*auth.Policy)
 	if len(tenantID) != 0 {
@@ -106,7 +106,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	policy, _ := obj.(*auth.Policy)
-	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" {
 		policy.Spec.TenantID = tenantID
 		policy.Spec.Type = auth.PolicyCustom

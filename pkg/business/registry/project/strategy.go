@@ -83,7 +83,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldProject := old.(*business.Project)
 	project, _ := obj.(*business.Project)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldProject.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update project information",
@@ -121,7 +121,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	project, _ := obj.(*business.Project)
 	if len(tenantID) != 0 {
 		project.Spec.TenantID = tenantID

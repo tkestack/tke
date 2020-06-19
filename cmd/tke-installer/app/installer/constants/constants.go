@@ -49,6 +49,8 @@ const (
 	AdminKeyFile         = DataDir + "admin.key"
 
 	KubeconfigFile = DataDir + "admin.kubeconfig"
+
+	AuthzWebhookNodePort = 31138
 )
 
 const (

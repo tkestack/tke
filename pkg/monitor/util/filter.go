@@ -30,7 +30,7 @@ import (
 // FilterPrometheus is used to filter helm that do not belong
 // to the tenant.
 func FilterPrometheus(ctx context.Context, prom *monitor.Prometheus) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}

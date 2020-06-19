@@ -41,6 +41,17 @@ message AddonSpec {
   optional string version = 3;
 }
 
+message AuthzWebhookAddr {
+  // +optional
+  optional BuiltinAuthzWebhookAddr builtin = 1;
+
+  // +optional
+  optional ExternalAuthzWebhookAddr external = 2;
+}
+
+message BuiltinAuthzWebhookAddr {
+}
+
 // CSIOperator is a operator to manages CSI external components.
 message CSIOperator {
   // +optional
@@ -355,6 +366,10 @@ message ClusterFeature {
 
   // +optional
   optional CSIOperatorFeature csiOperator = 10;
+
+  // For kube-apiserver authorization webhook
+  // +optional
+  optional AuthzWebhookAddr authzWebhookAddr = 11;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.
@@ -643,6 +658,12 @@ message Etcd {
   // External describes how to connect to an external etcd cluster
   // Local and External are mutually exclusive
   optional ExternalEtcd external = 2;
+}
+
+message ExternalAuthzWebhookAddr {
+  optional string ip = 1;
+
+  optional int32 port = 2;
 }
 
 // ExternalEtcd describes an external etcd cluster.

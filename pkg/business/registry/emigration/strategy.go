@@ -63,7 +63,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldEmigration := old.(*business.NsEmigration)
 	newEmigration, _ := obj.(*business.NsEmigration)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldEmigration.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update emigration information",
@@ -89,7 +89,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	emigration, _ := obj.(*business.NsEmigration)
 	if len(tenantID) != 0 {
 		emigration.Spec.TenantID = tenantID

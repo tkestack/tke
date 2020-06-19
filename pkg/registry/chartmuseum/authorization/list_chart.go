@@ -72,7 +72,7 @@ func (a *authorization) validateListChart(w http.ResponseWriter, req *http.Reque
 		return nil, fmt.Errorf("locked")
 	}
 	if chartGroup.Spec.Visibility == registry.VisibilityPrivate {
-		username, userTenantID := authentication.GetUsernameAndTenantID(req.Context())
+		username, userTenantID := authentication.UsernameAndTenantID(req.Context())
 		if username == "" && userTenantID == "" {
 			a.notAuthenticated(w, req)
 			return nil, fmt.Errorf("not authenticated")

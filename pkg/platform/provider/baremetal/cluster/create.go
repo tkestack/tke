@@ -31,8 +31,6 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/image"
-
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -45,11 +43,13 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/authzwebhook"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy"
 	galaxyimages "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/image"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/keepalived"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
@@ -587,10 +587,35 @@ func (p *Provider) EnsureThirdPartyHAInit(ctx context.Context, c *v1.Cluster) er
 
 	return nil
 }
+func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error {
+	if !c.AuthzWebhookEnable() {
+		return nil
+	}
+
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		authzEndpoint, ok := c.AuthzWebhookExternEndpoint()
+		if !ok {
+			authzEndpoint = p.config.AuthzWebhook.Endpoint
+		}
+
+		option := authzwebhook.Option{AuthzWebhookEndpoint: authzEndpoint}
+		err = authzwebhook.Install(machineSSH, &option)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
 
 func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
 	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
-	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigName)
+	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigFile)
 	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
 	if GPUQuotaAdmissionHost == "" {
 		GPUQuotaAdmissionHost = "gpu-quota-admission"
@@ -639,7 +664,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 
 		if p.config.Audit.Address != "" {
 			if len(auditPolicyData) != 0 {
-				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), constants.KuberentesAuditPolicyConfigFile)
+				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), constants.KubernetesAuditPolicyConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}

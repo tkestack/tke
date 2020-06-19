@@ -174,8 +174,12 @@ func (p *Provider) getAPIServerExtraArgs(c *v1.Cluster) map[string]string {
 		"token-auth-file": constants.TokenFile,
 	}
 	if p.config.Audit.Address != "" {
-		args["audit-policy-file"] = constants.KuberentesAuditPolicyConfigFile
+		args["audit-policy-file"] = constants.KubernetesAuditPolicyConfigFile
 		args["audit-webhook-config-file"] = constants.KuberentesAuditWebhookConfigFile
+	}
+	if c.AuthzWebhookEnable() {
+		args["authorization-webhook-config-file"] = constants.KubernetesAuthzWebhookConfigFile
+		args["authorization-mode"] = "Node,RBAC,Webhook"
 	}
 	for k, v := range c.Spec.APIServerExtraArgs {
 		args[k] = v

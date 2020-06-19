@@ -30,7 +30,7 @@ import (
 // FilterLogAgent is used to filter log collector that do not belong
 // to the tenant.
 func FilterLogAgent(ctx context.Context, decorator *logagent.LogAgent) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}

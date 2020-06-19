@@ -38,7 +38,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
@@ -49,7 +48,6 @@ import (
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -60,7 +58,7 @@ const (
 )
 
 func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (dynamic.Interface, error) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
 	}
@@ -75,7 +73,7 @@ func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, plat
 
 // ClientSetByCluster returns the backend kubernetes clientSet by given cluster object
 func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (*kubernetes.Clientset, error) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
 	}
@@ -85,105 +83,6 @@ func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platform
 	}
 
 	return BuildClientSet(ctx, cluster, credential)
-}
-
-// ClientSet returns the backend kubernetes clientSet
-func ClientSet(ctx context.Context, platformClient platforminternalclient.PlatformInterface) (*kubernetes.Clientset, error) {
-	clusterName := filter.ClusterFrom(ctx)
-	if clusterName == "" {
-		return nil, errors.NewBadRequest("clusterName is required")
-	}
-
-	cluster, err := platformClient.Clusters().Get(ctx, clusterName, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return ClientSetByCluster(ctx, cluster, platformClient)
-}
-
-// RESTClient returns the versioned rest client of clientSet.
-func RESTClient(ctx context.Context, platformClient platforminternalclient.PlatformInterface) (restclient.Interface, *request.RequestInfo, error) {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return nil, nil, errors.NewBadRequest("unable to get request info from context")
-	}
-	clientSet, err := ClientSet(ctx, platformClient)
-	if err != nil {
-		return nil, nil, err
-	}
-	client := RESTClientFor(clientSet, requestInfo.APIGroup, requestInfo.APIVersion)
-	return client, requestInfo, nil
-}
-
-// RESTClientFor returns the versioned rest client of clientSet by given api
-// version.
-func RESTClientFor(clientSet *kubernetes.Clientset, apiGroup, apiVersion string) restclient.Interface {
-	gv := fmt.Sprintf("%s/%s", strings.ToLower(apiGroup), strings.ToLower(apiVersion))
-	switch gv {
-	case "/v1":
-		return clientSet.CoreV1().RESTClient()
-	case "apps/v1":
-		return clientSet.AppsV1().RESTClient()
-	case "apps/v1beta1":
-		return clientSet.AppsV1beta1().RESTClient()
-	case "admissionregistration.k8s.io/v1beta1":
-		return clientSet.AdmissionregistrationV1beta1().RESTClient()
-	case "apps/v1beta2":
-		return clientSet.AppsV1beta2().RESTClient()
-	case "autoscaling/v1":
-		return clientSet.AutoscalingV1().RESTClient()
-	case "autoscaling/v2beta1":
-		return clientSet.AutoscalingV2beta1().RESTClient()
-	case "batch/v1":
-		return clientSet.BatchV1().RESTClient()
-	case "batch/v1beta1":
-		return clientSet.BatchV1beta1().RESTClient()
-	case "batch/v2alpha1":
-		return clientSet.BatchV2alpha1().RESTClient()
-	case "certificates.k8s.io/v1beta1":
-		return clientSet.CertificatesV1beta1().RESTClient()
-	case "events.k8s.io/v1beta1":
-		return clientSet.EventsV1beta1().RESTClient()
-	case "extensions/v1beta1":
-		return clientSet.ExtensionsV1beta1().RESTClient()
-	case "networking.k8s.io/v1":
-		return clientSet.NetworkingV1().RESTClient()
-	case "networking.k8s.io/v1beta1":
-		return clientSet.NetworkingV1beta1().RESTClient()
-	case "coordination.k8s.io/v1":
-		return clientSet.CoordinationV1().RESTClient()
-	case "coordination.k8s.io/v1beta1":
-		return clientSet.CoordinationV1beta1().RESTClient()
-	case "policy/v1beta1":
-		return clientSet.PolicyV1beta1().RESTClient()
-	case "rbac.authorization.k8s.io/v1alpha1":
-		return clientSet.RbacV1alpha1().RESTClient()
-	case "rbac.authorization.k8s.io/v1":
-		return clientSet.RbacV1().RESTClient()
-	case "rbac.authorization.k8s.io/v1beta1":
-		return clientSet.RbacV1beta1().RESTClient()
-	case "scheduling.k8s.io/v1alpha1":
-		return clientSet.SchedulingV1alpha1().RESTClient()
-	case "scheduling.k8s.io/v1beta1":
-		return clientSet.SchedulingV1beta1().RESTClient()
-	case "node.k8s.io/v1alpha1":
-		return clientSet.NodeV1alpha1().RESTClient()
-	case "node.k8s.io/v1beta1":
-		return clientSet.NodeV1beta1().RESTClient()
-	case "scheduling.k8s.io/v1":
-		return clientSet.SchedulingV1().RESTClient()
-	case "settings.k8s.io/v1alpha1":
-		return clientSet.SettingsV1alpha1().RESTClient()
-	case "storage.k8s.io/v1alpha1":
-		return clientSet.StorageV1alpha1().RESTClient()
-	case "storage.k8s.io/v1":
-		return clientSet.StorageV1().RESTClient()
-	case "storage.k8s.io/v1beta1":
-		return clientSet.StorageV1beta1().RESTClient()
-	default:
-		return clientSet.RESTClient()
-	}
 }
 
 // ResourceFromKind returns the resource name by kind.

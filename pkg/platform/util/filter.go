@@ -29,7 +29,7 @@ import (
 
 // FilterCluster is used to filter clusters that do not belong to the tenant.
 func FilterCluster(ctx context.Context, cluster *platform.Cluster) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -41,7 +41,7 @@ func FilterCluster(ctx context.Context, cluster *platform.Cluster) error {
 
 // FilterClusterCredential is used to filter ClusterCredential that do not belong to the tenant.
 func FilterClusterCredential(ctx context.Context, obj *platform.ClusterCredential) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -53,7 +53,7 @@ func FilterClusterCredential(ctx context.Context, obj *platform.ClusterCredentia
 
 // FilterMachine is used to filter machine that do not belong to the tenant.
 func FilterMachine(ctx context.Context, machine *platform.Machine) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -65,7 +65,7 @@ func FilterMachine(ctx context.Context, machine *platform.Machine) error {
 
 // FilterRegistry is used to filter registry that do not belong to the tenant.
 func FilterRegistry(ctx context.Context, registry *platform.Registry) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -78,7 +78,7 @@ func FilterRegistry(ctx context.Context, registry *platform.Registry) error {
 // FilterPersistentEvent is used to filter persistent event that do not belong
 // to the tenant.
 func FilterPersistentEvent(ctx context.Context, pe *platform.PersistentEvent) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -91,7 +91,7 @@ func FilterPersistentEvent(ctx context.Context, pe *platform.PersistentEvent) er
 // FilterHelm is used to filter helm that do not belong
 // to the tenant.
 func FilterHelm(ctx context.Context, helm *platform.Helm) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -104,7 +104,7 @@ func FilterHelm(ctx context.Context, helm *platform.Helm) error {
 // FilterTappController is used to filter tapp controller that do not belong
 // to the tenant.
 func FilterTappController(ctx context.Context, tappController *platform.TappController) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -117,7 +117,7 @@ func FilterTappController(ctx context.Context, tappController *platform.TappCont
 // FilterCSIOperator is used to filter csi operator that do not belong
 // to the tenant.
 func FilterCSIOperator(ctx context.Context, csiOperator *platform.CSIOperator) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -130,7 +130,7 @@ func FilterCSIOperator(ctx context.Context, csiOperator *platform.CSIOperator) e
 // FilterVolumeDecorator is used to filter volume decorator that do not belong
 // to the tenant.
 func FilterVolumeDecorator(ctx context.Context, decorator *platform.VolumeDecorator) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -143,7 +143,7 @@ func FilterVolumeDecorator(ctx context.Context, decorator *platform.VolumeDecora
 // FilterLogCollector is used to filter log collector that do not belong
 // to the tenant.
 func FilterLogCollector(ctx context.Context, decorator *platform.LogCollector) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -156,7 +156,7 @@ func FilterLogCollector(ctx context.Context, decorator *platform.LogCollector) e
 // FilterCronHPA is used to filter CronHPA that do not belong
 // to the tenant.
 func FilterCronHPA(ctx context.Context, cronHPA *platform.CronHPA) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -169,7 +169,7 @@ func FilterCronHPA(ctx context.Context, cronHPA *platform.CronHPA) error {
 // FilterPrometheus is used to filter helm that do not belong
 // to the tenant.
 func FilterPrometheus(ctx context.Context, prom *platform.Prometheus) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -182,7 +182,7 @@ func FilterPrometheus(ctx context.Context, prom *platform.Prometheus) error {
 // FilterIPAM is used to filter ipam that do not belong
 // to the tenant.
 func FilterIPAM(ctx context.Context, ipam *platform.IPAM) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -194,7 +194,7 @@ func FilterIPAM(ctx context.Context, ipam *platform.IPAM) error {
 
 // FilterLBCF is used to filter LBCF that do not belong to the tenant.
 func FilterLBCF(ctx context.Context, lbcf *platform.LBCF) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}

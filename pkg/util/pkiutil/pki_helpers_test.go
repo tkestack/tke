@@ -530,21 +530,67 @@ func TestAppendSANsToAltNames(t *testing.T) {
 }
 
 func TestGenerateCertAndKey(t *testing.T) {
-	cacrt, err := ioutil.ReadFile("./ca.crt")
-	if err != nil {
-		t.Errorf("ca.crt err: %s", err.Error())
-		return
+	config := &certutil.Config{
+		CommonName:   "TKE",
+		Organization: []string{"Tencent"},
 	}
-	cakey, err := ioutil.ReadFile("ca.key")
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		t.Errorf("ca.key err: %s", err.Error())
-		return
+		t.Fatalf("couldn't generate Private Key: %s", err)
 	}
-	clientcertData, clientkeyData, err := GenerateCertAndKey("tke", nil, cacrt, cakey)
+	caCert, err := certutil.NewSelfSignedCACert(*config, caKey)
 	if err != nil {
-		t.Errorf("unexpected err: %s", err.Error())
-		return
+		t.Fatalf("couldn't create self signed ca cert: %s", err)
 	}
-	ioutil.WriteFile("./etcdclient.crt", clientcertData, 0777)
-	ioutil.WriteFile("./etcdclient.key", clientkeyData, 0777)
+	caCertEncoded := EncodeCertPEM(caCert)
+	if len(caCertEncoded) == 0 {
+		t.Fatalf("ca cert is empty")
+	}
+	caKeyEncoded := EncodePrivateKeyPEM(caKey)
+	if len(caKeyEncoded) == 0 {
+		t.Fatalf("ca key is empty")
+	}
+
+	var tests = []struct {
+		desc     string
+		username string
+		groups   []string
+		expected bool
+	}{
+		{
+			desc:     "empty username and groups",
+			username: "",
+			groups:   nil,
+			expected: false,
+		},
+		{
+			desc:     "empty groups",
+			username: "tke",
+			groups:   nil,
+			expected: true,
+		},
+		{
+			desc:     "empty username",
+			username: "",
+			groups:   []string{"group1", "group2"},
+			expected: false,
+		},
+		{
+			desc:     "username and groups",
+			username: "tke",
+			groups:   []string{"group1", "group2"},
+			expected: true,
+		},
+	}
+
+	for _, rt := range tests {
+		t.Run(rt.desc, func(t *testing.T) {
+			_, _, err := GenerateClientCertAndKey(rt.username, rt.groups, caCertEncoded, caKeyEncoded)
+			actual := bool(err == nil)
+			if actual != rt.expected {
+				t.Errorf("failed GenerateClientCertAndKey: desc:%s\n\texpected: %t\n\t  actual: %t\n\t  err: %s",
+					rt.desc, rt.expected, actual, err)
+			}
+		})
+	}
 }

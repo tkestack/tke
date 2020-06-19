@@ -91,7 +91,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
 			p.EnsureKeepalivedInit,
-
+			p.EnsureAuthzWebhook,
 			p.EnsurePrepareForControlplane,
 
 			p.EnsureKubeadmInitPhaseKubeletStart,

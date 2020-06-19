@@ -73,7 +73,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // Validate validates a new api signing key.
 func (Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" {
 		return field.ErrorList{field.Forbidden(field.NewPath(""), "Please contact admin to create category")}
 	}
@@ -115,7 +115,7 @@ func ToSelectableFields(category *auth.Category) fields.Set {
 
 // ValidateUpdate is the default update validation for a api signing key.
 func (Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" {
 		return field.ErrorList{field.Forbidden(field.NewPath(""), "Please contact admin to update category")}
 	}

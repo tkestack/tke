@@ -142,7 +142,7 @@ func (a *authorization) validateGetChart(w http.ResponseWriter, req *http.Reques
 	}
 	chartObject := chartList.Items[0]
 	if chartObject.Spec.Visibility == registry.VisibilityPrivate {
-		username, userTenantID := authentication.GetUsernameAndTenantID(req.Context())
+		username, userTenantID := authentication.UsernameAndTenantID(req.Context())
 		if username == "" && userTenantID == "" {
 			a.notAuthenticated(w, req)
 			return nil, fmt.Errorf("not authenticated")

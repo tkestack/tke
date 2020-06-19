@@ -117,7 +117,7 @@ func (a *authorization) validateAPICreateChart(w http.ResponseWriter, req *http.
 		a.locked(w)
 		return nil, fmt.Errorf("locked")
 	}
-	username, userTenantID := authentication.GetUsernameAndTenantID(req.Context())
+	username, userTenantID := authentication.UsernameAndTenantID(req.Context())
 	if username == "" && userTenantID == "" {
 		log.Warn("Anonymous user try push chart",
 			log.String("tenantID", tenantID),

@@ -152,7 +152,7 @@ func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, o
 		identityList.Items = newList
 	}
 
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return obj, err
 	}

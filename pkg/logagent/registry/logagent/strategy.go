@@ -20,6 +20,7 @@ package logagent
 
 import (
 	"context"
+
 	"tkestack.io/tke/api/logagent"
 
 	"tkestack.io/tke/pkg/apiserver/authentication"
@@ -70,7 +71,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	logCollector, _ := obj.(*logagent.LogAgent)
 
 	if len(tenantID) != 0 {
@@ -89,7 +90,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	oldCollector := old.(*logagent.LogAgent)
 	newCollector, _ := obj.(*logagent.LogAgent)
 	if len(tenantID) != 0 {
