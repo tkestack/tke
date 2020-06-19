@@ -7,26 +7,23 @@ import * as ActionType from '../constants/ActionType';
 import {
   initContainer,
   initCronMetrics,
-  initEnv,
   initHpaMetrics,
   initmatchExpressions,
   initMount,
-  initValueFrom,
   initVolume,
   initWorkloadAnnotataions,
   initWorkloadLabel
 } from '../constants/initState';
 import {
   ContainerItem,
-  EnvItem,
   HpaMetrics,
   MetricOption,
   Resource,
   ResourceFilter,
   RootState,
-  ValueFrom,
   VolumeItem,
-  WorkloadLabel
+  WorkloadLabel,
+  ContainerEnv
 } from '../models';
 import { CronMetrics, MatchExpressions } from '../models/WorkloadEdit';
 import { router } from '../router';
@@ -626,30 +623,14 @@ export const workloadEditActions = {
   },
 
   /** 新增环境变量 */
-  addEnv: (cKey: string) => {
-    return async (dispatch, getState: GetState) => {
+  addEnvItem: (cKey: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
         cIndex = containers.findIndex(c => c.id === cKey);
 
-      let newEnv: EnvItem = Object.assign({}, initEnv, { id: uuid() });
+      let newEnv: ContainerEnv.ItemWithId = { ...ContainerEnv.initEnvItem, id: uuid() };
 
-      containers[cIndex]['envs'].push(newEnv);
-      dispatch({
-        type: ActionType.W_UpdateContainers,
-        payload: containers
-      });
-    };
-  },
-
-  /** 删除环境变量 */
-  deleteEnv: (cKey: string, eId: string) => {
-    return async (dispatch, getState: GetState) => {
-      let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
-        cIndex = containers.findIndex(c => c.id === cKey),
-        envs: EnvItem[] = containers[cIndex]['envs'],
-        eIndex = envs.findIndex(e => e.id === eId);
-
-      containers[cIndex]['envs'].splice(eIndex, 1);
+      containers[cIndex]['envItems'].push(newEnv);
       dispatch({
         type: ActionType.W_UpdateContainers,
         payload: containers
@@ -658,11 +639,11 @@ export const workloadEditActions = {
   },
 
   /** 更新环境变量 */
-  updateEnv: (obj: any, cKey: string, eId: string) => {
-    return async (dispatch, getState: GetState) => {
+  updateEnvItem: (obj: Partial<ContainerEnv.Item>, cKey: string, eId: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
         cIndex = containers.findIndex(c => c.id === cKey),
-        envs: EnvItem[] = containers[cIndex]['envs'],
+        envs: ContainerEnv.ItemWithId[] = containers[cIndex].envItems,
         eIndex = envs.findIndex(e => e.id === eId),
         objKeys = Object.keys(obj);
 
@@ -676,50 +657,15 @@ export const workloadEditActions = {
     };
   },
 
-  /** 新增valueFrom */
-  addValueFrom: (cKey: string) => {
-    return async (dispatch, getState: GetState) => {
-      let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
-        cIndex = containers.findIndex(c => c.id === cKey);
-
-      let newValueFrom: ValueFrom = Object.assign({}, initValueFrom, { id: uuid() });
-
-      containers[cIndex]['valueFrom'].push(newValueFrom);
-      dispatch({
-        type: ActionType.W_UpdateContainers,
-        payload: containers
-      });
-    };
-  },
-
-  /** 删除valueFrom */
-  deleteValueFrom: (cKey: string, vId: string) => {
-    return async (dispatch, getState: GetState) => {
+  /** 删除环境变量 */
+  deleteEnvItem: (cKey: string, eId: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
         cIndex = containers.findIndex(c => c.id === cKey),
-        valueFrom: ValueFrom[] = containers[cIndex]['valueFrom'],
-        vIndex = valueFrom.findIndex(v => v.id === vId);
+        envs: ContainerEnv.ItemWithId[] = containers[cIndex].envItems,
+        eIndex = envs.findIndex(e => e.id === eId);
 
-      containers[cIndex]['valueFrom'].splice(vIndex, 1);
-      dispatch({
-        type: ActionType.W_UpdateContainers,
-        payload: containers
-      });
-    };
-  },
-
-  /** 更新valueFrom */
-  updateValueFrom: (obj: any, cKey: string, vId: string) => {
-    return async (dispatch, getState: GetState) => {
-      let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
-        cIndex = containers.findIndex(c => c.id === cKey),
-        valueFrom: ValueFrom[] = containers[cIndex]['valueFrom'],
-        vIndex = valueFrom.findIndex(v => v.id === vId),
-        objKeys = Object.keys(obj);
-
-      objKeys.forEach(item => {
-        valueFrom[vIndex][item] = obj[item];
-      });
+      containers[cIndex]['envItems'].splice(eIndex, 1);
       dispatch({
         type: ActionType.W_UpdateContainers,
         payload: containers

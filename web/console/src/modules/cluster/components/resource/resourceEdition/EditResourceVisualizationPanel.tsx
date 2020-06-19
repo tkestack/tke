@@ -31,7 +31,8 @@ import {
   MetricOption,
   ServiceEditJSONYaml,
   VolumeItem,
-  WorkloadEditJSONYaml
+  WorkloadEditJSONYaml,
+  ContainerEnv
 } from '../../../models';
 import { AffinityRule } from '../../../models/WorkloadEdit';
 import { router } from '../../../router';
@@ -1038,49 +1039,46 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         });
       }
 
-      // 处理 env相关的
-      if (c.envs.length) {
-        containerItem['env'] = c.envs.map(env => {
-          let envItem = {
-            name: env.envName
-          };
+      containerItem['env'] = [];
+      c.envItems.forEach(env => {
+        let envItem = {
+          name: env.name
+        };
 
-          if (env.envValue) {
-            envItem['value'] = env.envValue;
-          }
-          return envItem;
-        });
-      }
-
-      // 处理 envFrom的问题
-      if (c.valueFrom.length) {
-        let valueFrom = [];
-        valueFrom = c.valueFrom.map(item => {
-          let envItem = {
-            name: item.aliasName
-          };
-
+        if (env.type === ContainerEnv.EnvTypeEnum.UserDefined) {
+          envItem['value'] = env.value;
+        } else if (
+          env.type === ContainerEnv.EnvTypeEnum.SecretKeyRef ||
+          env.type === ContainerEnv.EnvTypeEnum.ConfigMapRef
+        ) {
+          let isSecret = env.type === ContainerEnv.EnvTypeEnum.SecretKeyRef;
           let keyRef = {
-            key: item.key,
-            name: item.name,
+            key: isSecret ? env.secretDataKey : env.configMapDataKey,
+            name: isSecret ? env.secretName : env.configMapName,
             optional: false
           };
 
-          if (item.type === 'configMap') {
-            envItem['valueFrom'] = {
-              configMapKeyRef: keyRef
-            };
-          } else {
-            envItem['valueFrom'] = {
-              secretKeyRef: keyRef
-            };
-          }
-          return envItem;
-        });
-
-        containerItem['env'] =
-          containerItem['env'] && containerItem['env'].length ? containerItem['env'].concat(valueFrom) : valueFrom;
-      }
+          envItem['valueFrom'] = {
+            [isSecret ? 'secretKeyRef' : 'configMapKeyRef']: keyRef
+          };
+        } else if (env.type === ContainerEnv.EnvTypeEnum.FieldRef) {
+          envItem['valueFrom'] = {
+            fieldRef: {
+              apiVersion: env.apiVersion,
+              fieldPath: env.fieldName
+            }
+          };
+        } else if (env.type === ContainerEnv.EnvTypeEnum.ResourceFieldRef) {
+          envItem['valueFrom'] = {
+            resourceFieldRef: {
+              containerName: c.name,
+              resource: env.resourceFieldName,
+              divisor: env.divisor
+            }
+          };
+        }
+        containerItem['env'].push(envItem);
+      });
 
       // 如果有工作目录
       if (c.workingDir) {

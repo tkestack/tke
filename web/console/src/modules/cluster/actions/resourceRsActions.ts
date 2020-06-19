@@ -3,7 +3,7 @@ import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
 import * as ActionType from '../constants/ActionType';
-import { Replicaset, ResourceFilter, RootState } from '../models';
+import { Replicaset, ResourceFilter, RootState, Resource } from '../models';
 import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
@@ -18,9 +18,13 @@ const fetchRsActions = generateFetcherActionCreator({
     let { subRoot, clusterVersion } = getState(),
       { resourceDetailState, resourceOption } = subRoot,
       { ffResourceList } = resourceOption,
-      { rsQuery } = resourceDetailState;
+      { rsQuery, resourceDetailInfo } = resourceDetailState;
 
-    let labelInfo = ffResourceList.selection.metadata.labels;
+    const getLabelInfo = (resource: Resource) => {
+      return resource.spec.selector && resource.spec.selector.matchLabels ? resource.spec.selector.matchLabels : {};
+    };
+
+    let labelInfo = resourceDetailInfo.selection ? getLabelInfo(resourceDetailInfo.selection) : {};
     let labelKeys = Object.keys(labelInfo);
 
     let isClearData = (fetchOptions && fetchOptions.noCache) || labelKeys.length === 0 ? true : false;

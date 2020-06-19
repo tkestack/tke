@@ -19,7 +19,7 @@ import {
   TableProps,
   Text,
   Button,
-  ExternalLink,
+  ExternalLink
 } from '@tencent/tea-component';
 import {
   expandable,
@@ -36,7 +36,7 @@ import {
   sortable,
   SortBy,
   stylize,
-  StylizeOption,
+  StylizeOption
 } from '@tencent/tea-component/lib/table/addons';
 import { autotip } from '@tencent/tea-component/lib/table/addons/autotip';
 import { StatusTip } from '@tencent/tea-component/lib/tips';
@@ -161,7 +161,7 @@ function TablePanelBody({
 }: TablePanelProps) {
   let {
     model: { list, query },
-    action,
+    action
   } = props;
   let isCAMError = list.fetchState === FetchState.Failed && isCamRefused(list.error);
 
@@ -181,8 +181,8 @@ function TablePanelBody({
     (query.searchFilter &&
       searchFilterKeys.length !== 0 &&
       searchFilterKeys
-        .filter((key) => query.searchFilter[key] !== null)
-        .map((key) => `${key}:${query.searchFilter[key]}`)
+        .filter(key => query.searchFilter[key] !== null)
+        .map(key => `${key}:${query.searchFilter[key]}`)
         .join(','));
   /**
    * 判断是否需要展示loading态
@@ -199,7 +199,7 @@ function TablePanelBody({
         (query.filter && query.filter.searchBoxValues && query.filter.searchBoxValues.length) ||
         (query.searchFilter &&
           searchFilterKeys.length &&
-          searchFilterKeys.some((key) => query.searchFilter[key] !== null))
+          searchFilterKeys.some(key => query.searchFilter[key] !== null))
       ) ||
       isNeedLoading);
 
@@ -226,7 +226,7 @@ function TablePanelBody({
       sorts,
       filters,
       setSorts,
-      setFilters,
+      setFilters
     });
     props.columns = columns;
     props.addons = props.addons.concat(addons);
@@ -255,7 +255,7 @@ function TablePanelBody({
         headClassName,
         headStyle,
         bodyClassName,
-        bodyStyle,
+        bodyStyle
       })
     );
   }
@@ -282,9 +282,9 @@ function TablePanelBody({
                     query.filter.searchBoxValues.length &&
                     action.applyFilter({ searchBoxValues: [] });
 
-                  if (query.searchFilter && searchFilterKeys.some((key) => query.searchFilter[key] !== null)) {
+                  if (query.searchFilter && searchFilterKeys.some(key => query.searchFilter[key] !== null)) {
                     let nextFilter = {};
-                    searchFilterKeys.forEach((key) => {
+                    searchFilterKeys.forEach(key => {
                       nextFilter[key] = null;
                     });
                     action.applySearchFilter(nextFilter);
@@ -301,8 +301,8 @@ function TablePanelBody({
                 foundKeyword: search,
                 emptyText: search ? null : <StatusTip status="empty" emptyText={emptyTips} />,
                 errorText: props.errorText,
-                retryText: props.retryText,
-              }),
+                retryText: props.retryText
+              })
             ])
       }
     />
@@ -343,12 +343,12 @@ function formatColumn<Record = any>({ columns, onSort, action }: TablePanelProps
                 {record[column.key] + ''}
               </Text>
             );
-          },
+          }
     };
     if (config.headerTips) {
       if (config.header) {
         if (typeof config.header === 'function') {
-          columnInfo.header = (columns) => {
+          columnInfo.header = columns => {
             return (
               <React.Fragment>
                 {(config.header as Function)(columns)}
@@ -359,7 +359,7 @@ function formatColumn<Record = any>({ columns, onSort, action }: TablePanelProps
             );
           };
         } else {
-          columnInfo.header = (columns) => (
+          columnInfo.header = columns => (
             <React.Fragment>
               <Text overflow>{config.header}</Text>
               <Bubble content={config.headerTips || null}>
@@ -377,7 +377,7 @@ function formatColumn<Record = any>({ columns, onSort, action }: TablePanelProps
           type: 'single',
           column: config.key,
           value: stateObj.filters[config.key],
-          onChange: (value) => {
+          onChange: value => {
             stateObj.filters[config.key] = value;
             stateObj.setFilters(stateObj.filters);
 
@@ -389,7 +389,7 @@ function formatColumn<Record = any>({ columns, onSort, action }: TablePanelProps
           },
           all: config.filterable.all,
           options: config.filterable.options,
-          searchable: config.filterable.options.length > 10,
+          searchable: config.filterable.options.length > 10
         })
       );
     }
@@ -403,16 +403,16 @@ function formatColumn<Record = any>({ columns, onSort, action }: TablePanelProps
       sortable({
         columns: sortableColumns,
         value: stateObj.sorts,
-        onChange: (value) => {
+        onChange: value => {
           stateObj.setSorts(value);
           onSort && onSort(value);
-        },
+        }
       })
     );
   }
   return {
     columns: columnsFormat,
-    addons,
+    addons
   };
 }
 
@@ -449,7 +449,7 @@ function createOperationColumn<Record>(
         ops = [...nodes, more];
       }
       return <React.Fragment>{ops}</React.Fragment>;
-    },
+    }
   };
   return column4Operations;
 }
@@ -506,7 +506,7 @@ function TablePanelPagination({ model, action, paginationProps }: TablePanelProp
       pageIndex={pageIndex}
       pageSize={pageSize}
       recordCount={list.data.recordCount}
-      onPagingChange={(query) => {
+      onPagingChange={query => {
         if (query.pageIndex > Math.ceil(list.data.recordCount / query.pageSize)) {
           query.pageIndex = 1;
         }
@@ -524,7 +524,7 @@ function TablePanelContinuePagination({ model, action, paginationProps }: TableP
 
   let totalCount = 0;
   let finalPages = list.pages ? list.pages : [];
-  finalPages.forEach((listItem) => {
+  finalPages.forEach(listItem => {
     totalCount += listItem.data.recordCount;
   });
 
@@ -571,14 +571,14 @@ function TablePanelContinuePagination({ model, action, paginationProps }: TableP
           ? Number.MAX_SAFE_INTEGER
           : totalCount
       }
-      onPagingChange={(query) => {
+      onPagingChange={query => {
         if (pageSize === query.pageSize) {
           action.changePagingIndex(query.pageIndex);
         } else {
           action.changePaging(
             Object.assign({}, query, {
               append: false,
-              clear: true,
+              clear: true
             })
           );
         }
