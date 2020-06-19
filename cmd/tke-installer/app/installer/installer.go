@@ -35,6 +35,8 @@ import (
 	"strings"
 	"time"
 
+	utilhttp "tkestack.io/tke/pkg/util/http"
+
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -1246,7 +1248,7 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 		return fmt.Errorf("external etcd specified, but ca key is not provided yet")
 	}
 
-	etcdClientCertData, etcdClientKeyData, err := pkiutil.GenerateCertAndKey(namespace, nil,
+	etcdClientCertData, etcdClientKeyData, err := pkiutil.GenerateClientCertAndKey(namespace, nil,
 		t.Cluster.ClusterCredential.ETCDCACert, t.Cluster.ClusterCredential.ETCDCAKey)
 	if err != nil {
 		return fmt.Errorf("prepareCertificates fail:%w", err)
@@ -1288,6 +1290,11 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 	return apiclient.CreateOrUpdateConfigMap(ctx, t.globalClient, cm)
 }
 
+func (t *TKE) authzWebhookBuiltinEndpoint() string {
+	return utilhttp.MakeEndpoint("https", t.Para.Cluster.Spec.Machines[0].IP,
+		constants.AuthzWebhookNodePort, "/auth/authz")
+}
+
 func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 	providerConfig, err := baremetalconfig.New(constants.ProviderConfigFile)
 	if err != nil {
@@ -1302,6 +1309,9 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 		providerConfig.Audit.Address = t.determineGatewayHTTPSAddress()
 	}
 	providerConfig.PlatformAPIClientConfig = "conf/tke-platform-config.yaml"
+	// todo using ingress to expose authz service for ha.(
+	//  users do not known nodeport when assigned vport in third party loadbalance)
+	providerConfig.AuthzWebhook.Endpoint = t.authzWebhookBuiltinEndpoint()
 
 	err = providerConfig.Save(constants.ProviderConfigFile)
 	if err != nil {
@@ -1513,6 +1523,7 @@ func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
 		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
+		"NodePort":         constants.AuthzWebhookNodePort,
 	}
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-auth-api/*.yaml", option)
 	if err != nil {

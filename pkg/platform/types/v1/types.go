@@ -103,11 +103,12 @@ func (c *Cluster) RESTConfigForBootstrap(config *rest.Config) (*rest.Config, err
 
 	return c.RESTConfig(config)
 }
-func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
+
+func (c *Cluster) setRESTConfigDefaults(config *rest.Config) error {
 	if config.Host == "" {
 		host, err := c.Host()
 		if err != nil {
-			return nil, err
+			return err
 		}
 		config.Host = host
 	}
@@ -119,6 +120,21 @@ func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
 	}
 	if config.Burst == 0 {
 		config.Burst = defaultBurst
+	}
+
+	if c.ClusterCredential != nil && c.ClusterCredential.CACert != nil {
+		config.TLSClientConfig.CAData = c.ClusterCredential.CACert
+	} else {
+		config.TLSClientConfig.Insecure = true
+	}
+
+	return nil
+}
+
+func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
+	err := c.setRESTConfigDefaults(config)
+	if err != nil {
+		return nil, err
 	}
 
 	if c.ClusterCredential.CACert != nil {
@@ -134,6 +150,19 @@ func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
 	if c.ClusterCredential.Token != nil {
 		config.BearerToken = *c.ClusterCredential.Token
 	}
+
+	return config, nil
+}
+
+func (c *Cluster) RESTConfigForClientX509(config *rest.Config, clientCertData []byte,
+	clientKeyData []byte) (*rest.Config, error) {
+	err := c.setRESTConfigDefaults(config)
+	if err != nil {
+		return nil, err
+	}
+
+	config.TLSClientConfig.CertData = clientCertData
+	config.TLSClientConfig.KeyData = clientKeyData
 
 	return config, nil
 }

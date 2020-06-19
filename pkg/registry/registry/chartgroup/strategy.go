@@ -61,7 +61,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(context.Context) rest.GarbageColl
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldChartGroup := old.(*registry.ChartGroup)
 	chartGroup, _ := obj.(*registry.ChartGroup)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldChartGroup.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update registry information", log.String("oldTenantID", oldChartGroup.Spec.TenantID), log.String("newTenantID", chartGroup.Spec.TenantID), log.String("userTenantID", tenantID))
@@ -83,7 +83,7 @@ func (Strategy) Export(context.Context, runtime.Object, bool) error {
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	chartGroup, _ := obj.(*registry.ChartGroup)
 	if len(tenantID) != 0 {
 		chartGroup.Spec.TenantID = tenantID

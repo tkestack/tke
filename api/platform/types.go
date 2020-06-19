@@ -332,6 +332,9 @@ type ClusterFeature struct {
 	Hooks map[HookType]string
 	// +optional
 	CSIOperator *CSIOperatorFeature
+	// For kube-apiserver authorization webhook
+	// +optional
+	AuthzWebhookAddr *AuthzWebhookAddr
 }
 
 type HA struct {
@@ -357,6 +360,20 @@ type HookType string
 
 type CSIOperatorFeature struct {
 	Version string
+}
+
+type AuthzWebhookAddr struct {
+	// +optional
+	Builtin *BuiltinAuthzWebhookAddr
+	// +optional
+	External *ExternalAuthzWebhookAddr
+}
+
+type BuiltinAuthzWebhookAddr struct{}
+
+type ExternalAuthzWebhookAddr struct {
+	IP   string `json:"ip" protobuf:"bytes,1,name=ip"`
+	Port int32  `json:"port" protobuf:"varint,2,name=port"`
 }
 
 const (

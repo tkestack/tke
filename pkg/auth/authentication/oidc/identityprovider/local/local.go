@@ -190,7 +190,7 @@ func (p *localConnector) Refresh(ctx context.Context, s connector.Scopes, identi
 
 // Get is an object that can get the user that match the provided field and label criteria.
 func (c *identityProvider) GetUser(ctx context.Context, name string, options *metav1.GetOptions) (*auth.User, error) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
@@ -211,7 +211,7 @@ func (c *identityProvider) GetUser(ctx context.Context, name string, options *me
 // List is an object that can list users that match the provided field and label criteria.
 func (c *identityProvider) ListUsers(ctx context.Context, options *metainternal.ListOptions) (*auth.UserList, error) {
 	keyword, limit := util.ParseQueryKeywordAndLimit(options)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
@@ -248,7 +248,7 @@ func (c *identityProvider) ListUsers(ctx context.Context, options *metainternal.
 
 // Get is an object that can get the user that match the provided field and label criteria.
 func (c *identityProvider) GetGroup(ctx context.Context, name string, options *metav1.GetOptions) (*auth.Group, error) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}
@@ -269,7 +269,7 @@ func (c *identityProvider) GetGroup(ctx context.Context, name string, options *m
 // List is an object that can list users that match the provided field and label criteria.
 func (c *identityProvider) ListGroups(ctx context.Context, options *metainternal.ListOptions) (*auth.GroupList, error) {
 	keyword, limit := util.ParseQueryKeywordAndLimit(options)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" && tenantID != c.tenantID {
 		return nil, apierrors.NewBadRequest("must in the same tenant")
 	}

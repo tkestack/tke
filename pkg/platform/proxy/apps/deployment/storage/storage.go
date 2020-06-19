@@ -21,6 +21,8 @@ package storage
 import (
 	"context"
 
+	"tkestack.io/tke/pkg/platform/proxy"
+
 	appsv1 "k8s.io/api/apps/v1"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	appsv1beta2 "k8s.io/api/apps/v1beta2"
@@ -35,7 +37,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
-	"tkestack.io/tke/pkg/platform/util"
 )
 
 // Storage includes storage for resources.
@@ -51,12 +52,12 @@ type Storage struct {
 
 // REST implements pkg/api/rest.StandardStorage
 type REST struct {
-	*util.Store
+	*proxy.Store
 }
 
 // NewStorageV1 returns a Storage object that will work against resources.
 func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	deploymentStore := &util.Store{
+	deploymentStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &appsv1.Deployment{} },
 		NewListFunc:    func() runtime.Object { return &appsv1.DeploymentList{} },
 		Namespaced:     true,
@@ -87,7 +88,7 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 
 // NewStorageV1Beta1 returns a Storage object that will work against resources.
 func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	deploymentStore := &util.Store{
+	deploymentStore := &proxy.Store{
 		NewFunc:     func() runtime.Object { return &appsv1beta1.Deployment{} },
 		NewListFunc: func() runtime.Object { return &appsv1beta1.DeploymentList{} },
 		Namespaced:  true,
@@ -126,7 +127,7 @@ func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platf
 
 // NewStorageExtensionsV1Beta1 returns a Storage object that will work against resources.
 func NewStorageExtensionsV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	deploymentStore := &util.Store{
+	deploymentStore := &proxy.Store{
 		NewFunc:     func() runtime.Object { return &extensionsv1beta1.Deployment{} },
 		NewListFunc: func() runtime.Object { return &extensionsv1beta1.DeploymentList{} },
 		Namespaced:  true,
@@ -161,7 +162,7 @@ func NewStorageExtensionsV1Beta1(_ genericregistry.RESTOptionsGetter, platformCl
 
 // NewStorageV1Beta2 returns a Storage object that will work against resources.
 func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	deploymentStore := &util.Store{
+	deploymentStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &appsv1beta2.Deployment{} },
 		NewListFunc:    func() runtime.Object { return &appsv1beta2.DeploymentList{} },
 		Namespaced:     true,
@@ -209,7 +210,7 @@ func (r *REST) Categories() []string {
 // StatusREST implements the REST endpoint for scale the deployment.
 type StatusREST struct {
 	rest.Storage
-	store *util.Store
+	store *proxy.Store
 }
 
 // StatusREST implements Patcher
@@ -264,7 +265,7 @@ func (r *ScaleREST) New() runtime.Object {
 
 // Get finds a resource in the storage by name and returns it.
 func (r *ScaleREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	client, requestInfo, err := util.RESTClient(ctx, r.platformClient)
+	client, requestInfo, err := proxy.RESTClient(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +287,7 @@ func (r *ScaleREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 
 // Update finds a resource in the storage and updates it.
 func (r *ScaleREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	client, requestInfo, err := util.RESTClient(ctx, r.platformClient)
+	client, requestInfo, err := proxy.RESTClient(ctx, r.platformClient)
 	if err != nil {
 		return nil, false, err
 	}
@@ -358,7 +359,7 @@ func (r *RollbackREST) New() runtime.Object {
 
 // Create inserts a new item according to the unique key from the object.
 func (r *RollbackREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	client, requestInfo, err := util.RESTClient(ctx, r.platformClient)
+	client, requestInfo, err := proxy.RESTClient(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}

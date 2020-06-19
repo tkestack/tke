@@ -62,7 +62,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldMachine := old.(*platform.Machine)
 	machine, _ := obj.(*platform.Machine)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldMachine.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update machine information", log.String("oldTenantID", oldMachine.Spec.TenantID), log.String("newTenantID", machine.Spec.TenantID), log.String("userTenantID", tenantID))
@@ -84,7 +84,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	machine, _ := obj.(*platform.Machine)
 	if len(tenantID) != 0 {
 		machine.Spec.TenantID = tenantID

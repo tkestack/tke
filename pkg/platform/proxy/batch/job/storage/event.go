@@ -22,6 +22,7 @@ import (
 	"context"
 	"sort"
 
+	"tkestack.io/tke/pkg/platform/proxy"
 	"tkestack.io/tke/pkg/platform/util"
 
 	batchV1 "k8s.io/api/batch/v1"
@@ -58,7 +59,7 @@ func (r *EventREST) New() runtime.Object {
 
 // Get retrieves the object from the storage. It is required to support Patch.
 func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	client, err := util.ClientSet(ctx, r.platformClient)
+	client, err := proxy.ClientSet(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}

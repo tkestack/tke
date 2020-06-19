@@ -70,7 +70,7 @@ func (Strategy) DefaultGarbageCollectionGroup(ctx context.Context) rest.GarbageC
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (s *Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	oldGroup := old.(*auth.LocalGroup)
 	group, _ := obj.(*auth.LocalGroup)
 
@@ -105,7 +105,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	group, _ := obj.(*auth.LocalGroup)
-	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" {
 		group.Spec.TenantID = tenantID
 	}

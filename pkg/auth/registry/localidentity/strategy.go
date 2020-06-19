@@ -68,7 +68,7 @@ func (s *Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object
 	oldLocalIdentity := old.(*auth.LocalIdentity)
 	localIdentity, _ := obj.(*auth.LocalIdentity)
 
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldLocalIdentity.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update local identity information", log.String("oldTenantID", oldLocalIdentity.Spec.TenantID), log.String("newTenantID", localIdentity.Spec.TenantID), log.String("userTenantID", tenantID))
@@ -95,7 +95,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	localIdentity, _ := obj.(*auth.LocalIdentity)
 
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		localIdentity.Spec.TenantID = tenantID
 	}

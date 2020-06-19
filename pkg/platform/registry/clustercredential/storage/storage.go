@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -113,7 +114,7 @@ func (r *REST) ShortNames() []string {
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" {
 		if options == nil {
 			options = &metainternal.ListOptions{}

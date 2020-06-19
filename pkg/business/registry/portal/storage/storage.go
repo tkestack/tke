@@ -92,7 +92,7 @@ func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableO
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, _ *metainternal.ListOptions) (runtime.Object, error) {
 	log.Debugf("business portal list, ctx %v", ctx)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return &business.Portal{
 			Administrator: true,

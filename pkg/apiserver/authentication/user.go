@@ -20,14 +20,15 @@ package authentication
 
 import (
 	"context"
+
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 )
 
-// GetUsernameAndTenantID implementation decomposition in the original
+// UsernameAndTenantID implementation decomposition in the original
 // kubernetes api server the user name obtained in *Userinfo is the actual
 // username and tenant ID.
-func GetUsernameAndTenantID(ctx context.Context) (username string, tenantID string) {
+func UsernameAndTenantID(ctx context.Context) (username string, tenantID string) {
 	userInfo, ok := request.UserFrom(ctx)
 	if !ok {
 		return "", ""
@@ -43,8 +44,16 @@ func GetUsernameAndTenantID(ctx context.Context) (username string, tenantID stri
 	return userInfo.GetName(), tenantID
 }
 
+func Groups(ctx context.Context) (groups []string) {
+	userInfo, ok := request.UserFrom(ctx)
+	if !ok {
+		return nil
+	}
+	return userInfo.GetGroups()
+}
+
 // IsAdministrator check whether administrator
 func IsAdministrator(ctx context.Context, privilegedUsername string) bool {
-	username, tenantID := GetUsernameAndTenantID(ctx)
+	username, tenantID := UsernameAndTenantID(ctx)
 	return username == privilegedUsername && tenantID == ""
 }

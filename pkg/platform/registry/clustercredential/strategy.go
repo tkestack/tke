@@ -75,7 +75,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	clusterCredential, _ := obj.(*platform.ClusterCredential)
 
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		clusterCredential.TenantID = tenantID
 	}
@@ -88,7 +88,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		oldClusterCredential := old.(*platform.ClusterCredential)
 		clusterCredential, _ := obj.(*platform.ClusterCredential)

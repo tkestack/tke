@@ -69,7 +69,7 @@ func (Strategy) DefaultGarbageCollectionRole(ctx context.Context) rest.GarbageCo
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	oldRole := old.(*auth.Role)
 	role, _ := obj.(*auth.Role)
 	if len(tenantID) != 0 {
@@ -106,7 +106,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	role, _ := obj.(*auth.Role)
-	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" {
 		role.Spec.TenantID = tenantID
 	}

@@ -21,6 +21,7 @@ package message
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,7 +58,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldMessage := old.(*notify.Message)
 	message, _ := obj.(*notify.Message)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldMessage.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update message information", log.String("oldTenantID", oldMessage.Spec.TenantID), log.String("newTenantID", message.Spec.TenantID), log.String("userTenantID", tenantID))
@@ -79,7 +80,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	message, _ := obj.(*notify.Message)
 	if len(tenantID) != 0 {
 		message.Spec.TenantID = tenantID

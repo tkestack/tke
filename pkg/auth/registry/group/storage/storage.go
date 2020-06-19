@@ -98,7 +98,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 
 // Get finds a resource in the storage by name and returns it.
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		tenantID, name = util.ParseTenantAndName(name)
 	}
@@ -120,7 +120,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 
 	if tenantID == "" {
 		tenantID, _ = options.FieldSelector.RequiresExactMatch("spec.tenantID")

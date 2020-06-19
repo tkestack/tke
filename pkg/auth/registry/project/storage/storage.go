@@ -117,7 +117,7 @@ func (r *REST) Get(ctx context.Context, projectName string, options *metav1.GetO
 		return nil, err
 	}
 
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" && len(projectPolicyList.Items) > 0 {
 		tenantID = projectPolicyList.Items[0].Spec.TenantID
 	}
@@ -149,7 +149,7 @@ func (r *REST) Get(ctx context.Context, projectName string, options *metav1.GetO
 }
 
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	v1opts := &v1.ListOptions{}
 	if tenantID != "" {
 		v1opts = util.PredicateV1ListOptions(tenantID, options)

@@ -54,6 +54,7 @@ type Config struct {
 	APIServer               APIServer         `yaml:"apiServer"`
 	ControllerManager       ControllerManager `yaml:"controllerManager"`
 	Scheduler               Scheduler         `yaml:"scheduler"`
+	AuthzWebhook            AuthzWebhook      `yaml:"authzWebhook"`
 }
 
 func (c *Config) Save(filename string) error {
@@ -104,4 +105,8 @@ type ControllerManager struct {
 
 type Scheduler struct {
 	ExtraArgs map[string]string `yaml:"extraArgs"`
+}
+
+type AuthzWebhook struct {
+	Endpoint string `yaml:"endpoint"`
 }

@@ -72,7 +72,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	cronHPA, _ := obj.(*platform.CronHPA)
 
 	if len(tenantID) != 0 {
@@ -91,7 +91,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	oldCronHPA := old.(*platform.CronHPA)
 	cronHPA, _ := obj.(*platform.CronHPA)
 	if len(tenantID) != 0 {

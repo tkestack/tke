@@ -40,7 +40,7 @@ func FilterWithUser(ctx context.Context,
 	authClient authversionedclient.AuthV1Interface,
 	businessClient *businessinternalclient.BusinessClient) (bool, *business.ProjectList, error) {
 
-	userName, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	userName, tenantID := authentication.UsernameAndTenantID(ctx)
 
 	isAdmin := false
 	listOpt := v1.ListOptions{FieldSelector: fmt.Sprintf("spec.tenantID=%s", tenantID)}

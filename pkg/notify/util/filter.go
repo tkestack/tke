@@ -20,15 +20,16 @@ package util
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"tkestack.io/tke/api/notify"
-	"tkestack.io/tke/api/notify/v1"
+	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
 // FilterChannel is used to filter channels that do not belong to the tenant.
 func FilterChannel(ctx context.Context, channel *notify.Channel) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -40,7 +41,7 @@ func FilterChannel(ctx context.Context, channel *notify.Channel) error {
 
 // FilterReceiver is used to filter receiver that do not belong to the tenant.
 func FilterReceiver(ctx context.Context, receiver *notify.Receiver) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -52,7 +53,7 @@ func FilterReceiver(ctx context.Context, receiver *notify.Receiver) error {
 
 // FilterReceiverGroup is used to filter receiver group that do not belong to the tenant.
 func FilterReceiverGroup(ctx context.Context, receiverGroup *notify.ReceiverGroup) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -64,7 +65,7 @@ func FilterReceiverGroup(ctx context.Context, receiverGroup *notify.ReceiverGrou
 
 // FilterMessage is used to filter message that do not belong to the tenant.
 func FilterMessage(ctx context.Context, message *notify.Message) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -76,7 +77,7 @@ func FilterMessage(ctx context.Context, message *notify.Message) error {
 
 // FilterMessageRequest is used to filter message request that do not belong to the tenant.
 func FilterMessageRequest(ctx context.Context, messageRequest *notify.MessageRequest) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -88,7 +89,7 @@ func FilterMessageRequest(ctx context.Context, messageRequest *notify.MessageReq
 
 // FilterTemplate is used to filter template that do not belong to the tenant.
 func FilterTemplate(ctx context.Context, tpl *notify.Template) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}

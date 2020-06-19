@@ -61,7 +61,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldMessageRequest := old.(*notify.MessageRequest)
 	messageRequest, _ := obj.(*notify.MessageRequest)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldMessageRequest.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update message request information", log.String("oldTenantID", oldMessageRequest.Spec.TenantID), log.String("newTenantID", messageRequest.Spec.TenantID), log.String("userTenantID", tenantID))
@@ -83,7 +83,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	messageRequest, _ := obj.(*notify.MessageRequest)
 	if len(tenantID) != 0 {
 		messageRequest.Spec.TenantID = tenantID

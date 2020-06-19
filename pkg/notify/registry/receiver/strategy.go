@@ -21,6 +21,7 @@ package receiver
 import (
 	"context"
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,7 +58,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldReceiver := old.(*notify.Receiver)
 	receiver, _ := obj.(*notify.Receiver)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldReceiver.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update receiver information", log.String("oldTenantID", oldReceiver.Spec.TenantID), log.String("newTenantID", receiver.Spec.TenantID), log.String("userTenantID", tenantID))
@@ -83,7 +84,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	receiver, _ := obj.(*notify.Receiver)
 	if len(tenantID) != 0 {
 		receiver.Spec.TenantID = tenantID

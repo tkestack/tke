@@ -20,7 +20,6 @@ package storage
 
 import (
 	"context"
-	"tkestack.io/tke/pkg/platform/util"
 
 	autoscalingAPIV1 "k8s.io/api/autoscaling/v1"
 	autoscalingAPIV2Beta1 "k8s.io/api/autoscaling/v2beta1"
@@ -30,6 +29,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/pkg/platform/proxy"
 )
 
 // Storage includes storage for resources.
@@ -41,12 +41,12 @@ type Storage struct {
 
 // REST implements pkg/api/rest.StandardStorage
 type REST struct {
-	*util.Store
+	*proxy.Store
 }
 
 // NewStorageV1 returns a Storage object that will work against resources.
 func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	scalerStore := &util.Store{
+	scalerStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &autoscalingAPIV1.HorizontalPodAutoscaler{} },
 		NewListFunc:    func() runtime.Object { return &autoscalingAPIV1.HorizontalPodAutoscalerList{} },
 		Namespaced:     true,
@@ -68,7 +68,7 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 
 // NewStorageV2Beta1 returns a Storage object that will work against resources.
 func NewStorageV2Beta1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	scalerStore := &util.Store{
+	scalerStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &autoscalingAPIV2Beta1.HorizontalPodAutoscaler{} },
 		NewListFunc:    func() runtime.Object { return &autoscalingAPIV2Beta1.HorizontalPodAutoscalerList{} },
 		Namespaced:     true,
@@ -90,7 +90,7 @@ func NewStorageV2Beta1(_ genericregistry.RESTOptionsGetter, platformClient platf
 
 // NewStorageV2Beta2 returns a Storage object that will work against resources.
 func NewStorageV2Beta2(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	scalerStore := &util.Store{
+	scalerStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &autoscalingAPIV2Beta2.HorizontalPodAutoscaler{} },
 		NewListFunc:    func() runtime.Object { return &autoscalingAPIV2Beta2.HorizontalPodAutoscalerList{} },
 		Namespaced:     true,
@@ -129,7 +129,7 @@ func (r *REST) Categories() []string {
 // StatusREST implements the REST endpoint for changing the status of a resource
 type StatusREST struct {
 	rest.Storage
-	store *util.Store
+	store *proxy.Store
 }
 
 // StatusREST implements Patcher

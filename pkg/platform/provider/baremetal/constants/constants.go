@@ -25,15 +25,18 @@ import (
 )
 
 const (
-	AuditPolicyConfigBaseName = "audit-policy.yaml"
-	OIDCCACertName            = "oidc-ca.crt"
-
+	AuditPolicyConfigName  = "audit-policy.yaml"
+	AuthzWebhookConfigName = "tke-authz-webhook.yaml"
+	OIDCCACertName         = "oidc-ca.crt"
+	AdminCertName          = "admin.crt"
+	AdminkeyName           = "admin.key"
 	// Kubernetes Config
 	KubernetesDir                       = "/etc/kubernetes/"
 	KuberentesSchedulerPolicyConfigFile = KubernetesDir + "scheduler-policy-config.json"
 	KuberentesAuditWebhookConfigFile    = KubernetesDir + "audit-api-client-config.yaml"
 	TokenFile                           = KubernetesDir + "known_tokens.csv"
-	KuberentesAuditPolicyConfigFile     = KubernetesDir + AuditPolicyConfigBaseName
+	KubernetesAuditPolicyConfigFile     = KubernetesDir + AuditPolicyConfigName
+	KubernetesAuthzWebhookConfigFile    = KubernetesDir + AuthzWebhookConfigName
 	KubeadmConfigFileName               = KubernetesDir + "kubeadm-config.yaml"
 	KubeletKubeConfigFileName           = KubernetesDir + "kubelet.conf"
 
@@ -49,6 +52,11 @@ const (
 	CNIBinDir  = "/opt/cni/bin/"
 	CNIDataDir = "/var/lib/cni/"
 	CNIConfDIr = "/etc/cni"
+	AppCertDir = "/app/certs/"
+
+	// AppCert
+	AppAdminCertFile = AppCertDir + AdminCertName
+	AppAdminKeyFile  = AppCertDir + AdminkeyName
 
 	// ETC
 	EtcdDataDir          = "/var/lib/etcd"
@@ -58,6 +66,8 @@ const (
 	// PKI
 	CertificatesDir = KubernetesDir + "pki/"
 	OIDCCACertFile  = CertificatesDir + OIDCCACertName
+	AdminCertFile   = CertificatesDir + AdminCertName
+	AdminKeyFile    = CertificatesDir + AdminkeyName
 
 	// CACertName defines certificate name
 	CACertName = CertificatesDir + "ca.crt"
@@ -94,12 +104,11 @@ const (
 	SrcDir                = ProviderDir + "res/"
 	ConfDir               = ProviderDir + "conf/"
 	ConfigFile            = ConfDir + "config.yaml"
-	AuditPolicyConfigName = ConfDir + AuditPolicyConfigBaseName
+	AuditPolicyConfigFile = ConfDir + AuditPolicyConfigName
 	OIDCConfigFile        = ConfDir + OIDCCACertName
-
-	ManifestsDir        = ProviderDir + "manifests/"
-	GPUManagerManifest  = ManifestsDir + "gpu-manager/gpu-manager.yaml"
-	CSIOperatorManifest = ManifestsDir + "csi-operator/csi-operator.yaml"
+	ManifestsDir          = ProviderDir + "manifests/"
+	GPUManagerManifest    = ManifestsDir + "gpu-manager/gpu-manager.yaml"
+	CSIOperatorManifest   = ManifestsDir + "csi-operator/csi-operator.yaml"
 
 	KUBERNETES                   = 1
 	DNSIPIndex                   = 10

@@ -21,6 +21,8 @@ package storage
 import (
 	"context"
 
+	"tkestack.io/tke/pkg/platform/proxy"
+
 	corev1 "k8s.io/api/core/v1"
 	metaInternalVersion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +30,6 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/pkg/platform/util"
 )
 
 // Storage includes storage for resources.
@@ -80,7 +81,7 @@ func (r *REST) NewList() runtime.Object {
 // List selects resources in the storage which match to the selector. 'options'
 // can be nil.
 func (r *REST) List(ctx context.Context, options *metaInternalVersion.ListOptions) (runtime.Object, error) {
-	client, requestInfo, err := util.RESTClient(ctx, r.platformClient)
+	client, requestInfo, err := proxy.RESTClient(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +102,7 @@ func (r *REST) List(ctx context.Context, options *metaInternalVersion.ListOption
 
 // Get finds a resource in the storage by name and returns it.
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	client, requestInfo, err := util.RESTClient(ctx, r.platformClient)
+	client, requestInfo, err := proxy.RESTClient(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}
