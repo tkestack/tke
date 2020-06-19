@@ -391,8 +391,9 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
               </li>
             </ul>
             <p style={{ marginBottom: '5px' }}>
-              3. 可执行 kubectl get node
-              测试是否可正常访问集群。如果无法连接请查看是否已经开启公网访问或内网访问入口，并确保访问客户端在指定的网络环境内。
+              3. 可执行 kubectl get pod -n {np}
+              测试是否可正常访问您的命名空间下的资源。如果无法连接请查看是否已经开启公网访问或内网访问入口，并确保访问客户端在指定的网络环境内。
+              如果返回 (Forbidden) 错误，请确保用户具有所在业务相应的权限。
             </p>
           </div>
         </Modal.Body>
