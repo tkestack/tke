@@ -1,8 +1,6 @@
 import { combineReducers } from 'redux';
 
-import {
-    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload
-} from '@tencent/ff-redux';
+import { createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
 
@@ -23,6 +21,8 @@ const logOptionReducer = combineReducers({
 /** ==== start 日志的相关处理 ============ */
 
 const TempReducer = combineReducers({
+  resourceDetailInfo: createFFListReducer(FFReduxActionName.Resource_Detail_Info),
+
   yamlList: generateFetcherReducer<RecordSet<string>>({
     actionType: ActionType.FetchYaml,
     initialData: {
