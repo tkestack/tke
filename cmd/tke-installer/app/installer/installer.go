@@ -37,14 +37,15 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful"
-	pkgerrors "github.com/pkg/errors"
+	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	"gopkg.in/go-playground/validator.v9"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -419,7 +420,7 @@ func (t *TKE) run(ctx context.Context) error {
 		err := t.prepare()
 		if err != nil {
 			statusErr := err.Status()
-			return pkgerrors.New(statusErr.String())
+			return errors.New(statusErr.String())
 		}
 	}
 
@@ -487,7 +488,7 @@ func (t *TKE) completeWithProvider() {
 	t.clusterProvider = clusterProvider
 }
 
-func (t *TKE) prepare() errors.APIStatus {
+func (t *TKE) prepare() apierrors.APIStatus {
 	t.setConfigDefault(&t.Para.Config)
 	statusError := t.validateConfig(t.Para.Config)
 	if statusError != nil {
@@ -508,24 +509,24 @@ func (t *TKE) prepare() errors.APIStatus {
 	platformCluster := new(platform.Cluster)
 	err := platform.Scheme.Convert(v1Cluster, platformCluster, nil)
 	if err != nil {
-		return errors.NewInternalError(err)
+		return apierrors.NewInternalError(err)
 	}
 	t.strategy.PrepareForCreate(ctx, platformCluster)
 
 	// Validate
 	kinds, _, err := platform.Scheme.ObjectKinds(v1Cluster)
 	if err != nil {
-		return errors.NewInternalError(err)
+		return apierrors.NewInternalError(err)
 	}
 
 	allErrs := t.strategy.Validate(ctx, platformCluster)
 	if len(allErrs) > 0 {
-		return errors.NewInvalid(kinds[0].GroupKind(), v1Cluster.GetName(), allErrs)
+		return apierrors.NewInvalid(kinds[0].GroupKind(), v1Cluster.GetName(), allErrs)
 	}
 
 	err = platform.Scheme.Convert(platformCluster, v1Cluster, nil)
 	if err != nil {
-		return errors.NewInternalError(err)
+		return apierrors.NewInternalError(err)
 	}
 
 	statusError = t.validateResource(v1Cluster)
@@ -537,7 +538,7 @@ func (t *TKE) prepare() errors.APIStatus {
 	for _, one := range t.Cluster.Spec.Machines {
 		ok, err := utilnet.InterfaceHasAddr(one.IP)
 		if err != nil {
-			return errors.NewInternalError(err)
+			return apierrors.NewInternalError(err)
 		}
 		if ok {
 			t.IncludeSelf = true
@@ -635,25 +636,25 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 	}
 }
 
-func (t *TKE) validateConfig(config types.Config) *errors.StatusError {
+func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 	validate := validator.New()
 	err := validate.Struct(config)
 	if err != nil {
-		return errors.NewBadRequest(err.Error())
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	if config.Gateway != nil || config.Registry.TKERegistry != nil {
 		if config.Basic.Username == "" || config.Basic.Password == nil {
-			return errors.NewBadRequest("username or password required when enabled gateway or registry")
+			return apierrors.NewBadRequest("username or password required when enabled gateway or registry")
 		}
 	}
 
 	if config.Auth.TKEAuth == nil && config.Auth.OIDCAuth == nil {
-		return errors.NewBadRequest("tke auth or oidc auth required")
+		return apierrors.NewBadRequest("tke auth or oidc auth required")
 	}
 
 	if config.Registry.TKERegistry == nil && config.Registry.ThirdPartyRegistry == nil {
-		return errors.NewBadRequest("tke registry or third party registry required")
+		return apierrors.NewBadRequest("tke registry or third party registry required")
 	}
 
 	if config.Registry.ThirdPartyRegistry != nil {
@@ -665,15 +666,15 @@ func (t *TKE) validateConfig(config types.Config) *errors.StatusError {
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			if _, ok := err.(*exec.ExitError); ok {
-				return errors.NewBadRequest(string(out))
+				return apierrors.NewBadRequest(string(out))
 			}
-			return errors.NewInternalError(err)
+			return apierrors.NewInternalError(err)
 		}
 	}
 
 	if config.Monitor != nil {
 		if config.Monitor.InfluxDBMonitor != nil && config.Monitor.ESMonitor != nil {
-			return errors.NewBadRequest("influxdb or es only had one")
+			return apierrors.NewBadRequest("influxdb or es only had one")
 		}
 	}
 
@@ -695,26 +696,26 @@ func (t *TKE) validateConfig(config types.Config) *errors.StatusError {
 	return nil
 }
 
-func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames []string) *errors.StatusError {
+func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames []string) *apierrors.StatusError {
 	if (certificate != nil && privateKey == nil) || (certificate == nil && privateKey != nil) {
-		return errors.NewBadRequest("certificate and privateKey must offer together")
+		return apierrors.NewBadRequest("certificate and privateKey must offer together")
 	}
 
 	if certificate != nil {
 		cert, err := tls.X509KeyPair(certificate, privateKey)
 		if err != nil {
-			return errors.NewBadRequest(err.Error())
+			return apierrors.NewBadRequest(err.Error())
 		}
 		if len(cert.Certificate) != 1 {
-			return errors.NewBadRequest("certificate must only has one cert")
+			return apierrors.NewBadRequest("certificate must only has one cert")
 		}
 		certs1, err := certutil.ParseCertsPEM(certificate)
 		if err != nil {
-			return errors.NewBadRequest(err.Error())
+			return apierrors.NewBadRequest(err.Error())
 		}
 		for _, one := range dnsNames {
 			if !funk.Contains(certs1[0].DNSNames, one) {
-				return errors.NewBadRequest(fmt.Sprintf("certificate DNSNames must contains %v", one))
+				return apierrors.NewBadRequest(fmt.Sprintf("certificate DNSNames must contains %v", one))
 			}
 		}
 	}
@@ -723,12 +724,14 @@ func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 }
 
 // validateResource validate the cpu and memory of cluster machines whether meets the requirements.
-func (t *TKE) validateResource(cluster *platformv1.Cluster) *errors.StatusError {
+func (t *TKE) validateResource(cluster *platformv1.Cluster) *apierrors.StatusError {
 	var (
+		errs             []error
 		cpuSum           int
 		memoryInBytesSum uint64
+		firstNodeDisk    int
 	)
-	for _, machine := range cluster.Spec.Machines {
+	for i, machine := range cluster.Spec.Machines {
 		sshConfig := &ssh.Config{
 			User:       machine.Username,
 			Host:       machine.IP,
@@ -739,25 +742,43 @@ func (t *TKE) validateResource(cluster *platformv1.Cluster) *errors.StatusError 
 		}
 		s, err := ssh.New(sshConfig)
 		if err != nil {
-			return errors.NewInternalError(err)
+			return apierrors.NewInternalError(err)
 		}
+
+		if i == 0 {
+			firstNodeDisk, err = ssh.DiskAvail(s, constants.PathForDiskSpaceRequest)
+			if err != nil {
+				return apierrors.NewInternalError(fmt.Errorf("get disk availble space error: %w", err))
+			}
+		}
+
 		cpu, err := ssh.NumCPU(s)
 		if err != nil {
-			return errors.NewInternalError(fmt.Errorf("get cpu error: %w", err))
+			return apierrors.NewInternalError(fmt.Errorf("get cpu error: %w", err))
 		}
 		cpuSum += cpu
 
 		memInBytes, err := ssh.MemoryCapacity(s)
 		if err != nil {
-			return errors.NewInternalError(fmt.Errorf("get memory error: %w", err))
+			return apierrors.NewInternalError(fmt.Errorf("get memory error: %w", err))
 		}
 		memoryInBytesSum += memInBytes
 	}
 	if cpuSum < constants.CPURequest {
-		return errors.NewBadRequest(fmt.Sprintf("at lease %d cores are required", constants.CPURequest))
+		errs = append(errs, fmt.Errorf("sum of cpu in all nodes needs to be greater than %d",
+			constants.CPURequest))
 	}
 	if math.Ceil(float64(memoryInBytesSum/1024/1024/1024)) < constants.MemoryRequest {
-		return errors.NewBadRequest(fmt.Sprintf("at lease %d GiB memory are required", constants.MemoryRequest))
+		errs = append(errs, fmt.Errorf("sum of memory in all nodes needs to be greater than %d GiB",
+			constants.MemoryRequest))
+	}
+	if firstNodeDisk < constants.FirstNodeDiskSpaceRequest {
+		errs = append(errs, fmt.Errorf("availble space of disk for %s in the first node which you input in cluster needs to be greater than %d GiB",
+			constants.PathForDiskSpaceRequest, constants.FirstNodeDiskSpaceRequest))
+	}
+
+	if len(errs) != 0 {
+		return apierrors.NewBadRequest(utilerrors.NewAggregate(errs).Error())
 	}
 
 	return nil
@@ -773,7 +794,7 @@ func (t *TKE) completeProviderConfigForRegistry() error {
 	if t.Para.Config.Registry.TKERegistry != nil {
 		ip, err := utilnet.GetSourceIP(t.Para.Cluster.Spec.Machines[0].IP)
 		if err != nil {
-			return pkgerrors.Wrap(err, "get ip for registry error")
+			return errors.Wrap(err, "get ip for registry error")
 		}
 		c.Registry.IP = ip
 	}
@@ -803,14 +824,14 @@ func (t *TKE) auditEnabled() bool {
 }
 
 func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
-	apiStatus := func() errors.APIStatus {
+	apiStatus := func() apierrors.APIStatus {
 		if t.Step != 0 {
-			return errors.NewAlreadyExists(platformv1.Resource("Cluster"), "global")
+			return apierrors.NewAlreadyExists(platformv1.Resource("Cluster"), "global")
 		}
 		para := new(types.CreateClusterPara)
 		err := req.ReadEntity(para)
 		if err != nil {
-			return errors.NewBadRequest(err.Error())
+			return apierrors.NewBadRequest(err.Error())
 		}
 		t.Para = para
 		if err := t.prepare(); err != nil {
@@ -834,13 +855,13 @@ func (t *TKE) retryCreateCluster(req *restful.Request, rsp *restful.Response) {
 }
 
 func (t *TKE) findCluster(request *restful.Request, response *restful.Response) {
-	apiStatus := func() errors.APIStatus {
+	apiStatus := func() apierrors.APIStatus {
 		clusterName := request.PathParameter("name")
 		if t.Cluster == nil {
-			return errors.NewBadRequest("no cluater available")
+			return apierrors.NewBadRequest("no cluater available")
 		}
 		if t.Cluster.Name != clusterName {
-			return errors.NewNotFound(platform.Resource("Cluster"), clusterName)
+			return apierrors.NewNotFound(platform.Resource("Cluster"), clusterName)
 		}
 
 		return nil
@@ -859,17 +880,17 @@ func (t *TKE) findCluster(request *restful.Request, response *restful.Response) 
 func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Response) {
 	var err error
 	var data []byte
-	apiStatus := func() errors.APIStatus {
+	apiStatus := func() apierrors.APIStatus {
 		clusterName := request.PathParameter("name")
 		if t.Cluster.Cluster == nil {
-			return errors.NewBadRequest("no cluater available")
+			return apierrors.NewBadRequest("no cluater available")
 		}
 		if t.Cluster.Name != clusterName {
-			return errors.NewNotFound(platform.Resource("Cluster"), clusterName)
+			return apierrors.NewNotFound(platform.Resource("Cluster"), clusterName)
 		}
 		data, err = ioutil.ReadFile(constants.ClusterLogFile)
 		if err != nil {
-			return errors.NewInternalError(err)
+			return apierrors.NewInternalError(err)
 		}
 		t.progress.Data = string(data)
 
@@ -1040,7 +1061,7 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 				condition.Type, time.Since(start).Seconds(),
 				condition.Reason, condition.Message, errCount)
 			if errCount >= 10 {
-				return pkgerrors.New("the retry limit has been reached")
+				return errors.New("the retry limit has been reached")
 			}
 
 			errCount++
@@ -1053,11 +1074,11 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 			errCount = 0
 		case platformv1.ConditionTrue: // means all condition is done
 			if t.Cluster.Status.Phase != platformv1.ClusterRunning {
-				return pkgerrors.Errorf("OnCreate.%s, no next condition but cluster is not running!", condition.Type)
+				return errors.Errorf("OnCreate.%s, no next condition but cluster is not running!", condition.Type)
 			}
 			return t.initDataForDeployTKE()
 		default:
-			return pkgerrors.Errorf("unknown condition status %s", condition.Status)
+			return errors.Errorf("unknown condition status %s", condition.Status)
 		}
 		time.Sleep(5 * time.Second)
 	}
@@ -1113,7 +1134,7 @@ func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 
 	err := t.startLocalRegistry()
 	if err != nil {
-		return pkgerrors.Wrap(err, "start local registry error")
+		return errors.Wrap(err, "start local registry error")
 	}
 
 	// for push image to local registry
@@ -1892,7 +1913,7 @@ func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
-			return pkgerrors.New(string(out))
+			return errors.New(string(out))
 		}
 		return err
 	}
@@ -1954,14 +1975,14 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 				}
 			}
 			if _, err := client.ApiregistrationV1().APIServices().Create(ctx, apiService, metav1.CreateOptions{}); err != nil {
-				if !errors.IsAlreadyExists(err) {
+				if !apierrors.IsAlreadyExists(err) {
 					return false, nil
 				}
 			}
 			return true, nil
 		})
 		if err != nil {
-			return pkgerrors.Wrapf(err, "register apiservice %v error", one)
+			return errors.Wrapf(err, "register apiservice %v error", one)
 		}
 
 		err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
@@ -1975,7 +1996,7 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 			return false, nil
 		})
 		if err != nil {
-			return pkgerrors.Wrapf(err, "check apiservices %v error", one)
+			return errors.Wrapf(err, "check apiservices %v error", one)
 		}
 	}
 	return nil
