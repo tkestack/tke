@@ -70,6 +70,9 @@ const (
 )
 
 const (
-	CPURequest    = 2
-	MemoryRequest = 4 // GiB
+	CPURequest                = 2
+	MemoryRequest             = 4  // GiB
+	FirstNodeDiskSpaceRequest = 30 // GiB
+
+	PathForDiskSpaceRequest = "/var/lib"
 )

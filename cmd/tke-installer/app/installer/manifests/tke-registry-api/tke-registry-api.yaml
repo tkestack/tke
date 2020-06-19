@@ -83,7 +83,7 @@ spec:
             name: tke-registry-api
         - name: registry-data
           hostPath:
-            path: /storage
+            path: /var/lib/tke-registry-api
             type: DirectoryOrCreate
         - name: tke-registry-api-secret
           secret:
