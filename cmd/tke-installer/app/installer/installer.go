@@ -768,7 +768,7 @@ func (t *TKE) validateResource(cluster *platformv1.Cluster) *apierrors.StatusErr
 		errs = append(errs, fmt.Errorf("sum of cpu in all nodes needs to be greater than %d",
 			constants.CPURequest))
 	}
-	if math.Ceil(float64(memoryInBytesSum/1024/1024/1024)) < constants.MemoryRequest {
+	if math.Ceil(float64(memoryInBytesSum)/1024/1024/1024) < constants.MemoryRequest {
 		errs = append(errs, fmt.Errorf("sum of memory in all nodes needs to be greater than %d GiB",
 			constants.MemoryRequest))
 	}
