@@ -70,6 +70,6 @@ const (
 )
 
 const (
-	CPURequest    = 8
-	MemoryRequest = 15 // GiB
+	CPURequest    = 2
+	MemoryRequest = 4 // GiB
 )
