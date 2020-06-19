@@ -625,7 +625,6 @@ func cmIPAM() *corev1.ConfigMap {
 }
 
 func cmFloatingIP() *corev1.ConfigMap {
-	const emptyFloatingIPs = `floatingips: ""`
 	return &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
@@ -636,7 +635,7 @@ func cmFloatingIP() *corev1.ConfigMap {
 			Namespace: metav1.NamespaceSystem,
 		},
 		Data: map[string]string{
-			"data": emptyFloatingIPs,
+			"floatingips": "",
 		},
 	}
 }
