@@ -1,19 +1,32 @@
 import { FetcherState, FFListModel, OperationResult, RecordSet, WorkflowState } from '@tencent/ff-redux';
 
 import { RouteState } from '../../../../helpers';
+import { FFObjectModel } from '../../../../lib/ff-redux/src/object/Model';
 import { Region, RegionFilter, ResourceFilter } from '../../common/models';
 import { Resource } from '../../common/models/Resource';
 import {
-  User,
+  Cluster,
+  ClusterFilter,
+  Manager,
+  ManagerFilter,
   Member,
-  UserFilter,
-  PolicyPlain,
+  Namespace,
+  NamespaceEdition,
+  NamespaceFilter,
+  NamespaceOperator,
   PolicyFilter,
-  Cluster, ClusterFilter, Manager, ManagerFilter, Namespace, NamespaceEdition, NamespaceFilter,
-  NamespaceOperator, Project, ProjectEdition, ProjectFilter
+  PolicyPlain,
+  Project,
+  ProjectEdition,
+  ProjectFilter,
+  User,
+  UserFilter
 } from './index';
+import { NamespaceCert } from './Namespace';
+import { ProjectUserMap, UserManagedProject, UserManagedProjectFilter } from './Project';
+import { UserInfo } from './User';
 
-type ProjectWorkflow = WorkflowState<Project, void>;
+type ProjectWorkflow = WorkflowState<Project, string>;
 type ProjectEditWorkflow = WorkflowState<ProjectEdition, void>;
 type NamespaceWorkflow = WorkflowState<Namespace, NamespaceOperator>;
 type NamespaceEditWorkflow = WorkflowState<NamespaceEdition, NamespaceOperator>;
@@ -22,6 +35,12 @@ type userWorkflow = WorkflowState<Member, any>;
 export interface RootState {
   /** 路由 */
   route?: RouteState;
+
+  platformType?: string;
+
+  userInfo?: FFObjectModel<UserInfo, any>;
+
+  userManagedProjects?: FFListModel<UserManagedProject, UserManagedProjectFilter>;
 
   project?: FFListModel<Project, ProjectFilter>;
 
@@ -78,4 +97,20 @@ export interface RootState {
 
   /** 关联策略相关，单独设置，不赋予任何场景相关的命名 */
   policyPlainList?: FFListModel<PolicyPlain, PolicyFilter>;
+
+  /**project和用户信息的映射 */
+  projectUserInfo?: FFObjectModel<ProjectUserMap, ProjectFilter>;
+
+  detailProject?: FFListModel<Project, ProjectFilter>;
+
+  addExistMultiProject?: ProjectWorkflow;
+
+  deleteParentProject?: ProjectWorkflow;
+
+  projectDetail?: Project;
+
+  /**namespaceTable */
+  namespaceKubectlConfig?: FFObjectModel<NamespaceCert, NamespaceFilter>;
+
+  migrateNamesapce?: NamespaceWorkflow;
 }

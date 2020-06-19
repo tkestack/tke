@@ -6,12 +6,17 @@ export const EditProjecResourceLimit = 'EditProjecResourceLimit';
 export const UpdateProjectEdition = 'UpdateProjectEdition';
 export const ClearProjectEdition = 'ClearProjectEdition';
 export const DeleteProject = 'DeleteProject';
+export const AddExistMultiProject = 'AddExistMultiProject';
+export const DeleteParentProject = 'DeleteParentProject';
+export const ProjectDetail = 'ProjectDetail';
+export const PlatformType = 'IsBussiness';
 
 /**命名空间 */
 export const CreateNamespace = 'CreateNamespace';
 export const EditNamespaceResourceLimit = 'EditNamespaceResourceLimit';
 export const UpdateNamespaceEdition = 'UpdateNamespaceEdition';
 export const DeleteNamespace = 'DeleteNamespace';
+export const MigrateNamesapce = 'MigrateNamesapce';
 
 /**admin */
 export const ModifyAdminstrator = 'ModifyAdminstrator';

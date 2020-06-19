@@ -1,8 +1,14 @@
 import { resourceConfig } from '@config';
 import { CommonAPI, ResourceFilter, ResourceInfo } from '@src/modules/common';
 import {
-    createFFListActions, deepClone, extend, FetchOptions, generateFetcherActionCreator,
-    generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
+  createFFListActions,
+  deepClone,
+  extend,
+  FetchOptions,
+  generateFetcherActionCreator,
+  generateWorkflowActionCreator,
+  isSuccessWorkflow,
+  OperationTrigger
 } from '@tencent/ff-redux';
 
 import * as ActionTypes from '../constants/ActionType';
@@ -17,19 +23,19 @@ type GetState = () => RootState;
  * 增加用户
  */
 const addUser = generateWorkflowActionCreator<Member, void>({
-    actionType: ActionTypes.AddUser,
-    workflowStateLocator: (state: RootState) => state.addUserWorkflow,
-    operationExecutor: WebAPI.addUser,
-    after: {
-        [OperationTrigger.Done]: (dispatch, getState: GetState) => {
-            let { addUserWorkflow, route } = getState();
-            if (isSuccessWorkflow(addUserWorkflow)) {
-                router.navigate({ sub: 'detail', tab: 'member' }, route.queries);
-            }
-            /** 结束工作流 */
-            dispatch(FFModelUserActions.applyFilter({}));
-        }
+  actionType: ActionTypes.AddUser,
+  workflowStateLocator: (state: RootState) => state.addUserWorkflow,
+  operationExecutor: WebAPI.addUser,
+  after: {
+    [OperationTrigger.Done]: (dispatch, getState: GetState) => {
+      let { addUserWorkflow, route } = getState();
+      if (isSuccessWorkflow(addUserWorkflow)) {
+        router.navigate({ sub: 'detail', tab: 'member' }, route.queries);
+      }
+      /** 结束工作流 */
+      dispatch(FFModelUserActions.applyFilter({}));
     }
+  }
 });
 //
 // /**
@@ -84,26 +90,26 @@ const addUser = generateWorkflowActionCreator<Member, void>({
  * 用户列表操作
  */
 const FFModelUserActions = createFFListActions<User, UserFilter>({
-    actionName: ActionTypes.UserList,
-    fetcher: async (query, getState: GetState) => {
-        console.log('ActionTypes.UserList query is:', query);
-        let response = await WebAPI.fetchUserList(query);
-        return response;
-    },
-    getRecord: (getState: GetState) => {
-        return getState().userList;
-    },
-    onFinish: (record, dispatch: Redux.Dispatch) => {
-        if (record.data.recordCount) {
-            let isNotNeedPoll =
-                record.data.records.filter(item => item.status && item.status['phase'] && item.status['phase'] === 'Deleting')
-                    .length === 0;
+  actionName: ActionTypes.UserList,
+  fetcher: async (query, getState: GetState) => {
+    console.log('ActionTypes.UserList query is:', query);
+    let response = await WebAPI.fetchUserList(query);
+    return response;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().userList;
+  },
+  onFinish: (record, dispatch: Redux.Dispatch) => {
+    if (record.data.recordCount) {
+      let isNotNeedPoll =
+        record.data.records.filter(item => item.status && item.status['phase'] && item.status['phase'] === 'Deleting')
+          .length === 0;
 
-            if (isNotNeedPoll) {
-                dispatch(FFModelUserActions.clearPolling());
-            }
-        }
+      if (isNotNeedPoll) {
+        dispatch(FFModelUserActions.clearPolling());
+      }
     }
+  }
 });
 //
 // /* ================================ start 权限列表相关的 ================================ */
@@ -130,52 +136,52 @@ const FFModelUserActions = createFFListActions<User, UserFilter>({
 /* ================================ end 权限列表相关的 ================================ */
 
 const restActions = {
-    addUser,
-    // removeUser,
-    // getUser,
-    // updateUser,
-    // strategy: strategyActions,
+  addUser,
+  // removeUser,
+  // getUser,
+  // updateUser,
+  // strategy: strategyActions,
 
-    /** 轮训操作 */
-    poll: (params) => {
-        return async (dispatch: Redux.Dispatch) => {
-            dispatch(
-                userActions.polling({
-                    filter: {
-                        ifAll: true,
-                        projectId: params.projectId,
-                    },
-                    delayTime: 5000
-                })
-            );
-        };
-    },
+  /** 轮训操作 */
+  poll: params => {
+    return async (dispatch: Redux.Dispatch) => {
+      dispatch(
+        userActions.polling({
+          filter: {
+            ifAll: true,
+            projectId: params.projectId
+          },
+          delayTime: 5000
+        })
+      );
+    };
+  },
 
-    /** 初始化集群的版本 */
-    getUsersByName: (username: string) => {
-        return (dispatch: Redux.Dispatch, getState: GetState) => {
-            let filterUsers = [];
-            getState().userList.list.data.records.forEach(user => {
-                if (user.spec.name === username || user.spec.displayName === username) {
-                    filterUsers.push(user);
-                }
-            });
-            dispatch({
-                type: ActionTypes.FetchUserByName,
-                payload: filterUsers
-            });
-        };
-    },
+  /** 初始化集群的版本 */
+  getUsersByName: (username: string) => {
+    return (dispatch: Redux.Dispatch, getState: GetState) => {
+      let filterUsers = [];
+      getState().userList.list.data.records.forEach(user => {
+        if (user.spec.name === username || user.spec.displayName === username) {
+          filterUsers.push(user);
+        }
+      });
+      dispatch({
+        type: ActionTypes.FetchUserByName,
+        payload: filterUsers
+      });
+    };
+  }
 
-    // getLoginUserInfo: () => {
-    //     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-    //         let response = await WebAPI.fetchAdminstratorInfo();
-    //         dispatch({
-    //             type: ActionType.LoginUserInfo,
-    //             payload: response
-    //         });
-    //     };
-    // }
+  // getLoginUserInfo: () => {
+  //     return async (dispatch: Redux.Dispatch, getState: GetState) => {
+  //         let response = await WebAPI.fetchAdminstratorInfo();
+  //         dispatch({
+  //             type: ActionType.LoginUserInfo,
+  //             payload: response
+  //         });
+  //     };
+  // }
 };
 
 export const userActions = extend({}, FFModelUserActions, restActions);

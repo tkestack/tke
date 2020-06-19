@@ -1,3 +1,4 @@
+import { auth_project } from './resource/k8sConfig/otherResource';
 import {
   deployment,
   statefulset,
@@ -181,6 +182,7 @@ export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey =
     role: getResourceConfig(role, finalK8sVersion),
     localgroup: getResourceConfig(localgroup, finalK8sVersion),
     group: getResourceConfig(group, finalK8sVersion),
+    auth_project: getResourceConfig(auth_project, finalK8sVersion),
     /** =============== 这里是权限相关的 =============== */
 
     /** 告警配置 */

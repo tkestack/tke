@@ -220,7 +220,6 @@ export const W_NodeAbnormalMigratePolicy = 'W_NodeAbnormalMigratePolicy';
 export const W_UpdateOversoldRatio = 'W_UpdateOversoldRatio';
 
 /**亲和性调度相关 */
-export const W_SelectNodeSelector = 'W_SelectNodeSelector';
 export const WV_NodeSelector = 'WV_NodeSelector';
 export const W_UpdateNodeAffinityRule = 'W_UpdateNodeAffinityRule';
 export const W_SelectNodeAffinityType = 'W_SelectNodeAffinityType';

@@ -209,6 +209,17 @@ export const user = (k8sVersion: string) => {
   });
 };
 
+/** users的配置 */
+export const auth_project = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'auth_project',
+    requestType: {
+      list: 'projects'
+    }
+  });
+};
+
 /** roles的配置 */
 export const role = (k8sVersion: string) => {
   return generateResourceInfo({

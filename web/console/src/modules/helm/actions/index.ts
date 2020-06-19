@@ -1,5 +1,5 @@
 import { projectNamespaceActions } from './projectNamespaceActions.project';
-import { namespaceActions } from './namespaceActions.project';
+import { namespaceActions } from './namespaceActions';
 import { clusterActions } from './clusterActions';
 import { regionActions } from './regionActions';
 import { helmActions } from './helmActions';

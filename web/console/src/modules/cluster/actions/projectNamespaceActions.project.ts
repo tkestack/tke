@@ -11,6 +11,7 @@ import { router } from '../router';
 import * as WebAPI from '../WebAPI';
 import { clusterActions } from './clusterActions';
 import { namespaceActions } from './namespaceActions';
+import { setProjectName } from '@helper';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
@@ -92,7 +93,6 @@ const restActions = {
         type: ActionType.ProjectSelection,
         payload: project
       });
-      dispatch(projectNamespaceActions.applyFilter({ specificName: project }));
       let { mode, type, resourceName } = urlParams;
       router.navigate(
         mode && type && resourceName ? urlParams : { mode: 'list', type: 'namespace', resourceName: 'np' },
@@ -100,6 +100,8 @@ const restActions = {
           projectName: project
         })
       );
+      setProjectName(project);
+      dispatch(projectNamespaceActions.applyFilter({ specificName: project }));
     };
   },
 

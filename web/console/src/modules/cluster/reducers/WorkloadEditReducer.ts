@@ -1,6 +1,8 @@
+import { ComputerFilter, Computer } from './../models/Computer';
+import { FFReduxActionName } from './../constants/Config';
 import { combineReducers } from 'redux';
 
-import { RecordSet, reduceToPayload } from '@tencent/ff-redux';
+import { RecordSet, reduceToPayload, createFFListReducer } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
 
@@ -194,10 +196,8 @@ const TempReducer = combineReducers({
 
   v_partition: reduceToPayload(ActionType.WV_Partition, initValidator),
 
-  nodeSelection: reduceToPayload(ActionType.W_SelectNodeSelector, []),
-
+  computer: createFFListReducer<Computer, ComputerFilter>(FFReduxActionName.COMPUTER_WORKLOAD),
   v_nodeSelection: reduceToPayload(ActionType.WV_NodeSelector, initValidator),
-
   nodeAffinityType: reduceToPayload(ActionType.W_SelectNodeAffinityType, 'unset'),
 
   nodeAffinityRule: reduceToPayload(ActionType.W_UpdateNodeAffinityRule, initAffinityRule),

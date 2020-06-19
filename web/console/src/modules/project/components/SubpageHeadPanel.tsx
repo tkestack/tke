@@ -15,9 +15,9 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class SubpageHeadPanel extends React.Component<RootProps, {}> {
   render() {
-    let { route, project } = this.props,
-      projectName = project.selections[0] ? project.selections[0].spec.displayName : '',
-      projectId = project.selections[0] ? project.selections[0].metadata.name : '';
+    let { route, project, projectDetail } = this.props,
+      projectName = projectDetail ? projectDetail.spec.displayName : '',
+      projectId = projectDetail ? projectDetail.metadata.name : '';
 
     return (
       <React.Fragment>

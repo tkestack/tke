@@ -1,8 +1,8 @@
-import { FetcherState, Identifiable, QueryState, RecordSet } from '@tencent/ff-redux';
+import { FetcherState, Identifiable, QueryState, RecordSet, FFListModel } from '@tencent/ff-redux';
 
 import { Validation } from '../../common/models';
 import { ConfigItems, ContainerItem, Resource, ResourceFilter, VolumeItem } from '../models';
-import { Computer } from './Computer';
+import { Computer, ComputerFilter } from './Computer';
 
 export interface WorkloadEdit extends Identifiable {
   /** workload name */
@@ -112,11 +112,11 @@ export interface WorkloadEdit extends Identifiable {
   /** imagePullSecret列表 */
   imagePullSecrets?: ImagePullSecrets[];
 
-  /** 亲和性调度指定节点 */
-  nodeSelection?: Computer[];
-
   /**节点校验 */
   v_nodeSelection?: Validation;
+
+  //用于选择亲和性调度节点
+  computer?: FFListModel<Computer, ComputerFilter>;
 
   /**亲和性调度方式："node" 指定节点调度 "rule" 自定义规则 "unset" 不使用*/
   nodeAffinityType?: string;
