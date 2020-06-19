@@ -68,8 +68,8 @@ spec:
             periodSeconds: 20
           resources:
             limits:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 500m
+              memory: 1Gi
             requests:
               cpu: 50m
               memory: 128Mi

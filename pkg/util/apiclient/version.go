@@ -20,9 +20,9 @@ package apiclient
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Masterminds/semver"
-
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -49,7 +49,7 @@ func GetClusterVersion(client kubernetes.Interface) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%v.%v", version.Major, version.Minor), nil
+	return fmt.Sprintf("%v.%v", version.Major, strings.TrimSuffix(version.Minor, "+")), nil
 }
 
 func CheckVersion(version string, versionConstraint string) (bool, error) {

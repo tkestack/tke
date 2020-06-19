@@ -35,15 +35,14 @@ export class ResourceModifyHistoryPanel extends React.Component<RootProps, Resou
   }
 
   componentDidMount() {
-    let { actions, subRoot, route } = this.props,
-      { ffResourceList } = subRoot.resourceOption;
-
-    // 这里主要是几个tab之间相互跳，需要重新拉取
-    ffResourceList.selection &&
+    let { route, subRoot, actions } = this.props,
+      { resourceDetailInfo } = subRoot.resourceDetailState;
+    let { rid, clusterId, np } = route.queries;
+    resourceDetailInfo.selection !== null &&
       actions.resourceDetail.rs.applyFilter({
-        regionId: +route.queries['rid'],
-        clusterId: route.queries['clusterId'],
-        namespace: route.queries['np']
+        regionId: +rid,
+        clusterId,
+        namespace: np
       });
   }
 

@@ -22,6 +22,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"tkestack.io/tke/pkg/util/apiclient"
@@ -45,4 +46,12 @@ func Create(ctx context.Context, clientset kubernetes.Interface) error {
 	}
 
 	return apiclient.CreateOrUpdateConfigMap(ctx, clientset, cm)
+}
+
+func Delete(ctx context.Context, clientset kubernetes.Interface) error {
+	err := clientset.CoreV1().ConfigMaps(Namespace).Delete(ctx, Name, metav1.DeleteOptions{})
+	if errors.IsNotFound(err) {
+		err = nil
+	}
+	return err
 }

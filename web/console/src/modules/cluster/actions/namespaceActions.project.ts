@@ -83,15 +83,7 @@ const restActions = {
       }
 
       // 初始化或者变更Resource的信息，在创建页面当中，变更ns，不需要拉取resource
-      mode !== 'create' && finder
-        ? dispatch(
-            resourceActions.poll({
-              namespace,
-              clusterId: finder.spec.clusterName,
-              regionId: +route.queries['rid']
-            })
-          )
-        : dispatch(resourceActions.clearFetch());
+      mode !== 'create' && finder ? dispatch(resourceActions.poll()) : dispatch(resourceActions.clearFetch());
     };
   }
 };

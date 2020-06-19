@@ -60,6 +60,7 @@ const (
 	crbIPAMName        = "galaxy-ipam"
 	crIPAMName         = "galaxy-ipam"
 	cmIPAMName         = "galaxy-ipam-etc"
+	cmFloatingIPName   = "floatingip-config"
 )
 
 // Controller is responsible for performing actions dependent upon a ipam phase.
@@ -386,6 +387,12 @@ func (c *Controller) installIPAM(ctx context.Context, ipam *v1.IPAM) error {
 			return err
 		}
 	}
+	// Create floatingIP configmap.
+	if _, err := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, cmFloatingIP(), metav1.CreateOptions{}); err != nil {
+		if !errors.IsAlreadyExists(err) {
+			return err
+		}
+	}
 	// Deployment IPAM
 	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentIPAM(ipam.Spec.Version), metav1.CreateOptions{}); err != nil {
 		return err
@@ -613,6 +620,23 @@ func cmIPAM() *corev1.ConfigMap {
 		},
 		Data: map[string]string{
 			"galaxy-ipam.json": cfg,
+		},
+	}
+}
+
+func cmFloatingIP() *corev1.ConfigMap {
+	const emptyFloatingIPs = `floatingips: ""`
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cmFloatingIPName,
+			Namespace: metav1.NamespaceSystem,
+		},
+		Data: map[string]string{
+			"data": emptyFloatingIPs,
 		},
 	}
 }

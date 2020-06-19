@@ -102,7 +102,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
     let { actions } = this.props;
     // 离开页面的话，清空当前的轮询操作
-    actions.resource.clearPollEvent();
+    actions.resource.clearPolling();
     // 离开页面的话，清空当前的多选
     actions.resource.selectMultipleResource([]);
   }

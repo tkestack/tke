@@ -89,8 +89,9 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		receiver.Spec.TenantID = tenantID
 	}
 
-	receiver.ObjectMeta.Name = ""
-	receiver.ObjectMeta.GenerateName = "recv"
+	if receiver.Name == "" && receiver.GenerateName == "" {
+		receiver.GenerateName = "recv-"
+	}
 }
 
 // Validate validates a new receiver.

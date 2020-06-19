@@ -10,7 +10,8 @@ export const FFReduxActionName = {
   Resource_Workload: 'Resource_Workload',
   LBCF_DRIVER: 'LBCF_DRIVER',
 
-  COMPUTER_WORKLOAD: 'COMPUTER_WORKLOAD'
+  COMPUTER_WORKLOAD: 'COMPUTER_WORKLOAD',
+  Resource_Detail_Info: 'Resource_Detail_Info'
 };
 /** ========================= end FFRedux的相关配置 ======================== */
 
@@ -771,4 +772,20 @@ export const DropCapabilitiesList = [
   'SYS_CHROOT',
   'SETFCAP',
   'all'
+];
+
+/** pod远程登录的选项 */
+export const podRemoteShellOptions = [
+  {
+    value: '/bin/bash',
+    text: '/bin/bash'
+  },
+  {
+    value: '/bin/zsh',
+    text: '/bin/zsh'
+  },
+  {
+    value: '/bin/sh',
+    text: '/bin/sh'
+  }
 ];

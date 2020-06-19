@@ -40,12 +40,6 @@ export enum ConsoleModuleEnum {
   /** 镜像仓库 */
   Registry = 'registry',
 
-  /** Chart */
-  Chart = 'chart',
-
-  /** 访问凭证 */
-  ApiKey = 'apiKey',
-
   /** 认证模块 */
   Auth = 'auth',
 
@@ -97,7 +91,7 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '组织资源',
-    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Chart, ConsoleModuleEnum.ApiKey],
+    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Auth],
     subRouterConfig: [
       {
         url: '/tkestack/registry/repo',
@@ -107,12 +101,12 @@ const commonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack/registry/chart',
         title: 'Chart包仓库管理',
-        watchModule: ConsoleModuleEnum.Chart
+        watchModule: ConsoleModuleEnum.Registry
       },
       {
         url: '/tkestack/registry/apikey',
         title: '访问凭证',
-        watchModule: ConsoleModuleEnum.ApiKey
+        watchModule: ConsoleModuleEnum.Auth
       }
     ]
   },
@@ -200,7 +194,7 @@ const businessCommonRouterConfig: RouterConfig[] = [
   },
   {
     title: '组织资源',
-    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.ApiKey],
+    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Auth],
     subRouterConfig: [
       {
         url: '/tkestack-project/registry/repo',
@@ -210,7 +204,7 @@ const businessCommonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack-project/registry/apikey',
         title: '访问凭证',
-        watchModule: ConsoleModuleEnum.ApiKey
+        watchModule: ConsoleModuleEnum.Auth
       }
     ]
   },

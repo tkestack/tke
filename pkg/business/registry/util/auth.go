@@ -38,7 +38,7 @@ import (
 func FilterWithUser(ctx context.Context,
 	projectList *business.ProjectList,
 	authClient authversionedclient.AuthV1Interface,
-	businessClient *businessinternalclient.BusinessClient, all4Admin bool) (bool, *business.ProjectList, error) {
+	businessClient *businessinternalclient.BusinessClient) (bool, *business.ProjectList, error) {
 
 	userName, tenantID := authentication.GetUsernameAndTenantID(ctx)
 
@@ -50,7 +50,6 @@ func FilterWithUser(ctx context.Context,
 	}
 	for _, platform := range platformList.Items {
 		if util.InStringSlice(platform.Spec.Administrators, userName) {
-			log.Errorf("platform.Spec.Administrators %v, %s", platform.Spec.Administrators, userName)
 			isAdmin = true
 			break
 		}
@@ -72,14 +71,13 @@ func FilterWithUser(ctx context.Context,
 				log.Info("user", log.Any("user", user))
 				userID = user.Name
 				if authutil.IsPlatformAdministrator(user) {
-					log.Errorf("user %v, %s", user, userName)
 					isAdmin = true
 				}
 				break
 			}
 		}
 	}
-	if (isAdmin && all4Admin) || projectList == nil || projectList.Items == nil {
+	if projectList == nil || projectList.Items == nil {
 		return isAdmin, projectList, nil
 	}
 
