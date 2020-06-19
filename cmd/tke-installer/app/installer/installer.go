@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -32,7 +33,6 @@ import (
 	"path"
 	goruntime "runtime"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -725,8 +725,8 @@ func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 // validateResource validate the cpu and memory of cluster machines whether meets the requirements.
 func (t *TKE) validateResource(cluster *platformv1.Cluster) *errors.StatusError {
 	var (
-		cpuSum    int
-		memorySum int
+		cpuSum           int
+		memoryInBytesSum uint64
 	)
 	for _, machine := range cluster.Spec.Machines {
 		sshConfig := &ssh.Config{
@@ -741,32 +741,22 @@ func (t *TKE) validateResource(cluster *platformv1.Cluster) *errors.StatusError 
 		if err != nil {
 			return errors.NewInternalError(err)
 		}
-		cmd := "nproc --all"
-		stdout, err := s.CombinedOutput(cmd)
+		cpu, err := ssh.NumCPU(s)
 		if err != nil {
 			return errors.NewInternalError(fmt.Errorf("get cpu error: %w", err))
 		}
-		cpu, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
-		if err != nil {
-			return errors.NewInternalError(fmt.Errorf("convert cpu value error: %w", err))
-		}
 		cpuSum += cpu
 
-		cmd = "free -g | grep Mem  | awk '{print $2}'"
-		stdout, err = s.CombinedOutput(cmd)
+		memInBytes, err := ssh.MemoryCapacity(s)
 		if err != nil {
 			return errors.NewInternalError(fmt.Errorf("get memory error: %w", err))
 		}
-		memory, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
-		if err != nil {
-			return errors.NewInternalError(fmt.Errorf("convert memory value error: %w", err))
-		}
-		memorySum += memory
+		memoryInBytesSum += memInBytes
 	}
 	if cpuSum < constants.CPURequest {
 		return errors.NewBadRequest(fmt.Sprintf("at lease %d cores are required", constants.CPURequest))
 	}
-	if memorySum < constants.MemoryRequest {
+	if math.Ceil(float64(memoryInBytesSum/1024/1024/1024)) < constants.MemoryRequest {
 		return errors.NewBadRequest(fmt.Sprintf("at lease %d GiB memory are required", constants.MemoryRequest))
 	}
 

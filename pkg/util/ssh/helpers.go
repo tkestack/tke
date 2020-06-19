@@ -39,3 +39,34 @@ func Timestamp(s Interface) (int, error) {
 
 	return strconv.Atoi(strings.TrimSpace(string(stdout)))
 }
+
+// MemoryCapacity returns the machine's total memory from /proc/meminfo.
+// Returns the total memory capacity as an uint64 (number of bytes).
+func MemoryCapacity(s Interface) (uint64, error) {
+	stdout, err := s.CombinedOutput(`grep 'MemTotal:' /proc/meminfo | grep -oP '\d+'`)
+	if err != nil {
+		return 0, err
+	}
+
+	memInKB, err := strconv.ParseUint(strings.TrimSpace(string(stdout)), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return memInKB * 1024, err
+}
+
+// NumCPU returns the number of logical CPUs.
+func NumCPU(s Interface) (int, error) {
+	stdout, err := s.CombinedOutput(`nproc --all`)
+	if err != nil {
+		return 0, err
+	}
+
+	cpu, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
+	if err != nil {
+		return 0, err
+	}
+
+	return cpu, nil
+}
