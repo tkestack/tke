@@ -22,7 +22,12 @@ export const UserTablePanel = () => {
   const [editUser, setEditUser] = useState();
   const { userList, route, platformType, userManagedProjects, projectDetail } = state;
 
-  let enableOp = platformType === PlatformTypeEnum.Manager;
+  let enableOp =
+    platformType === PlatformTypeEnum.Manager ||
+    (platformType === PlatformTypeEnum.Business &&
+      userManagedProjects.list.data.records.find(
+        item => item.name === (projectDetail ? projectDetail.metadata.name : null)
+      ));
 
   useEffect(() => {
     actions.policy.associate.policyList.applyFilter({ resource: 'project', resourceID: '' });
@@ -61,14 +66,16 @@ export const UserTablePanel = () => {
         return (
           <Text>
             {content || '-'}
-            <Icon
-              onClick={() => {
-                toggle();
-                setEditUser({ ...user });
-              }}
-              style={{ cursor: 'pointer' }}
-              type="pencil"
-            />
+            {enableOp && (
+              <Icon
+                onClick={() => {
+                  toggle();
+                  setEditUser({ ...user });
+                }}
+                style={{ cursor: 'pointer' }}
+                type="pencil"
+              />
+            )}
           </Text>
         );
       }

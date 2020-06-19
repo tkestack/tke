@@ -93,7 +93,6 @@ export async function fetchUserList(query: QueryState<UserFilter>) {
         url
       },
       '',
-      projectId,
       search
     );
 

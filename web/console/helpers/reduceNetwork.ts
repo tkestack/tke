@@ -73,12 +73,7 @@ export const requestMethodForAction = (type: string) => {
  * 统一的请求处理
  * @param userParams: RequestParams
  */
-export const reduceNetworkRequest = async (
-  userParams: RequestParams,
-  clusterId?: string,
-  projectId?: string,
-  keyword?: string
-) => {
+export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?: string, keyword?: string) => {
   let { method, url, userDefinedHeader = {}, data = {}, apiParams, baseURL = GET_CONSOLE_MODULE_BASE_URL } = userParams;
 
   let rsp;

@@ -113,7 +113,10 @@ export async function fetchProjectList(query: QueryState<ProjectFilter>) {
 
       let params: RequestParams = {
         method: Method.get,
-        url
+        url,
+        userDefinedHeader: {
+          'X-TKE-ProjectName': projectId
+        }
       };
       return reduceNetworkRequest(params).catch(e => null);
     });
