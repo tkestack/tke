@@ -64,7 +64,9 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
       }
     }
 
-    return (
+    return resourceIns === null ? (
+      <noscript />
+    ) : (
       <div>
         {this._renderBasicInfo(resourceIns)}
         {resourceName === 'ingress' && this._renderRules(resourceIns)}

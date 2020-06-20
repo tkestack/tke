@@ -25,14 +25,19 @@ import (
 )
 
 const (
-	// KubernetesDir is the directory Kubernetes owns for storing various configuration files
-	KubernetesDir         = "/etc/kubernetes/"
-	KubeletPodManifestDir = KubernetesDir + "manifests/"
+	AuditPolicyConfigBaseName = "audit-policy.yaml"
+	OIDCCACertName            = "oidc-ca.crt"
 
-	SchedulerPolicyConfigFile = KubernetesDir + "scheduler-policy-config.json"
-	AuditWebhookConfigFile    = KubernetesDir + "audit-api-client-config.yaml"
-	AuditPolicyConfigFile     = KubernetesDir + "audit-policy.yaml"
+	// Kubernetes Config
+	KubernetesDir                       = "/etc/kubernetes/"
+	KuberentesSchedulerPolicyConfigFile = KubernetesDir + "scheduler-policy-config.json"
+	KuberentesAuditWebhookConfigFile    = KubernetesDir + "audit-api-client-config.yaml"
+	TokenFile                           = KubernetesDir + "known_tokens.csv"
+	KuberentesAuditPolicyConfigFile     = KubernetesDir + AuditPolicyConfigBaseName
+	KubeadmConfigFileName               = KubernetesDir + "kubeadm-config.yaml"
+	KubeletKubeConfigFileName           = KubernetesDir + "kubelet.conf"
 
+	KubeletPodManifestDir                = KubernetesDir + "manifests/"
 	EtcdPodManifestFile                  = KubeletPodManifestDir + "etcd.yaml"
 	KubeAPIServerPodManifestFile         = KubeletPodManifestDir + "kube-apiserver.yaml"
 	KubeControllerManagerPodManifestFile = KubeletPodManifestDir + "kube-controller-manager.yaml"
@@ -45,17 +50,14 @@ const (
 	CNIDataDir = "/var/lib/cni/"
 	CNIConfDIr = "/etc/cni"
 
-	CertificatesDir = KubernetesDir + "pki/"
-	EtcdDataDir     = "/var/lib/etcd"
-
-	TokenFile = KubernetesDir + "known_tokens.csv"
-
-	KubectlConfigFile = "/root/.kube/config"
-
+	// ETC
+	EtcdDataDir          = "/var/lib/etcd"
+	KubectlConfigFile    = "/root/.kube/config"
 	KeepavliedConfigFile = "/etc/keepalived/keepalived.conf"
 
-	OIDCCACertName = "oidc-ca.crt"
-	OIDCCACertFile = CertificatesDir + OIDCCACertName
+	// PKI
+	CertificatesDir = KubernetesDir + "pki/"
+	OIDCCACertFile  = CertificatesDir + OIDCCACertName
 
 	// CACertName defines certificate name
 	CACertName = CertificatesDir + "ca.crt"
@@ -80,25 +82,23 @@ const (
 	// APIServerEtcdClientKeyName defines apiserver's etcd client key name
 	APIServerEtcdClientKeyName = CertificatesDir + "apiserver-etcd-client.key"
 
-	KubeadmConfigFileName = KubernetesDir + "kubeadm-config.yaml"
-
-	// KubeletKubeConfigFileName defines the file name for the kubeconfig that the control-plane kubelet will use for talking
-	// to the API server
-	KubeletKubeConfigFileName = KubernetesDir + "kubelet.conf"
-
 	// LabelNodeRoleMaster specifies that a node is a control-plane
 	// This is a duplicate definition of the constant in pkg/controller/service/service_controller.go
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
 
-	ProviderDir = "provider/baremetal/"
-	SrcDir      = ProviderDir + "res/"
-	ConfDir     = ProviderDir + "conf/"
-	ConfigFile  = ConfDir + "config.yaml"
+	// Provider
+	ProviderDir           = "provider/baremetal/"
+	SrcDir                = ProviderDir + "res/"
+	ConfDir               = ProviderDir + "conf/"
+	ConfigFile            = ConfDir + "config.yaml"
+	AuditPolicyConfigName = ConfDir + AuditPolicyConfigBaseName
+	OIDCConfigFile        = ConfDir + OIDCCACertName
 
 	ManifestsDir        = ProviderDir + "manifests/"
 	GPUManagerManifest  = ManifestsDir + "gpu-manager/gpu-manager.yaml"
 	CSIOperatorManifest = ManifestsDir + "csi-operator/csi-operator.yaml"
 
+	KUBERNETES                   = 1
 	DNSIPIndex                   = 10
 	GPUQuotaAdmissionIPIndex     = 9
 	GPUQuotaAdmissionIPAnnotaion = platformv1.GroupName + "/gpu-quota-admission-ip"

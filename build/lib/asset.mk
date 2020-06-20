@@ -17,7 +17,7 @@
 ASSETS_GENERATOR_VERSION := v1.0.0
 
 .PHONY: asset.build
-asset.build: asset.build.addon asset.build.web.console asset.build.web.installer
+asset.build: asset.build.addon
 
 .PHONY: asset.build.addon
 asset.build.addon:
@@ -25,20 +25,4 @@ asset.build.addon:
 	@docker run --rm \
 		-v $(ROOT_DIR)/hack/addon/readme:/src \
 		-v $(ROOT_DIR)/pkg/platform/registry/clusteraddontype/assets:/assets \
-		$(REGISTRY_PREFIX)/assets-generator:$(ASSETS_GENERATOR_VERSION) -o /assets/assets.go /src
-
-.PHONY: asset.build.web.console
-asset.build.web.console:
-	@echo "===========> Bundling console web assets to application"
-	@docker run --rm \
-		-v $(ROOT_DIR)/web/console/build:/src \
-		-v $(ROOT_DIR)/pkg/gateway/assets:/assets \
-		$(REGISTRY_PREFIX)/assets-generator:$(ASSETS_GENERATOR_VERSION) -o /assets/assets.go /src
-
-.PHONY: asset.build.web.installer
-asset.build.web.installer:
-	@echo "===========> Bundling installer web assets to application"
-	@docker run --rm \
-		-v $(ROOT_DIR)/web/installer/build:/src \
-		-v $(ROOT_DIR)/cmd/tke-installer/assets:/assets \
 		$(REGISTRY_PREFIX)/assets-generator:$(ASSETS_GENERATOR_VERSION) -o /assets/assets.go /src

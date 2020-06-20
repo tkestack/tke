@@ -22,14 +22,16 @@ const fetchNamespaceListActions = generateFetcherActionCreator({
     let namesapceInfo = resourceConfig(clusterVersion)[namespaceQuery && namespaceQuery.filter && namespaceQuery.filter.projectName ? 'namespaces' : 'ns'];
     let isClearData = fetchOptions && fetchOptions.noCache;
     let response = await WebAPI.fetchNamespaceList(namespaceQuery, namesapceInfo, isClearData);
-    // 给cluster注入logAgent信息
-    let agents = await CommonAPI.fetchLogagents();
-    let clusterHasLogAgent = {};
-    for (let agent of agents.records) {
-      clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
-    }
-    for (let ns of response.records) {
-      ns.cluster.spec.logAgentName = clusterHasLogAgent[ns.cluster.metadata.name];
+    if (namespaceQuery && namespaceQuery.filter && namespaceQuery.filter.projectName) {
+      // 如果是在业务侧, 给cluster注入logAgent信息。因为在业务侧操作的是业务和命名空间，只有通过命名空间的信息转换出集群信息来
+      let agents = await CommonAPI.fetchLogagents();
+      let clusterHasLogAgent = {};
+      for (let agent of agents.records) {
+        clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
+      }
+      for (let ns of response.records) {
+        ns.cluster.spec.logAgentName = clusterHasLogAgent[ns.cluster.metadata.name];
+      }
     }
     return response;
   },

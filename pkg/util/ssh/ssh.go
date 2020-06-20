@@ -124,10 +124,10 @@ func (s *SSH) Ping() error {
 func (s *SSH) CombinedOutput(cmd string) ([]byte, error) {
 	stdout, stderr, exit, err := s.Exec(cmd)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("exec cmd %q eror: %w", cmd, err)
 	}
 	if exit != 0 {
-		return nil, fmt.Errorf("exit error %d:%s", exit, stderr)
+		return nil, fmt.Errorf("exec cmd %q eror: exit code %d: stderr %s", cmd, exit, stderr)
 	}
 	return []byte(stdout), nil
 }
@@ -407,7 +407,13 @@ func MakePrivateKeySignerFromFile(key string) (ssh.Signer, error) {
 }
 
 func MakePrivateKeySigner(privateKey []byte, passPhrase []byte) (ssh.Signer, error) {
-	signer, err := ssh.ParsePrivateKeyWithPassphrase(privateKey, passPhrase)
+	var signer ssh.Signer
+	var err error
+	if passPhrase == nil {
+		signer, err = ssh.ParsePrivateKey(privateKey)
+	} else {
+		signer, err = ssh.ParsePrivateKeyWithPassphrase(privateKey, passPhrase)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error parsing SSH key: '%v'", err)
 	}

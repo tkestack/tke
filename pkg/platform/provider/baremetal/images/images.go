@@ -48,13 +48,13 @@ func (c Components) Get(name string) *containerregistry.Image {
 }
 
 var components = Components{
-	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.3.18"},
+	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.4.7"},
 	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.6.7"},
 	Pause:              containerregistry.Image{Name: "pause", Tag: "3.1"},
 	NvidiaDevicePlugin: containerregistry.Image{Name: "nvidia-device-plugin", Tag: "1.0.0-beta4"},
 	Keepalived:         containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
 
-	GPUManager:        containerregistry.Image{Name: "gpu-manager", Tag: "v1.0.0"},
+	GPUManager:        containerregistry.Image{Name: "gpu-manager", Tag: "v1.0.4"},
 	Busybox:           containerregistry.Image{Name: "busybox", Tag: "1.31.0"},
 	GPUQuotaAdmission: containerregistry.Image{Name: "gpu-quota-admission", Tag: "v1.0.0"},
 }

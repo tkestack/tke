@@ -14,6 +14,7 @@ import { ResourceListMapForContainerLog } from '../constants/Config';
 import { ContainerLogs, Resource } from '../models';
 import { isCanAddContainerLog } from './EditOriginContainerPanel';
 import { ContainerItemProps } from './ListOriginContainerItemPanel';
+import { clusterActions } from '@src/modules/logStash/actions/clusterActions';
 
 insertCSS(
   'EditOriginContainerItemPanel',
@@ -114,6 +115,11 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                           className="tc-15-select m"
                           onSelect={value => {
                             actions.editLogStash.selectContainerLogNamespace(value, containerLogIndex);
+                            // 兼容业务侧的处理
+                            if (window.location.href.includes('tkestack-project')) {
+                              let namespaceFound = namespaceList.data.records.find(item => item.namespace === value);
+                              actions.cluster.selectClusterFromEditNamespace(namespaceFound.cluster);
+                            }
                           }}
                           name="Namespace"
                           tipPosition="right"

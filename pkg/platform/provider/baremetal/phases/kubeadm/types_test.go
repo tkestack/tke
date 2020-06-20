@@ -28,7 +28,7 @@ import (
 )
 
 func TestConfig_Marshal(t *testing.T) {
-	c := &Config{
+	c := &InitConfig{
 		InitConfiguration: &v1beta2.InitConfiguration{
 			TypeMeta:       metav1.TypeMeta{},
 			CertificateKey: "a",

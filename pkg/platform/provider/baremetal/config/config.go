@@ -45,13 +45,18 @@ func New(filename string) (*Config, error) {
 }
 
 type Config struct {
-	Registry Registry `yaml:"registry"`
-	Audit    Audit    `yaml:"audit"`
-	Feature  Feature  `yaml:"feature"`
+	Registry          Registry          `yaml:"registry"`
+	Audit             Audit             `yaml:"audit"`
+	Feature           Feature           `yaml:"feature"`
+	Docker            Docker            `yaml:"docker"`
+	Kubelet           Kubelet           `yaml:"kubelet"`
+	APIServer         APIServer         `yaml:"apiServer"`
+	ControllerManager ControllerManager `yaml:"controllerManager"`
+	Scheduler         Scheduler         `yaml:"scheduler"`
 }
 
 func (c *Config) Save(filename string) error {
-	f, err := os.OpenFile(filename, os.O_RDWR, 0644)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
@@ -78,4 +83,24 @@ type Audit struct {
 
 type Feature struct {
 	SkipConditions []string `yaml:"skipConditions"`
+}
+
+type Docker struct {
+	ExtraArgs map[string]string `yaml:"extraArgs"`
+}
+
+type Kubelet struct {
+	ExtraArgs map[string]string `yaml:"extraArgs"`
+}
+
+type APIServer struct {
+	ExtraArgs map[string]string `yaml:"extraArgs"`
+}
+
+type ControllerManager struct {
+	ExtraArgs map[string]string `yaml:"extraArgs"`
+}
+
+type Scheduler struct {
+	ExtraArgs map[string]string `yaml:"extraArgs"`
 }

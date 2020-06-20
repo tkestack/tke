@@ -74,9 +74,12 @@ func NewProvider() (*Provider, error) {
 			p.EnsureDocker,
 			p.EnsureKubelet,
 			p.EnsureCNIPlugins,
+			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
 
-			p.EnsureJoinNode,
+			p.EnsureJoinPhasePreflight,
+			p.EnsureJoinPhaseKubeletStart,
+
 			p.EnsureKubeconfig,
 			p.EnsureMarkNode,
 			p.EnsureNodeReady,

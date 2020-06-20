@@ -8,7 +8,7 @@ import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { resourceConfig } from '../../../../../../config';
-import { cloneDeep, CreateResource, InputField, WorkflowDialog } from '../../../../common';
+import { cloneDeep, CreateResource, InputField, WorkflowDialog, TipInfo } from '../../../../common';
 import { allActions } from '../../../actions/';
 import { RootProps } from '../../ClusterApp';
 
@@ -76,6 +76,8 @@ export class ResourceGrayUpgradeDialog extends React.Component<RootProps, {}> {
         }}
       >
         <div style={{ maxHeight: '700px', overflowY: 'auto' }}>
+          <TipInfo type="info">{t('灰度升级过程中，下列所有容器实例会同时重启')}</TipInfo>
+
           <FormPanel isNeedCard={false} style={{ paddingRight: '80px' }}>
             {editTappGrayUpdate.map((item, index_out) => (
               <FormPanel.Item

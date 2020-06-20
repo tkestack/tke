@@ -26,6 +26,7 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/apimachinery/pkg/util/sets"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
@@ -39,6 +40,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/util"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	"tkestack.io/tke/pkg/logagent/apiserver"
+	"tkestack.io/tke/pkg/apiserver/filter"
 )
 
 const (
@@ -59,6 +61,9 @@ type Config struct {
 //config relies on options
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(logagent.Codecs)
+	//to support file download we need to change logrun
+	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString("watch", "proxy", "connect"),
+		sets.NewString("filedownload"),[]string{})
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false

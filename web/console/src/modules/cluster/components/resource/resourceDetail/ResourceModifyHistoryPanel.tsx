@@ -51,7 +51,7 @@ export class ResourceModifyHistoryPanel extends React.Component<RootProps, Resou
     let resourceSelection = this.props.subRoot.resourceOption.ffResourceList.selection,
       nextResourceSelection = nextProps.subRoot.resourceOption.ffResourceList.selection;
 
-    if (resourceSelection.length === 0 && nextResourceSelection.length) {
+    if (resourceSelection === null && nextResourceSelection) {
       let { route, actions } = nextProps;
       // 拉取rs的列表
       actions.resourceDetail.rs.applyFilter({

@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"fmt"
 	"path"
-	"strings"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
@@ -32,8 +31,7 @@ import (
 )
 
 type Option struct {
-	Version   string
-	ExtraArgs map[string]string
+	Version string
 }
 
 func Install(s ssh.Interface, option *Option) error {
@@ -46,15 +44,6 @@ func Install(s ssh.Interface, option *Option) error {
 	_, stderr, exit, err := s.Execf(cmd, dstFile, constants.DstBinDir)
 	if err != nil {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-	}
-
-	var args []string
-	for k, v := range option.ExtraArgs {
-		args = append(args, fmt.Sprintf(`--%s="%s"`, k, v))
-	}
-	err = s.WriteFile(strings.NewReader(fmt.Sprintf("KUBELET_EXTRA_ARGS=%s", strings.Join(args, " "))), "/etc/sysconfig/kubelet")
-	if err != nil {
-		return err
 	}
 
 	serviceData, err := template.ParseFile(path.Join(constants.ConfDir, "kubelet/kubelet.service"), nil)

@@ -14,10 +14,12 @@
   
 * [产品使用指南](products)
   
-  [切换控制台](products/platform/controlpannel.md)
+  [切换控制台](products/controlpannel.md)
   
   * [平台侧](products/platform)
     * [集群管理](products/platform/cluster.md)
+      * 基本信息
+      * 节点管理
     * [业务管理](products/platform/business.md)
     * [扩展组件](products/platform/extender.md)
     * [组织资源](products/platform/resource.md)

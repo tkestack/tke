@@ -70,7 +70,7 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	}
 
 	if receiverGroup.Name == "" && receiverGroup.GenerateName == "" {
-		receiverGroup.GenerateName = "rg-"
+		receiverGroup.GenerateName = "recvgrp-"
 	}
 }
 
@@ -93,8 +93,9 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		receiverGroup.Spec.TenantID = tenantID
 	}
 
-	receiverGroup.ObjectMeta.Name = ""
-	receiverGroup.ObjectMeta.GenerateName = "recvgrp"
+	if receiverGroup.Name == "" && receiverGroup.GenerateName == "" {
+		receiverGroup.GenerateName = "recvgrp-"
+	}
 }
 
 // Validate validates a new receiverGroup.

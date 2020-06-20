@@ -114,7 +114,10 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
                   className="tc-15-select m"
                   onSelect={value => {
                     actions.namespace.selectNamespace(value);
-                    handleNamespaceSwitched(value);
+                    // 兼容业务侧对集群的处理，从命名空间关联到集群
+                    if (window.location.href.includes('tkestack-project')) {
+                      handleNamespaceSwitched(value);
+                    }
                     if (ifFetchLogList) {
                       actions.log.applyFilter({
                         clusterId: route.queries['clusterId'],

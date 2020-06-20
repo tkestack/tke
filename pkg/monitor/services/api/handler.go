@@ -374,10 +374,12 @@ func (h *processor) List(req *restful.Request, resp *restful.Response) {
 	status := http.StatusBadRequest
 
 	var (
-		entityName  string
-		clusterName string
-		page        int64
-		pageSize    int64
+		entityName      string
+		clusterName     string
+		page            int64
+		pageSize        int64
+		namespace       string
+		alarmPolicyType string
 	)
 
 	defer func() {
@@ -400,6 +402,8 @@ func (h *processor) List(req *restful.Request, resp *restful.Response) {
 		log.Infof("invalid page_size: %s", req.QueryParameter("page_size"))
 		pageSize = 10
 	}
+	namespace = req.QueryParameter("namespace")
+	alarmPolicyType = req.QueryParameter("alarmPolicyType")
 	ruleGroups, err := h.prometheusProcessor.ListGroups(req.Request.Context(), clusterName)
 	if err != nil {
 		result.Err = err.Error()
@@ -410,6 +414,12 @@ func (h *processor) List(req *restful.Request, resp *restful.Response) {
 	for i := range ruleGroups {
 		rg := ruleGroups[i]
 		alarmPolicy := rest.NewAlarmPolicyFromRuleGroup(rg)
+		if namespace != "" && alarmPolicy.Namespace != namespace {
+			continue
+		}
+		if alarmPolicyType != "" && alarmPolicy.AlarmPolicySettings != nil && alarmPolicy.AlarmPolicySettings.AlarmPolicyType != alarmPolicyType {
+			continue
+		}
 		alarmPolicies = append(alarmPolicies, alarmPolicy)
 	}
 	sort.Sort(alarmPolicies)

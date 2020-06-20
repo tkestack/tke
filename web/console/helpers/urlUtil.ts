@@ -95,6 +95,8 @@ interface K8sRestfulPathOptions {
   /** 命名空间，具体的ns */
   namespace?: string;
 
+  isSpetialNamespace?: boolean;
+
   /** 不在路径最后的变量，比如projectId*/
   middleKey?: string;
 
@@ -125,6 +127,7 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
   let {
     resourceInfo,
     namespace = '',
+    isSpetialNamespace = false,
     middleKey = '',
     specificName = '',
     extraResource = '',
@@ -135,7 +138,7 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
 
   /// #if project
   //业务侧ns eg: cls-xxx-ns 需要去除前缀
-  if (namespace && window.location.href.includes('tkestack-project')) {
+  if (namespace && !isSpetialNamespace) {
     namespace = namespace.startsWith('global')
       ? namespace.split('-').splice(1).join('-')
       : namespace.split('-').splice(2).join('-');
