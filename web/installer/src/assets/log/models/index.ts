@@ -1,1 +1,0 @@
-export { RootState } from './RootState';

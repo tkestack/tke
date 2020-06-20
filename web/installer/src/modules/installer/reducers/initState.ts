@@ -1,5 +1,7 @@
-import { uuid } from '@tencent/qcloud-lib';
+import { uuid } from '@tencent/ff-redux';
+
 import { initValidation } from '../../common/models';
+import { EditState } from '../models';
 
 export const initMachine = {
   id: uuid(),
@@ -9,7 +11,7 @@ export const initMachine = {
   port: '',
   v_port: initValidation,
   authWay: 'password',
-  user: '',
+  user: 'root',
   v_user: initValidation,
   password: '',
   v_password: initValidation,
@@ -25,7 +27,8 @@ export const initArg = {
   v_value: initValidation
 };
 
-export const initEdit = {
+export const initEdit: EditState = {
+  id: '',
   //基本设置
   username: '',
   v_username: initValidation,
@@ -35,11 +38,13 @@ export const initEdit = {
   v_confirmPassword: initValidation,
 
   //高可用设置
-  haType: 'tke',
+  haType: 'none',
   haTkeVip: '',
   v_haTkeVip: initValidation,
   haThirdVip: '',
   v_haThirdVip: initValidation,
+  haThirdVipPort: '',
+  v_haThirdVipPort: initValidation,
 
   //集群设置
   networkDevice: 'eth0',
@@ -85,6 +90,14 @@ export const initEdit = {
 
   //业务模块设置
   openBusiness: true,
+  openAudit: false,
+  auditEsUrl: '',
+  auditEsReserveDays: 7,
+  v_auditEsUrl: initValidation,
+  auditEsUsername: '',
+  v_auditEsUsername: initValidation,
+  auditEsPassword: '',
+  v_auditEsPassword: initValidation,
 
   //监控模块设置
   monitorType: 'tke-influxdb',

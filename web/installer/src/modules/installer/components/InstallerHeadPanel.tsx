@@ -1,5 +1,6 @@
-import * as React from "react";
-import { RootProps } from "./InstallerApp";
+import * as React from 'react';
+
+import { RootProps } from './InstallerApp';
 
 export class InstallerHeadPanel extends React.Component<RootProps, void> {
   render() {

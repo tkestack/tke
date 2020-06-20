@@ -52,4 +52,6 @@ export interface UserDefinedHeader {
 
   /** 集群的名称 */
   'X-TKE-ClusterName'?: string;
+
+  'X-TKE-ProjectName'?: string;
 }

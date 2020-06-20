@@ -138,17 +138,21 @@ func WithAuthentication(handler http.Handler, auth authenticator.Request, failed
 		// authorization header is not required anymore in case of a successful authentication.
 		req.Header.Del("Authorization")
 
-		if userInfo, ok := resp.User.(*user.DefaultInfo); ok {
-			if userInfo.Groups == nil {
-				userInfo.Groups = make([]string, 0)
+		if readOnly, ok := resp.User.(*user.DefaultInfo); ok {
+			userInfo := &user.DefaultInfo{
+				Name:  readOnly.Name,
+				UID:   readOnly.UID,
+				Extra: readOnly.Extra,
 			}
+			userInfo.Groups = append(userInfo.Groups, readOnly.Groups...)
+
 			clusterName := req.Header.Get(filter.ClusterNameHeaderKey)
 			if clusterName != "" {
-				userInfo.Groups = append(userInfo.Groups, GroupWithCluster(clusterName))
+				userInfo.Groups = appendGroups(userInfo.Groups, "cluster", clusterName)
 			}
 			projectName := req.Header.Get(filter.ProjectNameHeaderKey)
 			if projectName != "" {
-				userInfo.Groups = append(userInfo.Groups, GroupWithProject(projectName))
+				userInfo.Groups = appendGroups(userInfo.Groups, "project", projectName)
 			}
 
 			req = req.WithContext(genericapirequest.WithUser(req.Context(), userInfo))
@@ -163,10 +167,6 @@ func WithAuthentication(handler http.Handler, auth authenticator.Request, failed
 	})
 }
 
-func GroupWithCluster(cluster string) string {
-	return fmt.Sprintf("cluster:%s", cluster)
-}
-
 func GetClusterFromGroups(groups []string) string {
 	for _, group := range groups {
 		if strings.HasPrefix(group, "cluster:") {
@@ -174,10 +174,6 @@ func GetClusterFromGroups(groups []string) string {
 		}
 	}
 	return ""
-}
-
-func GroupWithProject(project string) string {
-	return fmt.Sprintf("project:%s", project)
 }
 
 func GetValueFromGroups(groups []string, key string) string {
@@ -231,4 +227,16 @@ func compressUsername(username string) string {
 	default:
 		return "other"
 	}
+}
+
+func appendGroups(groups []string, key, value string) []string {
+	temp := groups
+	groups = nil
+	prefix := fmt.Sprintf("%s:", key)
+	for _, group := range temp {
+		if !strings.HasPrefix(group, prefix) {
+			groups = append(groups, group)
+		}
+	}
+	return append(groups, fmt.Sprintf("%s:%s", key, value))
 }

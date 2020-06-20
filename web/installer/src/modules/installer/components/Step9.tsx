@@ -1,177 +1,217 @@
 import * as React from 'react';
+
+import { isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
+import { Alert, Button, Form } from '@tencent/tea-component';
+
+import { getWorkflowError } from '../../common/utils';
 import { RootProps } from './InstallerApp';
-import { Button, Form, Alert, Modal, ExternalLink, Stepper, List, Text } from '@tencent/tea-component';
-import { CodeMirrorEditor } from '../../common/components';
-import { Base64 } from 'js-base64';
-import { downloadCrt } from '../../../../helpers';
 
-interface Step9State {
-  isShowertDialog?: boolean;
-}
-
-export class Step9 extends React.Component<RootProps, Step9State> {
-  state = {
-    isShowertDialog: false
-  };
-  componentDidMount() {
-    const { actions } = this.props;
-    actions.installer.poll();
-  }
-
-  componentWillUnmount() {
-    clearInterval(window['pollProgress']);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    // let preStatus = this.props.clusterProgress.data.record['status'],
-    //   nextStatus = nextProps.clusterProgress.data.record['status'];
-    // if ((!preStatus || preStatus === 'Doing') && nextStatus === 'Success') {
-    //   this.setState({ isShowertDialog: true });
-    // }
-  }
-
-  getHost(hostArr: string[], serverArr: string[]) {
-    if (!hostArr || !hostArr.length || !serverArr || !serverArr.length) {
-      return '';
-    } else {
-      let hosts = '';
-      hostArr.forEach(h => {
-        hosts += serverArr[0] + ' ' + h + '\n';
-      });
-      return hosts;
-    }
-  }
+export class Step9 extends React.Component<RootProps> {
   render() {
-    const { step } = this.props;
-    const { clusterProgress } = this.props;
+    const { actions, editState, step, createCluster } = this.props;
+    let failed = createCluster.operationState === OperationState.Done && !isSuccessWorkflow(createCluster);
 
-    let steps = [];
-    if (clusterProgress.data.record['hosts'] && clusterProgress.data.record['hosts'].length) {
-      steps.push({
-        id: 'hosts',
-        label: '配置域名解析',
-        detail: (
-          <section>
-            <p>
-              请配置如下DNS解析，临时访问也可以配置本地解析（Linux: /etc/hosts， Windows:
-              c:\windows\system32\drivers\etc\hosts）
-            </p>
-            <div className="rich-textarea hide-number">
-              <div className="rich-content" contentEditable={false}>
-                <pre
-                  className="rich-text"
-                  id="host"
-                  style={{
-                    width: '520px',
-                    marginTop: '0px',
-                    marginBottom: '0px',
-                    whiteSpace: 'pre-wrap',
-                    overflow: 'auto'
-                  }}
-                >
-                  {this.getHost(clusterProgress.data.record['hosts'], clusterProgress.data.record['servers'])}
-                </pre>
-              </div>
-            </div>
-          </section>
-        )
-      });
-    }
-    steps.push({
-      id: 'access',
-      label: '集群访问',
-      detail: (
-        <List type="number">
-          <List.Item>
-            访问TKE Stack控制台：
-            <ExternalLink href={clusterProgress.data.record['url']}>{clusterProgress.data.record['url']}</ExternalLink>
-            <List type="bullet">
-              <List.Item>
-                用户名：
-                {clusterProgress.data.record['username']}
-              </List.Item>
-              <List.Item>
-                密&nbsp;&nbsp;&nbsp;码：
-                {clusterProgress.data.record['password'] ? Base64.decode(clusterProgress.data.record['password']) : ''}
-              </List.Item>
-            </List>
-          </List.Item>
-          <List.Item>
-            通过kubeconfig 访问global集群：
-            <List type="bullet">
-              <List.Item>
-                <Button
-                  type="link"
-                  onClick={() =>
-                    downloadCrt(Base64.decode(clusterProgress.data.record['kubeconfig']), 'kubeconfig.txt')
-                  }
-                >
-                  下载kubeconfig
-                </Button>
-              </List.Item>
-              <Text theme="label">
-                TKE
-                global集群的访问凭证信息存储在：部署节点/opt/tke-installer/data/目录下，您可以在此目录再次查看以上信息，关于kubeclt
-                的配置，请参考
-                <ExternalLink href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/">
-                  帮助文档
-                </ExternalLink>
-              </Text>
-            </List>
-          </List.Item>
-        </List>
-      )
-    });
     return step === 'step9' ? (
       <section>
-        <CodeMirrorEditor
-          isShowHeader={false}
-          value={clusterProgress.data.record['data']}
-          lineNumbers={true}
-          readOnly={true}
-          height={500}
-          mode="javascript"
-        />
-        <Modal
-          visible={this.state.isShowertDialog}
-          caption="操作指引"
-          size="l"
-          onClose={() => this.setState({ isShowertDialog: false })}
-          disableEscape
-        >
-          <Modal.Body style={{ maxHeight: '600px', overflow: 'auto' }}>
-            <p style={{ marginBottom: '20px' }}>请按如下指引进行操作：</p>
-            <Stepper type="process-vertical-dot" steps={steps} />
-          </Modal.Body>
-        </Modal>
-
+        <Form.Title>基本配置</Form.Title>
+        <Form>
+          <Form.Item label="用户名">
+            <Form.Text>{editState.username}</Form.Text>
+          </Form.Item>
+          <Form.Item label="密码">
+            <Form.Text>{editState.password}</Form.Text>
+          </Form.Item>
+        </Form>
+        <hr />
+        <Form.Title>高可用设置</Form.Title>
+        <Form>
+          <Form.Item label="高可用类型">
+            <Form.Text>
+              {editState.haType === 'tke' ? 'TKE提供' : editState.haType === 'thirdParty' ? '使用已有' : '不设置'}
+            </Form.Text>
+          </Form.Item>
+          {editState.haType === 'tke' ? (
+            <Form.Item label="VIP地址">
+              <Form.Text>{editState.haTkeVip}</Form.Text>
+            </Form.Item>
+          ) : editState.haType === 'thirdParty' ? (
+            <Form.Item label="VIP地址">
+              <Form.Text>{editState.haThirdVip}</Form.Text>
+            </Form.Item>
+          ) : (
+            ''
+          )}
+        </Form>
+        <hr />
+        <Form.Title>集群设置</Form.Title>
+        <Form>
+          <Form.Item label="网卡名称">
+            <Form.Text>{editState.networkDevice}</Form.Text>
+          </Form.Item>
+          <Form.Item label="GPU类型">
+            <Form.Text>{editState.gpuType === 'none' ? '不使用' : editState.gpuType}</Form.Text>
+          </Form.Item>
+          <Form.Item label="容器网络">
+            <Form.Text>{editState.cidr}</Form.Text>
+          </Form.Item>
+          <Form.Item label="master节点">
+            {editState.machines.map((m, index) => (
+              <Form.Text key={index}>{m.host}</Form.Text>
+            ))}
+          </Form.Item>
+        </Form>
+        <hr />
+        <Form.Title>认证模块设置</Form.Title>
+        <Form>
+          <Form.Item label="认证方式">
+            <Form.Text>{editState.authType}</Form.Text>
+          </Form.Item>
+          {editState.authType === 'oidc' ? (
+            <>
+              <Form.Item label="IssueUrl">
+                <Form.Text>{editState.issueURL}</Form.Text>
+              </Form.Item>
+              <Form.Item label="ClientID">
+                <Form.Text>{editState.clientID}</Form.Text>
+              </Form.Item>
+              <Form.Item label="CA证书">
+                <Form.Text>{editState.caCert}</Form.Text>
+              </Form.Item>
+            </>
+          ) : (
+            <noscript />
+          )}
+        </Form>
+        <hr />
+        <Form.Title>镜像仓库设置</Form.Title>
+        <Form>
+          <Form.Item label="镜像仓库类型">
+            <Form.Text>{editState.repoType}</Form.Text>
+          </Form.Item>
+          {editState.repoType === 'tke' ? (
+            <Form.Item label="域名后缀">
+              <Form.Text>{editState.repoSuffix}</Form.Text>
+            </Form.Item>
+          ) : editState.repoType === 'thirdParty' ? (
+            <React.Fragment>
+              <Form.Item label="仓库地址">
+                <Form.Text>{editState.repoAddress}</Form.Text>
+              </Form.Item>
+              <Form.Item label="命名空间">
+                <Form.Text>{editState.repoNamespace}</Form.Text>
+              </Form.Item>
+              <Form.Item label="用户名">
+                <Form.Text>{editState.repoUser}</Form.Text>
+              </Form.Item>
+              <Form.Item label="密码">
+                <Form.Text>{editState.repoPassword}</Form.Text>
+              </Form.Item>
+            </React.Fragment>
+          ) : (
+            <noscript />
+          )}
+        </Form>
+        <hr />
+        <Form.Title>业务模块设置</Form.Title>
+        <Form>
+          <Form.Item label="是否开启">
+            <Form.Text>{editState.openBusiness ? '是' : '否'}</Form.Text>
+          </Form.Item>
+        </Form>
+        <hr />
+        <Form.Title>审计模块设置</Form.Title>
+        <Form>
+          <Form.Item label="是否开启">
+            <Form.Text>{editState.openAudit ? '是' : '否'}</Form.Text>
+          </Form.Item>
+          <Form.Item label="ES地址">
+            <Form.Text>{editState.auditEsUrl}</Form.Text>
+          </Form.Item>
+          {(editState.auditEsUsername || editState.auditEsPassword) && (
+            <>
+              <Form.Item label="用户名">
+                <Form.Text>{editState.auditEsUsername}</Form.Text>
+              </Form.Item>
+              <Form.Item label="密码">
+                <Form.Text>{editState.auditEsPassword}</Form.Text>
+              </Form.Item>
+            </>
+          )}
+        </Form>
+        <hr />
+        <Form.Title>监控模块设置</Form.Title>
+        <Form>
+          <Form.Item label="监控存储类型">
+            <Form.Text>{editState.monitorType}</Form.Text>
+          </Form.Item>
+          {editState.monitorType === 'es' ? (
+            <>
+              <Form.Item label="ES地址">
+                <Form.Text>{editState.esUrl}</Form.Text>
+              </Form.Item>
+              {(editState.esUsername || editState.esPassword) && (
+                <>
+                  <Form.Item label="用户名">
+                    <Form.Text>{editState.esUsername}</Form.Text>
+                  </Form.Item>
+                  <Form.Item label="密码">
+                    <Form.Text>{editState.esPassword}</Form.Text>
+                  </Form.Item>
+                </>
+              )}
+            </>
+          ) : editState.monitorType === 'external-inflexdb' ? (
+            <>
+              <Form.Item label="InfluxDB地址">
+                <Form.Text>{editState.influxDBUrl}</Form.Text>
+              </Form.Item>
+              <Form.Item label="用户名">
+                <Form.Text>{editState.influxDBUsername}</Form.Text>
+              </Form.Item>
+              <Form.Item label="密码">
+                <Form.Text>{editState.influxDBPassword}</Form.Text>
+              </Form.Item>
+            </>
+          ) : (
+            <noscript />
+          )}
+        </Form>
+        <hr />
+        <Form.Title>控制台设置</Form.Title>
+        <Form>
+          <Form.Item label="是否开启">
+            <Form.Text>{editState.openConsole ? '是' : '否'}</Form.Text>
+          </Form.Item>
+          <Form.Item label="控制台域名">
+            <Form.Text>{editState.consoleDomain || '无'}</Form.Text>
+          </Form.Item>
+          <Form.Item label="证书类型">
+            <Form.Text>{editState.certType}</Form.Text>
+          </Form.Item>
+        </Form>
         <Form.Action style={{ position: 'absolute', bottom: '20px', left: '20px', width: '960px' }}>
-          <Button
-            disabled={clusterProgress.data.record['status'] !== 'Success'}
-            onClick={() => this.setState({ isShowertDialog: true })}
-          >
-            {clusterProgress.data.record['status'] === 'Doing' ? (
-              <span>
-                <i className="n-loading-icon" />
-                安装中...
-              </span>
-            ) : clusterProgress.data.record['status'] === 'Success' ? (
-              <span>查看指引</span>
-            ) : (
-              <span>安装失败</span>
-            )}
+          <Button style={{ marginRight: '10px' }} type="weak" onClick={() => actions.installer.stepNext('step8')}>
+            上一步
           </Button>
-          {clusterProgress.data.record['status'] === 'Failed' && (
+          <Button
+            type="primary"
+            onClick={() => {
+              actions.installer.createCluster.start([editState]);
+              actions.installer.createCluster.perform();
+            }}
+          >
+            安装
+          </Button>
+          {failed && (
             <Alert
               type="error"
               style={{
                 display: 'inline-block',
-                marginTop: '0px',
-                marginBottom: '0px',
-                marginLeft: '20px'
+                marginTop: '10px',
+                marginBottom: '0px'
               }}
             >
-              安装失败
+              {getWorkflowError(createCluster)}
             </Alert>
           )}
         </Form.Action>

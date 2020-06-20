@@ -1,13 +1,25 @@
 import { combineReducers } from 'redux';
 
-import { createFFListReducer, generateFetcherReducer, generateWorkflowReducer, reduceToPayload } from '@tencent/ff-redux';
+import {
+  createFFListReducer,
+  createFFObjectReducer,
+  generateFetcherReducer,
+  generateWorkflowReducer,
+  reduceToPayload
+} from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';
-import { initNamespaceEdition, initProjectEdition } from '../constants/Config';
+import { FFReduxActionName, initNamespaceEdition, initProjectEdition } from '../constants/Config';
 import { router } from '../router';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
+
+  platformType: reduceToPayload(ActionType.PlatformType, 'init'),
+
+  userInfo: createFFObjectReducer(FFReduxActionName.UserInfo),
+
+  userManagedProjects: createFFListReducer(FFReduxActionName.UserManagedProjects),
 
   project: createFFListReducer('project'),
 
@@ -71,4 +83,23 @@ export const RootReducer = combineReducers({
 
   /** 关联策略相关 */
   policyPlainList: createFFListReducer(ActionType.PolicyPlainList),
+
+  projectUserInfo: createFFObjectReducer(FFReduxActionName.ProjectUserInfo),
+
+  detailProject: createFFListReducer('detailProject'),
+
+  addExistMultiProject: generateWorkflowReducer({
+    actionType: ActionType.AddExistMultiProject
+  }),
+  deleteParentProject: generateWorkflowReducer({
+    actionType: ActionType.DeleteParentProject
+  }),
+
+  projectDetail: reduceToPayload(ActionType.ProjectDetail, null),
+
+  namespaceKubectlConfig: createFFObjectReducer(FFReduxActionName.NamespaceKubectlConfig),
+
+  migrateNamesapce: generateWorkflowReducer({
+    actionType: ActionType.MigrateNamesapce
+  })
 });

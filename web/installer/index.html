@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="zh">
-    <head>
-        <meta charset="UTF-8">
-        <title>TKE Dashboard</title>
-        <link rel="stylesheet" href="//imgcache.qq.com/open_proj/proj_qcloud_v2/mc_2014/global/css/v1/global.css">
-        <link rel="stylesheet" href="//imgcache.qq.com/open_proj/proj_qcloud_v2/bee/css/bee.css?ver=201805171037">
-        <link rel="stylesheet" href="https://imgcache.qq.com/open_proj/proj_qcloud_v2/mc_2014/docker/css/docker.css">
-    </head>
+  <head>
+    <meta charset="UTF-8" />
+    <title>TKE Dashboard</title>
+    <link rel="stylesheet" href="//imgcache.qq.com/open_proj/proj_qcloud_v2/mc_2014/global/css/v1/global.css" />
+    <link rel="stylesheet" href="//imgcache.qq.com/open_proj/proj_qcloud_v2/bee/css/bee.css?ver=201805171037" />
+    <link rel="stylesheet" href="https://imgcache.qq.com/open_proj/proj_qcloud_v2/mc_2014/docker/css/docker.css" />
+  </head>
 
-    <body>
-        <div id="root"></div>
+  <body>
+    <div id="root"></div>
 
-        <script src="//cdn.bootcss.com/jquery/2.2.1/jquery.min.js"></script>
-        <script src="http://localhost:8088/js/app.js"></script>
-        <script>
-            // 解决seajs的报错
-            window.seajs = window.seajs || { 
-                require: function (id) { 
-                    if (id === "$") { 
-                        return window.$; 
-                    } 
-                    return {} 
-                }
-            };
-        </script>
-    </body>
+    <script src="//cdn.bootcss.com/jquery/2.2.1/jquery.min.js"></script>
+    <script src="http://localhost:8088/js/app.js"></script>
+    <script>
+      // 解决seajs的报错
+      window.seajs = window.seajs || {
+        require: function (id) {
+          if (id === '$') {
+            return window.$;
+          }
+          return {};
+        }
+      };
+    </script>
+  </body>
 </html>

@@ -19,6 +19,7 @@ import { AlarmPolicy } from '@src/modules/alarmPolicy';
 import { Notify } from '@src/modules/notify';
 // 公有云的图表组件为异步加载，这里为了减少路径配置，还是保留为同步加载，预先import即可变成不split
 import '@tencent/tchart/build/ChartsComponents';
+import { Project } from '@src/modules/project';
 insertCSS(
   'myTagSearchBox',
   `.myTagSearchBox{ width:100% !important; background-color: #fff; }
@@ -109,6 +110,19 @@ Entry.register({
         <Wrapper platformType={PlatformTypeEnum.Business}>
           <ForbiddentDialog />
           <Application />
+        </Wrapper>
+      )
+    },
+
+    /**
+     * @url https://{{domain}}/tkestack-project/project
+     */
+    project: {
+      title: t('业务管理 - TKEStack业务侧'),
+      container: (
+        <Wrapper platformType={PlatformTypeEnum.Business}>
+          <ForbiddentDialog />
+          <Project />
         </Wrapper>
       )
     },

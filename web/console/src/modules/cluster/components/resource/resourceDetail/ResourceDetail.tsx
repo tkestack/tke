@@ -51,26 +51,23 @@ export class ResourceDetail extends React.Component<RootProps, {}> {
   componentWillMount() {
     let {
       actions,
+      clusterVersion,
       subRoot: {
-        resourceInfo,
-        detailResourceOption: { detailResourceName },
-        resourceOption: { ffResourceList }
+        resourceDetailState: { resourceDetailInfo }
       },
       route
     } = this.props;
-    let urlParams = router.resolve(route);
-    let tab = urlParams['tab'];
-    //当直接跳转到其他tab页的时候，这时需要对集群内资源进行初始化。
-    if (
-      resourceInfo.requestType &&
-      resourceInfo.requestType.useDetailInfo &&
-      ffResourceList.list.data.recordCount > 0
-    ) {
-      let list = tab ? resourceInfo.requestType.detailInfoList[tab] : resourceInfo.requestType.detailInfoList['info'];
-      if (list) {
-        actions.resource.initDetailResourceName(list[0].value);
-      }
-    }
+    let { rid, np, clusterId, resourceIns } = route.queries;
+
+    // 进入即进行资源详情的拉取，前提是当前resourceDetailInfo没有拉取过，且clusterVersion为''
+    !resourceDetailInfo.selection &&
+      clusterVersion !== '' &&
+      actions.resourceDetail.resourceInfo.applyFilter({
+        regionId: +rid,
+        namespace: np,
+        clusterId,
+        specificName: resourceIns
+      });
   }
 
   render() {

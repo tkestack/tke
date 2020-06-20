@@ -85,6 +85,7 @@
     "react-codemirror": "^1.0.0",
     "react-codemirror2": "^5.1.0",
     "react-monaco-editor": "0.8.1",
+    "ifvisible.js": "^1.0.6",
     "react-redux": "^5.0.7",
     "react-router-dom": "^4.3.1",
     "react-router-redux": "^4.0.8",

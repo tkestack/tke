@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { MediaObject, Icon, ExternalLink } from '@tencent/tea-component';
+
+import { ExternalLink, Icon, MediaObject } from '@tencent/tea-component';
 
 interface AuthTipProps {
   name?: string;

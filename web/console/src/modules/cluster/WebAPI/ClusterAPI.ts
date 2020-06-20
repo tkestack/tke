@@ -13,6 +13,7 @@ import { Cluster, ClusterFilter, RequestParams, ResourceInfo } from '../../commo
 import { CreateResource } from '../../common/models/CreateResource';
 import { authTypeMapping, CreateICVipType } from '../constants/Config';
 import { CreateIC } from '../models';
+import { deleteResourceIns } from './K8sResourceAPI';
 
 /**
  * 集群列表的查询
@@ -274,39 +275,51 @@ export async function createImportClsutter(resource: CreateResource[], regionId:
     let clusterData = JSON.parse(jsonData);
 
     let clustercredentialData = {
-      clusterName: '',
       metadata: {
         generateName: 'clustercredential'
       },
       caCert: clusterData.status.credential.caCert,
       token: clusterData.status.credential.token ? clusterData.status.credential.token : undefined
     };
-    clusterData.status.credential = undefined;
-    clusterData = JSON.stringify(clusterData);
     // 构建参数
-    let params: RequestParams = {
+    let clustercredentialParams: RequestParams = {
       method,
-      url: clusterUrl,
-      data: clusterData
+      url: clustercredentialUrl,
+      data: clustercredentialData
     };
 
-    let response = await reduceNetworkRequest(params, clusterId);
-    if (response.code === 0) {
-      let clustercredentialParams: RequestParams = {
+    let clustercredentialResponce = await reduceNetworkRequest(clustercredentialParams, clusterId);
+    if (clustercredentialResponce.code === 0) {
+      let clusterParams: RequestParams = {
         method,
-        url: clustercredentialUrl,
-        data: clustercredentialData
+        url: clusterUrl,
+        data: clusterData
       };
-      clustercredentialData.clusterName = response.data.metadata.name;
-      clustercredentialData = JSON.parse(JSON.stringify(clustercredentialData));
-      let clustercredentialResponce = await reduceNetworkRequest(clustercredentialParams, clusterId);
-      if (clustercredentialResponce.code === 0) {
-        return operationResult(resource);
-      } else {
-        return operationResult(resource, reduceNetworkWorkflow(clustercredentialResponce));
+      clusterData.spec.clusterCredentialRef = { name: clustercredentialResponce.data.metadata.name };
+      clusterData.status.credential = undefined;
+      clusterData = JSON.parse(JSON.stringify(clusterData));
+      try {
+        let clusterResponce = await reduceNetworkRequest(clusterParams, clusterId);
+        if (clusterResponce.code === 0) {
+          return operationResult(resource);
+        } else {
+          return operationResult(resource, reduceNetworkWorkflow(clusterResponce));
+        }
+      } catch (error) {
+        deleteResourceIns(
+          [
+            {
+              id: uuid(),
+              resourceIns: clustercredentialResponce.data.metadata.name,
+              resourceInfo: clustercredentialResourceInfo
+            }
+          ],
+          1
+        );
+        throw error;
       }
     } else {
-      return operationResult(resource, reduceNetworkWorkflow(response));
+      return operationResult(resource, reduceNetworkWorkflow(clustercredentialResponce));
     }
   } catch (error) {
     return operationResult(resource, reduceNetworkWorkflow(error));

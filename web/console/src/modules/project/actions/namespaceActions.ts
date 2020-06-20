@@ -1,22 +1,35 @@
+import { FFReduxActionName } from './../constants/Config';
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import {
-    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger,
-    uuid
+  createFFListActions,
+  extend,
+  generateWorkflowActionCreator,
+  isSuccessWorkflow,
+  OperationTrigger,
+  uuid,
+  createFFObjectActions
 } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import * as ActionType from '../constants/ActionType';
-import {
-    initNamespaceEdition, initProjectResourceLimit, resourceTypeToUnit
-} from '../constants/Config';
-import {
-    Namespace, NamespaceEdition, NamespaceFilter, NamespaceOperator, RootState
-} from '../models';
+import { initNamespaceEdition, initProjectResourceLimit, resourceTypeToUnit } from '../constants/Config';
+import { Namespace, NamespaceEdition, NamespaceFilter, NamespaceOperator, RootState } from '../models';
 import { ProjectResourceLimit } from '../models/Project';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
+import { NamespaceCert } from '../models/Namespace';
 
 type GetState = () => RootState;
+const FFObjectNamespaceCertInfoActions = createFFObjectActions<NamespaceCert, NamespaceFilter>({
+  actionName: FFReduxActionName.NamespaceKubectlConfig,
+  fetcher: async (query, getState: GetState) => {
+    let response = await WebAPI.fetchNamespaceKubectlConfig(query);
+    return response;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().namespaceKubectlConfig;
+  }
+});
 
 const FFModelNamespaceActions = createFFListActions<Namespace, NamespaceFilter>({
   actionName: 'namespace',
@@ -27,6 +40,7 @@ const FFModelNamespaceActions = createFFListActions<Namespace, NamespaceFilter>(
   getRecord: (getState: GetState) => {
     return getState().namespace;
   },
+  keepLastSelection: true,
   onFinish: (record, dispatch: Redux.Dispatch, getState: GetState) => {
     if (
       record.data.records.filter(item => item.status.phase !== 'Available' && item.status.phase !== 'Failed').length ===
@@ -38,6 +52,8 @@ const FFModelNamespaceActions = createFFListActions<Namespace, NamespaceFilter>(
 });
 
 const restActions = {
+  namespaceKubectlConfig: FFObjectNamespaceCertInfoActions,
+
   poll: (filter?: NamespaceFilter) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { namespace } = getState();
@@ -100,11 +116,24 @@ const restActions = {
     }
   }),
 
-  select: (namespaces: Namespace[]) => {
-    return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      dispatch(FFModelNamespaceActions.selects(namespaces));
-    };
-  },
+  /**迁移Namespace */
+  migrateNamesapce: generateWorkflowActionCreator<Namespace, NamespaceOperator>({
+    actionType: ActionType.MigrateNamesapce,
+    workflowStateLocator: (state: RootState) => state.migrateNamesapce,
+    operationExecutor: WebAPI.migrateNamesapce,
+    after: {
+      [OperationTrigger.Done]: (dispatch, getState) => {
+        let { migrateNamesapce, route } = getState();
+        if (isSuccessWorkflow(migrateNamesapce)) {
+          dispatch(restActions.migrateNamesapce.reset());
+          dispatch(namespaceActions.clearSelection());
+          setTimeout(() => {
+            dispatch(namespaceActions.poll());
+          }, 5000);
+        }
+      }
+    }
+  }),
 
   selectCluster: (value: string | number) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
@@ -247,6 +276,10 @@ const restActions = {
         payload: initNamespaceEdition
       });
     };
+  },
+  getKubectlConfig: (certInfo: NamespaceCert, clusterId: string, np: string, userName: string) => {
+    let config = `apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: ${certInfo.caCertPem}\n    server: ${certInfo.apiServer}\n  name: ${clusterId}\ncontexts:\n- context:\n    cluster: ${clusterId}\n    user: ${userName}\n  name: ${clusterId}-${np}\ncurrent-context: ${clusterId}-${np}\nkind: Config\npreferences: {}\nusers:\n- name: ${userName}\n  user:\n    client-certificate-data: ${certInfo.certPem}\n    client-key-data: ${certInfo.keyPem}\n`;
+    return config;
   }
 };
 

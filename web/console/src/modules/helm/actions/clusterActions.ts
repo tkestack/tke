@@ -7,6 +7,7 @@ import { FFReduxActionName } from '../constants/Config';
 import { RootState } from '../models';
 import { router } from '../router';
 import { helmActions } from './helmActions';
+import { namespaceActions } from './namespaceActions';
 
 type GetState = () => RootState;
 
@@ -59,8 +60,11 @@ const restActions = {
           trigger: 'Done'
         }
       });
-
       dispatch(helmActions.checkClusterHelmStatus());
+      /// #if tke
+      dispatch(namespaceActions.applyFilter({ clusterId: cluster.metadata.name }));
+
+      /// #endif
     };
   }
 };
