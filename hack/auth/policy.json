@@ -573,7 +573,12 @@
                     "getAddon",
                     "getRegistrynamespace",
                     "listAddons",
-                    "listRegistrynamespaces"
+                    "listRegistrynamespaces",
+                    "create",
+                    "get",
+                    "list",
+                    "update",
+                    "delete"
                 ],
                 "resources": [
                     "*"
@@ -911,7 +916,12 @@
                     "updateStorageclass",
                     "updateTapp",
                     "updateTemplate",
-                    "updateVolumeattachment"
+                    "updateVolumeattachment",
+                    "create",
+                    "get",
+                    "list",
+                    "update",
+                    "delete"
                 ],
                 "resources": [
                     "*"
@@ -1095,7 +1105,9 @@
                     "listStorageclasses",
                     "listTapps",
                     "listTemplates",
-                    "listVolumeattachments"
+                    "listVolumeattachments",
+                    "get",
+                    "list"
                 ],
                 "resources": [
                     "*"
