@@ -7,10 +7,14 @@
     "node": ">=10.3.0"
   },
   "scripts": {
+    "common_pre": "rm -rf node_modules && npm i && npm run unzip_third_party",
+    "unzip_third_party": "unzip -n -d ./node_modules ../../third_party/fe_node_modules.zip",
+    "predev": "npm run common_pre",
     "dev": "cross-env NODE_ENV=development Version=tke node ./develop/index.ts",
     "cp_public": "mkdir -p build && cp -r public/* build",
     "prebuild_console": "npm run cp_public && npm run common_pre",
     "build_console": "cross-env NODE_ENV=production Version=tke webpack --config webpack/webpack.prod.js",
+    "predev_project": "npm run common_pre",
     "dev_project": "cross-env NODE_ENV=development node ./develop/index.ts project zh",
     "prebuild_project": "npm run cp_public && npm run common_pre",
     "build_project": "cross-env NODE_ENV=production  webpack --config webpack/webpack.prod.js --version=project --lng=zh --filename=project",
