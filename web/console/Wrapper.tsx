@@ -158,8 +158,13 @@ const commonRouterConfig: RouterConfig[] = [
       },
       {
         url: '/tkestack/log',
-        title: '日志',
-        watchModule: ConsoleModuleEnum.PLATFORM
+        title: '日志采集',
+        watchModule: ConsoleModuleEnum.PLATFORM,
+      },
+      {
+        url: '/tkestack/log/setting',
+        title: '日志组件',
+        watchModule: ConsoleModuleEnum.PLATFORM,
       },
       {
         url: '/tkestack/persistent-event',
@@ -221,9 +226,20 @@ const businessCommonRouterConfig: RouterConfig[] = [
         url: '/tkestack-project/notify',
         title: '通知设置',
         watchModule: ConsoleModuleEnum.Notify
+      },
+    ],
+  },
+  {
+    title: '运维中心',
+    watchModule: [ConsoleModuleEnum.PLATFORM],
+    subRouterConfig: [
+      {
+        url: '/tkestack-project/log',
+        title: '日志采集',
+        watchModule: ConsoleModuleEnum.PLATFORM
       }
     ]
-  }
+  },
 ];
 
 interface ConsoleWrapperProps {

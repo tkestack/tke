@@ -14,7 +14,7 @@ export { Replicaset } from './Replicaset';
 export { SubRouter, SubRouterFilter, BasicRouter } from './SubRouter';
 export { PortMap } from './PortMap';
 export { RuleMap } from './RuleMap';
-export { ResourceDetailState, RsEditJSONYaml, PodLogFilter, LogOption } from './ResourceDetailState';
+export { ResourceDetailState, RsEditJSONYaml, PodLogFilter, LogOption, LogHierarchyQuery, LogContentQuery, DownloadLogQuery } from './ResourceDetailState';
 export {
   WorkloadEdit,
   WorkloadEditJSONYaml,

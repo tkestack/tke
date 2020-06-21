@@ -1284,15 +1284,16 @@ export const validateWorkloadActions = {
     };
   },
 
-  /** 校验容器的工作目录设置 */
-  _validateWorkingDir(dir: string) {
+  /** 校验容器的工作/日志目录设置 */
+  _validateDir(dir: string, errorMessage: string) {
     let reg = /^\/(?:[a-zA-Z0-9-_.]+\/?)*$/,
       status = 0,
       message = '';
 
     if (dir && !reg.test(dir)) {
       status = 2;
-      message = t('工作目录格式不正确');
+      message = errorMessage;
+      // message = t('工作目录格式不正确');
     } else {
       status = 1;
       message = '';
@@ -1300,18 +1301,34 @@ export const validateWorkloadActions = {
     return { status, message };
   },
 
-  validateWorkingDir(dir: string, cId: string) {
+  _validateWorkingDir(dir: string) {
+    return this._validateDir(dir, t('工作目录格式不正确'));
+  },
+
+  _validateLogDir(dir: string) {
+    return this._validateDir(dir, t('日志目录格式不正确'));
+  },
+
+  validateDir(dir: string, cId: string, v_key: string, errorMessage: string) {
     return async (dispatch, getState: GetState) => {
       let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
         cIndex = containers.findIndex(c => c.id === cId),
-        result = validateWorkloadActions._validateWorkingDir(dir);
+        result = validateWorkloadActions._validateDir(dir, errorMessage);
 
-      containers[cIndex]['v_workingDir'] = result;
+      containers[cIndex][v_key] = result;
       dispatch({
         type: ActionType.W_UpdateContainers,
         payload: containers
       });
     };
+  },
+
+  validateWorkingDir(dir: string, cId: string) {
+    return this.validateDir(dir, cId, 'v_workingDir', t('工作目录格式不正确'));
+  },
+
+  validateLogDir(dir: string, cId: string) {
+    return this.validateDir(dir, cId, 'v_logDir', t('日志目录格式不正确'));
   },
 
   /** 校验容器的健康检查的端口 */
@@ -1726,6 +1743,7 @@ export const validateWorkloadActions = {
         dispatch(validateWorkloadActions.validateGpuMemLimit(container.gpuMem + '', cKey));
         dispatch(validateWorkloadActions.validateAllMemLimit(container));
         dispatch(validateWorkloadActions.validateWorkingDir(container.workingDir, cKey));
+        dispatch(validateWorkloadActions.validateLogDir(container.logDir, cKey));
 
         // 校验环境变量是否都ok
         if (container.envItems.length) {

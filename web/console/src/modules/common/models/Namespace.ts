@@ -1,4 +1,5 @@
 import { Identifiable } from '@tencent/ff-redux';
+import { Cluster } from './Cluster';
 
 export interface Namespace extends Identifiable {
   /** 命名空间名称 */
@@ -17,9 +18,14 @@ export interface Namespace extends Identifiable {
   createdAt?: string;
 
   metadata?;
+
+  cluster?: Cluster;
 }
 
 export interface NamespaceFilter {
+  /**业务 */
+  projectName?: string;
+
   /**集群Id */
   clusterId?: string;
 

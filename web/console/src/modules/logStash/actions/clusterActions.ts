@@ -1,10 +1,10 @@
-import { createFFListActions, extend } from '@tencent/ff-redux';
+import { createFFListActions, extend, uuid } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
 import {
-    Cluster, ClusterFilter, Resource, ResourceFilter, ResourceInfo
+  Cluster, ClusterFilter, CreateResource, Resource, ResourceFilter, ResourceInfo
 } from '../../common/models';
 import { CommonAPI } from '../../common/webapi';
 import * as ActionType from '../constants/ActionType';
@@ -15,6 +15,8 @@ import { editLogStashActions } from './editLogStashActions';
 import { logActions } from './logActions';
 import { logDaemonsetActions } from './logDaemonsetActions';
 import { namespaceActions } from './namespaceActions';
+import * as WebAPI from '../WebAPI';
+import { projectNamespaceActions } from '@src/modules/cluster/actions/projectNamespaceActions.project';
 
 type GetState = () => RootState;
 
@@ -65,6 +67,14 @@ const fetchClusterActions = generateFetcherActionCreator({
     let resourceInfo = resourceConfig()['cluster'];
     let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
     let response = await CommonAPI.fetchResourceList({ query: clusterQuery, resourceInfo, isClearData });
+    let agents = await CommonAPI.fetchLogagents();
+    let clusterHasLogAgent = {};
+    for (let agent of agents.records) {
+      clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
+    }
+    for (let cluster of response.records) {
+      cluster.spec.logAgentName = clusterHasLogAgent[cluster.metadata.name];
+    }
     return response;
   },
   finish: (dispatch: Redux.Dispatch, getState: GetState) => {
@@ -89,7 +99,77 @@ const queryClusterActions = generateQueryActionCreator<ClusterFilter>({
 });
 
 const restActions = {
-  /** 集群的选择
+  initProjectList: () => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { route, projectSelection } = getState();
+      let portalResourceInfo = resourceConfig()['portal'];
+      let portal = await WebAPI.fetchUserPortal(portalResourceInfo);
+      let userProjectList = Object.keys(portal.projects).map(key => {
+        return {
+          name: key,
+          displayName: portal.projects[key]
+        };
+      });
+      dispatch({
+        type: ActionType.InitProjectList,
+        payload: userProjectList
+      });
+      let defaultProjectName = projectSelection
+        ? projectSelection
+        : route.queries['projectName']
+          ? route.queries['projectName']
+          : userProjectList.length
+            ? userProjectList[0].name
+            : '';
+      defaultProjectName && dispatch(clusterActions.selectProject(defaultProjectName));
+    };
+  },
+
+  /** 选择业务 */
+  selectProject: (project: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { route, projectNamespaceQuery } = getState(),
+        urlParams = router.resolve(route);
+      dispatch({
+        type: ActionType.ProjectSelection,
+        payload: project
+      });
+      router.navigate(urlParams, Object.assign({}, route.queries, { projectName: project }));
+      dispatch(namespaceActions.applyFilter({ projectName: project }));
+    };
+  },
+  // 业务侧下，在列表页表格操作区切换命名空间的时候设置一下当前选中的集群（兼容平台侧下的处理逻辑）
+  selectClusterFromNamespace: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let { clusterList, route, regionList } = getState(),
+        urlParams = router.resolve(route),
+        { rid, projectName } = route.queries,
+        { mode } = urlParams;
+      dispatch({
+        type: ActionType.SelectCluster,
+        payload: cluster ? [cluster] : []
+      });
+      let clusterId = cluster.metadata.name;
+      router.navigate(urlParams, Object.assign({}, route.queries, { clusterId }));
+      // 拉取已经开通的addon的列表
+      dispatch(
+        ListAddonActions.applyFilter({
+          specificName: clusterId
+        })
+      );
+    };
+  },
+  // 业务侧下，在编辑页切换日志源下的的命名空间时设置选中的集群（同样是兼容平台侧下的处理逻辑）
+  selectClusterFromEditNamespace: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      dispatch({
+        type: ActionType.SelectCluster,
+        payload: cluster ? [cluster] : []
+      });
+    };
+  },
+
+  /** 集群的选择-平台侧
    * @params clusterId: string  集群Id
    * @params isNeedInitClusterVersion: boolean | number 是否需要初始化集群的版本
    */
@@ -97,7 +177,7 @@ const restActions = {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { clusterList, route, regionList } = getState(),
         urlParams = router.resolve(route),
-        { rid } = route.queries,
+        { rid, projectName } = route.queries,
         { mode } = urlParams,
         isCreate = mode === 'create',
         isUpdate = mode === 'update',
@@ -131,7 +211,7 @@ const restActions = {
           dispatch(clusterActions.initClusterVersion(clusterSelection.status.version, clusterId));
         }
 
-        dispatch(namespaceActions.applyFilter({ clusterId, regionId: +rid }));
+        dispatch(namespaceActions.applyFilter({ projectName, clusterId, regionId: +rid }));
 
         // 拉取已经开通的addon的列表
         dispatch(
@@ -171,7 +251,31 @@ const restActions = {
         payload: k8sVersion
       });
     };
-  }
+  },
+
+  enableLogAgent: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let resourceInfo = resourceConfig()['logagent'];
+      let resource: CreateResource = {
+        id: uuid(),
+        resourceInfo,
+        clusterId: cluster.metadata.name
+      };
+      let response = await CommonAPI.createLogAgent(resource);
+    };
+  },
+
+  disableLogAgent: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let resourceInfo = resourceConfig()['logagent'];
+      let resource: CreateResource = {
+        id: uuid(),
+        resourceInfo,
+        clusterId: cluster.metadata.name
+      };
+      let response = await CommonAPI.deleteLogAgent(resource, cluster.spec.logAgentName);
+    };
+  },
 };
 
 export const clusterActions = extend({}, queryClusterActions, fetchClusterActions, restActions);

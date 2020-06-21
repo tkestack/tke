@@ -50,7 +50,8 @@ export const restActions = {
   /** 拉取单个日志采集规则的 */
   fetchSpecificLog: (name: string, clusterId: string, namespace: string, mode: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { clusterVersion, route } = getState();
+      let { clusterVersion, route, clusterSelection } = getState();
+      let logAgentName = clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName || '';
       let resourceInfo = resourceConfig(clusterVersion)['logcs'];
       let { clusterId, regionId } = route.queries;
       let result = await CommonAPI.fetchResourceList({
@@ -58,6 +59,7 @@ export const restActions = {
           filter: {
             namespace,
             clusterId,
+            logAgentName,
             specificName: name
           }
         },
@@ -145,6 +147,7 @@ export const restActions = {
                   let resourceQuery: QueryState<ResourceFilter> = {
                     filter: {
                       clusterId,
+                      logAgentName,
                       isCanFetchResourceList: true,
                       namespace: item.namespaceSelection,
                       workloadType: workloadType,
@@ -188,6 +191,7 @@ export const restActions = {
             query: {
               filter: {
                 clusterId,
+                logAgentName,
                 namespace
               }
             }

@@ -302,6 +302,17 @@ export const logcs = (k8sVersion: string) => {
   });
 };
 
+/** logagent 的相关配置 */
+export const logagent = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'logagent',
+    requestType: {
+      list: 'logagents'
+    }
+  });
+};
+
 export const prometheus = (k8sVersion: string) => {
   return generateResourceInfo({
     k8sVersion,

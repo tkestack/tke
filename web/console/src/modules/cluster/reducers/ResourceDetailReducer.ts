@@ -14,6 +14,8 @@ const logOptionReducer = combineReducers({
 
   containerName: reduceToPayload(ActionType.ContainerName, ''),
 
+  logFile: reduceToPayload(ActionType.LogFile, 'stdout'),
+
   tailLines: reduceToPayload(ActionType.TailLines, '100'),
 
   isAutoRenew: reduceToPayload(ActionType.IsAutoRenewPodLog, false)
@@ -96,6 +98,12 @@ const TempReducer = combineReducers({
       records: [] as string[]
     }
   }),
+
+  logAgent: reduceToPayload(ActionType.PodLogAgent, {}),
+
+  logHierarchy: reduceToPayload(ActionType.PodLogHierarchy, []),
+
+  logContent: reduceToPayload(ActionType.PodLogContent, ''),
 
   logOption: logOptionReducer,
 
