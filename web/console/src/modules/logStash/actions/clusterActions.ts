@@ -134,25 +134,17 @@ const restActions = {
         type: ActionType.ProjectSelection,
         payload: project
       });
+      router.navigate(urlParams, Object.assign({}, route.queries, { projectName: project }));
       dispatch(namespaceActions.applyFilter({ projectName: project }));
-      // let { mode, type, resourceName } = urlParams;
-      // router.navigate(
-      //   mode && type && resourceName ? urlParams : { mode: 'list', type: 'namespace', resourceName: 'np' },
-      //   Object.assign({}, route.queries, {
-      //     projectName: project
-      //   })
-      // );
     };
   },
+  // 业务侧下，在列表页表格操作区切换命名空间的时候设置一下当前选中的集群（兼容平台侧下的处理逻辑）
   selectClusterFromNamespace: (cluster: Cluster) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { clusterList, route, regionList } = getState(),
         urlParams = router.resolve(route),
         { rid, projectName } = route.queries,
-        { mode } = urlParams,
-        isCreate = mode === 'create',
-        isUpdate = mode === 'update',
-        isDetail = mode === 'datail';
+        { mode } = urlParams;
       dispatch({
         type: ActionType.SelectCluster,
         payload: cluster ? [cluster] : []
@@ -165,6 +157,15 @@ const restActions = {
           specificName: clusterId
         })
       );
+    };
+  },
+  // 业务侧下，在编辑页切换日志源下的的命名空间时设置选中的集群（同样是兼容平台侧下的处理逻辑）
+  selectClusterFromEditNamespace: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      dispatch({
+        type: ActionType.SelectCluster,
+        payload: cluster ? [cluster] : []
+      });
     };
   },
 

@@ -1,7 +1,6 @@
 import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
 import { tip } from '@tencent/tea-app/lib/bridge';
 import { t } from '@tencent/tea-app/lib/i18n';
-import { isEmpty } from '../common/utils';
 
 import { resourceConfig } from '../../../config';
 import {
@@ -213,7 +212,7 @@ export async function fetchResourceList(
 export async function modifyLogStash(resources: CreateResource[], regionId: number) {
   try {
     let { clusterId, logAgentName, namespace, mode, jsonData, resourceInfo, isStrategic = true, resourceIns } = resources[0];
-    let url = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, logAgentName });
+    let url = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, logAgentName, isSpetialNamespace: window.location.href.includes('tkestack-project') });
     // 构建参数
     let method = requestMethodForAction(mode);
     let params: RequestParams = {
