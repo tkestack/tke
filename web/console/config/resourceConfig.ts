@@ -34,6 +34,7 @@ import {
   policy,
   category,
   logcs,
+  logagent,
   addon,
   addon_gpumanager,
   addon_helm,
@@ -140,6 +141,7 @@ export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey =
     machines: getResourceConfig(machines, finalK8sVersion),
     helm: getResourceConfig(helm, finalK8sVersion),
     logcs: getResourceConfig(logcs, finalK8sVersion),
+    logagent: getResourceConfig(logagent, finalK8sVersion),
     logout: getResourceConfig(logoutConfig, finalK8sVersion),
     clustercredential: getResourceConfig(clustercredential, finalK8sVersion),
 

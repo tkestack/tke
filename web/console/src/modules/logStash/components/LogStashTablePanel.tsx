@@ -158,8 +158,9 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
 
   /** 操作按钮 */
   private _renderOperationCell(logStash: Log) {
-    let { actions, route, clusterVersion } = this.props,
+    let { actions, route, clusterVersion, clusterSelection } = this.props,
       urlParams = router.resolve(route);
+    let logAgentName = clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName || '';
 
     // 编辑日志采集器规则的按钮
     const renderEditButton = () => {
@@ -193,6 +194,7 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
               id: uuid(),
               namespace: logStash.metadata.namespace,
               clusterId: route.queries['clusterId'],
+              logAgentName,
               resourceIns: logStash.metadata.name,
               resourceInfo: resourceConfig(clusterVersion)['logcs']
             };

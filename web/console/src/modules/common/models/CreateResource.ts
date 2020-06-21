@@ -23,6 +23,9 @@ export interface CreateResource extends Identifiable {
   /** 当前的clusterId */
   clusterId?: string;
 
+  /** 当前的logAgentName */
+  logAgentName?: string;
+
   /** yamlJsonData 更新pod的数量、更新镜像等，都通过jsonData直接传过去 */
   jsonData?: string;
 

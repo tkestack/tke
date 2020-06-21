@@ -3,7 +3,7 @@ import * as React from 'react';
 import { FormPanel } from '@tencent/ff-component';
 import { FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Button, Icon, Text } from '@tencent/tea-component';
+import { Button, Icon, Switch, Text } from '@tencent/tea-component';
 
 import { dateFormatter } from '../../../../../../helpers';
 import { Cluster } from '../../../../common';
@@ -36,6 +36,20 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
     } else {
       return '';
     }
+  }
+  /** 处理开关日志采集组件的的操作 */
+  private _handleSwitch(cluster: Cluster) {
+    let { actions, route } = this.props;
+    let enableLogAgent = !cluster.spec.logAgentName;
+    if (enableLogAgent) {
+      actions.cluster.enableLogAgent(cluster);
+    } else {
+      actions.cluster.disableLogAgent(cluster);
+    }
+
+    actions.cluster.applyFilter({});
+
+    return;
   }
   /** 展示集群的基本信息 */
   private _renderClusterInfo() {
@@ -115,6 +129,14 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
         </FormPanel.Item>
         <FormPanel.Item label={t('创建时间')} text>
           {dateFormatter(new Date(clusterInfo.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}
+        </FormPanel.Item>
+        <FormPanel.Item label={t('日志采集')} text>
+          <Switch
+            value={Boolean(clusterInfo.spec.logAgentName)}
+            onChange={value => {
+              this._handleSwitch(clusterInfo);
+            }}
+          />
         </FormPanel.Item>
       </React.Fragment>
     ) : (
