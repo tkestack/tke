@@ -29,9 +29,10 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"io/ioutil"
-	certutil "k8s.io/client-go/util/cert"
 	"os"
 	"testing"
+
+	certutil "k8s.io/client-go/util/cert"
 )
 
 func TestNewCertificateAuthority(t *testing.T) {
@@ -526,4 +527,24 @@ func TestAppendSANsToAltNames(t *testing.T) {
 		}
 	}
 
+}
+
+func TestGenerateCertAndKey(t *testing.T) {
+	cacrt, err := ioutil.ReadFile("./ca.crt")
+	if err != nil {
+		t.Errorf("ca.crt err: %s", err.Error())
+		return
+	}
+	cakey, err := ioutil.ReadFile("ca.key")
+	if err != nil {
+		t.Errorf("ca.key err: %s", err.Error())
+		return
+	}
+	clientcertData, clientkeyData, err := GenerateCertAndKey("tke", nil, cacrt, cakey)
+	if err != nil {
+		t.Errorf("unexpected err: %s", err.Error())
+		return
+	}
+	ioutil.WriteFile("./etcdclient.crt", clientcertData, 0777)
+	ioutil.WriteFile("./etcdclient.key", clientkeyData, 0777)
 }
