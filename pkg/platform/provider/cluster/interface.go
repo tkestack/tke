@@ -27,7 +27,6 @@ import (
 	"strings"
 
 	"github.com/thoas/go-funk"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -37,10 +36,11 @@ import (
 )
 
 const (
-	ReasonFailedProcess     = "FailedProcess"
-	ReasonWaitingProcess    = "WaitingProcess"
-	ReasonSuccessfulProcess = "SuccessfulProcess"
-	ReasonSkipProcess       = "SkipProcess"
+	ReasonWaiting      = "Waiting"
+	ReasonSkip         = "Skip"
+	ReasonFailedInit   = "FailedInit"
+	ReasonFailedUpdate = "FailedUpdate"
+	ReasonFailedDelete = "FailedDelete"
 
 	ConditionTypeDone = "EnsureDone"
 )
@@ -78,6 +78,15 @@ type Provider interface {
 var _ Provider = &DelegateProvider{}
 
 type Handler func(context.Context, *v1.Cluster) error
+
+func (h Handler) Name() string {
+	name := runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()
+	i := strings.LastIndex(name, ".")
+	if i == -1 {
+		return "Unknown"
+	}
+	return strings.TrimSuffix(name[i+1:], "-fm")
+}
 
 type DelegateProvider struct {
 	ProviderName string
@@ -139,43 +148,34 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 		return err
 	}
 
-	now := metav1.Now()
 	if cluster.Spec.Features.SkipConditions != nil &&
 		funk.ContainsString(cluster.Spec.Features.SkipConditions, condition.Type) {
 		cluster.SetCondition(platformv1.ClusterCondition{
-			Type:               condition.Type,
-			Status:             platformv1.ConditionTrue,
-			LastProbeTime:      now,
-			LastTransitionTime: now,
-			Reason:             ReasonSkipProcess,
+			Type:    condition.Type,
+			Status:  platformv1.ConditionTrue,
+			Reason:  ReasonSkip,
+			Message: "Skip current condition",
 		})
 	} else {
-		f := p.getCreateHandler(condition.Type)
-		if f == nil {
+		handler := p.getCreateHandler(condition.Type)
+		if handler == nil {
 			return fmt.Errorf("can't get handler by %s", condition.Type)
 		}
-		log.Infow("OnCreate", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
-			"clusterName", cluster.Name)
-		err = f(ctx, cluster)
+		log.Infow("OnCreate", "handler", handler.Name(), "cluster", cluster.Name)
+		err = handler(ctx, cluster)
 		if err != nil {
 			cluster.SetCondition(platformv1.ClusterCondition{
-				Type:          condition.Type,
-				Status:        platformv1.ConditionFalse,
-				LastProbeTime: now,
-				Message:       err.Error(),
-				Reason:        ReasonFailedProcess,
+				Type:    condition.Type,
+				Status:  platformv1.ConditionFalse,
+				Message: err.Error(),
+				Reason:  ReasonFailedInit,
 			})
-			cluster.Status.Reason = ReasonFailedProcess
-			cluster.Status.Message = err.Error()
 			return nil
 		}
 
 		cluster.SetCondition(platformv1.ClusterCondition{
-			Type:               condition.Type,
-			Status:             platformv1.ConditionTrue,
-			LastProbeTime:      now,
-			LastTransitionTime: now,
-			Reason:             ReasonSuccessfulProcess,
+			Type:   condition.Type,
+			Status: platformv1.ConditionTrue,
 		})
 	}
 
@@ -187,12 +187,10 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 		}
 	} else {
 		cluster.SetCondition(platformv1.ClusterCondition{
-			Type:               nextConditionType,
-			Status:             platformv1.ConditionUnknown,
-			LastProbeTime:      now,
-			LastTransitionTime: now,
-			Message:            "waiting process",
-			Reason:             ReasonWaitingProcess,
+			Type:    nextConditionType,
+			Status:  platformv1.ConditionUnknown,
+			Message: "waiting execute",
+			Reason:  ReasonWaiting,
 		})
 	}
 
@@ -200,27 +198,33 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 }
 
 func (p *DelegateProvider) OnUpdate(ctx context.Context, cluster *v1.Cluster) error {
-	for _, f := range p.UpdateHandlers {
-		log.Infow("OnUpdate", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
-			"clusterName", cluster.Name)
-		err := f(ctx, cluster)
+	for _, handler := range p.UpdateHandlers {
+		log.Infow("OnUpdate", "handler", handler.Name(), "cluster", cluster.Name)
+		err := handler(ctx, cluster)
 		if err != nil {
+			cluster.Status.Reason = ReasonFailedUpdate
+			cluster.Status.Message = fmt.Sprintf("%s error: %v", handler.Name(), err)
 			return err
 		}
 	}
+	cluster.Status.Reason = ""
+	cluster.Status.Message = ""
 
 	return nil
 }
 
 func (p *DelegateProvider) OnDelete(ctx context.Context, cluster *v1.Cluster) error {
-	for _, f := range p.DeleteHandlers {
-		log.Infow("OnDelete", "handler", runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(),
-			"clusterName", cluster.Name)
-		err := f(ctx, cluster)
+	for _, handler := range p.DeleteHandlers {
+		log.Infow("OnDelete", "handler", handler.Name(), "cluster", cluster.Name)
+		err := handler(ctx, cluster)
 		if err != nil {
+			cluster.Status.Reason = ReasonFailedDelete
+			cluster.Status.Message = fmt.Sprintf("%s error: %v", handler.Name(), err)
 			return err
 		}
 	}
+	cluster.Status.Reason = ""
+	cluster.Status.Message = ""
 
 	return nil
 }
@@ -229,23 +233,13 @@ func (p *DelegateProvider) OnRunning(ctx context.Context, cluster *v1.Cluster) e
 	return nil
 }
 
-func (h Handler) name() string {
-	name := runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name()
-	i := strings.Index(name, "Ensure")
-	if i == -1 {
-		return ""
-	}
-	return strings.TrimSuffix(name[i:], "-fm")
-}
-
 func (p *DelegateProvider) getNextConditionType(conditionType string) string {
 	var (
-		i int
-		f Handler
+		i       int
+		handler Handler
 	)
-	for i, f = range p.CreateHandlers {
-		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-		if strings.Contains(name, conditionType+"-fm") {
+	for i, handler = range p.CreateHandlers {
+		if handler.Name() == conditionType {
 			break
 		}
 	}
@@ -254,13 +248,13 @@ func (p *DelegateProvider) getNextConditionType(conditionType string) string {
 	}
 	next := p.CreateHandlers[i+1]
 
-	return next.name()
+	return next.Name()
 }
 
 func (p *DelegateProvider) getCreateHandler(conditionType string) Handler {
-	for _, f := range p.CreateHandlers {
-		if conditionType == f.name() {
-			return f
+	for _, handler := range p.CreateHandlers {
+		if conditionType == handler.Name() {
+			return handler
 		}
 	}
 
@@ -277,11 +271,10 @@ func (p *DelegateProvider) getCreateCurrentCondition(c *v1.Cluster) (*platformv1
 
 	if len(c.Status.Conditions) == 0 {
 		return &platformv1.ClusterCondition{
-			Type:          p.CreateHandlers[0].name(),
-			Status:        platformv1.ConditionUnknown,
-			LastProbeTime: metav1.Now(),
-			Message:       "waiting process",
-			Reason:        ReasonWaitingProcess,
+			Type:    p.CreateHandlers[0].Name(),
+			Status:  platformv1.ConditionUnknown,
+			Message: "waiting process",
+			Reason:  ReasonWaiting,
 		}, nil
 	}
 
