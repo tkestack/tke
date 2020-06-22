@@ -104,6 +104,14 @@ func (in *Cluster) SetCondition(newCondition ClusterCondition) {
 	}
 
 	in.Status.Conditions = conditions
+	switch newCondition.Status {
+	case ConditionFalse:
+		in.Status.Reason = newCondition.Reason
+		in.Status.Message = newCondition.Message
+	default:
+		in.Status.Reason = ""
+		in.Status.Message = ""
+	}
 }
 
 func (in *Cluster) Host() (string, error) {
