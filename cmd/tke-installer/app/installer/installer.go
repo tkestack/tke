@@ -36,6 +36,8 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/util/pkiutil"
+
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -1257,6 +1259,16 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 		return err
 	}
 
+	if t.Cluster.Spec.Etcd.External != nil {
+		return fmt.Errorf("external etcd specified, but ca key is not provided yet")
+	}
+
+	etcdClientCertData, etcdClientKeyData, err := pkiutil.GenerateCertAndKey(namespace, nil,
+		t.Cluster.ClusterCredential.ETCDCACert, t.Cluster.ClusterCredential.ETCDCAKey)
+	if err != nil {
+		return fmt.Errorf("prepareCertificates fail:%w", err)
+	}
+
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "certs",
@@ -1264,8 +1276,8 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 		},
 		Data: map[string]string{
 			"etcd-ca.crt":        string(t.Cluster.ClusterCredential.ETCDCACert),
-			"etcd.crt":           string(t.Cluster.ClusterCredential.ETCDAPIClientCert),
-			"etcd.key":           string(t.Cluster.ClusterCredential.ETCDAPIClientKey),
+			"etcd.crt":           string(etcdClientCertData),
+			"etcd.key":           string(etcdClientKeyData),
 			"ca.crt":             string(caCrt),
 			"ca.key":             string(caKey),
 			"front-proxy-ca.crt": string(frontProxyCACrt),

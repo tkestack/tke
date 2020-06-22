@@ -73,6 +73,38 @@ func NewCertificateAuthority(config *certutil.Config) (*x509.Certificate, *rsa.P
 	return cert, key, nil
 }
 
+func GenerateCertAndKey(username string, groups []string, certCA []byte, certKey []byte) ([]byte, []byte, error) {
+	certDer, _ := pem.Decode(certCA)
+	caCert, _ := x509.ParseCertificate(certDer.Bytes)
+	privKey, _ := keyutil.ParsePrivateKeyPEM(certKey)
+
+	var caKey crypto.Signer
+	switch k := privKey.(type) {
+	case *rsa.PrivateKey:
+		caKey = k
+	case *ecdsa.PrivateKey:
+		caKey = k
+	default:
+		return nil, nil, fmt.Errorf("the private key file %s is neither in RSA nor ECDSA format", certKey)
+	}
+
+	config := &certutil.Config{
+		CommonName:   username,
+		Organization: groups,
+		AltNames:     certutil.AltNames{},
+		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	cert, key, err := NewCertAndKey(caCert, caKey, config)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to sign certificate")
+	}
+
+	clientCertData := EncodeCertPEM(cert)
+	clientKeyData := EncodePrivateKeyPEM(key)
+
+	return clientCertData, clientKeyData, nil
+}
+
 // NewCertAndKey creates new certificate and key by passing the certificate authority certificate and key
 func NewCertAndKey(caCert *x509.Certificate, caKey crypto.Signer, config *certutil.Config) (*x509.Certificate, *rsa.PrivateKey, error) {
 	key, err := NewPrivateKey()
