@@ -840,6 +840,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/business/v1.PlatformList":                                schema_tke_api_business_v1_PlatformList(ref),
 		"tkestack.io/tke/api/business/v1.PlatformSpec":                                schema_tke_api_business_v1_PlatformSpec(ref),
 		"tkestack.io/tke/api/business/v1.Portal":                                      schema_tke_api_business_v1_Portal(ref),
+		"tkestack.io/tke/api/business/v1.PortalProject":                               schema_tke_api_business_v1_PortalProject(ref),
 		"tkestack.io/tke/api/business/v1.Project":                                     schema_tke_api_business_v1_Project(ref),
 		"tkestack.io/tke/api/business/v1.ProjectList":                                 schema_tke_api_business_v1_ProjectList(ref),
 		"tkestack.io/tke/api/business/v1.ProjectSpec":                                 schema_tke_api_business_v1_ProjectSpec(ref),
@@ -40019,12 +40020,54 @@ func schema_tke_api_business_v1_Portal(ref common.ReferenceCallback) common.Open
 							},
 						},
 					},
+					"extension": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Extension is extension info. for projects.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/business/v1.PortalProject"),
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"administrator", "projects"},
+				Required: []string{"administrator", "projects", "extension"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/business/v1.PortalProject"},
+	}
+}
+
+func schema_tke_api_business_v1_PortalProject(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "PortalProject is a project extension info for portal.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Phases of projects.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"parent": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Parents of projects.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"phase", "parent"},
+			},
+		},
 	}
 }
 

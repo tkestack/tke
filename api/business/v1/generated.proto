@@ -360,6 +360,18 @@ message Portal {
   // Projects represents the list of projects to which the user belongs, where the key represents
   // project name and the value represents the project display name.
   map<string, string> projects = 3;
+
+  // Extension is extension info. for projects.
+  map<string, PortalProject> extension = 4;
+}
+
+// PortalProject is a project extension info for portal.
+message PortalProject {
+  // Phases of projects.
+  optional string phase = 1;
+
+  // Parents of projects.
+  optional string parent = 2;
 }
 
 // Project is a project in TKE.

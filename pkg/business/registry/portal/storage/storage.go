@@ -113,12 +113,18 @@ func (r *REST) List(ctx context.Context, _ *metainternal.ListOptions) (runtime.O
 	}
 
 	projects := make(map[string]string)
+	extension := make(map[string]business.PortalProject)
 	for _, project := range projectList.Items {
 		projects[project.ObjectMeta.Name] = project.Spec.DisplayName
+		extension[project.ObjectMeta.Name] = business.PortalProject{
+			Phase:  (string)(project.Status.Phase),
+			Parent: project.Spec.ParentProjectName,
+		}
 	}
 
 	return &business.Portal{
 		Administrator: isAdmin,
 		Projects:      projects,
+		Extension:     extension,
 	}, nil
 }
