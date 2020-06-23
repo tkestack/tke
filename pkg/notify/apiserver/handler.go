@@ -35,23 +35,24 @@ import (
 )
 
 const (
-	alertNameKey         = "alertName"
-	startsAtKey          = "startsAt"
-	alarmPolicyTypeKey   = "alarmPolicyType"
-	alarmPolicyNameKey   = "alarmPolicyName"
-	clusterIDKey         = "clusterID"
-	valueKey             = "value"
-	workloadKindKey      = "workloadKind"
-	namespaceKey         = "namespace"
-	workloadNameKey      = "workloadName"
-	podNameKey           = "podName"
-	nodeNameKey          = "nodeName"
-	nodeRoleKey          = "nodeRole"
-	unitKey              = "unit"
-	evaluateTypeKey      = "evaluateType"
-	evaluateValueKey     = "evaluateValue"
-	metricDisplayNameKey = "metricDisplayName"
-	summaryKey           = "summary"
+	alertNameKey          = "alertName"
+	startsAtKey           = "startsAt"
+	alarmPolicyTypeKey    = "alarmPolicyType"
+	alarmPolicyNameKey    = "alarmPolicyName"
+	clusterIDKey          = "clusterID"
+	clusterDisplayNameKey = "clusterDisplayName"
+	valueKey              = "value"
+	workloadKindKey       = "workloadKind"
+	namespaceKey          = "namespace"
+	workloadNameKey       = "workloadName"
+	podNameKey            = "podName"
+	nodeNameKey           = "nodeName"
+	nodeRoleKey           = "nodeRole"
+	unitKey               = "unit"
+	evaluateTypeKey       = "evaluateType"
+	evaluateValueKey      = "evaluateValue"
+	metricDisplayNameKey  = "metricDisplayName"
+	summaryKey            = "summary"
 )
 
 // Request response struct
@@ -243,6 +244,11 @@ func getVariables(alert Alert) map[string]string {
 		summary = fmt.Sprintf("%s, 集群ID:%s", summary, clusterIDValue)
 	}
 
+	clusterDisplayNameValue, ok := labels["cluster_display_name"]
+	if ok {
+		summary = fmt.Sprintf("%s, 集群名称:%s", summary, clusterDisplayNameValue)
+	}
+
 	workloadKindValue, ok := labels["workload_kind"]
 	if ok {
 		summary = fmt.Sprintf("%s, 工作负载类型:%s", summary, workloadKindValue)
@@ -279,6 +285,7 @@ func getVariables(alert Alert) map[string]string {
 	variables[valueKey] = valueValue
 	variables[alertNameKey] = alertNameValue
 	variables[clusterIDKey] = clusterIDValue
+	variables[clusterDisplayNameKey] = clusterDisplayNameValue
 	variables[workloadKindKey] = workloadKindValue
 	variables[workloadNameKey] = workloadNameValue
 	variables[namespaceKey] = namespaceValue
