@@ -20,6 +20,7 @@ package ssh
 
 import (
 	"bytes"
+	"crypto/md5"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -36,7 +37,6 @@ import (
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/go-playground/validator.v9"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"tkestack.io/tke/pkg/util/hash"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -186,20 +186,20 @@ func (s *SSH) Exec(cmd string) (stdout string, stderr string, exit int, err erro
 }
 
 func (s *SSH) CopyFile(src, dst string) error {
-	srcHash, err := hash.Sha256WithFile(src)
+	data, err := ioutil.ReadFile(src)
 	if err != nil {
 		return err
 	}
-	hashFile := "/tmp" + dst + ".sha256"
-	buffer := new(bytes.Buffer)
-	buffer.WriteString(fmt.Sprintf("%s %s", srcHash, dst))
-	_ = s.WriteFile(buffer, hashFile)
-	_, err = s.CombinedOutput(fmt.Sprintf("sha256sum --check --status %s", hashFile))
-	if err == nil { // means dst exist and same as src
-		log.Infof("skip copy `%s` because already existed", src)
+	needWriteFile, err := s.needWriteFile(data, dst)
+	if err != nil {
+		return err
+	}
+	if !needWriteFile {
+		log.Infof("[%s] Skip copy %q because already existed", s.addr, src)
 		return nil
 	}
-	log.Infof("[%s] copy `%s` to %q", s.addr, src, dst)
+
+	log.Infof("[%s] Copy %q to %q", s.addr, src, dst)
 
 	config := &ssh.ClientConfig{
 		User:            s.User,
@@ -226,13 +226,6 @@ func (s *SSH) CopyFile(src, dst string) error {
 	}
 	defer sftpClient.Close()
 
-	srcFile, err := os.Open(src)
-
-	if err != nil {
-		return fmt.Errorf("open file error:%s:%s", src, err)
-	}
-	defer srcFile.Close()
-
 	sftpClient.MkdirAll(path.Dir(dst))
 	dstFile, err := sftpClient.Create(dst)
 	if err != nil {
@@ -240,11 +233,28 @@ func (s *SSH) CopyFile(src, dst string) error {
 	}
 	defer dstFile.Close()
 
-	_, err = dstFile.ReadFrom(srcFile)
+	_, err = dstFile.ReadFrom(bytes.NewBuffer(data))
 	return err
 }
 
 func (s *SSH) WriteFile(src io.Reader, dst string) error {
+	data, err := ioutil.ReadAll(src)
+	if err != nil {
+		return err
+	}
+	needWriteFile, err := s.needWriteFile(data, dst)
+	if err != nil {
+		return err
+	}
+	if !needWriteFile {
+		log.Infof("[%s] Skip write %q because already existed", s.addr, dst)
+		return nil
+	}
+
+	return s.writeFile(bytes.NewBuffer(data), dst)
+}
+
+func (s *SSH) writeFile(src io.Reader, dst string) error {
 	log.Infof("[%s] Write data to %q", s.addr, dst)
 
 	config := &ssh.ClientConfig{
@@ -284,6 +294,25 @@ func (s *SSH) WriteFile(src io.Reader, dst string) error {
 
 	_, err = dstFile.ReadFrom(src)
 	return err
+}
+
+func (s *SSH) needWriteFile(data []byte, dst string) (bool, error) {
+	srcHash := md5.Sum(data)
+
+	hashFile := "/tmp" + dst + ".md5"
+	buffer := new(bytes.Buffer)
+	buffer.WriteString(fmt.Sprintf("%x %s\n", srcHash, dst))
+	err := s.writeFile(buffer, hashFile)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = s.CombinedOutput(fmt.Sprintf("md5sum --check --status %s", hashFile))
+	if err == nil { // means dst exist and same as src
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (s *SSH) Stat(p string) (os.FileInfo, error) {
