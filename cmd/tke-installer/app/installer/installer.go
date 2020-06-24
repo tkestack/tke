@@ -1287,20 +1287,21 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 }
 
 func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
-	c, err := baremetalconfig.New(constants.ProviderConfigFile)
+	config, err := baremetalconfig.New(constants.ProviderConfigFile)
 	if err != nil {
 		return err
 	}
 	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
 		t.Para.Config.Registry.TKERegistry != nil {
 		ip := t.Cluster.Spec.Machines[0].IP // registry current only run in first node
-		c.Registry.IP = ip
+		config.Registry.IP = ip
 	}
 	if t.auditEnabled() {
-		c.Audit.Address = t.determineGatewayHTTPSAddress()
+		config.Audit.Address = t.determineGatewayHTTPSAddress()
 	}
+	config.PlatformAPIClientConfig = "conf/tke-platform-config.yaml"
 
-	err = c.Save(constants.ProviderConfigFile)
+	err = config.Save(constants.ProviderConfigFile)
 	if err != nil {
 		return err
 	}
