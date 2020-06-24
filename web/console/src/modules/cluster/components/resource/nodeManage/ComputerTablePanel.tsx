@@ -21,10 +21,10 @@ import { ReduceRequest } from '../resourceDetail/ResourcePodPanel';
 export const ComputerStatus = {
   Running: 'success',
   Initializing: 'label',
-  Failed: 'danger',
+  Failed: 'danger'
 };
 
-const mapDispatchToProps = (dispatch) =>
+const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
 interface State {
@@ -33,12 +33,12 @@ interface State {
   sorts?: SortBy[];
 }
 
-@connect((state) => state, mapDispatchToProps)
+@connect(state => state, mapDispatchToProps)
 export class ComputerTablePanel extends React.Component<RootProps, State> {
   state = {
     showOsTips: false,
     selectCluster: null,
-    sorts: [],
+    sorts: []
   };
 
   handleExpand() {
@@ -62,7 +62,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         Object.assign({}, urlParams, { mode: 'list', type: 'basic', resourceName: 'info' }),
         Object.assign({}, route.queries, {
           rid: route.queries['rid'],
-          clusterId: selectCluster.clusterId,
+          clusterId: selectCluster.clusterId
         })
       );
       hide();
@@ -102,7 +102,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         key: 'instanceId',
         header: t('节点名'),
         width: '15%',
-        render: (x) => {
+        render: x => {
           let instanceId = x.metadata.name;
 
           return (
@@ -119,13 +119,13 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               <Clip target={`#${x.id}`} />
             </Text>
           );
-        },
+        }
       },
       {
         key: 'status',
         header: t('状态'),
         width: '8%',
-        render: (x) => (
+        render: x => (
           <React.Fragment>
             <Text theme={ComputerStatus[x.status.phase]} verticalAlign="middle" parent={'p'}>
               {x.status.phase || '-'}
@@ -142,7 +142,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               </Button>
             )}
           </React.Fragment>
-        ),
+        )
       },
       {
         key: 'role',
@@ -150,13 +150,13 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         width: '10%',
         render: (x: Computer) => {
           return <Text verticalAlign="middle">{x.metadata.role}</Text>;
-        },
+        }
       },
       {
         key: 'address',
         header: t('IP地址'),
         width: '15%',
-        render: (x) => {
+        render: x => {
           return (
             <React.Fragment>
               <Text id={x.metadata.name} verticalAlign="middle">
@@ -165,13 +165,13 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               <Clip target={`#${x.metadata.name}`} />
             </React.Fragment>
           );
-        },
+        }
       },
       {
         key: 'createTime',
         header: t('创建时间'),
         width: '15%',
-        render: (x) => {
+        render: x => {
           let time = dateFormatter(new Date(x.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss');
 
           let [year, currentTime] = time.split(' ');
@@ -185,8 +185,8 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               </Text>
             </React.Fragment>
           );
-        },
-      },
+        }
+      }
     ];
 
     return (
@@ -224,7 +224,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         key: 'instanceId',
         header: t('节点名'),
         width: '15%',
-        render: (x) => {
+        render: x => {
           let instanceId = x.metadata.name;
 
           return (
@@ -241,13 +241,13 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               <Clip target={`#${x.id}`} />
             </Text>
           );
-        },
+        }
       },
       {
         key: 'status',
         header: t('状态'),
         width: '8%',
-        render: (x) => (
+        render: x => (
           <React.Fragment>
             <Text theme={ComputerStatus[x.status.phase]} verticalAlign="middle" parent={'p'}>
               {x.status.phase || '-'}
@@ -260,7 +260,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               )}
             </div>
           </React.Fragment>
-        ),
+        )
       },
       {
         key: 'role',
@@ -268,17 +268,17 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         width: '10%',
         render: (x: Computer) => {
           return <Text verticalAlign="middle">{x.metadata.role}</Text>;
-        },
+        }
       },
       {
         key: 'capacity',
         header: t('配置'),
         width: '12%',
-        render: (x) => {
+        render: x => {
           let capacity = x.status.capacity;
           let capacityInfo = {
-            cpu: capacity.cpu,
-            memory: capacity.memory,
+            cpu: capacity ? capacity.cpu : '0',
+            memory: capacity ? capacity.memory : '0'
           };
           let finalCpu = ReduceRequest('cpu', capacityInfo),
             finalmem = (ReduceRequest('memory', capacity) / 1024).toFixed(2);
@@ -287,20 +287,20 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
             <React.Fragment>
               <Text verticalAlign="middle">
                 {t('{{count}} 核, ', {
-                  count: finalCpu,
+                  count: finalCpu
                 })}
               </Text>
               <Text verticalAlign="middle">{`${finalmem} GB`}</Text>
             </React.Fragment>
           );
-        },
+        }
       },
       {
         key: 'address',
         header: t('IP地址'),
         width: '15%',
-        render: (x) => {
-          let finalIPInfo = x.status.addresses.filter((item) => item.type !== 'Hostname');
+        render: x => {
+          let finalIPInfo = x.status.addresses.filter(item => item.type !== 'Hostname');
 
           return (
             <React.Fragment>
@@ -314,19 +314,19 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               ))}
             </React.Fragment>
           );
-        },
+        }
       },
       {
         key: 'podCIDR',
         header: t('PodCIDR'),
         width: '12%',
-        render: (x) => <Text>{x.spec.podCIDR}</Text>,
+        render: x => <Text>{x.spec.podCIDR}</Text>
       },
       {
         key: 'createTime',
         header: t('创建时间'),
         width: '15%',
-        render: (x) => {
+        render: x => {
           let time = dateFormatter(new Date(x.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss');
 
           let [year, currentTime] = time.split(' ');
@@ -340,8 +340,8 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
               </Text>
             </React.Fragment>
           );
-        },
-      },
+        }
+      }
     ];
 
     let emptyTips: JSX.Element = (
@@ -358,7 +358,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
     return (
       <TablePanel
         columns={columns}
-        getOperations={(x) => this._renderOperationCell(x)}
+        getOperations={x => this._renderOperationCell(x)}
         action={actions.computer}
         model={computer}
         emptyTips={emptyTips}
@@ -382,15 +382,15 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         }
         addons={[
           selectable({
-            value: computer.selections.map((item) => item.id as string),
-            onChange: (keys) => {
+            value: computer.selections.map(item => item.id as string),
+            onChange: keys => {
               actions.computer.selects(
-                computer.list.data.records.filter((record) => {
+                computer.list.data.records.filter(record => {
                   return keys.indexOf(record.id as string) !== -1;
                 })
               );
-            },
-          }),
+            }
+          })
         ]}
       />
     );
@@ -405,7 +405,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
       urlParams = router.resolve(route);
 
     // 选择当前选择的具体的resource
-    let resourceSelection = ffResourceList.list.data.records.find((item) => item.metadata.name === resourceIns);
+    let resourceSelection = ffResourceList.list.data.records.find(item => item.metadata.name === resourceIns);
     actions.resource.select(resourceSelection);
     // 进行路由的跳转
     router.navigate(
