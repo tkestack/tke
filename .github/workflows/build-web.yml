@@ -8,7 +8,7 @@ on:
       - 'web/**'
 
 jobs:
-  build:
+  build-web:
 
     runs-on: self-hosted
 
