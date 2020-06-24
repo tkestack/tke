@@ -921,18 +921,22 @@ func (t *TKE) do(ctx context.Context) {
 	}
 
 	for t.Step < len(t.steps) {
-		t.log.Infof("%d.%s doing", t.Step, t.steps[t.Step].Name)
-		start := time.Now()
-		err := t.steps[t.Step].Func(ctx)
-		if err != nil {
-			t.progress.Status = types.StatusFailed
-			t.log.Infof("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
-			return
-		}
-		t.log.Infof("%d.%s [Success] [%fs]", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds())
+		wait.PollInfinite(10*time.Second, func() (bool, error) {
+			t.log.Infof("%d.%s doing", t.Step, t.steps[t.Step].Name)
+			start := time.Now()
+			err := t.steps[t.Step].Func(ctx)
+			if err != nil {
+				t.progress.Status = types.StatusFailed
+				t.log.Errorf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
+				return false, nil
+			}
+			t.log.Infof("%d.%s [Success] [%fs]", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds())
 
-		t.Step++
-		t.backup()
+			t.Step++
+			t.backup()
+
+			return true, nil
+		})
 	}
 
 	t.progress.Status = types.StatusSuccess
