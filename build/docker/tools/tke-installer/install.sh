@@ -150,8 +150,7 @@ function start_installer() {
 function check_installer() {
   echo "Step.6 check tke-installer status [doing]"
 
-  ip=$(ip route get 1 | awk '{print $NF;exit}')
-  url="http://$ip:8080/index.html"
+  url="http://127.0.0.1:8080/index.html"
   if ! curl -sSf "$url" >/dev/null; then
     echo "check installer status error"
     docker logs tke-installer
