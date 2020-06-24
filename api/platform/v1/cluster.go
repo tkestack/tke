@@ -77,6 +77,16 @@ func (in *Cluster) RemoveAddress(addrType AddressType) {
 	in.Status.Addresses = addrs
 }
 
+func (in *Cluster) GetCondition(conditionType string) *ClusterCondition {
+	for _, condition := range in.Status.Conditions {
+		if condition.Type == conditionType {
+			return &condition
+		}
+	}
+
+	return nil
+}
+
 func (in *Cluster) SetCondition(newCondition ClusterCondition) {
 	var conditions []ClusterCondition
 

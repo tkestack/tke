@@ -21,14 +21,11 @@ package machine
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"reflect"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -44,14 +41,13 @@ import (
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
-	"tkestack.io/tke/pkg/util/strategicpatch"
 )
 
 const (
 	conditionTypeHealthCheck = "HealthCheck"
 	failedHealthCheckReason  = "FailedHealthCheck"
 
-	healthCheckInterval = 5 * time.Minute
+	resyncInternal = 1 * time.Minute
 )
 
 // Controller is responsible for performing actions dependent upon a machine phase.
@@ -62,7 +58,6 @@ type Controller struct {
 
 	log            log.Logger
 	platformClient platformversionedclient.PlatformV1Interface
-	healthCache    mapset.Set
 	deleter        deletion.MachineDeleterInterface
 }
 
@@ -75,9 +70,8 @@ func NewController(
 	c := &Controller{
 		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machine"),
 
-		log:            log.WithName("machine-controller"),
+		log:            log.WithName("MachineController"),
 		platformClient: platformclient,
-		healthCache:    mapset.NewSet(),
 		deleter:        deletion.NewMachineDeleter(platformclient.Machines(), platformclient, finalizerToken, true),
 	}
 
@@ -116,6 +110,16 @@ func (c *Controller) updateMachine(old, obj interface{}) {
 
 func (c *Controller) needsUpdate(oldMachine *platformv1.Machine, newMachine *platformv1.Machine) bool {
 	if !reflect.DeepEqual(oldMachine.Spec, newMachine.Spec) {
+		return true
+	}
+
+	// Control the synchronization interval through the health detection interval
+	// to avoid version conflicts caused by concurrent modification
+	healthCondition := newMachine.GetCondition(conditionTypeHealthCheck)
+	if healthCondition == nil {
+		return true
+	}
+	if time.Since(healthCondition.LastProbeTime.Time) > resyncInternal {
 		return true
 	}
 
@@ -185,11 +189,11 @@ func (c *Controller) processNextWorkItem() bool {
 // namespaces created or deleted. This function is not meant to be invoked
 // concurrently with the same key.
 func (c *Controller) syncMachine(key string) error {
-	logger := c.log.WithValues("machine", key)
+	ctx := c.log.WithValues("machine", key).WithContext(context.TODO())
 
 	startTime := time.Now()
 	defer func() {
-		logger.Info("Finished syncing machine", "processTime", time.Since(startTime).String())
+		log.FromContext(ctx).Info("Finished syncing machine", "processTime", time.Since(startTime).String())
 	}()
 
 	_, name, err := cache.SplitMetaNamespaceKey(key)
@@ -199,33 +203,31 @@ func (c *Controller) syncMachine(key string) error {
 
 	machine, err := c.lister.Get(name)
 	if apierrors.IsNotFound(err) {
-		logger.Info("Machine has been deleted")
+		log.FromContext(ctx).Info("Machine has been deleted")
 	}
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("unable to retrieve machine %v from store: %v", key, err))
 		return err
 	}
 
-	return c.reconcile(context.Background(), key, machine)
+	return c.reconcile(ctx, key, machine)
 }
 
 func (c *Controller) reconcile(ctx context.Context, key string, machine *platformv1.Machine) error {
-	logger := c.log.WithValues("machine", machine.Name)
-
 	var err error
 	switch machine.Status.Phase {
 	case platformv1.MachineInitializing:
 		err = c.onCreate(ctx, machine)
-	case platformv1.MachineRunning, platformv1.MachineFailed:
+	case platformv1.MachineRunning, platformv1.MachineFailed, platformv1.MachineUpgrading:
 		err = c.onUpdate(ctx, machine)
 	case platformv1.MachineTerminating:
-		logger.Info("Machine has been terminated. Attempting to cleanup resources")
+		log.FromContext(ctx).Info("Machine has been terminated. Attempting to cleanup resources")
 		err = c.deleter.Delete(context.Background(), key)
 		if err == nil {
-			logger.Info("Machine has been successfully deleted")
+			log.FromContext(ctx).Info("Machine has been successfully deleted")
 		}
 	default:
-		logger.Info("unknown machine phase", "status.phase", machine.Status.Phase)
+		log.FromContext(ctx).Info("unknown machine phase", "status.phase", machine.Status.Phase)
 	}
 
 	return err
@@ -242,9 +244,13 @@ func (c *Controller) onCreate(ctx context.Context, machine *platformv1.Machine) 
 	}
 
 	for machine.Status.Phase == platformv1.MachineInitializing {
-		// if OnCreate returns error or Update returns error, return error for retry.
 		err = provider.OnCreate(ctx, machine, cluster)
-		_, err = c.platformClient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
+		if err != nil {
+			// Update status, ignore failure
+			_, _ = c.platformClient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
+			return err
+		}
+		machine, err = c.platformClient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
@@ -254,8 +260,6 @@ func (c *Controller) onCreate(ctx context.Context, machine *platformv1.Machine) 
 }
 
 func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) error {
-	c.ensureStartHealthCheck(ctx, machine.Name)
-
 	provider, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
 		return err
@@ -266,8 +270,13 @@ func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) 
 		return err
 	}
 
-	// if OnUpdate returns error or Update returns error, return error for retry.
 	err = provider.OnUpdate(ctx, machine, cluster)
+	if err != nil {
+		// Update status, ignore failure
+		_, _ = c.platformClient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
+		return err
+	}
+	machine = c.checkHealth(ctx, machine)
 	_, err = c.platformClient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 	if err != nil {
 		return err
@@ -276,46 +285,11 @@ func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) 
 	return nil
 }
 
-func (c *Controller) ensureStartHealthCheck(ctx context.Context, key string) {
-	if c.healthCache.Contains(key) {
-		return
+func (c *Controller) checkHealth(ctx context.Context, machine *platformv1.Machine) *platformv1.Machine {
+	if !(machine.Status.Phase == platformv1.MachineRunning ||
+		machine.Status.Phase == platformv1.MachineFailed) {
+		return machine
 	}
-	logger := c.log.WithValues("machine", key)
-	logger.Info("Start health check loop")
-	time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
-	go wait.PollImmediateInfinite(healthCheckInterval, c.watchHealth(ctx, key))
-	c.healthCache.Add(key)
-}
-
-func (c *Controller) watchHealth(ctx context.Context, key string) func() (bool, error) {
-	return func() (bool, error) {
-		logger := c.log.WithName("health-check").WithValues("machine", key)
-
-		machine, err := c.lister.Get(key)
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.Info("Stop health check because machine has been deleted")
-				c.healthCache.Remove(key)
-				return true, nil
-			}
-			return false, nil
-		}
-
-		if !(machine.Status.Phase == platformv1.MachineRunning || machine.Status.Phase == platformv1.MachineFailed) {
-			return false, nil
-		}
-
-		err = c.checkHealth(ctx, machine)
-		if err != nil {
-			logger.Error(err, "Check health error")
-		}
-
-		return false, nil
-	}
-}
-
-func (c *Controller) checkHealth(ctx context.Context, machine *platformv1.Machine) error {
-	oldMachine := machine.DeepCopy()
 
 	healthCheckCondition := platformv1.MachineCondition{
 		Type:   conditionTypeHealthCheck,
@@ -344,14 +318,7 @@ func (c *Controller) checkHealth(ctx context.Context, machine *platformv1.Machin
 
 	machine.SetCondition(healthCheckCondition)
 
-	patchBytes, err := strategicpatch.GetPatchBytes(oldMachine, machine)
-	if err != nil {
-		return fmt.Errorf("GetPatchBytes error: %w", err)
-	}
-	_, err = c.platformClient.Machines().Patch(ctx, machine.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
-	if err != nil {
-		return fmt.Errorf("update health status error: %w", err)
-	}
+	log.FromContext(ctx).Info("Update machine health status", "phase", machine.Status.Phase)
 
-	return nil
+	return machine
 }

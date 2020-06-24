@@ -20,10 +20,21 @@ package v1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func addDefaultingFuncs(scheme *runtime.Scheme) error {
 	return RegisterDefaults(scheme)
+}
+
+func SetDefaults_ClusterSpec(obj *ClusterSpec) {
+	if obj.Upgrade.Mode == "" {
+		obj.Upgrade.Mode = UpgradeModeAuto
+	}
+	if obj.Upgrade.Strategy.MaxUnready == nil {
+		maxUnready := intstr.FromInt(0)
+		obj.Upgrade.Strategy.MaxUnready = &maxUnready
+	}
 }
 
 func SetDefaults_ClusterStatus(obj *ClusterStatus) {

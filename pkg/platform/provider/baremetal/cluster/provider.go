@@ -25,6 +25,8 @@ import (
 	"github.com/AlekSi/pointer"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
+	"k8s.io/client-go/tools/clientcmd"
+	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
@@ -35,6 +37,10 @@ import (
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
+)
+
+const (
+	name = "Baremetal"
 )
 
 func init() {
@@ -49,7 +55,8 @@ func init() {
 type Provider struct {
 	*clusterprovider.DelegateProvider
 
-	config *config.Config
+	config         *config.Config
+	platformClient platformv1client.PlatformV1Interface
 }
 
 var _ clusterprovider.Provider = &Provider{}
@@ -58,7 +65,8 @@ func NewProvider() (*Provider, error) {
 	p := new(Provider)
 
 	p.DelegateProvider = &clusterprovider.DelegateProvider{
-		ProviderName: "Baremetal",
+		ProviderName: name,
+
 		CreateHandlers: []clusterprovider.Handler{
 			p.EnsureCopyFiles,
 			p.EnsurePreInstallHook,
@@ -82,7 +90,6 @@ func NewProvider() (*Provider, error) {
 			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
 			p.EnsureKeepalivedInit,
-			p.EnsureThirdPartyHAInit,
 
 			p.EnsurePrepareForControlplane,
 
@@ -110,7 +117,6 @@ func NewProvider() (*Provider, error) {
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
 			p.EnsureKeepalivedWithLB,
-			p.EnsureThirdPartyHA,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
@@ -120,11 +126,12 @@ func NewProvider() (*Provider, error) {
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
+			p.EnsureUpgradeControlPlaneNode,
+
 			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
 			p.EnsureKeepalivedWithLB,
-			p.EnsureThirdPartyHA,
 		},
 	}
 
@@ -135,6 +142,15 @@ func NewProvider() (*Provider, error) {
 	p.config = cfg
 
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
+
+	restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
+	if err != nil {
+		return nil, err
+	}
+	p.platformClient, err = platformv1client.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	return p, nil
 }

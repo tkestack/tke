@@ -321,10 +321,7 @@ func (p *Provider) EnsureKubelet(ctx context.Context, machine *platformv1.Machin
 		return err
 	}
 
-	option := &kubelet.Option{
-		Version: cluster.Spec.Version,
-	}
-	err = kubelet.Install(machineSSH, option)
+	err = kubelet.Install(machineSSH, cluster.Spec.Version)
 	if err != nil {
 		return err
 	}

@@ -986,6 +986,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.TappControllerSpec":                          schema_tke_api_platform_v1_TappControllerSpec(ref),
 		"tkestack.io/tke/api/platform/v1.TappControllerStatus":                        schema_tke_api_platform_v1_TappControllerStatus(ref),
 		"tkestack.io/tke/api/platform/v1.ThirdPartyHA":                                schema_tke_api_platform_v1_ThirdPartyHA(ref),
+		"tkestack.io/tke/api/platform/v1.Upgrade":                                     schema_tke_api_platform_v1_Upgrade(ref),
+		"tkestack.io/tke/api/platform/v1.UpgradeStrategy":                             schema_tke_api_platform_v1_UpgradeStrategy(ref),
 		"tkestack.io/tke/api/platform/v1.VolumeDecorator":                             schema_tke_api_platform_v1_VolumeDecorator(ref),
 		"tkestack.io/tke/api/platform/v1.VolumeDecoratorList":                         schema_tke_api_platform_v1_VolumeDecoratorList(ref),
 		"tkestack.io/tke/api/platform/v1.VolumeDecoratorSpec":                         schema_tke_api_platform_v1_VolumeDecoratorSpec(ref),
@@ -44085,12 +44087,18 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							Ref:         ref("tkestack.io/tke/api/platform/v1.Etcd"),
 						},
 					},
+					"upgrade": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Upgrade control upgrade process.",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.Upgrade"),
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd"},
+			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd", "tkestack.io/tke/api/platform/v1.Upgrade"},
 	}
 }
 
@@ -47062,6 +47070,54 @@ func schema_tke_api_platform_v1_ThirdPartyHA(ref common.ReferenceCallback) commo
 				Required: []string{"vip", "vport"},
 			},
 		},
+	}
+}
+
+func schema_tke_api_platform_v1_Upgrade(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"mode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Upgrade mode, default value is Auto.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"strategy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Upgrade strategy config.",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.UpgradeStrategy"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/platform/v1.UpgradeStrategy"},
+	}
+}
+
+func schema_tke_api_platform_v1_UpgradeStrategy(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "UpgradeStrategy used to control the upgrade process.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"maxUnready": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The maximum number of pods that can be unready during the upgrade. 0% means all pods need to be ready after evition. 100% means ignore any pods unready which may be used in one worker node, use this carefully! default value is 0%.",
+							Ref:         ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/util/intstr.IntOrString"},
 	}
 }
 

@@ -87,7 +87,7 @@ func (Strategy) AllowCreateOnUpdate() bool {
 // unconditionally (irrespective of the latest resource version), when there is
 // no resource version specified in the object.
 func (Strategy) AllowUnconditionalUpdate() bool {
-	return false
+	return true
 }
 
 // Canonicalize normalizes the object after validation.

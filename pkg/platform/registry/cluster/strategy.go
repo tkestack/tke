@@ -22,10 +22,6 @@ import (
 	"context"
 	"fmt"
 
-	"tkestack.io/tke/pkg/platform/types"
-
-	"tkestack.io/tke/api/platform/validation"
-
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,8 +32,10 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/api/platform/validation"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
@@ -72,6 +70,9 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 			log.Panic("Unauthorized update cluster information", log.String("oldTenantID", oldCluster.Spec.TenantID), log.String("newTenantID", cluster.Spec.TenantID), log.String("userTenantID", tenantID))
 		}
 		cluster.Spec.TenantID = tenantID
+	}
+	if cluster.Spec.Version != oldCluster.Spec.Version && cluster.Spec.Version != cluster.Status.Version {
+		cluster.Status.Phase = platform.ClusterUpgrading
 	}
 }
 

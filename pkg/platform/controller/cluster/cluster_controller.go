@@ -20,21 +20,18 @@ package cluster
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"math/rand"
 	"reflect"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
@@ -44,7 +41,6 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/cluster/deletion"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
-	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 	"tkestack.io/tke/pkg/util/strategicpatch"
@@ -54,7 +50,7 @@ const (
 	conditionTypeHealthCheck = "HealthCheck"
 	failedHealthCheckReason  = "FailedHealthCheck"
 
-	healthCheckInterval = 5 * time.Minute
+	resyncInternal = 1 * time.Minute
 )
 
 // Controller is responsible for performing actions dependent upon a cluster phase.
@@ -65,7 +61,6 @@ type Controller struct {
 
 	log            log.Logger
 	platformClient platformversionedclient.PlatformV1Interface
-	healthCache    mapset.Set
 	deleter        deletion.ClusterDeleterInterface
 }
 
@@ -78,9 +73,8 @@ func NewController(
 	c := &Controller{
 		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "cluster"),
 
-		log:            log.WithName("cluster-controller"),
+		log:            log.WithName("ClusterController"),
 		platformClient: platformClient,
-		healthCache:    mapset.NewSet(),
 		deleter: deletion.NewClusterDeleter(platformClient.Clusters(),
 			platformClient,
 			finalizerToken,
@@ -134,7 +128,13 @@ func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluste
 		return true
 	}
 
-	if !reflect.DeepEqual(old.Status, new.Status) {
+	// Control the synchronization interval through the health detection interval
+	// to avoid version conflicts caused by concurrent modification
+	healthCondition := new.GetCondition(conditionTypeHealthCheck)
+	if healthCondition == nil {
+		return true
+	}
+	if time.Since(healthCondition.LastProbeTime.Time) > resyncInternal {
 		return true
 	}
 
@@ -204,11 +204,10 @@ func (c *Controller) processNextWorkItem() bool {
 // namespaces created or deleted. This function is not meant to be invoked
 // concurrently with the same key.
 func (c *Controller) syncCluster(key string) error {
-	logger := c.log.WithValues("cluster", key)
-
+	ctx := c.log.WithValues("cluster", key).WithContext(context.TODO())
 	startTime := time.Now()
 	defer func() {
-		logger.Info("Finished syncing cluster", "processTime", time.Since(startTime).String())
+		log.FromContext(ctx).Info("Finished syncing cluster", "processTime", time.Since(startTime).String())
 	}()
 
 	_, name, err := cache.SplitMetaNamespaceKey(key)
@@ -218,60 +217,69 @@ func (c *Controller) syncCluster(key string) error {
 
 	cluster, err := c.lister.Get(name)
 	if apierrors.IsNotFound(err) {
-		logger.Info("cluster has been deleted")
+		log.FromContext(ctx).Info("cluster has been deleted")
 	}
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("unable to retrieve cluster %v from store: %v", key, err))
 		return err
 	}
 
-	return c.reconcile(context.Background(), key, cluster)
+	return c.reconcile(ctx, key, cluster)
 }
 
 func (c *Controller) reconcile(ctx context.Context, key string, cluster *platformv1.Cluster) error {
-	logger := c.log.WithValues("cluster", cluster.Name)
-
-	if err := c.ensureSyncOldClusterCredential(context.Background(), cluster); err != nil {
-		return fmt.Errorf("sync old ClusterCredential error: %w", err)
-	}
-
 	var err error
+
+	c.ensureSyncCredentialClusterName(ctx, cluster)
+
 	switch cluster.Status.Phase {
 	case platformv1.ClusterInitializing:
 		err = c.onCreate(ctx, cluster)
-	case platformv1.ClusterRunning, platformv1.ClusterFailed:
+	case platformv1.ClusterRunning, platformv1.ClusterFailed, platformv1.ClusterUpgrading:
 		err = c.onUpdate(ctx, cluster)
 	case platformv1.ClusterTerminating:
-		logger.Info("Cluster has been terminated. Attempting to cleanup resources")
+		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
 		err = c.deleter.Delete(context.Background(), key)
 		if err == nil {
-			logger.Info("Machine has been successfully deleted")
+			log.FromContext(ctx).Info("Machine has been successfully deleted")
 		}
 	default:
-		logger.Info("unknown cluster phase", "status.phase", cluster.Status.Phase)
+		log.FromContext(ctx).Info("unknown cluster phase", "status.phase", cluster.Status.Phase)
 	}
 
 	return err
 }
 
 func (c *Controller) onCreate(ctx context.Context, cluster *platformv1.Cluster) error {
+	var err error
+
+	cluster, err = c.ensureCreateClusterCredential(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("ensureCreateClusterCredential error: %w", err)
+	}
+
 	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return err
-	}
-	if err := c.ensureClusterCredential(ctx, cluster); err != nil {
-		return fmt.Errorf("ensureClusterCredential error: %w", err)
 	}
 	clusterWrapper, err := typesv1.GetCluster(ctx, c.platformClient, cluster)
 	if err != nil {
 		return err
 	}
 
-	// If any error happens, return error for retry.
 	for clusterWrapper.Status.Phase == platformv1.ClusterInitializing {
 		err = provider.OnCreate(ctx, clusterWrapper)
-		_, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
-		_, err = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+		if err != nil {
+			// Update status, ignore failure
+			_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+			_, _ = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			return err
+		}
+		clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+		clusterWrapper.Cluster, err = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
@@ -285,16 +293,24 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 	if err != nil {
 		return err
 	}
-
 	clusterWrapper, err := typesv1.GetCluster(ctx, c.platformClient, cluster)
 	if err != nil {
 		return err
 	}
 
-	// If any error happens, return error for retry.
 	err = provider.OnUpdate(ctx, clusterWrapper)
-	_, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
-	_, err = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+	if err != nil {
+		// Update status, ignore failure
+		_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		_, _ = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+		return err
+	}
+	clusterWrapper = c.checkHealth(ctx, clusterWrapper)
+	clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+	clusterWrapper.Cluster, err = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -302,119 +318,74 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 	return nil
 }
 
-// ensureSyncOldClusterCredential using for sync old cluster without ClusterCredentialRef, will remove in next release.
-func (c *Controller) ensureSyncOldClusterCredential(ctx context.Context, cluster *platformv1.Cluster) error {
+// ensureCreateClusterCredential creates ClusterCredential for cluster if ClusterCredentialRef is nil.
+// TODO: add gc collector for clean non reference ClusterCredential.
+func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster *platformv1.Cluster) (*platformv1.Cluster, error) {
 	if cluster.Spec.ClusterCredentialRef != nil {
-		return nil
+		return cluster, nil
 	}
 
-	fieldSelector := fields.OneTermEqualSelector("clusterName", cluster.Name).String()
-	clusterCredentials, err := c.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+	var err error
+	credential := &platformv1.ClusterCredential{
+		TenantID:    cluster.Spec.TenantID,
+		ClusterName: cluster.Name,
+	}
+	credential, err = c.platformClient.ClusterCredentials().Create(ctx, credential, metav1.CreateOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if len(clusterCredentials.Items) == 0 {
-		// Deprecated: will remove in next release
-		if cluster.Spec.Type == "Imported" {
-			return errors.New("waiting create ClusterCredential")
-		}
-		return nil
-	}
-	credential := &clusterCredentials.Items[0]
 	cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
-	_, err = c.platformClient.Clusters().Update(ctx, cluster, metav1.UpdateOptions{})
+	cluster, err = c.platformClient.Clusters().Update(ctx, cluster, metav1.UpdateOptions{})
 	if err != nil {
-		return err
+		// Possible deletion failure will result in dirty data. So need gc collector.
+		_ = c.platformClient.ClusterCredentials().Delete(ctx, credential.Name, metav1.DeleteOptions{})
+		return nil, err
 	}
 
-	return nil
+	return cluster, nil
 }
 
-func (c *Controller) ensureClusterCredential(ctx context.Context, cluster *platformv1.Cluster) error {
+func (c *Controller) ensureSyncCredentialClusterName(ctx context.Context, cluster *platformv1.Cluster) {
 	if cluster.Spec.ClusterCredentialRef == nil {
-		// Deprecated: will remove in next release
-		if cluster.Spec.Type == "Imported" { // don't precreate ClusterCredential for Imported cluster
-			return nil
-		}
+		return
+	}
 
-		credential := &platformv1.ClusterCredential{
-			TenantID:    cluster.Spec.TenantID,
-			ClusterName: cluster.Name,
-		}
-		credential, err := c.platformClient.ClusterCredentials().Create(ctx, credential, metav1.CreateOptions{})
-		if err != nil && !apierrors.IsAlreadyExists(err) {
-			return err
-		}
-		cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
-		_, err = c.platformClient.Clusters().Update(ctx, cluster, metav1.UpdateOptions{})
-		if err != nil {
-			return err
-		}
-	} else {
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		credential, err := c.platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
+		oldCredential := credential.DeepCopy()
 		if credential.ClusterName != cluster.Name {
 			credential.ClusterName = cluster.Name
-			_, err = c.platformClient.ClusterCredentials().Update(ctx, credential, metav1.UpdateOptions{})
+
+			patchBytes, err := strategicpatch.GetPatchBytes(oldCredential, credential)
+			if err != nil {
+				return fmt.Errorf("GetPatchBytes for credential error: %w", err)
+			}
+			_, err = c.platformClient.ClusterCredentials().Patch(ctx, credential.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
 			if err != nil {
 				return err
 			}
 		}
-	}
-
-	return nil
-}
-
-func (c *Controller) ensureStartHealthCheck(ctx context.Context, key string) {
-	if c.healthCache.Contains(key) {
-		return
-	}
-	logger := c.log.WithName("health-check").WithValues("cluster", key)
-	logger.Info("Start health check loop")
-	time.Sleep(time.Duration(rand.Intn(100)) * time.Microsecond)
-	go wait.PollImmediateInfinite(healthCheckInterval, c.watchHealth(ctx, key))
-	c.healthCache.Add(key)
-}
-
-// watchHealth check cluster health when phase in Running or Failed.
-// Avoid affecting state machine operation.
-func (c *Controller) watchHealth(ctx context.Context, key string) func() (bool, error) {
-	return func() (bool, error) {
-		logger := c.log.WithName("health-check").WithValues("cluster", key)
-
-		cluster, err := c.lister.Get(key)
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.Info("Stop health check because cluster has been deleted")
-				c.healthCache.Remove(key)
-				return true, nil
-			}
-			return false, nil
-		}
-
-		if !(cluster.Status.Phase == platformv1.ClusterRunning || cluster.Status.Phase == platformv1.ClusterFailed) {
-			return false, nil
-		}
-
-		err = c.checkHealth(ctx, cluster)
-		if err != nil {
-			logger.Error(err, "Check health error")
-		}
-
-		return false, nil
+		return nil
+	})
+	if err != nil {
+		log.FromContext(ctx).Error(err, "sync ClusterCredential.ClusterName error")
 	}
 }
 
-func (c *Controller) checkHealth(ctx context.Context, cluster *platformv1.Cluster) error {
-	oldCluster := cluster.DeepCopy()
+func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) *typesv1.Cluster {
+	if !(cluster.Status.Phase == platformv1.ClusterRunning ||
+		cluster.Status.Phase == platformv1.ClusterFailed) {
+		return cluster
+	}
 
 	healthCheckCondition := platformv1.ClusterCondition{
 		Type:   conditionTypeHealthCheck,
 		Status: platformv1.ConditionFalse,
 	}
-	client, err := util.BuildExternalClientSet(ctx, cluster, c.platformClient)
+	client, err := cluster.Clientset()
 	if err != nil {
 		cluster.Status.Phase = platformv1.ClusterFailed
 
@@ -437,14 +408,9 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *platformv1.Cluste
 
 	cluster.SetCondition(healthCheckCondition)
 
-	patchBytes, err := strategicpatch.GetPatchBytes(oldCluster, cluster)
-	if err != nil {
-		return fmt.Errorf("GetPatchBytes error: %w", err)
-	}
-	_, err = c.platformClient.Clusters().Patch(ctx, cluster.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
-	if err != nil {
-		return fmt.Errorf("update cluster health status error: %w", err)
-	}
+	log.FromContext(ctx).Info("Update cluster health status",
+		"version", cluster.Status.Version,
+		"phase", cluster.Status.Phase)
 
-	return nil
+	return cluster
 }

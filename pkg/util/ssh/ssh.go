@@ -137,6 +137,7 @@ func (s *SSH) Execf(format string, a ...interface{}) (stdout string, stderr stri
 }
 
 func (s *SSH) Exec(cmd string) (stdout string, stderr string, exit int, err error) {
+	log.Debugf("[%s] Exec %q", s.addr, cmd)
 	// Setup the config, dial the server, and open a session.
 	config := &ssh.ClientConfig{
 		User:            s.User,
@@ -195,11 +196,11 @@ func (s *SSH) CopyFile(src, dst string) error {
 		return err
 	}
 	if !needWriteFile {
-		log.Infof("[%s] Skip copy %q because already existed", s.addr, src)
+		log.Debugf("[%s] Skip copy %q because already existed", s.addr, src)
 		return nil
 	}
 
-	log.Infof("[%s] Copy %q to %q", s.addr, src, dst)
+	log.Debugf("[%s] Copy %q to %q", s.addr, src, dst)
 
 	config := &ssh.ClientConfig{
 		User:            s.User,
@@ -247,7 +248,7 @@ func (s *SSH) WriteFile(src io.Reader, dst string) error {
 		return err
 	}
 	if !needWriteFile {
-		log.Infof("[%s] Skip write %q because already existed", s.addr, dst)
+		log.Debugf("[%s] Skip write %q because already existed", s.addr, dst)
 		return nil
 	}
 
@@ -255,7 +256,7 @@ func (s *SSH) WriteFile(src io.Reader, dst string) error {
 }
 
 func (s *SSH) writeFile(src io.Reader, dst string) error {
-	log.Infof("[%s] Write data to %q", s.addr, dst)
+	log.Debugf("[%s] Write data to %q", s.addr, dst)
 
 	config := &ssh.ClientConfig{
 		User:            s.User,

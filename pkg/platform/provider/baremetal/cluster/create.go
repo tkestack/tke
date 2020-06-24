@@ -31,8 +31,6 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/thirdpartyha"
-
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -54,6 +52,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/thirdpartyha"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -862,16 +861,13 @@ func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) err
 }
 
 func (p *Provider) EnsureKubelet(ctx context.Context, c *v1.Cluster) error {
-	option := &kubelet.Option{
-		Version: c.Spec.Version,
-	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
 		}
 
-		err = kubelet.Install(machineSSH, option)
+		err = kubelet.Install(machineSSH, c.Spec.Version)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -898,21 +894,20 @@ func (p *Provider) EnsureCNIPlugins(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseWaitControlPlane(ctx context.Context, c *v1.Cluster) error {
-	start := time.Now()
-
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		healthStatus := 0
 		clientset, err := c.ClientsetForBootstrap()
 		if err != nil {
-			log.Warn(err.Error())
+			log.FromContext(ctx).Error(err, "Create clientset error")
 			return false, nil
 		}
-		clientset.Discovery().RESTClient().Get().AbsPath("/healthz").Do(ctx).StatusCode(&healthStatus)
-		if healthStatus != http.StatusOK {
+		result := clientset.Discovery().RESTClient().Get().AbsPath("/healthz").Do(ctx)
+		statusCode := 0
+		result.StatusCode(&statusCode)
+		if statusCode != http.StatusOK {
+			log.FromContext(ctx).Error(result.Error(), "check healthz error", "statusCode", statusCode)
 			return false, nil
 		}
 
-		log.Infof("All control plane components are healthy after %f seconds\n", time.Since(start).Seconds())
 		return true, nil
 	})
 }
@@ -1000,7 +995,7 @@ func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 		return nil
 	}
 
-	log.Info("csi-perator in feature will be created.", log.String("name", c.Cluster.Name))
+	log.FromContext(ctx).Info("csi-perator will be created")
 
 	client, err := c.Clientset()
 	if err != nil {
@@ -1014,10 +1009,10 @@ func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 
 	err = apiclient.CreateResourceWithFile(ctx, client, constants.CSIOperatorManifest, option)
 	if err != nil {
-		return errors.Wrap(err, "install csi operator error")
+		return errors.Wrap(err, "install csi-operator error")
 	}
 
-	log.Info("csi-perator in feature already created.", log.String("name", c.Cluster.Name))
+	log.FromContext(ctx).Info("csi-perator already created")
 
 	return nil
 }
@@ -1052,7 +1047,7 @@ func (p *Provider) EnsureKeepalivedWithLB(ctx context.Context, c *v1.Cluster) er
 			return err
 		}
 
-		log.Info("keepalived created success.", log.String("name", c.Cluster.Name), log.String("node", machine.IP))
+		log.FromContext(ctx).Info("keepalived created success.", "node", machine.IP)
 	}
 
 	return nil

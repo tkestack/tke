@@ -19,9 +19,11 @@
 package log
 
 import (
+	"context"
+	"log"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"log"
 	"tkestack.io/tke/pkg/util/log/klog"
 )
 
@@ -73,6 +75,9 @@ type Logger interface {
 	// that name segments contain only letters, digits, and hyphens
 	// (see the package documentation for more information).
 	WithName(name string) Logger
+
+	// WithContext returns a copy of context in which the log value is set.
+	WithContext(ctx context.Context) context.Context
 
 	// Flush calls the underlying Core's Sync method, flushing any buffered
 	// log entries. Applications should take care to call Sync before exiting.

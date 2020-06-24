@@ -27,6 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	certutil "k8s.io/client-go/util/cert"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -50,11 +51,12 @@ func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
 		}
 		expirationDuration := time.Until(certs[0].NotAfter)
 		if expirationDuration > constants.RenewCertsTimeThreshold {
-			log.Infof("skip EnsureRenewCerts because expiration duration(%s) > threshold(%s)", expirationDuration, constants.RenewCertsTimeThreshold)
+			log.FromContext(ctx).Info("Skip EnsureRenewCerts because expiration duration > threshold",
+				"duration", expirationDuration.String(), "threshold", constants.RenewCertsTimeThreshold.String())
 			return nil
 		}
 
-		log.Infof("EnsureRenewCerts for %s", s.Host)
+		log.FromContext(ctx).Info("EnsureRenewCerts", "nodeName", s.Host)
 		err = kubeadm.RenewCerts(s)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
@@ -90,7 +92,7 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 			}
 		}
 
-		log.Infof("EnsureAPIServerCert for %s", s.Host)
+		log.FromContext(ctx).Info("EnsureAPIServerCert", "nodeName", s.Host)
 		for _, file := range []string{constants.APIServerCertName, constants.APIServerKeyName} {
 			s.CombinedOutput(fmt.Sprintf("rm -f %s", file))
 		}
@@ -113,6 +115,42 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Cluster) error {
+	client, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+	option := kubeadm.UpgradeOption{
+		NodeRole:   kubeadm.NodeRoleMaster,
+		Version:    c.Spec.Version,
+		MaxUnready: c.Spec.Upgrade.Strategy.MaxUnready,
+	}
+	for i, machine := range c.Spec.Machines {
+		option.MachineName = machine.Username
+		option.NodeName = machine.IP
+		option.BootstrapNode = i == 0
+		s, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		upgraded, err := kubeadm.UpgradeNode(s, client, p.platformClient, option)
+		if err != nil {
+			return err
+		}
+
+		// Label next node when upgraded all master nodes and upgrade mode is auto.
+		if upgraded && c.Spec.Upgrade.Mode == platformv1.UpgradeModeAuto && i == len(c.Spec.Machines)-1 {
+			err = kubeadm.MarkNextUpgradeWorkerNode(client, p.platformClient, option.Version)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	c.Status.Phase = platformv1.ClusterRunning
 
 	return nil
 }

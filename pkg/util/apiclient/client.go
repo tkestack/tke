@@ -64,6 +64,41 @@ func CheckAPIHealthz(ctx context.Context, client rest.Interface) bool {
 	return healthStatus == http.StatusOK
 }
 
+// CheckPodReadyWithLabel checks if the pod is ready with label.
+func CheckPodReadyWithLabel(ctx context.Context, client kubernetes.Interface, namespace string, labelSelector string) (bool, error) {
+	return CheckPodReady(ctx, client, namespace, metav1.ListOptions{LabelSelector: labelSelector})
+}
+
+// CheckPodReady checks if the pod is ready.
+func CheckPodReady(ctx context.Context, client kubernetes.Interface, namespace string, option metav1.ListOptions) (bool, error) {
+	pods, err := client.CoreV1().Pods(namespace).List(ctx, option)
+	if err != nil {
+		return false, err
+	}
+	for _, pod := range pods.Items {
+		if !IsPodReady(&pod) {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// CheckPodWithPredicate check pod with specify predicate.
+func CheckPodWithPredicate(ctx context.Context, client kubernetes.Interface, namespace string, option metav1.ListOptions, predicate func(*corev1.Pod) bool) (bool, error) {
+	pods, err := client.CoreV1().Pods(namespace).List(ctx, option)
+	if err != nil {
+		return false, err
+	}
+	for _, pod := range pods.Items {
+		if !predicate(&pod) {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
 // CheckDeployment check Deployment current replicas is equal to desired and all pods are running
 func CheckDeployment(ctx context.Context, client kubernetes.Interface, namespace string, name string) (bool, error) {
 	deployment, err := client.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})

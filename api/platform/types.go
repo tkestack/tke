@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // +genclient
@@ -116,7 +117,11 @@ type ClusterSpec struct {
 	ClusterCredentialRef *corev1.LocalObjectReference
 
 	// Etcd holds configuration for etcd.
+	// +optional
 	Etcd *Etcd
+	// Upgrade control upgrade process.
+	// +optional
+	Upgrade Upgrade
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -186,12 +191,14 @@ const (
 type ClusterPhase string
 
 const (
-	// ClusterRunning is the normal running phase.
-	ClusterRunning ClusterPhase = "Running"
 	// ClusterInitializing is the initialize phase.
 	ClusterInitializing ClusterPhase = "Initializing"
+	// ClusterRunning is the normal running phase.
+	ClusterRunning ClusterPhase = "Running"
 	// ClusterFailed is the failed phase.
 	ClusterFailed ClusterPhase = "Failed"
+	// ClusterUpgrading means that the cluster is in upgrading process.
+	ClusterUpgrading ClusterPhase = "Upgrading"
 	// ClusterTerminating means the cluster is undergoing graceful termination.
 	ClusterTerminating ClusterPhase = "Terminating"
 )
@@ -406,6 +413,31 @@ type ExternalEtcd struct {
 	CertFile string
 	// KeyFile is an SSL key file used to secure etcd communication.
 	KeyFile string
+}
+
+type Upgrade struct {
+	// Upgrade mode, default value is Auto.
+	Mode UpgradeMode
+	// Upgrade strategy config.
+	Strategy UpgradeStrategy
+}
+
+type UpgradeMode string
+
+const (
+	// Upgrade nodes automatically.
+	UpgradeModeAuto = UpgradeMode("Auto")
+	// Manual upgrade nodes which means user need label node with `platform.tkestack.io/need-upgrade`.
+	UpgradeModeManual = UpgradeMode("Manual")
+)
+
+// UpgradeStrategy used to control the upgrade process.
+type UpgradeStrategy struct {
+	// The maximum number of pods that can be unready during the upgrade.
+	// 0% means all pods need to be ready after evition.
+	// 100% means ignore any pods unready which may be used in one worker node, use this carefully!
+	// default value is 0%.
+	MaxUnready intstr.IntOrString
 }
 
 // ResourceList is a set of (resource name, quantity) pairs.
@@ -1387,12 +1419,14 @@ type MachineCondition struct {
 type MachinePhase string
 
 const (
-	// MachineRunning is the normal running phase
-	MachineRunning MachinePhase = "Running"
 	// MachineInitializing is the initialize phase
 	MachineInitializing MachinePhase = "Initializing"
+	// MachineRunning is the normal running phase
+	MachineRunning MachinePhase = "Running"
 	// MachineFailed is the failed phase
 	MachineFailed MachinePhase = "Failed"
+	// MachineUpgrading means that the machine is in upgrading process.
+	MachineUpgrading MachinePhase = "Upgrading"
 	// MachineTerminating is the terminating phase
 	MachineTerminating MachinePhase = "Terminating"
 )
