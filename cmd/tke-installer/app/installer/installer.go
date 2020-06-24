@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	stdlog "log"
 	"math"
 	"net"
 	"net/http"
@@ -35,8 +34,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"tkestack.io/tke/pkg/util/pkiutil"
 
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
@@ -81,6 +78,7 @@ import (
 	"tkestack.io/tke/pkg/util/kubeconfig"
 	"tkestack.io/tke/pkg/util/log"
 	utilnet "tkestack.io/tke/pkg/util/net"
+	"tkestack.io/tke/pkg/util/pkiutil"
 	"tkestack.io/tke/pkg/util/ssh"
 
 	// import platform schema
@@ -97,7 +95,7 @@ type TKE struct {
 	// IncludeSelf means installer is using one of cluster's machines
 	IncludeSelf bool `json:"includeSelf"`
 
-	log             *stdlog.Logger
+	log             log.Logger
 	steps           []types.Handler
 	progress        *types.ClusterProgress
 	strategy        *clusterstrategy.Strategy
@@ -127,15 +125,15 @@ func New(config *config.Config) *TKE {
 	c.clusterProvider = clusterProvider
 
 	_ = os.MkdirAll(path.Dir(constants.ClusterLogFile), 0755)
-	f, err := os.OpenFile(constants.ClusterLogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0744)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	c.log = stdlog.New(f, "", stdlog.LstdFlags)
+	logOptions := log.NewOptions()
+	logOptions.OutputPaths = []string{constants.ClusterLogFile}
+	logOptions.ErrorOutputPaths = logOptions.OutputPaths
+	log.Init(logOptions)
+	c.log = log.WithName("tke-installer")
 
 	c.docker = new(docker.Docker)
-	c.docker.Stdout = c.log.Writer()
-	c.docker.Stderr = c.log.Writer()
+	c.docker.Stdout = c.log
+	c.docker.Stderr = c.log
 
 	if !config.Force {
 		data, err := ioutil.ReadFile(constants.ClusterFile)
@@ -396,18 +394,19 @@ func (t *TKE) initSteps() {
 		return !funk.ContainsString(t.Para.Config.SkipSteps, step.Name)
 	}).([]types.Handler)
 
-	t.log.Println("Steps:")
+	t.log.Info("Steps:")
 	for i, step := range t.steps {
-		t.log.Printf("%d %s", i, step.Name)
+		t.log.Infof("%d %s", i, step.Name)
 	}
 }
 
 func (t *TKE) Run() {
 	var err error
+	ctx := t.log.WithContext(context.Background())
 	if t.Config.NoUI {
-		err = t.run(context.Background())
+		err = t.run(ctx)
 	} else {
-		err = t.runWithUI(context.Background())
+		err = t.runWithUI(ctx)
 	}
 	if err != nil {
 		log.Error(err.Error())
@@ -913,7 +912,7 @@ func (t *TKE) do(ctx context.Context) {
 	t.initSteps()
 
 	if t.Step == 0 {
-		t.log.Print("===>starting install task")
+		t.log.Info("===>starting install task")
 		t.progress.Status = types.StatusDoing
 	}
 
@@ -922,15 +921,15 @@ func (t *TKE) do(ctx context.Context) {
 	}
 
 	for t.Step < len(t.steps) {
-		t.log.Printf("%d.%s doing", t.Step, t.steps[t.Step].Name)
+		t.log.Infof("%d.%s doing", t.Step, t.steps[t.Step].Name)
 		start := time.Now()
 		err := t.steps[t.Step].Func(ctx)
 		if err != nil {
 			t.progress.Status = types.StatusFailed
-			t.log.Printf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
+			t.log.Infof("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
 			return
 		}
-		t.log.Printf("%d.%s [Success] [%fs]", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds())
+		t.log.Infof("%d.%s [Success] [%fs]", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds())
 
 		t.Step++
 		t.backup()
@@ -971,7 +970,7 @@ func (t *TKE) do(ctx context.Context) {
 	if t.Para.Config.HA != nil {
 		t.progress.Servers = append(t.progress.Servers, t.Para.Config.HA.VIP())
 	}
-	t.log.Printf("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
+	t.log.Infof("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
 }
 
 func (t *TKE) runAfterClusterReady() bool {
@@ -1048,42 +1047,20 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 		t.Cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
 	}
 
-	var errCount int
-	for {
-		start := time.Now()
+	for t.Cluster.Status.Phase == platformv1.ClusterInitializing {
 		err := t.clusterProvider.OnCreate(ctx, t.Cluster)
 		if err != nil {
 			return err
 		}
 		t.backup()
-		condition := t.Cluster.Status.Conditions[len(t.Cluster.Status.Conditions)-1]
-		switch condition.Status {
-		case platformv1.ConditionFalse: // means current condition run into error
-			t.log.Printf("OnCreate.%s [Failed] [%fs] reason: %s message: %s retry: %d",
-				condition.Type, time.Since(start).Seconds(),
-				condition.Reason, condition.Message, errCount)
-			if errCount >= 10 {
-				return errors.New("the retry limit has been reached")
-			}
-
-			errCount++
-		case platformv1.ConditionUnknown: // means has next condition need to process
-			condition = t.Cluster.Status.Conditions[len(t.Cluster.Status.Conditions)-2]
-			t.log.Printf("OnCreate.%s [Success] [%fs]", condition.Type, time.Since(start).Seconds())
-
-			t.Cluster.Status.Reason = ""
-			t.Cluster.Status.Message = ""
-			errCount = 0
-		case platformv1.ConditionTrue: // means all condition is done
-			if t.Cluster.Status.Phase != platformv1.ClusterRunning {
-				return errors.Errorf("OnCreate.%s, no next condition but cluster is not running!", condition.Type)
-			}
-			return t.initDataForDeployTKE()
-		default:
-			return errors.Errorf("unknown condition status %s", condition.Status)
-		}
-		time.Sleep(5 * time.Second)
 	}
+
+	err = t.initDataForDeployTKE()
+	if err != nil {
+		return fmt.Errorf("init data for deploy tke error: %w", err)
+	}
+
+	return nil
 }
 
 func (t *TKE) backup() error {
@@ -1108,12 +1085,12 @@ func (t *TKE) loadImages(ctx context.Context) error {
 	for _, image := range tkeImages {
 		imageNames := strings.Split(image, "/")
 		if len(imageNames) != 2 {
-			t.log.Printf("invalid image name:name=%s", image)
+			t.log.Infof("invalid image name:name=%s", image)
 			continue
 		}
 		name, _, _, err := t.docker.GetNameArchTag(imageNames[1])
 		if err != nil {
-			t.log.Printf("skip invalid image: %s", image)
+			t.log.Infof("skip invalid image: %s", image)
 			continue
 		}
 		if name == "tke-installer" { // no need to push installer image for speed up
@@ -1155,7 +1132,7 @@ func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	t.log.Print(string(data))
+	t.log.Info(string(data))
 
 	return nil
 }
@@ -2090,7 +2067,7 @@ func (t *TKE) pushImages(ctx context.Context) error {
 	for i, image := range tkeImages {
 		name, arch, tag, err := t.docker.GetNameArchTag(image)
 		if err != nil { // skip invalid image
-			t.log.Printf("skip invalid image: %s", image)
+			t.log.Infof("skip invalid image: %s", image)
 			continue
 		}
 
@@ -2126,7 +2103,7 @@ func (t *TKE) pushImages(ctx context.Context) error {
 			}
 		}
 
-		t.log.Printf("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))
+		t.log.Infof("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))
 	}
 
 	sortedManifests := manifestSet.List()
@@ -2135,7 +2112,7 @@ func (t *TKE) pushImages(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		t.log.Printf("push manifest %s to registry success[%d/%d]", manifest, i+1, len(sortedManifests))
+		t.log.Infof("push manifest %s to registry success[%d/%d]", manifest, i+1, len(sortedManifests))
 	}
 
 	return nil
@@ -2154,7 +2131,7 @@ func (t *TKE) postInstallHook(ctx context.Context) error {
 }
 
 func (t *TKE) execHook(filename string) error {
-	t.log.Printf("Execute hook script %s", filename)
+	t.log.Infof("Execute hook script %s", filename)
 	cmd := exec.Command(filename)
 	cmd.Stdout = t.log.Writer()
 	cmd.Stderr = t.log.Writer()
