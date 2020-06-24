@@ -2137,8 +2137,8 @@ func (t *TKE) postInstallHook(ctx context.Context) error {
 func (t *TKE) execHook(filename string) error {
 	t.log.Infof("Execute hook script %s", filename)
 	cmd := exec.Command(filename)
-	cmd.Stdout = t.log.Writer()
-	cmd.Stderr = t.log.Writer()
+	cmd.Stdout = t.log
+	cmd.Stderr = t.log
 	err := cmd.Run()
 	if err != nil {
 		return err
