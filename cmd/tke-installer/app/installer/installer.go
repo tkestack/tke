@@ -164,7 +164,7 @@ func (t *TKE) initSteps() {
 	// TKERegistry load images && start local registry && push images to local registry
 	// && deploy tke-registry-api && push images to tke-registry
 	// ThirdPartyRegistry load images && push images
-	if !IsDevRegistry(t.Para.Config.Registry) {
+	if !t.Para.Config.Registry.IsOfficial() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Load images",
@@ -184,7 +184,7 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if !IsDevRegistry(t.Para.Config.Registry) {
+	if !t.Para.Config.Registry.IsOfficial() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Push images",
@@ -1287,21 +1287,21 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 }
 
 func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
-	config, err := baremetalconfig.New(constants.ProviderConfigFile)
+	providerConfig, err := baremetalconfig.New(constants.ProviderConfigFile)
 	if err != nil {
 		return err
 	}
 	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
 		t.Para.Config.Registry.TKERegistry != nil {
 		ip := t.Cluster.Spec.Machines[0].IP // registry current only run in first node
-		config.Registry.IP = ip
+		providerConfig.Registry.IP = ip
 	}
 	if t.auditEnabled() {
-		config.Audit.Address = t.determineGatewayHTTPSAddress()
+		providerConfig.Audit.Address = t.determineGatewayHTTPSAddress()
 	}
-	config.PlatformAPIClientConfig = "conf/tke-platform-config.yaml"
+	providerConfig.PlatformAPIClientConfig = "conf/tke-platform-config.yaml"
 
-	err = config.Save(constants.ProviderConfigFile)
+	err = providerConfig.Save(constants.ProviderConfigFile)
 	if err != nil {
 		return err
 	}

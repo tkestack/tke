@@ -24,16 +24,8 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful"
-	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
-	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	"tkestack.io/tke/pkg/util/log"
 )
-
-func IsDevRegistry(r types.Registry) bool {
-	return r.ThirdPartyRegistry != nil &&
-		r.ThirdPartyRegistry.Domain == constants.DevRegistryDomain &&
-		r.ThirdPartyRegistry.Namespace == constants.DevRegistryNamespace
-}
 
 func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	now := time.Now()
