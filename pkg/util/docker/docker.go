@@ -50,6 +50,9 @@ func New() *Docker {
 
 // runCmd starts to execute the command specified by cmdString.
 func (d *Docker) runCmd(cmdString string) error {
+	if d.Stdout != nil {
+		_, _ = d.Stdout.Write([]byte(cmdString + "\n"))
+	}
 	cmd := exec.Command("sh", "-c", cmdString)
 	cmd.Stdout = d.Stdout
 	cmd.Stderr = d.Stderr
