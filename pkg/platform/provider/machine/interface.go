@@ -25,13 +25,15 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"time"
+
+	"tkestack.io/tke/pkg/util/log"
 
 	"github.com/thoas/go-funk"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
-	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
@@ -134,8 +136,11 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, machine *platformv1.Mac
 		if handler == nil {
 			return fmt.Errorf("can't get handler by %s", condition.Type)
 		}
-		log.Infow("OnCreate", "handler", handler.Name(), "machine", machine.Name)
+		ctx := log.FromContext(ctx).WithName("MachineProvider.OnCreate").WithName(handler.Name()).WithContext(ctx)
+		log.FromContext(ctx).Info("Doing")
+		startTime := time.Now()
 		err = handler(ctx, machine, cluster)
+		log.FromContext(ctx).Info("Done", "error", err, "cost", time.Since(startTime).String())
 		if err != nil {
 			machine.SetCondition(platformv1.MachineCondition{
 				Type:    condition.Type,
@@ -169,8 +174,11 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, machine *platformv1.Mac
 
 func (p *DelegateProvider) OnUpdate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	for _, handler := range p.UpdateHandlers {
-		log.Infow("OnUpdate", "handler", handler.Name(), "machine", machine.Name)
+		ctx := log.FromContext(ctx).WithName("MachineProvider.OnUpdate").WithName(handler.Name()).WithContext(ctx)
+		log.FromContext(ctx).Info("Doing")
+		startTime := time.Now()
 		err := handler(ctx, machine, cluster)
+		log.FromContext(ctx).Info("Done", "error", err, "cost", time.Since(startTime).String())
 		if err != nil {
 			machine.Status.Reason = ReasonFailedUpdate
 			machine.Status.Message = fmt.Sprintf("%s error: %v", handler.Name(), err)
@@ -185,8 +193,11 @@ func (p *DelegateProvider) OnUpdate(ctx context.Context, machine *platformv1.Mac
 
 func (p *DelegateProvider) OnDelete(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	for _, handler := range p.DeleteHandlers {
-		log.Infow("OnDelete", "handler", handler.Name(), "machine", machine.Name)
+		ctx := log.FromContext(ctx).WithName("MachineProvider.OnDelete").WithName(handler.Name()).WithContext(ctx)
+		log.FromContext(ctx).Info("Doing")
+		startTime := time.Now()
 		err := handler(ctx, machine, cluster)
+		log.FromContext(ctx).Info("Done", "error", err, "cost", time.Since(startTime).String())
 		if err != nil {
 			cluster.Status.Reason = ReasonFailedDelete
 			cluster.Status.Message = fmt.Sprintf("%s error: %v", handler.Name(), err)

@@ -45,14 +45,15 @@ func New(filename string) (*Config, error) {
 }
 
 type Config struct {
-	Registry          Registry          `yaml:"registry"`
-	Audit             Audit             `yaml:"audit"`
-	Feature           Feature           `yaml:"feature"`
-	Docker            Docker            `yaml:"docker"`
-	Kubelet           Kubelet           `yaml:"kubelet"`
-	APIServer         APIServer         `yaml:"apiServer"`
-	ControllerManager ControllerManager `yaml:"controllerManager"`
-	Scheduler         Scheduler         `yaml:"scheduler"`
+	PlatformAPIClientConfig string            `yaml:"platformAPIClientConfig"`
+	Registry                Registry          `yaml:"registry"`
+	Audit                   Audit             `yaml:"audit"`
+	Feature                 Feature           `yaml:"feature"`
+	Docker                  Docker            `yaml:"docker"`
+	Kubelet                 Kubelet           `yaml:"kubelet"`
+	APIServer               APIServer         `yaml:"apiServer"`
+	ControllerManager       ControllerManager `yaml:"controllerManager"`
+	Scheduler               Scheduler         `yaml:"scheduler"`
 }
 
 func (c *Config) Save(filename string) error {

@@ -26,7 +26,6 @@ import (
 
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
@@ -61,7 +60,7 @@ func newCommonChecks(s ssh.Interface) []Checker {
 func RunMasterChecks(s ssh.Interface) error {
 	checks := newCommonChecks(s)
 	checks = append(checks, []Checker{
-		NumCPUCheck{Interface: s, NumCPU: 4},
+		NumCPUCheck{Interface: s, NumCPU: constants.MinNumCPU},
 		DirAvailableCheck{Interface: s, Path: constants.EtcdDataDir},
 		PortOpenCheck{Interface: s, port: 6443}, // kube-apiserver
 		PortOpenCheck{Interface: s, port: constants.InsecureSchedulerPort},
@@ -212,7 +211,7 @@ func (poc PortOpenCheck) Name() string {
 
 // Check validates if the particular port is available.
 func (poc PortOpenCheck) Check() (warnings, errorList []error) {
-	log.Infof("validating availability of port %d", poc.port)
+
 	errorList = []error{}
 	stdout, _, exit, err := poc.Exec(fmt.Sprintf("ss -tl | grep ':%d'", poc.port))
 	if err != nil {
@@ -243,7 +242,7 @@ func (fac FileAvailableCheck) Name() string {
 
 // Check validates if the given file does not already exist.
 func (fac FileAvailableCheck) Check() (warnings, errorList []error) {
-	log.Infof("validating the existence of file %s", fac.Path)
+
 	if _, err := fac.Stat(fac.Path); err == nil {
 		errorList = append(errorList, errors.Errorf("%s already exists", fac.Path))
 	}
@@ -268,7 +267,7 @@ func (fcc FileContentCheck) Name() string {
 
 // Check validates if the given file contains the given content.
 func (fcc FileContentCheck) Check() (warnings, errorList []error) {
-	log.Infof("validating the contents of file %s", fcc.Path)
+
 	data, err := fcc.ReadFile(fcc.Path)
 	if err != nil {
 		return nil, []error{err}
@@ -300,7 +299,7 @@ func (ipc InPathCheck) Name() string {
 
 // Check validates if the given executable is present in the path.
 func (ipc InPathCheck) Check() (warnings, errs []error) {
-	log.Infof("validating the presence of executable %s", ipc.executable)
+
 	_, err := ipc.LookPath(ipc.executable)
 	if err != nil {
 		if ipc.mandatory {
@@ -366,7 +365,7 @@ func (dac DirAvailableCheck) Name() string {
 
 // Check validates if a directory does not exist or empty.
 func (dac DirAvailableCheck) Check() (warnings, errorList []error) {
-	log.Infof("validating the existence of directory %s", dac.Path)
+
 	if _, err := dac.Stat(dac.Path); err == nil {
 		errorList = append(errorList, errors.Errorf("%s already exists", dac.Path))
 	}

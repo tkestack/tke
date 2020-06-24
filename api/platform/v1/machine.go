@@ -39,6 +39,16 @@ func (in *MachineSpec) SSH() (*ssh.SSH, error) {
 	return ssh.New(sshConfig)
 }
 
+func (in *Machine) GetCondition(conditionType string) *MachineCondition {
+	for _, condition := range in.Status.Conditions {
+		if condition.Type == conditionType {
+			return &condition
+		}
+	}
+
+	return nil
+}
+
 func (in *Machine) SetCondition(newCondition MachineCondition) {
 	var conditions []MachineCondition
 

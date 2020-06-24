@@ -64,3 +64,12 @@ func CheckVersion(version string, versionConstraint string) (bool, error) {
 
 	return c.Check(v), nil
 }
+
+func CheckVersionOrDie(version string, versionConstraint string) bool {
+	ok, err := CheckVersion(version, versionConstraint)
+	if err != nil {
+		panic(err)
+	}
+
+	return ok
+}

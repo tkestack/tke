@@ -30,14 +30,28 @@ import (
 	"tkestack.io/tke/pkg/util/template"
 )
 
-type Option struct {
-	Version string
-}
-
-func Install(s ssh.Interface, option *Option) error {
-	dstFile, err := res.KubernetesNode.CopyToNode(s, option.Version)
+func Install(s ssh.Interface, version string) (err error) {
+	dstFile, err := res.KubernetesNode.CopyToNode(s, version)
 	if err != nil {
 		return err
+	}
+
+	for _, file := range []string{"kubelet", "kubectl"} {
+		file = path.Join(constants.DstBinDir, file)
+		if _, err := s.Stat(file); err == nil {
+			backupFile, err := ssh.BackupFile(s, file)
+			if err != nil {
+				return fmt.Errorf("backup file %q error: %w", file, err)
+			}
+			defer func() {
+				if err == nil {
+					return
+				}
+				if err = ssh.RestoreFile(s, backupFile); err != nil {
+					err = fmt.Errorf("restore file %q error: %w", backupFile, err)
+				}
+			}()
+		}
 	}
 
 	cmd := "tar xvaf %s -C %s --strip-components=3"

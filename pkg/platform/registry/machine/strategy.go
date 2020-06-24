@@ -22,8 +22,6 @@ import (
 	"context"
 	"fmt"
 
-	"tkestack.io/tke/api/platform/validation"
-
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,6 +32,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/api/platform/validation"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"

@@ -86,6 +86,9 @@ const (
 	// This is a duplicate definition of the constant in pkg/controller/service/service_controller.go
 	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
 
+	// LabelNodeNeedUpgrade specifies that a node need upgrade.
+	LabelNodeNeedUpgrade = platformv1.GroupName + "/need-upgrade"
+
 	// Provider
 	ProviderDir           = "provider/baremetal/"
 	SrcDir                = ProviderDir + "res/"
@@ -105,4 +108,7 @@ const (
 
 	// RenewCertsTimeThreshold control how long time left to renew certs
 	RenewCertsTimeThreshold = 30 * 24 * time.Hour
+
+	// MinNumCPU mininum cpu number.
+	MinNumCPU = 2
 )
