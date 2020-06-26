@@ -38,6 +38,10 @@ func (c *FakeMonitorV1) Metrics() v1.MetricInterface {
 	return &FakeMetrics{c}
 }
 
+func (c *FakeMonitorV1) Prometheuses() v1.PrometheusInterface {
+	return &FakePrometheuses{c}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeMonitorV1) RESTClient() rest.Interface {

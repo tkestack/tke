@@ -16,24 +16,26 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package v1
+package util
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
+	"context"
+
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"tkestack.io/tke/api/monitor"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
-func addDefaultingFuncs(scheme *runtime.Scheme) error {
-	return RegisterDefaults(scheme)
-}
-
-func SetDefaults_ConfigMap(obj *ConfigMap) {
-	if obj.Data == nil {
-		obj.Data = make(map[string]string)
+// FilterPrometheus is used to filter helm that do not belong
+// to the tenant.
+func FilterPrometheus(ctx context.Context, prom *monitor.Prometheus) error {
+	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
 	}
-}
-
-func SetDefaults_PrometheusStatus(obj *PrometheusStatus) {
-	if obj.Phase == "" {
-		obj.Phase = AddonPhaseInitializing
+	if prom.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("prometheus"), prom.ObjectMeta.Name)
 	}
+	return nil
 }

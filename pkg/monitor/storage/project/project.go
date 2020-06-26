@@ -142,7 +142,7 @@ func updateMetrics(tags map[string]string, resourcePrefix string, resources busi
 	}
 
 	for metricName, v := range fullNameResources {
-		log.Infof("metricName: %s, tags: %s", metricName, tags)
+		log.Debugf("metricName: %s, tags: %s", metricName, tags)
 		if metric, ok := projectMetricsMap[metricName]; ok {
 			metric.With(tags).Set(float64(v.MilliValue()) / 1000)
 		}

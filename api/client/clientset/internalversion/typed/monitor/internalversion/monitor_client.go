@@ -29,6 +29,7 @@ type MonitorInterface interface {
 	RESTClient() rest.Interface
 	ConfigMapsGetter
 	MetricsGetter
+	PrometheusesGetter
 }
 
 // MonitorClient is used to interact with features provided by the monitor.tkestack.io group.
@@ -42,6 +43,10 @@ func (c *MonitorClient) ConfigMaps() ConfigMapInterface {
 
 func (c *MonitorClient) Metrics() MetricInterface {
 	return newMetrics(c)
+}
+
+func (c *MonitorClient) Prometheuses() PrometheusInterface {
+	return newPrometheuses(c)
 }
 
 // NewForConfig creates a new MonitorClient for the given config.

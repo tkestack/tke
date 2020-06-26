@@ -48,6 +48,7 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers := map[string]InitFunc{}
 
 	controllers["metric"] = startMetricController
+	controllers["prometheus"] = startPrometheusController
 	return controllers
 }
 

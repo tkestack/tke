@@ -28,7 +28,8 @@ import (
 	"net/http"
 	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
-	"tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-monitor-controller/app/config"
 	"tkestack.io/tke/pkg/controller"
@@ -70,8 +71,12 @@ type ControllerContext struct {
 	ResyncPeriod            func() time.Duration
 	ControllerStartInterval time.Duration
 
-	BusinessClient v1.BusinessV1Interface
+	BusinessClient businessv1.BusinessV1Interface
+	PlatformClient platformv1.PlatformV1Interface
 	MonitorConfig  *monitorconfig.MonitorConfiguration
+	// Remote write/read address for prometheus
+	RemoteAddresses []string
+	RemoteType      string
 }
 
 // IsControllerEnabled returns whether the controller has been enabled
@@ -115,7 +120,9 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
 
-		MonitorConfig: cfg.MonitorConfig,
+		MonitorConfig:   cfg.MonitorConfig,
+		RemoteAddresses: cfg.Features.MonitorStorageAddresses,
+		RemoteType:      cfg.Features.MonitorStorageType,
 	}
 
 	if cfg.BusinessAPIServerClientConfig != nil {
@@ -124,6 +131,14 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 			return ControllerContext{}, fmt.Errorf("failed to create the business client: %v", err)
 		}
 		ctx.BusinessClient = businessClient.BusinessV1()
+	}
+
+	if cfg.PlatformAPIServerClientConfig != nil {
+		platformClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.PlatformAPIServerClientConfig, "tke-monitor-controller"))
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to create the platform client: %v", err)
+		}
+		ctx.PlatformClient = platformClient.PlatformV1()
 	}
 
 	return ctx, nil

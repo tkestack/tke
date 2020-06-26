@@ -21,10 +21,17 @@ package app
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
+	"time"
 	"tkestack.io/tke/api/monitor/v1"
 	"tkestack.io/tke/pkg/monitor/controller/metric"
+	"tkestack.io/tke/pkg/monitor/controller/prometheus"
 	"tkestack.io/tke/pkg/monitor/storage"
 	"tkestack.io/tke/pkg/util/log"
+)
+
+const (
+	promEventSyncPeriod = 5 * time.Minute
+	concurrentPromSyncs = 10
 )
 
 func startMetricController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -43,6 +50,34 @@ func startMetricController(ctx ControllerContext) (http.Handler, bool, error) {
 	ctrl := metric.NewController(projectStorage)
 
 	go ctrl.Run(ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startPrometheusController(ctx ControllerContext) (http.Handler, bool, error) {
+	if ctx.RemoteType == "" || len(ctx.RemoteAddresses) == 0 {
+		log.Errorf("wrong remote type or address %v %v", ctx.RemoteType, ctx.RemoteAddresses)
+		return nil, false, nil
+	}
+
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: v1.GroupName, Version: "v1", Resource: "prometheuses"}] {
+		log.Errorf("no prometheus in AvailableResources %v", ctx.AvailableResources)
+		return nil, false, nil
+	}
+
+	ctrl := prometheus.NewController(
+		ctx.ClientBuilder.ClientOrDie("prometheus-controller"),
+		ctx.PlatformClient,
+		ctx.InformerFactory.Monitor().V1().Prometheuses(),
+		promEventSyncPeriod,
+
+		ctx.RemoteAddresses,
+		ctx.RemoteType,
+	)
+
+	go func() {
+		_ = ctrl.Run(concurrentPromSyncs, ctx.Stop)
+	}()
 
 	return nil, true, nil
 }

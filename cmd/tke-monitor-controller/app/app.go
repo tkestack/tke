@@ -23,6 +23,7 @@ import (
 	"tkestack.io/tke/cmd/tke-monitor-controller/app/config"
 	"tkestack.io/tke/cmd/tke-monitor-controller/app/options"
 	"tkestack.io/tke/pkg/app"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -50,6 +51,7 @@ func run(opts *options.Options) app.RunFunc {
 		log.Init(opts.Log)
 		defer log.Flush()
 
+		containerregistry.Init(opts.Registry.Domain, opts.Registry.Namespace)
 		cfg, err := config.CreateConfigFromOptions(basename, opts)
 		if err != nil {
 			return err

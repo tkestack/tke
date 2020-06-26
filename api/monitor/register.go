@@ -63,6 +63,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Metric{},
 		&MetricList{},
 
+		&Prometheus{},
+		&PrometheusList{},
+
 		&ConfigMap{},
 		&ConfigMapList{})
 	return nil
