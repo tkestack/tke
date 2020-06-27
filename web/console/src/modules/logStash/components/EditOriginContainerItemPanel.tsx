@@ -69,6 +69,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
     return (
       <FormPanel fixed isNeedCard={false} style={{ minWidth: 600, padding: '30px' }}>
         <div className="run-docker-box" style={containerLog.collectorWay === 'workload' ? { minWidth: '750px' } : {}}>
+          {window.location.href.includes('/tkestack-project') ||
           <div className="justify-grid">
             <div className="col">
               <span />
@@ -91,7 +92,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                 <i className="icon-cancel-icon" />
               </LinkButton>
             </div>
-          </div>
+          </div>}
           <div className="edit-param-list">
             <div className="param-box" style={{ paddingBottom: '0' }}>
               <div className="param-bd">

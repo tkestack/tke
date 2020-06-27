@@ -519,7 +519,7 @@ export async function fetchResourceLogHierarchy(query: LogHierarchyQuery) {
 
   if (response.code === 0) {
     let content = response.data;
-    content !== '' && traverse(content);
+    !isEmpty(content) && traverse(content);
   }
 
   return logList;
