@@ -82,7 +82,7 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
     }
     // 判断当前是否能够新建日志收集规则
     let { canCreate, tip } = isCanCreateLogStash(clusterSelection[0], logList.data.records, isDaemonsetNormal);
-    let ifFetchLogList = includes(canFetchLogList, isDaemonsetNormal.phase);
+    let ifFetchLogList = logAgentName || includes(canFetchLogList, isDaemonsetNormal.phase);
     let handleNamespaceSwitched = namespaceSelection => {
       let namespaceFound = namespaceList.data.records.find(item => item.namespace === namespaceSelection);
       actions.cluster.selectClusterFromNamespace(namespaceFound.cluster);

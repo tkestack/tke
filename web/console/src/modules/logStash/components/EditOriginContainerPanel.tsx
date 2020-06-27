@@ -88,7 +88,8 @@ export class EditOriginContainerPanel extends React.Component<RootProps, any> {
 
         {isSelectedAllNamespace === 'selectOne' && this._renderContainerLogList()}
 
-        {isSelectedAllNamespace === 'selectOne' && (
+        {window.location.href.includes('/tkestack-project') ||
+        isSelectedAllNamespace === 'selectOne' && (
           <Bubble content={!canAdd ? tip : null} placement="right">
             <a
               href="javascript:;"

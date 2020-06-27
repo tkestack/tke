@@ -310,7 +310,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
   }
 
   private async _handleSubmit(mode) {
-    let { actions, route, logStashEdit, isOpenLogStash, clusterVersion, logSelection, clusterSelection } = this.props;
+    let { actions, route, logStashEdit, clusterVersion, logSelection, clusterSelection } = this.props;
     let { rid, clusterId } = route.queries;
     let { logAgentName } = clusterSelection[0].spec;
     let {
@@ -352,7 +352,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
       +rid
     );
 
-    if (valResult && isOpenLogStash) {
+    if (valResult) {
       let { rid, clusterId } = route.queries;
 
       let logResourceInfo = resourceConfig(clusterVersion)['logcs'];

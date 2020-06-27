@@ -23,9 +23,10 @@ export async function checkStashNameIsExist(
 ) {
   let resourceInfo = resourceConfig(clusterVersion)['logcs'];
   let url = reduceK8sRestfulPath({
+    isSpetialNamespace: true,
     resourceInfo,
     clusterId,
-    namespace,
+    namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
     specificName: logStashName
   });
   let params: RequestParams = {
