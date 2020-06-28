@@ -89,5 +89,6 @@ func Install(s ssh.Interface, option *Option) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

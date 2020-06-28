@@ -31,6 +31,8 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/image"
+
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -450,6 +452,22 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 
 		option.IsGPU = gpu.IsEnable(machine.Labels)
 		err = docker.Install(machineSSH, option)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureKubernetesImages(ctx context.Context, c *v1.Cluster) error {
+	option := &image.Option{Version: c.Spec.Version, RegistryDomain: p.config.Registry.Domain}
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		err = image.PullKubernetesImages(machineSSH, option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
