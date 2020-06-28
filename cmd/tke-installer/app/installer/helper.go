@@ -19,7 +19,7 @@
 package installer
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"time"
@@ -36,7 +36,7 @@ func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.
 		return
 	}
 
-	log.Printf("raw http request:\n%s", reqBytes)
+	fmt.Printf("raw http request:\n%s", reqBytes)
 	chain.ProcessFilter(req, resp)
-	log.Printf("%s %s %v", req.Request.Method, req.Request.URL, time.Since(now))
+	fmt.Printf("%s %s %v", req.Request.Method, req.Request.URL, time.Since(now))
 }
