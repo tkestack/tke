@@ -123,6 +123,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureCSIOperator,
 
 			p.EnsureCleanup,
+			p.EnsureCreateClusterMark,
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
@@ -132,6 +133,9 @@ func NewProvider() (*Provider, error) {
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
 			p.EnsureKeepalivedWithLB,
+		},
+		DeleteHandlers: []clusterprovider.Handler{
+			p.EnsureCleanClusterMark,
 		},
 	}
 
