@@ -496,6 +496,7 @@ func (t *TKE) prepare() apierrors.APIStatus {
 		return statusError
 	}
 
+	platform.Scheme.Default(t.Cluster.Cluster)
 	t.setClusterDefault(&t.Para.Cluster, &t.Para.Config)
 
 	// mock platform api
