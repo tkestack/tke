@@ -403,18 +403,17 @@ func (t *TKE) initSteps() {
 
 func (t *TKE) Run() {
 	var err error
-	ctx := t.log.WithContext(context.Background())
 	if t.Config.NoUI {
-		err = t.run(ctx)
+		err = t.run()
 	} else {
-		err = t.runWithUI(ctx)
+		err = t.runWithUI()
 	}
 	if err != nil {
 		log.Error(err.Error())
 	}
 }
 
-func (t *TKE) run(ctx context.Context) error {
+func (t *TKE) run() error {
 	if !t.isFromRestore {
 		if err := t.loadPara(); err != nil {
 			return err
@@ -426,12 +425,12 @@ func (t *TKE) run(ctx context.Context) error {
 		}
 	}
 
-	t.do(ctx)
+	t.do()
 
 	return nil
 }
 
-func (t *TKE) runWithUI(ctx context.Context) error {
+func (t *TKE) runWithUI() error {
 	a := NewAssertsResource()
 	restful.Add(a.WebService())
 	restful.Add(t.WebService())
@@ -441,7 +440,7 @@ func (t *TKE) runWithUI(ctx context.Context) error {
 	restful.Filter(globalLogging)
 
 	if t.isFromRestore {
-		go t.do(ctx)
+		go t.do()
 	}
 
 	log.Infof("Starting %s at http://%s", t.Config.ServerName, t.Config.ListenAddr)
@@ -840,7 +839,7 @@ func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 		if err := t.prepare(); err != nil {
 			return err
 		}
-		go t.do(req.Request.Context())
+		go t.do()
 
 		return nil
 	}()
@@ -853,7 +852,7 @@ func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 }
 
 func (t *TKE) retryCreateCluster(req *restful.Request, rsp *restful.Response) {
-	go t.do(req.Request.Context())
+	go t.do()
 	_ = rsp.WriteEntity(nil)
 }
 
@@ -907,8 +906,9 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 	}
 }
 
-func (t *TKE) do(ctx context.Context) {
+func (t *TKE) do() {
 	start := time.Now()
+	ctx := t.log.WithContext(context.Background())
 
 	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
 	t.initSteps()
