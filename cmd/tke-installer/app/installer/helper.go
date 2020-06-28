@@ -19,12 +19,12 @@
 package installer
 
 import (
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"time"
 
 	"github.com/emicklei/go-restful"
-	"tkestack.io/tke/pkg/util/log"
 )
 
 func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
@@ -36,7 +36,7 @@ func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.
 		return
 	}
 
-	log.Infof("raw http request:\n%s", reqBytes)
+	log.Printf("raw http request:\n%s", reqBytes)
 	chain.ProcessFilter(req, resp)
-	log.Infof("%s %s %v", req.Request.Method, req.Request.URL, time.Since(now))
+	log.Printf("%s %s %v", req.Request.Method, req.Request.URL, time.Since(now))
 }

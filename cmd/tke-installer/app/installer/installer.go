@@ -126,6 +126,7 @@ func New(config *config.Config) *TKE {
 
 	_ = os.MkdirAll(path.Dir(constants.ClusterLogFile), 0755)
 	logOptions := log.NewOptions()
+	logOptions.DisableColor = true
 	logOptions.OutputPaths = []string{constants.ClusterLogFile}
 	logOptions.ErrorOutputPaths = logOptions.OutputPaths
 	log.Init(logOptions)
