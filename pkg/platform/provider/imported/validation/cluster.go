@@ -31,7 +31,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"tkestack.io/tke/api/platform"
-	"tkestack.io/tke/pkg/platform/provider/imported/util/mark"
+	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"

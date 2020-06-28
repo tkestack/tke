@@ -55,6 +55,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/thirdpartyha"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
+	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/cmdstring"
@@ -1088,4 +1089,13 @@ func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
 	}
 
 	return nil
+}
+
+func (p *Provider) EnsureCreateClusterMark(ctx context.Context, c *v1.Cluster) error {
+	clientset, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+
+	return mark.Create(ctx, clientset)
 }

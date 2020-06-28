@@ -21,7 +21,7 @@ package cluster
 import (
 	"context"
 
-	"tkestack.io/tke/pkg/platform/provider/imported/util/mark"
+	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 )
 
