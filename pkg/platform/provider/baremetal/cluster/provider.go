@@ -81,10 +81,11 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsureClusterComplete,
 
-			// insatll packages
+			// install packages
 			p.EnsureNvidiaDriver,
 			p.EnsureNvidiaContainerRuntime,
 			p.EnsureDocker,
+			p.EnsureKubernetesImages,
 			p.EnsureKubelet,
 			p.EnsureCNIPlugins,
 			p.EnsureConntrackTools,
