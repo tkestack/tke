@@ -142,6 +142,7 @@ metadata:
 spec:
   selector:
     k8s-app: gpu-quota-admission
+  clusterIP: "{{ .GPUQuotaAdmissionHost }}"
   ports:
     - protocol: TCP
       port: 3456

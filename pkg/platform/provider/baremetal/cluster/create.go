@@ -980,6 +980,7 @@ func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 		"GPUManagerImage":        images.Get().GPUManager.FullName(),
 		"BusyboxImage":           images.Get().Busybox.FullName(),
 		"GPUQuotaAdmissionImage": images.Get().GPUQuotaAdmission.FullName(),
+		"GPUQuotaAdmissionHost":  c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion],
 	}
 
 	err = apiclient.CreateResourceWithFile(ctx, client, constants.GPUManagerManifest, option)
