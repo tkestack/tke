@@ -146,15 +146,14 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 }
 
 func (p *Provider) getKubeProxyConfiguration(c *v1.Cluster) *kubeproxyv1alpha1.KubeProxyConfiguration {
-	kubeProxyMode := "iptables"
+	config := &kubeproxyv1alpha1.KubeProxyConfiguration{}
+	config.Mode = "iptables"
 	if c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS {
-		kubeProxyMode = "ipvs"
+		config.Mode = "ipvs"
+		config.ClusterCIDR = c.Spec.ClusterCIDR
 	}
 
-	return &kubeproxyv1alpha1.KubeProxyConfiguration{
-		Mode:        kubeproxyv1alpha1.ProxyMode(kubeProxyMode),
-		ClusterCIDR: c.Spec.ClusterCIDR,
-	}
+	return config
 }
 
 func (p *Provider) getKubeletConfiguration(c *v1.Cluster) *kubeletv1beta1.KubeletConfiguration {
