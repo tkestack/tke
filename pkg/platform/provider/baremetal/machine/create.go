@@ -229,7 +229,7 @@ func (p *Provider) EnsureDisableSwap(ctx context.Context, machine *platformv1.Ma
 		return err
 	}
 
-	_, err = machineSSH.CombinedOutput("swapoff -a && sed -i 's/^[^#]*swap/#&/' /etc/fstab")
+	_, err = machineSSH.CombinedOutput(`swapoff -a && sed -i "s/^[^#]*swap/#&/" /etc/fstab`)
 	if err != nil {
 		return err
 	}

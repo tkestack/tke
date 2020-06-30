@@ -38,7 +38,7 @@ func Install(s ssh.Interface, version string) (err error) {
 
 	for _, file := range []string{"kubelet", "kubectl"} {
 		file = path.Join(constants.DstBinDir, file)
-		if _, err := s.Stat(file); err == nil {
+		if ok, err := s.Exist(file); err == nil && ok {
 			backupFile, err := ssh.BackupFile(s, file)
 			if err != nil {
 				return fmt.Errorf("backup file %q error: %w", file, err)
