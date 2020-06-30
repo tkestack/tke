@@ -242,8 +242,7 @@ func (fac FileAvailableCheck) Name() string {
 
 // Check validates if the given file does not already exist.
 func (fac FileAvailableCheck) Check() (warnings, errorList []error) {
-
-	if _, err := fac.Stat(fac.Path); err == nil {
+	if ok, err := fac.Exist(fac.Path); err == nil && ok {
 		errorList = append(errorList, errors.Errorf("%s already exists", fac.Path))
 	}
 	return nil, errorList
@@ -365,8 +364,7 @@ func (dac DirAvailableCheck) Name() string {
 
 // Check validates if a directory does not exist or empty.
 func (dac DirAvailableCheck) Check() (warnings, errorList []error) {
-
-	if _, err := dac.Stat(dac.Path); err == nil {
+	if ok, err := dac.Exist(dac.Path); err == nil && ok {
 		errorList = append(errorList, errors.Errorf("%s already exists", dac.Path))
 	}
 
