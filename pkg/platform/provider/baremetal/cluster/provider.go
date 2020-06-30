@@ -196,8 +196,8 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	if cluster.Spec.Properties.MaxNodePodNum == nil {
 		cluster.Spec.Properties.MaxNodePodNum = pointer.ToInt32(256)
 	}
-	if cluster.Spec.Features.SkipConditions == nil {
-		cluster.Spec.Features.SkipConditions = p.config.Feature.SkipConditions
+	if p.config.Feature.SkipConditions != nil {
+		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, p.config.Feature.SkipConditions...)
 	}
 
 	if cluster.Spec.Etcd == nil {
