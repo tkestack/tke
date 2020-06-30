@@ -183,6 +183,26 @@ data:
     webhook_config_file = "/app/conf/tke-authz-webhook.yaml"
 {{- end }}
 
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-platform-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+
   tke-authn-webhook.yaml: |
     apiVersion: v1
     kind: Config
