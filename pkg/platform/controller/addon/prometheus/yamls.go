@@ -624,10 +624,10 @@ groups:
   - record: k8s_pod_restart_total
     expr: sum(idelta(kube_pod_container_status_restarts_total [2m])) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
-  - record: k8s_node_status_ready
-    expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role)  kube_node_labels)  without(condition, status)
+  - record: k8s_node_status_ready_with_node_role
+    expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role, device_type)  kube_node_labels)  without(condition, status)
 
-  - record: k8s_node_status_ready_without_node_role
+  - record: k8s_node_status_ready
     expr: max(kube_node_status_condition{condition="Ready", status="true"})  without(condition, status)
 
   - record: k8s_node_pod_restart_total
