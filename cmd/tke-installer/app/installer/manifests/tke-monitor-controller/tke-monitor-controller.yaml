@@ -78,6 +78,18 @@ data:
       api_server_client_config = "/app/conf/tke-business-api-config.yaml"
 {{- end }}
 
+      [client.platform]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+
+      [registry]
+      container_domain = "{{ .RegistryDomain }}"
+      container_namespace = "{{ .RegistryNamespace }}"
+
+      [features]
+      monitor_storage_type = "{{ .MonitorStorageType }}"
+      monitor_storage_addresses = "{{ .MonitorStorageAddresses }}"
+
   tke-monitor-api-config.yaml: |
     apiVersion: v1
     kind: Config
@@ -86,6 +98,26 @@ data:
         cluster:
           certificate-authority: /app/certs/ca.crt
           server: https://tke-monitor-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-platform-api
     users:
       - name: admin-cert
         user:

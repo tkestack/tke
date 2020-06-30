@@ -28,6 +28,8 @@ import (
 type Interface interface {
 	// ConfigMaps returns a ConfigMapInformer.
 	ConfigMaps() ConfigMapInformer
+	// Prometheuses returns a PrometheusInformer.
+	Prometheuses() PrometheusInformer
 }
 
 type version struct {
@@ -44,4 +46,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // ConfigMaps returns a ConfigMapInformer.
 func (v *version) ConfigMaps() ConfigMapInformer {
 	return &configMapInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// Prometheuses returns a PrometheusInformer.
+func (v *version) Prometheuses() PrometheusInformer {
+	return &prometheusInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

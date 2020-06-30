@@ -29,6 +29,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/storage"
 	configmapstorage "tkestack.io/tke/pkg/monitor/registry/configmap/storage"
 	metricstorage "tkestack.io/tke/pkg/monitor/registry/metric/storage"
+	promstorage "tkestack.io/tke/pkg/monitor/registry/prometheus/storage"
 	monitorstorage "tkestack.io/tke/pkg/monitor/storage"
 )
 
@@ -68,6 +69,10 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		metricREST := metricstorage.NewStorage(restOptionsGetter, s.MetricStorage)
 		storageMap["metrics"] = metricREST.Metric
+
+		promREST := promstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		storageMap["prometheuses"] = promREST.Prometheus
+		storageMap["prometheuses/status"] = promREST.Status
 	}
 
 	return storageMap

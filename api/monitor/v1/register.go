@@ -51,6 +51,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Metric{},
 		&MetricList{},
 
+		&Prometheus{},
+		&PrometheusList{},
+
 		&ConfigMap{},
 		&ConfigMapList{})
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)

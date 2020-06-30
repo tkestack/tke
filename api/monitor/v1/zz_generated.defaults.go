@@ -32,6 +32,8 @@ import (
 func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&ConfigMap{}, func(obj interface{}) { SetObjectDefaults_ConfigMap(obj.(*ConfigMap)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMapList{}, func(obj interface{}) { SetObjectDefaults_ConfigMapList(obj.(*ConfigMapList)) })
+	scheme.AddTypeDefaultingFunc(&Prometheus{}, func(obj interface{}) { SetObjectDefaults_Prometheus(obj.(*Prometheus)) })
+	scheme.AddTypeDefaultingFunc(&PrometheusList{}, func(obj interface{}) { SetObjectDefaults_PrometheusList(obj.(*PrometheusList)) })
 	return nil
 }
 
@@ -43,5 +45,16 @@ func SetObjectDefaults_ConfigMapList(in *ConfigMapList) {
 	for i := range in.Items {
 		a := &in.Items[i]
 		SetObjectDefaults_ConfigMap(a)
+	}
+}
+
+func SetObjectDefaults_Prometheus(in *Prometheus) {
+	SetDefaults_PrometheusStatus(&in.Status)
+}
+
+func SetObjectDefaults_PrometheusList(in *PrometheusList) {
+	for i := range in.Items {
+		a := &in.Items[i]
+		SetObjectDefaults_Prometheus(a)
 	}
 }

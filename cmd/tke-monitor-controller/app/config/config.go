@@ -50,8 +50,11 @@ type Config struct {
 	MonitorAPIServerClientConfig *restclient.Config
 	// the rest config for the business apiserver
 	BusinessAPIServerClientConfig *restclient.Config
+	// the rest config for the platform apiserver
+	PlatformAPIServerClientConfig *restclient.Config
 	Component                     controlleroptions.ComponentConfiguration
 	MonitorConfig                 *monitorconfig.MonitorConfiguration
+	Features                      *options.FeatureOptions
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -107,6 +110,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 			Authenticator: anonymous.NewAuthenticator(),
 		},
 		MonitorConfig: monitorConfig,
+		Features:      opts.FeatureOptions,
 	}
 
 	businessAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
@@ -115,6 +119,14 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 	if ok && businessAPIServerClientConfig != nil {
 		controllerManagerConfig.BusinessAPIServerClientConfig = businessAPIServerClientConfig
+	}
+
+	platformAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if ok && platformAPIServerClientConfig != nil {
+		controllerManagerConfig.PlatformAPIServerClientConfig = platformAPIServerClientConfig
 	}
 
 	if err := opts.Component.ApplyTo(&controllerManagerConfig.Component); err != nil {

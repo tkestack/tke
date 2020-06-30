@@ -22,6 +22,7 @@ syntax = 'proto2';
 
 package tkestack.io.tke.api.monitor.v1;
 
+import "k8s.io/apimachinery/pkg/api/resource/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
@@ -113,5 +114,97 @@ message MetricQueryCondition {
   optional string expr = 2;
 
   optional string value = 3;
+}
+
+// Prometheus is a kubernetes package manager.
+message Prometheus {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of clusters in this set.
+  // +optional
+  optional PrometheusSpec spec = 2;
+
+  // +optional
+  optional PrometheusStatus status = 3;
+}
+
+// PrometheusList is the whole list of all prometheus which owned by a tenant.
+message PrometheusList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of Prometheuss
+  repeated Prometheus items = 2;
+}
+
+// PrometheusRemoteAddr is the remote write/read address for prometheus
+message PrometheusRemoteAddr {
+  repeated string writeAddr = 1;
+
+  repeated string readAddr = 2;
+}
+
+// PrometheusSpec describes the attributes on a Prometheus.
+message PrometheusSpec {
+  optional string tenantID = 1;
+
+  optional string clusterName = 2;
+
+  optional string version = 3;
+
+  // SubVersion is the components version such as node-exporter.
+  map<string, string> subVersion = 4;
+
+  // RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.
+  optional PrometheusRemoteAddr remoteAddress = 5;
+
+  // +optional
+  // NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
+  optional string notifyWebhook = 6;
+
+  // +optional
+  // Resources is the resource request and limit for prometheus
+  optional ResourceRequirements resources = 7;
+
+  // +optional
+  // RunOnMaster indicates whether to add master Affinity for all monitor components or not
+  optional bool runOnMaster = 8;
+
+  // +optional
+  // AlertRepeatInterval indicates repeat interval of alerts
+  optional string alertRepeatInterval = 9;
+}
+
+// PrometheusStatus is information about the current status of a Prometheus.
+message PrometheusStatus {
+  // +optional
+  optional string version = 1;
+
+  // Phase is the current lifecycle phase of the helm of cluster.
+  // +optional
+  optional string phase = 2;
+
+  // Reason is a brief CamelCase string that describes any failure.
+  // +optional
+  optional string reason = 3;
+
+  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
+  // +optional
+  optional int32 retryCount = 4;
+
+  // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
+
+  // SubVersion is the components version such as node-exporter.
+  map<string, string> subVersion = 6;
+}
+
+// ResourceRequirements describes the compute resource requirements.
+message ResourceRequirements {
+  map<string, k8s.io.apimachinery.pkg.api.resource.Quantity> limits = 1;
+
+  map<string, k8s.io.apimachinery.pkg.api.resource.Quantity> requests = 2;
 }
 

@@ -19,11 +19,14 @@
 package v1
 
 import (
+	"fmt"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func addConversionFuncs(scheme *runtime.Scheme) error {
-	funcs := []func(scheme *runtime.Scheme) error{}
+	funcs := []func(scheme *runtime.Scheme) error{
+		AddFieldLabelConversionsForPrometheus,
+	}
 	for _, f := range funcs {
 		if err := f(scheme); err != nil {
 			return err
@@ -31,4 +34,24 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 	}
 
 	return nil
+}
+
+// AddFieldLabelConversionsForPrometheus adds a conversion function to convert
+// field selectors of Prometheus from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForPrometheus(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Prometheus"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.tenantID",
+				"spec.clusterName",
+				"spec.version",
+				"status.phase",
+				"status.version",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
 }

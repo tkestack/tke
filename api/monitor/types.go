@@ -19,7 +19,117 @@
 package monitor
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// ResourceList is a set of (resource name, quantity) pairs.
+type ResourceList map[string]resource.Quantity
+
+// ResourceRequirements describes the compute resource requirements.
+type ResourceRequirements struct {
+	Limits   ResourceList
+	Requests ResourceList
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Prometheus is a systems monitoring and alerting toolkit.
+type Prometheus struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of clusters in this set.
+	// +optional
+	Spec PrometheusSpec
+	// +optional
+	Status PrometheusStatus
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PrometheusList is the whole list of all prometheus which owned by a tenant.
+type PrometheusList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+
+	// List of Prometheuss
+	Items []Prometheus
+}
+
+// PrometheusSpec describes the attributes on a Prometheus.
+type PrometheusSpec struct {
+	TenantID      string
+	ClusterName   string
+	Version       string
+	SubVersion    map[string]string
+	RemoteAddress PrometheusRemoteAddr
+	// +optional
+	NotifyWebhook string
+	// +optional
+	Resources ResourceRequirements
+	// +optional
+	RunOnMaster bool
+	// +optional
+	AlertRepeatInterval string
+}
+
+// PrometheusStatus is information about the current status of a Prometheus.
+type PrometheusStatus struct {
+	// +optional
+	Version string
+	// Phase is the current lifecycle phase of the helm of cluster.
+	// +optional
+	Phase AddonPhase
+	// Reason is a brief CamelCase string that describes any failure.
+	// +optional
+	Reason string
+	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
+	// +optional
+	RetryCount int32
+	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
+	// +optional
+	LastReInitializingTimestamp metav1.Time
+	// SubVersion is the components version such as node-exporter.
+	SubVersion map[string]string
+}
+
+// PrometheusRemoteAddr is the remote write/read address for prometheus
+type PrometheusRemoteAddr struct {
+	WriteAddr []string
+	ReadAddr  []string
+}
+
+// AddonPhase defines the phase of addon
+type AddonPhase string
+
+const (
+	// AddonPhaseInitializing means is wait initializing.
+	AddonPhaseInitializing AddonPhase = "Initializing"
+	// AddonPhaseReinitializing means is reinitializing.
+	AddonPhaseReinitializing AddonPhase = "Reinitializing"
+	// AddonPhaseChecking means is wait checking.
+	AddonPhaseChecking AddonPhase = "Checking"
+	// AddonPhaseRunning means is running.
+	AddonPhaseRunning AddonPhase = "Running"
+	// AddonPhaseUpgrading means is upgrading.
+	AddonPhaseUpgrading AddonPhase = "Upgrading"
+	// AddonPhaseFailed means has been failed.
+	AddonPhaseFailed AddonPhase = "Failed"
+	// AddonPhasePending means the controller is proceeding deploying
+	AddonPhasePending AddonPhase = "Pending"
+	// AddonPhaseUnhealthy means some pods of GPUManager is partial running
+	AddonPhaseUnhealthy AddonPhase = "Unhealthy"
+	// AddonPhaseTerminating means addon terminating
+	AddonPhaseTerminating AddonPhase = "Terminating"
+	// AddonPhaseUnknown means addon unknown
+	AddonPhaseUnknown AddonPhase = "Unknown"
 )
 
 // +genclient
