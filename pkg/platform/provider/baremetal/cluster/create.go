@@ -259,7 +259,7 @@ func (p *Provider) EnsureClusterComplete(ctx context.Context, cluster *v1.Cluste
 	funcs := []func(cluster *v1.Cluster) error{
 		completeNetworking,
 		completeDNS,
-		completeGPU,
+		completeServiceIP,
 		completeAddresses,
 		completeCredential,
 	}
@@ -315,15 +315,20 @@ func completeDNS(cluster *v1.Cluster) error {
 	return nil
 }
 
-func completeGPU(cluster *v1.Cluster) error {
-	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.GPUQuotaAdmissionIPIndex)
-	if err != nil {
-		return errors.Wrap(err, "get gpu quota admission IP error")
-	}
+func completeServiceIP(cluster *v1.Cluster) error {
 	if cluster.Annotations == nil {
 		cluster.Annotations = make(map[string]string)
 	}
-	cluster.Annotations[constants.GPUQuotaAdmissionIPAnnotaion] = ip.String()
+	for index, name := range map[int]string{
+		constants.GPUQuotaAdmissionIPIndex: constants.GPUQuotaAdmissionIPAnnotaion,
+		constants.GalaxyIPAMIPIndex:        constants.GalaxyIPAMIPIndexAnnotaion,
+	} {
+		ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, index)
+		if err != nil {
+			return errors.Wrap(err, "get service IP error")
+		}
+		cluster.Annotations[name] = ip.String()
+	}
 
 	return nil
 }
@@ -572,8 +577,13 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 	if GPUQuotaAdmissionHost == "" {
 		GPUQuotaAdmissionHost = "gpu-quota-admission"
 	}
+	GalaxyIPAMHost := c.Annotations[constants.GalaxyIPAMIPIndexAnnotaion]
+	if GalaxyIPAMHost == "" {
+		GalaxyIPAMHost = "galaxy-ipam"
+	}
 	schedulerPolicyConfig, err := template.ParseString(schedulerPolicyConfig, map[string]interface{}{
 		"GPUQuotaAdmissionHost": GPUQuotaAdmissionHost,
+		"GalaxyIPAMHost":        GalaxyIPAMHost,
 	})
 	if err != nil {
 		return errors.Wrap(err, "parse schedulerPolicyConfig error")
