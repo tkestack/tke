@@ -239,7 +239,7 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 		err = c.onUpdate(ctx, cluster)
 	case platformv1.ClusterTerminating:
 		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
-		err = c.deleter.Delete(context.Background(), key)
+		err = c.deleter.Delete(ctx, key)
 		if err == nil {
 			log.FromContext(ctx).Info("Machine has been successfully deleted")
 		}

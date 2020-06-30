@@ -35,5 +35,11 @@ func (l *zapLogger) WithContext(ctx context.Context) context.Context {
 
 // FromContext returns the value of the log key on the ctx.
 func FromContext(ctx context.Context) Logger {
-	return ctx.Value(logContextKey).(Logger)
+	if ctx != nil {
+		logger := ctx.Value(logContextKey)
+		if logger != nil {
+			return logger.(Logger)
+		}
+	}
+	return WithName("Unknown-Context")
 }
