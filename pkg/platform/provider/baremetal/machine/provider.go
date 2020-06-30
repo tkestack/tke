@@ -99,13 +99,17 @@ func NewProvider() (*Provider, error) {
 
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
-	restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
-	if err != nil {
-		return nil, err
-	}
-	p.platformClient, err = platformv1client.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
+	// Run for compatibility with installer.
+	// TODO: Installer reuse platform components
+	if cfg.PlatformAPIClientConfig != "" {
+		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
+		if err != nil {
+			return nil, err
+		}
+		p.platformClient, err = platformv1client.NewForConfig(restConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return p, nil
