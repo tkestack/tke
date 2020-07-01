@@ -53,7 +53,7 @@ const (
             }
          ],
          "nodeCacheCapable" : false,
-         "urlPrefix" : "http://galaxy-ipam:9040/v1"
+         "urlPrefix" : "http://{{.GalaxyIPAMHost}}:9040/v1"
       }
    ],
    "kind" : "Policy"
