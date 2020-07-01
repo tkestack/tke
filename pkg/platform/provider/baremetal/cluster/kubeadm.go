@@ -166,6 +166,7 @@ func (p *Provider) getKubeletConfiguration(c *v1.Cluster) *kubeletv1beta1.Kubele
 			"cpu":    "100m",
 			"memory": "500Mi",
 		},
+		MaxPods: *c.Spec.Properties.MaxNodePodNum,
 	}
 }
 
