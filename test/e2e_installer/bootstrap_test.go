@@ -121,7 +121,7 @@ var _ = Describe("bootstrap", func() {
 		Expect(resp.StatusCode).To(Equal(http.StatusCreated))
 
 		By("wait install finish")
-		err = wait.PollImmediate(5*time.Second, 30*time.Minute, func() (bool, error) {
+		err = wait.PollImmediate(5*time.Second, 2*time.Hour, func() (bool, error) {
 			url := fmt.Sprintf("http://%s:8080/api/cluster/global/progress", nodes[0].InternalIP)
 			resp, err := http.Get(url)
 			if err != nil {
