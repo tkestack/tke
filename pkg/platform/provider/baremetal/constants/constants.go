@@ -81,5 +81,7 @@ const (
 
 	DNSIPIndex                   = 10
 	GPUQuotaAdmissionIPIndex     = 9
+	GalaxyIPAMIPIndex            = 8
 	GPUQuotaAdmissionIPAnnotaion = platformv1.GroupName + "/gpu-quota-admission-ip"
+	GalaxyIPAMIPIndexAnnotaion   = platformv1.GroupName + "/galaxy-ipam-ip"
 )

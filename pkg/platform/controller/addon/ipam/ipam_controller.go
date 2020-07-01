@@ -41,6 +41,7 @@ import (
 	v1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
@@ -59,6 +60,7 @@ const (
 	crbIPAMName        = "galaxy-ipam"
 	crIPAMName         = "galaxy-ipam"
 	cmIPAMName         = "galaxy-ipam-etc"
+	cmFloatingIPName   = "floatingip-config"
 )
 
 // Controller is responsible for performing actions dependent upon a ipam phase.
@@ -385,12 +387,22 @@ func (c *Controller) installIPAM(ipam *v1.IPAM) error {
 			return err
 		}
 	}
+	// Create floatingIP configmap.
+	if _, err := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(cmFloatingIP()); err != nil {
+		if !errors.IsAlreadyExists(err) {
+			return err
+		}
+	}
 	// Deployment IPAM
 	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(deploymentIPAM(ipam.Spec.Version)); err != nil {
 		return err
 	}
 	// Service IPAM
-	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(serviceIPAM()); err != nil {
+	clusterIP := ""
+	if cluster.Annotations != nil {
+		clusterIP = cluster.Annotations[constants.GalaxyIPAMIPIndexAnnotaion]
+	}
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(serviceIPAM(clusterIP)); err != nil {
 		return err
 	}
 	log.Info("ipam installed")
@@ -616,7 +628,23 @@ func cmIPAM() *corev1.ConfigMap {
 	}
 }
 
-func serviceIPAM() *corev1.Service {
+func cmFloatingIP() *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cmFloatingIPName,
+			Namespace: metav1.NamespaceSystem,
+		},
+		Data: map[string]string{
+			"floatingips": "",
+		},
+	}
+}
+
+func serviceIPAM(clusterIP string) *corev1.Service {
 	return &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
@@ -628,7 +656,8 @@ func serviceIPAM() *corev1.Service {
 			Labels:    map[string]string{"app": "galaxy-ipam"},
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": "galaxy-ipam"},
+			ClusterIP: clusterIP,
+			Selector:  map[string]string{"app": "galaxy-ipam"},
 			Ports: []corev1.ServicePort{
 				{Name: "scheduler-port", Port: 9040, TargetPort: intstr.FromInt(9040), NodePort: 32760},
 				{Name: "api-port", Port: 9041, TargetPort: intstr.FromInt(9041), NodePort: 32761},
