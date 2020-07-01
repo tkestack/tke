@@ -210,6 +210,8 @@ func (c *Controller) syncMachine(key string) error {
 		return err
 	}
 
+	ctx = log.FromContext(ctx).WithValues("cluster", machine.Spec.ClusterName).WithContext(ctx)
+
 	return c.reconcile(ctx, key, machine)
 }
 
@@ -222,7 +224,7 @@ func (c *Controller) reconcile(ctx context.Context, key string, machine *platfor
 		err = c.onUpdate(ctx, machine)
 	case platformv1.MachineTerminating:
 		log.FromContext(ctx).Info("Machine has been terminated. Attempting to cleanup resources")
-		err = c.deleter.Delete(context.Background(), key)
+		err = c.deleter.Delete(ctx, key)
 		if err == nil {
 			log.FromContext(ctx).Info("Machine has been successfully deleted")
 		}
