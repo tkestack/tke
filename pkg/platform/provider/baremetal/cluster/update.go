@@ -90,9 +90,13 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 			if reflect.DeepEqual(funk.IntersectString(actualCertSANs, exptectCertSANs), exptectCertSANs) {
 				return nil
 			}
+			log.FromContext(ctx).Info("EnsureAPIServerCert",
+				"nodeName", s.Host,
+				"exptectCertSANs", exptectCertSANs,
+				"actualCertSANs", actualCertSANs,
+			)
 		}
 
-		log.FromContext(ctx).Info("EnsureAPIServerCert", "nodeName", s.Host)
 		for _, file := range []string{constants.APIServerCertName, constants.APIServerKeyName} {
 			s.CombinedOutput(fmt.Sprintf("rm -f %s", file))
 		}
