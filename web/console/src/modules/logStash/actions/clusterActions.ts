@@ -75,6 +75,7 @@ const fetchClusterActions = generateFetcherActionCreator({
     for (let cluster of response.records) {
       cluster.spec.logAgentName = clusterHasLogAgent[cluster.metadata.name];
     }
+
     return response;
   },
   finish: (dispatch: Redux.Dispatch, getState: GetState) => {

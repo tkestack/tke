@@ -82,18 +82,17 @@ const restActions = {
       if (urlParams['tab'] === 'log') {
         dispatch(resourcePodLogActions.handleFetchData(podName, containerName, tailLines));
         // 拉取日志目录结构
-        let agentName = '';
         if (logAgent && logAgent['metadata'] && logAgent['metadata']['name']) {
-          agentName = logAgent['metadata']['name'];
+          let agentName = logAgent['metadata']['name'];
+          const query: LogHierarchyQuery = {
+            agentName,
+            namespace: route.queries['np'],
+            clusterId: route.queries['clusterId'],
+            pod: podName,
+            container: containerName,
+          };
+          dispatch(resourcePodLogActions.getLogHierarchy(query));
         }
-        const query: LogHierarchyQuery = {
-          agentName,
-          namespace: route.queries['np'],
-          clusterId: route.queries['clusterId'],
-          pod: podName,
-          container: containerName,
-        };
-        dispatch(resourcePodLogActions.getLogHierarchy(query));
       }
     };
   },

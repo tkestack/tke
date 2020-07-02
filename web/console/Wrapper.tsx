@@ -40,6 +40,9 @@ export enum ConsoleModuleEnum {
   /** 镜像仓库 */
   Registry = 'registry',
 
+  /** 日志模块 */
+  LogAgent = 'logagent',
+
   /** 认证模块 */
   Auth = 'auth',
 
@@ -149,7 +152,7 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维中心',
-    watchModule: [ConsoleModuleEnum.PLATFORM, ConsoleModuleEnum.Audit],
+    watchModule: [ConsoleModuleEnum.PLATFORM, ConsoleModuleEnum.Audit, ConsoleModuleEnum.LogAgent],
     subRouterConfig: [
       {
         url: '/tkestack/helm',
@@ -159,12 +162,12 @@ const commonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack/log',
         title: '日志采集',
-        watchModule: ConsoleModuleEnum.PLATFORM,
+        watchModule: ConsoleModuleEnum.LogAgent,
       },
       {
         url: '/tkestack/log/setting',
         title: '日志组件',
-        watchModule: ConsoleModuleEnum.PLATFORM,
+        watchModule: ConsoleModuleEnum.LogAgent,
       },
       {
         url: '/tkestack/persistent-event',
@@ -231,12 +234,12 @@ const businessCommonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维中心',
-    watchModule: [ConsoleModuleEnum.PLATFORM],
+    watchModule: [ConsoleModuleEnum.LogAgent],
     subRouterConfig: [
       {
         url: '/tkestack-project/log',
         title: '日志采集',
-        watchModule: ConsoleModuleEnum.PLATFORM
+        watchModule: ConsoleModuleEnum.LogAgent
       }
     ]
   },

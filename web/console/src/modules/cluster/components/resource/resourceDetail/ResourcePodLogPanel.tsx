@@ -54,29 +54,31 @@ export class ResourcePodLogPanel extends React.Component<RootProps, {}> {
       { podName, containerName, logFile, tailLines } = subRoot.resourceDetailState.logOption;
     let clusterId = route.queries['clusterId'];
 
-    // 获取集群日志组件名称
-    let resourceInfo: ResourceInfo = resourceConfig()['logagent'];
-    let k8sQueryObj = {
-      fieldSelector: `spec.clusterName=${clusterId}`
-    };
+    if (window['modules'] && window['modules']['logagent']) {
+      // 获取集群日志组件名称
+      let resourceInfo: ResourceInfo = resourceConfig()['logagent'];
+      let k8sQueryObj = {
+        fieldSelector: `spec.clusterName=${clusterId}`
+      };
 
-    k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-    let logAgent = await WebAPI.fetchLogagentName(resourceInfo, clusterId, k8sQueryObj);
-    actions.resourceDetail.log.setLogAgent(logAgent);
+      k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
+      let logAgent = await WebAPI.fetchLogagentName(resourceInfo, clusterId, k8sQueryObj);
+      actions.resourceDetail.log.setLogAgent(logAgent);
 
-    if (podName !== '' && containerName !== '') {
-      actions.resourceDetail.log.selectLogFile(logFile);
-      actions.resourceDetail.log.handleFetchData(podName, containerName, tailLines);
+      if (podName !== '' && containerName !== '') {
+        actions.resourceDetail.log.selectLogFile(logFile);
+        actions.resourceDetail.log.handleFetchData(podName, containerName, tailLines);
 
-      if (logAgent && logAgent['metadata'] && logAgent['metadata']['name']) {
-        let agentName = logAgent['metadata']['name'];
-        actions.resourceDetail.log.getLogHierarchy({
-          agentName,
-          clusterId: route.queries['clusterId'],
-          namespace: route.queries['np'],
-          container: containerName,
-          pod: podName
-        });
+        if (logAgent && logAgent['metadata'] && logAgent['metadata']['name']) {
+          let agentName = logAgent['metadata']['name'];
+          actions.resourceDetail.log.getLogHierarchy({
+            agentName,
+            clusterId: route.queries['clusterId'],
+            namespace: route.queries['np'],
+            container: containerName,
+            pod: podName
+          });
+        }
       }
     }
   }
