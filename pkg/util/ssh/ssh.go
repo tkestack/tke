@@ -32,6 +32,7 @@ import (
 	"time"
 
 	"github.com/pkg/sftp"
+	"github.com/segmentio/ksuid"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/go-playground/validator.v9"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -221,7 +222,7 @@ func (s *SSH) writeFile(src io.Reader, dst string) error {
 	realDst := dst
 	if !strings.HasPrefix(dst, tmpDir) {
 		needMove = true
-		dst = path.Join(tmpDir, dst)
+		dst = path.Join(tmpDir, ksuid.New().String(), dst)
 	}
 
 	err = sftpClient.MkdirAll(path.Dir(dst))
@@ -239,7 +240,7 @@ func (s *SSH) writeFile(src io.Reader, dst string) error {
 		return err
 	}
 	if needMove {
-		_, err = s.CombinedOutput(fmt.Sprintf("mkdir -p $(dirname %s); mv %s %s", realDst, dst, realDst))
+		_, err = s.CombinedOutput(fmt.Sprintf("mkdir -p $(dirname %s); mv %s %s; rm -rf $(dirname %s)", realDst, dst, realDst, dst))
 		if err != nil {
 			return err
 		}
