@@ -36,6 +36,7 @@ import (
 
 func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
+		logger := log.FromContext(ctx).WithValues("node", machine.IP)
 		s, err := machine.SSH()
 		if err != nil {
 			return err
@@ -43,24 +44,29 @@ func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
 
 		data, err := s.ReadFile(constants.APIServerCertName)
 		if err != nil {
-			return err
+			logger.Error(err, "read cert file error")
+			return nil
 		}
 		certs, err := certutil.ParseCertsPEM(data)
 		if err != nil {
-			return err
+			logger.Error(err, "ParseCertsPEM error")
+			return nil
 		}
 		expirationDuration := time.Until(certs[0].NotAfter)
 		if expirationDuration > constants.RenewCertsTimeThreshold {
-			log.FromContext(ctx).Info("Skip EnsureRenewCerts because expiration duration > threshold",
-				"duration", expirationDuration.String(), "threshold", constants.RenewCertsTimeThreshold.String())
+			logger.Info("Skip EnsureRenewCerts because expiration duration > threshold",
+				"duration", expirationDuration.String(),
+				"threshold", constants.RenewCertsTimeThreshold.String(),
+			)
 			return nil
 		}
 
-		log.FromContext(ctx).Info("EnsureRenewCerts", "nodeName", s.Host)
+		logger.Info("RenewCerts doing")
 		err = kubeadm.RenewCerts(s)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
+		logger.Info("RenewCerts done")
 	}
 
 	return nil
