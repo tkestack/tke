@@ -144,6 +144,9 @@ var _ = Describe("bootstrap", func() {
 				return false, fmt.Errorf("unknown install progress status: %s", progress.Status)
 			}
 		})
+		if err == nil {
+			os.Setenv("NEED_DELETE", "true")
+		}
 		Expect(err).To(BeNil())
 	})
 })
