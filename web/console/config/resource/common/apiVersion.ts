@@ -458,6 +458,7 @@ const k8sApiVersionFor18: ApiVersion = {
     group: logAgentServiceVersion.group,
     version: logAgentServiceVersion.version,
     basicEntry: logAgentServiceVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.LogAgent,
     headTitle: 'LogAgent'
   },
   clustercredential: {

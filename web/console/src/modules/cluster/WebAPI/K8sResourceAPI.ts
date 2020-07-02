@@ -518,8 +518,11 @@ export async function fetchResourceLogHierarchy(query: LogHierarchyQuery) {
   };
 
   if (response.code === 0) {
-    let content = response.data;
-    !isEmpty(content) && traverse(content);
+    // 接口成功的话 response.data 为日志内容，失败的话为 { Code: '', Message: '' } 格式的错误
+    if (response.data && !response.data.Code) {
+      let content = response.data;
+      !isEmpty(content) && traverse(content);
+    }
   }
 
   return logList;
@@ -557,7 +560,9 @@ export async function fetchResourceLogContent(query: LogContentQuery) {
 
   if (response.code === 0) {
     let { data } = response;
-    content = data.content;
+    if (data && data.content) {
+      content = data.content;
+    }
   }
 
   return content;

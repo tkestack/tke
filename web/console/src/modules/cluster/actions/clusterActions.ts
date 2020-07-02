@@ -84,14 +84,16 @@ const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
     for (let record of response.records) {
       record.spec.hasPrometheus = clusterHasPs[record.metadata.name];
     }
-    // 增加获取日志采集组件信息
-    let agents = await CommonAPI.fetchLogagents();
-    let clusterHasLogAgent = {};
-    for (let agent of agents.records) {
-      clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
-    }
-    for (let cluster of response.records) {
-      cluster.spec.logAgentName = clusterHasLogAgent[cluster.metadata.name];
+    if (window['modules'] && window['modules']['logagent']) {
+      // 增加获取日志采集组件信息
+      let agents = await CommonAPI.fetchLogagents();
+      let clusterHasLogAgent = {};
+      for (let agent of agents.records) {
+        clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
+      }
+      for (let cluster of response.records) {
+        cluster.spec.logAgentName = clusterHasLogAgent[cluster.metadata.name];
+      }
     }
     return response;
   },
