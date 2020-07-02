@@ -10,7 +10,7 @@
 
 虽然开源协同大行其道，但**合适才是最好**基本原则仍然需要贯彻执行 -- 量体裁衣；结合开发难度，开发效率，后期代码维护，组件维护，实施人员使用难度，实施人员现场修改难度等多维度进行考量。方案如下：    
 
-![](./tkestack-pic/proposal.jpg)    
+![](./pic/proposal.jpg)    
 
 - **kubeadm+ansible:**     
   **优点：**对kubernetes版本，网络插件，docker 版本自主可控；        
@@ -51,7 +51,7 @@
 
 ### 1. 走进tkesack
 
-![](./tkestack-pic/tkestack-arti.png)    
+![](./pic/tkestack-arti.png)    
 
 从tkestack git 获取到的架构图可以看出tkestack分为installer， Global，cluster这三种角色；其中installer 负责tkestack Global集群的安装，当前提供命令行安装模式和图形化安装模式；cluster 角色是作为业务集群，通Global集群纳管。当前我们只需要部署一个Global集群作为业务集群即可满足需求，cluster集群只是为了提供给客户使用tkestack多集群管理使用。    
 
@@ -63,7 +63,7 @@ tkestack 在installer 以hooks 方式实现用户自定义扩展， 有如下hoo
 
 默认tkestack部署流程如下：    
 
-![](./tkestack-pic/install-proccess.jpg)    
+![](./pic/install-proccess.jpg)    
 
 由于installer 节点在tkestack 设计上计划安装完毕直接废弃，所以tkestack 会在global集群重新部署一个镜像仓库作为后续业务使用，当然也会将tkestack 平台的镜像重新repush到集群内的镜像仓库。所以容器化的自定义扩展主件的部署需要放到post-install 脚本进行触发。    
 
@@ -470,7 +470,7 @@ tkestack 在installer 以hooks 方式实现用户自定义扩展， 有如下hoo
 当前通过ansible set facts 方式，ansible when 条件执行，以及shell 命令增加判断方式实现幂等；通过设置开关+hooks+ansible tag方式实现扩展性和解耦。      
 最终私有化一键部署流程如下：    
 
-![](./tkestack-pic/onstep-install-process.jpg)    
+![](./pic/onstep-install-process.jpg)    
 
 合理利用tkestack特性（用好80%），结合自身业务场景做出满足需求私有化一键部署(做好20%)。
 
