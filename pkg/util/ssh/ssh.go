@@ -28,7 +28,6 @@ import (
 	"net"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/pkg/sftp"
@@ -218,13 +217,8 @@ func (s *SSH) writeFile(src io.Reader, dst string) error {
 	}
 	defer closer()
 
-	needMove := false
 	realDst := dst
-	if !strings.HasPrefix(dst, tmpDir) {
-		needMove = true
-		dst = path.Join(tmpDir, ksuid.New().String(), dst)
-	}
-
+	dst = path.Join(tmpDir, ksuid.New().String(), dst)
 	err = sftpClient.MkdirAll(path.Dir(dst))
 	if err != nil {
 		return err
@@ -239,11 +233,10 @@ func (s *SSH) writeFile(src io.Reader, dst string) error {
 	if err != nil {
 		return err
 	}
-	if needMove {
-		_, err = s.CombinedOutput(fmt.Sprintf("mkdir -p $(dirname %s); mv %s %s; rm -rf $(dirname %s)", realDst, dst, realDst, dst))
-		if err != nil {
-			return err
-		}
+
+	_, err = s.CombinedOutput(fmt.Sprintf("mkdir -p $(dirname %s); mv %s %s; rm -rf $(dirname %s)", realDst, dst, realDst, dst))
+	if err != nil {
+		return err
 	}
 
 	return err
