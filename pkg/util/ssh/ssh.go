@@ -128,7 +128,7 @@ func (s *SSH) Execf(format string, a ...interface{}) (stdout string, stderr stri
 
 func (s *SSH) Exec(cmd string) (stdout string, stderr string, exit int, err error) {
 	if s.Sudo {
-		cmd = fmt.Sprintf(`sudo bash << EOF
+		cmd = fmt.Sprintf(`sudo bash << 'EOF'
 %s
 EOF
 `, cmd)
