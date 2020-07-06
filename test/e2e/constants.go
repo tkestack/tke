@@ -16,36 +16,17 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package env
+package e2e
 
 import (
-	"os"
-	"path"
-
-	"github.com/joho/godotenv"
+	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 )
 
 const (
-	envFile = "tke.env"
+	baremetalProviderPath         = "../../../pkg/platform/"
+	ConfDir                       = baremetalProviderPath + baremetalconstants.ConfDir
+	ManifestDir                   = "../manifests/"
+	EtcdYamlFile                  = ManifestDir + "etcd/*.yaml"
+	TKEPlatformAPIYAMLFile        = ManifestDir + "tke-platform-api/*.yaml"
+	TKEPlatformControllerYAMLFile = ManifestDir + "tke-platform-controller/*.yaml"
 )
-
-func init() {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-	godotenv.Load(path.Join(home, envFile), envFile) // for local dev
-}
-
-const (
-	VERSION            = "VERSION"
-	PROVIDERRESVERSION = "PROVIDERRESVERSION"
-)
-
-func ImageVersion() string {
-	return os.Getenv(VERSION)
-}
-
-func ProviderResImageVersion() string {
-	return os.Getenv(PROVIDERRESVERSION)
-}

@@ -47,8 +47,15 @@ const (
 	ServerKeyFile        = DataDir + "server.key"
 	AdminCrtFile         = DataDir + "admin.crt"
 	AdminKeyFile         = DataDir + "admin.key"
+	KubeconfigFile       = DataDir + "admin.kubeconfig"
 
-	KubeconfigFile = DataDir + "admin.kubeconfig"
+	CACrtFileBaseName      = "ca.crt"
+	CAKeyFileBaseName      = "ca.key"
+	ServerCrtFileBaseName  = "server.crt"
+	ServerKeyFileBaseName  = "server.key"
+	AdminCrtFileBaseName   = "admin.crt"
+	AdminKeyFileBaseName   = "admin.key"
+	KubeconfigFileBaseName = "admin.kubeconfig"
 
 	AuthzWebhookNodePort = 31138
 )

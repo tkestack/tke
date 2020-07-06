@@ -1003,7 +1003,7 @@ func (t *TKE) generateCertificates(ctx context.Context) error {
 			ips = append(ips, net.ParseIP(t.Para.Config.HA.ThirdPartyHA.VIP))
 		}
 	}
-	return certs.Generate(dnsNames, ips)
+	return certs.Generate(dnsNames, ips, constants.DataDir)
 }
 
 func (t *TKE) prepareFrontProxyCertificates(ctx context.Context) error {
