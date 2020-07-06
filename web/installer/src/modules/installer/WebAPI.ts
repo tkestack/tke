@@ -302,6 +302,8 @@ export async function createCluster(edits: Array<EditState>) {
         // 未开启监控模块
       }
 
+      params.config['logagent'] = {};
+
       // 高可用设置
       if (edits[0].haType === 'tke') {
         params.config['ha'] = {

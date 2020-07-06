@@ -56,14 +56,17 @@ function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] 
 
 /**获取Alarm列表 */
 export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
-  let { paging } = query;
+  let {
+    paging,
+    filter: { clusterId, namespace, alarmPolicyType }
+  } = query;
   let alarmPolicyList: AlarmPolicy[] = [];
   let resourceInfo: ResourceInfo = resourceConfig().alarmPolicy;
   let url = reduceK8sRestfulPath({
     resourceInfo: {
       ...resourceInfo,
       requestType: {
-        list: `monitor/clusters/${query.filter.clusterId}/${resourceInfo.requestType.list}`
+        list: `monitor/clusters/${clusterId}/${resourceInfo.requestType.list}`
       }
     }
   });
@@ -76,15 +79,15 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
     params['page'] = pageIndex;
     params['page_size'] = pageSize;
 
-    //业务侧一次性拉取
-    /// #if project
-    params['page'] = 1;
-    params['page_size'] = 999;
-    /// #endif
-
     params.url += `?page=${params['page']}&page_size=${params['page_size']}`;
   }
+  if (namespace) {
+    params.url += `&namespace=${namespace}`;
+  }
 
+  if (alarmPolicyType) {
+    params.url += `&alarmPolicyType=${alarmPolicyType}`;
+  }
   // if (search) {
   //   params['Filter'] = {
   //     AlarmPolicyName: search

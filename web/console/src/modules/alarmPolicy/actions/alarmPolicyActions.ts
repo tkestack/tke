@@ -19,18 +19,6 @@ const _alarmPolicyActions = createFFListActions<AlarmPolicy, AlarmPolicyFilter>(
   actionName: 'AlarmPolicy',
   fetcher: async (query, getstate: GetState) => {
     const response = await WebAPI.fetchAlarmPolicy(query);
-
-    //业务侧中过滤只有这个namepace下的AlarmPolicy
-    /// #if project
-    let { namespaceSelection, route } = getstate();
-    let namespace = (getstate().namespaceSelection || route.queries['np']).split('-').splice(2).join('-');
-    response.records = response.records.filter(
-      item =>
-        item.alarmObjetcsType === 'part' && item.alarmObjectNamespace === namespace && item.alarmPolicyType === 'pod'
-    );
-    response.recordCount = response.records.length;
-    /// #endif
-
     return response;
   },
   getRecord: (getState: GetState) => {

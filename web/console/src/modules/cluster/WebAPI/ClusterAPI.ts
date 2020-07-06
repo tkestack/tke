@@ -253,8 +253,8 @@ export async function modifyClusterName(clusters: CreateResource[]) {
  */
 export async function fetchCreateICK8sVersion() {
   return [
-    { text: '1.14.10', value: '1.14.10' },
-    { text: '1.16.6', value: '1.16.6' }
+    { text: '1.16.9', value: '1.16.9' },
+    { text: '1.18.3', value: '1.18.3' }
   ];
 }
 

@@ -106,6 +106,10 @@ export interface AlarmPolicyFilter {
    * 地域
    */
   regionId?: number;
+
+  alarmPolicyType?: string;
+
+  namespace?: string;
 }
 
 export interface AlarmPolicyOperator {
