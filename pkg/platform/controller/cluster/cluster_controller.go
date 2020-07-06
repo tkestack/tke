@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -400,7 +401,7 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 			healthCheckCondition.Message = err.Error()
 		} else {
 			cluster.Status.Phase = platformv1.ClusterRunning
-			cluster.Status.Version = version.String()
+			cluster.Status.Version = strings.TrimPrefix(version.String(), "v")
 
 			healthCheckCondition.Status = platformv1.ConditionTrue
 		}
