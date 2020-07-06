@@ -273,12 +273,12 @@ func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) 
 	}
 
 	err = provider.OnUpdate(ctx, machine, cluster)
+	machine = c.checkHealth(ctx, machine)
 	if err != nil {
 		// Update status, ignore failure
-		_, _ = c.platformClient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
+		_, _ = c.platformClient.Machines().UpdateStatus(ctx, machine, metav1.UpdateOptions{})
 		return err
 	}
-	machine = c.checkHealth(ctx, machine)
 	_, err = c.platformClient.Machines().Update(ctx, machine, metav1.UpdateOptions{})
 	if err != nil {
 		return err
