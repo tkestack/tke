@@ -14,12 +14,12 @@ import { CreateProjectPanel } from './CreateProjectPanel';
 import { EditProjectManagerPanel } from './EditProjectManagerPanel';
 import { RootProps } from './ProjectApp';
 
-const mapDispatchToProps = (dispatch) =>
+const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
-    dispatch,
+    dispatch
   });
 
-@connect((state) => state, mapDispatchToProps)
+@connect(state => state, mapDispatchToProps)
 export class ProjectActionPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     const { actions } = this.props;
@@ -49,7 +49,7 @@ export class ProjectActionPanel extends React.Component<RootProps, {}> {
               >
                 {t('新建业务')}
               </Button>
-              <Button
+              {/* <Button
                 type="primary"
                 onClick={() => {
                   actions.manager.initAdminstrator();
@@ -57,7 +57,7 @@ export class ProjectActionPanel extends React.Component<RootProps, {}> {
                 }}
               >
                 {t('设置管理员')}
-              </Button>
+              </Button> */}
             </React.Fragment>
           }
           right={

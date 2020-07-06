@@ -66,7 +66,7 @@ export class NamespaceTablePanel extends React.Component<RootProps, {}> {
           let disabledOp = x.status.phase === 'Terminating';
           let url = `/tkestack/cluster/sub/list/resource/deployment?rid=1&clusterId=${x.spec.clusterName}&np=${x.spec.namespace}`;
           /// #if project
-          url = `/tkestack-project/cluster/sub/list/resource/deployment?rid=1&clusterId=${x.spec.clusterName}&np=${x.spec.namespace}`;
+          url = `/tkestack-project/application/list/resource/deployment?rid=1&clusterId=${x.spec.clusterName}&np=${x.spec.namespace}`;
           /// #endif
           return <Text overflow>{!disabledOp ? <a href={url}>{x.spec.namespace}</a> : x.spec.namespace}</Text>;
         }

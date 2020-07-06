@@ -289,7 +289,10 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         disabled = true;
         errorTip = t('global集群资源不可删除');
       } else if (resourceName === 'np') {
-        disabled = resource['metadata']['name'].indexOf('kube-') >= 0 || resource['metadata']['name'] === 'default';
+        disabled =
+          resource['metadata']['name'].indexOf('kube-') >= 0 ||
+          resource['metadata']['name'] === 'default' ||
+          resource['metadata']['name'] === 'tke';
         errorTip = t('命名空间不可删除');
       } else if (resourceName === 'svc' && namespaceSelection !== 'kube-system') {
         //当资源为 servcie的时候，删除按钮的一些操作是不允许的
