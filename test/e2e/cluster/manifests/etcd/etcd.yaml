@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd-client
+  namespace: {{ .Namespace }}
+spec:
+  ports:
+    - name: etcd-client-port
+      port: 2379
+      protocol: TCP
+      targetPort: 2379
+  selector:
+    app: etcd
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: etcd
+    etcd_node: etcd0
+  name: etcd0
+  namespace: {{ .Namespace }}
+spec:
+  nodeSelector:
+    node-role.kubernetes.io/master: ""
+  containers:
+    - command:
+        - /usr/local/bin/etcd
+        - --name
+        - etcd0
+        - --initial-advertise-peer-urls
+        - http://etcd0:2380
+        - --listen-peer-urls
+        - http://0.0.0.0:2380
+        - --listen-client-urls
+        - https://0.0.0.0:2379
+        - --advertise-client-urls
+        - https://etcd0:2379
+        - --initial-cluster
+        - etcd0=http://etcd0:2380
+        - --initial-cluster-state
+        - new
+        - --cert-file=/app/certs/server.crt
+        - --key-file=/app/certs/server.key
+        - --client-cert-auth=true
+        - --ca-file=/app/certs/etcd-ca.crt
+        - --trusted-ca-file=/app/certs/etcd-ca.crt
+      image: quay.io/coreos/etcd:latest
+      volumeMounts:
+        - name: certs-volume
+          mountPath: /app/certs
+      name: etcd0
+      ports:
+        - containerPort: 2379
+          name: client
+          protocol: TCP
+        - containerPort: 2380
+          name: server
+          protocol: TCP
+  restartPolicy: Always
+  volumes:
+    - name: certs-volume
+      configMap:
+        name: certs
+
+

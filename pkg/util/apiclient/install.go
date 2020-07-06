@@ -24,7 +24,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
-	"regexp"
+	"strings"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -148,6 +148,17 @@ func init() {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
 		err := CreateOrUpdateDaemonSet(ctx, client, obj)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	handlers["Pod"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+		obj := new(corev1.Pod)
+		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
+			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
+		}
+		err := CreateOrUpdatePod(ctx, client, obj)
 		if err != nil {
 			return err
 		}
@@ -292,10 +303,9 @@ func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, fi
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(data))
 
-	reg := regexp.MustCompile(`(?m)^-{3,}$`)
-	items := reg.Split(string(data), -1)
+	items := strings.Split(string(data), "---")
+	fmt.Println("items len:", len(items))
 	for _, item := range items {
 		objBytes := []byte(item)
 		obj := new(object)
@@ -303,6 +313,7 @@ func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, fi
 		if err != nil {
 			return err
 		}
+		fmt.Println("kind:", obj.Kind)
 		if obj.Kind == "" {
 			continue
 		}
