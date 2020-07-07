@@ -35,8 +35,6 @@ import (
 	"strings"
 	"time"
 
-	utilhttp "tkestack.io/tke/pkg/util/http"
-
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -77,6 +75,7 @@ import (
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/docker"
 	"tkestack.io/tke/pkg/util/hosts"
+	utilhttp "tkestack.io/tke/pkg/util/http"
 	"tkestack.io/tke/pkg/util/kubeconfig"
 	"tkestack.io/tke/pkg/util/log"
 	utilnet "tkestack.io/tke/pkg/util/net"
@@ -861,10 +860,7 @@ func (t *TKE) retryCreateCluster(req *restful.Request, rsp *restful.Response) {
 func (t *TKE) findCluster(request *restful.Request, response *restful.Response) {
 	apiStatus := func() apierrors.APIStatus {
 		clusterName := request.PathParameter("name")
-		if t.Cluster == nil {
-			return apierrors.NewBadRequest("no cluater available")
-		}
-		if t.Cluster.Name != clusterName {
+		if t.Cluster.Cluster == nil || t.Cluster.Name != clusterName {
 			return apierrors.NewNotFound(platform.Resource("Cluster"), clusterName)
 		}
 
