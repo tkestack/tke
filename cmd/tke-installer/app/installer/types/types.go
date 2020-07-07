@@ -39,7 +39,7 @@ type Config struct {
 	Registry  Registry  `json:"registry"`
 	Business  *Business `json:"business,omitempty"`
 	Monitor   *Monitor  `json:"monitor,omitempty"`
-	Logagent  Logagent  `json:"logagent,omitempty"`
+	Logagent  *Logagent `json:"logagent,omitempty"`
 	HA        *HA       `json:"ha,omitempty"`
 	Gateway   *Gateway  `json:"gateway,omitempty"`
 	Audit     *Audit    `json:"audit,omitempty"`

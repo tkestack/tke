@@ -594,6 +594,7 @@ func (t *TKE) setConfigDefault(config *types.Config) {
 		}
 	}
 
+	config.Logagent = new(types.Logagent)
 }
 func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Config) {
 	if cluster.APIVersion == "" {
