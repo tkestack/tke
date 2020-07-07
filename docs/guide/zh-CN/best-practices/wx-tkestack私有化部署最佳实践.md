@@ -1,6 +1,6 @@
 [TOC]
 
-# tkestack 私有化部署最佳实践
+# wx tkestack 私有化部署最佳实践
 
 ## 背景    
 
@@ -472,11 +472,19 @@ tkestack 在installer 以hooks 方式实现用户自定义扩展， 有如下hoo
 
 ![](./pic/onstep-install-process.jpg)    
 
-合理利用tkestack特性（用好80%），结合自身业务场景做出满足需求私有化一键部署(做好20%)。
+### 3. 业务应用    
+
+![](./pic/busi-helm-release.png)        
+业务通过helmfile release（release名称必须以${中心名}-${客户名简称}）来组织不同客户部署不同的业务组件，不同release对应到不同的业务组件的helm chart value，当打包业务helm时会根据release ${中心名}-${客户名简称}.yaml文件定义的业务组件进行过滤打包，完成业务按需部署。        
+![](./pic/busi-helm-dpl.png)      
+私有化一键部署时会通过helmfile 工具进行部署，如上图所示。    
+![](./pic/busi-helm-update.png)     
+更新过程私有化一键部署当前不纳入管控，只负责将 agent 部署到master1 节点作为cicd执行更新agent，具体流程如上图所示。          
+
+合理利用tkestack特性（用好80%），结合自身业务场景做出满足需求私有化一键部署(做好20%)。    
 
 
 
 ## 不足
 
-- 在测试tkestack keepalived 采用单播模式的高可用方案时出现部署kubernetes过程中由于keepalived 选举切换发生vip 网络抖动最终导致部署失败；
 - 当前所有镜像都是打成tar附件模式打包安装包，使得安装包有点大；同时部署集群镜像仓库时还需要从installer节点的镜像仓库重新将镜像推送至集群镜像仓库，这个耗时很大；建议将出包时将镜像推送到离线镜像仓库，然后将离线镜像仓库持久化目录打包这样合理利用镜像特性缩减安装包大小；部署时拷贝镜像仓库持久化数据到对应目录并挂载，加速部署。
