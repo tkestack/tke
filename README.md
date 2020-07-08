@@ -40,7 +40,7 @@
 * Hardware
   * 8 vCPU
   * 16 GB of Memory
-  * 50 GB of Disk Space
+  * 100 GB of Disk Space
 * Operating Systems
   * Ubuntu 16.04/18.04  LTS (64-bit)
   * CentOS Linux 7.6 (64-bit)
@@ -86,7 +86,7 @@ For the full story, head over to the [developer's documentation](docs/devel/deve
 
 ## Community
 
-You are encouraged to communicate most things via [GitHub issues](https://github.com/tkestack/tke/issues/new/choose) or pull requests.
+You are encouraged to communicate most things via GitHub [issues](https://github.com/tkestack/tke/issues/new/choose) or [pull requests](https://github.com/tkestack/tke/pulls).
 
 Other active channels:
 

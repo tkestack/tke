@@ -13,13 +13,11 @@
     * [如何构建 Docker 镜像](QuickStart/examples/%E5%A6%82%E4%BD%95%E6%9E%84%E5%BB%BAdocker%E9%95%9C%E5%83%8F.md)
   
 * [产品使用指南](products)
-  
+
   [切换控制台](products/controlpannel.md)
-  
+
   * [平台侧](products/platform)
     * [集群管理](products/platform/cluster.md)
-      * 基本信息
-      * 节点管理
     * [业务管理](products/platform/business.md)
     * [扩展组件](products/platform/extender.md)
     * [组织资源](products/platform/resource.md)
@@ -49,13 +47,15 @@
       * [日志](products/business-control-pannel/application/log.md)
       * [事件](products/business-control-pannel/application/events.md)
     * [Helm 应用](products/business-control-pannel/helm/helm.md)
+    * [业务管理](products/business-control-pannel/business-manage.md)
     * [组织资源](products/business-control-pannel/resource)
       * [仓库管理](products/business-control-pannel/resource/registry.md)
       * [访问凭证](products/business-control-pannel/resource/credentials.md)
     * [监控与告警](products/business-control-pannel/monitor-alert)
       * [设置告警](products/business-control-pannel/monitor-alert/alert.md)
       * [通知管理](products/business-control-pannel/monitor-alert/notifition.md)
-  
+    * [运维中心](products/business-control-pannel/monitor-alert)
+
 * [产品特色功能](features)
   * [Galaxy](features/galaxy.md)
   * [TAPP](features/tapp.md)
@@ -64,16 +64,20 @@
   * [LBCF](features/lbcf.md)
   
 * [FAQ](FAQ)
-  * [部署类](features/galaxy.md)
-    * [如何规划部署资源](FAQ/installation.md#如何规划部署资源)
-    * [如何使用存储](FAQ/installation.md#如何使用存储)
-    * [常见报错解决方案](FAQ/installation.md#常见报错解决方案)
-    * [如何重新部署集群](FAQ/installation.md#如何重新部署集群)
-  * [功能类](FAQ/features.md)
-    * [如何接入 LDAP、OIDC](FAQ/features.md#如何接入LDAP、OIDC)
-    * [如何实现自定义监控](FAQ/features.md#如何实现自定义监控)
-    * [如何做日志分析](FAQ/features.md#如何做日志分析)
-  * [权限类](FAQ/access.md)
-    * [业务管理、平台管理的区别](FAQ/access.md#业务管理、平台管理的区别)
-    * [如何设置自定义策略](FAQ/access.md#如何设置自定义策略)
-  * [事件类](FAQ/events.md)
+  
+  * [部署类](FAQ/部署类)
+    * [如何规划部署资源](FAQ/部署类/规划部署资源.md)
+    * [如何使用存储](FAQ/部署类/如何使用存储.md)
+    * [如何重新部署](FAQ/部署类/如何重新部署.md)
+  * [功能类](FAQ/功能类)
+    * [如何接入 LDAP、OIDC](FAQ/功能类/如何接入LDAP、OIDC.md)
+    * [如何实现自定义监控](FAQ/功能类/如何实现自定义监控.md)
+    * [如何做日志分析](FAQ/功能类/如何做日志分析.md)
+  * [权限类](FAQ/权限类)
+    * [业务管理、平台管理的区别](FAQ/权限类/业务管理、平台管理的区别.md)
+    * [如何设置自定义策略](FAQ/权限类/如何设置自定义策略.md)
+    * [Docker login 权限错误](FAQ/权限类/Docker login 权限错误.md)
+  * [事件类](FAQ/事件类)
+    * [常见错误事件](FAQ/事件类/常见错误事件.md)
+  * [平台类](FAQ/品台类)
+    * [平台使用常见问题](FAQ/平台类/平台使用常见问题.md)
