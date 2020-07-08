@@ -1,18 +1,12 @@
-# 常见问题列表：
+### 
 
-[如何接入LDAP、OIDC](#如何接入LDAP、OIDC)  
 
-[如何实现自定义监控  ](#如何实现自定义监控)  
-
-[如何做日志分析](#如何做日志分析)  
-
-### 如何接入LDAP、OIDC
 
 接入LDAP、OIDC有两种方式；
 
 1. 在集群安装时，配置OIDC认证信息，关于OIDC配置信息，请参考[Configuring the API Server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server)。
 
-![installer-oidc](../../../images/installer-oidc.png)
+![installer-oidc](../../../../../../../../Typora/images/installer-oidc.png)
 
 2. 集群安装完成后，可以通过调用API的形式切换认证模式为OIDC或LDAP
 
@@ -86,17 +80,4 @@
    ```
    curl -XDELETE https://{auth_address}/apis/auth.tkestack.io/v1/identityproviders/ldap-test -H 'Authorization: Bearer {admin_token}'
    ```
-
-
-
-
-### 如何实现自定义监控  
-
-TKEStack 提供了的默认监控内容为工作负载的资源监控，监控功能将会持续拓展，您也可以通过部署[prometheus-operator](https://github.com/coreos/prometheus-operator)来实现自定义指标的监控。
-
-
-
-### 如何做日志分析
-
-可在扩展组件中部署Logcollector组件收集日志，在运维中心中配置日志采集，讲日志输出到用户自己的日志存储服务，也可以通过Helm部署[elasticsearch](https://hub.helm.sh/charts/elastic/elasticsearch)或[kafka](https://hub.helm.sh/charts/incubator/kafka)，以及[kibana](https://hub.helm.sh/charts/elastic/kibana)，自行搭建容器化的日志分析工具平台。
 
