@@ -36,6 +36,7 @@ import (
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -550,7 +551,7 @@ func (c *Controller) createPrometheusIfNeeded(ctx context.Context, key string, c
 			delayTime := time.Now().Add(2 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediate(20*time.Second, 1*time.Minute, c.checkPrometheusStatus(ctx, prometheus, key, delayTime))
+				wait.PollImmediateUntil(60*time.Second, c.checkPrometheusStatus(ctx, prometheus, key, delayTime), c.stopCh)
 			}()
 		}
 	}
@@ -619,14 +620,30 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 
 	crds := getCRDs()
 	for _, crd := range crds {
-		crdObj := apiextensionsv1.CustomResourceDefinition{}
-		err := json.Unmarshal([]byte(crd), &crdObj)
-		if err != nil {
-			return err
-		}
-		_, err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
-		if err != nil {
-			return err
+		if apiclient.ClusterVersionIsBefore117(kubeClient) {
+			crdObj := apiextensionsv1beta1.CustomResourceDefinition{}
+			err := json.Unmarshal([]byte(crd), &crdObj)
+			if err != nil {
+				return err
+			}
+			crdObj.TypeMeta.APIVersion = "apiextensions.k8s.io/v1beta1"
+			_, err = crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
+			if err != nil {
+				log.Errorf("create crd failed %v", err)
+				return err
+			}
+		} else {
+			crdObj := apiextensionsv1.CustomResourceDefinition{}
+			err := json.Unmarshal([]byte(crd), &crdObj)
+			if err != nil {
+				return err
+			}
+
+			_, err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
+			if err != nil {
+				log.Errorf("create crd failed %v", err)
+				return err
+			}
 		}
 	}
 
@@ -2079,15 +2096,29 @@ func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Pro
 
 	crds := getCRDs()
 	for _, crd := range crds {
-		crdObj := apiextensionsv1.CustomResourceDefinition{}
-		err := json.Unmarshal([]byte(crd), &crdObj)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Delete(ctx, crdObj.Name, metav1.DeleteOptions{})
-		if err != nil {
-			errs = append(errs, err)
+		if apiclient.ClusterVersionIsBefore117(kubeClient) {
+			crdObj := apiextensionsv1beta1.CustomResourceDefinition{}
+			err := json.Unmarshal([]byte(crd), &crdObj)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			crdObj.TypeMeta.APIVersion = "apiextensions.k8s.io/v1beta1"
+			err = crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(ctx, crdObj.Name, metav1.DeleteOptions{})
+			if err != nil && !errors.IsNotFound(err) {
+				errs = append(errs, err)
+			}
+		} else {
+			crdObj := apiextensionsv1.CustomResourceDefinition{}
+			err := json.Unmarshal([]byte(crd), &crdObj)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Delete(ctx, crdObj.Name, metav1.DeleteOptions{})
+			if err != nil && !errors.IsNotFound(err) {
+				errs = append(errs, err)
+			}
 		}
 	}
 

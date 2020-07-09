@@ -555,7 +555,7 @@ func (c *Controller) createPrometheusIfNeeded(ctx context.Context, key string, c
 			delayTime := time.Now().Add(2 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediate(20*time.Second, 1*time.Minute, c.checkPrometheusStatus(ctx, prometheus, key, delayTime))
+				wait.PollImmediateUntil(60*time.Second, c.checkPrometheusStatus(ctx, prometheus, key, delayTime), c.stopCh)
 			}()
 		}
 	}
