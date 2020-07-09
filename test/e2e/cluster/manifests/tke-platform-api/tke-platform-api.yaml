@@ -1,0 +1,125 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: tke-platform-api
+  name: tke-platform-api
+  namespace: {{ .Namespace }}
+spec:
+  containers:
+    - name: tke-platform-api
+      image: {{ .Image }}
+      imagePullPolicy: Always
+      args:
+        - -C=/app/conf/tke-platform-api.toml
+{{- if .EnableAudit }}
+        - --audit-policy-file=/app/conf/audit-policy.yaml
+        - --audit-webhook-config-file=/app/conf/audit-api-client-config.yaml
+{{- end }}
+      volumeMounts:
+        - name: certs-volume
+          mountPath: /app/certs
+        - name: tke-platform-api-volume
+          mountPath: /app/conf
+        - name: provider-volume
+          mountPath: /app/provider/baremetal
+        - name: provider-config-volume
+          mountPath: /app/provider/baremetal/conf/
+      ports:
+        - containerPort: 9443
+      readinessProbe:
+        httpGet:
+          port: 9443
+          path: /healthz/ping
+          scheme: HTTPS
+        initialDelaySeconds: 5
+        periodSeconds: 10
+      livenessProbe:
+        httpGet:
+          port: 9443
+          path: /healthz
+          scheme: HTTPS
+        initialDelaySeconds: 15
+        periodSeconds: 20
+      resources:
+        limits:
+          cpu: 100m
+          memory: 256Mi
+        requests:
+          cpu: 50m
+          memory: 128Mi
+  volumes:
+    - name: certs-volume
+      configMap:
+        name: certs
+    - name: tke-platform-api-volume
+      configMap:
+        name: tke-platform-api
+    - name: provider-volume
+      emptyDir: {}
+    - name: provider-config-volume
+      configMap:
+        name: provider-config
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-platform-api
+  namespace: {{ .Namespace }}
+data:
+  tke-platform-api.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [etcd]
+    servers = [
+      "https://etcd-client:2379"
+    ]
+    cafile = "/app/certs/etcd-ca.crt"
+    certfile = "/app/certs/etcd.crt"
+    keyfile = "/app/certs/etcd.key"
+
+    [generic]
+    external_hostname = "tke-platform-api"
+    external_port = 443
+
+    [authentication]
+    token_auth_file = "/app/certs/token.csv"
+    client_ca_file = "/app/certs/ca.crt"
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          insecure-skip-tls-verify: true
+          server: https://tke-platform-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: tke-platform-api
+  namespace: {{ .Namespace }}
+  annotations:
+    tke.prometheus.io/scrape: "true"
+    prometheus.io/scheme: https
+spec:
+  type: NodePort
+  selector:
+    app: tke-platform-api
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 9443
