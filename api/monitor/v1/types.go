@@ -191,6 +191,40 @@ type MetricQueryCondition struct {
 	Value string `json:"value" protobuf:"bytes,3,opt,name=value"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterOverview defines the structure for querying clusters' overview data request and result.
+type ClusterOverview struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// +optional
+	Result *ClusterOverviewResult `json:"result,omitempty" protobuf:"bytes,2,opt,name=result"`
+}
+
+type ClusterOverviewResult struct {
+	ClusterCount  int64               `json:"clusterCount" protobuf:"bytes,1,opt,name=clusterCount"`
+	NodeCount     int64               `json:"nodeCount" protobuf:"bytes,2,opt,name=nodeCount"`
+	WorkloadCount int64               `json:"workloadCount" protobuf:"bytes,3,opt,name=workloadCount"`
+	Clusters      []*ClusterStatistic `json:"clusters" protobuf:"bytes,4,opt,name=clusters"`
+}
+
+type ClusterStatistic struct {
+	ClusterID        string  `json:"clusterID" protobuf:"bytes,1,opt,name=clusterID"`
+	NodeCount        int64   `json:"nodeCount" protobuf:"bytes,2,opt,name=nodeCount"`
+	NodeAbnormal     int64   `json:"nodeAbnormal" protobuf:"bytes,3,opt,name=nodeAbnormal"`
+	WorkloadCount    int64   `json:"workloadCount" protobuf:"bytes,4,opt,name=workloadCount"`
+	WorkloadAbnormal int64   `json:"workloadAbnormal" protobuf:"bytes,5,opt,name=workloadAbnormal"`
+	CPURequest       float64 `json:"cpuRequest" protobuf:"bytes,6,opt,name=cpuRequest"`
+	CPULimit         float64 `json:"cpuLimit" protobuf:"bytes,7,opt,name=cpuLimit"`
+	CPUCapacity      float64 `json:"cpuCapacity" protobuf:"bytes,8,opt,name=cpuCapacity"`
+	CPUAllocatable   float64 `json:"cpuAllocatable" protobuf:"bytes,9,opt,name=cpuAllocatable"`
+	MemRequest       int64   `json:"memRequest" protobuf:"bytes,10,opt,name=memRequest"`
+	MemLimit         int64   `json:"memLimit" protobuf:"bytes,11,opt,name=memLimit"`
+	MemCapacity      int64   `json:"memCapacity" protobuf:"bytes,12,opt,name=memCapacity"`
+	MemAllocatable   int64   `json:"memAllocatable" protobuf:"bytes,13,opt,name=memAllocatable"`
+}
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection

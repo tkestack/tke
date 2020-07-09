@@ -19,9 +19,8 @@
 package apiserver
 
 import (
-	"k8s.io/apiserver/pkg/registry/generic"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"time"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	monitorv1 "tkestack.io/tke/api/monitor/v1"
@@ -31,7 +30,12 @@ import (
 	"tkestack.io/tke/pkg/monitor/route"
 	rulesop "tkestack.io/tke/pkg/monitor/services/api"
 	monitorstorage "tkestack.io/tke/pkg/monitor/storage"
+	"tkestack.io/tke/pkg/monitor/util/cache"
 	"tkestack.io/tke/pkg/util/log"
+
+	"k8s.io/apiserver/pkg/registry/generic"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 )
 
 // ExtraConfig contains the additional configuration of apiserver.
@@ -103,19 +107,31 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 
 	s.Handler.GoRestfulContainer.Add(monitorResource.WebService())
 
+	cacher := cache.NewCacher(c.ExtraConfig.PlatformClient)
+
 	// The order here is preserved in discovery.
 	restStorageProviders := []storage.RESTStorageProvider{
 		&monitorrest.StorageProvider{
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
 			MetricStorage:        metricStorage,
+			PlatformClient:       c.ExtraConfig.PlatformClient,
+			Cacher:               cacher,
 		},
 	}
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)
+	m.GenericAPIServer.AddPostStartHookOrDie("start-cacher", c.postStartHookFunc(cacher))
 
 	log.Info("All of http handlers registered", log.Strings("paths", m.GenericAPIServer.Handler.ListedPaths()))
 
 	return m, nil
+}
+
+func (c completedConfig) postStartHookFunc(cacher cache.Cacher) genericapiserver.PostStartHookFunc {
+	return func(ctx genericapiserver.PostStartHookContext) error {
+		go wait.Until(cacher.Reload, 10*time.Minute, ctx.StopCh)
+		return nil
+	}
 }
 
 // InstallAPIs will install the APIs for the restStorageProviders if they are enabled.

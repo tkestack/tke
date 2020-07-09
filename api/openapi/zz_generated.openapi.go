@@ -859,6 +859,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/logagent/v1.LogFileDownloadSpec":                         schema_tke_api_logagent_v1_LogFileDownloadSpec(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileTree":                                 schema_tke_api_logagent_v1_LogFileTree(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileTreeSpec":                             schema_tke_api_logagent_v1_LogFileTreeSpec(ref),
+		"tkestack.io/tke/api/monitor/v1.ClusterOverview":                              schema_tke_api_monitor_v1_ClusterOverview(ref),
+		"tkestack.io/tke/api/monitor/v1.ClusterOverviewResult":                        schema_tke_api_monitor_v1_ClusterOverviewResult(ref),
+		"tkestack.io/tke/api/monitor/v1.ClusterStatistic":                             schema_tke_api_monitor_v1_ClusterStatistic(ref),
 		"tkestack.io/tke/api/monitor/v1.ConfigMap":                                    schema_tke_api_monitor_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/monitor/v1.ConfigMapList":                                schema_tke_api_monitor_v1_ConfigMapList(ref),
 		"tkestack.io/tke/api/monitor/v1.Metric":                                       schema_tke_api_monitor_v1_Metric(ref),
@@ -902,6 +905,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/notify/v1.TemplateText":                                  schema_tke_api_notify_v1_TemplateText(ref),
 		"tkestack.io/tke/api/notify/v1.TemplateWechat":                                schema_tke_api_notify_v1_TemplateWechat(ref),
 		"tkestack.io/tke/api/platform/v1.AddonSpec":                                   schema_tke_api_platform_v1_AddonSpec(ref),
+		"tkestack.io/tke/api/platform/v1.AuthzWebhookAddr":                            schema_tke_api_platform_v1_AuthzWebhookAddr(ref),
+		"tkestack.io/tke/api/platform/v1.BuiltinAuthzWebhookAddr":                     schema_tke_api_platform_v1_BuiltinAuthzWebhookAddr(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperator":                                 schema_tke_api_platform_v1_CSIOperator(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperatorFeature":                          schema_tke_api_platform_v1_CSIOperatorFeature(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperatorList":                             schema_tke_api_platform_v1_CSIOperatorList(ref),
@@ -937,6 +942,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.CronHPASpec":                                 schema_tke_api_platform_v1_CronHPASpec(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPAStatus":                               schema_tke_api_platform_v1_CronHPAStatus(ref),
 		"tkestack.io/tke/api/platform/v1.Etcd":                                        schema_tke_api_platform_v1_Etcd(ref),
+		"tkestack.io/tke/api/platform/v1.ExternalAuthzWebhookAddr":                    schema_tke_api_platform_v1_ExternalAuthzWebhookAddr(ref),
 		"tkestack.io/tke/api/platform/v1.ExternalEtcd":                                schema_tke_api_platform_v1_ExternalEtcd(ref),
 		"tkestack.io/tke/api/platform/v1.File":                                        schema_tke_api_platform_v1_File(ref),
 		"tkestack.io/tke/api/platform/v1.HA":                                          schema_tke_api_platform_v1_HA(ref),
@@ -40956,6 +40962,181 @@ func schema_tke_api_logagent_v1_LogFileTreeSpec(ref common.ReferenceCallback) co
 	}
 }
 
+func schema_tke_api_monitor_v1_ClusterOverview(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ClusterOverview defines the structure for querying clusters' overview data request and result.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"result": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/monitor/v1.ClusterOverviewResult"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/monitor/v1.ClusterOverviewResult"},
+	}
+}
+
+func schema_tke_api_monitor_v1_ClusterOverviewResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clusterCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"nodeCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"workloadCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"clusters": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/monitor/v1.ClusterStatistic"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"clusterCount", "nodeCount", "workloadCount", "clusters"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/monitor/v1.ClusterStatistic"},
+	}
+}
+
+func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clusterID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"nodeCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"nodeAbnormal": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"workloadCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"workloadAbnormal": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"cpuRequest": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"cpuLimit": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"cpuCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"cpuAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"memRequest": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memLimit": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+				},
+				Required: []string{"clusterID", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "cpuRequest", "cpuLimit", "cpuCapacity", "cpuAllocatable", "memRequest", "memLimit", "memCapacity", "memAllocatable"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_monitor_v1_ConfigMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -42978,6 +43159,40 @@ func schema_tke_api_platform_v1_AddonSpec(ref common.ReferenceCallback) common.O
 	}
 }
 
+func schema_tke_api_platform_v1_AuthzWebhookAddr(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"builtin": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.BuiltinAuthzWebhookAddr"),
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.ExternalAuthzWebhookAddr"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/platform/v1.BuiltinAuthzWebhookAddr", "tkestack.io/tke/api/platform/v1.ExternalAuthzWebhookAddr"},
+	}
+}
+
+func schema_tke_api_platform_v1_BuiltinAuthzWebhookAddr(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_platform_v1_CSIOperator(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -43993,11 +44208,17 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Ref: ref("tkestack.io/tke/api/platform/v1.CSIOperatorFeature"),
 						},
 					},
+					"authzWebhookAddr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For kube-apiserver authorization webhook",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.AuthzWebhookAddr"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.CSIOperatorFeature", "tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA"},
+			"tkestack.io/tke/api/platform/v1.AuthzWebhookAddr", "tkestack.io/tke/api/platform/v1.CSIOperatorFeature", "tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA"},
 	}
 }
 
@@ -44918,6 +45139,31 @@ func schema_tke_api_platform_v1_Etcd(ref common.ReferenceCallback) common.OpenAP
 		},
 		Dependencies: []string{
 			"tkestack.io/tke/api/platform/v1.ExternalEtcd", "tkestack.io/tke/api/platform/v1.LocalEtcd"},
+	}
+}
+
+func schema_tke_api_platform_v1_ExternalAuthzWebhookAddr(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ip": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"port": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+				},
+				Required: []string{"ip", "port"},
+			},
+		},
 	}
 }
 

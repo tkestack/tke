@@ -30,6 +30,53 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "v1";
 
+// ClusterOverview defines the structure for querying clusters' overview data request and result.
+message ClusterOverview {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // +optional
+  optional ClusterOverviewResult result = 2;
+}
+
+message ClusterOverviewResult {
+  optional int64 clusterCount = 1;
+
+  optional int64 nodeCount = 2;
+
+  optional int64 workloadCount = 3;
+
+  repeated ClusterStatistic clusters = 4;
+}
+
+message ClusterStatistic {
+  optional string clusterID = 1;
+
+  optional int64 nodeCount = 2;
+
+  optional int64 nodeAbnormal = 3;
+
+  optional int64 workloadCount = 4;
+
+  optional int64 workloadAbnormal = 5;
+
+  optional double cpuRequest = 6;
+
+  optional double cpuLimit = 7;
+
+  optional double cpuCapacity = 8;
+
+  optional double cpuAllocatable = 9;
+
+  optional int64 memRequest = 10;
+
+  optional int64 memLimit = 11;
+
+  optional int64 memCapacity = 12;
+
+  optional int64 memAllocatable = 13;
+}
+
 // ConfigMap holds configuration data for tke to consume.
 message ConfigMap {
   // +optional
