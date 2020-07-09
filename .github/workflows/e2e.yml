@@ -1,0 +1,21 @@
+name: build
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'test/e2e/*'  
+
+jobs:
+  build:
+
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: e2e test
+      id: make
+      run: |
+        echo "jamie hello world"
