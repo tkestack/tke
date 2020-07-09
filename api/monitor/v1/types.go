@@ -191,6 +191,53 @@ type MetricQueryCondition struct {
 	Value string `json:"value" protobuf:"bytes,3,opt,name=value"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterOverview defines the structure for querying clusters' overview data request and result.
+type ClusterOverview struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// +optional
+	Result *ClusterOverviewResult `json:"result,omitempty" protobuf:"bytes,2,opt,name=result"`
+}
+
+type ClusterOverviewResult struct {
+	ClusterCount     int32               `json:"clusterCount" protobuf:"bytes,1,opt,name=clusterCount"`
+	ClusterAbnormal  int32               `json:"clusterAbnormal" protobuf:"bytes,2,opt,name=clusterAbnormal"`
+	ProjectCount     int32               `json:"projectCount" protobuf:"bytes,3,opt,name=projectCount"`
+	ProjectAbnormal  int32               `json:"projectAbnormal" protobuf:"bytes,4,opt,name=projectAbnormal"`
+	NodeCount        int32               `json:"nodeCount" protobuf:"bytes,5,opt,name=nodeCount"`
+	NodeAbnormal     int32               `json:"nodeAbnormal" protobuf:"bytes,6,opt,name=nodeAbnormal"`
+	WorkloadCount    int32               `json:"workloadCount" protobuf:"bytes,7,opt,name=workloadCount"`
+	WorkloadAbnormal int32               `json:"workloadAbnormal" protobuf:"bytes,8,opt,name=workloadAbnormal"`
+	Clusters         []*ClusterStatistic `json:"clusters" protobuf:"bytes,9,opt,name=clusters"`
+}
+
+type ClusterStatistic struct {
+	ClusterID                string  `json:"clusterID" protobuf:"bytes,1,opt,name=clusterID"`
+	ClusterPhase             string  `json:"clusterPhase" protobuf:"bytes,2,opt,name=clusterPhase"`
+	NodeCount                int32   `json:"nodeCount" protobuf:"bytes,3,opt,name=nodeCount"`
+	NodeAbnormal             int32   `json:"nodeAbnormal" protobuf:"bytes,4,opt,name=nodeAbnormal"`
+	WorkloadCount            int32   `json:"workloadCount" protobuf:"bytes,5,opt,name=workloadCount"`
+	WorkloadAbnormal         int32   `json:"workloadAbnormal" protobuf:"bytes,6,opt,name=workloadAbnormal"`
+	CPURequest               float64 `json:"cpuRequest" protobuf:"bytes,7,opt,name=cpuRequest"`
+	CPULimit                 float64 `json:"cpuLimit" protobuf:"bytes,8,opt,name=cpuLimit"`
+	CPUCapacity              float64 `json:"cpuCapacity" protobuf:"bytes,9,opt,name=cpuCapacity"`
+	CPUAllocatable           float64 `json:"cpuAllocatable" protobuf:"bytes,10,opt,name=cpuAllocatable"`
+	CPURequestRate           string  `json:"cpuRequestRate" protobuf:"bytes,11,opt,name=cpuRequestRate"`
+	CPUAllocatableRate       string  `json:"cpuAllocatableRate" protobuf:"bytes,12,opt,name=cpuAllocatableRate"`
+	MemRequest               int64   `json:"memRequest" protobuf:"bytes,13,opt,name=memRequest"`
+	MemLimit                 int64   `json:"memLimit" protobuf:"bytes,14,opt,name=memLimit"`
+	MemCapacity              int64   `json:"memCapacity" protobuf:"bytes,15,opt,name=memCapacity"`
+	MemAllocatable           int64   `json:"memAllocatable" protobuf:"bytes,16,opt,name=memAllocatable"`
+	MemRequestRate           string  `json:"memRequestRate" protobuf:"bytes,17,opt,name=memRequestRate"`
+	MemAllocatableRate       string  `json:"memAllocatableRate" protobuf:"bytes,18,opt,name=memAllocatableRate"`
+	SchedulerHealthy         bool    `json:"schedulerHealthy" protobuf:"bytes,19,opt,name=schedulerHealthy"`
+	ControllerManagerHealthy bool    `json:"controllerManagerHealthy" protobuf:"bytes,20,opt,name=controllerManagerHealthy"`
+	EtcdHealthy              bool    `json:"etcdHealthy" protobuf:"bytes,21,opt,name=etcdHealthy"`
+}
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection
