@@ -67,6 +67,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&PrometheusList{},
 
 		&ConfigMap{},
-		&ConfigMapList{})
+		&ConfigMapList{},
+
+		&ClusterOverview{})
 	return nil
 }

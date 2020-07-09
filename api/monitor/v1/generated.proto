@@ -30,6 +30,79 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "v1";
 
+// ClusterOverview defines the structure for querying clusters' overview data request and result.
+message ClusterOverview {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // +optional
+  optional ClusterOverviewResult result = 2;
+}
+
+message ClusterOverviewResult {
+  optional int32 clusterCount = 1;
+
+  optional int32 clusterAbnormal = 2;
+
+  optional int32 projectCount = 3;
+
+  optional int32 projectAbnormal = 4;
+
+  optional int32 nodeCount = 5;
+
+  optional int32 nodeAbnormal = 6;
+
+  optional int32 workloadCount = 7;
+
+  optional int32 workloadAbnormal = 8;
+
+  repeated ClusterStatistic clusters = 9;
+}
+
+message ClusterStatistic {
+  optional string clusterID = 1;
+
+  optional string clusterPhase = 2;
+
+  optional int32 nodeCount = 3;
+
+  optional int32 nodeAbnormal = 4;
+
+  optional int32 workloadCount = 5;
+
+  optional int32 workloadAbnormal = 6;
+
+  optional double cpuRequest = 7;
+
+  optional double cpuLimit = 8;
+
+  optional double cpuCapacity = 9;
+
+  optional double cpuAllocatable = 10;
+
+  optional string cpuRequestRate = 11;
+
+  optional string cpuAllocatableRate = 12;
+
+  optional int64 memRequest = 13;
+
+  optional int64 memLimit = 14;
+
+  optional int64 memCapacity = 15;
+
+  optional int64 memAllocatable = 16;
+
+  optional string memRequestRate = 17;
+
+  optional string memAllocatableRate = 18;
+
+  optional bool schedulerHealthy = 19;
+
+  optional bool controllerManagerHealthy = 20;
+
+  optional bool etcdHealthy = 21;
+}
+
 // ConfigMap holds configuration data for tke to consume.
 message ConfigMap {
   // +optional

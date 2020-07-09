@@ -185,6 +185,53 @@ type MetricQueryCondition struct {
 	Value string
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterOverview defines the structure for clusters' overview data request and result.
+type ClusterOverview struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+	// +optional
+	Result *ClusterOverviewResult
+}
+
+type ClusterOverviewResult struct {
+	ClusterCount     int32
+	ClusterAbnormal  int32
+	ProjectCount     int32
+	ProjectAbnormal  int32
+	NodeCount        int32
+	NodeAbnormal     int32
+	WorkloadCount    int32
+	WorkloadAbnormal int32
+	Clusters         []*ClusterStatistic
+}
+
+type ClusterStatistic struct {
+	ClusterID                string
+	ClusterPhase             string
+	NodeCount                int32
+	NodeAbnormal             int32
+	WorkloadCount            int32
+	WorkloadAbnormal         int32
+	CPURequest               float64
+	CPULimit                 float64
+	CPUCapacity              float64
+	CPUAllocatable           float64
+	CPURequestRate           string
+	CPUAllocatableRate       string
+	MemRequest               int64
+	MemLimit                 int64
+	MemCapacity              int64
+	MemAllocatable           int64
+	MemRequestRate           string
+	MemAllocatableRate       string
+	SchedulerHealthy         bool
+	ControllerManagerHealthy bool
+	EtcdHealthy              bool
+}
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection
