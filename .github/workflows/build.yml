@@ -11,13 +11,14 @@ on:
 
 jobs:
   build:
-
     runs-on: self-hosted
-
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Make build lint and test
-      id: make
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: testenv
+      env:
+        MY_VAR: Hello World!
+        MY_NAME: P3TERX
       run: |
-        make
+        echo $MY_VAR
+        echo My name is $MY_NAME
