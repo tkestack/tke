@@ -20,11 +20,6 @@ jobs:
     - name: printversion
       run: |
         echo "docker image version" $VERSION
-    - name: docker-login
-      uses: azure/docker-login@v1
-      with:
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
     - name: testenv
       env:
         MY_VAR: Hello World!
