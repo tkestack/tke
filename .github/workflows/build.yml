@@ -17,6 +17,10 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v2
+      with:
+         fetch-depth: 2
+    - name: checkout head
+      run: git checkout HEAD^
     - name: printversion
       run: |
         echo "docker image version" $VERSION
