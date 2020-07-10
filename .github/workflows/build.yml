@@ -20,4 +20,4 @@ jobs:
     - name: Make build lint and test
       id: make
       run: |
-        make
+        make push IMAGES="tke-platform-api"
