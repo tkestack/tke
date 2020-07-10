@@ -19,9 +19,10 @@
 package log
 
 import (
+	"log"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"log"
 	"tkestack.io/tke/pkg/util/log/klog"
 )
 
@@ -69,7 +70,7 @@ type Logger interface {
 
 	// WithName adds a new element to the logger's name.
 	// Successive calls with WithName continue to append
-	// suffixes to the logger's name.  It's strongly reccomended
+	// suffixes to the logger's name.  It's strongly recommended
 	// that name segments contain only letters, digits, and hyphens
 	// (see the package documentation for more information).
 	WithName(name string) Logger
