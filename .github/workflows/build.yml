@@ -8,6 +8,8 @@ on:
   pull_request:
     branches:
       - master
+env:
+  VERSION: ${{ github.sha }}
 
 jobs:
   build:
