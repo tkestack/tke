@@ -133,10 +133,10 @@ arch=arm64 version=v1.3.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 ## 4. 访问控制台
 
-在本地主机的浏览器地址输入http://console.tke.com，可访问Global集群的控制台界面，输入控制台安装创建的用户名和密码后即可使用TKEStack。
+在本地主机的浏览器地址输入 http://console.tke.com ，可访问Global集群的控制台界面，输入控制台安装创建的用户名和密码后即可使用TKEStack。
 
 # 安装常见问题
 
 安装失败请首先检查硬件和软件需求：[installation requirements](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
 
-可参考[FAQ installation](../FAQ/installation.md)获得更多帮助。
+可参考[FAQ installation](../FAQ/installation)获得更多帮助。
