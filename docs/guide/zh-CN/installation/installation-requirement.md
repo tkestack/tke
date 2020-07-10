@@ -5,7 +5,7 @@
 > **特别注意**：
 >
 > 1. 安装的时候，至少需要**一个Installer节点**和**一个作为Global集群的master节点**。业务集群的节点是在部署完Global集群的master节点之后再添加的。
-> 2. **Installer节点**：是单独的用作安装的节点，不能作为Global集群的节点使用。因为在安装Global集群时，需要多次重启docker，此时如果Global集群里面有Installer节点，重启docker会中断Global集群的安装。该节点需要一台**系统盘至少100G**的机器。
+> 2. **Installer节点**：是单独的用作安装的节点，不能作为Global集群的节点使用。因为在安装Global集群时，需要多次重启docker，此时如果Global集群里面有Installer节点，重启docker会中断Global集群的安装。该节点需要一台**系统盘100G**的机器，系统盘要保证剩余**50GB可用的空间**，all-in-one模式还需要更多的空间。
 > 3. **Global集群**：至少需要一台**8核16G内存，100G系统盘**的机器。
 
 
