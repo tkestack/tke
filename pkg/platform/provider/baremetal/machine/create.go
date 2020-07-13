@@ -169,22 +169,24 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, machine *platformv1.
 }
 
 func (p *Provider) EnsureKernelModule(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	machineSSH, err := machine.Spec.SSH()
+	s, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
 	modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
+	if _, err := s.CombinedOutput("modinfo br_netfilter"); err == nil {
+		modules = append(modules, "br_netfilter")
+	}
 	var data bytes.Buffer
-
 	for _, m := range modules {
-		_, err := machineSSH.CombinedOutput(fmt.Sprintf("modprobe %s", m))
+		_, err := s.CombinedOutput(fmt.Sprintf("modprobe %s", m))
 		if err != nil {
 			return err
 		}
 		data.WriteString(m + "\n")
 	}
-	err = machineSSH.WriteFile(strings.NewReader(data.String()), moduleFile)
+	err = s.WriteFile(strings.NewReader(data.String()), moduleFile)
 	if err != nil {
 		return err
 	}
