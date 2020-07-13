@@ -181,22 +181,26 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 }
 
 func (p *Provider) EnsureKernelModule(ctx context.Context, c *v1.Cluster) error {
-	modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
 	var data bytes.Buffer
 	for _, machine := range c.Spec.Machines {
-		machineSSH, err := machine.SSH()
+		modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
+
+		s, err := machine.SSH()
 		if err != nil {
 			return err
 		}
+		if _, err := s.CombinedOutput("modinfo br_netfilter"); err == nil {
+			modules = append(modules, "br_netfilter")
+		}
 
 		for _, m := range modules {
-			_, err := machineSSH.CombinedOutput(fmt.Sprintf("modprobe %s", m))
+			_, err := s.CombinedOutput(fmt.Sprintf("modprobe %s", m))
 			if err != nil {
 				return errors.Wrap(err, machine.IP)
 			}
 			data.WriteString(m + "\n")
 		}
-		err = machineSSH.WriteFile(strings.NewReader(data.String()), moduleFile)
+		err = s.WriteFile(strings.NewReader(data.String()), moduleFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
