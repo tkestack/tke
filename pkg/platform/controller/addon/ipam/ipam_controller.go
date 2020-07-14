@@ -659,8 +659,8 @@ func serviceIPAM(clusterIP string) *corev1.Service {
 			ClusterIP: clusterIP,
 			Selector:  map[string]string{"app": "galaxy-ipam"},
 			Ports: []corev1.ServicePort{
-				{Name: "scheduler-port", Port: 9040, TargetPort: intstr.FromInt(9040), NodePort: 32760},
-				{Name: "api-port", Port: 9041, TargetPort: intstr.FromInt(9041), NodePort: 32761},
+				{Name: "scheduler-port", Port: 9040, TargetPort: intstr.FromInt(9040)},
+				{Name: "api-port", Port: 9041, TargetPort: intstr.FromInt(9041)},
 			},
 			Type: corev1.ServiceTypeClusterIP,
 		},
