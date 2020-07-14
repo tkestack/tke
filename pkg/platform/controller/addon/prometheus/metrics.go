@@ -34,7 +34,7 @@ func init() {
 }
 
 func UpdateMetricPrometheusStatusFail(tenantID string, clusterName string, failed bool) {
-	labels := map[string]string{"tenantID": tenantID, "clusterName": clusterName}
+	labels := map[string]string{"tenant_id": tenantID, "cluster_name": clusterName}
 	if failed {
 		prometheusStatusFail.With(labels).Set(1)
 	} else {
