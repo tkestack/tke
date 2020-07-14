@@ -382,6 +382,9 @@ func (c *Controller) processPrometheusDelete(cachedPrometheus *cachedPrometheus,
 	log.Info("prometheus will be dropped", log.String("prome", key))
 
 	prometheus := cachedPrometheus.state
+	if prometheus != nil {
+		DeleteMetricPrometheusStatusFail(prometheus.Spec.TenantID, prometheus.Spec.ClusterName, prometheus.Name)
+	}
 	err := c.uninstallPrometheus(prometheus, true)
 	if err != nil {
 		log.Errorf("Prometheus uninstall fail: %v", err)
