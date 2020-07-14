@@ -26,15 +26,15 @@ var (
 			Name: "prometheus_status_fail",
 			Help: "prometheus addon status fail or not",
 		},
-		[]string{"tenant_id", "cluster_name"})
+		[]string{"tenant_id", "cluster_name", "prometheus_name"})
 )
 
 func init() {
 	prometheus.MustRegister(prometheusStatusFail)
 }
 
-func UpdateMetricPrometheusStatusFail(tenantID string, clusterName string, failed bool) {
-	labels := map[string]string{"tenant_id": tenantID, "cluster_name": clusterName}
+func UpdateMetricPrometheusStatusFail(tenantID string, clusterName string, prometheusName string, failed bool) {
+	labels := map[string]string{"tenant_id": tenantID, "cluster_name": clusterName, "prometheus_name": prometheusName}
 	if failed {
 		prometheusStatusFail.With(labels).Set(1)
 	} else {
