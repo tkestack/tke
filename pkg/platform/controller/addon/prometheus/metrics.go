@@ -41,3 +41,8 @@ func UpdateMetricPrometheusStatusFail(tenantID string, clusterName string, prome
 		prometheusStatusFail.With(labels).Set(0)
 	}
 }
+
+func DeleteMetricPrometheusStatusFail(tenantID string, clusterName string, prometheusName string) {
+	labels := map[string]string{"tenant_id": tenantID, "cluster_name": clusterName, "prometheus_name": prometheusName}
+	prometheusStatusFail.Delete(labels)
+}
