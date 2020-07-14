@@ -520,7 +520,7 @@ func (c *Controller) createPrometheusIfNeeded(key string, cachedPrometheus *cach
 		}
 	case v1.AddonPhaseRunning:
 		log.Info("Prometheus entry Running", log.String("prome", key))
-		UpdateMetricPrometheusStatusFail(prometheus.Spec.TenantID, prometheus.Spec.ClusterName, false)
+		UpdateMetricPrometheusStatusFail(prometheus.Spec.TenantID, prometheus.Spec.ClusterName, prometheus.Name, false)
 		if needUpgrade(prometheus) {
 			c.health.Delete(key)
 			prometheus = prometheus.DeepCopy()
@@ -549,7 +549,7 @@ func (c *Controller) createPrometheusIfNeeded(key string, cachedPrometheus *cach
 		c.upgrading.Delete(key)
 		c.health.Delete(key)
 
-		UpdateMetricPrometheusStatusFail(prometheus.Spec.TenantID, prometheus.Spec.ClusterName, true)
+		UpdateMetricPrometheusStatusFail(prometheus.Spec.TenantID, prometheus.Spec.ClusterName, prometheus.Name, true)
 
 		// should try check when prometheus recover again
 		log.Info("Prometheus try checking after fail", log.String("prome", key))
