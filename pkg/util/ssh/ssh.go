@@ -174,11 +174,21 @@ func (s *SSH) CopyFile(src, dst string) error {
 }
 
 func (s *SSH) WriteFile(src io.Reader, dst string) error {
-	data, err := ioutil.ReadAll(src)
+	tmpfile, err := ioutil.TempFile("", "*.tmp")
 	if err != nil {
 		return err
 	}
-	needWriteFile, err := s.needWriteFile(data, dst)
+	defer os.Remove(tmpfile.Name())
+
+	if _, err := io.Copy(tmpfile, src); err != nil {
+		return err
+	}
+
+	if _, err := tmpfile.Seek(0, os.SEEK_SET); err != nil {
+		return err
+	}
+
+	needWriteFile, err := s.needWriteFile(tmpfile, dst)
 	if err != nil {
 		return err
 	}
@@ -187,7 +197,11 @@ func (s *SSH) WriteFile(src io.Reader, dst string) error {
 		return nil
 	}
 
-	return s.writeFile(bytes.NewBuffer(data), dst)
+	if _, err := tmpfile.Seek(0, os.SEEK_SET); err != nil {
+		return err
+	}
+
+	return s.writeFile(tmpfile, dst)
 }
 
 func (s *SSH) ReadFile(filename string) ([]byte, error) {
@@ -242,12 +256,15 @@ func (s *SSH) writeFile(src io.Reader, dst string) error {
 	return err
 }
 
-func (s *SSH) needWriteFile(data []byte, dst string) (bool, error) {
-	srcHash := md5.Sum(data)
+func (s *SSH) needWriteFile(src io.Reader, dst string) (bool, error) {
+	srcHash := md5.New()
+	if _, err := io.Copy(srcHash, src); err != nil {
+		return false, err
+	}
 
 	hashFile := tmpDir + dst + ".md5"
 	buffer := new(bytes.Buffer)
-	buffer.WriteString(fmt.Sprintf("%x %s\n", srcHash, dst))
+	buffer.WriteString(fmt.Sprintf("%x %s\n", srcHash.Sum(nil), dst))
 	err := s.writeFile(buffer, hashFile)
 	if err != nil {
 		return false, err
