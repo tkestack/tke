@@ -512,6 +512,11 @@ func (c *Controller) uninstallCronHPA(cronHPA *v1.CronHPA) error {
 	if err != nil {
 		return err
 	}
+	if cluster.Status.Phase == v1.ClusterTerminating {
+		log.Info(fmt.Sprintf("Keep the components of CronHPA %s when deleting the cluster", cronHPA.Spec.ClusterName))
+		return nil
+	}
+
 	kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
