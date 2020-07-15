@@ -92,7 +92,6 @@ func GetRESTConfig() *rest.Config {
 	if err != nil {
 		panic(err)
 	}
-
 	return restConfig
 }
 

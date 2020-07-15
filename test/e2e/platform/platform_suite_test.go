@@ -15,37 +15,20 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-
-package env
+package platform_test
 
 import (
-	"os"
-	"path"
+	"testing"
 
-	"github.com/joho/godotenv"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	_ "tkestack.io/tke/test/util/env"
 )
 
-const (
-	envFile = "tke.env"
-)
-
-func init() {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
+func TestCluster(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping cluster suite in short mode")
 	}
-	godotenv.Load(path.Join(home, envFile), envFile) // for local dev
-}
-
-const (
-	VERSION            = "VERSION"
-	PROVIDERRESVERSION = "PROVIDERRESVERSION"
-)
-
-func ImageVersion() string {
-	return os.Getenv(VERSION)
-}
-
-func ProviderResImageVersion() string {
-	return os.Getenv(PROVIDERRESVERSION)
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Platform Suite")
 }
