@@ -243,6 +243,7 @@ var deleteResourceFuncs = []deleteResourceFunc{
 	deleteGPUManager,
 	deleteIPAM,
 	deleteTappControllers,
+	deleteCronHPA,
 	deleteClusterProvider,
 	deleteMachine,
 	deleteClusterCredential,
@@ -386,6 +387,31 @@ func deleteTappControllers(deleter *clusterDeleter, cluster *v1.Cluster) error {
 	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
 	for _, tappController := range tappControllerList.Items {
 		if err := deleter.platformClient.TappControllers().Delete(tappController.ObjectMeta.Name, deleteOpt); err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func deleteCronHPA(deleter *clusterDeleter, cluster *v1.Cluster) error {
+	log.Debug("Cluster controller - deleteCronHPA", log.String("clusterName", cluster.ObjectMeta.Name))
+
+	listOpt := metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.ObjectMeta.Name),
+	}
+	cronHPAList, err := deleter.platformClient.CronHPAs().List(listOpt)
+	if err != nil {
+		return err
+	}
+	if len(cronHPAList.Items) == 0 {
+		return nil
+	}
+	background := metav1.DeletePropagationBackground
+	deleteOpt := &metav1.DeleteOptions{PropagationPolicy: &background}
+	for _, cronHPA := range cronHPAList.Items {
+		if err := deleter.platformClient.CronHPAs().Delete(cronHPA.ObjectMeta.Name, deleteOpt); err != nil {
 			if !errors.IsNotFound(err) {
 				return err
 			}
