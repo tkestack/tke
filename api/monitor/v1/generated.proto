@@ -247,6 +247,10 @@ message PrometheusSpec {
   // +optional
   // AlertRepeatInterval indicates repeat interval of alerts
   optional string alertRepeatInterval = 9;
+
+  // +optional
+  // WithNPD indicates whether to deploy node-problem-detector or not
+  optional bool withNPD = 10;
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.

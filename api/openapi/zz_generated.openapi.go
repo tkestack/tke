@@ -41751,6 +41751,13 @@ func schema_tke_api_monitor_v1_PrometheusSpec(ref common.ReferenceCallback) comm
 							Format:      "",
 						},
 					},
+					"withNPD": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WithNPD indicates whether to deploy node-problem-detector or not",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "clusterName"},
 			},
@@ -47153,6 +47160,13 @@ func schema_tke_api_platform_v1_PrometheusSpec(ref common.ReferenceCallback) com
 						SchemaProps: spec.SchemaProps{
 							Description: "AlertRepeatInterval indicates repeat interval of alerts",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"withNPD": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WithNPD indicates whether to deploy node-problem-detector or not",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},

@@ -84,6 +84,9 @@ type PrometheusSpec struct {
 	// +optional
 	// AlertRepeatInterval indicates repeat interval of alerts
 	AlertRepeatInterval string `json:"alertRepeatInterval,omitempty" protobuf:"bytes,9,opt,name=alertRepeatInterval"`
+	// +optional
+	// WithNPD indicates whether to deploy node-problem-detector or not
+	WithNPD bool `json:"withNPD,omitempty" protobuf:"bytes,10,opt,name=withNPD"`
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
