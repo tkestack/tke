@@ -19,10 +19,14 @@
 package v1
 
 import (
+	appv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	tappv1 "tkestack.io/tapp/pkg/apis/tappcontroller/v1"
 )
 
 // +genclient
@@ -1322,6 +1326,75 @@ type LogCollectorStatus struct {
 	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
 	// +optional
 	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,5,name=lastReInitializingTimestamp"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Template instance is a recorder of kubernetes event.
+type Template struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// +optional
+	Spec TemplateSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	// +optional
+	Status TemplateStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// TemplateSpec is a description of template.
+type TemplateSpec struct {
+	TenantID string `json:"tenantID,omitempty" protobuf:"bytes,1,opt,name=tenantID"`
+	// +optional
+	Type     string `json:"type" protobuf:"bytes,2,opt,name=type"`
+	Username string `json:"username" protobuf:"bytes,3,opt,name=username"`
+	// +optional
+	Labels  map[string]string `json:"labels,omitempty" protobuf:"bytes,4,opt,name=labels"`
+	Content ContentSpec       `json:"content,omitempty" protobuf:"bytes,5,opt,name=content"`
+}
+
+// TemplateStatus is information about the current status of a
+// TemplateStatus.
+type TemplateStatus struct {
+	// Phase is the current lifecycle phase of the persistent event of cluster.
+	// +optional
+	Phase AddonPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase"`
+	// Reason is a brief CamelCase string that describes any failure.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,2,opt,name=reason"`
+	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
+	// +optional
+	RetryCount int32 `json:"retryCount" protobuf:"varint,3,name=retryCount"`
+	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
+	// +optional
+	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,4,name=lastReInitializingTimestamp"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// TemplateList is the whole list of template.
+type TemplateList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of templates
+	Items []Template `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// ContentSpec indicates the backend type and attributes of the persistent
+// log store.
+// +k8s:openapi-gen=true
+type ContentSpec struct {
+	Deployment  *appv1.Deployment     `json:"deployment,omitempty" protobuf:"bytes,1,opt,name=deployment"`
+	StatefulSet *appv1.StatefulSet    `json:"statefulSet,omitempty" protobuf:"bytes,2,opt,name=statefulSet"`
+	DaemonSet   *appv1.DaemonSet      `json:"daemonSet,omitempty" protobuf:"bytes,3,opt,name=daemonSet"`
+	Job         *batchv1.Job          `json:"job,omitempty" protobuf:"bytes,4,opt,name=job"`
+	CronJob     *batchv1beta1.CronJob `json:"cronJob,omitempty" protobuf:"bytes,5,opt,name=cronJob"`
+	Tapp        *tappv1.TApp          `json:"tapp,omitempty" protobuf:"bytes,6,opt,name=tapp"`
 }
 
 // +genclient

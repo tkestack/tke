@@ -22,12 +22,16 @@ syntax = 'proto2';
 
 package tkestack.io.tke.api.platform.v1;
 
+import "k8s.io/api/apps/v1/generated.proto";
+import "k8s.io/api/batch/v1/generated.proto";
+import "k8s.io/api/batch/v1beta1/generated.proto";
 import "k8s.io/api/core/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/api/resource/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 import "k8s.io/apimachinery/pkg/util/intstr/generated.proto";
+import "tkestack.io/tapp/pkg/apis/tappcontroller/v1/generated.proto";
 
 // Package-wide variables from generator "generated".
 option go_package = "v1";
@@ -587,6 +591,23 @@ message ConfigMapList {
 
   // Items is the list of ConfigMaps.
   repeated ConfigMap items = 2;
+}
+
+// ContentSpec indicates the backend type and attributes of the persistent
+// log store.
+// +k8s:openapi-gen=true
+message ContentSpec {
+  optional k8s.io.api.apps.v1.Deployment deployment = 1;
+
+  optional k8s.io.api.apps.v1.StatefulSet statefulSet = 2;
+
+  optional k8s.io.api.apps.v1.DaemonSet daemonSet = 3;
+
+  optional k8s.io.api.batch.v1.Job job = 4;
+
+  optional k8s.io.api.batch.v1beta1.CronJob cronJob = 5;
+
+  optional tkestack.io.tapp.pkg.apis.tappcontroller.v1.TApp tapp = 6;
 }
 
 // CronHPA is a new kubernetes workload.
@@ -1409,6 +1430,62 @@ message TappControllerStatus {
   // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
+}
+
+// Template instance is a recorder of kubernetes event.
+message Template {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // +optional
+  optional TemplateSpec spec = 2;
+
+  // +optional
+  optional TemplateStatus status = 3;
+}
+
+// TemplateList is the whole list of template.
+message TemplateList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of templates
+  repeated Template items = 2;
+}
+
+// TemplateSpec is a description of template.
+message TemplateSpec {
+  optional string tenantID = 1;
+
+  // +optional
+  optional string type = 2;
+
+  optional string username = 3;
+
+  // +optional
+  map<string, string> labels = 4;
+
+  optional ContentSpec content = 5;
+}
+
+// TemplateStatus is information about the current status of a
+// TemplateStatus.
+message TemplateStatus {
+  // Phase is the current lifecycle phase of the persistent event of cluster.
+  // +optional
+  optional string phase = 1;
+
+  // Reason is a brief CamelCase string that describes any failure.
+  // +optional
+  optional string reason = 2;
+
+  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
+  // +optional
+  optional int32 retryCount = 3;
+
+  // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 4;
 }
 
 message ThirdPartyHA {

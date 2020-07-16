@@ -234,6 +234,10 @@ fi
 
 if [[ "${GENS}" = "all" ]] || [[ "${GENS}" = "all-external" ]] || grep -qw "protobuf-external" <<<"${GENS}"; then
   echo "===========> Generating external protobuf codes"
+  for api in "${EXT_PB_APIS[@]}"; do
+    chmod -R +w "${GOPATH}/src/${api}/"
+  done
+
   "${K8S_BIN}"/go-to-protobuf \
         --go-header-file "/root/boilerplate.go.txt" \
         --proto-import "${K8S_ROOT}/vendor" \
@@ -249,5 +253,8 @@ if [[ "${GENS}" = "all" ]] || [[ "${GENS}" = "all-external" ]] || grep -qw "swag
   done
   for group_version in "${EXT_FQ_APIS[@]}"; do
     gen_types_swagger_doc "${group_version}" "${GOPATH}/src/${group_version}"
+  done
+  for api in "${EXT_SWAGGER_APIS[@]}"; do
+    gen_types_swagger_doc "${api}" "${GOPATH}/src/${api}"
   done
 fi

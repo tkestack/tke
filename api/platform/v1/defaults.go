@@ -58,6 +58,12 @@ func SetDefaults_MachineStatus(obj *MachineStatus) {
 	}
 }
 
+func SetDefaults_TemplateStatus(obj *TemplateStatus) {
+	if obj.Phase == "" {
+		obj.Phase = AddonPhaseInitializing
+	}
+}
+
 func SetDefaults_ConfigMap(obj *ConfigMap) {
 	if obj.Data == nil {
 		obj.Data = make(map[string]string)

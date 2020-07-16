@@ -63,6 +63,18 @@ func FilterMachine(ctx context.Context, machine *platform.Machine) error {
 	return nil
 }
 
+// FilterTemplate is used to filter template that do not belong to the tenant.
+func FilterTemplate(ctx context.Context, template *platform.Template) error {
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if template.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("template"), template.ObjectMeta.Name)
+	}
+	return nil
+}
+
 // FilterRegistry is used to filter registry that do not belong to the tenant.
 func FilterRegistry(ctx context.Context, registry *platform.Registry) error {
 	_, tenantID := authentication.UsernameAndTenantID(ctx)

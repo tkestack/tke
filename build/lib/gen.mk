@@ -18,11 +18,16 @@
 K8S_APIMACHINERY_DIR = $(shell go list -f '{{ .Dir }}' -m k8s.io/apimachinery)
 # set the kubernetes api package dir
 K8S_API_DIR = $(shell go list -f '{{ .Dir }}' -m k8s.io/api)
+# set the tapp api package dir
+TAPP_API_DIR = $(shell go list -f '{{ .Dir }}' -m tkestack.io/tapp)
 # set the gogo protobuf package dir
 GOGO_PROTOBUF_DIR = $(shell go list -f '{{ .Dir }}' -m github.com/gogo/protobuf)
-EXT_PB_APIS = "k8s.io/api/core/v1 k8s.io/api/apps/v1"
 # set the code generator image version
 CODE_GENERATOR_VERSION := v1.18.2
+
+EXT_PB_APIS = "tkestack.io/tapp/pkg/apis/tappcontroller/v1 k8s.io/api/core/v1 k8s.io/api/apps/v1 k8s.io/api/batch/v1 k8s.io/api/batch/v1beta1"
+EXT_SWAGGER_APIS = "tkestack.io/tapp/pkg/apis/tappcontroller/v1"
+
 FIND := find . ! -path './pkg/platform/provider/baremetal/apis/*'
 
 .PHONY: gen.run
@@ -35,7 +40,10 @@ gen.run: gen.clean gen.api gen.openapi gen.gateway gen.registry gen.monitor gen.
 gen.api:
 	@$(DOCKER) run --rm \
 		-v $(ROOT_DIR):/go/src/$(ROOT_PACKAGE) \
+		-v $(TAPP_API_DIR):/go/src/tkestack.io/tapp \
+		-v $(ROOT_DIR)/build/docker/tools/code-generator/code.sh:/root/code.sh \
 		-e EXT_PB_APIS=$(EXT_PB_APIS)\
+		-e EXT_SWAGGER_APIS=${EXT_SWAGGER_APIS}\
 	 	$(REGISTRY_PREFIX)/code-generator:$(CODE_GENERATOR_VERSION) \
 	 	/root/code.sh \
 	 	all \
@@ -101,6 +109,7 @@ gen.openapi:
     	-v $(ROOT_DIR):/go/src/$(ROOT_PACKAGE) \
 		-e EXT_PB_APIS=$(EXT_PB_APIS)\
 		-v $(K8S_APIMACHINERY_DIR):/go/src/k8s.io/apimachinery \
+		-v $(TAPP_API_DIR):/go/src/tkestack.io/tapp \
 		-v $(K8S_API_DIR):/go/src/k8s.io/api \
 	 	$(REGISTRY_PREFIX)/code-generator:$(CODE_GENERATOR_VERSION) \
 	 	/root/openapi.sh \
@@ -109,6 +118,7 @@ gen.openapi:
 
 .PHONY: gen.clean
 gen.clean:
+	@chmod -R +w .
 	@rm -rf ./api/client/{clientset,informers,listers}
 	@$(FIND) -type f -name 'generated.*' -delete
 	@$(FIND) -type f -name 'zz_generated*.go' -delete

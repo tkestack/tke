@@ -24,6 +24,7 @@ API_PACKAGE="tkestack.io/tke/api"
 
 API_MACHINERY_DIR=$(go list -f '{{ .Dir }}' -m k8s.io/apimachinery)
 API_DIR=$(go list -f '{{ .Dir }}' -m k8s.io/api)
+TAPP_DIR=$(go list -f '{{ .Dir }}' -m tkestack.io/tapp)
 
 # kubernetes api machinery
 api_machinery=$(
@@ -41,9 +42,18 @@ api=$(
   sort -u
 )
 
+# tapp api
+tapp_api=$(
+  grep --color=never --exclude-dir=origin -rl '+k8s:openapi-gen=' "${TAPP_DIR}" | \
+  xargs -n1 dirname | \
+  sed "s,^${TAPP_DIR}/,tkestack.io/tapp/," | \
+  sort -u
+)
+
 input_dirs=(
   ${api_machinery}
   ${api}
+  ${tapp_api}
   "${API_PACKAGE}"/platform/v1
   "${API_PACKAGE}"/business/v1
   "${API_PACKAGE}"/notify/v1
