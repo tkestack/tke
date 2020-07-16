@@ -52,4 +52,6 @@ type RegistryExpansion interface{}
 
 type TappControllerExpansion interface{}
 
+type TemplateExpansion interface{}
+
 type VolumeDecoratorExpansion interface{}

@@ -864,6 +864,43 @@ func (TappControllerStatus) SwaggerDoc() map[string]string {
 	return map_TappControllerStatus
 }
 
+var map_Template = map[string]string{
+	"": "Template instance is a recorder of kubernetes event.",
+}
+
+func (Template) SwaggerDoc() map[string]string {
+	return map_Template
+}
+
+var map_TemplateList = map[string]string{
+	"":      "TemplateList is the whole list of template.",
+	"items": "List of templates",
+}
+
+func (TemplateList) SwaggerDoc() map[string]string {
+	return map_TemplateList
+}
+
+var map_TemplateSpec = map[string]string{
+	"": "TemplateSpec is a description of template.",
+}
+
+func (TemplateSpec) SwaggerDoc() map[string]string {
+	return map_TemplateSpec
+}
+
+var map_TemplateStatus = map[string]string{
+	"":                            "TemplateStatus is information about the current status of a TemplateStatus.",
+	"phase":                       "Phase is the current lifecycle phase of the persistent event of cluster.",
+	"reason":                      "Reason is a brief CamelCase string that describes any failure.",
+	"retryCount":                  "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
+	"lastReInitializingTimestamp": "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
+}
+
+func (TemplateStatus) SwaggerDoc() map[string]string {
+	return map_TemplateStatus
+}
+
 var map_Upgrade = map[string]string{
 	"mode":     "Upgrade mode, default value is Auto.",
 	"strategy": "Upgrade strategy config.",

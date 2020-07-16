@@ -44,6 +44,7 @@ type PlatformV1Interface interface {
 	PrometheusesGetter
 	RegistriesGetter
 	TappControllersGetter
+	TemplatesGetter
 	VolumeDecoratorsGetter
 }
 
@@ -114,6 +115,10 @@ func (c *PlatformV1Client) Registries() RegistryInterface {
 
 func (c *PlatformV1Client) TappControllers() TappControllerInterface {
 	return newTappControllers(c)
+}
+
+func (c *PlatformV1Client) Templates() TemplateInterface {
+	return newTemplates(c)
 }
 
 func (c *PlatformV1Client) VolumeDecorators() VolumeDecoratorInterface {

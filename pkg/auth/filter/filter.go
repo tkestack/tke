@@ -25,6 +25,7 @@ import (
 	"unicode"
 
 	"tkestack.io/tke/api/business"
+	"tkestack.io/tke/api/platform"
 
 	"github.com/go-openapi/inflect"
 	"golang.org/x/net/context"
@@ -151,6 +152,9 @@ func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) autho
 
 	if resourceType == "namespaces" && attr.GetAPIGroup() == registry.GroupName {
 		resourceType = "registrynamespaces"
+	}
+	if resourceType == "templates" && attr.GetAPIGroup() == platform.GroupName {
+		resourceType = "workloadtemplates"
 	}
 
 	clusterName := ""
