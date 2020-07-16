@@ -21,9 +21,10 @@ package prometheus
 import "github.com/prometheus/client_golang/prometheus"
 
 var (
+	//TODO switch name back to prometheus_status_fail when rm platform addon platform
 	prometheusStatusFail = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "prometheus_status_fail",
+			Name: "prometheus_status_fail_monitor",
 			Help: "prometheus addon status fail or not",
 		},
 		[]string{"tenant_id", "cluster_name", "prometheus_name"})
