@@ -1329,6 +1329,63 @@ type LogCollectorStatus struct {
 // +genclient:skipVerbs=deleteCollection
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// Template instance is a recorder of kubernetes event.
+type Template struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// +optional
+	Spec TemplateSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	// +optional
+	Status TemplateStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// TemplateSpec is a description of template.
+type TemplateSpec struct {
+	TenantID string `json:"tenantID,omitempty" protobuf:"bytes,1,opt,name=tenantID"`
+	// +optional
+	Type     string `json:"type" protobuf:"bytes,2,opt,name=type"`
+	Username string `json:"username" protobuf:"bytes,3,opt,name=username"`
+	// +optional
+	Labels  map[string]string `json:"labels,omitempty" protobuf:"bytes,4,opt,name=labels"`
+	Content string            `json:"content,omitempty" protobuf:"bytes,5,opt,name=content"`
+}
+
+// TemplateStatus is information about the current status of a
+// TemplateStatus.
+type TemplateStatus struct {
+	// Phase is the current lifecycle phase of the persistent event of cluster.
+	// +optional
+	Phase AddonPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase"`
+	// Reason is a brief CamelCase string that describes any failure.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,2,opt,name=reason"`
+	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
+	// +optional
+	RetryCount int32 `json:"retryCount" protobuf:"varint,3,name=retryCount"`
+	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
+	// +optional
+	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,4,name=lastReInitializingTimestamp"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// TemplateList is the whole list of template.
+type TemplateList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of templates
+	Items []Template `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // Machine instance in Kubernetes cluster
 type Machine struct {
 	metav1.TypeMeta `json:",inline"`

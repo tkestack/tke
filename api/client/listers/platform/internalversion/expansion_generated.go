@@ -80,6 +80,10 @@ type RegistryListerExpansion interface{}
 // TappControllerLister.
 type TappControllerListerExpansion interface{}
 
+// TemplateListerExpansion allows custom methods to be added to
+// TemplateLister.
+type TemplateListerExpansion interface{}
+
 // VolumeDecoratorListerExpansion allows custom methods to be added to
 // VolumeDecoratorLister.
 type VolumeDecoratorListerExpansion interface{}

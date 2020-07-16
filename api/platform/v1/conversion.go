@@ -31,6 +31,7 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		AddFieldLabelConversionsForMachine,
 		AddFieldLabelConversionsForRegistry,
 		AddFieldLabelConversionsForPersistentEvent,
+		AddFieldLabelConversionsForTemplate,
 		AddFieldLabelConversionsForHelm,
 		AddFieldLabelConversionsForTappController,
 		AddFieldLabelConversionsForCSIOperator,
@@ -99,6 +100,25 @@ func AddFieldLabelConversionsForMachine(scheme *runtime.Scheme) error {
 				"spec.clusterName",
 				"spec.type",
 				"spec.ip",
+				"status.phase",
+				"metadata.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}
+
+// AddFieldLabelConversionsForMachine adds a conversion function to convert
+// field selectors of Cluster from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForTemplate(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("Template"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.tenantID",
+				"spec.username",
+				"spec.type",
 				"status.phase",
 				"metadata.name":
 				return label, value, nil
