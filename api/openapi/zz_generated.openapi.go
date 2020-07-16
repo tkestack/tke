@@ -44690,6 +44690,13 @@ func schema_tke_api_platform_v1_PrometheusSpec(ref common.ReferenceCallback) com
 							Format:      "",
 						},
 					},
+					"withNPD": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WithNPD indicates whether to deploy node-problem-detector or not",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "clusterName"},
 			},
