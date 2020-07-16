@@ -750,6 +750,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/apimachinery/pkg/runtime.Unknown":                                     schema_k8sio_apimachinery_pkg_runtime_Unknown(ref),
 		"k8s.io/apimachinery/pkg/util/intstr.IntOrString":                             schema_apimachinery_pkg_util_intstr_IntOrString(ref),
 		"k8s.io/apimachinery/pkg/version.Info":                                        schema_k8sio_apimachinery_pkg_version_Info(ref),
+		"tkestack.io/tapp/pkg/apis/tappcontroller/v1.TApp":                            schema_pkg_apis_tappcontroller_v1_TApp(ref),
+		"tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppList":                        schema_pkg_apis_tappcontroller_v1_TAppList(ref),
+		"tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppSpec":                        schema_pkg_apis_tappcontroller_v1_TAppSpec(ref),
+		"tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppStatus":                      schema_pkg_apis_tappcontroller_v1_TAppStatus(ref),
+		"tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppUpdateStrategy":              schema_pkg_apis_tappcontroller_v1_TAppUpdateStrategy(ref),
 		"tkestack.io/tke/api/auth/v1.APIKey":                                          schema_tke_api_auth_v1_APIKey(ref),
 		"tkestack.io/tke/api/auth/v1.APIKeyList":                                      schema_tke_api_auth_v1_APIKeyList(ref),
 		"tkestack.io/tke/api/auth/v1.APIKeyReq":                                       schema_tke_api_auth_v1_APIKeyReq(ref),
@@ -936,6 +941,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.ClusterStatus":                               schema_tke_api_platform_v1_ClusterStatus(ref),
 		"tkestack.io/tke/api/platform/v1.ConfigMap":                                   schema_tke_api_platform_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/platform/v1.ConfigMapList":                               schema_tke_api_platform_v1_ConfigMapList(ref),
+		"tkestack.io/tke/api/platform/v1.ContentSpec":                                 schema_tke_api_platform_v1_ContentSpec(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPA":                                     schema_tke_api_platform_v1_CronHPA(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPAList":                                 schema_tke_api_platform_v1_CronHPAList(ref),
 		"tkestack.io/tke/api/platform/v1.CronHPAProxyOptions":                         schema_tke_api_platform_v1_CronHPAProxyOptions(ref),
@@ -997,6 +1003,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.TappControllerProxyOptions":                  schema_tke_api_platform_v1_TappControllerProxyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.TappControllerSpec":                          schema_tke_api_platform_v1_TappControllerSpec(ref),
 		"tkestack.io/tke/api/platform/v1.TappControllerStatus":                        schema_tke_api_platform_v1_TappControllerStatus(ref),
+		"tkestack.io/tke/api/platform/v1.Template":                                    schema_tke_api_platform_v1_Template(ref),
+		"tkestack.io/tke/api/platform/v1.TemplateList":                                schema_tke_api_platform_v1_TemplateList(ref),
+		"tkestack.io/tke/api/platform/v1.TemplateSpec":                                schema_tke_api_platform_v1_TemplateSpec(ref),
+		"tkestack.io/tke/api/platform/v1.TemplateStatus":                              schema_tke_api_platform_v1_TemplateStatus(ref),
 		"tkestack.io/tke/api/platform/v1.ThirdPartyHA":                                schema_tke_api_platform_v1_ThirdPartyHA(ref),
 		"tkestack.io/tke/api/platform/v1.Upgrade":                                     schema_tke_api_platform_v1_Upgrade(ref),
 		"tkestack.io/tke/api/platform/v1.UpgradeStrategy":                             schema_tke_api_platform_v1_UpgradeStrategy(ref),
@@ -35610,6 +35620,302 @@ func schema_k8sio_apimachinery_pkg_version_Info(ref common.ReferenceCallback) co
 	}
 }
 
+func schema_pkg_apis_tappcontroller_v1_TApp(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TApp represents a set of pods with consistent identities.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec defines the desired identities of pods in this tapp.",
+							Ref:         ref("tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Status is the current status of pods in this TApp. This data may be out of date by some window of time.",
+							Ref:         ref("tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppSpec", "tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppStatus"},
+	}
+}
+
+func schema_pkg_apis_tappcontroller_v1_TAppList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TAppList is a collection of TApp.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tapp/pkg/apis/tappcontroller/v1.TApp"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tapp/pkg/apis/tappcontroller/v1.TApp"},
+	}
+}
+
+func schema_pkg_apis_tappcontroller_v1_TAppSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A TAppSpec is the specification of a TApp.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"replicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"selector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Selector is a label query over pods that should match the replica count. If empty, defaulted to labels on the pod template. More info: http://releases.k8s.io/release-1.4/docs/user-guide/labels.md#label-selectors",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector"),
+						},
+					},
+					"template": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template is the object that describes the pod that will be initial created/default scaled it should be added to TemplatePool",
+							Ref:         ref("k8s.io/api/core/v1.PodTemplateSpec"),
+						},
+					},
+					"templatePool": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TemplatePool stores a map whose key is template name and value is podTemplate",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.PodTemplateSpec"),
+									},
+								},
+							},
+						},
+					},
+					"statuses": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Statuses stores desired instance status instanceID --> desiredStatus",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"templates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Templates stores instanceID --> template name",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"updateStrategy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UpdateStrategy indicates the StatefulSetUpdateStrategy that will be employed to update Pods in the TApp",
+							Ref:         ref("tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppUpdateStrategy"),
+						},
+					},
+					"forceDeletePod": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ForceDeletePod indicates whether force delete pods when it is being deleted because of NodeLost. Default values is false.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"neverMigrate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NeverMigrate indicates whether to migrate pods. If it is true, pods will never be migrated to other nodes, otherwise it depends on other conditions(e.g. pod restart policy).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"volumeClaimTemplates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "volumeClaimTemplates is a list of claims that pods are allowed to reference. The StatefulSet controller is responsible for mapping network identities to claims in a way that maintains the identity of a pod. Every claim in this list must have at least one matching (by name) volumeMount in one container in the template. A claim in this list takes precedence over any volumes in the template, with the same name.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("k8s.io/api/core/v1.PersistentVolumeClaim"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"template"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/core/v1.PersistentVolumeClaim", "k8s.io/api/core/v1.PodTemplateSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.LabelSelector", "tkestack.io/tapp/pkg/apis/tappcontroller/v1.TAppUpdateStrategy"},
+	}
+}
+
+func schema_pkg_apis_tappcontroller_v1_TAppStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TAppStatus represents the current state of a TApp.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"observedGeneration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "most recent generation observed by controller.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"replicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Replicas is the number of actual replicas.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"readyReplicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ReadyReplicas is the number of running replicas",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"scaleLabelSelector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ScaleSelector is a label for query over pods that should match the replica count used by HPA.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"appStatus": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AppStatus describe the current TApp state",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"statuses": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Statues stores actual instanceID --> InstanceStatus",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"replicas", "readyReplicas"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_tappcontroller_v1_TAppUpdateStrategy(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Only support rolling update now",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"template": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template is the rolling update template name",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxUnavailable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxUnavailable is the max unavailable number when tapp is rolling update, default is infinite.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_tke_api_auth_v1_APIKey(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -44988,6 +45294,51 @@ func schema_tke_api_platform_v1_ConfigMapList(ref common.ReferenceCallback) comm
 	}
 }
 
+func schema_tke_api_platform_v1_ContentSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ContentSpec indicates the backend type and attributes of the persistent log store.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"deployment": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/api/apps/v1.Deployment"),
+						},
+					},
+					"statefulSet": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/api/apps/v1.StatefulSet"),
+						},
+					},
+					"daemonSet": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/api/apps/v1.DaemonSet"),
+						},
+					},
+					"job": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/api/batch/v1.Job"),
+						},
+					},
+					"cronJob": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/api/batch/v1beta1.CronJob"),
+						},
+					},
+					"tapp": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tapp/pkg/apis/tappcontroller/v1.TApp"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/api/apps/v1.DaemonSet", "k8s.io/api/apps/v1.Deployment", "k8s.io/api/apps/v1.StatefulSet", "k8s.io/api/batch/v1.Job", "k8s.io/api/batch/v1beta1.CronJob", "tkestack.io/tapp/pkg/apis/tappcontroller/v1.TApp"},
+	}
+}
+
 func schema_tke_api_platform_v1_CronHPA(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -47684,6 +48035,193 @@ func schema_tke_api_platform_v1_TappControllerStatus(ref common.ReferenceCallbac
 					"phase": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Phase is the current lifecycle phase of the tapp controller of cluster.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reason is a brief CamelCase string that describes any failure.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"retryCount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"lastReInitializingTimestamp": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_platform_v1_Template(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Template instance is a recorder of kubernetes event.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.TemplateSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.TemplateStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/platform/v1.TemplateSpec", "tkestack.io/tke/api/platform/v1.TemplateStatus"},
+	}
+}
+
+func schema_tke_api_platform_v1_TemplateList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TemplateList is the whole list of template.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of templates",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/platform/v1.Template"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/platform/v1.Template"},
+	}
+}
+
+func schema_tke_api_platform_v1_TemplateSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TemplateSpec is a description of template.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"tenantID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"content": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.ContentSpec"),
+						},
+					},
+				},
+				Required: []string{"username"},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/platform/v1.ContentSpec"},
+	}
+}
+
+func schema_tke_api_platform_v1_TemplateStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TemplateStatus is information about the current status of a TemplateStatus.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Phase is the current lifecycle phase of the persistent event of cluster.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

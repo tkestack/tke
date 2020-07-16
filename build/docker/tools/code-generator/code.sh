@@ -250,4 +250,5 @@ if [[ "${GENS}" = "all" ]] || [[ "${GENS}" = "all-external" ]] || grep -qw "swag
   for group_version in "${EXT_FQ_APIS[@]}"; do
     gen_types_swagger_doc "${group_version}" "${GOPATH}/src/${group_version}"
   done
+  gen_types_swagger_doc "${EXT_SWAGGER_API}" "${GOPATH}/src/${EXT_SWAGGER_API}"
 fi
