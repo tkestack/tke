@@ -107,6 +107,7 @@ var map_PrometheusSpec = map[string]string{
 	"resources":           "Resources is the resource request and limit for prometheus",
 	"runOnMaster":         "RunOnMaster indicates whether to add master Affinity for all monitor components or not",
 	"alertRepeatInterval": "AlertRepeatInterval indicates repeat interval of alerts",
+	"withNPD":             "WithNPD indicates whether to deploy node-problem-detector or not",
 }
 
 func (PrometheusSpec) SwaggerDoc() map[string]string {

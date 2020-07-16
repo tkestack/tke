@@ -556,6 +556,7 @@ func autoConvert_v1_PrometheusSpec_To_monitor_PrometheusSpec(in *PrometheusSpec,
 	}
 	out.RunOnMaster = in.RunOnMaster
 	out.AlertRepeatInterval = in.AlertRepeatInterval
+	out.WithNPD = in.WithNPD
 	return nil
 }
 
@@ -578,6 +579,7 @@ func autoConvert_monitor_PrometheusSpec_To_v1_PrometheusSpec(in *monitor.Prometh
 	}
 	out.RunOnMaster = in.RunOnMaster
 	out.AlertRepeatInterval = in.AlertRepeatInterval
+	out.WithNPD = in.WithNPD
 	return nil
 }
 

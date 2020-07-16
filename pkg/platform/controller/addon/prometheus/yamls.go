@@ -290,7 +290,7 @@ func scrapeConfigForPrometheus() string {
         target_label: namespace
       - source_labels: [__meta_kubernetes_pod_name]
         action: drop
-        regex: etcd.+
+        regex: etcd.+|node-problem-detector.+
       - source_labels: [__meta_kubernetes_pod_name]
         action: replace
         target_label: pod_name
@@ -403,6 +403,45 @@ func scrapeConfigForPrometheus() string {
         regex: 'project_(.*)'
         action: keep
       - regex: "instance|job|pod_name|scope|node|subresource"
+        action: labeldrop
+
+    - job_name: 'node-problem-detector'
+      scrape_timeout: 60s
+      honor_labels: false
+      kubernetes_sd_configs:
+      - role: pod
+      tls_config:
+        insecure_skip_verify: true
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_tke_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: keep
+        regex: node-problem-detector.+
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: node
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (.+)
+      metric_relabel_configs:
+      - source_labels: [ __name__ ]
+        regex: 'problem_(.*)'
+        action: keep
+      - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
 `
 	return cfgStr

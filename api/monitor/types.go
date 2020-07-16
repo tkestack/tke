@@ -78,6 +78,8 @@ type PrometheusSpec struct {
 	RunOnMaster bool
 	// +optional
 	AlertRepeatInterval string
+	// +optional
+	WithNPD bool
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
