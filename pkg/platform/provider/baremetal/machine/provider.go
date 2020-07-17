@@ -134,9 +134,10 @@ func (p *Provider) create(m *Machine) error {
 	}
 
 	skipConditions := m.Cluster.Spec.Features.SkipConditions
-	if skipConditions == nil {
-		skipConditions = p.config.Feature.SkipConditions
+	if p.config.Feature.SkipConditions != nil {
+		skipConditions = append(skipConditions, p.config.Feature.SkipConditions...)
 	}
+
 	now := metav1.Now()
 	if funk.ContainsString(skipConditions, condition.Type) {
 		m.SetCondition(platformv1.MachineCondition{

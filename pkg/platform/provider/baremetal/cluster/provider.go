@@ -193,9 +193,10 @@ func (p *Provider) create(c *Cluster) error {
 	}
 
 	skipConditions := c.Spec.Features.SkipConditions
-	if skipConditions == nil {
-		skipConditions = p.config.Feature.SkipConditions
+	if p.config.Feature.SkipConditions != nil {
+		skipConditions = append(skipConditions, p.config.Feature.SkipConditions...)
 	}
+
 	now := metav1.Now()
 	if funk.ContainsString(skipConditions, condition.Type) {
 		c.SetCondition(platformv1.ClusterCondition{
