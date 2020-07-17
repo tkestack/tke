@@ -27,7 +27,7 @@ import (
 )
 
 func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadmv1beta2.JoinConfiguration {
-	apiServerEndpoint, err := c.HostForBootstrap()
+	apiServerEndpoint, err := c.Host()
 	if err != nil {
 		panic(err)
 	}
