@@ -5,6 +5,7 @@ go 1.12
 replace (
 	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
+	github.com/dovics/domain-role-manager => github.com/amasser/domain-role-manager v0.0.0-20200325101749-a44f9c315081
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.2.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
@@ -18,7 +19,6 @@ require (
 	github.com/chartmuseum/storage v0.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.38.1-0.20200506070354-4231c1d4b313
-	github.com/deckarep/golang-set v1.7.1
 	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
