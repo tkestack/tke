@@ -142,7 +142,7 @@ data:
       api_server = "https://tke-platform-api"
       api_server_client_config = "/app/conf/tke-platform-config.yaml"
 
-      [client.buisness]
+      [client.business]
       api_server = "https://tke-business-api"
       api_server_client_config = "/app/conf/tke-business-config.yaml"
 
@@ -193,7 +193,7 @@ data:
       - name: tke
         cluster:
           certificate-authority: /app/certs/ca.crt
-          server: https://tke-platform-api
+          server: https://tke-business-api
     users:
       - name: admin-cert
         user:
