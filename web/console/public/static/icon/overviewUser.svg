@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="22px" height="22px" viewBox="0 0 22 22" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>jiaoseguanli</title>
+    <defs>
+        <polygon id="path-1" points="0 0 290 0 290 205 0 205"></polygon>
+        <filter x="-1.2%" y="-1.2%" width="102.4%" height="103.4%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="1" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0.666666667   0 0 0 0 0.666666667   0 0 0 0 0.666666667  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <polygon id="path-3" points="0 103 290 103 290 151 0 151"></polygon>
+        <filter x="-0.2%" y="-1.0%" width="100.3%" height="102.1%" filterUnits="objectBoundingBox" id="filter-4">
+            <feOffset dx="0" dy="-1" in="SourceAlpha" result="shadowOffsetInner1"></feOffset>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0.898039216   0 0 0 0 0.898039216   0 0 0 0 0.898039216  0 0 0 1 0" type="matrix" in="shadowInnerInner1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="编组-5" transform="translate(-15.000000, -116.000000)">
+            <g id="Rectangle-12-Copy">
+                <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+                <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-1"></use>
+            </g>
+            <g id="矩形备份-4">
+                <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-3"></use>
+                <use fill="black" fill-opacity="1" filter="url(#filter-4)" xlink:href="#path-3"></use>
+            </g>
+            <g id="jiaoseguanli" transform="translate(15.000000, 116.000000)" fill="#333333" fill-rule="nonzero">
+                <path d="M16.84375,15.7666667 L6.25625,15.7666667 C5.8025,15.7666667 5.5,15.4733333 5.5,15.0333333 C5.5,14.5933333 5.8025,14.3 6.25625,14.3 L16.84375,14.3 C17.2975,14.3 17.6,14.5933333 17.6,15.0333333 C17.6,15.4733333 17.2975,15.7666667 16.84375,15.7666667 Z M16.84375,18.7 L6.25625,18.7 C5.8025,18.7 5.5,18.4066667 5.5,17.9666667 C5.5,17.5266667 5.8025,17.2333333 6.25625,17.2333333 L16.84375,17.2333333 C17.2975,17.2333333 17.6,17.5266667 17.6,17.9666667 C17.6,18.4066667 17.2975,18.7 16.84375,18.7 Z" id="形状"></path>
+                <path d="M18.8571429,1.57142857 C19.8,1.57142857 20.4285714,2.2 20.4285714,3.14285714 L20.4285714,18.8571429 C20.4285714,19.8 19.8,20.4285714 18.8571429,20.4285714 L3.14285714,20.4285714 C2.2,20.4285714 1.57142857,19.8 1.57142857,18.8571429 L1.57142857,3.14285714 C1.57142857,2.2 2.2,1.57142857 3.14285714,1.57142857 L18.8571429,1.57142857 M18.8571429,0 L3.14285714,0 C1.41428571,0 0,1.41428571 0,3.14285714 L0,18.8571429 C0,20.5857143 1.41428571,22 3.14285714,22 L18.8571429,22 C20.5857143,22 22,20.5857143 22,18.8571429 L22,3.14285714 C22,1.41428571 20.5857143,0 18.8571429,0 Z" id="形状"></path>
+                <path d="M11.55,9.9 C9.95789474,9.9 8.8,8.37692308 8.8,6.51538462 C8.8,4.65384615 9.95789474,3.3 11.55,3.3 C13.1421053,3.3 14.3,4.82307692 14.3,6.51538462 C14.3,8.20769231 13.1421053,9.9 11.55,9.9 Z M11.55,4.99230769 C10.8263158,4.99230769 10.2473684,5.66923077 10.2473684,6.51538462 C10.2473684,7.36153846 10.8263158,8.03846154 11.55,8.03846154 C12.2736842,8.03846154 12.8526316,7.36153846 12.8526316,6.51538462 C12.8526316,5.66923077 12.2736842,4.99230769 11.55,4.99230769 Z" id="形状"></path>
+                <path d="M16.5,12.1 L14.9032258,12.1 C14.9032258,10.3967742 13.3064516,9.11935484 11.55,9.11935484 C9.79354839,9.11935484 8.19677419,10.3967742 8.19677419,12.1 L6.6,12.1 C6.6,9.68709677 8.83548387,7.7 11.55,7.7 C14.2645161,7.7 16.5,9.68709677 16.5,12.1 Z" id="路径"></path>
+            </g>
+        </g>
+    </g>
+</svg>
