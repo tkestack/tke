@@ -78,6 +78,11 @@ interface RouterConfig {
 /** 基础的侧边栏导航栏配置 */
 const commonRouterConfig: RouterConfig[] = [
   {
+    url: '/tkestack/overview',
+    title: '概览',
+    watchModule: ConsoleModuleEnum.Monitor
+  },
+  {
     url: '/tkestack/cluster',
     title: '集群管理',
     watchModule: ConsoleModuleEnum.PLATFORM
@@ -162,12 +167,12 @@ const commonRouterConfig: RouterConfig[] = [
       {
         url: '/tkestack/log',
         title: '日志采集',
-        watchModule: ConsoleModuleEnum.LogAgent,
+        watchModule: ConsoleModuleEnum.LogAgent
       },
       {
         url: '/tkestack/log/setting',
         title: '日志组件',
-        watchModule: ConsoleModuleEnum.LogAgent,
+        watchModule: ConsoleModuleEnum.LogAgent
       },
       {
         url: '/tkestack/persistent-event',
@@ -229,8 +234,8 @@ const businessCommonRouterConfig: RouterConfig[] = [
         url: '/tkestack-project/notify',
         title: '通知设置',
         watchModule: ConsoleModuleEnum.Notify
-      },
-    ],
+      }
+    ]
   },
   {
     title: '运维中心',
@@ -242,7 +247,7 @@ const businessCommonRouterConfig: RouterConfig[] = [
         watchModule: ConsoleModuleEnum.LogAgent
       }
     ]
-  },
+  }
 ];
 
 interface ConsoleWrapperProps {

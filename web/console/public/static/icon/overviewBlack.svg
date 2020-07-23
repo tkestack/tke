@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="20px" height="20px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 63.1 (92452) - https://sketch.com -->
+    <title>Rectangle 7</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="290" height="188"></rect>
+        <filter x="-2.4%" y="-2.7%" width="104.8%" height="107.4%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="2" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0.656063988   0 0 0 0 0.656063988   0 0 0 0 0.656063988  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="TKEStack-平台管理" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="平台管理-概览页面" transform="translate(-1034.000000, -405.000000)">
+            <g id="Group-2" transform="translate(1013.000000, 345.000000)">
+                <g id="Rectangle-2-Copy-4">
+                    <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+                    <use fill="#FFFFFF" fill-rule="evenodd" xlink:href="#path-1"></use>
+                </g>
+                <rect id="Rectangle-7" stroke="#979797" fill="#D8D8D8" x="21.5" y="60.5" width="19" height="19"></rect>
+            </g>
+        </g>
+    </g>
+</svg>
