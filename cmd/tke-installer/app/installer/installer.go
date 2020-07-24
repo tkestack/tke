@@ -2272,6 +2272,7 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 		return err
 	}
 	_ = ioutil.WriteFile(constants.KubeconfigFile, data, 0644)
-	_ = os.MkdirAll("/root/.kube", 0755)
-	return ioutil.WriteFile("/root/.kube/config", data, 0644)
+	homeDir, _ := os.UserHomeDir()
+	_ = os.MkdirAll(homeDir+"/.kube", 0755)
+	return ioutil.WriteFile(homeDir+"/.kube/config", data, 0644)
 }
