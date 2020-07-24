@@ -122,6 +122,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
 			p.EnsureCSIOperator,
+			p.EnsureMetricsServer,
 
 			p.EnsureCleanup,
 			p.EnsureCreateClusterMark,

@@ -34,6 +34,9 @@ type Components struct {
 	GPUManager        containerregistry.Image
 	Busybox           containerregistry.Image
 	GPUQuotaAdmission containerregistry.Image
+
+	MetricsServer containerregistry.Image
+	AddonResizer  containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -58,6 +61,9 @@ var components = Components{
 	GPUManager:        containerregistry.Image{Name: "gpu-manager", Tag: "v1.0.4"},
 	Busybox:           containerregistry.Image{Name: "busybox", Tag: "1.31.0"},
 	GPUQuotaAdmission: containerregistry.Image{Name: "gpu-quota-admission", Tag: "v1.0.0"},
+
+	MetricsServer: containerregistry.Image{Name: "metrics-server", Tag: "v0.3.6"},
+	AddonResizer:  containerregistry.Image{Name: "addon-resizer", Tag: "1.8.11"},
 }
 
 func List() []string {
