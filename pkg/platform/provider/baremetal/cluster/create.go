@@ -1049,6 +1049,24 @@ func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
+func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error {
+	client, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+	option := map[string]interface{}{
+		"MetricsServerImage": images.Get().MetricsServer.FullName(),
+		"AddonResizerImage":  images.Get().AddonResizer.FullName(),
+	}
+
+	err = apiclient.CreateResourceWithFile(ctx, client, constants.MetricsServerManifest, option)
+	if err != nil {
+		return errors.Wrap(err, "install metrics server error")
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 	if c.Cluster.Spec.Features.CSIOperator == nil {
 		return nil
