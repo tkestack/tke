@@ -57,7 +57,7 @@ function prefight() {
 
   check::root
   check::disk '/opt' 30
-  check::disk '/var/lib/docker' 20
+  check::disk '/var/lib' 20
 }
 
 function check::root() {
