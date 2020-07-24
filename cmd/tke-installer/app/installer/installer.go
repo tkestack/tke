@@ -209,7 +209,7 @@ func (t *TKE) initSteps() {
 			Func: t.writeKubeconfig,
 		},
 		{
-			Name: "Execute post deploy hook",
+			Name: "Execute post cluster ready hook",
 			Func: t.postClusterReadyHook,
 		},
 		{
@@ -387,7 +387,7 @@ func (t *TKE) initSteps() {
 
 	t.steps = append(t.steps, []types.Handler{
 		{
-			Name: "Execute post deploy hook",
+			Name: "Execute post install hook",
 			Func: t.postInstallHook,
 		},
 	}...)
