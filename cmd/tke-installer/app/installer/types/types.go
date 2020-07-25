@@ -107,6 +107,10 @@ func (r *Registry) IsOfficial() bool {
 	return funk.ContainsString([]string{"docker.io/tkestack", "ccr.ccs.tencentyun.com/tkestack"}, r.Prefix())
 }
 
+func (r *Registry) ShouldPushImages() bool {
+	return !r.IsOfficial() && (r.TKERegistry != nil || r.ThirdPartyRegistry != nil && !r.ThirdPartyRegistry.Pushed)
+}
+
 type TKERegistry struct {
 	Domain    string `json:"domain" validate:"hostname_rfc1123"`
 	Namespace string `json:"namespace"`
@@ -119,6 +123,7 @@ type ThirdPartyRegistry struct {
 	Namespace string `json:"namespace" validate:"required"`
 	Username  string `json:"username" validate:"required"`
 	Password  []byte `json:"password" validate:"required"`
+	Pushed    bool   `json:"pushed"`
 }
 
 type Business struct {

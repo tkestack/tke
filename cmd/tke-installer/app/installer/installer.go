@@ -166,7 +166,7 @@ func (t *TKE) initSteps() {
 	// TKERegistry load images && start local registry && push images to local registry
 	// && deploy tke-registry-api && push images to tke-registry
 	// ThirdPartyRegistry load images && push images
-	if !t.Para.Config.Registry.IsOfficial() {
+	if t.Para.Config.Registry.ShouldPushImages() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Load images",
@@ -186,7 +186,7 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if !t.Para.Config.Registry.IsOfficial() {
+	if t.Para.Config.Registry.ShouldPushImages() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Push images",
