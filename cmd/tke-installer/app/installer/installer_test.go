@@ -18,19 +18,50 @@
 
 package installer
 
-//var (
-//	tke = newTKE()
-//)
-//
-//func newTKE() *TKE {
-//	return &TKE{
-//		namespace:    namespace,
-//		globalClient: client.GetClientSet(),
-//	}
-//}
+import (
+	"crypto/x509"
+	"encoding/pem"
+	"github.com/stretchr/testify/assert"
+	certutil "k8s.io/client-go/util/cert"
+	"testing"
+	"tkestack.io/tke/pkg/util/pkiutil"
+)
+
+var (
+	tke = newTKE()
+)
+
+func newTKE() *TKE {
+	return &TKE{
+		namespace: namespace,
+	}
+}
 
 // TODO support customize version.GitVersion
 //func TestTKE_prepareImages(t *testing.T) {
 //	err := tke.prepareImages(context.Background())
 //	assert.Nil(t, err)
 //}
+
+func TestTKE_validateCertAndKey(t *testing.T) {
+	caCert, caKey, _ := pkiutil.NewCertificateAuthority(&certutil.Config{
+		CommonName:   "TKE",
+		Organization: []string{"Tencent"},
+	})
+
+	cert, key, _ := pkiutil.NewCertAndKey(caCert, caKey, &certutil.Config{
+		CommonName:   "TKE-SERVER",
+		Organization: []string{"Tencent"},
+		AltNames: certutil.AltNames{
+			DNSNames: append([]string{"*.tke.com", "*.registry.tke.com"}),
+		},
+		Usages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+	})
+
+	err := tke.validateCertAndKey(
+		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}),
+		pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}),
+		[]string{"console.tke.com", "registry.tke.com", "*.registry.tke.com"},
+	)
+	assert.True(t, err == nil)
+}

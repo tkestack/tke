@@ -34,6 +34,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"tkestack.io/tke/pkg/util/validation"
 
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
@@ -718,13 +719,18 @@ func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 			return apierrors.NewBadRequest(err.Error())
 		}
 		for _, one := range dnsNames {
-			if !funk.Contains(certs1[0].DNSNames, one) {
+			if !matchDNSName(certs1[0].DNSNames, one) {
 				return apierrors.NewBadRequest(fmt.Sprintf("certificate DNSNames must contains %v", one))
 			}
 		}
 	}
 
 	return nil
+}
+
+func matchDNSName(certDNSNames []string, dnsName string) bool {
+	dotIdx := strings.Index(dnsName, ".")
+	return funk.Contains(certDNSNames, dnsName) || validation.IsValidDNSName(dnsName) && dotIdx > -1 && funk.Contains(certDNSNames, "*"+dnsName[dotIdx:])
 }
 
 // validateResource validate the cpu and memory of cluster machines whether meets the requirements.
