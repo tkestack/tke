@@ -214,11 +214,6 @@ const businessCommonRouterConfig: RouterConfig[] = [
     watchModule: ConsoleModuleEnum.Business
   },
   {
-    url: '/tkestack-project/helm',
-    title: 'Helm2应用',
-    watchModule: ConsoleModuleEnum.PLATFORM
-  },
-  {
     url: '/tkestack-project/project',
     title: '业务管理',
     watchModule: ConsoleModuleEnum.Business
@@ -267,12 +262,17 @@ const businessCommonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维管理',
-    watchModule: [ConsoleModuleEnum.Application, ConsoleModuleEnum.LogAgent],
+    watchModule: [ConsoleModuleEnum.Application, ConsoleModuleEnum.LogAgent, ConsoleModuleEnum.PLATFORM],
     subRouterConfig: [
       {
         url: '/tkestack-project/app/app',
         title: 'Helm应用',
         watchModule: ConsoleModuleEnum.Application
+      },
+      {
+        url: '/tkestack-project/helm',
+        title: 'Helm2应用',
+        watchModule: ConsoleModuleEnum.PLATFORM
       },
       {
         url: '/tkestack-project/log',
