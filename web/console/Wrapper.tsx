@@ -47,7 +47,10 @@ export enum ConsoleModuleEnum {
   Auth = 'auth',
 
   /** 审计模块 */
-  Audit = 'audit'
+  Audit = 'audit',
+
+  /** Helm应用模块 */
+  Application = 'application'
 }
 
 export enum PlatformTypeEnum {
@@ -107,8 +110,13 @@ const commonRouterConfig: RouterConfig[] = [
         watchModule: ConsoleModuleEnum.Registry
       },
       {
+        url: '/tkestack/registry/chartgroup',
+        title: 'Helm仓库',
+        watchModule: ConsoleModuleEnum.Registry
+      },
+      {
         url: '/tkestack/registry/chart',
-        title: 'Chart包仓库管理',
+        title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },
       {
@@ -157,11 +165,21 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维中心',
-    watchModule: [ConsoleModuleEnum.PLATFORM, ConsoleModuleEnum.Audit, ConsoleModuleEnum.LogAgent],
+    watchModule: [
+      ConsoleModuleEnum.Application,
+      ConsoleModuleEnum.PLATFORM,
+      ConsoleModuleEnum.Audit,
+      ConsoleModuleEnum.LogAgent
+    ],
     subRouterConfig: [
       {
-        url: '/tkestack/helm',
+        url: '/tkestack/application/app',
         title: 'Helm应用',
+        watchModule: ConsoleModuleEnum.Application
+      },
+      {
+        url: '/tkestack/helm',
+        title: 'Helm2应用',
         watchModule: ConsoleModuleEnum.PLATFORM
       },
       {
@@ -206,7 +224,17 @@ const businessCommonRouterConfig: RouterConfig[] = [
     subRouterConfig: [
       {
         url: '/tkestack-project/registry/repo',
-        title: '仓库管理',
+        title: '镜像仓库管理',
+        watchModule: ConsoleModuleEnum.Registry
+      },
+      {
+        url: '/tkestack-project/registry/chartgroup',
+        title: 'Helm仓库',
+        watchModule: ConsoleModuleEnum.Registry
+      },
+      {
+        url: '/tkestack-project/registry/chart',
+        title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },
       {
@@ -240,6 +268,11 @@ const businessCommonRouterConfig: RouterConfig[] = [
         url: '/tkestack-project/log',
         title: '日志采集',
         watchModule: ConsoleModuleEnum.LogAgent
+      },
+      {
+        url: '/tkestack-project/app/app',
+        title: 'Helm应用',
+        watchModule: ConsoleModuleEnum.Application
       }
     ]
   }

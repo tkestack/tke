@@ -11,7 +11,8 @@ import { router } from '../router';
 import { configStore } from '../stores/RootStore';
 import { ApiKeyContainer } from './apikey/ApiKeyContainer';
 import { RepoContainer } from './repo/RepoContainer';
-import { ChartContainer } from './chart/ChartContainer';
+import { ChartApp } from './chart/ChartApp';
+import { ChartGroupApp } from './chartgroup/ChartGroupApp';
 
 const store = configStore();
 
@@ -42,10 +43,6 @@ const mapDispatchToProps = dispatch =>
 )
 @((router.serve as any)())
 class RegistryApp extends React.Component<RootProps, {}> {
-  componentDidMount() {
-    this.props.actions.image.fetchDockerRegUrl.fetch();
-  }
-
   render() {
     let { route } = this.props,
       urlParam = router.resolve(route);
@@ -55,7 +52,9 @@ class RegistryApp extends React.Component<RootProps, {}> {
     } else if (urlParam['sub'] === 'repo') {
       return <RepoContainer {...this.props} />;
     } else if (urlParam['sub'] === 'chart') {
-      return <ChartContainer {...this.props} />;
+      return <ChartApp {...this.props} />;
+    } else if (urlParam['sub'] === 'chartgroup') {
+      return <ChartGroupApp {...this.props} />;
     } else {
       return <RepoContainer {...this.props} />;
     }

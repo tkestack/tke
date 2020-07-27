@@ -240,7 +240,7 @@ export function createFFListActions<T, TFilter, ExtendParamsT = any, TSFilter = 
             return getFieldValue(r, model.valueField) === value;
           });
           if (record) {
-            actions.select(record);
+            dispatch(actions.select(record));
           }
         }
       };
@@ -288,7 +288,7 @@ export function createFFListActions<T, TFilter, ExtendParamsT = any, TSFilter = 
             return (values as any[]).indexOf(getFieldValue(r, model.valueField)) !== -1;
           });
           if (records && records.length) {
-            actions.selects(records);
+            dispatch(actions.selects(records));
           }
         }
       };
