@@ -377,9 +377,6 @@ func (c *Controller) createLBCFIfNeeded(key string, cachedLBCF *cachedLBCF, lbcf
 		}
 	case v1.AddonPhaseFailed:
 		log.Info("LBCF is error", log.String("LBCF ", key))
-		if _, ok := c.health.Load(key); ok {
-			c.health.Delete(key)
-		}
 	}
 	return nil
 }
@@ -523,32 +520,43 @@ func (c *Controller) watchLBCFHealth(key string) func() (bool, error) {
 		log.Info("Start check LBCF in cluster health", log.String("cluster", key))
 		lbcf, err := c.lister.Get(key)
 		if err != nil {
-			return false, err
+			log.Errorf("lbcf health check get key %s failed: %v", key, err)
+			return false, nil
 		}
 
 		cluster, err := c.client.PlatformV1().Clusters().Get(lbcf.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
-			return false, err
+			log.Errorf("lbcf health check get cluster %s failed: %v", lbcf.Spec.ClusterName, err)
+			return false, nil
 		}
 		if err != nil {
 			return false, nil
 		}
 		if _, ok := c.health.Load(key); !ok {
-			log.Info("health check over.")
+			log.Infof("lbcf health check for %s check over.", lbcf.Name)
 			return true, nil
 		}
 		kubeClient, err := util.BuildExternalClientSet(cluster, c.client.PlatformV1())
 		if err != nil {
-			return false, err
+			log.Errorf("lbcf health check get kube-client for cluster %s failed: %v", cluster.Name, err)
+			return false, nil
 		}
 		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", svcLBCFHealthCheckName, strconv.Itoa(svcLBCFHealthCheckPort), svcLBCFHealthCheckPath, nil).DoRaw(); err != nil {
 			lbcf = lbcf.DeepCopy()
 			lbcf.Status.Phase = v1.AddonPhaseFailed
-			lbcf.Status.Reason = "LBCF is not healthy."
+			lbcf.Status.Reason = fmt.Sprintf("%v", err)
 			if err = c.persistUpdate(lbcf); err != nil {
-				return false, err
+				log.Errorf("health check update lbcf status for %s failed: %v", lbcf.Name, err)
+				return false, nil
 			}
-			return true, nil
+			return false, nil
+		}
+		lbcf = lbcf.DeepCopy()
+		lbcf.Status.Phase = v1.AddonPhaseRunning
+		lbcf.Status.Reason = ""
+		if err = c.persistUpdate(lbcf); err != nil {
+			log.Errorf("health check update lbcf status for %s failed: %v", lbcf.Name, err)
+			return false, nil
 		}
 		return false, nil
 	}
