@@ -5,7 +5,6 @@ go 1.12
 replace (
 	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
-	github.com/dovics/domain-role-manager => github.com/amasser/domain-role-manager v0.0.0-20200325101749-a44f9c315081
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.2.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
