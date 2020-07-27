@@ -6,6 +6,8 @@ import {
   authServerVersion,
   monitorServerVersion,
   auditServerVersion,
+  registryServerVersion,
+  applicationServerVersion
 } from '../../apiServerVersion';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { ConsoleModuleEnum } from '../../../Wrapper';
@@ -110,6 +112,13 @@ export interface ApiVersion {
   /** 审计记录 */
   audit?: ResourceApiInfo;
   auditFilterCondition?: ResourceApiInfo;
+
+  /** 仓库配置 */
+  chartgroup?: ResourceApiInfo;
+  chart?: ResourceApiInfo;
+
+  /** 应用配置 */
+  app?: ResourceApiInfo;
 }
 
 interface ResourceApiInfo {
@@ -209,7 +218,7 @@ const k8sApiVersionFor114: ApiVersion = {
     version: 'v1',
     basicEntry: 'apis',
     headTitle: 'ReplicaSet'
-  },
+  }
 };
 /** ================== start 1.14 的apiversion配置 ======================== */
 
@@ -745,6 +754,39 @@ const notifyApiVersion: ApiVersion = {
   }
 };
 
+/**
+ * 仓库相关
+ */
+const registryPolicyApiVersion: ApiVersion = {
+  chartgroup: {
+    group: registryServerVersion.group,
+    version: registryServerVersion.version,
+    basicEntry: registryServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Registry,
+    headTitle: 'ChartGroup'
+  },
+  chart: {
+    group: registryServerVersion.group,
+    version: registryServerVersion.version,
+    basicEntry: registryServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Registry,
+    headTitle: 'Chart'
+  }
+};
+
+/**
+ * 应用相关
+ */
+const applicationApiVersion: ApiVersion = {
+  app: {
+    group: applicationServerVersion.group,
+    version: applicationServerVersion.version,
+    basicEntry: applicationServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Application,
+    headTitle: 'App'
+  }
+};
+
 interface FinalApiVersion {
   [props: string]: ApiVersion;
 }
@@ -756,7 +798,9 @@ const basicApiVersion = Object.assign(
   k8sApiVersionForAddon,
   k8sApiVersionFor18,
   alarmPolicyApiVersion,
-  notifyApiVersion
+  notifyApiVersion,
+  registryPolicyApiVersion,
+  applicationApiVersion
 );
 
 /**

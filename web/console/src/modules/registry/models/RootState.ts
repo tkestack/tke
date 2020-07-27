@@ -1,9 +1,29 @@
-import { WorkflowState, FetcherState, FFListModel } from '@tencent/ff-redux';
+import { WorkflowState, FetcherState, FFListModel, FFObjectModel } from '@tencent/ff-redux';
 import { ApiKey, ApiKeyFilter, ApiKeyCreation } from './ApiKey';
 import { Repo, RepoFilter, RepoCreation } from './Repo';
 import { Image, ImageFilter, ImageCreation } from './Image';
-import { Chart, ChartFilter, ChartIns, ChartInsFilter, ChartCreation } from './Chart';
+import {
+  Chart,
+  ChartFilter,
+  ChartIns,
+  ChartInsFilter,
+  ChartCreation,
+  ChartEditor,
+  ChartVersion,
+  ChartDetailFilter,
+  RemovedChartVersions,
+  ChartInfo,
+  ChartInfoFilter,
+  ChartVersionFilter
+} from './Chart';
+import { ChartGroup, ChartGroupFilter, ChartGroupEditor, ChartGroupCreation } from './ChartGroup';
+import { UserInfo } from './UserInfo';
+import { Project, ProjectFilter } from './Project';
+import { Cluster, ClusterFilter } from './Cluster';
+import { Namespace, NamespaceFilter, ProjectNamespace, ProjectNamespaceFilter } from './Namespace';
+import { AppCreation, App, AppFilter } from './App';
 import { RouteState } from '../../../../helpers';
+import { Validation, ValidatorModel } from '@tencent/ff-validator';
 
 type ApiKeyWorkflow = WorkflowState<ApiKey, void>;
 type ApiKeyCreateWorkflow = WorkflowState<ApiKeyCreation, void>;
@@ -77,4 +97,38 @@ export interface RootState {
 
   /** 删除仓库工作流 */
   deleteChart?: ChartWorkflow;
+
+  /** 模板仓库 */
+  chartGroupList?: FFListModel<ChartGroup, ChartGroupFilter>;
+  chartGroupCreation?: ChartGroupCreation;
+  chartGroupEditor?: ChartGroupEditor;
+  chartGroupValidator?: ValidatorModel;
+  chartGroupAddWorkflow?: WorkflowState<ChartGroup, any>;
+  chartGroupUpdateWorkflow?: WorkflowState<ChartGroup, any>;
+  chartGroupRemoveWorkflow?: WorkflowState<ChartGroup, any>;
+  projectList?: FFListModel<Project, ProjectFilter>;
+  userInfo?: UserInfo;
+
+  /** 模板 */
+  chartList?: FFListModel<Chart, ChartFilter>;
+  // chartCreation?: ChartCreation;
+  chartEditor?: ChartEditor;
+  chartValidator?: ValidatorModel;
+  chartAddWorkflow?: WorkflowState<Chart, any>;
+  chartUpdateWorkflow?: WorkflowState<Chart, ChartDetailFilter>;
+  chartRemoveWorkflow?: WorkflowState<Chart, ChartFilter>;
+  chartVersionRemoveWorkflow?: WorkflowState<ChartVersion, ChartVersionFilter>;
+  removedChartVersions?: RemovedChartVersions;
+  chartDetail?: FFObjectModel<Chart, ChartDetailFilter>;
+  chartInfo?: FFObjectModel<ChartInfo, ChartInfoFilter>;
+  chartVersionFile?: FFObjectModel<any, ChartVersionFilter>;
+  appCreation?: AppCreation;
+  appValidator?: ValidatorModel;
+  appAddWorkflow?: WorkflowState<App, AppFilter>;
+
+  /** 集群 */
+  clusterList?: FFListModel<Cluster, ClusterFilter>;
+  /** 命名空间 */
+  namespaceList?: FFListModel<Namespace, NamespaceFilter>;
+  projectNamespaceList?: FFListModel<ProjectNamespace, ProjectNamespaceFilter>;
 }

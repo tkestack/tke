@@ -17,6 +17,7 @@ import { AlarmPolicy } from './src/modules/alarmPolicy';
 import { Notify } from './src/modules/notify';
 import { LogStash } from './src/modules/logStash';
 import { Helm } from './src/modules/helm';
+import { Application } from './src/modules/application';
 import { TipDialog } from './src/modules/common';
 import { Button, Alert, Text } from '@tencent/tea-component';
 import { Init_Forbiddent_Config } from './helpers/reduceNetwork';
@@ -233,10 +234,23 @@ Entry.register({
     },
 
     /**
+     * @url https://{{domain}}/tkestack/application
+     */
+    application: {
+      title: t('Helm 应用 - TKEStack'),
+      container: (
+        <Wrapper platformType={PlatformTypeEnum.Manager}>
+          <ForbiddentDialog />
+          <Application />
+        </Wrapper>
+      ),
+    },
+
+    /**
      * @url https://{{domain}}/tkestack/helm
      */
     helm: {
-      title: t('Helm 应用 - TKEStack'),
+      title: t('Helm2 应用 - TKEStack'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />

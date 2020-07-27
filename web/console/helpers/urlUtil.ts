@@ -108,6 +108,9 @@ interface K8sRestfulPathOptions {
   clusterId?: string;
 
   meshId?: string;
+
+  /** 业务视图是否切分namespace */
+  toSplitIfProjectNamespace?: boolean;
 }
 
 /**
@@ -126,12 +129,13 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
     specificName = '',
     extraResource = '',
     clusterId = '',
-    meshId
+    meshId = '',
+    toSplitIfProjectNamespace = true
   } = options;
 
   /// #if project
   //业务侧ns eg: cls-xxx-ns 需要去除前缀
-  if (namespace) {
+  if (namespace && toSplitIfProjectNamespace === true) {
     namespace = namespace.startsWith('global')
       ? namespace.split('-').splice(1).join('-')
       : namespace.split('-').splice(2).join('-');

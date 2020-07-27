@@ -7,8 +7,13 @@ import { Router } from '../../../helpers/Router';
  * @param name  镜像仓库键值
  */
 export const router = new Router('/tkestack/registry(/:sub)(/:mode)(/:tab)', {
-  nsName: '',
-  ns: '',
+  sub: '',
+  mode: '',
+  tab: '',
+  cg: '',
+  chart: '',
   cgName: '',
-  cg: ''
+  chartName: '',
+  prj: '',
+  ns: '',
 });

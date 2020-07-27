@@ -71,7 +71,12 @@ export const requestMethodForAction = (type: string) => {
  * 统一的请求处理
  * @param userParams: RequestParams
  */
-export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?: string, projectId?: string, keyword?: string) => {
+export const reduceNetworkRequest = async (
+  userParams: RequestParams,
+  clusterId?: string,
+  projectId?: string,
+  keyword?: string,
+) => {
   let {
     method,
     url,
@@ -182,7 +187,7 @@ export const reduceNetworkWorkflow = (error: any) => {
  * @param target T[]
  * @param error any
  */
-export const operationResult = function<T>(target: T[] | T, error?: any): OperationResult<T>[] {
+export const operationResult = function <T>(target: T[] | T, error?: any): OperationResult<T>[] {
   if (target instanceof Array) {
     return target.map(x => ({ success: !error, target: x, error }));
   }

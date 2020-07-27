@@ -51,6 +51,9 @@ export enum ConsoleModuleEnum {
 
   /** 审计模块 */
   Audit = 'audit',
+
+  /** Helm应用模块 */
+  Application = 'application',
 }
 
 export enum PlatformTypeEnum {
@@ -97,7 +100,7 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '组织资源',
-    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Chart, ConsoleModuleEnum.ApiKey],
+    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Auth],
     subRouterConfig: [
       {
         url: '/tkestack/registry/repo',
@@ -105,14 +108,19 @@ const commonRouterConfig: RouterConfig[] = [
         watchModule: ConsoleModuleEnum.Registry,
       },
       {
+        url: '/tkestack/registry/chartgroup',
+        title: 'Helm仓库',
+        watchModule: ConsoleModuleEnum.Registry,
+      },
+      {
         url: '/tkestack/registry/chart',
-        title: 'Chart包仓库管理',
-        watchModule: ConsoleModuleEnum.Chart,
+        title: 'Helm模板',
+        watchModule: ConsoleModuleEnum.Registry,
       },
       {
         url: '/tkestack/registry/apikey',
         title: '访问凭证',
-        watchModule: ConsoleModuleEnum.ApiKey,
+        watchModule: ConsoleModuleEnum.Auth,
       },
     ],
   },
@@ -150,11 +158,16 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维中心',
-    watchModule: [ConsoleModuleEnum.PLATFORM, ConsoleModuleEnum.Audit],
+    watchModule: [ConsoleModuleEnum.Application, ConsoleModuleEnum.PLATFORM, ConsoleModuleEnum.Audit],
     subRouterConfig: [
       {
-        url: '/tkestack/helm',
+        url: '/tkestack/application/app',
         title: 'Helm应用',
+        watchModule: ConsoleModuleEnum.Application,
+      },
+      {
+        url: '/tkestack/helm',
+        title: 'Helm2应用',
         watchModule: ConsoleModuleEnum.PLATFORM,
       },
       {
@@ -185,22 +198,32 @@ const businessCommonRouterConfig: RouterConfig[] = [
   },
   {
     url: '/tkestack-project/helm',
-    title: 'Helm应用',
+    title: 'Helm2应用',
     watchModule: ConsoleModuleEnum.PLATFORM,
   },
   {
     title: '组织资源',
-    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.ApiKey],
+    watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Auth],
     subRouterConfig: [
       {
         url: '/tkestack-project/registry/repo',
-        title: '仓库管理',
+        title: '镜像仓库管理',
+        watchModule: ConsoleModuleEnum.Registry,
+      },
+      {
+        url: '/tkestack-project/registry/chartgroup',
+        title: 'Helm仓库',
+        watchModule: ConsoleModuleEnum.Registry,
+      },
+      {
+        url: '/tkestack-project/registry/chart',
+        title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry,
       },
       {
         url: '/tkestack-project/registry/apikey',
         title: '访问凭证',
-        watchModule: ConsoleModuleEnum.ApiKey,
+        watchModule: ConsoleModuleEnum.Auth,
       },
     ],
   },
@@ -217,6 +240,17 @@ const businessCommonRouterConfig: RouterConfig[] = [
         url: '/tkestack-project/notify',
         title: '通知设置',
         watchModule: ConsoleModuleEnum.Notify,
+      },
+    ],
+  },
+  {
+    title: '运维管理',
+    watchModule: [ConsoleModuleEnum.Application],
+    subRouterConfig: [
+      {
+        url: '/tkestack-project/app/app',
+        title: 'Helm应用',
+        watchModule: ConsoleModuleEnum.Application,
       },
     ],
   },
