@@ -21,9 +21,10 @@ package installer
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	certutil "k8s.io/client-go/util/cert"
-	"testing"
 	"tkestack.io/tke/pkg/util/pkiutil"
 )
 
@@ -37,12 +38,6 @@ func newTKE() *TKE {
 	}
 }
 
-// TODO support customize version.GitVersion
-//func TestTKE_prepareImages(t *testing.T) {
-//	err := tke.prepareImages(context.Background())
-//	assert.Nil(t, err)
-//}
-
 func TestTKE_validateCertAndKey(t *testing.T) {
 	caCert, caKey, _ := pkiutil.NewCertificateAuthority(&certutil.Config{
 		CommonName:   "TKE",
@@ -53,7 +48,7 @@ func TestTKE_validateCertAndKey(t *testing.T) {
 		CommonName:   "TKE-SERVER",
 		Organization: []string{"Tencent"},
 		AltNames: certutil.AltNames{
-			DNSNames: append([]string{"*.tke.com", "*.registry.tke.com"}),
+			DNSNames: []string{"*.tke.com", "*.registry.tke.com"},
 		},
 		Usages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 	})
