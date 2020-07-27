@@ -31,7 +31,7 @@ insertCSS(
 );
 
 export const UserDetail = () => {
-  const state = useSelector((state) => state);
+  const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
@@ -49,7 +49,7 @@ export const UserDetail = () => {
     // 请求用户详情
     actions.user.getUser.fetch({
       noCache: true,
-      data: { name: sub },
+      data: { name: sub }
     });
 
     // 进行用户绑定的策略的拉取
@@ -90,26 +90,26 @@ export const UserDetail = () => {
       key: 'name',
       header: t('策略名'),
       width: '20%',
-      render: (x) => x.spec.displayName,
+      render: x => x.spec.displayName
     },
     {
       key: 'category',
       header: t('类型'),
       width: '20%',
-      render: (x) => x.spec.category,
+      render: x => x.spec.category
     },
     {
       key: 'desp',
       header: t('描述'),
       width: '40%',
-      render: (x) => x.spec.description,
-    },
+      render: x => x.spec.description
+    }
   ];
 
   const tabs = [
-    { id: 'policies', label: '已关联策略' },
-    { id: 'groups', label: '已关联用户组' },
-    // { id: 'roles', label: '已关联角色' },
+    { id: 'policies', label: t('已关联策略') },
+    { id: 'groups', label: t('已关联用户组') }
+    // { id: 'roles', label: t('已关联角色') },
   ];
 
   return (
@@ -136,7 +136,7 @@ export const UserDetail = () => {
                     <Input
                       value={displayName}
                       className={isNameError && 'is-error'}
-                      onChange={(value) => {
+                      onChange={value => {
                         setBasicParamsValue({ ...basicParamsValue, displayName: value });
                       }}
                     />
@@ -152,7 +152,7 @@ export const UserDetail = () => {
                   <React.Fragment>
                     <Input
                       value={phoneNumber}
-                      onChange={(value) => {
+                      onChange={value => {
                         setBasicParamsValue({ ...basicParamsValue, phoneNumber: value });
                       }}
                     />
@@ -172,7 +172,7 @@ export const UserDetail = () => {
                   <React.Fragment>
                     <Input
                       value={email}
-                      onChange={(value) => {
+                      onChange={value => {
                         setBasicParamsValue({ ...basicParamsValue, email: value });
                       }}
                     />
@@ -246,16 +246,16 @@ export const UserDetail = () => {
         user: {
           metadata: {
             name: user.metadata.name,
-            resourceVersion: user.metadata.resourceVersion,
+            resourceVersion: user.metadata.resourceVersion
           },
           spec: {
             username: user.spec.username,
             displayName,
             phoneNumber,
-            email,
-          },
-        },
-      },
+            email
+          }
+        }
+      }
     });
     setEditValue({ editBasic: false });
   }

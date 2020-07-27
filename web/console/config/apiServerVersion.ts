@@ -73,3 +73,21 @@ export const logAgentServiceVersion = {
   group: 'logagent.tkestack.io',
   version: 'v1'
 };
+ 
+/**
+ * 仓库模块
+ */
+export const registryServerVersion = {
+  basicUrl: 'apis',
+  group: 'registry.tkestack.io',
+  version: 'v1'
+};
+
+/**
+ * 应用模块
+ */
+export const applicationServerVersion = {
+  basicUrl: 'apis',
+  group: 'application.tkestack.io',
+  version: 'v1'
+};

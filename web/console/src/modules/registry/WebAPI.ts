@@ -1,8 +1,20 @@
 import { OperationResult, QueryState, RecordSet } from '@tencent/ff-redux';
 
+import {
+  Method,
+  // operationResult,
+  reduceK8sQueryString,
+  reduceK8sRestfulPath,
+  reduceNetworkRequest,
+  reduceNetworkWorkflow,
+  RequestResult,
+  GET,
+  POST,
+  PUT,
+  PATCH,
+  DELETE
+} from '../../../helpers';
 import { resourceConfig } from '../../../config/resourceConfig';
-import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNetworkWorkflow } from '../../../helpers';
-import { Method } from '../../../helpers/reduceNetwork';
 import { RequestParams, ResourceInfo } from '../common/models';
 import { CHART_URL, REPO_URL, Default_D_URL } from './constants/Config';
 import {
@@ -15,11 +27,26 @@ import {
   Chart,
   ChartCreation,
   ChartFilter,
+  ChartDetailFilter,
+  ChartVersionFilter,
   ChartIns,
   ChartInsFilter,
   Image,
   ImageCreation,
-  ImageFilter
+  ImageFilter,
+  ChartGroup,
+  ChartGroupFilter,
+  ChartGroupDetailFilter,
+  Project,
+  ChartVersion,
+  ChartInfoFilter,
+  Cluster,
+  ClusterFilter,
+  Namespace,
+  ProjectNamespace,
+  NamespaceFilter,
+  ProjectNamespaceFilter,
+  ProjectFilter
 } from './models';
 
 // 返回标准操作结果
@@ -240,46 +267,6 @@ export async function deleteRepo(repos: Repo[]) {
   } catch (error) {
     throw reduceNetworkWorkflow(error);
   }
-}
-
-/** Chart Group */
-export async function fetchChartList(query: QueryState<ChartFilter>) {
-  let { search, paging } = query;
-
-  let params: RequestParams = {
-    method: Method.get,
-    url: CHART_URL
-  };
-
-  let response = await reduceNetworkRequest(params);
-  let chartList = [],
-    total = 0;
-  try {
-    if (response.code === 0) {
-      let listItems = response.data;
-      if (listItems.items) {
-        chartList = listItems.items.map((item, index) => {
-          return Object.assign({}, item, { id: index });
-        });
-      }
-    }
-  } catch (error) {
-    if (+error.response.status !== 404) {
-      throw error;
-    }
-  }
-
-  if (search) {
-    chartList = chartList.filter(x => x.spec.displayName.includes(query.search));
-  }
-  total = chartList.length;
-
-  const result: RecordSet<Repo> = {
-    recordCount: total,
-    records: chartList
-  };
-
-  return result;
 }
 
 export async function createChart(charts: ChartCreation[]) {
@@ -503,4 +490,373 @@ export async function fetchDockerRegUrl() {
       return Default_D_URL;
     }
   }
+}
+
+/** 以下代码为新版本代码 */
+/** 模板仓库 */
+/**
+ * 仓库列表
+ * @param query
+ */
+export async function fetchChartGroupList(query: QueryState<ChartGroupFilter>) {
+  const { keyword, filter } = query;
+  const queryObj = filter.repoType
+    ? {
+        'fieldSelector=repoType': filter.repoType
+      }
+    : {};
+  const resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, keyword: keyword });
+  let objs: ChartGroup[] = !rr.error && rr.data.items ? rr.data.items : [];
+  const result: RecordSet<ChartGroup> = {
+    recordCount: objs.length,
+    records: objs
+  };
+  return result;
+}
+
+/**
+ * 查询仓库
+ * @param filter 查询条件参数
+ */
+export async function fetchChartGroup(filter: ChartGroupDetailFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
+  let rr: RequestResult = await GET({ url, projectId: filter.projectID });
+  return rr.data;
+}
+
+/**
+ * 修改仓库
+ * @param chartGroupInfo
+ */
+export async function updateChartGroup([chartGroupInfo]) {
+  const resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: chartGroupInfo.metadata.name });
+  let rr: RequestResult = await PUT({
+    url,
+    bodyData: chartGroupInfo,
+    projectId:
+      chartGroupInfo.spec.projects && chartGroupInfo.spec.projects.length > 0 ? chartGroupInfo.spec.projects[0] : ''
+  });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 增加仓库
+ * @param chartGroupInfo
+ */
+export async function addChartGroup([chartGroupInfo]) {
+  const resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  let rr: RequestResult = await POST({
+    url,
+    bodyData: chartGroupInfo,
+    projectId:
+      chartGroupInfo.spec.projects && chartGroupInfo.spec.projects.length > 0 ? chartGroupInfo.spec.projects[0] : ''
+  });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 删除仓库
+ * @param group
+ */
+export async function deleteChartGroup([chartGroup]: ChartGroup[]) {
+  let resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: chartGroup.metadata.name });
+  let rr: RequestResult = await DELETE({
+    url,
+    projectId: chartGroup.spec.projects && chartGroup.spec.projects.length > 0 ? chartGroup.spec.projects[0] : ''
+  });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 有权限的业务列表
+ * @param query
+ */
+// export async function fetchManagedProjectList(query: QueryState<void>) {
+//   const empty: RecordSet<Project> = {
+//     recordCount: 0,
+//     records: []
+//   };
+//   const resourceInfo: ResourceInfo = resourceConfig()['info'];
+//   const url = reduceK8sRestfulPath({ resourceInfo });
+//   let rr: RequestResult = await GET(url, true);
+//   if (rr.error) {
+//     return empty;
+//   }
+//   let uid: string = rr.data.uid;
+//   const projectResourceInfo: ResourceInfo = resourceConfig()['projects'];
+//   const projectUrl = reduceK8sRestfulPath({ resourceInfo: projectResourceInfo });
+//   let prr: RequestResult = await GET(projectUrl, true);
+//   const projectBelongResourceInfo: ResourceInfo = resourceConfig()['user'];
+//   const projectBelongUrl = reduceK8sRestfulPath({
+//     resourceInfo: projectBelongResourceInfo,
+//     specificName: uid,
+//     extraResource: 'projects'
+//   });
+//   let pbrr: RequestResult = await GET(projectBelongUrl, true);
+//   if (prr.error || pbrr.error) {
+//     return empty;
+//   }
+//   let managedProjects = !pbrr.error && pbrr.data.managedProjects ? Object.keys(pbrr.data.managedProjects) : [];
+//   let items = [];
+//   if (!prr.error && prr.data.items) {
+//     prr.data.items.forEach(i => {
+//       if (managedProjects.indexOf(i.metadata.name) > -1) {
+//         items.push({
+//           id: i.metadata && i.metadata.name,
+//           metadata: {
+//             name: i.metadata.name
+//           },
+//           spec: {
+//             displayName: i.spec.displayName
+//           }
+//         });
+//       }
+//     });
+//   }
+//   const result: RecordSet<Project> = {
+//     recordCount: items.length,
+//     records: items
+//   };
+//   return result;
+// }
+
+/**
+ * 有权限的业务列表
+ * @param query
+ */
+export async function fetchPortalProjectList(query: QueryState<ProjectFilter>) {
+  const empty: RecordSet<Project> = {
+    recordCount: 0,
+    records: []
+  };
+  const resourceInfo: ResourceInfo = resourceConfig()['portal'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  let rr: RequestResult = await GET({ url, tipErr: true });
+  if (rr.error) {
+    return empty;
+  }
+  let items = Object.keys(rr.data.projects).map(key => {
+    return {
+      id: key,
+      metadata: {
+        name: key
+      },
+      spec: {
+        displayName: rr.data.projects[key]
+      }
+    };
+  });
+  const result: RecordSet<Project, ChartInfoFilter> = {
+    recordCount: items.length,
+    records: items,
+    data: query.filter.chartInfoFilter
+  };
+  return result;
+}
+
+/**
+ * 获取人员信息
+ * @param query
+ */
+export async function fetchUserInfo() {
+  const resourceInfo: ResourceInfo = resourceConfig()['info'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  let rr: RequestResult = await GET({ url, tipErr: true });
+  return rr.data;
+}
+
+/**
+ * 仓库列表
+ * @param query
+ */
+export async function fetchChartList(query: QueryState<ChartFilter>) {
+  const { keyword, filter } = query;
+  const queryObj = filter.repoType
+    ? {
+        'fieldSelector=repoType': filter.repoType
+      }
+    : {};
+  const resourceInfo: ResourceInfo = resourceConfig()['chart'];
+  let opts = { resourceInfo: resourceInfo };
+  // if (filter.namespace) {
+  //   opts['namespace'] = filter.namespace;
+  //   opts['toSplitIfProjectNamespace'] = false;
+  // }
+  const url = reduceK8sRestfulPath(opts);
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET({
+    url: url + queryString,
+    tipErr: true,
+    projectId: filter.projectID ? filter.projectID : undefined,
+    keyword
+  });
+  let objs: Chart[] = !rr.error && rr.data.items ? rr.data.items : [];
+  const result: RecordSet<Chart> = {
+    recordCount: objs.length,
+    records: objs
+  };
+  return result;
+}
+
+/**
+ * 查询Chart
+ * @param filter 查询条件参数
+ */
+export async function fetchChart(filter: ChartDetailFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()['chart'];
+  const url = reduceK8sRestfulPath({
+    resourceInfo,
+    namespace: filter.namespace,
+    specificName: filter.name,
+    toSplitIfProjectNamespace: false
+  });
+  let rr: RequestResult = await GET({ url, projectId: filter.projectID });
+  return rr.data;
+}
+
+/**
+ * 修改Chart
+ * @param chartInfo
+ */
+export async function updateChart([chartInfo], filter: ChartDetailFilter) {
+  const resourceInfo: ResourceInfo = resourceConfig()['chart'];
+  const url = reduceK8sRestfulPath({
+    resourceInfo,
+    namespace: chartInfo.metadata.namespace,
+    specificName: chartInfo.metadata.name,
+    toSplitIfProjectNamespace: false
+  });
+  let rr: RequestResult = await PUT({ url, bodyData: chartInfo, projectId: filter.projectID });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 删除模板
+ * @param group
+ */
+export async function deleteChartVersion([chartVersion]: ChartVersion[], filter: ChartVersionFilter) {
+  // const url = `/chart/api/${filter.chartGroupName}/charts/${filter.chartName}/${filter.chartVersion}`;
+  // let rr: RequestResult = await DELETE({ url });
+  // return operationResult(rr.data, rr.error);
+  const resourceInfo: ResourceInfo = resourceConfig()['chart'];
+  const queryObj = {
+    version: filter.chartVersion
+  };
+  const url = reduceK8sRestfulPath({
+    resourceInfo,
+    namespace: filter.chartDetailFilter.namespace,
+    specificName: filter.chartDetailFilter.name,
+    extraResource: 'version',
+    toSplitIfProjectNamespace: false
+  });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await DELETE({ url: url + queryString, projectId: filter.chartDetailFilter.projectID });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 获取模板
+ * @param group
+ */
+export async function fetchChartVersionFile(filter: ChartVersionFilter) {
+  const url = `/chart/${filter.chartGroupName}/charts/${filter.chartName}-${filter.chartVersion}.tgz`;
+  let rr: RequestResult = await GET({ url });
+  return rr.data;
+}
+
+/**
+ * 查询仓库
+ * @param filter 查询条件参数
+ */
+export async function fetchChartInfo(filter: ChartInfoFilter) {
+  const queryObj = {
+    version: filter.chartVersion,
+    cluster: filter.cluster
+  };
+  const resourceInfo: ResourceInfo = resourceConfig()['chart'];
+  const url = reduceK8sRestfulPath({
+    resourceInfo,
+    namespace: filter.metadata.namespace,
+    specificName: filter.metadata.name,
+    extraResource: 'info',
+    toSplitIfProjectNamespace: false
+  });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, projectId: filter.projectID });
+  return rr.data;
+}
+
+/**
+ * 增加应用
+ * @param appInfo
+ */
+export async function addApp([appInfo]) {
+  const resourceInfo: ResourceInfo = resourceConfig()['app'];
+  const url = reduceK8sRestfulPath({
+    resourceInfo,
+    namespace: appInfo.metadata.namespace,
+    toSplitIfProjectNamespace: false
+  });
+  let rr: RequestResult = await POST({ url, bodyData: appInfo });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
+ * 集群列表
+ * @param query
+ */
+export async function fetchClusterList(query: QueryState<ClusterFilter>) {
+  const resourceInfo: ResourceInfo = resourceConfig()['cluster'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  let rr: RequestResult = await GET({ url, tipErr: true });
+  let objs: Cluster[] = !rr.error && rr.data.items ? rr.data.items : [];
+  const result: RecordSet<Cluster, ChartInfoFilter> = {
+    recordCount: objs.length,
+    records: objs,
+    data: query.filter.chartInfoFilter
+  };
+  return result;
+}
+
+/**
+ * 命名空间列表
+ * @param query
+ */
+export async function fetchNamespaceList(query: QueryState<NamespaceFilter>) {
+  const { keyword, filter } = query;
+  const resourceInfo: ResourceInfo = resourceConfig()['ns'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  let rr: RequestResult = await GET({ url, tipErr: true, clusterId: filter.cluster });
+  let objs: Namespace[] = !rr.error && rr.data.items ? rr.data.items : [];
+  const result: RecordSet<Namespace, ChartInfoFilter> = {
+    recordCount: objs.length,
+    records: objs,
+    data: query.filter.chartInfoFilter
+  };
+  return result;
+}
+
+/**
+ * 业务Namespace查询
+ * @param query Namespace查询的一些过滤条件
+ */
+export async function fetchProjectNamespaceList(query: QueryState<ProjectNamespaceFilter>) {
+  const { keyword, filter } = query;
+  const resourceInfo: ResourceInfo = resourceConfig()['namespaces'];
+  const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.projectId, extraResource: 'namespaces' });
+  let rr: RequestResult = await GET({ url, tipErr: true });
+  let objs: ProjectNamespace[] = !rr.error && rr.data.items ? rr.data.items : [];
+  const result: RecordSet<ProjectNamespace, ChartInfoFilter> = {
+    recordCount: objs.length,
+    records: objs,
+    data: query.filter.chartInfoFilter
+  };
+  return result;
 }

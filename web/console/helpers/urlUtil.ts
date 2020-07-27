@@ -113,6 +113,9 @@ interface K8sRestfulPathOptions {
   logAgentName?: string;
 
   meshId?: string;
+
+  /** 业务视图是否切分namespace */
+  toSplitIfProjectNamespace?: boolean;
 }
 
 /**
