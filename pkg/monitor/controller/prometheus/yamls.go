@@ -42,7 +42,7 @@ func scrapeConfigForPrometheus() string {
         target_label: device_type
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'kubelet_running_pod_count'
+        regex: 'kubelet_running_pod_count|kubelet_volume_stats_used_bytes|kubelet_volume_stats_capacity_bytes|kubelet_pleg_relist_duration_seconds_sum|kubelet_pleg_relist_duration_seconds_count'
         action: keep
       - regex: (__name__|instance|node_role_kubernetes_io_master|device_type)
         action: labelkeep
@@ -74,7 +74,7 @@ func scrapeConfigForPrometheus() string {
         replacement: /metrics/cadvisor
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'container_fs_writes_bytes_total|container_fs_reads_bytes_total|container_fs_writes_total|container_fs_reads_total|container_cpu_usage_seconds_total|container_memory_usage_bytes|container_memory_cache|container_network_receive_bytes_total|container_network_transmit_bytes_total|container_network_receive_packets_total|container_network_transmit_packets_total'
+        regex: 'container_fs_writes_bytes_total|container_fs_reads_bytes_total|container_fs_writes_total|container_fs_reads_total|container_cpu_usage_seconds_total|container_memory_usage_bytes|container_memory_cache|container_network_receive_bytes_total|container_network_transmit_bytes_total|container_network_receive_packets_total|container_network_transmit_packets_total|container_spec_cpu_quota|container_spec_cpu_period|container_spec_memory_limit_bytes|container_memory_working_set_bytes'
         action: keep
       - source_labels: [container]
         regex: "(.+)"
@@ -129,7 +129,7 @@ func scrapeConfigForPrometheus() string {
         replacement: $1:$2
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'container_gpu_utilization|container_request_gpu_utilization|container_gpu_memory_total|container_request_gpu_memory|kube_node_status_allocatable|kube_node_status_capacity|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_job_status_failed|kube_statefulset_status_replicas_ready|kube_statefulset_replicas|kube_daemonset_status_number_unavailable|kube_deployment_status_replicas_unavailable|kube_pod_labels|kube_pod_info|kube_pod_status_ready|kube_pod_container_status_restarts_total|kube_pod_container_resource_requests|kube_pod_container_resource_limits|kube_node_status_condition|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_replicaset_owner|kube_namespace_labels|kube_node_spec_taint'
+        regex: 'container_gpu_utilization|container_request_gpu_utilization|container_gpu_memory_total|container_request_gpu_memory|kube_node_status_allocatable|kube_node_status_capacity|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_job_status_failed|kube_statefulset_status_replicas_ready|kube_statefulset_replicas|kube_daemonset_status_number_unavailable|kube_deployment_status_replicas_unavailable|kube_pod_labels|kube_pod_info|kube_pod_status_ready|kube_pod_container_status_restarts_total|kube_pod_container_resource_requests|kube_pod_container_resource_limits|kube_node_status_condition|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_replicaset_owner|kube_namespace_labels|kube_node_spec_taint|kube_node_info|kube_node_spec_unschedulable|kube_deployment_spec_replicas|kube_deployment_status_replicas|kube_deployment_status_replicas_updated|kube_deployment_status_replicas_available|kube_daemonset_status_number_ready|kube_daemonset_status_desired_number_scheduled|kube_pod_status_phase|kube_pod_container_status_running|kube_pod_container_status_waiting|kube_pod_container_status_terminated|kube_pod_container_status_last_terminated_reason|kube_job_status_succeeded|kube_job_status_active|kube_cronjob_spec_suspend|kube_persistentvolume_status_phase'
         action: keep
       - source_labels: [created_by_kind]
         action: replace
@@ -312,7 +312,7 @@ func scrapeConfigForPrometheus() string {
         regex: (.+)
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_current_inflight_requests|apiserver_dropped_requests_total|apiserver_request_total|apiserver_request_duration_seconds_(.*)|node_sockstat_TCP_inuse|node_network_transmit_bytes_total|node_network_receive_bytes_total|node_filesystem_size_bytes|node_filesystem_avail_bytes|node_disk_written_bytes_total|node_disk_read_bytes_total|node_disk_writes_completed_total|node_disk_reads_completed_total|node_cpu_seconds_total|node_memory_Buffers_bytes|node_memory_Cached_bytes|node_memory_MemTotal_bytes|node_memory_MemFree_bytes'
+        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_current_inflight_requests|apiserver_dropped_requests_total|apiserver_request_total|apiserver_request_duration_seconds_(.*)|node_sockstat_TCP_inuse|node_network_transmit_bytes_total|node_network_receive_bytes_total|node_filesystem_size_bytes|node_filesystem_avail_bytes|node_disk_written_bytes_total|node_disk_read_bytes_total|node_disk_writes_completed_total|node_disk_reads_completed_total|node_cpu_seconds_total|node_memory_Buffers_bytes|node_memory_Cached_bytes|node_memory_MemTotal_bytes|node_memory_MemFree_bytes|node_boot_time_seconds|node_load1|node_load5|node_load15|node_filefd_allocated|node_filefd_maximum|node_context_switches_total|node_filesystem_free_bytes|node_filesystem_files_free|node_filesystem_files|node_disk_io_time_seconds_total|node_disk_read_time_seconds_total|node_disk_write_time_seconds_total|node_disk_io_time_seconds_total|node_disk_io_time_weighted_seconds_total|node_memory_MemAvailable_bytes|node_vmstat_pgmajfault|node_vmstat_oom_kill|node_network_receive_errs_total|node_network_transmit_errs_total'
         action: keep
       - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
