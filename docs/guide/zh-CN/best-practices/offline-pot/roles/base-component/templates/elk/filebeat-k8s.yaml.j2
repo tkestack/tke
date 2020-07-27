@@ -1,0 +1,191 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: pot
+  labels:
+    k8s-app: filebeat
+data:
+  filebeat.yml: |-
+    filebeat.inputs:
+    - type: log
+      enabled: true
+      paths:
+        - "{{ kubelet_root_dir }}/pods/*/volumes/kubernetes.io~empty-dir/*/*/*"
+      exclude_files:
+        - '\/php\/slow.log'
+        - '\/php\/fpm.log'
+        - '\/nginx\/error.log'
+        - '{{ kubelet_root_dir }}/pods/*/volumes/kubernetes.io~empty-dir/*/php/*.*'
+      encoding: utf-8
+      tail_files: false
+      close_inactive: 5m
+      ignore_older: 24h
+      clean_inactive: 96h
+      clean_removed: true
+      fields:
+        hosts: ${HOST:none}
+        log_topic: {{ app_env_flag }}
+        _pot_store_target: ['to_es']
+        k8s_cluster: {{ app_env_flag }}-global
+        log_type: app
+        
+      fields_under_root: true
+      
+      processors:
+        - add_kubernetes_metadata:
+            in_cluster: true
+            host: ${NODE_NAME}
+            default_indexers.enabled: false
+            default_matchers.enabled: false
+            include_pod_uid: true
+            indexers:
+              - pod_uid:
+            matchers:
+              - logs_path:
+                  logs_path: {{ kubelet_root_dir }}/pods/
+                  resource_type: pod
+    filebeat.modules:
+    - module: nginx
+    - module: kafka
+    - module: system
+    - module: kibana
+      
+    output.kafka:
+      hosts: ["kafka-headless:9092"]
+      topic: "%{[log_topic]}"
+      partition.round_robin:
+        reachable_only: false
+      compression: none
+      required_acks: 1
+      max_message_bytes: 1000000
+      version: 0.10.0     
+   
+      
+    logging.level: info
+    logging.to_syslog: false
+    logging.metrics.period: 300s
+    logging.to_files: true
+    logging.files:
+      path: /usr/share/filebeat/logs/
+      name: "filebeat.log"
+      rotateeverybytes: 10485760
+      keepfiles: 7
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: filebeat
+  namespace: pot
+  labels:
+    k8s-app: filebeat
+spec:
+  selector:
+    matchLabels:
+      k8s-app: filebeat
+  template:
+    metadata:
+      labels:
+        k8s-app: filebeat
+    spec:
+      serviceAccountName: filebeat
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: filebeat
+        image: {{ registry_domain }}/library/filebeat:7.4.2.1
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e",
+        ]
+        env:
+        - name: KAFKA_HOST
+          value: "kafka-headless"
+        - name: KAFKA_PORT
+          value: "9092"
+        - name: HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        securityContext:
+          runAsUser: 0
+        resources:
+          limits:
+            memory: 2Gi
+          requests:
+            cpu: 200m
+            memory: 200Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/filebeat.yml
+          readOnly: true
+          subPath: filebeat.yml
+        - name: data
+          mountPath: /usr/share/filebeat/data
+        - name: varlibdockercontainers
+          mountPath: /var/log/containers
+          readOnly: true
+        - name: kubeletpods
+          mountPropagation: HostToContainer
+          mountPath: {{ kubelet_root_dir }}/pods
+          readOnly: true
+      tolerations:
+      - operator: Exists
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 0600
+          name: filebeat-config
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/log/containers
+      - name: kubeletpods
+        hostPath:
+          path: {{ kubelet_root_dir }}/pods
+      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+      - name: data
+        hostPath:
+          path: /var/lib/filebeat-data
+          type: DirectoryOrCreate
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: filebeat
+subjects:
+- kind: ServiceAccount
+  name: filebeat
+  namespace: pot
+roleRef:
+  kind: ClusterRole
+  name: filebeat
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: filebeat
+  labels:
+    k8s-app: filebeat
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources:
+  - namespaces
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: filebeat
+  namespace: pot
+  labels:
+    k8s-app: filebeat
+---

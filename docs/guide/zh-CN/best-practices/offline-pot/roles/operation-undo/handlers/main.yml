@@ -1,0 +1,17 @@
+---
+# handlers file for operation-undo
+
+# restart sshd
+- name: restart sshd
+  systemd: 
+    name: sshd 
+    state: restarted
+  become: yes
+
+# restart docker
+- name: restart docker
+  systemd: 
+    name: docker 
+    state: restarted
+    daemon_reload: yes
+  become: yes

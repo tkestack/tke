@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-minio-0
+  labels:
+    minio: data-minio
+spec:
+  capacity:
+    storage: 30Gi 
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ minio_mount_path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['minio'][0] }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-minio-1
+  labels:
+    minio: data-minio
+spec:
+  capacity:
+    storage: 30Gi 
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ minio_mount_path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['minio'][1] }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-minio-2
+  labels:
+    minio: data-minio
+spec:
+  capacity:
+    storage: 30Gi 
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ minio_mount_path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['minio'][2] }}
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-minio-3
+  labels:
+    minio: data-minio
+spec:
+  capacity:
+    storage: 30Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ minio_mount_path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['minio'][3] }}

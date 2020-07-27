@@ -1,0 +1,21 @@
+apiVersion: v1
+items:
+- apiVersion: platform.tkestack.io/v1
+  kind: Machine
+  metadata:
+    generateName: mc-{{ item.replace('.','-') }}
+    name: mc-{{ item.replace('.','-') }}
+  spec:
+    clusterName: global
+    finalizers:
+    - machine
+    ip: {{ item }}
+    password: {{ ansible_ssh_pass_base64 }}
+    port: {{ ansible_port }}
+    tenantID: default
+    type: Baremetal
+    username: {{ ansible_ssh_user }}
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""

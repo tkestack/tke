@@ -1,0 +1,55 @@
+# add tke nodes to kubernetes cluster
+
+# get ansible_ssh_pass base64
+- name: get ansible_ssh_pass base64
+  shell: echo -n "{{ ansible_ssh_pass }}" | base64
+  register: ssh_pass_base64
+  when: inventory_hostname == groups['masters'][0] and (groups['workers'] | length) != 0
+  tags: tke_node_init
+
+# set facts
+- name: set ansible_ssh_pass_base64 facts
+  set_fact:
+    ansible_ssh_pass_base64: "{{ ssh_pass_base64.stdout }}"
+  when: inventory_hostname == groups['masters'][0] and (groups['workers'] | length) != 0
+  tags: tke_node_init
+
+# create save tke node manager dir
+- name: create tke node manager dir
+  shell: ls /data/tke-node-mgr || mkdir -p /data/tke-node-mgr
+  when: inventory_hostname == groups['masters'][0] and (groups['workers'] | length) != 0
+  tags: tke_node_init
+
+# generate add tke node yaml
+- name: generate add tke node yaml
+  template:
+    src: templates/tke-node.yaml.j2
+    dest: /data/tke-node-mgr/{{ item }}-tke-node.yaml
+    mode: '0644'
+  when: inventory_hostname == groups['masters'][0] and (groups['workers'] | length) != 0
+  with_items:
+    - "{{ groups['workers'] }}"
+  tags: tke_node_init
+
+# add tke node
+- name: add tke node
+  shell: kubectl apply -f /data/tke-node-mgr/{{ item }}-tke-node.yaml
+  when: inventory_hostname == groups['masters'][0] and (groups['workers'] | length) != 0
+  with_items:
+    - "{{ groups['workers'] }}"
+  tags: add_tke_node
+
+# remove tke node
+- name: remove tke node
+  shell: kubectl delete -f /data/tke-node-mgr/{{ item }}-tke-node.yaml
+  when: inventory_hostname == groups['masters'][0] and (groups['workers'] | length) != 0
+  with_items:
+    - "{{ groups['workers'] }}"
+  tags: remove_tke_node
+
+# clean tke node 
+- name: clean tke node
+  script: scripts/clean-nodes.sh
+  when: inventory_hostname in groups['workers'] and (groups['workers'] | length) != 0
+  tags: remove_tke_node
+

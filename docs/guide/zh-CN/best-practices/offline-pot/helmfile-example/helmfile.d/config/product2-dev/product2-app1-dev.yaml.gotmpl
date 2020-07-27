@@ -1,0 +1,70 @@
+bootstrap:
+  replicaCount: "{{ .Environment.Values.global | getOrNil "replicaCount" | default "1" }}"
+  
+  fullnameOverride: "product2-app1"
+  nameOverride: "product2-app1"
+  
+  image:
+    repository: shsmu/helmfile-product-dev
+    tag: "v1.0.1"
+    pullPolicy: IfNotPresent
+
+  command:
+    - /start
+  
+  env:
+    - name: APP_NAME
+      value: "product2-app1"
+# 简化 global env 导入方式
+   {{- range $key, $val := .Environment.Values.global.ENV }}
+   {{- if and (ne $key "execute_key1") (ne $key "execute_key2") }}
+    - name: {{ $key }}
+      value: {{ $val | quote }}
+   {{- end }}
+   {{- end }}
+#    - name: APP_ENV_FLAG
+#      value: dev
+#    - name: LOG_PATH
+#      value: /data/logs
+#    - name: HOST
+#      value: "0.0.0.0"
+#    - name: PORT0
+#      value: "80"
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 150m
+      memory: 128Mi
+
+  securityContext:
+    capabilities:
+      add:
+      - SYS_PTRACE
+  
+  imagePullSecrets:
+    - name: qcloudregistrykey
+    - name: tencenthubkey
+  
+  # service 
+  # product2-app1
+  #
+  service:
+    type: ClusterIP
+    ports:
+    - name: tcp-80-80
+      port: 80
+      protocol: TCP
+      targetPort: 80
+
+  #ingress:
+  #  hosts:
+  #  - product2-app1-ty.mydomain.com
+  #  annotations:
+  #    kubernetes.io/ingress.class: nginx
+  #  tls:
+  #  - secretName: haproxy-tls-product2
+  #    hosts:
+  #    - product2-app1-ty.mydomain.com

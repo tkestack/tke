@@ -1,0 +1,81 @@
+#!/bin/bash
+# Author: yhchen
+set -e
+
+BASE_DIR=$(cd `dirname $0` && pwd)
+cd $BASE_DIR
+
+if [ "x$1" == "x" ];then
+  echo 'please input a parameter! for call func!'
+  exit 1
+else
+  CALL_FUN=$1
+fi
+
+NFS_DATA={{ nfs_data }}
+NFS_APP_LIST={{ nfs_app_list }}
+PV_NAME_PREFIX={{ app_env_flag }}
+IS_CREATE_PV={{ is_create_pv }}
+
+# config nfs 
+dpl_nfs(){
+  echo "###### config nfs start ######"
+  # config nfs
+  if [ ! -d '/etc/exports.d' ]; then
+    mkdir -p /etc/exports.d
+  fi
+  # create nfs data dir 
+  for app in ${NFS_APP_LIST[@]};
+  do
+    if [ ! -d "${NFS_DATA}/${app}" ]; then
+      mkdir -p "${NFS_DATA}/${app}" ;
+      chown nfsnobody:nfsnobody "${NFS_DATA}/${app}" ;
+      chmod 777 -R "${NFS_DATA}/${app}";
+      echo "${NFS_DATA}/${app} *(rw,sync,no_root_squash,no_all_squash)" > /etc/exports.d/offline-pot-${app}.exports ;
+    fi
+  done
+  # apply nfs config
+  exportfs -rv
+  # create nfs pv
+  if [[ -f '/data/nfs-mgr/nfs-pv.yaml.tpl' && "$IS_CREATE_PV" == "true" ]]; then
+    for app in ${NFS_APP_LIST[@]};
+    do
+      if [ `kubectl get pv | grep ${PV_NAME_PREFIX}-${app} | wc -l` -eq 0 ]; then
+        \cp /data/nfs-mgr/nfs-pv.yaml.tpl /data/nfs-mgr/nfs-pv.yaml
+        sed -i 's#--PV-NAME--#'"${PV_NAME_PREFIX}-${app}"'#g' /data/nfs-mgr/nfs-pv.yaml
+        sed -i 's#--PATH--#'"${NFS_DATA}/${app}"'#g' /data/nfs-mgr/nfs-pv.yaml
+        kubectl apply -f /data/nfs-mgr/nfs-pv.yaml
+      fi
+    done
+  fi
+  echo "###### config nfs end ######"
+}
+
+# remove nfs config
+del_nfs(){
+  echo "###### remove nfs config start ######"
+  # remove nfs pv
+  if [[ -f '/data/nfs-mgr/nfs-pv.yaml.tpl' && "$IS_CREATE_PV" == "true" ]]; then
+    for app in ${NFS_APP_LIST[@]};
+    do
+      if [ `kubectl get pv | grep ${PV_NAME_PREFIX}-${app} | grep -v Bound | wc -l` -gt 0 ]; then
+        \cp /data/nfs-mgr/nfs-pv.yaml.tpl /data/nfs-mgr/nfs-pv.yaml
+        sed -i 's#--PV-NAME--#'"${PV_NAME_PREFIX}-${app}"'#g' /data/nfs-mgr/nfs-pv.yaml
+        sed -i 's#--PATH--#'"${NFS_DATA}/${app}"'#g' /data/nfs-mgr/nfs-pv.yaml
+        kubectl delete -f /data/nfs-mgr/nfs-pv.yaml
+        rm -f /etc/exports.d/offline-pot-${app}.exports
+        # apply nfs config
+        exportfs -rv
+        # remove nfs data dir
+        rm -rf ${NFS_DATA}
+      fi
+    done
+  fi
+  
+  echo "###### remove nfs config end ######"
+}
+
+main(){
+    $CALL_FUN
+}
+main

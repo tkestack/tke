@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    dc-name: --PV-NAME--
+  name: --PV-NAME--
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: {{ nfs_pv_storage_size }}
+  nfs:
+    path: --PATH--
+    server: {{ groups['nfs'][0] }}
+  persistentVolumeReclaimPolicy: Retain
+

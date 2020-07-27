@@ -1,0 +1,71 @@
+#! /usr/bin/env bash
+
+BASE_DIR=$(cd `dirname $0` && pwd)
+cd $BASE_DIR
+
+echo "offline-pot post install"
+
+# add kubernetes's nodes on tkestack plat
+if [ -f './mgr-scripts/tke-nodes-mgr.sh' ] && [ `docker ps | grep tke-installer | wc -l` -eq 1 ]; then
+  sh ./mgr-scripts/tke-nodes-mgr.sh
+fi
+
+# change tkestack gateway replicas to 1 on tkestack plat and when nginx ingress controller will be deploy
+if [ -f './mgr-scripts/tke-gateway-mgr.sh' ] && [ `docker ps | grep tke-installer | wc -l` -eq 1 ]; then
+  if [ -f "hosts" ]; then
+    if [ "x`cat hosts | grep ^deploy_nginx_ingress= | awk -F\' '{print $2}' || echo 'false'`" == "xtrue" ]; then
+      sh ./mgr-scripts/tke-gateway-mgr.sh
+    fi
+  else
+    echo "hosts file not exist, please check!!!" && exit 0
+  fi
+fi
+
+# deploy harbor for local registry when tkestack not deploy
+if [ -f './mgr-scripts/deploy-base-component.sh' ] && [ `docker ps -a | grep tke-installer | wc -l` -eq 0 ]; then
+  # deploy harbor
+  sh ./mgr-scripts/deploy-base-component.sh -f dpl_harbor
+  # harbor health check
+  if [ -f './mgr-scripts/health-check.sh' ]; then
+    if [ `sh ./mgr-scripts/health-check.sh -f harbor_dpl_check | grep 'harbor not health, please check!!' | wc -l`  -gt 0 ]; then
+      echo "harbor deploy failed, please check !!!" && exit 1
+    else
+      echo "harbor is health."
+    fi
+  fi
+fi
+
+# when base component's helms dir is not empty will be exec
+if [ -f './mgr-scripts/deploy-base-component.sh' ]; then
+  # if non tkestack need change deploy/remove tag
+  if [ `docker ps -a | grep tke-installer | wc -l` -eq 0 ]; then
+    # change helmtiller deploy and remove ansible tag
+    sed -i 's/helmtiller_init/unhelmtiller_init/g' ./mgr-scripts/deploy-base-component.sh
+    sed -i 's/deploy_helmtiller/dpl_helmtiller_nontke/g' ./mgr-scripts/deploy-base-component.sh
+    if [ -f "./mgr-scripts/remove-base-component.sh" ]; then
+      sed -i 's/remove_helmtiller/del_helmtiller_nontke/g' ./mgr-scripts/remove-base-component.sh
+    fi
+  else
+    # change helmtiller deploy and remove ansible tag
+    sed -i 's/unhelmtiller_init/helmtiller_init/g' ./mgr-scripts/deploy-base-component.sh
+    sed -i 's/dpl_helmtiller_nontke/deploy_helmtiller/g' ./mgr-scripts/deploy-base-component.sh
+    if [ -f "./mgr-scripts/remove-base-component.sh" ]; then
+      sed -i 's/del_helmtiller_nontke/remove_helmtiller/g' ./mgr-scripts/remove-base-component.sh
+    fi
+  fi
+  sh ./mgr-scripts/deploy-base-component.sh
+fi
+
+if [ -f './mgr-scripts/deploy-business.sh' ]; then
+  if [ -f "hosts" ]; then
+    if [ "x`cat hosts | grep ^deploy_business= | awk -F\' '{print $2}' || echo 'false'`" == "xtrue" ]; then
+      sh ./mgr-scripts/deploy-business.sh
+    fi
+  else
+    echo "hosts file not exist, please check!!!" && exit 0
+  fi
+fi
+
+if [ -f './mgr-scripts/health-check.sh' ]; then 
+  sh ./mgr-scripts/health-check.sh
+fi

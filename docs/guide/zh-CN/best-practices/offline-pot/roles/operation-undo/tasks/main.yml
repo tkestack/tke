@@ -1,0 +1,5 @@
+---
+# tasks file for operation-undo
+- include: sshd-init-undo.yml
+- include: remove-devnetcloud-proxy-undo.yml
+- include: recover-disk-to-raw.yml

@@ -1,0 +1,113 @@
+# deploy nfs and remove nfs
+
+# set facts
+- name: set deploy_nfs facts
+  set_fact:
+    deploy_nfs: "{{ deploy_nfs }}"
+  when: inventory_hostname in groups['nfs']
+  tags: dpl_nfs
+
+# create mgr nfs dir
+- name: create mgr nfs dir
+  shell: if [ ! -d "/data/nfs-mgr" ]; then \
+           mkdir -p /data/nfs-mgr ; \
+         fi
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true
+  tags: dpl_nfs
+
+# install nfs-utils
+- name: install nfs-utils
+  shell: if [ `systemctl status nfs-server | wc -l ` -eq 0 ] && [ `systemctl status rpcbind | wc -l ` -eq 0 ]; then \
+           yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y nfs-utils ; \
+         else \
+           echo "nfs-utils had installed!!" ; \
+         fi
+  ignore_errors: yes
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true
+  tags: dpl_nfs
+
+# start nfs
+- name: start nfs
+  shell: if [ `systemctl is-active rpcbind` == 'inactive' ]; then \
+           systemctl start rpcbind ; systemctl enable rpcbind; \
+         fi; \
+         if [ `systemctl is-active nfs-server` == 'inactive' ]; then \
+           systemctl start nfs-server ; systemctl enable nfs-server; \
+         fi
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true
+  tags: dpl_nfs
+
+# copy nfs mgr script and nfs pv tpl file
+- name: copy nfs mgr script and nfs pv tpl file
+  template: 
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+    mode: "0755"
+  with_items:
+    - "templates/nfs/nfs-pv.yaml.tpl.j2:/data/nfs-mgr/nfs-pv.yaml.tpl"
+    - "templates/nfs/nfs-mgr-tools.sh.j2:/data/nfs-mgr/nfs-mgr-tools.sh"
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true
+  tags: dpl_nfs
+
+# get nfs mgr script stat for deploy
+- name: get mfs mgr script stat for deploy
+  stat:
+    path: '/data/nfs-mgr/nfs-mgr-tools.sh'
+  register: nfs_dpl_script
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true
+  tags: dpl_nfs
+
+# config nfs
+- name: config nfs 
+  shell: sh /data/nfs-mgr/nfs-mgr-tools.sh dpl_nfs
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true and nfs_dpl_script.stat.exists == True
+  tags: dpl_nfs
+
+# set facts
+- name: set deploy_nfs facts
+  set_fact:
+    deploy_nfs: "{{ deploy_nfs }}"
+  when: inventory_hostname in groups['nfs']
+  tags: remove_nfs
+
+# get nfs mgr script stat for remove
+- name: get nfs mgr script stat for remove
+  stat:
+    path: '/data/nfs-mgr/nfs-mgr-tools.sh'
+  register: nfs_del_script
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true
+  tags: remove_nfs
+
+# remove nfs data 
+- name: remove nfs data
+  shell: sh /data/nfs-mgr/nfs-mgr-tools.sh del_nfs
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true and nfs_del_script.stat.exists == True
+  tags: remove_nfs
+
+# set deploy_nfs facts for health check
+- name: set deploy_nfs facts for health check
+  set_fact:
+    deploy_nfs: "{{ deploy_nfs }}"
+  when: inventory_hostname in groups['nfs']
+  tags: nfs_health_check
+
+# get nfs listen status
+- name: get nfs listen status
+  shell: if [ `netstat -plnt | grep ':2049' | wc -l` -gt 0 ]; then echo "true"; else echo "false";fi
+  register: nfs_listen_status
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true
+  tags: nfs_health_check
+
+# nfs health
+- name: nfs health
+  debug:
+    msg: "Info: {{ inventory_hostname }}'s nfs health."
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true and nfs_listen_status.stdout == "true" 
+  tags: nfs_health_check
+
+# nfs not health
+- name: nfs not health
+  debug:
+    msg: "Warning: {{ inventory_hostname }}'s nfs not health, please check!!"
+  when: inventory_hostname in groups['nfs'] and deploy_nfs == true and nfs_listen_status.stdout == "false"
+  tags: nfs_health_check

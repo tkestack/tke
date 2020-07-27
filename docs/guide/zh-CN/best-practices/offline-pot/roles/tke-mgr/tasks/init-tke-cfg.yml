@@ -1,0 +1,60 @@
+# init tke  config
+
+# get ansible_ssh_pass base64
+- name: get ansible_ssh_pass base64
+  shell: echo -n "{{ ansible_ssh_pass }}" | base64
+  register: ssh_pass_base64
+  when: inventory_hostname in groups['installer']
+  tags: init_tke_cfg
+
+- name: get tke_pwd base64
+  shell: echo -n "{{ tke_pwd }}" | base64
+  register: tke_passwd_base64
+  when: inventory_hostname in groups['installer'] 
+  tags: init_tke_cfg
+
+# set facts
+- name: set ansible_ssh_pass_base64 facts
+  set_fact:
+    ansible_ssh_pass_base64: "{{ ssh_pass_base64.stdout }}"
+  when: inventory_hostname in groups['installer']
+  tags: init_tke_cfg
+
+- name: set tke_pwd_base64 facts
+  set_fact:
+    tke_pwd_base64: "{{ tke_passwd_base64.stdout }}"
+  when: inventory_hostname in groups['installer']
+  tags: init_tke_cfg
+
+- name: set tke_ha_type facts
+  set_fact:
+    tke_ha_type: "{{ tke_ha_type }}"
+  when: inventory_hostname in groups['installer']
+  tags: init_tke_cfg
+
+# generate keepalived type tke ha deploy config
+- name: generate keepalived type tke ha deploy config
+  template:
+    src: templates/tke-ha-keepalived.json.j2
+    dest: /opt/tke-installer/data/tke.json
+    mode: '0644'
+  when: inventory_hostname in groups['installer'] and (groups['masters'] | length) == 3 and tke_ha_type == "tke"
+  tags: init_tke_cfg
+
+# generate lb type tke ha deploy config
+- name: generate lb type tke ha deploy config
+  template:
+    src: templates/tke-ha-lb.json.j2
+    dest: /opt/tke-installer/data/tke.json
+    mode: '0644'
+  when: inventory_hostname in groups['installer'] and (groups['masters'] | length) == 3 and tke_ha_type == "third"
+  tags: init_tke_cfg
+
+# generate tke sigle deploy config
+- name: generate tke sigle deploy config
+  template:
+    src: templates/tke-sigle.json.j2
+    dest: /opt/tke-installer/data/tke.json
+    mode: '0644'
+  when: inventory_hostname in groups['installer'] and (groups['masters'] | length) == 1 and tke_ha_type == "none"
+  tags: init_tke_cfg

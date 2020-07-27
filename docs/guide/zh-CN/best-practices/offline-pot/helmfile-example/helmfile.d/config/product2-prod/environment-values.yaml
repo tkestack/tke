@@ -1,0 +1,29 @@
+# dEFault values for charts.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# 全局值，可以被所有 chart ,  {{ .Environment.Values.global }} 方式引用
+##
+global:
+# deployment
+
+  ## 副本数量(Values.global.replicaCount)
+  replicaCount: 1
+  ## 保留历史版本记录数量(Values.global.revisionHistoryLimit) 主要用于回滚
+  revisionHistoryLimit: 5
+  ## 更新策略(Values.global.revisionHistoryLimit) RollingUpdate -- 滚动更新
+  updatestrategy: RollingUpdate
+
+# ENV
+  ENV:
+    APP_ENV_FLAG: prod
+    LOG_PATH: /data/logs
+    HOST: "0.0.0.0"
+    PORT0: "80"
+
+app2:
+  persistence:
+    enabled: false
+    existingClaim: "pvc-product2-app2"
+  dataVolumeMountPath: /data/app2_data
+  dataVolumeName: data-app2

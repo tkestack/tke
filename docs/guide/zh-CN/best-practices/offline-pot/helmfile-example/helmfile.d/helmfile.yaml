@@ -1,0 +1,18 @@
+---
+bases:
+  - commons/repos.yaml
+  - commons/helmdefaults.yaml
+#  - commons/environments.yaml
+
+---
+  
+# Ordered list of releases.
+helmfiles:
+  - releases/product1-dev.yaml
+  - releases/product1-test.yaml
+  - releases/product1-stage.yaml
+  - releases/product1-prod.yaml
+  - releases/product2-dev.yaml
+  - releases/product2-test.yaml
+  - releases/product2-stage.yaml
+  - releases/product2-prod.yaml
