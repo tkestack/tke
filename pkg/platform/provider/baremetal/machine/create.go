@@ -239,6 +239,19 @@ func (p *Provider) EnsureDisableSwap(ctx context.Context, machine *platformv1.Ma
 	return nil
 }
 
+func (p *Provider) EnsureManifestDir(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+	_, err = machineSSH.CombinedOutput("mkdir -p /etc/kubernetes/manifests")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureKubeconfig(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	masterEndpoint, err := util.GetMasterEndpoint(cluster.Status.Addresses)
 	if err != nil {
