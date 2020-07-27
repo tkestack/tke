@@ -154,11 +154,12 @@ func NewProvider() (*Provider, error) {
 	if cfg.PlatformAPIClientConfig != "" {
 		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
 		if err != nil {
-			return nil, err
-		}
-		p.platformClient, err = platformv1client.NewForConfig(restConfig)
-		if err != nil {
-			return nil, err
+			log.Errorf("read PlatformAPIClientConfig error: %w", err)
+		} else {
+			p.platformClient, err = platformv1client.NewForConfig(restConfig)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
