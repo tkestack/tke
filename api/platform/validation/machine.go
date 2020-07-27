@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -137,9 +138,6 @@ func ValidateWorkerTimeOffset(fldPath *field.Path, worker *ssh.SSH, masters []*s
 func ValidateSSH(fldPath *field.Path, ip string, port int, user string, password []byte, privateKey []byte, passPhrase []byte) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if user != "root" {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("user"), user, "must be root"))
-	}
 	for _, msg := range validation.IsValidIP(ip) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ip"), ip, msg))
 
@@ -169,9 +167,12 @@ func ValidateSSH(fldPath *field.Path, ip string, port int, user string, password
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath, "", err.Error()))
 	} else {
-		err = s.Ping()
+		output, err := s.CombinedOutput("whoami")
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath, "", err.Error()))
+		}
+		if strings.TrimSpace(string(output)) != "root" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("user"), user, `must be root or set sudo without password`))
 		}
 	}
 

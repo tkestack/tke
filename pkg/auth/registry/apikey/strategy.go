@@ -62,7 +62,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 // object.
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	newAPIKey, _ := obj.(*auth.APIKey)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		newAPIKey.Spec.TenantID = tenantID
 	}
@@ -82,7 +82,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	apiKey := obj.(*auth.APIKey)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		apiKey.Spec.TenantID = tenantID
 	}

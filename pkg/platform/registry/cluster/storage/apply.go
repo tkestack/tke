@@ -41,6 +41,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/platform/proxy"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -394,7 +395,7 @@ func applyObjectFromDynamicClient(ctx context.Context, dynamicClient dynamic.Nam
 }
 
 func applyObjectFromClientSet(ctx context.Context, client *kubernetes.Clientset, gvk *schema.GroupVersionKind, name, namespace string, notUpdate bool, metaAccessor meta.MetadataAccessor, obj runtime.Object) (*applyObject, *metav1.Status) {
-	restClient := util.RESTClientFor(client, gvk.Group, gvk.Version)
+	restClient := proxy.RESTClientFor(client, gvk.Group, gvk.Version)
 
 	if len(name) != 0 {
 		result := restClient.Get().

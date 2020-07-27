@@ -39,9 +39,9 @@ const (
 
 var (
 	_forbiddenNamespaces = map[string]bool{
-		"default":     true,
-		"kube-system": true,
-		"kube-public": true,
+		"kube-system":     true,
+		"kube-public":     true,
+		"kube-node-lease": true,
 	}
 )
 

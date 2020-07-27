@@ -444,6 +444,7 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
     fileSystem:
       rootDirectory: _debug/registry
   security:
+    # private key for signing registry JWT token, PKCS#1 encoded.
     tokenPrivateKeyFile: keys/private_key.pem
     tokenPublicKeyFile: keys/public.crt
     adminPassword: secret

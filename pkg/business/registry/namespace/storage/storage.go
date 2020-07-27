@@ -504,7 +504,7 @@ func (r *CertificateREST) Get(ctx context.Context, name string, options runtime.
 	if err != nil {
 		return nil, fmt.Errorf("prj:%s, ns:%s, query string '%s', %s", ns.Namespace, ns.Name, business.CertOptionValidDays, err)
 	}
-	user, _ := authentication.GetUsernameAndTenantID(ctx)
+	user, _ := authentication.UsernameAndTenantID(ctx)
 	template := x509.Certificate{
 		Subject: pkix.Name{
 			CommonName: user,

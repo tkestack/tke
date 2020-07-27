@@ -87,7 +87,6 @@ spec:
               mountPath: /var/log/gpu-manager
             - name: rundir
               mountPath: /var/run
-              readOnly: true
             - name: cgroup
               mountPath: /sys/fs/cgroup
               readOnly: true
@@ -143,6 +142,7 @@ metadata:
 spec:
   selector:
     k8s-app: gpu-quota-admission
+  clusterIP: "{{ .GPUQuotaAdmissionHost }}"
   ports:
     - protocol: TCP
       port: 3456

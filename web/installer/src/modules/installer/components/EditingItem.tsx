@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { RootProps } from './InstallerApp';
-import { Button, Input, Form, Justify, Segment, Text } from '@tencent/tea-component';
-import { validateActions } from '../actions/validateActions';
+
+import { Button, Form, Input, Justify, Segment, Text } from '@tencent/tea-component';
+
 import { getValidateStatus } from '../../common/utils/getValidateStatus';
+import { validateActions } from '../actions/validateActions';
+import { RootProps } from './InstallerApp';
 
 interface EditingItemProps extends RootProps {
   id?: string | number;
@@ -55,7 +57,7 @@ export class EditingItem extends React.Component<EditingItemProps> {
             message={machine.v_host.message}
           >
             <Input
-              placeholder="请输入目标机器访问地址"
+              placeholder="请输入访问地址,eg:ip1;ip2;ip3"
               value={machine.host}
               onChange={value => actions.installer.updateMachine({ host: value }, id)}
             />
@@ -90,6 +92,7 @@ export class EditingItem extends React.Component<EditingItemProps> {
             message={machine.v_user.message}
           >
             <Input
+              disabled={true}
               placeholder="请输入特权用户名"
               value={machine.user}
               onChange={user => actions.installer.updateMachine({ user }, id)}

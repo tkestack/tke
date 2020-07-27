@@ -19,14 +19,15 @@ const fetchNamespaceActions = generateFetcherActionCreator({
     // 获取当前的资源的配置
     let namespaceList = [];
     projectNamespaceList.data.records.forEach(item => {
-      namespaceList.push({ id: uuid(), name: item.spec.namespace });
+      namespaceList.push({ id: uuid(), name: item.metadata.name });
     });
 
     return { recordCount: namespaceList.length, records: namespaceList };
   },
   finish: (dispatch, getState: GetState) => {
     let { namespaceList, route } = getState();
-    let defauleNamespace = (namespaceList.data.recordCount && namespaceList.data.records[0].name) || '';
+    let defauleNamespace =
+      route.queries['np'] || (namespaceList.data.recordCount && namespaceList.data.records[0].name) || '';
     dispatch(namespaceActions.selectNamespace(defauleNamespace));
   }
 });
@@ -47,19 +48,23 @@ const restActions = {
         } = getState(),
         urlParams = router.resolve(route);
 
-      let finder = projectNamespaceList.data.records.find(item => item.spec.namespace === namespace);
+      let finder = projectNamespaceList.data.records.find(item => item.metadata.name === namespace);
+      if (!finder) {
+        finder = projectNamespaceList.data.records.length ? projectNamespaceList.data.records[0] : null;
+      }
 
-      router.navigate(
-        urlParams,
-        Object.assign(route.queries, {
-          np: namespace
-        })
-      );
-      dispatch({
-        type: ActionType.SelectNamespace,
-        payload: namespace
-      });
       if (finder) {
+        router.navigate(
+          urlParams,
+          Object.assign(route.queries, {
+            np: finder.metadata.name
+          })
+        );
+        dispatch({
+          type: ActionType.SelectNamespace,
+          payload: finder.metadata.name
+        });
+
         dispatch(
           clusterActions.selectCluster({
             id: finder.spec.clusterName,

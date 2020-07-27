@@ -83,7 +83,7 @@ func (r *GroupREST) List(ctx context.Context, options *metainternal.ListOptions)
 		projectID = requestInfo.Name
 	}
 
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.projectID=%s", projectID),
 	})
@@ -154,7 +154,7 @@ func (r *GroupREST) Create(ctx context.Context, obj runtime.Object, createValida
 		projectID = requestInfo.Name
 	}
 
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 
 	projectPolicyList, err := r.authClient.ProjectPolicyBindings().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.projectID=%s", projectID),

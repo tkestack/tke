@@ -27,8 +27,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/imdario/mergo"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
@@ -39,6 +41,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
@@ -150,7 +153,9 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, machine *platformv1.
 
 	domains := []string{
 		p.config.Registry.Domain,
-		machine.Spec.TenantID + "." + p.config.Registry.Domain,
+	}
+	if machine.Spec.TenantID != "" {
+		domains = append(domains, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 	for _, one := range domains {
 		remoteHosts := hosts.RemoteHosts{Host: one, SSH: machineSSH}
@@ -164,22 +169,24 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, machine *platformv1.
 }
 
 func (p *Provider) EnsureKernelModule(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	machineSSH, err := machine.Spec.SSH()
+	s, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
-	modules := []string{"iptable_nat"}
+	modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
+	if _, err := s.CombinedOutput("modinfo br_netfilter"); err == nil {
+		modules = append(modules, "br_netfilter")
+	}
 	var data bytes.Buffer
-
 	for _, m := range modules {
-		_, err := machineSSH.CombinedOutput(fmt.Sprintf("modprobe %s", m))
+		_, err := s.CombinedOutput(fmt.Sprintf("modprobe %s", m))
 		if err != nil {
 			return err
 		}
 		data.WriteString(m + "\n")
 	}
-	err = machineSSH.WriteFile(strings.NewReader(data.String()), moduleFile)
+	err = s.WriteFile(strings.NewReader(data.String()), moduleFile)
 	if err != nil {
 		return err
 	}
@@ -224,7 +231,7 @@ func (p *Provider) EnsureDisableSwap(ctx context.Context, machine *platformv1.Ma
 		return err
 	}
 
-	_, err = machineSSH.CombinedOutput("swapoff -a && sed -i 's/^[^#]*swap/#&/' /etc/fstab")
+	_, err = machineSSH.CombinedOutput(`swapoff -a && sed -i "s/^[^#]*swap/#&/" /etc/fstab`)
 	if err != nil {
 		return err
 	}
@@ -290,15 +297,17 @@ func (p *Provider) EnsureDocker(ctx context.Context, machine *platformv1.Machine
 	}
 
 	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
-	if p.config.Registry.NeedSetHosts() {
+	if p.config.Registry.NeedSetHosts() && machine.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 
+	extraArgs := cluster.Spec.DockerExtraArgs
+	utilruntime.Must(mergo.Merge(&extraArgs, p.config.Docker.ExtraArgs))
 	option := &docker.Option{
 		InsecureRegistries: insecureRegistries,
 		RegistryDomain:     p.config.Registry.Domain,
 		IsGPU:              gpu.IsEnable(machine.Spec.Labels),
-		ExtraArgs:          cluster.Spec.DockerExtraArgs,
+		ExtraArgs:          extraArgs,
 	}
 	err = docker.Install(machineSSH, option)
 	if err != nil {
@@ -314,11 +323,7 @@ func (p *Provider) EnsureKubelet(ctx context.Context, machine *platformv1.Machin
 		return err
 	}
 
-	option := &kubelet.Option{
-		Version:   cluster.Spec.Version,
-		ExtraArgs: cluster.Spec.KubeletExtraArgs,
-	}
-	err = kubelet.Install(machineSSH, option)
+	err = kubelet.Install(machineSSH, cluster.Spec.Version)
 	if err != nil {
 		return err
 	}
@@ -340,13 +345,13 @@ func (p *Provider) EnsureCNIPlugins(ctx context.Context, machine *platformv1.Mac
 	return nil
 }
 
-func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+func (p *Provider) EnsureConntrackTools(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
-	err = kubeadm.Install(machineSSH)
+	err = res.ConntrackTools.InstallWithDefault(machineSSH)
 	if err != nil {
 		return err
 	}
@@ -354,22 +359,41 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machin
 	return nil
 }
 
-func (p *Provider) EnsureJoinNode(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	host, err := cluster.Host()
-	if err != nil {
-		return err
-	}
+func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
 	}
 
-	option := &kubeadm.JoinNodeOption{
-		NodeName:             machine.Spec.IP,
-		BootstrapToken:       *cluster.ClusterCredential.BootstrapToken,
-		ControlPlaneEndpoint: host,
+	err = kubeadm.Install(machineSSH, cluster.Spec.Version)
+	if err != nil {
+		return err
 	}
-	err = kubeadm.JoinNode(machineSSH, option)
+
+	return nil
+}
+
+func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "preflight")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureJoinPhaseKubeletStart(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "kubelet-start")
 	if err != nil {
 		return err
 	}

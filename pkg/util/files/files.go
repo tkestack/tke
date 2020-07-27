@@ -23,8 +23,10 @@ package files
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+
 	utilfs "tkestack.io/tke/pkg/util/filesystem"
 )
 
@@ -230,4 +232,16 @@ func ReplaceDir(fs utilfs.Filesystem, path string, files map[string]string) erro
 	}
 	// rename over target directory
 	return fs.Rename(tmpPath, path)
+}
+
+// WriteFileWithDir writes data to a file named by filename in dir.
+func WriteFileWithDir(dir string, filename string, data []byte, perm os.FileMode) error {
+	absFilePath := filepath.Join(dir, filename)
+	return ioutil.WriteFile(absFilePath, data, perm)
+}
+
+// ReadFileWithDir reads the file named by filename in dir and returns the contents.
+func ReadFileWithDir(dir string, filename string) ([]byte, error) {
+	absFilePath := filepath.Join(dir, filename)
+	return ioutil.ReadFile(absFilePath)
 }

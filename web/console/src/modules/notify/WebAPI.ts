@@ -85,10 +85,10 @@ export async function fetchResourceList(query: QueryState<{}>, resourceInfo) {
  * @param strategy 新的策略
  */
 export async function modifyResource([resource]: Resource[]) {
-  let { mode, resourceIns, resourceInfo, jsonData, namespace } = resource;
+  let { mode, resourceIns, resourceInfo, jsonData, namespace, isSpetialNamespace } = resource;
 
   try {
-    const url = reduceK8sRestfulPath({ resourceInfo, specificName: resourceIns, namespace });
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: resourceIns, namespace, isSpetialNamespace });
     const response = await reduceNetworkRequest({
       method: mode === 'create' ? 'POST' : 'PUT',
       url,
@@ -109,10 +109,10 @@ export async function modifyResource([resource]: Resource[]) {
 
 export async function deleteResource(resources: Resource[]) {
   for (let resource of resources) {
-    let { resourceIns, resourceInfo, jsonData, namespace } = resource;
+    let { resourceIns, resourceInfo, jsonData, namespace, isSpetialNamespace } = resource;
 
     try {
-      const url = reduceK8sRestfulPath({ resourceInfo, specificName: resource.metadata.name, namespace });
+      const url = reduceK8sRestfulPath({ resourceInfo, specificName: resource.metadata.name, namespace: namespace || resource.metadata.namespace, isSpetialNamespace });
       const response = await reduceNetworkRequest({
         method: 'DELETE',
         url,

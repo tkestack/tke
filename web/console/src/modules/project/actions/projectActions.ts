@@ -1,3 +1,6 @@
+import { detailActions } from './detailActions';
+import { ProjectUserMap } from './../models/Project';
+import { FFReduxActionName } from './../constants/Config';
 import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import {
   createFFListActions,
@@ -6,7 +9,8 @@ import {
   generateWorkflowActionCreator,
   isSuccessWorkflow,
   OperationTrigger,
-  uuid
+  uuid,
+  createFFObjectActions
 } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
@@ -49,14 +53,27 @@ const FFModelProjectActions = createFFListActions<Project, ProjectFilter>({
   }
 });
 
+const FFObjectProjectUserInfoActions = createFFObjectActions<ProjectUserMap, ProjectFilter>({
+  actionName: FFReduxActionName.ProjectUserInfo,
+  fetcher: async (query, getState: GetState) => {
+    let response = await WebAPI.fetchProjectUserInfo(query);
+    return response;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().projectUserInfo;
+  }
+});
+
 const restActions = {
+  projectUserInfo: FFObjectProjectUserInfoActions,
+
   poll: (filter?: ProjectFilter) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { project } = getState();
       dispatch(
         FFModelProjectActions.polling({
           filter: filter || project.query.filter,
-          delayTime: 8000
+          delayTime: 10000
         })
       );
     };
@@ -130,8 +147,7 @@ const restActions = {
     operationExecutor: WebAPI.editProject,
     after: {
       [OperationTrigger.Done]: (dispatch, getState) => {
-        let { editProjecResourceLimit, route } = getState(),
-          urlParams = router.resolve(route);
+        let { editProjecResourceLimit, route } = getState();
         if (isSuccessWorkflow(editProjecResourceLimit)) {
           dispatch(restActions.editProjecResourceLimit.reset());
           dispatch(restActions.clearEdition());
@@ -141,8 +157,44 @@ const restActions = {
     }
   }),
 
+  /** 编辑业务描述 */
+  addExistMultiProject: generateWorkflowActionCreator<Project, string>({
+    actionType: ActionType.AddExistMultiProject,
+    workflowStateLocator: (state: RootState) => state.addExistMultiProject,
+    operationExecutor: WebAPI.addExistMultiProject,
+    after: {
+      [OperationTrigger.Done]: (dispatch, getState) => {
+        let { addExistMultiProject, route } = getState(),
+          urlParams = router.resolve(route);
+        if (isSuccessWorkflow(addExistMultiProject)) {
+          dispatch(restActions.addExistMultiProject.reset());
+          dispatch(projectActions.clearSelection());
+          dispatch(detailActions.project.applyPolling(route.queries['projectId']));
+        }
+      }
+    }
+  }),
+
+  /** 编辑业务描述 */
+  deleteParentProject: generateWorkflowActionCreator<Project, string>({
+    actionType: ActionType.DeleteParentProject,
+    workflowStateLocator: (state: RootState) => state.deleteParentProject,
+    operationExecutor: WebAPI.deleteParentProject,
+    after: {
+      [OperationTrigger.Done]: (dispatch, getState) => {
+        let { deleteParentProject, route } = getState(),
+          urlParams = router.resolve(route);
+        if (isSuccessWorkflow(deleteParentProject)) {
+          dispatch(restActions.deleteParentProject.reset());
+          dispatch(detailActions.project.clearSelection());
+          dispatch(detailActions.project.applyPolling(route.queries['projectId']));
+        }
+      }
+    }
+  }),
+
   /** 删除业务 */
-  deleteProject: generateWorkflowActionCreator<Project, void>({
+  deleteProject: generateWorkflowActionCreator<Project, string>({
     actionType: ActionType.DeleteProject,
     workflowStateLocator: (state: RootState) => state.deleteProject,
     operationExecutor: WebAPI.deleteProject,
@@ -157,17 +209,14 @@ const restActions = {
     }
   }),
 
-  selectProject: (projects: Project[]) => {
-    return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      dispatch(FFModelProjectActions.selects(projects));
-    };
-  },
-
   /**拉取业务详情 */
   fetchDetail: (projectId?: string) => {
     return async dispatch => {
       let project = await WebAPI.fetchProjectDetail(projectId);
-      dispatch(restActions.selectProject([project]));
+      dispatch({
+        type: ActionType.ProjectDetail,
+        payload: project
+      });
     };
   },
 

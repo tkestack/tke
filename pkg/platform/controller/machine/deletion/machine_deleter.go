@@ -82,6 +82,8 @@ type machineDeleter struct {
 // to wait for them to go away.
 // Caller is expected to keep calling this until it succeeds.
 func (d *machineDeleter) Delete(ctx context.Context, name string) error {
+	ctx = log.FromContext(ctx).WithName("Delete").WithContext(ctx)
+
 	// Multiple controllers may edit a machine during termination
 	// first get the latest state of the machine before proceeding
 	// if the machine was deleted already, don't do anything
@@ -95,8 +97,6 @@ func (d *machineDeleter) Delete(ctx context.Context, name string) error {
 	if machine.DeletionTimestamp == nil {
 		return nil
 	}
-
-	log.Info("Machine controller - machine deleter", log.String("name", machine.Name), log.String("finalizerToken", string(d.finalizerToken)))
 
 	// ensure that the status is up to date on the machine
 	// if we get a not found error, we assume the machine is truly gone
@@ -245,7 +245,7 @@ var deleteResourceFuncs = []deleteResourceFunc{
 
 // deleteAllContent will use the client to delete each resource identified in machine.
 func (d *machineDeleter) deleteAllContent(ctx context.Context, machine *v1.Machine) error {
-	log.Debug("Machine controller - deleteAllContent", log.String("machineName", machine.Name))
+	log.FromContext(ctx).Info("deleteAllContent doing")
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
@@ -260,12 +260,13 @@ func (d *machineDeleter) deleteAllContent(ctx context.Context, machine *v1.Machi
 		return utilerrors.NewAggregate(errs)
 	}
 
-	log.Debug("Machine controller - deletedAllContent", log.String("machineName", machine.Name))
+	log.FromContext(ctx).Info("deleteAllContent done")
+
 	return nil
 }
 
 func deleteMachineProvider(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error {
-	log.Info("Machine controller - deleteMachineProvider", log.String("machineName", machine.Name))
+	log.FromContext(ctx).Info("deleteMachineProvider doing")
 
 	provider, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
@@ -276,11 +277,18 @@ func deleteMachineProvider(ctx context.Context, deleter *machineDeleter, machine
 		return err
 	}
 
-	return provider.OnDelete(ctx, machine, cluster)
+	err = provider.OnDelete(ctx, machine, cluster)
+	if err != nil {
+		return err
+	}
+
+	log.FromContext(ctx).Info("deleteMachineProvider done")
+
+	return nil
 }
 
 func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error {
-	log.Debug("Machine controller - deleteNode", log.String("machineName", machine.Name))
+	log.FromContext(ctx).Info("deleteNode doing")
 
 	cluster, err := typesv1.GetClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
 	if err != nil {
@@ -300,6 +308,8 @@ func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machin
 			return err
 		}
 	}
+
+	log.FromContext(ctx).Info("deleteNode done")
 
 	return nil
 }

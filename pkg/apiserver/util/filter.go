@@ -30,7 +30,7 @@ import (
 // PredicateListOptions determines the query options according to the tenant
 // attribute of the request user.
 func PredicateListOptions(ctx context.Context, options *metainternal.ListOptions) *metainternal.ListOptions {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		tenantID = filter.TenantIDFrom(ctx)
 		if tenantID == "" {

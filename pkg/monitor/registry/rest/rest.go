@@ -24,12 +24,17 @@ import (
 	genericserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
+	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/monitor"
 	"tkestack.io/tke/api/monitor/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	configmapstorage "tkestack.io/tke/pkg/monitor/registry/configmap/storage"
 	metricstorage "tkestack.io/tke/pkg/monitor/registry/metric/storage"
+	clusteroverview "tkestack.io/tke/pkg/monitor/registry/overview/cluster/storage"
+	promstorage "tkestack.io/tke/pkg/monitor/registry/prometheus/storage"
 	monitorstorage "tkestack.io/tke/pkg/monitor/storage"
+	"tkestack.io/tke/pkg/monitor/util/cache"
 )
 
 // StorageProvider is a REST type for core resources storage that implement
@@ -38,6 +43,9 @@ type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
 	PrivilegedUsername   string
 	MetricStorage        monitorstorage.MetricStorage
+	Cacher               cache.Cacher
+	PlatformClient       platformversionedclient.PlatformV1Interface
+	BusinessClient       businessversionedclient.BusinessV1Interface
 }
 
 // Implement RESTStorageProvider
@@ -68,6 +76,13 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		metricREST := metricstorage.NewStorage(restOptionsGetter, s.MetricStorage)
 		storageMap["metrics"] = metricREST.Metric
+
+		clusterOverviewREST := clusteroverview.NewStorage(restOptionsGetter, s.PlatformClient, s.BusinessClient, s.Cacher)
+		storageMap["clusteroverviews"] = clusterOverviewREST.ClusterOverview
+
+		promREST := promstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		storageMap["prometheuses"] = promREST.Prometheus
+		storageMap["prometheuses/status"] = promREST.Status
 	}
 
 	return storageMap

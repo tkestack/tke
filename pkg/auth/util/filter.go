@@ -34,7 +34,7 @@ import (
 
 // FilterLocalIdentity is used to filter localIdentity that do not belong to the tenant.
 func FilterLocalIdentity(ctx context.Context, localIdentity *auth.LocalIdentity) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -48,7 +48,7 @@ func FilterLocalIdentity(ctx context.Context, localIdentity *auth.LocalIdentity)
 
 // FilterAPIKey is used to filter apiKey that do not belong to the tenant.
 func FilterAPIKey(ctx context.Context, apiKey *auth.APIKey) error {
-	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -61,7 +61,7 @@ func FilterAPIKey(ctx context.Context, apiKey *auth.APIKey) error {
 
 // FilterPolicy is used to filter policy that do not belong to the tenant.
 func FilterPolicy(ctx context.Context, policy *auth.Policy) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -79,7 +79,7 @@ func FilterPolicy(ctx context.Context, policy *auth.Policy) error {
 
 // FilterPolicy is used to filter policy that do not belong to the tenant.
 func FilterProjectPolicy(ctx context.Context, binding *auth.ProjectPolicyBinding) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -101,7 +101,7 @@ func FilterProjectPolicy(ctx context.Context, binding *auth.ProjectPolicyBinding
 
 // FilterRole is used to filter role that do not belong to the tenant.
 func FilterRole(ctx context.Context, role *auth.Role) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -123,7 +123,7 @@ func FilterRole(ctx context.Context, role *auth.Role) error {
 
 // FilterGroup is used to filter group that do not belong to the tenant.
 func FilterGroup(ctx context.Context, group *auth.LocalGroup) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -136,7 +136,7 @@ func FilterGroup(ctx context.Context, group *auth.LocalGroup) error {
 // PredicateUserNameListOptions determines the query options according to the username
 // attribute of the request user.
 func PredicateUserNameListOptions(ctx context.Context, options *metainternal.ListOptions) *metainternal.ListOptions {
-	username, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return options
 	}

@@ -2,6 +2,8 @@ import axios from 'axios';
 import { OperationResult } from '@tencent/ff-redux';
 import { RequestParams, ResourceInfo } from '../src/modules/common/models';
 import { changeForbiddentConfig } from '../index';
+import { parseQueryString } from './urlUtil';
+import { getProjectName } from './appUtil';
 
 /** 是否展示没有权限的弹窗 */
 export let Init_Forbiddent_Config = {
@@ -75,7 +77,7 @@ export const reduceNetworkRequest = async (
   userParams: RequestParams,
   clusterId?: string,
   projectId?: string,
-  keyword?: string,
+  keyword?: string
 ) => {
   let {
     method,
@@ -94,16 +96,27 @@ export const reduceNetworkRequest = async (
       'X-TKE-ClusterName': clusterId
     });
   }
-  if (projectId) {
-    userDefinedHeader = Object.assign({}, userDefinedHeader, {
+
+  /// #if project
+  let searchParams;
+  try {
+    searchParams = parseQueryString(location.search);
+  } catch (error) {}
+  if (!projectId) {
+    if (searchParams && (searchParams.projectName || searchParams.projectId)) {
+      projectId = searchParams.projectName || searchParams.projectId;
+    } else {
+      projectId = getProjectName();
+    }
+  }
+  userDefinedHeader = Object.assign(
+    {},
+    {
       'X-TKE-ProjectName': projectId
-    });
-  }
-  if (keyword) {
-    userDefinedHeader = Object.assign({}, userDefinedHeader, {
-      'X-TKE-FuzzyResourceName': keyword
-    });
-  }
+    },
+    userDefinedHeader
+  );
+  /// #endif
 
   let params = {
     method,
@@ -130,7 +143,7 @@ export const reduceNetworkRequest = async (
   } catch (error) {
     // 如果返回是 401的话，自动登出，此时是鉴权不过，cookies失效了
     if (error.response && error.response.status === 401) {
-      // location.reload();
+      location.reload();
     } else if (error.response && error.response.status === 403) {
       changeForbiddentConfig({
         isShow: true,

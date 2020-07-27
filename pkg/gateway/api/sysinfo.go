@@ -35,6 +35,7 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	auditapi "tkestack.io/tke/pkg/audit/api"
+	logagentapi "tkestack.io/tke/api/logagent/v1"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 )
 
@@ -52,6 +53,7 @@ type Components struct {
 	Auth     *GroupVersion `json:"auth,omitempty"`
 	Registry *GroupVersion `json:"registry,omitempty"`
 	Audit    *GroupVersion `json:"audit,omitempty"`
+	LogAgent *GroupVersion `json:"logagent,omitempty"`
 }
 
 type SysInfo struct {
@@ -126,6 +128,12 @@ func handleGetSysInfoFunc(cfg *gatewayconfig.GatewayConfiguration) func(*restful
 			cmp.Audit = &GroupVersion{
 				GroupName: auditapi.GroupName,
 				Version:   auditapi.Version,
+			}
+		}
+		if cfg.Components.LogAgent != nil {
+			cmp.LogAgent = &GroupVersion{
+				GroupName: logagentapi.GroupName,
+				Version: logagentapi.Version,
 			}
 		}
 		sysInfo := SysInfo{

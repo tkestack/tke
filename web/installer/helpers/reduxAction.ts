@@ -1,6 +1,6 @@
 import { Dispatch } from 'redux';
-import { ReduxAction } from '@tencent/qcloud-lib';
-import { FetchOptions, FetcherPayload, FetcherTrigger } from '@tencent/qcloud-redux-fetcher';
+
+import { FetcherPayload, FetcherTrigger, FetchOptions, ReduxAction } from '@tencent/ff-redux';
 
 interface Fetcher<T> {
   (getState: () => any, options: FetchOptions, dispatch: Redux.Dispatch): Promise<T>;

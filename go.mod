@@ -5,6 +5,7 @@ go 1.12
 replace (
 	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
+	github.com/dovics/domain-role-manager => github.com/amasser/domain-role-manager v0.0.0-20200325101749-a44f9c315081
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.2.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
@@ -14,7 +15,6 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-sdk-go v1.29.32
 	github.com/bitly/go-simplejson v0.5.0
-	github.com/blang/semver v3.5.1+incompatible
 	github.com/casbin/casbin/v2 v2.2.1
 	github.com/chartmuseum/storage v0.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -40,6 +40,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/howeyc/fsnotify v0.9.0
+	github.com/imdario/mergo v0.3.8
 	github.com/influxdata/influxdb1-client v0.0.0-20190402204710-8ff2fc3824fc
 	github.com/jinzhu/configor v1.1.1
 	github.com/joho/godotenv v1.3.0

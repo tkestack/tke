@@ -85,3 +85,12 @@ export const QueryPodList = 'QueryPodList';
 export const UpdateContainerFilePaths = 'UpdateContainerFilePaths';
 export const UpdateContaierFileWorkloadList = 'UpdateContaierFileWorkloadList ';
 export const isFirstFetchResource = 'isFirstFetchResource';
+
+//业务侧
+// export const QueryNamespaceList = 'QueryNamespaceList';
+export const SelectNamespace = 'SelectNamespace';
+export const InitProjectList = 'InitProjectList';
+export const ProjectSelection = 'ProjectSelection';
+// export const FetchNamespaceList = 'FetchNamespaceList';
+export const FetchProjectList = 'FetchProjectList';
+export const QueryProject = 'QueryProject';

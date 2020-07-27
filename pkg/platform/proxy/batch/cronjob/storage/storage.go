@@ -22,6 +22,7 @@ package storage
 
 import (
 	"context"
+
 	batchV1Beta1 "k8s.io/api/batch/v1beta1"
 	batchV2Alpha1 "k8s.io/api/batch/v2alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +30,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/proxy"
 )
 
 // Storage includes storage for resources.
@@ -41,12 +42,12 @@ type Storage struct {
 
 // REST implements pkg/api/rest.StandardStorage
 type REST struct {
-	*util.Store
+	*proxy.Store
 }
 
 // NewStorageV2Alpha1 returns a Storage object that will work against resources.
 func NewStorageV2Alpha1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	replicaSetStore := &util.Store{
+	replicaSetStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &batchV2Alpha1.CronJob{} },
 		NewListFunc:    func() runtime.Object { return &batchV2Alpha1.CronJobList{} },
 		Namespaced:     true,
@@ -68,7 +69,7 @@ func NewStorageV2Alpha1(_ genericregistry.RESTOptionsGetter, platformClient plat
 
 // NewStorageV1Beta1 returns a Storage object that will work against resources.
 func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	replicaSetStore := &util.Store{
+	replicaSetStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &batchV1Beta1.CronJob{} },
 		NewListFunc:    func() runtime.Object { return &batchV1Beta1.CronJobList{} },
 		Namespaced:     true,
@@ -107,7 +108,7 @@ func (r *REST) Categories() []string {
 // StatusREST implements the REST endpoint for changing the status of a replication controller
 type StatusREST struct {
 	rest.Storage
-	store *util.Store
+	store *proxy.Store
 }
 
 // StatusREST implements Patcher

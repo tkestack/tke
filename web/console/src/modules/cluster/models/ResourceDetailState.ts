@@ -1,13 +1,17 @@
-import { Validation } from 'src/modules/common';
+import { Validation, LogAgent } from 'src/modules/common';
 
 import { FetcherState, FFListModel, QueryState, RecordSet, WorkflowState } from '@tencent/ff-redux';
 
 import { CreateResource, Event, Pod, Replicaset, ResourceFilter } from './';
 import { PodFilterInNode } from './Pod';
+import { Resource } from './ResourceOption';
 
 type ResourceModifyWorkflow = WorkflowState<CreateResource, number>;
 
 export interface ResourceDetailState {
+  /** 拉取资源的详情信息 */
+  resourceDetailInfo?: FFListModel<Resource, ResourceFilter>;
+
   /** yaml 的数据列表 */
   yamlList?: FetcherState<RecordSet<string>>;
 
@@ -64,6 +68,12 @@ export interface ResourceDetailState {
 
   /** logOption 用于日志的选择过滤条件 */
   logOption?: LogOption;
+
+  logAgent?: LogAgent;
+
+  logHierarchy?: string[];
+
+  logContent?: string;
 }
 
 export interface LogOption {
@@ -73,6 +83,9 @@ export interface LogOption {
   /** containerName */
   containerName?: string;
 
+  /** logFile */
+  logFile?: string;
+
   /** tailLines */
   tailLines?: string;
 
@@ -80,9 +93,65 @@ export interface LogOption {
   isAutoRenew?: boolean;
 }
 
+/**
+ * 查询日志目录结构的 payload 定义
+ */
+export interface LogHierarchyQuery {
+  agentName?: string;
+
+  namespace?: string;
+
+  clusterId?: string;
+
+  pod?: string;
+
+  container?: string;
+}
+
+/**
+ * 查询日志内容的 payload 定义
+ */
+export interface LogContentQuery {
+  agentName?: string;
+
+  namespace?: string;
+
+  clusterId?: string;
+
+  pod?: string;
+
+  container?: string;
+
+  start?: number;
+
+  length?: number;
+
+  filepath?: string;
+}
+
+/**
+ * 下载日志文件的 payload 定义
+ */
+export interface DownloadLogQuery {
+  agentName?: string;
+
+  namespace?: string;
+
+  clusterId?: string;
+
+  pod?: string;
+
+  container?: string;
+
+  filepath?: string;
+}
+
 export interface PodLogFilter extends ResourceFilter {
   /** container的名称 */
   container?: string;
+
+  /** 日志文件路径 */
+  logFile?: string;
 
   /** 显示日志的条数 */
   tailLines?: string;

@@ -55,6 +55,14 @@ func (r *UserREST) NewList() runtime.Object {
 	return &auth.UserList{}
 }
 
+// ConvertToTable converts objects to metav1.Table objects using default table
+// convertor.
+func (r *UserREST) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	// TODO: convert user list to table
+	tableConvertor := rest.NewDefaultTableConvertor(auth.Resource("users"))
+	return tableConvertor.ConvertToTable(ctx, object, tableOptions)
+}
+
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *UserREST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	requestInfo, ok := request.RequestInfoFrom(ctx)

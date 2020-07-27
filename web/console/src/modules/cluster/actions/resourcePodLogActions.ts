@@ -1,10 +1,11 @@
 import { extend, FetchOptions, generateFetcherActionCreator, ReduxAction } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
+import { LogAgent } from 'src/modules/common/models';
 import { resourceConfig } from '../../../../config/resourceConfig';
 import * as ActionType from '../constants/ActionType';
 import { PollEventName } from '../constants/Config';
-import { PodLogFilter, RootState } from '../models';
+import { PodLogFilter, RootState, LogHierarchyQuery, LogContentQuery, DownloadLogQuery } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
 
@@ -69,7 +70,8 @@ const restActions = {
     return async (dispatch, getState: GetState) => {
       let { route, subRoot } = getState(),
         urlParams = router.resolve(route),
-        { podName, tailLines } = subRoot.resourceDetailState.logOption;
+        { logAgent, logOption } = subRoot.resourceDetailState,
+        { podName, logFile, tailLines } = logOption;
 
       dispatch({
         type: ActionType.ContainerName,
@@ -77,7 +79,56 @@ const restActions = {
       });
 
       // 进行数据的拉取，如果tab 不在 log 页面的话，不需要进行拉取
-      urlParams['tab'] === 'log' && dispatch(resourcePodLogActions.handleFetchData(podName, containerName, tailLines));
+      if (urlParams['tab'] === 'log') {
+        dispatch(resourcePodLogActions.handleFetchData(podName, containerName, tailLines));
+        // 拉取日志目录结构
+        if (logAgent && logAgent['metadata'] && logAgent['metadata']['name']) {
+          let agentName = logAgent['metadata']['name'];
+          const query: LogHierarchyQuery = {
+            agentName,
+            namespace: route.queries['np'],
+            clusterId: route.queries['clusterId'],
+            pod: podName,
+            container: containerName,
+          };
+          dispatch(resourcePodLogActions.getLogHierarchy(query));
+        }
+      }
+    };
+  },
+
+  /** 选择日志文件 */
+  selectLogFile: (logFile: string) => {
+    return async (dispatch, getState: GetState) => {
+      let { route, subRoot } = getState(),
+        urlParams = router.resolve(route),
+        { logAgent } = subRoot.resourceDetailState,
+        { podName, containerName, tailLines } = subRoot.resourceDetailState.logOption;
+
+      dispatch({
+        type: ActionType.LogFile,
+        payload: logFile
+      });
+
+      if (logFile === 'stdout') {
+        urlParams['tab'] === 'log' && dispatch(resourcePodLogActions.handleFetchData(podName, containerName, tailLines));
+      } else {
+        let agentName = '';
+        if (logAgent && logAgent['metadata'] && logAgent['metadata']['name']) {
+          agentName = logAgent['metadata']['name'];
+        }
+        const query: LogContentQuery = {
+          agentName,
+          namespace: route.queries['np'],
+          clusterId: route.queries['clusterId'],
+          pod: podName,
+          container: containerName,
+          filepath: logFile,
+          start: 0,
+          length: Number(tailLines)
+        };
+        urlParams['tab'] === 'log' && dispatch(resourcePodLogActions.getLogContent(query));
+      }
     };
   },
 
@@ -125,6 +176,44 @@ const restActions = {
     };
   },
 
+  setLogAgent: (logAgent: LogAgent) => {
+    return async (dispatch, getState: GetState) => {
+      dispatch({
+        type: ActionType.PodLogAgent,
+        payload: logAgent
+      });
+    };
+  },
+
+  /** 拉取采集日志结构 **/
+  getLogHierarchy: (query: LogHierarchyQuery) => {
+    return async (dispatch, getState: GetState) => {
+      let response = await WebAPI.fetchResourceLogHierarchy(query);
+      dispatch({
+        type: ActionType.PodLogHierarchy,
+        payload: response
+      });
+    };
+  },
+
+  /** 获取日志文件内容 **/
+  getLogContent: (query: LogContentQuery) => {
+    return async (dispatch, getState: GetState) => {
+      let response = await WebAPI.fetchResourceLogContent(query);
+      dispatch({
+        type: ActionType.PodLogContent,
+        payload: response
+      });
+    };
+  },
+
+  /** 下载日志文件 **/
+  downloadLogFile: (query: DownloadLogQuery) => {
+    return async (dispatch, getState: GetState) => {
+      let response = await WebAPI.downloadLogFile(query);
+    };
+  },
+
   /** 切换自动刷新 */
   toggleAutoRenew: () => {
     return async (dispatch, getState: GetState) => {
@@ -139,11 +228,32 @@ const restActions = {
   /** 轮训日志的拉取 */
   poll: (queryObj: any) => {
     return async (dispatch, getState: GetState) => {
-      let { route } = getState(),
-        urlParams = router.resolve(route);
+      let { route, subRoot } = getState(),
+        { logAgent, logOption } = subRoot.resourceDetailState,
+        { podName, containerName, logFile, tailLines, isAutoRenew } = logOption,
+      urlParams = router.resolve(route);
 
       // 触发日志的轮询
-      dispatch(resourcePodLogActions.applyFilter(queryObj));
+      if (logFile === 'stdout') {
+        dispatch(resourcePodLogActions.applyFilter(queryObj));
+      } else {
+        let agentName = '';
+        if (logAgent && logAgent['metadata'] && logAgent['metadata']['name']) {
+          agentName = logAgent['metadata']['name'];
+        }
+        let { namespace, clusterId, specificName: pod, container, tailLines } = queryObj;
+        let logContentQuery: LogContentQuery = {
+          agentName,
+          namespace,
+          clusterId,
+          pod,
+          container,
+          start: 0,
+          length: Number(tailLines),
+          filepath: logFile,
+        };
+        dispatch(resourcePodLogActions.getLogContent(logContentQuery));
+      }
       // 每次轮询之前先清空之前的轮询
       dispatch(resourcePodLogActions.clearPollLog());
 

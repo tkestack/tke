@@ -2,6 +2,7 @@ import { t } from '@tencent/tea-app/lib/i18n';
 import classNames from 'classnames';
 import * as React from 'react';
 import { CommonBar, FormItem } from '../../../../common/components';
+import { FormPanel } from '@tencent/ff-component';
 import { helmResourceList } from '../../../constants/Config';
 import { RootProps } from '../../HelmApp';
 export class BaseInfoPanel extends React.Component<RootProps, {}> {
@@ -24,8 +25,16 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
 
   render() {
     let {
-      helmCreation: { name, resourceSelection, isValid, cluster }
+      namespaceSelection,
+      namespaceList,
+      actions,
+      listState: { cluster },
+      helmCreation: { name, resourceSelection, isValid }
     } = this.props;
+    let namespaceOptions = namespaceList.data.records.map((p, index) => ({
+      text: p.name,
+      value: p.name
+    }));
 
     return (
       <div>
@@ -48,7 +57,23 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
               </p>
             </div>
           </FormItem>
-          <FormItem label={t('运行集群')}>{cluster.selection ? cluster.selection.spec.displayName : '-'}</FormItem>
+
+          <FormItem label={t('运行集群')}>{cluster.selection ? cluster.selection.metadata.name : '-'}</FormItem>
+
+          <FormItem label={t('命名空间')}>
+            <div
+              className={classNames('form-unit', {
+                'is-error': namespaceSelection === ''
+              })}
+            >
+              <FormPanel.Select
+                label={'namespace'}
+                options={namespaceOptions}
+                value={namespaceSelection}
+                onChange={value => actions.namespace.selectNamespace(value)}
+              />
+            </div>
+          </FormItem>
         </ul>
         <hr className="hr-mod" />
         <ul className="form-list" style={{ marginBottom: 16 }}>

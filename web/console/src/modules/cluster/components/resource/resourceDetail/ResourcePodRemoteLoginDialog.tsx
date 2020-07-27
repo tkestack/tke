@@ -2,21 +2,42 @@ import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Bubble, Button, Modal, Table, TableColumn } from '@tea/component';
+import { Bubble, Button, Modal, Table, TableColumn, Text, Checkbox } from '@tea/component';
 import { stylize } from '@tea/component/table/addons/stylize';
 import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { allActions } from '../../../actions';
-import { ContainerStatusMap } from '../../../constants/Config';
+import { ContainerStatusMap, podRemoteShellOptions } from '../../../constants/Config';
 import { PodContainer } from '../../../models';
 import { RootProps } from '../../ClusterApp';
+import { FormPanel } from '@tencent/ff-component';
+
+interface ResourcePodRemoteLoginDialogState {
+  /** 是否使用用户自定义的shell */
+  isUserDefined?: boolean;
+
+  /** 用户选择的shell */
+  shellSelected?: string;
+
+  /** 用户自己输入的shell */
+  userDefinedShell?: string;
+}
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
 @connect(state => state, mapDispatchToProps)
-export class ResourcePodRemoteLoginDialog extends React.Component<RootProps, {}> {
+export class ResourcePodRemoteLoginDialog extends React.Component<RootProps, ResourcePodRemoteLoginDialogState> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isUserDefined: false,
+      shellSelected: '/bin/bash',
+      userDefinedShell: ''
+    };
+  }
+
   render() {
     let { actions, subRoot, route } = this.props,
       { resourceDetailState } = subRoot,
@@ -77,7 +98,7 @@ export class ResourcePodRemoteLoginDialog extends React.Component<RootProps, {}>
                   (x.name ? x.name : '') +
                   '&namespace=' +
                   namespace +
-                  '&command=/bin/bash'
+                  `&command=${this.state.isUserDefined ? this.state.userDefinedShell : this.state.shellSelected}`
                 }
                 target="_blank"
               >
@@ -93,31 +114,45 @@ export class ResourcePodRemoteLoginDialog extends React.Component<RootProps, {}>
     return (
       <Modal visible={true} caption={t('容器登录')} onClose={cancel} disableEscape={true}>
         <Modal.Body>
-          <div className="docker-dialog jiqun">
-            <div className="act-outline">
-              <div className="act-summary">
-                <p>
-                  <span>
-                    <Trans count={containersLength}>
-                      该实例下共有<strong className="text-warning">{{ containersLength }}个</strong>容器
-                    </Trans>
-                  </span>
-                </p>
-              </div>
-              <div className="del-colony-tb">
-                <Table
-                  columns={columns}
-                  records={containers}
-                  addons={[
-                    stylize({
-                      className: 'ovm-dialog-tablepanel',
-                      bodyStyle: { overflowY: 'auto', height: 160 }
-                    })
-                  ]}
+          <Text>
+            <Trans count={containersLength}>
+              该实例下共有<strong className="text-warning">{{ containersLength }}个</strong>容器
+            </Trans>
+          </Text>
+          <Table
+            columns={columns}
+            records={containers}
+            addons={[
+              stylize({
+                className: 'ovm-dialog-tablepanel',
+                bodyStyle: { overflowY: 'auto', height: 160 }
+              })
+            ]}
+          />
+          <FormPanel isNeedCard={false} className="tea-mt-2n">
+            <FormPanel.Item label={t('执行命令行')} text>
+              <Checkbox
+                value={this.state.isUserDefined}
+                onChange={value => this.setState({ isUserDefined: value })}
+                className="tea-mb-1n"
+              >
+                {t('使用自定义执行命令行')}
+              </Checkbox>
+              {this.state.isUserDefined ? (
+                <FormPanel.Input
+                  value={this.state.userDefinedShell}
+                  onChange={value => this.setState({ userDefinedShell: value })}
+                  placeholder="eg: /bin/bash"
                 />
-              </div>
-            </div>
-          </div>
+              ) : (
+                <FormPanel.Select
+                  options={podRemoteShellOptions}
+                  value={this.state.shellSelected}
+                  onChange={value => this.setState({ shellSelected: value })}
+                />
+              )}
+            </FormPanel.Item>
+          </FormPanel>
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={cancel}>{t('取消')}</Button>

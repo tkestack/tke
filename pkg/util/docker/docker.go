@@ -27,6 +27,7 @@ import (
 
 	"tkestack.io/tke/pkg/spec"
 
+	"github.com/docker/distribution/reference"
 	pkgerrors "github.com/pkg/errors"
 )
 
@@ -50,6 +51,9 @@ func New() *Docker {
 
 // runCmd starts to execute the command specified by cmdString.
 func (d *Docker) runCmd(cmdString string) error {
+	if d.Stdout != nil {
+		_, _ = d.Stdout.Write([]byte(cmdString))
+	}
 	cmd := exec.Command("sh", "-c", cmdString)
 	cmd.Stdout = d.Stdout
 	cmd.Stderr = d.Stderr
@@ -60,7 +64,7 @@ func (d *Docker) runCmd(cmdString string) error {
 func (d *Docker) getCmdOutput(cmdString string) ([]byte, error) {
 	// print cmdString before run
 	if d.Stdout != nil {
-		_, _ = d.Stdout.Write([]byte(cmdString + "\n"))
+		_, _ = d.Stdout.Write([]byte(cmdString))
 	}
 	cmd := exec.Command("sh", "-c", cmdString)
 	return cmd.Output()
@@ -151,14 +155,20 @@ func (d *Docker) GetNameArchTag(image string) (name string, arch string, tag str
 // SplitImageNameAndTag returns the name & tag of the given image.
 // If the tag is <none>, return err.
 func (d *Docker) SplitImageNameAndTag(image string) (name string, tag string, err error) {
-	nameAndTag := strings.Split(image, ":")
-	if len(nameAndTag) != 2 {
+	imageRef, err := reference.Parse(image)
+	if err != nil {
 		return "", "", fmt.Errorf("fail to get name and tag for image: %v", image)
 	}
-	if nameAndTag[1] == "<none>" {
-		return "", "", fmt.Errorf("image %s is invalid", image)
+
+	switch v := imageRef.(type) {
+	case reference.NamedTagged:
+		if v.Tag() == "<none>" {
+			return "", "", fmt.Errorf("image %s is invalid", image)
+		}
+		return v.Name(), v.Tag(), nil
+	default:
+		return "", "", fmt.Errorf("image: %v does not have a name and tag", image)
 	}
-	return nameAndTag[0], nameAndTag[1], nil
 }
 
 // SplitNameAndArch returns the real name & arch of the given name.

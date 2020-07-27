@@ -1,4 +1,15 @@
-import { extend, FetchOptions, generateFetcherActionCreator, ReduxAction, uuid } from '@tencent/ff-redux';
+import { ResourceInfo } from '@src/modules/common';
+import { FFReduxActionName } from './../constants/Config';
+import { Computer, ComputerFilter } from './../models/Computer';
+import {
+  extend,
+  FetchOptions,
+  generateFetcherActionCreator,
+  ReduxAction,
+  uuid,
+  createFFListActions,
+  deepClone
+} from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
@@ -7,26 +18,23 @@ import * as ActionType from '../constants/ActionType';
 import {
   initContainer,
   initCronMetrics,
-  initEnv,
   initHpaMetrics,
   initmatchExpressions,
   initMount,
-  initValueFrom,
   initVolume,
   initWorkloadAnnotataions,
   initWorkloadLabel
 } from '../constants/initState';
 import {
   ContainerItem,
-  EnvItem,
   HpaMetrics,
   MetricOption,
   Resource,
   ResourceFilter,
   RootState,
-  ValueFrom,
   VolumeItem,
-  WorkloadLabel
+  WorkloadLabel,
+  ContainerEnv
 } from '../models';
 import { CronMetrics, MatchExpressions } from '../models/WorkloadEdit';
 import { router } from '../router';
@@ -179,7 +187,48 @@ const cronHpaActions = {
   }
 };
 /** ============================== end cronhpa的相关操作 ============================== */
+/** ============================== start computer的相关操作 ============================== */
+const FFModelComputerActions = createFFListActions<Computer, ComputerFilter>({
+  actionName: FFReduxActionName.COMPUTER_WORKLOAD,
+  fetcher: async (query, getState: GetState) => {
+    let { clusterVersion } = getState();
+    let nodeInfo: ResourceInfo = resourceConfig(clusterVersion)['node'];
+    let newQuery = deepClone(query);
+    let { searchFilter } = newQuery;
+    if (searchFilter && searchFilter.instanceId) {
+      newQuery.search = searchFilter.instanceId;
+    }
 
+    let nodeItems = await WebAPI.fetchResourceList(newQuery, {
+      resourceInfo: nodeInfo,
+      isNeedSpecific: query.searchFilter && query.searchFilter.instanceId ? true : false,
+      isContinue: true
+    });
+    nodeItems.records = nodeItems.records.map(item => {
+      if (
+        Object.keys(item.metadata.labels).findIndex(key => key.indexOf('node-role.kubernetes.io/master') !== -1) !== -1
+      ) {
+        item.metadata.role = 'Master&Etcd';
+      } else {
+        item.metadata.role = 'Worker';
+      }
+      let phase;
+      if (item.status.conditions) {
+        let nodeStatus = item.status.conditions.find(item => item.type === 'Ready');
+        phase = nodeStatus.status === 'True' ? 'Running' : 'Failed';
+      }
+      item.status.phase = phase;
+      item.id = item.metadata.name;
+      return item;
+    });
+    return nodeItems;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().subRoot.workloadEdit.computer;
+  }
+});
+
+/** ============================== end computer的相关操作 ============================== */
 export const workloadEditActions = {
   /** hpa的相关操作 */
   hpa: hpaActions,
@@ -195,6 +244,8 @@ export const workloadEditActions = {
 
   /* cronhpa的相关操作 */
   cronhpa: cronHpaActions,
+
+  computer: FFModelComputerActions,
 
   /** 更新workload名称 */
   inputWorkloadName: (name: string) => {
@@ -626,30 +677,14 @@ export const workloadEditActions = {
   },
 
   /** 新增环境变量 */
-  addEnv: (cKey: string) => {
-    return async (dispatch, getState: GetState) => {
+  addEnvItem: (cKey: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
         cIndex = containers.findIndex(c => c.id === cKey);
 
-      let newEnv: EnvItem = Object.assign({}, initEnv, { id: uuid() });
+      let newEnv: ContainerEnv.ItemWithId = { ...ContainerEnv.initEnvItem, id: uuid() };
 
-      containers[cIndex]['envs'].push(newEnv);
-      dispatch({
-        type: ActionType.W_UpdateContainers,
-        payload: containers
-      });
-    };
-  },
-
-  /** 删除环境变量 */
-  deleteEnv: (cKey: string, eId: string) => {
-    return async (dispatch, getState: GetState) => {
-      let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
-        cIndex = containers.findIndex(c => c.id === cKey),
-        envs: EnvItem[] = containers[cIndex]['envs'],
-        eIndex = envs.findIndex(e => e.id === eId);
-
-      containers[cIndex]['envs'].splice(eIndex, 1);
+      containers[cIndex]['envItems'].push(newEnv);
       dispatch({
         type: ActionType.W_UpdateContainers,
         payload: containers
@@ -658,11 +693,11 @@ export const workloadEditActions = {
   },
 
   /** 更新环境变量 */
-  updateEnv: (obj: any, cKey: string, eId: string) => {
-    return async (dispatch, getState: GetState) => {
+  updateEnvItem: (obj: Partial<ContainerEnv.Item>, cKey: string, eId: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
         cIndex = containers.findIndex(c => c.id === cKey),
-        envs: EnvItem[] = containers[cIndex]['envs'],
+        envs: ContainerEnv.ItemWithId[] = containers[cIndex].envItems,
         eIndex = envs.findIndex(e => e.id === eId),
         objKeys = Object.keys(obj);
 
@@ -676,50 +711,15 @@ export const workloadEditActions = {
     };
   },
 
-  /** 新增valueFrom */
-  addValueFrom: (cKey: string) => {
-    return async (dispatch, getState: GetState) => {
-      let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
-        cIndex = containers.findIndex(c => c.id === cKey);
-
-      let newValueFrom: ValueFrom = Object.assign({}, initValueFrom, { id: uuid() });
-
-      containers[cIndex]['valueFrom'].push(newValueFrom);
-      dispatch({
-        type: ActionType.W_UpdateContainers,
-        payload: containers
-      });
-    };
-  },
-
-  /** 删除valueFrom */
-  deleteValueFrom: (cKey: string, vId: string) => {
-    return async (dispatch, getState: GetState) => {
+  /** 删除环境变量 */
+  deleteEnvItem: (cKey: string, eId: string) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
         cIndex = containers.findIndex(c => c.id === cKey),
-        valueFrom: ValueFrom[] = containers[cIndex]['valueFrom'],
-        vIndex = valueFrom.findIndex(v => v.id === vId);
+        envs: ContainerEnv.ItemWithId[] = containers[cIndex].envItems,
+        eIndex = envs.findIndex(e => e.id === eId);
 
-      containers[cIndex]['valueFrom'].splice(vIndex, 1);
-      dispatch({
-        type: ActionType.W_UpdateContainers,
-        payload: containers
-      });
-    };
-  },
-
-  /** 更新valueFrom */
-  updateValueFrom: (obj: any, cKey: string, vId: string) => {
-    return async (dispatch, getState: GetState) => {
-      let containers: ContainerItem[] = cloneDeep(getState().subRoot.workloadEdit.containers),
-        cIndex = containers.findIndex(c => c.id === cKey),
-        valueFrom: ValueFrom[] = containers[cIndex]['valueFrom'],
-        vIndex = valueFrom.findIndex(v => v.id === vId),
-        objKeys = Object.keys(obj);
-
-      objKeys.forEach(item => {
-        valueFrom[vIndex][item] = obj[item];
-      });
+      containers[cIndex]['envItems'].splice(eIndex, 1);
       dispatch({
         type: ActionType.W_UpdateContainers,
         payload: containers
@@ -906,15 +906,6 @@ export const workloadEditActions = {
     };
   },
 
-  /**选择亲和性调度指定节点调度 */
-  selectNodeSelector: computers => {
-    return async (dispatch, getState: GetState) => {
-      dispatch({
-        type: ActionType.W_SelectNodeSelector,
-        payload: computers
-      });
-    };
-  },
   deleteAffinityRule: (type?: string, id?: string) => {
     return async (dispatch, getState: GetState) => {
       let { nodeAffinityRule } = getState().subRoot.workloadEdit;

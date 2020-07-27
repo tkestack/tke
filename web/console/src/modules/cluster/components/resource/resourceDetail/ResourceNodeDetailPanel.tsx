@@ -27,11 +27,11 @@ const mapDispatchToProps = dispatch =>
 export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
   render() {
     let { subRoot, route } = this.props,
-      { resourceOption } = subRoot,
-      { ffResourceList } = resourceOption;
+      { resourceDetailState } = subRoot,
+      { resourceDetailInfo } = resourceDetailState;
 
     // 当前选中的node节点
-    let resourceIns = ffResourceList.selection;
+    let resourceIns = resourceDetailInfo.selection;
 
     // 当前的地域
     let regionId = route.queries['rid'];

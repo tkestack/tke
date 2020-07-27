@@ -56,13 +56,24 @@ export function getClusterId(): string {
 /**
  * 设置默认集群
  */
+export function setProjectName(projectId: string) {
+  util.cookie.set('projectId', projectId);
+}
+
+export function getProjectName(): string {
+  let rId = util.cookie.get('projectId');
+  return rId;
+}
+
+/**
+ * 设置默认集群
+ */
 export function setClusterId(clusterId: string) {
   util.cookie.set('clusterId', clusterId);
   if (window.localStorage) {
     localStorage[util.getUin() + '_clusterId'] = clusterId;
   }
 }
-
 /**
  * 获取当前默认的集群命名空间
  */
@@ -145,7 +156,7 @@ export function setRegionList(list: string[]) {
 
 export function debounce(fn, delay: number, immediate?: boolean) {
   let timer = null;
-  return function() {
+  return function () {
     const that = this;
     const args = arguments; // 箭头函数不能用arguments参数
     if (timer) {
@@ -158,12 +169,12 @@ export function debounce(fn, delay: number, immediate?: boolean) {
       }
 
       // 过了delay时间，设置判定条件timer = null; 上边才可以响应
-      timer = setTimeout(function() {
+      timer = setTimeout(function () {
         timer = null;
       }, delay);
     } else {
       // 每次触发都要delay时间之后才响应
-      timer = setTimeout(function() {
+      timer = setTimeout(function () {
         fn.apply(that, args);
       }, delay);
     }

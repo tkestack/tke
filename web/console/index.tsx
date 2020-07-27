@@ -12,8 +12,9 @@ import { Wrapper, PlatformTypeEnum } from './Wrapper';
 import { Addon } from './src/modules/addon';
 import { Uam } from './src/modules/uam';
 import { PersistentEvent } from './src/modules/persistentEvent';
-import { Audit }  from './src/modules/audit';
+import { Audit } from './src/modules/audit';
 import { AlarmPolicy } from './src/modules/alarmPolicy';
+import { AlarmRecord } from './src/modules/alarmRecord';
 import { Notify } from './src/modules/notify';
 import { LogStash } from './src/modules/logStash';
 import { Helm } from './src/modules/helm';
@@ -25,6 +26,7 @@ import { Init_Forbiddent_Config } from './helpers/reduceNetwork';
 // 公有云的图表组件为异步加载，这里为了减少路径配置，还是保留为同步加载，预先import即可变成不split
 import '@tencent/tchart/build/ChartsComponents';
 import { BlankPage } from './blankPage';
+import { Overview } from '@src/modules/overview';
 
 insertCSS(
   'hidden-checkbox',
@@ -81,7 +83,7 @@ class ForbiddentDialog extends React.Component<any, ForbiddentDialogState> {
   constructor(props: any) {
     super(props);
     this.state = {
-      forbiddentConfig: Init_Forbiddent_Config,
+      forbiddentConfig: Init_Forbiddent_Config
     };
 
     changeForbiddentConfig = (config: { isShow: boolean; message: string }) => {
@@ -139,9 +141,20 @@ Entry.register({
           <ForbiddentDialog />
           <Cluster />
         </Wrapper>
-      ),
+      )
     },
-
+    /**
+     * @url https://{{domain}}/tkestack/overview
+     */
+    overview: {
+      title: t('概览 - TKEStack'),
+      container: (
+        <Wrapper platformType={PlatformTypeEnum.Manager}>
+          <ForbiddentDialog />
+          <Overview />
+        </Wrapper>
+      )
+    },
     /**
      * @url https://{{domain}}/tkestack/cluster
      */
@@ -152,7 +165,7 @@ Entry.register({
           <ForbiddentDialog />
           <Cluster />
         </Wrapper>
-      ),
+      )
     },
 
     /**
@@ -165,7 +178,7 @@ Entry.register({
           <ForbiddentDialog />
           <Project />
         </Wrapper>
-      ),
+      )
     },
 
     /**
@@ -178,7 +191,7 @@ Entry.register({
           <ForbiddentDialog />
           <Addon />
         </Wrapper>
-      ),
+      )
     },
 
     /**
@@ -191,7 +204,7 @@ Entry.register({
           <ForbiddentDialog />
           <Registry />
         </Wrapper>
-      ),
+      )
     },
 
     /**
@@ -204,7 +217,7 @@ Entry.register({
           <ForbiddentDialog />
           <Uam />
         </Wrapper>
-      ),
+      )
     },
 
     /**
@@ -217,7 +230,7 @@ Entry.register({
           <ForbiddentDialog />
           <AlarmPolicy />
         </Wrapper>
-      ),
+      )
     },
 
     /**
@@ -230,7 +243,20 @@ Entry.register({
           <ForbiddentDialog />
           <Notify />
         </Wrapper>
-      ),
+      )
+    },
+
+    /**
+     * @url https://{{domain}}/tkestack/alarm-record
+     */
+    'alarm-record': {
+      title: t('告警记录 - TKEStack'),
+      container: (
+        <Wrapper platformType={PlatformTypeEnum.Manager}>
+          <ForbiddentDialog />
+          <AlarmRecord />
+        </Wrapper>
+      )
     },
 
     /**
@@ -256,7 +282,7 @@ Entry.register({
           <ForbiddentDialog />
           <Helm />
         </Wrapper>
-      ),
+      )
     },
 
     /**
@@ -269,7 +295,7 @@ Entry.register({
           <ForbiddentDialog />
           <LogStash />
         </Wrapper>
-      ),
+      )
     },
 
     /**
@@ -282,13 +308,13 @@ Entry.register({
           <ForbiddentDialog />
           <PersistentEvent />
         </Wrapper>
-      ),
+      )
     },
 
     /**
      * @url https://{{domain}}/tkestack/audit
      */
-    'audit': {
+    audit: {
       title: t('审计记录 - TKEStack'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
@@ -308,8 +334,8 @@ Entry.register({
           <ForbiddentDialog />
           <BlankPage />
         </Wrapper>
-      ),
-    },
-  },
+      )
+    }
+  }
 });
 /** ============================== end 容器服务 模块 ================================= */

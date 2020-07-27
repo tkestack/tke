@@ -20,7 +20,7 @@ package http
 
 import "testing"
 
-func TestExternalAddress(t *testing.T) {
+func TestMakeAddress(t *testing.T) {
 	cases := []struct {
 		scheme string
 		host   string
@@ -56,7 +56,7 @@ func TestExternalAddress(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			address := ExternalAddress(c.scheme, c.host, c.port)
+			address := MakeAddress(c.scheme, c.host, c.port)
 			if address != c.expect {
 				t.Fatalf("expect %#v but got %#v", c.expect, address)
 			}
@@ -64,7 +64,7 @@ func TestExternalAddress(t *testing.T) {
 	}
 }
 
-func TestExternalEndpoint(t *testing.T) {
+func TestMakeEndpoint(t *testing.T) {
 	cases := []struct {
 		scheme string
 		host   string
@@ -90,7 +90,7 @@ func TestExternalEndpoint(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			address := ExternalEndpoint(c.scheme, c.host, c.port, c.path)
+			address := MakeEndpoint(c.scheme, c.host, c.port, c.path)
 			if address != c.expect {
 				t.Fatalf("expect %#v but got %#v", c.expect, address)
 			}

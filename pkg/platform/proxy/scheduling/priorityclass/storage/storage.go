@@ -26,7 +26,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/proxy"
 )
 
 // Storage includes storage for resources.
@@ -36,12 +36,12 @@ type Storage struct {
 
 // REST implements pkg/api/rest.StandardStorage.
 type REST struct {
-	*util.Store
+	*proxy.Store
 }
 
 // NewStorageV1Alpha1 returns a Storage object that will work against resources.
 func NewStorageV1Alpha1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	networkPolicyStore := &util.Store{
+	networkPolicyStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &schedulingV1Alpha1.PriorityClass{} },
 		NewListFunc:    func() runtime.Object { return &schedulingV1Alpha1.PriorityClassList{} },
 		Namespaced:     false,
@@ -55,7 +55,7 @@ func NewStorageV1Alpha1(_ genericregistry.RESTOptionsGetter, platformClient plat
 
 // NewStorageV1Beta1 returns a Storage object that will work against resources.
 func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	networkPolicyStore := &util.Store{
+	networkPolicyStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &schedulingV1Beta1.PriorityClass{} },
 		NewListFunc:    func() runtime.Object { return &schedulingV1Beta1.PriorityClassList{} },
 		Namespaced:     false,
@@ -69,7 +69,7 @@ func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platf
 
 // NewStorageV1 returns a Storage object that will work against resources.
 func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	networkPolicyStore := &util.Store{
+	networkPolicyStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &schedulingV1.PriorityClass{} },
 		NewListFunc:    func() runtime.Object { return &schedulingV1.PriorityClassList{} },
 		Namespaced:     false,

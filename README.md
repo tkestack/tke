@@ -40,7 +40,7 @@
 * Hardware
   * 8 vCPU
   * 16 GB of Memory
-  * 50 GB of Disk Space
+  * 100 GB of Disk Space
 * Operating Systems
   * Ubuntu 16.04/18.04  LTS (64-bit)
   * CentOS Linux 7.6 (64-bit)
@@ -52,7 +52,8 @@
 2. **Configure Installer:** Please execute the following command in the terminal of your **installer** node
 
 ```shell
-version=v1.2.4 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-$version.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-$version.run.sha256 && chmod +x tke-installer-x86_64-$version.run && ./tke-installer-x86_64-$version.run
+# Choose installation package according to your installation node CPU architecture [amd64, arm64]
+arch=amd64 version=v1.3.0 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
 ```
 
 3. **Configure Console:** Open your browser to http://`INSTALLER-NODE-IP`:8080/index.html, the Web GUI will guide you to initialize and install the TKEStack's **Global Cluster and Console**. You can refer to [installation-procedures](docs/guide/zh-CN/installation/installation-procedures.md)
@@ -85,11 +86,12 @@ For the full story, head over to the [developer's documentation](docs/devel/deve
 
 ## Community
 
-You are encouraged to communicate most things via [GitHub issues](https://github.com/tkestack/tke/issues/new/choose) or pull requests.
+You are encouraged to communicate most things via GitHub [issues](https://github.com/tkestack/tke/issues/new/choose) or [pull requests](https://github.com/tkestack/tke/pulls).
 
 Other active channels:
 
 - WeChat Group
+- Please scan the following WeChat QRcode and note **TKEStack**, he will add you into the TKEStack WeChat Group.
 
 ![TKEStack](docs/images/wechat.jpeg)
 

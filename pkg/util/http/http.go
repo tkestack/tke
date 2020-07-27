@@ -20,8 +20,8 @@ package http
 
 import "fmt"
 
-// ExternalAddress to build external http address by given scheme, host and port.
-func ExternalAddress(scheme, host string, port int) string {
+// MakeAddress to build external http address by given scheme, host and port.
+func MakeAddress(scheme, host string, port int) string {
 	switch scheme {
 	case "http", "HTTP", "Http":
 		if port == 80 {
@@ -38,10 +38,10 @@ func ExternalAddress(scheme, host string, port int) string {
 	}
 }
 
-// ExternalEndpoint to build external http endpoint by given address and path.
-func ExternalEndpoint(scheme, host string, port int, path string) string {
+// MakeEndpoint to build external http endpoint by given address and path.
+func MakeEndpoint(scheme, host string, port int, path string) string {
 	if path == "" {
 		path = "/"
 	}
-	return fmt.Sprintf("%s%s", ExternalAddress(scheme, host, port), path)
+	return fmt.Sprintf("%s%s", MakeAddress(scheme, host, port), path)
 }

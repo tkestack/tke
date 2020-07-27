@@ -58,8 +58,10 @@ spec:
               mountPath: /app/provider/baremetal/conf/kubeadm/
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
+            - name: gpu-manager-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/gpu-manager/
             - name: csi-operator-manifests-volume
-                mountPath: /app/provider/baremetal/manifests/csi-operator/
+              mountPath: /app/provider/baremetal/manifests/csi-operator/
             - name: keepalived-manifests-volume
               mountPath: /app/provider/baremetal/manifests/keepalived/
           ports:
@@ -80,11 +82,11 @@ spec:
             periodSeconds: 20
           resources:
             limits:
-              cpu: 500m
-              memory: 1Gi
-            requests:
-              cpu: 250m
+              cpu: 100m
               memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
       volumes:
         - name: certs-volume
           configMap:
@@ -109,9 +111,12 @@ spec:
         - name: gpu-manifests-volume
           configMap:
             name: gpu-manifests
+        - name: gpu-manager-manifests-volume
+          configMap:
+            name: gpu-manager-manifests
         - name: csi-operator-manifests-volume
-            configMap:
-              name: csi-operator-manifests
+          configMap:
+            name: csi-operator-manifests
         - name: keepalived-manifests-volume
           configMap:
             name: keepalived-manifests
@@ -177,6 +182,26 @@ data:
     mode = "Webhook"
     webhook_config_file = "/app/conf/tke-authz-webhook.yaml"
 {{- end }}
+
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-platform-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
 
   tke-authn-webhook.yaml: |
     apiVersion: v1

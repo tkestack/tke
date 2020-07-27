@@ -58,6 +58,10 @@ const restActions = {
         { isNeedFetchNamespace, mode } = subRoot;
 
       let finder = projectNamespaceList.data.records.find(item => item.metadata.name === namespace);
+      if (!finder) {
+        finder = projectNamespaceList.data.records.length ? projectNamespaceList.data.records[0] : null;
+      }
+
       if (finder) {
         let clusterFinder = cluster.list.data.records.find(item => item.metadata.name === finder.spec.clusterName);
         if (clusterFinder) {
@@ -71,23 +75,15 @@ const restActions = {
       });
 
       // 这里进行路由的更新，如果不需要命名空间的话，路由就不需要有np的信息
-      if (isNeedFetchNamespace) {
-        router.navigate(urlParams, Object.assign({}, route.queries, { np: namespace }));
+      if (isNeedFetchNamespace && finder) {
+        router.navigate(urlParams, Object.assign({}, route.queries, { np: finder.metadata.name }));
       } else {
         let routeQueries = Object.assign({}, route.queries, { np: undefined });
         router.navigate(urlParams, JSON.parse(JSON.stringify(routeQueries)));
       }
 
       // 初始化或者变更Resource的信息，在创建页面当中，变更ns，不需要拉取resource
-      mode !== 'create' && finder
-        ? dispatch(
-            resourceActions.poll({
-              namespace,
-              clusterId: finder.spec.clusterName,
-              regionId: +route.queries['rid']
-            })
-          )
-        : dispatch(resourceActions.clearFetch());
+      mode !== 'create' && finder ? dispatch(resourceActions.poll()) : dispatch(resourceActions.clearFetch());
     };
   }
 };

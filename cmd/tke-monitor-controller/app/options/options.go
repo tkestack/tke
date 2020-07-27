@@ -39,6 +39,9 @@ type Options struct {
 	Component         *controlleroptions.ComponentOptions
 	MonitorAPIClient  *controlleroptions.APIServerClientOptions
 	BusinessAPIClient *controlleroptions.APIServerClientOptions
+	PlatformAPIClient *controlleroptions.APIServerClientOptions
+	Registry          *apiserveroptions.RegistryOptions
+	FeatureOptions    *FeatureOptions
 	// The Registry will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Monitor's current working directory.
 	MonitorConfig string
@@ -53,6 +56,9 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
 		MonitorAPIClient:  controlleroptions.NewAPIServerClientOptions("monitor", true),
 		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", false),
+		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", false),
+		Registry:          apiserveroptions.NewRegistryOptions(),
+		FeatureOptions:    NewFeatureOptions(),
 	}
 }
 
@@ -64,6 +70,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Component.AddFlags(fs)
 	o.MonitorAPIClient.AddFlags(fs)
 	o.BusinessAPIClient.AddFlags(fs)
+	o.PlatformAPIClient.AddFlags(fs)
+	o.Registry.AddFlags(fs)
+	o.FeatureOptions.AddFlags(fs)
 
 	fs.String(flagMonitorConfig, o.MonitorConfig,
 		"The Monitor will load its initial configuration from this file. The path may be absolute or relative; relative paths start at the Monitor's current working directory. Omit this flag to use the built-in default configuration values.")
@@ -81,6 +90,9 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Component.ApplyFlags()...)
 	errs = append(errs, o.MonitorAPIClient.ApplyFlags()...)
 	errs = append(errs, o.BusinessAPIClient.ApplyFlags()...)
+	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
+	errs = append(errs, o.Registry.ApplyFlags()...)
+	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
 
 	o.MonitorConfig = viper.GetString(configMonitorConfig)
 

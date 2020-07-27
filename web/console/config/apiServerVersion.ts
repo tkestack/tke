@@ -82,3 +82,9 @@ export const applicationServerVersion = {
   group: 'application.tkestack.io',
   version: 'v1'
 };
+
+export const logAgentServiceVersion = {
+  basicUrl: 'apis',
+  group: 'logagent.tkestack.io',
+  version: 'v1'
+};

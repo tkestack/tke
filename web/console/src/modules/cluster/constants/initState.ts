@@ -6,7 +6,6 @@ import {
   ContainerItem,
   DialogNameEnum,
   DialogState,
-  EnvItem,
   HealthCheck,
   HealthCheckItem,
   HpaMetrics,
@@ -16,7 +15,6 @@ import {
   PortMap,
   SecretData,
   Selector,
-  ValueFrom,
   VolumeItem,
   WorkloadLabel
 } from '../models';
@@ -240,26 +238,6 @@ const initHealthCheck: HealthCheck = {
   readyCheck: initHealthCheckItem
 };
 
-/** 初始化环境变量 */
-export const initEnv: EnvItem = {
-  id: uuid(),
-  envName: '',
-  v_envName: initValidator,
-  envValue: '',
-  v_envValue: initValidator
-};
-
-/** 初始化环境变量的valueFrom */
-export const initValueFrom: ValueFrom = {
-  id: uuid(),
-  type: '',
-  name: '',
-  key: '',
-  v_key: initValidator,
-  aliasName: '',
-  v_aliasName: initValidator
-};
-
 /** 初始化imagePullSecrets */
 export const initImagePullSecrets: ImagePullSecrets = {
   id: uuid(),
@@ -279,8 +257,7 @@ export const initContainer: ContainerItem = {
   mounts: initMount,
   memLimit: initMemLimit,
   cpuLimit: initCpuLimit,
-  envs: [],
-  valueFrom: [],
+  envItems: [],
   isOpenAdvancedSetting: false,
   isAdvancedError: false,
   gpu: 0,

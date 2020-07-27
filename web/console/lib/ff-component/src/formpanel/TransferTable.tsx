@@ -121,8 +121,8 @@ function FormPanelTransferTable<TResource = any>({ ...props }: FormPanelTransfer
         <Transfer.Cell
           title={
             title +
-            t('   共{{totalCount}}项 已加载 {{count}} 项', {
-              totalCount: finallist.data.recordCount,
+            t('  已加载 {{count}} 项', {
+              // totalCount: finallist.data.recordCount,
               count: finallist.data.records.length
             })
           }
@@ -143,9 +143,7 @@ function FormPanelTransferTable<TResource = any>({ ...props }: FormPanelTransfer
             bottomTip={
               isNeedScollLoding && finallist.data.records.length < finallist.data.recordCount ? (
                 <LoadingTip />
-              ) : (
-                  undefined
-                )
+              ) : undefined
             }
             scrollable={scrollableOption}
             selectable={{

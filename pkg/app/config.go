@@ -20,12 +20,13 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/gosuri/uitable"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"os"
-	"strings"
 )
 
 var cfgFile string
@@ -45,7 +46,7 @@ func initCobra() {
 		viper.SetConfigFile(cfgFile)
 
 		if err := viper.ReadInConfig(); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Error: failed to read configuration file: %v\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "Error: failed to read configuration file(%s): %v\n", cfgFile, err)
 			os.Exit(1)
 		}
 	}

@@ -21,14 +21,20 @@ package apiclient
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
+	toolswatch "k8s.io/client-go/tools/watch"
 )
 
 // GetClientset return clientset
@@ -56,6 +62,41 @@ func CheckAPIHealthz(ctx context.Context, client rest.Interface) bool {
 	healthStatus := 0
 	client.Get().AbsPath("/healthz").Do(ctx).StatusCode(&healthStatus)
 	return healthStatus == http.StatusOK
+}
+
+// CheckPodReadyWithLabel checks if the pod is ready with label.
+func CheckPodReadyWithLabel(ctx context.Context, client kubernetes.Interface, namespace string, labelSelector string) (bool, error) {
+	return CheckPodReady(ctx, client, namespace, metav1.ListOptions{LabelSelector: labelSelector})
+}
+
+// CheckPodReady checks if the pod is ready.
+func CheckPodReady(ctx context.Context, client kubernetes.Interface, namespace string, option metav1.ListOptions) (bool, error) {
+	pods, err := client.CoreV1().Pods(namespace).List(ctx, option)
+	if err != nil {
+		return false, err
+	}
+	for _, pod := range pods.Items {
+		if !IsPodReady(&pod) {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// CheckPodWithPredicate check pod with specify predicate.
+func CheckPodWithPredicate(ctx context.Context, client kubernetes.Interface, namespace string, option metav1.ListOptions, predicate func(*corev1.Pod) bool) (bool, error) {
+	pods, err := client.CoreV1().Pods(namespace).List(ctx, option)
+	if err != nil {
+		return false, err
+	}
+	for _, pod := range pods.Items {
+		if !predicate(&pod) {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 // CheckDeployment check Deployment current replicas is equal to desired and all pods are running
@@ -161,4 +202,45 @@ func getPodConditionFromList(conditions []corev1.PodCondition, conditionType cor
 		}
 	}
 	return -1, nil
+}
+
+// PullImageWithPod pull image for pod
+func PullImageWithPod(ctx context.Context, clientset kubernetes.Interface, pod *corev1.Pod) error {
+	clientset.CoreV1().Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{})
+
+	pod, err := clientset.CoreV1().Pods(pod.Namespace).Create(ctx, pod, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+
+	fieldSelector := fields.OneTermEqualSelector("metadata.name", pod.Name).String()
+	lw := &cache.ListWatch{
+		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+			options.FieldSelector = fieldSelector
+			return clientset.CoreV1().Pods(pod.Namespace).List(context.TODO(), options)
+		},
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			options.FieldSelector = fieldSelector
+			return clientset.CoreV1().Pods(pod.Namespace).Watch(context.TODO(), options)
+		},
+	}
+
+	_, err = toolswatch.ListWatchUntil(ctx, lw, func(event watch.Event) (bool, error) {
+		if event.Type != watch.Modified {
+			return false, nil
+		}
+		pod := event.Object.(*corev1.Pod)
+		for _, one := range pod.Status.ContainerStatuses {
+			if one.ImageID == "" {
+				return false, nil
+			}
+		}
+
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("pull image error: %w", err)
+	}
+
+	return clientset.CoreV1().Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{})
 }

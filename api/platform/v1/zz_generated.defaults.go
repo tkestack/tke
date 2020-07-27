@@ -71,6 +71,7 @@ func SetObjectDefaults_CSIOperatorList(in *CSIOperatorList) {
 }
 
 func SetObjectDefaults_Cluster(in *Cluster) {
+	SetDefaults_ClusterSpec(&in.Spec)
 	SetDefaults_ClusterStatus(&in.Status)
 }
 

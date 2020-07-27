@@ -109,6 +109,27 @@ func CreateOrUpdateServiceAccount(ctx context.Context, client clientset.Interfac
 	return nil
 }
 
+// CreateOrUpdateService creates a service if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
+func CreateOrUpdatePod(ctx context.Context, client clientset.Interface, pod *corev1.Pod) error {
+	_, err := client.CoreV1().Pods(pod.ObjectMeta.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
+	if err == nil {
+		gracePeriodSeconds := int64(0)
+		deleteOptions := metav1.DeleteOptions{
+			GracePeriodSeconds: &gracePeriodSeconds,
+		}
+
+		err := client.CoreV1().Pods(pod.ObjectMeta.Namespace).Delete(ctx, pod.Name, deleteOptions)
+		if err != nil {
+			return err
+		}
+	}
+	if _, err := client.CoreV1().Pods(pod.ObjectMeta.Namespace).Create(ctx, pod, metav1.CreateOptions{}); err != nil {
+		return errors.Wrap(err, "unable to create pod")
+	}
+
+	return nil
+}
+
 // CreateOrUpdateDeployment creates a Deployment if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
 func CreateOrUpdateDeployment(ctx context.Context, client clientset.Interface, deploy *apps.Deployment) error {
 	if _, err := client.AppsV1().Deployments(deploy.ObjectMeta.Namespace).Create(ctx, deploy, metav1.CreateOptions{}); err != nil {
@@ -316,7 +337,6 @@ func CreateOrUpdateNamespace(ctx context.Context, client clientset.Interface, ns
 		if !apierrors.IsAlreadyExists(err) {
 			return errors.Wrap(err, "unable to create namespace")
 		}
-
 		if _, err := client.CoreV1().Namespaces().Update(ctx, ns, metav1.UpdateOptions{}); err != nil {
 			return errors.Wrap(err, "unable to update namespace")
 		}
@@ -567,5 +587,25 @@ func MarkNode(ctx context.Context, client clientset.Interface, nodeName string, 
 			}
 		}
 		n.Spec.Taints = taints
+	})
+}
+
+// RemoveNodeTaints remove taints from existed node taints
+func RemoveNodeTaints(ctx context.Context, client clientset.Interface, nodeName string, taints []corev1.Taint) error {
+	return PatchNode(ctx, client, nodeName, func(n *corev1.Node) {
+		var newTaints []corev1.Taint
+		for _, oldTaint := range n.Spec.Taints {
+			existed := false
+			for _, taint := range taints {
+				if taint.MatchTaint(&oldTaint) {
+					existed = true
+					break
+				}
+			}
+			if !existed {
+				newTaints = append(newTaints, oldTaint)
+			}
+		}
+		n.Spec.Taints = newTaints
 	})
 }

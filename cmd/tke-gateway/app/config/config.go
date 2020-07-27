@@ -97,7 +97,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)
 	genericAPIServerConfig.MaxRequestBodyBytes = chartmuseum.MaxUploadSize
-	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString(), sets.NewString(), []string{"/"})
+	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString(), sets.NewString("filedownload"), []string{"/"})
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableDiscovery = false
 	genericAPIServerConfig.EnableProfiling = false

@@ -129,7 +129,7 @@ func scrapeConfigForPrometheus() string {
         replacement: $1:$2
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'container_gpu_utilization|container_request_gpu_utilization|container_gpu_memory_total|container_request_gpu_memory|kube_node_status_allocatable|kube_node_status_capacity|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_job_status_failed|kube_statefulset_status_replicas_ready|kube_statefulset_replicas|kube_daemonset_status_number_unavailable|kube_deployment_status_replicas_unavailable|kube_pod_labels|kube_pod_info|kube_pod_status_ready|kube_pod_container_status_restarts_total|kube_pod_container_resource_requests|kube_pod_container_resource_limits|kube_node_status_condition|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_replicaset_owner|kube_namespace_labels'
+        regex: 'container_gpu_utilization|container_request_gpu_utilization|container_gpu_memory_total|container_request_gpu_memory|kube_node_status_allocatable|kube_node_status_capacity|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_job_status_failed|kube_statefulset_status_replicas_ready|kube_statefulset_replicas|kube_daemonset_status_number_unavailable|kube_deployment_status_replicas_unavailable|kube_pod_labels|kube_pod_info|kube_pod_status_ready|kube_pod_container_status_restarts_total|kube_pod_container_resource_requests|kube_pod_container_resource_limits|kube_node_status_condition|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_replicaset_owner|kube_namespace_labels|kube_node_spec_taint'
         action: keep
       - source_labels: [created_by_kind]
         action: replace
@@ -290,7 +290,7 @@ func scrapeConfigForPrometheus() string {
         target_label: namespace
       - source_labels: [__meta_kubernetes_pod_name]
         action: drop
-        regex: etcd.+
+        regex: etcd.+|node-problem-detector.+
       - source_labels: [__meta_kubernetes_pod_name]
         action: replace
         target_label: pod_name
@@ -403,6 +403,45 @@ func scrapeConfigForPrometheus() string {
         regex: 'project_(.*)'
         action: keep
       - regex: "instance|job|pod_name|scope|node|subresource"
+        action: labeldrop
+
+    - job_name: 'node-problem-detector'
+      scrape_timeout: 60s
+      honor_labels: false
+      kubernetes_sd_configs:
+      - role: pod
+      tls_config:
+        insecure_skip_verify: true
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_tke_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: keep
+        regex: node-problem-detector.+
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: node
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (.+)
+      metric_relabel_configs:
+      - source_labels: [ __name__ ]
+        regex: 'problem_(.*)'
+        action: keep
+      - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
 `
 	return cfgStr
@@ -626,10 +665,10 @@ groups:
   - record: k8s_pod_restart_total
     expr: sum(idelta(kube_pod_container_status_restarts_total [2m])) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
-  - record: k8s_node_status_ready
+  - record: k8s_node_status_ready_with_node_role
     expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role, device_type)  kube_node_labels)  without(condition, status)
 
-  - record: k8s_node_status_ready_without_node_role
+  - record: k8s_node_status_ready
     expr: max(kube_node_status_condition{condition="Ready", status="true"})  without(condition, status)
 
   - record: k8s_node_pod_restart_total
@@ -669,10 +708,10 @@ groups:
     expr: (100 - sum (node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"}) by (node) / sum (node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"}) by (node) *100) *on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_filesystem_avail_bytes
-    expr: (sum by (node) (node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"})) *on(node) group_left(node_role, device_type) kube_node_labels
+    expr: node_filesystem_avail_bytes{fstype=~"ext3|ext4|xfs"} *on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_filesystem_size_bytes
-    expr: (sum by (node) (node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"})) *on(node) group_left(node_role, device_type) kube_node_labels
+    expr: node_filesystem_size_bytes{fstype=~"ext3|ext4|xfs"} *on(node) group_left(node_role, device_type) kube_node_labels
 
   - record: k8s_node_network_receive_bytes_bw
     expr: (sum by (node) (irate(node_network_receive_bytes_total{device!~"lo|veth(.*)|virb(.*)|docker(.*)|tunl(.*)|v-h(.*)|flannel(.*)"}[5m])))*on(node) group_left(node_role, device_type) kube_node_labels

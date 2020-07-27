@@ -1,6 +1,7 @@
-import { RootState, EditState, Machine } from '../models';
 import * as ActionType from '../constants/ActionType';
+import { EditState, Machine, RootState } from '../models';
 import { installerActions } from './installerActions';
+
 type GetState = () => RootState;
 
 export const validateActions = {
@@ -12,6 +13,9 @@ export const validateActions = {
     if (!username) {
       status = 2;
       message = '用户名不能为空';
+    } else if (!/^[a-z]*$/.test(username)) {
+      status = 2;
+      message = '用户名只支持小写字母';
     } else {
       status = 1;
       message = '';
@@ -132,7 +136,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep1(editState: EditState) {
+  _validateStep2(editState: EditState) {
     let result =
       validateActions._validateUsername(editState.username).status === 1 &&
       validateActions._validatePassword(editState.password).status === 1 &&
@@ -143,7 +147,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep1(editState: EditState) {
+  validateStep2(editState: EditState) {
     return dispatch => {
       const v_username = validateActions._validateUsername(editState.username),
         v_password = validateActions._validatePassword(editState.password),
@@ -179,7 +183,7 @@ export const validateActions = {
   },
 
   _validateHost(host: string) {
-    let reg = /^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$/,
+    let reg = /^\d{1,3}(\.\d{1,3}){3}(;\d{1,3}(\.\d{1,3}){3})*$/,
       status = 0,
       message = '';
 
@@ -217,6 +221,9 @@ export const validateActions = {
     } else if (!reg.test(port)) {
       status = 2;
       message = '访问端口格式不正确';
+    } else if (+port < 1 || +port > 65535) {
+      status = 2;
+      message = '访问端口范围不正确';
     } else {
       status = 1;
       message = '';
@@ -349,7 +356,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep2(editState: EditState) {
+  _validateStep3(editState: EditState) {
     let result =
       validateActions._validateNetworkDevice(editState.networkDevice).status === 1 &&
       validateActions._validateAllMachines(editState.machines);
@@ -357,7 +364,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep2(editState: EditState) {
+  validateStep3(editState: EditState) {
     return dispatch => {
       const v_networkDevice = validateActions._validateNetworkDevice(editState.networkDevice);
 
@@ -477,7 +484,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep3(editState: EditState) {
+  _validateStep4(editState: EditState) {
     let result =
       validateActions._validateIssueUrl(editState.issueURL, editState.authType).status === 1 &&
       validateActions._validateClientID(editState.clientID, editState.authType).status === 1 &&
@@ -486,7 +493,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep3(editState: EditState) {
+  validateStep4(editState: EditState) {
     return dispatch => {
       const v_issueURL = validateActions._validateIssueUrl(editState.issueURL, editState.authType),
         v_clientID = validateActions._validateClientID(editState.clientID, editState.authType),
@@ -658,7 +665,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep4(editState: EditState) {
+  _validateStep5(editState: EditState) {
     let result =
       validateActions._validateRepoSuffix(editState.repoSuffix, editState.repoType).status === 1 &&
       validateActions._validateRepoAddress(editState.repoAddress, editState.repoType).status === 1 &&
@@ -669,7 +676,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep4(editState: EditState) {
+  validateStep5(editState: EditState) {
     return dispatch => {
       const v_repoSuffix = validateActions._validateRepoSuffix(editState.repoSuffix, editState.repoType),
         v_repoAddress = validateActions._validateRepoAddress(editState.repoAddress, editState.repoType),
@@ -684,6 +691,46 @@ export const validateActions = {
           v_repoNamespace,
           v_repoUser,
           v_repoPassword
+        })
+      );
+    };
+  },
+
+  _validateStep6(editState: EditState) {
+    let result = true;
+    if (editState.openAudit) {
+      result =
+        validateActions._validateESUrl(editState.auditEsUrl, 'es').status === 1 &&
+        validateActions._validateESUsername(
+          editState.auditEsUsername,
+          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
+        ).status === 1 &&
+        validateActions._validateESPassword(
+          editState.auditEsPassword,
+          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
+        ).status === 1;
+    }
+
+    return result;
+  },
+
+  validateStep6(editState: EditState) {
+    return dispatch => {
+      const v_auditEsUrl = validateActions._validateESUrl(editState.auditEsUrl, 'es'),
+        v_auditEsUsername = validateActions._validateESUsername(
+          editState.auditEsUsername,
+          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
+        ),
+        v_auditEsPassword = validateActions._validateESPassword(
+          editState.auditEsPassword,
+          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
+        );
+
+      dispatch(
+        installerActions.updateEdit({
+          v_auditEsUrl,
+          v_auditEsUsername,
+          v_auditEsPassword
         })
       );
     };
@@ -851,11 +898,17 @@ export const validateActions = {
     };
   },
 
-  _validateStep6(editState: EditState) {
+  _validateStep7(editState: EditState) {
     let result =
       validateActions._validateESUrl(editState.esUrl, editState.monitorType).status === 1 &&
-      validateActions._validateESUsername(editState.esUsername, editState.monitorType).status === 1 &&
-      validateActions._validateESPassword(editState.esPassword, editState.monitorType).status === 1 &&
+      validateActions._validateESUsername(
+        editState.esUsername,
+        editState.esUsername || editState.esPassword ? editState.monitorType : null
+      ).status === 1 &&
+      validateActions._validateESPassword(
+        editState.esPassword,
+        editState.esUsername || editState.esPassword ? editState.monitorType : null
+      ).status === 1 &&
       validateActions._validateInfluxDBUrl(editState.influxDBUrl, editState.monitorType).status === 1 &&
       validateActions._validateInfluxDBUsername(editState.influxDBUsername, editState.monitorType).status === 1 &&
       validateActions._validateInfluxDBPassword(editState.influxDBPassword, editState.monitorType).status === 1;
@@ -863,7 +916,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep6(editState: EditState) {
+  validateStep7(editState: EditState) {
     return dispatch => {
       const v_esUrl = validateActions._validateESUrl(editState.esUrl, editState.monitorType),
         v_esUsername = validateActions._validateESUsername(editState.esUsername, editState.monitorType),
@@ -979,7 +1032,7 @@ export const validateActions = {
     };
   },
 
-  _validateStep7(editState?: EditState) {
+  _validateStep8(editState?: EditState) {
     const result =
       validateActions._validateCertificate(editState.certificate, editState.openConsole, editState.certType).status ===
         1 &&
@@ -988,7 +1041,7 @@ export const validateActions = {
     return result;
   },
 
-  validateStep7(editState?: EditState) {
+  validateStep8(editState?: EditState) {
     return dispatch => {
       const v_certificate = validateActions._validateCertificate(
           editState.certificate,

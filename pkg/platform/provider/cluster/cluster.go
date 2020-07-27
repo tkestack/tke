@@ -53,6 +53,28 @@ func RegisterHandler(mux *mux.PathRecorderMux) {
 	}
 }
 
+// Setup call all provider's setup method.
+func Setup() error {
+	for _, p := range providers {
+		if err := p.Setup(); err != nil {
+			return fmt.Errorf("%s.Setup error:%w", p.Name(), err)
+		}
+	}
+
+	return nil
+}
+
+// Teardown call all provider's teardown method.
+func Teardown() error {
+	for _, p := range providers {
+		if err := p.Teardown(); err != nil {
+			return fmt.Errorf("%s.Teardown error:%w", p.Name(), err)
+		}
+	}
+
+	return nil
+}
+
 // Providers returns a sorted list of the names of the registered providers.
 func Providers() []string {
 	providersMu.RLock()

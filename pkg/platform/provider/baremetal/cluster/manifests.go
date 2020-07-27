@@ -45,7 +45,6 @@ const (
          "filterVerb" : "filter",
          "BindVerb": "bind",
          "weight": 1,
-         "enableHttps": false,
          "managedResources" : [
             {
                "ignoredByScheduler" : true,
@@ -53,7 +52,7 @@ const (
             }
          ],
          "nodeCacheCapable" : false,
-         "urlPrefix" : "http://galaxy-ipam:9040/v1"
+         "urlPrefix" : "http://{{.GalaxyIPAMHost}}:9040/v1"
       }
    ],
    "kind" : "Policy"

@@ -92,4 +92,20 @@ export interface ProjectFilter {
 
   /**业务名称 */
   displayName?: string;
+
+  parentProject?: string;
+}
+
+export interface ProjectUserMap {
+  [props: string]: {
+    id: string;
+    username: string;
+  }[];
+}
+
+export interface UserManagedProject extends Identifiable {
+  name: string;
+}
+export interface UserManagedProjectFilter {
+  userId: string;
 }

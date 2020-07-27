@@ -42,13 +42,43 @@ OPTIONS="--name tke-installer -d --privileged --net=host
 -v tke-installer-bin:/app/bin
 "
 
+declare -A archMap=(
+  [x86_64]=amd64
+  [aarch64]=arm64
+)
+
+if [ -z ${archMap[$(arch)]+unset} ]; then
+  echo "ERROR: unsupport arch $(arch)"
+fi
+ARCH=${archMap[$(arch)]}
+
 function prefight() {
   echo "Step.1 prefight"
 
+  check::root
+  check::disk '/opt' 30
+  check::disk '/var/lib' 20
+}
+
+function check::root() {
   if [ "root" != "$(whoami)" ]; then
     echo "only root can execute this script"
     exit 1
   fi
+  echo "root: yes"
+}
+
+function check::disk() {
+  local -r path=$1
+  local -r size=$2
+
+    disk_avail=$(df -BG "$path" | tail -1 | awk '{print $4}' | grep -oP '\d+')
+  if ((disk_avail < size)); then
+    echo "available disk space for $path needs be greater than $size GiB"
+    exit 1
+  fi
+
+  echo "available disk space($path):  $disk_avail GiB"
 }
 
 function ensure_docker() {
@@ -76,13 +106,14 @@ function install_docker() {
 
   # becuase first start docker may be restart some times
   systemctl start docker || :
-  for i in {1..60}; do
+  maxSecond=60
+  for i in $(seq 1 $maxSecond); do
     if systemctl is-active --quiet docker; then
       break
     fi
     sleep 1
   done
-  if (( i == 10)); then
+  if ((i == maxSecond)); then
     echo "start docker failed, please check docker service."
     exit 1
   fi
@@ -101,9 +132,9 @@ function load_image() {
 function clean_old_data() {
   echo "Step.4 clean old data [doing]"
 
-  rm -rf $DATA_DIR || :
-  docker rm -f tke-installer || :
-  docker volume prune -f || :
+  rm -rf $DATA_DIR >/dev/null 2>&1 || :
+  docker rm -f tke-installer >/dev/null 2>&1 || :
+  docker volume prune -f >/dev/null 2>&1 || :
 
   echo "Step.4 clean old data [ok]"
 }
@@ -111,7 +142,7 @@ function clean_old_data() {
 function start_installer() {
   echo "Step.5 start tke-installer [doing]"
 
-  docker run $OPTIONS tkestack/tke-installer:$VERSION
+  docker run $OPTIONS "tkestack/tke-installer-${ARCH}:$VERSION"
 
   echo "Step.5 start tke-installer [ok]"
 }
@@ -119,9 +150,8 @@ function start_installer() {
 function check_installer() {
   echo "Step.6 check tke-installer status [doing]"
 
-  ip=$(ip route get 1 | awk '{print $NF;exit}')
-  url="http://$ip:8080/index.html"
-  if ! curl -sSf $url  >/dev/null; then
+  url="http://127.0.0.1:8080/index.html"
+  if ! curl -sSf "$url" >/dev/null; then
     echo "check installer status error"
     docker logs tke-installer
     exit 1

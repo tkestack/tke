@@ -309,13 +309,23 @@ func (c *Controller) processUpdate(ctx context.Context, cachedNamespace *cachedN
 }
 
 func (c *Controller) handlePhase(ctx context.Context, key string, cachedNamespace *cachedNamespace, namespace *v1.Namespace) error {
-	switch namespace.Status.Phase {
-	case v1.NamespacePending:
+	if namespace.Status.Phase == v1.NamespacePending ||
+		namespace.Status.Phase == v1.NamespaceAvailable ||
+		namespace.Status.Phase == v1.NamespaceFailed {
 		if err := c.calculateProjectUsed(ctx, cachedNamespace, namespace); err != nil {
-			// Since it's pending now, no need to set v1.NamespaceFailed.
-			return err
+			namespace.Status.Phase = v1.NamespaceFailed
+			namespace.Status.Message = "calculateProjectUsed failed"
+			namespace.Status.Reason = err.Error()
+			namespace.Status.LastTransitionTime = metav1.Now()
+			return c.persistUpdateNamespace(ctx, namespace)
 		}
-		// Once project has been updated, try our best update namespace CachedSpecHard.
+	}
+
+	switch namespace.Status.Phase {
+	case v1.NamespaceFailed:
+		fallthrough
+	case v1.NamespacePending:
+		// Since project has been updated, try our best update namespace CachedSpecHard.
 		namespace.Status.CachedSpecHard = namespace.Spec.Hard
 		if err := c.ensureNamespaceOnCluster(ctx, namespace); err != nil {
 			namespace.Status.Phase = v1.NamespaceFailed
@@ -330,14 +340,7 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedNamespac
 		namespace.Status.LastTransitionTime = metav1.Now()
 		return c.persistUpdateNamespace(ctx, namespace)
 	case v1.NamespaceAvailable:
-		if err := c.calculateProjectUsed(ctx, cachedNamespace, namespace); err != nil {
-			namespace.Status.Phase = v1.NamespaceFailed
-			namespace.Status.Message = "calculateProjectUsed failed"
-			namespace.Status.Reason = err.Error()
-			namespace.Status.LastTransitionTime = metav1.Now()
-			return c.persistUpdateNamespace(ctx, namespace)
-		}
-		// Once project has been updated, try our best update namespace CachedSpecHard.
+		// Since project has been updated, try our best update namespace CachedSpecHard.
 		cachedHard := namespace.Status.CachedSpecHard
 		namespace.Status.CachedSpecHard = namespace.Spec.Hard
 		if err := c.ensureNamespaceOnCluster(ctx, namespace); err != nil {
@@ -350,8 +353,6 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedNamespac
 		if !reflect.DeepEqual(namespace.Spec.Hard, cachedHard) {
 			_ = c.persistUpdateNamespace(ctx, namespace)
 		}
-		c.startNamespaceHealthCheck(key)
-	case v1.NamespaceFailed:
 		c.startNamespaceHealthCheck(key)
 	}
 	return nil

@@ -17,7 +17,7 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class LogStashSubHeadPanel extends React.Component<RootProps, any> {
   componentDidMount() {
-    let { actions, route, regionList } = this.props,
+    let { actions, route, regionList, projectList } = this.props,
       { clusterId, stashName, namespace } = route.queries;
     let urlParams = router.resolve(route);
     let mode = urlParams['mode'],
@@ -29,7 +29,10 @@ export class LogStashSubHeadPanel extends React.Component<RootProps, any> {
     if (isDetail) {
       actions.log.fetchSpecificLog(stashName, clusterId, namespace, mode);
     }
-    if (regionList.data.recordCount === 0) {
+    let byProject = window.location.href.includes('tkestack-project');
+    if (byProject && projectList.length === 0) {
+      actions.cluster.initProjectList();
+    } else if (!byProject && regionList.data.recordCount === 0) {
       // 进行地域的拉取
       //如果用户刷新了页面，则需要重新获取
       actions.region.fetch();

@@ -19,10 +19,11 @@
 package authorization
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	restclient "k8s.io/client-go/rest"
-	"net/http"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 )
@@ -72,7 +73,7 @@ type authorization struct {
 }
 
 func (a *authorization) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	username, tenantID := authentication.GetUsernameAndTenantID(req.Context())
+	username, tenantID := authentication.UsernameAndTenantID(req.Context())
 	if tenantID == "" && username != "" && username == a.adminUsername {
 		a.nextHandler.ServeHTTP(w, req)
 		return

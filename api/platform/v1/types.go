@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // +genclient
@@ -121,7 +122,11 @@ type ClusterSpec struct {
 	ClusterCredentialRef *corev1.LocalObjectReference `json:"clusterCredentialRef,omitempty" probobuf:"bytes,20,opt,name=clusterCredentialRef" protobuf:"bytes,20,opt,name=clusterCredentialRef"`
 
 	// Etcd holds configuration for etcd.
+	// +optional
 	Etcd *Etcd `json:"etcd,omitempty" protobuf:"bytes,21,opt,name=etcd"`
+	// Upgrade control upgrade process.
+	// +optional
+	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -191,12 +196,14 @@ const (
 type ClusterPhase string
 
 const (
-	// ClusterRunning is the normal running phase.
-	ClusterRunning ClusterPhase = "Running"
 	// ClusterInitializing is the initialize phase.
 	ClusterInitializing ClusterPhase = "Initializing"
+	// ClusterRunning is the normal running phase.
+	ClusterRunning ClusterPhase = "Running"
 	// ClusterFailed is the failed phase.
 	ClusterFailed ClusterPhase = "Failed"
+	// ClusterUpgrading means that the cluster is in upgrading process.
+	ClusterUpgrading ClusterPhase = "Upgrading"
 	// ClusterTerminating means the cluster is undergoing graceful termination.
 	ClusterTerminating ClusterPhase = "Terminating"
 )
@@ -246,6 +253,7 @@ type ClusterAddress struct {
 	// The cluster address.
 	Host string `json:"host" protobuf:"bytes,2,opt,name=host"`
 	Port int32  `json:"port" protobuf:"varint,3,name=port"`
+	Path string `json:"path" protobuf:"bytes,4,opt,name=path"`
 }
 
 // +genclient
@@ -329,6 +337,9 @@ type ClusterFeature struct {
 	Hooks map[HookType]string `json:"hooks,omitempty" protobuf:"bytes,9,opt,name=hooks"`
 	// +optional
 	CSIOperator *CSIOperatorFeature `json:"csiOperator,omitempty" protobuf:"bytes,10,opt,name=csiOperator"`
+	// For kube-apiserver authorization webhook
+	// +optional
+	AuthzWebhookAddr *AuthzWebhookAddr `json:"authzWebhookAddr,omitempty" protobuf:"bytes,11,opt,name=authzWebhookAddr"`
 }
 
 type HA struct {
@@ -354,6 +365,20 @@ type HookType string
 
 type CSIOperatorFeature struct {
 	Version string `json:"version" protobuf:"bytes,1,name=version"`
+}
+
+type AuthzWebhookAddr struct {
+	// +optional
+	Builtin *BuiltinAuthzWebhookAddr `json:"builtin,omitempty" protobuf:"bytes,1,opt,name=builtin"`
+	// +optional
+	External *ExternalAuthzWebhookAddr `json:"external,omitempty" protobuf:"bytes,2,opt,name=external"`
+}
+
+type BuiltinAuthzWebhookAddr struct{}
+
+type ExternalAuthzWebhookAddr struct {
+	IP   string `json:"ip" protobuf:"bytes,1,name=ip"`
+	Port int32  `json:"port" protobuf:"varint,2,name=port"`
 }
 
 const (
@@ -416,6 +441,34 @@ type ExternalEtcd struct {
 	// KeyFile is an SSL key file used to secure etcd communication.
 	// Required if using a TLS connection.
 	KeyFile string `json:"keyFile" protobuf:"bytes,4,opt,name=keyFile"`
+}
+
+type Upgrade struct {
+	// Upgrade mode, default value is Auto.
+	// +optional
+	Mode UpgradeMode `json:"mode,omitempty" protobuf:"bytes,1,opt,name=mode"`
+	// Upgrade strategy config.
+	// +optional
+	Strategy UpgradeStrategy `json:"strategy,omitempty" protobuf:"bytes,2,opt,name=strategy"`
+}
+
+type UpgradeMode string
+
+const (
+	// Upgrade nodes automatically.
+	UpgradeModeAuto = UpgradeMode("Auto")
+	// Manual upgrade nodes which means user need label node with `platform.tkestack.io/need-upgrade`.
+	UpgradeModeManual = UpgradeMode("Manual")
+)
+
+// UpgradeStrategy used to control the upgrade process.
+type UpgradeStrategy struct {
+	// The maximum number of pods that can be unready during the upgrade.
+	// 0% means all pods need to be ready after evition.
+	// 100% means ignore any pods unready which may be used in one worker node, use this carefully!
+	// default value is 0%.
+	// +optional
+	MaxUnready *intstr.IntOrString `json:"maxUnready,omitempty" protobuf:"bytes,1,opt,name=maxUnready"`
 }
 
 // ResourceList is a set of (resource name, quantity) pairs.
@@ -804,6 +857,9 @@ type PrometheusSpec struct {
 	// +optional
 	// AlertRepeatInterval indicates repeat interval of alerts
 	AlertRepeatInterval string `json:"alertRepeatInterval,omitempty" protobuf:"bytes,9,opt,name=alertRepeatInterval"`
+	// +optional
+	// WithNPD indicates whether to deploy node-problem-detector or not
+	WithNPD bool `json:"withNPD,omitempty" protobuf:"bytes,10,opt,name=withNPD"`
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
@@ -1408,12 +1464,14 @@ type MachineCondition struct {
 type MachinePhase string
 
 const (
-	// MachineRunning is the normal running phase
-	MachineRunning MachinePhase = "Running"
 	// MachineInitializing is the initialize phase
 	MachineInitializing MachinePhase = "Initializing"
+	// MachineRunning is the normal running phase
+	MachineRunning MachinePhase = "Running"
 	// MachineFailed is the failed phase
 	MachineFailed MachinePhase = "Failed"
+	// MachineUpgrading means that the machine is in upgrading process.
+	MachineUpgrading MachinePhase = "Upgrading"
 	// MachineTerminating is the terminating phase
 	MachineTerminating MachinePhase = "Terminating"
 )

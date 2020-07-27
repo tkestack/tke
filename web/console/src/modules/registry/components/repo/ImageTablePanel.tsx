@@ -322,9 +322,14 @@ class ImageTagTable extends React.Component<TagProps, any> {
             header: '路径',
             render: (x: Tag) => (
               <Text parent="div" overflow>
-                <span className="text" id={`_${x.digest.substring(x.digest.length - 10, x.digest.length)}`}>
+                <Text
+                  className="text"
+                  overflow
+                  style={{ width: '80%' }}
+                  id={`_${x.digest.substring(x.digest.length - 10, x.digest.length)}`}
+                >
                   {`${this.props.docRegUrl}/${this.props.nsName}/${this.props.imageName}:${x.name}`}
-                </span>{' '}
+                </Text>{' '}
                 <Clip target={`#_${x.digest.substring(x.digest.length - 10, x.digest.length)}`} />
               </Text>
             )

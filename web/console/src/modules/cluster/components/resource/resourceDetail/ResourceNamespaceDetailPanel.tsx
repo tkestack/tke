@@ -29,17 +29,17 @@ const mapDispatchToProps = dispatch =>
 export class ResourceNamespaceDetailPanel extends React.Component<RootProps, {}> {
   render() {
     let { subRoot } = this.props,
-      { resourceOption } = subRoot,
-      { ffResourceList } = resourceOption;
+      { resourceOption, resourceDetailState } = subRoot,
+      { resourceDetailInfo } = resourceDetailState;
 
-    let resourceIns = ffResourceList.selection;
+    let resourceIns = resourceDetailInfo.selection;
 
     let statusMap = ResourceStatus['np'];
 
     let isNeedLoading =
-      ffResourceList.list.fetched !== true ||
-      ffResourceList.list.fetchState === FetchState.Fetching ||
-      ffResourceList.selection;
+      resourceDetailInfo.list.fetched !== true ||
+      resourceDetailInfo.list.fetchState === FetchState.Fetching ||
+      resourceIns === null;
 
     return isNeedLoading ? (
       loadingElement

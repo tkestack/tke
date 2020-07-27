@@ -23,3 +23,5 @@ package v1
 type ConfigMapExpansion interface{}
 
 type MetricExpansion interface{}
+
+type PrometheusExpansion interface{}

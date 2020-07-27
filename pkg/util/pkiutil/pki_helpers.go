@@ -73,6 +73,59 @@ func NewCertificateAuthority(config *certutil.Config) (*x509.Certificate, *rsa.P
 	return cert, key, nil
 }
 
+func DecodeRawCertAndKey(rawCert []byte, rawKey []byte) (*x509.Certificate, crypto.Signer, error) {
+	certDer, _ := pem.Decode(rawCert)
+	if certDer == nil || len(certDer.Bytes) == 0 {
+		return nil, nil, fmt.Errorf("certca decode error")
+	}
+	cert, err := x509.ParseCertificate(certDer.Bytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cacert parse err:%s", err)
+	}
+
+	privKey, err := keyutil.ParsePrivateKeyPEM(rawKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cert key parse err:%s", err)
+	}
+
+	var key crypto.Signer
+	switch k := privKey.(type) {
+	case *rsa.PrivateKey:
+		key = k
+	case *ecdsa.PrivateKey:
+		key = k
+	default:
+		return nil, nil, fmt.Errorf("the private key file %s is neither in RSA nor ECDSA format", rawKey)
+	}
+
+	return cert, key, nil
+}
+
+func GenerateClientCertAndKey(cn string, org []string, certCA []byte, certKey []byte) ([]byte, []byte,
+	error) {
+	caCert, caKey, err := DecodeRawCertAndKey(certCA, certKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to decode ca cert and ca key:%s", err)
+	}
+
+	config := &certutil.Config{
+		CommonName:   cn,
+		Organization: org,
+		AltNames:     certutil.AltNames{},
+		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+
+	cert, key, err := NewCertAndKey(caCert, caKey, config)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to sign certificate:%s", err)
+	}
+
+	clientCertData := EncodeCertPEM(cert)
+	clientKeyData := EncodePrivateKeyPEM(key)
+
+	return clientCertData, clientKeyData, nil
+}
+
 // NewCertAndKey creates new certificate and key by passing the certificate authority certificate and key
 func NewCertAndKey(caCert *x509.Certificate, caKey crypto.Signer, config *certutil.Config) (*x509.Certificate, *rsa.PrivateKey, error) {
 	key, err := NewPrivateKey()

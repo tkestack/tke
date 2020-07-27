@@ -226,7 +226,8 @@ func (ClusterCredentialList) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterFeature = map[string]string{
-	"": "ClusterFeature records the features that are enabled by the cluster.",
+	"":                 "ClusterFeature records the features that are enabled by the cluster.",
+	"authzWebhookAddr": "For kube-apiserver authorization webhook",
 }
 
 func (ClusterFeature) SwaggerDoc() map[string]string {
@@ -276,6 +277,7 @@ var map_ClusterSpec = map[string]string{
 	"dnsDomain":            "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
 	"clusterCredentialRef": "ClusterCredentialRef for isolate sensitive information. If not specified, cluster controller will create one; If specified, provider must make sure is valid.",
 	"etcd":                 "Etcd holds configuration for etcd.",
+	"upgrade":              "Upgrade control upgrade process.",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {
@@ -748,6 +750,7 @@ var map_PrometheusSpec = map[string]string{
 	"resources":           "Resources is the resource request and limit for prometheus",
 	"runOnMaster":         "RunOnMaster indicates whether to add master Affinity for all monitor components or not",
 	"alertRepeatInterval": "AlertRepeatInterval indicates repeat interval of alerts",
+	"withNPD":             "WithNPD indicates whether to deploy node-problem-detector or not",
 }
 
 func (PrometheusSpec) SwaggerDoc() map[string]string {
@@ -859,6 +862,24 @@ var map_TappControllerStatus = map[string]string{
 
 func (TappControllerStatus) SwaggerDoc() map[string]string {
 	return map_TappControllerStatus
+}
+
+var map_Upgrade = map[string]string{
+	"mode":     "Upgrade mode, default value is Auto.",
+	"strategy": "Upgrade strategy config.",
+}
+
+func (Upgrade) SwaggerDoc() map[string]string {
+	return map_Upgrade
+}
+
+var map_UpgradeStrategy = map[string]string{
+	"":           "UpgradeStrategy used to control the upgrade process.",
+	"maxUnready": "The maximum number of pods that can be unready during the upgrade. 0% means all pods need to be ready after evition. 100% means ignore any pods unready which may be used in one worker node, use this carefully! default value is 0%.",
+}
+
+func (UpgradeStrategy) SwaggerDoc() map[string]string {
+	return map_UpgradeStrategy
 }
 
 var map_VolumeDecorator = map[string]string{

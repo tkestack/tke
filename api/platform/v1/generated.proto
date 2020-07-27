@@ -27,6 +27,7 @@ import "k8s.io/apimachinery/pkg/api/resource/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
+import "k8s.io/apimachinery/pkg/util/intstr/generated.proto";
 
 // Package-wide variables from generator "generated".
 option go_package = "v1";
@@ -38,6 +39,17 @@ message AddonSpec {
   optional string clusterName = 2;
 
   optional string version = 3;
+}
+
+message AuthzWebhookAddr {
+  // +optional
+  optional BuiltinAuthzWebhookAddr builtin = 1;
+
+  // +optional
+  optional ExternalAuthzWebhookAddr external = 2;
+}
+
+message BuiltinAuthzWebhookAddr {
 }
 
 // CSIOperator is a operator to manages CSI external components.
@@ -208,6 +220,8 @@ message ClusterAddress {
   optional string host = 2;
 
   optional int32 port = 3;
+
+  optional string path = 4;
 }
 
 // ClusterApplyOptions is the query options to a kube-apiserver proxy call for cluster object.
@@ -352,6 +366,10 @@ message ClusterFeature {
 
   // +optional
   optional CSIOperatorFeature csiOperator = 10;
+
+  // For kube-apiserver authorization webhook
+  // +optional
+  optional AuthzWebhookAddr authzWebhookAddr = 11;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.
@@ -481,7 +499,12 @@ message ClusterSpec {
   optional k8s.io.api.core.v1.LocalObjectReference clusterCredentialRef = 20;
 
   // Etcd holds configuration for etcd.
+  // +optional
   optional Etcd etcd = 21;
+
+  // Upgrade control upgrade process.
+  // +optional
+  optional Upgrade upgrade = 22;
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -635,6 +658,12 @@ message Etcd {
   // External describes how to connect to an external etcd cluster
   // Local and External are mutually exclusive
   optional ExternalEtcd external = 2;
+}
+
+message ExternalAuthzWebhookAddr {
+  optional string ip = 1;
+
+  optional int32 port = 2;
 }
 
 // ExternalEtcd describes an external etcd cluster.
@@ -1218,6 +1247,10 @@ message PrometheusSpec {
   // +optional
   // AlertRepeatInterval indicates repeat interval of alerts
   optional string alertRepeatInterval = 9;
+
+  // +optional
+  // WithNPD indicates whether to deploy node-problem-detector or not
+  optional bool withNPD = 10;
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
@@ -1382,6 +1415,26 @@ message ThirdPartyHA {
   optional string vip = 1;
 
   optional int32 vport = 2;
+}
+
+message Upgrade {
+  // Upgrade mode, default value is Auto.
+  // +optional
+  optional string mode = 1;
+
+  // Upgrade strategy config.
+  // +optional
+  optional UpgradeStrategy strategy = 2;
+}
+
+// UpgradeStrategy used to control the upgrade process.
+message UpgradeStrategy {
+  // The maximum number of pods that can be unready during the upgrade.
+  // 0% means all pods need to be ready after evition.
+  // 100% means ignore any pods unready which may be used in one worker node, use this carefully!
+  // default value is 0%.
+  // +optional
+  optional k8s.io.apimachinery.pkg.util.intstr.IntOrString maxUnready = 1;
 }
 
 // VolumeDecorator is a controller to manage PVC information.

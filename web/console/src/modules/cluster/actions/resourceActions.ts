@@ -77,17 +77,17 @@ const listResourceActions = createFFListActions<Resource, ResourceFilter>({
 
       /** ============== start 列表页，需要进行资源的轮询 ================= */
       if (mode === 'list' && includes(ResourceNeedJudgeLoading, resourceName)) {
-        if (
-          ffResourceList.list.data.records.filter(item => IsResourceShowLoadingIcon(resourceName, item)).length === 0
-        ) {
-          dispatch(resourceActions.clearPollEvent());
+        if (record.data.records.filter(item => IsResourceShowLoadingIcon(resourceName, item)).length === 0) {
+          dispatch(resourceActions.clearPolling());
+        } else {
+          dispatch(resourceActions.startPolling({ delayTime: 8000 }));
         }
       } else {
-        dispatch(resourceActions.clearPollEvent());
+        dispatch(resourceActions.clearPolling());
       }
       /** ============== end 列表页，需要进行资源的轮询 ================= */
     } else {
-      dispatch(resourceActions.clearPollEvent());
+      dispatch(resourceActions.clearPolling());
     }
   }
 });
@@ -361,23 +361,24 @@ const restActions = {
   },
 
   /** 轮询拉取条件 */
-  poll: (queryObj: ResourceFilter) => {
+  poll: () => {
     return async (dispatch, getState: GetState) => {
-      // 每次轮询之前先清空之前的轮询
-      dispatch(resourceActions.clearPollEvent());
-      // 触发列表的查询
-      dispatch(resourceActions.applyFilter(queryObj));
+      let { route } = getState();
+      let { np, clusterId, rid, meshId } = route.queries;
 
-      window[PollEventName['resourceList']] = setInterval(() => {
-        dispatch(resourceActions.poll(queryObj));
-      }, 8000);
-    };
-  },
+      let filterObj: ResourceFilter = {
+        namespace: np,
+        clusterId,
+        regionId: +rid,
+        meshId
+      };
 
-  /** 清空轮询条件 */
-  clearPollEvent: () => {
-    return async (dispatch, getState: GetState) => {
-      clearInterval(window[PollEventName['resourceList']]);
+      dispatch(
+        resourceActions.polling({
+          filter: filterObj,
+          delayTime: 8000
+        })
+      );
     };
   },
 

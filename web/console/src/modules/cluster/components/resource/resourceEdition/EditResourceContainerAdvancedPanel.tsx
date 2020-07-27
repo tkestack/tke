@@ -51,6 +51,29 @@ export class EditResourceContainerAdvancedPanel extends React.Component<Containe
               )}
             </div>
           </FormItem>
+          <FormItem label={t('日志目录')}>
+            <Select
+              size="auto"
+              options={container.mounts.map(({ mountPath }) => ({ value: mountPath, text: mountPath }))}
+              value={container.logDir}
+              onChange={value => {
+                actions.editWorkload.updateContainer({ logDir: value }, cKey);
+              }}
+            />
+            <input
+              type="text"
+              placeholder=""
+              className="tc-15-input-text m"
+              value={container.logPath}
+              onChange={e => actions.editWorkload.updateContainer({ logPath: e.target.value }, cKey)}
+              onBlur={e => actions.validate.workload.validateWorkingDir(e.target.value, cKey)}
+            />
+            <p className="form-input-help text-label">
+              <Trans>
+                <span style={{ verticalAlign: '-1px' }}>指定容器运行后的日志目录，</span>
+              </Trans>
+            </p>
+          </FormItem>
           <FormItem label={t('运行命令')}>
             <div className="form-unit is-success">
               <textarea

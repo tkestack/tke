@@ -54,7 +54,7 @@ var _ = Describe("bootstrap", func() {
 			s, err := ssh.New(&ssh.Config{
 				User:     one.Username,
 				Password: one.Password,
-				Host:     one.InternalIP,
+				Host:     one.PublicIP,
 				Port:     int(one.Port),
 			})
 			Expect(err).To(BeNil())
@@ -84,9 +84,9 @@ var _ = Describe("bootstrap", func() {
 
 	It("should bootstrap successfuly", func() {
 		By("install installer")
-		version := os.Getenv("VERSION")
-		cmd := fmt.Sprintf("wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-x86_64-%s.run{,.sha256} && sha256sum --check --status tke-installer-x86_64-%s.run.sha256 && chmod +x tke-installer-x86_64-%s.run && ./tke-installer-x86_64-%s.run",
-			version, version, version, version)
+		name := fmt.Sprintf("tke-installer-%s-%s-%s", os.Getenv("OS"), os.Getenv("ARCH"), os.Getenv("VERSION"))
+		cmd := fmt.Sprintf("wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/%s.run{,.sha256} && sha256sum --check --status %s.run.sha256 && chmod +x %s.run && ./%s.run",
+			name, name, name, name)
 		_, err := nodesSSH[0].CombinedOutput(cmd)
 		Expect(err).To(BeNil())
 
@@ -121,7 +121,7 @@ var _ = Describe("bootstrap", func() {
 		Expect(resp.StatusCode).To(Equal(http.StatusCreated))
 
 		By("wait install finish")
-		err = wait.PollImmediate(5*time.Second, 30*time.Minute, func() (bool, error) {
+		err = wait.PollImmediate(5*time.Second, 2*time.Hour, func() (bool, error) {
 			url := fmt.Sprintf("http://%s:8080/api/cluster/global/progress", nodes[0].InternalIP)
 			resp, err := http.Get(url)
 			if err != nil {
@@ -144,6 +144,9 @@ var _ = Describe("bootstrap", func() {
 				return false, fmt.Errorf("unknown install progress status: %s", progress.Status)
 			}
 		})
+		if err == nil {
+			os.Setenv("NEED_DELETE", "true")
+		}
 		Expect(err).To(BeNil())
 	})
 })

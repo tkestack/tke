@@ -7,7 +7,8 @@ import {
   monitorServerVersion,
   auditServerVersion,
   registryServerVersion,
-  applicationServerVersion
+  applicationServerVersion,
+  logAgentServiceVersion,
 } from '../../apiServerVersion';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { ConsoleModuleEnum } from '../../../Wrapper';
@@ -50,7 +51,9 @@ export interface ApiVersion {
   machines?: ResourceApiInfo;
   helm?: ResourceApiInfo;
   logcs?: ResourceApiInfo;
+  logagent?: ResourceApiInfo;
   clustercredential?: ResourceApiInfo;
+  auth_project?: ResourceApiInfo;
 
   lbcf?: ResourceApiInfo;
   lbcf_bg?: ResourceApiInfo;
@@ -92,6 +95,7 @@ export interface ApiVersion {
   /** 告警配置 */
   prometheus?: ResourceApiInfo;
   alarmPolicy?: ResourceApiInfo;
+  alarmRecord?: ResourceApiInfo;
   channel?: ResourceApiInfo;
   template?: ResourceApiInfo;
   message?: ResourceApiInfo;
@@ -397,6 +401,13 @@ const k8sApiVersionFor18: ApiVersion = {
     watchModule: ConsoleModuleEnum.Auth,
     headTitle: 'Users'
   },
+  auth_project: {
+    group: authServerVersion.group,
+    version: authServerVersion.version,
+    basicEntry: authServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Auth,
+    headTitle: 'PorjectUsers'
+  },
   role: {
     group: authServerVersion.group,
     version: authServerVersion.version,
@@ -446,14 +457,19 @@ const k8sApiVersionFor18: ApiVersion = {
     watchModule: ConsoleModuleEnum.PLATFORM,
     headTitle: 'Helm'
   },
-
   logcs: {
     group: 'tke.cloud.tencent.com',
     version: 'v1',
     basicEntry: 'apis',
     headTitle: 'LogCollector'
   },
-
+  logagent: {
+    group: logAgentServiceVersion.group,
+    version: logAgentServiceVersion.version,
+    basicEntry: logAgentServiceVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.LogAgent,
+    headTitle: 'LogAgent'
+  },
   clustercredential: {
     group: apiServerVersion.group,
     version: apiServerVersion.version,
@@ -706,6 +722,13 @@ const alarmPolicyApiVersion: ApiVersion = {
     watchModule: ConsoleModuleEnum.Monitor,
     headTitle: 'AlarmPolicy'
   },
+  alarmRecord: {
+    group: notifyServerVersion.group,
+    version: notifyServerVersion.version,
+    basicEntry: notifyServerVersion.basicUrl,
+    watchModule: ConsoleModuleEnum.Notify,
+    headTitle: 'AlarmRecord'
+  },
   prometheus: {
     group: apiServerVersion.group,
     version: apiServerVersion.version,
@@ -735,7 +758,6 @@ const notifyApiVersion: ApiVersion = {
     version: notifyServerVersion.version,
     basicEntry: notifyServerVersion.basicUrl,
     watchModule: ConsoleModuleEnum.Notify,
-
     headTitle: 'Message'
   },
   receiver: {

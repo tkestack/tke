@@ -1,6 +1,7 @@
+import * as classnames from 'classnames';
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
-import * as classnames from 'classnames';
+
 import { FadeTransition } from '@tencent/tea-component';
 
 export interface TopTipsProps {

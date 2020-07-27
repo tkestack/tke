@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tke-auth-api.fullname" . }}
+  labels:
+    {{- include "tke-auth-api.labels" . | nindent 4 }}
+data:
+  abac-policy.json: |
+    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:*","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
+  tke-auth-api.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/tke-auth-api/tls.crt"
+    tls_private_key_file = "/app/certs/tke-auth-api/tls.key"
+
+    [etcd]
+    servers = [
+      "https://etcd:2379"
+    ]
+    cafile = "/app/certs/etcd/ca.crt"
+    certfile = "/app/certs/etcd/client.crt"
+    keyfile = "/app/certs/etcd/client.key"
+
+    [generic]
+    external_hostname = "tke-auth-api"
+    external_port = 443
+
+    [authorization]
+    policy_file="/app/conf/abac-policy.json"
+
+    [authentication]
+{{/*    token_auth_file = "/app/certs/token.csv"*/}}
+    client_ca_file = "/app/certs/tke-auth-api/ca.crt"
+    privileged_username = "{{ .Values.adminUsername }}"
+
+{{/*      [authentication.requestheader]*/}}
+{{/*      client_ca_file = "/app/certs/front-proxy-ca.crt"*/}}
+{{/*      username_headers = "X-Remote-User"*/}}
+{{/*      group_headers = "X-Remote-Group"*/}}
+{{/*      extra_headers_prefix = "X-Remote-Extra-"*/}}
+
+    [auth]
+    assets_path = "/app/web/auth"
+    init_client_id = "{{ .Values.tenantID }}"
+    init_client_secret = "{{ .Values.oidcClientSecret }}"
+    init_client_redirect_uris = [
+    {{- range $element := .Values.redirectHosts}}
+    {{ printf `      "http://%s/callback",` $element}}
+    {{ printf `      "https://%s/callback",` $element}}
+    {{- end}}
+    ]
+
+  {{- if .Values.enableAudit }}
+  audit-policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    omitStages:
+    - "RequestReceived"
+    - "ResponseStarted"
+    rules:
+    - level: None
+      resources:
+      - group: "auth.tkestack.io"
+        resources: ["configmaps", "*/status"]
+    - level: RequestResponse
+      verbs: ["create", "update", "patch", "delete", "deletecollection"]
+
+  audit-api-client-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          insecure-skip-tls-verify: true
+          server: https://tke-audit-api/apis/audit.tkestack.io/v1/events/sink/control-plane
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+        name: tke
+
+    {{- end }}

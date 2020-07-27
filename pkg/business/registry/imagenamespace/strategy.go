@@ -63,7 +63,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldImageNamespace := old.(*business.ImageNamespace)
 	imageNamespace, _ := obj.(*business.ImageNamespace)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldImageNamespace.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update imageNamespace information",
@@ -88,7 +88,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	imageNamespace, _ := obj.(*business.ImageNamespace)
 	if len(tenantID) != 0 {
 		imageNamespace.Spec.TenantID = tenantID

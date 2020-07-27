@@ -20,7 +20,6 @@ package validation
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -29,8 +28,8 @@ import (
 	"tkestack.io/tke/pkg/util/ipallocator"
 )
 
-// IsHTTPSReachle tests that https://host:port is reachble in timeout.
-func IsHTTPSReachle(host string, port int32, timeout time.Duration) error {
+// IsValiadURL tests that https://host:port is reachble in timeout.
+func IsValiadURL(url string, timeout time.Duration) error {
 	client := &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
@@ -41,7 +40,6 @@ func IsHTTPSReachle(host string, port int32, timeout time.Duration) error {
 		},
 	}
 
-	url := fmt.Sprintf("https://%s:%d", host, port)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return err

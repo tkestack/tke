@@ -64,7 +64,7 @@ func (a *authorization) index(w http.ResponseWriter, req *http.Request) {
 		a.locked(w)
 		return
 	}
-	username, userTenantID := authentication.GetUsernameAndTenantID(req.Context())
+	username, userTenantID := authentication.UsernameAndTenantID(req.Context())
 	if chartGroup.Spec.Visibility == registry.VisibilityPublic {
 		// visibility is public, everyone can pull
 		if username == "" && userTenantID == "" {

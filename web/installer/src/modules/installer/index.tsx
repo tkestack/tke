@@ -1,6 +1,8 @@
 import * as React from 'react';
+
+import { insertCSS } from '@tencent/ff-redux';
+
 import { InstallerAppContainer } from './components/InstallerApp';
-import { insertCSS } from '@tencent/qcloud-lib';
 
 insertCSS(
   'Installer',

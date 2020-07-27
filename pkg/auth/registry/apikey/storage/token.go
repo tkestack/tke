@@ -49,7 +49,7 @@ func (r *TokenREST) New() runtime.Object {
 }
 
 func (r *TokenREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	userName, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	userName, tenantID := authentication.UsernameAndTenantID(ctx)
 
 	apikeyReq := obj.(*auth.APIKeyReq)
 	var err error

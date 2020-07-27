@@ -95,6 +95,9 @@ interface K8sRestfulPathOptions {
   /** 命名空间，具体的ns */
   namespace?: string;
 
+  /** 业务视图是否切分namespace */
+  isSpetialNamespace?: boolean;
+
   /** 不在路径最后的变量，比如projectId*/
   middleKey?: string;
 
@@ -107,10 +110,11 @@ interface K8sRestfulPathOptions {
   /** 集群id，适用于addon 请求平台转发的场景 */
   clusterId?: string;
 
+  /** 集群logAgentName */
+  logAgentName?: string;
+
   meshId?: string;
 
-  /** 业务视图是否切分namespace */
-  toSplitIfProjectNamespace?: boolean;
 }
 
 /**
@@ -125,17 +129,17 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
   let {
     resourceInfo,
     namespace = '',
-    middleKey = '',
+    isSpetialNamespace = false,
     specificName = '',
     extraResource = '',
     clusterId = '',
     meshId = '',
-    toSplitIfProjectNamespace = true
+    logAgentName = '',
   } = options;
 
   /// #if project
   //业务侧ns eg: cls-xxx-ns 需要去除前缀
-  if (namespace && toSplitIfProjectNamespace === true) {
+  if (namespace && !isSpetialNamespace) {
     namespace = namespace.startsWith('global')
       ? namespace.split('-').splice(1).join('-')
       : namespace.split('-').splice(2).join('-');
@@ -155,8 +159,10 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
    * 非addon（以deployment为例):  /apis/apps/v1beta2/namespaces/${namespace}/deployments/${deployment}/${extraResource}
    */
   if (isAddon) {
-    let clusterInfo: ResourceInfo = resourceConfig()['cluster'];
-    url = `/${clusterInfo.basicEntry}/${clusterInfo.group}/${clusterInfo.version}/${clusterInfo.requestType['list']}/${clusterId}/${resourceInfo.requestType['list']}`;
+    // 兼容新旧日志组件
+    let baseInfo: ResourceInfo = resourceConfig()[logAgentName ? 'logagent' : 'cluster'];
+    let baseValue = logAgentName || clusterId;
+    url = `/${baseInfo.basicEntry}/${baseInfo.group}/${baseInfo.version}/${baseInfo.requestType['list']}/${baseValue}/${resourceInfo.requestType['list']}`;
 
     if (extraResource || resourceInfo['namespaces'] || specificName) {
       let queryArr: string[] = [];
