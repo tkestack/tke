@@ -224,12 +224,14 @@ func (d *Docker) RemoveImage(image string) error {
 
 // RemoveContainers forces to remove one or more running containers.
 func (d *Docker) RemoveContainers(containers ...string) error {
-	// Force the removal of containers. Do not return error.
-	cmdString := fmt.Sprintf("docker rm -f %s 2> /dev/null || true", strings.Join(containers, " "))
-	err := d.runCmd(cmdString)
-	if err != nil {
-		return pkgerrors.Wrap(err, "docker rm error")
+	for _, one := range containers {
+		cmdString := fmt.Sprintf("docker inspect %s >/dev/null 2>&1 && docker rm -f %s || true", one, one)
+		err := d.runCmd(cmdString)
+		if err != nil {
+			return pkgerrors.Wrap(err, "docker rm error")
+		}
 	}
+
 	return nil
 }
 
