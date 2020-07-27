@@ -102,17 +102,18 @@ export const reduceNetworkRequest = async (
   try {
     searchParams = parseQueryString(location.search);
   } catch (error) {}
-  if (!projectId) {
+  let pid = projectId;
+  if (!pid) {
     if (searchParams && (searchParams.projectName || searchParams.projectId)) {
-      projectId = searchParams.projectName || searchParams.projectId;
+      pid = searchParams.projectName || searchParams.projectId;
     } else {
-      projectId = getProjectName();
+      pid = getProjectName();
     }
   }
   userDefinedHeader = Object.assign(
     {},
     {
-      'X-TKE-ProjectName': projectId
+      'X-TKE-ProjectName': pid
     },
     userDefinedHeader
   );
