@@ -70,6 +70,12 @@ func (d *Docker) getCmdOutput(cmdString string) ([]byte, error) {
 	return cmd.Output()
 }
 
+// Healthz check docker daemon healthz status.
+func (d *Docker) Healthz() bool {
+	_, err := d.getCmdOutput("docker ps")
+	return err == nil
+}
+
 // GetImages returns docker images which match given image prefix.
 func (d *Docker) GetImages(imagePrefix string) ([]string, error) {
 	cmdString := fmt.Sprintf("docker images --format='{{.Repository}}:{{.Tag}}' --filter='reference=%s'", imagePrefix)

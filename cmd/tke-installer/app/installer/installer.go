@@ -34,6 +34,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/util/validation"
 
 	"github.com/emicklei/go-restful"
@@ -1924,6 +1925,11 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 }
 
 func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
+	if !t.docker.Healthz() {
+		t.log.Info("Actively exit in order to reconnect to the docker service")
+		os.Exit(1)
+	}
+
 	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain(), File: "hosts"}
 	err := localHosts.Set(t.servers[0])
 	if err != nil {
