@@ -68,6 +68,10 @@ func (c *Config) Save(filename string) error {
 	return y.Encode(c)
 }
 
+func (c *Config) AuditEnabled() bool {
+	return c.Audit.Address != ""
+}
+
 type Registry struct {
 	Prefix    string `yaml:"prefix"`
 	IP        string `yaml:"ip"`

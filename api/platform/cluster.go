@@ -65,7 +65,7 @@ func (in *Cluster) Host() (string, error) {
 	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
 }
 
-func (in *Cluster) AuthzWebhookEnable() bool {
+func (in *Cluster) AuthzWebhookEnabled() bool {
 	return in.Spec.Features.AuthzWebhookAddr != nil &&
 		(in.Spec.Features.AuthzWebhookAddr.Builtin != nil || in.Spec.Features.AuthzWebhookAddr.External != nil)
 }

@@ -592,7 +592,7 @@ func (p *Provider) EnsureThirdPartyHAInit(ctx context.Context, c *v1.Cluster) er
 	return nil
 }
 func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error {
-	if !c.AuthzWebhookEnable() {
+	if !c.AuthzWebhookEnabled() {
 		return nil
 	}
 
@@ -666,7 +666,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			}
 		}
 
-		if p.config.Audit.Address != "" {
+		if p.config.AuditEnabled() {
 			if len(auditPolicyData) != 0 {
 				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), constants.KubernetesAuditPolicyConfigFile)
 				if err != nil {
