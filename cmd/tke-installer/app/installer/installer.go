@@ -1456,6 +1456,7 @@ func (t *TKE) installTKELogagentAPI(ctx context.Context) error {
 		"Username":       t.Para.Config.Auth.TKEAuth.Username,
 		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
 		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":    t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1527,6 +1528,7 @@ func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
 		"NodePort":         constants.AuthzWebhookNodePort,
+		"EnableAudit":      t.auditEnabled(),
 	}
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-auth-api/*.yaml", option)
 	if err != nil {
@@ -1682,6 +1684,7 @@ func (t *TKE) installTKEBusinessAPI(ctx context.Context) error {
 		"SyncProjectsWithNamespaces": t.Config.SyncProjectsWithNamespaces,
 		"EnableAuth":                 t.Para.Config.Auth.TKEAuth != nil,
 		"EnableRegistry":             t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":                t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1743,9 +1746,10 @@ func (t *TKE) installInfluxDB(ctx context.Context) error {
 
 func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":   t.Config.Replicas,
-		"Image":      images.Get().TKEMonitorAPI.FullName(),
-		"EnableAuth": t.Para.Config.Auth.TKEAuth != nil,
+		"Replicas":    t.Config.Replicas,
+		"Image":       images.Get().TKEMonitorAPI.FullName(),
+		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"EnableAudit": t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1847,9 +1851,10 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 
 func (t *TKE) installTKENotifyAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":   t.Config.Replicas,
-		"Image":      images.Get().TKENotifyAPI.FullName(),
-		"EnableAuth": t.Para.Config.Auth.TKEAuth != nil,
+		"Replicas":    t.Config.Replicas,
+		"Image":       images.Get().TKENotifyAPI.FullName(),
+		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"EnableAudit": t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1897,6 +1902,7 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 		"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
 		"EnableAuth":    t.Para.Config.Auth.TKEAuth != nil,
 		"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
+		"EnableAudit":   t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
