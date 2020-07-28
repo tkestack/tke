@@ -1,0 +1,129 @@
+# check pod network cidr whethere with host network conflict
+
+# check pod network cidr whethere with host network conflict
+- name: check pod network cidr whethere with host network conflict
+  shell: if [ "{{ cluster_cidr.split('/')[1] }}" -eq 16 ]; then \
+           if [ "{{ ansible_default_ipv4.network.split('.')[0] }}" -ne \
+           "{{ cluster_cidr.split('/')[0].split('.')[0] }}" ]; then \
+               echo "False"; \
+           elif [ "{{ ansible_default_ipv4.network.split('.')[1] }}" -ne \
+           "{{ cluster_cidr.split('/')[0].split('.')[1] }}" ]; then \
+               echo "False"; \
+           else echo "True"; \
+           fi \
+         elif [ "{{ cluster_cidr.split('/')[1] }}" -eq 17 ]; then \
+           if [ "{{ ansible_default_ipv4.network.split('.')[0] }}" -ne \
+           "{{ cluster_cidr.split('/')[0].split('.')[0] }}" ]; then \
+             echo "False"; \
+           elif [ "{{ ansible_default_ipv4.network.split('.')[1] }}" -ne \
+           "{{ cluster_cidr.split('/')[0].split('.')[1] }}" ]; then \
+             echo "False"; \
+           elif ([ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 0 ] && \
+           [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 128 ]); then \
+             echo "False"; \
+           elif ([ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 128 ] && \
+           [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 128 ]); then \
+             echo "False"; \
+           else echo "True"; \
+           fi \
+         elif [ "{{ cluster_cidr.split('/')[1] }}" -eq 18 ]; then \ 
+           if [ "{{ ansible_default_ipv4.network.split('.')[0] }}" -ne \
+           "{{ cluster_cidr.split('/')[0].split('.')[0] }}" ]; then \
+             echo "False"; \
+           elif [ "{{ ansible_default_ipv4.network.split('.')[1] }}" -ne \
+           "{{ cluster_cidr.split('/')[0].split('.')[1] }}" ]; then \
+             echo "False"; \
+           elif ([ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 0 ] && \
+           [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 64 ]); then \
+             echo "False"; \
+           elif [ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 64 ]; then  \
+             if ([ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 128 ] || \
+             [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 64 ] ); then \
+               echo "False"; \
+             else echo "True"; \
+             fi \
+           elif [ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 128 ]; then  \
+             if ([ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 192 ] || \
+             [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 128 ] ); then \
+               echo "False"; \
+             else echo "True"; \
+             fi \
+           elif ([ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 192 ] && \
+           [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 192 ]); then \
+             echo "False"; \
+           else echo "True"; \
+           fi \
+         elif [ "{{ cluster_cidr.split('/')[1] }}" -eq 19 ]; then \
+           if [ "{{ ansible_default_ipv4.network.split('.')[0] }}" -ne \
+           "{{ cluster_cidr.split('/')[0].split('.')[0] }}" ]; then \
+             echo "False"; \
+           elif [ "{{ ansible_default_ipv4.network.split('.')[1] }}" -ne \
+           "{{ cluster_cidr.split('/')[0].split('.')[1] }}" ]; then \
+             echo "False"; \
+           elif ([ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 0 ] && \
+           [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 32 ]); then \
+             echo "False"; \
+           elif [ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 32 ]; then  \
+             if ([ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 64 ] || \
+             [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 32 ] ); then \
+               echo "False"; \
+             else echo "True"; \
+             fi \
+           elif [ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 64 ]; then  \
+             if ([ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 96 ] || \
+             [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 64 ] ); then \
+               echo "False"; \
+             else echo "True"; \
+             fi \
+           elif [ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 96 ]; then  \
+             if ([ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 128 ] || \
+             [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 96 ] ); then \
+               echo "False"; \
+             else echo "True"; \
+             fi \
+           elif [ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 128 ]; then  \
+             if ([ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 160 ] || \
+             [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 128 ] ); then \
+               echo "False"; \
+             else echo "True"; \
+             fi \
+           elif [ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 160 ]; then  \
+             if ([ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 192 ] || \
+             [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 160 ] ); then \
+               echo "False"; \
+             else echo "True"; \
+             fi \
+           elif [ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 192 ]; then  \
+             if ([ "{{ ansible_default_ipv4.network.split('.')[2]}}" -ge 224 ] || \
+             [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 192 ] ); then \
+               echo "False"; \
+             else echo "True"; \
+             fi \
+           elif ([ "{{ cluster_cidr.split('/')[0].split('.')[2] }}" -eq 224 ] && \
+           [ "{{ ansible_default_ipv4.network.split('.')[2]}}" -lt 224 ]); then \
+             echo "False"; \
+           else echo "True"; \
+           fi \ 
+         elif [ "{{ cluster_cidr.split('/')[0].split('.')[0] }}" -eq 10 ]; then \
+           if ([ "{{ cluster_cidr.split('/')[1] }}" -eq 14 ] || \
+           [ "{{ cluster_cidr.split('/')[1] }}" -eq 15 ]); then \
+             echo "Manual"; \
+           fi \
+         else echo "True"; \
+         fi
+  register: network_cidr_conflict
+  tags: check_pod_network
+
+# network cidr conflict exit deploy
+- name: network cidr conflict exit deploy
+  shell: echo "network cidr with hosts network conflict, cloud not deploy tkestack.please change pod network!!!" && exit 1
+  when: network_cidr_conflict.stdout == "True"
+  ignore_errors: yes
+  tags: check_pod_network
+
+# when pod cidr choose /14 or /15,please check by yourself.
+- name: pod cidr choose /14 or /15,is too large. 
+  shell: echo "pod cidr choose /14 or /15,please check by yourself. and not recommended cidr set /14 or 15!" && exit 1
+  ignore_errors: yes
+  when: network_cidr_conflict.stdout == "Manual"
+  tags: check_pod_network

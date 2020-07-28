@@ -1,0 +1,46 @@
+replicas: 3
+image: {{ registry_domain }}/{{ kafka_image_name }}
+imageTag: {{ kafka_image_tag }}
+imagePullPolicy: "IfNotPresent"
+resources:
+   limits:
+     cpu: {{ kafka_limit_cpu }}
+     memory: {{ kafka_limit_mem }}
+   requests:
+     cpu: {{ kafka_request_cpu }}
+     memory: {{ kafka_request_mem }}
+kafkaHeapOptions: {{ kafka_heap_options }}
+tolerations:
+- key: node-role.kubernetes.io/node
+  operator: Exists
+  effect: NoSchedule
+- key: node-role.kubernetes.io/node
+  operator: Exists
+  effect: PreferNoSchedule
+persistence:
+  matchKey: kafka-pv
+  matchValue: data-kafka
+  storageClass: local-storage
+  size: 5Gi
+zookeeper:
+  env:
+    ZK_HEAP_SIZE: {{ zk_heap_size }}
+  persistence:
+    enabled: true
+    matchKey: zk-pv
+    matchValue: data-kafka-zookeeper
+    storageClass: local-storage
+    accessMode: ReadWriteOnce
+    size: 5Gi
+  replicaCount: 3
+  image:
+    repository: {{ registry_domain }}/{{ zk_image_name }}
+    tag: {{ zk_image_tag }}
+    pullPolicy: IfNotPresent
+  tolerations:
+  - key: node-role.kubernetes.io/node
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/node
+    operator: Exists
+    effect: PreferNoSchedule

@@ -1,0 +1,8 @@
+---
+- hosts: '{{ hosts }}'
+  gather_facts: True
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/local/bin"
+  become: yes
+  roles:
+    - hosts-init

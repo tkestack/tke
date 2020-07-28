@@ -1,0 +1,4 @@
+---
+# vars file for hosts-check
+release_versions: {}
+kernal_version: {}

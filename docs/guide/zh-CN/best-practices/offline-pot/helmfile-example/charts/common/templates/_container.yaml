@@ -1,0 +1,62 @@
+{{- define "common.container.tpl" -}}
+name: {{ template "common.name" . }}
+image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+{{- if .Values.image.pullPolicy }}
+imagePullPolicy: {{ .Values.image.pullPolicy }}
+{{- else }}
+imagePullPolicy: IfNotPresent
+{{- end }}
+{{- with .Values.command }}
+command:
+{{ toYaml . | indent 2 }}
+{{- end }}
+env:
+{{- with .Values.env }}
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- if .Values.skyAgent }}
+{{- if .Values.skyAgent.enabled }}
+  - name: ENABLE_SKYWALKING
+    value: "1"
+  - name: APP_NAME
+    value: {{ template "common.name" . }}
+{{- end }}
+{{- end }}
+{{- with .Values.securityContext }}
+securityContext:
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- with .Values.workingDir }}
+workingDir:
+{{ toYaml . | indent 2 }}
+{{- end }}
+resources:
+{{ toYaml .Values.resources | indent 2 }}
+livenessProbe:
+{{ toYaml .Values.livenessProbe | indent 2 }}
+readinessProbe:
+{{ toYaml .Values.readinessProbe | indent 2 }}
+volumeMounts:
+  - name: {{ template "common.name" . }}
+    mountPath: /data/logs
+{{- if .Values.ccClient }}
+{{- if .Values.ccClient.enabled }}
+  - name: {{ template "common.name" . }}-config
+    mountPath: /data/config/
+{{- end }}
+{{- end }}
+{{- if .Values.skyAgent }}
+{{- if .Values.skyAgent.enabled }}
+  - name: {{ template "common.name" . }}-skywalking-sidecar
+    mountPath: /sidecar/skywalking-agent
+{{- end }}
+{{- end }}
+{{- with .Values.volumeMounts }}
+{{ toYaml . | indent 2 }}
+{{- end }}
+{{- end -}}
+{{- define "common.container" -}}
+{{- /* clear new line so indentation works correctly */ -}}
+{{- println "" -}}
+{{- include "common.util.merge" (append . "common.container.tpl") | indent 8 -}}
+{{- end -}}

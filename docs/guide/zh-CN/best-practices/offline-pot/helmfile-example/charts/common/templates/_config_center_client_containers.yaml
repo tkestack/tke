@@ -1,0 +1,25 @@
+{{- define "common.cc_container.tpl" }}
+name: cc-client
+{{- if .Values.ccClient.image }}
+image: {{ .Values.ccClient.image }}
+{{- else }}
+image: demo/helmfile-cc-client:1.0.1
+{{- end }}
+imagePullPolicy: IfNotPresent
+env:
+  - name: APP_NAME
+    value: {{ template "common.name" . }}
+{{- with .Values.ccClient.env }}
+{{ toYaml . | indent 2 }}
+{{- end }}
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 128Mi
+volumeMounts:
+  - name: {{ template "common.name" . }}-config
+    mountPath: /data/cc-client/config/
+{{- end }}

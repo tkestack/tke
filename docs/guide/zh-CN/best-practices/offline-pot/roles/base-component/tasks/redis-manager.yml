@@ -1,0 +1,334 @@
+# deploy redis and remove redis
+
+# set facts
+- name: set master-slave deploy_redis facts
+  set_fact: deploy_redis = "{{ deploy_redis }}"
+  tags: redis_mgr_init
+
+- name: set master-slave redis_mode facts
+  set_fact: redis_mode = "{{ redis_mode }}"
+  tags: redis_mgr_init
+
+# create save master-slave redis manager dir
+- name: create save master-slave redis manager dir
+  shell: ls /data/redis-pkg || mkdir -p /data/redis-pkg
+  when: deploy_redis == 'true' and inventory_hostname in groups['redis'] and redis_mode == 'master-slave'
+  tags: redis_mgr_init
+
+# copy master-slave redis install pkg to redis master node
+- name: copy master-slave redis install pkg to redis master node
+  copy:
+    src: "{{ dpl_dir }}-tgz/redis_deploy.tgz"
+    dest: /data/redis-pkg/redis_deploy.tgz
+  when: deploy_redis == 'true' and inventory_hostname == groups['redis'][0] and redis_mode == 'master-slave'
+  tags: redis_mgr_init
+
+# unzip master-slave redis install pkg
+- name: unzip master-slave redis install pkg
+  shell: (ls /data/redis-pkg/redis_deploy.tgz && cd /data/redis-pkg/ && tar -zxf redis_deploy.tgz) || \
+         (echo 'not has redis_deploy.tgz!cloud not deploy' && exit 1)
+  when: deploy_redis == 'true' and inventory_hostname == groups['redis'][0] and redis_mode == 'master-slave'
+  tags: redis_mgr_init
+
+# copy deploy master-slave redis master script to redis master node
+- name: copy deploy master-slave redis master script to redis master node
+  template:
+    src: templates/redis/redis_master_deploy.sh.j2
+    dest: /data/redis-pkg/redis_master_deploy.sh
+    mode: '0755'
+  when: deploy_redis == 'true' and inventory_hostname == groups['redis'][0] and redis_mode == 'master-slave'
+  tags: redis_mgr_init
+
+# set master-slave redis_mode facts for deploy
+- name: set redis_mode facts for deploy
+  set_fact: redis_mode = "{{ redis_mode }}"
+  tags: deploy_redis
+
+# get deploy master-slave redis master script stat
+- name: get deploy master-slave redis master script stat
+  stat:
+    path: /data/redis-pkg/redis_master_deploy.sh
+  register: redis_master_deploy
+  when: inventory_hostname == groups['redis'][0]
+  tags: deploy_redis
+
+# deploy master-slave redis master
+- name: deploy master-slave redis master
+  shell: cd /data/redis-pkg/ && sh redis_master_deploy.sh
+  when: inventory_hostname == groups['redis'][0] and redis_mode == 'master-slave' and redis_master_deploy.stat.exists == True
+  tags: deploy_redis
+
+# ack master-slave redis slave install pkg
+- name: ack master-slave redis slave install pkg
+  stat:
+    path: /data/redis-pkg/redis_slave_deploy.tgz
+  register: redis_slave_pkg
+  when: inventory_hostname == groups['redis'][0]
+  tags: deploy_redis
+
+# get save master-slave redis slave pkg stat
+- name: get save master-slave redis slave pkg stat
+  stat:
+    path: /data/redis-pkg
+  register: redis_pkg_dir
+  when: inventory_hostname == groups['redis'][1]
+  tags: deploy_redis
+
+# copy master-slave redis slave pkg to redis slave node
+- name: copy master-slave redis slave pkg to redis slave node
+  shell: sshpass -p '{{ ansible_ssh_pass }}' scp -P {{ ansible_port }} -oStrictHostKeyChecking=no \
+         /data/redis-pkg/redis_slave_deploy.tgz \
+         {{ ansible_ssh_user }}@{{ groups['db'][1] }}:/data/redis-pkg/redis_slave_deploy.tgz
+  when: inventory_hostname == groups['redis'][0] and redis_slave_pkg.stat.exists == True and redis_mode == 'master-slave'
+  tags: deploy_redis
+
+# unzip master-slave redis slave install pkg
+- name: unzip master-slave redis slave install pkg
+  shell: (ls /data/redis-pkg/redis_slave_deploy.tgz && cd /data/redis-pkg/ && tar -zxf redis_slave_deploy.tgz \
+         ) || (echo 'not has redis_slave_deploy.tgz pkg,cloud not deploy!' && exit 1)
+  when: inventory_hostname == groups['redis'][1] and redis_pkg_dir.stat.exists == True and redis_pkg_dir.stat.isdir and redis_mode == 'master-slave'
+  tags: deploy_redis
+
+# copy deploy master-slave redis slave script to redis slave node
+- name: copy deploy master-slave redis slave script to redis slave node
+  template:
+    src: templates/redis/redis_slave_deploy.sh.j2
+    dest: /data/redis-pkg/redis_slave_deploy.sh
+    mode: '0755'
+  when: inventory_hostname == groups['redis'][1] and redis_pkg_dir.stat.exists == True and redis_pkg_dir.stat.isdir and redis_mode == 'master-slave'
+  tags: deploy_redis
+
+# deploy master-slave redis slave
+- name: deploy master-slave redis slave
+  shell: cd /data/redis-pkg/ && sh redis_slave_deploy.sh
+  when: inventory_hostname == groups['redis'][1] and redis_pkg_dir.stat.exists == True and redis_pkg_dir.stat.isdir and redis_mode == 'master-slave'
+  tags: deploy_redis
+
+# set master-slave redis_mode facts for remove
+- name: set master-slave redis_mode facts for remove
+  set_fact: redis_mode = "{{ redis_mode }}"
+  tags: remove_redis
+
+# get master-slave redis data dir stat
+- name: get master-slave redis data dir stat
+  stat:
+    path: /data/redis
+  register: redis_data_dir
+  when: inventory_hostname in groups['redis']
+  tags: remove_redis
+
+# generate remove master-slave redis script
+- name: generate remove master-slave redis script
+  template:
+    src: templates/redis/clean_redis.sh.j2
+    dest: /data/redis-pkg/clean_redis.sh
+    mode: '0755'
+  when: inventory_hostname in groups['redis'] and redis_data_dir.stat.exists == True and redis_data_dir.stat.isdir and redis_mode == 'master-slave'
+  tags: remove_redis
+
+# remove master-slave redis
+- name: remove master-slave redis
+  shell: cd /data/redis-pkg/ && sh clean_redis.sh && cd /data/ && rm -rf /data/redis-pkg/
+  when: inventory_hostname in groups['redis'] and redis_data_dir.stat.exists == True and redis_data_dir.stat.isdir and redis_mode == 'master-slave'
+  tags: remove_redis
+
+# set facts
+- name: set master-slave deploy_redis facts for health check
+  set_fact: deploy_redis = "{{ deploy_redis }}"
+  tags: redis_health_check
+
+- name: set master-slave redis_mode facts for health check
+  set_fact: redis_mode = "{{ redis_mode }}"
+  tags: redis_health_check
+
+# get master-slave redis port  listen status
+- name: get master-slave redis port listen status
+  shell: if [ `ss -nat -l | grep "{{ REDIS_PORT }}" | wc -l` -eq 1 ]; then echo "true"; else echo "false";fi
+  register: redis_listen_status
+  when: inventory_hostname in groups['redis'] and deploy_redis == 'true'
+  tags: redis_health_check
+
+- name: master-slave redis not health
+  debug:
+    msg: "Warning: {{ inventory_hostname }}'s redis not health, please check!!"
+  when: inventory_hostname in groups['redis'] and deploy_redis == 'true' and redis_listen_status.stdout == "false" and redis_mode == 'master-slave'
+  tags: redis_health_check
+
+- name: master-slave redis health
+  debug:
+    msg: "Info: {{ inventory_hostname }}'s redis health."
+  when: inventory_hostname in groups['redis'] and deploy_redis == 'true' and redis_listen_status.stdout == "true" and redis_mode == 'master-slave'
+  tags: redis_health_check
+
+# set facts for deploy redis cluster
+- name: set cluster deploy_redis facts
+  set_fact: deploy_redis = "{{ deploy_redis }}"
+  tags: dpl_redis_cluster
+
+- name: set cluster redis_mode facts
+  set_fact: redis_mode = "{{ redis_mode }}"
+  tags: dpl_redis_cluster
+
+- name: set cluster redis node taints switch
+  set_fact: redis_taints = "{{ redis_taints }}"
+  tags: dpl_redis_cluster
+
+- name: set cluster redis persistence switch
+  set_fact: redis_persistence = "{{ redis_persistence }}"
+  tags: dpl_redis_cluster
+
+# create cluster redis's master and slave data dir
+- name: create cluster redis's master and slave data dir
+  shell: if [ `ls {{ redis_data_dir }} | wc -l ` -eq 0 ]; then mkdir -p "{{ redis_data_dir }}/master" && mkdir -p "{{ redis_data_dir }}/slave" ; fi
+  when: inventory_hostname in groups['redis'] and deploy_redis == 'true'  and redis_mode == 'cluster' and redis_persistence == 'true'
+  tags: dpl_redis_cluster
+
+# cluster redis nodes add taints
+- name: cluster redis nodes add taints
+  shell: kubectl taint nodes "{{ inventory_hostname }}" redis-cluster=true:NoSchedule --overwrite
+  when: inventory_hostname in groups['redis'] and deploy_redis == 'true'  and redis_mode == 'cluster' and redis_taints == 'true'
+  tags: dpl_redis_cluster
+
+# cluster redis node add label
+- name: cluster redis node add label
+  shell: kubectl label nodes "{{ inventory_hostname }}" redis-cluster='true' --overwrite
+  when: inventory_hostname in groups['redis'] and deploy_redis == 'true'  and redis_mode == 'cluster'
+  tags: dpl_redis_cluster
+
+# create save cluster redis yaml and helms dir
+- name: create save cluster redis yaml and helms dir
+  shell: (ls /data/tke-yamls/redis || mkdir -p /data/tke-yamls/redis) && \
+         (ls /data/helms || mkdir -p /data/helms)
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'  and redis_mode == 'cluster'
+  tags: dpl_redis_cluster
+
+# copy cluster redis helms file to master node
+- name: copy cluster redis helms file to master node
+  copy:
+    src: helms/redis-cluster
+    dest: /data/helms/
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'  and redis_mode == 'cluster'
+  tags: dpl_redis_cluster
+
+# generate cluster redis helm value yaml
+- name: generate cluster redis helm value yaml
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+  with_items:
+    - 'templates/common/local-storage.yaml.j2:/data/tke-yamls/redis/local-storage.yaml'
+    - 'templates/redis/redis-cluster-client.yaml.j2:/data/tke-yamls/redis/redis-cluster-client.yaml'
+    - 'templates/redis/redis-cluster-values.yaml.j2:/data/helms/redis-cluster/values.yaml'
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'  and redis_mode == 'cluster'
+  tags: dpl_redis_cluster
+
+# generate cluster redis persistence yaml
+- name: generate cluster redis persistence yaml
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+  with_items:
+    - 'templates/redis/redis-cluster-local-pv.yaml.j2:/data/tke-yamls/redis/redis-cluster-local-pv.yaml'
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'  and redis_mode == 'cluster' and redis_persistence == 'true'
+  tags: dpl_redis_cluster
+
+# create save deploy cluster redis script dir
+- name: create save deploy cluster redis script dir
+  shell: mkdir -p /data/offline-pot-scripts
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'  and redis_mode == 'cluster'
+  tags: dpl_redis_cluster
+
+# generate deploy cluster redis script
+- name: generate deploy cluster redis script
+  template:
+    src: templates/common/base-component-tools.sh.j2
+    dest: /data/offline-pot-scripts/base-component-tools.sh
+    mode: '0755'
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'  and redis_mode == 'cluster'
+  tags: dpl_redis_cluster
+
+# get deploy cluster redis script stat
+- name: get deploy cluster redis script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: redis_cluster_dpl_script
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'
+  tags: dpl_redis_cluster
+
+# deploy cluster redis
+- name: deploy cluster redis
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh dpl_redis_cluster
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'  and redis_mode == 'cluster' and redis_cluster_dpl_script.stat.exists == True
+  tags: dpl_redis_cluster
+
+# set facts for remove redis cluster
+- name: set cluster deploy_redis facts
+  set_fact: deploy_redis = "{{ deploy_redis }}"
+  tags: del_redis_cluster
+
+- name: set cluster redis_mode facts
+  set_fact: redis_mode = "{{ redis_mode }}"
+  tags: del_redis_cluster
+
+- name: set cluster redis node taints switch
+  set_fact: redis_taints = "{{ redis_taints }}"
+  tags: del_redis_cluster
+
+- name: set cluster redis persistence switch
+  set_fact: redis_persistence = "{{ redis_persistence }}"
+  tags: del_redis_cluster
+
+- name: get remove cluster redis script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: redis_cluster_del_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: del_redis_cluster
+
+
+# remove cluster redis
+- name: remove cluster redis
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh del_redis_cluster
+  when: inventory_hostname == groups['masters'][0] and redis_cluster_del_script.stat.exists == True and deploy_redis == 'true'  and redis_mode == 'cluster'
+  tags: del_redis_cluster
+
+# remove redis cluster data
+- name: remove redis cluster data
+  shell: if [ `ls "{{ redis_data_dir }}" | wc -l` -gt 0 ] && [ `kubectl get pvc | grep redis-data | wc -l` -eq 0 ];then \
+            rm -rf "{{ redis_data_dir }}"; \
+         fi
+  when: inventory_hostname in groups['redis'] and deploy_redis == 'true'  and redis_mode == 'cluster' and redis_persistence == 'true'
+  tags: del_redis_cluster
+
+
+# set deploy redis cluster facts for health check
+- name: set cluster deploy_redis facts
+  set_fact: deploy_redis = "{{ deploy_redis }}"
+  tags: redis_cluster_health_check
+
+- name: set cluster redis_mode facts
+  set_fact: redis_mode = "{{ redis_mode }}"
+  tags: redis_cluster_health_check
+
+
+# get redis cluster deploy status
+- name: get redis cluster deploy status
+  shell: if [ `kubectl get pods -n pot|grep redis-cluster|grep '1/1'|wc -l ` -gt 0 ]; \
+         then echo "true"; else echo "false";fi
+  register: redis_cluster_dpl_status
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'
+  tags: redis_cluster_health_check
+
+# redis cluster deploy success
+- name: redis cluster deploy success
+  debug:
+    msg: "Info: redis cluster deploy success."
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'  and redis_mode == 'cluster' and redis_cluster_dpl_status.stdout == "true"
+  tags: redis_cluster_health_check
+
+# redis cluster deploy failed
+- name: redis cluster deploy failed
+  debug:
+    msg: "Warning: redis cluster deploy failed, please check!"
+  when: inventory_hostname == groups['masters'][0] and deploy_redis == 'true'  and redis_mode == 'cluster' and redis_cluster_dpl_status.stdout == "false"
+  tags: redis_cluster_health_check

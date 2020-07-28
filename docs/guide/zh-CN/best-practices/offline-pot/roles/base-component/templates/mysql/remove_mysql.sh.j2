@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+#function:
+#	deploy mysql5.7.22 service on Centos7.2
+#release:
+#	2018-03-01 first-release by edwardmli|2018-04-18 second-release by edwardmli
+#	modify yihuachen
+#
+
+SHELL_FOLDER=$(cd "$(dirname "$0")";pwd)
+BACKUP_SCRIPTS_DIR='/data/db_backup/scripts'
+MYSQL_BUFFER={{ MYSQL_BUFFER }}
+MYSQL_PORT={{ MYSQL_PORT }}
+MYSQL_PASS={{ MYSQL_PASS }}
+MYSQL_DATADIR={{ MYSQL_DATADIR }}
+MASTER_HOST={{ ansible_default_ipv4.address }}
+MYSQL_EDITION=mysql-5.7.29-linux-glibc2.12-x86_64
+MYSQL_BINARY_FILE=${MYSQL_EDITION}.tar.gz
+LIBAIO_RPM_FILE='libaio-0.3.109-13.el7.x86_64.rpm'
+
+# check mysql whether had running
+MYSQL_RUNING=`ps -ef | grep mysqld | grep -v grep | grep ${MYSQL_PORT} | wc -l`
+if [[ $MYSQL_RUNING -eq 1 ]]
+then
+    # kill mysql process
+    kill -9 `ps -ef | grep mysqld | grep -v grep | grep ${MYSQL_PORT} | awk '{print $2}'`
+    kill -9 `ps -ef | grep mysqld_safe | grep -v grep | awk '{print $2}'`
+
+    DATA_DIR=${MYSQL_DATADIR}
+    if [[ -d ${DATA_DIR} ]]
+    then
+        if [[ "`ls ${DATA_DIR}|wc -l`" != "0" ]]
+        then
+	        rm -rf ${DATA_DIR}
+        fi
+    else
+        echo "${DATA_DIR} is empty !"
+    fi
+
+    echo -e "######\033[32mRemove files\033[0m......"
+    if [[ -f ${SHELL_FOLDER}/my.cnf ]]
+    then
+        rm -f ${SHELL_FOLDER}/my.cnf
+    fi
+    if [[  -f ${SHELL_FOLDER}/slave_deploy.sh ]]
+    then
+        rm -f ${SHELL_FOLDER}/slave_deploy.sh
+    fi
+    if [[  -f ${SHELL_FOLDER}/initial_data.sql ]]
+    then
+        rm -f ${SHELL_FOLDER}/initial_data.sql
+    fi
+    echo -e "\033[32mDone.\033[0m"
+
+    if [[  -f ${SHELL_FOLDER}/${MYSQL_BINARY_FILE} ]]
+    then
+        rm -f ${SHELL_FOLDER}/${MYSQL_BINARY_FILE}
+    fi
+    echo -e "######\033[32mCheck directories\033[0m......"
+    if [[ -d /usr/local/mysql ]]
+    then
+        rm -f /usr/bin/mysql*
+        rm -f  /usr/local/mysql/bin/mysql*
+        rm -rf /usr/local/mysql*
+    fi
+    echo -e "\033[32mDone.\033[0m"
+
+    cd ${SHELL_FOLDER}
+
+    if [[  -f ${SHELL_FOLDER}/${LIBAIO_RPM_FILE} ]]
+    then
+        rm -f ${SHELL_FOLDER}/${LIBAIO_RPM_FILE}
+    fi
+    if [[ -d "/usr/local/${MYSQL_EDITION}" ]]
+    then
+        rm -rf /usr/local/${MYSQL_EDITION}
+    fi
+    if [[ -d "/data/db_backup" ]]
+    then
+        rm -rf /data/db_backup
+    fi
+
+    cat /etc/sysctl.conf | grep 'vm.swappiness = 5' && sed -i '/vm.swappiness = 5/d'  /etc/sysctl.conf || echo 'ignore'
+    cat /etc/sysctl.conf | grep 'vm.dirty_background_ratio = 5' && sed -i '/vm.dirty_background_ratio = 5/d' /etc/sysctl.conf || echo 'ignore'
+    cat /etc/sysctl.conf | grep 'vm.dirty_ratio = 10' && sed -i '/vm.dirty_ratio = 10/d' /etc/sysctl.conf || echo 'ignore'
+    #cat /etc/sysctl.conf | grep 'net.ipv4.tcp_tw_recycle = 1' && sed -i '/net.ipv4.tcp_tw_recycle = 1/d' /etc/sysctl.conf || echo 'ignore'
+    #cat /etc/sysctl.conf | grep 'net.ipv4.tcp_tw_reuse = 1' && sed -i '/net.ipv4.tcp_tw_reuse = 1/d' /etc/sysctl.conf || echo 'ignore'
+    sysctl -p /dev/null 2>&1
+
+    echo -e "\033[32mDone.\033[0m"
+
+    #安装数据库
+    echo -e "######\033[32minstall mysql\033[0m......"
+    if [[ -f /etc/my.cnf ]]
+    then
+        rm -f /etc/my.cnf
+    fi
+    echo -e "\033[32mDone.\033[0m"
+
+    if [[ -d "/data/logs/mysql" ]]
+    then
+        rm -rf /data/logs/mysql
+    fi
+
+    # remove mysql user and group
+    cat /etc/passwd | grep ^mysql && userdel mysql > /dev/null 2>&1 || echo 'not has mysql user'
+    cat /etc/group | grep ^mysql && groupdel mysql> /dev/null 2>&1 || echo 'not has mysql group'
+
+    echo -e "\033[32msuccessfully!\033[0m"
+else
+    echo "mysql is not running on this host!"
+fi
