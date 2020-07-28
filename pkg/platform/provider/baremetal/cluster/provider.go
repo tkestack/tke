@@ -192,6 +192,13 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 		}
 	}
 
+	if p.config.AuditEnabled() {
+		if !cluster.AuthzWebhookEnabled() {
+			cluster.Spec.Features.AuthzWebhookAddr = &platform.AuthzWebhookAddr{Builtin: &platform.
+				BuiltinAuthzWebhookAddr{}}
+		}
+	}
+
 	if cluster.Spec.Properties.MaxClusterServiceNum == nil && cluster.Spec.ServiceCIDR == nil {
 		cluster.Spec.Properties.MaxClusterServiceNum = pointer.ToInt32(256)
 	}
