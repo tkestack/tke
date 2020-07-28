@@ -978,10 +978,11 @@ func (t *TKE) do() {
 		t.progress.Hosts = append(t.progress.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
 	}
 
-	t.progress.Servers = t.servers
 	if t.Para.Config.HA != nil {
 		t.progress.Servers = append(t.progress.Servers, t.Para.Config.HA.VIP())
 	}
+	t.progress.Servers = append(t.progress.Servers, t.servers...)
+
 	t.log.Infof("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
 }
 
