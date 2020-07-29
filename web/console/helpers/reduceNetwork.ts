@@ -127,7 +127,7 @@ export const reduceNetworkRequest = async (
       'X-TKE-FuzzyResourceName': keyword
     });
   }
-  
+
   let params = {
     method,
     baseURL,
