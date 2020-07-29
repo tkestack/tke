@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -35,6 +36,7 @@ import (
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	"tkestack.io/tke/pkg/application/util"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
+	registryutil "tkestack.io/tke/pkg/registry/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -151,13 +153,14 @@ func (h *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	url := &url.URL{
 		Scheme: h.externalScheme,
-		Host:   host,
+		Host:   registryutil.BuildTenantRegistryDomain(host, h.chart.Spec.TenantID),
+		Path:   fmt.Sprintf("/chart/%s", h.chart.Spec.ChartGroupName),
 	}
 	cpopt := helmaction.ChartPathOptions{
 		CaFile:    h.externalCAFile,
 		Username:  h.registryConfig.Security.AdminUsername,
 		Password:  h.registryConfig.Security.AdminPassword,
-		RepoURL:   url.String() + "/chart/" + h.chart.Spec.ChartGroupName,
+		RepoURL:   url.String(),
 		ChartRepo: h.chart.Spec.TenantID + "/" + h.chart.Spec.ChartGroupName,
 		Chart:     h.chart.Spec.Name,
 		Version:   h.chartVersion,

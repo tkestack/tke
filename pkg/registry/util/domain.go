@@ -16,13 +16,16 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package config
+package util
 
-// RepoConfiguration contains options to connect to a chart repo.
-type RepoConfiguration struct {
-	Scheme        string
-	DomainSuffix  string
-	CaFile        string
-	Admin         string
-	AdminPassword string
+import (
+	"strings"
+)
+
+// BuildTenantRegistryDomain returns full registry domain for the tenant.
+func BuildTenantRegistryDomain(domainSuffix string, tenant string) string {
+	if strings.HasSuffix(domainSuffix, tenant+".") {
+		return domainSuffix
+	}
+	return tenant + "." + domainSuffix
 }
