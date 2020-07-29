@@ -278,7 +278,7 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if t.Para.Config.Business != nil {
+	if t.businessEnabled() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Install tke-business-api",
@@ -834,6 +834,10 @@ func (t *TKE) auditEnabled() bool {
 		t.Para.Config.Audit.ElasticSearch.Address != ""
 }
 
+func (t *TKE) businessEnabled() bool {
+	return t.Para.Config.Business != nil
+}
+
 func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 	apiStatus := func() apierrors.APIStatus {
 		if t.Step != 0 {
@@ -1313,6 +1317,9 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 	if t.auditEnabled() {
 		providerConfig.Audit.Address = t.determineGatewayHTTPSAddress()
 	}
+	if t.businessEnabled() {
+		providerConfig.Business.Enabled = true
+	}
 	providerConfig.PlatformAPIClientConfig = "conf/tke-platform-config.yaml"
 	// todo using ingress to expose authz service for ha.(
 	//  users do not known nodeport when assigned vport in third party loadbalance)
@@ -1422,7 +1429,7 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 		"EnableRegistry":   t.Para.Config.Registry.TKERegistry != nil,
 		"EnableAuth":       t.Para.Config.Auth.TKEAuth != nil,
 		"EnableMonitor":    t.Para.Config.Monitor != nil,
-		"EnableBusiness":   t.Para.Config.Business != nil,
+		"EnableBusiness":   t.businessEnabled(),
 		"EnableLogagent":   t.Para.Config.Logagent != nil,
 		"EnableAudit":      t.auditEnabled(),
 	}
@@ -1795,7 +1802,7 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 	params := map[string]interface{}{
 		"Replicas":                t.Config.Replicas,
 		"Image":                   images.Get().TKEMonitorController.FullName(),
-		"EnableBusiness":          t.Para.Config.Business != nil,
+		"EnableBusiness":          t.businessEnabled(),
 		"RegistryDomain":          t.Para.Config.Registry.Domain(),
 		"RegistryNamespace":       t.Para.Config.Registry.Namespace(),
 		"MonitorStorageType":      "",
@@ -1982,7 +1989,7 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		svcs = append(svcs, "tke-auth-api")
 	}
-	if t.Para.Config.Business != nil {
+	if t.businessEnabled() {
 		svcs = append(svcs, "tke-business-api")
 	}
 	if t.Para.Config.Monitor != nil {
