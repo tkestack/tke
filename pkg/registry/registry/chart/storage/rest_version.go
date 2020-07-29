@@ -40,6 +40,7 @@ import (
 	"tkestack.io/tke/api/registry"
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
+	registryutil "tkestack.io/tke/pkg/registry/util"
 	authorizationutil "tkestack.io/tke/pkg/registry/util/authorization"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -154,7 +155,7 @@ func (h *versionProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 	}
 	loc := &url.URL{
 		Scheme: h.externalScheme,
-		Host:   host,
+		Host:   registryutil.BuildTenantRegistryDomain(host, h.chart.Spec.TenantID),
 		Path:   fmt.Sprintf("/chart/api/%s/charts/%s/%s", h.chart.Spec.ChartGroupName, h.chart.Spec.Name, h.chartVersion),
 	}
 

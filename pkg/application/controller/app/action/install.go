@@ -20,7 +20,8 @@ package action
 
 import (
 	"context"
-	"strings"
+	"fmt"
+	"net/url"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
@@ -30,6 +31,7 @@ import (
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	"tkestack.io/tke/pkg/application/util"
+	registryutil "tkestack.io/tke/pkg/registry/util"
 )
 
 // Install installs a chart archive
@@ -57,6 +59,12 @@ func Install(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	loc := &url.URL{
+		Scheme: repo.Scheme,
+		Host:   registryutil.BuildTenantRegistryDomain(repo.DomainSuffix, newApp.Spec.Chart.TenantID),
+		Path:   fmt.Sprintf("/chart/%s", newApp.Spec.Chart.ChartGroupName),
+	}
 	_, err = client.Install(&helmaction.InstallOptions{
 		Namespace:        newApp.Namespace,
 		ReleaseName:      newApp.Spec.Name,
@@ -66,7 +74,7 @@ func Install(ctx context.Context,
 			CaFile:      repo.CaFile,
 			Username:    repo.Admin,
 			Password:    repo.AdminPassword,
-			RepoURL:     strings.Trim(repo.Host, "/") + "/chart/" + newApp.Spec.Chart.ChartGroupName,
+			RepoURL:     loc.String(),
 			ChartRepo:   newApp.Spec.Chart.TenantID + "/" + newApp.Spec.Chart.ChartGroupName,
 			Chart:       newApp.Spec.Chart.ChartName,
 			Version:     newApp.Spec.Chart.ChartVersion,
