@@ -20,7 +20,8 @@ package action
 
 import (
 	"context"
-	"strings"
+	"fmt"
+	"net/url"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
@@ -29,6 +30,7 @@ import (
 	appconfig "tkestack.io/tke/pkg/application/controller/app/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	"tkestack.io/tke/pkg/application/util"
+	registryutil "tkestack.io/tke/pkg/registry/util"
 )
 
 // Pull is the action for pulling a chart.
@@ -42,12 +44,17 @@ func Pull(ctx context.Context,
 	if err != nil {
 		return "", err
 	}
+	loc := &url.URL{
+		Scheme: repo.Scheme,
+		Host:   registryutil.BuildTenantRegistryDomain(repo.DomainSuffix, app.Spec.Chart.TenantID),
+		Path:   fmt.Sprintf("/chart/%s", app.Spec.Chart.ChartGroupName),
+	}
 	destfile, err := client.Pull(&helmaction.PullOptions{
 		ChartPathOptions: helmaction.ChartPathOptions{
 			CaFile:    repo.CaFile,
 			Username:  repo.Admin,
 			Password:  repo.AdminPassword,
-			RepoURL:   strings.Trim(repo.Host, "/") + "/chart/" + app.Spec.Chart.ChartGroupName,
+			RepoURL:   loc.String(),
 			ChartRepo: app.Spec.Chart.TenantID + "/" + app.Spec.Chart.ChartGroupName,
 			Chart:     app.Spec.Chart.ChartName,
 			Version:   app.Spec.Chart.ChartVersion,

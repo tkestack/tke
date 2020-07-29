@@ -27,14 +27,16 @@ import (
 )
 
 const (
-	flagRepoHost          = "repo-host"
+	flagRepoScheme        = "repo-scheme"
+	flagRepoDomainSuffix  = "repo-domain-suffix"
 	flagRepoCaFile        = "repo-cafile"
 	flagRepoAdmin         = "repo-admin"
 	flagRepoAdminPassword = "repo-admin-password"
 )
 
 const (
-	configRepoHost          = "repo.host"
+	configRepoScheme        = "repo.scheme"
+	configRepoDomainSuffix  = "repo.domain_suffix"
 	configRepoCaFile        = "repo.cafile"
 	configRepoAdmin         = "repo.admin"
 	configRepoAdminPassword = "repo.admin_password"
@@ -42,7 +44,8 @@ const (
 
 // RepoOptions contains configuration items related to auth attributes.
 type RepoOptions struct {
-	Host          string
+	Scheme        string
+	DomainSuffix  string
 	CaFile        string
 	Admin         string
 	AdminPassword string
@@ -55,9 +58,13 @@ func NewRepoOptions() *RepoOptions {
 
 // AddFlags adds flags for console to the specified FlagSet object.
 func (o *RepoOptions) AddFlags(fs *pflag.FlagSet) {
-	fs.String(flagRepoHost, o.Host,
-		"Chart repo host.")
-	_ = viper.BindPFlag(configRepoHost, fs.Lookup(flagRepoHost))
+	fs.String(flagRepoScheme, o.Scheme,
+		"Chart repo server scheme.")
+	_ = viper.BindPFlag(configRepoScheme, fs.Lookup(flagRepoScheme))
+
+	fs.String(flagRepoDomainSuffix, o.DomainSuffix,
+		"Chart repo domain suffix.")
+	_ = viper.BindPFlag(configRepoDomainSuffix, fs.Lookup(flagRepoDomainSuffix))
 
 	fs.String(flagRepoCaFile, o.CaFile,
 		"CA certificate to verify peer against.")
@@ -77,9 +84,14 @@ func (o *RepoOptions) AddFlags(fs *pflag.FlagSet) {
 func (o *RepoOptions) ApplyFlags() []error {
 	var errs []error
 
-	o.Host = viper.GetString(configRepoHost)
-	if o.Host == "" {
-		errs = append(errs, fmt.Errorf("--%s must be specified", flagRepoHost))
+	o.Scheme = viper.GetString(configRepoScheme)
+	if o.Scheme == "" {
+		errs = append(errs, fmt.Errorf("--%s must be specified", flagRepoScheme))
+	}
+
+	o.DomainSuffix = viper.GetString(configRepoDomainSuffix)
+	if o.DomainSuffix == "" {
+		errs = append(errs, fmt.Errorf("--%s must be specified", flagRepoDomainSuffix))
 	}
 
 	o.CaFile = viper.GetString(configRepoCaFile)
@@ -95,7 +107,8 @@ func (o *RepoOptions) ApplyTo(cfg *appconfig.RepoConfiguration) error {
 		return nil
 	}
 
-	cfg.Host = o.Host
+	cfg.Scheme = o.Scheme
+	cfg.DomainSuffix = o.DomainSuffix
 	cfg.CaFile = o.CaFile
 	cfg.Admin = o.Admin
 	cfg.AdminPassword = o.AdminPassword
