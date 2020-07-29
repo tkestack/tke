@@ -38,7 +38,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
+	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
@@ -1054,12 +1056,20 @@ func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error
 	if err != nil {
 		return err
 	}
+	config, err := c.RESTConfig(&rest.Config{})
+	if err != nil {
+		return err
+	}
+	kaClient, err := kubeaggregatorclientset.NewForConfig(config)
+	if err != nil {
+		return err
+	}
 	option := map[string]interface{}{
 		"MetricsServerImage": images.Get().MetricsServer.FullName(),
 		"AddonResizerImage":  images.Get().AddonResizer.FullName(),
 	}
 
-	err = apiclient.CreateResourceWithFile(ctx, client, constants.MetricsServerManifest, option)
+	err = apiclient.CreateKAResourceWithFile(ctx, client, kaClient, constants.MetricsServerManifest, option)
 	if err != nil {
 		return errors.Wrap(err, "install metrics server error")
 	}
