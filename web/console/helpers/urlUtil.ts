@@ -96,7 +96,7 @@ interface K8sRestfulPathOptions {
   namespace?: string;
 
   /** 业务视图是否切分namespace */
-  isSpetialNamespace?: boolean;
+  isSpecialNamespace?: boolean;
 
   /** 不在路径最后的变量，比如projectId*/
   middleKey?: string;
@@ -129,7 +129,7 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
   let {
     resourceInfo,
     namespace = '',
-    isSpetialNamespace = false,
+    isSpecialNamespace = false,
     specificName = '',
     extraResource = '',
     clusterId = '',
@@ -139,7 +139,7 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
 
   /// #if project
   //业务侧ns eg: cls-xxx-ns 需要去除前缀
-  if (namespace && !isSpetialNamespace) {
+  if (namespace && !isSpecialNamespace) {
     namespace = namespace.startsWith('global')
       ? namespace.split('-').splice(1).join('-')
       : namespace.split('-').splice(2).join('-');

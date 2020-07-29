@@ -97,7 +97,6 @@ export const reduceNetworkRequest = async (
     });
   }
 
-  /// #if project
   let searchParams;
   try {
     searchParams = parseQueryString(location.search);
@@ -117,7 +116,6 @@ export const reduceNetworkRequest = async (
     },
     userDefinedHeader
   );
-  /// #endif
 
   let params = {
     method,
