@@ -97,11 +97,12 @@ export const reduceNetworkRequest = async (
     });
   }
 
+  let pid = projectId;
+  /// #if project
   let searchParams;
   try {
     searchParams = parseQueryString(location.search);
   } catch (error) {}
-  let pid = projectId;
   if (!pid) {
     if (searchParams && (searchParams.projectName || searchParams.projectId)) {
       pid = searchParams.projectName || searchParams.projectId;
@@ -109,13 +110,16 @@ export const reduceNetworkRequest = async (
       pid = getProjectName();
     }
   }
-  userDefinedHeader = Object.assign(
-    {},
-    {
-      'X-TKE-ProjectName': pid
-    },
-    userDefinedHeader
-  );
+  /// #endif
+  if (pid) {
+    userDefinedHeader = Object.assign(
+      {},
+      {
+        'X-TKE-ProjectName': pid
+      },
+      userDefinedHeader
+    );
+  }
 
   let params = {
     method,
