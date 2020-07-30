@@ -102,7 +102,11 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		return nil, err
 	}
 
-	assets.RegisterRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.OAuthConfig, c.ExtraConfig.GatewayConfig.DisableOIDCProxy)
+	if !c.ExtraConfig.HeaderRequest {
+		assets.RegisterRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.OAuthConfig, c.ExtraConfig.GatewayConfig.DisableOIDCProxy)
+	} else {
+		assets.RegisterRoute(s.Handler.NonGoRestfulMux, nil, c.ExtraConfig.GatewayConfig.DisableOIDCProxy)
+	}
 
 	m := &Gateway{
 		GenericAPIServer: s,
