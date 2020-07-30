@@ -72,35 +72,45 @@ message ClusterStatistic {
 
   optional int32 workloadAbnormal = 6;
 
-  optional double cpuRequest = 7;
+  optional bool hasMetricServer = 7;
 
-  optional double cpuLimit = 8;
+  optional double cpuUsed = 8;
 
-  optional double cpuCapacity = 9;
+  optional double cpuRequest = 9;
 
-  optional double cpuAllocatable = 10;
+  optional double cpuLimit = 10;
 
-  optional string cpuRequestRate = 11;
+  optional double cpuCapacity = 11;
 
-  optional string cpuAllocatableRate = 12;
+  optional double cpuAllocatable = 12;
 
-  optional int64 memRequest = 13;
+  optional string cpuRequestRate = 13;
 
-  optional int64 memLimit = 14;
+  optional string cpuAllocatableRate = 14;
 
-  optional int64 memCapacity = 15;
+  optional string cpuUsage = 15;
 
-  optional int64 memAllocatable = 16;
+  optional int64 memUsed = 16;
 
-  optional string memRequestRate = 17;
+  optional int64 memRequest = 17;
 
-  optional string memAllocatableRate = 18;
+  optional int64 memLimit = 18;
 
-  optional bool schedulerHealthy = 19;
+  optional int64 memCapacity = 19;
 
-  optional bool controllerManagerHealthy = 20;
+  optional int64 memAllocatable = 20;
 
-  optional bool etcdHealthy = 21;
+  optional string memRequestRate = 21;
+
+  optional string memAllocatableRate = 22;
+
+  optional string memUsage = 23;
+
+  optional bool schedulerHealthy = 24;
+
+  optional bool controllerManagerHealthy = 25;
+
+  optional bool etcdHealthy = 26;
 }
 
 // ConfigMap holds configuration data for tke to consume.

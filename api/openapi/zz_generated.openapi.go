@@ -41118,6 +41118,18 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 							Format: "int32",
 						},
 					},
+					"hasMetricServer": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"cpuUsed": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
 					"cpuRequest": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"number"},
@@ -41152,6 +41164,18 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
+						},
+					},
+					"cpuUsage": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"memUsed": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 					"memRequest": {
@@ -41190,6 +41214,12 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 							Format: "",
 						},
 					},
+					"memUsage": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"schedulerHealthy": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
@@ -41209,7 +41239,7 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 						},
 					},
 				},
-				Required: []string{"clusterID", "clusterPhase", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "cpuRequest", "cpuLimit", "cpuCapacity", "cpuAllocatable", "cpuRequestRate", "cpuAllocatableRate", "memRequest", "memLimit", "memCapacity", "memAllocatable", "memRequestRate", "memAllocatableRate", "schedulerHealthy", "controllerManagerHealthy", "etcdHealthy"},
+				Required: []string{"clusterID", "clusterPhase", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "hasMetricServer", "cpuUsed", "cpuRequest", "cpuLimit", "cpuCapacity", "cpuAllocatable", "cpuRequestRate", "cpuAllocatableRate", "cpuUsage", "memUsed", "memRequest", "memLimit", "memCapacity", "memAllocatable", "memRequestRate", "memAllocatableRate", "memUsage", "schedulerHealthy", "controllerManagerHealthy", "etcdHealthy"},
 			},
 		},
 	}
