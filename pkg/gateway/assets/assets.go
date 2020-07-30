@@ -38,7 +38,7 @@ var (
 )
 
 func RegisterRoute(m *mux.PathRecorderMux, oauthConfig *oauth2.Config, disableOIDCProxy bool) {
-	hanlder := func() http.HandlerFunc {
+	handler := func() http.HandlerFunc {
 		return func(writer http.ResponseWriter, request *http.Request) {
 			if oauthConfig != nil {
 				_, err := token.RetrieveToken(request)
@@ -58,5 +58,5 @@ func RegisterRoute(m *mux.PathRecorderMux, oauthConfig *oauth2.Config, disableOI
 		}
 	}
 
-	m.HandlePrefix("/", hanlder())
+	m.HandlePrefix("/", handler())
 }
