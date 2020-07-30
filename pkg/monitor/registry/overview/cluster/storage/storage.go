@@ -20,20 +20,20 @@ package storage
 import (
 	"context"
 	"fmt"
-
+	"k8s.io/apimachinery/pkg/api/errors"
+	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/monitor"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/monitor/util/cache"
 	"tkestack.io/tke/pkg/util/log"
-
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 // Storage includes storage for metrics and all sub resources.
@@ -44,7 +44,6 @@ type Storage struct {
 // NewStorage returns a Storage object that will work against metrics.
 func NewStorage(_ genericregistry.RESTOptionsGetter, platformClient platformversionedclient.PlatformV1Interface,
 	businessClient businessversionedclient.BusinessV1Interface, cacher cache.Cacher) *Storage {
-	log.Info("ClusterOverview NewStorage")
 	return &Storage{
 		ClusterOverview: &REST{
 			platformClient: platformClient,
@@ -86,6 +85,9 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateOb
 	if tenantID != "" {
 		listOptions.FieldSelector = fmt.Sprintf("spec.tenantID=%s", tenantID)
 	}
+	wrappedOptions := apiserverutil.PredicateListOptions(ctx, &metainternal.ListOptions{})
+	log.Infof("create cluster overview: %+v, tenantID: %+v, wrappedOptions: %+v",
+		listOptions, tenantID, wrappedOptions)
 
 	clusterIDs := make([]string, 0)
 	if clusterList, err := r.platformClient.Clusters().List(ctx, listOptions); err == nil && clusterList != nil {

@@ -20,6 +20,7 @@ package util
 
 import (
 	"io"
+	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 
 	"tkestack.io/tke/api/monitor"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -79,6 +80,7 @@ type RouteOperator interface {
 }
 
 type ClusterClientSets map[string]*kubernetes.Clientset
+type MetricServerClientSets map[string]*metricsv.Clientset
 type DynamicClientSet map[string]dynamic.Interface
 type ClusterSet map[string]*platformv1.Cluster
 type ClusterCredentialSet map[string]*platformv1.ClusterCredential
@@ -98,18 +100,23 @@ func (w *WorkloadCounter) Total() int {
 type ResourceCounter struct {
 	NodeTotal          int
 	NodeAbnormal       int
+	HasMetricServer    bool
+	CPUUsed            float64
 	CPURequest         float64
 	CPULimit           float64
 	CPUCapacity        float64
 	CPUAllocatable     float64
 	CPURequestRate     float64
 	CPUAllocatableRate float64
+	CPUUsage           float64
+	MemUsed            int64
 	MemRequest         int64
 	MemLimit           int64
 	MemCapacity        int64
 	MemAllocatable     int64
 	MemRequestRate     float64
 	MemAllocatableRate float64
+	MemUsage           float64
 }
 
 type ComponentHealth struct {
