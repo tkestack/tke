@@ -1366,6 +1366,10 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 			Name: "keepalived-manifests",
 			File: baremetalconstants.ManifestsDir + "/keepalived/*",
 		},
+		{
+			Name: "metrics-server-manifests",
+			File: baremetalconstants.ManifestsDir + "/metrics-server/*",
+		},
 	}
 	for _, one := range configMaps {
 		err := apiclient.CreateOrUpdateConfigMapFromFile(ctx, t.globalClient,
