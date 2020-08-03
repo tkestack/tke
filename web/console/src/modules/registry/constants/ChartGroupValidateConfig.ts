@@ -43,17 +43,17 @@ export const ChartGroupValidateSchema: ValidateSchema = {
         }
       ]
     },
-    {
-      vKey: 'spec.displayName',
-      label: t('仓库别名'),
-      rules: [
-        RuleTypeEnum.isRequire,
-        {
-          type: RuleTypeEnum.maxLength,
-          limit: 60
-        }
-      ]
-    },
+    // {
+    //   vKey: 'spec.displayName',
+    //   label: t('仓库别名'),
+    //   rules: [
+    //     RuleTypeEnum.isRequire,
+    //     {
+    //       type: RuleTypeEnum.maxLength,
+    //       limit: 60
+    //     }
+    //   ]
+    // },
     {
       vKey: 'spec.description',
       label: t('描述'),

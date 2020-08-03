@@ -56,11 +56,11 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
             value: chartGroupCreation.spec.name,
             onChange: value =>
               actions.chartGroup.create.updateCreationState({
-                spec: Object.assign({}, chartGroupCreation.spec, { name: value })
+                spec: Object.assign({}, chartGroupCreation.spec, { name: value, displayName: value })
               })
           }}
         />
-        <FormPanel.Item
+        {/* <FormPanel.Item
           label={t('仓库别名')}
           vkey="spec.displayName"
           input={{
@@ -71,7 +71,7 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
                 spec: Object.assign({}, chartGroupCreation.spec, { displayName: value })
               })
           }}
-        />
+        /> */}
         <FormPanel.Item label={t('仓库类型')} vkey="spec.type">
           <FormPanel.Radios
             value={chartGroupCreation.spec.type}
@@ -81,9 +81,12 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
             ]}
             onChange={value => {
               let obj = { type: value };
+              if (value !== 'project') {
+                obj['projects'] = [];
+              }
               if (value === 'personal') {
                 obj['name'] = userInfo.name;
-                obj['projects'] = [];
+                obj['displayName'] = userInfo.name;
               }
               actions.chartGroup.create.updateCreationState({
                 spec: Object.assign({}, chartGroupCreation.spec, obj)

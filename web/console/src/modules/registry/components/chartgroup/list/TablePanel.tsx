@@ -9,16 +9,41 @@ import { router } from '../../../router';
 import { allActions } from '../../../actions';
 import { ChartGroup } from '../../../models';
 import { RootProps } from '../ChartGroupApp';
+import { ChartUsageGuideDialog } from '../../ChartUsageGuideDialog';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
   });
 
+interface ChartUsageGuideDialogState extends RootProps {
+  showChartUsageGuideDialog?: boolean;
+  chartGroupName?: string;
+  registryUrl?: string;
+}
+
 @connect(state => state, mapDispatchToProps)
-export class TablePanel extends React.Component<RootProps, {}> {
+export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialogState> {
+  constructor(props, context) {
+    super(props, context);
+    this.state = {
+      showChartUsageGuideDialog: false,
+      chartGroupName: '',
+      registryUrl: ''
+    };
+  }
+
   render() {
     let { actions, chartGroupList, route, userInfo } = this.props;
+    const isEditable = (x: ChartGroup): boolean => {
+      if (x.spec.type === 'system') {
+        return false;
+      }
+      if (x.spec.type === 'personal' && userInfo) {
+        return x.spec.name === userInfo.name;
+      }
+      return true;
+    };
 
     const columns: TableColumn<ChartGroup>[] = [
       {
@@ -26,7 +51,7 @@ export class TablePanel extends React.Component<RootProps, {}> {
         header: t('仓库名'),
         render: (x: ChartGroup) => (
           <Text parent="div" overflow>
-            {x.spec.type === 'system' || (x.spec.type === 'personal' && userInfo && x.spec.name !== userInfo.name) ? (
+            {!isEditable(x) ? (
               <span>{(x.spec.name || '-') + ' / ' + (x.spec.displayName || '-')}</span>
             ) : (
               <a
@@ -98,7 +123,7 @@ export class TablePanel extends React.Component<RootProps, {}> {
           </Text>
         )
       },
-      { key: 'operation', header: t('操作'), render: chartGroup => this._renderOperationCell(chartGroup) }
+      { key: 'operation', header: t('操作'), render: x => this._renderOperationCell(x, isEditable(x)) }
     ];
 
     return (
@@ -115,18 +140,41 @@ export class TablePanel extends React.Component<RootProps, {}> {
           isNeedPagination={true}
           bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
         />
+        <ChartUsageGuideDialog
+          showDialog={this.state.showChartUsageGuideDialog}
+          chartGroupName={this.state.chartGroupName}
+          registryUrl={this.state.registryUrl}
+          onClose={() => {
+            this.setState({
+              showChartUsageGuideDialog: false
+            });
+          }}
+        />
       </React.Fragment>
     );
   }
 
   /** 渲染操作按钮 */
-  _renderOperationCell = (chartGroup: ChartGroup) => {
-    let { actions } = this.props;
+  _renderOperationCell = (chartGroup: ChartGroup, deletable: boolean) => {
+    let { actions, dockerRegistryUrl } = this.props;
     return (
       <React.Fragment>
-        <LinkButton onClick={() => this._removeChartGroup(chartGroup)}>
-          <Trans>删除</Trans>
+        <LinkButton
+          onClick={() => {
+            this.setState({
+              showChartUsageGuideDialog: true,
+              chartGroupName: chartGroup.spec.name,
+              registryUrl: dockerRegistryUrl.data
+            });
+          }}
+        >
+          <Trans>上传指引</Trans>
         </LinkButton>
+        {deletable && (
+          <LinkButton onClick={() => this._removeChartGroup(chartGroup)}>
+            <Trans>删除</Trans>
+          </LinkButton>
+        )}
       </React.Fragment>
     );
   };
