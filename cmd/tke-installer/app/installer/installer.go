@@ -942,7 +942,7 @@ func (t *TKE) do() {
 			start := time.Now()
 			err := t.steps[t.Step].Func(ctx)
 			if err != nil {
-				t.progress.Status = types.StatusFailed
+				t.progress.Status = types.StatusRetrying
 				t.log.Errorf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
 				return false, nil
 			}
@@ -950,7 +950,7 @@ func (t *TKE) do() {
 
 			t.Step++
 			t.backup()
-
+			t.progress.Status = types.StatusDoing
 			return true, nil
 		})
 	}

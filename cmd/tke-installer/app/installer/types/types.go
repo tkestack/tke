@@ -207,10 +207,11 @@ type ClusterProgress struct {
 type ClusterProgressStatus string
 
 const (
-	StatusUnknown = "Unknown"
-	StatusDoing   = "Doing"
-	StatusSuccess = "Success"
-	StatusFailed  = "Failed"
+	StatusUnknown  = "Unknown"
+	StatusDoing    = "Doing"
+	StatusSuccess  = "Success"
+	StatusFailed   = "Failed"
+	StatusRetrying = "Retrying"
 )
 
 type Handler struct {
