@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"tkestack.io/tke/api/application"
@@ -67,20 +68,20 @@ func (rs *HistoryREST) New() runtime.Object {
 func (rs *HistoryREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := rs.application.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewInternalError(err)
 	}
 	app := obj.(*application.App)
 
 	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Namespace)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewInternalError(err)
 	}
 	history, err := client.History(&helmaction.HistoryOptions{
 		Namespace:   app.Namespace,
 		ReleaseName: app.Spec.Name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewInternalError(err)
 	}
 	appHistory := &application.AppHistory{
 		ObjectMeta: metav1.ObjectMeta{

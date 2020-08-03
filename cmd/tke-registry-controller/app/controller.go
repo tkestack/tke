@@ -50,6 +50,7 @@ func NewControllerInitializers() map[string]InitFunc {
 
 	controllers["chartgroup"] = startChartGroupController
 	controllers["chart"] = startChartController
+	controllers["identityprovider"] = startIdentityProviderController
 	return controllers
 }
 

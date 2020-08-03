@@ -33,6 +33,7 @@ import (
 	registryconfigv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
 	registryconfigvalidation "tkestack.io/tke/pkg/registry/apis/config/validation"
 	"tkestack.io/tke/pkg/registry/config/configfiles"
+	registrycontrollerconfig "tkestack.io/tke/pkg/registry/controller/config"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -50,8 +51,11 @@ type Config struct {
 	RegistryAPIServerClientConfig *restclient.Config
 	// the rest config for the business apiserver
 	BusinessAPIServerClientConfig *restclient.Config
+	// the rest config for the auth apiserver
+	AuthAPIServerClientConfig *restclient.Config
 	// the registry config for chartmuseum/image
-	RegistryConfig *registryconfigv1.RegistryConfiguration
+	RegistryConfig               *registryconfigv1.RegistryConfiguration
+	RegistryDefaultConfiguration registrycontrollerconfig.RegistryDefaultConfiguration
 
 	Component controlleroptions.ComponentConfiguration
 }
@@ -104,6 +108,14 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, fmt.Errorf("failed to initialize client config of business API server")
 	}
 
+	authAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.AuthAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("failed to initialize client config of auth API server")
+	}
+
 	// shallow copy, do not modify the apiServerClientConfig.Timeout.
 	config := *registryAPIServerClientConfig
 	config.Timeout = opts.Component.LeaderElection.RenewDeadline
@@ -120,6 +132,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		},
 		BusinessAPIServerClientConfig: businessAPIServerClientConfig,
 		RegistryAPIServerClientConfig: registryAPIServerClientConfig,
+		AuthAPIServerClientConfig:     authAPIServerClientConfig,
 		RegistryConfig:                v1RegistryConfig,
 	}
 
@@ -132,5 +145,10 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err := opts.Debug.ApplyTo(&controllerManagerConfig.Component.Debugging); err != nil {
 		return nil, err
 	}
+
+	if err := opts.Registry.ApplyTo(&controllerManagerConfig.RegistryDefaultConfiguration); err != nil {
+		return nil, err
+	}
+
 	return controllerManagerConfig, nil
 }
