@@ -48,16 +48,12 @@ class RegistryApp extends React.Component<RootProps, {}> {
   render() {
     let { route } = this.props,
       urlParam = router.resolve(route);
-
-    if (urlParam['sub'] === 'apikey') {
+    if (!urlParam['sub'] || urlParam['sub'] === 'chart' || urlParam['sub'] === 'chartgroup') {
+      return <AppCenter {...this.props} />;
+    } else if (urlParam['sub'] === 'apikey') {
       return <ApiKeyContainer {...this.props} />;
     } else if (urlParam['sub'] === 'repo') {
       return <RepoContainer {...this.props} />;
-    } else if (urlParam['sub'] === 'chart') {
-      return <AppCenter {...this.props} />;
-    } else if (urlParam['sub'] === 'chartgroup') {
-      // return <ChartGroupApp {...this.props} />;
-      return <AppCenter {...this.props} />;
     } else {
       return <RepoContainer {...this.props} />;
     }
