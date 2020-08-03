@@ -109,13 +109,13 @@ const commonRouterConfig: RouterConfig[] = [
         title: '镜像仓库管理',
         watchModule: ConsoleModuleEnum.Registry
       },
+      // {
+      //   url: '/tkestack/registry/chartgroup',
+      //   title: 'Helm仓库',
+      //   watchModule: ConsoleModuleEnum.Registry
+      // },
       {
         url: '/tkestack/registry/chartgroup',
-        title: 'Helm仓库',
-        watchModule: ConsoleModuleEnum.Registry
-      },
-      {
-        url: '/tkestack/registry/chart',
         title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },
@@ -227,13 +227,13 @@ const businessCommonRouterConfig: RouterConfig[] = [
         title: '镜像仓库管理',
         watchModule: ConsoleModuleEnum.Registry
       },
+      // {
+      //   url: '/tkestack-project/registry/chartgroup',
+      //   title: 'Helm仓库',
+      //   watchModule: ConsoleModuleEnum.Registry
+      // },
       {
         url: '/tkestack-project/registry/chartgroup',
-        title: 'Helm仓库',
-        watchModule: ConsoleModuleEnum.Registry
-      },
-      {
-        url: '/tkestack-project/registry/chart',
         title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },

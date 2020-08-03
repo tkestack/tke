@@ -33,9 +33,9 @@ export class ChartGroupList extends React.Component<RootProps, {}> {
     return (
       <React.Fragment>
         <ContentView>
-          <ContentView.Header>
+          {/* <ContentView.Header>
             <HeaderPanel />
-          </ContentView.Header>
+          </ContentView.Header> */}
           <ContentView.Body>
             <ActionPanel />
             <TablePanel />

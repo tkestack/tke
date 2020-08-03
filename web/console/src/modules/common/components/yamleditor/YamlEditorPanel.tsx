@@ -85,7 +85,7 @@ export class YamlEditorPanel extends React.Component<YamlEditorPanelProps, YamlE
         options={codeOptions}
         onBeforeChange={(editor, data, value) => {
           // 配置项当中的value 不用props.config 是因为 更新之后，yaml的光标会默认跳转到末端
-          !readOnly && handleInputForEditor(value);
+          !readOnly && handleInputForEditor && handleInputForEditor(value);
         }}
       />
     );

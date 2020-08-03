@@ -89,7 +89,7 @@ export class BaseInfoPanel extends React.Component<RootProps> {
               <FormPanel.Item text label={t('仓库名称')}>
                 {chartGroupEditor.spec.name}
               </FormPanel.Item>
-              {!chartGroupEditor.v_editing ? (
+              {/* {!chartGroupEditor.v_editing ? (
                 <FormPanel.Item text label={t('仓库别名')}>
                   {chartGroupEditor.spec.displayName}
                 </FormPanel.Item>
@@ -106,7 +106,7 @@ export class BaseInfoPanel extends React.Component<RootProps> {
                       })
                   }}
                 />
-              )}
+              )} */}
               <FormPanel.Item text label={t('仓库类型')}>
                 {typeMap[chartGroupEditor.spec.type] +
                   (chartGroupEditor.spec.type === 'project' ? '(' + projects.join(',') + ')' : '') || '-'}

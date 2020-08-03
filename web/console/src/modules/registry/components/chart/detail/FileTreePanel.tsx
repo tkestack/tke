@@ -8,13 +8,16 @@ import { bindActionCreators, OperationState, isSuccessWorkflow } from '@tencent/
 import { allActions } from '../../../actions';
 import { YamlEditorPanel } from '../../../../common/components';
 import { ChartTreeFile } from '@src/modules/registry/models';
+let deepEqual = require('deep-equal');
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
 interface AppCreateState {
   content?: string;
+  defaultContent?: string;
   selectedVersion?: string;
+  selectedTreeID?: string;
 }
 
 @connect(state => state, mapDispatchToProps)
@@ -23,9 +26,58 @@ export class FileTreePanel extends React.Component<RootProps, AppCreateState> {
     super(props, context);
     this.state = {
       content: '',
-      selectedVersion: ''
+      defaultContent: '',
+      selectedVersion: '',
+      selectedTreeID: 'values.yaml'
     };
   }
+
+  componentWillReceiveProps(nextProps: RootProps) {
+    let { chartInfo } = nextProps;
+    if (chartInfo.object.data) {
+      let node = this.getNode('values.yaml', chartInfo.object.data.fileTree);
+      if (node) {
+        this.setState({ defaultContent: node.data });
+      }
+    }
+  }
+
+  getNode = (id: string, tree: ChartTreeFile) => {
+    if (!tree) {
+      return undefined;
+    }
+    if (tree.fullPath === id) {
+      return tree;
+    }
+    for (let i = 0; i < tree.children.length; i++) {
+      let node = this.getNode(id, tree.children[i]);
+      if (node) {
+        return node;
+      }
+    }
+    return undefined;
+  };
+
+  lookupTree = (tree: ChartTreeFile) => {
+    if (!tree) {
+      return {};
+    }
+    let node = {
+      id: tree.fullPath,
+      content: tree.name,
+      expandable: tree.children.length > 0,
+      selectable: false,
+      children: []
+    };
+    if (tree.children.length > 0) {
+      node.children = tree.children.map(c => {
+        return this.lookupTree(c);
+      });
+    } else {
+      delete node.children;
+    }
+    return node;
+  };
 
   render() {
     let { actions, chartEditor, chartInfo, route } = this.props;
@@ -38,46 +90,9 @@ export class FileTreePanel extends React.Component<RootProps, AppCreateState> {
           };
         })
       : [];
-
-    const getNode = (id: string, tree: ChartTreeFile) => {
-      if (!tree) {
-        return undefined;
-      }
-      if (tree.fullPath === id) {
-        return tree;
-      }
-      for (let i = 0; i < tree.children.length; i++) {
-        let node = getNode(id, tree.children[i]);
-        if (node) {
-          return node;
-        }
-      }
-      return undefined;
-    };
-
-    const lookupTree = (tree: ChartTreeFile) => {
-      if (!tree) {
-        return {};
-      }
-      let node = {
-        id: tree.fullPath,
-        content: tree.name,
-        expandable: tree.children.length > 0,
-        selectable: false,
-        children: []
-      };
-      if (tree.children.length > 0) {
-        node.children = tree.children.map(c => {
-          return lookupTree(c);
-        });
-      } else {
-        delete node.children;
-      }
-      return node;
-    };
     let treeData = [];
     if (chartInfo.object.data) {
-      treeData.push(lookupTree(chartInfo.object.data.fileTree));
+      treeData.push(this.lookupTree(chartInfo.object.data.fileTree));
     }
     return (
       <ContentView>
@@ -118,22 +133,27 @@ export class FileTreePanel extends React.Component<RootProps, AppCreateState> {
                       selectable
                       data={treeData}
                       activable={true}
+                      defaultActiveIds={['values.yaml']}
                       defaultExpandedIds={
                         chartInfo.object.data && chartInfo.object.data.fileTree
                           ? [chartInfo.object.data.fileTree.fullPath]
                           : ['']
                       }
                       onActive={(selectedIds, context) => {
-                        let node = getNode(selectedIds[0], chartInfo.object.data.fileTree);
-                        console.log(node);
+                        let node = this.getNode(selectedIds[0], chartInfo.object.data.fileTree);
                         if (node) {
-                          this.setState({ content: node.data });
+                          this.setState({ content: node.data, selectedTreeID: selectedIds[0] });
                         }
                       }}
                     />
                   }
                 >
-                  <YamlEditorPanel config={this.state.content} />
+                  <YamlEditorPanel
+                    readOnly={true}
+                    config={
+                      this.state.selectedTreeID === 'values.yaml' ? this.state.defaultContent : this.state.content
+                    }
+                  />
                 </FormPanel.Item>
               </FormPanel>
             </Card.Body>
