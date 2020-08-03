@@ -1,75 +1,46 @@
 ---
-kind: Service
-apiVersion: v1
-metadata:
-  name: tke-registry-api
-  namespace: tke
-  annotations:
-    tke.prometheus.io/scrape: "true"
-    prometheus.io/scheme: https
-spec:
-  selector:
-    app: tke-registry-api
-  ports:
-    - protocol: TCP
-      port: 443
-      targetPort: 9453
----
 kind: Deployment
 apiVersion: apps/v1
 metadata:
   labels:
-    app: tke-registry-api
-  name: tke-registry-api
+    app: tke-registry-controller
+  name: tke-registry-controller
   namespace: tke
 spec:
-  replicas: 1
+  replicas: {{ .Replicas }}
   selector:
     matchLabels:
-      app: tke-registry-api
+      app: tke-registry-controller
   template:
     metadata:
       labels:
-        app: tke-registry-api
+        app: tke-registry-controller
     spec:
       containers:
-        - name: tke-registry-api
+        - name: tke-registry-controller
           image: {{ .Image }}
           args:
-            - -C=/app/conf/tke-registry-api.toml
-{{- if .EnableAudit }}
-            - --audit-policy-file=/app/conf/audit-policy.yaml
-            - --audit-webhook-config-file=/app/conf/audit-api-client-config.yaml
-{{- end }}
+            - -C=/app/conf/tke-registry-controller.toml
           volumeMounts:
             - name: certs-volume
               mountPath: /app/certs
-            - name: tke-registry-api-volume
+            - name: tke-registry-controller-volume
               mountPath: /app/conf
-            - name: registry-data
-              mountPath: /storage
-            - name: tke-registry-api-secret
+            - name: tke-registry-controller-secret
               mountPath: /etc/registry
           ports:
-            - containerPort: 9453
-          readinessProbe:
-            httpGet:
-              port: 9453
-              path: /healthz/ping
-              scheme: HTTPS
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            - containerPort: 9454
           livenessProbe:
             httpGet:
-              port: 9453
+              port: 9454
               path: /healthz
               scheme: HTTPS
             initialDelaySeconds: 15
             periodSeconds: 20
           resources:
             limits:
-              cpu: 500m
-              memory: 1Gi
+              cpu: 100m
+              memory: 256Mi
             requests:
               cpu: 50m
               memory: 128Mi
@@ -78,22 +49,18 @@ spec:
         - name: certs-volume
           configMap:
             name: certs
-        - name: tke-registry-api-volume
+        - name: tke-registry-controller-volume
           configMap:
-            name: tke-registry-api
-        - name: registry-data
-          hostPath:
-            path: /var/lib/tke-registry-api
-            type: DirectoryOrCreate
-        - name: tke-registry-api-secret
+            name: tke-registry-controller
+        - name: tke-registry-controller-secret
           secret:
-            secretName: tke-registry-api
+            secretName: tke-registry-controller
 
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: tke-registry-api
+  name: tke-registry-controller
   namespace: tke
 type: Opaque
 data:
@@ -101,72 +68,27 @@ data:
   private_key.pem: "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBczF5SWcxTkRLR2tSczZhcDM1eDJyOERrSFNHWXpBRTBEeWxQd2krMnp6ZXUrd05HCmREL3J0cTdna3BFSm9rZWFrVDVDZU83S1FuTDlRSHVoZ3lEbkJucGlpVVczcWFPTDFTaC9xTWF0T0dIOWd6SisKQzYya0t5dGMrWUtjY2ZmZTZNTTg2Vm5kVVRoY2JrNnQ4VWpQWjZQc055aG5RRDdxRjdFUVRDc3ZGVWJRRkhOcQpnbi9EeTJPV0U4bTJHWHNneFJPbm5XaGVoeFB3ZmxQZXpOZGxCSXpReGdpWE5WZDQ5dHVxUHFERjBEZ2d0UlIvClREWGwvdktuT3lRUFN2eThhdlU3TXFuTXZOTSsvM3hRRlpHbjI5NXBGdDNIa0RBbE5yYk9YcGd1Z0psK3dFdWEKaCtNaWVLQlFKL1FEZ3B0cFBCNlJRSDh1MSs1Sk50eVFQcXNKeVFJREFRQUJBb0lCQUJFVlJTTk04TjZPYzFNcgpFbzdydGhvelF3YkxSbVJYMFArSXJjSVBEVmhiTTExUkNJclY4N3RvbUpjZEhVL0poaDFEVXMxMTRPbkhUZnV3ClNzZlVnR3lMaDRzUGl0aXJiUXdXV1dKWDJmTyswWWlIYkozc0lmRENwbzVWTkZWZWlHcWUvZFF6N1BKcGJkUkwKeGlGdkQrSU5LTmh3RHJWOXlJb05JVUkvOHJJUjdaYWdwbjFlN2RPaVRrVXBmSlUzdmZ6VnZpL0U4SFhob2orRAoyUkZMMGovemhMd29IT2hwUDAvbXlsV1ZLUFBHZ0t2RE1XTDB5NmZXa1ZPZzE4V2Q2Tmdqd3VZaEsvTUtSdzhPClNTZUlDSFNLelhrSGQ4QXdRY3FKZkNpekxKZjVVWng2TWhtMDJORlU2SjZGRTE5d0hUR3Q2b1dTdlFBZVZrM3EKMHhqYzBJa0NnWUVBNkt4MXlvWWZZM0llSjNkQ0xpdzhTa1VoZkFiRTdXNkJwMWZEaHU0eEhkVFFpTXVqYUh0bQpFNkJxWDJHZkdSVzJzNGRJZWJScTJmd3g1a3NEekZlbHBNTGtLZTdYUUo3SUJhN3YxcUhaaHdjanhKNXlwSEh6Ck50dDZVOE9xSEdPS0tMZm9XYjlROE1wS3MvUEkvUnlCNGp4bUVnQ0VueU9QeXhEcy9iV2hoL01DZ1lFQXhWZlMKYnhrYjZ4eW1PYm9tZ1gvNWp6SkhoRElIbGJvOUkzUTgwV0pEWCtLa09ENGM5UFdSbWgxWlZOcmxCcXZ0YjJINApicWtzeTYxYkU3Rnp0SjVMR1F5RnZ4U1N1b2pwd08zbVNIMllkNWIrby93eHNBMFlMMG1oYkZORWVOZi9tckl2CjlyZ0xrYzZVMm52ejA1cXk0MTRWLzAvWEJXQVRHQzVCamtobnNsTUNnWUVBbnVuVFZheC9XYk9DaHQvOE1uOEIKK3BQMng3ZnozbHFBY1NRUEptUWU1Y29KVjdVRitZRjJlV2N4MzgxVUZaVHdBUFFmK3dmUGh1eXB4Q2x1QWEzSApNNTNzcWZzM3h5bnJZWDVXenRnaU13Z2NWTmtIWWV0MSt2eXlNdTNMakxJcmxaM3VNd1hwS1Z4dzR6RlpFQTdkCll3QnZrbElLUW9yT1ZocE1Vd2d2dUNNQ2dZQWFiUkE0NEZ2a3VBbHFZWXNXZkZTbTRFekRYdyswOVNPS3c5NEIKQysrSnY0Zk9JRU13YWxIOUdVRUZJK3JYWWQ2QnM5VFl2TDdLNTRQeXR5aVBYME1mTDVZWmFGL2Rxc2ZpbGZqbwpiQ2ttbW9tdTIrNnJiSlY0ZjV1bUxlQlZibGRFRitoa1dYRHpMWDZ4WXpmYmRqUE9UcU1UZFZXTjJyZXozVDNhCkY4Z0xFUUtCZ1FET3lwV1RPWXBKdEwvZ3ZLY0Y3R3hGbGZWVzNzZ09ESVFuQmd2eXZOWjFGMVlzdDJ2dlpBQXMKZkt6OU5hKzlhTjZvbHNUWmQwUmh5d3UrKzdmQzJOTm5qL0d3MzlMUmd3ZWNHdnpBZXZHV0ZoMGlxaGEyT3poOApvVDJzS1A0TEdITGgyQ2Z2NXMzWXBEVW5MSWdFbW9PeEhZMTVFbklER2ZFLy9FVDZ5RXVVRlE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo="
 
 ---
-apiVersion: v1
 kind: ConfigMap
+apiVersion: v1
 metadata:
-  name: tke-registry-api
+  name: tke-registry-controller
   namespace: tke
 data:
-  tke-registry-api.toml: |
-    registry_config = "/app/conf/tke-registry-config.yaml"
-
-    [authentication]
-    token_auth_file = "/app/certs/token.csv"
-    client_ca_file = "/app/certs/ca.crt"
-
-      [authentication.oidc]
-{{- if .EnableAuth }}
-      client_id = "default"
-      issuer_url = "https://tke-auth-api/oidc"
-      external_issuer_url = "https://tke-auth-api/oidc"
-      ca_file = "/app/certs/ca.crt"
-      username_prefix ="-"
-      username_claim = "name"
-      tenantid_claim = "federated_claims"
-      token_review_path = "/auth/authn"
-{{- else }}
-      client_id = {{ .OIDCClientID }}
-      issuer_url = {{ .OIDCIssuerURL }}
-  {{- if .UseOIDCCA }}
-      ca_file = "/app/certs/oidc-ca.crt"
-  {{- end}}
-{{- end }}
-
-      [authentication.requestheader]
-      client_ca_file = "/app/certs/front-proxy-ca.crt"
-      username_headers = "X-Remote-User"
-      group_headers = "X-Remote-Group"
-      extra_headers_prefix = "X-Remote-Extra-"
-
-    [authorization]
-{{- if .EnableAuth }}
-    mode = "Webhook"
-    webhook_config_file = "/app/conf/tke-auth-webhook.yaml"
-{{- end }}
-
+  tke-registry-controller.toml: |
+    registry_config = "/app/conf/registry-config.yaml"
+    
+    [registry_setting]
+    default_system_chartgroups = ["public"]
+    
     [secure_serving]
     tls_cert_file = "/app/certs/server.crt"
     tls_private_key_file = "/app/certs/server.key"
 
-    [etcd]
-    servers = [
-      "https://etcd:2379"
-    ]
-    cafile = "/app/certs/etcd-ca.crt"
-    certfile = "/app/certs/etcd.crt"
-    keyfile = "/app/certs/etcd.key"
-
-    [generic]
-    external_scheme = "https"
-    external_hostname = "{{ .DomainSuffix }}"
-    external_port = 443
-    external_ca_file = "/app/certs/ca.crt"
-
     [client]
 
-      [client.platform]
-      api_server = "https://tke-platform-api"
-      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+      [client.registry]
+      api_server = "https://tke-registry-api"
+      api_server_client_config = "/app/conf/tke-registry-config.yaml"
 
 {{- if .EnableBusiness }}
       [client.business]
@@ -180,7 +102,7 @@ data:
       api_server_client_config = "/app/conf/tke-auth-config.yaml"
 {{- end }}
 
-  tke-registry-config.yaml: |
+  registry-config.yaml: |
     apiVersion: registry.config.tkestack.io/v1
     kind: RegistryConfiguration
     storage:
@@ -195,64 +117,14 @@ data:
     defaultTenant: default
     domainSuffix: "{{ .DomainSuffix }}"
 
-  tke-auth-webhook.yaml: |
+  tke-registry-config.yaml: |
     apiVersion: v1
     kind: Config
     clusters:
       - name: tke
         cluster:
           certificate-authority: /app/certs/ca.crt
-          server: https://tke-auth-api/auth/authz
-    users:
-      - name: admin-cert
-        user:
-          client-certificate: /app/certs/admin.crt
-          client-key: /app/certs/admin.key
-    current-context: tke
-    contexts:
-    - context:
-        cluster: tke
-        user: admin-cert
-      name: tke
-{{- if .EnableAudit }}
-  audit-policy.yaml: |
-    apiVersion: audit.k8s.io/v1
-    kind: Policy
-    omitStages:
-    - "RequestReceived"
-    - "ResponseStarted"
-    rules:
-    - level: None
-      resources:
-      - group: "registry.tkestack.io"
-        resources: ["configmaps", "*/status"]
-    - level: RequestResponse
-      verbs: ["create", "update", "patch", "delete", "deletecollection"]
-
-  audit-api-client-config.yaml: |
-    apiVersion: v1
-    kind: Config
-    clusters:
-      - name: tke
-        cluster:
-          insecure-skip-tls-verify: true
-          server: https://tke-audit-api/apis/audit.tkestack.io/v1/events/sink/control-plane
-    current-context: tke
-    contexts:
-      - context:
-          cluster: tke
-        name: tke
-
-{{- end }}
-
-  tke-platform-config.yaml: |
-    apiVersion: v1
-    kind: Config
-    clusters:
-      - name: tke
-        cluster:
-          certificate-authority: /app/certs/ca.crt
-          server: https://tke-platform-api
+          server: https://tke-registry-api
     users:
       - name: admin-cert
         user:

@@ -34,21 +34,24 @@ type Components struct {
 
 	ProviderRes containerregistry.Image
 
-	TKEGateway            containerregistry.Image
-	TKEAuthAPI            containerregistry.Image
-	TKEAuthController     containerregistry.Image
-	TKEBusinessAPI        containerregistry.Image
-	TKEBusinessController containerregistry.Image
-	TKEMonitorAPI         containerregistry.Image
-	TKEMonitorController  containerregistry.Image
-	TKENotifyAPI          containerregistry.Image
-	TKENotifyController   containerregistry.Image
-	TKEPlatformAPI        containerregistry.Image
-	TKEPlatformController containerregistry.Image
-	TKERegistryAPI        containerregistry.Image
-	TKELogagentAPI        containerregistry.Image
-	TKELogagentController containerregistry.Image
-	TKEAudit              containerregistry.Image
+	TKEGateway               containerregistry.Image
+	TKEAuthAPI               containerregistry.Image
+	TKEAuthController        containerregistry.Image
+	TKEBusinessAPI           containerregistry.Image
+	TKEBusinessController    containerregistry.Image
+	TKEMonitorAPI            containerregistry.Image
+	TKEMonitorController     containerregistry.Image
+	TKENotifyAPI             containerregistry.Image
+	TKENotifyController      containerregistry.Image
+	TKEPlatformAPI           containerregistry.Image
+	TKEPlatformController    containerregistry.Image
+	TKERegistryAPI           containerregistry.Image
+	TKERegistryController    containerregistry.Image
+	TKELogagentAPI           containerregistry.Image
+	TKELogagentController    containerregistry.Image
+	TKEAudit                 containerregistry.Image
+	TKEApplicationAPI        containerregistry.Image
+	TKEApplicationController containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -71,21 +74,24 @@ var components = Components{
 
 	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.18.3-1"},
 
-	TKEAuthAPI:            containerregistry.Image{Name: "tke-auth-api", Tag: Version},
-	TKEAuthController:     containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
-	TKEBusinessAPI:        containerregistry.Image{Name: "tke-business-api", Tag: Version},
-	TKEBusinessController: containerregistry.Image{Name: "tke-business-controller", Tag: Version},
-	TKEGateway:            containerregistry.Image{Name: "tke-gateway", Tag: Version},
-	TKEMonitorAPI:         containerregistry.Image{Name: "tke-monitor-api", Tag: Version},
-	TKEMonitorController:  containerregistry.Image{Name: "tke-monitor-controller", Tag: Version},
-	TKENotifyAPI:          containerregistry.Image{Name: "tke-notify-api", Tag: Version},
-	TKENotifyController:   containerregistry.Image{Name: "tke-notify-controller", Tag: Version},
-	TKEPlatformAPI:        containerregistry.Image{Name: "tke-platform-api", Tag: Version},
-	TKEPlatformController: containerregistry.Image{Name: "tke-platform-controller", Tag: Version},
-	TKERegistryAPI:        containerregistry.Image{Name: "tke-registry-api", Tag: Version},
-	TKELogagentAPI:        containerregistry.Image{Name: "tke-logagent-api", Tag: Version},
-	TKELogagentController: containerregistry.Image{Name: "tke-logagent-controller", Tag: Version},
-	TKEAudit:              containerregistry.Image{Name: "tke-audit-api", Tag: Version},
+	TKEAuthAPI:               containerregistry.Image{Name: "tke-auth-api", Tag: Version},
+	TKEAuthController:        containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
+	TKEBusinessAPI:           containerregistry.Image{Name: "tke-business-api", Tag: Version},
+	TKEBusinessController:    containerregistry.Image{Name: "tke-business-controller", Tag: Version},
+	TKEGateway:               containerregistry.Image{Name: "tke-gateway", Tag: Version},
+	TKEMonitorAPI:            containerregistry.Image{Name: "tke-monitor-api", Tag: Version},
+	TKEMonitorController:     containerregistry.Image{Name: "tke-monitor-controller", Tag: Version},
+	TKENotifyAPI:             containerregistry.Image{Name: "tke-notify-api", Tag: Version},
+	TKENotifyController:      containerregistry.Image{Name: "tke-notify-controller", Tag: Version},
+	TKEPlatformAPI:           containerregistry.Image{Name: "tke-platform-api", Tag: Version},
+	TKEPlatformController:    containerregistry.Image{Name: "tke-platform-controller", Tag: Version},
+	TKERegistryAPI:           containerregistry.Image{Name: "tke-registry-api", Tag: Version},
+	TKERegistryController:    containerregistry.Image{Name: "tke-registry-controller", Tag: Version},
+	TKELogagentAPI:           containerregistry.Image{Name: "tke-logagent-api", Tag: Version},
+	TKELogagentController:    containerregistry.Image{Name: "tke-logagent-controller", Tag: Version},
+	TKEAudit:                 containerregistry.Image{Name: "tke-audit-api", Tag: Version},
+	TKEApplicationAPI:        containerregistry.Image{Name: "tke-application-api", Tag: Version},
+	TKEApplicationController: containerregistry.Image{Name: "tke-application-controller", Tag: Version},
 }
 
 func List() []string {
