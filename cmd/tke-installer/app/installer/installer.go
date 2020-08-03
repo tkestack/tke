@@ -1943,7 +1943,7 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 		"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
 		"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
 		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-		"EnableBusiness": t.Para.Config.Business != nil,
+		"EnableBusiness": t.businessEnabled(),
 		"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
 		"EnableAudit":    t.auditEnabled(),
 	}
@@ -1975,7 +1975,7 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 			"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
 			"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
 			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-			"EnableBusiness": t.Para.Config.Business != nil,
+			"EnableBusiness": t.businessEnabled(),
 			"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
 		})
 	if err != nil {
