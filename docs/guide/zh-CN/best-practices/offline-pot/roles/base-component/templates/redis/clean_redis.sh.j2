@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+#function:
+#    deploy privatized redis4 
+#release
+#    2018/11/2 first_release by edwardmli
+#    modify yihuachen
+
+
+ROOT_DIR=`cd $(dirname $0);pwd`
+
+REDIS_PORT={{ REDIS_PORT }}
+DATA_DIR=/data/redis
+REDIS_PASS={{ REDIS_PASS }}
+cd ${ROOT_DIR}
+
+# stop redis service
+# port check
+REDIS_RUNING=`ps -ef | grep redis-server | grep -v grep | wc -l`
+if [[ $REDIS_RUNING -eq 1 ]]
+then
+    kill -9 `ps -ef | grep redis-server | grep -v grep | awk '{print $2}'`
+
+    # kenerl config
+    sed -i '/vm.overcommit_memory/d' /etc/sysctl.conf
+    sed -i '/net.core.somaxconn/d' /etc/sysctl.conf
+    sysctl -p > /dev/null
+
+    # remove redis data directory 
+    if [[ `ls ${DATA_DIR}|wc -l` -gt 0 ]]
+    then
+       rm -rf ${DATA_DIR}    
+    fi
+
+    # remove dependences
+    rpm -qa|grep redis|awk '{print "rpm -e "$1}'|sh
+
+    # clean redis dir
+    rm -rf /etc/redis || echo 'not has /etc/redis'
+    rm -f /etc/init.d/redis || echo 'not has /etc/init.d/redis'
+
+    cat /etc/passwd | grep ^redis &&  userdel -f redis 2>/dev/null || echo 'no redis user'
+    cat /etc/group | grep ^redis && groupdel redis 2>/dev/null || echo 'no redis group'
+else
+    echo 'redis is not running!'
+fi

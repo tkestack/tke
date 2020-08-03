@@ -1,0 +1,24 @@
+# check hosts whether had enable dns
+
+# whether use dnsmasq
+- name: check whether use dnsmasq
+  shell: systemctl is-active dnsmasq
+  register: dnsmasq_state
+  ignore_errors: yes
+  tags: check_dns
+
+- name: check whether config resolv.conf dns nameserver or search
+  shell: if ([ `cat /etc/resolv.conf  | grep ^nameserver | wc -l` -ne 0 ] || \
+         [ `cat /etc/resolv.conf  | grep ^search | wc -l` -ne 0 ]); then \
+           echo "True"; else echo "False"; fi
+  register: resolv_config_state
+  tags: check_dns
+
+
+# out put check dns result msg
+- name: dns not config warning
+  shell: echo "dns not config!!! please check!" && exit 1
+  ignore_errors: yes
+  when: resolv_config_state.stdout == "False" and dnsmasq_state.stdout != 'active'
+  tags: check_dns
+

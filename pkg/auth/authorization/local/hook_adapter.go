@@ -21,18 +21,15 @@ package local
 import (
 	"time"
 
-	domainrolemanager "github.com/dovics/domain-role-manager"
-	"tkestack.io/tke/pkg/auth/util"
-
-	"github.com/casbin/casbin/v2"
-	"k8s.io/client-go/tools/cache"
-	"tkestack.io/tke/pkg/util/log"
-
-	genericapiserver "k8s.io/apiserver/pkg/server"
-
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
+	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
+
+	"github.com/casbin/casbin/v2"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/client-go/tools/cache"
 )
 
 type adapterHookHandler struct {
@@ -64,7 +61,7 @@ func (d *adapterHookHandler) PostStartHook() (string, genericapiserver.PostStart
 		adpt := util.NewAdapter(d.authClient.AuthV1().Rules(), d.ruleInformer.Lister())
 		d.enforcer.SetAdapter(adpt)
 
-		rm := domainrolemanager.NewRoleManager(10)
+		rm := util.NewRoleManager(10)
 		d.enforcer.SetRoleManager(rm)
 		_ = d.enforcer.LoadPolicy()
 

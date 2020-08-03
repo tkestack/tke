@@ -32,7 +32,7 @@ VERSION=latest
 
 INSTALL_DIR=/opt/tke-installer
 DATA_DIR=$INSTALL_DIR/data
-OPTIONS="--name tke-installer -d --privileged --net=host
+OPTIONS="--name tke-installer -d --privileged --net=host --restart=always
 -v /etc/hosts:/app/hosts
 -v /etc/docker:/etc/docker
 -v /var/run/docker.sock:/var/run/docker.sock

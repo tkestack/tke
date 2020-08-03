@@ -1,0 +1,15 @@
+---
+# tasks file for base-component
+- include: harbor-mgr.yml
+- include: load-and-push-images.yml
+- include: redis-manager.yml
+- include: mysql-manager.yml
+- include: prometheus-mgr.yml
+- include: helm-tiller-mgr.yml
+- include: nginx-ingress-mgr.yml
+- include: kafka-mgr.yml
+- include: elk-mgr.yml
+- include: nfs-mgr.yml
+- include: minio-mgr.yml
+- include: postgres-mgr.yml
+- include: sgikes-mgr.yml

@@ -1,0 +1,173 @@
+# check iptables whether allow access 80 and 443 port
+
+# check iptables service whether enable
+- name: check iptables service whether enable
+  shell: systemctl is-active iptables.service
+  register: iptables_state
+  ignore_errors: yes
+  tags: check_iptables
+
+- name: check firewalld service whether enable
+  shell: systemctl is-active firewalld.service
+  register: firewalld_state
+  ignore_errors: yes
+  tags: check_iptables
+
+# create /data dir
+- name: create data dir
+  shell: ls /data || mkdir -p /data
+  when: iptables_state.stdout == 'active' or firewalld_state.stdout == 'active'
+  tags: check_iptables
+
+# copy mask2cdr.sh script to data dir
+- name: copy mask2cdr.sh script to data dir
+  copy:
+    src: scripts
+    dest: /data/
+    mode: '0755'
+  when: iptables_state.stdout == 'active' or firewalld_state.stdout == 'active'
+  tags: check_iptables
+# base netmask get host's  cdr
+- name: base netmask get host's  cdr
+  shell: /data/scripts/mask2cdr.sh "{{ ansible_default_ipv4.netmask }}"
+  register: host_cdr
+  when: iptables_state.stdout == 'active' or firewalld_state.stdout == 'active'
+  tags: check_iptables
+
+# config iptables-config
+- name: config iptables-config
+  copy:
+    src: templates/iptables-config.j2
+    dest: /etc/sysconfig/iptables-config
+    mode: '0600'
+  when: iptables_state.stdout == 'active' and firewalld_state.stdout != 'active'
+  tags: check_iptables
+
+# when iptables enable will be add allow anywhere access 80 or 443 ports rules
+- name: when iptables enable will be add allow anywhere access 80 or 443 ports rules
+  iptables:
+    chain: INPUT
+    ctstate: NEW
+    protocol: tcp
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+    action: insert
+  when: iptables_state.stdout == 'active' and firewalld_state.stdout != 'active'
+  with_items:
+    - 80
+    - 443
+    - 8080
+    - 6443
+    - 1443
+  tags: check_iptables
+
+# when iptables enable will be add pod network and host network access all protocol input
+- name: when iptables enable will be add pod network and host network access all protocol input
+  iptables:
+    chain: INPUT
+    source: "{{ item }}"
+    protocol: all
+    jump: ACCEPT
+    action: insert
+  when: iptables_state.stdout == 'active' and firewalld_state.stdout != 'active'
+  with_items:
+    - "{{ cluster_cidr }}"
+    - "{{ ansible_default_ipv4.network }}/{{ host_cdr.stdout }}"
+  tags: check_iptables
+
+- name: when iptables enable will be add pod network and host network access all protocol input destination
+  iptables:
+    chain: INPUT
+    destination: "{{ item }}"
+    protocol: all
+    jump: ACCEPT
+    action: insert
+  when: iptables_state.stdout == 'active' and firewalld_state.stdout != 'active'
+  with_items:
+    - "{{ cluster_cidr }}"
+    - "{{ ansible_default_ipv4.network }}/{{ host_cdr.stdout }}"
+  tags: check_iptables
+
+- name: when iptables enable will be add pod network and host network access all protocol output source
+  iptables:
+    chain: OUTPUT
+    source: 0.0.0.0/0
+    protocol: all
+    jump: ACCEPT
+    action: insert
+  when: iptables_state.stdout == 'active' and firewalld_state.stdout != 'active'
+  tags: check_iptables
+
+- name: when iptables enable will be add pod network and host network access all protocol output destination
+  iptables:
+    chain: OUTPUT
+    destination: 0.0.0.0/0
+    protocol: all
+    jump: ACCEPT
+    action: insert
+  when: iptables_state.stdout == 'active' and firewalld_state.stdout != 'active'
+  tags: check_iptables
+
+- name: when iptables enable will be add pod network and host network access all protocol forward source
+  iptables:
+    chain: FORWARD
+    source: 0.0.0.0/0
+    protocol: all
+    jump: ACCEPT
+    action: insert
+  when: iptables_state.stdout == 'active' and firewalld_state.stdout != 'active'
+  tags: check_iptables
+
+- name: when iptables enable will be add pod network and host network access all protocol forward destination
+  iptables:
+    chain: FORWARD
+    destination: 0.0.0.0/0
+    protocol: all
+    jump: ACCEPT
+    action: insert
+  when: iptables_state.stdout == 'active' and firewalld_state.stdout != 'active'
+  tags: check_iptables
+
+# iptables rules persistence
+- name: iptables rules persistence
+  shell: service iptables save
+  when: iptables_state.stdout == 'active' and firewalld_state.stdout != 'active'
+  tags: check_iptables
+
+# when firewalld enable will be add allow anywhere access 80 or 443 ports rules
+- name: when firewalld enable will be add allow anywhere access 80 or 443 ports rules
+  firewalld:
+    port: "{{ item }}"
+    source: 0.0.0.0/0
+    immediate: yes
+    permanent: yes
+    state: enabled
+  when: iptables_state.stdout != 'active' and firewalld_state.stdout == 'active'
+  with_items:
+    - '80/tcp'
+    - '443/tcp'
+    - '8080/tcp'
+    - '1443/tcp'
+    - '6443/tcp'
+  tags: check_iptables
+
+
+# when firewalld enable will be add pod network and host network access all protocol input source
+- name: when firewalld enable will be add pod network and host network access all protocol input source
+  shell: '{{ item }}'
+  when: iptables_state.stdout != 'active' and firewalld_state.stdout == 'active'
+  with_items: 
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter INPUT 0 -s {{ cluster_cidr }} -m state --state NEW,RELATED,ESTABLISHED -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter INPUT 0 -s {{ ansible_default_ipv4.network }}/{{ host_cdr.stdout }} -m state --state NEW,RELATED,ESTABLISHED -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter INPUT 0 -d {{ cluster_cidr }} -m state --state NEW,RELATED,ESTABLISHED -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter INPUT 0 -d {{ ansible_default_ipv4.network }}/{{ host_cdr.stdout }} -m state --state NEW,RELATED,ESTABLISHED -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -s {{ cluster_cidr }}  -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -d {{ cluster_cidr }}  -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -s {{ ansible_default_ipv4.network }}/{{ host_cdr.stdout }}  -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -d {{ ansible_default_ipv4.network }}/{{ host_cdr.stdout }}  -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -s 0.0.0.0/0 -d 0.0.0.0/0 -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 0 -s {{ ansible_default_ipv4.network }}/{{ host_cdr.stdout }} -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 0 -d {{ ansible_default_ipv4.network }}/{{ host_cdr.stdout }} -j ACCEPT'
+    - 'firewall-cmd --permanent --direct --add-rule ipv4 filter FORWARD 0 -s 0.0.0.0/0 -d 0.0.0.0/0 -j ACCEPT'
+  notify: restart firewalld
+  tags: check_iptables

@@ -1,0 +1,193 @@
+# deploy elk and remove elk
+
+# set facts
+- name: set deploy_elk facts
+  set_fact:
+    deploy_elk: "{{ deploy_elk }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: elk_init
+
+# get es password base64
+- name: get es password base64
+  shell: echo -n "{{ es_pwd }}" | base64
+  register: es_pass_base64
+  when: inventory_hostname == groups['masters'][0]
+  tags: elk_init
+
+# set facts
+- name: set es_pwd_base64 facts
+  set_fact:
+    es_pwd_base64: "{{ es_pass_base64.stdout }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: elk_init
+
+# get es username base64
+- name: get es username base64
+  shell: echo -n "{{ es_uname }}" | base64
+  register: es_username_base64
+  when: inventory_hostname == groups['masters'][0]
+  tags: elk_init
+
+# set facts
+- name: set es_uname_base64 facts
+  set_fact:
+    es_uname_base64: "{{ es_username_base64.stdout }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: elk_init
+
+# set vm.max_map_count
+- name: vm.max_map_count
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: ".*{{ item }}"
+    line: "vm.max_map_count=655360"
+    state: present
+  with_items:
+    - 'vm.max_map_count'
+  when: inventory_hostname in groups['logs']
+  tags: elk_init
+
+# enable vm.max_map_count config
+- name: enable vm.max_map_count config
+  shell: sysctl -p
+  when: inventory_hostname in groups['logs']
+  tags: elk_init
+
+# create save elk yaml and helms dir
+- name: create save elk yaml and helms dir
+  shell: (ls /data/tke-yamls/elk || mkdir -p /data/tke-yamls/elk) && \
+         (ls /data/helms || mkdir -p /data/helms)
+  when: inventory_hostname == groups['masters'][0] and deploy_elk == true
+  tags: elk_init
+
+# create elasticksearch data dir
+- name: create  elasticksearch data dir
+  shell: for i in `echo "{{ groups['logs'] }}"`; do \
+           if [ "{{ inventory_hostname }}" == "{{ groups['logs'][0] }}" ]; then \
+             mkdir -p "{{ es_data }}/data-0" ; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['logs'][1] }}" ]; then \
+             mkdir -p "{{ es_data }}/data-1" ; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['logs'][2] }}" ]; then \
+             mkdir -p "{{ es_data }}/data-2" ; \
+           fi; \
+         done
+  when: inventory_hostname in groups['logs']
+  tags: elk_init
+
+# copy elk helms file to master node
+- name: copy elk helms file to master node
+  copy:
+    src: helms/elasticsearch
+    dest: /data/helms/
+  when: inventory_hostname == groups['masters'][0] and deploy_elk == true
+  tags: elk_init
+
+# copy kibana helms file to master node
+- name: copy kibana helms file to master node
+  copy:
+    src: helms/kibana
+    dest: /data/helms/
+  when: inventory_hostname == groups['masters'][0] and deploy_elk == true
+  tags: elk_init
+
+# generate elasticsearch kibana yaml
+- name: generate elasticearch kibana  yaml
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+  with_items:
+    - 'templates/elk/es-base-auth-secret.yaml.j2:/data/tke-yamls/elk/es-base-auth-secret.yaml'
+    - 'templates/elk/es-crt-secret.yaml.j2:/data/tke-yamls/elk/es-crt-secret.yaml'
+    - 'templates/elk/kibana-cert-secret.yaml.j2:/data/tke-yamls/elk/kibana-cert-secret.yaml'
+    - 'templates/elk/kibana.tke.com-secret.yaml.j2:/data/tke-yamls/elk/kibana.tke.com-secret.yaml'
+    - 'templates/elk/es-local-pv.yaml.j2:/data/tke-yamls/elk/es-local-pv.yaml'
+    - 'templates/common/local-storage.yaml.j2:/data/tke-yamls/elk/local-storage.yaml'
+    - 'templates/elk/logstash.yaml.j2:/data/tke-yamls/elk/logstash.yaml'
+    - 'templates/elk/filebeat-k8s.yaml.j2:/data/tke-yamls/elk/filebeat-k8s.yaml'
+    - 'templates/elk/log-test.yaml.j2:/data/tke-yamls/elk/log-test.yaml'
+    - 'templates/elk/telnet-curl-tcpdump.yaml.j2:/data/tke-yamls/elk/telnet-curl-tcpdump.yaml'
+    - 'templates/elk/elasticsearch.yaml.j2:/data/helms/elasticsearch/values.yaml'
+    - 'templates/elk/kibana.yaml.j2:/data/helms/kibana/values.yaml'
+  when: inventory_hostname == groups['masters'][0] and deploy_elk == true
+  tags: elk_init
+
+# create save deploy elk script dir
+- name: create save deploy elk script dir
+  shell: mkdir -p /data/offline-pot-scripts
+  when: inventory_hostname == groups['masters'][0] and deploy_elk == true
+  tags: elk_init
+
+# generate deploy elk script
+- name: generate deploy elk script
+  template:
+    src: templates/common/base-component-tools.sh.j2
+    dest: /data/offline-pot-scripts/base-component-tools.sh
+    mode: '0755'
+  when: inventory_hostname == groups['masters'][0] and deploy_elk == true
+  tags: elk_init
+
+# get deploy elk script stat
+- name: get deploy elk script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: elk_dpl_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: deploy_elk
+
+# deploy elk 
+- name: deploy elk
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh dpl_elk
+  when: inventory_hostname == groups['masters'][0] and elk_dpl_script.stat.exists == True
+  tags: deploy_elk
+
+# get remove elk script stat
+- name: get remove elk script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: elk_del_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: remove_elk
+
+# remove elk
+- name: remove elk
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh del_elk
+  when: inventory_hostname == groups['masters'][0] and elk_del_script.stat.exists == True
+  tags: remove_elk
+
+# remove elk data 
+- name: remove elk data
+  shell: if [ `ls "{{ es_data }}" | wc -l` -gt 0 ] && [ `kubectl get pvc | grep elasticsearch | wc -l` -eq 0 ];then \ 
+            rm -rf "{{ es_data }}"; \ 
+         fi
+  when: inventory_hostname in groups['logs']
+  tags: remove_elk
+
+# set deploy_elk facts for health check
+- name: set deploy_elk facts for health check
+  set_fact:
+    deploy_elk: "{{ deploy_elk }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: elk_health_check
+
+# get elk deploy status
+- name: get elk deploy status
+  shell: if [ `kubectl get pods -n pot|grep elasticsearch-master|grep '1/1'|wc -l ` -gt 0 ]; \
+         then echo "true"; else echo "false";fi
+  register: elk_dpl_status
+  when: inventory_hostname == groups['masters'][0] and deploy_elk == true
+  tags: elk_health_check
+
+# elk deploy success
+- name: elk deploy success
+  debug:
+    msg: "Info: elk deploy success."
+  when: inventory_hostname == groups['masters'][0] and deploy_elk == true and elk_dpl_status.stdout == "true"
+  tags: elk_health_check
+
+# elk deploy failed
+- name: elk deploy failed
+  debug:
+    msg: "Warning: elk deploy failed, please check!"
+  when: inventory_hostname == groups['masters'][0] and deploy_elk == true and elk_dpl_status.stdout == "false"
+  tags: elk_health_check
+

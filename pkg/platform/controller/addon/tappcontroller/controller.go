@@ -348,10 +348,7 @@ func (c *Controller) createTappControllerIfNeeded(ctx context.Context, key strin
 			tappController.Status.RetryCount = 0
 			return c.persistUpdate(ctx, tappController)
 		}
-		if _, ok := c.health.Load(key); !ok {
-			c.health.Store(key, true)
-			go wait.PollImmediateUntil(5*time.Minute, c.watchTappControllerHealth(ctx, key), c.stopCh)
-		}
+		c.checkHealth(ctx, key)
 	case v1.AddonPhaseUpgrading:
 		if _, ok := c.upgrading.Load(key); !ok {
 			c.upgrading.Store(key, true)
@@ -363,11 +360,19 @@ func (c *Controller) createTappControllerIfNeeded(ctx context.Context, key strin
 		}
 	case v1.AddonPhaseFailed:
 		log.Info("Tapp controller is error", log.String("tappControllerName", key))
-		c.health.Delete(key)
-		c.checking.Delete(key)
-		c.upgrading.Delete(key)
+		c.checkHealth(ctx, key)
 	}
 	return nil
+}
+
+func (c *Controller) checkHealth(ctx context.Context, key string) {
+	if _, ok := c.health.Load(key); !ok {
+		c.health.Store(key, true)
+		go func() {
+			defer c.health.Delete(key)
+			wait.PollImmediateUntil(5*time.Minute, c.watchTappControllerHealth(ctx, key), c.stopCh)
+		}()
+	}
 }
 
 func needUpgrade(tappController *v1.TappController) bool {

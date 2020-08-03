@@ -64,6 +64,8 @@ spec:
               mountPath: /app/provider/baremetal/manifests/csi-operator/
             - name: keepalived-manifests-volume
               mountPath: /app/provider/baremetal/manifests/keepalived/
+            - name: metrics-server-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/metrics-server/
           ports:
             - containerPort: 9443
           readinessProbe:
@@ -120,6 +122,9 @@ spec:
         - name: keepalived-manifests-volume
           configMap:
             name: keepalived-manifests
+        - name: metrics-server-manifests-volume
+          configMap:
+            name: metrics-server-manifests
 ---
 kind: ConfigMap
 apiVersion: v1

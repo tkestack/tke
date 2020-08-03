@@ -1,0 +1,85 @@
+{{- define "common.deployment.tpl" -}}
+apiVersion: apps/v1
+kind: Deployment
+{{ template "common.metadata" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+{{- if .Values.strategy }}
+  {{- with .Values.strategy }}
+{{ toYaml . | indent 4 }}
+  {{- end }}
+{{- else }}
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ template "common.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "common.name" . }}
+        release: {{ .Release.Name | quote }}
+    spec:
+{{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- if .Values.affinity }}
+      affinity:
+  {{- with .Values.affinity }}
+{{ toYaml . | indent 8 }}
+  {{- end }}
+{{- end }}
+{{- if .Values.nodeSelector }}
+      nodeSelector:
+  {{- with .Values.nodeSelector }}
+{{ toYaml . | indent 8 }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+{{- else }}
+      terminationGracePeriodSeconds: 120
+{{- end }}
+      volumes:
+        - name: {{ template "common.name" . }}
+          emptyDir: {}
+{{- if .Values.ccClient }}
+{{- if .Values.ccClient.enabled }}
+        - name: {{ template "common.name" . }}-config
+          emptyDir: {}
+{{- end }}
+{{- end }}
+{{- if .Values.skyAgent }}
+{{- if .Values.skyAgent.enabled }}
+        - name: {{ template "common.name" . }}-skywalking-sidecar
+          emptyDir: {}
+{{- end }}
+{{- end }}
+    {{- with .Values.volumes }}
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      containers:
+      -
+{{ include "common.container.tpl" . | indent 8 }}
+{{- if .Values.ccClient }}
+{{- if .Values.ccClient.enabled }}
+      -
+{{ include "common.cc_container.tpl" . | indent 8 }}
+{{- end }}
+{{- end }}
+{{- if .Values.skyAgent }}
+{{- if .Values.skyAgent.enabled }}
+      -
+{{ include "common.sky_container.tpl" . | indent 8 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- define "common.deployment" -}}
+{{- template "common.util.merge" (append . "common.deployment.tpl") -}}
+{{- end -}}

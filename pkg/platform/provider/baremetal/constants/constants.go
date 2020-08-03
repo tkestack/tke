@@ -109,6 +109,7 @@ const (
 	ManifestsDir          = ProviderDir + "manifests/"
 	GPUManagerManifest    = ManifestsDir + "gpu-manager/gpu-manager.yaml"
 	CSIOperatorManifest   = ManifestsDir + "csi-operator/csi-operator.yaml"
+	MetricsServerManifest = ManifestsDir + "metrics-server/metrics-server.yaml"
 
 	KUBERNETES                   = 1
 	DNSIPIndex                   = 10

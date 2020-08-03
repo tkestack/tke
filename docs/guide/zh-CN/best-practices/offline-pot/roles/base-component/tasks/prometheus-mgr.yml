@@ -1,0 +1,80 @@
+# deploy prometheus and remove prometheus
+
+# set facts
+- name: set deploy_prometheus facts
+  set_fact:
+    deploy_prometheus: "{{ deploy_prometheus }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: prometheus_init
+
+# create save prometheus yaml dir
+- name: create save prometheus yaml dir
+  shell: ls /data/tke-yamls/prometheus || mkdir -p /data/tke-yamls/prometheus
+  when: inventory_hostname == groups['masters'][0] and deploy_prometheus == true
+  tags: prometheus_init
+
+# generate prometheus yaml
+- name: generate prometheus yaml
+  template:
+    src: templates/prometheus/prometheus.platform.tkestack.io.yaml.j2
+    dest: /data/tke-yamls/prometheus/prometheus.platform.tkestack.io.yaml
+    mode: '0644'
+  when: inventory_hostname == groups['masters'][0] and deploy_prometheus == true
+  tags: prometheus_init
+
+# get prometheus.platform.tkestack.io.yaml for deploy
+- name: get prometheus.platform.tkestack.io.yaml for deploy
+  stat:
+    path: '/data/tke-yamls/prometheus/prometheus.platform.tkestack.io.yaml'
+  register: deploy_prometheus_yaml
+  when: inventory_hostname == groups['masters'][0]
+  tags: deploy_prometheus
+
+# deploy prometheus
+- name: deploy prometheus
+  shell: kubectl apply -f /data/tke-yamls/prometheus/prometheus.platform.tkestack.io.yaml
+  when: inventory_hostname == groups['masters'][0] and deploy_prometheus_yaml.stat.exists == True
+  tags: deploy_prometheus
+
+# get prometheus.platform.tkestack.io.yaml for remove
+- name: get prometheus.platform.tkestack.io.yaml remove
+  stat:
+    path: '/data/tke-yamls/prometheus/prometheus.platform.tkestack.io.yaml'
+  register: remove_prometheus_yaml
+  when: inventory_hostname == groups['masters'][0]
+  tags: remove_prometheus
+
+# remove prometheus
+- name: remove prometheus
+  shell: kubectl delete -f /data/tke-yamls/prometheus/prometheus.platform.tkestack.io.yaml
+  when: inventory_hostname == groups['masters'][0] and remove_prometheus_yaml.stat.exists == True
+  tags: remove_prometheus
+
+# set deploy_prometheus facts for health check
+- name: set deploy_prometheus facts for health check
+  set_fact:
+    deploy_prometheus: "{{ deploy_prometheus }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: prometheus_health_ckeck
+
+# get prometheus deploy status
+- name: get prometheus deploy status
+  shell: if [ `kubectl get pods -n kube-system | grep prometheus | grep '3/3' | wc -l` -gt 0 ]; then \
+         echo "true"; else echo "false";fi
+  register: prometheus_dpl_status
+  when: inventory_hostname == groups['masters'][0] and deploy_prometheus == true
+  tags: prometheus_health_ckeck
+
+# prometheus deploy success
+- name: prometheus deploy success
+  debug:
+    msg: "Info: prometheus deploy success."
+  when: inventory_hostname == groups['masters'][0] and deploy_prometheus == true and prometheus_dpl_status.stdout == "true"
+  tags: prometheus_health_ckeck
+
+# prometheus deploy faield
+- name: prometheus deploy faield
+  debug:
+    msg: "Warning: prometheus deploy failed, please check!!!"
+  when: inventory_hostname == groups['masters'][0] and deploy_prometheus == true and prometheus_dpl_status.stdout == "false"
+  tags: prometheus_health_ckeck

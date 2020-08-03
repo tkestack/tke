@@ -40,6 +40,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
+	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	controllerutils "tkestack.io/tke/pkg/controller"
 )
 
@@ -395,6 +397,17 @@ func CreateOrUpdateCronJob(ctx context.Context, client clientset.Interface, cron
 
 		if _, err := client.BatchV1beta1().CronJobs(cronjob.ObjectMeta.Namespace).Update(ctx, cronjob, metav1.UpdateOptions{}); err != nil {
 			return errors.Wrap(err, "unable to update cronjob")
+		}
+	}
+	return nil
+}
+
+// CreateOrUpdateAPIService creates a APIService if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
+func CreateOrUpdateAPIService(ctx context.Context, client kubeaggregatorclientset.Interface, as *apiregistrationv1.APIService) error {
+	if _, err := client.ApiregistrationV1().APIServices().Create(ctx, as, metav1.CreateOptions{}); err != nil {
+		// Note: We don't run .Update here afterwards as that's probably not required
+		if !apierrors.IsAlreadyExists(err) {
+			return errors.Wrap(err, "unable to create apiservice")
 		}
 	}
 	return nil

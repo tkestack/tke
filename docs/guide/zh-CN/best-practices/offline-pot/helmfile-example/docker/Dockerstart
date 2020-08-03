@@ -1,0 +1,26 @@
+#!/BIN/bash
+
+export APP_ENV_FLAG=${APP_ENV_FLAG:-'ty'}
+
+DATE_TIME=$(date +%Y%m%d%H%M%S)
+HOME_DIR=/data/build
+mkdir -p /data/helms/business
+
+ls -R /data/build/
+cd /data/build/helm/charts
+sed -i 's@extensions/v1beta1@apps/v1@g' common/templates/_deployment.yaml
+rm -rf bootstrap/charts/common-0.0.5.tgz
+tar zcf bootstrap/charts/common-0.0.5.tgz common/
+
+cd /data/build/helm/
+mkdir -p /data/helms/business/$DATE_TIME
+mv /data/build/helm/* /data/helms/business/$DATE_TIME
+cd /data/helms/business/
+/bin/rm latest
+ln -s $DATE_TIME latest
+
+echo 'hello world'
+
+while [ 1 ];do
+    sleep 1d
+done

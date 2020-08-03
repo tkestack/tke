@@ -24,7 +24,7 @@ TKEStack 采用了 Kubernetes on Kubernetes 的设计理念。即节点仅运行
 * Cluster: 运行业务的 Kubernetes 集群，可以通过 TKEStack 控制台创建或导入；
 
 * Auth: 权限认证组件，提供用户鉴权、权限对接相关功能；
-* Gateway: 网管组件，实现集群后台统一入口、统一鉴权相关的功能，并运行控制台的 Web 界面服务；
+* Gateway: 网关组件，实现集群后台统一入口、统一鉴权相关的功能，并运行控制台的 Web 界面服务；
 * Platform: 集群管理组件，提供 Global 集群管理多个业务集群相关功能；
 * Business: 业务管理组件，提供平台业务管理相关功能的后台服务；
 * Network Controller：网络服务组件，支撑 Galaxy 网络功能；

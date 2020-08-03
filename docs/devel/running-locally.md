@@ -88,7 +88,7 @@ versions.
  [here](https://nodejs.org/en/download/package-manager/).
 
 ## Building TKE Components
-TKE contains 11 core components, a dependency list generator and a customized installer. For detail see [here](/cmd/README.md).
+TKE contains 11 core components, a dependency list generator and a customized installer. For detail see [here](/docs/devel/components.md).
 
 - Clone TKE Repository
 
@@ -155,7 +155,7 @@ echo 'token,admin,1,"administrator"' > _debug/token.csv
 ## Bootstrap TKE Core Components
 This section will walk you through how to bootstrap TKE on your local machine.
 
-TKE contains 11 core components. For detail see [here](/tke/cmd/README.md). In order for all the
+TKE contains 11 core components. For detail see [here](/docs/devel/components.md). In order for all the
 services to run properly, please make sure to follow the guide below to bootstrap them in order.
 You could skip the optional components if it is not needed.
 
