@@ -6,7 +6,7 @@ import { Router } from '../../../helpers/Router';
  * @param tab   详情页 tab
  * @param name  镜像仓库键值
  */
-export const router = new Router('/tkestack-project/registry(/:sub)(/:mode)(/:tab)', {
+export const router = new Router('/tkestack-project/registry/appcenter(/:sub)(/:mode)(/:tab)', {
   sub: '',
   mode: '',
   tab: '',
