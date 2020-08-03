@@ -474,16 +474,16 @@ groups:
     expr:  label_replace(label_replace(__pod_info1{workload_kind="ReplicaSet"} * on (workload_name,namespace) group_left(owner_name, owner_kind) label_replace(kube_replicaset_owner,"workload_name","$1","replicaset","(.*)"),"workload_name","$1","owner_name","(.*)"),"workload_kind","$1","owner_kind","(.*)")  or on(pod_name,namesapce)  __pod_info1{workload_kind != "ReplicaSet"}
 
   - record: k8s_cluster_cpu_core_total
-    expr: sum(kube_node_status_allocatable_cpu_cores * on(node) group_left kube_node_labels {node_role="Node"})
+    expr: sum(kube_node_status_allocatable_cpu_cores)
 
   - record: k8s_cluster_memory_total
-    expr: sum(kube_node_status_allocatable_memory_bytes * on(node) group_left kube_node_labels {node_role="Node"})
+    expr: sum(kube_node_status_allocatable_memory_bytes)
 
   - record: k8s_cluster_gpu_total
-    expr: sum(kube_node_status_allocatable_gpu * on(node) group_left kube_node_labels {node_role="Node"})
+    expr: sum(kube_node_status_allocatable_gpu)
 
   - record: k8s_cluster_gpu_memory_total
-    expr: sum(kube_node_status_allocatable_gpu_memory * on(node) group_left kube_node_labels {node_role="Node"})
+    expr: sum(kube_node_status_allocatable_gpu_memory)
 
   - record: k8s_container_cpu_core_used
     expr: sum(rate(container_cpu_usage_seconds_total[4m])) by (container_name, namespace, pod_name) * on(namespace, pod_name) group_left(workload_kind, workload_name, node, node_role)  __pod_info2
@@ -665,6 +665,9 @@ groups:
   - record: k8s_pod_restart_total
     expr: sum(idelta(kube_pod_container_status_restarts_total [2m])) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
+  - record: k8s_pod_status_phase
+    expr: kube_pod_status_phase * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+
   - record: k8s_node_status_ready_with_node_role
     expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role, device_type)  kube_node_labels)  without(condition, status)
 
@@ -760,6 +763,58 @@ groups:
             "workload_kind","CronJob","","")
             ,"workload_name","","cronjob","(.*)"),
             "__name__", "k8s_workload_abnormal", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+
+  - record: k8s_workload_replicas_desire
+    expr: |-
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_deployment_spec_replicas,
+            "workload_kind","Deployment","","")
+            ,"workload_name","$1","deployment","(.*)"),
+            "__name__", "k8s_workload_replicas_desire", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+            or on (namespace,workload_name,workload_kind, __name__)
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_daemonset_status_desired_number_scheduled,
+            "workload_kind","DaemonSet","","")
+            ,"workload_name","$1","daemonset","(.*)"),
+            "__name__", "k8s_workload_replicas_desire", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+            or on (namespace,workload_name,workload_kind, __name__)
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_statefulset_replicas,
+            "workload_kind","StatefulSet","","")
+            ,"workload_name","$1","statefulset","(.*)"),
+            "__name__", "k8s_workload_replicas_desire", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+
+  - record: k8s_workload_replicas_current
+    expr: |-
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_deployment_status_replicas_available,
+            "workload_kind","Deployment","","")
+            ,"workload_name","$1","deployment","(.*)"),
+            "__name__", "k8s_workload_replicas_current", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+            or on (namespace,workload_name,workload_kind, __name__)
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_daemonset_status_number_ready,
+            "workload_kind","DaemonSet","","")
+            ,"workload_name","$1","daemonset","(.*)"),
+            "__name__", "k8s_workload_replicas_current", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+            or on (namespace,workload_name,workload_kind, __name__)
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_statefulset_status_replicas_ready,
+            "workload_kind","StatefulSet","","")
+            ,"workload_name","$1","statefulset","(.*)"),
+            "__name__", "k8s_workload_replicas_current", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
 
   - record: k8s_workload_pod_restart_total
     expr: sum(k8s_pod_restart_total) by(namespace,workload_kind,workload_name)
@@ -885,19 +940,22 @@ groups:
     expr: k8s_namespace_gpu_memory_used * 100 / scalar(k8s_cluster_gpu_memory_total)
 
   - record: k8s_cluster_cpu_core_used
-    expr:  sum(k8s_pod_cpu_core_used{node_role="Node"})
+    expr:  sum(k8s_pod_cpu_core_used)
 
   - record: k8s_cluster_mem_usage_bytes
-    expr:  sum(k8s_pod_mem_usage_bytes{node_role="Node"})
+    expr:  sum(k8s_pod_mem_usage_bytes)
 
   - record: k8s_cluster_mem_no_cache_bytes
-    expr: sum(k8s_pod_mem_no_cache_bytes{node_role="Node"})
+    expr: sum(k8s_pod_mem_no_cache_bytes)
 
   - record: k8s_cluster_rate_cpu_core_used_cluster
     expr: k8s_cluster_cpu_core_used  * 100 / scalar(k8s_cluster_cpu_core_total)
 
   - record: k8s_cluster_rate_cpu_core_request_cluster
-    expr: sum(kube_pod_container_resource_requests{resource="cpu"} * on(node) group_left kube_node_labels {node_role="Node"} ) * 100 / scalar(k8s_cluster_cpu_core_total)
+    expr: sum(kube_pod_container_resource_requests{resource="cpu"}) * 100 / scalar(k8s_cluster_cpu_core_total)
+
+  - record: k8s_cluster_cpu_core_request
+    expr: sum(kube_pod_container_resource_requests{resource="cpu"})
 
   - record: k8s_cluster_rate_mem_usage_bytes_cluster
     expr: k8s_cluster_mem_usage_bytes * 100 / scalar(k8s_cluster_memory_total)
@@ -906,55 +964,76 @@ groups:
     expr: k8s_cluster_mem_no_cache_bytes * 100 / scalar(k8s_cluster_memory_total)
 
   - record: k8s_cluster_rate_mem_request_bytes_cluster
-    expr: sum(kube_pod_container_resource_requests{resource="memory"} * on(node) group_left kube_node_labels {node_role="Node"} ) * 100 / scalar(k8s_cluster_memory_total)
+    expr: sum(kube_pod_container_resource_requests{resource="memory"}) * 100 / scalar(k8s_cluster_memory_total)
+
+  - record: k8s_cluster_mem_request_bytes
+    expr: sum(kube_pod_container_resource_requests{resource="memory"})
 
   - record: k8s_cluster_network_receive_bytes_bw
-    expr: sum(k8s_pod_network_receive_bytes_bw{node_role="Node"})
+    expr: sum(k8s_pod_network_receive_bytes_bw)
 
   - record: k8s_cluster_network_transmit_bytes_bw
-    expr: sum(k8s_pod_network_transmit_bytes_bw{node_role="Node"})
+    expr: sum(k8s_pod_network_transmit_bytes_bw)
 
   - record: k8s_cluster_network_receive_bytes
-    expr: sum(k8s_pod_network_receive_bytes{node_role="Node"})
+    expr: sum(k8s_pod_network_receive_bytes)
 
   - record: k8s_cluster_network_transmit_bytes
-    expr: sum(k8s_pod_network_transmit_bytes{node_role="Node"})
+    expr: sum(k8s_pod_network_transmit_bytes)
 
   - record: k8s_cluster_network_receive_packets
-    expr: sum(k8s_pod_network_receive_packets{node_role="Node"})
+    expr: sum(k8s_pod_network_receive_packets)
 
   - record: k8s_cluster_network_transmit_packets
-    expr: sum(k8s_pod_network_transmit_packets{node_role="Node"})
+    expr: sum(k8s_pod_network_transmit_packets)
 
   - record: k8s_cluster_fs_read_bytes
-    expr: sum(k8s_pod_fs_read_bytes{node_role="Node"})
+    expr: sum(k8s_pod_fs_read_bytes)
 
   - record: k8s_cluster_fs_write_bytes
-    expr: sum(k8s_pod_fs_write_bytes{node_role="Node"})
+    expr: sum(k8s_pod_fs_write_bytes)
 
   - record: k8s_cluster_fs_read_times
-    expr: sum(k8s_pod_fs_read_times{node_role="Node"})
+    expr: sum(k8s_pod_fs_read_times)
 
   - record: k8s_cluster_fs_write_times
-    expr: sum(k8s_pod_fs_write_times{node_role="Node"})
+    expr: sum(k8s_pod_fs_write_times)
 
   - record: k8s_cluster_gpu_used
-    expr:  sum(k8s_pod_gpu_used{node_role="Node"})
+    expr:  sum(k8s_pod_gpu_used)
 
   - record: k8s_cluster_rate_gpu_used_cluster
     expr: k8s_cluster_gpu_used  * 100 / scalar(k8s_cluster_gpu_total)
 
   - record: k8s_cluster_rate_gpu_request_cluster
-    expr: sum(k8s_pod_gpu_request * on(node) group_left kube_node_labels {node_role="Node"}) * 100 / scalar(k8s_cluster_gpu_total)
+    expr: sum(k8s_pod_gpu_request) * 100 / scalar(k8s_cluster_gpu_total)
 
   - record: k8s_cluster_gpu_memory_used
-    expr:  sum(k8s_pod_gpu_memory_used{node_role="Node"})
+    expr:  sum(k8s_pod_gpu_memory_used)
 
   - record: k8s_cluster_rate_gpu_memory_used_cluster
     expr: k8s_cluster_gpu_memory_used  * 100 / scalar(k8s_cluster_gpu_memory_total)
 
   - record: k8s_cluster_rate_gpu_memory_request_cluster
-    expr: sum(k8s_pod_gpu_memory_request * on(node) group_left kube_node_labels {node_role="Node"} ) * 100 / scalar(k8s_cluster_gpu_memory_total)
+    expr: sum(k8s_pod_gpu_memory_request) * 100 / scalar(k8s_cluster_gpu_memory_total)
+
+  - record: k8s_cluster_node_num
+    expr: count(kube_node_info)
+
+  - record: k8s_cluster_pod_num
+    expr: sum(k8s_node_pod_num)
+
+  - record: k8s_cluster_workload_num
+    expr: count(max(__pod_info2{workload_kind!="<none>"}) by (namespace,workload_kind,workload_name))
+
+  - record: k8s_cluster_workload_replicas_unexpected_num
+    expr: count((k8s_workload_replicas_desire - k8s_workload_replicas_current) > 0 and k8s_workload_replicas_current != 0)
+
+  - record: k8s_cluster_workload_replicas_expected_num
+    expr: count((k8s_workload_replicas_desire - k8s_workload_replicas_current) == 0)
+
+  - record: k8s_cluster_workload_replicas_zero_num
+    expr: count(k8s_workload_replicas_current == 0)
 
   - record: project_namespace_cpu_core_used
     expr: k8s_namespace_cpu_core_used* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
