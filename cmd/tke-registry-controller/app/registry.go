@@ -24,11 +24,13 @@ import (
 
 	"helm.sh/chartmuseum/pkg/chartmuseum/server/multitenant"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	authv1 "tkestack.io/tke/api/auth/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	serveroptionsv1 "tkestack.io/tke/pkg/registry/chartmuseum/serveroptions/v1"
 	"tkestack.io/tke/pkg/registry/controller/chart"
 	"tkestack.io/tke/pkg/registry/controller/chartgroup"
+	"tkestack.io/tke/pkg/registry/controller/identityprovider"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -38,6 +40,9 @@ const (
 
 	chartSyncPeriod      = 60 * time.Second
 	concurrentChartSyncs = 10
+
+	identityProviderSyncPeriod      = 60 * time.Second
+	concurrentIdentityProviderSyncs = 10
 )
 
 func startChartGroupController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -87,6 +92,24 @@ func startChartController(ctx ControllerContext) (http.Handler, bool, error) {
 	)
 
 	go ctrl.Run(concurrentChartSyncs, ctx.Stop)
+
+	return nil, true, nil
+}
+
+func startIdentityProviderController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AuthAvailableResources[schema.GroupVersionResource{Group: authv1.GroupName, Version: "v1", Resource: "identityproviders"}] {
+		return nil, false, nil
+	}
+
+	ctrl := identityprovider.NewController(
+		ctx.AuthClient,
+		ctx.ClientBuilder.ClientOrDie("identityprovider-controller"),
+		ctx.AuthInformerFactory.Auth().V1().IdentityProviders(),
+		identityProviderSyncPeriod,
+		ctx.RegistryDefaultConfiguration,
+	)
+
+	go ctrl.Run(concurrentIdentityProviderSyncs, ctx.Stop)
 
 	return nil, true, nil
 }

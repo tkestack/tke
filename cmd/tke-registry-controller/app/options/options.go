@@ -39,9 +39,11 @@ type Options struct {
 	Component         *controlleroptions.ComponentOptions
 	RegistryAPIClient *controlleroptions.APIServerClientOptions
 	BusinessAPIClient *controlleroptions.APIServerClientOptions
+	AuthAPIClient     *controlleroptions.APIServerClientOptions
 	// The Registry will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Registry's current working directory.
 	RegistryConfig string
+	Registry       *RegistryOptions
 }
 
 // NewOptions creates a new Options with a default config.
@@ -53,6 +55,8 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
 		RegistryAPIClient: controlleroptions.NewAPIServerClientOptions("registry", true),
 		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", true),
+		AuthAPIClient:     controlleroptions.NewAPIServerClientOptions("auth", true),
+		Registry:          NewRegistryOptions(),
 	}
 }
 
@@ -64,10 +68,12 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Component.AddFlags(fs)
 	o.RegistryAPIClient.AddFlags(fs)
 	o.BusinessAPIClient.AddFlags(fs)
+	o.AuthAPIClient.AddFlags(fs)
 
 	fs.String(flagRegistryConfig, o.RegistryConfig,
 		"The Registry will load its initial configuration from this file. The path may be absolute or relative; relative paths start at the Registry's current working directory. Omit this flag to use the built-in default configuration values.")
 	_ = viper.BindPFlag(configRegistryConfig, fs.Lookup(flagRegistryConfig))
+	o.Registry.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -81,8 +87,10 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Component.ApplyFlags()...)
 	errs = append(errs, o.RegistryAPIClient.ApplyFlags()...)
 	errs = append(errs, o.BusinessAPIClient.ApplyFlags()...)
+	errs = append(errs, o.AuthAPIClient.ApplyFlags()...)
 
 	o.RegistryConfig = viper.GetString(configRegistryConfig)
+	errs = append(errs, o.Registry.ApplyFlags()...)
 
 	return errs
 }

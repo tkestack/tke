@@ -58,7 +58,14 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 			ClientConfig: cfg.RegistryAPIServerClientConfig,
 		}
 
-		controllerContext, err := CreateControllerContext(cfg, rootClientBuilder, ctx.Done())
+		var authClientBuilder controller.ClientBuilder = nil
+		if cfg.AuthAPIServerClientConfig != nil {
+			authClientBuilder = controller.SimpleControllerClientBuilder{
+				ClientConfig: cfg.AuthAPIServerClientConfig,
+			}
+		}
+
+		controllerContext, err := CreateControllerContext(cfg, rootClientBuilder, authClientBuilder, ctx.Done())
 		if err != nil {
 			log.Fatalf("error building controller context: %v", err)
 		}
@@ -68,6 +75,9 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 		}
 
 		controllerContext.InformerFactory.Start(controllerContext.Stop)
+		if authClientBuilder != nil {
+			controllerContext.AuthInformerFactory.Start(controllerContext.Stop)
+		}
 		close(controllerContext.InformersStarted)
 
 		select {}

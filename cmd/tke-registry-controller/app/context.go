@@ -29,12 +29,14 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
+	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-registry-controller/app/config"
 	"tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/controller/util"
 	registryconfigv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
+	registrycontrollerconfig "tkestack.io/tke/pkg/registry/controller/config"
 )
 
 // InitFunc is used to launch a particular controller.  It may run additional "should I activate checks".
@@ -72,8 +74,15 @@ type ControllerContext struct {
 	ControllerStartInterval time.Duration
 
 	BusinessClient businessv1.BusinessV1Interface
+	AuthClient     authv1.AuthV1Interface
+	// AuthAvailableResources is a map listing auth available resources
+	AuthAvailableResources map[schema.GroupVersionResource]bool
+	// AuthInformerFactory gives access to informers for the controller.
+	AuthInformerFactory versionedinformers.SharedInformerFactory
+
 	// the registry config for chartmuseum/image-repo
-	RegistryConfig *registryconfigv1.RegistryConfiguration
+	RegistryConfig               *registryconfigv1.RegistryConfiguration
+	RegistryDefaultConfiguration registrycontrollerconfig.RegistryDefaultConfiguration
 }
 
 // IsControllerEnabled returns whether the controller has been enabled
@@ -84,7 +93,7 @@ func (c ControllerContext) IsControllerEnabled(name string) bool {
 // CreateControllerContext creates a context struct containing references to resources needed by the
 // controllers such as the cloud provider and clientBuilder. rootClientBuilder is only used for
 // the shared-informers client and token controller.
-func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.ClientBuilder, stop <-chan struct{}) (ControllerContext, error) {
+func CreateControllerContext(cfg *config.Config, rootClientBuilder, authClientBuilder controller.ClientBuilder, stop <-chan struct{}) (ControllerContext, error) {
 	versionedClient := rootClientBuilder.ClientOrDie("shared-informers")
 	sharedInformers := versionedinformers.NewSharedInformerFactory(versionedClient, controller.ResyncPeriod(&cfg.Component)())
 
@@ -108,22 +117,42 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 	}
 
 	ctx := ControllerContext{
-		ClientBuilder:           rootClientBuilder,
-		InformerFactory:         sharedInformers,
-		RESTMapper:              restMapper,
-		AvailableResources:      availableResources,
-		Stop:                    stop,
-		InformersStarted:        make(chan struct{}),
-		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
-		ControllerStartInterval: cfg.Component.ControllerStartInterval,
-		RegistryConfig:          cfg.RegistryConfig,
+		ClientBuilder:                rootClientBuilder,
+		InformerFactory:              sharedInformers,
+		RESTMapper:                   restMapper,
+		AvailableResources:           availableResources,
+		Stop:                         stop,
+		InformersStarted:             make(chan struct{}),
+		ResyncPeriod:                 controller.ResyncPeriod(&cfg.Component),
+		ControllerStartInterval:      cfg.Component.ControllerStartInterval,
+		RegistryConfig:               cfg.RegistryConfig,
+		RegistryDefaultConfiguration: cfg.RegistryDefaultConfiguration,
 	}
+
 	if cfg.BusinessAPIServerClientConfig != nil {
 		businessClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.BusinessAPIServerClientConfig, "tke-registry-controller"))
 		if err != nil {
 			return ControllerContext{}, fmt.Errorf("failed to create the business client: %v", err)
 		}
 		ctx.BusinessClient = businessClient.BusinessV1()
+	}
+
+	if cfg.AuthAPIServerClientConfig != nil && authClientBuilder != nil {
+		authClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.AuthAPIServerClientConfig, "tke-registry-controller"))
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to create the auth client: %v", err)
+		}
+		ctx.AuthClient = authClient.AuthV1()
+
+		authAvailableResources, err := controller.GetAvailableResources(authClientBuilder)
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to get the auth available resources: %v", err)
+		}
+		ctx.AuthAvailableResources = authAvailableResources
+
+		authVersionedClient := authClientBuilder.ClientOrDie("shared-informers")
+		authSharedInformers := versionedinformers.NewSharedInformerFactory(authVersionedClient, controller.ResyncPeriod(&cfg.Component)())
+		ctx.AuthInformerFactory = authSharedInformers
 	}
 
 	return ctx, nil
