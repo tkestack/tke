@@ -1,0 +1,100 @@
+#!/bin/bash
+# Author: yhchen
+set -e
+
+BASE_DIR=$(cd `dirname $0` && pwd)
+cd $BASE_DIR
+
+if [ "x$1" == "x" ];then
+  echo 'please input a parameter! for call func!'
+  exit 1
+else
+  CALL_FUN=$1
+fi
+
+
+# deploy business
+dpl_business(){
+  echo "###### deploy business start ######"
+  if [ `ls /data/helms/business/ | wc -l` -gt 0 ]; then
+    # create remote registry secret 
+    if [ -d "/data/helms/business/secrets" ]; then
+      for f in `ls /data/helms/business/secrets`;
+      do
+        if [ -f "/data/helms/business/secrets/${f}" ]; then
+          kubectl apply -f /data/helms/business/secrets/${f}
+        fi
+      done
+    fi
+    # check releases whether is empty
+    if [ `ls /data/helms/business/helmfile.d/releases | wc -l` -gt 0 ]; then 
+      # check {{ app_env_flag }} whether had created
+      if [ `kubectl get ns | grep default | wc -l` -eq 0 ]; then
+        kubectl create ns default
+      fi  
+      # check release whether had deployed
+      if [ `helm list -n default | wc -l` -le 1 ]; then
+        for release in `ls /data/helms/business/helmfile.d/releases/`;
+        do
+          cd /data/helms/business/helmfile.d/ ;
+          helmfile --namespace default  -e {{ app_env_flag }} -f releases/${release} sync
+        done
+      else
+        echo "The {{ app_env_flag }} release had deployed!"
+      fi
+    else
+      echo "{{ app_env_flag }} release is empty,please check!!!"
+    fi
+  else
+    echo "not has business need to deploy,please check!!"
+  fi
+  echo "###### deploy business end ######"
+}
+
+# remove business
+del_business(){
+  echo "###### remove business start ######"
+  # remove business
+  if [ `ls /data/helms/business/ | wc -l` -gt 0 ]; then
+    # check releases whether is empty
+    if [ `ls /data/helms/business/helmfile.d/releases | wc -l` -gt 0 ]; then
+      # check {{ app_env_flag }} whether had created
+      if [ `kubectl get ns | grep default | wc -l` -gt 0 ]; then
+        # check release whether had deployed
+        if [ `helm list -n default | wc -l` -gt 1 ]; then
+          for release in `ls /data/helms/business/helmfile.d/releases/`;
+          do
+            cd /data/helms/business/helmfile.d/ ;
+            helmfile --namespace default  -e {{ app_env_flag }} -f releases/${release} destroy
+          done
+        else
+          echo "The {{ app_env_flag }} release had deployed!"
+        fi
+      else
+        echo "The {{ app_env_flag }} not deploy!!"
+      fi
+    else
+      echo "{{ app_env_flag }} release is empty,please check!!!"
+    fi
+    # delete remote registry secret 
+    if [ -d "/data/helms/business/secrets" ]; then
+      for f in `ls /data/helms/business/secrets`;
+      do
+        if [ -f "/data/helms/business/secrets/${f}" ]; then
+          kubectl delete -f /data/helms/business/secrets/${f}
+        fi
+      done
+    fi
+    # delete /data/helms/business/
+    rm -rf /data/helms/business/
+  else
+    echo "not has business need to remove,please check!!"
+  fi
+  echo "###### remove business end ######"
+}
+
+
+main(){
+    $CALL_FUN
+}
+main

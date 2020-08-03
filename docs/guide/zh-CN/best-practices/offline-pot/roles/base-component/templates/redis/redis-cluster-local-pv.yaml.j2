@@ -1,0 +1,144 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-master0-data
+  labels:
+    redis-pv: redis-data
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ redis_data_dir }}/master
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['redis'][0] }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-master1-data
+  labels:
+    redis-pv: redis-data
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ redis_data_dir }}/master
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['redis'][1] }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-master2-data
+  labels:
+    redis-pv: redis-data
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ redis_data_dir }}/master
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['redis'][2] }}
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-slave1-data
+  labels:
+    redis-pv: redis-data
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ redis_data_dir }}/slave
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['redis'][0] }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-slave2-data
+  labels:
+    redis-pv: redis-data
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ redis_data_dir }}/slave
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['redis'][1] }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-slave0-data
+  labels:
+    redis-pv: redis-data
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ redis_data_dir }}/slave
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['redis'][2] }}

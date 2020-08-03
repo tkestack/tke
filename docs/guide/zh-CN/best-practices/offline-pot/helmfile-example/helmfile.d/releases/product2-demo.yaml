@@ -1,0 +1,41 @@
+#####################################################################
+# environments
+###
+###  The list of environments managed by helmfile.
+###
+#####################################################################
+
+environments:
+  default:
+  demo:
+    values:
+    - ../config/product2-demo/environment-values.yaml
+
+releases:
+- name: product2-app1-{{`{{ .Environment.Name }}`}}
+#  namespace: default
+  chart: ../../product2/product2-app1
+  labels:
+    chart: "product2-app1"
+    app: "product2-app1"
+    component: "product2-app1"
+  values:
+    - ../config/product2-{{`{{ .Environment.Name }}`}}/{{`{{ .Release.Name }}`}}.yaml.gotmpl
+- name: product2-app2-{{`{{ .Environment.Name }}`}}
+#  namespace: default
+  chart: ../../product2/product2-app2
+  labels:
+    chart: "product2-app2"
+    app: "product2-app2"
+    component: "product2-app2"
+  values:
+    - ../config/product2-{{`{{ .Environment.Name }}`}}/{{`{{ .Release.Name }}`}}.yaml.gotmpl
+- name: product2-helm-{{`{{ .Environment.Name }}`}}
+#  namespace: default
+  chart: ../../product2/product2-helm
+  labels:
+    chart: "product2-helm"
+    app: "product2-helm"
+    component: "product2-helm"
+  values:
+    - ../config/product2-{{`{{ .Environment.Name }}`}}/{{`{{ .Release.Name }}`}}.yaml.gotmpl

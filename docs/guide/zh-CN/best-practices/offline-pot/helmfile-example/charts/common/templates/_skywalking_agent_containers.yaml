@@ -1,0 +1,25 @@
+{{- define "common.sky_container.tpl" -}}
+name: sky-agent
+{{- if .Values.skyAgent.image }}
+image: {{ .Values.skyAgent.image }}
+{{- else }}
+image: shsmu/skywalking-agent-sidecar:3.2.6-3
+{{- end }}
+imagePullPolicy: IfNotPresent
+env:
+  - name: APP_NAME
+    value: {{ template "common.name" . }}
+{{- with .Values.skyAgent.env }}
+{{ toYaml . | indent 2 }}
+{{- end }}
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+volumeMounts:
+  - name: {{ template "common.name" . }}-skywalking-sidecar
+    mountPath: /sidecar/skywalking-agent
+{{- end -}}

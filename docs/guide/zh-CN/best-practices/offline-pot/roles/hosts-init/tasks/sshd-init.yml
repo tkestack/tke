@@ -1,0 +1,23 @@
+# enable password authentication
+
+# get sshd_config backup file stat for backup
+- name: get sshd_config.bak stat
+  stat:
+    path: /etc/ssh/sshd_config.bak
+  register: sshd_config_bak
+  tags: sshd_config_init
+
+# backup sshd_config
+- name: backup sshd_config
+  shell: \cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+  when: sshd_config_bak.stat.exists == False
+  tags: sshd_config_init
+
+# init sshd_config
+- name: sshd_config init
+  replace:
+    dest: /etc/ssh/sshd_config
+    regexp: "^PasswordAuthentication.*no$"
+    replace: 'PasswordAuthentication yes'
+  notify: restart sshd
+  tags: sshd_config_init

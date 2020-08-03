@@ -1,0 +1,29 @@
+# recover devnetcloud docker proxy config file
+
+# get http-proxy.conf.bak stat
+- name: get http-proxy.conf.bak stat
+  stat:
+    path: /etc/systemd/system/docker.service.d/http-proxy.conf.bak
+  register: http_proxy_file_recover
+  tags: recover_docker_proxy
+
+# recover docker proxy config
+- name: recover docker_proxy
+  shell: \cp /etc/systemd/system/docker.service.d/http-proxy.conf.bak /etc/systemd/system/docker.service.d/http-proxy.conf
+  when: http_proxy_file_recover.stat.exists == True
+  notify: restart docker
+  tags: recover_docker_proxy
+
+
+# get iProxy.sh file stat
+- name: get iproxy.sh file stat
+  stat:
+    path: ~/iProxy.sh
+  register: iproxy_file_undo
+  tags: recover_devnet_proxy
+
+# recover devnet-proxy 
+- name: recover devnet-proxy
+  shell: cat /etc/profile | grep devnet-proxy || /bin/bash -c 'source ~/iProxy.sh -install'
+  when: iproxy_file_undo.stat.exists == True
+  tags: recover_devnet_proxy

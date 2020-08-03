@@ -55,6 +55,7 @@ type Config struct {
 	ControllerManager       ControllerManager `yaml:"controllerManager"`
 	Scheduler               Scheduler         `yaml:"scheduler"`
 	AuthzWebhook            AuthzWebhook      `yaml:"authzWebhook"`
+	Business                Business          `yaml:"Business"`
 }
 
 func (c *Config) Save(filename string) error {
@@ -66,6 +67,14 @@ func (c *Config) Save(filename string) error {
 
 	y := yaml.NewEncoder(f)
 	return y.Encode(c)
+}
+
+func (c *Config) AuditEnabled() bool {
+	return c.Audit.Address != ""
+}
+
+func (c *Config) BusinessEnabled() bool {
+	return c.Business.Enabled
 }
 
 type Registry struct {
@@ -109,4 +118,7 @@ type Scheduler struct {
 
 type AuthzWebhook struct {
 	Endpoint string `yaml:"endpoint"`
+}
+type Business struct {
+	Enabled bool `yaml:"enabled"`
 }

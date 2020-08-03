@@ -1,0 +1,14 @@
+---
+# tasks file for hosts-init
+- include: sshd-init.yml
+- include: selinux-init.yml
+- include: remove-devnetcloud-proxy.yml
+- include: add-domains.yml
+- include: deploy-offlie-yum-repo.yml
+- include: install-base-tools.yml
+- include: data-disk-init.yml
+- include: check-iptables.yml
+- include: check-time-syn-service.yml
+- include: install-stress-tools.yml
+- include: update-kernal.yml
+- include: registry-influxdb-init.yml

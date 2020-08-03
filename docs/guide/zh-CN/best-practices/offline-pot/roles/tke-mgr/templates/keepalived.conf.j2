@@ -1,0 +1,29 @@
+global_defs {
+    enable_script_security
+    script_user root
+ }
+ vrrp_script chk {
+    script "/bin/bash -c 'curl -m1 -k -s https://127.0.0.1:6443/healthz -o/dev/null'"
+    interval 2
+    weight -10
+    fall 1
+    rise 1
+ }
+ vrrp_instance VI_1 {
+     state BACKUP
+     interface {{ net_interface}}
+
+     virtual_router_id 51
+     priority 100
+     advert_int 1
+     authentication {
+         auth_type PASS
+         auth_pass 1111
+     }
+     virtual_ipaddress {
+         {{ tke_vip }}
+     }
+     track_script {
+       chk
+     }
+ }

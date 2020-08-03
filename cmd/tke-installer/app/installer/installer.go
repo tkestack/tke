@@ -35,6 +35,8 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/util/validation"
+
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -276,7 +278,7 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if t.Para.Config.Business != nil {
+	if t.businessEnabled() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Install tke-business-api",
@@ -718,13 +720,18 @@ func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 			return apierrors.NewBadRequest(err.Error())
 		}
 		for _, one := range dnsNames {
-			if !funk.Contains(certs1[0].DNSNames, one) {
+			if !matchDNSName(certs1[0].DNSNames, one) {
 				return apierrors.NewBadRequest(fmt.Sprintf("certificate DNSNames must contains %v", one))
 			}
 		}
 	}
 
 	return nil
+}
+
+func matchDNSName(certDNSNames []string, dnsName string) bool {
+	dotIdx := strings.Index(dnsName, ".")
+	return funk.Contains(certDNSNames, dnsName) || validation.IsValidDNSName(dnsName) && dotIdx > -1 && funk.Contains(certDNSNames, "*"+dnsName[dotIdx:])
 }
 
 // validateResource validate the cpu and memory of cluster machines whether meets the requirements.
@@ -825,6 +832,10 @@ func (t *TKE) auditEnabled() bool {
 	return t.Para.Config.Audit != nil &&
 		t.Para.Config.Audit.ElasticSearch != nil &&
 		t.Para.Config.Audit.ElasticSearch.Address != ""
+}
+
+func (t *TKE) businessEnabled() bool {
+	return t.Para.Config.Business != nil
 }
 
 func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
@@ -971,10 +982,11 @@ func (t *TKE) do() {
 		t.progress.Hosts = append(t.progress.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
 	}
 
-	t.progress.Servers = t.servers
 	if t.Para.Config.HA != nil {
 		t.progress.Servers = append(t.progress.Servers, t.Para.Config.HA.VIP())
 	}
+	t.progress.Servers = append(t.progress.Servers, t.servers...)
+
 	t.log.Infof("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
 }
 
@@ -1305,6 +1317,9 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 	if t.auditEnabled() {
 		providerConfig.Audit.Address = t.determineGatewayHTTPSAddress()
 	}
+	if t.businessEnabled() {
+		providerConfig.Business.Enabled = true
+	}
 	providerConfig.PlatformAPIClientConfig = "conf/tke-platform-config.yaml"
 	// todo using ingress to expose authz service for ha.(
 	//  users do not known nodeport when assigned vport in third party loadbalance)
@@ -1350,6 +1365,10 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 		{
 			Name: "keepalived-manifests",
 			File: baremetalconstants.ManifestsDir + "/keepalived/*",
+		},
+		{
+			Name: "metrics-server-manifests",
+			File: baremetalconstants.ManifestsDir + "/metrics-server/*",
 		},
 	}
 	for _, one := range configMaps {
@@ -1414,7 +1433,7 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 		"EnableRegistry":   t.Para.Config.Registry.TKERegistry != nil,
 		"EnableAuth":       t.Para.Config.Auth.TKEAuth != nil,
 		"EnableMonitor":    t.Para.Config.Monitor != nil,
-		"EnableBusiness":   t.Para.Config.Business != nil,
+		"EnableBusiness":   t.businessEnabled(),
 		"EnableLogagent":   t.Para.Config.Logagent != nil,
 		"EnableAudit":      t.auditEnabled(),
 	}
@@ -1450,6 +1469,7 @@ func (t *TKE) installTKELogagentAPI(ctx context.Context) error {
 		"Username":       t.Para.Config.Auth.TKEAuth.Username,
 		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
 		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":    t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1521,6 +1541,7 @@ func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
 		"NodePort":         constants.AuthzWebhookNodePort,
+		"EnableAudit":      t.auditEnabled(),
 	}
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-auth-api/*.yaml", option)
 	if err != nil {
@@ -1676,6 +1697,7 @@ func (t *TKE) installTKEBusinessAPI(ctx context.Context) error {
 		"SyncProjectsWithNamespaces": t.Config.SyncProjectsWithNamespaces,
 		"EnableAuth":                 t.Para.Config.Auth.TKEAuth != nil,
 		"EnableRegistry":             t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":                t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1737,9 +1759,10 @@ func (t *TKE) installInfluxDB(ctx context.Context) error {
 
 func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":   t.Config.Replicas,
-		"Image":      images.Get().TKEMonitorAPI.FullName(),
-		"EnableAuth": t.Para.Config.Auth.TKEAuth != nil,
+		"Replicas":    t.Config.Replicas,
+		"Image":       images.Get().TKEMonitorAPI.FullName(),
+		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"EnableAudit": t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1783,7 +1806,7 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 	params := map[string]interface{}{
 		"Replicas":                t.Config.Replicas,
 		"Image":                   images.Get().TKEMonitorController.FullName(),
-		"EnableBusiness":          t.Para.Config.Business != nil,
+		"EnableBusiness":          t.businessEnabled(),
 		"RegistryDomain":          t.Para.Config.Registry.Domain(),
 		"RegistryNamespace":       t.Para.Config.Registry.Namespace(),
 		"MonitorStorageType":      "",
@@ -1841,9 +1864,10 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 
 func (t *TKE) installTKENotifyAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":   t.Config.Replicas,
-		"Image":      images.Get().TKENotifyAPI.FullName(),
-		"EnableAuth": t.Para.Config.Auth.TKEAuth != nil,
+		"Replicas":    t.Config.Replicas,
+		"Image":       images.Get().TKENotifyAPI.FullName(),
+		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"EnableAudit": t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1891,6 +1915,7 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 		"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
 		"EnableAuth":    t.Para.Config.Auth.TKEAuth != nil,
 		"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
+		"EnableAudit":   t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1912,6 +1937,11 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 }
 
 func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
+	if !t.docker.Healthz() {
+		t.log.Info("Actively exit in order to reconnect to the docker service")
+		os.Exit(1)
+	}
+
 	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain(), File: "hosts"}
 	err := localHosts.Set(t.servers[0])
 	if err != nil {
@@ -1963,7 +1993,7 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		svcs = append(svcs, "tke-auth-api")
 	}
-	if t.Para.Config.Business != nil {
+	if t.businessEnabled() {
 		svcs = append(svcs, "tke-business-api")
 	}
 	if t.Para.Config.Monitor != nil {

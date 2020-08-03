@@ -1,0 +1,22 @@
+# local registry and influxdb data dir init
+
+# local registry data dir init
+- name: local registry data dir init
+  shell: if [ ! -L "/storage" ]; then \
+           if [ ! -d "/storage"  ]; then \
+             mkdir -p /data/storage && ln -s /data/storage /storage ; \
+           fi \
+         fi 
+  when: inventory_hostname == groups['masters'][0]
+  tags: registry_influxdb_init
+
+# influxdb data dir init
+- name: influxdb data dir init
+  shell: if [ ! -L "/var/lib/influxdb" ]; then \
+           if [ ! -d "/var/lib/influxdb"  ]; then \
+             mkdir -p /data/influxdb && ln -s /data/influxdb /var/lib/influxdb ; \
+           fi \
+         fi
+  when: inventory_hostname == groups['masters'][0]
+  tags: registry_influxdb_init
+

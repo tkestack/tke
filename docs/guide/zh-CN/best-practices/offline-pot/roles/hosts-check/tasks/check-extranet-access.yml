@@ -1,0 +1,31 @@
+# check  whether can access out server of the Internet.
+
+# set  switch facts
+- name: set check_ex_net facts
+  set_fact: check_ex_net = "{{ check_ex_net }}"
+  tags: check_access_internet
+
+# check out servier domain1 access
+- name: check access out server domain1 detail
+  uri:
+    url: "https://{{ out_ser_domain1 }}"
+    timeout: 5
+  ignore_errors: yes
+  tags: check_access_internet
+  
+
+# check out server domain2 access
+- name: check access out server domain2 detail
+  uri:
+    url: "http://{{ out_ser_domain2 }}"
+    timeout: 5
+  ignore_errors: yes
+  tags: check_access_internet
+
+# check www.baidu.com access
+- name: check access www.baidu.com detail
+  uri:
+    url: https://www.baidu.com
+    timeout: 5
+  ignore_errors: yes
+  tags: check_access_internet

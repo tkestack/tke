@@ -5,7 +5,6 @@ go 1.12
 replace (
 	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
-	github.com/dovics/domain-role-manager => github.com/amasser/domain-role-manager v0.0.0-20200325101749-a44f9c315081
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.2.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
@@ -24,7 +23,6 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7
-	github.com/dovics/domain-role-manager v0.0.0-20200325101749-a44f9c315081
 	github.com/emicklei/go-restful v2.11.1+incompatible
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.7
@@ -57,7 +55,7 @@ require (
 	github.com/prometheus/client_golang v1.4.0
 	github.com/prometheus/common v0.9.1
 	github.com/rs/cors v1.6.0
-	github.com/segmentio/ksuid v1.0.2
+	github.com/segmentio/ksuid v1.0.3
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.0.0

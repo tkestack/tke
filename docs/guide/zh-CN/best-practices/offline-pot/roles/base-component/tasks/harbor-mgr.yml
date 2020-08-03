@@ -1,0 +1,99 @@
+# deploy and remove harbor 
+
+# create deploy harbor dir
+- name: 
+  shell: (ls /data || mkdir -p /data)
+  when: inventory_hostname == groups['installer'][0]
+  tags: dpl_harbor
+
+# copy harbor install pkg
+- name: copy harbor install pkg
+  copy:
+    src: "{{ dpl_dir }}-tgz/harbor.20200525103320.tar.gz"
+    dest: /data/
+  when: inventory_hostname == groups['installer'][0]
+  tags: dpl_harbor
+
+# unzip harbor install pkg 
+- name: unzip harbor install pkg
+  shell: if [ -f "/data/harbor.20200525103320.tar.gz" ]; then \
+           tar -zxf /data/harbor.20200525103320.tar.gz -C /data/ ; \
+         fi
+  when: inventory_hostname == groups['installer'][0]
+  tags: dpl_harbor
+
+# generate harbor's config
+- name: generate harbor's config
+  template:
+    src: templates/harbor/harbor-hosts.j2
+    dest: "/data/harbor/hosts"
+  when: inventory_hostname == groups['installer'][0]
+  tags: dpl_harbor
+
+# remove harbor install pkg
+- name: remove harbor install pkg
+  shell: if [ -f "/data/harbor.20200525103320.tar.gz" ]; then \
+           rm -f /data/harbor.20200525103320.tar.gz ; \
+         fi
+  when: inventory_hostname == groups['installer'][0]
+  tags: dpl_harbor
+
+# deploy harbor 
+- name: deploy harbor
+  shell: if [ -f "/data/harbor/harbor-install.sh" ]; then \
+           cd /data/harbor/ && sh harbor-install.sh ; \
+         else \
+           echo "harbor install script not exist, please check !!!" && exit 1 ; \
+         fi
+  when: inventory_hostname == groups['installer'][0]
+  tags: dpl_harbor
+
+# mkdir registry cert's dir
+- name: mkdir registry cert's dir
+  shell: mkdir -p '/etc/docker/certs.d/{{ registry_domain }}:{{ harbor_https }}'
+  when: inventory_hostname in groups['masters'] or inventory_hostname in groups['workers']
+  tags: dpl_harbor
+
+# issue registry crt
+- name: issue registry crt
+  copy:
+    src: "/data/harbor/certs/{{ item }}"
+    dest: '/etc/docker/certs.d/{{ registry_domain }}:{{ harbor_https }}/{{ item }}'
+  with_items:
+    - "registry.tke.com.cert"
+    - "registry.tke.com.key"
+    - "ca.crt"
+  when: inventory_hostname in groups['masters'] or inventory_hostname in groups['workers']
+  tags: dpl_harbor
+
+# remove harbor 
+- name: remove harbor
+  shell: if [ -f "/data/harbor/harbor-install.sh" ]; then \
+           cd /data/harbor/ && sh harbor-install.sh -f del_harbor ; \
+           cd /data/ && rm -rf /data/harbor && rm -rf {{ harbor_data_volume }} ; \
+         else \
+           echo "harbor-install.sh script not exist, please check !!!" && exit 1 ; \
+         fi
+  when: inventory_hostname == groups['installer'][0]
+  tags: del_harbor
+
+# get harbor listen status
+- name: get harbor listen status
+  shell: if [ `ss -nat -l | grep :{{ harbor_https }} | wc -l` -gt 0 ]; then echo "true"; else echo "false";fi
+  register: harbor_listen_status 
+  when: inventory_hostname in groups['installer']
+  tags: harbor_health_check
+
+# harbor health
+- name: harbor health
+  debug:
+    msg: "Info: {{ inventory_hostname }}'s harbor health."
+  when: inventory_hostname in groups['installer']  and harbor_listen_status.stdout == "true"
+  tags: harbor_health_check
+
+# harbor not health
+- name: harbor not health
+  debug:
+    msg: "Warning: {{ inventory_hostname }}'s harbor not health, please check!!"
+  when: inventory_hostname in groups['installer']  and harbor_listen_status.stdout == "false"
+  tags: harbor_health_check

@@ -1,0 +1,35 @@
+# install stress tools
+
+# set facts
+
+- name: set stress_perfor switch facts
+  set_fact: stress_perfor = "{{ stress_perfor }}"
+  tags: install_stress_tools
+
+# install iperf tools
+- name: install iperf tools
+  shell: yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y iperf
+  ignore_errors: yes
+  when: stress_perfor == 'true' and ansible_distribution == 'CentOS'
+  tags: install_stress_tools
+
+# install fio dep
+- name: install fio dep
+  shell: yum --disablerepo=\* --enablerepo=offline-yum install -y libpmem-1.1-1.el7.x86_64
+  ignore_errors: yes
+  when: stress_perfor == 'true' and ansible_distribution == 'CentOS'
+  tags: install_stress_tools
+
+# install fio tools
+- name: install fio tools
+  shell: yum --disablerepo=\* --enablerepo=offline-yum install -y fio
+  ignore_errors: yes
+  when: stress_perfor == 'true' and ansible_distribution == 'CentOS'
+  tags: install_stress_tools
+
+# install sysbench tools
+- name: install sysbench tools
+  shell: yum --disablerepo=\* --enablerepo=offline-yum install -y sysbench
+  ignore_errors: yes
+  when: stress_perfor == 'true' and ansible_distribution == 'CentOS'
+  tags: install_stress_tools

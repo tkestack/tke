@@ -1,0 +1,443 @@
+#!/bin/bash
+# Author: yhchen
+set -e
+
+BASE_DIR=$(cd `dirname $0` && pwd)
+cd $BASE_DIR
+
+if [ "x$1" == "x" ];then
+  echo 'please input a parameter! for call func!'
+  exit 1
+else
+  CALL_FUN=$1
+fi
+
+# deploy nginx-ingress
+dpl_nginx_ingress(){
+  echo "###### deploy nginx ingress start ######"
+  # deploy nginx-ingress
+  if [ -f '/data/helms/nginx-ingress/values.yaml' ]; then
+    if [ `kubectl get ns | grep pot | wc -l` -eq 0 ]; then
+      kubectl create ns pot
+    fi
+    (helm list -n pot | grep nginx-ingress) || (cd /data/helms/ && \
+     helm install -n pot  nginx-ingress -f ./nginx-ingress/values.yaml ./nginx-ingress)
+  else
+    echo 'nginx-ingress had deployed!!!'
+  fi
+  echo "###### deploy nginx ingress end ######"
+}
+
+# remove nginx-ingress
+del_nginx_ingress(){
+  # remove nginx-ingress
+  if [ `helm list -n pot | grep nginx-ingress | wc -l` -gt 0 ]; then
+    helm uninstall -n pot `helm list -n pot | \
+    grep nginx-ingress | awk '{print $1}'`
+  fi
+}
+
+# deploy kafka
+dpl_kafka(){
+  echo "###### deploy kafka start ######"
+  # create storage class
+  if [ `kubectl get storageclass | grep local-storage | wc -l` -eq 0 ]; then
+    if [ -f '/data/tke-yamls/kafka/local-storage.yaml' ]; then
+      kubectl apply -f /data/tke-yamls/kafka/local-storage.yaml
+    else
+      echo 'local-storage.yaml not exist,please check!!!' && exit 1
+    fi
+  fi
+
+  # create ns
+  if [ `kubectl get ns | grep pot | wc -l` -eq 0 ]; then
+    kubectl create ns pot
+  fi
+  # create kafka pv
+  if [ -f '/data/tke-yamls/kafka/kafka-local-pv.yaml' ]; then
+    kubectl get pv -n pot | grep kafka || kubectl apply -f /data/tke-yamls/kafka/kafka-local-pv.yaml -n pot
+  else
+    echo 'Dose not has kafka-local-pv.yaml,please check!'
+  fi
+  # create zk pv
+  if [ -f '/data/tke-yamls/kafka/zk-local-pv.yaml' ]; then
+    kubectl get pv -n pot | grep zookeeper || kubectl apply -f /data/tke-yamls/kafka/zk-local-pv.yaml -n pot
+  else
+    echo 'Dose not has zk-local-pv.yaml,please check!'
+  fi
+  # deploy kafka and zk
+  if [ -f '/data/helms/wx-kafka/values/{{ app_env_flag }}.yaml' ]; then
+    (helm2 list --namespace pot | grep kafka) || (cd /data/helms/ && \
+     helm2 install --namespace pot --name kafka -f ./wx-kafka/values/{{ app_env_flag }}.yaml ./wx-kafka)
+  else
+    echo 'kafka had deployed!!!'
+  fi
+  # deploy kafka manager
+  if [ -f '/data/helms/wx-kafka-manager/values/{{ app_env_flag }}.yaml' ]; then
+    (helm2 list --namespace pot | grep kafka-manager) || (cd /data/helms/ && \
+     helm2 install --namespace pot \
+     --name kafka-manager -f ./wx-kafka-manager/values/{{ app_env_flag }}.yaml ./wx-kafka-manager)
+  else
+    echo 'kafka manager had deployed!!!'
+  fi
+  echo "###### deploy kafka end ######"
+}
+
+# remove kafka
+del_kafka(){
+  echo "###### remove kafka start ######"
+  # remove kafka
+  if [ `helm2 list --namespace pot | grep kafka | grep -v kafka-manager | wc -l` -gt 0 ]; then
+    helm2 del --purge  \
+    `helm2 list --namespace pot | grep kafka | grep -v kafka-manager | awk '{print $1}'`
+  fi
+  # remove kafka pvc and pv
+  if [ `kubectl get pvc -n pot | grep kafka | wc -l` -gt 0 ]; then
+    for pvc in `kubectl get pvc -n pot | grep kafka | awk '{print $1}'`; do
+      kubectl delete pvc $pvc -n pot
+    done
+  fi
+  if [ `kubectl get pv -n pot | grep kafka | wc -l` -gt 0 ]; then
+    for pv in `kubectl get pv -n pot | grep kafka | awk '{print $1}'`;do
+      kubectl delete pv $pv -n pot
+    done
+  fi
+  # remove kafka manager
+  if [ `helm2 list --namespace pot | grep kafka-manager | wc -l` -gt 0 ]; then
+    helm2 del --purge  \
+    `helm2 list --namespace pot | grep kafka-manager | awk '{print $1}'`
+  fi
+  echo "###### remove kafka end ######"
+}
+
+# deploy elk
+dpl_elk(){
+  echo "###### deploy elk start ######"
+  # create storage class
+  if [ `kubectl get storageclass | grep local-storage | wc -l` -eq 0 ]; then
+    if [ -f '/data/tke-yamls/elk/local-storage.yaml' ]; then
+      kubectl apply -f /data/tke-yamls/elk/local-storage.yaml
+    else
+      echo 'local-storage.yaml not exist,please check!!!' && exit 1
+    fi
+  fi
+
+  # create ns
+  if [ `kubectl get ns | grep pot | wc -l` -eq 0 ]; then
+    kubectl create ns pot
+  fi
+  # create es pv
+  if [ -f '/data/tke-yamls/elk/es-local-pv.yaml' ]; then
+    kubectl get pv -n pot | grep data-es || kubectl apply -f /data/tke-yamls/elk/es-local-pv.yaml -n pot
+  else
+    echo 'Dose not has es-local-pv.yaml,please check!'
+  fi
+  # create secret
+  if [ -f '/data/tke-yamls/elk/es-base-auth-secret.yaml' ]; then
+    kubectl get secret -n pot | grep elastic-credentials || kubectl apply -f /data/tke-yamls/elk/es-base-auth-secret.yaml -n pot
+  else
+    echo 'Dose not has es-base-auth-secret.yaml,please check!'
+  fi
+  if [ -f '/data/tke-yamls/elk/es-crt-secret.yaml' ]; then
+    kubectl get secret -n pot | grep elastic-certificates || kubectl apply -f /data/tke-yamls/elk/es-crt-secret.yaml -n pot
+  else
+    echo 'Dose not has es-crt-secret.yaml,please check!'
+  fi
+  if [ -f '/data/tke-yamls/elk/kibana-cert-secret.yaml' ]; then
+    kubectl get secret -n pot | grep elastic-certificate-pem || kubectl apply -f /data/tke-yamls/elk/kibana-cert-secret.yaml -n pot
+  else
+    echo 'Dose not has kibana-cert-secret.yaml,please check!'
+  fi
+  if [ -f '/data/tke-yamls/elk/kibana.tke.com-secret.yaml' ]; then
+    kubectl get secret -n pot | grep kibana.tke.com || kubectl apply -f /data/tke-yamls/elk/kibana.tke.com-secret.yaml -n pot
+  else
+    echo 'Dose not has kibana.tke.com-secret.yaml,please check!'
+  fi
+  # deploy elasticsearch
+  if [ -f '/data/helms/elasticsearch/values.yaml' ]; then
+    (helm2 list --namespace pot | grep elasticsearch) || (cd /data/helms/ && \
+     helm2 install --namespace pot --name elasticsearch -f ./elasticsearch/values.yaml ./elasticsearch)
+  else
+    echo 'elasticsearch had deployed!!!'
+  fi
+  # deploy kibana
+  if [ -f '/data/helms/kibana/values.yaml' ]; then
+    (helm2 list --namespace pot | grep kibana) || (cd /data/helms/ && \
+     helm2 install --namespace pot \
+     --name kibana -f ./kibana/values.yaml ./kibana)
+  else
+    echo 'kibana had deployed!!!'
+  fi
+  # deploy filebeat
+  if [ -f '/data/tke-yamls/elk/filebeat-k8s.yaml' ]; then
+    if [ `kubectl get pods -n pot | grep  filebeat | wc -l` -eq 0 ]; then
+      kubectl apply -f /data/tke-yamls/elk/filebeat-k8s.yaml -n pot
+    else
+      echo 'filebeat had deployed!!!'
+    fi
+  fi
+  # deploy logstash
+  if [ -f '/data/tke-yamls/elk/logstash.yaml' ]; then
+    if [ `kubectl get pods -n pot | grep  logstash | wc -l` -eq 0 ]; then
+      kubectl apply -f /data/tke-yamls/elk/logstash.yaml -n pot
+    else
+      echo 'logstash had deployed!!!'
+    fi
+  fi
+  echo "###### deploy elk end ######"
+}
+
+# remove elk
+del_elk(){
+  echo "###### remove elk start ######"
+  # remove filebeat
+  if [ -f '/data/tke-yamls/elk/filebeat-k8s.yaml' ]; then
+    if [ `kubectl get pods -n pot | grep  filebeat | wc -l` -gt 0 ]; then
+      kubectl delete -f /data/tke-yamls/elk/filebeat-k8s.yaml -n pot
+    fi
+  fi
+  # remove logstash
+  if [ -f '/data/tke-yamls/elk/logstash.yaml' ]; then
+    if [ `kubectl get pods -n pot | grep  logstash | wc -l` -gt 0 ]; then
+      kubectl delete -f /data/tke-yamls/elk/logstash.yaml -n pot
+    fi
+  fi
+  # remove kibana
+  if [ `helm2 list --namespace pot | grep kibana | wc -l` -gt 0 ]; then
+    helm2 del --purge  \
+    `helm2 list --namespace pot | grep kibana | awk '{print $1}'`
+  fi
+  # remove elasticsearch
+  if [ `helm2 list --namespace pot | grep elasticsearch | wc -l` -gt 0 ]; then
+    helm2 del --purge  \
+    `helm2 list --namespace pot | grep elasticsearch | awk '{print $1}'`
+  fi
+  # remove es pvc and pv
+  if [ `kubectl get pvc -n pot | grep elasticsearch | wc -l` -gt 0 ]; then
+    for pvc in `kubectl get pvc -n pot | grep elasticsearch | awk '{print $1}'`; do
+      kubectl delete pvc $pvc -n pot
+    done
+  fi
+  if [ `kubectl get pv -n pot | grep data-es | wc -l` -gt 0 ]; then
+    for pv in `kubectl get pv -n pot | grep data-es | awk '{print $1}'`;do
+      kubectl delete pv $pv -n pot
+    done
+  fi
+  # remove secret
+  if [ -f '/data/tke-yamls/elk/es-base-auth-secret.yaml' ]; then
+    if [ `kubectl get secret -n pot | grep elastic-credentials | wc -l` -gt 0 ];then
+      kubectl delete -f /data/tke-yamls/elk/es-base-auth-secret.yaml -n pot
+    fi
+  else
+    echo 'Dose not has es-base-auth-secret.yaml,please check!'
+  fi
+  if [ -f '/data/tke-yamls/elk/es-crt-secret.yaml' ]; then
+    if [ `kubectl get secret -n pot | grep elastic-certificates | wc -l` -gt 0 ];then
+      kubectl delete -f /data/tke-yamls/elk/es-crt-secret.yaml -n pot
+    fi
+  else
+    echo 'Dose not has es-crt-secret.yaml,please check!'
+  fi
+  if [ -f '/data/tke-yamls/elk/kibana-cert-secret.yaml' ]; then
+    if [ `kubectl get secret -n pot | grep elastic-certificate-pem | wc -l` -gt 0 ];then
+      kubectl delete -f /data/tke-yamls/elk/kibana-cert-secret.yaml -n pot
+    fi
+  else
+    echo 'Dose not has kibana-cert-secret.yaml,please check!'
+  fi
+  if [ -f '/data/tke-yamls/elk/kibana.tke.com-secret.yaml' ]; then
+    if [ `kubectl get secret -n pot | grep kibana.tke.com | wc -l` -gt 0 ];then
+      kubectl delete -f /data/tke-yamls/elk/kibana.tke.com-secret.yaml -n pot
+    fi
+  else
+    echo 'Dose not has kibana.tke.com-secret.yaml,please check!'
+  fi
+  echo "###### remove elk end ######"
+}
+
+# deploy minio
+dpl_minio(){
+  echo "###### deploy minio start ######"
+  # create storage class
+  if [ `kubectl get storageclass | grep local-storage | wc -l` -eq 0 ]; then
+    if [ -f '/data/tke-yamls/minio/local-storage.yaml' ]; then
+      kubectl apply -f /data/tke-yamls/minio/local-storage.yaml
+    else
+      echo 'local-storage.yaml not exist,please check!!!' && exit 1
+    fi
+  fi
+
+  # create ns
+  if [ `kubectl get ns | grep pot | wc -l` -eq 0 ]; then
+    kubectl create ns pot
+  fi
+  # create minio pv
+  if [ -f '/data/tke-yamls/minio/minio-local-pv.yaml' ]; then
+    kubectl get pv -n pot | grep minio || kubectl apply -f /data/tke-yamls/minio/minio-local-pv.yaml -n pot
+  else
+    echo 'Dose not has minio-local-pv.yaml,please check!'
+  fi
+  # deploy minio
+  if [ -f '/data/helms/wx-minio/values/{{ app_env_flag }}.yaml' ]; then
+    (helm2 list --namespace pot | grep minio) || (cd /data/helms/ && \
+     helm2 install --namespace pot --name minio -f ./wx-minio/values/{{ app_env_flag }}.yaml ./wx-minio)
+  else
+    echo 'minio had deployed!!!'
+  fi
+  echo "###### deploy minio end ######"
+}
+
+# remove minio
+del_minio(){
+  echo "###### remove minio start ######"
+  # remove minio
+  if [ `helm2 list --namespace pot | grep minio | wc -l` -gt 0 ]; then
+    helm2 del --purge  \
+    `helm2 list --namespace pot | grep minio | awk '{print $1}'`
+  fi
+  # remove minio pvc and pv
+  if [ `kubectl get pvc -n pot | grep minio | wc -l` -gt 0 ]; then
+    for pvc in `kubectl get pvc -n pot | grep minio | awk '{print $1}'`; do
+      kubectl delete pvc $pvc -n pot
+    done
+  fi
+  if [ `kubectl get pv -n pot | grep minio | wc -l` -gt 0 ]; then
+    for pv in `kubectl get pv -n pot | grep minio | awk '{print $1}'`;do
+      kubectl delete pv $pv -n pot
+    done
+  fi
+  echo "###### remove minio end ######"
+}
+
+# deploy sg-ik-es
+dpl_sgikes(){
+  echo "###### deploy sg-ik-es start ######"
+  # create storage class
+  if [ `kubectl get storageclass | grep local-storage | wc -l` -eq 0 ]; then
+    if [ -f '/data/tke-yamls/sgikes/local-storage.yaml' ]; then
+      kubectl apply -f /data/tke-yamls/sgikes/local-storage.yaml
+    else
+      echo 'local-storage.yaml not exist,please check!!!' && exit 1
+    fi
+  fi
+
+  # create ns
+  if [ `kubectl get ns | grep pot | wc -l` -eq 0 ]; then
+    kubectl create ns pot
+  fi
+  # create sgikes pv
+  if [ -f '/data/tke-yamls/sgikes/sg-ik-es-master-pv.yaml' ]; then
+    kubectl get pv -n pot | grep sg-ik-es-master || kubectl apply -f /data/tke-yamls/sgikes/sg-ik-es-master-pv.yaml -n pot
+  else
+    echo 'Dose not has sg-ik-es-master-pv.yaml,please check!'
+  fi
+  if [ -f '/data/tke-yamls/sgikes/sg-ik-es-data-pv.yaml' ]; then
+    kubectl get pv -n pot | grep data-sg-ik-es || kubectl apply -f /data/tke-yamls/sgikes/sg-ik-es-data-pv.yaml -n pot
+  else
+    echo 'Dose not has sg-ik-es-data-pv.yaml,please check!'
+  fi
+
+  # deploy sgikes
+  if [ -f '/data/helms/sg-helm-ik/values.yaml' ]; then
+    (helm2 list --namespace pot | grep sgikes) || (cd /data/helms/ && \
+     helm2 install --namespace pot --name sgikes -f ./sg-helm-ik/values.yaml ./sg-helm-ik)
+  else
+    echo 'sgikes had deployed!!!'
+  fi
+  echo "###### deploy sg-ik-es end ######"
+}
+
+# remove sgikes
+del_sgikes(){
+  echo "###### remove sg-ik-es start ######"
+  # remove sgikes
+  if [ `helm2 list --namespace pot | grep sgikes | wc -l` -gt 0 ]; then
+    helm2 del --purge  \
+    `helm2 list --namespace pot | grep sgikes | awk '{print $1}'`
+  fi
+  # remove sgikes pvc and pv
+  if [ `kubectl get pvc -n pot | grep sgikes | wc -l` -gt 0 ]; then
+    for pvc in `kubectl get pvc -n pot | grep sgikes | awk '{print $1}'`; do
+      kubectl delete pvc $pvc -n pot
+    done
+  fi
+  if [ `kubectl get pv -n pot | grep sg-ik-es | wc -l` -gt 0 ]; then
+    for pv in `kubectl get pv -n pot | grep sg-ik-es | awk '{print $1}'`;do
+      kubectl delete pv $pv -n pot
+    done
+  fi
+  if [ `kubectl get secret -n pot | grep sgikes | wc -l` -gt 0 ]; then
+    for s in `kubectl get secret -n pot | grep sgikes | awk '{print $1}'`;
+    do
+      kubectl delete secret ${s} -n pot
+    done
+  fi
+  echo "###### remove sg-ik-es end ######"
+}
+
+# deploy redis cluster
+dpl_redis_cluster(){
+  echo "###### deploy redis cluster start ######"
+  # create storage class
+  if [ `kubectl get storageclass | grep local-storage | wc -l` -eq 0 ]; then
+    if [ -f '/data/tke-yamls/redis/local-storage.yaml' ]; then
+      kubectl apply -f /data/tke-yamls/redis/local-storage.yaml
+    else
+      echo 'local-storage.yaml not exist,please check!!!' && exit 1
+    fi
+  fi
+
+  # create ns
+  if [ `kubectl get ns | grep pot | wc -l` -eq 0 ]; then
+    kubectl create ns pot
+  fi
+  # create redis pv when need persistence
+  if [ -f '/data/tke-yamls/redis/redis-cluster-local-pv.yaml' ]; then
+    kubectl get pv -n pot | grep redis || kubectl apply -f /data/tke-yamls/redis/redis-cluster-local-pv.yaml -n pot
+  else
+    echo 'Dose not has redis-cluster-local-pv.yaml,please check!'
+  fi
+
+  # deploy redis cluster
+  if [ -f '/data/helms/redis-cluster/values.yaml' ]; then
+    (helm list -n pot | grep redis-cluster) || (cd /data/helms/ && \
+     helm install  redis-cluster -f ./redis-cluster/values.yaml ./redis-cluster -n pot)
+  else
+    echo 'redis-cluster had deployed!!!'
+  fi
+  # deploy redis cluster client
+  if [ -f "/data/tke-yamls/redis/redis-cluster-client.yaml" ]; then
+    kubectl apply -f /data/tke-yamls/redis/redis-cluster-client.yaml -n pot
+  fi
+  echo "###### deploy redis cluster end ######"
+}
+
+# remove redis cluster
+del_redis_cluster(){
+  echo "###### remove redis cluster start ######"
+  # remove sgikes
+  if [ `helm list -n pot | grep redis-cluster | wc -l` -gt 0 ]; then
+    helm delete `helm list -n pot | grep redis-cluster | awk '{print $1}'` -n pot
+  fi
+  # remove redis cluster pvc and pv
+  if [ `kubectl get pvc -n pot | grep redis-data | wc -l` -gt 0 ]; then
+    for pvc in `kubectl get pvc -n pot | grep redis-data | awk '{print $1}'`; do
+      kubectl delete pvc $pvc -n pot
+    done
+  fi
+  if [ `kubectl get pv -n pot | grep redis | wc -l` -gt 0 ]; then
+    for pv in `kubectl get pv -n pot | grep redis | awk '{print $1}'`;do
+      kubectl delete pv $pv -n pot
+    done
+  fi
+  # remove redis cluster client
+  if [ -f "/data/tke-yamls/redis/redis-cluster-client.yaml" ]; then
+    kubectl delete -f /data/tke-yamls/redis/redis-cluster-client.yaml -n pot || echo "redis cluster client not deploy"
+  fi
+  echo "###### remove redis cluster #####"
+}
+
+main(){
+    $CALL_FUN
+}
+main

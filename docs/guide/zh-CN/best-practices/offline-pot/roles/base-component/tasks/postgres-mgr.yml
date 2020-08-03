@@ -1,0 +1,107 @@
+# deploy postgres and remove postgres
+
+# set facts
+- name: set deploy_postgres facts
+  set_fact: deploy_postgres = "{{ deploy_postgres }}"
+  tags: dpl_postgres
+
+- name: set deploy_business facts
+  set_fact: deploy_business = "{{ deploy_business }}"
+  tags: dpl_postgres
+
+# create  postgres data dir
+- name: create  postgres data dir
+  shell: ls "{{ POSTGRES_DATA_DIR }}" || mkdir -p "{{ POSTGRES_DATA_DIR }}"
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1]
+  tags: dpl_postgres
+
+# create postgres mgr dir
+- name: create postgres mgr dir
+  shell: ls /data/postgres-mgr || mkdir -p /data/postgres-mgr
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1]
+  tags: dpl_postgres
+
+# copy postgres install script
+- name: copy postgres install script
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+    mode: "0755"
+  with_items:
+    - "templates/postgres/postgres_start.sh.j2:/data/postgres-mgr/postgres_start.sh"
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1]
+  tags: dpl_postgres
+
+# install psql cli
+- name: install psql cli
+  shell: yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y postgresql-contrib
+  ignore_errors: yes
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1] and ansible_distribution == 'CentOS'
+  tags: dpl_postgres
+
+# install docker 
+- name: install docker 
+  shell: docker ps || (yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y docker-ce docker-ce-cli containerd.io && systemctl start docker && systemctl enable docker)
+  ignore_errors: yes
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1] and ansible_distribution == 'CentOS'
+  tags: dpl_postgres
+
+# get deploy postgres script stat
+- name: get deploy postgres script stat
+  stat:
+    path: /data/postgres-mgr/postgres_start.sh
+  register: dpl_postgres_script
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1]
+  tags: dpl_postgres
+
+# start postgres 
+- name: start postgres 
+  shell: sh /data/postgres-mgr/postgres_start.sh
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1] and dpl_postgres_script.stat.exists == True
+  tags: dpl_postgres
+
+# init postgres
+- name: init postgres
+  shell: sleep 15 && \
+         PGPASSWORD={{ POSTGRES_PASSWORD }} psql -h 0.0.0.0 -U postgres -c "CREATE DATABASE kong OWNER postgres;" && \
+         PGPASSWORD={{ POSTGRES_PASSWORD }} psql -h 0.0.0.0 -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE kong to postgres;" 
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1] and deploy_business == 'true'
+  tags: dpl_postgres
+
+# set deploy_postgres facts for remove
+- name: set deploy_postgres facts for remove
+  set_fact: deploy_postgres = "{{ deploy_postgres }}"
+  tags: del_postgres
+
+# remove postgres
+- name: remove postgres
+  shell: if [ `docker ps | grep postgres | wc -l` -eq 1 ]; then docker rm -f postgres;fi ; \
+         if [ -d "{{ POSTGRES_DATA_DIR }}" ]; then rm -rf "{{ POSTGRES_DATA_DIR }}"; fi
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1]
+  tags: del_postgres
+
+# set deploy_postgres facts for for health check
+- name: set deploy_postgres facts for for health check
+  set_fact: deploy_postgres = "{{ deploy_postgres }}"
+  tags: pgsql_health_check
+
+# get postgres status
+- name: get postgres status
+  shell: if [ `netstat -plnt | grep postgres | wc -l` -gt 0 ]; then echo "true"; else echo "false";fi
+  register: pgsql_listen_status
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1]
+  tags: pgsql_health_check
+
+# postgres health 
+- name: postgres health 
+  debug:
+    msg: "Info: {{ inventory_hostname }}'s postgres health."
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1] and pgsql_listen_status.stdout == "true"
+  tags: pgsql_health_check
+
+# postgres not health 
+- name: postgres not health
+  debug:
+    msg: "Warning: {{ inventory_hostname }}'s postgres not health, please check!!"
+  when: deploy_postgres == 'true' and inventory_hostname == groups['db'][1] and pgsql_listen_status.stdout == "false"
+  tags: pgsql_health_check

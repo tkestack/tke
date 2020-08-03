@@ -1,0 +1,135 @@
+{
+ "config": {
+  "ServerName": "tke-installer",
+  "ListenAddr": ":8080",
+  "NoUI": false,
+  "Config": "conf/tke.json",
+  "Force": false,
+  "SyncProjectsWithNamespaces": false,
+  "Replicas": {{ tke_replicas }}
+ },
+ "para": {
+  "cluster": {
+   "kind": "Cluster",
+   "apiVersion": "platform.tkestack.io/v1",
+   "metadata": {
+    "name": "global"
+   },
+   "spec": {
+    "finalizers": [
+     "cluster"
+    ],
+    "tenantID": "default",
+    "displayName": "TKE",
+    "type": "Baremetal",
+    "version": "{{ k8s_version }}",
+    "networkDevice": "{{ net_interface }}",
+    "clusterCIDR": "{{ cluster_cidr }}",
+    "dnsDomain": "cluster.local",
+    "features": {
+     "ipvs": {{ ipvs }},
+     "enableMasterSchedule": true
+    },
+    "properties": {
+     "maxClusterServiceNum": {{ max_cluster_service_num }},
+     "maxNodePodNum": {{ max_node_pod_num }}
+    },
+    "machines": [
+     {
+      "ip": "{{ groups['masters'][0] }}",
+      "port": {{ ansible_port }},
+      "username": "{{ ansible_ssh_user }}",
+      "password": "{{ ansible_ssh_pass_base64 }}"
+     }
+    ],
+    "dockerExtraArgs": {
+     "data-root": "{{ docker_data_root }}"
+    },
+    "kubeletExtraArgs": {
+     "root-dir": "{{ kubelet_root_dir }}"
+    },
+    "apiServerExtraArgs": {
+     "runtime-config": "apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
+    }
+   }
+  },
+  "Config": {
+   "basic": {
+    "username": "{{ tke_admin_user }}",
+    "password": "{{ tke_pwd_base64 }}"
+   },
+   "auth": {
+    "tke": {
+     "tenantID": "default",
+     "username": "{{ tke_admin_user }}",
+     "password": "{{ tke_pwd_base64 }}"
+    }
+   },
+   "registry": {
+    "tke": {
+     "domain": "{{ registry_domain }}",
+     "namespace": "library",
+     "username": "{{ tke_admin_user }}",
+     "password": "{{ tke_pwd_base64 }}"
+    }
+   },
+   "business": {},
+   "monitor": {
+    "influxDB": {
+     "local": {}
+    }
+   },
+   "gateway": {
+    "domain": "{{ tke_console_domain }}",
+    "cert": {
+     "selfSigned": {}
+    }
+   }
+  }
+ },
+ "cluster": {
+  "kind": "Cluster",
+  "apiVersion": "platform.tkestack.io/v1",
+  "metadata": {
+   "name": "global"
+  },
+  "spec": {
+   "finalizers": [
+    "cluster"
+   ],
+   "tenantID": "default",
+   "displayName": "TKE",
+   "type": "Baremetal",
+   "version": "{{ k8s_version }}",
+   "networkDevice": "{{ net_interface }}",
+   "clusterCIDR": "{{ cluster_cidr }}",
+   "dnsDomain": "cluster.local",
+   "features": {
+    "ipvs": {{ ipvs }},
+    "enableMasterSchedule": true
+   },
+   "properties": {
+    "maxClusterServiceNum": {{ max_cluster_service_num }},
+    "maxNodePodNum": {{ max_node_pod_num }}
+   },
+   "machines": [
+    {
+      "ip": "{{ groups['masters'][0] }}",
+      "port": {{ ansible_port }},
+      "username": "{{ ansible_ssh_user }}",
+      "password": "{{ ansible_ssh_pass_base64 }}"
+    }
+   ],
+   "dockerExtraArgs": {
+    "data-root": "{{ docker_data_root }}"
+   },
+   "kubeletExtraArgs": {
+    "root-dir": "{{ kubelet_root_dir }}"
+   },
+   "apiServerExtraArgs": {
+    "runtime-config": "apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true"
+   }
+  }
+ },
+ "step": 0
+}

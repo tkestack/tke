@@ -1,0 +1,187 @@
+# deploy sgikes and remove sgikes
+
+# set facts
+- name: set deploy_sgikes facts
+  set_fact:
+    deploy_sgikes: "{{ deploy_sgikes }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: sgikes_init
+
+# set vm.max_map_count
+- name: vm.max_map_count
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: ".*{{ item }}"
+    line: "vm.max_map_count=655360"
+    state: present
+  with_items:
+    - 'vm.max_map_count'
+  when: inventory_hostname in groups['sgikes']
+  tags: sgikes_init
+
+# enable vm.max_map_count config
+- name: enable vm.max_map_count config
+  shell: sysctl -p
+  when: inventory_hostname in groups['sgikes']
+  tags: sgikes_init
+
+# create save sgikes yaml and helms dir
+- name: create save sgikes yaml and helms dir
+  shell: (ls /data/tke-yamls/sgikes || mkdir -p /data/tke-yamls/sgikes) && \
+         (ls /data/helms || mkdir -p /data/helms)
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true
+  tags: sgikes_init
+
+# create deploy_sgikes data dir when three nodes
+- name: create  deploy_sgikes data dir when three nodes
+  shell: for i in `echo "{{ groups['sgikes'] }}"`; do \
+           if [ "{{ inventory_hostname }}" == "{{ groups['sgikes'][0] }}" ]; then \
+             mkdir -p "{{ sg_ik_es_data }}/data-0" ; mkdir -p "{{ sg_ik_es_data }}/master-0" ; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['sgikes'][1] }}" ]; then \
+             mkdir -p "{{ sg_ik_es_data }}/data-1" ; mkdir -p "{{ sg_ik_es_data }}/master-1" ; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['sgikes'][2] }}" ]; then \
+             mkdir -p "{{ sg_ik_es_data }}/data-2" ; mkdir -p "{{ sg_ik_es_data }}/master-2" ; \
+           fi; \
+         done
+  when: inventory_hostname in groups['sgikes'] and (groups['sgikes'] | length) == 3
+  tags: sgikes_init
+
+# create deploy_sgikes data dir when six nodes
+- name: create  deploy_sgikes data dir when six nodes
+  shell: for i in `echo "{{ groups['sgikes'] }}"`; do \
+           if [ "{{ inventory_hostname }}" == "{{ groups['sgikes'][0] }}" ]; then \
+             mkdir -p "{{ sg_ik_es_data }}/master-0" ; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['sgikes'][1] }}" ]; then \
+             mkdir -p "{{ sg_ik_es_data }}/master-1" ; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['sgikes'][2] }}" ]; then \
+             mkdir -p "{{ sg_ik_es_data }}/master-2" ; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['sgikes'][3] }}" ]; then \
+             mkdir -p "{{ sg_ik_es_data }}/data-0" ; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['sgikes'][4] }}" ]; then \
+             mkdir -p "{{ sg_ik_es_data }}/data-1" ; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['sgikes'][5] }}" ]; then \
+             mkdir -p "{{ sg_ik_es_data }}/data-2" ; \
+           fi; \
+         done
+  when: inventory_hostname in groups['sgikes'] and  (groups['sgikes'] | length) == 6
+  tags: sgikes_init
+
+# copy sgikes helms file to master node
+- name: copy sgikes helms file to master node
+  copy:
+    src: helms/sg-helm-ik
+    dest: /data/helms/
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true
+  tags: sgikes_init
+
+
+# generate sgikes yaml
+- name: generate sgikes yaml
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+  with_items:
+    - 'templates/sgikes/sg-ik-es-master-pv.yaml.j2:/data/tke-yamls/sgikes/sg-ik-es-master-pv.yaml'
+    - 'templates/common/local-storage.yaml.j2:/data/tke-yamls/sgikes/local-storage.yaml'
+    - 'templates/sgikes/sg-ik-values.yaml.j2:/data/helms/sg-helm-ik/values.yaml'
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true
+  tags: sgikes_init
+
+# generate sgikes for es data node yaml when three node
+- name: generate sgikes for es data node yaml when three node
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+  with_items:
+    - 'templates/sgikes/sg-ik-es-data-pv.yaml.j2:/data/tke-yamls/sgikes/sg-ik-es-data-pv.yaml'
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true and (groups['sgikes'] | length) == 3
+  tags: sgikes_init
+
+# generate sgikes for es data node yaml when six node
+- name: generate sgikes for es data node yaml when six node
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+  with_items:
+    - 'templates/sgikes/sg-ik-es-data-pv-isolate.yaml.j2:/data/tke-yamls/sgikes/sg-ik-es-data-pv.yaml'
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true and (groups['sgikes'] | length) == 6
+  tags: sgikes_init
+
+# create save deploy sgikes script dir
+- name: create save deploy sgikes script dir
+  shell: mkdir -p /data/offline-pot-scripts
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true
+  tags: sgikes_init
+
+# generate deploy sgikes script
+- name: generate deploy sgikes script
+  template:
+    src: templates/common/base-component-tools.sh.j2
+    dest: /data/offline-pot-scripts/base-component-tools.sh
+    mode: '0755'
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true
+  tags: sgikes_init
+
+# get deploy sgikes script stat
+- name: get deploy sgikes script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: sgikes_dpl_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: dpl_sgikes
+
+# deploy sgikes 
+- name: deploy sgikes
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh dpl_sgikes
+  when: inventory_hostname == groups['masters'][0] and sgikes_dpl_script.stat.exists == True
+  tags: dpl_sgikes
+
+# get remove sgikes script stat 
+- name: get remove sgikes script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: sgikes_del_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: remove_sgikes
+
+# remove sgikes
+- name: remove sgikes
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh del_sgikes
+  when: inventory_hostname == groups['masters'][0] and sgikes_del_script.stat.exists == True
+  tags: remove_sgikes
+
+# remove sgikes data 
+- name: remove sgikes data
+  shell: if [ `ls "{{ sg_ik_es_data }}" | wc -l` -gt 0 ] && [ `kubectl get pvc | grep sgikes | wc -l` -eq 0 ];then \ 
+            rm -rf "{{ sg_ik_es_data }}"; \ 
+         fi
+  when: inventory_hostname in groups['sgikes']
+  tags: remove_sgikes
+
+# set deploy_sgikes facts for health check
+- name: set deploy_sgikes facts for health check
+  set_fact:
+    deploy_sgikes: "{{ deploy_sgikes }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: sgikes_health_check
+
+# get sgikes deploy status
+- name: get sgikes deploy status
+  shell: if [ `kubectl get pods -n pot|grep sgikes|grep '1/1'|wc -l` -gt 0 ]; then echo "true"; else echo "false";fi
+  register: sgikes_dpl_status
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true
+  tags: sgikes_health_check
+
+# sgikes deploy success
+- name: sgikes deploy success
+  debug:
+    msg: "Info: sgikes deploy success."
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true and sgikes_dpl_status.stdout == "true"
+  tags: sgikes_health_check
+
+# sgikes deploy failed
+- name: sgikes deploy failed
+  debug:
+    msg: "Warning: sgikes deploy failed, please check!"
+  when: inventory_hostname == groups['masters'][0] and deploy_sgikes == true and sgikes_dpl_status.stdout == "false"
+  tags: sgikes_health_check
