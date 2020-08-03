@@ -15,7 +15,6 @@ const mapDispatchToProps = dispatch =>
   });
 
 interface ChartActionState {
-  showUsageGuideline?: boolean;
   scene?: string;
   projectID?: string;
 }
@@ -27,7 +26,6 @@ export class ActionPanel extends React.Component<RootProps, ChartActionState> {
     let { route } = props;
     let urlParams = router.resolve(route);
     this.state = {
-      showUsageGuideline: false,
       scene: urlParams['tab'] || 'all',
       projectID: ''
     };
@@ -62,14 +60,6 @@ export class ActionPanel extends React.Component<RootProps, ChartActionState> {
                 >
                   {t('新建')}
                 </Button> */}
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    this.setState({ showUsageGuideline: true });
-                  }}
-                >
-                  {t('上传指引')}
-                </Button>
                 <Segment
                   value={scene}
                   onChange={value => {
@@ -115,7 +105,6 @@ export class ActionPanel extends React.Component<RootProps, ChartActionState> {
             }
           />
         </Table.ActionPanel>
-        {this._renderUsageGuideDialog()}
       </React.Fragment>
     );
   }
@@ -132,134 +121,5 @@ export class ActionPanel extends React.Component<RootProps, ChartActionState> {
       actions.project.list.fetch();
       this.setState({ projectID: '' });
     }
-  }
-
-  private _renderUsageGuideDialog() {
-    return (
-      <TipDialog
-        isShow={this.state.showUsageGuideline}
-        width={680}
-        caption={t('Chart 上传指引')}
-        cancelAction={() => this.setState({ showUsageGuideline: false })}
-        performAction={() => this.setState({ showUsageGuideline: false })}
-      >
-        <div className="mirroring-box" style={{ marginTop: '0px' }}>
-          <ul className="mirroring-upload-list">
-            <li>
-              <p>
-                <strong>
-                  <Trans>前置条件</Trans>
-                </strong>
-              </p>
-            </li>
-            <li>
-              <p>
-                <Trans>
-                  本地安装 Helm 客户端, 更多可查看{' '}
-                  <a href="https://helm.sh/docs/intro/quickstart/" target="_blank">
-                    安装 Helm
-                  </a>
-                  .{' '}
-                </Trans>
-              </p>
-              <code>
-                <Clip target="#installHelm" className="copy-btn">
-                  <Trans>复制</Trans>
-                </Clip>
-                <p id="installHelm">{`$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | sh`}</p>
-              </code>
-            </li>
-            <li>
-              <p>
-                <Trans>本地 Helm 客户端添加 TKEStack 的 repo.</Trans>
-              </p>
-              <code>
-                <Clip target="#addTkeRepo" className="copy-btn">
-                  <Trans>复制</Trans>
-                </Clip>
-                <p id="addTkeRepo">{`helm repo add [仓库名] http://${this.props.dockerRegistryUrl.data}/chart/[模板仓库名] --username tkestack --password [访问凭证] `}</p>
-              </code>
-              <p className="text-weak">
-                <Trans>
-                  获取有效访问凭证信息，请前往
-                  <a
-                    href="javascript:;"
-                    onClick={() => {
-                      let urlParams = router.resolve(this.props.route);
-                      router.navigate(Object.assign({}, urlParams, { sub: 'apikey', mode: '', tab: '' }), {});
-                    }}
-                  >
-                    [访问凭证]
-                  </a>
-                  管理。
-                </Trans>
-              </p>
-            </li>
-            <li>
-              <p>
-                <Trans>安装 helm-push 插件</Trans>
-              </p>
-              <code>
-                <Clip target="#installHelmPush" className="copy-btn">
-                  <Trans>复制</Trans>
-                </Clip>
-                <p id="installHelmPush">{`$ helm plugin install https://github.com/chartmuseum/helm-push`}</p>
-              </code>
-            </li>
-            <li>
-              <p>
-                <strong>
-                  <Trans>上传Helm Chart</Trans>
-                </strong>
-              </p>
-            </li>
-            <li>
-              <p>
-                <Trans>上传文件夹</Trans>
-              </p>
-              <code>
-                <Clip target="#pushHelmDir" className="copy-btn">
-                  <Trans>复制</Trans>
-                </Clip>
-                <p id="pushHelmDir">{`$ helm push ./myapp [仓库名]`}</p>
-              </code>
-            </li>
-            <li>
-              <p>
-                <Trans>上传压缩包</Trans>
-              </p>
-              <code>
-                <Clip target="#pushHelmTar" className="copy-btn">
-                  <Trans>复制</Trans>
-                </Clip>
-                <p id="pushHelmTar">{`$ helm push myapp-1.0.1.tgz [仓库名]`}</p>
-              </code>
-            </li>
-            <li>
-              <p>
-                <Trans>下载最新版本</Trans>
-              </p>
-              <code>
-                <Clip target="#downloadChart" className="copy-btn">
-                  <Trans>复制</Trans>
-                </Clip>
-                <p id="downloadChart">{`$ helm fetch [仓库名]/myapp`}</p>
-              </code>
-            </li>
-            <li>
-              <p>
-                <Trans>下载指定版本</Trans>
-              </p>
-              <code>
-                <Clip target="#downloadSChart" className="copy-btn">
-                  <Trans>复制</Trans>
-                </Clip>
-                <p id="downloadSChart">{`$ helm fetch [仓库名]/myapp --version 1.0.1`}</p>
-              </code>
-            </li>
-          </ul>
-        </div>
-      </TipDialog>
-    );
   }
 }

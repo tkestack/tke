@@ -13,6 +13,7 @@ import { ApiKeyContainer } from './apikey/ApiKeyContainer';
 import { RepoContainer } from './repo/RepoContainer';
 import { ChartApp } from './chart/ChartApp';
 import { ChartGroupApp } from './chartgroup/ChartGroupApp';
+import { AppCenter } from './AppCenter';
 
 const store = configStore();
 
@@ -37,12 +38,13 @@ export interface RootProps extends RootState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 @((router.serve as any)())
 class RegistryApp extends React.Component<RootProps, {}> {
+  componentDidMount() {
+    this.props.actions.image.fetchDockerRegUrl.fetch();
+  }
+
   render() {
     let { route } = this.props,
       urlParam = router.resolve(route);
@@ -52,9 +54,10 @@ class RegistryApp extends React.Component<RootProps, {}> {
     } else if (urlParam['sub'] === 'repo') {
       return <RepoContainer {...this.props} />;
     } else if (urlParam['sub'] === 'chart') {
-      return <ChartApp {...this.props} />;
+      return <AppCenter {...this.props} />;
     } else if (urlParam['sub'] === 'chartgroup') {
-      return <ChartGroupApp {...this.props} />;
+      // return <ChartGroupApp {...this.props} />;
+      return <AppCenter {...this.props} />;
     } else {
       return <RepoContainer {...this.props} />;
     }

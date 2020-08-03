@@ -10,10 +10,6 @@ import { RepoDetailPanel } from './RepoDetailPanel';
 import { RepoTablePanel } from './RepoTablePanel';
 
 export class RepoContainer extends React.Component<RootProps, {}> {
-  componentDidMount() {
-    this.props.actions.image.fetchDockerRegUrl.fetch();
-  }
-
   render() {
     let { route } = this.props,
       urlParam = router.resolve(route);
