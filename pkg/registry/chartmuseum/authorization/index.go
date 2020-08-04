@@ -82,7 +82,7 @@ func (a *authorization) index(w http.ResponseWriter, req *http.Request) {
 
 	authorized, err := AuthorizeForChartGroup(w, req, a.authorizer, "get", *cg)
 	if err != nil {
-		log.Error("Failed to get resourceAttributes",
+		log.Error("Failed to authorize for chartGroup",
 			log.String("tenantID", tenantID),
 			log.String("chartGroupName", chartGroupName),
 			log.Err(err))

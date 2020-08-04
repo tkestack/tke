@@ -27,7 +27,6 @@ import (
 	"tkestack.io/tke/api/application"
 	applicationinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	"tkestack.io/tke/pkg/application/util"
 )
@@ -37,7 +36,6 @@ type HistoryREST struct {
 	application       ApplicationStorage
 	applicationClient *applicationinternalclient.ApplicationClient
 	platformClient    platformversionedclient.PlatformV1Interface
-	registryClient    registryversionedclient.RegistryV1Interface
 }
 
 // NewHistoryREST returns a wrapper around the underlying generic storage and performs
@@ -48,13 +46,11 @@ func NewHistoryREST(
 	application ApplicationStorage,
 	applicationClient *applicationinternalclient.ApplicationClient,
 	platformClient platformversionedclient.PlatformV1Interface,
-	registryClient registryversionedclient.RegistryV1Interface,
 ) *HistoryREST {
 	rest := &HistoryREST{
 		application:       application,
 		applicationClient: applicationClient,
 		platformClient:    platformClient,
-		registryClient:    registryClient,
 	}
 	return rest
 }

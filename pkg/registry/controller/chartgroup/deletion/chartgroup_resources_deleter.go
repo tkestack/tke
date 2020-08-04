@@ -271,6 +271,10 @@ func (d *chartGroupResourcesDeleter) deleteAllContent(ctx context.Context, chart
 }
 
 func deleteChartGroup(ctx context.Context, deleter *chartGroupResourcesDeleter, chartGroup *registryv1.ChartGroup) error {
+	if deleter.businessClient == nil {
+		return nil
+	}
+
 	var errs []error
 	for _, projectID := range chartGroup.Spec.Projects {
 		businessChartGroup, err := deleter.businessClient.ChartGroups(projectID).Get(ctx, chartGroup.Spec.Name, metav1.GetOptions{})

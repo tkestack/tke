@@ -46,10 +46,6 @@ const (
 )
 
 func startChartGroupController(ctx ControllerContext) (http.Handler, bool, error) {
-	if ctx.BusinessClient == nil {
-		return nil, false, nil
-	}
-
 	if !ctx.AvailableResources[schema.GroupVersionResource{Group: registryv1.GroupName, Version: "v1", Resource: "chartgroups"}] {
 		return nil, false, nil
 	}
@@ -97,6 +93,10 @@ func startChartController(ctx ControllerContext) (http.Handler, bool, error) {
 }
 
 func startIdentityProviderController(ctx ControllerContext) (http.Handler, bool, error) {
+	if ctx.AuthClient == nil {
+		return nil, false, nil
+	}
+
 	if !ctx.AuthAvailableResources[schema.GroupVersionResource{Group: authv1.GroupName, Version: "v1", Resource: "identityproviders"}] {
 		return nil, false, nil
 	}

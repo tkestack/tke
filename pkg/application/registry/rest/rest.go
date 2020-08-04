@@ -75,8 +75,8 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		appRESTStorage := applicationstorage.NewStorage(restOptionsGetter, applicationClient)
 		appREST := applicationstorage.NewREST(appRESTStorage.App, applicationClient, s.PlatformClient, s.RegistryClient,
 			s.Authorizer)
-		appHistoryREST := applicationstorage.NewHistoryREST(appRESTStorage.App, applicationClient, s.PlatformClient, s.RegistryClient)
-		appResourceREST := applicationstorage.NewResourceREST(appRESTStorage.App, applicationClient, s.PlatformClient, s.RegistryClient)
+		appHistoryREST := applicationstorage.NewHistoryREST(appRESTStorage.App, applicationClient, s.PlatformClient)
+		appResourceREST := applicationstorage.NewResourceREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		appRollbackREST := applicationstorage.NewRollbackREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		storageMap["apps"] = appREST
 		storageMap["apps/histories"] = appHistoryREST
