@@ -110,12 +110,12 @@ const commonRouterConfig: RouterConfig[] = [
         watchModule: ConsoleModuleEnum.Registry
       },
       // {
-      //   url: '/tkestack/registry/appcenter',
+      //   url: '/tkestack/registry/chartgroup',
       //   title: 'Helm仓库',
       //   watchModule: ConsoleModuleEnum.Registry
       // },
       {
-        url: '/tkestack/registry/appcenter',
+        url: '/tkestack/registry/chartgroup',
         title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },
@@ -223,12 +223,12 @@ const businessCommonRouterConfig: RouterConfig[] = [
         watchModule: ConsoleModuleEnum.Registry
       },
       // {
-      //   url: '/tkestack-project/registry/appcenter',
+      //   url: '/tkestack-project/registry/chartgroup',
       //   title: 'Helm仓库',
       //   watchModule: ConsoleModuleEnum.Registry
       // },
       {
-        url: '/tkestack-project/registry/appcenter',
+        url: '/tkestack-project/registry/chartgroup',
         title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },
