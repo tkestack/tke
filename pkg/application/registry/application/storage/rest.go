@@ -211,6 +211,11 @@ func (rs *REST) ConvertToTable(ctx context.Context, object runtime.Object, table
 }
 
 func (rs *REST) check(ctx context.Context, app *application.App) error {
+	//TODO: allowAlways if registryClient is empty?
+	if rs.registryClient == nil {
+		return nil
+	}
+
 	chartGroupList, err := rs.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName),
 	})

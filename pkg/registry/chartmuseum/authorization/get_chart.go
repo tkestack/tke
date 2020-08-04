@@ -157,7 +157,7 @@ func (a *authorization) validateGetChart(w http.ResponseWriter, req *http.Reques
 
 	authorized, err := AuthorizeForChart(w, req, a.authorizer, "get", *cg, chartObject.Name)
 	if err != nil {
-		log.Error("Failed to get resourceAttributes",
+		log.Error("Failed to authorize for chart",
 			log.String("tenantID", tenantID),
 			log.String("chartGroupName", chartGroupName),
 			log.String("chartName", chartName),

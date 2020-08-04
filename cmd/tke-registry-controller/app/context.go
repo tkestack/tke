@@ -137,13 +137,14 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder, authClientBu
 		ctx.BusinessClient = businessClient.BusinessV1()
 	}
 
-	if cfg.AuthAPIServerClientConfig != nil && authClientBuilder != nil {
+	if cfg.AuthAPIServerClientConfig != nil {
 		authClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(cfg.AuthAPIServerClientConfig, "tke-registry-controller"))
 		if err != nil {
 			return ControllerContext{}, fmt.Errorf("failed to create the auth client: %v", err)
 		}
 		ctx.AuthClient = authClient.AuthV1()
-
+	}
+	if authClientBuilder != nil {
 		authAvailableResources, err := controller.GetAvailableResources(authClientBuilder)
 		if err != nil {
 			return ControllerContext{}, fmt.Errorf("failed to get the auth available resources: %v", err)
