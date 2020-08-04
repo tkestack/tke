@@ -1330,6 +1330,7 @@ k8s.io/apiserver v0.0.0-20191122221311-9d521947b1e1/go.mod h1:RbsZY5zzBIWnz4Kbct
 k8s.io/apiserver v0.18.0/go.mod h1:3S2O6FeBBd6XTo0njUrLxiqk8GNy6wWOftjhJcXYnjw=
 k8s.io/apiserver v0.18.2 h1:fwKxdTWwwYhxvtjo0UUfX+/fsitsNtfErPNegH2x9ic=
 k8s.io/apiserver v0.18.2/go.mod h1:Xbh066NqrZO8cbsoenCwyDJ1OSi8Ag8I2lezeHxzwzw=
+k8s.io/apiserver v0.18.6 h1:HcWwcOfhj4Yv6y2igP4ZUuovyPjVLGoZcG0Tsph4Mxo=
 k8s.io/cli-runtime v0.18.0/go.mod h1:1eXfmBsIJosjn9LjEBUd2WVPoPAY9XGTqTFcPMIBsUQ=
 k8s.io/cli-runtime v0.18.2 h1:JiTN5RgkFNTiMxHBRyrl6n26yKWAuNRlei1ZJALUmC8=
 k8s.io/cli-runtime v0.18.2/go.mod h1:yfFR2sQQzDsV0VEKGZtrJwEy4hLZ2oj4ZIfodgxAHWQ=

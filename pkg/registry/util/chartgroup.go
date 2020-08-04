@@ -23,6 +23,10 @@ import (
 
 //TODO: fix here, use util-function to judge isPlatformAdmin
 func isPlatformAdmin(ctx context.Context, businessClient businessversionedclient.BusinessV1Interface) (bool, error) {
+	// if we don't use business component, we are all admin
+	if businessClient == nil {
+		return true, nil
+	}
 	isPlatformAdmin := false
 	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	platformList, err := businessClient.Platforms().List(ctx, metav1.ListOptions{
@@ -127,7 +131,7 @@ func filterProjectChartGroups(ctx context.Context,
 	}
 	targetProjectID := filter.ProjectIDFrom(ctx)
 
-	if filterFromProjectBelongs {
+	if filterFromProjectBelongs && authClient != nil {
 		uid := authentication.GetUID(ctx)
 		_, tenantID := authentication.UsernameAndTenantID(ctx)
 		belongs := &authv1.ProjectBelongs{}

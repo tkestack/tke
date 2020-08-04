@@ -54,8 +54,8 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		SecureServing:     apiserveroptions.NewSecureServingOptions(serverName, 9454),
 		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
 		RegistryAPIClient: controlleroptions.NewAPIServerClientOptions("registry", true),
-		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", true),
-		AuthAPIClient:     controlleroptions.NewAPIServerClientOptions("auth", true),
+		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", false),
+		AuthAPIClient:     controlleroptions.NewAPIServerClientOptions("auth", false),
 		Registry:          NewRegistryOptions(),
 	}
 }

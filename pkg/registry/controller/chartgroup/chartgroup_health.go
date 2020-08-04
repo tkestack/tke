@@ -116,6 +116,10 @@ func (c *Controller) watchChartGroupHealth(ctx context.Context, key string) func
 }
 
 func (c *Controller) checkChartGroupHealth(ctx context.Context, chartGroup *registryv1.ChartGroup) error {
+	if c.businessClient == nil {
+		return nil
+	}
+
 	var errs []error
 	for _, p := range chartGroup.Spec.Projects {
 		_, err := c.businessClient.ChartGroups(p).Get(ctx, chartGroup.Spec.Name, metav1.GetOptions{})

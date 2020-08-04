@@ -181,28 +181,26 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
-		return nil, fmt.Errorf("failed to initialize client config of auth API server")
+	if ok && authAPIServerClientConfig != nil {
+		authClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(authAPIServerClientConfig, "tke-registry-api"))
+		if err != nil {
+			return nil, err
+		}
+		cfg.AuthClient = authClient.AuthV1()
 	}
-	authClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(authAPIServerClientConfig, "tke-registry-api"))
-	if err != nil {
-		return nil, err
-	}
-	cfg.AuthClient = authClient.AuthV1()
 
 	// client config for business apiserver
 	businessAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
-		return nil, fmt.Errorf("failed to initialize client config of business API server")
+	if ok && businessAPIServerClientConfig != nil {
+		businessClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(businessAPIServerClientConfig, "tke-registry-api"))
+		if err != nil {
+			return nil, err
+		}
+		cfg.BusinessClient = businessClient.BusinessV1()
 	}
-	businessClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(businessAPIServerClientConfig, "tke-registry-api"))
-	if err != nil {
-		return nil, err
-	}
-	cfg.BusinessClient = businessClient.BusinessV1()
 
 	// client config for platform apiserver
 	platformAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)

@@ -320,6 +320,10 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedChartGro
 }
 
 func (c *Controller) createOrDeleteBusinessChartGroup(ctx context.Context, cachedChartGroup *cachedChartGroup, chartGroup *registryv1.ChartGroup) error {
+	if c.businessClient == nil {
+		return nil
+	}
+
 	cachedProjects := []string{}
 	if cachedChartGroup.state != nil {
 		cachedProjects = cachedChartGroup.state.Spec.Projects

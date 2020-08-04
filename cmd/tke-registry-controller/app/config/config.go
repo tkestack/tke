@@ -100,20 +100,16 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, fmt.Errorf("failed to initialize client config of registry API server")
 	}
 
+	// optional
 	businessAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
-		return nil, fmt.Errorf("failed to initialize client config of business API server")
-	}
 
+	// optional
 	authAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.AuthAPIClient)
 	if err != nil {
 		return nil, err
-	}
-	if !ok {
-		return nil, fmt.Errorf("failed to initialize client config of auth API server")
 	}
 
 	// shallow copy, do not modify the apiServerClientConfig.Timeout.
