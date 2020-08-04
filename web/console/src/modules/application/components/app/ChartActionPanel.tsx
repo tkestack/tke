@@ -33,7 +33,6 @@ export class ChartActionPanel extends React.Component<RootProps, ChartActionStat
   render() {
     const { actions, route, chartList, projectList } = this.props;
     let urlParam = router.resolve(route);
-    const { sub } = urlParam;
 
     let { scene, projectID } = this.state;
     let sceneOptions = [
