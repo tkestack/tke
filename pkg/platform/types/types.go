@@ -29,6 +29,8 @@ import (
 	"k8s.io/client-go/rest"
 	"tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
@@ -69,6 +71,12 @@ func GetCluster(ctx context.Context, platformClient internalversion.PlatformInte
 			return nil, fmt.Errorf("get cluster's credential error: %w", err)
 		}
 		result.ClusterCredential = clusterCredential
+	} else {
+		credential, err := util.GetClusterCredential(ctx, platformClient, cluster)
+		if err != nil {
+			log.Errorf("query older cluster's credential error: %w", err)
+		}
+		result.ClusterCredential = credential
 	}
 
 	return result, nil
