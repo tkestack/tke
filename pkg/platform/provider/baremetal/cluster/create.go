@@ -597,19 +597,21 @@ func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error 
 	if !c.AuthzWebhookEnabled() {
 		return nil
 	}
-
+	isGlobalCluster := (c.Cluster.Name == "global")
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
 		}
-
 		authzEndpoint, ok := c.AuthzWebhookExternEndpoint()
 		if !ok {
-			authzEndpoint = p.config.AuthzWebhook.Endpoint
+			if isGlobalCluster {
+				authzEndpoint, _ = c.AuthzWebhookBuiltinEndpoint()
+			} else {
+				authzEndpoint = p.config.AuthzWebhook.Endpoint
+			}
 		}
-
-		option := authzwebhook.Option{AuthzWebhookEndpoint: authzEndpoint}
+		option := authzwebhook.Option{AuthzWebhookEndpoint: authzEndpoint, IsGlobalCluster: isGlobalCluster}
 		err = authzwebhook.Install(machineSSH, &option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
