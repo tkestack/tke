@@ -1,0 +1,67 @@
+audit:
+  enabled: false
+  elasticSearch:
+    address: x
+    reserveDays: 1
+    username: admin
+    password: password
+
+auth:
+  enabled: true
+
+business:
+  enabled: true
+
+gateway:
+  enabled: true
+
+logagent:
+  enabled: true
+
+monitor:
+  enabled: true
+  influxdb:
+    enabled: true
+    nodeName: "172.19.1.0"
+  storageType: influxdb
+  storageAddress: "http://172.19.1.0:8086"
+  storageUsername: admin
+  storagePassword: password
+
+registry:
+  enabled: true
+  domain: registry.tke.com
+  namespace: library
+  nodeName: "172.19.1.0"
+
+certsName: certs
+
+oidcClientSecret: ab
+oidcIssuerURL: oidcIssuerURL
+useOIDCCA: false
+
+token: XXX
+
+tenantID: default
+adminUsername: admin
+adminPassword: password
+
+frontProxyCA: |
+  -----BEGIN CERTIFICATE-----
+  MIIC0DCCAbigAwIBAgIBADANBgkqhkiG9w0BAQsFADAZMRcwFQYDVQQDEw5mcm9u
+  dC1wcm94eS1jYTAeFw0yMDA3MDgwNDE1MTFaFw0zMDA3MDYwNDE1MTFaMBkxFzAV
+  BgNVBAMTDmZyb250LXByb3h5LWNhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+  CgKCAQEAuGw9bxniDlzAcfiCfZMliO8ekZxn8v6v+mUFsGP9x/meu6gRn0B+2kIA
+  9T4f1Tv6FUEEz+wFYyO9qlOsPS/4foQyGadQeDL91GDk1l3U4oTYenY/dgIs0EFt
+  6lSfjp7bHG9qkAbYXY01rcLo/k922Uziu1al32GixcuNQmN/tME3hRqGNRMLYSrt
+  1IHGlL0zz6NTl+cM9xXrTzalhLkP2f3rmRnyRz6IMMKHN5eFTbJNod8oD4NWhIg2
+  AM0+IBb0yoWjoW6jOFXkViH/diYn6GJgW9iyl0WJ5l6zZKvDggTTD0riozLusxI1
+  lUmzQlF9yQVLgO/4Ok4wpDfWhKCE9QIDAQABoyMwITAOBgNVHQ8BAf8EBAMCAqQw
+  DwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAjjTVJYWh4Wk6PY/b
+  7Sres7xdGrJB6elycABViec6GjCzi58Zt4jqTnxssTZSGNJdpQSht+YVDGJcOuU8
+  9WNT7SeoKw4+6yK+ee6IM+YQy0okjZARQsiqqWvpniJo0CaaXxxZRT+YFlFBqVVc
+  Ud8d100tjpPlZDjiIrDEGVkJyyy8/nst3/9cChMH5cgVkFOuXizQ8Vv+a2mkuaV2
+  87EKaq8x2T0gxJnxSNd2GDbn6lGRpqa8T8oJUqtNpq8y9vW5rCDYUoc1GJwVMNpR
+  O8CoiBzrJEWf4HAsuUfGOHctkfcq1cT5VJgfcqKMzlQ2Cvwe8NKD+xfdX7umgIlg
+  hqSn7g==
+  -----END CERTIFICATE-----

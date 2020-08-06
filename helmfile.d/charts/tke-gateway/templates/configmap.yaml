@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tke-gateway.fullname" . }}
+  labels:
+    {{- include "tke-gateway.labels" . | nindent 4 }}
+data:
+  tke-gateway.toml: |
+    gateway_config = "/app/conf/tke-gateway-config.yaml"
+
+    [authentication]
+
+      [authentication.oidc]
+      client_secret = "{{ .Values.oidcClientSecret }}"
+      client_id = "default"
+      issuer_url = "https://tke-auth-api/oidc"
+      ca_file = "/app/certs/ca.crt"
+      username_prefix ="-"
+      username_claim = "name"
+      groups_claim = "groups"
+      tenantid_claim = "federated_claims"
+
+    [insecure_serving]
+    port = {{ .Values.httpPort }}
+
+    [secure_serving]
+    port = {{ .Values.httpsPort }}
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+  tke-gateway-config.yaml: |
+    apiVersion: gateway.config.tkestack.io/v1
+    kind: GatewayConfiguration
+    {{- if .Values.auth.enabled }}
+    auth:
+      defaultTenant: {{ .Values.tenantID }}
+    {{- end }}
+    {{- if .Values.registry.enabled }}
+    registry:
+      defaultTenant: {{ .Values.tenantID }}
+      domainSuffix: {{ .Values.registryDomainSuffix }}
+    {{- end }}
+    components:
+      {{- if .Values.audit.enabled }}
+      auth:
+        address: https://tke-audit-api
+        passthrough:
+          caFile: ""
+      {{- end }}
+      {{- if .Values.auth.enabled }}
+      auth:
+        address: https://tke-auth-api
+        passthrough:
+          caFile: ""
+      {{- end }}
+      {{- if .Values.business.enabled }}
+      business:
+        address: https://tke-business-api
+        passthrough:
+          caFile: ""
+      {{- end }}
+      {{- if .Values.logagent.enabled }}
+      logagent:
+        address: https://tke-logagent-api
+        passthrough:
+          caFile: ""
+      {{- end }}
+      {{- if .Values.monitor.enabled }}
+      monitor:
+        address: https://tke-monitor-api
+        passthrough:
+          caFile: ""
+      notify:
+        address: https://tke-notify-api
+        passthrough:
+          caFile: ""
+      {{- end }}
+      platform:
+        address: https://tke-platform-api
+        passthrough:
+          caFile: ""
+      {{- if .Values.registry.enabled }}
+      registry:
+        address: https://tke-registry-api
+        passthrough:
+          caFile: ""
+      {{- end }}

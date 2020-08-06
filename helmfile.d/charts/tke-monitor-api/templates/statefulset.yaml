@@ -1,0 +1,43 @@
+{{- if and .Values.monitor.enabled .Values.monitor.influxdb.enabled -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: influxdb
+  labels:
+    app: influxdb
+    {{- include "tke-monitor-api.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: influxdb
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+      annotations:
+        timstamp: "{{ date "20060102150405" .Release.Time }}"
+    spec:
+      containers:
+        - name: influxdb
+          image: "{{ .Values.registryPrefix }}/{{ .Values.influxdb.repository }}:{{ .Values.influxdb.tag }}"
+          imagePullPolicy: {{ .Values.influxdb.pullPolicy }}
+          livenessProbe:
+            tcpSocket:
+              port: 8086
+          readinessProbe:
+            tcpSocket:
+              port: 8086
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/influxdb
+              subPath:
+      nodeName: {{ .Values.monitor.influxdb.nodeName }}
+      hostNetwork: true
+      volumes:
+        - name: data
+          hostPath:
+            path: /var/lib/influxdb
+            type: DirectoryOrCreate
+  {{- end }}

@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tke-platform-api.fullname" . }}
+  labels:
+    {{- include "tke-platform-api.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tke-platform-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        timstamp: "{{ date "20060102150405" .Release.Time }}"
+    {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "tke-platform-api.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "tke-platform-api.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: wait-tke-auth-api
+          image: {{ .Values.registryPrefix }}/toolbox:v0.1.0
+          command: ['sh', '-c', 'until curl -k https://tke-auth-api; do echo waiting for tke-auth-api; sleep 2; done;']
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.registryPrefix }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - -C=/app/conf/tke-platform-api.toml
+{{- if .Values.audit.enabled }}
+            - --audit-policy-file=/app/conf/audit-policy.yaml
+            - --audit-webhook-config-file=/app/conf/tke-audit-api/tke-audit-config.yaml
+{{- end }}
+          ports:
+            - name: https
+              containerPort: {{ .Values.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz/ping
+              port: https
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+          volumeMounts:
+            - name: {{ include "tke-platform-api.fullname" . }}
+              mountPath: /app/conf
+            - name: {{ .Values.certsName }}
+              mountPath: /app/certs
+            {{- if .Values.audit.enabled }}
+            - name: tke-audit-api-config
+              mountPath: /app/conf/tke-audit-api
+            {{- end}}
+            - name: provider-config
+              mountPath: /app/provider/baremetal/conf/
+            {{- if .Values.auth.enabled }}
+            - name: tke-auth-api-config
+              mountPath: /app/conf/tke-auth-api
+            {{- end}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "tke-platform-api.fullname" . }}
+          configMap:
+            name: {{ include "tke-platform-api.fullname" . }}
+        - name: {{ .Values.certsName }}
+          secret:
+            secretName: {{ .Values.certsName }}
+        {{- if .Values.audit.enabled }}
+        - name: tke-audit-api-config
+          configMap:
+            name: tke-audit-api-config
+        {{- end }}
+        {{- if .Values.auth.enabled }}
+        - name: tke-auth-api-config
+          configMap:
+            name: tke-auth-api-config
+        {{- end }}
+        - name: provider-config
+          configMap:
+            name: provider-config

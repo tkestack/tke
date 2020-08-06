@@ -35,6 +35,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/fields"
+
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -60,8 +62,8 @@ import (
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
-	"tkestack.io/tke/cmd/tke-installer/app/installer/certs"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/helm"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
@@ -72,6 +74,7 @@ import (
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/certs"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/docker"
 	"tkestack.io/tke/pkg/util/hosts"
@@ -217,149 +220,12 @@ func (t *TKE) initSteps() {
 			Func: t.prepareFrontProxyCertificates,
 		},
 		{
-			Name: "Create namespace for install TKE",
-			Func: t.createNamespace,
+			Name: "Deploy TKE",
+			Func: t.deployTKE,
 		},
 		{
-			Name: "Prepare certificates",
-			Func: t.prepareCertificates,
-		},
-		{
-			Name: "Prepare baremetal provider config",
-			Func: t.prepareBaremetalProviderConfig,
-		},
-		{
-			Name: "Install etcd",
-			Func: t.installETCD,
-		},
-	}...)
-
-	if t.Para.Config.Auth.TKEAuth != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-auth-api",
-				Func: t.installTKEAuthAPI,
-			},
-			{
-				Name: "Install tke-auth-controller",
-				Func: t.installTKEAuthController,
-			},
-		}...)
-	}
-
-	if t.auditEnabled() {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke audit",
-				Func: t.installTKEAudit,
-			},
-		}...)
-	}
-
-	t.steps = append(t.steps, []types.Handler{
-		{
-			Name: "Install tke-platform-api",
-			Func: t.installTKEPlatformAPI,
-		},
-		{
-			Name: "Install tke-platform-controller",
-			Func: t.installTKEPlatformController,
-		},
-	}...)
-
-	if t.Para.Config.Registry.TKERegistry != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-registry-api",
-				Func: t.installTKERegistryAPI,
-			},
-		}...)
-	}
-
-	if t.Para.Config.Business != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-business-api",
-				Func: t.installTKEBusinessAPI,
-			},
-			{
-				Name: "Install tke-business-controller",
-				Func: t.installTKEBusinessController,
-			},
-		}...)
-	}
-
-	if t.Para.Config.Monitor != nil {
-		if t.Para.Config.Monitor.InfluxDBMonitor != nil &&
-			t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-			t.steps = append(t.steps, []types.Handler{
-				{
-					Name: "Install InfluxDB",
-					Func: t.installInfluxDB,
-				},
-			}...)
-		}
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-monitor-api",
-				Func: t.installTKEMonitorAPI,
-			},
-			{
-				Name: "Install tke-monitor-controller",
-				Func: t.installTKEMonitorController,
-			},
-			{
-				Name: "Install tke-notify-api",
-				Func: t.installTKENotifyAPI,
-			},
-			{
-				Name: "Install tke-notify-controller",
-				Func: t.installTKENotifyController,
-			},
-		}...)
-	}
-
-	if t.Para.Config.Logagent != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-logagent-api",
-				Func: t.installTKELogagentAPI,
-			},
-			{
-				Name: "Install tke-logagent-controller",
-				Func: t.installTKELogagentController,
-			},
-		}...)
-	}
-
-	// others
-
-	// Add more tke component before THIS!!!
-	if t.Para.Config.Gateway != nil {
-		if t.IncludeSelf {
-			t.steps = append(t.steps, []types.Handler{
-				{
-					Name: "Prepare images before stop local registry",
-					Func: t.prepareImages,
-				},
-				{
-					Name: "Stop local registry to give up 80/443 for tke-gateway",
-					Func: t.stopLocalRegistry,
-				},
-			}...)
-		}
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-gateway",
-				Func: t.installTKEGateway,
-			},
-		}...)
-	}
-
-	t.steps = append(t.steps, []types.Handler{
-		{
-			Name: "Register tke api into global cluster",
-			Func: t.registerAPI,
+			Name: "Wait TKE ready",
+			Func: t.waitTKEReady,
 		},
 		{
 			Name: "Import resource to TKE platform",
@@ -367,23 +233,23 @@ func (t *TKE) initSteps() {
 		},
 	}...)
 
-	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
-		t.Para.Config.Registry.TKERegistry != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Prepare push images to TKE registry",
-				Func: t.preparePushImagesToTKERegistry,
-			},
-			{
-				Name: "Push images to registry",
-				Func: t.pushImages,
-			},
-			{
-				Name: "Set global cluster hosts",
-				Func: t.setGlobalClusterHosts,
-			},
-		}...)
-	}
+	//if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
+	//	t.Para.Config.Registry.TKERegistry != nil {
+	//	t.steps = append(t.steps, []types.Handler{
+	//		{
+	//			Name: "Prepare push images to TKE registry",
+	//			Func: t.preparePushImagesToTKERegistry,
+	//		},
+	//		{
+	//			Name: "Push images to registry",
+	//			Func: t.pushImages,
+	//		},
+	//		{
+	//			Name: "Set global cluster hosts",
+	//			Func: t.setGlobalClusterHosts,
+	//		},
+	//	}...)
+	//}
 
 	t.steps = append(t.steps, []types.Handler{
 		{
@@ -560,6 +426,9 @@ func (t *TKE) setConfigDefault(config *types.Config) {
 			Password: []byte("admin"),
 		}
 	}
+	if config.Basic.Token == "" {
+		config.Basic.Token = ksuid.New().String()
+	}
 
 	if config.Registry.TKERegistry != nil {
 		if config.Registry.TKERegistry.Domain == "" {
@@ -569,10 +438,14 @@ func (t *TKE) setConfigDefault(config *types.Config) {
 		config.Registry.TKERegistry.Username = config.Basic.Username
 		config.Registry.TKERegistry.Password = config.Basic.Password
 	}
+
 	if config.Auth.TKEAuth != nil {
 		config.Auth.TKEAuth.TenantID = constants.DefaultTeantID
 		config.Auth.TKEAuth.Username = config.Basic.Username
 		config.Auth.TKEAuth.Password = config.Basic.Password
+		if config.Auth.TKEAuth.OIDCClientSecret == "" {
+			config.Auth.TKEAuth.OIDCClientSecret = ksuid.New().String()
+		}
 	}
 
 	if config.Gateway != nil {
@@ -1003,7 +876,7 @@ func (t *TKE) generateCertificates(ctx context.Context) error {
 			ips = append(ips, net.ParseIP(t.Para.Config.HA.ThirdPartyHA.VIP))
 		}
 	}
-	return certs.Generate(dnsNames, ips, constants.DataDir)
+	return certs.GenerateInDir(constants.DataDir, t.namespace, dnsNames, ips)
 }
 
 func (t *TKE) prepareFrontProxyCertificates(ctx context.Context) error {
@@ -1025,6 +898,220 @@ func (t *TKE) prepareFrontProxyCertificates(ctx context.Context) error {
 		return err
 	}
 	err = ioutil.WriteFile(constants.FrontProxyCACrtFile, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *TKE) deployTKE(ctx context.Context) error {
+	caCert, err := ioutil.ReadFile(constants.CACrtFile)
+	if err != nil {
+		return err
+	}
+	caKey, err := ioutil.ReadFile(constants.CAKeyFile)
+	if err != nil {
+		return err
+	}
+	frontProxyCACert, err := ioutil.ReadFile(constants.FrontProxyCACrtFile)
+	if err != nil {
+		return err
+	}
+	serverCert, err := ioutil.ReadFile(constants.ServerCrtFile)
+	if err != nil {
+		return err
+	}
+	serverKey, err := ioutil.ReadFile(constants.ServerKeyFile)
+	if err != nil {
+		return err
+	}
+
+	etcdClientCertData, etcdClientKeyData, err := pkiutil.GenerateClientCertAndKey(t.namespace, nil,
+		t.Cluster.ClusterCredential.ETCDCACert, t.Cluster.ClusterCredential.ETCDCAKey)
+	if err != nil {
+		return fmt.Errorf("prepareCertificates fail:%w", err)
+	}
+
+	values := &helm.Values{
+		CertsName:        "certs",
+		CACert:           string(caCert),
+		CAKey:            string(caKey),
+		ServerCert:       string(serverCert),
+		ServerKey:        string(serverKey),
+		FrontProxyCACert: string(frontProxyCACert),
+		ETCDValues: helm.ETCDValues{
+			Hosts:      t.servers,
+			CACert:     string(t.Cluster.ClusterCredential.ETCDCACert),
+			ClientCert: string(etcdClientCertData),
+			ClientKey:  string(etcdClientKeyData),
+		},
+
+		RegistryPreifx: t.Para.Config.Registry.Prefix(),
+		Token:          t.Para.Config.Basic.Token,
+		AdminUsername:  t.Para.Config.Basic.Username,
+		AdminPassword:  string(t.Para.Config.Basic.Password),
+	}
+
+	if t.Para.Config.Audit != nil {
+		values.Audit = helm.Audit{
+			Eanbled: true,
+			AuditElasticSearch: helm.AuditElasticSearch{
+				Address:     t.Para.Config.Audit.ElasticSearch.Address,
+				ReserveDays: t.Para.Config.Audit.ElasticSearch.ReserveDays,
+				Username:    t.Para.Config.Audit.ElasticSearch.Username,
+				Password:    t.Para.Config.Audit.ElasticSearch.Password,
+			},
+		}
+	}
+	if t.Para.Config.Auth.OIDCAuth != nil {
+		values.OIDCClientClientID = t.Para.Config.Auth.OIDCAuth.ClientID
+		values.OIDCIssuerURL = t.Para.Config.Auth.OIDCAuth.IssuerURL
+		values.USEOIDCCA = t.Para.Config.Auth.OIDCAuth.CACert != nil
+		values.OIDCCACert = string(t.Para.Config.Auth.OIDCAuth.CACert)
+	}
+	if t.Para.Config.Auth.TKEAuth != nil {
+		redirectHosts := t.servers
+		redirectHosts = append(redirectHosts, "tke-gateway")
+		if t.Para.Config.Gateway != nil && t.Para.Config.Gateway.Domain != "" {
+			redirectHosts = append(redirectHosts, t.Para.Config.Gateway.Domain)
+		}
+		if t.Para.Config.HA != nil {
+			redirectHosts = append(redirectHosts, t.Para.Config.HA.VIP())
+		}
+		if t.Para.Cluster.Spec.PublicAlternativeNames != nil {
+			redirectHosts = append(redirectHosts, t.Para.Cluster.Spec.PublicAlternativeNames...)
+		}
+		values.Auth = helm.Auth{
+			Eanbled:       true,
+			RedirectHosts: redirectHosts,
+		}
+		values.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
+		values.OIDCClientSecret = t.Para.Config.Auth.TKEAuth.OIDCClientSecret
+	}
+	if t.Para.Config.Business != nil {
+		values.Business = helm.Business{
+			Eanbled: true,
+		}
+	}
+	if t.Para.Config.Gateway != nil {
+		values.Gateway = helm.Gateway{
+			Eanbled: true,
+		}
+	}
+	if t.Para.Config.Logagent != nil {
+		values.Logagent = helm.Logagent{
+			Eanbled: true,
+		}
+	}
+	if t.Para.Config.Monitor != nil {
+		values.Monitor = helm.Monitor{
+			Eanbled: true,
+		}
+		if t.Para.Config.Monitor.InfluxDBMonitor != nil {
+			values.Monitor.StorageType = "influxdb"
+			if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
+				values.Monitor.InfluxDB = helm.InfluxDB{
+					Eanbled:  true,
+					NodeName: t.servers[0],
+				}
+				values.Monitor.StorageAddress = fmt.Sprintf("http://%s:8086", t.servers[0])
+			}
+
+			if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
+				values.Monitor.StorageAddress = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
+				values.Monitor.StorageUsername = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
+				values.Monitor.StoragePassword = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
+			}
+		}
+	}
+	if t.Para.Config.Registry.TKERegistry != nil {
+		values.Registry = helm.Registry{
+			Eanbled:   true,
+			Domain:    t.Para.Config.Registry.TKERegistry.Domain,
+			Namespace: t.Para.Config.Registry.TKERegistry.Namespace,
+			NodeName:  t.servers[0],
+		}
+	}
+
+	return helm.Install(t.namespace, values)
+}
+
+func (t *TKE) waitTKEReady(ctx context.Context) error {
+	err := wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		deployments, err := t.globalClient.AppsV1().Deployments(t.namespace).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			t.log.Error(err, "list deployments error")
+			return false, nil
+		}
+		for _, one := range deployments.Items {
+			ok, err := apiclient.CheckDeployment(context.TODO(), t.globalClient, one.Namespace, one.Name)
+			if err != nil {
+				t.log.Error(err, "check deployment error")
+				return false, nil
+			}
+			if !ok {
+				t.log.Infof("deployment %s/%s is not ready", one.Namespace, one.Name)
+				return false, nil
+			}
+		}
+
+		statefulSets, err := t.globalClient.AppsV1().StatefulSets(t.namespace).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			t.log.Error(err, "list statefulSets error")
+		}
+		for _, one := range statefulSets.Items {
+			ok, err := apiclient.CheckStatefulSet(context.TODO(), t.globalClient, one.Namespace, one.Name)
+			if err != nil {
+				t.log.Error(err, "check statefulSet error")
+				return false, nil
+			}
+			if !ok {
+				t.log.Infof("statefulSet %s/%s is not ready", one.Namespace, one.Name)
+				return false, nil
+			}
+		}
+
+		if t.Para.Config.Gateway != nil && t.IncludeSelf {
+			gateway, err := t.globalClient.AppsV1().DaemonSets(t.namespace).Get(ctx, "tke-gateway", metav1.GetOptions{})
+			if err != nil {
+				t.log.Error(err, "get daemonSet tke-gateway error")
+				return false, nil
+			}
+			pods, err := t.globalClient.CoreV1().Pods(t.namespace).List(ctx, metav1.ListOptions{
+				LabelSelector: fields.SelectorFromSet(gateway.Spec.Selector.MatchLabels).String(),
+			})
+			if err != nil {
+				t.log.Error(err, "get pods tke-gateway  error")
+				return false, nil
+			}
+			for _, pod := range pods.Items {
+				for _, container := range pod.Status.ContainerStatuses {
+					if container.ImageID == "" {
+						return false, nil
+					}
+				}
+			}
+
+			err = t.stopLocalRegistry(context.Background())
+			if err != nil {
+				t.log.Error(err, "stop local registry for tke-gateway")
+				return false, nil
+			}
+
+			ok, err := apiclient.CheckDaemonset(context.TODO(), t.globalClient, t.namespace, "tke-gateway")
+			if err != nil {
+				t.log.Error(err, "check daemonSet error")
+				return false, nil
+			}
+			if !ok {
+				t.log.Infof("deployment %s/tke-gateway is not ready", t.namespace)
+				return false, nil
+			}
+		}
+
+		return true, nil
+	})
 	if err != nil {
 		return err
 	}
@@ -1401,7 +1488,7 @@ func (t *TKE) prepareImages(ctx context.Context) error {
 func (t *TKE) stopLocalRegistry(ctx context.Context) error {
 	err := t.docker.RemoveContainers("registry-http", "registry-https")
 	if err != nil {
-		return err
+		return fmt.Errorf("stop local registry error: %w", err)
 	}
 	return nil
 }

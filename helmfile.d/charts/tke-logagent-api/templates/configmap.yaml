@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tke-logagent-api.fullname" . }}
+  labels:
+    {{- include "tke-logagent-api.labels" . | nindent 4 }}
+data:
+  token.csv: |
+    {{ .Values.token }},admin,admin,system:masters
+  tke-logagent-api.toml: |
+    monitor_config = "/app/conf/tke-monitor-config.yaml"
+
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [etcd]
+    servers = [
+      "https://etcd:2379"
+    ]
+    cafile = "/app/certs/etcd-ca.crt"
+    certfile = "/app/certs/etcd-client.crt"
+    keyfile = "/app/certs/etcd-client.key"
+
+    [generic]
+    external_hostname = "tke-logagent-api"
+    external_port = 443
+
+    [authentication]
+    token_auth_file = "/app/conf/token.csv"
+    client_ca_file = "/app/certs/ca.crt"
+
+      [authentication.oidc]
+    {{- if .Values.auth.enabled }}
+      client_id = "default"
+      issuer_url = "https://tke-auth-api/oidc"
+      external_issuer_url = "https://tke-auth-api/oidc"
+      ca_file = "/app/certs/ca.crt"
+      username_prefix ="-"
+      username_claim = "name"
+      groups_claim = "groups"
+      tenantid_claim = "federated_claims"
+    {{- else }}
+      client_id = {{ .Values.oidcClientID }}
+      issuer_url = {{ .Values.oidcIssuerURL }}
+    {{- if .Values.useOIDCCA }}
+      ca_file = "/app/certs/oidc-ca.crt"
+    {{- end}}
+    {{- end }}
+
+      [authentication.requestheader]
+      client_ca_file = "/app/certs/front-proxy-ca.crt"
+      username_headers = "X-Remote-User"
+      group_headers = "X-Remote-Group"
+      extra_headers_prefix = "X-Remote-Extra-"
+
+    {{- if .Values.auth.enabled }}
+    mode = "Webhook"
+    webhook_config_file = "/app/conf/tke-auth-api/tke-authz-webhook.yaml"
+    {{- end }}
+
+    [client]
+
+      [client.platform]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-api/tke-platform-config.yaml"
+
+  {{- if .Values.audit.enabled }}
+  audit-policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    omitStages:
+    - "RequestReceived"
+    - "ResponseStarted"
+    rules:
+    - level: None
+      resources:
+      - group: "logagent.tkestack.io"
+        resources: ["configmaps", "*/status"]
+    - level: RequestResponse
+      verbs: ["create", "update", "patch", "delete", "deletecollection"]
+  {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tke-logagent-api.fullname" . }}-config
+  labels:
+  {{- include "tke-logagent-api.labels" . | nindent 4 }}
+data:
+  tke-logagent-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          insecure-skip-tls-verify: true
+          server: https://{{ include "tke-logagent-api.fullname" . }}
+    users:
+      - name: admin
+        user:
+          token: {{ .Values.token }}
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin
+        name: tke

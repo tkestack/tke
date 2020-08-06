@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tke-auth-controller.fullname" . }}
+  labels:
+    {{- include "tke-auth-controller.labels" . | nindent 4 }}
+data:
+  tke-auth-controller.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [client]
+
+      [client.auth]
+      api_server = "https://tke-auth-api"
+      api_server_client_config = "/app/conf/tke-auth-api/tke-auth-config.yaml"
+
+    [features]
+    category_path = "/app/auth/category.json"
+    policy_path = "/app/auth/policy.json"
+    tenant_admin = "{{ .Values.adminUsername }}"
+    tenant_admin_secret = "{{ .Values.adminPassword }}"

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "tke-business-api.fullname" . }}-test-connection"
+  labels:
+    {{- include "tke-business-api.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: wget --spider
+      image: busybox
+      command: ['wget --spider']
+      args: ['{{ include "tke-business-api.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never

@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tke-business-controller.fullname" . }}
+  labels:
+    {{- include "tke-business-controller.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tke-business-controller.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        timstamp: "{{ date "20060102150405" .Release.Time }}"
+    {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "tke-business-controller.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "tke-business-controller.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init
+          image: {{ .Values.registryPrefix }}/toolbox:v0.1.0
+          command: ['sh', '-c', 'until curl -k https://tke-business-api; do echo waiting for tke-business-api; sleep 2; done;']
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.registryPrefix }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+          - -C=/app/conf/tke-business-controller.toml
+          volumeMounts:
+            - name: {{ include "tke-business-controller.fullname" . }}
+              mountPath: /app/conf
+            - name: {{ .Values.certsName }}
+              mountPath: /app/certs
+            - name: tke-business-api-config
+              mountPath: /app/conf/tke-business-api
+            - name: tke-platform-api-config
+              mountPath: /app/conf/tke-platform-api
+            {{- if .Values.auth.enabled }}
+            - name: tke-auth-api-config
+              mountPath: /app/conf/tke-auth-api
+            {{- end}}
+            {{- if .Values.registry.enabled }}
+            - name: tke-registry-api-config
+              mountPath: /app/conf/tke-registry-api
+            {{- end}}
+          ports:
+            - name: https
+              containerPort: {{ .Values.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "tke-business-controller.fullname" . }}
+          configMap:
+            name: {{ include "tke-business-controller.fullname" . }}
+        - name: {{ .Values.certsName }}
+          secret:
+            secretName: {{ .Values.certsName }}
+        - name: tke-business-api-config
+          configMap:
+            name: tke-business-api-config
+        - name: tke-platform-api-config
+          configMap:
+            name: tke-platform-api-config
+        {{- if .Values.audit.enabled }}
+        - name: tke-audit-api-config
+          configMap:
+            name: tke-audit-api-config
+        {{- end }}
+        {{- if .Values.auth.enabled }}
+        - name: tke-auth-api-config
+          configMap:
+            name: tke-auth-api-config
+        {{- end }}
+        {{- if .Values.registry.enabled }}
+        - name: tke-registry-api-config
+          configMap:
+            name: tke-registry-api-config
+        {{- end }}

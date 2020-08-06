@@ -1,0 +1,15 @@
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: "v1.notify.tkestack.io"
+  labels:
+  {{- include "tke-notify-api.labels" . | nindent 4 }}
+spec:
+  insecureSkipTLSVerify: true
+  group: notify.tkestack.io
+  groupPriorityMinimum: 1000
+  service:
+    name: {{ include "tke-notify-api.fullname" . }}
+    namespace: {{ .Release.Namespace }}
+  version: v1
+  versionPriority: 5

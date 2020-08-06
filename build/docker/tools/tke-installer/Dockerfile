@@ -32,6 +32,11 @@ RUN apk add --no-cache \
 
 RUN apk --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted add lrzsz
 
+RUN wget https://get.helm.sh/helm-v3.2.4-linux-amd64.tar.gz && \
+    tar xvzf helm-v3.2.4-linux-amd64.tar.gz && \
+    mv linux-amd64/helm /usr/local/bin &&  \
+    rm -rf helm-v3.2.4-linux-amd64.tar.gz linux-amd64
+
 ADD . /app
 
 RUN ln -s /app/.docker /root/.docker

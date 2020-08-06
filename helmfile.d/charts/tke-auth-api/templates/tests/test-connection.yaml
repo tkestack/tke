@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "tke-auth-api.fullname" . }}-test-connection"
+  labels:
+    {{- include "tke-auth-api.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: curl
+      image: {{ .Values.registryPrefix }}/toolbox:v0.1.0
+      command:
+        - sh
+        - -c
+        - "curl -k -H 'Authorization: Bearer {{.Values.token}}' https://{{ include "tke-auth-api.fullname" . }}:{{ .Values.service.port }}/apis"
+  restartPolicy: Never

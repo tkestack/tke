@@ -29,7 +29,7 @@ import (
 
 type CreateClusterPara struct {
 	Cluster v1.Cluster `json:"cluster"`
-	Config  Config     `json:"Config"`
+	Config  Config     `json:"config"`
 }
 
 // Config is the installer config
@@ -49,6 +49,7 @@ type Config struct {
 type Basic struct {
 	Username string `json:"username"`
 	Password []byte `json:"password"`
+	Token    string `json:"token"`
 }
 
 type Auth struct {
@@ -57,9 +58,10 @@ type Auth struct {
 }
 
 type TKEAuth struct {
-	TenantID string `json:"tenantID"`
-	Username string `json:"username"`
-	Password []byte `json:"password"`
+	TenantID         string `json:"tenantID"`
+	Username         string `json:"username"`
+	Password         []byte `json:"password"`
+	OIDCClientSecret string `json:"oidcClientSecret"`
 }
 
 type OIDCAuth struct {

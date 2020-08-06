@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "etcd.fullname" . }}-test-connection"
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: etcdctl
+      image: lwieske/etcdctl:v3.4.9
+      command:
+        - etcdctl
+        - member
+        - list
+      env:
+        - name: ETCDCTL_API
+          value: "3"
+        - name: ETCDCTL_ENDPOINTS
+          value: https://{{ include "etcd.fullname" . }}:2379
+        - name: ETCDCTL_CACERT
+          value: /etc/etcd/ca.crt
+        - name: ETCDCTL_CERT
+          value: /etc/etcd/client.crt
+        - name: ETCDCTL_KEY
+          value: /etc/etcd/client.key
+      volumeMounts:
+        - mountPath: /etc/etcd
+          name: cert
+  volumes:
+    - name: cert
+      secret:
+        secretName: {{ include "etcd.fullname" . }}
+  restartPolicy: Never

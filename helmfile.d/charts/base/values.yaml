@@ -1,0 +1,18 @@
+# Default values for base.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+caCert: ""
+caKey: ""
+serverCert: ""
+serverKey: ""
+frontProxyCACert: ""
+oidcCACert: ""
+
+etcdName: etcd
+etcd:
+  hosts: []
+  port: 2379
+  caCert: ""
+  clientCert: ""
+  clientKey: ""

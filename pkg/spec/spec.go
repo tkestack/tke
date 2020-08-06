@@ -23,6 +23,19 @@ import (
 )
 
 var (
+	// Components used for generate server cert.
+	Components = []string{
+		"tke-platform-api",
+		"tke-business-api",
+		"tke-notify-api",
+		"tke-auth-api",
+		"tke-gateway",
+		"tke-monitor-api",
+		"tke-registry-api",
+		"tke-logagent-api",
+		"tke-audit-api",
+	}
+
 	Archs         = []string{"amd64", "arm64"}
 	Arm64         = "arm64"
 	Arm64Variants = []string{"v8", "unknown"}

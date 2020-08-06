@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tke-logagent-controller.fullname" . }}
+  labels:
+    {{- include "tke-logagent-controller.labels" . | nindent 4 }}
+data:
+  tke-logagent-controller.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [client]
+
+      [client.logagent]
+      api_server = "https://tke-logagent-api"
+      api_server_client_config = "/app/conf/tke-logagent-api/tke-logagent-config.yaml"
+
+      [client.platform]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-api/tke-platform-config.yaml"
+
+      {{- if .Values.auth.enabled }}
+      [client.auth]
+      api_server = "https://tke-auth-api"
+      api_server_client_config = "/app/conf/tke-auth-api/tke-auth-config.yaml"
+      {{- end }}
+
+      {{- if .Values.registry.enabled }}
+      [client.registry]
+      api_server = "https://tke-registry-api"
+      api_server_client_config = "/app/conf/tke-resitry-api/tke-registry-config.yaml"
+      {{- end }}
+
+    [features]
+    domain = "{{ .Values.registry.domain }}"
+    namespace = "{{ .Values.registry.namespace }}"

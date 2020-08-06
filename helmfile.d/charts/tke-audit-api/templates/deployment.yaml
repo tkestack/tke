@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tke-audit-api.fullname" . }}
+  labels:
+    {{- include "tke-audit-api.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tke-audit-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        timstamp: "{{ date "20060102150405" .Release.Time }}"
+    {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "tke-audit-api.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "tke-audit-api.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: wait-tke-auth-api
+          image: {{ .Values.registryPrefix }}/toolbox:v0.1.0
+          command: ['sh', '-c', 'until curl -k https://tke-auth-api; do echo waiting for tke-auth-api; sleep 2; done;']
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.registryPrefix }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+          - -C=/app/conf/{{ .Chart.Name }}.toml
+          ports:
+            - name: https
+              containerPort: {{ .Values.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz/ping
+              port: https
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+          volumeMounts:
+            - name: {{ include "tke-audit-api.fullname" . }}
+              mountPath: /app/conf
+            - name: {{ .Values.certsName }}
+              mountPath: /app/certs
+            {{- if .Values.auth.enabled }}
+            - name: tke-auth-api-config
+              mountPath: /app/conf/tke-auth-api
+            {{- end}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "tke-audit-api.fullname" . }}
+          configMap:
+            name: {{ include "tke-audit-api.fullname" . }}
+        - name: {{ .Values.certsName }}
+          secret:
+            secretName: {{ .Values.certsName }}
+        {{- if .Values.auth.enabled }}
+        - name: tke-auth-api-config
+          configMap:
+            name: tke-auth-api-config
+        {{- end }}

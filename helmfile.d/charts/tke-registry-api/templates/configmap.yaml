@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tke-registry-api.fullname" . }}
+  labels:
+    {{- include "tke-registry-api.labels" . | nindent 4 }}
+data:
+  token.csv: |
+    {{ .Values.token }},admin,admin,system:masters
+  tke-registry-api.toml: |
+    registry_config = "/app/conf/tke-registry-config.yaml"
+
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [etcd]
+    servers = [
+      "https://etcd:2379"
+    ]
+    cafile = "/app/certs/etcd-ca.crt"
+    certfile = "/app/certs/etcd-client.crt"
+    keyfile = "/app/certs/etcd-client.key"
+
+    [generic]
+    external_hostname = "tke-registry-api"
+    external_port = 443
+
+    [authentication]
+    token_auth_file = "/app/conf/token.csv"
+    client_ca_file = "/app/certs/ca.crt"
+
+      [authentication.oidc]
+    {{- if .Values.auth.enabled }}
+      client_id = "default"
+      issuer_url = "https://tke-auth-api/oidc"
+      external_issuer_url = "https://tke-auth-api/oidc"
+      ca_file = "/app/certs/ca.crt"
+      username_prefix ="-"
+      username_claim = "name"
+      groups_claim = "groups"
+      tenantid_claim = "federated_claims"
+    {{- else }}
+      client_id = {{ .Values.oidcClientID }}
+      issuer_url = {{ .Values.oidcIssuerURL }}
+    {{- if .Values.useOIDCCA }}
+      ca_file = "/app/certs/oidc-ca.crt"
+    {{- end}}
+    {{- end }}
+
+      [authentication.requestheader]
+      client_ca_file = "/app/certs/front-proxy-ca.crt"
+      username_headers = "X-Remote-User"
+      group_headers = "X-Remote-Group"
+      extra_headers_prefix = "X-Remote-Extra-"
+
+    {{- if .Values.auth.enabled }}
+    mode = "Webhook"
+    webhook_config_file = "/app/conf/tke-auth-api/tke-authz-webhook.yaml"
+    {{- end }}
+
+  tke-registry-config.yaml: |
+    apiVersion: registry.config.tkestack.io/v1
+    kind: RegistryConfiguration
+    storage:
+      fileSystem:
+        rootDirectory: /storage
+    security:
+      tokenPrivateKeyFile: /app/certs/tke-registry-api/private_key.pem
+      tokenPublicKeyFile: /app/certs/tke-registry-api/public_key.crt
+      adminPassword: "{{ .Values.adminPassword }}"
+      adminUsername: "{{ .Values.adminUsername }}"
+      httpSecret: "{{ .Values.adminPassword }}"
+    defaultTenant: default
+    domainSuffix: "{{ .Values.registry.domain }}"
+
+  {{- if .Values.audit.enabled }}
+  audit-policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    omitStages:
+    - "RequestReceived"
+    - "ResponseStarted"
+    rules:
+    - level: None
+      resources:
+      - group: "registry.tkestack.io"
+        resources: ["configmaps", "*/status"]
+    - level: RequestResponse
+      verbs: ["create", "update", "patch", "delete", "deletecollection"]
+  {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tke-registry-api.fullname" . }}-config
+  labels:
+  {{- include "tke-registry-api.labels" . | nindent 4 }}
+data:
+  tke-registry-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          insecure-skip-tls-verify: true
+          server: https://{{ include "tke-registry-api.fullname" . }}
+    users:
+      - name: admin
+        user:
+          token: {{ .Values.token }}
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin
+        name: tke

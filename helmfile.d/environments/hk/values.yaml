@@ -1,0 +1,76 @@
+audit:
+  enabled: false
+  elasticSearch:
+    address: x
+    reserveDays: 1
+    username: admin
+    password: password
+
+auth:
+  enabled: true
+
+business:
+  enabled: true
+
+gateway:
+  enabled: true
+
+logagent:
+  enabled: true
+
+monitor:
+  enabled: true
+  influxdb:
+    enabled: true
+    nodeName: "172.20.0.7"
+  storageType: influxdb
+  storageAddress: "http://172.20.0.7:8086"
+  storageUsername: admin
+  storagePassword: password
+
+registry:
+  enabled: true
+  domain: registry.tke.com
+  namespace: library
+  nodeName: "172.20.0.7"
+
+
+frontProxyCA: |
+  -----BEGIN CERTIFICATE-----
+  MIIEcDCCA1igAwIBAgIHSQwivKjvEjANBgkqhkiG9w0BAQsFADBQMQswCQYDVQQG
+  EwJDTjEqMBEGA1UEChMKdGVuY2VudHl1bjAVBgNVBAoTDnN5c3RlbTptYXN0ZXJz
+  MRUwEwYDVQQDEwxjbHMtNGlrbG5qM3EwHhcNMTkxMDIyMDIxMjQ1WhcNMzkxMDIy
+  MDIxMjQ1WjBbMQswCQYDVQQGEwJDTjEqMBEGA1UEChMKdGVuY2VudHl1bjAVBgNV
+  BAoTDnN5c3RlbTptYXN0ZXJzMSAwHgYDVQQDExdrdWJlLWNvbnRyb2xsZXItbWFu
+  YWdlcjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALW5PdrTjDTc2jT1
+  3XJrP9LxTxsNfdIdV0dYpYuG5INoz+NWX8dMNNlC7IVoK1gKgJNjWb5PGk03m7PJ
+  k8AanEVtK/zvGxqLXebNbJHalMjxi4n2qIbkFKiE6/q12/9VQpB2/t/OyJLaZbeB
+  DcngQmk5zKtUitquW+n08lEh4/g9o1ColMLnN1kIDHdFQIu9EpAh6qYTZsR1sWQJ
+  9TJAhF9tUZ1l+aqUTmpRz29Jl9enalAPaTHy8IlL6lS2db4Y8/2QDb7n2HaKQr1Q
+  +p9YqfKroZqNO2jQ1TcHWLSwrTXGl3YOK+DMYMHg2XL6K8MqkkhOX0h5jEmtk6L8
+  XcKLtEsCAwEAAaOCAUIwggE+MA4GA1UdDwEB/wQEAwIChDAdBgNVHSUEFjAUBggr
+  BgEFBQcDAgYIKwYBBQUHAwEwDAYDVR0TAQH/BAIwADCB/gYDVR0RBIH2MIHzghFr
+  dWJlcm5ldGVzLW1hc3RlcoIka3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVy
+  LmxvY2FsghZrdWJlcm5ldGVzLmRlZmF1bHQuc3ZjghJrdWJlcm5ldGVzLmRlZmF1
+  bHSCCmt1YmVybmV0ZXOCMmNscy00aWtsbmozcS1rdWJlbGIuaGsuMTI1MzY4Nzcw
+  MC5jbGIubXlxY2xvdWQuY29tgiJjbHMtNGlrbG5qM3EuY2NzLnRlbmNlbnQtY2xv
+  dWQuY29thwQK8yGIhwSp/oAOhwR/94ABhwSsFAAHhwSsFAALhwSsFAAOhwR/AAAB
+  MA0GCSqGSIb3DQEBCwUAA4IBAQCBYvIM8bnOSyk5mfxgbr2al5TquzMbSrEjXUsM
+  uNOWCffu5i5pDBzekEtK7KO9T55vtk9n1ZcGYhszm/uvH1gkHA5DWylopHaipCpJ
+  B53uDYXbtOM4G2YvDqvVdBGEliiZFsjpUElPZI4rB8c6UPsWKj/IhBRx+VG2iieP
+  REBiYLWQWHjzR3Mmeq8bLGgA9lQZpT2WftonWo6kOlTuxRRxXTn2ag5PXjnZd1lC
+  jpJKMtdk3WZK8r4E/2rcXIjwrtzPRN+dd7yXzx5AhEQbym4BR4yIDNPxhVDRPUQj
+  YMOa0NKziU+lguZsPIjOA4vqXYUJIqpNNMi3bmZ2hwBhe0Dp
+  -----END CERTIFICATE-----
+
+certsName: certs
+
+oidcClientSecret: ab
+oidcIssuerURL: oidcIssuerURL
+useOIDCCA: false
+
+token: XXX
+
+tenantID: default
+adminUsername: admin
+adminPassword: password

@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "tke-gateway.fullname" . }}
+  labels:
+    {{- include "tke-gateway.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "tke-gateway.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        timstamp: "{{ date "20060102150405" .Release.Time }}"
+    {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "tke-gateway.selectorLabels" . | nindent 8 }}
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "tke-gateway.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: wait-tke-auth-api
+          image: {{ .Values.registryPrefix }}/toolbox:v0.1.0
+          command: ['sh', '-c', 'until curl -k https://tke-auth-api; do echo waiting for tke-auth-api; sleep 2; done;']
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.registryPrefix }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - -C=/app/conf/tke-gateway.toml
+          ports:
+            - name: http
+              containerPort: {{ .Values.httpPort }}
+              protocol: TCP
+            - name: https
+              containerPort: {{ .Values.httpsPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz/ping
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+          volumeMounts:
+            - name: {{ include "tke-gateway.fullname" . }}
+              mountPath: /app/conf
+            - name: {{ .Values.certsName }}
+              mountPath: /app/certs
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "tke-gateway.fullname" . }}
+          configMap:
+            name: {{ include "tke-gateway.fullname" . }}
+        - name: {{ .Values.certsName }}
+          secret:
+            secretName: {{ .Values.certsName }}

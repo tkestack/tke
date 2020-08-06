@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tke-auth-controller.fullname" . }}
+  labels:
+    {{- include "tke-auth-controller.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tke-auth-controller.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        timstamp: "{{ date "20060102150405" .Release.Time }}"
+    {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "tke-auth-controller.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "tke-auth-controller.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: wait-tke-auth-api
+          image: {{ .Values.registryPrefix }}/toolbox:v0.1.0
+          command: ['sh', '-c', 'until curl -k https://tke-auth-api; do echo waiting for tke-auth-api; sleep 2; done;']
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.registryPrefix }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+          - -C=/app/conf/tke-auth-controller.toml
+          volumeMounts:
+            - name: {{ include "tke-auth-controller.fullname" . }}
+              mountPath: /app/conf
+            - name: {{ .Values.certsName }}
+              mountPath: /app/certs
+            - name: tke-auth-api-config
+              mountPath: /app/conf/tke-auth-api
+          ports:
+            - name: https
+              containerPort: {{ .Values.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "tke-auth-controller.fullname" . }}
+          configMap:
+            name: {{ include "tke-auth-controller.fullname" . }}
+        - name: {{ .Values.certsName }}
+          secret:
+            secretName: {{ .Values.certsName }}
+        - name: tke-auth-api-config
+          configMap:
+            name: tke-auth-api-config

@@ -1,0 +1,102 @@
+#repositories:
+#  - name: stable
+#    url: file://charts/
+
+releases:
+  - name: base
+    chart: charts/base
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-audit-api
+    chart: charts/tke-audit-api
+    condition: audit.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-auth-api
+    chart: charts/tke-auth-api
+    condition: auth.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-auth-controller
+    chart: charts/tke-auth-controller
+    condition: auth.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-platform-api
+    chart: charts/tke-platform-api
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-platform-controller
+    chart: charts/tke-platform-controller
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-business-api
+    chart: charts/tke-business-api
+    condition: auth.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-business-controller
+    chart: charts/tke-business-controller
+    condition: auth.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-logagent-api
+    chart: charts/tke-logagent-api
+    condition: logagent.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-logagent-controller
+    chart: charts/tke-logagent-controller
+    condition: logagent.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-monitor-api
+    chart: charts/tke-monitor-api
+    condition: monitor.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-monitor-controller
+    chart: charts/tke-monitor-controller
+    condition: monitor.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-notify-api
+    chart: charts/tke-notify-api
+    condition: monitor.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-notify-controller
+    chart: charts/tke-notify-controller
+    condition: monitor.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-registry-api
+    chart: charts/tke-registry-api
+    condition: registry.enabled
+    values:
+      - environments/default/values.yaml
+
+  - name: tke-gateway
+    chart: charts/tke-gateway
+    condition: gateway.enabled
+    values:
+      - environments/default/values.yaml
+
+environments:
+  default:
+    values:
+      - environments/default/values.yaml

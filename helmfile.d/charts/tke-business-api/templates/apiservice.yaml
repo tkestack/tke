@@ -1,0 +1,15 @@
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: "v1.business.tkestack.io"
+  labels:
+  {{- include "tke-business-api.labels" . | nindent 4 }}
+spec:
+  insecureSkipTLSVerify: true
+  group: business.tkestack.io
+  groupPriorityMinimum: 1000
+  service:
+    name: {{ include "tke-business-api.fullname" . }}
+    namespace: {{ .Release.Namespace }}
+  version: v1
+  versionPriority: 5
