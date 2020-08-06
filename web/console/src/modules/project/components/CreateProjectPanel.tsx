@@ -98,6 +98,11 @@ export class CreateProjectPanel extends React.Component<
       return { text: `${item.metadata.name}(${item.spec.displayName})`, value: item.metadata.name };
     });
 
+    projectListOpions.unshift({
+      text: '无上级业务',
+      value: ''
+    });
+
     let finalClusterList = deepClone(cluster);
 
     let parentProjectSelection = projectEdition.parentProject
@@ -182,6 +187,7 @@ export class CreateProjectPanel extends React.Component<
                   )}
                   <Button
                     icon={'close'}
+                    disabled={projectEdition.clusters.length === 1}
                     onClick={() => {
                       actions.project.deleteClusters(index);
                     }}
