@@ -138,7 +138,7 @@ Entry.register({
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
-          <Cluster />
+          <Overview />
         </Wrapper>
       )
     },
