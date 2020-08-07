@@ -136,7 +136,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
     let namespaceOptions = namespaceList.data.records.map(n => {
       return {
         value: n.name,
-        text: n.name
+        text: n.displayName
       };
     });
 
