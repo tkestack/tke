@@ -372,7 +372,8 @@ export async function fetchNamespaceList(query: QueryState<NamespaceFilter>, nam
         namespaceList = list.items.map(item => {
           return {
             id: uuid(),
-            name: item.metadata.name
+            name: item.metadata.name,
+            displayName: item.metadata.name
           };
         });
       } else {

@@ -138,7 +138,7 @@ export class EditConfigMapPanel extends React.Component<RootProps, {}> {
                   value={namespace}
                   recordData={namespaceList}
                   valueField="name"
-                  textField="name"
+                  textField="displayName"
                   name="Namespace"
                   onSelect={value => {
                     actions.editCM.selectNamespace(value);

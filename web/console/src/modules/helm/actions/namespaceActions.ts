@@ -26,7 +26,7 @@ const fetchNamespaceActions = generateFetcherActionCreator({
     let response = await CommonAPI.fetchResourceList({ query: namespaceQuery, resourceInfo: namespaceInfo });
     return {
       recordCount: response.recordCount,
-      records: response.records.map(r => ({ id: r.metadata.name, name: r.metadata.name }))
+      records: response.records.map(r => ({ id: r.metadata.name, name: r.metadata.name, displayName: r.metadata.name }))
     };
   },
   finish: (dispatch: Redux.Dispatch, getState: GetState) => {

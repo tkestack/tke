@@ -45,6 +45,10 @@ export const NamespaceStatus = {
   Terminating: {
     text: 'Terminating',
     classname: 'text-restart'
+  },
+  Failed: {
+    text: 'Failed',
+    classname: 'text-danger'
   }
 };
 
