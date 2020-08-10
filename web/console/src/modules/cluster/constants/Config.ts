@@ -301,7 +301,15 @@ export const ServiceWorkloadList = [
   },
   {
     value: 'statefulset',
-    name: 'Statefulset'
+    name: 'StatefulSet'
+  },
+  {
+    value: 'daemonset',
+    name: 'DaemonSet'
+  },
+  {
+    value: 'tapp',
+    name: 'TApp'
   }
 ];
 
