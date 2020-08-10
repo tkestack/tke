@@ -69,6 +69,14 @@ func GetCluster(ctx context.Context, platformClient internalversion.PlatformInte
 			return nil, fmt.Errorf("get cluster's credential error: %w", err)
 		}
 		result.ClusterCredential = clusterCredential
+	} else if platformClient != nil {
+		clusterCredentials, err := platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("clusterName=%s", cluster.Name)})
+		if err != nil {
+			return nil, fmt.Errorf("get cluster's credential error: %w", err)
+		}
+		if clusterCredentials != nil && clusterCredentials.Items != nil && len(clusterCredentials.Items) > 0 {
+			result.ClusterCredential = &clusterCredentials.Items[0]
+		}
 	}
 
 	return result, nil
