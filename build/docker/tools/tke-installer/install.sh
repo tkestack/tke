@@ -147,19 +147,26 @@ function start_installer() {
   echo "Step.5 start tke-installer [ok]"
 }
 
+
 function check_installer() {
-  echo "Step.6 check tke-installer status [doing]"
-
-  url="http://127.0.0.1:8080/index.html"
-  if ! curl -sSf "$url" >/dev/null; then
-    echo "check installer status error"
-    docker logs tke-installer
-    exit 1
-  fi
-
-  echo "Step.6 check tke-installer status [ok]"
-
-  echo "Please use your browser which can connect this machine to open $url for install TKE!"
+  s=10
+  for i in $(seq 1 $s)
+  do
+    echo "Step.6 check tke-installer status [doing]"
+    url="http://127.0.0.1:8080/index.html"
+    if ! curl -sSf "$url" >/dev/null; then
+      sleep 3
+      echo "Step.6 retries left $(($s-$i))"
+      continue
+    else
+      echo "Step.6 check tke-installer status [ok]"
+      echo "Please use your browser which can connect this machine to open $url for install TKE!"
+      exit 0
+    fi
+  done
+  echo "check installer status error"
+  docker logs tke-installer
+  exit 1 
 }
 
 prefight
