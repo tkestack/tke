@@ -20,15 +20,16 @@ package util
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"tkestack.io/tke/api/registry"
-	"tkestack.io/tke/api/registry/v1"
+	v1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
 // FilterNamespace is used to filter namespaces that do not belong to the tenant.
 func FilterNamespace(ctx context.Context, namespace *registry.Namespace) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -40,7 +41,7 @@ func FilterNamespace(ctx context.Context, namespace *registry.Namespace) error {
 
 // FilterRepository is used to filter repositories that do not belong to the tenant.
 func FilterRepository(ctx context.Context, repository *registry.Repository) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -52,7 +53,7 @@ func FilterRepository(ctx context.Context, repository *registry.Repository) erro
 
 // FilterChartGroup is used to filter chart groups that do not belong to the tenant.
 func FilterChartGroup(ctx context.Context, chartGroup *registry.ChartGroup) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -64,7 +65,7 @@ func FilterChartGroup(ctx context.Context, chartGroup *registry.ChartGroup) erro
 
 // FilterChart is used to filter charts that do not belong to the tenant.
 func FilterChart(ctx context.Context, chart *registry.Chart) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}

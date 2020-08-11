@@ -4,6 +4,7 @@ import {
   generateFetcherActionCreator,
   RecordSet,
   ReduxAction,
+  uuid,
   createFFListActions
 } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
@@ -44,6 +45,7 @@ const listResourceActions = createFFListActions<Resource, ResourceFilter>({
       let list = [];
       projectNamespaceList.data.records.forEach(item => {
         list.push({
+          id: uuid(),
           metadata: { name: item.spec.namespace, creationTimestamp: item.metadata.creationTimestamp },
           spec: {
             clusterId: item.spec.clusterName,
@@ -125,12 +127,12 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
   let gameBRresourceInfo = resourceConfig(clusterVersion).lbcf_br;
   let gameBGList = await WebAPI.fetchResourceList(resourceQuery, {
       resourceInfo: gameBGresourceInfo,
-      isClearData,
-      isContinue: true
+      isClearData
     }),
     gameLBList = await WebAPI.fetchResourceList(resourceQuery, {
       resourceInfo,
-      isClearData
+      isClearData,
+      isContinue: true
     }),
     gameBRList = await WebAPI.fetchResourceList(resourceQuery, {
       resourceInfo: gameBRresourceInfo,
@@ -144,10 +146,8 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
           records => records.metadata.labels['lbcf.tkestack.io/backend-group'] === backgroup.metadata.name
         );
         try {
-          backGroups.push({
+          let backGroup = {
             name: backgroup.metadata.name,
-            labels: backgroup.spec.pods.byLabel.selector,
-            port: backgroup.spec.pods.port,
             status: backgroup.status,
             backendRecords: backendRecords.map(record => {
               return {
@@ -156,7 +156,23 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
                 conditions: record.status && record.status.conditions ? record.status.conditions : []
               };
             })
-          });
+          };
+          if (backgroup.spec.pods) {
+            backGroup['pods'] = {
+              labels: backgroup.spec.pods.byLabel.selector,
+              port: backgroup.spec.pods.port,
+              byName: backgroup.spec.pods.byName
+            };
+          } else if (backgroup.spec.service) {
+            backGroup['service'] = {
+              name: backgroup.spec.service.name,
+              port: backgroup.spec.service.port,
+              nodeSelector: backgroup.spec.service.nodeSelector
+            };
+          } else {
+            backGroup['static'] = backgroup.spec.static;
+          }
+          backGroups.push(backGroup);
         } catch (e) {}
       }
     });
@@ -373,18 +389,25 @@ const restActions = {
       isNeedClear && dispatch(resourceActions.fetch({ noCache: true }));
     };
   },
-
   /** 轮询拉取条件 */
-  poll: (queryObj: ResourceFilter) => {
+  poll: () => {
     return async (dispatch, getState: GetState) => {
-      // 每次轮询之前先清空之前的轮询
-      dispatch(resourceActions.clearPollEvent());
-      // 触发列表的查询
-      dispatch(resourceActions.applyFilter(queryObj));
+      let { route } = getState();
+      let { np, clusterId, rid, meshId } = route.queries;
 
-      window[PollEventName['resourceList']] = setInterval(() => {
-        dispatch(resourceActions.poll(queryObj));
-      }, 8000);
+      let filterObj: ResourceFilter = {
+        namespace: np,
+        clusterId,
+        regionId: +rid,
+        meshId
+      };
+
+      dispatch(
+        resourceActions.polling({
+          filter: filterObj,
+          delayTime: 8000
+        })
+      );
     };
   },
 

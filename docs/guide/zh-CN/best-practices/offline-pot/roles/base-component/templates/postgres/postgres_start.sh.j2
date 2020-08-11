@@ -1,0 +1,9 @@
+docker run \
+  --detach \
+  --restart=always \
+  --net host \
+  --env POSTGRES_PASSWORD={{ POSTGRES_PASSWORD }} \
+  --env POSTGRES_USER=postgres \
+  --name postgres \
+  -v {{ POSTGRES_DATA_DIR }}:/var/lib/postgresql/data \
+  -d {{ registry_domain }}/{{ POSTGRES_IMAGE }}

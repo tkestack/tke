@@ -4,7 +4,7 @@ Namespaces 是 Kubernetes 在同一个集群中进行逻辑环境划分的对象
 ## 使用方法
 
 - 通过 TKEStack 控制台使用：TKEStack 控制台提供 Namespaces 的增删改查功能。
-  - 【业务管理】平台下不支持对命名空间的直接操作，需在【平台管理】下[【业务管理】](../../../products/platform/business.md)中的“创建业务下的命名空间”来实现
+  - 【业务管理】平台下不支持对命名空间的直接操作，需在【平台管理】下[【业务管理】](../../../products/platform/business.md)中指定业务通过“创建业务下的命名空间”来实现。
 - 通过 Kubectl 使用：更多详情可查看 [Kubernetes 官网文档](https://kubernetes.io/docs/tasks/administer-cluster/namespaces/)。
 
 

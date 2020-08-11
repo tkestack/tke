@@ -68,12 +68,15 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         isOpenLogStash,
         modifyLogStashFlow,
         isDaemonsetNormal,
-        logDaemonset
+        logDaemonset,
+        projectList,
+        projectSelection
       } = this.props,
       { logStashName, v_logStashName, v_clusterSelection, logMode } = logStashEdit,
       urlParams = router.resolve(route);
     // 当前的类型 create | update
     let { mode } = urlParams;
+    let byProject = window.location.href.includes('/tkestack-project');
 
     let isCreateMode: boolean = mode === 'create';
 
@@ -104,6 +107,98 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         text: logModeList[mode].name
       };
     });
+    // 如果是在业务侧，去掉"节点文件路径"
+    if (byProject) {
+      logModeSegments.pop();
+    }
+
+    // 根据当前是平台侧/业务侧返回业务/集群选择器，或者显示业务/集群信息（修改）
+    let getSelector = () => {
+      if (byProject) {
+        if (!isCreateMode) {
+          return (
+            <FormPanel.Item label={t('所属业务')} text>
+              {projectSelection}
+            </FormPanel.Item>
+          );
+        }
+        let projectListOptions = projectList.map((p, index) => ({
+          text: p.displayName,
+          value: p.name
+        }));
+
+        return (<>
+          <FormPanel.Item label={t('业务：')}>
+            <FormPanel.Select
+              options={projectListOptions}
+              value={projectSelection}
+              onChange={value => {
+                actions.cluster.selectProject(value);
+              }}
+            ></FormPanel.Select>
+          </FormPanel.Item>
+        </>);
+      }
+      if (!isCreateMode) {
+        return (
+          <FormPanel.Item label={t('所属集群')} text>
+            {clusterSelection[0] &&
+            clusterSelection[0].metadata.name + '(' + clusterSelection[0].spec.displayName + ')'}
+          </FormPanel.Item>
+        );
+      }
+
+      return (
+        <FormPanel.Item
+          label={t('所属集群')}
+          message={
+            <React.Fragment>
+              <Text parent="p">
+                <Trans>
+                  如现有的集群不合适，您可以去控制台
+                  <ExternalLink href={`/tke/cluster/create?rid=${route.queries['rid']}`} target="_self">
+                    导入集群
+                  </ExternalLink>
+                  或者
+                  <ExternalLink href={`/tke/cluster/createIC?rid=${route.queries['rid']}`} target="_self">
+                    新建一个独立集群
+                  </ExternalLink>
+                </Trans>
+              </Text>
+              {!isOpenLogStash && (
+                <Text theme="danger">
+                  <Trans>
+                    该集群未开启日志收集功能，
+                    <Button type="link" onClick={() => actions.workflow.authorizeOpenLog.start()}>
+                      立即开启
+                    </Button>
+                  </Trans>
+                </Text>
+              )}
+            </React.Fragment>
+          }
+        >
+          <SelectList
+            value={clusterSelection[0] ? clusterSelection[0].metadata.name : ''}
+            recordData={selectClusterList}
+            valueField="clusterId"
+            textField="clusterName"
+            textFields={['clusterId', 'clusterName']}
+            textFormat={`\${clusterId} (\${clusterName})`}
+            className="tc-15-select m"
+            style={{ marginRight: '5px' }}
+            onSelect={value => actions.cluster.selectCluster(value)}
+            name={t('集群')}
+            emptyTip=""
+            tipPosition="left"
+            align="start"
+            validator={v_clusterSelection}
+            isUnshiftDefaultItem={false}
+          />
+        </FormPanel.Item>
+      );
+    };
+
     return (
       <FormPanel>
         {!isCreateMode ? (
@@ -127,60 +222,8 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
           />
         )}
 
-        {!isCreateMode ? (
-          <FormPanel.Item label={t('所属集群')} text>
-            {clusterSelection[0] &&
-              clusterSelection[0].metadata.name + '(' + clusterSelection[0].spec.displayName + ')'}
-          </FormPanel.Item>
-        ) : (
-          <FormPanel.Item
-            label={t('所属集群')}
-            message={
-              <React.Fragment>
-                <Text parent="p">
-                  <Trans>
-                    如现有的集群不合适，您可以去控制台
-                    <ExternalLink href={`/tke/cluster/create?rid=${route.queries['rid']}`} target="_self">
-                      导入集群
-                    </ExternalLink>
-                    或者
-                    <ExternalLink href={`/tke/cluster/createIC?rid=${route.queries['rid']}`} target="_self">
-                      新建一个独立集群
-                    </ExternalLink>
-                  </Trans>
-                </Text>
-                {!isOpenLogStash && (
-                  <Text theme="danger">
-                    <Trans>
-                      该集群未开启日志收集功能，
-                      <Button type="link" onClick={() => actions.workflow.authorizeOpenLog.start()}>
-                        立即开启
-                      </Button>
-                    </Trans>
-                  </Text>
-                )}
-              </React.Fragment>
-            }
-          >
-            <SelectList
-              value={clusterSelection[0] ? clusterSelection[0].metadata.name : ''}
-              recordData={selectClusterList}
-              valueField="clusterId"
-              textField="clusterName"
-              textFields={['clusterId', 'clusterName']}
-              textFormat={`\${clusterId} (\${clusterName})`}
-              className="tc-15-select m"
-              style={{ marginRight: '5px' }}
-              onSelect={value => actions.cluster.selectCluster(value)}
-              name={t('集群')}
-              emptyTip=""
-              tipPosition="left"
-              align="start"
-              validator={v_clusterSelection}
-              isUnshiftDefaultItem={false}
-            />
-          </FormPanel.Item>
-        )}
+        {getSelector()}
+
         {!isCreateMode ? (
           <FormPanel.Item label={t('类型')} text>
             {selectedLogMode.name}
@@ -267,8 +310,9 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
   }
 
   private async _handleSubmit(mode) {
-    let { actions, route, logStashEdit, isOpenLogStash, clusterVersion, logSelection } = this.props;
+    let { actions, route, logStashEdit, clusterVersion, logSelection, clusterSelection } = this.props;
     let { rid, clusterId } = route.queries;
+    let { logAgentName } = clusterSelection[0].spec;
     let {
       logStashName,
       logMode,
@@ -308,7 +352,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
       +rid
     );
 
-    if (valResult && isOpenLogStash) {
+    if (valResult) {
       let { rid, clusterId } = route.queries;
 
       let logResourceInfo = resourceConfig(clusterVersion)['logcs'];
@@ -444,6 +488,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         mode: mode === 'update' ? 'modify' : mode, //更新方式为put，不是patch，update对应的为patch，modify对应为put
         namespace,
         clusterId,
+        logAgentName,
         jsonData,
         isStrategic: false,
         resourceIns: mode === 'update' ? logStashName : '' //更新的需要需要带上具体的name

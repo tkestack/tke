@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/proxy"
 )
 
 // Storage includes storage for resources.
@@ -34,12 +34,12 @@ type Storage struct {
 
 // REST implements pkg/api/rest.StandardStorage.
 type REST struct {
-	*util.Store
+	*proxy.Store
 }
 
 // NewStorageV1Beta1 returns a Storage object that will work against resources.
 func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	volumeAttachmentStore := &util.Store{
+	volumeAttachmentStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &storageV1Beta1.VolumeAttachment{} },
 		NewListFunc:    func() runtime.Object { return &storageV1Beta1.VolumeAttachmentList{} },
 		Namespaced:     false,
@@ -53,7 +53,7 @@ func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platf
 
 // NewStorageV1Alpha1 returns a Storage object that will work against resources.
 func NewStorageV1Alpha1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	volumeAttachmentStore := &util.Store{
+	volumeAttachmentStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &storageV1Alpha1.VolumeAttachment{} },
 		NewListFunc:    func() runtime.Object { return &storageV1Alpha1.VolumeAttachmentList{} },
 		Namespaced:     false,

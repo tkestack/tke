@@ -1,8 +1,6 @@
 import { combineReducers } from 'redux';
 
-import {
-    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload
-} from '@tencent/ff-redux';
+import { createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
 
@@ -16,6 +14,8 @@ const logOptionReducer = combineReducers({
 
   containerName: reduceToPayload(ActionType.ContainerName, ''),
 
+  logFile: reduceToPayload(ActionType.LogFile, 'stdout'),
+
   tailLines: reduceToPayload(ActionType.TailLines, '100'),
 
   isAutoRenew: reduceToPayload(ActionType.IsAutoRenewPodLog, false)
@@ -23,6 +23,8 @@ const logOptionReducer = combineReducers({
 /** ==== start 日志的相关处理 ============ */
 
 const TempReducer = combineReducers({
+  resourceDetailInfo: createFFListReducer(FFReduxActionName.Resource_Detail_Info),
+
   yamlList: generateFetcherReducer<RecordSet<string>>({
     actionType: ActionType.FetchYaml,
     initialData: {
@@ -96,6 +98,12 @@ const TempReducer = combineReducers({
       records: [] as string[]
     }
   }),
+
+  logAgent: reduceToPayload(ActionType.PodLogAgent, {}),
+
+  logHierarchy: reduceToPayload(ActionType.PodLogHierarchy, []),
+
+  logContent: reduceToPayload(ActionType.PodLogContent, ''),
 
   logOption: logOptionReducer,
 

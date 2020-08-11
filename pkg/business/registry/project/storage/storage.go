@@ -22,8 +22,6 @@ import (
 	"context"
 	"fmt"
 
-	"tkestack.io/tke/pkg/apiserver/authentication"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +37,7 @@ import (
 	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/cmd/tke-business-api/app/options"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	projectstrategy "tkestack.io/tke/pkg/business/registry/project"
 	"tkestack.io/tke/pkg/business/util"
@@ -75,12 +74,11 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 
 		ShouldDeleteDuringUpdate: shouldDeleteDuringUpdate,
 	}
-	options := &genericregistry.StoreOptions{
+
+	if err := store.CompleteWithOptions(&genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    projectstrategy.GetAttrs,
-	}
-
-	if err := store.CompleteWithOptions(options); err != nil {
+	}); err != nil {
 		log.Panic("Failed to create project etcd rest storage", log.Err(err))
 	}
 
@@ -93,7 +91,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 	finalizeStore.ExportStrategy = projectstrategy.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		Project:  &REST{store, authClient, privilegedUsername},
+		Project:  &REST{store, authClient, businessClient, privilegedUsername},
 		Status:   &StatusREST{&statusStore},
 		Finalize: &FinalizeREST{&finalizeStore},
 	}
@@ -133,6 +131,7 @@ type REST struct {
 	*registry.Store
 
 	authClient         authversionedclient.AuthV1Interface
+	businessClient     *businessinternalclient.BusinessClient
 	privilegedUsername string
 }
 

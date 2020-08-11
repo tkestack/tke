@@ -1,121 +1,35 @@
 import * as React from 'react';
+
+import { Button, ExternalLink, Form } from '@tencent/tea-component';
+
 import { RootProps } from './InstallerApp';
-import { Button, Input, Form, Segment, Text } from '@tencent/tea-component';
-import { getValidateStatus } from '../../common/utils';
-import { validateActions } from '../actions/validateActions';
 
 export class Step1 extends React.Component<RootProps> {
   render() {
-    const { actions, editState, step } = this.props;
+    const { isVerified, actions, step } = this.props;
     return step === 'step1' ? (
       <section>
-        <Form.Title>
-          账户设置
-          <Text theme="label" style={{ fontSize: '12px', fontWeight: 400, marginLeft: '10px' }}>
-            设置控制台管理员账号信息
-          </Text>
-        </Form.Title>
-
-        <Form layout="fixed">
-          <Form.Item
-            label="用户名"
-            required
-            status={getValidateStatus(editState.v_username)}
-            message={editState.v_username.message}
-          >
-            <Input value={editState.username} onChange={value => actions.installer.updateEdit({ username: value })} />
-          </Form.Item>
-          <Form.Item
-            label="密码"
-            required
-            status={getValidateStatus(editState.v_password)}
-            message={editState.v_password.message}
-          >
-            <Input
-              type="password"
-              value={editState.password}
-              onChange={value => actions.installer.updateEdit({ password: value })}
-            />
-          </Form.Item>
-          <Form.Item
-            label="确认密码"
-            required
-            status={getValidateStatus(editState.v_confirmPassword)}
-            message={editState.v_confirmPassword.message}
-          >
-            <Input
-              type="password"
-              value={editState.confirmPassword}
-              onChange={value => actions.installer.updateEdit({ confirmPassword: value })}
-            />
-          </Form.Item>
-        </Form>
-        <hr />
-        <Form.Title>
-          高可用设置
-          <Text theme="label" style={{ fontSize: '12px', fontWeight: 400, marginLeft: '10px' }}>
-            设置控制台、APIServer的高可用VIP
-          </Text>
-        </Form.Title>
         <Form>
-          <Form.Item label="高可用类型">
-            <Segment
-              value={editState.haType}
-              options={[
-                { value: 'tke', text: 'TKE提供' },
-                { value: 'thirdParty', text: '使用已有' },
-                { value: 'none', text: '不设置' }
-              ]}
-              onChange={value => actions.installer.updateEdit({ haType: value })}
-            />
-            {editState.haType === 'tke' ? (
-              <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
-                <Form>
-                  <Form.Item
-                    label="VIP地址"
-                    required
-                    status={getValidateStatus(editState.v_haTkeVip)}
-                    message={editState.v_haTkeVip.message}
-                  >
-                    <Input
-                      value={editState.haTkeVip}
-                      onChange={value => actions.installer.updateEdit({ haTkeVip: value })}
-                    />
-                  </Form.Item>
-                </Form>
-              </div>
-            ) : editState.haType === 'thirdParty' ? (
-              <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
-                <Form>
-                  <Form.Item
-                    label="VIP地址"
-                    required
-                    status={getValidateStatus(editState.v_haThirdVip)}
-                    message={editState.v_haThirdVip.message}
-                  >
-                    <Input
-                      value={editState.haThirdVip}
-                      onChange={value => actions.installer.updateEdit({ haThirdVip: value })}
-                    />
-                  </Form.Item>
-                </Form>
-              </div>
-            ) : (
-              <noscript />
-            )}
+          <Form.Item>
+            <Form.Text>
+              感谢您选择TKEStack，TKEStack遵循Apache LICENSE 2.0（许可），您可以在此查看许可原文：
+              <ExternalLink href="http://www.apache.org/licenses/LICENSE-2.0">
+                http://www.apache.org/licenses/LICENSE-2.0
+              </ExternalLink>
+              除非适用法律要求或以书面形式同意，否则根据“许可”分发的软件将按“原样”分发，不附带任何明示或暗示的保证或条件。
+              请参阅许可，以了解许可下的权限和限制。
+            </Form.Text>
           </Form.Item>
         </Form>
+
         <Form.Action style={{ position: 'absolute', bottom: '20px', left: '20px', width: '960px' }}>
           <Button
             type="primary"
             onClick={() => {
-              actions.validate.validateStep1(editState);
-              if (validateActions._validateStep1(editState)) {
-                actions.installer.stepNext('step2');
-              }
+              actions.installer.stepNext('step2');
             }}
           >
-            下一步
+            开始
           </Button>
         </Form.Action>
       </section>

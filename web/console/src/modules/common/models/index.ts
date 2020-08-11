@@ -34,3 +34,4 @@ export { CreateResource, MergeType } from './CreateResource';
 export { Resource, ResourceFilter } from './Resource';
 
 export { KeyValue } from './KeyValue';
+export { LogAgent } from './LogAgent';

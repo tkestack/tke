@@ -51,7 +51,9 @@ export class HelmHeadPanel extends React.Component<RootProps, {}> {
   render() {
     let {
       actions,
-      listState: { cluster }
+      listState: { cluster },
+      namespaceList,
+      namespaceSelection
     } = this.props;
     let clusterContent: React.ReactNode;
 
@@ -62,18 +64,31 @@ export class HelmHeadPanel extends React.Component<RootProps, {}> {
         value: item.metadata.name,
         text: `${item.metadata.name}(${item.spec.displayName ? item.spec.displayName : '未命名'})`
       }));
-
+      let namespaceOptions = namespaceList.data.records.map((p, index) => ({
+        text: p.displayName,
+        value: p.name
+      }));
       clusterContent = (
-        <Select
-          size="m"
-          options={clusterOptions}
-          value={cluster.selection ? cluster.selection.metadata.name : null}
-          onChange={value => {
-            let finder = cluster.list.data.records.find(item => item.metadata.name === value);
-            actions.cluster.selectCluster(finder);
-          }}
-          placeholder={cluster.list.data.recordCount ? t('请选择集群') : t('当前地域暂无集群')}
-        />
+        <>
+          <Select
+            size="m"
+            options={clusterOptions}
+            value={cluster.selection ? cluster.selection.metadata.name : null}
+            onChange={value => {
+              let finder = cluster.list.data.records.find(item => item.metadata.name === value);
+              actions.cluster.selectCluster(finder);
+            }}
+            placeholder={cluster.list.data.recordCount ? t('请选择集群') : t('当前地域暂无集群')}
+          />
+          <Text reset verticalAlign={'middle'}>
+            namespace
+          </Text>
+          <Select
+            options={namespaceOptions}
+            value={namespaceSelection}
+            onChange={value => actions.namespace.selectNamespace(value)}
+          />
+        </>
       );
     }
 

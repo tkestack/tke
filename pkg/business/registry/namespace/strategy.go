@@ -64,7 +64,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldNamespace := old.(*business.Namespace)
 	namespace, _ := obj.(*business.Namespace)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldNamespace.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update namespace information", log.String("oldTenantID", oldNamespace.Spec.TenantID), log.String("newTenantID", namespace.Spec.TenantID), log.String("userTenantID", tenantID))
@@ -91,7 +91,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	namespace, _ := obj.(*business.Namespace)
 	if len(tenantID) != 0 {
 		namespace.Spec.TenantID = tenantID

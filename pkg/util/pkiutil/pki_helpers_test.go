@@ -29,9 +29,10 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"io/ioutil"
-	certutil "k8s.io/client-go/util/cert"
 	"os"
 	"testing"
+
+	certutil "k8s.io/client-go/util/cert"
 )
 
 func TestNewCertificateAuthority(t *testing.T) {
@@ -526,4 +527,70 @@ func TestAppendSANsToAltNames(t *testing.T) {
 		}
 	}
 
+}
+
+func TestGenerateCertAndKey(t *testing.T) {
+	config := &certutil.Config{
+		CommonName:   "TKE",
+		Organization: []string{"Tencent"},
+	}
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("couldn't generate Private Key: %s", err)
+	}
+	caCert, err := certutil.NewSelfSignedCACert(*config, caKey)
+	if err != nil {
+		t.Fatalf("couldn't create self signed ca cert: %s", err)
+	}
+	caCertEncoded := EncodeCertPEM(caCert)
+	if len(caCertEncoded) == 0 {
+		t.Fatalf("ca cert is empty")
+	}
+	caKeyEncoded := EncodePrivateKeyPEM(caKey)
+	if len(caKeyEncoded) == 0 {
+		t.Fatalf("ca key is empty")
+	}
+
+	var tests = []struct {
+		desc     string
+		username string
+		groups   []string
+		expected bool
+	}{
+		{
+			desc:     "empty username and groups",
+			username: "",
+			groups:   nil,
+			expected: false,
+		},
+		{
+			desc:     "empty groups",
+			username: "tke",
+			groups:   nil,
+			expected: true,
+		},
+		{
+			desc:     "empty username",
+			username: "",
+			groups:   []string{"group1", "group2"},
+			expected: false,
+		},
+		{
+			desc:     "username and groups",
+			username: "tke",
+			groups:   []string{"group1", "group2"},
+			expected: true,
+		},
+	}
+
+	for _, rt := range tests {
+		t.Run(rt.desc, func(t *testing.T) {
+			_, _, err := GenerateClientCertAndKey(rt.username, rt.groups, caCertEncoded, caKeyEncoded)
+			actual := bool(err == nil)
+			if actual != rt.expected {
+				t.Errorf("failed GenerateClientCertAndKey: desc:%s\n\texpected: %t\n\t  actual: %t\n\t  err: %s",
+					rt.desc, rt.expected, actual, err)
+			}
+		})
+	}
 }

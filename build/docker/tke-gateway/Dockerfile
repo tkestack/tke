@@ -20,4 +20,5 @@ RUN echo "hosts: files dns" >> /etc/nsswitch.conf
 
 WORKDIR /app
 ADD tke-gateway /app/bin/
+COPY assets /app/assets
 ENTRYPOINT ["/app/bin/tke-gateway"]

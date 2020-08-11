@@ -48,8 +48,12 @@ spec:
               mountPath: /app/provider/baremetal/conf/kubeadm/
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
+            - name: gpu-manager-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/gpu-manager/
             - name: keepalived-manifests-volume
               mountPath: /app/provider/baremetal/manifests/keepalived/
+            - name: metrics-server-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/metrics-server/
           ports:
             - containerPort: 9445
           livenessProbe:
@@ -61,11 +65,11 @@ spec:
             periodSeconds: 20
           resources:
             limits:
-              cpu: 500m
+              cpu: 100m
               memory: 1Gi
             requests:
-              cpu: 250m
-              memory: 256Mi
+              cpu: 50m
+              memory: 128Mi
       volumes:
         - name: certs-volume
           configMap:
@@ -90,9 +94,15 @@ spec:
         - name: gpu-manifests-volume
           configMap:
             name: gpu-manifests
+        - name: gpu-manager-manifests-volume
+          configMap:
+            name: gpu-manager-manifests
         - name: keepalived-manifests-volume
           configMap:
             name: keepalived-manifests
+        - name: metrics-server-manifests-volume
+          configMap:
+            name: metrics-server-manifests
 ---
 kind: ConfigMap
 apiVersion: v1

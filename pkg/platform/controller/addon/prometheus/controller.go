@@ -36,6 +36,7 @@ import (
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,6 +125,11 @@ const (
 	kubeStateRoleBinding        = "kube-state-metrics"
 	kubeStateRole               = "kube-state-metrics-resizer"
 	kubeStateWorkLoad           = "kube-state-metrics"
+
+	nodeProblemDetectorWorkload           = "node-problem-detector"
+	nodeProblemDetectorServiceAccount     = "node-problem-detector"
+	nodeProblemDetectorClusterRoleBinding = "node-problem-detector"
+	nodeProblemDetectorClusterRole        = "node-problem-detector"
 
 	specialLabelName  = "k8s-submitter"
 	specialLabelValue = "controller"
@@ -377,6 +383,9 @@ func (c *Controller) processPrometheusDelete(ctx context.Context, cachedPromethe
 	log.Info("prometheus will be dropped", log.String("prome", key))
 
 	prometheus := cachedPrometheus.state
+	if prometheus != nil {
+		DeleteMetricPrometheusStatusFail(prometheus.Spec.TenantID, prometheus.Spec.ClusterName, prometheus.Name)
+	}
 	err := c.uninstallPrometheus(ctx, prometheus, true)
 	if err != nil {
 		log.Errorf("Prometheus uninstall fail: %v", err)
@@ -515,6 +524,7 @@ func (c *Controller) createPrometheusIfNeeded(ctx context.Context, key string, c
 		}
 	case v1.AddonPhaseRunning:
 		log.Info("Prometheus entry Running", log.String("prome", key))
+		UpdateMetricPrometheusStatusFail(prometheus.Spec.TenantID, prometheus.Spec.ClusterName, prometheus.Name, false)
 		if needUpgrade(prometheus) {
 			c.health.Delete(key)
 			prometheus = prometheus.DeepCopy()
@@ -543,6 +553,8 @@ func (c *Controller) createPrometheusIfNeeded(ctx context.Context, key string, c
 		c.upgrading.Delete(key)
 		c.health.Delete(key)
 
+		UpdateMetricPrometheusStatusFail(prometheus.Spec.TenantID, prometheus.Spec.ClusterName, prometheus.Name, true)
+
 		// should try check when prometheus recover again
 		log.Info("Prometheus try checking after fail", log.String("prome", key))
 		if _, ok := c.checking.Load(key); !ok {
@@ -550,7 +562,7 @@ func (c *Controller) createPrometheusIfNeeded(ctx context.Context, key string, c
 			delayTime := time.Now().Add(2 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediate(20*time.Second, 1*time.Minute, c.checkPrometheusStatus(ctx, prometheus, key, delayTime))
+				wait.PollImmediateUntil(60*time.Second, c.checkPrometheusStatus(ctx, prometheus, key, delayTime), c.stopCh)
 			}()
 		}
 	}
@@ -619,14 +631,30 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 
 	crds := getCRDs()
 	for _, crd := range crds {
-		crdObj := apiextensionsv1.CustomResourceDefinition{}
-		err := json.Unmarshal([]byte(crd), &crdObj)
-		if err != nil {
-			return err
-		}
-		_, err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
-		if err != nil {
-			return err
+		if apiclient.ClusterVersionIsBefore117(kubeClient) {
+			crdObj := apiextensionsv1beta1.CustomResourceDefinition{}
+			err := json.Unmarshal([]byte(crd), &crdObj)
+			if err != nil {
+				return err
+			}
+			crdObj.TypeMeta.APIVersion = "apiextensions.k8s.io/v1beta1"
+			_, err = crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
+			if err != nil {
+				log.Errorf("create crd failed %v", err)
+				return err
+			}
+		} else {
+			crdObj := apiextensionsv1.CustomResourceDefinition{}
+			err := json.Unmarshal([]byte(crd), &crdObj)
+			if err != nil {
+				return err
+			}
+
+			_, err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
+			if err != nil {
+				log.Errorf("create crd failed %v", err)
+				return err
+			}
 		}
 	}
 
@@ -722,7 +750,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		return err
 	}
 	// Crd prometheus instance
-	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(ctx, createPrometheusCRD(components, prometheus, cluster.Name, remoteWrites, remoteReads, c.remoteType), metav1.CreateOptions{}); err != nil {
+	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(ctx, createPrometheusCRD(components, prometheus, cluster, remoteWrites, remoteReads, c.remoteType), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	prometheus.Status.SubVersion[PrometheusService] = components.PrometheusService.Tag
@@ -769,6 +797,25 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	}
 	prometheus.Status.SubVersion[kubeStateService] = components.KubeStateService.Tag
 
+	if prometheus.Spec.WithNPD {
+		// ServiceAccount for node-problem-detector
+		if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, createServiceAccountForNPD(), metav1.CreateOptions{}); err != nil {
+			return err
+		}
+		// ClusterRole for node-problem-detector
+		if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, createClusterRoleForNPD(), metav1.CreateOptions{}); err != nil {
+			return err
+		}
+		// ClusterRoleBinding for node-problem-detector
+		if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, createClusterRoleBindingForNPD(), metav1.CreateOptions{}); err != nil {
+			return err
+		}
+		// DaemonSet for node-problem-detector
+		if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, createDaemonSetForNPD(components), metav1.CreateOptions{}); err != nil {
+			return err
+		}
+		prometheus.Status.SubVersion[nodeProblemDetectorWorkload] = components.NodeProblemDetector.Tag
+	}
 	return nil
 }
 
@@ -1075,7 +1122,7 @@ func clusterRoleBindingPrometheus() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus, clusterName string, remoteWrites, remoteReads []string, remoteType string) *monitoringv1.Prometheus {
+func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus, cluster *v1.Cluster, remoteWrites, remoteReads []string, remoteType string) *monitoringv1.Prometheus {
 	var remoteReadSpecs []monitoringv1.RemoteReadSpec
 	for _, r := range remoteReads {
 		if r == "nil" {
@@ -1180,7 +1227,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 					"prometheus.io/port":   "9090",
 				},
 			},
-			ExternalLabels:     map[string]string{"cluster_id": clusterName},
+			ExternalLabels:     map[string]string{"cluster_id": cluster.Name, "tenant_id": prometheus.Spec.TenantID, "cluster_display_name": cluster.Spec.DisplayName},
 			ScrapeInterval:     "60s",
 			RemoteRead:         remoteReadSpecs,
 			RemoteWrite:        remoteWriteSpecs,
@@ -1912,6 +1959,188 @@ func createAppsDeploymentForMetrics(components images.Components, prometheus *v1
 	return deploy
 }
 
+func createServiceAccountForNPD() *corev1.ServiceAccount {
+	return &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ServiceAccount",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nodeProblemDetectorServiceAccount,
+			Namespace: metav1.NamespaceSystem,
+			Labels:    map[string]string{"kubernetes.io/cluster-service": "true", "addonmanager.kubernetes.io/mode": "Reconcile"},
+		},
+	}
+}
+
+func createClusterRoleForNPD() *rbacv1.ClusterRole {
+	return &rbacv1.ClusterRole{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "rbac.authorization.k8s.io/v1beta1",
+			Kind:       "ClusterRole",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   nodeProblemDetectorClusterRole,
+			Labels: map[string]string{"kubernetes.io/cluster-service": "true", "addonmanager.kubernetes.io/mode": "Reconcile"},
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{""},
+				Resources: []string{"nodes", "pods"},
+				Verbs:     []string{"list", "get"},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"nodes/status"},
+				Verbs:     []string{"patch"},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"events"},
+				Verbs:     []string{"create", "patch", "update"},
+			},
+		},
+	}
+}
+
+func createClusterRoleBindingForNPD() *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterRoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   nodeProblemDetectorClusterRoleBinding,
+			Labels: map[string]string{"kubernetes.io/cluster-service": "true", "addonmanager.kubernetes.io/mode": "Reconcile"},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     nodeProblemDetectorClusterRole,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      nodeProblemDetectorServiceAccount,
+				Namespace: metav1.NamespaceSystem,
+			},
+		},
+	}
+}
+
+var selectorForNPD = metav1.LabelSelector{
+	MatchLabels: map[string]string{specialLabelName: specialLabelValue, "k8s-app": "node-problem-detector"},
+}
+
+func createDaemonSetForNPD(components images.Components) *appsv1.DaemonSet {
+	return &appsv1.DaemonSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "DaemonSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nodeProblemDetectorWorkload,
+			Namespace: metav1.NamespaceSystem,
+			Labels:    map[string]string{"kubernetes.io/cluster-service": "true", "addonmanager.kubernetes.io/mode": "Reconcile", specialLabelName: specialLabelValue, "k8s-app": "node-problem-detector"},
+		},
+		Spec: appsv1.DaemonSetSpec{
+			Selector: &selectorForNPD,
+			UpdateStrategy: appsv1.DaemonSetUpdateStrategy{
+				Type: appsv1.RollingUpdateDaemonSetStrategyType,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      map[string]string{specialLabelName: specialLabelValue, "k8s-app": "node-problem-detector"},
+					Annotations: map[string]string{"scheduler.alpha.kubernetes.io/critical-pod": "", "tke.prometheus.io/scrape": "true", "prometheus.io/scheme": "http", "prometheus.io/port": "20257"},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  nodeProblemDetectorWorkload,
+							Image: components.NodeProblemDetector.FullName(),
+							Command: []string{
+								"/node-problem-detector",
+								"--logtostderr",
+								"--prometheus-address=0.0.0.0",
+								"--config.system-log-monitor=/config/kernel-monitor.json,/config/docker-monitor.json",
+							},
+							SecurityContext: &corev1.SecurityContext{
+								Privileged: boolPointer(true),
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "NODE_NAME",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
+										},
+									},
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									MountPath: "/var/log",
+									Name:      "log",
+									ReadOnly:  true,
+								},
+								{
+									MountPath: "/dev/kmsg",
+									Name:      "kmsg",
+									ReadOnly:  true,
+								},
+								{
+									MountPath: "/etc/localtime",
+									Name:      "localtime",
+									ReadOnly:  true,
+								},
+							},
+						},
+					},
+					HostNetwork: true,
+					HostPID:     true,
+					Volumes: []corev1.Volume{
+						{
+							Name: "log",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/var/log",
+								},
+							},
+						},
+						{
+							Name: "kmsg",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/dev/kmsg",
+								},
+							},
+						},
+						{
+							Name: "localtime",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/etc/localtime",
+								},
+							},
+						},
+					},
+					ServiceAccountName: nodeProblemDetectorServiceAccount,
+					Tolerations: []corev1.Toleration{
+						{
+							Operator: corev1.TolerationOpExists,
+							Effect:   corev1.TaintEffectNoSchedule,
+						},
+						{
+							Operator: corev1.TolerationOpExists,
+							Key:      "CriticalAddonsOnly",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Prometheus, dropData bool) error {
 	var err error
 	var errs []error
@@ -2055,6 +2284,25 @@ func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Pro
 		errs = append(errs, err)
 	}
 
+	if prometheus.Spec.WithNPD {
+		err = kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Delete(ctx, nodeProblemDetectorWorkload, metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			errs = append(errs, err)
+		}
+		err = kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, nodeProblemDetectorClusterRoleBinding, metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			errs = append(errs, err)
+		}
+		err = kubeClient.RbacV1().ClusterRoles().Delete(ctx, nodeProblemDetectorClusterRole, metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			errs = append(errs, err)
+		}
+		err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, nodeProblemDetectorServiceAccount, metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			errs = append(errs, err)
+		}
+	}
+
 	// delete prometheus-operator
 	err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, prometheusOperatorWorkLoad, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -2079,15 +2327,29 @@ func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Pro
 
 	crds := getCRDs()
 	for _, crd := range crds {
-		crdObj := apiextensionsv1.CustomResourceDefinition{}
-		err := json.Unmarshal([]byte(crd), &crdObj)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Delete(ctx, crdObj.Name, metav1.DeleteOptions{})
-		if err != nil {
-			errs = append(errs, err)
+		if apiclient.ClusterVersionIsBefore117(kubeClient) {
+			crdObj := apiextensionsv1beta1.CustomResourceDefinition{}
+			err := json.Unmarshal([]byte(crd), &crdObj)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			crdObj.TypeMeta.APIVersion = "apiextensions.k8s.io/v1beta1"
+			err = crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(ctx, crdObj.Name, metav1.DeleteOptions{})
+			if err != nil && !errors.IsNotFound(err) {
+				errs = append(errs, err)
+			}
+		} else {
+			crdObj := apiextensionsv1.CustomResourceDefinition{}
+			err := json.Unmarshal([]byte(crd), &crdObj)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+			err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Delete(ctx, crdObj.Name, metav1.DeleteOptions{})
+			if err != nil && !errors.IsNotFound(err) {
+				errs = append(errs, err)
+			}
 		}
 	}
 
@@ -2545,4 +2807,8 @@ func (c *Controller) initThanos() ([]string, error) {
 	}
 
 	return remoteWrites, nil
+}
+
+func boolPointer(value bool) *bool {
+	return &value
 }

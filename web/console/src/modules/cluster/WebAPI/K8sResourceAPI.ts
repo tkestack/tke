@@ -14,7 +14,14 @@ import {
 } from '../../../../helpers';
 import { isEmpty } from '../../common';
 import { CreateResource, MergeType, RequestParams, ResourceInfo, UserDefinedHeader } from '../../common/models';
-import { DifferentInterfaceResourceOperation, Namespace, Resource, ResourceFilter } from '../models';
+import {
+  DifferentInterfaceResourceOperation,
+  LogContentQuery,
+  LogHierarchyQuery,
+  Namespace,
+  Resource,
+  ResourceFilter
+} from '../models';
 
 // 提示框
 const tips = seajs.require('tips');
@@ -52,13 +59,15 @@ export async function fetchNamespaceList(query: QueryState<ResourceFilter>, reso
         namespaceList = list.items.map(item => {
           return {
             id: uuid(),
-            name: item.metadata.name
+            name: item.metadata.name,
+            displayName: item.metadata.name
           };
         });
       } else {
         namespaceList.push({
           id: uuid(),
-          name: list.metadata.name
+          name: list.metadata.name,
+          displayName: list.metadata.name
         });
       }
     }
@@ -246,7 +255,8 @@ export async function fetchResourceList(
   const result: RecordSet<Resource> = {
     recordCount: resourceList.length,
     records: isNeedDes && resourceList.length > 1 ? resourceList.reverse() : resourceList,
-    continueToken: nextContinueToken
+    continueToken: nextContinueToken,
+    continue: nextContinueToken ? true : false
   };
 
   return result;
@@ -439,6 +449,160 @@ export async function fetchResourceLogList(
 }
 
 /**
+ * 获取日志组件的组件名称
+ */
+export async function fetchLogagentName(resourceInfo: ResourceInfo, clusterId: string, k8sQueryObj: any = {}) {
+  let logAgent = {};
+  let k8sUrl = reduceK8sRestfulPath({ resourceInfo });
+  let queryString = reduceK8sQueryString({ k8sQueryObj, restfulPath: k8sUrl });
+  let url = k8sUrl + queryString;
+  // 构建参数
+  let params: RequestParams = {
+    method: Method.get,
+    url
+  };
+
+  let response = await reduceNetworkRequest(params, clusterId);
+
+  if (response.code === 0) {
+    const { items } = response.data;
+    if (!isEmpty(items)) {
+      // 返回的是数组形式，理论上可以有多个 logAgent，实际上默认取第一个即可
+      logAgent = items[0];
+    }
+  }
+
+  return logAgent;
+}
+
+/**
+ * 获取日志目录结构
+ */
+export async function fetchResourceLogHierarchy(query: LogHierarchyQuery) {
+  let { agentName, clusterId, namespace, pod, container } = query;
+  let logList = [];
+
+  let url = `/apis/logagent.tkestack.io/v1/logagents/${agentName}/filetree`;
+  const payload = {
+    kind: 'LogFileTree',
+    apiVersion: 'logagent.tkestack.io/v1',
+    spec: {
+      clusterId,
+      namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
+      container,
+      pod
+    }
+  };
+  let params: RequestParams = {
+    method: Method.post,
+    url,
+    userDefinedHeader: {},
+    data: payload
+  };
+
+  let response = await reduceNetworkRequest(params, clusterId);
+
+  const traverse = (hierarchyData, path = '') => {
+    let { path: subPath, isDir, children } = hierarchyData;
+    // 如果是日志文件的话，构造完整路径，附加到日志文件列表，返回
+    if (!isDir) {
+      logList.push(path ? path + '/' + subPath : subPath);
+      return;
+    }
+    for (let i = 0; i < children.length; i++) {
+      const item = children[i];
+      traverse(item, path ? path + '/' + subPath : subPath);
+    }
+  };
+
+  if (response.code === 0) {
+    // 接口成功的话 response.data 为日志内容，失败的话为 { Code: '', Message: '' } 格式的错误
+    if (response.data && !response.data.Code) {
+      let content = response.data;
+      !isEmpty(content) && traverse(content);
+    }
+  }
+
+  return logList;
+}
+
+/**
+ * 获取日志内容
+ */
+export async function fetchResourceLogContent(query: LogContentQuery) {
+  let content = '';
+  let { agentName, clusterId, namespace, pod, container, start, length, filepath } = query;
+
+  let url = `/apis/logagent.tkestack.io/v1/logagents/${agentName}/filecontent`;
+  const payload = {
+    kind: 'LogFileContent',
+    apiVersion: 'logagent.tkestack.io/v1',
+    spec: {
+      clusterId,
+      namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
+      container,
+      pod,
+      start,
+      length,
+      filepath
+    }
+  };
+  let params: RequestParams = {
+    method: Method.post,
+    url,
+    userDefinedHeader: {},
+    data: payload
+  };
+
+  let response = await reduceNetworkRequest(params, clusterId);
+
+  if (response.code === 0) {
+    let { data } = response;
+    if (data && data.content) {
+      content = data.content;
+    }
+  }
+
+  return content;
+}
+
+/**
+ * 下载日志文件
+ * @param query
+ */
+export async function downloadLogFile(query) {
+  let content = '';
+  let { agentName, clusterId, namespace, pod, container, filepath } = query;
+
+  let url = `/apis/logagent.tkestack.io/v1/logagents/${agentName}/filedownload`;
+  const payload = {
+    pod,
+    namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
+    container,
+    path: filepath
+  };
+  // 构建参数
+  let params: RequestParams = {
+    method: Method.post,
+    url,
+    data: payload
+  };
+
+  let response = await reduceNetworkRequest(params, clusterId);
+
+  if (response.code === 0) {
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/x-tar' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filepath);
+    document.body.appendChild(link);
+    link.click();
+  }
+
+  return content;
+}
+
+/**
  * 同时创建多种资源
  * @param resource: CreateResource 创建resourceIns的相关信息
  * @param regionId: number 地域的ID
@@ -606,7 +770,7 @@ export async function modifyMultiResourceIns(resource: CreateResource[], regionI
           }
         }
       };
-      let response = await reduceNetworkRequest(param, clusterId);
+      let response = reduceNetworkRequest(param, clusterId);
       return response;
     });
     // 构建参数
@@ -787,7 +951,7 @@ export async function updateMultiResourceIns(resource: CreateResource[], regionI
         }
       };
 
-      let response = await reduceNetworkRequest(params, clusterId);
+      let response = reduceNetworkRequest(params, clusterId);
       return response;
     });
     let response = await Promise.all(requests);

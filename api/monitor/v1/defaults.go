@@ -31,3 +31,9 @@ func SetDefaults_ConfigMap(obj *ConfigMap) {
 		obj.Data = make(map[string]string)
 	}
 }
+
+func SetDefaults_PrometheusStatus(obj *PrometheusStatus) {
+	if obj.Phase == "" {
+		obj.Phase = AddonPhaseInitializing
+	}
+}

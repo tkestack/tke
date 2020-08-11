@@ -1,0 +1,73 @@
+# disk recover to raw device
+
+# set  switch facts
+- name: set recover_disk_to_raw_switch facts
+  set_fact: recover_disk_to_raw_switch = "{{ recover_disk_to_raw_switch }}"
+  tags: recover_disk_to_raw
+
+# check  disk whethere is raw device
+- name: check "{{ data_disk_name }}" disk whethere is raw device
+  shell: if [ `lsblk  | grep {{ data_disk_name }} | wc -l` -eq 1 ]; then echo "True"; elif [ `lsblk  | grep {{ data_disk_name }} | wc -l` -gt 1 ]; then echo "False";fi
+  register: recover_disk_raw_device
+  when: recover_disk_to_raw_switch == 'true'
+  tags: recover_disk_to_raw
+
+
+# umount the filesystem
+- name: umount filesystem
+  mount:
+    path: "{{ check_path }}"
+    src: "/dev/mapper/{{ vg_name }}-{{ lv_name }}"
+    fstype: "{{ filesystem }}"
+    state: unmounted
+  when: recover_disk_to_raw_switch == 'true' and recover_disk_raw_device.stdout == "False"
+  tags: recover_disk_to_raw
+
+# remove disk mount from /etc/fstab
+- name: remove disk mount from /etc/fstab
+  mount:
+    path: "{{ check_path }}"
+    src: "/dev/mapper/{{ vg_name }}-{{ lv_name }}"
+    fstype: "{{ filesystem }}"
+    state: absent
+  when: recover_disk_to_raw_switch == 'true' and recover_disk_raw_device.stdout == "False"
+  tags: recover_disk_to_raw
+
+# remove lvm
+- name: remove lvm "{{ lv_name }}"
+  lvol:
+    vg: "{{ vg_name }}"
+    lv: "{{ lv_name }}"
+    state: absent
+    force: yes
+  when: recover_disk_to_raw_switch == 'true' and recover_disk_raw_device.stdout == "False"
+  tags: recover_disk_to_raw
+  
+# remove vg
+- name: remove vg "{{ vg_name }}"
+  lvg:
+    vg: "{{ vg_name }}"
+    state: absent
+  when: recover_disk_to_raw_switch == 'true' and recover_disk_raw_device.stdout == "False"
+  tags: recover_disk_to_raw
+
+# Read device information (always use unit when probing)
+- name: get "{{ disk_device_name }}" information
+  parted: 
+    device: "{{ disk_device_name }}" 
+    unit: MiB
+  register: recover_disk_info
+  ignore_errors: yes
+  when: recover_disk_to_raw_switch == 'true' and recover_disk_raw_device.stdout == "False"
+  tags: recover_disk_to_raw
+
+# revoce disk to raw device
+- name: recover "{{ disk_device_name }}" to raw
+  parted:
+    device: "{{ disk_device_name }}"
+    number: "{{ item.num }}"
+    state: absent
+  with_items:
+    - "{{ recover_disk_info.partitions }}"
+  when: recover_disk_to_raw_switch == 'true' and recover_disk_raw_device.stdout == "False"
+  tags: recover_disk_to_raw

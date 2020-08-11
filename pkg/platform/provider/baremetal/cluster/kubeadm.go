@@ -21,6 +21,7 @@ package cluster
 import (
 	"fmt"
 
+	"github.com/imdario/mergo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -34,14 +35,39 @@ import (
 	"tkestack.io/tke/pkg/util/json"
 )
 
-func (p *Provider) getKubeadmConfig(c *v1.Cluster) *kubeadm.Config {
-	config := new(kubeadm.Config)
+func (p *Provider) getKubeadmInitConfig(c *v1.Cluster) *kubeadm.InitConfig {
+	config := new(kubeadm.InitConfig)
 	config.InitConfiguration = p.getInitConfiguration(c)
 	config.ClusterConfiguration = p.getClusterConfiguration(c)
 	config.KubeProxyConfiguration = p.getKubeProxyConfiguration(c)
 	config.KubeletConfiguration = p.getKubeletConfiguration(c)
 
 	return config
+}
+
+func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadmv1beta2.JoinConfiguration {
+	apiServerEndpoint, err := c.HostForBootstrap()
+	if err != nil {
+		panic(err)
+	}
+
+	return &kubeadmv1beta2.JoinConfiguration{
+		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
+			Name:             nodeName,
+			KubeletExtraArgs: p.getKubeletExtraArgs(c),
+		},
+		Discovery: kubeadmv1beta2.Discovery{
+			BootstrapToken: &kubeadmv1beta2.BootstrapTokenDiscovery{
+				Token:                    *c.ClusterCredential.BootstrapToken,
+				APIServerEndpoint:        apiServerEndpoint,
+				UnsafeSkipCAVerification: true,
+			},
+			TLSBootstrapToken: *c.ClusterCredential.BootstrapToken,
+		},
+		ControlPlane: &kubeadmv1beta2.JoinControlPlane{
+			CertificateKey: *c.ClusterCredential.CertificateKey,
+		},
+	}
 }
 
 func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfiguration {
@@ -56,7 +82,8 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 			},
 		},
 		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
-			Name: c.Spec.Machines[0].IP,
+			Name:             c.Spec.Machines[0].IP,
+			KubeletExtraArgs: p.getKubeletExtraArgs(c),
 		},
 		LocalAPIEndpoint: kubeadmv1beta2.APIEndpoint{
 			AdvertiseAddress: c.Spec.Machines[0].IP,
@@ -119,14 +146,14 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 }
 
 func (p *Provider) getKubeProxyConfiguration(c *v1.Cluster) *kubeproxyv1alpha1.KubeProxyConfiguration {
-	kubeProxyMode := "iptables"
+	config := &kubeproxyv1alpha1.KubeProxyConfiguration{}
+	config.Mode = "iptables"
 	if c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS {
-		kubeProxyMode = "ipvs"
+		config.Mode = "ipvs"
+		config.ClusterCIDR = c.Spec.ClusterCIDR
 	}
 
-	return &kubeproxyv1alpha1.KubeProxyConfiguration{
-		Mode: kubeproxyv1alpha1.ProxyMode(kubeProxyMode),
-	}
+	return config
 }
 
 func (p *Provider) getKubeletConfiguration(c *v1.Cluster) *kubeletv1beta1.KubeletConfiguration {
@@ -139,6 +166,7 @@ func (p *Provider) getKubeletConfiguration(c *v1.Cluster) *kubeletv1beta1.Kubele
 			"cpu":    "100m",
 			"memory": "500Mi",
 		},
+		MaxPods: *c.Spec.Properties.MaxNodePodNum,
 	}
 }
 
@@ -146,13 +174,20 @@ func (p *Provider) getAPIServerExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{
 		"token-auth-file": constants.TokenFile,
 	}
-	if p.config.Audit.Address != "" {
-		args["audit-policy-file"] = constants.AuditPolicyConfigFile
-		args["audit-webhook-config-file"] = constants.AuditWebhookConfigFile
+	if p.config.AuditEnabled() {
+		args["audit-policy-file"] = constants.KubernetesAuditPolicyConfigFile
+		args["audit-webhook-config-file"] = constants.KuberentesAuditWebhookConfigFile
+	}
+	if c.AuthzWebhookEnabled() {
+		args["authorization-webhook-config-file"] = constants.KubernetesAuthzWebhookConfigFile
+		args["authorization-mode"] = "Node,RBAC,Webhook"
 	}
 	for k, v := range c.Spec.APIServerExtraArgs {
 		args[k] = v
 	}
+
+	utilruntime.Must(mergo.Merge(&args, c.Spec.APIServerExtraArgs))
+	utilruntime.Must(mergo.Merge(&args, p.config.APIServer.ExtraArgs))
 
 	return args
 }
@@ -168,17 +203,34 @@ func (p *Provider) getControllerManagerExtraArgs(c *v1.Cluster) map[string]strin
 		args[k] = v
 	}
 
+	utilruntime.Must(mergo.Merge(&args, c.Spec.ControllerManagerExtraArgs))
+	utilruntime.Must(mergo.Merge(&args, p.config.ControllerManager.ExtraArgs))
+
 	return args
 }
 
 func (p *Provider) getSchedulerExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{
 		"use-legacy-policy-config": "true",
-		"policy-config-file":       constants.SchedulerPolicyConfigFile,
+		"policy-config-file":       constants.KuberentesSchedulerPolicyConfigFile,
 	}
 	for k, v := range c.Spec.SchedulerExtraArgs {
 		args[k] = v
 	}
+
+	utilruntime.Must(mergo.Merge(&args, c.Spec.SchedulerExtraArgs))
+	utilruntime.Must(mergo.Merge(&args, p.config.Scheduler.ExtraArgs))
+
+	return args
+}
+
+func (p *Provider) getKubeletExtraArgs(c *v1.Cluster) map[string]string {
+	args := map[string]string{
+		"pod-infra-container-image": images.Get().Pause.FullName(),
+	}
+
+	utilruntime.Must(mergo.Merge(&args, c.Spec.KubeletExtraArgs))
+	utilruntime.Must(mergo.Merge(&args, p.config.Kubelet.ExtraArgs))
 
 	return args
 }

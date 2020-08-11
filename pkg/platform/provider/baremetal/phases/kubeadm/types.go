@@ -24,7 +24,6 @@ import (
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
@@ -45,15 +44,14 @@ func init() {
 	utilruntime.Must(AddToScheme(Scheme))
 }
 
-type Config struct {
+type InitConfig struct {
 	InitConfiguration      *kubeadmv1beta2.InitConfiguration
 	ClusterConfiguration   *kubeadmv1beta2.ClusterConfiguration
-	JoinConfiguration      *kubeadmv1beta2.JoinConfiguration
 	KubeletConfiguration   *kubeletv1beta1.KubeletConfiguration
 	KubeProxyConfiguration *kubeproxyv1alpha1.KubeProxyConfiguration
 }
 
-func (c *Config) Marshal() ([]byte, error) {
+func (c *InitConfig) Marshal() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	v := reflect.ValueOf(*c)
 	for i := 0; i < v.NumField(); i++ {
@@ -64,12 +62,8 @@ func (c *Config) Marshal() ([]byte, error) {
 		if !ok {
 			panic("no runtime.Object")
 		}
-		gvks, _, err := Scheme.ObjectKinds(obj)
-		if err != nil {
-			return nil, err
-		}
 
-		yamlData, err := MarshalToYAML(obj, gvks[0].GroupVersion())
+		yamlData, err := MarshalToYAML(obj)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +75,13 @@ func (c *Config) Marshal() ([]byte, error) {
 }
 
 // MarshalToYaml marshals an object into yaml.
-func MarshalToYAML(obj runtime.Object, gv schema.GroupVersion) ([]byte, error) {
+func MarshalToYAML(obj runtime.Object) ([]byte, error) {
+	gvks, _, err := Scheme.ObjectKinds(obj)
+	if err != nil {
+		return nil, err
+	}
+	gv := gvks[0].GroupVersion()
+
 	const mediaType = runtime.ContentTypeYAML
 	info, ok := runtime.SerializerInfoForMediaType(Codecs.SupportedMediaTypes(), mediaType)
 	if !ok {

@@ -35,38 +35,10 @@ export const validateClusterCreationAction = {
     };
   },
 
-  /** 校验port是否正确 */
-  _validatePort(port: string) {
-    let status = 0,
-      message = '';
-
-    if (!port) {
-      status = 2;
-      message = 'port端口不能为空';
-    } else if (+port < 1 || +port > 65535) {
-      status = 2;
-      message = '端口范围为1～65535';
-    } else {
-      status = 1;
-      message = '';
-    }
-    return { status, message };
-  },
-
-  validatePort() {
-    return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { port } = getState().clusterCreationState;
-      let result = validateClusterCreationAction._validatePort(port);
-      dispatch(clusterCreationAction.updateClusterCreationState({ v_port: result }));
-    };
-  },
-
-  /**
-   * 校验apiserver地址是否正确
-   */
   _validateApiServer(name: string) {
     let status = 0,
       message = '',
+      numberReg = /^\d+$/,
       ipReg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/,
       hostReg = /^([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?$/;
     //验证集群名称
@@ -74,15 +46,51 @@ export const validateClusterCreationAction = {
     if (!name) {
       status = 2;
       message = 'API Server地址不能为空';
-    } else if (!ipReg.test(name) && !hostReg.test(name)) {
-      status = 2;
-      message = 'API Server格式不正确';
+    } else if (name.startsWith('https://')) {
+      let tempName = name.substring(8);
+      let tempSplit = tempName.split(':');
+      let host = tempSplit[0];
+      let path = '',
+        port = '';
+      if (host.indexOf('/') !== -1) {
+        let index = host.indexOf('/');
+        path = host.substring(index);
+        host = host.substring(0, index);
+        port = '443';
+      } else {
+        port = tempSplit[1] ? tempSplit[1].split('/')[0] : '443';
+        if (tempSplit[1] && tempSplit[1].indexOf('/') !== -1) {
+          path = tempSplit[1] ? tempSplit[1].substring(tempSplit[1].indexOf('/')) : '';
+        }
+      }
+      if (!host) {
+        status = 2;
+        message = 'API Server访问地址域名不能为空';
+      } else if (!ipReg.test(host) && !hostReg.test(host)) {
+        status = 2;
+        message = 'API Server格式不正确';
+      } else {
+        status = 1;
+        message = '';
+      }
+      if (!numberReg.test(port)) {
+        status = 2;
+        message = '端口格式错误';
+      } else if (+port < 1 || +port > 65535) {
+        status = 2;
+        message = '端口范围为1～65535';
+      } else {
+        status = 1;
+        message = '';
+      }
     } else {
-      status = 1;
-      message = '';
+      status = 2;
+      message = 'API Server访问地址，必须是https';
     }
+
     return { status, message };
   },
+
   validateApiServer() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let { apiServer } = getState().clusterCreationState;
@@ -142,7 +150,7 @@ export const validateClusterCreationAction = {
   },
   /** 校验clusterconnection的正确性 */
   _validateclusterCreationState(clusterCreationState: ClusterCreationState) {
-    let { name, apiServer, certFile, port, token } = clusterCreationState;
+    let { name, apiServer, certFile, token } = clusterCreationState;
 
     let result = true;
 
@@ -151,7 +159,7 @@ export const validateClusterCreationAction = {
       validateClusterCreationAction._validateClusterName(name).status === 1 &&
       validateClusterCreationAction._validateApiServer(apiServer).status === 1 &&
       validateClusterCreationAction._validateCertfile(certFile).status === 1 &&
-      validateClusterCreationAction._validatePort(port).status === 1 &&
+      // validateClusterCreationAction._validatePort(port).status === 1 &&
       validateClusterCreationAction._validateToken(token).status === 1;
 
     return result;
@@ -162,7 +170,7 @@ export const validateClusterCreationAction = {
       dispatch(validateClusterCreationAction.validateClusterName());
       dispatch(validateClusterCreationAction.validateCertfile());
       dispatch(validateClusterCreationAction.validateApiServer());
-      dispatch(validateClusterCreationAction.validatePort());
+      // dispatch(validateClusterCreationAction.validatePort());
       dispatch(validateClusterCreationAction.validateToken());
     };
   }

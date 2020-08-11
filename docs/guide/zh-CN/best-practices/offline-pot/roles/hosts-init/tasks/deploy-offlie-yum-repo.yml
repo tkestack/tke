@@ -1,0 +1,31 @@
+# deploy offline yum reop
+
+# load offline yum repo image
+- name: load offline yum repo on installer host
+  shell: docker load -i `ls {{ dpl_dir }}-images/yum-repo*.tar`
+  register: load_offline_yum_state
+  when: inventory_hostname in groups['installer'] and ansible_distribution == 'CentOS'
+  tags: deploy_offline_yum_repo
+
+# get current offline yum repo image name
+- name: get current offline yum repo image name
+  shell: echo "{{ load_offline_yum_state.stdout }}" | awk -F' ' '{print $NF}'
+  register: offline_yum_image
+  when: inventory_hostname in groups['installer'] and ansible_distribution == 'CentOS'
+  tags: deploy_offline_yum_repo
+
+# start offline yum repo with docker
+- name: start offline yum repo
+  shell: docker ps -a | grep offline-yum && docker rm -f offline-yum && docker run --restart=always -d -ti -p 38080:80 --name offline-yum "{{ offline_yum_image.stdout }}" ||  \
+         docker run --restart=always -d -ti -p 38080:80 --name offline-yum "{{ offline_yum_image.stdout }}"
+  when: inventory_hostname in groups['installer'] and ansible_distribution == 'CentOS'
+  tags: deploy_offline_yum_repo
+
+# issued offline-yum.repo to hosts
+- name: issued offline-yum.repo to hosts
+  template:
+    src: templates/offline-yum.repo.j2
+    dest: /etc/yum.repos.d/offline-yum.repo
+    mode: '0644'
+  when: ansible_distribution == 'CentOS'
+  tags: deploy_offline_yum_repo

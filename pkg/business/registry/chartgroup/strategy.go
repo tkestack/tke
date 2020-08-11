@@ -63,7 +63,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldChartGroup := old.(*business.ChartGroup)
 	chartGroup, _ := obj.(*business.ChartGroup)
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) != 0 {
 		if oldChartGroup.Spec.TenantID != tenantID {
 			log.Panic("Unauthorized update chartGroup information",
@@ -88,7 +88,7 @@ func (Strategy) Export(ctx context.Context, obj runtime.Object, exact bool) erro
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	chartGroup, _ := obj.(*business.ChartGroup)
 	if len(tenantID) != 0 {
 		chartGroup.Spec.TenantID = tenantID

@@ -1,0 +1,26 @@
+name: build-web
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'web/**'
+
+jobs:
+  build-web:
+
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '13.x'
+
+      - run: npm install
+
+      - run: |
+          make web

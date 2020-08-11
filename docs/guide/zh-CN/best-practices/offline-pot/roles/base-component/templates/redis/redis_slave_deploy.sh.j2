@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+#function:
+#    deploy privatized redis4 
+#release
+#    2018/11/2 first_release by edwardmli
+#
+
+
+ROOT_DIR=`cd $(dirname $0);pwd`
+
+REDIS_PORT={{ REDIS_PORT }}
+DATA_DIR=/data/redis
+REDIS_PASS={{ REDIS_PASS }}
+cd ${ROOT_DIR}
+
+# check redis whether is running
+
+REDIS_RUNING=`ps -ef | grep redis-server | grep -v grep | wc -l`
+if [[ $REDIS_RUNING -eq 0 ]]
+then
+    # kenerl config
+    sed -i '/vm.overcommit_memory/d' /etc/sysctl.conf
+    sed -i '/net.core.somaxconn/d' /etc/sysctl.conf
+    echo "vm.overcommit_memory=1" >> /etc/sysctl.conf
+    echo "net.core.somaxconn=511" >> /etc/sysctl.conf
+    sysctl -p > /dev/null
+    cat /etc/group | grep ^redis || groupadd redis 2>/dev/null
+    cat /etc/passwd | grep ^redis || useradd -s /sbin/nologin -g redis redis 2>/dev/null
+
+
+    #file check
+    if [[ ! -f ${ROOT_DIR}/jemalloc-3.6.0-1.el6.x86_64.rpm ]]
+    then
+       echo "No file jemalloc-3.6.0-1.el6.x86_64.rpm exits"
+    exit 1
+    fi
+
+    if [[ ! -f ${ROOT_DIR}/redis40u-4.0.10-1.ius.centos7.x86_64.rpm ]]
+    then
+        echo "No file redis40u-4.0.10-1.ius.centos7.x86_64.rp exits"
+        exit 1
+    fi
+
+    if [[ ! -f ${ROOT_DIR}/redis.conf.slave ]]
+    then
+        echo "No file redis.conf.slave exits"
+        exit 1
+    fi
+
+    if [[ ! -f ${ROOT_DIR}/redis_service ]]
+    then
+        echo "No file redis_service exits"
+        exit 1
+    fi
+
+
+    # directory check
+    mkdir -p ${DATA_DIR}
+    if [[ `ls ${DATA_DIR}|wc -l` -gt 0 ]]
+    then
+        echo "Directory ${DATA_DIR} is not empty"
+        exit 1
+    fi
+    mkdir -p ${DATA_DIR}/{pid,log,data}
+
+    # install dependences
+    rpm -qa|grep redis|awk '{print "rpm -e "$1}'|sh
+    rpm -ivh ${ROOT_DIR}/jemalloc-3.6.0-1.el6.x86_64.rpm > /dev/null 2>&1
+    rpm -ivh ${ROOT_DIR}/redis40u-4.0.10-1.ius.centos7.x86_64.rpm > /dev/null 2>&1
+
+    # install
+    mkdir -p /etc/redis
+    cp -a ${ROOT_DIR}/redis.conf.slave /etc/redis/redis.conf
+    cp -a ${ROOT_DIR}/redis_service /etc/init.d/redis
+    chmod +x /etc/init.d/redis
+    service redis start
+
+    if [[ $? -ne 0 ]]
+    then
+        echo "Start redis error"
+        exit 1
+    fi
+
+    rm redis.conf.slave redis_service jemalloc-3.6.0-1.el6.x86_64.rpm redis40u-4.0.10-1.ius.centos7.x86_64.rpm redis_slave_deploy.sh
+else
+    echo 'redis had running!'
+fi

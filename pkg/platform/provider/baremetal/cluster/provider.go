@@ -25,6 +25,8 @@ import (
 	"github.com/AlekSi/pointer"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
+	"k8s.io/client-go/tools/clientcmd"
+	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
@@ -35,6 +37,10 @@ import (
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
+)
+
+const (
+	name = "Baremetal"
 )
 
 func init() {
@@ -49,7 +55,8 @@ func init() {
 type Provider struct {
 	*clusterprovider.DelegateProvider
 
-	config *config.Config
+	config         *config.Config
+	platformClient platformv1client.PlatformV1Interface
 }
 
 var _ clusterprovider.Provider = &Provider{}
@@ -58,11 +65,13 @@ func NewProvider() (*Provider, error) {
 	p := new(Provider)
 
 	p.DelegateProvider = &clusterprovider.DelegateProvider{
-		ProviderName: "Baremetal",
+		ProviderName: name,
+
 		CreateHandlers: []clusterprovider.Handler{
 			p.EnsureCopyFiles,
 			p.EnsurePreInstallHook,
 
+			// configure system
 			p.EnsureRegistryHosts,
 			p.EnsureKernelModule,
 			p.EnsureSysctl,
@@ -72,45 +81,66 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsureClusterComplete,
 
+			// install packages
 			p.EnsureNvidiaDriver,
 			p.EnsureNvidiaContainerRuntime,
 			p.EnsureDocker,
+			p.EnsureKubernetesImages,
 			p.EnsureKubelet,
 			p.EnsureCNIPlugins,
+			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
-
+			p.EnsureKeepalivedInit,
+			p.EnsureThirdPartyHAInit,
+			p.EnsureAuthzWebhook,
 			p.EnsurePrepareForControlplane,
 
-			p.EnsureKubeadmInitKubeletStartPhase,
-			p.EnsureKubeadmInitCertsPhase,
+			p.EnsureKubeadmInitPhaseKubeletStart,
+			p.EnsureKubeadmInitPhaseCerts,
 			p.EnsureStoreCredential,
-			p.EnsureKubeconfig,
-			p.EnsureKubeadmInitKubeConfigPhase,
-			p.EnsureKubeadmInitControlPlanePhase,
-			p.EnsureKubeadmInitEtcdPhase,
-			p.EnsureKubeadmInitWaitControlPlanePhase,
-			p.EnsureKubeadmInitUploadConfigPhase,
-			p.EnsureKubeadmInitUploadCertsPhase,
-			p.EnsureKubeadmInitBootstrapTokenPhase,
-			p.EnsureKubeadmInitAddonPhase,
+			p.EnsureKubeconfig, // for upload
+			p.EnsureKubeadmInitPhaseKubeConfig,
+			p.EnsureKubeadmInitPhaseControlPlane,
+			p.EnsureKubeadmInitPhaseETCD,
+			p.EnsureKubeadmInitPhaseWaitControlPlane,
+			p.EnsureKubeadmInitPhaseUploadConfig,
+			p.EnsureKubeadmInitPhaseUploadCerts,
+			p.EnsureKubeadmInitPhaseBootstrapToken,
+			p.EnsureKubeadmInitPhaseAddon,
+
 			p.EnsureGalaxy,
 
-			p.EnsureJoinControlePlane,
+			p.EnsureJoinPhasePreflight,
+			p.EnsureJoinPhaseControlPlanePrepare,
+			p.EnsureJoinPhaseKubeletStart,
+			p.EnsureJoinPhaseControlPlaneJoinETCD,
+			p.EnsureJoinPhaseControlPlaneJoinUpdateStatus,
+
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
-
+			p.EnsureKeepalivedWithLB,
+			p.EnsureThirdPartyHA,
+			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
 			p.EnsureCSIOperator,
+			p.EnsureMetricsServer,
 
 			p.EnsureCleanup,
-
+			p.EnsureCreateClusterMark,
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
+			p.EnsureUpgradeControlPlaneNode,
+
 			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
+			p.EnsureKeepalivedWithLB,
+			p.EnsureThirdPartyHA,
+		},
+		DeleteHandlers: []clusterprovider.Handler{
+			p.EnsureCleanClusterMark,
 		},
 	}
 
@@ -121,6 +151,20 @@ func NewProvider() (*Provider, error) {
 	p.config = cfg
 
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
+
+	// Run for compatibility with installer.
+	// TODO: Installer reuse platform components
+	if cfg.PlatformAPIClientConfig != "" {
+		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
+		if err != nil {
+			log.Errorf("read PlatformAPIClientConfig error: %w", err)
+		} else {
+			p.platformClient, err = platformv1client.NewForConfig(restConfig)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return p, nil
 }
@@ -146,12 +190,23 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 		cluster.Spec.NetworkDevice = "eth0"
 	}
 
-	if cluster.Spec.Features.IPVS == nil {
-		cluster.Spec.Features.IPVS = pointer.ToBool(true)
-	}
 	if cluster.Spec.Features.CSIOperator != nil {
 		if cluster.Spec.Features.CSIOperator.Version == "" {
 			cluster.Spec.Features.CSIOperator.Version = csioperatorimage.LatestVersion
+		}
+	}
+
+	if p.config.AuditEnabled() {
+		if !cluster.AuthzWebhookEnabled() {
+			cluster.Spec.Features.AuthzWebhookAddr = &platform.AuthzWebhookAddr{Builtin: &platform.
+				BuiltinAuthzWebhookAddr{}}
+		}
+	}
+
+	if p.config.BusinessEnabled() {
+		if !cluster.AuthzWebhookEnabled() {
+			cluster.Spec.Features.AuthzWebhookAddr = &platform.AuthzWebhookAddr{Builtin: &platform.
+				BuiltinAuthzWebhookAddr{}}
 		}
 	}
 
@@ -161,12 +216,17 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	if cluster.Spec.Properties.MaxNodePodNum == nil {
 		cluster.Spec.Properties.MaxNodePodNum = pointer.ToInt32(256)
 	}
-	if cluster.Spec.Features.SkipConditions == nil {
-		cluster.Spec.Features.SkipConditions = p.config.Feature.SkipConditions
+	if p.config.Feature.SkipConditions != nil {
+		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, p.config.Feature.SkipConditions...)
 	}
 
 	if cluster.Spec.Etcd == nil {
 		cluster.Spec.Etcd = &platform.Etcd{Local: &platform.LocalEtcd{}}
+	}
+
+	if cluster.Spec.Etcd.Local != nil {
+		// reuse global etcd for tke components which create `etcd` service.
+		cluster.Spec.Etcd.Local.ServerCertSANs = append(cluster.Spec.Etcd.Local.ServerCertSANs, "etcd")
 	}
 
 	return nil

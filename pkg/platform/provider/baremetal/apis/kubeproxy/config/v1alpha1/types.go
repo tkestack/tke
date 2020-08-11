@@ -26,15 +26,15 @@ import (
 type KubeProxyIPTablesConfiguration struct {
 	// masqueradeBit is the bit of the iptables fwmark space to use for SNAT if using
 	// the pure iptables proxy mode. Values must be within the range [0, 31].
-	MasqueradeBit *int32 `json:"masqueradeBit"`
+	MasqueradeBit *int32 `json:"masqueradeBit,omitempty"`
 	// masqueradeAll tells kube-proxy to SNAT everything if using the pure iptables proxy mode.
 	MasqueradeAll bool `json:"masqueradeAll"`
 	// syncPeriod is the period that iptables rules are refreshed (e.g. '5s', '1m',
 	// '2h22m').  Must be greater than 0.
-	SyncPeriod metav1.Duration `json:"syncPeriod"`
+	SyncPeriod metav1.Duration `json:"syncPeriod,omitempty"`
 	// minSyncPeriod is the minimum period that iptables rules are refreshed (e.g. '5s', '1m',
 	// '2h22m').
-	MinSyncPeriod metav1.Duration `json:"minSyncPeriod"`
+	MinSyncPeriod metav1.Duration `json:"minSyncPeriod,omitempty"`
 }
 
 // KubeProxyIPVSConfiguration contains ipvs-related configuration
@@ -42,27 +42,27 @@ type KubeProxyIPTablesConfiguration struct {
 type KubeProxyIPVSConfiguration struct {
 	// syncPeriod is the period that ipvs rules are refreshed (e.g. '5s', '1m',
 	// '2h22m').  Must be greater than 0.
-	SyncPeriod metav1.Duration `json:"syncPeriod"`
+	SyncPeriod metav1.Duration `json:"syncPeriod,omitempty"`
 	// minSyncPeriod is the minimum period that ipvs rules are refreshed (e.g. '5s', '1m',
 	// '2h22m').
-	MinSyncPeriod metav1.Duration `json:"minSyncPeriod"`
+	MinSyncPeriod metav1.Duration `json:"minSyncPeriod,omitempty"`
 	// ipvs scheduler
-	Scheduler string `json:"scheduler"`
+	Scheduler string `json:"scheduler,omitempty"`
 	// excludeCIDRs is a list of CIDR's which the ipvs proxier should not touch
 	// when cleaning up ipvs services.
-	ExcludeCIDRs []string `json:"excludeCIDRs"`
+	ExcludeCIDRs []string `json:"excludeCIDRs,omitempty"`
 	// strict ARP configure arp_ignore and arp_announce to avoid answering ARP queries
 	// from kube-ipvs0 interface
 	StrictARP bool `json:"strictARP"`
 	// tcpTimeout is the timeout value used for idle IPVS TCP sessions.
 	// The default value is 0, which preserves the current timeout value on the system.
-	TCPTimeout metav1.Duration `json:"tcpTimeout"`
+	TCPTimeout metav1.Duration `json:"tcpTimeout,omitempty"`
 	// tcpFinTimeout is the timeout value used for IPVS TCP sessions after receiving a FIN.
 	// The default value is 0, which preserves the current timeout value on the system.
-	TCPFinTimeout metav1.Duration `json:"tcpFinTimeout"`
+	TCPFinTimeout metav1.Duration `json:"tcpFinTimeout,omitempty"`
 	// udpTimeout is the timeout value used for IPVS UDP packets.
 	// The default value is 0, which preserves the current timeout value on the system.
-	UDPTimeout metav1.Duration `json:"udpTimeout"`
+	UDPTimeout metav1.Duration `json:"udpTimeout,omitempty"`
 }
 
 // KubeProxyConntrackConfiguration contains conntrack settings for
@@ -70,17 +70,17 @@ type KubeProxyIPVSConfiguration struct {
 type KubeProxyConntrackConfiguration struct {
 	// maxPerCore is the maximum number of NAT connections to track
 	// per CPU core (0 to leave the limit as-is and ignore min).
-	MaxPerCore *int32 `json:"maxPerCore"`
+	MaxPerCore *int32 `json:"maxPerCore,omitempty"`
 	// min is the minimum value of connect-tracking records to allocate,
 	// regardless of conntrackMaxPerCore (set maxPerCore=0 to leave the limit as-is).
-	Min *int32 `json:"min"`
+	Min *int32 `json:"min,omitempty"`
 	// tcpEstablishedTimeout is how long an idle TCP connection will be kept open
 	// (e.g. '2s').  Must be greater than 0 to set.
-	TCPEstablishedTimeout *metav1.Duration `json:"tcpEstablishedTimeout"`
+	TCPEstablishedTimeout *metav1.Duration `json:"tcpEstablishedTimeout,omitempty"`
 	// tcpCloseWaitTimeout is how long an idle conntrack entry
 	// in CLOSE_WAIT state will remain in the conntrack
 	// table. (e.g. '60s'). Must be greater than 0 to set.
-	TCPCloseWaitTimeout *metav1.Duration `json:"tcpCloseWaitTimeout"`
+	TCPCloseWaitTimeout *metav1.Duration `json:"tcpCloseWaitTimeout,omitempty"`
 }
 
 // KubeProxyWinkernelConfiguration contains Windows/HNS settings for
@@ -88,13 +88,13 @@ type KubeProxyConntrackConfiguration struct {
 type KubeProxyWinkernelConfiguration struct {
 	// networkName is the name of the network kube-proxy will use
 	// to create endpoints and policies
-	NetworkName string `json:"networkName"`
+	NetworkName string `json:"networkName,omitempty"`
 	// sourceVip is the IP address of the source VIP endoint used for
 	// NAT when loadbalancing
-	SourceVip string `json:"sourceVip"`
+	SourceVip string `json:"sourceVip,omitempty"`
 	// enableDSR tells kube-proxy whether HNS policies should be created
 	// with DSR
-	EnableDSR bool `json:"enableDSR"`
+	EnableDSR bool `json:"enableDSR,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -109,45 +109,45 @@ type KubeProxyConfiguration struct {
 
 	// bindAddress is the IP address for the proxy server to serve on (set to 0.0.0.0
 	// for all interfaces)
-	BindAddress string `json:"bindAddress"`
+	BindAddress string `json:"bindAddress,omitempty"`
 	// healthzBindAddress is the IP address and port for the health check server to serve on,
 	// defaulting to 0.0.0.0:10256
-	HealthzBindAddress string `json:"healthzBindAddress"`
+	HealthzBindAddress string `json:"healthzBindAddress,omitempty"`
 	// metricsBindAddress is the IP address and port for the metrics server to serve on,
 	// defaulting to 127.0.0.1:10249 (set to 0.0.0.0 for all interfaces)
-	MetricsBindAddress string `json:"metricsBindAddress"`
+	MetricsBindAddress string `json:"metricsBindAddress,omitempty"`
 	// enableProfiling enables profiling via web interface on /debug/pprof handler.
 	// Profiling handlers will be handled by metrics server.
-	EnableProfiling bool `json:"enableProfiling"`
+	EnableProfiling bool `json:"enableProfiling,omitempty"`
 	// clusterCIDR is the CIDR range of the pods in the cluster. It is used to
 	// bridge traffic coming from outside of the cluster. If not provided,
 	// no off-cluster bridging will be performed.
-	ClusterCIDR string `json:"clusterCIDR"`
+	ClusterCIDR string `json:"clusterCIDR,omitempty"`
 	// hostnameOverride, if non-empty, will be used as the identity instead of the actual hostname.
-	HostnameOverride string `json:"hostnameOverride"`
+	HostnameOverride string `json:"hostnameOverride,omitempty"`
 	// clientConnection specifies the kubeconfig file and client connection settings for the proxy
 	// server to use when communicating with the apiserver.
-	ClientConnection componentbaseconfigv1alpha1.ClientConnectionConfiguration `json:"clientConnection"`
+	ClientConnection componentbaseconfigv1alpha1.ClientConnectionConfiguration `json:"clientConnection,omitempty"`
 	// iptables contains iptables-related configuration options.
-	IPTables KubeProxyIPTablesConfiguration `json:"iptables"`
+	IPTables KubeProxyIPTablesConfiguration `json:"iptables,omitempty"`
 	// ipvs contains ipvs-related configuration options.
-	IPVS KubeProxyIPVSConfiguration `json:"ipvs"`
+	IPVS KubeProxyIPVSConfiguration `json:"ipvs,omitempty"`
 	// oomScoreAdj is the oom-score-adj value for kube-proxy process. Values must be within
 	// the range [-1000, 1000]
-	OOMScoreAdj *int32 `json:"oomScoreAdj"`
+	OOMScoreAdj *int32 `json:"oomScoreAdj,omitempty"`
 	// mode specifies which proxy mode to use.
-	Mode ProxyMode `json:"mode"`
+	Mode ProxyMode `json:"mode,omitempty"`
 	// portRange is the range of host ports (beginPort-endPort, inclusive) that may be consumed
 	// in order to proxy service traffic. If unspecified (0-0) then ports will be randomly chosen.
-	PortRange string `json:"portRange"`
+	PortRange string `json:"portRange,omitempty"`
 	// udpIdleTimeout is how long an idle UDP connection will be kept open (e.g. '250ms', '2s').
 	// Must be greater than 0. Only applicable for proxyMode=userspace.
-	UDPIdleTimeout metav1.Duration `json:"udpIdleTimeout"`
+	UDPIdleTimeout metav1.Duration `json:"udpIdleTimeout,omitempty"`
 	// conntrack contains conntrack-related configuration options.
-	Conntrack KubeProxyConntrackConfiguration `json:"conntrack"`
+	Conntrack KubeProxyConntrackConfiguration `json:"conntrack,omitempty"`
 	// configSyncPeriod is how often configuration from the apiserver is refreshed. Must be greater
 	// than 0.
-	ConfigSyncPeriod metav1.Duration `json:"configSyncPeriod"`
+	ConfigSyncPeriod metav1.Duration `json:"configSyncPeriod,omitempty"`
 	// nodePortAddresses is the --nodeport-addresses value for kube-proxy process. Values must be valid
 	// IP blocks. These values are as a parameter to select the interfaces where nodeport works.
 	// In case someone would like to expose a service on localhost for local visit and some other interfaces for
@@ -155,13 +155,13 @@ type KubeProxyConfiguration struct {
 	// If set it to "127.0.0.0/8", kube-proxy will only select the loopback interface for NodePort.
 	// If set it to a non-zero IP block, kube-proxy will filter that down to just the IPs that applied to the node.
 	// An empty string slice is meant to select all network interfaces.
-	NodePortAddresses []string `json:"nodePortAddresses"`
+	NodePortAddresses []string `json:"nodePortAddresses,omitempty"`
 	// winkernel contains winkernel-related configuration options.
-	Winkernel KubeProxyWinkernelConfiguration `json:"winkernel"`
+	Winkernel KubeProxyWinkernelConfiguration `json:"winkernel,omitempty"`
 	// ShowHiddenMetricsForVersion is the version for which you want to show hidden metrics.
-	ShowHiddenMetricsForVersion string `json:"showHiddenMetricsForVersion"`
+	ShowHiddenMetricsForVersion string `json:"showHiddenMetricsForVersion,omitempty"`
 	// DetectLocalMode determines mode to use for detecting local traffic, defaults to LocalModeClusterCIDR
-	DetectLocalMode LocalMode `json:"detectLocalMode"`
+	DetectLocalMode LocalMode `json:"detectLocalMode,omitempty"`
 }
 
 // Currently, three modes of proxy are available in Linux platform: 'userspace' (older, going to be EOL), 'iptables'

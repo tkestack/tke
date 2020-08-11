@@ -55,7 +55,6 @@ const (
 	alarmPolicyTypePod     = "pod"
 	alarmPolicyTypeKey     = "alarmPolicyType"
 	alarmObjectsTypeKey    = "alarmObjectsType"
-	alarmObjectsTypePart   = "part"
 	filterNamespaceKey     = "namespace"
 	filterWorkloadKindKey  = "workload_kind"
 	filterWorkloadNameKey  = "workload_name"
@@ -475,8 +474,7 @@ func NewAlarmPolicyFromRuleGroup(ruleGroup *v1.RuleGroup) *AlarmPolicy {
 			}
 		}
 
-		if alarmPolicy.AlarmPolicySettings.AlarmObjectsType == alarmObjectsTypePart &&
-			(alarmPolicy.Namespace == "" || alarmPolicy.WorkloadType == "" || alarmPolicy.AlarmPolicySettings.AlarmObjects == "") {
+		if alarmPolicy.Namespace == "" || alarmPolicy.WorkloadType == "" || alarmPolicy.AlarmPolicySettings.AlarmObjects == "" {
 			filter := NewMetricFilterFromExpr(r.Expr.String())
 			alarmPolicy.Namespace = filter.Namespace
 			alarmPolicy.WorkloadType = filter.WorkloadKind

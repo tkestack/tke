@@ -1,0 +1,64 @@
+bootstrap:
+  replicaCount: 1
+  
+  fullnameOverride: "product-helm"
+  nameOverride: "product-helm"
+  
+  image:
+    repository: shsmu/product-helm
+    tag: "v1.0.1"
+    pullPolicy: IfNotPresent
+
+  command:
+    - /start
+  
+  env:
+    - name: APP_ENV_FLAG
+      value: {{ .Environment.Values.global.ENV | getOrNil "APP_ENV_FLAG" | default "test" }}
+
+  resources:
+    limits:
+      cpu: "1"
+      memory: 250Mi
+    requests:
+      cpu: "100m"
+      memory: 50Mi
+
+
+  securityContext:
+    capabilities:
+      add:
+      - SYS_PTRACE
+  
+  imagePullSecrets:
+    - name: docker.io
+  
+# 开启配置中心
+  ccClient:
+    enabled: false
+    env:
+      - name: APP_ENV_FLAG
+        value: test
+      - name: APP_ID
+        value: product2-monitoring
+
+# 开启配置中心
+  skyAgent:
+    enabled: false
+    env:
+      - name: SKY_OAP_SVC
+        value: "127.0.0.1"
+      - name: SKY_OAP_PORT
+        value: "11800"
+
+  volumeMounts:
+    - name: data
+      mountPath: /data/helms/business
+
+  volumes:
+    - name: data
+      hostPath:
+        path: /data/helms/business
+
+  nodeSelector:
+    kubernetes.io/hostname: 172.17.0.16

@@ -23,19 +23,22 @@ package storage
 import (
 	"context"
 
-	appsV1 "k8s.io/api/apps/v1"
-	appsV1Beta1 "k8s.io/api/apps/v1beta1"
-	appsV1Beta2 "k8s.io/api/apps/v1beta2"
-	autoscalingV1API "k8s.io/api/autoscaling/v1"
+	"tkestack.io/tke/pkg/platform/proxy"
+
+	appsv1 "k8s.io/api/apps/v1"
+	appsv1beta1 "k8s.io/api/apps/v1beta1"
+	appsv1beta2 "k8s.io/api/apps/v1beta2"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/apiserver/filter"
 )
 
 // Storage includes storage for resources.
@@ -49,14 +52,14 @@ type Storage struct {
 
 // REST implements pkg/api/rest.StandardStorage
 type REST struct {
-	*util.Store
+	*proxy.Store
 }
 
 // NewStorageV1 returns a Storage object that will work against resources.
 func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	replicaSetStore := &util.Store{
-		NewFunc:        func() runtime.Object { return &appsV1.ReplicaSet{} },
-		NewListFunc:    func() runtime.Object { return &appsV1.ReplicaSetList{} },
+	replicaSetStore := &proxy.Store{
+		NewFunc:        func() runtime.Object { return &appsv1.ReplicaSet{} },
+		NewListFunc:    func() runtime.Object { return &appsv1.ReplicaSetList{} },
 		Namespaced:     true,
 		PlatformClient: platformClient,
 	}
@@ -82,9 +85,9 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 
 // NewStorageV1Beta2 returns a Storage object that will work against resources.
 func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	replicaSetStore := &util.Store{
-		NewFunc:        func() runtime.Object { return &appsV1Beta2.ReplicaSet{} },
-		NewListFunc:    func() runtime.Object { return &appsV1Beta2.ReplicaSetList{} },
+	replicaSetStore := &proxy.Store{
+		NewFunc:        func() runtime.Object { return &appsv1beta2.ReplicaSet{} },
+		NewListFunc:    func() runtime.Object { return &appsv1beta2.ReplicaSetList{} },
 		Namespaced:     true,
 		PlatformClient: platformClient,
 	}
@@ -107,7 +110,7 @@ func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platf
 
 // NewStorageExtensionsV1Beta1 returns a Storage object that will work against resources.
 func NewStorageExtensionsV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	replicaSetStore := &util.Store{
+	replicaSetStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &extensionsv1beta1.ReplicaSet{} },
 		NewListFunc:    func() runtime.Object { return &extensionsv1beta1.ReplicaSetList{} },
 		Namespaced:     true,
@@ -152,7 +155,7 @@ func (r *REST) Categories() []string {
 // StatusREST implements the REST endpoint for changing the status of a replication controller
 type StatusREST struct {
 	rest.Storage
-	store *util.Store
+	store *proxy.Store
 }
 
 // StatusREST implements Patcher
@@ -189,28 +192,28 @@ var _ = rest.GroupVersionKindProvider(&ScaleREST{})
 // GroupVersionKind is used to specify a particular GroupVersionKind to discovery.
 func (r *ScaleREST) GroupVersionKind(containingGV schema.GroupVersion) schema.GroupVersionKind {
 	switch containingGV {
-	case appsV1Beta1.SchemeGroupVersion:
-		return appsV1Beta1.SchemeGroupVersion.WithKind("Scale")
-	case appsV1Beta2.SchemeGroupVersion:
-		return appsV1Beta2.SchemeGroupVersion.WithKind("Scale")
+	case appsv1beta1.SchemeGroupVersion:
+		return appsv1beta1.SchemeGroupVersion.WithKind("Scale")
+	case appsv1beta2.SchemeGroupVersion:
+		return appsv1beta2.SchemeGroupVersion.WithKind("Scale")
 	default:
-		return autoscalingV1API.SchemeGroupVersion.WithKind("Scale")
+		return autoscalingv1.SchemeGroupVersion.WithKind("Scale")
 	}
 }
 
 // New creates a new Scale object
 func (r *ScaleREST) New() runtime.Object {
-	return &autoscalingV1API.Scale{}
+	return &autoscalingv1.Scale{}
 }
 
 // Get finds a resource in the storage by name and returns it.
 func (r *ScaleREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	client, requestInfo, err := util.RESTClient(ctx, r.platformClient)
+	client, requestInfo, err := proxy.RESTClient(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &autoscalingV1API.Scale{}
+	result := &autoscalingv1.Scale{}
 	if err := client.
 		Get().
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
@@ -227,9 +230,29 @@ func (r *ScaleREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 
 // Update finds a resource in the storage and updates it.
 func (r *ScaleREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	client, requestInfo, err := util.RESTClient(ctx, r.platformClient)
+	client, requestInfo, err := proxy.RESTClient(ctx, r.platformClient)
 	if err != nil {
 		return nil, false, err
+	}
+
+	if requestInfo.Verb == "patch" {
+		requestBody, ok := filter.RequestBodyFrom(ctx)
+		if !ok {
+			return nil, false, errors.NewBadRequest("request body is required")
+		}
+		result := &autoscalingv1.Scale{}
+		if err := client.
+			Patch(types.PatchType(requestBody.ContentType)).
+			NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").
+			Resource(requestInfo.Resource).
+			SubResource(requestInfo.Subresource).
+			Name(name).
+			Body(requestBody.Data).
+			Do(ctx).
+			Into(result); err != nil {
+			return nil, false, err
+		}
+		return result, true, nil
 	}
 
 	obj, err := objInfo.UpdatedObject(ctx, nil)
@@ -237,7 +260,7 @@ func (r *ScaleREST) Update(ctx context.Context, name string, objInfo rest.Update
 		return nil, false, errors.NewInternalError(err)
 	}
 
-	result := &autoscalingV1API.Scale{}
+	result := &autoscalingv1.Scale{}
 	if err := client.
 		Put().
 		NamespaceIfScoped(requestInfo.Namespace, requestInfo.Namespace != "").

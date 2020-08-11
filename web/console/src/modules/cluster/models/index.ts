@@ -14,7 +14,7 @@ export { Replicaset } from './Replicaset';
 export { SubRouter, SubRouterFilter, BasicRouter } from './SubRouter';
 export { PortMap } from './PortMap';
 export { RuleMap } from './RuleMap';
-export { ResourceDetailState, RsEditJSONYaml, PodLogFilter, LogOption } from './ResourceDetailState';
+export { ResourceDetailState, RsEditJSONYaml, PodLogFilter, LogOption, LogHierarchyQuery, LogContentQuery, DownloadLogQuery } from './ResourceDetailState';
 export {
   WorkloadEdit,
   WorkloadEditJSONYaml,
@@ -25,7 +25,7 @@ export {
   ImagePullSecrets
 } from './WorkloadEdit';
 export { VolumeItem, ConfigItems, PvcEditInfo } from './VolumeItem';
-export { ContainerItem, HealthCheck, HealthCheckItem, MountItem, EnvItem, ValueFrom, LimitItem } from './ContainerItem';
+export { ContainerItem, HealthCheck, HealthCheckItem, MountItem, LimitItem } from './ContainerItem';
 export { ConfigMapEdit, initVariable, Variable } from './ConfigMapEdit';
 export { Pod, PodContainer, PodFilterInNode } from './Pod';
 export { ResourceLogOption } from './ResourceLogOption';
@@ -41,3 +41,4 @@ export { CreateResource, MergeType } from '../../common/models';
 export { LbcfEdit, LbcfBGJSONYaml, LbcfLBJSONYaml } from './LbcfEdit';
 export { DetailResourceOption } from './DetailResourceOption';
 export { LbcfResource, BackendGroup, BackendRecord } from './Lbcf';
+export * from './ContainerEnv';

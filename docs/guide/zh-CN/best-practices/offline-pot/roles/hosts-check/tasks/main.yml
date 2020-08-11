@@ -1,0 +1,9 @@
+---
+# tasks file for hosts-check
+- include: check-system-and-kernal-version.yml
+- include: check-nat-module.yml
+- include: check-disk-meets-requirements.yml
+- include: check-pod-network-cidr.yml
+- include: check-extranet-access.yml 
+- include: check-dns-enable.yml 
+- include: check-perfor.yml

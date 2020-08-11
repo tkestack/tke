@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Bubble, ExternalLink, Radio } from '@tea/component';
+import { Bubble, ExternalLink, Icon, Radio, Text } from '@tea/component';
+import { FormPanelTransferTable, FormPanelTransferTableTableProps } from '@tencent/ff-component';
 import { bindActionCreators, deepClone, FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
@@ -11,6 +12,7 @@ import { allActions } from '../../../actions';
 import { affinityRuleOperator, affinityType } from '../../../constants/Config';
 import { MatchExpressions } from '../../../models/WorkloadEdit';
 import { RootProps } from '../../ClusterApp';
+import { Computer } from '@src/modules/cluster/models';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -19,81 +21,143 @@ const mapDispatchToProps = dispatch =>
 export class EditResourceNodeAffinityPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
     let { actions, subRoot, route } = this.props;
-    let { computer } = subRoot.computerState;
+    let { computer } = subRoot.workloadEdit;
     let { clusterId, rid } = route.queries;
-    computer.list.fetched !== true && actions.computer.applyFilter({ clusterId, regionId: +rid });
+    actions.editWorkload.computer.applyFilter({ clusterId, regionId: +rid });
   }
 
-  _renderComputerList() {
-    let { route, subRoot } = this.props,
-      { computer } = subRoot.computerState,
-      { nodeSelection, v_nodeSelection } = subRoot.workloadEdit;
-    let content: JSX.Element[] = [];
+  componentWillUnmount() {
+    let { actions, subRoot, route } = this.props;
+    actions.editWorkload.computer.clearFetch();
+  }
 
-    if (computer.list.fetched !== true || computer.list.fetchState === FetchState.Fetching) {
-      // do something
-    }
+  _renderComputerTransferTable() {
+    let { route, subRoot, actions } = this.props,
+      { computer } = subRoot.workloadEdit;
+    const selectorProps: FormPanelTransferTableTableProps<Computer> = {
+      tagSearch: {
+        attributes: [{ type: 'input', key: 'instanceId', name: 'instanceId' }]
+      },
+      /** 要供选择的数据 */
+      model: computer,
 
-    computer.list.data.records.forEach((computer, index) => {
-      let item: JSX.Element;
-      try {
-        let readyCondition = computer.status.conditions.filter(item => item.type === 'Ready')[0];
+      action: actions.editWorkload.computer,
+
+      isNeedScollLoding: true,
+
+      rowDisabled: (com: Computer) => {
+        let readyCondition = com.status.conditions.filter(item => item.type === 'Ready')[0];
         let isComputerRunning = readyCondition['status'] === 'True';
+        return !isComputerRunning;
+      },
 
-        item = (
-          <label key={index + 'label'} className="form-ctrl-label" style={{ display: 'block', margin: 10 }}>
-            <Bubble placement="top" content={!isComputerRunning ? t('节点状态不正常') : null}>
-              <input
-                disabled={!isComputerRunning}
-                type="checkbox"
-                className="tc-15-checkbox"
-                checked={nodeSelection.findIndex(node => node.metadata.name === computer.metadata.name) !== -1}
-                style={{ verticalAlign: 'middle' }}
-                onChange={e => this._handleNodeSelection(e.target.value)}
-                value={computer.metadata.name}
-              />
-              <span>{`${computer.metadata.name}(${computer.metadata.role})`}</span>
-            </Bubble>
-          </label>
-        );
-      } catch (error) {}
-      item && content.push(item);
-    });
-    if (computer.list.data.recordCount === 0) {
-      content.push(
-        <div style={{ fontSize: '11px', marginBottom: '-5px', marginTop: '2px' }}>
-          <strong>{t('该集群无可用节点')}</strong>
-          {/* { <p className='text-danger'></p> */}
-        </div>
-      );
-    }
-    v_nodeSelection.status === 2 &&
-      content.push(
-        <p className="text-danger" style={{ fontSize: '11px' }}>
-          {v_nodeSelection.message}
-        </p>
-      );
-    return content;
+      /** 选择器标题 */
+      title: t('当前集群有以下可用节点'),
+
+      columns: [
+        {
+          key: 'instanceId',
+          header: t('ID'),
+          render: (x: Computer) => {
+            let readyCondition = x.status.conditions.filter(item => item.type === 'Ready')[0];
+            let isComputerRunning = readyCondition['status'] === 'True';
+            return (
+              <Bubble content={isComputerRunning ? null : '节点状态不正常'}>
+                <Text parent="div" overflow style={{ display: 'block' }}>
+                  {x.metadata.name}
+                  {!isComputerRunning && <Icon type="info" />}
+                </Text>
+              </Bubble>
+            );
+          }
+        },
+        {
+          key: 'type',
+          header: t('节点类型'),
+          render: x => {
+            return (
+              <Text parent="div" overflow style={{ display: 'block' }}>
+                {x.metadata.role}
+              </Text>
+            );
+          }
+        }
+      ],
+      recordKey: 'id'
+    };
+    return <FormPanelTransferTable<Computer> {...selectorProps} />;
   }
 
-  _handleNodeSelection(value) {
-    let { subRoot, actions } = this.props,
-      { computer } = subRoot.computerState,
-      nodeSelection = deepClone(subRoot.workloadEdit.nodeSelection);
-    let index = nodeSelection.findIndex(node => node.metadata.name === value);
-    if (index !== -1) {
-      nodeSelection.splice(index, 1);
-    } else {
-      let item = computer.list.data.records.find(computer => computer.metadata.name === value);
-      item && nodeSelection.push(item);
-    }
-    actions.editWorkload.selectNodeSelector(nodeSelection);
-  }
+  // _renderComputerList() {
+  //   let { route, subRoot } = this.props,
+  //     { computer } = subRoot.computerState,
+  //     { nodeSelection, v_nodeSelection } = subRoot.workloadEdit;
+  //   let content: JSX.Element[] = [];
+
+  //   if (computer.list.fetched !== true || computer.list.fetchState === FetchState.Fetching) {
+  //     // do something
+  //   }
+
+  //   computer.list.data.records.forEach((computer, index) => {
+  //     let item: JSX.Element;
+  //     try {
+  //       let readyCondition = computer.status.conditions.filter(item => item.type === 'Ready')[0];
+  //       let isComputerRunning = readyCondition['status'] === 'True';
+
+  //       item = (
+  //         <label key={index + 'label'} className="form-ctrl-label" style={{ display: 'block', margin: 10 }}>
+  //           <Bubble placement="top" content={!isComputerRunning ? t('节点状态不正常') : null}>
+  //             <input
+  //               disabled={!isComputerRunning}
+  //               type="checkbox"
+  //               className="tc-15-checkbox"
+  //               checked={nodeSelection.findIndex(node => node.metadata.name === computer.metadata.name) !== -1}
+  //               style={{ verticalAlign: 'middle' }}
+  //               onChange={e => this._handleNodeSelection(e.target.value)}
+  //               value={computer.metadata.name}
+  //             />
+  //             <span>{`${computer.metadata.name}(${computer.metadata.role})`}</span>
+  //           </Bubble>
+  //         </label>
+  //       );
+  //     } catch (error) {}
+  //     item && content.push(item);
+  //   });
+  //   if (computer.list.data.recordCount === 0) {
+  //     content.push(
+  //       <div style={{ fontSize: '11px', marginBottom: '-5px', marginTop: '2px' }}>
+  //         <strong>{t('该集群无可用节点')}</strong>
+  //         {/* { <p className='text-danger'></p> */}
+  //       </div>
+  //     );
+  //   }
+  //   v_nodeSelection.status === 2 &&
+  //     content.push(
+  //       <p className="text-danger" style={{ fontSize: '11px' }}>
+  //         {v_nodeSelection.message}
+  //       </p>
+  //     );
+  //   return content;
+  // }
+
+  // _handleNodeSelection(value) {
+  //   let { subRoot, actions } = this.props,
+  //     { computer } = subRoot.computerState,
+  //     nodeSelection = deepClone(subRoot.workloadEdit.nodeSelection);
+  //   let index = nodeSelection.findIndex(node => node.metadata.name === value);
+  //   if (index !== -1) {
+  //     nodeSelection.splice(index, 1);
+  //   } else {
+  //     let item = computer.list.data.records.find(computer => computer.metadata.name === value);
+  //     item && nodeSelection.push(item);
+  //   }
+  //   actions.editWorkload.selectNodeSelector(nodeSelection);
+  // }
 
   _renderAffinityRuleList(type: string) {
     let { actions, subRoot } = this.props,
       { workloadEdit } = subRoot,
-      { nodeAffinityType, nodeAffinityRule, nodeSelection } = workloadEdit;
+      { nodeAffinityType, nodeAffinityRule } = workloadEdit;
 
     // 获得当前的pod节点调度的操作符
     let operatorTypeList = affinityRuleOperator.map((item, index) => (
@@ -183,7 +247,7 @@ export class EditResourceNodeAffinityPanel extends React.Component<RootProps, {}
   render() {
     let { actions, subRoot } = this.props,
       { workloadEdit } = subRoot,
-      { nodeAffinityType, nodeAffinityRule, nodeSelection, v_nodeSelection } = workloadEdit;
+      { nodeAffinityType, nodeAffinityRule, v_nodeSelection } = workloadEdit;
     let requiredCanAdd = isEmpty(nodeAffinityRule.requiredExecution[0].matchExpressions.filter(x => !x.key));
     let preferredCanAdd = isEmpty(
       nodeAffinityRule.preferredExecution[0].preference.matchExpressions.filter(x => !x.key)
@@ -211,19 +275,10 @@ export class EditResourceNodeAffinityPanel extends React.Component<RootProps, {}
         </Radio.Group>
         <p className="text-label">{t('可根据调度规则，将Pod调度到符合预期的Label的节点中。')}</p>
         {nodeAffinityType === affinityType.node ? (
-          <div
-            className={'form-unit specific'}
-            style={{
-              backgroundColor: '#f2f2f2',
-              padding: '5px 10px 15px',
-              maxWidth: '350px',
-              maxHeight: '150px',
-              minHeight: '50px',
-              overflowY: 'auto'
-            }}
-          >
-            {this._renderComputerList()}
-          </div>
+          <>
+            {this._renderComputerTransferTable()}
+            <Text theme={'danger'}>{v_nodeSelection.status === 2 ? v_nodeSelection.message : ''}</Text>
+          </>
         ) : nodeAffinityType === affinityType.rule ? (
           <div className="up-date">
             <div className="as-sel-box">

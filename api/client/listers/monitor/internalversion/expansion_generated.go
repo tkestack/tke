@@ -23,3 +23,7 @@ package internalversion
 // ConfigMapListerExpansion allows custom methods to be added to
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}
+
+// PrometheusListerExpansion allows custom methods to be added to
+// PrometheusLister.
+type PrometheusListerExpansion interface{}

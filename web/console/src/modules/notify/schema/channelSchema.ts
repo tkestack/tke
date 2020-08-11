@@ -41,6 +41,12 @@ export const channelSchema = {
             appID: { ...TYPES.string, required: true },
             appSecret: { ...TYPES.string, required: true }
           }
+        },
+        webhook: {
+          properties: {
+            url: { ...TYPES.string, required: true },
+            headers: { ...TYPES.string, placeholder: '自定义Header，仅支持Key:Value格式，中间用;号分割。eg param1:1;param2:2' }
+          }
         }
       }
     }

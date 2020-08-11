@@ -23,12 +23,10 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class ResourceYamlPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
-    let { actions, subRoot } = this.props,
-      { resourceOption } = subRoot,
-      { ffResourceList } = resourceOption;
+    let { actions } = this.props;
 
-    // 这里是从 列表跳入到详情页的时候，进行yaml的拉取
-    ffResourceList.selection && actions.resourceDetail.fetchResourceYaml.fetch();
+    // 进行yaml的拉取
+    actions.resourceDetail.fetchResourceYaml.fetch();
   }
 
   componentWillReceiveProps(nextProps: RootProps) {
@@ -36,7 +34,7 @@ export class ResourceYamlPanel extends React.Component<RootProps, {}> {
       oldResourceSelection = this.props.subRoot.resourceOption.ffResourceList.selection;
 
     // 在详情页面直接刷新的，由于请求顺序的原因，此时并没有resourceSelection，会导致请求yaml失败
-    if (oldResourceSelection.length === 0 && newResourceSelection.length === 1) {
+    if (oldResourceSelection === null && newResourceSelection) {
       this.props.actions.resourceDetail.fetchResourceYaml.fetch();
     }
   }

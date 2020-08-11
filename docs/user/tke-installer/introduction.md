@@ -158,7 +158,7 @@ Flags:
     Installer run in ui mode by default, provide a user-friendly visual installation interface. 
     Command line mode can be enabled through no-ui, which facilitates automated installation for advanced users.
     Config should provide though an json file(`/opt/tke-insatller/conf/tke.json`) and should rerun tke-installer container.
-    `version=v1.2.4 && docker run --name tke-installer -d --privileged --net=host -v/etc/hosts:/app/hosts -v/etc/docker:/etc/docker -v/var/run/docker.sock:/var/run/docker.sock -v$DATA_DIR:/app/data -v$INSTALL_DIR/conf:/app/conf --entrypoint="/app/bin/tke-installer --no-ui" tkestack/tke-installer:$version`
+    `arch=amd64 version=v1.3.0 && docker run --name tke-installer -d --privileged --net=host -v/etc/hosts:/app/hosts -v/etc/docker:/etc/docker -v/var/run/docker.sock:/var/run/docker.sock -v$DATA_DIR:/app/data -v$INSTALL_DIR/conf:/app/conf --entrypoint="/app/bin/tke-installer --no-ui" tkestack/tke-installer-$arch:$version`
     [Configuration file format](./installer-config.md)
 
 5. How to automate custom logic or integrate your own deployment?
@@ -172,4 +172,4 @@ Flags:
 
     If you want to automate integration hooks, you can modify the container creation parameters of tke-installer.
     Assuming your hook has been placed in `/opt/tke-installer/hooks`, You should rerun tke-installer container.
-    `version=v1.2.4 && hooks=/opt/tke-installer/hooks && docker run --name tke-installer -d --privileged --net=host -v/etc/hosts:/app/hosts -v/etc/docker:/etc/docker -v/var/run/docker.sock:/var/run/docker.sock -v$DATA_DIR:/app/data -v$INSTALL_DIR/conf:/app/conf -v$hooks:/app/hooks tkestack/tke-installer:$version`
+    `arch=amd64 version=v1.3.0 && hooks=/opt/tke-installer/hooks && docker run --name tke-installer -d --privileged --net=host -v/etc/hosts:/app/hosts -v/etc/docker:/etc/docker -v/var/run/docker.sock:/var/run/docker.sock -v$DATA_DIR:/app/data -v$INSTALL_DIR/conf:/app/conf -v$hooks:/app/hooks tkestack/tke-installer-$arch:$version`

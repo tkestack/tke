@@ -53,7 +53,7 @@ export class UpdateWorkloadPodNumPanel extends React.Component<RootProps, {}> {
     // 这里是从列表页进入的时候，需要去初始化 workloadEdit当中的内容，如果是直接在当前页面刷新的话，会去拉取列表，在fetchResource之后，会初始化
     if (ffResourceList.list.data.recordCount) {
       let finder = ffResourceList.list.data.records.find(item => item.metadata.name === resourceIns);
-      finder && actions.editWorkload.updateContainerNum(finder.spec.replicas);
+      finder && actions.editWorkload.updateContainerNum(finder.spec.replicas || '0');
     }
   }
 

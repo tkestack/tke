@@ -1,0 +1,3 @@
+{{- template "common.deployment" (list . "mychart.deployment") -}}
+{{- define "mychart.deployment" -}}
+{{- end -}}

@@ -28,6 +28,8 @@ import { ResourceTableChannel } from './resourceList/ResourceTableChannel';
 import { ResourceTableReceiver } from './resourceList/ResourceTableReceiver';
 import { ResourceTableTemplate } from './resourceList/ResourceTableTemplate';
 import { ResourceSidebar } from './ResourceSidebar';
+import { BodyIntroHeader } from './resourceIntro/BodyIntroHeader';
+import { BodyIntro } from './resourceIntro/BodyIntro';
 
 const store = configStore();
 
@@ -145,6 +147,10 @@ class NotifyApp extends React.Component<RootProps, any> {
         }
         break;
       }
+      case 'bodyintro':
+        header = <BodyIntroHeader />;
+        content = <BodyIntro />;
+        break;
       default:
         header = <NotifyHead {...this.props} />;
         switch (urlParams.resourceName) {
@@ -160,6 +166,18 @@ class NotifyApp extends React.Component<RootProps, any> {
           default:
             content = <ResourceTableChannel {...this.props} />;
         }
+    }
+    if (urlParams.mode === 'bodyintro') {
+      return (
+        <ContentView>
+          <ContentView.Header>{header}</ContentView.Header>
+          <ContentView.Body>
+            <ContentView>
+              <ContentView.Body>{content}</ContentView.Body>
+            </ContentView>
+          </ContentView.Body>
+        </ContentView>
+      );
     }
     return (
       <ContentView>

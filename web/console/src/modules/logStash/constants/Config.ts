@@ -1,6 +1,7 @@
 /** ========================= start FFRedux的相关配置 ======================== */
 export const FFReduxActionName = {
-  OPENADDON: 'openAddon'
+  OPENADDON: 'openAddon',
+  CLUSTER: 'cluster'
 };
 /** ========================= end FFRedux的相关配置 ======================== */
 

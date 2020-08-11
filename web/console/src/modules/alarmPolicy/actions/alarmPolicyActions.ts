@@ -11,6 +11,7 @@ import * as WebAPI from '../WebAPI';
 import { namespaceActions } from './namespaceActions';
 import { validatorActions } from './validatorActions';
 import { workloadActions } from './workloadActions';
+import { reverseReduceNs } from '@helper/urlUtil';
 
 type GetState = () => RootState;
 
@@ -18,21 +19,6 @@ const _alarmPolicyActions = createFFListActions<AlarmPolicy, AlarmPolicyFilter>(
   actionName: 'AlarmPolicy',
   fetcher: async (query, getstate: GetState) => {
     const response = await WebAPI.fetchAlarmPolicy(query);
-
-    //业务侧中过滤只有这个namepace下的AlarmPolicy
-    /// #if project
-    let { namespaceSelection, route } = getstate();
-    let namespace = (getstate().namespaceSelection || route.queries['np'])
-      .split('-')
-      .splice(2)
-      .join('-');
-    response.records = response.records.filter(
-      item =>
-        item.alarmObjetcsType === 'part' && item.alarmObjectNamespace === namespace && item.alarmPolicyType === 'pod'
-    );
-    response.recordCount = response.records.length;
-    /// #endif
-
     return response;
   },
   getRecord: (getState: GetState) => {
@@ -69,6 +55,12 @@ const editActions = {
         type: ActionType.InputAlarmPolicyType,
         payload: alarmpolicy.alarmPolicyType
       });
+      if (alarmpolicy.alarmPolicyType === 'pod') {
+        dispatch({
+          type: ActionType.InputAlarmPolicyObjectsType,
+          payload: 'part'
+        });
+      }
 
       dispatch(alarmPolicyActions.initAlarmMetricsForUpdate(alarmpolicy.alarmMetrics, alarmpolicy.alarmPolicyType));
       dispatch(
@@ -95,22 +87,30 @@ const editActions = {
       if (alarmpolicy.alarmPolicyType !== 'cluster') {
         dispatch(alarmPolicyActions.inputAlarmPolicyObjectsType(alarmpolicy.alarmObjetcsType));
         //告警对象是workload且选择按工作负载选择初始化
-        if (alarmpolicy.alarmObjetcsType === 'part') {
+        if (alarmpolicy.alarmPolicyType === 'pod') {
           let namespace;
-          /// #if project
-          //业务侧的namespace需要做前缀处理
-          namespace = `${alarmpolicy.clusterId}-${alarmpolicy.alarmObjectNamespace}`;
-          /// #endif
-          /// #if tke
-          namespace = alarmpolicy.alarmObjectNamespace;
-          /// #endif
+          let workType;
+          if (alarmpolicy.alarmObjetcsType === 'part') {
+            namespace = reverseReduceNs(alarmpolicy.clusterId, alarmpolicy.alarmObjectNamespace);
+            workType = alarmpolicy.alarmObjectWorkloadType;
+            dispatch(alarmPolicyActions.inputAlarmPolicyObjects(alarmpolicy.alarmObjetcs));
+          } else {
+            if (alarmpolicy.alarmObjectNamespace) {
+              namespace = reverseReduceNs(alarmpolicy.clusterId, alarmpolicy.alarmObjectNamespace);
+            } else {
+              namespace = 'ALL';
+            }
+            if (alarmpolicy.alarmObjectWorkloadType) {
+              workType = alarmpolicy.alarmObjectWorkloadType;
+            } else {
+              workType = 'ALL';
+            }
+          }
           dispatch({
             type: ActionType.InputAlarmWorkLoadNameSpace,
             payload: namespace
           });
-
           dispatch(alarmPolicyActions.inputAlarmObjectWorkloadType(alarmpolicy.alarmObjectWorkloadType));
-          dispatch(alarmPolicyActions.inputAlarmPolicyObjects(alarmpolicy.alarmObjetcs));
         }
       }
     };
@@ -148,12 +148,14 @@ const editActions = {
         );
         //初始化workload列表不使用初始值
         /// #if tke
-        if (mode === 'update' && finder.alarmPolicyType === 'pod' && finder.alarmObjetcsType === 'part') {
-          namespaceActions.applyFilter({
-            regionId: route.queries['rid'],
-            clusterId: route.queries['clusterId'],
-            default: false
-          });
+        if (mode === 'update' && finder.alarmPolicyType === 'pod') {
+          dispatch(
+            namespaceActions.applyFilter({
+              regionId: route.queries['rid'],
+              clusterId: route.queries['clusterId'],
+              default: false
+            })
+          );
         } else {
           dispatch(
             namespaceActions.applyFilter({
@@ -249,10 +251,31 @@ const editActions = {
   //alarm选择告警对象类型
   inputAlarmPolicyObjectsType: objectType => {
     return (dispatch, getState: GetState) => {
+      let { alarmPolicyEdition, namespaceList } = getState();
       dispatch({
         type: ActionType.InputAlarmPolicyObjectsType,
         payload: objectType
       });
+      if (alarmPolicyEdition.alarmPolicyType === 'pod') {
+        if (objectType === 'part') {
+          if (namespaceList.data.recordCount > 0 && alarmPolicyEdition.alarmObjectNamespace === 'ALL') {
+            dispatch({
+              type: ActionType.InputAlarmWorkLoadNameSpace,
+              payload: namespaceList.data.records[0].name
+            });
+          }
+          dispatch(alarmPolicyActions.inputAlarmObjectWorkloadType('Deployment'));
+        } else {
+          dispatch({
+            type: ActionType.InputAlarmObjectWorkloadType,
+            payload: 'ALL'
+          });
+          dispatch({
+            type: ActionType.InputAlarmWorkLoadNameSpace,
+            payload: 'ALL'
+          });
+        }
+      }
     };
   },
 
@@ -465,14 +488,18 @@ const editActions = {
         type: ActionType.InputAlarmPolicyObjects,
         payload: []
       });
-      dispatch(
-        workloadActions.applyFilter({
-          regionId: +regionSelection.value,
-          clusterId: cluster.selection ? cluster.selection.metadata.name : '',
-          namespace: namespace,
-          workloadType: alarmPolicyEdition.alarmObjectWorkloadType
-        })
-      );
+      if (alarmPolicyEdition.alarmPolicyType === 'pod' && alarmPolicyEdition.alarmObjectsType === 'all') {
+        //
+      } else {
+        dispatch(
+          workloadActions.applyFilter({
+            regionId: +regionSelection.value,
+            clusterId: cluster.selection ? cluster.selection.metadata.name : '',
+            namespace: namespace,
+            workloadType: alarmPolicyEdition.alarmObjectWorkloadType
+          })
+        );
+      }
     };
   },
   inputAlarmObjectWorkloadType: (type: string) => {
@@ -486,14 +513,18 @@ const editActions = {
         type: ActionType.InputAlarmPolicyObjects,
         payload: []
       });
-      dispatch(
-        workloadActions.applyFilter({
-          regionId: +regionSelection.value,
-          clusterId: cluster.selection ? cluster.selection.metadata.name : '',
-          namespace: alarmPolicyEdition.alarmObjectNamespace,
-          workloadType: type
-        })
-      );
+      if (alarmPolicyEdition.alarmPolicyType === 'pod' && alarmPolicyEdition.alarmObjectsType === 'all') {
+        //
+      } else {
+        dispatch(
+          workloadActions.applyFilter({
+            regionId: +regionSelection.value,
+            clusterId: cluster.selection ? cluster.selection.metadata.name : '',
+            namespace: alarmPolicyEdition.alarmObjectNamespace,
+            workloadType: type
+          })
+        );
+      }
     };
   },
 

@@ -20,6 +20,8 @@ package machine
 
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/client-go/tools/clientcmd"
+	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
@@ -27,6 +29,10 @@ import (
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
+)
+
+const (
+	name = "Baremetal"
 )
 
 func init() {
@@ -41,11 +47,51 @@ func init() {
 type Provider struct {
 	*machineprovider.DelegateProvider
 
-	config *config.Config
+	config         *config.Config
+	platformClient platformv1client.PlatformV1Interface
 }
 
 func NewProvider() (*Provider, error) {
 	p := new(Provider)
+
+	p.DelegateProvider = &machineprovider.DelegateProvider{
+		ProviderName: name,
+
+		CreateHandlers: []machineprovider.Handler{
+			p.EnsureCopyFiles,
+			p.EnsurePreInstallHook,
+
+			p.EnsureClean,
+			p.EnsureRegistryHosts,
+
+			p.EnsureKernelModule,
+			p.EnsureSysctl,
+			p.EnsureDisableSwap,
+			p.EnsureManifestDir,
+
+			p.EnsurePreflight, // wait basic setting done
+
+			p.EnsureNvidiaDriver,
+			p.EnsureNvidiaContainerRuntime,
+			p.EnsureDocker,
+			p.EnsureKubelet,
+			p.EnsureCNIPlugins,
+			p.EnsureConntrackTools,
+			p.EnsureKubeadm,
+
+			p.EnsureJoinPhasePreflight,
+			p.EnsureJoinPhaseKubeletStart,
+
+			p.EnsureKubeconfig,
+			p.EnsureMarkNode,
+			p.EnsureNodeReady,
+
+			p.EnsurePostInstallHook,
+		},
+		UpdateHandlers: []machineprovider.Handler{
+			p.EnsureUpgrade,
+		},
+	}
 
 	cfg, err := config.New(constants.ConfigFile)
 	if err != nil {
@@ -55,34 +101,17 @@ func NewProvider() (*Provider, error) {
 
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
-	p.DelegateProvider = &machineprovider.DelegateProvider{
-		ProviderName: "Baremetal",
-		CreateHandlers: []machineprovider.Handler{
-			p.EnsureCopyFiles,
-			p.EnsurePreInstallHook,
-
-			p.EnsureClean,
-			p.EnsureRegistryHosts,
-			p.EnsureKernelModule,
-			p.EnsureSysctl,
-			p.EnsureDisableSwap,
-
-			p.EnsurePreflight, // wait basic setting done
-
-			p.EnsureNvidiaDriver,
-			p.EnsureNvidiaContainerRuntime,
-			p.EnsureDocker,
-			p.EnsureKubelet,
-			p.EnsureCNIPlugins,
-			p.EnsureKubeadm,
-
-			p.EnsureJoinNode,
-			p.EnsureKubeconfig,
-			p.EnsureMarkNode,
-			p.EnsureNodeReady,
-
-			p.EnsurePostInstallHook,
-		},
+	// Run for compatibility with installer.
+	// TODO: Installer reuse platform components
+	if cfg.PlatformAPIClientConfig != "" {
+		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
+		if err != nil {
+			return nil, err
+		}
+		p.platformClient, err = platformv1client.NewForConfig(restConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return p, nil

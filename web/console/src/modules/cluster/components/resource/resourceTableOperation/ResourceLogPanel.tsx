@@ -138,7 +138,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
     // 展示命名空间的选择列表
     let namespaceOptions = namespaceList.data.records.map(item => ({
       value: item.name,
-      text: item.name
+      text: item.displayName
     }));
 
     // 展示workloadList的选择列表

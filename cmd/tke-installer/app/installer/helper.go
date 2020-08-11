@@ -19,21 +19,13 @@
 package installer
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"time"
 
 	"github.com/emicklei/go-restful"
-	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
-	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
-	"tkestack.io/tke/pkg/util/log"
 )
-
-func IsDevRegistry(r types.Registry) bool {
-	return r.ThirdPartyRegistry != nil &&
-		r.ThirdPartyRegistry.Domain == constants.DevRegistryDomain &&
-		r.ThirdPartyRegistry.Namespace == constants.DevRegistryNamespace
-}
 
 func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	now := time.Now()
@@ -44,7 +36,7 @@ func globalLogging(req *restful.Request, resp *restful.Response, chain *restful.
 		return
 	}
 
-	log.Infof("raw http request:\n%s", reqBytes)
+	fmt.Printf("raw http request:\n%s", reqBytes)
 	chain.ProcessFilter(req, resp)
-	log.Infof("%s %s %v", req.Request.Method, req.Request.URL, time.Since(now))
+	fmt.Printf("%s %s %v", req.Request.Method, req.Request.URL, time.Since(now))
 }

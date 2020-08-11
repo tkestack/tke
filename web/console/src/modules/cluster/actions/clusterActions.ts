@@ -2,7 +2,8 @@ import { createFFListActions, extend, FetchOptions, generateFetcherActionCreator
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
 import { resourceConfig } from '../../../../config';
-import { Cluster, ClusterFilter, ResourceInfo } from '../../common/';
+import { Cluster, ClusterFilter, CreateResource, ResourceInfo } from '../../common/';
+import { CommonAPI } from '../../common/webapi';
 import { TellIsNeedFetchNS, TellIsNotNeedFetchResource } from '../components/resource/ResourceSidebarPanel';
 import * as ActionType from '../constants/ActionType';
 import { FFReduxActionName } from '../constants/Config';
@@ -83,6 +84,17 @@ const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
     for (let record of response.records) {
       record.spec.hasPrometheus = clusterHasPs[record.metadata.name];
     }
+    if (window['modules'] && window['modules']['logagent']) {
+      // 增加获取日志采集组件信息
+      let agents = await CommonAPI.fetchLogagents();
+      let clusterHasLogAgent = {};
+      for (let agent of agents.records) {
+        clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
+      }
+      for (let cluster of response.records) {
+        cluster.spec.logAgentName = clusterHasLogAgent[cluster.metadata.name];
+      }
+    }
     return response;
   },
   getRecord: (getState: GetState) => {
@@ -149,10 +161,7 @@ const restActions = {
   /** 初始化集群的版本 */
   initClusterVersion: (clusterVersion: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let k8sVersion = clusterVersion
-        .split('.')
-        .slice(0, 2)
-        .join('.');
+      let k8sVersion = clusterVersion.split('.').slice(0, 2).join('.');
       dispatch({
         type: ActionType.ClusterVersion,
         payload: k8sVersion
@@ -261,7 +270,30 @@ const restActions = {
         payload: Object.assign({}, clusterAllocationRatioEdition, object)
       });
     };
-  }
+  },
+  enableLogAgent: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let resourceInfo = resourceConfig()['logagent'];
+      let resource: CreateResource = {
+        id: uuid(),
+        resourceInfo,
+        clusterId: cluster.metadata.name
+      };
+      let response = await CommonAPI.createLogAgent(resource);
+    };
+  },
+
+  disableLogAgent: (cluster: Cluster) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      let resourceInfo = resourceConfig()['logagent'];
+      let resource: CreateResource = {
+        id: uuid(),
+        resourceInfo,
+        clusterId: cluster.metadata.name
+      };
+      let response = await CommonAPI.deleteLogAgent(resource, cluster.spec.logAgentName);
+    };
+  },
 };
 
 export const clusterActions = extend({}, FFModelClusterActions, restActions);

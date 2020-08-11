@@ -1,10 +1,14 @@
-import { extend, generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow, createFFListActions } from '@tencent/ff-redux';
+import {
+  extend,
+  generateWorkflowActionCreator,
+  OperationTrigger,
+  isSuccessWorkflow,
+  createFFListActions
+} from '@tencent/ff-redux';
 import { RootState, PolicyAssociation, PolicyPlain, PolicyFilter } from '../../models';
 import * as ActionTypes from '../../constants/ActionType';
 import * as WebAPI from '../../UserManageWebAPI';
-import {
-    initPolicyAssociationState
-} from '../../constants/initState';
+import { initPolicyAssociationState } from '../../constants/initState';
 
 type GetState = () => RootState;
 
@@ -12,18 +16,16 @@ type GetState = () => RootState;
  * 列表操作
  */
 const fetchPolicyActions = createFFListActions<PolicyPlain, PolicyFilter>({
-    actionName: ActionTypes.PolicyPlainList,
-    fetcher: async (query, getState: GetState) => {
-        console.log('fetchPolicyActions query:', query);
-        let response = await WebAPI.fetchPolicyPlainList(query);
-        return response;
-    },
-    getRecord: (getState: GetState) => {
-        return getState().policyPlainList;
-    },
-    onFinish: (record, dispatch: Redux.Dispatch) => {
-
-    }
+  actionName: ActionTypes.PolicyPlainList,
+  fetcher: async (query, getState: GetState) => {
+    console.log('fetchPolicyActions query:', query);
+    let response = await WebAPI.fetchPolicyPlainList(query);
+    return response;
+  },
+  getRecord: (getState: GetState) => {
+    return getState().policyPlainList;
+  },
+  onFinish: (record, dispatch: Redux.Dispatch) => {}
 });
 //
 // /**
@@ -103,58 +105,58 @@ const fetchPolicyActions = createFFListActions<PolicyPlain, PolicyFilter>({
 // });
 
 const restActions = {
-    // associatePolicyWorkflow,
-    // disassociatePolicyWorkflow,
-
-    // /** 设置策略过滤器 */
-    // setupPolicyFilter: (filter: PolicyFilter) => {
-    //     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-    //         dispatch({
-    //             type: ActionTypes.UpdatePolicyFilter,
-    //             payload: Object.assign({}, getState().policyFilter, filter),
-    //         });
-    //     };
-    // },
-    //
-    // /** 选中策略，根据原始数据计算将添加的策略和将删除的策略 */
-    // selectPolicy: (policies: PolicyPlain[]) => {
-    //     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-    //         /** 选中关联策略，则更新关联策略面板WorkflowDialog会用到的PolicyAssociation状态数据 */
-    //         /** 比对计算出新增和删除的策略，originPolicies是指原先绑定的策略 */
-    //         const { originPolicies } = getState().policyAssociation;
-    //         const getDifferenceSet = (arr1, arr2) => {
-    //             let a1 = arr1.map(JSON.stringify);
-    //             let a2 = arr2.map(JSON.stringify);
-    //             return a1.concat(a2).filter(v => !a1.includes(v) || !a2.includes(v)).map(JSON.parse);
-    //         };
-    //         let allPolicies = policies.concat(originPolicies);
-    //         let removePolicies = getDifferenceSet(policies, allPolicies);
-    //         let addPolicies = getDifferenceSet(originPolicies, allPolicies);
-    //         dispatch({
-    //             type: ActionTypes.UpdatePolicyAssociation,
-    //             payload: Object.assign({}, getState().policyAssociation, {
-    //                 policies: policies,
-    //                 addPolicies: addPolicies,
-    //                 removePolicies: removePolicies
-    //             })
-    //         });
-    //     };
-    // },
-
-    // /** 清除策略关联状态数据 */
-    // clearPolicyAssociation: () => {
-    //     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-    //         dispatch({
-    //             type: ActionTypes.UpdatePolicyAssociation,
-    //             payload: initPolicyAssociationState
-    //         });
-    //     };
-    // }
+  // associatePolicyWorkflow,
+  // disassociatePolicyWorkflow,
+  // /** 设置策略过滤器 */
+  // setupPolicyFilter: (filter: PolicyFilter) => {
+  //     return async (dispatch: Redux.Dispatch, getState: GetState) => {
+  //         dispatch({
+  //             type: ActionTypes.UpdatePolicyFilter,
+  //             payload: Object.assign({}, getState().policyFilter, filter),
+  //         });
+  //     };
+  // },
+  //
+  // /** 选中策略，根据原始数据计算将添加的策略和将删除的策略 */
+  // selectPolicy: (policies: PolicyPlain[]) => {
+  //     return async (dispatch: Redux.Dispatch, getState: GetState) => {
+  //         /** 选中关联策略，则更新关联策略面板WorkflowDialog会用到的PolicyAssociation状态数据 */
+  //         /** 比对计算出新增和删除的策略，originPolicies是指原先绑定的策略 */
+  //         const { originPolicies } = getState().policyAssociation;
+  //         const getDifferenceSet = (arr1, arr2) => {
+  //             let a1 = arr1.map(JSON.stringify);
+  //             let a2 = arr2.map(JSON.stringify);
+  //             return a1.concat(a2).filter(v => !a1.includes(v) || !a2.includes(v)).map(JSON.parse);
+  //         };
+  //         let allPolicies = policies.concat(originPolicies);
+  //         let removePolicies = getDifferenceSet(policies, allPolicies);
+  //         let addPolicies = getDifferenceSet(originPolicies, allPolicies);
+  //         dispatch({
+  //             type: ActionTypes.UpdatePolicyAssociation,
+  //             payload: Object.assign({}, getState().policyAssociation, {
+  //                 policies: policies,
+  //                 addPolicies: addPolicies,
+  //                 removePolicies: removePolicies
+  //             })
+  //         });
+  //     };
+  // },
+  // /** 清除策略关联状态数据 */
+  // clearPolicyAssociation: () => {
+  //     return async (dispatch: Redux.Dispatch, getState: GetState) => {
+  //         dispatch({
+  //             type: ActionTypes.UpdatePolicyAssociation,
+  //             payload: initPolicyAssociationState
+  //         });
+  //     };
+  // }
 };
 
-export const associateActions = extend({},
-    {
-        policyList: fetchPolicyActions,
-        // policyAssociatedList: fetchPolicyAssociatedActions
-    },
-    restActions);
+export const associateActions = extend(
+  {},
+  {
+    policyList: fetchPolicyActions
+    // policyAssociatedList: fetchPolicyAssociatedActions
+  },
+  restActions
+);

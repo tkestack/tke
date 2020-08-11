@@ -21,13 +21,14 @@ package storage
 import (
 	"context"
 
+	"tkestack.io/tke/pkg/platform/proxy"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/pkg/platform/util"
 )
 
 // Storage includes storage for resources.
@@ -39,12 +40,12 @@ type Storage struct {
 
 // REST implements pkg/api/rest.StandardStorage
 type REST struct {
-	*util.Store
+	*proxy.Store
 }
 
 // NewStorage returns a Storage object that will work against resources.
 func NewStorage(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	persistentVolumeStore := &util.Store{
+	persistentVolumeStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &corev1.PersistentVolume{} },
 		NewListFunc:    func() runtime.Object { return &corev1.PersistentVolumeList{} },
 		Namespaced:     false,
@@ -75,7 +76,7 @@ func (r *REST) ShortNames() []string {
 // StatusREST implements the REST endpoint for changing the status of a resource
 type StatusREST struct {
 	rest.Storage
-	store *util.Store
+	store *proxy.Store
 }
 
 // StatusREST implements Patcher

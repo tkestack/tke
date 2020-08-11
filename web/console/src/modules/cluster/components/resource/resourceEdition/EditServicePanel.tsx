@@ -182,7 +182,7 @@ export class EditServicePanel extends React.Component<RootProps, EditServicePane
 
     let namespaceOptions = namespaceList.data.records.map(item => ({
       value: item.name,
-      text: item.name
+      text: item.displayName
     }));
 
     return (

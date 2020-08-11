@@ -29,7 +29,7 @@ export async function fetchResourceList<T = Resource>(options: {
   let { query, resourceInfo, k8sQueryObj = {}, isClearData = false } = options;
 
   let { filter, search } = query,
-    { namespace, regionId, clusterId, specificName } = filter;
+    { namespace, regionId, clusterId, specificName, logAgentName = '' } = filter;
 
   let resourceList = [];
 
@@ -37,9 +37,9 @@ export async function fetchResourceList<T = Resource>(options: {
     let k8sUrl = '';
     // 如果有搜索字段的话
     if (search) {
-      k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: search, clusterId });
+      k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: search, clusterId, logAgentName });
     } else {
-      k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName, clusterId });
+      k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName, clusterId, logAgentName });
     }
 
     // 这里去拼接，是否需要在k8sUrl后面拼接一些queryString
@@ -224,9 +224,9 @@ export async function applyResourceIns(resource: CreateResource[], regionId: num
  */
 export async function deleteResourceIns(resource: CreateResource[], regionId: number) {
   try {
-    let { resourceIns, clusterId, resourceInfo, namespace, mode } = resource[0];
+    let { resourceIns, clusterId, resourceInfo, namespace, mode, logAgentName = '' } = resource[0];
 
-    let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId });
+    let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, logAgentName });
     let url = k8sUrl;
 
     // 是用于后台去异步的删除resource当中的pod

@@ -222,7 +222,8 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
 
     let podFilter: PodFilterInNode = {};
     tags.forEach(item => {
-      podFilter[item.attr.key] = item.values[0]['name'];
+      let attrKey = item.attr ? item.attr.key : 'podName';
+      podFilter[attrKey] = item.values[0]['name'];
     });
     actions.resourceDetail.pod.updatePodFilterInNode(podFilter);
   }

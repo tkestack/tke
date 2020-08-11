@@ -31,32 +31,41 @@ import (
 	"strings"
 	"time"
 
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
+	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/authzwebhook"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy"
 	galaxyimages "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/image"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/keepalived"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/thirdpartyha"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
+	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/cmdstring"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/template"
 )
 
@@ -151,7 +160,9 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 
 	domains := []string{
 		p.config.Registry.Domain,
-		c.Spec.TenantID + "." + p.config.Registry.Domain,
+	}
+	if c.Spec.TenantID != "" {
+		domains = append(domains, c.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -172,22 +183,26 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 }
 
 func (p *Provider) EnsureKernelModule(ctx context.Context, c *v1.Cluster) error {
-	modules := []string{"iptable_nat"}
 	var data bytes.Buffer
 	for _, machine := range c.Spec.Machines {
-		machineSSH, err := machine.SSH()
+		modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
+
+		s, err := machine.SSH()
 		if err != nil {
 			return err
 		}
+		if _, err := s.CombinedOutput("modinfo br_netfilter"); err == nil {
+			modules = append(modules, "br_netfilter")
+		}
 
 		for _, m := range modules {
-			_, err := machineSSH.CombinedOutput(fmt.Sprintf("modprobe %s", m))
+			_, err := s.CombinedOutput(fmt.Sprintf("modprobe %s", m))
 			if err != nil {
 				return errors.Wrap(err, machine.IP)
 			}
 			data.WriteString(m + "\n")
 		}
-		err = machineSSH.WriteFile(strings.NewReader(data.String()), moduleFile)
+		err = s.WriteFile(strings.NewReader(data.String()), moduleFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -237,7 +252,7 @@ func (p *Provider) EnsureDisableSwap(ctx context.Context, c *v1.Cluster) error {
 			return err
 		}
 
-		_, err = machineSSH.CombinedOutput("swapoff -a && sed -i 's/^[^#]*swap/#&/' /etc/fstab")
+		_, err = machineSSH.CombinedOutput(`swapoff -a && sed -i "s/^[^#]*swap/#&/" /etc/fstab`)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -252,7 +267,7 @@ func (p *Provider) EnsureClusterComplete(ctx context.Context, cluster *v1.Cluste
 	funcs := []func(cluster *v1.Cluster) error{
 		completeNetworking,
 		completeDNS,
-		completeGPU,
+		completeServiceIP,
 		completeAddresses,
 		completeCredential,
 	}
@@ -289,6 +304,15 @@ func completeNetworking(cluster *v1.Cluster) error {
 	return nil
 }
 
+func kubernetesSvcIP(cluster *v1.Cluster) (string, error) {
+	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.KUBERNETES)
+	if err != nil {
+		return "", errors.Wrap(err, "get kubernetesSvcIP error")
+	}
+
+	return ip.String(), nil
+}
+
 func completeDNS(cluster *v1.Cluster) error {
 	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.DNSIPIndex)
 	if err != nil {
@@ -299,15 +323,20 @@ func completeDNS(cluster *v1.Cluster) error {
 	return nil
 }
 
-func completeGPU(cluster *v1.Cluster) error {
-	ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, constants.GPUQuotaAdmissionIPIndex)
-	if err != nil {
-		return errors.Wrap(err, "get gpu quota admission IP error")
-	}
+func completeServiceIP(cluster *v1.Cluster) error {
 	if cluster.Annotations == nil {
 		cluster.Annotations = make(map[string]string)
 	}
-	cluster.Annotations[constants.GPUQuotaAdmissionIPAnnotaion] = ip.String()
+	for index, name := range map[int]string{
+		constants.GPUQuotaAdmissionIPIndex: constants.GPUQuotaAdmissionIPAnnotaion,
+		constants.GalaxyIPAMIPIndex:        constants.GalaxyIPAMIPIndexAnnotaion,
+	} {
+		ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, index)
+		if err != nil {
+			return errors.Wrap(err, "get service IP error")
+		}
+		cluster.Annotations[name] = ip.String()
+	}
 
 	return nil
 }
@@ -411,13 +440,15 @@ func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, c *v1.Clust
 
 func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
-	if p.config.Registry.NeedSetHosts() {
+	if p.config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
+	extraArgs := c.Spec.DockerExtraArgs
+	utilruntime.Must(mergo.Merge(&extraArgs, p.config.Docker.ExtraArgs))
 	option := &docker.Option{
 		InsecureRegistries: insecureRegistries,
 		RegistryDomain:     p.config.Registry.Domain,
-		ExtraArgs:          c.Spec.DockerExtraArgs,
+		ExtraArgs:          extraArgs,
 	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -435,6 +466,38 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
+func (p *Provider) EnsureKubernetesImages(ctx context.Context, c *v1.Cluster) error {
+	option := &image.Option{Version: c.Spec.Version, RegistryDomain: p.config.Registry.Domain}
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		err = image.PullKubernetesImages(machineSSH, option)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureConntrackTools(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		err = res.ConntrackTools.InstallWithDefault(machineSSH)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -442,7 +505,114 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 			return err
 		}
 
-		err = kubeadm.Install(machineSSH)
+		err = kubeadm.Install(machineSSH, c.Spec.Version)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+// EnsureKeepalivedInit make sure all master node has cleaning iptable table so in kubeadm join time apiserver may not join it self.
+// keepalived only installs in master node 0 before kubeadm init phase to prevet from vip failover in kubeadm join(etcd phase)
+func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
+		return nil
+	}
+
+	kubernetesSvcIP, err := kubernetesSvcIP(c)
+	if err != nil {
+		return err
+	}
+
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		keepalived.ClearLoadBalance(machineSSH, c.Spec.Features.HA.TKEHA.VIP, kubernetesSvcIP)
+	}
+
+	option := &keepalived.Option{
+		IP:              c.Spec.Machines[0].IP,
+		VIP:             c.Spec.Features.HA.TKEHA.VIP,
+		LoadBalance:     false,
+		IPVS:            false,
+		KubernetesSvcIP: kubernetesSvcIP,
+	}
+
+	machineSSH, err := c.Spec.Machines[0].SSH()
+	if err != nil {
+		return err
+	}
+
+	err = keepalived.Install(machineSSH, option)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureThirdPartyHAInit(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.ThirdPartyHA == nil {
+		return nil
+	}
+
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		option := thirdpartyha.Option{
+			IP:    machine.IP,
+			VIP:   c.Spec.Features.HA.ThirdPartyHA.VIP,
+			VPort: c.Spec.Features.HA.ThirdPartyHA.VPort,
+		}
+
+		thirdpartyha.Clear(machineSSH, &option)
+	}
+
+	machineSSH, err := c.Spec.Machines[0].SSH()
+	if err != nil {
+		return err
+	}
+
+	option := thirdpartyha.Option{
+		IP:    c.Spec.Machines[0].IP,
+		VIP:   c.Spec.Features.HA.ThirdPartyHA.VIP,
+		VPort: c.Spec.Features.HA.ThirdPartyHA.VPort,
+	}
+
+	err = thirdpartyha.Install(machineSSH, &option)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error {
+	if !c.AuthzWebhookEnabled() {
+		return nil
+	}
+	isGlobalCluster := (c.Cluster.Name == "global")
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		authzEndpoint, ok := c.AuthzWebhookExternEndpoint()
+		if !ok {
+			if isGlobalCluster {
+				authzEndpoint, _ = c.AuthzWebhookBuiltinEndpoint()
+			} else {
+				authzEndpoint = p.config.AuthzWebhook.Endpoint
+			}
+		}
+		option := authzwebhook.Option{AuthzWebhookEndpoint: authzEndpoint, IsGlobalCluster: isGlobalCluster}
+		err = authzwebhook.Install(machineSSH, &option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -452,14 +622,19 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
-	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
-	auditPolicyData, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.AuditPolicyConfigFile))
+	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
+	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigFile)
 	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
 	if GPUQuotaAdmissionHost == "" {
 		GPUQuotaAdmissionHost = "gpu-quota-admission"
 	}
+	GalaxyIPAMHost := c.Annotations[constants.GalaxyIPAMIPIndexAnnotaion]
+	if GalaxyIPAMHost == "" {
+		GalaxyIPAMHost = "galaxy-ipam"
+	}
 	schedulerPolicyConfig, err := template.ParseString(schedulerPolicyConfig, map[string]interface{}{
 		"GPUQuotaAdmissionHost": GPUQuotaAdmissionHost,
+		"GalaxyIPAMHost":        GalaxyIPAMHost,
 	})
 	if err != nil {
 		return errors.Wrap(err, "parse schedulerPolicyConfig error")
@@ -471,7 +646,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 	if err != nil {
 		return errors.Wrap(err, "parse auditWebhookConfig error")
 	}
-	for i, machine := range c.Spec.Machines {
+	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -483,7 +658,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			return errors.Wrap(err, machine.IP)
 		}
 
-		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.SchedulerPolicyConfigFile)
+		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.KuberentesSchedulerPolicyConfigFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -495,60 +670,13 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			}
 		}
 
-		if c.Spec.Features.HA != nil {
-			if c.Spec.Features.HA.TKEHA != nil {
-				networkInterface := ssh.GetNetworkInterface(machineSSH, machine.IP)
-				if networkInterface == "" {
-					return fmt.Errorf("can't get network interface by %s", machine.IP)
-				}
-
-				data, err := template.ParseFile(constants.ManifestsDir+"keepalived/keepalived.conf", map[string]interface{}{
-					"Interface": networkInterface,
-					"VIP":       c.Spec.Features.HA.TKEHA.VIP,
-				})
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-				err = machineSSH.WriteFile(bytes.NewReader(data), constants.KeepavliedConfigFile)
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-
-				data, err = template.ParseFile(constants.ManifestsDir+"keepalived/keepalived.yaml", map[string]interface{}{
-					"Image": images.Get().Keepalived.FullName(),
-				})
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-				err = machineSSH.WriteFile(bytes.NewReader(data), constants.KeepavlivedManifestFile)
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-			}
-			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 { // forward rest control-plane to first master
-				cmd := fmt.Sprintf("iptables -t nat -I PREROUTING 1 -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
-					c.Spec.Machines[0].IP)
-				_, stderr, exit, err := machineSSH.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
-
-				cmd = fmt.Sprintf("iptables -t nat -I POSTROUTING 1 -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
-					c.Spec.Machines[0].IP, machine.IP)
-				_, stderr, exit, err = machineSSH.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
-			}
-		}
-
-		if p.config.Audit.Address != "" {
+		if p.config.AuditEnabled() {
 			if len(auditPolicyData) != 0 {
-				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), path.Join(constants.KubernetesDir, constants.AuditPolicyConfigFile))
+				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), constants.KubernetesAuditPolicyConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
-				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), path.Join(constants.KubernetesDir, constants.AuditWebhookConfigFile))
+				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KuberentesAuditWebhookConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
@@ -559,77 +687,77 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 	return nil
 }
 
-func (p *Provider) EnsureKubeadmInitKubeletStartPhase(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitPhaseKubeletStart(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c),
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c),
 		fmt.Sprintf("kubelet-start --node-name=%s", c.Spec.Machines[0].IP))
 }
 
-func (p *Provider) EnsureKubeadmInitCertsPhase(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitPhaseCerts(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "certs all")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "certs all")
 }
 
-func (p *Provider) EnsureKubeadmInitKubeConfigPhase(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitPhaseKubeConfig(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "kubeconfig all")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "kubeconfig all")
 }
 
-func (p *Provider) EnsureKubeadmInitControlPlanePhase(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitPhaseControlPlane(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "control-plane all")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "control-plane all")
 }
 
-func (p *Provider) EnsureKubeadmInitEtcdPhase(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitPhaseETCD(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "etcd local")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "etcd local")
 }
 
-func (p *Provider) EnsureKubeadmInitUploadConfigPhase(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitPhaseUploadConfig(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "upload-config all ")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "upload-config all ")
 }
 
-func (p *Provider) EnsureKubeadmInitUploadCertsPhase(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitPhaseUploadCerts(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "upload-certs --upload-certs")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "upload-certs --upload-certs")
 }
 
-func (p *Provider) EnsureKubeadmInitBootstrapTokenPhase(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitPhaseBootstrapToken(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "bootstrap-token")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "bootstrap-token")
 }
 
-func (p *Provider) EnsureKubeadmInitAddonPhase(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKubeadmInitPhaseAddon(ctx context.Context, c *v1.Cluster) error {
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmConfig(c), "addon all")
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "addon all")
 }
 
 func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
@@ -644,22 +772,78 @@ func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 	})
 }
 
-func (p *Provider) EnsureJoinControlePlane(ctx context.Context, c *v1.Cluster) error {
-	oidcCa, _ := ioutil.ReadFile(path.Join(constants.ConfDir, constants.OIDCCACertName))
-	option := &kubeadm.JoinControlPlaneOption{
-		BootstrapToken:       *c.ClusterCredential.BootstrapToken,
-		CertificateKey:       *c.ClusterCredential.CertificateKey,
-		ControlPlaneEndpoint: fmt.Sprintf("%s:6443", c.Spec.Machines[0].IP),
-		OIDCCA:               oidcCa,
-	}
+func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.Machines[1:] {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
 		}
 
-		option.NodeName = machine.IP
-		err = kubeadm.JoinControlPlane(machineSSH, option)
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "preflight")
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureJoinPhaseControlPlanePrepare(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.Machines[1:] {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "control-plane-prepare all")
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureJoinPhaseKubeletStart(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.Machines[1:] {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "kubelet-start")
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureJoinPhaseControlPlaneJoinETCD(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.Machines[1:] {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "control-plane-join etcd")
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureJoinPhaseControlPlaneJoinUpdateStatus(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.Machines[1:] {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "control-plane-join update-status")
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -739,17 +923,13 @@ func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) err
 }
 
 func (p *Provider) EnsureKubelet(ctx context.Context, c *v1.Cluster) error {
-	option := &kubelet.Option{
-		Version:   c.Spec.Version,
-		ExtraArgs: c.Spec.KubeletExtraArgs,
-	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
 		}
 
-		err = kubelet.Install(machineSSH, option)
+		err = kubelet.Install(machineSSH, c.Spec.Version)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -775,22 +955,21 @@ func (p *Provider) EnsureCNIPlugins(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureKubeadmInitWaitControlPlanePhase(ctx context.Context, c *v1.Cluster) error {
-	start := time.Now()
-
+func (p *Provider) EnsureKubeadmInitPhaseWaitControlPlane(ctx context.Context, c *v1.Cluster) error {
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		healthStatus := 0
 		clientset, err := c.ClientsetForBootstrap()
 		if err != nil {
-			log.Warn(err.Error())
+			log.FromContext(ctx).Error(err, "Create clientset error")
 			return false, nil
 		}
-		clientset.Discovery().RESTClient().Get().AbsPath("/healthz").Do(ctx).StatusCode(&healthStatus)
-		if healthStatus != http.StatusOK {
+		result := clientset.Discovery().RESTClient().Get().AbsPath("/healthz").Do(ctx)
+		statusCode := 0
+		result.StatusCode(&statusCode)
+		if statusCode != http.StatusOK {
+			log.FromContext(ctx).Error(result.Error(), "check healthz error", "statusCode", statusCode)
 			return false, nil
 		}
 
-		log.Infof("All control plane components are healthy after %f seconds\n", time.Since(start).Seconds())
 		return true, nil
 	})
 }
@@ -863,6 +1042,7 @@ func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 		"GPUManagerImage":        images.Get().GPUManager.FullName(),
 		"BusyboxImage":           images.Get().Busybox.FullName(),
 		"GPUQuotaAdmissionImage": images.Get().GPUQuotaAdmission.FullName(),
+		"GPUQuotaAdmissionHost":  c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion],
 	}
 
 	err = apiclient.CreateResourceWithFile(ctx, client, constants.GPUManagerManifest, option)
@@ -873,12 +1053,38 @@ func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
+func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error {
+	client, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+	config, err := c.RESTConfig(&rest.Config{})
+	if err != nil {
+		return err
+	}
+	kaClient, err := kubeaggregatorclientset.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	option := map[string]interface{}{
+		"MetricsServerImage": images.Get().MetricsServer.FullName(),
+		"AddonResizerImage":  images.Get().AddonResizer.FullName(),
+	}
+
+	err = apiclient.CreateKAResourceWithFile(ctx, client, kaClient, constants.MetricsServerManifest, option)
+	if err != nil {
+		return errors.Wrap(err, "install metrics server error")
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 	if c.Cluster.Spec.Features.CSIOperator == nil {
 		return nil
 	}
 
-	log.Info("csi-perator in feature will be created.", log.String("name", c.Cluster.Name))
+	log.FromContext(ctx).Info("csi-perator will be created")
 
 	client, err := c.Clientset()
 	if err != nil {
@@ -892,39 +1098,92 @@ func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 
 	err = apiclient.CreateResourceWithFile(ctx, client, constants.CSIOperatorManifest, option)
 	if err != nil {
-		return errors.Wrap(err, "install csi operator error")
+		return errors.Wrap(err, "install csi-operator error")
 	}
 
-	log.Info("csi-perator in feature already created.", log.String("name", c.Cluster.Name))
+	log.FromContext(ctx).Info("csi-perator already created")
 
 	return nil
 }
 
-func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
-	for i, machine := range c.Spec.Machines {
+func (p *Provider) EnsureKeepalivedWithLB(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
+		return nil
+	}
+
+	ipvs := c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS
+	kubernetesSvcIP, err := kubernetesSvcIP(c)
+	if err != nil {
+		return err
+	}
+
+	for _, machine := range c.Spec.Machines {
 		s, err := machine.SSH()
 		if err != nil {
 			return err
 		}
 
-		if c.Spec.Features.HA != nil {
-			if c.Spec.Features.HA.ThirdPartyHA != nil && i > 0 {
-				cmd := fmt.Sprintf("iptables -t nat -D PREROUTING -p tcp --dport 6443 -j DNAT --to-destination %s:6443",
-					c.Spec.Machines[0].IP)
-				_, stderr, exit, err := s.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
-
-				cmd = fmt.Sprintf("iptables -t nat -D POSTROUTING -p tcp -d %s --dport 6443 -j SNAT --to-source %s",
-					c.Spec.Machines[0].IP, machine.IP)
-				_, stderr, exit, err = s.Exec(cmd)
-				if err != nil || exit != 0 {
-					return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-				}
-			}
+		option := &keepalived.Option{
+			IP:              machine.IP,
+			VIP:             c.Spec.Features.HA.TKEHA.VIP,
+			LoadBalance:     true,
+			IPVS:            ipvs,
+			KubernetesSvcIP: kubernetesSvcIP,
 		}
 
+		err = keepalived.Install(s, option)
+		if err != nil {
+			return err
+		}
+
+		log.FromContext(ctx).Info("keepalived created success.", "node", machine.IP)
 	}
+
 	return nil
+}
+
+func (p *Provider) EnsureThirdPartyHA(ctx context.Context, c *v1.Cluster) error {
+	if c.Spec.Features.HA == nil || c.Spec.Features.HA.ThirdPartyHA == nil {
+		return nil
+	}
+
+	for _, machine := range c.Spec.Machines {
+		s, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		option := thirdpartyha.Option{
+			IP:    machine.IP,
+			VIP:   c.Spec.Features.HA.ThirdPartyHA.VIP,
+			VPort: c.Spec.Features.HA.ThirdPartyHA.VPort,
+		}
+
+		err = thirdpartyha.Install(s, &option)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.Machines {
+		_, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureCreateClusterMark(ctx context.Context, c *v1.Cluster) error {
+	clientset, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+
+	return mark.Create(ctx, clientset)
 }

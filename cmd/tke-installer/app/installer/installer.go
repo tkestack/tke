@@ -24,7 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	stdlog "log"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -32,19 +32,21 @@ import (
 	"path"
 	goruntime "runtime"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/util/validation"
+
 	"github.com/emicklei/go-restful"
-	pkgerrors "github.com/pkg/errors"
+	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	"gopkg.in/go-playground/validator.v9"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -75,22 +77,28 @@ import (
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/docker"
 	"tkestack.io/tke/pkg/util/hosts"
+	utilhttp "tkestack.io/tke/pkg/util/http"
 	"tkestack.io/tke/pkg/util/kubeconfig"
 	"tkestack.io/tke/pkg/util/log"
 	utilnet "tkestack.io/tke/pkg/util/net"
+	"tkestack.io/tke/pkg/util/pkiutil"
 	"tkestack.io/tke/pkg/util/ssh"
 
 	// import platform schema
 	_ "tkestack.io/tke/api/platform/install"
 )
 
+const namespace = "tke"
+
 type TKE struct {
 	Config  *config.Config           `json:"config"`
 	Para    *types.CreateClusterPara `json:"para"`
 	Cluster *v1.Cluster              `json:"cluster"`
 	Step    int                      `json:"step"`
+	// IncludeSelf means installer is using one of cluster's machines
+	IncludeSelf bool `json:"includeSelf"`
 
-	log             *stdlog.Logger
+	log             log.Logger
 	steps           []types.Handler
 	progress        *types.ClusterProgress
 	strategy        *clusterstrategy.Strategy
@@ -120,15 +128,16 @@ func New(config *config.Config) *TKE {
 	c.clusterProvider = clusterProvider
 
 	_ = os.MkdirAll(path.Dir(constants.ClusterLogFile), 0755)
-	f, err := os.OpenFile(constants.ClusterLogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0744)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	c.log = stdlog.New(f, "", stdlog.LstdFlags)
+	logOptions := log.NewOptions()
+	logOptions.DisableColor = true
+	logOptions.OutputPaths = []string{constants.ClusterLogFile}
+	logOptions.ErrorOutputPaths = logOptions.OutputPaths
+	log.Init(logOptions)
+	c.log = log.WithName("tke-installer")
 
 	c.docker = new(docker.Docker)
-	c.docker.Stdout = c.log.Writer()
-	c.docker.Stderr = c.log.Writer()
+	c.docker.Stdout = c.log
+	c.docker.Stderr = c.log
 
 	if !config.Force {
 		data, err := ioutil.ReadFile(constants.ClusterFile)
@@ -159,7 +168,7 @@ func (t *TKE) initSteps() {
 	// TKERegistry load images && start local registry && push images to local registry
 	// && deploy tke-registry-api && push images to tke-registry
 	// ThirdPartyRegistry load images && push images
-	if !IsDevRegistry(t.Para.Config.Registry) {
+	if !t.Para.Config.Registry.IsOfficial() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Load images",
@@ -179,7 +188,7 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if !IsDevRegistry(t.Para.Config.Registry) {
+	if !t.Para.Config.Registry.IsOfficial() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Push images",
@@ -202,7 +211,7 @@ func (t *TKE) initSteps() {
 			Func: t.writeKubeconfig,
 		},
 		{
-			Name: "Execute post deploy hook",
+			Name: "Execute post cluster ready hook",
 			Func: t.postClusterReadyHook,
 		},
 		{
@@ -269,7 +278,7 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if t.Para.Config.Business != nil {
+	if t.businessEnabled() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Install tke-business-api",
@@ -312,15 +321,6 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if t.Para.Config.Gateway != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-gateway",
-				Func: t.installTKEGateway,
-			},
-		}...)
-	}
-
 	if t.Para.Config.Logagent != nil {
 		t.steps = append(t.steps, []types.Handler{
 			{
@@ -330,6 +330,30 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Install tke-logagent-controller",
 				Func: t.installTKELogagentController,
+			},
+		}...)
+	}
+
+	// others
+
+	// Add more tke component before THIS!!!
+	if t.Para.Config.Gateway != nil {
+		if t.IncludeSelf {
+			t.steps = append(t.steps, []types.Handler{
+				{
+					Name: "Prepare images before stop local registry",
+					Func: t.prepareImages,
+				},
+				{
+					Name: "Stop local registry to give up 80/443 for tke-gateway",
+					Func: t.stopLocalRegistry,
+				},
+			}...)
+		}
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke-gateway",
+				Func: t.installTKEGateway,
 			},
 		}...)
 	}
@@ -365,7 +389,7 @@ func (t *TKE) initSteps() {
 
 	t.steps = append(t.steps, []types.Handler{
 		{
-			Name: "Execute post deploy hook",
+			Name: "Execute post install hook",
 			Func: t.postInstallHook,
 		},
 	}...)
@@ -373,21 +397,26 @@ func (t *TKE) initSteps() {
 	t.steps = funk.Filter(t.steps, func(step types.Handler) bool {
 		return !funk.ContainsString(t.Para.Config.SkipSteps, step.Name)
 	}).([]types.Handler)
+
+	t.log.Info("Steps:")
+	for i, step := range t.steps {
+		t.log.Infof("%d %s", i, step.Name)
+	}
 }
 
 func (t *TKE) Run() {
 	var err error
 	if t.Config.NoUI {
-		err = t.run(context.Background())
+		err = t.run()
 	} else {
-		err = t.runWithUI(context.Background())
+		err = t.runWithUI()
 	}
 	if err != nil {
 		log.Error(err.Error())
 	}
 }
 
-func (t *TKE) run(ctx context.Context) error {
+func (t *TKE) run() error {
 	if !t.isFromRestore {
 		if err := t.loadPara(); err != nil {
 			return err
@@ -395,16 +424,16 @@ func (t *TKE) run(ctx context.Context) error {
 		err := t.prepare()
 		if err != nil {
 			statusErr := err.Status()
-			return pkgerrors.New(statusErr.String())
+			return errors.New(statusErr.String())
 		}
 	}
 
-	t.do(ctx)
+	t.do()
 
 	return nil
 }
 
-func (t *TKE) runWithUI(ctx context.Context) error {
+func (t *TKE) runWithUI() error {
 	a := NewAssertsResource()
 	restful.Add(a.WebService())
 	restful.Add(t.WebService())
@@ -414,7 +443,7 @@ func (t *TKE) runWithUI(ctx context.Context) error {
 	restful.Filter(globalLogging)
 
 	if t.isFromRestore {
-		go t.do(ctx)
+		go t.do()
 	}
 
 	log.Infof("Starting %s at http://%s", t.Config.ServerName, t.Config.ListenAddr)
@@ -463,13 +492,14 @@ func (t *TKE) completeWithProvider() {
 	t.clusterProvider = clusterProvider
 }
 
-func (t *TKE) prepare() errors.APIStatus {
+func (t *TKE) prepare() apierrors.APIStatus {
 	t.setConfigDefault(&t.Para.Config)
 	statusError := t.validateConfig(t.Para.Config)
 	if statusError != nil {
 		return statusError
 	}
 
+	platform.Scheme.Default(&t.Para.Cluster)
 	t.setClusterDefault(&t.Para.Cluster, &t.Para.Config)
 
 	// mock platform api
@@ -484,24 +514,24 @@ func (t *TKE) prepare() errors.APIStatus {
 	platformCluster := new(platform.Cluster)
 	err := platform.Scheme.Convert(v1Cluster, platformCluster, nil)
 	if err != nil {
-		return errors.NewInternalError(err)
+		return apierrors.NewInternalError(err)
 	}
 	t.strategy.PrepareForCreate(ctx, platformCluster)
 
 	// Validate
 	kinds, _, err := platform.Scheme.ObjectKinds(v1Cluster)
 	if err != nil {
-		return errors.NewInternalError(err)
+		return apierrors.NewInternalError(err)
 	}
 
 	allErrs := t.strategy.Validate(ctx, platformCluster)
 	if len(allErrs) > 0 {
-		return errors.NewInvalid(kinds[0].GroupKind(), v1Cluster.GetName(), allErrs)
+		return apierrors.NewInvalid(kinds[0].GroupKind(), v1Cluster.GetName(), allErrs)
 	}
 
 	err = platform.Scheme.Convert(platformCluster, v1Cluster, nil)
 	if err != nil {
-		return errors.NewInternalError(err)
+		return apierrors.NewInternalError(err)
 	}
 
 	statusError = t.validateResource(v1Cluster)
@@ -510,6 +540,16 @@ func (t *TKE) prepare() errors.APIStatus {
 	}
 
 	t.Cluster.Cluster = v1Cluster
+	for _, one := range t.Cluster.Spec.Machines {
+		ok, err := utilnet.InterfaceHasAddr(one.IP)
+		if err != nil {
+			return apierrors.NewInternalError(err)
+		}
+		if ok {
+			t.IncludeSelf = true
+			break
+		}
+	}
 	t.backup()
 
 	return nil
@@ -556,6 +596,7 @@ func (t *TKE) setConfigDefault(config *types.Config) {
 		}
 	}
 
+	config.Logagent = new(types.Logagent)
 }
 func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Config) {
 	if cluster.APIVersion == "" {
@@ -570,7 +611,9 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 	if t.Para.Config.Auth.TKEAuth != nil {
 		cluster.Spec.TenantID = t.Para.Config.Auth.TKEAuth.TenantID
 	}
-	cluster.Spec.Version = spec.K8sVersions[len(spec.K8sVersions)-1] // use newest version
+	if cluster.Spec.Version == "" {
+		cluster.Spec.Version = spec.K8sVersions[0] // use newest version
+	}
 	if cluster.Spec.ClusterCIDR == "" {
 		cluster.Spec.ClusterCIDR = "10.244.0.0/16"
 	}
@@ -597,27 +640,31 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 			}
 		}
 	}
+	if config.Business != nil {
+		cluster.Spec.Features.AuthzWebhookAddr = &platformv1.AuthzWebhookAddr{Builtin: &platformv1.
+			BuiltinAuthzWebhookAddr{}}
+	}
 }
 
-func (t *TKE) validateConfig(config types.Config) *errors.StatusError {
+func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 	validate := validator.New()
 	err := validate.Struct(config)
 	if err != nil {
-		return errors.NewBadRequest(err.Error())
+		return apierrors.NewBadRequest(err.Error())
 	}
 
 	if config.Gateway != nil || config.Registry.TKERegistry != nil {
 		if config.Basic.Username == "" || config.Basic.Password == nil {
-			return errors.NewBadRequest("username or password required when enabled gateway or registry")
+			return apierrors.NewBadRequest("username or password required when enabled gateway or registry")
 		}
 	}
 
 	if config.Auth.TKEAuth == nil && config.Auth.OIDCAuth == nil {
-		return errors.NewBadRequest("tke auth or oidc auth required")
+		return apierrors.NewBadRequest("tke auth or oidc auth required")
 	}
 
 	if config.Registry.TKERegistry == nil && config.Registry.ThirdPartyRegistry == nil {
-		return errors.NewBadRequest("tke registry or third party registry required")
+		return apierrors.NewBadRequest("tke registry or third party registry required")
 	}
 
 	if config.Registry.ThirdPartyRegistry != nil {
@@ -629,15 +676,15 @@ func (t *TKE) validateConfig(config types.Config) *errors.StatusError {
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			if _, ok := err.(*exec.ExitError); ok {
-				return errors.NewBadRequest(string(out))
+				return apierrors.NewBadRequest(string(out))
 			}
-			return errors.NewInternalError(err)
+			return apierrors.NewInternalError(err)
 		}
 	}
 
 	if config.Monitor != nil {
 		if config.Monitor.InfluxDBMonitor != nil && config.Monitor.ESMonitor != nil {
-			return errors.NewBadRequest("influxdb or es only had one")
+			return apierrors.NewBadRequest("influxdb or es only had one")
 		}
 	}
 
@@ -659,26 +706,26 @@ func (t *TKE) validateConfig(config types.Config) *errors.StatusError {
 	return nil
 }
 
-func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames []string) *errors.StatusError {
+func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames []string) *apierrors.StatusError {
 	if (certificate != nil && privateKey == nil) || (certificate == nil && privateKey != nil) {
-		return errors.NewBadRequest("certificate and privateKey must offer together")
+		return apierrors.NewBadRequest("certificate and privateKey must offer together")
 	}
 
 	if certificate != nil {
 		cert, err := tls.X509KeyPair(certificate, privateKey)
 		if err != nil {
-			return errors.NewBadRequest(err.Error())
+			return apierrors.NewBadRequest(err.Error())
 		}
 		if len(cert.Certificate) != 1 {
-			return errors.NewBadRequest("certificate must only has one cert")
+			return apierrors.NewBadRequest("certificate must only has one cert")
 		}
 		certs1, err := certutil.ParseCertsPEM(certificate)
 		if err != nil {
-			return errors.NewBadRequest(err.Error())
+			return apierrors.NewBadRequest(err.Error())
 		}
 		for _, one := range dnsNames {
-			if !funk.Contains(certs1[0].DNSNames, one) {
-				return errors.NewBadRequest(fmt.Sprintf("certificate DNSNames must contains %v", one))
+			if !matchDNSName(certs1[0].DNSNames, one) {
+				return apierrors.NewBadRequest(fmt.Sprintf("certificate DNSNames must contains %v", one))
 			}
 		}
 	}
@@ -686,13 +733,20 @@ func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames
 	return nil
 }
 
+func matchDNSName(certDNSNames []string, dnsName string) bool {
+	dotIdx := strings.Index(dnsName, ".")
+	return funk.Contains(certDNSNames, dnsName) || validation.IsValidDNSName(dnsName) && dotIdx > -1 && funk.Contains(certDNSNames, "*"+dnsName[dotIdx:])
+}
+
 // validateResource validate the cpu and memory of cluster machines whether meets the requirements.
-func (t *TKE) validateResource(cluster *platformv1.Cluster) *errors.StatusError {
+func (t *TKE) validateResource(cluster *platformv1.Cluster) *apierrors.StatusError {
 	var (
-		cpuSum    int
-		memorySum int
+		errs             []error
+		cpuSum           int
+		memoryInBytesSum uint64
+		firstNodeDisk    int
 	)
-	for _, machine := range cluster.Spec.Machines {
+	for i, machine := range cluster.Spec.Machines {
 		sshConfig := &ssh.Config{
 			User:       machine.Username,
 			Host:       machine.IP,
@@ -703,35 +757,43 @@ func (t *TKE) validateResource(cluster *platformv1.Cluster) *errors.StatusError 
 		}
 		s, err := ssh.New(sshConfig)
 		if err != nil {
-			return errors.NewInternalError(err)
+			return apierrors.NewInternalError(err)
 		}
-		cmd := "nproc --all"
-		stdout, err := s.CombinedOutput(cmd)
-		if err != nil {
-			return errors.NewInternalError(fmt.Errorf("get cpu error: %w", err))
+
+		if i == 0 {
+			firstNodeDisk, err = ssh.DiskAvail(s, constants.PathForDiskSpaceRequest)
+			if err != nil {
+				return apierrors.NewInternalError(fmt.Errorf("get disk availble space error: %w", err))
+			}
 		}
-		cpu, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
+
+		cpu, err := ssh.NumCPU(s)
 		if err != nil {
-			return errors.NewInternalError(fmt.Errorf("convert cpu value error: %w", err))
+			return apierrors.NewInternalError(fmt.Errorf("get cpu error: %w", err))
 		}
 		cpuSum += cpu
 
-		cmd = "free -g | grep Mem  | awk '{print $2}'"
-		stdout, err = s.CombinedOutput(cmd)
+		memInBytes, err := ssh.MemoryCapacity(s)
 		if err != nil {
-			return errors.NewInternalError(fmt.Errorf("get memory error: %w", err))
+			return apierrors.NewInternalError(fmt.Errorf("get memory error: %w", err))
 		}
-		memory, err := strconv.Atoi(strings.TrimSpace(string(stdout)))
-		if err != nil {
-			return errors.NewInternalError(fmt.Errorf("convert memory value error: %w", err))
-		}
-		memorySum += memory
+		memoryInBytesSum += memInBytes
 	}
 	if cpuSum < constants.CPURequest {
-		return errors.NewBadRequest(fmt.Sprintf("at lease %d cores are required", constants.CPURequest))
+		errs = append(errs, fmt.Errorf("sum of cpu in all nodes needs to be greater than %d",
+			constants.CPURequest))
 	}
-	if memorySum < constants.MemoryRequest {
-		return errors.NewBadRequest(fmt.Sprintf("at lease %d GiB memory are required", constants.MemoryRequest))
+	if math.Ceil(float64(memoryInBytesSum)/1024/1024/1024) < constants.MemoryRequest {
+		errs = append(errs, fmt.Errorf("sum of memory in all nodes needs to be greater than %d GiB",
+			constants.MemoryRequest))
+	}
+	if firstNodeDisk < constants.FirstNodeDiskSpaceRequest {
+		errs = append(errs, fmt.Errorf("availble space of disk for %s in the first node which you input in cluster needs to be greater than %d GiB",
+			constants.PathForDiskSpaceRequest, constants.FirstNodeDiskSpaceRequest))
+	}
+
+	if len(errs) != 0 {
+		return apierrors.NewBadRequest(utilerrors.NewAggregate(errs).Error())
 	}
 
 	return nil
@@ -747,7 +809,7 @@ func (t *TKE) completeProviderConfigForRegistry() error {
 	if t.Para.Config.Registry.TKERegistry != nil {
 		ip, err := utilnet.GetSourceIP(t.Para.Cluster.Spec.Machines[0].IP)
 		if err != nil {
-			return pkgerrors.Wrap(err, "get ip for registry error")
+			return errors.Wrap(err, "get ip for registry error")
 		}
 		c.Registry.IP = ip
 	}
@@ -776,21 +838,25 @@ func (t *TKE) auditEnabled() bool {
 		t.Para.Config.Audit.ElasticSearch.Address != ""
 }
 
+func (t *TKE) businessEnabled() bool {
+	return t.Para.Config.Business != nil
+}
+
 func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
-	apiStatus := func() errors.APIStatus {
+	apiStatus := func() apierrors.APIStatus {
 		if t.Step != 0 {
-			return errors.NewAlreadyExists(platformv1.Resource("Cluster"), "global")
+			return apierrors.NewAlreadyExists(platformv1.Resource("Cluster"), "global")
 		}
 		para := new(types.CreateClusterPara)
 		err := req.ReadEntity(para)
 		if err != nil {
-			return errors.NewBadRequest(err.Error())
+			return apierrors.NewBadRequest(err.Error())
 		}
 		t.Para = para
 		if err := t.prepare(); err != nil {
 			return err
 		}
-		go t.do(req.Request.Context())
+		go t.do()
 
 		return nil
 	}()
@@ -803,18 +869,15 @@ func (t *TKE) createCluster(req *restful.Request, rsp *restful.Response) {
 }
 
 func (t *TKE) retryCreateCluster(req *restful.Request, rsp *restful.Response) {
-	go t.do(req.Request.Context())
+	go t.do()
 	_ = rsp.WriteEntity(nil)
 }
 
 func (t *TKE) findCluster(request *restful.Request, response *restful.Response) {
-	apiStatus := func() errors.APIStatus {
+	apiStatus := func() apierrors.APIStatus {
 		clusterName := request.PathParameter("name")
-		if t.Cluster == nil {
-			return errors.NewBadRequest("no cluater available")
-		}
-		if t.Cluster.Name != clusterName {
-			return errors.NewNotFound(platform.Resource("Cluster"), clusterName)
+		if t.Cluster.Cluster == nil || t.Cluster.Name != clusterName {
+			return apierrors.NewNotFound(platform.Resource("Cluster"), clusterName)
 		}
 
 		return nil
@@ -833,17 +896,17 @@ func (t *TKE) findCluster(request *restful.Request, response *restful.Response) 
 func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Response) {
 	var err error
 	var data []byte
-	apiStatus := func() errors.APIStatus {
+	apiStatus := func() apierrors.APIStatus {
 		clusterName := request.PathParameter("name")
-		if t.Cluster == nil {
-			return errors.NewBadRequest("no cluater available")
+		if t.Cluster.Cluster == nil {
+			return apierrors.NewBadRequest("no cluater available")
 		}
 		if t.Cluster.Name != clusterName {
-			return errors.NewNotFound(platform.Resource("Cluster"), clusterName)
+			return apierrors.NewNotFound(platform.Resource("Cluster"), clusterName)
 		}
 		data, err = ioutil.ReadFile(constants.ClusterLogFile)
 		if err != nil {
-			return errors.NewInternalError(err)
+			return apierrors.NewInternalError(err)
 		}
 		t.progress.Data = string(data)
 
@@ -857,14 +920,15 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 	}
 }
 
-func (t *TKE) do(ctx context.Context) {
+func (t *TKE) do() {
 	start := time.Now()
+	ctx := t.log.WithContext(context.Background())
 
 	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
 	t.initSteps()
 
 	if t.Step == 0 {
-		t.log.Print("===>starting install task")
+		t.log.Info("===>starting install task")
 		t.progress.Status = types.StatusDoing
 	}
 
@@ -873,18 +937,22 @@ func (t *TKE) do(ctx context.Context) {
 	}
 
 	for t.Step < len(t.steps) {
-		t.log.Printf("%d.%s doing", t.Step, t.steps[t.Step].Name)
-		start := time.Now()
-		err := t.steps[t.Step].Func(ctx)
-		if err != nil {
-			t.progress.Status = types.StatusFailed
-			t.log.Printf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
-			return
-		}
-		t.log.Printf("%d.%s [Success] [%fs]", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds())
+		wait.PollInfinite(10*time.Second, func() (bool, error) {
+			t.log.Infof("%d.%s doing", t.Step, t.steps[t.Step].Name)
+			start := time.Now()
+			err := t.steps[t.Step].Func(ctx)
+			if err != nil {
+				t.progress.Status = types.StatusFailed
+				t.log.Errorf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
+				return false, nil
+			}
+			t.log.Infof("%d.%s [Success] [%fs]", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds())
 
-		t.Step++
-		t.backup()
+			t.Step++
+			t.backup()
+
+			return true, nil
+		})
 	}
 
 	t.progress.Status = types.StatusSuccess
@@ -918,11 +986,12 @@ func (t *TKE) do(ctx context.Context) {
 		t.progress.Hosts = append(t.progress.Hosts, t.Para.Config.Registry.TKERegistry.Domain)
 	}
 
-	t.progress.Servers = t.servers
 	if t.Para.Config.HA != nil {
 		t.progress.Servers = append(t.progress.Servers, t.Para.Config.HA.VIP())
 	}
-	t.log.Printf("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
+	t.progress.Servers = append(t.progress.Servers, t.servers...)
+
+	t.log.Infof("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
 }
 
 func (t *TKE) runAfterClusterReady() bool {
@@ -950,7 +1019,7 @@ func (t *TKE) generateCertificates(ctx context.Context) error {
 			ips = append(ips, net.ParseIP(t.Para.Config.HA.ThirdPartyHA.VIP))
 		}
 	}
-	return certs.Generate(dnsNames, ips)
+	return certs.Generate(dnsNames, ips, constants.DataDir)
 }
 
 func (t *TKE) prepareFrontProxyCertificates(ctx context.Context) error {
@@ -987,50 +1056,32 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 	}
 	t.completeWithProvider()
 
-	t.Cluster.ClusterCredential = &platformv1.ClusterCredential{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("cc-%s", t.Cluster.Name),
-		},
-		TenantID:    t.Cluster.Spec.TenantID,
-		ClusterName: t.Cluster.Name,
+	if t.Cluster.Spec.ClusterCredentialRef == nil {
+		credential := &platformv1.ClusterCredential{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("cc-%s", t.Cluster.Name),
+			},
+			TenantID:    t.Cluster.Spec.TenantID,
+			ClusterName: t.Cluster.Name,
+		}
+		t.Cluster.ClusterCredential = credential
+		t.Cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
 	}
 
-	var errCount int
-	for {
-		start := time.Now()
+	for t.Cluster.Status.Phase == platformv1.ClusterInitializing {
 		err := t.clusterProvider.OnCreate(ctx, t.Cluster)
 		if err != nil {
 			return err
 		}
 		t.backup()
-		condition := t.Cluster.Status.Conditions[len(t.Cluster.Status.Conditions)-1]
-		switch condition.Status {
-		case platformv1.ConditionFalse: // means current condition run into error
-			t.log.Printf("OnCreate.%s [Failed] [%fs] reason: %s message: %s retry: %d",
-				condition.Type, time.Since(start).Seconds(),
-				condition.Reason, condition.Message, errCount)
-			if errCount >= 10 {
-				return pkgerrors.New("the retry limit has been reached")
-			}
-
-			errCount++
-		case platformv1.ConditionUnknown: // means has next condition need to process
-			condition = t.Cluster.Status.Conditions[len(t.Cluster.Status.Conditions)-2]
-			t.log.Printf("OnCreate.%s [Success] [%fs]", condition.Type, time.Since(start).Seconds())
-
-			t.Cluster.Status.Reason = ""
-			t.Cluster.Status.Message = ""
-			errCount = 0
-		case platformv1.ConditionTrue: // means all condition is done
-			if t.Cluster.Status.Phase != platformv1.ClusterRunning {
-				return pkgerrors.Errorf("OnCreate.%s, no next condition but cluster is not running!", condition.Type)
-			}
-			return t.initDataForDeployTKE()
-		default:
-			return pkgerrors.Errorf("unknown condition status %s", condition.Status)
-		}
-		time.Sleep(5 * time.Second)
 	}
+
+	err = t.initDataForDeployTKE()
+	if err != nil {
+		return fmt.Errorf("init data for deploy tke error: %w", err)
+	}
+
+	return nil
 }
 
 func (t *TKE) backup() error {
@@ -1055,12 +1106,12 @@ func (t *TKE) loadImages(ctx context.Context) error {
 	for _, image := range tkeImages {
 		imageNames := strings.Split(image, "/")
 		if len(imageNames) != 2 {
-			t.log.Printf("invalid image name:name=%s", image)
+			t.log.Infof("invalid image name:name=%s", image)
 			continue
 		}
-		name, _, err := t.docker.SplitImageNameAndTag(imageNames[1])
+		name, _, _, err := t.docker.GetNameArchTag(imageNames[1])
 		if err != nil {
-			t.log.Printf("skip invalid image: %s", image)
+			t.log.Infof("skip invalid image: %s", image)
 			continue
 		}
 		if name == "tke-installer" { // no need to push installer image for speed up
@@ -1083,7 +1134,7 @@ func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 
 	err := t.startLocalRegistry()
 	if err != nil {
-		return pkgerrors.Wrap(err, "start local registry error")
+		return errors.Wrap(err, "start local registry error")
 	}
 
 	// for push image to local registry
@@ -1102,13 +1153,13 @@ func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	t.log.Print(string(data))
+	t.log.Info(string(data))
 
 	return nil
 }
 
 func (t *TKE) startLocalRegistry() error {
-	err := t.docker.RemoveContainers("registry-http", "registry-https")
+	err := t.stopLocalRegistry(context.Background())
 	if err != nil {
 		return err
 	}
@@ -1161,7 +1212,7 @@ func (t *TKE) initDataForDeployTKE() error {
 		}
 	}
 
-	t.namespace = "tke"
+	t.namespace = namespace
 
 	return nil
 }
@@ -1206,6 +1257,16 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 		return err
 	}
 
+	if t.Cluster.Spec.Etcd.External != nil {
+		return fmt.Errorf("external etcd specified, but ca key is not provided yet")
+	}
+
+	etcdClientCertData, etcdClientKeyData, err := pkiutil.GenerateClientCertAndKey(namespace, nil,
+		t.Cluster.ClusterCredential.ETCDCACert, t.Cluster.ClusterCredential.ETCDCAKey)
+	if err != nil {
+		return fmt.Errorf("prepareCertificates fail:%w", err)
+	}
+
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "certs",
@@ -1213,8 +1274,8 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 		},
 		Data: map[string]string{
 			"etcd-ca.crt":        string(t.Cluster.ClusterCredential.ETCDCACert),
-			"etcd.crt":           string(t.Cluster.ClusterCredential.ETCDAPIClientCert),
-			"etcd.key":           string(t.Cluster.ClusterCredential.ETCDAPIClientKey),
+			"etcd.crt":           string(etcdClientCertData),
+			"etcd.key":           string(etcdClientKeyData),
 			"ca.crt":             string(caCrt),
 			"ca.key":             string(caKey),
 			"front-proxy-ca.crt": string(frontProxyCACrt),
@@ -1242,21 +1303,33 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 	return apiclient.CreateOrUpdateConfigMap(ctx, t.globalClient, cm)
 }
 
+func (t *TKE) authzWebhookBuiltinEndpoint() string {
+	return utilhttp.MakeEndpoint("https", t.Para.Cluster.Spec.Machines[0].IP,
+		constants.AuthzWebhookNodePort, "/auth/authz")
+}
+
 func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
-	c, err := baremetalconfig.New(constants.ProviderConfigFile)
+	providerConfig, err := baremetalconfig.New(constants.ProviderConfigFile)
 	if err != nil {
 		return err
 	}
 	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
 		t.Para.Config.Registry.TKERegistry != nil {
 		ip := t.Cluster.Spec.Machines[0].IP // registry current only run in first node
-		c.Registry.IP = ip
+		providerConfig.Registry.IP = ip
 	}
 	if t.auditEnabled() {
-		c.Audit.Address = t.determineGatewayHTTPSAddress()
+		providerConfig.Audit.Address = t.determineGatewayHTTPSAddress()
 	}
+	if t.businessEnabled() {
+		providerConfig.Business.Enabled = true
+	}
+	providerConfig.PlatformAPIClientConfig = "conf/tke-platform-config.yaml"
+	// todo using ingress to expose authz service for ha.(
+	//  users do not known nodeport when assigned vport in third party loadbalance)
+	providerConfig.AuthzWebhook.Endpoint = t.authzWebhookBuiltinEndpoint()
 
-	err = c.Save(constants.ProviderConfigFile)
+	err = providerConfig.Save(constants.ProviderConfigFile)
 	if err != nil {
 		return err
 	}
@@ -1286,12 +1359,20 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 			File: baremetalconstants.ManifestsDir + "/gpu/*",
 		},
 		{
+			Name: "gpu-manager-manifests",
+			File: baremetalconstants.ManifestsDir + "/gpu-manager/*",
+		},
+		{
 			Name: "csi-operator-manifests",
 			File: baremetalconstants.ManifestsDir + "/csi-operator/*",
 		},
 		{
 			Name: "keepalived-manifests",
 			File: baremetalconstants.ManifestsDir + "/keepalived/*",
+		},
+		{
+			Name: "metrics-server-manifests",
+			File: baremetalconstants.ManifestsDir + "/metrics-server/*",
 		},
 	}
 	for _, one := range configMaps {
@@ -1311,6 +1392,43 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 	return nil
 }
 
+func (t *TKE) prepareImages(ctx context.Context) error {
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tke-gateway",
+			Namespace: t.namespace,
+		},
+		Spec: corev1.PodSpec{
+			NodeSelector: map[string]string{
+				"node-role.kubernetes.io/master": "",
+			},
+			Containers: []corev1.Container{
+				{
+					Name:  "tke-gateway",
+					Image: images.Get().TKEGateway.FullName(),
+				},
+			},
+		},
+	}
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	err := apiclient.PullImageWithPod(ctx, t.globalClient, pod)
+	if err != nil {
+		return fmt.Errorf("prepare image error: %w", err)
+	}
+
+	return nil
+}
+
+func (t *TKE) stopLocalRegistry(ctx context.Context) error {
+	err := t.docker.RemoveContainers("registry-http", "registry-https")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (t *TKE) installTKEGateway(ctx context.Context) error {
 	option := map[string]interface{}{
 		"Image":            images.Get().TKEGateway.FullName(),
@@ -1319,7 +1437,7 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 		"EnableRegistry":   t.Para.Config.Registry.TKERegistry != nil,
 		"EnableAuth":       t.Para.Config.Auth.TKEAuth != nil,
 		"EnableMonitor":    t.Para.Config.Monitor != nil,
-		"EnableBusiness":   t.Para.Config.Business != nil,
+		"EnableBusiness":   t.businessEnabled(),
 		"EnableLogagent":   t.Para.Config.Logagent != nil,
 		"EnableAudit":      t.auditEnabled(),
 	}
@@ -1349,13 +1467,13 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 
 func (t *TKE) installTKELogagentAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":                   t.Config.Replicas,
-		"Image":                      images.Get().TKELogagentAPI.FullName(),
-		"TenantID":                   t.Para.Config.Auth.TKEAuth.TenantID,
-		"Username":                   t.Para.Config.Auth.TKEAuth.Username,
-		"SyncProjectsWithNamespaces": t.Config.SyncProjectsWithNamespaces,
-		"EnableAuth":                 t.Para.Config.Auth.TKEAuth != nil,
-		"EnableRegistry":             t.Para.Config.Registry.TKERegistry != nil,
+		"Replicas":       t.Config.Replicas,
+		"Image":          images.Get().TKELogagentAPI.FullName(),
+		"TenantID":       t.Para.Config.Auth.TKEAuth.TenantID,
+		"Username":       t.Para.Config.Auth.TKEAuth.Username,
+		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":    t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1426,6 +1544,8 @@ func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
 		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
 		"RedirectHosts":    redirectHosts,
+		"NodePort":         constants.AuthzWebhookNodePort,
+		"EnableAudit":      t.auditEnabled(),
 	}
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-auth-api/*.yaml", option)
 	if err != nil {
@@ -1581,6 +1701,7 @@ func (t *TKE) installTKEBusinessAPI(ctx context.Context) error {
 		"SyncProjectsWithNamespaces": t.Config.SyncProjectsWithNamespaces,
 		"EnableAuth":                 t.Para.Config.Auth.TKEAuth != nil,
 		"EnableRegistry":             t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":                t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1642,9 +1763,10 @@ func (t *TKE) installInfluxDB(ctx context.Context) error {
 
 func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":   t.Config.Replicas,
-		"Image":      images.Get().TKEMonitorAPI.FullName(),
-		"EnableAuth": t.Para.Config.Auth.TKEAuth != nil,
+		"Replicas":    t.Config.Replicas,
+		"Image":       images.Get().TKEMonitorAPI.FullName(),
+		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"EnableAudit": t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1686,25 +1808,47 @@ func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 
 func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 	params := map[string]interface{}{
-		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKEMonitorController.FullName(),
-		"EnableBusiness": t.Para.Config.Business != nil,
+		"Replicas":                t.Config.Replicas,
+		"Image":                   images.Get().TKEMonitorController.FullName(),
+		"EnableBusiness":          t.businessEnabled(),
+		"RegistryDomain":          t.Para.Config.Registry.Domain(),
+		"RegistryNamespace":       t.Para.Config.Registry.Namespace(),
+		"MonitorStorageType":      "",
+		"MonitorStorageAddresses": "",
 	}
 	if t.Para.Config.Monitor != nil {
 		if t.Para.Config.Monitor.ESMonitor != nil {
+			address := t.Para.Config.Monitor.ESMonitor.URL
 			params["StorageType"] = "es"
-			params["StorageAddress"] = t.Para.Config.Monitor.ESMonitor.URL
+			params["StorageAddress"] = address
 			params["StorageUsername"] = t.Para.Config.Monitor.ESMonitor.Username
 			params["StoragePassword"] = t.Para.Config.Monitor.ESMonitor.Password
+			params["MonitorStorageType"] = "elasticsearch"
+			if t.Para.Config.Monitor.ESMonitor.Username != "" {
+				address = address + "&u=" + t.Para.Config.Monitor.ESMonitor.Username
+			}
+			if t.Para.Config.Monitor.ESMonitor.Password != nil {
+				address = address + "&p=" + string(t.Para.Config.Monitor.ESMonitor.Password)
+			}
+			params["MonitorStorageAddresses"] = address
 		} else if t.Para.Config.Monitor.InfluxDBMonitor != nil {
 			params["StorageType"] = "influxDB"
-
+			params["MonitorStorageType"] = "influxdb"
 			if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
-				params["StorageAddress"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
+				address := t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
+				params["StorageAddress"] = address
 				params["StorageUsername"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
 				params["StoragePassword"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password
+				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username != "" {
+					address = address + "&u=" + t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
+				}
+				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password != nil {
+					address = address + "&p=" + string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
+				}
+				params["MonitorStorageAddresses"] = address
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				params["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
+				params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.servers[0])
 			}
 		}
 	}
@@ -1724,9 +1868,10 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 
 func (t *TKE) installTKENotifyAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":   t.Config.Replicas,
-		"Image":      images.Get().TKENotifyAPI.FullName(),
-		"EnableAuth": t.Para.Config.Auth.TKEAuth != nil,
+		"Replicas":    t.Config.Replicas,
+		"Image":       images.Get().TKENotifyAPI.FullName(),
+		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"EnableAudit": t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1774,6 +1919,7 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 		"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
 		"EnableAuth":    t.Para.Config.Auth.TKEAuth != nil,
 		"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
+		"EnableAudit":   t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1795,6 +1941,11 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 }
 
 func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
+	if !t.docker.Healthz() {
+		t.log.Info("Actively exit in order to reconnect to the docker service")
+		os.Exit(1)
+	}
+
 	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain(), File: "hosts"}
 	err := localHosts.Set(t.servers[0])
 	if err != nil {
@@ -1822,7 +1973,7 @@ func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
-			return pkgerrors.New(string(out))
+			return errors.New(string(out))
 		}
 		return err
 	}
@@ -1846,7 +1997,7 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		svcs = append(svcs, "tke-auth-api")
 	}
-	if t.Para.Config.Business != nil {
+	if t.businessEnabled() {
 		svcs = append(svcs, "tke-business-api")
 	}
 	if t.Para.Config.Monitor != nil {
@@ -1884,14 +2035,14 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 				}
 			}
 			if _, err := client.ApiregistrationV1().APIServices().Create(ctx, apiService, metav1.CreateOptions{}); err != nil {
-				if !errors.IsAlreadyExists(err) {
+				if !apierrors.IsAlreadyExists(err) {
 					return false, nil
 				}
 			}
 			return true, nil
 		})
 		if err != nil {
-			return pkgerrors.Wrapf(err, "register apiservice %v error", one)
+			return errors.Wrapf(err, "register apiservice %v error", one)
 		}
 
 		err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
@@ -1905,7 +2056,7 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 			return false, nil
 		})
 		if err != nil {
-			return pkgerrors.Wrapf(err, "check apiservices %v error", one)
+			return errors.Wrapf(err, "check apiservices %v error", one)
 		}
 	}
 	return nil
@@ -1987,7 +2138,7 @@ func (t *TKE) pushImages(ctx context.Context) error {
 	for i, image := range tkeImages {
 		name, arch, tag, err := t.docker.GetNameArchTag(image)
 		if err != nil { // skip invalid image
-			t.log.Printf("skip invalid image: %s", image)
+			t.log.Infof("skip invalid image: %s", image)
 			continue
 		}
 
@@ -2023,7 +2174,7 @@ func (t *TKE) pushImages(ctx context.Context) error {
 			}
 		}
 
-		t.log.Printf("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))
+		t.log.Infof("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))
 	}
 
 	sortedManifests := manifestSet.List()
@@ -2032,7 +2183,7 @@ func (t *TKE) pushImages(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		t.log.Printf("push manifest %s to registry success[%d/%d]", manifest, i+1, len(sortedManifests))
+		t.log.Infof("push manifest %s to registry success[%d/%d]", manifest, i+1, len(sortedManifests))
 	}
 
 	return nil
@@ -2051,10 +2202,10 @@ func (t *TKE) postInstallHook(ctx context.Context) error {
 }
 
 func (t *TKE) execHook(filename string) error {
-	t.log.Printf("Execute hook script %s", filename)
+	t.log.Infof("Execute hook script %s", filename)
 	cmd := exec.Command(filename)
-	cmd.Stdout = t.log.Writer()
-	cmd.Stderr = t.log.Writer()
+	cmd.Stdout = t.log
+	cmd.Stderr = t.log
 	err := cmd.Run()
 	if err != nil {
 		return err

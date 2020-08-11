@@ -22,6 +22,8 @@ import (
 	"context"
 	"path"
 
+	"github.com/thoas/go-funk"
+
 	v1 "tkestack.io/tke/api/platform/v1"
 )
 
@@ -99,6 +101,10 @@ func (r *Registry) Namespace() string {
 
 func (r *Registry) Prefix() string {
 	return path.Join(r.Domain(), r.Namespace())
+}
+
+func (r *Registry) IsOfficial() bool {
+	return funk.ContainsString([]string{"docker.io/tkestack", "ccr.ccs.tencentyun.com/tkestack"}, r.Prefix())
 }
 
 type TKERegistry struct {

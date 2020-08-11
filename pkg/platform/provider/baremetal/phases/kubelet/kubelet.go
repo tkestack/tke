@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"fmt"
 	"path"
-	"strings"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
@@ -31,30 +30,34 @@ import (
 	"tkestack.io/tke/pkg/util/template"
 )
 
-type Option struct {
-	Version   string
-	ExtraArgs map[string]string
-}
-
-func Install(s ssh.Interface, option *Option) error {
-	dstFile, err := res.KubernetesNode.CopyToNode(s, option.Version)
+func Install(s ssh.Interface, version string) (err error) {
+	dstFile, err := res.KubernetesNode.CopyToNode(s, version)
 	if err != nil {
 		return err
+	}
+
+	for _, file := range []string{"kubelet", "kubectl"} {
+		file = path.Join(constants.DstBinDir, file)
+		if ok, err := s.Exist(file); err == nil && ok {
+			backupFile, err := ssh.BackupFile(s, file)
+			if err != nil {
+				return fmt.Errorf("backup file %q error: %w", file, err)
+			}
+			defer func() {
+				if err == nil {
+					return
+				}
+				if err = ssh.RestoreFile(s, backupFile); err != nil {
+					err = fmt.Errorf("restore file %q error: %w", backupFile, err)
+				}
+			}()
+		}
 	}
 
 	cmd := "tar xvaf %s -C %s --strip-components=3"
 	_, stderr, exit, err := s.Execf(cmd, dstFile, constants.DstBinDir)
 	if err != nil {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
-	}
-
-	var args []string
-	for k, v := range option.ExtraArgs {
-		args = append(args, fmt.Sprintf(`--%s="%s"`, k, v))
-	}
-	err = s.WriteFile(strings.NewReader(fmt.Sprintf("KUBELET_EXTRA_ARGS=%s", strings.Join(args, " "))), "/etc/sysconfig/kubelet")
-	if err != nil {
-		return err
 	}
 
 	serviceData, err := template.ParseFile(path.Join(constants.ConfDir, "kubelet/kubelet.service"), nil)
@@ -69,6 +72,12 @@ func Install(s ssh.Interface, option *Option) error {
 	}
 
 	err = ss.Start()
+	if err != nil {
+		return err
+	}
+
+	cmd = fmt.Sprintf("kubectl completion bash > /etc/bash_completion.d/kubectl")
+	_, err = s.CombinedOutput(cmd)
 	if err != nil {
 		return err
 	}

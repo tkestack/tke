@@ -192,6 +192,7 @@ type NamespaceSpec struct {
 	Finalizers         []FinalizerName
 	TenantID           string
 	ClusterName        string
+	ClusterType        string
 	ClusterVersion     string
 	ClusterDisplayName string
 	Namespace          string
@@ -230,6 +231,10 @@ type NamespaceCert struct {
 	CertPem []byte
 	// +optional
 	KeyPem []byte
+	// +optional
+	CACertPem []byte
+	// +optional
+	APIServer string
 }
 
 // NamespacePhase indicates the status of namespace in project.
@@ -286,6 +291,17 @@ type PlatformList struct {
 	Items []Platform
 }
 
+// PortalProject is a project extension info for portal.
+type PortalProject struct {
+	// Phases of projects.
+	Phase string `json:"phase" protobuf:"bytes,1,opt,name=phase"`
+	// Parents of projects.
+	Parent string `json:"parent" protobuf:"bytes,2,opt,name=parent"`
+}
+
+// ProjectExtension is a map from project name to PortalProject.
+type ProjectExtension map[string]PortalProject
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:noVerbs
@@ -302,6 +318,8 @@ type Portal struct {
 	// Projects represents the list of projects to which the user belongs, where the key represents
 	// project name and the value represents the project display name.
 	Projects map[string]string
+	// Extension is extension info. for projects.
+	Extension ProjectExtension
 }
 
 // +genclient

@@ -103,8 +103,12 @@ export const DeletePod = 'DeletePod';
 export const IsShowLoginDialog = 'IsShowLoginDialog';
 export const QueryLogList = 'QueryLogList';
 export const FetchLogList = 'FetchLogList';
+export const PodLogAgent = 'PodLogAgent';
+export const PodLogHierarchy = 'PodLogHierarchy';
+export const PodLogContent = 'PodLogContent';
 export const PodName = 'PodName';
 export const ContainerName = 'ContainerName';
+export const LogFile = 'LogFile';
 export const TailLines = 'TailLines';
 export const IsAutoRenewPodLog = 'IsAutoRenewPodLog';
 export const QuerySecretList = 'QuerySecretList';
@@ -220,7 +224,6 @@ export const W_NodeAbnormalMigratePolicy = 'W_NodeAbnormalMigratePolicy';
 export const W_UpdateOversoldRatio = 'W_UpdateOversoldRatio';
 
 /**亲和性调度相关 */
-export const W_SelectNodeSelector = 'W_SelectNodeSelector';
 export const WV_NodeSelector = 'WV_NodeSelector';
 export const W_UpdateNodeAffinityRule = 'W_UpdateNodeAffinityRule';
 export const W_SelectNodeAffinityType = 'W_SelectNodeAffinityType';

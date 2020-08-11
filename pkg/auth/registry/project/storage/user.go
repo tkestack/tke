@@ -94,7 +94,7 @@ func (r *UserREST) List(ctx context.Context, options *metainternal.ListOptions) 
 		return nil, err
 	}
 
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" && len(projectPolicyList.Items) > 0 {
 		tenantID = projectPolicyList.Items[0].Spec.TenantID
 	}

@@ -1,10 +1,12 @@
-import * as React from 'react';
-import { RootProps } from './InstallerApp';
-import { Button, Card, Alert, Modal, ExternalLink } from '@tencent/tea-component';
-import { insertCSS } from '@tencent/qcloud-lib';
-import { CodeMirrorEditor, Clip } from '../../common/components';
 import { Base64 } from 'js-base64';
+import * as React from 'react';
+
+import { insertCSS } from '@tencent/ff-redux';
+import { Alert, Button, Card, ExternalLink, Modal } from '@tencent/tea-component';
+
 import { downloadCrt } from '../../../../helpers';
+import { Clip, CodeMirrorEditor } from '../../common/components';
+import { RootProps } from './InstallerApp';
 
 insertCSS(
   'ResultPanelStyle',

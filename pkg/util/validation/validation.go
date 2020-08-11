@@ -20,17 +20,26 @@ package validation
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/util/ipallocator"
 )
 
-// IsHTTPSReachle tests that https://host:port is reachble in timeout.
-func IsHTTPSReachle(host string, port int32, timeout time.Duration) error {
+const (
+	DNSName string = `^([a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62}){1}(\.[a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62})*[\._]?$`
+)
+
+var (
+	rxDNSName = regexp.MustCompile(DNSName)
+)
+
+// IsValiadURL tests that https://host:port is reachble in timeout.
+func IsValiadURL(url string, timeout time.Duration) error {
 	client := &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
@@ -41,7 +50,6 @@ func IsHTTPSReachle(host string, port int32, timeout time.Duration) error {
 		},
 	}
 
-	url := fmt.Sprintf("https://%s:%d", host, port)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -71,4 +79,15 @@ func IsSubNetOverlapped(net1, net2 *net.IPNet) error {
 		return errors.Errorf("subnet %v and %v are overlapped", net1, net2)
 	}
 	return nil
+}
+
+func IsValidDNSName(str string) bool {
+	if str == "" || len(strings.Replace(str, ".", "", -1)) > 255 {
+		return false
+	}
+	return !IsValidIP(str) && rxDNSName.MatchString(str)
+}
+
+func IsValidIP(str string) bool {
+	return net.ParseIP(str) != nil
 }

@@ -1,7 +1,9 @@
-import * as React from 'react';
-import { RootProps } from './InstallerApp';
-import { Button, Justify, Text } from '@tencent/tea-component';
 import * as classnames from 'classnames';
+import * as React from 'react';
+
+import { Button, Justify, Text } from '@tencent/tea-component';
+
+import { RootProps } from './InstallerApp';
 
 interface ListItemProps extends RootProps {
   id?: string | number;

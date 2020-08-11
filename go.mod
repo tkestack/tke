@@ -14,7 +14,6 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-sdk-go v1.29.32
 	github.com/bitly/go-simplejson v0.5.0
-	github.com/blang/semver v3.5.1+incompatible
 	github.com/casbin/casbin/v2 v2.2.1
 	github.com/chartmuseum/storage v0.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -24,7 +23,6 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7
-	github.com/dovics/domain-role-manager v0.0.0-20200325101749-a44f9c315081
 	github.com/emicklei/go-restful v2.11.1+incompatible
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.7
@@ -40,6 +38,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/howeyc/fsnotify v0.9.0
+	github.com/imdario/mergo v0.3.8
 	github.com/influxdata/influxdb1-client v0.0.0-20190402204710-8ff2fc3824fc
 	github.com/jinzhu/configor v1.1.1
 	github.com/joho/godotenv v1.3.0
@@ -56,7 +55,7 @@ require (
 	github.com/prometheus/client_golang v1.4.0
 	github.com/prometheus/common v0.9.1
 	github.com/rs/cors v1.6.0
-	github.com/segmentio/ksuid v1.0.2
+	github.com/segmentio/ksuid v1.0.3
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.0.0

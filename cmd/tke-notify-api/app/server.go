@@ -48,7 +48,7 @@ func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, 
 		cfg.VersionedSharedInformerFactory.Start(ctx.StopCh)
 
 		// Store notify api address in configmap named tke-notify-api; It is used by prometheus addon for alertmanager to send alarms
-		notifyAPIAddress := fmt.Sprintf("https://%s:%d", cfg.ExternalHost, cfg.ExternalPort)
+		notifyAPIAddress := fmt.Sprintf("https://%s.tke:%d", cfg.ExternalHost, cfg.ExternalPort)
 		notifyConfigMap := &v1.ConfigMap{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: v1.GroupName + "/" + v1.Version,
@@ -61,8 +61,8 @@ func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, 
 		}
 		cm, err := cfg.PlatformClient.ConfigMaps().Get(context.Background(), NotifyApiConfigMapName, metav1.GetOptions{})
 		if err == nil && cm != nil {
-			v, ok := cm.Annotations[NotifyAPIAddressKey]
-			if !ok || v != notifyConfigMap.Annotations[NotifyAPIAddressKey] {
+			_, ok := cm.Annotations[NotifyAPIAddressKey]
+			if !ok {
 				notifyConfigMap.ResourceVersion = cm.ResourceVersion
 				_, err = cfg.PlatformClient.ConfigMaps().Update(context.Background(), notifyConfigMap, metav1.UpdateOptions{})
 				if err != nil {

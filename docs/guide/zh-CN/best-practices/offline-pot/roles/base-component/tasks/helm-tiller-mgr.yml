@@ -1,0 +1,147 @@
+# deploy helm tiller and remove helm tiller
+
+# set facts
+- name: set deploy_helmtiller facts
+  set_fact:
+    deploy_helmtiller: "{{ deploy_helmtiller }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: helmtiller_init
+
+# create save helm tiller yaml dir
+- name: create save helm tiller yaml dir
+  shell: ls /data/tke-yamls/helm-tiller || mkdir -p /data/tke-yamls/helm-tiller
+  when: deploy_helmtiller == true and inventory_hostname == groups['masters'][0]
+  tags: helmtiller_init
+
+# generate helm tiller yaml
+- name: generate helm tiller yaml
+  template:
+    src: templates/helmtiller/helm-tiller.yaml.j2
+    dest: /data/tke-yamls/helm-tiller/helm-tiller.yaml
+    mode: '0644'
+  when: deploy_helmtiller == true and inventory_hostname == groups['masters'][0]
+  tags: helmtiller_init
+
+# get helm-tiller.yaml for deploy
+- name: get helm-tiller.yaml for deploy
+  stat:
+    path: '/data/tke-yamls/helm-tiller/helm-tiller.yaml'
+  register: deploy_helmtiller_yaml
+  when: inventory_hostname == groups['masters'][0]
+  tags: deploy_helmtiller
+
+# deploy helm tiller
+- name: deploy helm tiller
+  shell: kubectl apply -f /data/tke-yamls/helm-tiller/helm-tiller.yaml
+  when: inventory_hostname == groups['masters'][0] and deploy_helmtiller_yaml.stat.exists == True
+  tags: deploy_helmtiller
+
+# update helm tiller version
+- name: update helm tiller version
+  shell: kubectl set image deployment/tiller-deploy tiller={{ registry_domain }}/library/tiller:v2.16.1 -n kube-system
+  when: inventory_hostname == groups['masters'][0] and deploy_helmtiller_yaml.stat.exists == True
+  tags: deploy_helmtiller
+# get helm-tiller.yaml for remove
+- name: get helm-tiller.yaml remove
+  stat:
+    path: '/data/tke-yamls/helm-tiller/helm-tiller.yaml'
+  register: remove_helmtiller_yaml
+  when: inventory_hostname == groups['masters'][0]
+  tags: remove_helmtiller
+
+# remove helm tiller
+- name: remove helm tiller
+  shell: kubectl delete -f /data/tke-yamls/helm-tiller/helm-tiller.yaml
+  when: inventory_hostname == groups['masters'][0] and remove_helmtiller_yaml.stat.exists == True
+  tags: remove_helmtiller
+
+# set facts
+- name: set deploy_helmtiller facts for non tkestack deploy
+  set_fact:
+    deploy_helmtiller: "{{ deploy_helmtiller }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: dpl_helmtiller_nontke
+
+# create save helm tiller yaml dir for non tkestack deploy
+- name: create save helm tiller yaml dir for non tkestack deploy
+  shell: ls /data/tke-yamls/helm-tiller || mkdir -p /data/tke-yamls/helm-tiller
+  when: deploy_helmtiller == true and inventory_hostname == groups['masters'][0]
+  tags: dpl_helmtiller_nontke
+
+# generate helm tiller yaml for non tkestack deploy
+- name: generate helm tiller yaml for non tkestack deploy
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+    mode: '0644'
+  with_items:
+    - 'templates/helmtiller/helmtiller-clusterrole.yaml.j2:/data/tke-yamls/helm-tiller/helmtiller-clusterrole.yaml'
+    - 'templates/helmtiller/helmtiller-deploy.yaml.j2:/data/tke-yamls/helm-tiller/helmtiller-deploy.yaml'
+    - 'templates/helmtiller/helmtiller-sa.yaml.j2:/data/tke-yamls/helm-tiller/helmtiller-sa.yaml'
+  when: deploy_helmtiller == true and inventory_hostname == groups['masters'][0]
+  tags: dpl_helmtiller_nontke
+
+# get helm-tiller.yaml stat for non tkestack deploy
+- name: get helm-tiller.yaml stat for non tkestack deploy
+  stat:
+    path: '/data/tke-yamls/helm-tiller/helmtiller-deploy.yaml'
+  register: deploy_helmtiller_yaml
+  when: inventory_hostname == groups['masters'][0]
+  tags: dpl_helmtiller_nontke
+
+# deploy helm tiller on non tkestack
+- name: deploy helm tiller on non tkestack
+  shell: kubectl apply -f "{{ item }}"
+  with_items:
+    - '/data/tke-yamls/helm-tiller/helmtiller-clusterrole.yaml'
+    - '/data/tke-yamls/helm-tiller/helmtiller-sa.yaml'
+    - '/data/tke-yamls/helm-tiller/helmtiller-deploy.yaml'
+  when: inventory_hostname == groups['masters'][0] and deploy_helmtiller_yaml.stat.exists == True
+  tags: dpl_helmtiller_nontke
+
+# get helm-tiller.yaml stat for remove  on non tkestack
+- name: get helm-tiller.yaml stat for remove on non tkestack
+  stat:
+    path: '/data/tke-yamls/helm-tiller/helmtiller-deploy.yaml'
+  register: remove_helmtiller_yaml
+  when: inventory_hostname == groups['masters'][0]
+  tags: del_helmtiller_nontke
+
+# remove helm tiller on non tkestack
+- name: remove helm tiller on non tkestack
+  shell: kubectl delete -f "{{ item }}"
+  with_items:
+    - '/data/tke-yamls/helm-tiller/helmtiller-deploy.yaml'
+    - '/data/tke-yamls/helm-tiller/helmtiller-clusterrole.yaml'
+    - '/data/tke-yamls/helm-tiller/helmtiller-sa.yaml'
+  when: inventory_hostname == groups['masters'][0] and remove_helmtiller_yaml.stat.exists == True
+  tags: del_helmtiller_nontke
+
+# set deploy_helmtiller facts for health check
+- name: set deploy_helmtiller facts for health check
+  set_fact:
+    deploy_helmtiller: "{{ deploy_helmtiller }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: helmtiller_health_check
+
+# get helm tiller status
+- name: get helm tiller status
+  shell: if [ `kubectl get pods -n kube-system | grep tiller-deploy | grep '1/1' | wc -l` -eq 1 ]; then \
+         echo "true"; else echo "false";fi
+  register: helmtiller_dpl_status
+  when: inventory_hostname == groups['masters'][0] and deploy_helmtiller == true
+  tags: helmtiller_health_check
+
+# helm tiller deploy success
+- name: helm tiller deploy success
+  debug:
+    msg: "Info: helm tiller deploy success."
+  when: inventory_hostname == groups['masters'][0] and deploy_helmtiller == true and helmtiller_dpl_status.stdout == "true"
+  tags: helmtiller_health_check
+
+# helm tiller deploy failed
+- name: helm tiller deploy failed
+  debug:
+    msg: "Warning: helm tiller deploy failed, please check!"
+  when: inventory_hostname == groups['masters'][0] and deploy_helmtiller == true and helmtiller_dpl_status.stdout == "false"
+  tags: helmtiller_health_check

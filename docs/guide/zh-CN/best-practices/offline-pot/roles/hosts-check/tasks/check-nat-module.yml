@@ -1,0 +1,8 @@
+# Check host whether had installed nat module
+ 
+# check whether had installed nat module
+- name: check whether had installed nat module
+  shell: if [ `cat /proc/modules | grep iptable_nat | wc -l` -eq 0 ]; then echo "not install iptable nat module, deploy tkestack will be failed!!!" && exit 1; fi
+  ignore_errors: yes
+  tags: check_nat_module
+

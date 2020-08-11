@@ -47,8 +47,17 @@ const (
 	ServerKeyFile        = DataDir + "server.key"
 	AdminCrtFile         = DataDir + "admin.crt"
 	AdminKeyFile         = DataDir + "admin.key"
+	KubeconfigFile       = DataDir + "admin.kubeconfig"
 
-	KubeconfigFile = DataDir + "admin.kubeconfig"
+	CACrtFileBaseName      = "ca.crt"
+	CAKeyFileBaseName      = "ca.key"
+	ServerCrtFileBaseName  = "server.crt"
+	ServerKeyFileBaseName  = "server.key"
+	AdminCrtFileBaseName   = "admin.crt"
+	AdminKeyFileBaseName   = "admin.key"
+	KubeconfigFileBaseName = "admin.kubeconfig"
+
+	AuthzWebhookNodePort = 31138
 )
 
 const (
@@ -70,6 +79,9 @@ const (
 )
 
 const (
-	CPURequest    = 8
-	MemoryRequest = 15 // GiB
+	CPURequest                = 2
+	MemoryRequest             = 4  // GiB
+	FirstNodeDiskSpaceRequest = 30 // GiB
+
+	PathForDiskSpaceRequest = "/var/lib"
 )

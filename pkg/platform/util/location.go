@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
@@ -37,12 +38,7 @@ import (
 // APIServerLocationByCluster returns a URL and transport which one can use to
 // send traffic for the specified cluster api server.
 func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (*url.URL, http.RoundTripper, string, error) {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return nil, nil, "", errors.NewBadRequest("unable to get request info from context")
-	}
-
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, nil, "", errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
 	}
@@ -63,7 +59,7 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
-	host, err := ClusterHost(cluster)
+	address, err := ClusterAddress(cluster)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
@@ -76,8 +72,8 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 	// Otherwise, return the requested scheme and port, and the proxy transport
 	return &url.URL{
 		Scheme: "https",
-		Host:   host,
-		Path:   requestInfo.Path,
+		Host:   fmt.Sprintf("%v:%v", address.Host, address.Port),
+		Path:   address.Path,
 	}, transport, token, nil
 }
 
@@ -89,10 +85,20 @@ func APIServerLocation(ctx context.Context, platformClient platforminternalclien
 		return nil, nil, "", errors.NewBadRequest("clusterName is required")
 	}
 
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return nil, nil, "", errors.NewBadRequest("unable to get request info from context")
+	}
 	cluster, err := platformClient.Clusters().Get(ctx, clusterName, metav1.GetOptions{})
+
 	if err != nil {
 		return nil, nil, "", err
 	}
 
-	return APIServerLocationByCluster(ctx, cluster, platformClient)
+	location, transport, token, err := APIServerLocationByCluster(ctx, cluster, platformClient)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	location.Path = path.Join(location.Path, requestInfo.Path)
+	return location, transport, token, nil
 }

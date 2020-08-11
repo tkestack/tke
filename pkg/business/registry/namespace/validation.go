@@ -39,9 +39,9 @@ const (
 
 var (
 	_forbiddenNamespaces = map[string]bool{
-		"default":     true,
-		"kube-system": true,
-		"kube-public": true,
+		"kube-system":     true,
+		"kube-public":     true,
+		"kube-node-lease": true,
 	}
 )
 
@@ -89,8 +89,10 @@ func ValidateNamespace(ctx context.Context, namespace *business.Namespace, old *
 	objectGetter validation.BusinessObjectGetter, clusterGetter validation.ClusterGetter) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&namespace.ObjectMeta,
 		true, ValidateNamespaceName, field.NewPath("metadata"))
-	allErrs = append(allErrs,
-		validation.ValidateClusterVersioned(ctx, clusterGetter, namespace.Spec.ClusterName, namespace.Spec.TenantID)...)
+	if old == nil { // Only validate cluster when creating namespaces.
+		allErrs = append(allErrs,
+			validation.ValidateClusterVersioned(ctx, clusterGetter, namespace.Spec.ClusterName, namespace.Spec.TenantID)...)
+	}
 
 	fldSpecPath := field.NewPath("spec")
 

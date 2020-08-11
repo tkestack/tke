@@ -95,13 +95,6 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
         </div>
       );
 
-    let isNeedPagination = true;
-
-    /// 业务侧不需要分页
-    /// #if project
-    isNeedPagination = false;
-    /// #endif
-
     return (
       <React.Fragment>
         {this.renderPromTip()}
@@ -137,7 +130,7 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
               );
             }
           }}
-          isNeedPagination={isNeedPagination}
+          isNeedPagination={true}
         />
       </React.Fragment>
     );

@@ -29,7 +29,7 @@ import (
 
 // FilterNamespace is used to filter namespaces that do not belong to the tenant.
 func FilterNamespace(ctx context.Context, namespace *business.Namespace) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -41,7 +41,7 @@ func FilterNamespace(ctx context.Context, namespace *business.Namespace) error {
 
 // FilterProject is used to filter projects that do not belong to the tenant.
 func FilterProject(ctx context.Context, project *business.Project) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -53,7 +53,7 @@ func FilterProject(ctx context.Context, project *business.Project) error {
 
 // FilterPlatform is used to filter platforms that do not belong to the tenant.
 func FilterPlatform(ctx context.Context, platform *business.Platform) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -65,7 +65,7 @@ func FilterPlatform(ctx context.Context, platform *business.Platform) error {
 
 // FilterImageNamespace is used to filter imageNamespaces that do not belong to the tenant.
 func FilterImageNamespace(ctx context.Context, imageNamespace *business.ImageNamespace) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -77,7 +77,7 @@ func FilterImageNamespace(ctx context.Context, imageNamespace *business.ImageNam
 
 // FilterChartGroup is used to filter chartGroups that do not belong to the tenant.
 func FilterChartGroup(ctx context.Context, chartGroup *business.ChartGroup) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}
@@ -89,7 +89,7 @@ func FilterChartGroup(ctx context.Context, chartGroup *business.ChartGroup) erro
 
 // FilterNsEmigration is used to filter emigrations that do not belong to the tenant.
 func FilterNsEmigration(ctx context.Context, emigration *business.NsEmigration) error {
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return nil
 	}

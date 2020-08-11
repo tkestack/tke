@@ -184,3 +184,17 @@ export const VALIDATE_NAME_RULE = {
 };
 
 export const STRATEGY_TYPE = ['自定义策略', '预设策略'];
+
+export const FFReduxActionName = {
+  ProjectUserInfo: 'ProjectUserInfo',
+  NamespaceKubectlConfig: 'NamespaceKubectlConfig',
+  UserManagedProjects: 'UserManagedProjects',
+  UserInfo: 'UserInfo'
+};
+export enum PlatformTypeEnum {
+  /** 平台 */
+  Manager = 'manager',
+
+  /** 业务 */
+  Business = 'business'
+}

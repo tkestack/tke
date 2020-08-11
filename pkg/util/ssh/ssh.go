@@ -20,9 +20,7 @@ package ssh
 
 import (
 	"bytes"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
@@ -33,27 +31,30 @@ import (
 	"time"
 
 	"github.com/pkg/sftp"
+	"github.com/segmentio/ksuid"
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/go-playground/validator.v9"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"tkestack.io/tke/pkg/util/hash"
 	"tkestack.io/tke/pkg/util/log"
 )
 
+const (
+	tmpDir = "/tmp"
+)
+
 type SSH struct {
-	User        string
-	Host        string
-	Port        int
-	addr        string
+	*Config
 	authMethods []ssh.AuthMethod
 	dialer      sshDialer
-	Retry       int
 }
+
+var _ Interface = &SSH{}
 
 type Config struct {
 	User       string `validate:"required"`
 	Host       string `validate:"required"`
 	Port       int    `validate:"required"`
+	Sudo       bool
 	Password   string
 	PrivateKey []byte
 	PassPhrase []byte
@@ -63,18 +64,8 @@ type Config struct {
 	Retry       int
 }
 
-type Interface interface {
-	Ping() error
-	Exec(cmd string) (stdout string, stderr string, exit int, err error)
-	Execf(format string, a ...interface{}) (stdout string, stderr string, exit int, err error)
-	CombinedOutput(cmd string) ([]byte, error)
-
-	CopyFile(src, dst string) error
-	WriteFile(src io.Reader, dst string) error
-	ReadFile(filename string) ([]byte, error)
-	Stat(p string) (os.FileInfo, error)
-
-	LookPath(file string) (string, error)
+func (c *Config) addr() string {
+	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }
 
 func New(c *Config) (*SSH, error) {
@@ -98,20 +89,19 @@ func New(c *Config) (*SSH, error) {
 		}
 		authMethods = append(authMethods, ssh.PublicKeys(signer))
 	}
-	addr := fmt.Sprintf("%s:%d", c.Host, c.Port)
 
 	if c.DialTimeOut == 0 {
 		c.DialTimeOut = 5 * time.Second
 	}
 
+	if c.User != "root" {
+		c.Sudo = true
+	}
+
 	return &SSH{
-		User:        c.User,
-		Host:        c.Host,
-		Port:        c.Port,
-		addr:        addr,
+		Config:      c,
 		authMethods: authMethods,
 		dialer:      &timeoutDialer{&realSSHDialer{}, c.DialTimeOut},
-		Retry:       c.Retry,
 	}, nil
 }
 
@@ -124,10 +114,10 @@ func (s *SSH) Ping() error {
 func (s *SSH) CombinedOutput(cmd string) ([]byte, error) {
 	stdout, stderr, exit, err := s.Exec(cmd)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("exec cmd %q eror: %w", cmd, err)
 	}
 	if exit != 0 {
-		return nil, fmt.Errorf("exit error %d:%s", exit, stderr)
+		return nil, fmt.Errorf("exec cmd %q eror: exit code %d: stderr %s", cmd, exit, stderr)
 	}
 	return []byte(stdout), nil
 }
@@ -137,31 +127,19 @@ func (s *SSH) Execf(format string, a ...interface{}) (stdout string, stderr stri
 }
 
 func (s *SSH) Exec(cmd string) (stdout string, stderr string, exit int, err error) {
-	// Setup the config, dial the server, and open a session.
-	config := &ssh.ClientConfig{
-		User:            s.User,
-		Auth:            s.authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	if s.Sudo {
+		cmd = fmt.Sprintf(`sudo bash << 'EOF'
+%s
+EOF
+`, cmd)
 	}
-	client, err := s.dialer.Dial("tcp", s.addr, config)
-	if err != nil && s.Retry > 0 {
-		err = wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
-			if client, err = s.dialer.Dial("tcp", s.addr, config); err != nil {
-				return false, err
-			}
-			return true, nil
-		})
-	}
-	if err != nil {
-		return "", "", 0, fmt.Errorf("error getting SSH client to %s@%s: '%v'", s.User, s.addr, err)
-	}
-	defer client.Close()
+	log.Debugf("[%s] Exec %q", s.addr(), cmd)
 
-	session, err := client.NewSession()
+	session, closer, err := s.newSession()
 	if err != nil {
-		return "", "", 0, fmt.Errorf("error creating session to %s@%s: '%v'", s.User, s.addr, err)
+		return "", "", 0, err
 	}
-	defer session.Close()
+	defer closer()
 
 	// Run the command.
 	code := 0
@@ -179,99 +157,82 @@ func (s *SSH) Exec(cmd string) (stdout string, stderr string, exit int, err erro
 		} else {
 			// Some other kind of error happened (e.g. an IOError); consider the
 			// SSH unsuccessful.
-			err = fmt.Errorf("failed running `%s` on %s@%s: '%v'", cmd, s.User, s.addr, err)
+			err = fmt.Errorf("failed running `%s` on %s@%s: '%v'", cmd, s.User, s.addr(), err)
 		}
 	}
 	return bout.String(), berr.String(), code, err
 }
 
 func (s *SSH) CopyFile(src, dst string) error {
-	srcHash, err := hash.Sha256WithFile(src)
+	file, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	hashFile := "/tmp" + dst + ".sha256"
-	buffer := new(bytes.Buffer)
-	buffer.WriteString(fmt.Sprintf("%s %s", srcHash, dst))
-	_ = s.WriteFile(buffer, hashFile)
-	_, err = s.CombinedOutput(fmt.Sprintf("sha256sum --check --status %s", hashFile))
-	if err == nil { // means dst exist and same as src
-		log.Infof("skip copy `%s` because already existed", src)
-		return nil
-	}
-	log.Infof("[%s] copy `%s` to %q", s.addr, src, dst)
+	defer file.Close()
 
-	config := &ssh.ClientConfig{
-		User:            s.User,
-		Auth:            s.authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	client, err := s.dialer.Dial("tcp", s.addr, config)
-	if err != nil {
-		err = wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
-			if client, err = s.dialer.Dial("tcp", s.addr, config); err != nil {
-				return false, err
-			}
-			return true, nil
-		})
-	}
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
-	sftpClient, err := sftp.NewClient(client)
-	if err != nil {
-		return err
-	}
-	defer sftpClient.Close()
-
-	srcFile, err := os.Open(src)
-
-	if err != nil {
-		return fmt.Errorf("open file error:%s:%s", src, err)
-	}
-	defer srcFile.Close()
-
-	sftpClient.MkdirAll(path.Dir(dst))
-	dstFile, err := sftpClient.Create(dst)
-	if err != nil {
-		return fmt.Errorf("create file error:%s:%s", dst, err)
-	}
-	defer dstFile.Close()
-
-	_, err = dstFile.ReadFrom(srcFile)
-	return err
+	return s.WriteFile(file, dst)
 }
 
 func (s *SSH) WriteFile(src io.Reader, dst string) error {
-	log.Infof("[%s] Write data to %q", s.addr, dst)
-
-	config := &ssh.ClientConfig{
-		User:            s.User,
-		Auth:            s.authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	client, err := s.dialer.Dial("tcp", s.addr, config)
-	if err != nil {
-		err = wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
-			if client, err = s.dialer.Dial("tcp", s.addr, config); err != nil {
-				return false, err
-			}
-			return true, nil
-		})
-	}
+	tmpfile, err := ioutil.TempFile("", "*.tmp")
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer os.Remove(tmpfile.Name())
 
-	sftpClient, err := sftp.NewClient(client)
+	if _, err := io.Copy(tmpfile, src); err != nil {
+		return err
+	}
+
+	if _, err := tmpfile.Seek(0, os.SEEK_SET); err != nil {
+		return err
+	}
+
+	needWriteFile, err := s.needWriteFile(tmpfile, dst)
 	if err != nil {
 		return err
 	}
-	defer sftpClient.Close()
+	if !needWriteFile {
+		log.Debugf("[%s] Skip write %q because already existed", s.addr(), dst)
+		return nil
+	}
 
+	if _, err := tmpfile.Seek(0, os.SEEK_SET); err != nil {
+		return err
+	}
+
+	return s.writeFile(tmpfile, dst)
+}
+
+func (s *SSH) ReadFile(filename string) ([]byte, error) {
+	return s.CombinedOutput(fmt.Sprintf("cat %s", filename))
+}
+
+func (s *SSH) Exist(filename string) (bool, error) {
+	_, _, exit, err := s.Execf("ls %s", filename)
+	if err != nil {
+		return false, fmt.Errorf("ssh exec error: %w", err)
+	}
+
+	return exit == 0, nil
+}
+
+func (s *SSH) LookPath(file string) (string, error) {
+	data, err := s.CombinedOutput(fmt.Sprintf("which %s", file))
+	return string(data), err
+}
+
+func (s *SSH) writeFile(src io.Reader, dst string) error {
+	log.Debugf("[%s] Write data to %q", s.addr(), dst)
+
+	sftpClient, closer, err := s.newSFTPClient()
+	if err != nil {
+		return err
+	}
+	defer closer()
+
+	realDst := dst
+	dst = path.Join(tmpDir, ksuid.New().String(), dst)
 	err = sftpClient.MkdirAll(path.Dir(dst))
 	if err != nil {
 		return err
@@ -283,80 +244,104 @@ func (s *SSH) WriteFile(src io.Reader, dst string) error {
 	defer dstFile.Close()
 
 	_, err = dstFile.ReadFrom(src)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.CombinedOutput(fmt.Sprintf("mkdir -p $(dirname %s); mv %s %s; rm -rf $(dirname %s)", realDst, dst, realDst, dst))
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
-func (s *SSH) Stat(p string) (os.FileInfo, error) {
+func (s *SSH) needWriteFile(src io.Reader, dst string) (bool, error) {
+	srcHash := md5.New()
+	if _, err := io.Copy(srcHash, src); err != nil {
+		return false, err
+	}
+
+	hashFile := tmpDir + dst + ".md5"
+	buffer := new(bytes.Buffer)
+	buffer.WriteString(fmt.Sprintf("%x %s\n", srcHash.Sum(nil), dst))
+	err := s.writeFile(buffer, hashFile)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = s.CombinedOutput(fmt.Sprintf("md5sum --check --status %s", hashFile))
+	if err == nil { // means dst exist and same as src
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (s *SSH) newSFTPClient() (*sftp.Client, func(), error) {
+	client, closer, err := s.newClient()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sftpClient, err := sftp.NewClient(client)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return sftpClient,
+		func() {
+			closer()
+			sftpClient.Close()
+		},
+		nil
+}
+
+// newClient returns ssh session and closer which need defer run!
+func (s *SSH) newSession() (*ssh.Session, func(), error) {
+	client, closer, err := s.newClient()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	session, err := client.NewSession()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return session,
+		func() {
+			closer()
+			session.Close()
+		},
+		nil
+}
+
+// newClient returns ssh client and closer which need defer run!
+func (s *SSH) newClient() (*ssh.Client, func(), error) {
 	config := &ssh.ClientConfig{
 		User:            s.User,
 		Auth:            s.authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	client, err := s.dialer.Dial("tcp", s.addr, config)
+	client, err := s.dialer.Dial("tcp", s.addr(), config)
 	if err != nil {
 		err = wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
-			if client, err = s.dialer.Dial("tcp", s.addr, config); err != nil {
+			if client, err = s.dialer.Dial("tcp", s.addr(), config); err != nil {
 				return false, err
 			}
 			return true, nil
 		})
 	}
 	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
-
-	sftpClient, err := sftp.NewClient(client)
-	if err != nil {
-		return nil, err
-	}
-	defer sftpClient.Close()
-
-	return sftpClient.Stat(p)
-}
-
-func (s *SSH) ReadFile(filename string) ([]byte, error) {
-	config := &ssh.ClientConfig{
-		User:            s.User,
-		Auth:            s.authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	client, err := s.dialer.Dial("tcp", s.addr, config)
-	if err != nil {
-		err = wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
-			if client, err = s.dialer.Dial("tcp", s.addr, config); err != nil {
-				return false, fmt.Errorf("read file %s error: %w", filename, err)
-			}
-			return true, nil
-		})
-	}
-	if err != nil {
-		return nil, fmt.Errorf("read file %s error: %w", filename, err)
-	}
-	defer client.Close()
-
-	sftpClient, err := sftp.NewClient(client)
-	if err != nil {
-		return nil, fmt.Errorf("read file %s error: %w", filename, err)
-	}
-	defer sftpClient.Close()
-
-	f, err := sftpClient.Open(filename)
-	if err != nil {
-		return nil, fmt.Errorf("read file %s error: %w", filename, err)
-	}
-	data := new(bytes.Buffer)
-	_, err = f.WriteTo(data)
-	if err != nil {
-		return nil, fmt.Errorf("read file %s error: %w", filename, err)
+		return nil, nil, err
 	}
 
-	return data.Bytes(), nil
-}
-
-func (s *SSH) LookPath(file string) (string, error) {
-	data, err := s.CombinedOutput(fmt.Sprintf("which %s", file))
-	return string(data), err
+	return client,
+		func() {
+			client.Close()
+		},
+		nil
 }
 
 // Interface to allow mocking of ssh.Dial, for testing SSH
@@ -395,41 +380,4 @@ type timeoutDialer struct {
 func (d *timeoutDialer) Dial(network, addr string, config *ssh.ClientConfig) (*ssh.Client, error) {
 	config.Timeout = d.timeout
 	return d.dialer.Dial(network, addr, config)
-}
-
-func MakePrivateKeySignerFromFile(key string) (ssh.Signer, error) {
-	// Create an actual signer.
-	buffer, err := ioutil.ReadFile(key)
-	if err != nil {
-		return nil, fmt.Errorf("error reading SSH key %s: '%v'", key, err)
-	}
-	return MakePrivateKeySigner(buffer, nil)
-}
-
-func MakePrivateKeySigner(privateKey []byte, passPhrase []byte) (ssh.Signer, error) {
-	signer, err := ssh.ParsePrivateKeyWithPassphrase(privateKey, passPhrase)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing SSH key: '%v'", err)
-	}
-	return signer, nil
-}
-
-func ParsePublicKeyFromFile(keyFile string) (*rsa.PublicKey, error) {
-	buffer, err := ioutil.ReadFile(keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("error reading SSH key %s: '%v'", keyFile, err)
-	}
-	keyBlock, _ := pem.Decode(buffer)
-	if keyBlock == nil {
-		return nil, fmt.Errorf("error parsing SSH key %s: 'invalid PEM format'", keyFile)
-	}
-	key, err := x509.ParsePKIXPublicKey(keyBlock.Bytes)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing SSH key %s: '%v'", keyFile, err)
-	}
-	rsaKey, ok := key.(*rsa.PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("SSH key could not be parsed as rsa public key")
-	}
-	return rsaKey, nil
 }

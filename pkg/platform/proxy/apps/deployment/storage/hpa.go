@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 
+	"tkestack.io/tke/pkg/platform/proxy"
 	"tkestack.io/tke/pkg/util/apiclient"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -34,7 +35,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/pkg/platform/util"
 )
 
 // HPARest implements the REST endpoint for find hpalist by a deployment.
@@ -59,7 +59,7 @@ func (r *HPARest) New() runtime.Object {
 
 // Get retrieves the object from the storage. It is required to support Patch.
 func (r *HPARest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	client, err := util.ClientSet(ctx, r.platformClient)
+	client, err := proxy.ClientSet(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}

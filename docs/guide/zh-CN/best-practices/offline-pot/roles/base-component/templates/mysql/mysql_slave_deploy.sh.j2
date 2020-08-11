@@ -1,0 +1,187 @@
+#!/bin/bash
+#
+#function:
+#	deploy mysql5.7.22 service on Centos7.2
+#release:
+#	2018-03-01 first-release by edwardmli|2018-04-18 second-release by edwardmli
+#
+#
+
+SHELL_FOLDER=$(cd "$(dirname "$0")";pwd)
+BACKUP_SCRIPTS_DIR='/data/db_backup/scripts'
+BUFFER_POOL_SIZE=@BUFFER_POOL_SIZE
+MYSQL_PORT=@MYSQL_PORT
+DATA_DIR=@DATA_DIR
+MYSQL_EDITION=@MYSQL_EDITION
+MYSQL_BINARY_FILE=${MYSQL_EDITION}.tar.gz
+LIBAIO_RPM_FILE=@LIBAIO_RPM_FILE
+MASTER_PASS=@MASTER_PASS
+MASTER_HOST=@MASTER_HOST
+MASTER_PORT=${MYSQL_PORT}
+SLAVE_USER=repl
+SLAVE_PASS=@SLAVE_PASS
+
+
+# check mysql whether had running
+MYSQL_RUNING=`ps -ef | grep mysqld | grep -v grep | grep ${MYSQL_PORT} | wc -l`
+if [[ $MYSQL_RUNING -eq 0 ]]
+then
+    cat /etc/passwd | grep ^mysql && userdel mysql > /dev/null 2>&1 || echo 'not has mysql user'
+    cat /etc/group | grep ^mysql && groupdel mysql> /dev/null 2>&1 || echo 'not has mysql group'
+    groupadd mysql
+    useradd -r -s /bin/false -g mysql mysql
+    mkdir -p /data/logs/mysql > /dev/null 2>&1
+    chown -R mysql.mysql /data/logs/mysql
+
+    if [[ -d ${DATA_DIR} ]]
+    then
+        if [[ "`ls ${DATA_DIR}|wc -l`" != "0" ]]
+        then
+	          echo "${DATA_DIR} is not empty"
+            exit 1
+        fi
+    else
+        mkdir -p ${DATA_DIR}
+        chown mysql:mysql -R ${DATA_DIR}
+    fi
+
+    chown -R mysql.mysql ${DATA_DIR}
+
+    #查看所需文件
+    echo -e "######\033[32mCheck files\033[0m......"
+    if [[ ! -f ${SHELL_FOLDER}/my.cnf.slave ]]
+    then
+        echo "No file my.cnf found.slave!"
+        exit 1
+    fi
+    if [[ ! -f ${SHELL_FOLDER}/backup_script.sh ]]
+    then
+        echo "No file backup_script.sh found!"
+        exit 1
+    fi
+    if [[ ! -f ${SHELL_FOLDER}/${MYSQL_BINARY_FILE} ]]
+    then
+        echo "No file ${MYSQL_BINARY_FILE} found!"
+        exit 1
+    fi
+    echo -e "\033[32mDone.\033[0m"
+    echo -e "######\033[32mCheck directories\033[0m......"
+    if [[ -d /usr/local/mysql ]]
+    then
+        echo "Mysql program already exists!Backup /user/local/mysql to /usr/local/mysql.$(date +%y%m%d)......"
+        rm -rf /usr/local/mysql.$(date +%y%m%d)
+        mv /usr/local/mysql{,.$(date +%y%m%d)}
+    fi
+    echo -e "\033[32mDone.\033[0m"
+
+    cd ${SHELL_FOLDER}
+
+    #初始化数据库环境
+    echo -e "######\033[32mconfigure database environment\033[0m......"
+    rpm -qa|grep libaio|grep x86_64|grep -v libaio-devel > /dev/null
+    if [[ $? -eq 1 ]]
+    then
+        if [[ ! -f ${SHELL_FOLDER}/${LIBAIO_RPM_FILE} ]]
+        then
+            echo "No file ${LIBAIO_RPM_FILE} found!"
+            exit 1
+        fi
+        rpm -ivh ${LIBAIO_RPM_FILE}
+    fi
+    if [[ $? -eq 1 ]]
+    then
+        echo -e "libaio install \033[31mfailed!\033[0m"
+        exit 1
+    fi
+
+    tar zxf ${MYSQL_BINARY_FILE} -C /usr/local/
+    ln -s /usr/local/${MYSQL_EDITION} /usr/local/mysql
+    cp -a /usr/local/mysql/bin/mysql* /usr/bin/
+    cat /etc/sysctl.conf | grep 'vm.swappiness = 5' || echo 'vm.swappiness = 5' >> /etc/sysctl.conf
+    cat /etc/sysctl.conf | grep 'vm.dirty_background_ratio = 5' || echo 'vm.dirty_background_ratio = 5' >> /etc/sysctl.conf
+    cat /etc/sysctl.conf | grep 'vm.dirty_ratio = 10' || echo 'vm.dirty_ratio = 10' >> /etc/sysctl.conf
+    cat /etc/sysctl.conf | grep 'net.ipv4.tcp_tw_recycle = 1' || echo 'net.ipv4.tcp_tw_recycle = 1' >> /etc/sysctl.conf
+    cat /etc/sysctl.conf | grep 'net.ipv4.tcp_tw_reuse = 1' || echo 'net.ipv4.tcp_tw_reuse = 1' >> /etc/sysctl.conf
+    sysctl -p /dev/null 2>&1
+
+    echo -e "\033[32mDone.\033[0m"
+
+    #安装数据库
+    echo -e "######\033[32minstall mysql\033[0m......"
+    cp -a my.cnf.slave /etc/my.cnf
+    /usr/local/mysql/bin/mysqld --defaults-file=/etc/my.cnf --user=mysql --initialize-insecure > /dev/null 2>&1
+    chown -R mysql.mysql ${DATA_DIR}
+    echo -e "\033[32mDone.\033[0m"
+
+    #启动数据库
+    echo -e "######\033[32mstart mysql service\033[0m......"
+    nohup /usr/local/mysql/bin/mysqld_safe --defaults-file=/etc/my.cnf > /data/logs/mysql/mysqld_safe.log 2>&1 &
+    sleep 30
+
+    #检测数据库服务是否启动
+    ######check mysql service######
+    ps -ef|grep mysqld|grep -v grep|grep ${MYSQL_PORT} > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+        netstat -ntpl|grep ${MYSQL_PORT} > /dev/null
+        if [[ $? -eq 1 ]]
+        then
+            echo -e "mysql installation \033[31mfailed!\033[0m"
+	          exit 1
+        fi
+    else
+        echo -e "mysql installation \033[31mfailed!\033[0m"
+        exit 1
+    fi
+    echo -e "\033[32mDone.\033[0m"
+
+    #限制root账号登录
+    echo -e "######\033[32mClean users\033[0m......"
+    /usr/local/mysql/bin/mysql -S ${DATA_DIR}/mysql.sock -uroot --default-character-set=utf8mb4 -e "delete from mysql.user where user='';delete from mysql.user where host<>'localhost';"
+    if [[ $? -eq 1 ]]
+    then
+        echo -e "\033[31mfailed!\033[0m"
+        exit 1
+    fi
+    echo -e "\033[32mDone.\033[0m"
+
+    #变更账号为system，并重置密码
+    echo -e "######\033[32mUpdate user password\033[0m......"
+    /usr/local/mysql/bin/mysql -S ${DATA_DIR}/mysql.sock -uroot --default-character-set=utf8mb4 -e "set password=password('$MASTER_PASS');update mysql.user set user='system' where user='root';flush privileges;reset master;"
+    /usr/local/mysql/bin/mysql -S ${DATA_DIR}/mysql.sock -usystem -p${MASTER_PASS} --default-character-set=utf8mb4 -e "change master to master_host='${MASTER_HOST}',master_port=${MASTER_PORT},master_user='${SLAVE_USER}',master_password='${SLAVE_PASS}',master_auto_position=1;start slave;" > /dev/null 2>&1
+    if [[ $? -eq 1 ]]
+    then
+        echo -e "\033[31mfailed!\033[0m"
+        exit 1
+    fi
+    echo -e "\033[32mDone.\033[0m"
+
+    #创建备份任务
+    echo -e "######\033[32mAdd backup task to crontab\033[0m......"
+    if [[ ! -d ${BACKUP_SCRIPTS_DIR} ]]
+    then
+         mkdir -p ${BACKUP_SCRIPTS_DIR}
+    fi
+    sed -i "s/_password_/${MASTER_PASS}/g" ${SHELL_FOLDER}/backup_script.sh
+    cp -a ${SHELL_FOLDER}/backup_script.sh ${BACKUP_SCRIPTS_DIR}/
+    chmod u+x ${BACKUP_SCRIPTS_DIR}/backup_script.sh
+    crontab -l > /tmp/crontab.bak
+    grep "${BACKUP_SCRIPTS_DIR}/backup_script.sh" /tmp/crontab.bak > /dev/null 2>&1
+    if [[ $? -eq 1 ]]
+    then
+        echo "00 03 * * * ${BACKUP_SCRIPTS_DIR}/backup_script.sh > /dev/null 2>&1" >> /tmp/crontab.bak
+    fi
+
+    crontab /tmp/crontab.bak
+    rm ${SHELL_FOLDER}/{backup_script.sh,libaio-0.3.109-13.el7.x86_64.rpm,my.cnf.slave,${MYSQL_BINARY_FILE},slave_deploy.sh}
+    if [[ $? -eq 1 ]]
+    then
+        echo -e "\033[31mfailed!\033[0m"
+        exit 1
+    fi
+    echo -e "\033[32mDone.\033[0m"
+
+    echo -e "\033[32msuccessfully!\033[0m"
+else
+    echo "mysql had deploy and running now!"
+fi

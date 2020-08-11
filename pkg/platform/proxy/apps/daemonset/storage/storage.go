@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	appsV1 "k8s.io/api/apps/v1"
 	appsV1Beta2 "k8s.io/api/apps/v1beta2"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -28,7 +29,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/proxy"
 )
 
 // Storage includes storage for resources.
@@ -41,12 +42,12 @@ type Storage struct {
 
 // REST implements pkg/api/rest.StandardStorage
 type REST struct {
-	*util.Store
+	*proxy.Store
 }
 
 // NewStorageV1 returns a Storage object that will work against resources.
 func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	daemonSetStore := &util.Store{
+	daemonSetStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &appsV1.DaemonSet{} },
 		NewListFunc:    func() runtime.Object { return &appsV1.DaemonSetList{} },
 		Namespaced:     true,
@@ -71,7 +72,7 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 
 // NewStorageV1Beta2 returns a Storage object that will work against resources.
 func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	daemonSetStore := &util.Store{
+	daemonSetStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &appsV1Beta2.DaemonSet{} },
 		NewListFunc:    func() runtime.Object { return &appsV1Beta2.DaemonSetList{} },
 		Namespaced:     true,
@@ -96,7 +97,7 @@ func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platf
 
 // NewStorageExtensionsV1Beta1 returns a Storage object that will work against resources.
 func NewStorageExtensionsV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	daemonSetStore := &util.Store{
+	daemonSetStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &extensionsv1beta1.DaemonSet{} },
 		NewListFunc:    func() runtime.Object { return &extensionsv1beta1.DaemonSetList{} },
 		Namespaced:     true,
@@ -138,7 +139,7 @@ func (r *REST) Categories() []string {
 // StatusREST implements the REST endpoint for changing the status of a resource.
 type StatusREST struct {
 	rest.Storage
-	store *util.Store
+	store *proxy.Store
 }
 
 // StatusREST implements Patcher

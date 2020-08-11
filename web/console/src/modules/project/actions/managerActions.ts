@@ -1,5 +1,9 @@
 import {
-    createFFListActions, extend, generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
+  createFFListActions,
+  extend,
+  generateWorkflowActionCreator,
+  isSuccessWorkflow,
+  OperationTrigger
 } from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';

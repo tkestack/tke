@@ -1,13 +1,12 @@
 #  部署环境要求
 
-
-
 ## 硬件要求
 
-
-
-> 注意：Global集群至少需要一台**8核16G内存，50G系统盘**的机器。
-
+> **特别注意**：
+>
+> 1. 安装的时候，至少需要**一个Installer节点**和**一个作为Global集群的master节点**。业务集群的节点是在部署完Global集群的master节点之后再添加的。
+> 2. **Installer节点**：是单独的用作安装的节点，不能作为Global集群的节点使用。因为在安装Global集群时，需要多次重启docker，此时如果Global集群里面有Installer节点，重启docker会中断Global集群的安装。该节点需要一台**系统盘100G**的机器，系统盘要保证剩余**50GB可用的空间**，all-in-one模式还需要更多的空间。
+> 3. **Global集群**：至少需要一台**8核16G内存，100G系统盘**的机器。
 
 
 * **最小化部署配置：**
@@ -26,14 +25,14 @@
         <td>Installer节点</td>
         <td>1</td>
         <td>2G</td>
-        <td>50G</td>
+        <td>100G</td>
         <td>1</td>
     </tr>
     <tr>
         <td>Global集群</td>
         <td>8</td>
         <td>16G</td>
-        <td>50G</td>
+        <td>100G</td>
         <td>1</td>
     </tr>
     <tr>
@@ -56,6 +55,7 @@
 
 
 
+
 * **推荐配置：**
 
 <table>
@@ -72,7 +72,7 @@
         <td>Installer节点</td>
         <td>1</td>
         <td>2G</td>
-        <td>50G</td>
+        <td>100G</td>
         <td>1</td>
     </tr>
     <tr>
@@ -98,6 +98,7 @@
         <td>>3</td>
     </tr>
   </table>
+
 
 
 

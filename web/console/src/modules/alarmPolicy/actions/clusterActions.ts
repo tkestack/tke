@@ -1,3 +1,4 @@
+import { reduceNs } from '@helper';
 import { resourceConfig } from '@config';
 import { ResourceInfo } from '@src/modules/common';
 import { createFFListActions, extend } from '@tencent/ff-redux';
@@ -55,9 +56,21 @@ const restActions = {
         dispatch(clusterActions.fetchClusterAddon(cluster.metadata.name, 1));
 
         router.navigate(urlParams, Object.assign({}, route.queries, { clusterId: cluster.metadata.name }));
+        /// #if project
+        dispatch(
+          alarmPolicyActions.applyFilter({
+            regionId: +regionSelection.value,
+            clusterId: cluster.metadata.name,
+            namespace: reduceNs(route.queries['np']),
+            alarmPolicyType: 'pod'
+          })
+        );
+        /// #endif
+        /// #if tke
         dispatch(
           alarmPolicyActions.applyFilter({ regionId: +regionSelection.value, clusterId: cluster.metadata.name })
         );
+        /// #endif
       } else {
         router.navigate(urlParams, Object.assign({}, route.queries, { clusterId: '' }));
         dispatch(alarmPolicyActions.clear());

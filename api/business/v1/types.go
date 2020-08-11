@@ -193,6 +193,7 @@ type NamespaceSpec struct {
 	Finalizers         []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
 	TenantID           string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
 	ClusterName        string          `json:"clusterName" protobuf:"bytes,3,opt,name=clusterName"`
+	ClusterType        string          `json:"clusterType" protobuf:"bytes,8,opt,name=clusterType"`
 	ClusterVersion     string          `json:"clusterVersion" protobuf:"bytes,6,opt,name=clusterVersion"`
 	ClusterDisplayName string          `json:"clusterDisplayName" protobuf:"bytes,7,opt,name=clusterDisplayName"`
 	Namespace          string          `json:"namespace" protobuf:"bytes,4,opt,name=namespace"`
@@ -231,6 +232,10 @@ type NamespaceCert struct {
 	CertPem []byte `json:"certPem,omitempty" protobuf:"bytes,1,rep,name=certPem"`
 	// +optional
 	KeyPem []byte `json:"keyPem,omitempty" protobuf:"bytes,2,rep,name=keyPem"`
+	// +optional
+	CACertPem []byte `json:"caCertPem,omitempty" protobuf:"bytes,3,rep,name=caCertPem"`
+	// +optional
+	APIServer string `json:"apiServer,omitempty" protobuf:"bytes,4,rep,name=apiServer"`
 }
 
 // NamespacePhase indicates the status of namespace in project.
@@ -287,6 +292,17 @@ type PlatformList struct {
 	Items []Platform `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
+// PortalProject is a project extension info for portal.
+type PortalProject struct {
+	// Phases of projects.
+	Phase string `json:"phase" protobuf:"bytes,1,opt,name=phase"`
+	// Parents of projects.
+	Parent string `json:"parent" protobuf:"bytes,2,opt,name=parent"`
+}
+
+// ProjectExtension is a map from project name to PortalProject.
+type ProjectExtension map[string]PortalProject
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:noVerbs
@@ -303,6 +319,8 @@ type Portal struct {
 	// Projects represents the list of projects to which the user belongs, where the key represents
 	// project name and the value represents the project display name.
 	Projects map[string]string `json:"projects" protobuf:"bytes,3,rep,name=projects"`
+	// Extension is extension info. for projects.
+	Extension ProjectExtension `json:"extension" protobuf:"bytes,4,rep,name=extension,casttype=ProjectExtension"`
 }
 
 // +genclient

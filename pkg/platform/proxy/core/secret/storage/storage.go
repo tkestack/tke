@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/proxy"
 )
 
 // Storage includes storage for resources.
@@ -33,12 +33,12 @@ type Storage struct {
 
 // REST implements pkg/api/rest.StandardStorage.
 type REST struct {
-	*util.Store
+	*proxy.Store
 }
 
 // NewStorage returns a Storage object that will work against resources.
 func NewStorage(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	secretStore := &util.Store{
+	secretStore := &proxy.Store{
 		NewFunc:        func() runtime.Object { return &corev1.Secret{} },
 		NewListFunc:    func() runtime.Object { return &corev1.SecretList{} },
 		Namespaced:     true,

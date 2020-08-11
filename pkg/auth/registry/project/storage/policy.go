@@ -80,7 +80,7 @@ func (r *PolicyREST) Get(ctx context.Context, name string, options *metav1.GetOp
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *PolicyREST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	fieldSelector := fields.Nothing()
-	_, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" {
 		fieldSelector = fields.AndSelectors(fieldSelector,
 			fields.OneTermEqualSelector("spec.tenantID", tenantID),

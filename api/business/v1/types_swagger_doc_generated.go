@@ -256,10 +256,21 @@ var map_Portal = map[string]string{
 	"":              "Portal is a user in TKE.",
 	"administrator": "Administrator indicates whether the user is a platform administrator",
 	"projects":      "Projects represents the list of projects to which the user belongs, where the key represents project name and the value represents the project display name.",
+	"extension":     "Extension is extension info. for projects.",
 }
 
 func (Portal) SwaggerDoc() map[string]string {
 	return map_Portal
+}
+
+var map_PortalProject = map[string]string{
+	"":       "PortalProject is a project extension info for portal.",
+	"phase":  "Phases of projects.",
+	"parent": "Parents of projects.",
+}
+
+func (PortalProject) SwaggerDoc() map[string]string {
+	return map_PortalProject
 }
 
 var map_Project = map[string]string{

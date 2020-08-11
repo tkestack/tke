@@ -1,13 +1,13 @@
 import { combineReducers } from 'redux';
+
+import { generateFetcherReducer, generateWorkflowReducer, reduceToPayload, ReduxAction, uuid } from '@tencent/ff-redux';
+
 import { Record } from '../../common/models';
-import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import * as ActionType from '../constants/ActionType';
-import { reduceToPayload, uuid, ReduxAction } from '@tencent/qcloud-lib';
 import { initEdit } from './initState';
-import { generateWorkflowReducer } from '@tencent/qcloud-redux-workflow';
 
 export const RootReducer = combineReducers({
-  step: reduceToPayload(ActionType.StepNext, 'step1'),
+  step: reduceToPayload(ActionType.StepNext, 'step2'),
 
   cluster: generateFetcherReducer<Record<any>>({
     actionType: ActionType.FetchCluster,

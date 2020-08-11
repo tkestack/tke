@@ -24,7 +24,11 @@ import (
 	"math/rand"
 	"time"
 
+	"tkestack.io/tke/pkg/util/http"
+	utilhttp "tkestack.io/tke/pkg/util/http"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
@@ -77,6 +81,16 @@ func (in *Cluster) RemoveAddress(addrType AddressType) {
 	in.Status.Addresses = addrs
 }
 
+func (in *Cluster) GetCondition(conditionType string) *ClusterCondition {
+	for _, condition := range in.Status.Conditions {
+		if condition.Type == conditionType {
+			return &condition
+		}
+	}
+
+	return nil
+}
+
 func (in *Cluster) SetCondition(newCondition ClusterCondition) {
 	var conditions []ClusterCondition
 
@@ -104,6 +118,14 @@ func (in *Cluster) SetCondition(newCondition ClusterCondition) {
 	}
 
 	in.Status.Conditions = conditions
+	switch newCondition.Status {
+	case ConditionFalse:
+		in.Status.Reason = newCondition.Reason
+		in.Status.Message = newCondition.Message
+	default:
+		in.Status.Reason = ""
+		in.Status.Message = ""
+	}
 }
 
 func (in *Cluster) Host() (string, error) {
@@ -128,4 +150,36 @@ func (in *Cluster) Host() (string, error) {
 	}
 
 	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
+}
+
+func (in *Cluster) AuthzWebhookEnabled() bool {
+	return in.Spec.Features.AuthzWebhookAddr != nil &&
+		(in.Spec.Features.AuthzWebhookAddr.Builtin != nil || in.Spec.Features.AuthzWebhookAddr.External != nil)
+}
+
+func (in *Cluster) AuthzWebhookExternEndpoint() (string, bool) {
+	if in.Spec.Features.AuthzWebhookAddr == nil {
+		return "", false
+	}
+
+	if in.Spec.Features.AuthzWebhookAddr.External == nil {
+		return "", false
+	}
+
+	ip := in.Spec.Features.AuthzWebhookAddr.External.IP
+	port := int(in.Spec.Features.AuthzWebhookAddr.External.Port)
+	return http.MakeEndpoint("https", ip, port, "/auth/authz"), true
+}
+
+func (in *Cluster) AuthzWebhookBuiltinEndpoint() (string, bool) {
+	if in.Spec.Features.AuthzWebhookAddr == nil {
+		return "", false
+	}
+
+	if in.Spec.Features.AuthzWebhookAddr.Builtin == nil {
+		return "", false
+	}
+
+	return utilhttp.MakeEndpoint("https", in.Spec.Machines[0].IP,
+		constants.AuthzWebhookNodePort, "/auth/authz"), true
 }

@@ -194,6 +194,12 @@ message NamespaceCert {
 
   // +optional
   optional bytes keyPem = 2;
+
+  // +optional
+  optional bytes caCertPem = 3;
+
+  // +optional
+  optional string apiServer = 4;
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -221,6 +227,8 @@ message NamespaceSpec {
   optional string tenantID = 2;
 
   optional string clusterName = 3;
+
+  optional string clusterType = 8;
 
   optional string clusterVersion = 6;
 
@@ -352,6 +360,18 @@ message Portal {
   // Projects represents the list of projects to which the user belongs, where the key represents
   // project name and the value represents the project display name.
   map<string, string> projects = 3;
+
+  // Extension is extension info. for projects.
+  map<string, PortalProject> extension = 4;
+}
+
+// PortalProject is a project extension info for portal.
+message PortalProject {
+  // Phases of projects.
+  optional string phase = 1;
+
+  // Parents of projects.
+  optional string parent = 2;
 }
 
 // Project is a project in TKE.

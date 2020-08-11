@@ -37,6 +37,36 @@ func init() {
 // RegisterConversions adds conversion functions to the given scheme.
 // Public to allow building arbitrary schemes.
 func RegisterConversions(s *runtime.Scheme) error {
+	if err := s.AddGeneratedConversionFunc((*ClusterOverview)(nil), (*monitor.ClusterOverview)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ClusterOverview_To_monitor_ClusterOverview(a.(*ClusterOverview), b.(*monitor.ClusterOverview), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.ClusterOverview)(nil), (*ClusterOverview)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_ClusterOverview_To_v1_ClusterOverview(a.(*monitor.ClusterOverview), b.(*ClusterOverview), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterOverviewResult)(nil), (*monitor.ClusterOverviewResult)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ClusterOverviewResult_To_monitor_ClusterOverviewResult(a.(*ClusterOverviewResult), b.(*monitor.ClusterOverviewResult), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.ClusterOverviewResult)(nil), (*ClusterOverviewResult)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_ClusterOverviewResult_To_v1_ClusterOverviewResult(a.(*monitor.ClusterOverviewResult), b.(*ClusterOverviewResult), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterStatistic)(nil), (*monitor.ClusterStatistic)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ClusterStatistic_To_monitor_ClusterStatistic(a.(*ClusterStatistic), b.(*monitor.ClusterStatistic), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.ClusterStatistic)(nil), (*ClusterStatistic)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_ClusterStatistic_To_v1_ClusterStatistic(a.(*monitor.ClusterStatistic), b.(*ClusterStatistic), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*ConfigMap)(nil), (*monitor.ConfigMap)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_ConfigMap_To_monitor_ConfigMap(a.(*ConfigMap), b.(*monitor.ConfigMap), scope)
 	}); err != nil {
@@ -97,7 +127,185 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*Prometheus)(nil), (*monitor.Prometheus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_Prometheus_To_monitor_Prometheus(a.(*Prometheus), b.(*monitor.Prometheus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.Prometheus)(nil), (*Prometheus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_Prometheus_To_v1_Prometheus(a.(*monitor.Prometheus), b.(*Prometheus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*PrometheusList)(nil), (*monitor.PrometheusList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_PrometheusList_To_monitor_PrometheusList(a.(*PrometheusList), b.(*monitor.PrometheusList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.PrometheusList)(nil), (*PrometheusList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_PrometheusList_To_v1_PrometheusList(a.(*monitor.PrometheusList), b.(*PrometheusList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*PrometheusRemoteAddr)(nil), (*monitor.PrometheusRemoteAddr)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_PrometheusRemoteAddr_To_monitor_PrometheusRemoteAddr(a.(*PrometheusRemoteAddr), b.(*monitor.PrometheusRemoteAddr), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.PrometheusRemoteAddr)(nil), (*PrometheusRemoteAddr)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_PrometheusRemoteAddr_To_v1_PrometheusRemoteAddr(a.(*monitor.PrometheusRemoteAddr), b.(*PrometheusRemoteAddr), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*PrometheusSpec)(nil), (*monitor.PrometheusSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_PrometheusSpec_To_monitor_PrometheusSpec(a.(*PrometheusSpec), b.(*monitor.PrometheusSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.PrometheusSpec)(nil), (*PrometheusSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_PrometheusSpec_To_v1_PrometheusSpec(a.(*monitor.PrometheusSpec), b.(*PrometheusSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*PrometheusStatus)(nil), (*monitor.PrometheusStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_PrometheusStatus_To_monitor_PrometheusStatus(a.(*PrometheusStatus), b.(*monitor.PrometheusStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.PrometheusStatus)(nil), (*PrometheusStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_PrometheusStatus_To_v1_PrometheusStatus(a.(*monitor.PrometheusStatus), b.(*PrometheusStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ResourceRequirements)(nil), (*monitor.ResourceRequirements)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ResourceRequirements_To_monitor_ResourceRequirements(a.(*ResourceRequirements), b.(*monitor.ResourceRequirements), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*monitor.ResourceRequirements)(nil), (*ResourceRequirements)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_monitor_ResourceRequirements_To_v1_ResourceRequirements(a.(*monitor.ResourceRequirements), b.(*ResourceRequirements), scope)
+	}); err != nil {
+		return err
+	}
 	return nil
+}
+
+func autoConvert_v1_ClusterOverview_To_monitor_ClusterOverview(in *ClusterOverview, out *monitor.ClusterOverview, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Result = (*monitor.ClusterOverviewResult)(unsafe.Pointer(in.Result))
+	return nil
+}
+
+// Convert_v1_ClusterOverview_To_monitor_ClusterOverview is an autogenerated conversion function.
+func Convert_v1_ClusterOverview_To_monitor_ClusterOverview(in *ClusterOverview, out *monitor.ClusterOverview, s conversion.Scope) error {
+	return autoConvert_v1_ClusterOverview_To_monitor_ClusterOverview(in, out, s)
+}
+
+func autoConvert_monitor_ClusterOverview_To_v1_ClusterOverview(in *monitor.ClusterOverview, out *ClusterOverview, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Result = (*ClusterOverviewResult)(unsafe.Pointer(in.Result))
+	return nil
+}
+
+// Convert_monitor_ClusterOverview_To_v1_ClusterOverview is an autogenerated conversion function.
+func Convert_monitor_ClusterOverview_To_v1_ClusterOverview(in *monitor.ClusterOverview, out *ClusterOverview, s conversion.Scope) error {
+	return autoConvert_monitor_ClusterOverview_To_v1_ClusterOverview(in, out, s)
+}
+
+func autoConvert_v1_ClusterOverviewResult_To_monitor_ClusterOverviewResult(in *ClusterOverviewResult, out *monitor.ClusterOverviewResult, s conversion.Scope) error {
+	out.ClusterCount = in.ClusterCount
+	out.ClusterAbnormal = in.ClusterAbnormal
+	out.ProjectCount = in.ProjectCount
+	out.ProjectAbnormal = in.ProjectAbnormal
+	out.NodeCount = in.NodeCount
+	out.NodeAbnormal = in.NodeAbnormal
+	out.WorkloadCount = in.WorkloadCount
+	out.WorkloadAbnormal = in.WorkloadAbnormal
+	out.Clusters = *(*[]*monitor.ClusterStatistic)(unsafe.Pointer(&in.Clusters))
+	return nil
+}
+
+// Convert_v1_ClusterOverviewResult_To_monitor_ClusterOverviewResult is an autogenerated conversion function.
+func Convert_v1_ClusterOverviewResult_To_monitor_ClusterOverviewResult(in *ClusterOverviewResult, out *monitor.ClusterOverviewResult, s conversion.Scope) error {
+	return autoConvert_v1_ClusterOverviewResult_To_monitor_ClusterOverviewResult(in, out, s)
+}
+
+func autoConvert_monitor_ClusterOverviewResult_To_v1_ClusterOverviewResult(in *monitor.ClusterOverviewResult, out *ClusterOverviewResult, s conversion.Scope) error {
+	out.ClusterCount = in.ClusterCount
+	out.ClusterAbnormal = in.ClusterAbnormal
+	out.ProjectCount = in.ProjectCount
+	out.ProjectAbnormal = in.ProjectAbnormal
+	out.NodeCount = in.NodeCount
+	out.NodeAbnormal = in.NodeAbnormal
+	out.WorkloadCount = in.WorkloadCount
+	out.WorkloadAbnormal = in.WorkloadAbnormal
+	out.Clusters = *(*[]*ClusterStatistic)(unsafe.Pointer(&in.Clusters))
+	return nil
+}
+
+// Convert_monitor_ClusterOverviewResult_To_v1_ClusterOverviewResult is an autogenerated conversion function.
+func Convert_monitor_ClusterOverviewResult_To_v1_ClusterOverviewResult(in *monitor.ClusterOverviewResult, out *ClusterOverviewResult, s conversion.Scope) error {
+	return autoConvert_monitor_ClusterOverviewResult_To_v1_ClusterOverviewResult(in, out, s)
+}
+
+func autoConvert_v1_ClusterStatistic_To_monitor_ClusterStatistic(in *ClusterStatistic, out *monitor.ClusterStatistic, s conversion.Scope) error {
+	out.ClusterID = in.ClusterID
+	out.ClusterPhase = in.ClusterPhase
+	out.NodeCount = in.NodeCount
+	out.NodeAbnormal = in.NodeAbnormal
+	out.WorkloadCount = in.WorkloadCount
+	out.WorkloadAbnormal = in.WorkloadAbnormal
+	out.CPURequest = in.CPURequest
+	out.CPULimit = in.CPULimit
+	out.CPUCapacity = in.CPUCapacity
+	out.CPUAllocatable = in.CPUAllocatable
+	out.CPURequestRate = in.CPURequestRate
+	out.CPUAllocatableRate = in.CPUAllocatableRate
+	out.MemRequest = in.MemRequest
+	out.MemLimit = in.MemLimit
+	out.MemCapacity = in.MemCapacity
+	out.MemAllocatable = in.MemAllocatable
+	out.MemRequestRate = in.MemRequestRate
+	out.MemAllocatableRate = in.MemAllocatableRate
+	out.SchedulerHealthy = in.SchedulerHealthy
+	out.ControllerManagerHealthy = in.ControllerManagerHealthy
+	out.EtcdHealthy = in.EtcdHealthy
+	return nil
+}
+
+// Convert_v1_ClusterStatistic_To_monitor_ClusterStatistic is an autogenerated conversion function.
+func Convert_v1_ClusterStatistic_To_monitor_ClusterStatistic(in *ClusterStatistic, out *monitor.ClusterStatistic, s conversion.Scope) error {
+	return autoConvert_v1_ClusterStatistic_To_monitor_ClusterStatistic(in, out, s)
+}
+
+func autoConvert_monitor_ClusterStatistic_To_v1_ClusterStatistic(in *monitor.ClusterStatistic, out *ClusterStatistic, s conversion.Scope) error {
+	out.ClusterID = in.ClusterID
+	out.ClusterPhase = in.ClusterPhase
+	out.NodeCount = in.NodeCount
+	out.NodeAbnormal = in.NodeAbnormal
+	out.WorkloadCount = in.WorkloadCount
+	out.WorkloadAbnormal = in.WorkloadAbnormal
+	out.CPURequest = in.CPURequest
+	out.CPULimit = in.CPULimit
+	out.CPUCapacity = in.CPUCapacity
+	out.CPUAllocatable = in.CPUAllocatable
+	out.CPURequestRate = in.CPURequestRate
+	out.CPUAllocatableRate = in.CPUAllocatableRate
+	out.MemRequest = in.MemRequest
+	out.MemLimit = in.MemLimit
+	out.MemCapacity = in.MemCapacity
+	out.MemAllocatable = in.MemAllocatable
+	out.MemRequestRate = in.MemRequestRate
+	out.MemAllocatableRate = in.MemAllocatableRate
+	out.SchedulerHealthy = in.SchedulerHealthy
+	out.ControllerManagerHealthy = in.ControllerManagerHealthy
+	out.EtcdHealthy = in.EtcdHealthy
+	return nil
+}
+
+// Convert_monitor_ClusterStatistic_To_v1_ClusterStatistic is an autogenerated conversion function.
+func Convert_monitor_ClusterStatistic_To_v1_ClusterStatistic(in *monitor.ClusterStatistic, out *ClusterStatistic, s conversion.Scope) error {
+	return autoConvert_monitor_ClusterStatistic_To_v1_ClusterStatistic(in, out, s)
 }
 
 func autoConvert_v1_ConfigMap_To_monitor_ConfigMap(in *ConfigMap, out *monitor.ConfigMap, s conversion.Scope) error {
@@ -256,4 +464,178 @@ func autoConvert_monitor_MetricQueryCondition_To_v1_MetricQueryCondition(in *mon
 // Convert_monitor_MetricQueryCondition_To_v1_MetricQueryCondition is an autogenerated conversion function.
 func Convert_monitor_MetricQueryCondition_To_v1_MetricQueryCondition(in *monitor.MetricQueryCondition, out *MetricQueryCondition, s conversion.Scope) error {
 	return autoConvert_monitor_MetricQueryCondition_To_v1_MetricQueryCondition(in, out, s)
+}
+
+func autoConvert_v1_Prometheus_To_monitor_Prometheus(in *Prometheus, out *monitor.Prometheus, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_PrometheusSpec_To_monitor_PrometheusSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1_PrometheusStatus_To_monitor_PrometheusStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_Prometheus_To_monitor_Prometheus is an autogenerated conversion function.
+func Convert_v1_Prometheus_To_monitor_Prometheus(in *Prometheus, out *monitor.Prometheus, s conversion.Scope) error {
+	return autoConvert_v1_Prometheus_To_monitor_Prometheus(in, out, s)
+}
+
+func autoConvert_monitor_Prometheus_To_v1_Prometheus(in *monitor.Prometheus, out *Prometheus, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_monitor_PrometheusSpec_To_v1_PrometheusSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_monitor_PrometheusStatus_To_v1_PrometheusStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_monitor_Prometheus_To_v1_Prometheus is an autogenerated conversion function.
+func Convert_monitor_Prometheus_To_v1_Prometheus(in *monitor.Prometheus, out *Prometheus, s conversion.Scope) error {
+	return autoConvert_monitor_Prometheus_To_v1_Prometheus(in, out, s)
+}
+
+func autoConvert_v1_PrometheusList_To_monitor_PrometheusList(in *PrometheusList, out *monitor.PrometheusList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]monitor.Prometheus)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_PrometheusList_To_monitor_PrometheusList is an autogenerated conversion function.
+func Convert_v1_PrometheusList_To_monitor_PrometheusList(in *PrometheusList, out *monitor.PrometheusList, s conversion.Scope) error {
+	return autoConvert_v1_PrometheusList_To_monitor_PrometheusList(in, out, s)
+}
+
+func autoConvert_monitor_PrometheusList_To_v1_PrometheusList(in *monitor.PrometheusList, out *PrometheusList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]Prometheus)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_monitor_PrometheusList_To_v1_PrometheusList is an autogenerated conversion function.
+func Convert_monitor_PrometheusList_To_v1_PrometheusList(in *monitor.PrometheusList, out *PrometheusList, s conversion.Scope) error {
+	return autoConvert_monitor_PrometheusList_To_v1_PrometheusList(in, out, s)
+}
+
+func autoConvert_v1_PrometheusRemoteAddr_To_monitor_PrometheusRemoteAddr(in *PrometheusRemoteAddr, out *monitor.PrometheusRemoteAddr, s conversion.Scope) error {
+	out.WriteAddr = *(*[]string)(unsafe.Pointer(&in.WriteAddr))
+	out.ReadAddr = *(*[]string)(unsafe.Pointer(&in.ReadAddr))
+	return nil
+}
+
+// Convert_v1_PrometheusRemoteAddr_To_monitor_PrometheusRemoteAddr is an autogenerated conversion function.
+func Convert_v1_PrometheusRemoteAddr_To_monitor_PrometheusRemoteAddr(in *PrometheusRemoteAddr, out *monitor.PrometheusRemoteAddr, s conversion.Scope) error {
+	return autoConvert_v1_PrometheusRemoteAddr_To_monitor_PrometheusRemoteAddr(in, out, s)
+}
+
+func autoConvert_monitor_PrometheusRemoteAddr_To_v1_PrometheusRemoteAddr(in *monitor.PrometheusRemoteAddr, out *PrometheusRemoteAddr, s conversion.Scope) error {
+	out.WriteAddr = *(*[]string)(unsafe.Pointer(&in.WriteAddr))
+	out.ReadAddr = *(*[]string)(unsafe.Pointer(&in.ReadAddr))
+	return nil
+}
+
+// Convert_monitor_PrometheusRemoteAddr_To_v1_PrometheusRemoteAddr is an autogenerated conversion function.
+func Convert_monitor_PrometheusRemoteAddr_To_v1_PrometheusRemoteAddr(in *monitor.PrometheusRemoteAddr, out *PrometheusRemoteAddr, s conversion.Scope) error {
+	return autoConvert_monitor_PrometheusRemoteAddr_To_v1_PrometheusRemoteAddr(in, out, s)
+}
+
+func autoConvert_v1_PrometheusSpec_To_monitor_PrometheusSpec(in *PrometheusSpec, out *monitor.PrometheusSpec, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.ClusterName = in.ClusterName
+	out.Version = in.Version
+	out.SubVersion = *(*map[string]string)(unsafe.Pointer(&in.SubVersion))
+	if err := Convert_v1_PrometheusRemoteAddr_To_monitor_PrometheusRemoteAddr(&in.RemoteAddress, &out.RemoteAddress, s); err != nil {
+		return err
+	}
+	out.NotifyWebhook = in.NotifyWebhook
+	if err := Convert_v1_ResourceRequirements_To_monitor_ResourceRequirements(&in.Resources, &out.Resources, s); err != nil {
+		return err
+	}
+	out.RunOnMaster = in.RunOnMaster
+	out.AlertRepeatInterval = in.AlertRepeatInterval
+	out.WithNPD = in.WithNPD
+	return nil
+}
+
+// Convert_v1_PrometheusSpec_To_monitor_PrometheusSpec is an autogenerated conversion function.
+func Convert_v1_PrometheusSpec_To_monitor_PrometheusSpec(in *PrometheusSpec, out *monitor.PrometheusSpec, s conversion.Scope) error {
+	return autoConvert_v1_PrometheusSpec_To_monitor_PrometheusSpec(in, out, s)
+}
+
+func autoConvert_monitor_PrometheusSpec_To_v1_PrometheusSpec(in *monitor.PrometheusSpec, out *PrometheusSpec, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.ClusterName = in.ClusterName
+	out.Version = in.Version
+	out.SubVersion = *(*map[string]string)(unsafe.Pointer(&in.SubVersion))
+	if err := Convert_monitor_PrometheusRemoteAddr_To_v1_PrometheusRemoteAddr(&in.RemoteAddress, &out.RemoteAddress, s); err != nil {
+		return err
+	}
+	out.NotifyWebhook = in.NotifyWebhook
+	if err := Convert_monitor_ResourceRequirements_To_v1_ResourceRequirements(&in.Resources, &out.Resources, s); err != nil {
+		return err
+	}
+	out.RunOnMaster = in.RunOnMaster
+	out.AlertRepeatInterval = in.AlertRepeatInterval
+	out.WithNPD = in.WithNPD
+	return nil
+}
+
+// Convert_monitor_PrometheusSpec_To_v1_PrometheusSpec is an autogenerated conversion function.
+func Convert_monitor_PrometheusSpec_To_v1_PrometheusSpec(in *monitor.PrometheusSpec, out *PrometheusSpec, s conversion.Scope) error {
+	return autoConvert_monitor_PrometheusSpec_To_v1_PrometheusSpec(in, out, s)
+}
+
+func autoConvert_v1_PrometheusStatus_To_monitor_PrometheusStatus(in *PrometheusStatus, out *monitor.PrometheusStatus, s conversion.Scope) error {
+	out.Version = in.Version
+	out.Phase = monitor.AddonPhase(in.Phase)
+	out.Reason = in.Reason
+	out.RetryCount = in.RetryCount
+	out.LastReInitializingTimestamp = in.LastReInitializingTimestamp
+	out.SubVersion = *(*map[string]string)(unsafe.Pointer(&in.SubVersion))
+	return nil
+}
+
+// Convert_v1_PrometheusStatus_To_monitor_PrometheusStatus is an autogenerated conversion function.
+func Convert_v1_PrometheusStatus_To_monitor_PrometheusStatus(in *PrometheusStatus, out *monitor.PrometheusStatus, s conversion.Scope) error {
+	return autoConvert_v1_PrometheusStatus_To_monitor_PrometheusStatus(in, out, s)
+}
+
+func autoConvert_monitor_PrometheusStatus_To_v1_PrometheusStatus(in *monitor.PrometheusStatus, out *PrometheusStatus, s conversion.Scope) error {
+	out.Version = in.Version
+	out.Phase = AddonPhase(in.Phase)
+	out.Reason = in.Reason
+	out.RetryCount = in.RetryCount
+	out.LastReInitializingTimestamp = in.LastReInitializingTimestamp
+	out.SubVersion = *(*map[string]string)(unsafe.Pointer(&in.SubVersion))
+	return nil
+}
+
+// Convert_monitor_PrometheusStatus_To_v1_PrometheusStatus is an autogenerated conversion function.
+func Convert_monitor_PrometheusStatus_To_v1_PrometheusStatus(in *monitor.PrometheusStatus, out *PrometheusStatus, s conversion.Scope) error {
+	return autoConvert_monitor_PrometheusStatus_To_v1_PrometheusStatus(in, out, s)
+}
+
+func autoConvert_v1_ResourceRequirements_To_monitor_ResourceRequirements(in *ResourceRequirements, out *monitor.ResourceRequirements, s conversion.Scope) error {
+	out.Limits = *(*monitor.ResourceList)(unsafe.Pointer(&in.Limits))
+	out.Requests = *(*monitor.ResourceList)(unsafe.Pointer(&in.Requests))
+	return nil
+}
+
+// Convert_v1_ResourceRequirements_To_monitor_ResourceRequirements is an autogenerated conversion function.
+func Convert_v1_ResourceRequirements_To_monitor_ResourceRequirements(in *ResourceRequirements, out *monitor.ResourceRequirements, s conversion.Scope) error {
+	return autoConvert_v1_ResourceRequirements_To_monitor_ResourceRequirements(in, out, s)
+}
+
+func autoConvert_monitor_ResourceRequirements_To_v1_ResourceRequirements(in *monitor.ResourceRequirements, out *ResourceRequirements, s conversion.Scope) error {
+	out.Limits = *(*ResourceList)(unsafe.Pointer(&in.Limits))
+	out.Requests = *(*ResourceList)(unsafe.Pointer(&in.Requests))
+	return nil
+}
+
+// Convert_monitor_ResourceRequirements_To_v1_ResourceRequirements is an autogenerated conversion function.
+func Convert_monitor_ResourceRequirements_To_v1_ResourceRequirements(in *monitor.ResourceRequirements, out *ResourceRequirements, s conversion.Scope) error {
+	return autoConvert_monitor_ResourceRequirements_To_v1_ResourceRequirements(in, out, s)
 }

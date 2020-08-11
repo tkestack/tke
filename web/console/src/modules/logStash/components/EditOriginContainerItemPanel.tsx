@@ -14,6 +14,7 @@ import { ResourceListMapForContainerLog } from '../constants/Config';
 import { ContainerLogs, Resource } from '../models';
 import { isCanAddContainerLog } from './EditOriginContainerPanel';
 import { ContainerItemProps } from './ListOriginContainerItemPanel';
+import { clusterActions } from '@src/modules/logStash/actions/clusterActions';
 
 insertCSS(
   'EditOriginContainerItemPanel',
@@ -68,6 +69,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
     return (
       <FormPanel fixed isNeedCard={false} style={{ minWidth: 600, padding: '30px' }}>
         <div className="run-docker-box" style={containerLog.collectorWay === 'workload' ? { minWidth: '750px' } : {}}>
+          {window.location.href.includes('/tkestack-project') ||
           <div className="justify-grid">
             <div className="col">
               <span />
@@ -90,7 +92,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                 <i className="icon-cancel-icon" />
               </LinkButton>
             </div>
-          </div>
+          </div>}
           <div className="edit-param-list">
             <div className="param-box" style={{ paddingBottom: '0' }}>
               <div className="param-bd">
@@ -114,6 +116,11 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                           className="tc-15-select m"
                           onSelect={value => {
                             actions.editLogStash.selectContainerLogNamespace(value, containerLogIndex);
+                            // 兼容业务侧的处理
+                            if (window.location.href.includes('tkestack-project')) {
+                              let namespaceFound = namespaceList.data.records.find(item => item.namespace === value);
+                              actions.cluster.selectClusterFromEditNamespace(namespaceFound.cluster);
+                            }
                           }}
                           name="Namespace"
                           tipPosition="right"
@@ -227,7 +234,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
     return (
       <div className="configuration-box" style={{ width: '600px', marginTop: '10px' }}>
         {this._renderLeftSide(containerLog.workloadType, containerLogIndex)}
-        <div className="rich-textarea simple-mod">
+        <div className="rich-textarea simple-mod" style={{ overflow: 'auto' }}>
           <div className="permission-code-editor">
             <strong className="code-title" style={{ border: 'none' }}>
               {t('列表')}

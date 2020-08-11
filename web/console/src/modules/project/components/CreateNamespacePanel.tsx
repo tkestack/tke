@@ -2,9 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { FormPanel } from '@tencent/ff-component';
-import {
-    bindActionCreators, deepClone, isSuccessWorkflow, OperationState
-} from '@tencent/ff-redux';
+import { bindActionCreators, deepClone, isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 import { Alert, Button, Modal } from '@tencent/tea-component';
 
@@ -58,14 +56,12 @@ export class CreateNamespacePanel extends React.Component<RootProps, {}> {
   }
 
   render() {
-    let { namespaceEdition, actions, cluster, project, createNamespace, route } = this.props;
-
-    let projectSelection = project.selections[0] ? project.selections[0] : null;
+    let { namespaceEdition, actions, cluster, project, createNamespace, route, projectDetail } = this.props;
 
     let finalClusterList = deepClone(cluster);
     //筛选出project中的集群
-    if (projectSelection) {
-      let projectClusterList = projectSelection.spec.clusters ? Object.keys(projectSelection.spec.clusters) : [];
+    if (projectDetail) {
+      let projectClusterList = projectDetail.spec.clusters ? Object.keys(projectDetail.spec.clusters) : [];
       finalClusterList.list.data.records = finalClusterList.list.data.records.filter(
         item => projectClusterList.indexOf(item.clusterId + '') !== -1
       );
@@ -93,10 +89,10 @@ export class CreateNamespacePanel extends React.Component<RootProps, {}> {
           }}
         />
         <FormPanel.Item text label={t('业务')}>
-          {projectSelection ? (
+          {projectDetail ? (
             <React.Fragment>
               <FormPanel.InlineText>
-                {t(projectSelection.metadata.name + '(' + projectSelection.spec.displayName + ')')}
+                {t(projectDetail.metadata.name + '(' + projectDetail.spec.displayName + ')')}
               </FormPanel.InlineText>
             </React.Fragment>
           ) : (
@@ -166,13 +162,12 @@ export class CreateNamespacePanel extends React.Component<RootProps, {}> {
     );
   }
   private _renderEditProjectLimitDialog() {
-    const { actions, project, namespaceEdition } = this.props;
+    const { actions, project, namespaceEdition, projectDetail } = this.props;
     let { isShowDialog } = this.state;
-    let projectSelection = project.selections[0] ? project.selections[0] : null;
 
     let clusterName = namespaceEdition.clusterName;
 
-    let resourceLimits = projectSelection && clusterName ? projectSelection.spec.clusters[clusterName].hard : {};
+    let resourceLimits = projectDetail && clusterName ? projectDetail.spec.clusters[clusterName].hard : {};
     return (
       <Modal visible={isShowDialog} caption={t('编辑资源限制')} onClose={() => this.setState({ isShowDialog: false })}>
         <CreateProjectResourceLimitPanel
@@ -183,6 +178,7 @@ export class CreateNamespacePanel extends React.Component<RootProps, {}> {
           resourceLimits={namespaceEdition.resourceLimits}
           onSubmit={requestLimits => {
             actions.namespace.updateNamespaceResourceLimit(requestLimits);
+            this.setState({ isShowDialog: false });
           }}
         />
       </Modal>

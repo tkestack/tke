@@ -5,12 +5,18 @@ import { OperationResult, QueryState, RecordSet, uuid } from '@tencent/ff-redux'
 import { t } from '@tencent/tea-app/lib/i18n';
 
 import { resourceConfig } from '../../../config';
-import { reduceK8sRestfulPath, reduceNetworkRequest } from '../../../helpers';
+import { reduceK8sRestfulPath, reduceNetworkRequest, reduceNs } from '../../../helpers';
 import { RequestParams, ResourceInfo } from '../common/models';
 import { ClusterHelmStatus } from './constants/Config';
 import {
-    Helm, HelmFilter, HelmHistory, HelmKeyValue, InstallingHelm, TencenthubChart,
-    TencenthubChartVersion, TencenthubNamespace
+  Helm,
+  HelmFilter,
+  HelmHistory,
+  HelmKeyValue,
+  InstallingHelm,
+  TencenthubChart,
+  TencenthubChartVersion,
+  TencenthubNamespace
 } from './models';
 
 // 提示
@@ -213,6 +219,7 @@ export async function createHelmByOther(
     username?: string;
     password?: string;
     kvs?: HelmKeyValue[];
+    namespace?: string;
   },
   regionId: number = 1,
   clusterId: string
@@ -223,7 +230,8 @@ export async function createHelmByOther(
   }/json`;
   let data = {
     chart_url: params.chart_url,
-    repo: params.resource
+    repo: params.resource,
+    namespace: reduceNs(params.namespace)
   };
   if (params.username) {
     data['username'] = params.username;
@@ -279,6 +287,7 @@ export async function updateHelmByOther(
     username?: string;
     password?: string;
     kvs?: HelmKeyValue[];
+    namespace?: string;
   },
   regionId: number = 1,
   clusterId: string
@@ -293,6 +302,7 @@ export async function updateHelmByOther(
   if (params.username) {
     data['username'] = params.username;
     data['password'] = params.password;
+    data['namespace'] = reduceNs(params.namespace);
   }
   if (params.kvs && params.kvs.length) {
     data['values'] = formatKeyValue(params.kvs);
@@ -411,17 +421,21 @@ export async function ignoreInstallingHelm(params: { helmName: string }, regionI
  * helm列表的查询
  * @param query helm列表查询的一些过滤条件
  */
-export async function fetchHelmList(query: QueryState<HelmFilter>, regionId: number = 1, clusterId: string) {
+export async function fetchHelmList(
+  query: QueryState<HelmFilter>,
+  regionId: number = 1,
+  clusterId: string,
+  np: string
+) {
   let { paging } = query;
 
   let resourceInfo: ResourceInfo = resourceConfig()['cluster'];
   let url = `${reduceK8sRestfulPath({
     resourceInfo,
     specificName: clusterId
-  })}/helm/tiller/v2/releases/json?status_codes=DEPLOYED&&status_codes=FAILED&&status_codes=DELETING&&status_codes=DELETED&&status_codes=UNKNOWN&&sort_by=LAST_RELEASED&&sort_order=DESC&&limit=${
-    paging.pageSize
-  }`;
-
+  })}/helm/tiller/v2/releases/json?status_codes=DEPLOYED&&status_codes=FAILED&&status_codes=DELETING&&status_codes=DELETED&&status_codes=UNKNOWN&&sort_by=LAST_RELEASED&&sort_order=DESC&&namespace=${reduceNs(
+    np
+  )}&&limit=${paging.pageSize}`;
   try {
     let response = await GET(url, regionId, clusterId, false);
     let data = response;

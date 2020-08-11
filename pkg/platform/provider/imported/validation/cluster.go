@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,7 +31,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"tkestack.io/tke/api/platform"
-	"tkestack.io/tke/pkg/platform/provider/imported/util/mark"
+	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
@@ -76,7 +77,15 @@ func ValidatClusterAddresses(addresses []platform.ClusterAddress, fldPath *field
 			for _, msg := range validation.IsValidPortNum(int(address.Port)) {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("port"), address.Port, msg))
 			}
-			err := utilvalidation.IsHTTPSReachle(address.Host, address.Port, 5*time.Second)
+			if address.Path != "" && !strings.HasPrefix(address.Path, "/") {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("path"), address.Path, "must start by `/`"))
+			}
+
+			url := fmt.Sprintf("https://%s:%d", address.Host, address.Port)
+			if address.Path != "" {
+				url = fmt.Sprintf("%s%s", url, address.Path)
+			}
+			err := utilvalidation.IsValiadURL(url, 5*time.Second)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath, address, err.Error()))
 			}

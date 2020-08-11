@@ -1,13 +1,20 @@
-import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
-import { extend, uuid } from '@tencent/qcloud-lib';
-import * as ActionType from '../constants/ActionType';
-import * as WebAPI from '../WebAPI';
-import { RootState, EditState } from '../models';
-import { initMachine, initArg } from '../reducers/initState';
-import { cloneDeep, isEmpty } from '../../common/utils';
-import { generateWorkflowActionCreator, OperationTrigger, isSuccessWorkflow } from '@tencent/qcloud-redux-workflow';
-import { initValidation } from '../../../../helpers/Validator';
 import { Base64 } from 'js-base64';
+
+import {
+  extend,
+  generateFetcherActionCreator,
+  generateWorkflowActionCreator,
+  isSuccessWorkflow,
+  OperationTrigger,
+  uuid
+} from '@tencent/ff-redux';
+
+import { initValidation } from '../../../../helpers/Validator';
+import { cloneDeep, isEmpty } from '../../common/utils';
+import * as ActionType from '../constants/ActionType';
+import { EditState, RootState } from '../models';
+import { initArg, initMachine } from '../reducers/initState';
+import * as WebAPI from '../WebAPI';
 import { validateActions } from './validateActions';
 
 type GetState = () => RootState;
@@ -21,15 +28,15 @@ const fetchClusterActions = generateFetcherActionCreator({
     const { cluster } = getState();
     switch (cluster.data.record['progress']['status']) {
       case 'Unknown':
-        dispatch(restActions.stepNext('step1'));
+        dispatch(restActions.stepNext('step2'));
         break;
       case 'Doing':
       case 'Success':
       case 'Failed':
-        dispatch(restActions.stepNext('step9'));
+        dispatch(restActions.stepNext('step10'));
         break;
       default:
-        dispatch(restActions.stepNext('step1'));
+        dispatch(restActions.stepNext('step2'));
     }
   }
 });
@@ -55,7 +62,7 @@ const workflowActions = {
         let { createCluster } = getState();
         if (isSuccessWorkflow(createCluster)) {
           dispatch(installerActions.createCluster.reset());
-          dispatch(installerActions.stepNext('step9'));
+          dispatch(installerActions.stepNext('step10'));
           dispatch(installerActions.poll());
         }
       }

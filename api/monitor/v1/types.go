@@ -19,7 +19,126 @@
 package v1
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// ResourceList is a set of (resource name, quantity) pairs.
+type ResourceList map[string]resource.Quantity
+
+// ResourceRequirements describes the compute resource requirements.
+type ResourceRequirements struct {
+	Limits   ResourceList `json:"limits,omitempty" protobuf:"bytes,1,rep,name=limits,casttype=ResourceList"`
+	Requests ResourceList `json:"requests,omitempty" protobuf:"bytes,2,rep,name=requests,casttype=ResourceList"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Prometheus is a kubernetes package manager.
+type Prometheus struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of clusters in this set.
+	// +optional
+	Spec PrometheusSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	// +optional
+	Status PrometheusStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PrometheusList is the whole list of all prometheus which owned by a tenant.
+type PrometheusList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// List of Prometheuss
+	Items []Prometheus `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// PrometheusSpec describes the attributes on a Prometheus.
+type PrometheusSpec struct {
+	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	ClusterName string `json:"clusterName" protobuf:"bytes,2,opt,name=clusterName"`
+	Version     string `json:"version,omitempty" protobuf:"bytes,3,opt,name=version"`
+	// SubVersion is the components version such as node-exporter.
+	SubVersion map[string]string `json:"subVersion,omitempty" protobuf:"bytes,4,opt,name=subVersion"`
+	// RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.
+	RemoteAddress PrometheusRemoteAddr `json:"remoteAddress,omitempty" protobuf:"bytes,5,opt,name=remoteAddress"`
+	// +optional
+	// NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
+	NotifyWebhook string `json:"notifyWebhook,omitempty" protobuf:"bytes,6,opt,name=notifyWebhook"`
+	// +optional
+	// Resources is the resource request and limit for prometheus
+	Resources ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,7,opt,name=resources"`
+	// +optional
+	// RunOnMaster indicates whether to add master Affinity for all monitor components or not
+	RunOnMaster bool `json:"runOnMaster,omitempty" protobuf:"bytes,8,opt,name=runOnMaster"`
+	// +optional
+	// AlertRepeatInterval indicates repeat interval of alerts
+	AlertRepeatInterval string `json:"alertRepeatInterval,omitempty" protobuf:"bytes,9,opt,name=alertRepeatInterval"`
+	// +optional
+	// WithNPD indicates whether to deploy node-problem-detector or not
+	WithNPD bool `json:"withNPD,omitempty" protobuf:"bytes,10,opt,name=withNPD"`
+}
+
+// PrometheusStatus is information about the current status of a Prometheus.
+type PrometheusStatus struct {
+	// +optional
+	Version string `json:"version,omitempty" protobuf:"bytes,1,opt,name=version"`
+	// Phase is the current lifecycle phase of the helm of cluster.
+	// +optional
+	Phase AddonPhase `json:"phase,omitempty" protobuf:"bytes,2,opt,name=phase"`
+	// Reason is a brief CamelCase string that describes any failure.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
+	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
+	// +optional
+	RetryCount int32 `json:"retryCount" protobuf:"varint,4,name=retryCount"`
+	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
+	// +optional
+	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,5,name=lastReInitializingTimestamp"`
+	// SubVersion is the components version such as node-exporter.
+	SubVersion map[string]string `json:"subVersion,omitempty" protobuf:"bytes,6,opt,name=subVersion"`
+}
+
+// PrometheusRemoteAddr is the remote write/read address for prometheus
+type PrometheusRemoteAddr struct {
+	WriteAddr []string `json:"writeAddr,omitempty" protobuf:"bytes,1,opt,name=writeAddr"`
+	ReadAddr  []string `json:"readAddr,omitempty" protobuf:"bytes,2,opt,name=readAddr"`
+}
+
+// AddonPhase defines the phase of helm constructor.
+type AddonPhase string
+
+const (
+	// AddonPhaseInitializing means is wait initializing.
+	AddonPhaseInitializing AddonPhase = "Initializing"
+	// AddonPhaseReinitializing means is reinitializing.
+	AddonPhaseReinitializing AddonPhase = "Reinitializing"
+	// AddonPhaseChecking means is wait checking.
+	AddonPhaseChecking AddonPhase = "Checking"
+	// AddonPhaseRunning means is running.
+	AddonPhaseRunning AddonPhase = "Running"
+	// AddonPhaseUpgrading means is upgrading.
+	AddonPhaseUpgrading AddonPhase = "Upgrading"
+	// AddonPhaseFailed means has been failed.
+	AddonPhaseFailed AddonPhase = "Failed"
+	// AddonPhasePending means the controller is proceeding deploying
+	AddonPhasePending AddonPhase = "Pending"
+	// AddonPhaseUnhealthy means some pods of GPUManager is partial running
+	AddonPhaseUnhealthy AddonPhase = "Unhealthy"
+	// AddonPhaseTerminating means addon terminating
+	AddonPhaseTerminating AddonPhase = "Terminating"
+	// AddonPhaseUnknown means addon unknown
+	AddonPhaseUnknown AddonPhase = "Unknown"
 )
 
 // +genclient
@@ -73,6 +192,53 @@ type MetricQueryCondition struct {
 	Key   string `json:"key" protobuf:"bytes,1,opt,name=key"`
 	Expr  string `json:"expr" protobuf:"bytes,2,opt,name=expr"`
 	Value string `json:"value" protobuf:"bytes,3,opt,name=value"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterOverview defines the structure for querying clusters' overview data request and result.
+type ClusterOverview struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// +optional
+	Result *ClusterOverviewResult `json:"result,omitempty" protobuf:"bytes,2,opt,name=result"`
+}
+
+type ClusterOverviewResult struct {
+	ClusterCount     int32               `json:"clusterCount" protobuf:"bytes,1,opt,name=clusterCount"`
+	ClusterAbnormal  int32               `json:"clusterAbnormal" protobuf:"bytes,2,opt,name=clusterAbnormal"`
+	ProjectCount     int32               `json:"projectCount" protobuf:"bytes,3,opt,name=projectCount"`
+	ProjectAbnormal  int32               `json:"projectAbnormal" protobuf:"bytes,4,opt,name=projectAbnormal"`
+	NodeCount        int32               `json:"nodeCount" protobuf:"bytes,5,opt,name=nodeCount"`
+	NodeAbnormal     int32               `json:"nodeAbnormal" protobuf:"bytes,6,opt,name=nodeAbnormal"`
+	WorkloadCount    int32               `json:"workloadCount" protobuf:"bytes,7,opt,name=workloadCount"`
+	WorkloadAbnormal int32               `json:"workloadAbnormal" protobuf:"bytes,8,opt,name=workloadAbnormal"`
+	Clusters         []*ClusterStatistic `json:"clusters" protobuf:"bytes,9,opt,name=clusters"`
+}
+
+type ClusterStatistic struct {
+	ClusterID                string  `json:"clusterID" protobuf:"bytes,1,opt,name=clusterID"`
+	ClusterPhase             string  `json:"clusterPhase" protobuf:"bytes,2,opt,name=clusterPhase"`
+	NodeCount                int32   `json:"nodeCount" protobuf:"bytes,3,opt,name=nodeCount"`
+	NodeAbnormal             int32   `json:"nodeAbnormal" protobuf:"bytes,4,opt,name=nodeAbnormal"`
+	WorkloadCount            int32   `json:"workloadCount" protobuf:"bytes,5,opt,name=workloadCount"`
+	WorkloadAbnormal         int32   `json:"workloadAbnormal" protobuf:"bytes,6,opt,name=workloadAbnormal"`
+	CPURequest               float64 `json:"cpuRequest" protobuf:"bytes,7,opt,name=cpuRequest"`
+	CPULimit                 float64 `json:"cpuLimit" protobuf:"bytes,8,opt,name=cpuLimit"`
+	CPUCapacity              float64 `json:"cpuCapacity" protobuf:"bytes,9,opt,name=cpuCapacity"`
+	CPUAllocatable           float64 `json:"cpuAllocatable" protobuf:"bytes,10,opt,name=cpuAllocatable"`
+	CPURequestRate           string  `json:"cpuRequestRate" protobuf:"bytes,11,opt,name=cpuRequestRate"`
+	CPUAllocatableRate       string  `json:"cpuAllocatableRate" protobuf:"bytes,12,opt,name=cpuAllocatableRate"`
+	MemRequest               int64   `json:"memRequest" protobuf:"bytes,13,opt,name=memRequest"`
+	MemLimit                 int64   `json:"memLimit" protobuf:"bytes,14,opt,name=memLimit"`
+	MemCapacity              int64   `json:"memCapacity" protobuf:"bytes,15,opt,name=memCapacity"`
+	MemAllocatable           int64   `json:"memAllocatable" protobuf:"bytes,16,opt,name=memAllocatable"`
+	MemRequestRate           string  `json:"memRequestRate" protobuf:"bytes,17,opt,name=memRequestRate"`
+	MemAllocatableRate       string  `json:"memAllocatableRate" protobuf:"bytes,18,opt,name=memAllocatableRate"`
+	SchedulerHealthy         bool    `json:"schedulerHealthy" protobuf:"bytes,19,opt,name=schedulerHealthy"`
+	ControllerManagerHealthy bool    `json:"controllerManagerHealthy" protobuf:"bytes,20,opt,name=controllerManagerHealthy"`
+	EtcdHealthy              bool    `json:"etcdHealthy" protobuf:"bytes,21,opt,name=etcdHealthy"`
 }
 
 // +genclient

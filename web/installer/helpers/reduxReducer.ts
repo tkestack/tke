@@ -1,3 +1,3 @@
-import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
+import { generateFetcherReducer } from '@tencent/ff-redux';
 
 export const createFetcherReducer = generateFetcherReducer;

@@ -203,7 +203,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		return nil, false, err
 	}
 
-	userName, tenantID := authentication.GetUsernameAndTenantID(ctx)
+	userName, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID == "" {
 		return r.Store.Delete(ctx, name, deleteValidation, options)
 	}
