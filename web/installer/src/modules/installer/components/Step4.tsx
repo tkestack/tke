@@ -28,14 +28,14 @@ export class Step4 extends React.Component<RootProps> {
               <div className="run-docker-box" style={{ marginTop: '10px', width: '100%' }}>
                 <Form>
                   <Form.Item
-                    label="IssueUrl"
+                    label="IssuerUrl"
                     required
-                    status={getValidateStatus(editState.v_issueURL)}
-                    message={editState.v_issueURL.message}
+                    status={getValidateStatus(editState.v_issuerURL)}
+                    message={editState.v_issuerURL.message}
                   >
                     <Input
-                      value={editState.issueURL}
-                      onChange={value => actions.installer.updateEdit({ issueURL: value })}
+                      value={editState.issuerURL}
+                      onChange={value => actions.installer.updateEdit({ issuerURL: value })}
                     />
                   </Form.Item>
                   <Form.Item
