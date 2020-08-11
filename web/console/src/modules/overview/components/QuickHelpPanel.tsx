@@ -8,8 +8,12 @@ export function QuickHelpPanel() {
       </Card.Header>
       <Card.Body style={{ paddingTop: 0, paddingBottom: 0 }}>
         <List split={'divide'}>
-          <List.Item style={{ verticalAlign: 'center' }}>
-            <img src="/static/icon/overviewCluster.svg" style={{ height: '30px' }} alt="logo" />
+          <List.Item>
+            <img
+              src="/static/icon/overviewCluster.svg"
+              style={{ height: '30px', verticalAlign: 'middle', marginRight: 10 }}
+              alt="logo"
+            />
             <Button
               type={'link'}
               onClick={() => {
@@ -19,8 +23,12 @@ export function QuickHelpPanel() {
               创建独立集群
             </Button>
           </List.Item>
-          <List.Item style={{ verticalAlign: 'center' }}>
-            <img src="/static/icon/overviewUser.svg" style={{ height: '30px' }} alt="logo" />
+          <List.Item>
+            <img
+              src="/static/icon/overviewUser.svg"
+              style={{ height: '30px', verticalAlign: 'middle', marginRight: 10 }}
+              alt="logo"
+            />
             <Button
               type={'link'}
               onClick={() => {
@@ -30,12 +38,16 @@ export function QuickHelpPanel() {
               创建角色
             </Button>
           </List.Item>
-          <List.Item style={{ verticalAlign: 'center' }}>
-            <img src="/static/icon/overviewGithub.svg" style={{ height: '30px' }} alt="logo" />
+          <List.Item>
+            <img
+              src="/static/icon/overviewGithub.svg"
+              style={{ height: '30px', verticalAlign: 'middle', marginRight: 10 }}
+              alt="logo"
+            />
             <Button
               type={'link'}
               onClick={() => {
-                location.href = 'https://github.com/tkestack/tke/tree/master/docs/guide/zh-CN';
+                location.href = 'https://github.com/tkestack/tke/issues';
               }}
             >
               github-issue

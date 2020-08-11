@@ -45,6 +45,10 @@ export const NamespaceStatus = {
   Terminating: {
     text: 'Terminating',
     classname: 'text-restart'
+  },
+  Failed: {
+    text: 'Failed',
+    classname: 'text-danger'
   }
 };
 
@@ -297,7 +301,15 @@ export const ServiceWorkloadList = [
   },
   {
     value: 'statefulset',
-    name: 'Statefulset'
+    name: 'StatefulSet'
+  },
+  {
+    value: 'daemonset',
+    name: 'DaemonSet'
+  },
+  {
+    value: 'tapp',
+    name: 'TApp'
   }
 ];
 

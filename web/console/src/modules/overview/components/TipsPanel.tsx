@@ -8,9 +8,9 @@ export function TipsPanel() {
       </Card.Header>
       <Card.Body style={{ paddingTop: 0, paddingBottom: 0 }}>
         <List split={'divide'}>
-          <List.Item style={{ verticalAlign: 'center' }}>
+          <List.Item>
             <img src="/static/icon/overviewBlack.svg" style={{ height: '30px' }} alt="logo" />
-            <div style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+            <div style={{ display: 'inline-block', verticalAlign: 'bottom', marginLeft: 10 }}>
               <Text parent={'div'} style={{ display: 'block' }}>
                 平台实验室
               </Text>
@@ -25,9 +25,9 @@ export function TipsPanel() {
               </Button>
             </div>
           </List.Item>
-          <List.Item style={{ verticalAlign: 'center' }}>
+          <List.Item>
             <img src="/static/icon/overviewBlack.svg" style={{ height: '30px' }} alt="logo" />
-            <div style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+            <div style={{ display: 'inline-block', verticalAlign: 'bottom', marginLeft: 10 }}>
               <Text parent={'div'} style={{ display: 'block' }}>
                 使用指引
               </Text>

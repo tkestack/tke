@@ -18,9 +18,15 @@ const fetchNamespaceActions = generateFetcherActionCreator({
     let { projectNamespaceList, namespaceQuery } = getState();
     // 获取当前的资源的配置
     let namespaceList = [];
-    projectNamespaceList.data.records.forEach(item => {
-      namespaceList.push({ id: uuid(), name: item.metadata.name });
-    });
+    projectNamespaceList.data.records
+      .filter(item => item.status.phase === 'Available')
+      .forEach(item => {
+        namespaceList.push({
+          id: uuid(),
+          name: item.metadata.name,
+          displayName: `${item.spec.namespace}(${item.spec.clusterName})`
+        });
+      });
 
     return { recordCount: namespaceList.length, records: namespaceList };
   },
