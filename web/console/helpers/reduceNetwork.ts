@@ -120,6 +120,11 @@ export const reduceNetworkRequest = async (
       userDefinedHeader
     );
   }
+  if (keyword) {
+    userDefinedHeader = Object.assign({}, userDefinedHeader, {
+      'X-TKE-FuzzyResourceName': keyword
+    });
+  }
 
   let params = {
     method,

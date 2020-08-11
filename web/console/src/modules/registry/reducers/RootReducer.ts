@@ -116,7 +116,7 @@ export const RootReducer = combineReducers({
   chartList: createFFListReducer(ActionType.ChartList, null, null, null, {
     query: {
       paging: {
-        pageSize: 9
+        pageSize: 15
       }
     }
   }),
