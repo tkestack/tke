@@ -129,7 +129,7 @@ func scrapeConfigForPrometheus() string {
         replacement: $1:$2
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'container_gpu_utilization|container_request_gpu_utilization|container_gpu_memory_total|container_request_gpu_memory|kube_node_status_allocatable|kube_node_status_capacity|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_job_status_failed|kube_statefulset_status_replicas_ready|kube_statefulset_replicas|kube_daemonset_status_number_unavailable|kube_deployment_status_replicas_unavailable|kube_pod_labels|kube_pod_info|kube_pod_status_ready|kube_pod_container_status_restarts_total|kube_pod_container_resource_requests|kube_pod_container_resource_limits|kube_node_status_condition|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_replicaset_owner|kube_namespace_labels|kube_node_spec_taint|kube_node_info|kube_node_spec_unschedulable|kube_deployment_spec_replicas|kube_deployment_status_replicas|kube_deployment_status_replicas_updated|kube_deployment_status_replicas_available|kube_daemonset_status_number_ready|kube_daemonset_status_desired_number_scheduled|kube_pod_status_phase|kube_pod_container_status_running|kube_pod_container_status_waiting|kube_pod_container_status_terminated|kube_pod_container_status_last_terminated_reason|kube_job_status_succeeded|kube_job_status_active|kube_cronjob_spec_suspend|kube_persistentvolume_status_phase'
+        regex: 'container_gpu_utilization|container_request_gpu_utilization|container_gpu_memory_total|container_request_gpu_memory|kube_node_status_allocatable|kube_node_status_capacity|kube_node_status_allocatable_cpu_cores|kube_node_status_allocatable_memory_bytes|kube_job_status_failed|kube_statefulset_status_replicas_ready|kube_statefulset_replicas|kube_daemonset_status_number_unavailable|kube_deployment_status_replicas_unavailable|kube_pod_labels|kube_pod_info|kube_pod_status_ready|kube_pod_container_status_restarts_total|kube_pod_container_resource_requests|kube_pod_container_resource_limits|kube_node_status_condition|kube_node_status_capacity_cpu_cores|kube_node_status_capacity_memory_bytes|kube_replicaset_owner|kube_namespace_labels|kube_node_spec_taint|kube_node_info|kube_node_spec_unschedulable|kube_deployment_spec_replicas|kube_deployment_status_replicas|kube_deployment_status_replicas_updated|kube_deployment_status_replicas_available|kube_daemonset_status_number_ready|kube_daemonset_status_desired_number_scheduled|kube_pod_status_phase|kube_pod_container_status_running|kube_pod_container_status_waiting|kube_pod_container_status_terminated|kube_pod_container_status_last_terminated_reason|kube_job_status_succeeded|kube_job_status_active|kube_cronjob_spec_suspend|kube_persistentvolume_status_phase|kube_resourcequota|kube_service_created'
         action: keep
       - source_labels: [created_by_kind]
         action: replace
@@ -312,9 +312,9 @@ func scrapeConfigForPrometheus() string {
         regex: (.+)
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_current_inflight_requests|apiserver_dropped_requests_total|apiserver_request_total|apiserver_request_duration_seconds_(.*)|node_sockstat_TCP_inuse|node_network_transmit_bytes_total|node_network_receive_bytes_total|node_filesystem_size_bytes|node_filesystem_avail_bytes|node_disk_written_bytes_total|node_disk_read_bytes_total|node_disk_writes_completed_total|node_disk_reads_completed_total|node_cpu_seconds_total|node_memory_Buffers_bytes|node_memory_Cached_bytes|node_memory_MemTotal_bytes|node_memory_MemFree_bytes|node_boot_time_seconds|node_load1|node_load5|node_load15|node_filefd_allocated|node_filefd_maximum|node_context_switches_total|node_filesystem_free_bytes|node_filesystem_files_free|node_filesystem_files|node_disk_io_time_seconds_total|node_disk_read_time_seconds_total|node_disk_write_time_seconds_total|node_disk_io_time_seconds_total|node_disk_io_time_weighted_seconds_total|node_memory_MemAvailable_bytes|node_vmstat_pgmajfault|node_vmstat_oom_kill|node_network_receive_errs_total|node_network_transmit_errs_total'
+        regex: 'scheduler_e2e_scheduling_latency_microseconds_sum|scheduler_e2e_scheduling_latency_microseconds_count|apiserver_current_inflight_requests|apiserver_dropped_requests_total|apiserver_request_total|apiserver_request_duration_seconds_(.*)|node_sockstat_TCP_inuse|node_network_transmit_bytes_total|node_network_receive_bytes_total|node_filesystem_size_bytes|node_filesystem_avail_bytes|node_disk_written_bytes_total|node_disk_read_bytes_total|node_disk_writes_completed_total|node_disk_reads_completed_total|node_cpu_seconds_total|node_memory_Buffers_bytes|node_memory_Cached_bytes|node_memory_MemTotal_bytes|node_memory_MemFree_bytes|node_boot_time_seconds|node_load1|node_load5|node_load15|node_filefd_allocated|node_filefd_maximum|node_context_switches_total|node_filesystem_free_bytes|node_filesystem_files_free|node_filesystem_files|node_disk_io_time_seconds_total|node_disk_read_time_seconds_total|node_disk_write_time_seconds_total|node_disk_io_time_seconds_total|node_disk_io_time_weighted_seconds_total|node_memory_MemAvailable_bytes|node_vmstat_pgmajfault|node_vmstat_oom_kill|node_network_receive_errs_total|node_network_transmit_errs_total|kubernetes_build_info'
         action: keep
-      - regex: "instance|job|pod_name|namespace|scope|subresource"
+      - regex: "instance|job|namespace|scope|subresource"
         action: labeldrop
 
     - job_name: 'tke-etcd'
@@ -359,7 +359,7 @@ func scrapeConfigForPrometheus() string {
         regex: (.+)
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes|etcd_disk_wal_fsync_duration_seconds(.*)|etcd_disk_backend_commit_duration_seconds(.*)|etcd_network_peer_round_trip_time_seconds(.*)'
+        regex: 'etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes|etcd_disk_wal_fsync_duration_seconds(.*)|etcd_disk_backend_commit_duration_seconds(.*)|etcd_network_peer_round_trip_time_seconds(.*)|etcd_server_version'
         action: keep
       - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
@@ -474,16 +474,16 @@ groups:
     expr:  label_replace(label_replace(__pod_info1{workload_kind="ReplicaSet"} * on (workload_name,namespace) group_left(owner_name, owner_kind) label_replace(kube_replicaset_owner,"workload_name","$1","replicaset","(.*)"),"workload_name","$1","owner_name","(.*)"),"workload_kind","$1","owner_kind","(.*)")  or on(pod_name,namesapce)  __pod_info1{workload_kind != "ReplicaSet"}
 
   - record: k8s_cluster_cpu_core_total
-    expr: sum(kube_node_status_allocatable_cpu_cores * on(node) group_left kube_node_labels {node_role="Node"})
+    expr: sum(kube_node_status_allocatable_cpu_cores)
 
   - record: k8s_cluster_memory_total
-    expr: sum(kube_node_status_allocatable_memory_bytes * on(node) group_left kube_node_labels {node_role="Node"})
+    expr: sum(kube_node_status_allocatable_memory_bytes)
 
   - record: k8s_cluster_gpu_total
-    expr: sum(kube_node_status_allocatable_gpu * on(node) group_left kube_node_labels {node_role="Node"})
+    expr: sum(kube_node_status_allocatable_gpu)
 
   - record: k8s_cluster_gpu_memory_total
-    expr: sum(kube_node_status_allocatable_gpu_memory * on(node) group_left kube_node_labels {node_role="Node"})
+    expr: sum(kube_node_status_allocatable_gpu_memory)
 
   - record: k8s_container_cpu_core_used
     expr: sum(rate(container_cpu_usage_seconds_total[4m])) by (container_name, namespace, pod_name) * on(namespace, pod_name) group_left(workload_kind, workload_name, node, node_role)  __pod_info2
@@ -599,6 +599,12 @@ groups:
   - record: k8s_pod_rate_mem_no_cache_limit
     expr: sum(k8s_container_mem_no_cache_bytes + on (container_name, pod_name, namespace) group_left kube_pod_container_resource_limits{resource="memory"} * 0) without(container_name )   * 100    / on (pod_name,namespace)  group_left  sum(kube_pod_container_resource_limits{resource="memory"})  without(container_name)
 
+  - record: k8s_pod_resource_request
+    expr: sum(kube_pod_container_resource_requests) without(container_name) * on(namespace, pod_name) group_left(workload_kind, workload_name, node, node_role)  __pod_info2
+
+  - record: k8s_pod_resource_limit
+    expr: sum(kube_pod_container_resource_limits) without(container_name) * on(namespace, pod_name) group_left(workload_kind, workload_name, node, node_role)  __pod_info2
+
   - record: k8s_pod_rate_mem_usage_node
     expr: k8s_pod_mem_usage_bytes * 100  /  on(node) group_left  kube_node_status_capacity_memory_bytes
 
@@ -665,14 +671,29 @@ groups:
   - record: k8s_pod_restart_total
     expr: sum(idelta(kube_pod_container_status_restarts_total [2m])) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
-  - record: k8s_node_status_ready
+  - record: k8s_pod_status_phase
+    expr: kube_pod_status_phase * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+
+  - record: k8s_node_status_ready_with_node_role
     expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role, device_type)  kube_node_labels)  without(condition, status)
 
-  - record: k8s_node_status_ready_without_node_role
+  - record: k8s_node_status_ready
     expr: max(kube_node_status_condition{condition="Ready", status="true"})  without(condition, status)
 
   - record: k8s_node_pod_restart_total
     expr: sum(k8s_pod_restart_total) without (pod_name,workload_kind,workload_name,namespace) * on(node) group_left(device_type) kube_node_labels
+
+  - record: k8s_node_resource_request
+    expr: sum(k8s_pod_resource_request) by(node, node_role, resource, unit)
+
+  - record: k8s_node_resource_limit
+    expr: sum(k8s_pod_resource_limit) by(node, node_role, resource, unit)
+
+  - record: k8s_node_status_capacity
+    expr: kube_node_status_capacity * on (node) group_left(node_role, device_type)  kube_node_labels
+
+  - record: k8s_node_status_allocatable
+    expr: kube_node_status_allocatable * on (node) group_left(node_role, device_type)  kube_node_labels
 
   - record: k8s_node_cpu_usage
     expr: (100 - sum (irate(node_cpu_seconds_total{mode="idle"}[5m])) by (node) / count (irate(node_cpu_seconds_total{mode="idle"}[5m])) by (node) * 100) * on(node) group_left(node_role, device_type) kube_node_labels
@@ -761,8 +782,66 @@ groups:
             ,"workload_name","","cronjob","(.*)"),
             "__name__", "k8s_workload_abnormal", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
 
+  - record: k8s_workload_replicas_desire
+    expr: |-
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_deployment_spec_replicas,
+            "workload_kind","Deployment","","")
+            ,"workload_name","$1","deployment","(.*)"),
+            "__name__", "k8s_workload_replicas_desire", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+            or on (namespace,workload_name,workload_kind, __name__)
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_daemonset_status_desired_number_scheduled,
+            "workload_kind","DaemonSet","","")
+            ,"workload_name","$1","daemonset","(.*)"),
+            "__name__", "k8s_workload_replicas_desire", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+            or on (namespace,workload_name,workload_kind, __name__)
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_statefulset_replicas,
+            "workload_kind","StatefulSet","","")
+            ,"workload_name","$1","statefulset","(.*)"),
+            "__name__", "k8s_workload_replicas_desire", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+
+  - record: k8s_workload_replicas_current
+    expr: |-
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_deployment_status_replicas_available,
+            "workload_kind","Deployment","","")
+            ,"workload_name","$1","deployment","(.*)"),
+            "__name__", "k8s_workload_replicas_current", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+            or on (namespace,workload_name,workload_kind, __name__)
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_daemonset_status_number_ready,
+            "workload_kind","DaemonSet","","")
+            ,"workload_name","$1","daemonset","(.*)"),
+            "__name__", "k8s_workload_replicas_current", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+            or on (namespace,workload_name,workload_kind, __name__)
+            max(label_replace(
+            label_replace(
+            label_replace(
+            kube_statefulset_status_replicas_ready,
+            "workload_kind","StatefulSet","","")
+            ,"workload_name","$1","statefulset","(.*)"),
+            "__name__", "k8s_workload_replicas_current", "__name__","(.*)") ) by (namespace, workload_name, workload_kind,__name__)
+
   - record: k8s_workload_pod_restart_total
     expr: sum(k8s_pod_restart_total) by(namespace,workload_kind,workload_name)
+
+  - record: k8s_workload_resource_request
+    expr: sum(k8s_pod_resource_request) by(workload_name, workload_kind, namespace, resource, unit)
+
+  - record: k8s_workload_resource_limit
+    expr: sum(k8s_pod_resource_limit) by(workload_name, workload_kind, namespace, resource, unit)
 
   - record: k8s_workload_cpu_core_used
     expr: sum(k8s_pod_cpu_core_used) by(workload_name, workload_kind, namespace)
@@ -823,6 +902,9 @@ groups:
 
   - record: k8s_workload_rate_gpu_memory_used_cluster
     expr: k8s_workload_gpu_memory_used * 100 / scalar(k8s_cluster_gpu_memory_total)
+
+  - record: k8s_resourcequota
+    expr: kube_resourcequota
 
   - record: k8s_namespace_cpu_core_used
     expr: sum(k8s_pod_cpu_core_used) by (namespace)
@@ -885,19 +967,22 @@ groups:
     expr: k8s_namespace_gpu_memory_used * 100 / scalar(k8s_cluster_gpu_memory_total)
 
   - record: k8s_cluster_cpu_core_used
-    expr:  sum(k8s_pod_cpu_core_used{node_role="Node"})
+    expr:  sum(k8s_pod_cpu_core_used)
 
   - record: k8s_cluster_mem_usage_bytes
-    expr:  sum(k8s_pod_mem_usage_bytes{node_role="Node"})
+    expr:  sum(k8s_pod_mem_usage_bytes)
 
   - record: k8s_cluster_mem_no_cache_bytes
-    expr: sum(k8s_pod_mem_no_cache_bytes{node_role="Node"})
+    expr: sum(k8s_pod_mem_no_cache_bytes)
 
   - record: k8s_cluster_rate_cpu_core_used_cluster
     expr: k8s_cluster_cpu_core_used  * 100 / scalar(k8s_cluster_cpu_core_total)
 
   - record: k8s_cluster_rate_cpu_core_request_cluster
-    expr: sum(kube_pod_container_resource_requests{resource="cpu"} * on(node) group_left kube_node_labels {node_role="Node"} ) * 100 / scalar(k8s_cluster_cpu_core_total)
+    expr: sum(kube_pod_container_resource_requests{resource="cpu"}) * 100 / scalar(k8s_cluster_cpu_core_total)
+
+  - record: k8s_cluster_cpu_core_request
+    expr: sum(kube_pod_container_resource_requests{resource="cpu"})
 
   - record: k8s_cluster_rate_mem_usage_bytes_cluster
     expr: k8s_cluster_mem_usage_bytes * 100 / scalar(k8s_cluster_memory_total)
@@ -906,55 +991,79 @@ groups:
     expr: k8s_cluster_mem_no_cache_bytes * 100 / scalar(k8s_cluster_memory_total)
 
   - record: k8s_cluster_rate_mem_request_bytes_cluster
-    expr: sum(kube_pod_container_resource_requests{resource="memory"} * on(node) group_left kube_node_labels {node_role="Node"} ) * 100 / scalar(k8s_cluster_memory_total)
+    expr: sum(kube_pod_container_resource_requests{resource="memory"}) * 100 / scalar(k8s_cluster_memory_total)
+
+  - record: k8s_cluster_mem_request_bytes
+    expr: sum(kube_pod_container_resource_requests{resource="memory"})
 
   - record: k8s_cluster_network_receive_bytes_bw
-    expr: sum(k8s_pod_network_receive_bytes_bw{node_role="Node"})
+    expr: sum(k8s_pod_network_receive_bytes_bw)
 
   - record: k8s_cluster_network_transmit_bytes_bw
-    expr: sum(k8s_pod_network_transmit_bytes_bw{node_role="Node"})
+    expr: sum(k8s_pod_network_transmit_bytes_bw)
 
   - record: k8s_cluster_network_receive_bytes
-    expr: sum(k8s_pod_network_receive_bytes{node_role="Node"})
+    expr: sum(k8s_pod_network_receive_bytes)
 
   - record: k8s_cluster_network_transmit_bytes
-    expr: sum(k8s_pod_network_transmit_bytes{node_role="Node"})
+    expr: sum(k8s_pod_network_transmit_bytes)
 
   - record: k8s_cluster_network_receive_packets
-    expr: sum(k8s_pod_network_receive_packets{node_role="Node"})
+    expr: sum(k8s_pod_network_receive_packets)
 
   - record: k8s_cluster_network_transmit_packets
-    expr: sum(k8s_pod_network_transmit_packets{node_role="Node"})
+    expr: sum(k8s_pod_network_transmit_packets)
 
   - record: k8s_cluster_fs_read_bytes
-    expr: sum(k8s_pod_fs_read_bytes{node_role="Node"})
+    expr: sum(k8s_pod_fs_read_bytes)
 
   - record: k8s_cluster_fs_write_bytes
-    expr: sum(k8s_pod_fs_write_bytes{node_role="Node"})
+    expr: sum(k8s_pod_fs_write_bytes)
 
   - record: k8s_cluster_fs_read_times
-    expr: sum(k8s_pod_fs_read_times{node_role="Node"})
+    expr: sum(k8s_pod_fs_read_times)
 
   - record: k8s_cluster_fs_write_times
-    expr: sum(k8s_pod_fs_write_times{node_role="Node"})
+    expr: sum(k8s_pod_fs_write_times)
 
   - record: k8s_cluster_gpu_used
-    expr:  sum(k8s_pod_gpu_used{node_role="Node"})
+    expr:  sum(k8s_pod_gpu_used)
 
   - record: k8s_cluster_rate_gpu_used_cluster
     expr: k8s_cluster_gpu_used  * 100 / scalar(k8s_cluster_gpu_total)
 
   - record: k8s_cluster_rate_gpu_request_cluster
-    expr: sum(k8s_pod_gpu_request * on(node) group_left kube_node_labels {node_role="Node"}) * 100 / scalar(k8s_cluster_gpu_total)
+    expr: sum(k8s_pod_gpu_request) * 100 / scalar(k8s_cluster_gpu_total)
 
   - record: k8s_cluster_gpu_memory_used
-    expr:  sum(k8s_pod_gpu_memory_used{node_role="Node"})
+    expr:  sum(k8s_pod_gpu_memory_used)
 
   - record: k8s_cluster_rate_gpu_memory_used_cluster
     expr: k8s_cluster_gpu_memory_used  * 100 / scalar(k8s_cluster_gpu_memory_total)
 
   - record: k8s_cluster_rate_gpu_memory_request_cluster
-    expr: sum(k8s_pod_gpu_memory_request * on(node) group_left kube_node_labels {node_role="Node"} ) * 100 / scalar(k8s_cluster_gpu_memory_total)
+    expr: sum(k8s_pod_gpu_memory_request) * 100 / scalar(k8s_cluster_gpu_memory_total)
+
+  - record: k8s_cluster_node_num
+    expr: count(kube_node_info)
+
+  - record: k8s_cluster_pod_num
+    expr: sum(k8s_node_pod_num)
+
+  - record: k8s_cluster_workload_num
+    expr: count(max(__pod_info2{workload_kind!="<none>"}) by (namespace,workload_kind,workload_name))
+
+  - record: k8s_cluster_workload_replicas_unexpected_num
+    expr: count((k8s_workload_replicas_desire - k8s_workload_replicas_current) > 0 and k8s_workload_replicas_current != 0)
+
+  - record: k8s_cluster_workload_replicas_expected_num
+    expr: count((k8s_workload_replicas_desire - k8s_workload_replicas_current) == 0)
+
+  - record: k8s_cluster_workload_replicas_zero_num
+    expr: count(k8s_workload_replicas_current == 0)
+
+  - record: k8s_cluster_age
+    expr: sum(time() - kube_service_created{namespace="default",service="kubernetes"})
 
   - record: project_namespace_cpu_core_used
     expr: k8s_namespace_cpu_core_used* on(namespace) group_left(project_name,namespace_name) kube_namespace_labels
@@ -1038,7 +1147,7 @@ groups:
     expr: sum(project_namespace_fs_write_bytes) by (project_name)
 
   - record: k8s_component_apiserver_ready
-    expr: up{instance=~"(.*)60001"} * on(node) group_left(node_role) kube_node_labels
+    expr: up{instance=~"(.*)60001|(.*)60002"} * on(node) group_left(node_role) kube_node_labels
 
   - record: k8s_component_etcd_ready
     expr: up{instance=~"(.*)2379"} * on(node) group_left(node_role) kube_node_labels
@@ -1054,6 +1163,18 @@ groups:
 
   - record: k8s_component_scheduler_scheduling_latency
     expr: sum(scheduler_e2e_scheduling_latency_microseconds_sum) by (node) / sum(scheduler_e2e_scheduling_latency_microseconds_count) by (node)
+
+  - record: k8s_component_apiserver_version
+    expr: max(kubernetes_build_info{pod_name=~"kube-apiserver.*"}) by (buildDate, compiler, gitCommit, gitTreeState, gitVersion, goVersion, major, minor, platform)
+
+  - record: k8s_component_scheduler_version
+    expr: max(kubernetes_build_info{pod_name=~"kube-scheduler.*"}) by (buildDate, compiler, gitCommit, gitTreeState, gitVersion, goVersion, major, minor, platform)
+
+  - record: k8s_component_controller_manager_version
+    expr: max(kubernetes_build_info{pod_name=~"kube-controller-manager.*"}) by (buildDate, compiler, gitCommit, gitTreeState, gitVersion, goVersion, major, minor, platform)
+
+  - record: k8s_component_etcd_version
+    expr: max(etcd_server_version) by (server_version)
 `)
 
 	return rules
