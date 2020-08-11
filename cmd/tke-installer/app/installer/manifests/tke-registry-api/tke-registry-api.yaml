@@ -23,7 +23,7 @@ metadata:
   name: tke-registry-api
   namespace: tke
 spec:
-  replicas: 1
+  replicas: {{ .Replicas }}
   selector:
     matchLabels:
       app: tke-registry-api

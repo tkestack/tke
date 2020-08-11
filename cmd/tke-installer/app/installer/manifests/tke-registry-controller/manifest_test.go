@@ -29,6 +29,7 @@ import (
 func TestManifest(t *testing.T) {
 	data, err := template.ParseFile("tke-registry-controller.yaml",
 		map[string]interface{}{
+			"Replicas":       1,
 			"Image":          "Image",
 			"NodeName":       "NodeName",
 			"AdminUsername":  "AdminUsername",
