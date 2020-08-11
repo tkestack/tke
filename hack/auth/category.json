@@ -2329,6 +2329,10 @@
                     "description": "列举Chart"
                 },
                 {
+                    "name": "listChartInfo",
+                    "description": "获取Chart文件"
+                },
+                {
                     "name": "listRegistries",
                     "description": "列举Registry"
                 },
@@ -2375,6 +2379,58 @@
                 {
                     "name": "updateRepositoryStatus",
                     "description": "修改Repository状态"
+                }
+            ]
+        }
+    },
+    {
+        "metadata": {
+            "name": "app",
+            "creationTimestamp": null
+        },
+        "Spec": {
+            "displayName": "应用编排",
+            "description": "应用编排",
+            "actions": [
+                {
+                    "name": "createApp",
+                    "description": "创建App"
+                },
+                {
+                    "name": "createAppRollback",
+                    "description": "回滚App"
+                },
+                {
+                    "name": "deleteApp",
+                    "description": "删除App"
+                },
+                {
+                    "name": "getApp",
+                    "description": "获取App"
+                },
+                {
+                    "name": "getAppStatus",
+                    "description": "获取App状态"
+                },
+                {
+                    "name": "listApps",
+                    "description": "列举App"
+                },
+                {
+                    "name": "listAppResources",
+                    "description": "列举App资源"
+                },
+                {
+                    "name": "listAppHistories",
+                    "description": "列举App历史"
+                },
+                {
+                    "name": "updateApp",
+                    "description": "修改App"
+                },
+                {
+                    "name": "updateAppStatus",
+                    "description": "修改App状态"
                 }
             ]
         }

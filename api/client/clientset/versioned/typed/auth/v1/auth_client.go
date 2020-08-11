@@ -33,6 +33,7 @@ type AuthV1Interface interface {
 	CategoriesGetter
 	ClientsGetter
 	ConfigMapsGetter
+	CustomPolicyBindingsGetter
 	GroupsGetter
 	IdentityProvidersGetter
 	LocalGroupsGetter
@@ -67,6 +68,10 @@ func (c *AuthV1Client) Clients() ClientInterface {
 
 func (c *AuthV1Client) ConfigMaps() ConfigMapInterface {
 	return newConfigMaps(c)
+}
+
+func (c *AuthV1Client) CustomPolicyBindings(namespace string) CustomPolicyBindingInterface {
+	return newCustomPolicyBindings(c, namespace)
 }
 
 func (c *AuthV1Client) Groups() GroupInterface {

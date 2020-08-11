@@ -1411,6 +1411,62 @@ message TappControllerStatus {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
 }
 
+// Template instance is a recorder of kubernetes event.
+message Template {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // +optional
+  optional TemplateSpec spec = 2;
+
+  // +optional
+  optional TemplateStatus status = 3;
+}
+
+// TemplateList is the whole list of template.
+message TemplateList {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  // List of templates
+  repeated Template items = 2;
+}
+
+// TemplateSpec is a description of template.
+message TemplateSpec {
+  optional string tenantID = 1;
+
+  // +optional
+  optional string type = 2;
+
+  optional string username = 3;
+
+  // +optional
+  map<string, string> labels = 4;
+
+  optional string content = 5;
+}
+
+// TemplateStatus is information about the current status of a
+// TemplateStatus.
+message TemplateStatus {
+  // Phase is the current lifecycle phase of the persistent event of cluster.
+  // +optional
+  optional string phase = 1;
+
+  // Reason is a brief CamelCase string that describes any failure.
+  // +optional
+  optional string reason = 2;
+
+  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
+  // +optional
+  optional int32 retryCount = 3;
+
+  // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 4;
+}
+
 message ThirdPartyHA {
   optional string vip = 1;
 

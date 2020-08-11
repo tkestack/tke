@@ -70,6 +70,10 @@ type Components struct {
 	// backend service.
 	// +optional
 	Audit *Component `json:"audit,omitempty"`
+	// application is used to specify the access information of the `tke-application-api`
+	// backend service.
+	// +optional
+	Application *Component `json:"application,omitempty"`
 }
 
 type Component struct {

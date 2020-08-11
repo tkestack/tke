@@ -75,6 +75,18 @@ message ChartGroupSpec {
 
   // +optional
   optional string visibility = 4;
+
+  // +optional
+  optional string type = 5;
+
+  // +optional
+  optional string description = 6;
+
+  // +optional
+  repeated string projects = 7;
+
+  // +optional
+  repeated string finalizers = 8;
 }
 
 // ChartGroupStatus represents information about the status of a chart group.
@@ -83,6 +95,43 @@ message ChartGroupStatus {
   optional bool locked = 1;
 
   optional int32 chartCount = 2;
+
+  // +optional
+  optional string phase = 3;
+
+  // The last time the condition transitioned from one status to another.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 4;
+
+  // The reason for the condition's last transition.
+  // +optional
+  optional string reason = 5;
+
+  // A human readable message indicating details about the transition.
+  // +optional
+  optional string message = 6;
+}
+
+// ChartInfo describes detail of a chart version.
+message ChartInfo {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of a chart.
+  // +optional
+  optional ChartInfoSpec spec = 2;
+}
+
+// ChartInfoSpec is a description of a ChartInfo.
+message ChartInfoSpec {
+  // +optional
+  map<string, string> readme = 1;
+
+  // +optional
+  map<string, string> values = 2;
+
+  // +optional
+  map<string, string> rawFiles = 3;
 }
 
 // ChartList is the whole list of all charts which owned by a chart group.
@@ -92,6 +141,18 @@ message ChartList {
 
   // List of charts
   repeated Chart items = 2;
+}
+
+// ChartProxyOptions is the query options to a ChartInfo proxy call.
+message ChartProxyOptions {
+  // +optional
+  optional string version = 1;
+
+  // +optional
+  optional string cluster = 2;
+
+  // +optional
+  optional string namespace = 3;
 }
 
 message ChartSpec {
@@ -106,6 +167,9 @@ message ChartSpec {
 
   // +optional
   optional string visibility = 5;
+
+  // +optional
+  repeated string finalizers = 6;
 }
 
 message ChartStatus {
@@ -115,6 +179,21 @@ message ChartStatus {
   optional int32 pullCount = 2;
 
   repeated ChartVersion versions = 3;
+
+  // +optional
+  optional string phase = 4;
+
+  // The last time the condition transitioned from one status to another.
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 5;
+
+  // The reason for the condition's last transition.
+  // +optional
+  optional string reason = 6;
+
+  // A human readable message indicating details about the transition.
+  // +optional
+  optional string message = 7;
 }
 
 message ChartVersion {
@@ -123,6 +202,8 @@ message ChartVersion {
   optional int64 chartSize = 2;
 
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time timeCreated = 3;
+
+  optional string description = 4;
 }
 
 // ConfigMap holds configuration data for tke to consume.

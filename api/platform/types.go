@@ -1309,6 +1309,62 @@ type LogCollectorStatus struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Machine instance in Kubernetes cluster
+type Template struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of the template.
+	// +optional
+	Spec TemplateSpec
+	// +optional
+	Status TemplateStatus
+}
+
+// TemplateSpec is a description of template.
+type TemplateSpec struct {
+	TenantID string
+	Type     string
+	Username string
+	Labels   map[string]string
+	Content  string
+}
+
+// TemplateStatus is information about the current status of a
+// TemplateStatus.
+type TemplateStatus struct {
+	// Phase is the current lifecycle phase of the persistent event of cluster.
+	// +optional
+	Phase AddonPhase
+	// Reason is a brief CamelCase string that describes any failure.
+	// +optional
+	Reason string
+	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
+	// +optional
+	RetryCount int32
+	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
+	// +optional
+	LastReInitializingTimestamp metav1.Time
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// TemplateList is the whole list of template.
+type TemplateList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+	// List of clusters
+	Items []Template
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:skipVerbs=deleteCollection
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// Machine instance in Kubernetes cluster
 type Machine struct {
 	metav1.TypeMeta
 	// +optional

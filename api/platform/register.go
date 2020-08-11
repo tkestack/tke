@@ -118,6 +118,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&LBCF{},
 		&LBCFList{},
 		&LBCFProxyOptions{},
+
+		&Template{},
+		&TemplateList{},
 	)
 	return nil
 }

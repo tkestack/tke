@@ -52,6 +52,17 @@ func Groups(ctx context.Context) (groups []string) {
 	return userInfo.GetGroups()
 }
 
+// GetUID implementation decomposition in the original
+// kubernetes api server the user name obtained in *Userinfo is the actual
+// userID.
+func GetUID(ctx context.Context) (uid string) {
+	userInfo, ok := request.UserFrom(ctx)
+	if !ok {
+		return ""
+	}
+	return userInfo.GetUID()
+}
+
 // IsAdministrator check whether administrator
 func IsAdministrator(ctx context.Context, privilegedUsername string) bool {
 	username, tenantID := UsernameAndTenantID(ctx)

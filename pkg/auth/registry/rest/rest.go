@@ -39,6 +39,7 @@ import (
 	groupstorage "tkestack.io/tke/pkg/auth/registry/group/storage"
 	idpstorage "tkestack.io/tke/pkg/auth/registry/identityprovider/storage"
 
+	custompolicybindingtorage "tkestack.io/tke/pkg/auth/registry/custompolicybinding/storage"
 	localgroupstorage "tkestack.io/tke/pkg/auth/registry/localgroup/storage"
 	localidentitystorage "tkestack.io/tke/pkg/auth/registry/localidentity/storage"
 	policystorage "tkestack.io/tke/pkg/auth/registry/policy/storage"
@@ -132,6 +133,11 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["projectpolicybindings"] = projectPolicyRest.ProjectPolicy
 		storageMap["projectpolicybindings/finalize"] = projectPolicyRest.Finalize
 		storageMap["projectpolicybindings/status"] = projectPolicyRest.Status
+
+		customPolicyRest := custompolicybindingtorage.NewStorage(restOptionsGetter, authClient, s.Enforcer, s.PrivilegedUsername)
+		storageMap["custompolicybindings"] = customPolicyRest.CustomPolicy
+		storageMap["custompolicybindings/finalize"] = customPolicyRest.Finalize
+		storageMap["custompolicybindings/status"] = customPolicyRest.Status
 
 		projectRest := projectstorage.NewStorage(restOptionsGetter, authClient, s.Enforcer)
 		storageMap["projects"] = projectRest.Project

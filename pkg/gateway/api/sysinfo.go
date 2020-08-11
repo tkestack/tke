@@ -20,13 +20,16 @@ package api
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/emicklei/go-restful"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
-	"net/http"
+	applicationapi "tkestack.io/tke/api/application/v1"
 	"tkestack.io/tke/api/auth"
 	authv1 "tkestack.io/tke/api/auth/v1"
 	"tkestack.io/tke/api/business"
 	businessv1 "tkestack.io/tke/api/business/v1"
+	logagentapi "tkestack.io/tke/api/logagent/v1"
 	"tkestack.io/tke/api/monitor"
 	monitorv1 "tkestack.io/tke/api/monitor/v1"
 	"tkestack.io/tke/api/notify"
@@ -35,7 +38,6 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	auditapi "tkestack.io/tke/pkg/audit/api"
-	logagentapi "tkestack.io/tke/api/logagent/v1"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 )
 
@@ -46,14 +48,15 @@ type GroupVersion struct {
 
 // Components contains the service address of each module in TKE
 type Components struct {
-	Platform *GroupVersion `json:"platform,omitempty"`
-	Business *GroupVersion `json:"business,omitempty"`
-	Monitor  *GroupVersion `json:"monitor,omitempty"`
-	Notify   *GroupVersion `json:"notify,omitempty"`
-	Auth     *GroupVersion `json:"auth,omitempty"`
-	Registry *GroupVersion `json:"registry,omitempty"`
-	Audit    *GroupVersion `json:"audit,omitempty"`
-	LogAgent *GroupVersion `json:"logagent,omitempty"`
+	Platform    *GroupVersion `json:"platform,omitempty"`
+	Business    *GroupVersion `json:"business,omitempty"`
+	Monitor     *GroupVersion `json:"monitor,omitempty"`
+	Notify      *GroupVersion `json:"notify,omitempty"`
+	Auth        *GroupVersion `json:"auth,omitempty"`
+	Registry    *GroupVersion `json:"registry,omitempty"`
+	Audit       *GroupVersion `json:"audit,omitempty"`
+	LogAgent    *GroupVersion `json:"logagent,omitempty"`
+	Application *GroupVersion `json:"application,omitempty"`
 }
 
 type SysInfo struct {
@@ -133,7 +136,13 @@ func handleGetSysInfoFunc(cfg *gatewayconfig.GatewayConfiguration) func(*restful
 		if cfg.Components.LogAgent != nil {
 			cmp.LogAgent = &GroupVersion{
 				GroupName: logagentapi.GroupName,
-				Version: logagentapi.Version,
+				Version:   logagentapi.Version,
+			}
+		}
+		if cfg.Components.Application != nil {
+			cmp.Application = &GroupVersion{
+				GroupName: applicationapi.GroupName,
+				Version:   applicationapi.Version,
 			}
 		}
 		sysInfo := SysInfo{

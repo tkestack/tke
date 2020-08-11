@@ -322,3 +322,32 @@ export const prometheus = (k8sVersion: string) => {
     }
   });
 };
+
+/**
+ * chartgroup
+ * @param k8sVersion
+ */
+export const chartgroup = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'chartgroup',
+    requestType: {
+      list: 'chartgroups'
+    }
+  });
+};
+
+/**
+ * chart
+ * @param k8sVersion
+ */
+export const chart = (k8sVersion: string) => {
+  return generateResourceInfo({
+    k8sVersion,
+    resourceName: 'chart',
+    requestType: {
+      list: 'charts'
+    },
+    isRelevantToNamespace: true
+  });
+};

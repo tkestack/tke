@@ -66,6 +66,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&PersistentEvent{},
 		&PersistentEventList{},
 
+		&Template{},
+		&TemplateList{},
+
 		&Helm{},
 		&HelmList{},
 		&HelmProxyOptions{},

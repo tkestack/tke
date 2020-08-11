@@ -5,7 +5,7 @@ import { reduceK8sRestfulPath } from '../../../../helpers';
 import { Method, reduceNetworkRequest } from '../../../../helpers/reduceNetwork';
 import { RequestParams, Resource } from '../../../modules/common';
 import { ResourceInfo } from '../../common/models/ResourceInfo';
-import { Namespace, ResourceFilter } from '../models';
+import { ResourceFilter } from '../models';
 
 //业务控制台api
 

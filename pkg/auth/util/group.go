@@ -117,7 +117,7 @@ func HandleGroupPoliciesUpdate(ctx context.Context, authClient authinternalclien
 		return nil
 	}
 
-	roles := enforcer.GetRolesForUserInDomain(GroupKey(group.Spec.TenantID, group.Name), "")
+	roles := enforcer.GetRolesForUserInDomain(GroupKey(group.Spec.TenantID, group.Name), DefaultDomain)
 	var oldPolicies []string
 	for _, r := range roles {
 		if strings.HasPrefix(r, "pol-") {
@@ -148,7 +148,7 @@ func FillGroupPolicies(ctx context.Context, authClient authinternalclient.AuthIn
 
 	policyDisplayNameMap := make(map[string]string)
 	for i, item := range groupList.Items {
-		roles := enforcer.GetRolesForUserInDomain(GroupKey(item.Spec.TenantID, item.Name), "")
+		roles := enforcer.GetRolesForUserInDomain(GroupKey(item.Spec.TenantID, item.Name), DefaultDomain)
 		var policies []string
 		for _, r := range roles {
 			if strings.HasPrefix(r, "pol-") {
