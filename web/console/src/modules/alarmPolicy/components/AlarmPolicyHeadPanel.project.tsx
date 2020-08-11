@@ -18,7 +18,7 @@ export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
       value: p.name
     }));
     let namespaceOptions = namespaceList.data.records.map((p, index) => ({
-      text: p.name,
+      text: p.displayName,
       value: p.name
     }));
     return (

@@ -15,7 +15,6 @@ export async function fetchClusteroverviews(query) {
 
   let response = await reduceNetworkRequest(params);
   if (response.code === 0) {
-    console.log(response);
     return response.data.result;
   }
 }

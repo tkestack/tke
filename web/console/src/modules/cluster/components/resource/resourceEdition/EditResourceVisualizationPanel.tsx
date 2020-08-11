@@ -202,7 +202,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
     let namespaceOptions = namespaceList.data.records.map(item => ({
       value: item.name,
-      text: item.name
+      text: item.displayName
     }));
 
     let finalResourceTypeList = [];
