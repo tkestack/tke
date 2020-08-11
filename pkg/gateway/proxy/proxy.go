@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"k8s.io/apiserver/pkg/server/mux"
+	"tkestack.io/tke/api/application"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/api/business"
 	"tkestack.io/tke/api/logagent"
@@ -45,14 +46,15 @@ const apiPrefix = "/apis"
 type moduleName string
 
 const (
-	moduleNamePlatform moduleName = "platform"
-	moduleNameBusiness moduleName = "business"
-	moduleNameNotify   moduleName = "notify"
-	moduleNameRegistry moduleName = "registry"
-	moduleNameAuth     moduleName = "auth"
-	moduleNameMonitor  moduleName = "monitor"
-	moduleNameLogagent moduleName = "logagent"
-	moduleNameAudit    moduleName = "audit"
+	moduleNamePlatform    moduleName = "platform"
+	moduleNameBusiness    moduleName = "business"
+	moduleNameNotify      moduleName = "notify"
+	moduleNameRegistry    moduleName = "registry"
+	moduleNameAuth        moduleName = "auth"
+	moduleNameMonitor     moduleName = "monitor"
+	moduleNameLogagent    moduleName = "logagent"
+	moduleNameAudit       moduleName = "audit"
+	moduleNameApplication moduleName = "application"
 )
 
 type modulePath struct {
@@ -138,6 +140,12 @@ func componentPrefix() map[moduleName][]modulePath {
 			},
 			modulePath{
 				prefix:    fmt.Sprintf("%s/%s/%s/events/listFieldValues/", apiPrefix, auditapi.GroupName, auditapi.Version),
+				protected: true,
+			},
+		},
+		moduleNameApplication: {
+			modulePath{
+				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, application.GroupName),
 				protected: true,
 			},
 		},
@@ -235,7 +243,7 @@ func prefixProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gateway
 			}
 		}
 	}
-
+	//log agent
 	if cfg.Components.LogAgent != nil {
 		if prefixes, ok := componentPrefixMap[moduleNameLogagent]; ok {
 			for _, prefix := range prefixes {
@@ -248,6 +256,14 @@ func prefixProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gateway
 		if prefixes, ok := componentPrefixMap[moduleNameAudit]; ok {
 			for _, prefix := range prefixes {
 				pathPrefixProxyMap[prefix] = *cfg.Components.Audit
+			}
+		}
+	}
+	// application
+	if cfg.Components.Application != nil {
+		if prefixes, ok := componentPrefixMap[moduleNameApplication]; ok {
+			for _, prefix := range prefixes {
+				pathPrefixProxyMap[prefix] = *cfg.Components.Application
 			}
 		}
 	}

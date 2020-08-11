@@ -26,6 +26,7 @@ import (
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
+	applicationv1 "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	logagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
@@ -37,6 +38,7 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	ApplicationV1() applicationv1.ApplicationV1Interface
 	AuthV1() authv1.AuthV1Interface
 	BusinessV1() businessv1.BusinessV1Interface
 	LogagentV1() logagentv1.LogagentV1Interface
@@ -50,13 +52,19 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	authV1     *authv1.AuthV1Client
-	businessV1 *businessv1.BusinessV1Client
-	logagentV1 *logagentv1.LogagentV1Client
-	monitorV1  *monitorv1.MonitorV1Client
-	notifyV1   *notifyv1.NotifyV1Client
-	platformV1 *platformv1.PlatformV1Client
-	registryV1 *registryv1.RegistryV1Client
+	applicationV1 *applicationv1.ApplicationV1Client
+	authV1        *authv1.AuthV1Client
+	businessV1    *businessv1.BusinessV1Client
+	logagentV1    *logagentv1.LogagentV1Client
+	monitorV1     *monitorv1.MonitorV1Client
+	notifyV1      *notifyv1.NotifyV1Client
+	platformV1    *platformv1.PlatformV1Client
+	registryV1    *registryv1.RegistryV1Client
+}
+
+// ApplicationV1 retrieves the ApplicationV1Client
+func (c *Clientset) ApplicationV1() applicationv1.ApplicationV1Interface {
+	return c.applicationV1
 }
 
 // AuthV1 retrieves the AuthV1Client
@@ -115,6 +123,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
+	cs.applicationV1, err = applicationv1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.authV1, err = authv1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -155,6 +167,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
+	cs.applicationV1 = applicationv1.NewForConfigOrDie(c)
 	cs.authV1 = authv1.NewForConfigOrDie(c)
 	cs.businessV1 = businessv1.NewForConfigOrDie(c)
 	cs.logagentV1 = logagentv1.NewForConfigOrDie(c)
@@ -170,6 +183,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.applicationV1 = applicationv1.New(c)
 	cs.authV1 = authv1.New(c)
 	cs.businessV1 = businessv1.New(c)
 	cs.logagentV1 = logagentv1.New(c)

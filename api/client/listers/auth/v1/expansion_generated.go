@@ -40,6 +40,14 @@ type ClientListerExpansion interface{}
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}
 
+// CustomPolicyBindingListerExpansion allows custom methods to be added to
+// CustomPolicyBindingLister.
+type CustomPolicyBindingListerExpansion interface{}
+
+// CustomPolicyBindingNamespaceListerExpansion allows custom methods to be added to
+// CustomPolicyBindingNamespaceLister.
+type CustomPolicyBindingNamespaceListerExpansion interface{}
+
 // GroupListerExpansion allows custom methods to be added to
 // GroupLister.
 type GroupListerExpansion interface{}

@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/api/registry"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
 // ValidateChartGroupName is a ValidateNameFunc for names that must be a DNS
@@ -42,6 +43,17 @@ func ValidateChartGroup(ctx context.Context, chartGroup *registry.ChartGroup, re
 	if chartGroup.Spec.Name == "" {
 		allErrs = append(allErrs, field.Required(fldSpecPath.Child("name"), "must specify name"))
 	} else {
+		username, _ := authentication.UsernameAndTenantID(ctx)
+		if chartGroup.Spec.Type == registry.RepoTypePersonal && chartGroup.Spec.Name != username {
+			allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("name"), chartGroup.Spec.Name, "must be username when type is personal"))
+		}
+		if chartGroup.Spec.Type == registry.RepoTypePersonal && len(chartGroup.Spec.Projects) > 0 {
+			allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("type"), chartGroup.Spec.Type, "projects must be empty when type is personal"))
+		}
+		if chartGroup.Spec.Type == registry.RepoTypeSystem && chartGroup.Spec.Visibility != registry.VisibilityPublic {
+			allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("visibility"), chartGroup.Spec.Visibility, "visibility must be public when type is system"))
+		}
+
 		chartGroupList, err := registryClient.ChartGroups().List(ctx, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chartGroup.Spec.TenantID, chartGroup.Spec.Name),
 		})
@@ -57,6 +69,10 @@ func ValidateChartGroup(ctx context.Context, chartGroup *registry.ChartGroup, re
 		allErrs = append(allErrs, field.NotSupported(fldSpecPath.Child("visibility"), chartGroup.Spec.Visibility, visibilities.List()))
 	}
 
+	types := sets.NewString(string(registry.RepoTypePersonal), string(registry.RepoTypeProject), string(registry.RepoTypeSystem))
+	if !types.Has(string(chartGroup.Spec.Type)) {
+		allErrs = append(allErrs, field.NotSupported(fldSpecPath.Child("type"), chartGroup.Spec.Type, types.List()))
+	}
 	return allErrs
 }
 
@@ -73,5 +89,8 @@ func ValidateChartGroupUpdate(ctx context.Context, chartGroup *registry.ChartGro
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "name"), chartGroup.Spec.Name, "disallowed change the name"))
 	}
 
+	if chartGroup.Spec.Type != old.Spec.Type {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "type"), chartGroup.Spec.Type, "disallowed change the type"))
+	}
 	return allErrs
 }

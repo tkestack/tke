@@ -42,6 +42,7 @@ var (
 		"tke-registry-api",
 		"tke-logagent-api",
 		"tke-audit-api",
+		"tke-application-api",
 	}
 )
 

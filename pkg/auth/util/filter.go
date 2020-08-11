@@ -99,6 +99,19 @@ func FilterProjectPolicy(ctx context.Context, binding *auth.ProjectPolicyBinding
 	return nil
 }
 
+// FilterCustomPolicyBinding is used to filter policy that do not belong to the tenant.
+func FilterCustomPolicyBinding(ctx context.Context, binding *auth.CustomPolicyBinding) error {
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
+	if tenantID == "" {
+		return nil
+	}
+	if binding.Spec.TenantID != tenantID {
+		return errors.NewNotFound(v1.Resource("CustomPolicyBindings"), binding.ObjectMeta.Name)
+	}
+
+	return nil
+}
+
 // FilterRole is used to filter role that do not belong to the tenant.
 func FilterRole(ctx context.Context, role *auth.Role) error {
 	_, tenantID := authentication.UsernameAndTenantID(ctx)

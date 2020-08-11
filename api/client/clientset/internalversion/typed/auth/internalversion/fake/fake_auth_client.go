@@ -50,6 +50,10 @@ func (c *FakeAuth) ConfigMaps() internalversion.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }
 
+func (c *FakeAuth) CustomPolicyBindings(namespace string) internalversion.CustomPolicyBindingInterface {
+	return &FakeCustomPolicyBindings{c, namespace}
+}
+
 func (c *FakeAuth) Groups() internalversion.GroupInterface {
 	return &FakeGroups{c}
 }

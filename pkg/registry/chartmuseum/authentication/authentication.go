@@ -19,9 +19,10 @@
 package authentication
 
 import (
+	"net/http"
+
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
-	"net/http"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/apikey"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	authenticationutil "tkestack.io/tke/pkg/registry/util/authentication"
