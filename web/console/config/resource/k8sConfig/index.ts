@@ -22,6 +22,7 @@ export * from './alarmPolicy';
 export * from './alarmRecord';
 export * from './notifyChannel';
 export * from './audit';
+export * from './application';
 
 export { lbcf, lbcf_bg, lbcf_br, lbcf_driver } from './lbcf';
 
