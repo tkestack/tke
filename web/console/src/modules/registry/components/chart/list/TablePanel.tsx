@@ -164,7 +164,7 @@ export class TablePanel extends React.Component<RootProps, ChartTableState> {
               }
               actions.chart.list.changePaging(query);
             }}
-            pageSizeOptions={[9, 18, 36, 72]}
+            pageSizeOptions={[15, 24, 36, 72]}
           />
         </div>
       </React.Fragment>
