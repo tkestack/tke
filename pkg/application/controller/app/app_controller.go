@@ -285,6 +285,10 @@ func (c *Controller) processUpdate(ctx context.Context, cachedApp *cachedApp, ap
 	// start update app if needed
 	updated, err := c.handlePhase(ctx, key, cachedApp, app)
 	if err != nil {
+		log.Error("processUpdate failed",
+			log.String("namespace", app.Namespace),
+			log.String("name", app.Name),
+			log.Err(err))
 		return err
 	}
 	cachedApp.state = updated
