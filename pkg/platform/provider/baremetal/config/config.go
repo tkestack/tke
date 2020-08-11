@@ -55,7 +55,7 @@ type Config struct {
 	ControllerManager       ControllerManager `yaml:"controllerManager"`
 	Scheduler               Scheduler         `yaml:"scheduler"`
 	AuthzWebhook            AuthzWebhook      `yaml:"authzWebhook"`
-	Business                Business          `yaml:"Business"`
+	Business                Business          `yaml:"business"`
 }
 
 func (c *Config) Save(filename string) error {

@@ -90,6 +90,9 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	}
 	chart.ObjectMeta.GenerateName = "chart-"
 	chart.ObjectMeta.Name = ""
+	chart.Spec.Finalizers = []registry.FinalizerName{
+		registry.ChartFinalize,
+	}
 }
 
 // Validate validates a new chart.
@@ -179,5 +182,34 @@ func (StatusStrategy) PrepareForUpdate(_ context.Context, obj, old runtime.Objec
 // filled in before the object is persisted.  This method should not mutate
 // the object.
 func (s *StatusStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateChartUpdate(ctx, obj.(*registry.Chart), old.(*registry.Chart))
+}
+
+// FinalizeStrategy implements finalizer logic for Chart.
+type FinalizeStrategy struct {
+	*Strategy
+}
+
+var _ rest.RESTUpdateStrategy = &FinalizeStrategy{}
+
+// NewFinalizerStrategy create the FinalizeStrategy object by given strategy.
+func NewFinalizerStrategy(strategy *Strategy) *FinalizeStrategy {
+	return &FinalizeStrategy{strategy}
+}
+
+// PrepareForUpdate is invoked on update before validation to normalize
+// the object.  For example: remove fields that are not to be persisted,
+// sort order-insensitive list fields, etc.  This should not remove fields
+// whose presence would be considered a validation error.
+func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	newChart := obj.(*registry.Chart)
+	oldChart := old.(*registry.Chart)
+	newChart.Status = oldChart.Status
+}
+
+// ValidateUpdate is invoked after default fields in the object have been
+// filled in before the object is persisted.  This method should not mutate
+// the object.
+func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return ValidateChartUpdate(ctx, obj.(*registry.Chart), old.(*registry.Chart))
 }

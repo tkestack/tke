@@ -25,6 +25,7 @@ import (
 
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
+	application "tkestack.io/tke/api/application"
 	auth "tkestack.io/tke/api/auth"
 	business "tkestack.io/tke/api/business"
 	logagent "tkestack.io/tke/api/logagent"
@@ -60,7 +61,13 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=auth.tkestack.io, Version=internalVersion
+	// Group=application.tkestack.io, Version=internalVersion
+	case application.SchemeGroupVersion.WithResource("apps"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Application().InternalVersion().Apps().Informer()}, nil
+	case application.SchemeGroupVersion.WithResource("configmaps"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Application().InternalVersion().ConfigMaps().Informer()}, nil
+
+		// Group=auth.tkestack.io, Version=internalVersion
 	case auth.SchemeGroupVersion.WithResource("apikeys"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().APIKeys().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("apisigningkeys"):
@@ -71,6 +78,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Clients().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("configmaps"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().ConfigMaps().Informer()}, nil
+	case auth.SchemeGroupVersion.WithResource("custompolicybindings"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().CustomPolicyBindings().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("groups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Groups().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("identityproviders"):

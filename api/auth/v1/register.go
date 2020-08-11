@@ -85,8 +85,11 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ProjectBelongs{},
 		&Project{},
 		&ProjectList{},
-
 		&ProjectBelongs{},
+
+		&CustomPolicyBinding{},
+		&CustomPolicyBindingList{},
+
 		&ConfigMap{},
 		&ConfigMapList{},
 	)

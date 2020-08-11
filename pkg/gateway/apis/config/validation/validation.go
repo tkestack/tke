@@ -61,6 +61,10 @@ func ValidateGatewayConfiguration(gc *gatewayconfig.GatewayConfiguration) error 
 		allErrors = append(allErrors, validateComponent(gc.Components.Audit, fld.Child("audit"))...)
 	}
 
+	if gc.Components.Application != nil {
+		allErrors = append(allErrors, validateComponent(gc.Components.Application, fld.Child("application"))...)
+	}
+
 	return utilerrors.NewAggregate(allErrors)
 }
 

@@ -66,8 +66,23 @@ export const auditServerVersion = {
 };
 
 /**
- * 新日志模块
+ * 仓库模块
  */
+export const registryServerVersion = {
+  basicUrl: 'apis',
+  group: 'registry.tkestack.io',
+  version: 'v1'
+};
+
+/**
+ * 应用模块
+ */
+export const applicationServerVersion = {
+  basicUrl: 'apis',
+  group: 'application.tkestack.io',
+  version: 'v1'
+};
+
 export const logAgentServiceVersion = {
   basicUrl: 'apis',
   group: 'logagent.tkestack.io',

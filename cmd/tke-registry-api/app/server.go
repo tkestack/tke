@@ -21,7 +21,9 @@ package app
 import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"tkestack.io/tke/cmd/tke-registry-api/app/config"
+	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/registry/apiserver"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // CreateServerChain creates the api servers connected via delegation.
@@ -29,6 +31,10 @@ func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, 
 	apiServerConfig := createAPIServerConfig(cfg)
 	apiServer, err := CreateAPIServer(apiServerConfig, genericapiserver.NewEmptyDelegate())
 	if err != nil {
+		return nil, err
+	}
+
+	if err := registerHandler(apiServer); err != nil {
 		return nil, err
 	}
 
@@ -56,10 +62,26 @@ func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 			StorageFactory:          cfg.StorageFactory,
 			APIResourceConfigSource: cfg.StorageFactory.APIResourceConfigSource,
 			ExternalScheme:          cfg.ExternalScheme,
+			ExternalHost:            cfg.ExternalHost,
+			ExternalPort:            cfg.ExternalPort,
+			ExternalCAFile:          cfg.ExternalCAFile,
 			OIDCTokenReviewPath:     cfg.OIDCTokenReviewPath,
 			OIDCCAFile:              cfg.OIDCCAFile,
 			OIDCIssuerURL:           cfg.OIDCIssuerURL,
 			RegistryConfig:          cfg.RegistryConfig,
+			AuthClient:              cfg.AuthClient,
+			BusinessClient:          cfg.BusinessClient,
+			PlatformClient:          cfg.PlatformClient,
 		},
 	}
+}
+
+func createFilterChain(apiServer *genericapiserver.GenericAPIServer) {
+	apiServer.Handler.FullHandlerChain = filter.WithFuzzyResource(apiServer.Handler.FullHandlerChain)
+}
+
+func registerHandler(apiServer *apiserver.APIServer) error {
+	createFilterChain(apiServer.GenericAPIServer)
+	log.Info("All of http handlers registered", log.Strings("paths", apiServer.GenericAPIServer.Handler.ListedPaths()))
+	return nil
 }

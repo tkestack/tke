@@ -20,6 +20,7 @@ package file
 
 import (
 	"io/ioutil"
+	"os"
 
 	"tkestack.io/tke/pkg/util/bytes"
 )
@@ -36,4 +37,30 @@ func SetContent(filename string, pattern string, content string) error {
 	}
 
 	return ioutil.WriteFile(filename, newData, 0644)
+}
+
+// Exists judge if file exist
+func Exists(path string) bool {
+	_, err := os.Stat(path) //os.Stat获取文件信息
+	if err != nil {
+		if os.IsExist(err) {
+			return true
+		}
+		return false
+	}
+	return true
+}
+
+// IsDir judge if dir
+func IsDir(path string) bool {
+	s, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return s.IsDir()
+}
+
+// IsFile judge if file
+func IsFile(path string) bool {
+	return !IsDir(path)
 }

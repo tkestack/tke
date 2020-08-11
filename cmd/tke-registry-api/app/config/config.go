@@ -20,13 +20,16 @@ package config
 
 import (
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	"k8s.io/client-go/rest"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
+	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	generatedopenapi "tkestack.io/tke/api/openapi"
 	"tkestack.io/tke/api/registry"
@@ -39,13 +42,13 @@ import (
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/apiserver/util"
+	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	registryconfigvalidation "tkestack.io/tke/pkg/registry/apis/config/validation"
 	"tkestack.io/tke/pkg/registry/apiserver"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/config/configfiles"
 	"tkestack.io/tke/pkg/registry/distribution"
-	utilfs "tkestack.io/tke/pkg/util/filesystem"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -61,10 +64,16 @@ type Config struct {
 	VersionedSharedInformerFactory versionedinformers.SharedInformerFactory
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 	ExternalScheme                 string
+	ExternalHost                   string
+	ExternalPort                   int
+	ExternalCAFile                 string
 	OIDCCAFile                     string
 	OIDCTokenReviewPath            string
 	OIDCIssuerURL                  string
 	RegistryConfig                 *registryconfig.RegistryConfiguration
+	AuthClient                     authversionedclient.AuthV1Interface
+	BusinessClient                 businessversionedclient.BusinessV1Interface
+	PlatformClient                 platformversionedclient.PlatformV1Interface
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -78,7 +87,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 
 	// load config file, if provided
 	if configFile := opts.RegistryConfig; len(configFile) > 0 {
-		registryConfig, err = loadConfigFile(configFile)
+		registryConfig, err = configfiles.LoadConfigFile(configFile)
 		if err != nil {
 			log.Error("Failed to load registry configuration file", log.String("configFile", configFile), log.Err(err))
 			return nil, err
@@ -152,33 +161,60 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	return &Config{
+	cfg := &Config{
 		ServerName:                     serverName,
 		GenericAPIServerConfig:         genericAPIServerConfig,
 		VersionedSharedInformerFactory: versionedInformers,
 		StorageFactory:                 storageFactory,
 		ExternalScheme:                 opts.Generic.ExternalScheme,
+		ExternalHost:                   opts.Generic.ExternalHost,
+		ExternalPort:                   opts.Generic.ExternalPort,
+		ExternalCAFile:                 opts.Generic.ExternalCAFile,
 		OIDCIssuerURL:                  opts.Authentication.OIDC.IssuerURL,
 		OIDCCAFile:                     opts.Authentication.OIDC.CAFile,
 		OIDCTokenReviewPath:            opts.Authentication.OIDC.TokenReviewPath,
 		RegistryConfig:                 registryConfig,
-	}, nil
-}
+	}
 
-func loadConfigFile(name string) (*registryconfig.RegistryConfiguration, error) {
-	const errFmt = "failed to load Registry config file %s, error %v"
-	// compute absolute path based on current working dir
-	registryConfigFile, err := filepath.Abs(name)
+	// client config for auth apiserver
+	authAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.AuthAPIClient)
 	if err != nil {
-		return nil, fmt.Errorf(errFmt, name, err)
+		return nil, err
 	}
-	loader, err := configfiles.NewFsLoader(utilfs.DefaultFs{}, registryConfigFile)
+	if ok && authAPIServerClientConfig != nil {
+		authClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(authAPIServerClientConfig, "tke-registry-api"))
+		if err != nil {
+			return nil, err
+		}
+		cfg.AuthClient = authClient.AuthV1()
+	}
+
+	// client config for business apiserver
+	businessAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
 	if err != nil {
-		return nil, fmt.Errorf(errFmt, name, err)
+		return nil, err
 	}
-	kc, err := loader.Load()
+	if ok && businessAPIServerClientConfig != nil {
+		businessClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(businessAPIServerClientConfig, "tke-registry-api"))
+		if err != nil {
+			return nil, err
+		}
+		cfg.BusinessClient = businessClient.BusinessV1()
+	}
+
+	// client config for platform apiserver
+	platformAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.PlatformAPIClient)
 	if err != nil {
-		return nil, fmt.Errorf(errFmt, name, err)
+		return nil, err
 	}
-	return kc, err
+	if !ok {
+		return nil, fmt.Errorf("failed to initialize client config of platform API server")
+	}
+	platformClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(platformAPIServerClientConfig, "tke-registry-api"))
+	if err != nil {
+		return nil, err
+	}
+	cfg.PlatformClient = platformClient.PlatformV1()
+
+	return cfg, nil
 }

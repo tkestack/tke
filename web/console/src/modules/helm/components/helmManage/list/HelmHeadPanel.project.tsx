@@ -54,7 +54,7 @@ export class HelmHeadPanel extends React.Component<RootProps, {}> {
       value: p.name
     }));
     let namespaceOptions = namespaceList.data.records.map((p, index) => ({
-      text: `${p.name}(${cluster.selection ? cluster.selection.metadata.name : '-'})`,
+      text: p.displayName,
       value: p.name
     }));
     return (

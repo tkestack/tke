@@ -26,6 +26,7 @@ import (
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
+	applicationinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
 	authinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	businessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	logagentinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/logagent/internalversion"
@@ -37,6 +38,7 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	Application() applicationinternalversion.ApplicationInterface
 	Auth() authinternalversion.AuthInterface
 	Business() businessinternalversion.BusinessInterface
 	Logagent() logagentinternalversion.LogagentInterface
@@ -50,13 +52,19 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	auth     *authinternalversion.AuthClient
-	business *businessinternalversion.BusinessClient
-	logagent *logagentinternalversion.LogagentClient
-	monitor  *monitorinternalversion.MonitorClient
-	notify   *notifyinternalversion.NotifyClient
-	platform *platforminternalversion.PlatformClient
-	registry *registryinternalversion.RegistryClient
+	application *applicationinternalversion.ApplicationClient
+	auth        *authinternalversion.AuthClient
+	business    *businessinternalversion.BusinessClient
+	logagent    *logagentinternalversion.LogagentClient
+	monitor     *monitorinternalversion.MonitorClient
+	notify      *notifyinternalversion.NotifyClient
+	platform    *platforminternalversion.PlatformClient
+	registry    *registryinternalversion.RegistryClient
+}
+
+// Application retrieves the ApplicationClient
+func (c *Clientset) Application() applicationinternalversion.ApplicationInterface {
+	return c.application
 }
 
 // Auth retrieves the AuthClient
@@ -115,6 +123,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
+	cs.application, err = applicationinternalversion.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.auth, err = authinternalversion.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -155,6 +167,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
+	cs.application = applicationinternalversion.NewForConfigOrDie(c)
 	cs.auth = authinternalversion.NewForConfigOrDie(c)
 	cs.business = businessinternalversion.NewForConfigOrDie(c)
 	cs.logagent = logagentinternalversion.NewForConfigOrDie(c)
@@ -170,6 +183,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.application = applicationinternalversion.New(c)
 	cs.auth = authinternalversion.New(c)
 	cs.business = businessinternalversion.New(c)
 	cs.logagent = logagentinternalversion.New(c)

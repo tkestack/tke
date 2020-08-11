@@ -1,6 +1,6 @@
 # TKE Components
 
-`/cmd` directory includes every TKE components and is where all binaries and container images are built. For detail about how to launch the TKE cluster see the guide [here](/docs/running-locally.md).
+`/cmd` directory includes every TKE components and is where all binaries and container images are built. For detail about how to launch the TKE cluster see the guide [here](/docs/devel/running-locally.md).
 
 ## Overview
 

@@ -74,6 +74,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&Chart{},
 		&ChartList{},
+		&ChartInfo{},
+		&ChartProxyOptions{},
 	)
 	return nil
 }
