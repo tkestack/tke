@@ -1947,6 +1947,7 @@ func (t *TKE) installTKENotifyController(ctx context.Context) error {
 
 func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 	options := map[string]interface{}{
+		"Replicas":       t.Config.Replicas,
 		"Image":          images.Get().TKERegistryAPI.FullName(),
 		"NodeName":       t.servers[0],
 		"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
@@ -2002,6 +2003,7 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 
 func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
 	options := map[string]interface{}{
+		"Replicas":       t.Config.Replicas,
 		"Image":          images.Get().TKEApplicationAPI.FullName(),
 		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
 		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
