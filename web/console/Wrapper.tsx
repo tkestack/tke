@@ -177,11 +177,11 @@ const commonRouterConfig: RouterConfig[] = [
         title: 'Helm应用',
         watchModule: ConsoleModuleEnum.Application
       },
-      {
-        url: '/tkestack/helm',
-        title: 'Helm2应用',
-        watchModule: ConsoleModuleEnum.PLATFORM
-      },
+      // {
+      //   url: '/tkestack/helm',
+      //   title: 'Helm2应用',
+      //   watchModule: ConsoleModuleEnum.PLATFORM
+      // },
       {
         url: '/tkestack/log',
         title: '日志采集',
@@ -264,11 +264,11 @@ const businessCommonRouterConfig: RouterConfig[] = [
         title: 'Helm应用',
         watchModule: ConsoleModuleEnum.Application
       },
-      {
-        url: '/tkestack-project/helm',
-        title: 'Helm2应用',
-        watchModule: ConsoleModuleEnum.PLATFORM
-      },
+      // {
+      //   url: '/tkestack-project/helm',
+      //   title: 'Helm2应用',
+      //   watchModule: ConsoleModuleEnum.PLATFORM
+      // },
       {
         url: '/tkestack-project/log',
         title: '日志采集',
