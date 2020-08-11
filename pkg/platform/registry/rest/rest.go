@@ -43,6 +43,7 @@ import (
 	promstorage "tkestack.io/tke/pkg/platform/registry/prometheus/storage"
 	registrystorage "tkestack.io/tke/pkg/platform/registry/registry/storage"
 	tappcontrollertorage "tkestack.io/tke/pkg/platform/registry/tappcontroller/storage"
+	template "tkestack.io/tke/pkg/platform/registry/template/storage"
 	volumedecoratorstorage "tkestack.io/tke/pkg/platform/registry/volumedecorator/storage"
 )
 
@@ -101,6 +102,10 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["machines"] = machineREST.Machine
 		storageMap["machines/status"] = machineREST.Status
 		storageMap["machines/finalize"] = machineREST.Finalize
+
+		templateREST := template.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
+		storageMap["templates"] = templateREST.Template
+		storageMap["templates/status"] = templateREST.Status
 
 		clusterCredentialREST := clustercredentialstorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["clustercredentials"] = clusterCredentialREST.ClusterCredential

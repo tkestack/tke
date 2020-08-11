@@ -172,6 +172,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().Registries().Informer()}, nil
 	case platformv1.SchemeGroupVersion.WithResource("tappcontrollers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().TappControllers().Informer()}, nil
+	case platformv1.SchemeGroupVersion.WithResource("templates"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().Templates().Informer()}, nil
 	case platformv1.SchemeGroupVersion.WithResource("volumedecorators"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().V1().VolumeDecorators().Informer()}, nil
 
