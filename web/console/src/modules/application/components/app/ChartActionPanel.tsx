@@ -101,6 +101,7 @@ export class ChartActionPanel extends React.Component<RootProps, ChartActionStat
   private changeScene(scene: string) {
     const { actions } = this.props;
     /** 拉取列表 */
+    actions.chart.list.clearSelection();
     actions.chart.list.reset();
     // actions.chart.list.resetPaging();
     actions.chart.list.applyFilter({
