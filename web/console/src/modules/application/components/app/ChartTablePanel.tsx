@@ -30,7 +30,7 @@ export class ChartTablePanel extends React.Component<Props, ChartTableState> {
     super(props, context);
     this.state = {
       chartGroupID: [],
-      selectedChart: this.props.SelectedChart || ''
+      selectedChart: ''
     };
   }
 
@@ -72,7 +72,6 @@ export class ChartTablePanel extends React.Component<Props, ChartTableState> {
       Public: '公有',
       Private: '私有'
     };
-
     return (
       <React.Fragment>
         <div style={{ backgroundColor: '#f2f2f2', boxShadow: '0 2px 3px 0 rgba(0,0,0,.2)', padding: '10px' }}>
