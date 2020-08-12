@@ -90,6 +90,13 @@ const restActions = {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       let response = await WebAPI.fetchApp(filter);
       let editor: AppEditor = response;
+      if (editor.spec.values && editor.spec.values.rawValues) {
+        try {
+          editor.spec.values.rawValues = window.atob(editor.spec.values.rawValues);
+        } catch (error) {
+          console.log(error);
+        }
+      }
       dispatch({
         type: ActionTypes.UpdateAppEditorState,
         payload: editor

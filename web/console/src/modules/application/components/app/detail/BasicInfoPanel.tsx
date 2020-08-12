@@ -167,7 +167,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
                             namespace: appEditor.metadata.namespace,
                             metadata: {
                               namespace: targetChart ? targetChart.metadata.namespace : '',
-                              name: targetChart ? targetChart.metadata.name : '',
+                              name: targetChart ? targetChart.metadata.name : ''
                             },
                             chartVersion: value,
                             projectID: this.state.projectID
