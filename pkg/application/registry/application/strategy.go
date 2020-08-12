@@ -34,6 +34,7 @@ import (
 	"tkestack.io/tke/api/application"
 	applicationinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
@@ -70,6 +71,10 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 		app.Spec.TenantID = tenantID
 	}
 
+	if app.Spec.Values.RawValues != "" {
+		app.Spec.Values.RawValues = helmutil.SafeEncodeValue(app.Spec.Values.RawValues)
+	}
+
 	// Any changes to the spec increment the generation number, any changes to the
 	// status should reflect the generation number of the corresponding object.
 	// See metav1.ObjectMeta description for more information on Generation.
@@ -102,6 +107,10 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 	if app.Spec.Chart.TenantID == "" {
 		app.Spec.Chart.TenantID = app.Spec.TenantID
+	}
+
+	if app.Spec.Values.RawValues != "" {
+		app.Spec.Values.RawValues = helmutil.SafeEncodeValue(app.Spec.Values.RawValues)
 	}
 }
 
