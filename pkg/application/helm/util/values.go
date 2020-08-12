@@ -19,6 +19,7 @@
 package util
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -32,8 +33,13 @@ import (
 // values: can specify multiple or separate values: key1=val1,key2=val2
 // rawValues: json format or yaml format
 func MergeValues(values []string, rawValues string, vType string) (map[string]interface{}, error) {
+	// try decode first, maybe encoded data
+	bs, err := DecodeValue(rawValues)
+	if err == nil {
+		rawValues = string(bs)
+	}
+
 	base := map[string]interface{}{}
-	var err error
 	if len(rawValues) > 0 {
 		switch strings.ToLower(vType) {
 		case "yaml", "":
@@ -86,4 +92,37 @@ func parseJSONValue(values string) (map[string]interface{}, error) {
 		return nil, errors.Wrap(err, "failed to parse json value")
 	}
 	return base, nil
+}
+
+// DecodeValue will use base64 decoding
+func DecodeValue(value string) (string, error) {
+	if len(value) > 0 {
+		bs, err := base64.StdEncoding.DecodeString(value)
+		if err != nil {
+			return "", err
+		}
+		return string(bs), nil
+	}
+	return "", nil
+}
+
+// EncodeValue will use base64 encoding
+func EncodeValue(value string) string {
+	if len(value) > 0 {
+		return base64.StdEncoding.EncodeToString([]byte(value))
+	}
+	return value
+}
+
+// SafeEncodeValue will use base64 encoding
+func SafeEncodeValue(value string) string {
+	if len(value) > 0 {
+		_, err := DecodeValue(value)
+		if err == nil {
+			//already encode
+			return value
+		}
+		return base64.StdEncoding.EncodeToString([]byte(value))
+	}
+	return value
 }
