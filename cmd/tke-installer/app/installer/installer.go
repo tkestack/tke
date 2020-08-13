@@ -1422,6 +1422,10 @@ func (t *TKE) prepareImages(ctx context.Context) error {
 }
 
 func (t *TKE) stopLocalRegistry(ctx context.Context) error {
+	if !t.docker.Healthz() {
+		t.log.Info("Actively exit in order to reconnect to the docker service")
+		os.Exit(1)
+	}
 	err := t.docker.RemoveContainers("registry-http", "registry-https")
 	if err != nil {
 		return err
