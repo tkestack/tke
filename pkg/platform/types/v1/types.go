@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"path"
 	"time"
 
 	"github.com/pkg/errors"
@@ -187,8 +188,13 @@ func (c *Cluster) Host() (string, error) {
 	if address == nil {
 		return "", errors.New("can't find valid address")
 	}
+	result := fmt.Sprintf("%s:%d", address.Host, address.Port)
+	if address.Path != "" {
+		result = path.Join(result, path.Clean(address.Path))
+		result = fmt.Sprintf("https://%s", result)
+	}
 
-	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
+	return result, nil
 }
 
 func (c *Cluster) HostForBootstrap() (string, error) {
