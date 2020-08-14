@@ -27,10 +27,15 @@ const fetchNamespaceListActions = generateFetcherActionCreator({
       let agents = await CommonAPI.fetchLogagents();
       let clusterHasLogAgent = {};
       for (let agent of agents.records) {
-        clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
+        clusterHasLogAgent[agent.spec.clusterName] = { name: agent.metadata.name, status: agent.status.phase };
       }
       for (let ns of response.records) {
-        ns.cluster.spec.logAgentName = clusterHasLogAgent[ns.cluster.metadata.name];
+        let logagent = clusterHasLogAgent[ns.cluster.metadata.name];
+        if (logagent) {
+          let { name, status } = logagent;
+          ns.cluster.spec.logAgentName = name;
+          ns.cluster.spec.logAgentStatus = status;
+        }
       }
     }
     return response;
@@ -59,15 +64,16 @@ const restActions = {
    */
   autoSelectNamespaceForCreate: () => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { route } = getState();
+      let { route, namespaceList } = getState();
       let urlParams = router.resolve(route);
 
       //只有在创建状态下才需要帮用户选择默认选项
       if (urlParams['mode'] === 'create') {
-        if (getState().namespaceList.data.recordCount) {
-          dispatch({ type: ActionType.SelectContainerFileNamespace, payload: 'default' });
+        if (namespaceList.data.recordCount) {
+          let namespace = namespaceList.data.records[0].namespace;
+          dispatch({ type: ActionType.SelectContainerFileNamespace, payload: namespace });
           let containerLogsArr: ContainerLogs[] = cloneDeep(getState().logStashEdit.containerLogs);
-          containerLogsArr[0].namespaceSelection = 'default';
+          containerLogsArr[0].namespaceSelection = namespace;
           dispatch({
             type: ActionType.UpdateContainerLogs,
             payload: containerLogsArr
@@ -76,7 +82,7 @@ const restActions = {
           dispatch(
             resourceActions.applyFilter({
               clusterId: route.queries['clusterId'],
-              namespace: 'default',
+              namespace,
               workloadType: 'deployment',
               regionId: +route.queries['rid']
             })

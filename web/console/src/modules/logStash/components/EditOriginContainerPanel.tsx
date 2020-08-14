@@ -1,4 +1,6 @@
-import classnames from 'classnames';
+/**
+ * 日志源
+ */
 import * as React from 'react';
 import { connect } from 'react-redux';
 
@@ -15,6 +17,10 @@ import { ContainerLogs } from '../models';
 import { EditOriginContainerItemPanel } from './EditOriginContainerItemPanel';
 import { ListOriginContainerItemPanel } from './ListOriginContainerItemPanel';
 import { RootProps } from './LogStashApp';
+
+interface PropTypes extends RootProps {
+  isEdit?: boolean; // 是否是编辑模式
+}
 
 /** 日志源的相关提示 */
 const originModeTip = {
@@ -50,19 +56,29 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(state => state, mapDispatchToProps)
-export class EditOriginContainerPanel extends React.Component<RootProps, any> {
+@connect(
+  state => state,
+  mapDispatchToProps
+)
+export class EditOriginContainerPanel extends React.Component<PropTypes, any> {
+  state = {
+    isBusiness: window.location.href.includes('/tkestack-project') // 平台侧和业务侧展示和交互要做不同处理
+  };
+
   componentDidMount(): void {
     let { actions } = this.props;
-    if (window.location.href.includes('/tkestack-project')) {
+    let { isBusiness } = this.state;
+
+    if (isBusiness) {
       // 业务侧不显示"所有容器"
       actions.editLogStash.selectAllNamespace('selectOne');
     }
   }
 
   render() {
-    let { actions, logStashEdit, namespaceList } = this.props,
+    let { actions, logStashEdit, namespaceList, isEdit } = this.props,
       { isSelectedAllNamespace, logMode, containerLogs } = logStashEdit;
+    let { isBusiness } = this.state;
 
     // 日志源的类型
     let selectedOriginMode = originModeList.find(item => item.value === isSelectedAllNamespace);
@@ -71,7 +87,11 @@ export class EditOriginContainerPanel extends React.Component<RootProps, any> {
     let { canAdd, tip } = isCanAddContainerLog(containerLogs, namespaceList.data.recordCount);
 
     const originModeListSegments: SegmentOption[] = originModeList.map(mode => {
-      return { value: mode.value, text: mode.name };
+      return {
+        value: mode.value,
+        text: mode.name,
+        disabled: isEdit && selectedOriginMode.value !== mode.value
+      };
     });
     return (
       <FormPanel.Item
@@ -79,42 +99,27 @@ export class EditOriginContainerPanel extends React.Component<RootProps, any> {
         isShow={logMode === logModeList.container.value}
         message={originModeTip[isSelectedAllNamespace]}
       >
-        {window.location.href.includes('/tkestack-project') ||
+        {isBusiness || (
           <Segment
             options={originModeListSegments}
             value={selectedOriginMode.value}
             onChange={value => actions.editLogStash.selectAllNamespace(value)}
-          />}
+          />
+        )}
 
         {isSelectedAllNamespace === 'selectOne' && this._renderContainerLogList()}
-
-        {window.location.href.includes('/tkestack-project') ||
-        isSelectedAllNamespace === 'selectOne' && (
-          <Bubble content={!canAdd ? tip : null} placement="right">
-            <a
-              href="javascript:;"
-              className={classnames('add-btn', { disabled: !canAdd })}
-              onClick={() => {
-                canAdd && actions.editLogStash.addContainerLog();
-              }}
-              style={{ marginTop: '10px' }}
-            >
-              {t('添加Namespace')}
-            </a>
-          </Bubble>
-        )}
       </FormPanel.Item>
     );
   }
 
   /** 渲染指定容器的内容 */
   private _renderContainerLogList() {
-    let { logStashEdit } = this.props;
+    let { logStashEdit, isEdit } = this.props;
     return logStashEdit.containerLogs.map((containerLog, index) => {
       return containerLog.status === 'edited' ? (
         <ListOriginContainerItemPanel cKey={containerLog.id + ''} key={index} />
       ) : (
-        <EditOriginContainerItemPanel cKey={containerLog.id + ''} key={index} />
+        <EditOriginContainerItemPanel isEdit={isEdit} cKey={containerLog.id + ''} key={index} />
       );
     });
   }
