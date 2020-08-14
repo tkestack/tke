@@ -359,7 +359,7 @@ func scrapeConfigForPrometheus() string {
         regex: (.+)
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes|etcd_disk_wal_fsync_duration_seconds(.*)|etcd_disk_backend_commit_duration_seconds(.*)|etcd_network_peer_round_trip_time_seconds(.*)|etcd_server_version'
+        regex: 'etcd_server_leader_changes_seen_total|etcd_debugging_mvcc_db_total_size_in_bytes|etcd_disk_wal_fsync_duration_seconds(.*)|etcd_disk_backend_commit_duration_seconds(.*)|etcd_network_peer_round_trip_time_seconds(.*)|etcd_server_version|etcd_server_has_leader|grpc_server_started_total|grpc_server_handled_total|etcd_server_proposals_failed_total|etcd_server_proposals_pending|etcd_server_proposals_committed_total|etcd_server_proposals_applied_total|process_resident_memory_bytes|etcd_debugging_snap_save_total_duration_seconds_sum|etcd_network_peer_sent_bytes_total|etcd_network_peer_received_bytes_total|etcd_network_client_grpc_sent_bytes_total|etcd_network_client_grpc_received_bytes_total'
         action: keep
       - regex: "instance|job|pod_name|namespace|scope|subresource"
         action: labeldrop
