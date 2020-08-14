@@ -8,6 +8,9 @@ export interface Namespace extends Identifiable {
   /**命名空间 */
   namespace?: string;
 
+  /** 用在业务侧的命名空间全名 */
+  namespaceValue?: string;
+
   /**描述 */
   description?: string;
 

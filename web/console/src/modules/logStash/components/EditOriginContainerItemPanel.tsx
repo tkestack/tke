@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Bubble, Checkbox, FormItem } from '@tencent/tea-component';
+import { Bubble, Checkbox, FormItem, Form } from '@tencent/tea-component';
 
 import { LinkButton, SelectList } from '../../common/components';
 import { cloneDeep } from '../../common/utils';
@@ -49,7 +49,10 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(state => state, mapDispatchToProps)
+@connect(
+  state => state,
+  mapDispatchToProps
+)
 export class EditOriginContainerItemPanel extends React.Component<ContainerItemProps, any> {
   render() {
     let { actions, logStashEdit, cKey, namespaceList } = this.props,
@@ -69,67 +72,48 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
     return (
       <FormPanel fixed isNeedCard={false} style={{ minWidth: 600, padding: '30px' }}>
         <div className="run-docker-box" style={containerLog.collectorWay === 'workload' ? { minWidth: '750px' } : {}}>
-          {window.location.href.includes('/tkestack-project') ||
-          <div className="justify-grid">
-            <div className="col">
-              <span />
-            </div>
-            <div className="col">
-              <LinkButton
-                disabled={!canSave}
-                tip={t('保存')}
-                errorTip={t('请先完成待编辑项')}
-                onClick={() => this._handleSaveContainerLog(canSave, containerLogIndex)}
-              >
-                <i className="icon-submit-gray" />
-              </LinkButton>
-              <LinkButton
-                disabled={!canDelete}
-                tip={t('删除')}
-                errorTip={t('不可删除，至少创建一个容器')}
-                onClick={() => actions.editLogStash.deleteContainerLog(containerLogIndex)}
-              >
-                <i className="icon-cancel-icon" />
-              </LinkButton>
-            </div>
-          </div>}
           <div className="edit-param-list">
             <div className="param-box" style={{ paddingBottom: '0' }}>
               <div className="param-bd">
                 <ul className="form-list fixed-layout">
                   <FormPanel.Item label={t('所属Namespace')}>
-                    <Bubble
-                      content={
-                        containerLog.v_namespaceSelection.message ? containerLog.v_namespaceSelection.message : null
-                      }
-                    >
-                      <div
-                        className={classnames('code-list', {
-                          'is-error': containerLog.v_namespaceSelection.status === 2
-                        })}
+                    {this.props.isEdit ? (
+                      <Form.Text>{containerLog.namespaceSelection}</Form.Text>
+                    ) : (
+                      <Bubble
+                        content={
+                          containerLog.v_namespaceSelection.message ? containerLog.v_namespaceSelection.message : null
+                        }
                       >
-                        <SelectList
-                          value={containerLog.namespaceSelection}
-                          recordData={optinalNameSpaceList}
-                          valueField="namespace"
-                          textField="namespace"
-                          className="tc-15-select m"
-                          onSelect={value => {
-                            actions.editLogStash.selectContainerLogNamespace(value, containerLogIndex);
-                            // 兼容业务侧的处理
-                            if (window.location.href.includes('tkestack-project')) {
-                              let namespaceFound = namespaceList.data.records.find(item => item.namespace === value);
-                              actions.cluster.selectClusterFromEditNamespace(namespaceFound.cluster);
-                            }
-                          }}
-                          name="Namespace"
-                          tipPosition="right"
-                          style={{
-                            display: 'inline-block'
-                          }}
-                        />
-                      </div>
-                    </Bubble>
+                        <div
+                          className={classnames('code-list', {
+                            'is-error': containerLog.v_namespaceSelection.status === 2
+                          })}
+                        >
+                          <SelectList
+                            value={containerLog.namespaceSelection}
+                            recordData={optinalNameSpaceList}
+                            valueField="namespaceValue"
+                            textField="namespace"
+                            className="tc-15-select m"
+                            onSelect={value => {
+                              actions.editLogStash.selectContainerLogNamespace(value, containerLogIndex);
+                              actions.namespace.selectNamespace(value);
+                              // 兼容业务侧的处理
+                              if (window.location.href.includes('tkestack-project')) {
+                                let namespaceFound = namespaceList.data.records.find(item => item.namespaceValue === value);
+                                actions.cluster.selectClusterFromEditNamespace(namespaceFound.cluster);
+                              }
+                            }}
+                            name="Namespace"
+                            tipPosition="right"
+                            style={{
+                              display: 'inline-block'
+                            }}
+                          />
+                        </div>
+                      </Bubble>
+                    )}
                   </FormPanel.Item>
 
                   {this._renderCollectorWay(containerLog, containerLogIndex)}
