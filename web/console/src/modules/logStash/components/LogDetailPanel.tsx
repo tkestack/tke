@@ -16,7 +16,10 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(state => state, mapDispatchToProps)
+@connect(
+  state => state,
+  mapDispatchToProps
+)
 export class LogStashDetailPanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
     let { actions } = this.props;
@@ -151,7 +154,7 @@ export class LogStashDetailPanel extends React.Component<RootProps, {}> {
     );
   }
   render() {
-    let { logSelection, route, logStashEdit, clusterSelection, regionSelection } = this.props,
+    let { logSelection, route, logStashEdit, clusterSelection, regionSelection, projectSelection } = this.props,
       { logStashName, logMode, metadatas, consumerMode, isSelectedAllNamespace, nodeLogPath } = logStashEdit;
 
     return (
@@ -161,24 +164,30 @@ export class LogStashDetailPanel extends React.Component<RootProps, {}> {
             <FormPanel.Item text label={t('日志规则名称')}>
               {route.queries['stashName']}
             </FormPanel.Item>
-            <FormPanel.Item text label={t('所属集群')}>
-              <a
-                href={
-                  clusterSelection[0] && regionSelection
-                    ? '/tke/cluster/sub/list/basic/info?rid=' +
-                      regionSelection.value +
-                      '&clusterId=' +
-                      clusterSelection[0].metadata.name +
-                      '&np=default'
-                    : 'javascript:;'
-                }
-              >
-                {clusterSelection[0] && clusterSelection[0].id}
-              </a>
-              <span className="text-weak">
-                {clusterSelection[0] && '（' + clusterSelection[0].metadata.name + '）'}
-              </span>
-            </FormPanel.Item>
+            {window.location.href.includes('tkestack-project') ? (
+              <FormPanel.Item text label={t('所属业务')} >
+                {projectSelection}
+              </FormPanel.Item>
+            ) : (
+              <FormPanel.Item text label={t('所属集群')}>
+                <a
+                  href={
+                    clusterSelection[0] && regionSelection
+                      ? '/tkestack/cluster/sub/list/basic/info?rid=' +
+                        regionSelection.value +
+                        '&clusterId=' +
+                        clusterSelection[0].metadata.name +
+                        '&np=default'
+                      : 'javascript:;'
+                  }
+                >
+                  {clusterSelection[0] && clusterSelection[0].id}
+                </a>
+                <span className="text-weak">
+                  {clusterSelection[0] && '（' + clusterSelection[0].metadata.name + '）'}
+                </span>
+              </FormPanel.Item>
+            )}
             <FormPanel.Item text label={t('创建时间')}>
               {logSelection[0] &&
                 dateFormatter(new Date(logSelection[0].metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}
