@@ -312,7 +312,10 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 		return obj, err
 	}
 	localIdentity := obj.(*auth.LocalIdentity)
-	util.SetAdministrator(ctx, r.enforcer, r.authClient, localIdentity)
+	idp, err := r.authClient.IdentityProviders().Get(ctx, localIdentity.Spec.TenantID, metav1.GetOptions{})
+	if err == nil {
+		util.SetAdministrator(r.enforcer, localIdentity, idp)
+	}
 	return localIdentity, nil
 }
 
