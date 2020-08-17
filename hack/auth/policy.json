@@ -495,6 +495,193 @@
     },
     {
         "metadata": {
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "AppFullAccess",
+            "tenantID": "default",
+            "category": "app",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "该策略允许您管理平台租户应用编排资源",
+            "statement": {
+                "actions": [
+                    "*App*"
+                ],
+                "resources": [
+                    "*"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-registry-basic",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "RegistryBasic",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许创建、查看仓库，允许查看chart",
+            "statement": {
+                "actions": [
+                    "createChartgroup",
+                    "listChartgroups",
+                    "listCharts"
+                ],
+                "resources": [
+                    "*"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-chartgroup-pull-fake",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "ChartGroupPullFake",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许拉取仓库",
+            "statement": {
+                "actions": [
+                    "getChartgroup",
+                    "getChartgroupStatus",
+                    "listChartgroups"
+                ],
+                "resources": [
+                    "-"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-chartgroup-full-fake",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "ChartGroupFullFake",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许创建、修改、删除仓库",
+            "statement": {
+                "actions": [
+                    "*Chartgroup*"
+                ],
+                "resources": [
+                    "-"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-chart-pull-fake",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "ChartPullFake",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许拉取chart",
+            "statement": {
+                "actions": [
+                    "getChart",
+                    "getChartStatus",
+                    "listCharts",
+                    "listChartInfo"
+                ],
+                "resources": [
+                    "-"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-chart-full-fake",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "ChartFullFake",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许拉取、推送、删除chart",
+            "statement": {
+                "actions": [
+                    "createChart",
+                    "deleteChart",
+                    "getChart",
+                    "getChartStatus",
+                    "listCharts",
+                    "listChartInfo",
+                    "updateChart",
+                    "updateChartStatus"
+                ],
+                "resources": [
+                    "-"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
             "name": "pol-{tenantID}-project-owner",
             "creationTimestamp": null
         },
@@ -508,6 +695,7 @@
             "description": "预设业务角色，允许管理业务和业务下的所有功能和资源",
             "statement": {
                 "actions": [
+                    "*App*",
                     "*Channel*",
                     "*Message*",
                     "*Messagerequest*",
@@ -616,6 +804,8 @@
             "description": "预设业务角色，允许访问和管理所在业务下的所有功能和资源",
             "statement": {
                 "actions": [
+                    "*App*",
+                    "*Channel*",
                     "*Message*",
                     "*Messagerequest*",
                     "createAlarmpolicy",
@@ -780,6 +970,7 @@
                     "listAlarmpolicies",
                     "listChannels",
                     "listChartgroups",
+                    "listChartInfo",
                     "listCharts",
                     "listClusters",
                     "listConfigmaps",
@@ -962,6 +1153,7 @@
                     "*Messagerequest*",
                     "getAddon",
                     "getAlarmpolicy",
+                    "getApp",
                     "getChannel",
                     "getChannelStatus",
                     "getChart",
@@ -1034,8 +1226,12 @@
                     "getVolumeattachment",
                     "listAddons",
                     "listAlarmpolicies",
+                    "listAppHistories",
+                    "listAppResources",
+                    "listApps",
                     "listChannels",
                     "listChartgroups",
+                    "listChartInfo",
                     "listCharts",
                     "listClusters",
                     "listConfigmaps",
@@ -1788,6 +1984,7 @@
                     "listAlarmpolicies",
                     "listChannels",
                     "listChartgroups",
+                    "listChartInfo",
                     "listCharts",
                     "listConfigmaps",
                     "listControllerrevisions",

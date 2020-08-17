@@ -11,7 +11,7 @@ import { RootProps } from '../RegistryApp';
 
 export class ChartGroupTablePanel extends React.Component<RootProps, any> {
   componentDidMount() {
-    this.props.actions.chart.fetch();
+    this.props.actions.charts.fetch();
   }
 
   render() {
@@ -96,7 +96,7 @@ export class ChartGroupTablePanel extends React.Component<RootProps, any> {
         header: t('Chart包数'),
         render: (x: Chart) => (
           <Text parent="div" overflow>
-            <span className="text">{x.status.chartCount}</span>
+            <span className="text">{x.status.versions ? x.status.versions.length : 0}</span>
           </Text>
         )
       },
@@ -109,7 +109,7 @@ export class ChartGroupTablePanel extends React.Component<RootProps, any> {
             <Button
               type="link"
               onClick={() => {
-                this.props.actions.chart.deleteChart.start([chart]);
+                this.props.actions.charts.deleteChart.start([chart]);
               }}
             >
               {t('删除')}
@@ -127,7 +127,7 @@ export class ChartGroupTablePanel extends React.Component<RootProps, any> {
           list: this.props.chart.list,
           query: this.props.chart.query
         }}
-        actionOptions={this.props.actions.chart}
+        actionOptions={this.props.actions.charts}
       />
     );
   }
@@ -138,7 +138,7 @@ export class ChartGroupTablePanel extends React.Component<RootProps, any> {
       <WorkflowDialog
         caption={t('删除Chart包命名空间')}
         workflow={deleteChart}
-        action={actions.chart.deleteChart}
+        action={actions.charts.deleteChart}
         targets={deleteChart.targets}
         postAction={() => {}}
         params={{}}

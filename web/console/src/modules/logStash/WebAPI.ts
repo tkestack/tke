@@ -23,7 +23,7 @@ export async function checkStashNameIsExist(
 ) {
   let resourceInfo = resourceConfig(clusterVersion)['logcs'];
   let url = reduceK8sRestfulPath({
-    isSpetialNamespace: true,
+    isSpecialNamespace: true,
     resourceInfo,
     clusterId,
     namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
@@ -213,7 +213,7 @@ export async function fetchResourceList(
 export async function modifyLogStash(resources: CreateResource[], regionId: number) {
   try {
     let { clusterId, logAgentName, namespace, mode, jsonData, resourceInfo, isStrategic = true, resourceIns } = resources[0];
-    let url = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, logAgentName, isSpetialNamespace: window.location.href.includes('tkestack-project') });
+    let url = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, logAgentName, isSpecialNamespace: window.location.href.includes('tkestack-project') });
     // 构建参数
     let method = requestMethodForAction(mode);
     let params: RequestParams = {

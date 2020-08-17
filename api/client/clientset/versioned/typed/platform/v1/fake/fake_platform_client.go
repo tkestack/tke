@@ -94,6 +94,10 @@ func (c *FakePlatformV1) TappControllers() v1.TappControllerInterface {
 	return &FakeTappControllers{c}
 }
 
+func (c *FakePlatformV1) Templates() v1.TemplateInterface {
+	return &FakeTemplates{c}
+}
+
 func (c *FakePlatformV1) VolumeDecorators() v1.VolumeDecoratorInterface {
 	return &FakeVolumeDecorators{c}
 }

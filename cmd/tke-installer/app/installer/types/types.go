@@ -34,16 +34,17 @@ type CreateClusterPara struct {
 
 // Config is the installer config
 type Config struct {
-	Basic     *Basic    `json:"basic"`
-	Auth      Auth      `json:"auth"`
-	Registry  Registry  `json:"registry"`
-	Business  *Business `json:"business,omitempty"`
-	Monitor   *Monitor  `json:"monitor,omitempty"`
-	Logagent  *Logagent `json:"logagent,omitempty"`
-	HA        *HA       `json:"ha,omitempty"`
-	Gateway   *Gateway  `json:"gateway,omitempty"`
-	Audit     *Audit    `json:"audit,omitempty"`
-	SkipSteps []string  `json:"skipSteps,omitempty"`
+	Basic       *Basic       `json:"basic"`
+	Auth        Auth         `json:"auth"`
+	Registry    Registry     `json:"registry"`
+	Business    *Business    `json:"business,omitempty"`
+	Monitor     *Monitor     `json:"monitor,omitempty"`
+	Logagent    *Logagent    `json:"logagent,omitempty"`
+	HA          *HA          `json:"ha,omitempty"`
+	Gateway     *Gateway     `json:"gateway,omitempty"`
+	Audit       *Audit       `json:"audit,omitempty"`
+	Application *Application `json:"application,omitempty"`
+	SkipSteps   []string     `json:"skipSteps,omitempty"`
 }
 
 type Basic struct {
@@ -122,6 +123,12 @@ type ThirdPartyRegistry struct {
 }
 
 type Business struct {
+}
+
+type Application struct {
+	RegistryDomain   string `json:"registryDomain" validate:"hostname_rfc1123"`
+	RegistryUsername string `json:"registryUsername"`
+	RegistryPassword []byte `json:"registryPassword"`
 }
 
 type Monitor struct {
@@ -207,10 +214,11 @@ type ClusterProgress struct {
 type ClusterProgressStatus string
 
 const (
-	StatusUnknown = "Unknown"
-	StatusDoing   = "Doing"
-	StatusSuccess = "Success"
-	StatusFailed  = "Failed"
+	StatusUnknown  = "Unknown"
+	StatusDoing    = "Doing"
+	StatusSuccess  = "Success"
+	StatusFailed   = "Failed"
+	StatusRetrying = "Retrying"
 )
 
 type Handler struct {

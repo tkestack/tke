@@ -36,6 +36,7 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/addon/tappcontroller"
 	clustercontroller "tkestack.io/tke/pkg/platform/controller/cluster"
 	"tkestack.io/tke/pkg/platform/controller/machine"
+	"tkestack.io/tke/pkg/platform/controller/template"
 )
 
 const (
@@ -50,6 +51,9 @@ const (
 
 	ipamEventSyncPeriod = 5 * time.Minute
 	concurrentIPAMSyncs = 5
+
+	templateSyncPeriod      = 5 * time.Minute
+	concurrentTemplateSyncs = 5
 )
 
 func startClusterController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -85,6 +89,23 @@ func startMachineController(ctx ControllerContext) (http.Handler, bool, error) {
 
 	go func() {
 		_ = ctrl.Run(ctx.Config.MachineController.ConcurrentMachineSyncs, ctx.Stop)
+	}()
+
+	return nil, true, nil
+}
+
+func startTemplateController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "templates"}] {
+		return nil, false, nil
+	}
+
+	ctrl := template.NewController(
+		ctx.ClientBuilder.ClientOrDie("template-controller"),
+		ctx.InformerFactory.Platform().V1().Templates(),
+		templateSyncPeriod)
+
+	go func() {
+		_ = ctrl.Run(concurrentTemplateSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil

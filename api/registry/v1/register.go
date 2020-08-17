@@ -62,6 +62,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&Chart{},
 		&ChartList{},
+		&ChartInfo{},
+		&ChartProxyOptions{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

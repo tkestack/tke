@@ -169,6 +169,12 @@ data:
         passthrough:
           caFile: /app/certs/ca.crt
 {{- end }}
+{{- if .EnableApplication }}
+      application:
+        address: https://tke-application-api
+        passthrough:
+          caFile: /app/certs/ca.crt
+{{- end }}
 
 
 {{- if not .SelfSigned }}

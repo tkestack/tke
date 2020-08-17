@@ -18,6 +18,8 @@ require (
 	github.com/chartmuseum/storage v0.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.38.1-0.20200506070354-4231c1d4b313
+	github.com/deckarep/golang-set v1.7.1 // indirect
+	github.com/cyphar/filepath-securejoin v0.2.2
 	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
@@ -81,6 +83,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.18.2
 	k8s.io/apimachinery v0.18.2
 	k8s.io/apiserver v0.18.2
+	k8s.io/cli-runtime v0.18.2
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cluster-bootstrap v0.18.2
 	k8s.io/component-base v0.18.2
@@ -88,6 +91,9 @@ require (
 	k8s.io/kube-aggregator v0.18.2
 	k8s.io/kube-openapi v0.0.0-20200121204235-bf4fb3bd569c
 	k8s.io/kubectl v0.18.2 // indirect
+	k8s.io/metrics v0.18.2
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
+	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0
+	yunion.io/x/pkg v0.0.0-20200603123312-ad58e621aec0
 )

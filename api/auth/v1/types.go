@@ -72,6 +72,9 @@ const (
 
 	// RoleFinalize is an internal finalizer values to Role.
 	RoleFinalize FinalizerName = "role"
+
+	// CustomPolicyBindingFinalize is an internal finalizer values to CustomPolicyBinding.
+	CustomPolicyBindingFinalize FinalizerName = "custompolicybinding"
 )
 
 // LocalIdentitySpec is a description of an identity.
@@ -577,6 +580,47 @@ type ProjectPolicyBindingList struct {
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 	// List of policies.
 	Items []ProjectPolicyBinding `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// CustomPolicyBinding is a collection of subjects bond to policies in a custom scope.
+type CustomPolicyBinding struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	Spec   CustomPolicyBindingSpec   `json:"spec" protobuf:"bytes,2,opt,name=spec"`
+	Status CustomPolicyBindingStatus `protobuf:"bytes,3,opt,name=status"`
+}
+
+// CustomPolicyBindingSpec defines the desired identities of CustomPolicyBindingSpec document in this set.
+type CustomPolicyBindingSpec struct {
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,1,rep,name=finalizers,casttype=FinalizerName"`
+	TenantID   string          `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	Domain     string          `json:"domain" protobuf:"bytes,3,opt,name=domain"`
+	LastDomain string          `json:"lastDomain" protobuf:"bytes,4,opt,name=lastDomain"`
+	PolicyID   string          `json:"policyID" protobuf:"bytes,5,opt,name=policyID"`
+	Resources  []string        `json:"resources" protobuf:"bytes,6,opt,name=resources"`
+	RulePrefix string          `json:"rulePrefix" protobuf:"bytes,7,opt,name=rulePrefix"`
+	Users      []Subject       `json:"users" protobuf:"bytes,8,rep,name=users"`
+	Groups     []Subject       `json:"groups" protobuf:"bytes,9,rep,name=groups"`
+}
+
+// CustomPolicyBindingStatus represents information about the status of a CustomPolicyBinding.
+type CustomPolicyBindingStatus struct {
+	Phase BindingPhase `json:"phase" protobuf:"bytes,1,opt,name=phase,casttype=BindingPhase"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// CustomPolicyBindingList is the whole list of all CustomPolicyBindings.
+type CustomPolicyBindingList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// List of CustomPolicyBinding.
+	Items []CustomPolicyBinding `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
