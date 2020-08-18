@@ -178,7 +178,7 @@ func GetExternalRestConfig(cluster *platformv1.Cluster, credential *platformv1.C
 		Cluster:  contextName,
 		AuthInfo: contextName,
 	}
-	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "5s"}, nil)
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "30s"}, nil)
 	return clientConfig.ClientConfig()
 }
 
@@ -220,7 +220,7 @@ func GetInternalRestConfig(cluster *platform.Cluster, credential *platform.Clust
 		Cluster:  contextName,
 		AuthInfo: contextName,
 	}
-	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "5s"}, nil)
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "30s"}, nil)
 	return clientConfig.ClientConfig()
 }
 

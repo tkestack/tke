@@ -1,0 +1,31 @@
+---
+# handlers file for hosts-init
+
+# restart sshd
+- name: restart sshd
+  systemd: 
+    name: sshd 
+    state: restarted
+  become: yes
+
+# restart docker
+- name: restart docker
+  systemd: 
+    name: docker 
+    state: restarted
+    daemon_reload: yes
+  become: yes
+
+# restart ntpd
+- name: restart ntpd
+  systemd:
+    name: ntpd
+    state: restarted
+  become: yes
+
+# restart firewalld
+- name: restart firewalld
+  systemd:
+    name: firewalld
+    state: restarted
+  become: yes

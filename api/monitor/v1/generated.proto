@@ -30,6 +30,89 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "v1";
 
+// ClusterOverview defines the structure for querying clusters' overview data request and result.
+message ClusterOverview {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // +optional
+  optional ClusterOverviewResult result = 2;
+}
+
+message ClusterOverviewResult {
+  optional int32 clusterCount = 1;
+
+  optional int32 clusterAbnormal = 2;
+
+  optional int32 projectCount = 3;
+
+  optional int32 projectAbnormal = 4;
+
+  optional int32 nodeCount = 5;
+
+  optional int32 nodeAbnormal = 6;
+
+  optional int32 workloadCount = 7;
+
+  optional int32 workloadAbnormal = 8;
+
+  repeated ClusterStatistic clusters = 9;
+}
+
+message ClusterStatistic {
+  optional string clusterID = 1;
+
+  optional string clusterPhase = 2;
+
+  optional int32 nodeCount = 3;
+
+  optional int32 nodeAbnormal = 4;
+
+  optional int32 workloadCount = 5;
+
+  optional int32 workloadAbnormal = 6;
+
+  optional bool hasMetricServer = 7;
+
+  optional double cpuUsed = 8;
+
+  optional double cpuRequest = 9;
+
+  optional double cpuLimit = 10;
+
+  optional double cpuCapacity = 11;
+
+  optional double cpuAllocatable = 12;
+
+  optional string cpuRequestRate = 13;
+
+  optional string cpuAllocatableRate = 14;
+
+  optional string cpuUsage = 15;
+
+  optional int64 memUsed = 16;
+
+  optional int64 memRequest = 17;
+
+  optional int64 memLimit = 18;
+
+  optional int64 memCapacity = 19;
+
+  optional int64 memAllocatable = 20;
+
+  optional string memRequestRate = 21;
+
+  optional string memAllocatableRate = 22;
+
+  optional string memUsage = 23;
+
+  optional bool schedulerHealthy = 24;
+
+  optional bool controllerManagerHealthy = 25;
+
+  optional bool etcdHealthy = 26;
+}
+
 // ConfigMap holds configuration data for tke to consume.
 message ConfigMap {
   // +optional
@@ -174,6 +257,10 @@ message PrometheusSpec {
   // +optional
   // AlertRepeatInterval indicates repeat interval of alerts
   optional string alertRepeatInterval = 9;
+
+  // +optional
+  // WithNPD indicates whether to deploy node-problem-detector or not
+  optional bool withNPD = 10;
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.

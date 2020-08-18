@@ -1,0 +1,13 @@
+# remove cluster 
+
+# remove cluster 
+- name: clean cluster
+  script: scripts/clean-cluster.sh
+  when: inventory_hostname in groups['workers'] or inventory_hostname in groups['masters']
+  tags: remove_cluster
+
+# restart network on masters node
+- name: restart network on masters node
+  shell: systemctl restart network
+  when: inventory_hostname in groups['masters'] and (groups['masters'] | length) == 3 
+  tags: remove_cluster

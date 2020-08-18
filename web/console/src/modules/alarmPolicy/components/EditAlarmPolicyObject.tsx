@@ -58,7 +58,7 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
     let finalWorkloadTypeList = workloadTypeList.slice();
     let finalWorkloadNsList = namespaceList.data.records.map(ns => ({
       value: ns.name,
-      label: ns.name
+      label: ns.displayName
     }));
     if (addons['TappController']) {
       finalWorkloadTypeList.push({

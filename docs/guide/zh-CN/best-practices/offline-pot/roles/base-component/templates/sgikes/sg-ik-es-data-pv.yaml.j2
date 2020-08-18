@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-sg-ik-es-0
+  labels:
+    pv: sg-ik-es-data
+spec:
+  capacity:
+    storage: 500Gi 
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ sg_ik_es_data }}/data-0
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['sgikes'][0] }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-sg-ik-es-1
+  labels:
+    pv: sg-ik-es-data
+spec:
+  capacity:
+    storage: 500Gi 
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ sg_ik_es_data }}/data-1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['sgikes'][1] }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-sg-ik-es-2
+  labels:
+    pv: sg-ik-es-data
+spec:
+  capacity:
+    storage: 500Gi 
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: {{ sg_ik_es_data }}/data-2
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ groups['sgikes'][2] }}

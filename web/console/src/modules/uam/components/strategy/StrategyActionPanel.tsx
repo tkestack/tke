@@ -15,6 +15,8 @@ import {
   Select,
   Table,
   Transfer,
+  Bubble,
+  Text
 } from '@tea/component';
 import { removeable, selectable } from '@tea/component/table/addons';
 import { bindActionCreators, uuid } from '@tencent/ff-redux';
@@ -49,7 +51,11 @@ const columns = [
     header: t('描述'),
     width: 100,
     render: (cvm) => {
-      return cvm.description;
+      return (
+        <Bubble content={cvm.description}>
+          <Text parent="div" overflow>{cvm.description}</Text>
+        </Bubble>
+      );
     },
   },
 ];

@@ -59,13 +59,15 @@ export async function fetchNamespaceList(query: QueryState<ResourceFilter>, reso
         namespaceList = list.items.map(item => {
           return {
             id: uuid(),
-            name: item.metadata.name
+            name: item.metadata.name,
+            displayName: item.metadata.name
           };
         });
       } else {
         namespaceList.push({
           id: uuid(),
-          name: list.metadata.name
+          name: list.metadata.name,
+          displayName: list.metadata.name
         });
       }
     }
@@ -449,11 +451,7 @@ export async function fetchResourceLogList(
 /**
  * 获取日志组件的组件名称
  */
-export async function fetchLogagentName(
-  resourceInfo: ResourceInfo,
-  clusterId: string,
-  k8sQueryObj: any = {}
-) {
+export async function fetchLogagentName(resourceInfo: ResourceInfo, clusterId: string, k8sQueryObj: any = {}) {
   let logAgent = {};
   let k8sUrl = reduceK8sRestfulPath({ resourceInfo });
   let queryString = reduceK8sQueryString({ k8sQueryObj, restfulPath: k8sUrl });
@@ -461,7 +459,7 @@ export async function fetchLogagentName(
   // 构建参数
   let params: RequestParams = {
     method: Method.get,
-    url,
+    url
   };
 
   let response = await reduceNetworkRequest(params, clusterId);
@@ -499,7 +497,7 @@ export async function fetchResourceLogHierarchy(query: LogHierarchyQuery) {
     method: Method.post,
     url,
     userDefinedHeader: {},
-    data: payload,
+    data: payload
   };
 
   let response = await reduceNetworkRequest(params, clusterId);
@@ -546,14 +544,14 @@ export async function fetchResourceLogContent(query: LogContentQuery) {
       pod,
       start,
       length,
-      filepath,
+      filepath
     }
   };
   let params: RequestParams = {
     method: Method.post,
     url,
     userDefinedHeader: {},
-    data: payload,
+    data: payload
   };
 
   let response = await reduceNetworkRequest(params, clusterId);
@@ -581,13 +579,13 @@ export async function downloadLogFile(query) {
     pod,
     namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
     container,
-    path: filepath,
+    path: filepath
   };
   // 构建参数
   let params: RequestParams = {
     method: Method.post,
     url,
-    data: payload,
+    data: payload
   };
 
   let response = await reduceNetworkRequest(params, clusterId);
@@ -794,9 +792,9 @@ export async function modifyMultiResourceIns(resource: CreateResource[], regionI
  */
 export async function deleteResourceIns(resource: CreateResource[], regionId: number) {
   try {
-    let { resourceIns, clusterId, resourceInfo, namespace, meshId } = resource[0];
+    let { resourceIns, clusterId, resourceInfo, namespace, meshId, isSpetialNamespace = true } = resource[0];
 
-    let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, meshId });
+    let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, meshId, isSpetialNamespace });
     let url = k8sUrl;
 
     // 是用于后台去异步的删除resource当中的pod

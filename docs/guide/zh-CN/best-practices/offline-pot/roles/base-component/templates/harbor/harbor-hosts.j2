@@ -1,0 +1,33 @@
+# This is the harbor's ansible 'hosts' template file.
+# Create an all group that contains the harbor and workers groups
+[all:children]
+harbor
+workers
+
+# define global variables
+[all:vars]
+#SSH user, this user should allow ssh based auth without requiring a password
+ansible_ssh_user={{ ansible_ssh_user }}
+ansible_ssh_pass={{ ansible_ssh_pass }}
+ansible_port={{ ansible_port }}
+
+# harbor config
+hostname="{{ registry_domain }}" # registry domain, don't change
+harbor_http="{{ harbor_http }}" # harbor proxy http port
+harbor_https="{{ harbor_https }}" # harbor proxy https port
+certificate="/data/harbor/certs/registry.tke.com.crt" # don't change ,will be auto set
+private_key="/data/harbor/certs/registry.tke.com.key" # don't change ,will be auto set
+harbor_admin_password="{{ harbor_admin_password }}" # harbor admin password
+db_password="{{ harbor_db_password }}" # db password
+data_volume="{{ harbor_data_volume }}" # harbor registry dir
+dpl_dir="/data/harbor" # harbor install dir, don't change, will be auto set
+
+
+
+# harbor installer node
+[harbor]
+{{ groups['installer'][0] }}
+
+# all nodes
+[workers]
+{{ groups['installer'][0] }}

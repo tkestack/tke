@@ -1,0 +1,114 @@
+# deploy nginx ingress controller and remove nginx ingress controller
+
+# set facts
+- name: set deploy_nginx_ingress facts for deploy
+  set_fact:
+    deploy_nginx_ingress: "{{ deploy_nginx_ingress }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: deploy_nginx_ingress
+
+# create save nginx ingress helms dir
+- name: create save nginx ingress helms dir
+  shell: (ls /data/helms || mkdir -p /data/helms)
+  when: inventory_hostname == groups['masters'][0] and deploy_nginx_ingress == true
+  tags: deploy_nginx_ingress
+
+# copy nginx-ingress helms file to master node
+- name: copy nginx-ingress helms file to master node
+  copy:
+    src: helms/nginx-ingress
+    dest: /data/helms/
+  when: inventory_hostname == groups['masters'][0] and deploy_nginx_ingress == true
+  tags: deploy_nginx_ingress
+
+# add ingress label 
+- name: add ingress label
+  shell: kubectl label node "{{ item }}" ingress=true --overwrite
+  with_items:
+    - "{{ groups['ingress'] }}"
+  when: inventory_hostname == groups['masters'][0] and deploy_nginx_ingress == true
+  tags: deploy_nginx_ingress
+
+# generate nginx-ingress deploy yaml
+- name: generate nginx-ingress deploy yaml
+  template:
+    src: templates/nginx_ingress/nginx-ingess.yaml.j2
+    dest: /data/helms/nginx-ingress/values.yaml
+  when: inventory_hostname == groups['masters'][0] and deploy_nginx_ingress == true
+  tags: deploy_nginx_ingress
+
+# create save deploy nginx-ingress script dir
+- name: create save deploy nginx-ingress script dir
+  shell: mkdir -p /data/offline-pot-scripts
+  when: inventory_hostname == groups['masters'][0] and deploy_nginx_ingress == true
+  tags: deploy_nginx_ingress
+
+# generate deploy nginx-ingress script
+- name: generate deploy nginx-ingress script
+  template:
+    src: templates/common/base-component-tools.sh.j2
+    dest: /data/offline-pot-scripts/base-component-tools.sh
+    mode: '0755'
+  when: inventory_hostname == groups['masters'][0] and deploy_nginx_ingress == true
+  tags: deploy_nginx_ingress
+
+# get deploy nginx-ingress script stat
+- name: get deploy nginx-ingress script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: nginx_ingress_dpl_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: deploy_nginx_ingress
+
+# deploy nginx-ingress
+- name: deploy nginx-ingress
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh dpl_nginx_ingress
+  when: inventory_hostname == groups['masters'][0] and deploy_nginx_ingress == true and nginx_ingress_dpl_script.stat.exists == True
+  tags: deploy_nginx_ingress
+
+- name: set deploy_nginx_ingress facts for remove
+  set_fact:
+    deploy_nginx_ingress: "{{ deploy_nginx_ingress }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: remove_nginx_ingress
+
+# get remove ngin-ingress script stat
+- name: get remove nginx-ingress script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: nginx_ingress_del_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: remove_nginx_ingress
+
+# remove nginx-ingress 
+- name: remove nginx-ingress
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh del_nginx_ingress
+  when: inventory_hostname == groups['masters'][0] and deploy_nginx_ingress == true and nginx_ingress_del_script.stat.exists == True
+  tags: remove_nginx_ingress
+
+# get nginx ingress controller listen status
+- name: get nginx ingress controller listen status
+  shell: if [ `ss -nat -l | grep :443 | wc -l` -gt 0 ]; then echo "true"; else echo "false";fi
+  register: nginx_listen_status 
+  when: inventory_hostname in groups['ingress']
+  tags: ingress_controller_health_check
+
+- name: set deploy_nginx_ingress facts for health check
+  set_fact:
+    deploy_nginx_ingress: "{{ deploy_nginx_ingress }}"
+  when: inventory_hostname in groups['ingress']
+  tags: ingress_controller_health_check
+
+# nginx ingress controller health
+- name: nginx ingress controller health
+  debug:
+    msg: "Info: {{ inventory_hostname }}'s nginx ingress controller health."
+  when: inventory_hostname in groups['ingress'] and deploy_nginx_ingress == true and nginx_listen_status.stdout == "true"
+  tags: ingress_controller_health_check
+
+# nginx ingress controller not health
+- name: nginx ingress controller not health
+  debug:
+    msg: "Warning: {{ inventory_hostname }}'s nginx ingress controller not health, please check!!"
+  when: inventory_hostname in groups['ingress'] and deploy_nginx_ingress == true and nginx_listen_status.stdout == "false"
+  tags: ingress_controller_health_check

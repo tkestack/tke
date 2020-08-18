@@ -1,0 +1,53 @@
+# Check disk meets requirements
+
+# set facts
+
+- name: set check_data_disk_size_switch facts
+  set_fact: check_data_disk_size_switch = "{{ check_data_disk_size_switch }}"
+  tags: check_data_disk_size
+
+- name: set deploy_ceph facts
+  set_fact: deploy_ceph = "{{ deploy_ceph }}"
+  tags: check_ceph_disk
+
+# check data disk size whether meets requirements
+- name: check data disk size whether meets requirements
+  shell: if [ `lsblk  | grep ^{{ data_disk_name }} | awk '{print $4}'  \
+        | awk -FG '{print $1}'` -ge "{{ check_data_disk_size }}" ]; then echo "the {{ data_disk_name }} meets requirements";else echo "the {{ data_disk_name }} is not meets requirements" && exit 1;fi
+  ignore_errors: yes
+  when: check_data_disk_size_switch == 'true' and inventory_hostname not in groups['installer']
+  tags: check_data_disk_size
+
+# get data dir state
+- name: get data dir state
+  stat:
+    path: "{{ check_path }}"
+  register: data_dir
+  tags: check_data_dir
+
+# check data dir whethere exist
+- debug:
+    msg: "{{ check_path }}  dir is exist"
+  when: data_dir.stat.exists == True and data_dir.stat.isdir
+  tags: check_data_dir
+
+# if data dir not exit will be create
+- name: create data dir
+  shell: mkdir -p "{{ check_path }}"
+  when: data_dir.stat.exists == False
+  tags: check_data_dir
+
+# check ceph disk size whether meets requirements
+- name: check ceph disk size whether meets requirements
+  shell: if [ `lsblk  | grep ^{{ ceph_disk_name }} | awk '{print $4}'  \
+        | awk -FG '{print $1}'` -ge "{{ check_ceph_disk_size }}" ]; then echo "the {{ ceph_disk_name }} meets requirements";else echo "the {{ ceph_disk_name }} is not meets requirements" && exit 1;fi
+  ignore_errors: yes
+  when: deploy_ceph == 'true' and inventory_hostname in groups['ceph']
+  tags: check_ceph_disk
+
+# check ceph disk whether raw disk
+- name: check ceph disk whether raw disk
+  shell: if [ `lsblk  | grep {{ ceph_disk_name }} | wc -l` -eq 1 ]; then echo "the {{ ceph_disk_name }} is raw device!";else echo "the the {{ ceph_disk_name }} is not raw device,deploy ceph will be failed!" && exit 1;fi
+  ignore_errors: yes
+  when: deploy_ceph == 'true' and inventory_hostname in groups['ceph']
+  tags: check_ceph_disk

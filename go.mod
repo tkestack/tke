@@ -18,13 +18,11 @@ require (
 	github.com/chartmuseum/storage v0.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.38.1-0.20200506070354-4231c1d4b313
-	github.com/deckarep/golang-set v1.7.1
 	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7
-	github.com/dovics/domain-role-manager v0.0.0-20200325101749-a44f9c315081
 	github.com/emicklei/go-restful v2.11.1+incompatible
 	github.com/fatih/color v1.7.0
 	github.com/fsnotify/fsnotify v1.4.7
@@ -57,7 +55,7 @@ require (
 	github.com/prometheus/client_golang v1.4.0
 	github.com/prometheus/common v0.9.1
 	github.com/rs/cors v1.6.0
-	github.com/segmentio/ksuid v1.0.2
+	github.com/segmentio/ksuid v1.0.3
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.0.0
@@ -90,6 +88,7 @@ require (
 	k8s.io/kube-aggregator v0.18.2
 	k8s.io/kube-openapi v0.0.0-20200121204235-bf4fb3bd569c
 	k8s.io/kubectl v0.18.2 // indirect
+	k8s.io/metrics v0.18.2
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 	sigs.k8s.io/yaml v1.2.0
 )

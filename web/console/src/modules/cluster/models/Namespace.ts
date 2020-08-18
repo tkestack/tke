@@ -6,6 +6,8 @@ export interface Namespace extends Identifiable {
   /** 命名空间名称 */
   name: string;
 
+  displayName: string;
+
   //业务侧使用
   clusterVersion?: string;
 

@@ -1,0 +1,21 @@
+{{- define "common.service.tpl" -}}
+apiVersion: v1
+kind: Service
+{{ template "common.metadata" . }}
+  {{- if .Values.service.annotations }}
+  annotations:
+    {{ include "common.annote" .Values.service.annotations | indent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+{{- with .Values.service.ports }}
+  ports:
+{{ toYaml . | indent 4 }}
+{{- end }}
+  selector:
+    app: {{ template "common.name" . }}
+    release: {{ .Release.Name | quote }}
+{{- end -}}
+{{- define "common.service" -}}
+{{- template "common.util.merge" (append . "common.service.tpl") -}}
+{{- end -}}

@@ -1,0 +1,141 @@
+# Check system base performance
+
+# set facts
+
+- name: set stress_perfor facts
+  set_fact: stress_perfor = "{{ stress_perfor }}"
+  tags: check_system_base_perfor
+
+# check iperf server whether start, if not will be start
+- name: check iperf server whether start, if not will be start
+  shell: ps -ef | grep iperf | grep -v 'grep' || iperf -s -D 
+  when: stress_perfor == 'true' and inventory_hostname in groups['installer']
+  tags: check_system_base_perfor
+
+# get save net reports dir state
+- name: get save net reports dir state
+  stat:
+    path: "/data/perfor-reports/net"
+  register: perfor_reports_net_dir
+  when: stress_perfor == 'true'
+  tags: check_system_base_perfor
+
+# if save net report  dir not exit will be create
+- name: create net perfor reports dir
+  shell: mkdir -p "/data/perfor-reports/net"
+  when: perfor_reports_net_dir.stat.exists == False and stress_perfor == 'true'
+  tags: check_system_base_perfor
+
+# get save disk io reports dir state
+- name: get save disk io reports dir state
+  stat:
+    path: "/data/perfor-reports/diskio"
+  register: perfor_reports_diskio_dir
+  when: stress_perfor == 'true'
+  tags: check_system_base_perfor
+
+# if save disk io report  dir not exit will be create
+- name: create disk io perfor reports dir
+  shell: mkdir -p "/data/perfor-reports/diskio"
+  when: perfor_reports_diskio_dir.stat.exists == False and stress_perfor == 'true'
+  tags: check_system_base_perfor
+
+# check network perfor
+- name: check network perfor
+  shell: iperf -c "{{ groups['installer'][0] }}" -t 60
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  register: net_reports
+  tags: check_system_base_perfor
+
+# check network whether lost package and save the report to file
+- name: check network whether lost package
+  shell: echo "{{ net_reports.stdout }}" > "/data/perfor-reports/net/{{ inventory_hostname }}.log" && echo "{{ net_reports.stdout }}" | grep -i "Lost" && \
+         echo "{{ inventory_hostname }} network performance lost package,please check!!" && exit 1 || echo "{{ inventory_hostname }} network performance is not lost package!!"
+  ignore_errors: yes
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor
+
+# check system disk  io randread latency performance 
+- name: check system disk io randread latency performance
+  shell: ls /root/randread.txt || for i in { 0..1 }; do \
+         fio -filename=/root/randread.txt -direct=1 -iodepth 1 -thread -rw=randread -ioengine=libaio -bs=4k -size="{{ fio_size }}" -numjobs=30 -runtime=200 -group_reporting -name=randread-test && rm -f /root/randread.txt; done
+  register: system_diskio_latency_reports
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor
+
+# check system disk io randread latency whether ok and save reports
+- name: check system disk io randread latency whether ok and save report
+  shell:  echo "{{ system_diskio_latency_reports.stdout }}" > /data/perfor-reports/diskio/{{ inventory_hostname }}-system-latency.log  && \
+          for i in `echo "{{ system_diskio_latency_reports.stdout }}" |  grep '^[[:blank:]]*lat (usec)' | grep avg | awk '{print $5}'|awk -F, '{print $1}'|awk -F= '{print $2}'|awk -F. '{print $1}'`; \
+          do if [ $i -gt "{{ disk_io_latency }}" ];then echo "system disk io latency is a bit hight,current value is $i, please check!" && exit 1;else echo "system disk io latency is ok!";fi ; done 
+  ignore_errors: yes
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor
+
+# check data disk  io randread latency performance
+- name: check data disk io randread latency performance
+  shell: ls /data/perfor-reports/diskio/randread.txt || for i in { 0..1 }; do \
+         fio -filename=/data/perfor-reports/diskio/randread.txt -direct=1 -iodepth 1 -thread -rw=randread -ioengine=libaio -bs=4k -size="{{ fio_size }}" -numjobs=30 -runtime=200 -group_reporting -name=randread-test && \
+         rm -f /data/perfor-reports/diskio/randread.txt; done
+  register: data_diskio_latency_reports
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor
+
+# check system disk io randread latency whether ok and save reports
+- name: check system disk io randread latency whether ok and save report
+  shell:  echo "{{ data_diskio_latency_reports.stdout }}" > /data/perfor-reports/diskio/{{ inventory_hostname }}-data-latency.log && \
+          for i in `echo "{{ data_diskio_latency_reports.stdout }}" |  grep '^[[:blank:]]*lat (usec)' | grep avg | awk '{print $5}'|awk -F, '{print $1}'|awk -F= '{print $2}'|awk -F. '{print $1}'`; \
+          do if [ $i -gt "{{ disk_io_latency }}" ];then echo "data disk io latency is a bit hight,current value is $i, please check!" && exit 1;else echo "data disk io latency is ok!";fi ; done
+  ignore_errors: yes
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor
+
+# check system disk  iops performance
+- name: check system disk iops performance
+  shell: ls /root/randwrite.txt || for i in { 0..1 }; do \
+         fio -filename=/root/randwrite.txt -direct=1 -iodepth 32 -thread -rw=randwrite -ioengine=libaio -bs=4k -size="{{ fio_size }}" -numjobs=30 -runtime=200 -group_reporting -name=randwrite-test && rm -f /root/randwrite.txt; done
+  register: system_disk_iops_reports
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor
+
+# check system disk iops whether ok and save reports
+- name: check system disk iops whether ok and save report
+  shell:  echo "{{ system_disk_iops_reports.stdout }}" > /data/perfor-reports/diskio/{{ inventory_hostname }}-system-iops.log && \
+          for i in `echo "{{ system_disk_iops_reports.stdout }}" | grep '^[[:blank:]]*iops' | grep avg | awk '{print $7}' | awk -F, '{print $1}' |awk -F= '{print $2}'|awk -F. '{print $1}'`; \
+          do if [ $i -lt "{{ disk_iops }}" ];then echo "system disk iops is a bit low,current value is $i, please check!" && exit 1;else echo "system disk iops is ok!";fi ; done
+  ignore_errors: yes
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor
+
+# check data disk  iops performance
+- name: check data disk iops performance
+  shell: ls /data/perfor-reports/diskio/randwrite.txt || for i in { 0..1 }; do \
+         fio -filename=/data/perfor-reports/diskio/randwrite.txt -direct=1 -iodepth 32 -thread -rw=randwrite -ioengine=libaio -bs=4k -size="{{ fio_size }}" -numjobs=30 -runtime=200 -group_reporting -name=randwrite-test && \
+         rm -f /data/perfor-reports/diskio/randwrite.txt; done
+  register: data_disk_iops_reports
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor
+
+# check data disk iops whether ok and save report
+- name: check data disk iops whether ok and save report
+  shell:  echo "{{ data_disk_iops_reports.stdout }}" > /data/perfor-reports/diskio/{{ inventory_hostname }}-data-iops.log && \
+          for i in `echo "{{ data_disk_iops_reports.stdout }}" | grep '^[[:blank:]]*iops' | grep avg | awk '{print $7}' | awk -F, '{print $1}' |awk -F= '{print $2}'|awk -F. '{print $1}'`; \
+          do if [ $i -lt "{{ disk_iops }}" ];then echo "data disk iops is a bit low,current value is $i, please check!" && exit 1;else echo "data disk iops is ok!";fi ; done
+  ignore_errors: yes
+  when:  stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor
+
+# get reports to installer host
+- name: get reports to installer host
+  fetch:
+    src: "{{ item }}"
+    dest: "{{ item }}"
+    flat: yes
+  with_items:
+    - '/data/perfor-reports/net/{{ inventory_hostname }}.log'
+    - '/data/perfor-reports/diskio/{{ inventory_hostname }}-system-latency.log'
+    - '/data/perfor-reports/diskio/{{ inventory_hostname }}-data-latency.log'
+    - '/data/perfor-reports/diskio/{{ inventory_hostname }}-system-iops.log'
+    - '/data/perfor-reports/diskio/{{ inventory_hostname }}-data-iops.log'
+  when: stress_perfor == 'true' and inventory_hostname not in groups['installer']
+  tags: check_system_base_perfor

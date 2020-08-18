@@ -19,10 +19,16 @@
 package util
 
 import (
-	v1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"io"
+	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 
+	"tkestack.io/tke/api/monitor"
+	platformv1 "tkestack.io/tke/api/platform/v1"
+
+	v1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	alert_config "github.com/prometheus/alertmanager/config"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 )
 
 // GenericRuleOperator defines the generic rule operator for prometheus
@@ -71,4 +77,50 @@ type RouteOperator interface {
 	UpdateRoute(alertValue string, route *alert_config.Route) (*alert_config.Route, error)
 	GetRoute(alertValue string) (*alert_config.Route, error)
 	ListRoute() ([]*alert_config.Route, error)
+}
+
+type ClusterClientSets map[string]*kubernetes.Clientset
+type MetricServerClientSets map[string]*metricsv.Clientset
+type DynamicClientSet map[string]dynamic.Interface
+type ClusterSet map[string]*platformv1.Cluster
+type ClusterCredentialSet map[string]*platformv1.ClusterCredential
+type ClusterStatisticSet map[string]*monitor.ClusterStatistic
+
+type WorkloadCounter struct {
+	Deployment  int
+	DaemonSet   int
+	StatefulSet int
+	TApp        int
+}
+
+func (w *WorkloadCounter) Total() int {
+	return w.Deployment + w.DaemonSet + w.StatefulSet + w.TApp
+}
+
+type ResourceCounter struct {
+	NodeTotal          int
+	NodeAbnormal       int
+	HasMetricServer    bool
+	CPUUsed            float64
+	CPURequest         float64
+	CPULimit           float64
+	CPUCapacity        float64
+	CPUAllocatable     float64
+	CPURequestRate     float64
+	CPUAllocatableRate float64
+	CPUUsage           float64
+	MemUsed            int64
+	MemRequest         int64
+	MemLimit           int64
+	MemCapacity        int64
+	MemAllocatable     int64
+	MemRequestRate     float64
+	MemAllocatableRate float64
+	MemUsage           float64
+}
+
+type ComponentHealth struct {
+	Scheduler         bool
+	ControllerManager bool
+	Etcd              bool
 }

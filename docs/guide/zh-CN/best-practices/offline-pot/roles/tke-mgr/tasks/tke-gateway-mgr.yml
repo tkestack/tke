@@ -1,0 +1,21 @@
+# adjust the number of tke-gateway replicas 
+
+# set facts
+- name: set tke_replicas facts
+  set_fact:
+    tke_replicas: "{{ tke_replicas }}"
+  when: inventory_hostname == groups['masters'][0] and (groups['masters'] | length) >= 3 
+  tags: tke_gateway
+
+# The first master add tke-gateway=true label
+- name: the first master add tke-gateway=true label
+  shell: kubectl label node {{ groups['masters'][0] }} "tke-gateway"="true" --overwrite
+  when: inventory_hostname == groups['masters'][0] and (groups['masters'] | length) >= 3 and tke_replicas == "1"
+  tags: tke_gateway
+
+# tke gateway daemonset nodeSelector patch
+- name: tke gateway daemonset nodeSelector patch
+  shell: kubectl patch ds tke-gateway -p '{"spec":{"template":{"spec":{"nodeSelector":{"tke-gateway":"true"}}}}}' -n tke
+  when: inventory_hostname == groups['masters'][0] and (groups['masters'] | length) >= 3 and tke_replicas == "1"
+  tags: tke_gateway
+

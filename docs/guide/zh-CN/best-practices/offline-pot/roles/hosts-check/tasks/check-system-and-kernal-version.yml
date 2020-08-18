@@ -1,0 +1,35 @@
+# Check system and kernal version
+
+# set facts
+- name: set release version facts
+  set_fact:
+    release_versions: "{{ release_versions | combine( { inventory_hostname: hostvars[inventory_hostname]['ansible_distribution'] + '_' + hostvars[inventory_hostname]['ansible_distribution_major_version'] + '_' + hostvars[inventory_hostname]['ansible_distribution_version']  } ) }}"
+  tags: check_system_kernal_version
+
+- name: set kernal version facts
+  set_fact:
+    kernal_version: "{{ kernal_version | combine( { inventory_hostname: hostvars[inventory_hostname]['ansible_kernel']  } ) }}"
+  tags: check_system_kernal_version
+
+# check release version whether meets requirements
+- name: check release version whether meets requirements(CentOS)
+  shell: if ([ `echo {{ ansible_kernel }} | grep tlinux2 | wc -l` -eq 0 ] && [ "{{ ansible_distribution_version }}" \< 7.2 ]); then echo " {{ release_versions }} system version a bit low version,risky deployment!!!" && exit 1; \
+         elif [ "{{ ansible_distribution_version }}" \< 2.2 ]; then echo " {{ release_versions }} system version a bit low version,risky deployment!!!" && exit 1; fi
+  ignore_errors: yes
+  when: ansible_distribution == 'CentOS'
+  tags: check_system_kernal_version
+
+- name: check release version whether meets requirements(Ubuntu)
+  shell: if [ "{{ ansible_distribution_version }}" \< 16 ]; then echo  "{{ release_versions }}  system version a bit low version,risky deployment!!!" && exit 1; fi
+  ignore_errors: yes
+  when: ansible_distribution == 'Ubuntu'
+  tags: check_system_kernal_version
+
+# check kernal version whether meets requirements
+- name: check kernal version whether meets requirements
+  shell: if ([ "{{ use_calico }}" == "true"  ] && [ "{{ ansible_kernel }}" \< 4 ]); then echo "{{ kernal_version }} kernal version cloud not deploy calico" && exit 1; \
+         elif [ "{{ ansible_kernel }}" \< 3 ]; then echo "{{ kernal_version }} kernal version deploy tkestack will be failed!!!" && exit 1; fi
+  ignore_errors: yes
+  tags: check_system_kernal_version
+ 
+

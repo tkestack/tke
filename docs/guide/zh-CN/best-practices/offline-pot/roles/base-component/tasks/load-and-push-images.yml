@@ -1,0 +1,37 @@
+# load and push images
+
+# load images
+- name: load images
+  shell: if [ `ls {{ dpl_dir }}-images/ | wc -l` -gt 0 ];then \
+           for img in `ls {{ dpl_dir }}-images/`;do \
+             docker load -i {{ dpl_dir }}-images/${img}; \
+           done \
+         else \
+           echo 'Not had image file!'; \
+         fi
+  register: load_images_rst
+  when: inventory_hostname in groups['installer'] and ansible_distribution == 'CentOS'
+  tags: load_and_push_images
+
+# get images  name
+- name: get  images name
+  shell: echo "{{ load_images_rst.stdout }}" | awk -F' ' '{print $NF}'
+  register: images_list
+  when: inventory_hostname in groups['installer'] and ansible_distribution == 'CentOS'
+  tags: load_and_push_images
+
+# retag images and push
+- name: retag images and push
+  shell: if [ ! -f /root/.docker/.tkestack.config.json ]; then \
+            mkdir -p ~/.docker/ &&  \
+            docker ps -a | grep tke-installer | grep 'Up' || docker restart tke-installer && \
+            docker cp tke-installer:/root/.docker/config.json /root/.docker/.tkestack.config.json; \
+         fi; \
+         docker ps -a | grep tke-installer | grep 'Up' || docker restart tke-installer && \
+         for img in `echo "{{ images_list.stdout }}"`; do \
+           docker tag ${img} {{ registry_domain }}/library/`echo ${img} | awk -F/ '{print $NF}'`; \
+           docker exec tke-installer docker push {{ registry_domain }}/library/`echo ${img} | awk -F/ '{print $NF}'`; \
+         done
+  when: inventory_hostname in groups['installer'] and ansible_distribution == 'CentOS'
+  tags: load_and_push_images
+

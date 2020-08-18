@@ -1,0 +1,11 @@
+# init keepalived config
+
+# cp keepalived config to master node
+- name: cp keepalived config to master node
+  template:
+    src: templates/keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    mode: '0644'
+  when: inventory_hostname in groups['masters'] and (groups['masters'] | length) == 3 and tke_ha_type == "tke"
+  tags: init_keepalived
+

@@ -177,7 +177,7 @@ func RegisterRoute(m *mux.PathRecorderMux, cfg *gatewayconfig.GatewayConfigurati
 			if err != nil {
 				return err
 			}
-			log.Info("Registered reverse proxy of front proxy mode for backend component", log.String("pathPrefix", pathPrefix.prefix), log.Bool("protected", pathPrefix.protected), log.String("address", proxyComponent.Address))
+			log.Info("Registered reverse proxy of passthrough mode for backend component", log.String("pathPrefix", pathPrefix.prefix), log.Bool("protected", pathPrefix.protected), log.String("address", proxyComponent.Address))
 			m.HandlePrefix(pathPrefix.prefix, handler)
 		}
 	}

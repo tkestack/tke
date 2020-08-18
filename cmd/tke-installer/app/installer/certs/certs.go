@@ -22,11 +22,12 @@ import (
 	"crypto"
 	"crypto/rsa"
 	"crypto/x509"
-	"github.com/pkg/errors"
-	"io/ioutil"
-	certutil "k8s.io/client-go/util/cert"
 	"net"
+
+	"github.com/pkg/errors"
+	certutil "k8s.io/client-go/util/cert"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
+	"tkestack.io/tke/pkg/util/files"
 	"tkestack.io/tke/pkg/util/pkiutil"
 )
 
@@ -44,16 +45,16 @@ var (
 	}
 )
 
-func Generate(dnsNames []string, ips []net.IP) error {
+func Generate(dnsNames []string, ips []net.IP, dir string) error {
 	caCert, caKey, err := generateRootCA()
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(constants.CACrtFile, pkiutil.EncodeCertPEM(caCert), 0644)
+	err = files.WriteFileWithDir(dir, constants.CACrtFileBaseName, pkiutil.EncodeCertPEM(caCert), 0644)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(constants.CAKeyFile, pkiutil.EncodePrivateKeyPEM(caKey), 0644)
+	err = files.WriteFileWithDir(dir, constants.CAKeyFileBaseName, pkiutil.EncodePrivateKeyPEM(caKey), 0644)
 	if err != nil {
 		return err
 	}
@@ -62,11 +63,11 @@ func Generate(dnsNames []string, ips []net.IP) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(constants.ServerCrtFile, pkiutil.EncodeCertPEM(serverCert), 0644)
+	err = files.WriteFileWithDir(dir, constants.ServerCrtFileBaseName, pkiutil.EncodeCertPEM(serverCert), 0644)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(constants.ServerKeyFile, pkiutil.EncodePrivateKeyPEM(serverKey), 0644)
+	err = files.WriteFileWithDir(dir, constants.ServerKeyFileBaseName, pkiutil.EncodePrivateKeyPEM(serverKey), 0644)
 	if err != nil {
 		return err
 	}
@@ -75,11 +76,11 @@ func Generate(dnsNames []string, ips []net.IP) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(constants.AdminCrtFile, pkiutil.EncodeCertPEM(adminCert), 0644)
+	err = files.WriteFileWithDir(dir, constants.AdminCrtFileBaseName, pkiutil.EncodeCertPEM(adminCert), 0644)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(constants.AdminKeyFile, pkiutil.EncodePrivateKeyPEM(adminKey), 0644)
+	err = files.WriteFileWithDir(dir, constants.AdminKeyFileBaseName, pkiutil.EncodePrivateKeyPEM(adminKey), 0644)
 	if err != nil {
 		return err
 	}

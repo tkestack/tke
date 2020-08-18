@@ -1,0 +1,66 @@
+bootstrap:
+  replicaCount: 1
+  
+  fullnameOverride: "product2-app1"
+  nameOverride: "product2-app1"
+  
+  image:
+    repository: shsmu/helmfile-product-demo
+    tag: "v1.0.1"
+    pullPolicy: IfNotPresent
+
+  command:
+    - /start
+  
+  env:
+    - name: APP_ENV_FLAG
+      value: demo
+    - name: APP_NAME
+      value: "product2-app1"
+    - name: LOG_PATH
+      value: /data/logs
+    - name: HOST
+      value: "0.0.0.0"
+    - name: PORT0
+      value: "80"
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 1Gi
+
+  securityContext:
+    capabilities:
+      add:
+      - SYS_PTRACE
+  
+  imagePullSecrets:
+    - name: qcloudregistrykey
+    - name: tencenthubkey
+  
+  # service 
+  # product2-app1
+  #
+  service:
+    annotations:
+      service.kubernetes.io/qcloud-loadbalancer-clusterid: cls-jy8c2t4r
+      service.kubernetes.io/qcloud-loadbalancer-internal-subnetid: subnet-co2oobaz
+    type: LoadBalancer
+    ports:
+    - name: tcp-80-80
+      port: 80
+      protocol: TCP
+      targetPort: 80
+
+  #ingress:
+  #  hosts:
+  #  - product2-app1-ty.mydomain.com
+  #  annotations:
+  #    kubernetes.io/ingress.class: nginx
+  #  tls:
+  #  - secretName: haproxy-tls-product2
+  #    hosts:
+  #    - product2-app1-ty.mydomain.com

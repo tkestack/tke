@@ -29,13 +29,13 @@ export const workflowActions = {
       {
         [OperationTrigger.Done]: (dispatch, getState) => {
           let deleteLog = getState().inlineDeleteLog;
-          let { route, namespaceFliter } = getState();
+          let { route, namespaceSelection } = getState();
           if (isSuccessWorkflow(deleteLog)) {
             dispatch(
               logActions.applyFilter({
                 clusterId: route.queries['clusterId'],
                 isClear: false,
-                namespace: namespaceFliter
+                namespace: namespaceSelection
               })
             );
             dispatch(workflowActions.inlineDeleteLog.reset());
@@ -78,9 +78,6 @@ export const workflowActions = {
         if (isSuccessWorkflow(modifyLogStashFlow)) {
           // 初始化flow
           dispatch(workflowActions.modifyLogStash.reset());
-
-          //首页namespace重设
-          dispatch(namespaceActions.selectNamespace(''));
 
           // 进行路由的跳转，回列表页
           let newRouteQueies = JSON.parse(

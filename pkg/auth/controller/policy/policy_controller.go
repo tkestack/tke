@@ -229,6 +229,7 @@ func (c *Controller) processUpdate(policy *v1.Policy, key string) error {
 	// start update policy if needed
 	err := c.handlePhase(key, policy)
 	if err != nil {
+		log.Error("process update policy failed", log.Any("policy", policy.GetName()), log.Any("key", key), log.Err(err))
 		return err
 	}
 	return nil

@@ -1,0 +1,14 @@
+# add domains resolv
+
+# add domains resolv
+- name: add domains to hosts
+  lineinfile:
+    path: "/etc/hosts"
+    regexp: ".*{{ item }}$"
+    line: "{{ groups['installer'][0] }}  {{ item }}"
+    state: present
+  with_items:
+    - 'offline.yum.pot.tke.com'
+    - 'ntpd.pot.tke.com'
+    - '{{ registry_domain }}'
+  tags: add_domains

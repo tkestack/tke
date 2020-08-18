@@ -400,15 +400,15 @@ export const validateActions = {
     };
   },
 
-  _validateIssueUrl(issueUrl: string, authType?: string) {
+  _validateIssuerUrl(issuerUrl: string, authType?: string) {
     let status = 0,
       message = '';
 
-    //验证IssueUrl
+    //验证IssuerUrl
     if (authType === 'oidc') {
-      if (!issueUrl) {
+      if (!issuerUrl) {
         status = 2;
-        message = 'IssueUrl不能为空';
+        message = 'IssuerUrl不能为空';
       } else {
         status = 1;
         message = '';
@@ -421,10 +421,10 @@ export const validateActions = {
     return { status, message };
   },
 
-  validateIssueUrl(issueUrl?: string, authType?: string) {
+  validateIssuerUrl(issuerUrl?: string, authType?: string) {
     return dispatch => {
-      const v_issueURL = validateActions._validateIssueUrl(issueUrl, authType);
-      dispatch(installerActions.updateEdit({ v_issueURL }));
+      const v_issuerURL = validateActions._validateIssuerUrl(issuerUrl, authType);
+      dispatch(installerActions.updateEdit({ v_issuerURL }));
     };
   },
 
@@ -486,7 +486,7 @@ export const validateActions = {
 
   _validateStep4(editState: EditState) {
     let result =
-      validateActions._validateIssueUrl(editState.issueURL, editState.authType).status === 1 &&
+      validateActions._validateIssuerUrl(editState.issuerURL, editState.authType).status === 1 &&
       validateActions._validateClientID(editState.clientID, editState.authType).status === 1 &&
       validateActions._validateCaCert(editState.caCert, editState.authType).status === 1;
 
@@ -495,11 +495,11 @@ export const validateActions = {
 
   validateStep4(editState: EditState) {
     return dispatch => {
-      const v_issueURL = validateActions._validateIssueUrl(editState.issueURL, editState.authType),
+      const v_issuerURL = validateActions._validateIssuerUrl(editState.issuerURL, editState.authType),
         v_clientID = validateActions._validateClientID(editState.clientID, editState.authType),
         v_caCert = validateActions._validateCaCert(editState.caCert, editState.authType);
 
-      dispatch(installerActions.updateEdit({ v_issueURL, v_clientID, v_caCert }));
+      dispatch(installerActions.updateEdit({ v_issuerURL, v_clientID, v_caCert }));
     };
   },
 
