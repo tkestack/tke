@@ -84,7 +84,7 @@ In this case, client is able to fully support traditional `pagination` ,  since 
 2. `totalSize`= `limt` + `remainingItemCount`in first LIST request.  Client can calculate available page range by `totalSize/limt`as well,  this allow client show a list of page number for end user jump to directly
 3. `pageNum` is the `continue`token, but it is little difference from traditional `pageNum`,  traditional records in `pageNum`is in range `[pageNum*pageSize, pageNum*pageSize+pageSize]` , but in API chunking, whatever client jump to which `pageNum`,  the request just pass `continue`token base on previous result to LIST API,  this ensure the subsequent LIST API call range over full ordered list
 
-![enter image description here](../../images/api-chunking.png)
+![enter image description here](../../docs/images/api-chunking.png)
 
 **User  case 2**:  LIST request have `labelSelector` or`fieldSelector` option
 
