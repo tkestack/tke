@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 
 	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
@@ -58,6 +59,8 @@ const (
 	Scheduler         Component = "scheduler"
 	ControllerManager Component = "controller-manager"
 	Etcd              Component = "etcd-0"
+
+	EtcdPrefix = "etcd-"
 )
 
 var (
@@ -334,7 +337,12 @@ func isHealthy(component *corev1.ComponentStatus) bool {
 func (c *cacher) getComponentStatuses(clusterID string, clientSet *kubernetes.Clientset, health *util.ComponentHealth) {
 	if componentStatuses, err := clientSet.CoreV1().ComponentStatuses().List(context.Background(), metav1.ListOptions{}); err == nil {
 		for _, cs := range componentStatuses.Items {
-			UpdateComponentStatusFunc[Component(cs.GetName())](&cs, health)
+			csName := cs.GetName()
+			if _, ok := UpdateComponentStatusFunc[Component(csName)]; ok {
+				UpdateComponentStatusFunc[Component(csName)](&cs, health)
+			} else if strings.HasPrefix(csName, EtcdPrefix) {
+				health.Etcd = health.Etcd && isHealthy(&cs)
+			}
 		}
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query componentStatuses failed", log.Any("clusterID", clusterID), log.Err(err))
