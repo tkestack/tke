@@ -188,11 +188,6 @@ const commonRouterConfig: RouterConfig[] = [
         watchModule: ConsoleModuleEnum.LogAgent
       },
       {
-        url: '/tkestack/log/setting',
-        title: '日志组件',
-        watchModule: ConsoleModuleEnum.LogAgent
-      },
-      {
         url: '/tkestack/persistent-event',
         title: '事件持久化',
         watchModule: ConsoleModuleEnum.PLATFORM

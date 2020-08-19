@@ -94,6 +94,9 @@ const restActions = {
         payload: project
       });
       let { mode, type, resourceName } = urlParams;
+
+      // 切换Header中的业务时，重置页面中namespace的选择，因为不同的业务对应不同的namespace列表
+      delete route.queries['np'];
       router.navigate(
         mode && type && resourceName ? urlParams : { mode: 'list', type: 'namespace', resourceName: 'np' },
         Object.assign({}, route.queries, {

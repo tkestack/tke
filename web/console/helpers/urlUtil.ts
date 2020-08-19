@@ -137,14 +137,7 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
     logAgentName = '',
   } = options;
 
-  /// #if project
-  //业务侧ns eg: cls-xxx-ns 需要去除前缀
-  if (namespace && !isSpecialNamespace) {
-    namespace = namespace.startsWith('global')
-      ? namespace.split('-').splice(1).join('-')
-      : namespace.split('-').splice(2).join('-');
-  }
-  /// #endif
+  namespace = namespace.replace(new RegExp(`^${clusterId}-`), '');
   let url: string = '';
   let isAddon = resourceInfo.requestType && resourceInfo.requestType.addon ? resourceInfo.requestType.addon : false;
 

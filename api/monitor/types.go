@@ -217,18 +217,23 @@ type ClusterStatistic struct {
 	NodeAbnormal             int32
 	WorkloadCount            int32
 	WorkloadAbnormal         int32
+	HasMetricServer          bool
+	CPUUsed                  float64
 	CPURequest               float64
 	CPULimit                 float64
 	CPUCapacity              float64
 	CPUAllocatable           float64
 	CPURequestRate           string
 	CPUAllocatableRate       string
+	CPUUsage                 string
+	MemUsed                  int64
 	MemRequest               int64
 	MemLimit                 int64
 	MemCapacity              int64
 	MemAllocatable           int64
 	MemRequestRate           string
 	MemAllocatableRate       string
+	MemUsage                 string
 	SchedulerHealthy         bool
 	ControllerManagerHealthy bool
 	EtcdHealthy              bool

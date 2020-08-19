@@ -227,7 +227,7 @@ export async function createCluster(edits: Array<EditState>) {
       } else if (edits[0].authType === 'oidc') {
         params.config['auth'] = {
           oidc: {
-            issueURL: edits[0].issueURL,
+            issuerURL: edits[0].issuerURL,
             clientID: edits[0].clientID,
             caCert: Base64.encode(edits[0].caCert)
           }
