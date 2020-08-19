@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -408,7 +409,18 @@ func needUpgradeNode(client kubernetes.Interface, nodeName string, version strin
 	if err != nil {
 		return false, err
 	}
-	if strings.HasSuffix(node.Status.NodeInfo.KubeletVersion, version) {
+	nodeVersion, err := semver.NewVersion(node.Status.NodeInfo.KubeletVersion)
+	if err != nil {
+		return false, err
+	}
+	needVersion, err := semver.NewVersion(version)
+	if err != nil {
+		return false, err
+	}
+
+	if nodeVersion.Major() == needVersion.Major() &&
+		nodeVersion.Minor() == needVersion.Minor() &&
+		nodeVersion.Patch() == needVersion.Patch() {
 		return false, nil
 	}
 
