@@ -14,6 +14,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-sdk-go v1.29.32
 	github.com/bitly/go-simplejson v0.5.0
+	github.com/caixw/lib.go v0.0.0-20141220110639-1781da9139e0
 	github.com/casbin/casbin/v2 v2.2.1
 	github.com/chartmuseum/storage v0.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
