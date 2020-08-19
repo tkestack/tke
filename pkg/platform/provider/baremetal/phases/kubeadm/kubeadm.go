@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -337,7 +338,11 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 		if err != nil {
 			return false, nil
 		}
-		if strings.HasSuffix(node.Status.NodeInfo.KubeletVersion, option.Version) {
+		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, option.Version)
+		if err != nil {
+			return false, nil
+		}
+		if same {
 			return true, err
 		}
 		return false, nil
@@ -408,11 +413,12 @@ func needUpgradeNode(client kubernetes.Interface, nodeName string, version strin
 	if err != nil {
 		return false, err
 	}
-	if strings.HasSuffix(node.Status.NodeInfo.KubeletVersion, version) {
-		return false, nil
-	}
 
-	return true, nil
+	same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version)
+	if err != nil {
+		return false, err
+	}
+	return !same, nil
 }
 
 // checkMasterNodesVersion check all master nodes version.
@@ -424,7 +430,11 @@ func checkMasterNodesVersion(client kubernetes.Interface, version string) (bool,
 		return false, err
 	}
 	for _, node := range nodes.Items {
-		if !strings.HasSuffix(node.Status.NodeInfo.KubeletVersion, version) {
+		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version)
+		if err != nil {
+			return false, err
+		}
+		if !same {
 			return false, fmt.Errorf("master node(%s) current version is %s, required version is %s", node.Name, node.Status.NodeInfo.KubeletVersion, version)
 		}
 	}
@@ -522,8 +532,13 @@ func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platf
 		if err != nil {
 			return err
 		}
+
+		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version)
+		if err != nil {
+			return err
+		}
 		// Skip upgraded node.
-		if strings.HasSuffix(node.Status.NodeInfo.KubeletVersion, version) {
+		if same {
 			continue
 		}
 
@@ -547,4 +562,22 @@ func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platf
 	}
 
 	return nil
+}
+
+func sameVersion(ver1, ver2 string) (bool, error) {
+	semVer1, err := semver.NewVersion(ver1)
+	if err != nil {
+		return false, err
+	}
+	semVer2, err := semver.NewVersion(ver2)
+	if err != nil {
+		return false, err
+	}
+
+	if semVer1.Major() == semVer2.Major() &&
+		semVer1.Minor() == semVer2.Minor() &&
+		semVer1.Patch() == semVer2.Patch() {
+		return true, nil
+	}
+	return false, nil
 }
