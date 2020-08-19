@@ -630,7 +630,7 @@
                     "getChart",
                     "getChartStatus",
                     "listCharts",
-                    "listChartInfo"
+                    "listChartVersion"
                 ],
                 "resources": [
                     "-"
@@ -661,10 +661,11 @@
                 "actions": [
                     "createChart",
                     "deleteChart",
+                    "deleteChartVersion",
                     "getChart",
                     "getChartStatus",
                     "listCharts",
-                    "listChartInfo",
+                    "listChartVersion",
                     "updateChart",
                     "updateChartStatus"
                 ],
@@ -970,7 +971,7 @@
                     "listAlarmpolicies",
                     "listChannels",
                     "listChartgroups",
-                    "listChartInfo",
+                    "listChartVersion",
                     "listCharts",
                     "listClusters",
                     "listConfigmaps",
@@ -1231,7 +1232,7 @@
                     "listApps",
                     "listChannels",
                     "listChartgroups",
-                    "listChartInfo",
+                    "listChartVersion",
                     "listCharts",
                     "listClusters",
                     "listConfigmaps",
@@ -1984,7 +1985,7 @@
                     "listAlarmpolicies",
                     "listChannels",
                     "listChartgroups",
-                    "listChartInfo",
+                    "listChartVersion",
                     "listCharts",
                     "listConfigmaps",
                     "listControllerrevisions",
