@@ -214,6 +214,8 @@ func (in *ChartInfoSpec) DeepCopyInto(out *ChartInfoSpec) {
 			(*out)[key] = val
 		}
 	}
+	in.ChartSpec.DeepCopyInto(&out.ChartSpec)
+	in.ChartVersion.DeepCopyInto(&out.ChartVersion)
 	return
 }
 

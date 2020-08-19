@@ -63,6 +63,7 @@ func SetObjectDefaults_ChartGroupList(in *ChartGroupList) {
 
 func SetObjectDefaults_ChartInfo(in *ChartInfo) {
 	SetDefaults_ChartInfoSpec(&in.Spec)
+	SetDefaults_ChartSpec(&in.Spec.ChartSpec)
 }
 
 func SetObjectDefaults_ChartList(in *ChartList) {

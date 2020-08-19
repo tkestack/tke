@@ -295,6 +295,8 @@ type ChartVersion struct {
 	ChartSize   int64       `json:"chartSize,omitempty" protobuf:"varint,2,opt,name=chartSize"`
 	TimeCreated metav1.Time `json:"timeCreated,omitempty" protobuf:"bytes,3,opt,name=timeCreated"`
 	Description string      `json:"description,omitempty" protobuf:"bytes,4,opt,name=description"`
+	AppVersion  string      `json:"appVersion,omitempty" protobuf:"bytes,5,opt,name=appVersion"`
+	Icon        string      `json:"icon,omitempty" protobuf:"bytes,6,opt,name=icon"`
 }
 
 // Visibility defines the visible properties of the repo or namespace.
@@ -358,6 +360,10 @@ type ChartInfoSpec struct {
 	Values map[string]string `json:"values,omitempty" protobuf:"bytes,2,opt,name=values"`
 	// +optional
 	RawFiles map[string]string `json:"rawFiles,omitempty" protobuf:"bytes,3,opt,name=rawFiles"`
+	// +optional
+	ChartSpec `json:",inline" protobuf:"bytes,4,opt,name=chartSpec"`
+	// +optional
+	ChartVersion `json:",inline" protobuf:"bytes,5,opt,name=chartVersion"`
 }
 
 // +genclient

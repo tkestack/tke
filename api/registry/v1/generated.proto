@@ -132,6 +132,12 @@ message ChartInfoSpec {
 
   // +optional
   map<string, string> rawFiles = 3;
+
+  // +optional
+  optional ChartSpec chartSpec = 4;
+
+  // +optional
+  optional ChartVersion chartVersion = 5;
 }
 
 // ChartList is the whole list of all charts which owned by a chart group.
@@ -204,6 +210,10 @@ message ChartVersion {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time timeCreated = 3;
 
   optional string description = 4;
+
+  optional string appVersion = 5;
+
+  optional string icon = 6;
 }
 
 // ConfigMap holds configuration data for tke to consume.

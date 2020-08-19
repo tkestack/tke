@@ -295,6 +295,8 @@ type ChartVersion struct {
 	ChartSize   int64
 	TimeCreated metav1.Time
 	Description string
+	AppVersion  string
+	Icon        string
 }
 
 // Visibility defines the visible properties of the repo or namespace.
@@ -355,6 +357,10 @@ type ChartInfoSpec struct {
 	Values map[string]string
 	// +optional
 	RawFiles map[string]string
+	// +optional
+	ChartSpec
+	// +optional
+	ChartVersion
 }
 
 // +genclient

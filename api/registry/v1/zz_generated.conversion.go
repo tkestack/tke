@@ -450,6 +450,12 @@ func autoConvert_v1_ChartInfoSpec_To_registry_ChartInfoSpec(in *ChartInfoSpec, o
 	out.Readme = *(*map[string]string)(unsafe.Pointer(&in.Readme))
 	out.Values = *(*map[string]string)(unsafe.Pointer(&in.Values))
 	out.RawFiles = *(*map[string]string)(unsafe.Pointer(&in.RawFiles))
+	if err := Convert_v1_ChartSpec_To_registry_ChartSpec(&in.ChartSpec, &out.ChartSpec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1_ChartVersion_To_registry_ChartVersion(&in.ChartVersion, &out.ChartVersion, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -462,6 +468,12 @@ func autoConvert_registry_ChartInfoSpec_To_v1_ChartInfoSpec(in *registry.ChartIn
 	out.Readme = *(*map[string]string)(unsafe.Pointer(&in.Readme))
 	out.Values = *(*map[string]string)(unsafe.Pointer(&in.Values))
 	out.RawFiles = *(*map[string]string)(unsafe.Pointer(&in.RawFiles))
+	if err := Convert_registry_ChartSpec_To_v1_ChartSpec(&in.ChartSpec, &out.ChartSpec, s); err != nil {
+		return err
+	}
+	if err := Convert_registry_ChartVersion_To_v1_ChartVersion(&in.ChartVersion, &out.ChartVersion, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -583,6 +595,8 @@ func autoConvert_v1_ChartVersion_To_registry_ChartVersion(in *ChartVersion, out 
 	out.ChartSize = in.ChartSize
 	out.TimeCreated = in.TimeCreated
 	out.Description = in.Description
+	out.AppVersion = in.AppVersion
+	out.Icon = in.Icon
 	return nil
 }
 
@@ -596,6 +610,8 @@ func autoConvert_registry_ChartVersion_To_v1_ChartVersion(in *registry.ChartVers
 	out.ChartSize = in.ChartSize
 	out.TimeCreated = in.TimeCreated
 	out.Description = in.Description
+	out.AppVersion = in.AppVersion
+	out.Icon = in.Icon
 	return nil
 }
 
