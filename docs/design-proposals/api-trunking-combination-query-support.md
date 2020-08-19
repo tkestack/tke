@@ -94,7 +94,7 @@ In this case, since no `remainingItemCount` in the result , that means client ca
 
 K8s native support  `labelSelector` or`fieldSelector` in LIST API to identify or group the resources in Kubernetes  that have same key/value pairs attribute. Client should make the decision how to use `labelSelector` or`fieldSelector` according to blow principles:
 
-1.  `fieldSelector` is preferred to use at first, but it only works for general attribute such as  metadata.name
+1.  `fieldSelector` is preferred to use at first, but it only works for general attribute such as  metadata.name,  if the resource is owned by Tkestack, such as `cluster.platform.tkestack.io `, update  `AddFieldLabelConversionFunc`  in `tke-xxx-api` to extend more fields support, such as `spec.displayName`
 ```
 kubectl get secret -n test --field-selector "metadata.name=mysecret2,type=Opaque" --chunk-size=10 -v=6
 I0818 13:01:57.009465   23477 loader.go:375] Config loaded from file:  /root/.kube/config
