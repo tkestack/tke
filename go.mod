@@ -14,7 +14,6 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-sdk-go v1.29.32
 	github.com/bitly/go-simplejson v0.5.0
-	github.com/caixw/lib.go v0.0.0-20141220110639-1781da9139e0
 	github.com/casbin/casbin/v2 v2.2.1
 	github.com/chartmuseum/storage v0.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
@@ -91,6 +90,7 @@ require (
 	k8s.io/kube-aggregator v0.18.2
 	k8s.io/kube-openapi v0.0.0-20200121204235-bf4fb3bd569c
 	k8s.io/kubectl v0.18.2
+	k8s.io/metrics v0.18.2
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0

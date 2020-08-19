@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 
 	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
@@ -36,6 +37,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
 type updateComponent func(componentStatus *corev1.ComponentStatus, health *util.ComponentHealth)
@@ -45,11 +47,11 @@ type Component string
 const (
 	AllNamespaces = ""
 
-	ClusterSet      = "ClusterSet"
-	WorkloadCounter = "WorkloadCounter"
-	ResourceCounter = "ResourceCounter"
-	ClusterPhase    = "ClusterPhase"
-	ComponentHealth = "ComponentHealth"
+	ClusterClientSet = "ClusterClientSet"
+	WorkloadCounter  = "WorkloadCounter"
+	ResourceCounter  = "ResourceCounter"
+	ClusterPhase     = "ClusterPhase"
+	ComponentHealth  = "ComponentHealth"
 
 	TAppResourceName = "tapps"
 	TAppGroupName    = "apps.tkestack.io"
@@ -57,6 +59,8 @@ const (
 	Scheduler         Component = "scheduler"
 	ControllerManager Component = "controller-manager"
 	Etcd              Component = "etcd-0"
+
+	EtcdPrefix = "etcd-"
 )
 
 var (
@@ -124,15 +128,19 @@ func (c *cacher) getClusters() {
 				resourceCounter := &util.ResourceCounter{}
 				c.getNodes(clusterID, clientSet, resourceCounter)
 				c.getPods(clusterID, clientSet, resourceCounter)
+				if metricServerClientSet, err := c.getMetricServerClientSet(context.Background(), &cls); err == nil && metricServerClientSet != nil {
+					c.getNodeMetrics(clusterID, metricServerClientSet, resourceCounter)
+					log.Infof("cls: %+v, counter: %+v", clusterID, resourceCounter)
+				}
 				calResourceRate(resourceCounter)
 				health := &util.ComponentHealth{}
 				c.getComponentStatuses(clusterID, clientSet, health)
 				syncMap.Store(clusterID, map[string]interface{}{
-					ClusterSet:      clientSet,
-					WorkloadCounter: workloadCounter,
-					ResourceCounter: resourceCounter,
-					ClusterPhase:    string(cls.Status.Phase),
-					ComponentHealth: health,
+					ClusterClientSet: clientSet,
+					WorkloadCounter:  workloadCounter,
+					ResourceCounter:  resourceCounter,
+					ClusterPhase:     string(cls.Status.Phase),
+					ComponentHealth:  health,
 				})
 			}(clusters.Items[i])
 		}
@@ -142,12 +150,12 @@ func (c *cacher) getClusters() {
 		syncMap.Range(func(key, value interface{}) bool {
 			clusterID := key.(string)
 			val := value.(map[string]interface{})
-			clientSet := val[ClusterSet].(*kubernetes.Clientset)
+			clusterClientSet := val[ClusterClientSet].(*kubernetes.Clientset)
 			workloadCounter := val[WorkloadCounter].(*util.WorkloadCounter)
 			resourceCounter := val[ResourceCounter].(*util.ResourceCounter)
 			clusterPhase := val[ClusterPhase].(string)
 			health := val[ComponentHealth].(*util.ComponentHealth)
-			c.clusterClientSets[clusterID] = clientSet
+			c.clusterClientSets[clusterID] = clusterClientSet
 			c.clusterStatisticSet[clusterID] = &monitor.ClusterStatistic{
 				ClusterID:                clusterID,
 				ClusterPhase:             clusterPhase,
@@ -155,18 +163,23 @@ func (c *cacher) getClusters() {
 				NodeAbnormal:             int32(resourceCounter.NodeAbnormal),
 				WorkloadCount:            int32(workloadCounter.Total()),
 				WorkloadAbnormal:         0,
+				HasMetricServer:          resourceCounter.HasMetricServer,
+				CPUUsed:                  resourceCounter.CPUUsed,
 				CPURequest:               resourceCounter.CPURequest,
 				CPULimit:                 resourceCounter.CPULimit,
 				CPUAllocatable:           resourceCounter.CPUAllocatable,
 				CPUCapacity:              resourceCounter.CPUCapacity,
 				CPURequestRate:           transPercent(resourceCounter.CPURequestRate),
 				CPUAllocatableRate:       transPercent(resourceCounter.CPUAllocatableRate),
+				CPUUsage:                 transPercent(resourceCounter.CPUUsage),
+				MemUsed:                  resourceCounter.MemUsed,
 				MemRequest:               resourceCounter.MemRequest,
 				MemLimit:                 resourceCounter.MemLimit,
 				MemAllocatable:           resourceCounter.MemAllocatable,
 				MemCapacity:              resourceCounter.MemCapacity,
 				MemRequestRate:           transPercent(resourceCounter.MemRequestRate),
 				MemAllocatableRate:       transPercent(resourceCounter.MemAllocatableRate),
+				MemUsage:                 transPercent(resourceCounter.MemUsage),
 				SchedulerHealthy:         health.Scheduler,
 				ControllerManagerHealthy: health.ControllerManager,
 				EtcdHealthy:              health.Etcd,
@@ -174,6 +187,22 @@ func (c *cacher) getClusters() {
 			return true
 		})
 	}
+}
+
+func (c *cacher) getMetricServerClientSet(ctx context.Context, cls *platformv1.Cluster) (*metricsv.Clientset, error) {
+	cc, err := platformutil.GetClusterCredentialV1(ctx, c.platformClient, cls)
+	if err != nil {
+		log.Error("query cluster credential failed", log.Any("cluster", cls.GetName()), log.Err(err))
+		return nil, err
+	}
+
+	restConfig, err := platformutil.GetExternalRestConfig(cls, cc)
+	if err != nil {
+		log.Error("get rest config failed", log.Any("cluster", cls.GetName()), log.Err(err))
+		return nil, err
+	}
+
+	return metricsv.NewForConfig(restConfig)
 }
 
 // TODO
@@ -308,10 +337,38 @@ func isHealthy(component *corev1.ComponentStatus) bool {
 func (c *cacher) getComponentStatuses(clusterID string, clientSet *kubernetes.Clientset, health *util.ComponentHealth) {
 	if componentStatuses, err := clientSet.CoreV1().ComponentStatuses().List(context.Background(), metav1.ListOptions{}); err == nil {
 		for _, cs := range componentStatuses.Items {
-			UpdateComponentStatusFunc[Component(cs.GetName())](&cs, health)
+			csName := cs.GetName()
+			if _, ok := UpdateComponentStatusFunc[Component(csName)]; ok {
+				UpdateComponentStatusFunc[Component(csName)](&cs, health)
+			} else if strings.HasPrefix(csName, EtcdPrefix) {
+				health.Etcd = health.Etcd && isHealthy(&cs)
+			}
 		}
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query componentStatuses failed", log.Any("clusterID", clusterID), log.Err(err))
+	}
+}
+
+func (c *cacher) getNodeMetrics(clusterID string, clientSet *metricsv.Clientset, counter *util.ResourceCounter) {
+	if nodeMetrics, err := clientSet.MetricsV1beta1().NodeMetricses().List(context.Background(), metav1.ListOptions{}); err == nil {
+		for _, nm := range nodeMetrics.Items {
+			if resourceCPU, ok := nm.Usage[corev1.ResourceCPU]; ok {
+				log.Infof("metric server cpu: %+v", float64(resourceCPU.MilliValue())/float64(1000))
+				counter.CPUUsed += float64(resourceCPU.MilliValue()) / float64(1000)
+			}
+			if resourceMem, ok := nm.Usage[corev1.ResourceMemory]; ok {
+				log.Infof("metric server node used: %+v", resourceMem.Value())
+				counter.MemUsed += resourceMem.Value()
+			}
+		}
+		if len(nodeMetrics.Items) > 0 {
+			counter.HasMetricServer = true
+		} else {
+			counter.HasMetricServer = false
+		}
+	} else {
+		counter.HasMetricServer = false
+		log.Error("query node metrics from metric server failed", log.Any("cluster", clusterID), log.Err(err))
 	}
 }
 
@@ -394,15 +451,19 @@ func (c *cacher) getDynamicClients() {
 func calResourceRate(counter *util.ResourceCounter) {
 	counter.CPURequestRate = float64(0)
 	counter.CPUAllocatableRate = float64(0)
+	counter.CPUUsage = float64(0)
 	if counter.CPUCapacity > float64(0) {
 		counter.CPURequestRate = counter.CPURequest / counter.CPUCapacity
 		counter.CPUAllocatableRate = counter.CPUAllocatable / counter.CPUCapacity
+		counter.CPUUsage = counter.CPUUsed / counter.CPUCapacity
 	}
 	counter.MemRequestRate = float64(0)
 	counter.MemAllocatableRate = float64(0)
+	counter.MemUsage = float64(0)
 	if counter.MemCapacity > int64(0) {
 		counter.MemRequestRate = float64(counter.MemRequest) / float64(counter.MemCapacity)
 		counter.MemAllocatableRate = float64(counter.MemAllocatable) / float64(counter.MemCapacity)
+		counter.MemUsage = float64(counter.MemUsed) / float64(counter.MemCapacity)
 	}
 }
 

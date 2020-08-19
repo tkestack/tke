@@ -639,7 +639,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 
 	crds := getCRDs()
 	for _, crd := range crds {
-		if apiclient.ClusterVersionIsBefore117(kubeClient) {
+		if apiclient.ClusterVersionIsBefore116(kubeClient) {
 			crdObj := apiextensionsv1beta1.CustomResourceDefinition{}
 			err := json.Unmarshal([]byte(crd), &crdObj)
 			if err != nil {
@@ -2336,7 +2336,7 @@ func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Pro
 
 	crds := getCRDs()
 	for _, crd := range crds {
-		if apiclient.ClusterVersionIsBefore117(kubeClient) {
+		if apiclient.ClusterVersionIsBefore116(kubeClient) {
 			crdObj := apiextensionsv1beta1.CustomResourceDefinition{}
 			err := json.Unmarshal([]byte(crd), &crdObj)
 			if err != nil {

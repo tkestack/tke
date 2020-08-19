@@ -13,6 +13,8 @@ import { RootProps } from './LogStashApp';
 
 export interface ContainerItemProps extends RootProps {
   cKey: string;
+
+  isEdit?: boolean; // 是否是编辑模式
 }
 
 const mapDispatchToProps = dispatch =>

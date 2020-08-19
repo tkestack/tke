@@ -84,7 +84,8 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
     let { canCreate, tip, ifLogDaemonset } = isCanCreateLogStash(
       clusterSelection[0],
       logList.data.records,
-      isDaemonsetNormal
+      isDaemonsetNormal,
+      isOpenLogStash
     );
 
     /** 渲染日志类型 */
@@ -165,7 +166,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
                   </ExternalLink>
                 </Trans>
               </Text>
-              {!isOpenLogStash && (
+              {!(clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName || isOpenLogStash) && (
                 <Text theme="danger">
                   <Trans>
                     该集群未开启日志收集功能，
@@ -250,11 +251,11 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
           </FormPanel.Item>
         )}
 
-        <EditOriginContainerPanel />
+        <EditOriginContainerPanel isEdit={mode === 'update'} />
 
         <EditOriginNodePanel />
 
-        <EditOriginContainerFilePanel />
+        <EditOriginContainerFilePanel isEdit={mode === 'update'} />
 
         <EditConsumerPanel />
         <FormPanel.Footer>
@@ -311,8 +312,10 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
 
   private async _handleSubmit(mode) {
     let { actions, route, logStashEdit, clusterVersion, logSelection, clusterSelection } = this.props;
-    let { rid, clusterId } = route.queries;
+    // let { rid, clusterId } = route.queries;
+    let { rid } = route.queries;
     let { logAgentName } = clusterSelection[0].spec;
+    let { name: clusterId } = clusterSelection[0].metadata;
     let {
       logStashName,
       logMode,
@@ -353,7 +356,8 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
     );
 
     if (valResult) {
-      let { rid, clusterId } = route.queries;
+      // let { rid, clusterId } = route.queries;
+      let { rid } = route.queries;
 
       let logResourceInfo = resourceConfig(clusterVersion)['logcs'];
 
@@ -377,12 +381,14 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
                 });
               });
               return {
-                namespace: containerLog.namespaceSelection,
+                namespace: containerLog.namespaceSelection.replace(new RegExp(`^${clusterId}-`), ''),
                 all_containers: containerLog.collectorWay === 'container',
                 workloads
               };
             }
           );
+          // 按照v1.3的日志采集规范，指定容器只允许设置一个ns，这里要把namespace改写成这里指定的具体的ns，而不是kube-system
+          namespace = namespaces[0] && namespaces[0].namespace;
         }
         let containerLogInput: ContainerLogInput = {
           container_log_input: {
@@ -461,7 +467,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         apiVersion: (logResourceInfo.group ? logResourceInfo.group + '/' : '') + logResourceInfo.version,
         metadata: {
           name: logStashName,
-          namespace
+          namespace: namespace.replace(new RegExp(`^${clusterId}-`), '')
         },
         spec: {
           input: inputType,
@@ -485,13 +491,13 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
       let resource: CreateResource = {
         id: uuid(),
         resourceInfo: logResourceInfo,
-        mode: mode === 'update' ? 'modify' : mode, //更新方式为put，不是patch，update对应的为patch，modify对应为put
-        namespace,
+        mode: mode === 'update' ? 'modify' : mode, // 更新方式为put，不是patch，update对应的为patch，modify对应为put
+        namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
         clusterId,
         logAgentName,
         jsonData,
         isStrategic: false,
-        resourceIns: mode === 'update' ? logStashName : '' //更新的需要需要带上具体的name
+        resourceIns: mode === 'update' ? logStashName : '' // 更新的需要需要带上具体的name
       };
       actions.workflow.modifyLogStash.start([resource], +rid);
       actions.workflow.modifyLogStash.perform();

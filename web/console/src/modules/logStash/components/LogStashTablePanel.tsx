@@ -91,7 +91,7 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
       }
     ];
 
-    let { canCreate, tip } = isCanCreateLogStash(clusterSelection[0], logList.data.records, isDaemonsetNormal);
+    let { canCreate, tip } = isCanCreateLogStash(clusterSelection[0], logList.data.records, isDaemonsetNormal, isOpenLogStash);
 
     let emptyTips: JSX.Element = (
       <React.Fragment>
@@ -124,10 +124,10 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
 
   /** 处理日志采集的操作 */
   private _handleCreate() {
-    let { actions, isOpenLogStash, route } = this.props,
+    let { actions, isOpenLogStash, route, clusterSelection } = this.props,
       urlParams = router.resolve(route);
 
-    if (isOpenLogStash) {
+    if (clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName || isOpenLogStash) {
       router.navigate(Object.assign({}, urlParams, { mode: 'create' }), route.queries);
     } else {
       actions.workflow.authorizeOpenLog.start();

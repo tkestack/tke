@@ -354,17 +354,19 @@ export const editLogStashActions = {
 
       let { logStashEdit, route, clusterSelection } = getState();
       let { containerFileNamespace, containerFileWorkloadType } = logStashEdit;
-      let { name } = clusterSelection[0].metadata;
-      let isCanFetchResourceList = containerFileNamespace && containerFileWorkloadType ? true : false;
-      dispatch(
-        resourceActions.applyFilter({
-          clusterId: name,
-          regionId: +route.queries['rid'],
-          namespace: containerFileNamespace,
-          workloadType: containerFileWorkloadType,
-          isCanFetchResourceList: isCanFetchResourceList
-        })
-      );
+      if (clusterSelection[0]) {
+        let { name } = clusterSelection[0].metadata;
+        let isCanFetchResourceList = containerFileNamespace && containerFileWorkloadType ? true : false;
+        dispatch(
+          resourceActions.applyFilter({
+            clusterId: name,
+            regionId: +route.queries['rid'],
+            namespace: containerFileNamespace,
+            workloadType: containerFileWorkloadType,
+            isCanFetchResourceList: isCanFetchResourceList
+          })
+        );
+      }
     };
   },
 
@@ -383,26 +385,28 @@ export const editLogStashActions = {
 
       //拉取podList
       let { logStashEdit, route, clusterSelection } = getState();
-      let { name } = clusterSelection[0].metadata;
-      const { containerFileNamespace, containerFileWorkload } = logStashEdit;
-      if (containerFileNamespace && containerFileWorkload) {
-        dispatch(
-          podActions.applyFilter({
-            namespace: containerFileNamespace,
-            clusterId: name,
-            regionId: +route.queries['rid'],
-            specificName: containerFileWorkload,
-            isCanFetchPodList: containerFileNamespace && containerFileWorkload ? true : false
-          })
-        );
-      } else {
-        dispatch(
-          podActions.fetch({
-            noCache: true
-          })
-        );
+      if (clusterSelection[0]) {
+        let { name } = clusterSelection[0].metadata;
+        const { containerFileNamespace, containerFileWorkload } = logStashEdit;
+        if (containerFileNamespace && containerFileWorkload) {
+          dispatch(
+            podActions.applyFilter({
+              namespace: containerFileNamespace,
+              clusterId: name,
+              regionId: +route.queries['rid'],
+              specificName: containerFileWorkload,
+              isCanFetchPodList: containerFileNamespace && containerFileWorkload ? true : false
+            })
+          );
+        } else {
+          dispatch(
+            podActions.fetch({
+              noCache: true
+            })
+          );
+        }
+        dispatch(editLogStashActions.initContainerFileContainerFilePaths());
       }
-      dispatch(editLogStashActions.initContainerFileContainerFilePaths());
     };
   },
 
