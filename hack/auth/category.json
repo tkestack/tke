@@ -2269,6 +2269,10 @@
                     "description": "删除Chart"
                 },
                 {
+                    "name": "deleteChartVersion",
+                    "description": "删除Chart版本"
+                },
+                {
                     "name": "deleteChartgroup",
                     "description": "删除Chartgroup"
                 },
@@ -2329,7 +2333,7 @@
                     "description": "列举Chart"
                 },
                 {
-                    "name": "listChartInfo",
+                    "name": "listChartVersion",
                     "description": "获取Chart文件"
                 },
                 {
