@@ -175,6 +175,14 @@ func (a *authorization) afterAPICreateChart(ctx context.Context, chartGroup *reg
 		return err
 	}
 
+	newVersion := registry.ChartVersion{
+		Version:     chartMeta.Version,
+		ChartSize:   ctSize,
+		TimeCreated: metav1.Now(),
+		Description: chartMeta.Description,
+		AppVersion:  chartMeta.AppVersion,
+		Icon:        chartMeta.Icon,
+	}
 	if len(chartList.Items) == 0 {
 		if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).Create(ctx, &registry.Chart{
 			ObjectMeta: metav1.ObjectMeta{
@@ -188,14 +196,7 @@ func (a *authorization) afterAPICreateChart(ctx context.Context, chartGroup *reg
 			},
 			Status: registry.ChartStatus{
 				PullCount: 0,
-				Versions: []registry.ChartVersion{
-					{
-						Version:     chartMeta.Version,
-						ChartSize:   ctSize,
-						TimeCreated: metav1.Now(),
-						Description: chartMeta.Description,
-					},
-				},
+				Versions:  []registry.ChartVersion{newVersion},
 			},
 		}, metav1.CreateOptions{}); err != nil {
 			log.Error("Failed to create chart while pushed chart",
@@ -213,12 +214,7 @@ func (a *authorization) afterAPICreateChart(ctx context.Context, chartGroup *reg
 			for k, v := range chartObject.Status.Versions {
 				if v.Version == chartMeta.Version {
 					existVersion = true
-					chartObject.Status.Versions[k] = registry.ChartVersion{
-						Version:     chartMeta.Version,
-						ChartSize:   ctSize,
-						TimeCreated: metav1.Now(),
-						Description: chartMeta.Description,
-					}
+					chartObject.Status.Versions[k] = newVersion
 					if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(ctx, &chartObject, metav1.UpdateOptions{}); err != nil {
 						log.Error("Failed to update chart version while chart pushed",
 							log.String("tenantID", chartGroup.Spec.TenantID),
@@ -234,12 +230,7 @@ func (a *authorization) afterAPICreateChart(ctx context.Context, chartGroup *reg
 		}
 
 		if !existVersion {
-			chartObject.Status.Versions = append(chartObject.Status.Versions, registry.ChartVersion{
-				Version:     chartMeta.Version,
-				ChartSize:   ctSize,
-				TimeCreated: metav1.Now(),
-				Description: chartMeta.Description,
-			})
+			chartObject.Status.Versions = append(chartObject.Status.Versions, newVersion)
 			if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).UpdateStatus(ctx, &chartObject, metav1.UpdateOptions{}); err != nil {
 				log.Error("Failed to create repository tag while received notification",
 					log.String("tenantID", chartGroup.Spec.TenantID),

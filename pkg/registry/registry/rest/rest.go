@@ -99,12 +99,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["chartgroups/finalize"] = chartGroupRESTStorage.Finalize
 
 		chartREST := chartstorage.NewStorage(restOptionsGetter, registryClient, s.AuthClient, s.BusinessClient, s.PrivilegedUsername)
-		chartInfoREST := chartstorage.NewInfoREST(chartREST.Chart, s.PlatformClient, s.RegistryConfig,
-			s.ExternalScheme,
-			s.ExternalHost,
-			s.ExternalPort,
-			s.ExternalCAFile)
-		chartVersionREST := chartstorage.NewVersionREST(chartREST.Chart, registryClient, s.RegistryConfig,
+		chartVersionREST := chartstorage.NewVersionREST(chartREST.Chart, s.PlatformClient, registryClient, s.RegistryConfig,
 			s.ExternalScheme,
 			s.ExternalHost,
 			s.ExternalPort,
@@ -113,7 +108,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["charts"] = chartREST.Chart
 		storageMap["charts/status"] = chartREST.Status
 		storageMap["charts/finalize"] = chartREST.Finalize
-		storageMap["charts/info"] = chartInfoREST
 		storageMap["charts/version"] = chartVersionREST
 	}
 
