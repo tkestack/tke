@@ -746,9 +746,10 @@ export async function deleteChartVersion([chartVersion]: ChartVersion[], filter:
   // let rr: RequestResult = await DELETE({ url });
   // return operationResult(rr.data, rr.error);
   const resourceInfo: ResourceInfo = resourceConfig()['chart'];
-  const queryObj = {
-    version: filter.chartVersion
-  };
+  // const queryObj = {
+  //   version: filter.chartVersion
+  // };
+  // const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   const url = reduceK8sRestfulPath({
     resourceInfo,
     namespace: filter.chartDetailFilter.namespace,
@@ -756,8 +757,10 @@ export async function deleteChartVersion([chartVersion]: ChartVersion[], filter:
     extraResource: 'version',
     isSpecialNamespace: true
   });
-  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await DELETE({ url: url + queryString, projectId: filter.chartDetailFilter.projectID });
+  let rr: RequestResult = await DELETE({
+    url: url + '/' + filter.chartVersion,
+    projectId: filter.chartDetailFilter.projectID
+  });
   return operationResult(rr.data, rr.error);
 }
 
@@ -777,7 +780,7 @@ export async function fetchChartVersionFile(filter: ChartVersionFilter) {
  */
 export async function fetchChartInfo(filter: ChartInfoFilter) {
   const queryObj = {
-    version: filter.chartVersion,
+    // version: filter.chartVersion,
     cluster: filter.cluster
   };
   const resourceInfo: ResourceInfo = resourceConfig()['chart'];
@@ -785,11 +788,15 @@ export async function fetchChartInfo(filter: ChartInfoFilter) {
     resourceInfo,
     namespace: filter.metadata.namespace,
     specificName: filter.metadata.name,
-    extraResource: 'info',
+    extraResource: 'version',
     isSpecialNamespace: true
   });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, projectId: filter.projectID });
+  let rr: RequestResult = await GET({
+    url: url + '/' + filter.chartVersion + queryString,
+    tipErr: true,
+    projectId: filter.projectID
+  });
   return rr.data;
 }
 
