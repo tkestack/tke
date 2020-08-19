@@ -270,7 +270,7 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
  */
 export async function fetchChartInfo(filter: ChartInfoFilter) {
   const queryObj = {
-    version: filter.chartVersion,
+    // version: filter.chartVersion,
     cluster: filter.cluster,
     namespace: filter.namespace
   };
@@ -279,11 +279,15 @@ export async function fetchChartInfo(filter: ChartInfoFilter) {
     resourceInfo,
     namespace: filter.metadata.namespace,
     specificName: filter.metadata.name,
-    extraResource: 'info',
+    extraResource: 'version',
     isSpecialNamespace: true
   });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, projectId: filter.projectID });
+  let rr: RequestResult = await GET({
+    url: url + '/' + filter.chartVersion + queryString,
+    tipErr: true,
+    projectId: filter.projectID
+  });
   return rr.data;
 }
 
