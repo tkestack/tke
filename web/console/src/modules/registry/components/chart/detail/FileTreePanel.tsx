@@ -110,7 +110,7 @@ export class FileTreePanel extends React.Component<RootProps, AppCreateState> {
                     displayField: 'text',
                     options: versionOptions,
                     onChange: value => {
-                      this.setState({ selectedVersion: value, content: '' });
+                      this.setState({ selectedVersion: value, content: '', selectedTreeID: 'values.yaml' });
                       //加载文件
                       if (chartEditor) {
                         actions.chart.detail.chartInfo.applyFilter({
@@ -134,6 +134,7 @@ export class FileTreePanel extends React.Component<RootProps, AppCreateState> {
                       data={treeData}
                       activable={true}
                       defaultActiveIds={['values.yaml']}
+                      activeIds={[this.state.selectedTreeID]}
                       defaultExpandedIds={
                         chartInfo.object.data && chartInfo.object.data.fileTree
                           ? [chartInfo.object.data.fileTree.fullPath]
