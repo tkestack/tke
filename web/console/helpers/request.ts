@@ -8,7 +8,6 @@ export class RequestArgs {
   url: string;
   method?: string;
   bodyData?: any;
-  tipErr?: boolean = true;
   clusterId?: string;
   projectId?: string;
   keyword?: string;
@@ -30,9 +29,7 @@ export const SEND = async (args: RequestArgs) => {
   try {
     let response = await reduceNetworkRequest(params, args.clusterId, args.projectId, args.keyword);
     if (response.code !== 0) {
-      if (args.tipErr === true) {
-        tips.error(response.message, 2000);
-      }
+      tips.error(response.message, 2000);
       resp.data = args.bodyData;
       resp.error = response.message;
     } else {
@@ -44,9 +41,7 @@ export const SEND = async (args: RequestArgs) => {
     }
     return resp;
   } catch (error) {
-    if (args.tipErr === true) {
-      tips.error(error.response.data.message, 2000);
-    }
+    tips.error(error.response.data.message, 2000);
     resp.data = args.bodyData;
     resp.error = error.response.data.message;
     return resp;
