@@ -13,6 +13,8 @@ import { App, Chart } from '../../../models';
 import { ChartTablePanel } from '../ChartTablePanel';
 import { ChartActionPanel } from '../ChartActionPanel';
 import { ChartValueYamlDialog } from '../ChartValueYamlDialog';
+// @ts-ignore
+const tips = seajs.require('tips');
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -65,6 +67,11 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
           let app: App = Object.assign({}, appEditor);
           action.start([app]);
           action.perform();
+        } else {
+          let invalid = Object.keys(r).filter(v => {
+            return r[v].status === 2;
+          });
+          invalid.length > 0 && tips.error(r[invalid[0]].message.toString(), 2000);
         }
       });
     };

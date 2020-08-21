@@ -36,12 +36,12 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
   render() {
     let { actions, chartGroupList, route, userInfo } = this.props;
     const isEditable = (x: ChartGroup): boolean => {
-      if (x.spec.type === 'system') {
-        return false;
-      }
-      if (x.spec.type === 'personal' && userInfo) {
-        return x.spec.name === userInfo.name;
-      }
+      // if (x.spec.type === 'system') {
+      //   return false;
+      // }
+      // if (x.spec.type === 'personal' && userInfo) {
+      //   return x.spec.name === userInfo.name;
+      // }
       return true;
     };
 

@@ -10,6 +10,8 @@ import { FormPanel } from '@tencent/ff-component';
 import { InputField, TipInfo, getWorkflowError } from '../../../../../modules/common';
 import { ChartGroup } from '../../../models';
 import { isValid } from '@tencent/ff-validator';
+// @ts-ignore
+const tips = seajs.require('tips');
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
@@ -31,6 +33,11 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
           let chartGroup: ChartGroup = Object.assign({}, chartGroupCreation);
           action.start([chartGroup]);
           action.perform();
+        } else {
+          let invalid = Object.keys(r).filter(v => {
+            return r[v].status === 2;
+          });
+          invalid.length > 0 && tips.error(r[invalid[0]].message.toString(), 2000);
         }
       });
     };

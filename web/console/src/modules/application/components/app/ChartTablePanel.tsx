@@ -124,7 +124,7 @@ export class ChartTablePanel extends React.Component<Props, ChartTableState> {
                             '(' +
                             (cgMap[chart.spec.chartGroupName]
                               ? typeMap[cgMap[chart.spec.chartGroupName].spec.type]
-                              : '') +
+                              : '-') +
                             ')'}
                         </div>
                       }
@@ -136,7 +136,7 @@ export class ChartTablePanel extends React.Component<Props, ChartTableState> {
                           <Tag key={'visibility'}>
                             {cgMap[chart.spec.chartGroupName]
                               ? visibilityMap[cgMap[chart.spec.chartGroupName].spec.visibility]
-                              : ''}
+                              : '-'}
                           </Tag>
                         </React.Fragment>
                       }

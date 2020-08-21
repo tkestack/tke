@@ -10,6 +10,8 @@ import { bindActionCreators, OperationState, isSuccessWorkflow } from '@tencent/
 import { allActions } from '../../../actions';
 import { isValid } from '@tencent/ff-validator';
 import { ChartGroup } from '../../../models';
+// @ts-ignore
+const tips = seajs.require('tips');
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -30,6 +32,11 @@ export class BaseInfoPanel extends React.Component<RootProps> {
           let chartGroup: ChartGroup = Object.assign({}, chartGroupEditor);
           action.start([chartGroup]);
           action.perform();
+        } else {
+          let invalid = Object.keys(r).filter(v => {
+            return r[v].status === 2;
+          });
+          invalid.length > 0 && tips.error(r[invalid[0]].message.toString(), 2000);
         }
       });
     };
