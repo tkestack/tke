@@ -508,7 +508,9 @@ export async function fetchChartGroupList(query: QueryState<ChartGroupFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, keyword: keyword });
+  // TODO FIX
+  // reduceNetworkRequest设置了未传业务id则从cookie中读取的逻辑，传空的业务id是为了适配这段逻辑
+  let rr: RequestResult = await GET({ url: url + queryString, keyword: keyword, projectId: '' });
   let objs: ChartGroup[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<ChartGroup> = {
     recordCount: objs.length,
@@ -524,7 +526,7 @@ export async function fetchChartGroupList(query: QueryState<ChartGroupFilter>) {
 export async function fetchChartGroup(filter: ChartGroupDetailFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
-  let rr: RequestResult = await GET({ url, projectId: filter.projectID });
+  let rr: RequestResult = await GET({ url, projectId: filter.projectID ? filter.projectID : '' });
   return rr.data;
 }
 
@@ -638,7 +640,7 @@ export async function fetchPortalProjectList(query: QueryState<ProjectFilter>) {
   };
   const resourceInfo: ResourceInfo = resourceConfig()['portal'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await GET({ url, tipErr: true });
+  let rr: RequestResult = await GET({ url });
   if (rr.error) {
     return empty;
   }
@@ -668,7 +670,7 @@ export async function fetchPortalProjectList(query: QueryState<ProjectFilter>) {
 export async function fetchUserInfo() {
   const resourceInfo: ResourceInfo = resourceConfig()['info'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await GET({ url, tipErr: true });
+  let rr: RequestResult = await GET({ url });
   return rr.data;
 }
 
@@ -691,10 +693,10 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
   // }
   const url = reduceK8sRestfulPath(opts);
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  // reduceNetworkRequest设置了未传业务id则从cookie中读取的逻辑，传空的业务id是为了适配这段逻辑
   let rr: RequestResult = await GET({
     url: url + queryString,
-    tipErr: true,
-    projectId: filter.projectID ? filter.projectID : undefined,
+    projectId: filter.projectID ? filter.projectID : '',
     keyword
   });
   let objs: Chart[] = !rr.error && rr.data.items ? rr.data.items : [];
@@ -717,7 +719,7 @@ export async function fetchChart(filter: ChartDetailFilter) {
     specificName: filter.name,
     isSpecialNamespace: true
   });
-  let rr: RequestResult = await GET({ url, projectId: filter.projectID });
+  let rr: RequestResult = await GET({ url, projectId: filter.projectID ? filter.projectID : '' });
   return rr.data;
 }
 
@@ -733,7 +735,7 @@ export async function updateChart([chartInfo], filter: ChartDetailFilter) {
     specificName: chartInfo.metadata.name,
     isSpecialNamespace: true
   });
-  let rr: RequestResult = await PUT({ url, bodyData: chartInfo, projectId: filter.projectID });
+  let rr: RequestResult = await PUT({ url, bodyData: chartInfo, projectId: filter.projectID ? filter.projectID : '' });
   return operationResult(rr.data, rr.error);
 }
 
@@ -759,7 +761,7 @@ export async function deleteChartVersion([chartVersion]: ChartVersion[], filter:
   });
   let rr: RequestResult = await DELETE({
     url: url + '/' + filter.chartVersion,
-    projectId: filter.chartDetailFilter.projectID
+    projectId: filter.chartDetailFilter.projectID ? filter.chartDetailFilter.projectID : ''
   });
   return operationResult(rr.data, rr.error);
 }
@@ -794,8 +796,7 @@ export async function fetchChartInfo(filter: ChartInfoFilter) {
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({
     url: url + '/' + filter.chartVersion + queryString,
-    tipErr: true,
-    projectId: filter.projectID
+    projectId: filter.projectID ? filter.projectID : ''
   });
   return rr.data;
 }
@@ -822,7 +823,7 @@ export async function addApp([appInfo]) {
 export async function fetchClusterList(query: QueryState<ClusterFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['cluster'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await GET({ url, tipErr: true });
+  let rr: RequestResult = await GET({ url });
   let objs: Cluster[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Cluster, ChartInfoFilter> = {
     recordCount: objs.length,
@@ -840,7 +841,7 @@ export async function fetchNamespaceList(query: QueryState<NamespaceFilter>) {
   const { keyword, filter } = query;
   const resourceInfo: ResourceInfo = resourceConfig()['ns'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await GET({ url, tipErr: true, clusterId: filter.cluster });
+  let rr: RequestResult = await GET({ url, clusterId: filter.cluster });
   let objs: Namespace[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Namespace, ChartInfoFilter> = {
     recordCount: objs.length,
@@ -858,7 +859,7 @@ export async function fetchProjectNamespaceList(query: QueryState<ProjectNamespa
   const { keyword, filter } = query;
   const resourceInfo: ResourceInfo = resourceConfig()['namespaces'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.projectId, extraResource: 'namespaces' });
-  let rr: RequestResult = await GET({ url, tipErr: true });
+  let rr: RequestResult = await GET({ url });
   let objs: ProjectNamespace[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<ProjectNamespace, ChartInfoFilter> = {
     recordCount: objs.length,

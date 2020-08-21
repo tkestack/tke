@@ -46,7 +46,7 @@ import {
 export async function fetchClusterList(query: QueryState<void>) {
   const resourceInfo: ResourceInfo = resourceConfig()['cluster'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await GET({ url, tipErr: true });
+  let rr: RequestResult = await GET({ url });
   let objs: Cluster[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Cluster> = {
     recordCount: objs.length,
@@ -63,7 +63,7 @@ export async function fetchNamespaceList(query: QueryState<NamespaceFilter>) {
   const { keyword, filter } = query;
   const resourceInfo: ResourceInfo = resourceConfig()['ns'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await GET({ url, tipErr: true, clusterId: filter.cluster });
+  let rr: RequestResult = await GET({ url, clusterId: filter.cluster });
   let objs: Namespace[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Namespace> = {
     recordCount: objs.length,
@@ -80,7 +80,7 @@ export async function fetchProjectNamespaceList(query: QueryState<ProjectNamespa
   const { keyword, filter } = query;
   const resourceInfo: ResourceInfo = resourceConfig()['namespaces'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.projectId, extraResource: 'namespaces' });
-  let rr: RequestResult = await GET({ url, tipErr: true });
+  let rr: RequestResult = await GET({ url });
   let objs: ProjectNamespace[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<ProjectNamespace> = {
     recordCount: objs.length,
@@ -100,7 +100,7 @@ export async function fetchAppList(query: QueryState<AppFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['app'];
   const url = reduceK8sRestfulPath({ resourceInfo, namespace: filter.namespace, isSpecialNamespace: true });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, clusterId: filter.cluster, keyword });
+  let rr: RequestResult = await GET({ url: url + queryString, clusterId: filter.cluster, keyword });
   let objs: App[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<App> = {
     recordCount: objs.length,
@@ -121,7 +121,7 @@ export async function fetchApp(filter: AppDetailFilter) {
     specificName: filter.name,
     isSpecialNamespace: true
   });
-  let rr: RequestResult = await GET({ url, tipErr: true, clusterId: filter.cluster });
+  let rr: RequestResult = await GET({ url, clusterId: filter.cluster });
   return rr.data;
 }
 
@@ -185,7 +185,7 @@ export async function fetchAppResource(filter: AppResourceFilter) {
     extraResource: 'resources',
     isSpecialNamespace: true
   });
-  let rr: RequestResult = await GET({ url, tipErr: true, clusterId: filter.cluster });
+  let rr: RequestResult = await GET({ url, clusterId: filter.cluster });
   return rr.data;
 }
 
@@ -202,7 +202,7 @@ export async function fetchAppHistory(filter: AppHistoryFilter) {
     extraResource: 'histories',
     isSpecialNamespace: true
   });
-  let rr: RequestResult = await GET({ url, tipErr: true, clusterId: filter.cluster });
+  let rr: RequestResult = await GET({ url, clusterId: filter.cluster });
   return rr.data;
 }
 
@@ -227,7 +227,7 @@ export async function rollbackApp([app]: History[]) {
     isSpecialNamespace: true
   });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await POST({ url: url + queryString, bodyData: {}, tipErr: true, clusterId: cluster });
+  let rr: RequestResult = await POST({ url: url + queryString, bodyData: {}, clusterId: cluster });
   return operationResult(rr.data, rr.error);
 }
 
@@ -252,7 +252,6 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({
     url: url + queryString,
-    tipErr: true,
     projectId: filter.projectID ? filter.projectID : undefined,
     keyword
   });
@@ -285,7 +284,6 @@ export async function fetchChartInfo(filter: ChartInfoFilter) {
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({
     url: url + '/' + filter.chartVersion + queryString,
-    tipErr: true,
     projectId: filter.projectID
   });
   return rr.data;
@@ -301,7 +299,7 @@ export async function fetchChartGroupList(query: QueryState<ChartGroupFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, keyword });
+  let rr: RequestResult = await GET({ url: url + queryString, keyword });
   let objs: ChartGroup[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<ChartGroup> = {
     recordCount: objs.length,
@@ -374,7 +372,7 @@ export async function fetchPortalProjectList(query: QueryState<void>) {
   };
   const resourceInfo: ResourceInfo = resourceConfig()['portal'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await GET({ url, tipErr: true });
+  let rr: RequestResult = await GET({ url });
   if (rr.error) {
     return empty;
   }

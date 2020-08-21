@@ -28,10 +28,10 @@ export class AppCenter extends React.Component<RootProps, {}> {
     let { route } = this.props,
       urlParam = router.resolve(route);
     const tabs = [
-      { id: 'chartgroup', label: t('仓库') },
-      { id: 'chart', label: t('模板') }
+      { id: 'chart', label: t('模板') },
+      { id: 'chartgroup', label: t('仓库') }
     ];
-    let tab = 'chartgroup';
+    let tab = 'chart';
     if (urlParam['sub']) tab = urlParam['sub'];
     if (!urlParam['mode'] || urlParam['mode'] === 'list') {
       return (
@@ -50,11 +50,11 @@ export class AppCenter extends React.Component<RootProps, {}> {
                       router.navigate({ sub: tab.id });
                     }}
                   >
-                    <TabPanel id="chartgroup">
-                      <ChartGroupList {...this.props} />
-                    </TabPanel>
                     <TabPanel id="chart">
                       <ChartList {...this.props} />
+                    </TabPanel>
+                    <TabPanel id="chartgroup">
+                      <ChartGroupList {...this.props} />
                     </TabPanel>
                   </Tabs>
                 </Content.Body>
