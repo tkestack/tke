@@ -41,13 +41,14 @@ import (
 
 // Storage includes storage for resources.
 type Storage struct {
-	Deployment *REST
-	Status     *StatusREST
-	Scale      *ScaleREST
-	Rollback   *RollbackREST
-	Pods       *PodREST
-	HPAs       *HPARest
-	Events     *EventREST
+	Deployment  *REST
+	Status      *StatusREST
+	Scale       *ScaleREST
+	Rollback    *RollbackREST
+	RolloutUndo *RolloutUndoREST
+	Pods        *PodREST
+	HPAs        *HPARest
+	Events      *EventREST
 }
 
 // REST implements pkg/api/rest.StandardStorage
@@ -72,6 +73,9 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 			store: &statusStore,
 		},
 		Scale: &ScaleREST{
+			platformClient: platformClient,
+		},
+		RolloutUndo: &RolloutUndoREST{
 			platformClient: platformClient,
 		},
 		Pods: &PodREST{
