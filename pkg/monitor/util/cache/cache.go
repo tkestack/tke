@@ -85,7 +85,9 @@ type Cacher interface {
 
 type cacher struct {
 	sync.RWMutex
-	platformClient      platformversionedclient.PlatformV1Interface
+	platformClient platformversionedclient.PlatformV1Interface
+
+	// businessClient is not required, and needed to determine if it's nil
 	businessClient      businessversionedclient.BusinessV1Interface
 	clusterStatisticSet util.ClusterStatisticSet
 	clusterClientSets   util.ClusterClientSets

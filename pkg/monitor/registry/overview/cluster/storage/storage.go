@@ -97,17 +97,27 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateOb
 	}
 	clusterOverview.Result = r.cacher.GetClusterOverviewResult(clusterIDs)
 
-	projectCount := 0
-	projectAbnormal := 0
+	if r.businessClient == nil {
+		log.Info("The client for Business API Server is not installed")
+		clusterOverview.Result.ProjectCount = int32(monitor.OverviewProjectStatusDisable)
+		clusterOverview.Result.ProjectAbnormal = int32(monitor.OverviewProjectStatusDisable)
+		return clusterOverview, nil
+	}
+
+	projectCount := int32(0)
+	projectAbnormal := int32(0)
 	if projectList, err := r.businessClient.Projects().List(ctx, listOptions); err == nil && projectList != nil {
-		projectCount = len(projectList.Items)
+		projectCount = int32(len(projectList.Items))
 		for _, prj := range projectList.Items {
 			if prj.Status.Phase == businessv1.ProjectFailed {
 				projectAbnormal++
 			}
 		}
+	} else {
+		projectCount = int32(monitor.OverviewProjectStatusError)
+		projectAbnormal = int32(monitor.OverviewProjectStatusError)
 	}
-	clusterOverview.Result.ProjectCount = int32(projectCount)
-	clusterOverview.Result.ProjectAbnormal = int32(projectAbnormal)
+	clusterOverview.Result.ProjectCount = projectCount
+	clusterOverview.Result.ProjectAbnormal = projectAbnormal
 	return clusterOverview, nil
 }
