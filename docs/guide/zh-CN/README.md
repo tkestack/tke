@@ -17,6 +17,7 @@
   [切换控制台](products/controlpannel.md)
 
   * [平台侧](products/platform)
+    * [概览](products/platform/overview.md)
     * [集群管理](products/platform/cluster.md)
     * [业务管理](products/platform/business.md)
     * [扩展组件](products/platform/extender.md)
