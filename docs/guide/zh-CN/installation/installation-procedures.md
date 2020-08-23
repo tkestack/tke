@@ -6,7 +6,7 @@
 
 ## 2. Installer安装
 
-为了简化平台安装过程，容器服务开源版基于 tke-installer 安装器提供了一个向导式的图形化安装指引界面。
+为了简化平台安装过程，TKEStack基于 tke-installer 安装器提供了一个向导式的图形化安装指引界面。
 
 在您 Installer 节点的终端，执行如下脚本：
 
@@ -69,7 +69,7 @@ arch=arm64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 ![img](../../../images/step-3-2.png)
 
-* **高级设置**（非必须）：可以自定义 Global 集群的 Docker、kube-apiserver、kube-controller-manager、kube-scheduler、kubelet 运行参数
+* **高级设置**（非必须）：可以自定义 Global 集群的 Docker、kube-apiserver、kube-controller-manager、kube-scheduler、kubelet 运行参数，查看对应的帮助文档链接可获取详细信息。
 
 3. 填写 TKEStack 控制台认证信息。（建议使用**TKE提供**）
 
@@ -116,7 +116,7 @@ arch=arm64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 ![img](../../../images/step-8.png)
 
-9. 开始安装 TKEStack 控制台，安装成功后界面如下，最下面出现【查看指引】的按钮。
+9. 开始安装 TKEStack 控制台，**安装需要30min左右，请耐心等待**。安装成功后界面如下，最下面出现【查看指引】的按钮。
 
 ![img](../../../images/step-9.png)
 
