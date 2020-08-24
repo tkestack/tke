@@ -1,0 +1,110 @@
+# make the old down make the new up
+
+- name: cp the old kubelet.service to installer
+  fetch:
+    src: /etc/systemd/system/kubelet.service
+    dest: /data/tmp/
+    flat: yes
+  tags: init_server_env
+
+- name: paste kubelet.service in installer to the new one
+  copy:
+    src: /data/tmp/kubelet.service
+    dest: /etc/systemd/system/
+  tags: init_server_env
+
+- name: init server env
+  script: scripts/master-mgr/init_server.sh
+  tags: init_server_env
+
+- name: get args from the stable one
+  script: scripts/master-mgr/get_args.sh
+  tags: get_args
+  ignore_errors: yes
+
+- name: scp token files to installer
+  fetch:
+    src: /root/args/token
+    dest: /data/tmp/
+    flat: yes
+  tags: get_args
+
+- name: scp hash files to installer
+  fetch:
+    src: /root/args/hash
+    dest: /data/tmp/
+    flat: yes
+  tags: get_args
+
+- name: scp cert files to installer
+  fetch:
+    src: /root/args/cert
+    dest: /data/tmp/
+    flat: yes
+  tags: get_args
+
+- name: make the temp dir to save files
+  shell: mkdir -p /root/temp
+  tags: join_control_plane
+
+- name: scp token files in installer to the new one
+  copy:
+    src: /data/tmp/token
+    dest: /root/temp
+  tags: join_control_plane
+
+- name: scp hash files in installer to the new one
+  copy:
+    src: /data/tmp/hash
+    dest: /root/temp
+  tags: join_control_plane
+
+- name: scp cert files in installer to the new one
+  copy:
+    src: /data/tmp/cert
+    dest: /root/temp
+  tags: join_control_plane
+
+- name: join the control plane main process
+  script: scripts/master-mgr/join_control_plane.sh -h {{HEALTHY_MASTER_IP}} -n {{NEW_MASTER_IP}}
+  tags: join_control_plane
+
+- name: scp known tokens files to installer
+  fetch:
+    src: /etc/kubernetes/known_tokens.csv
+    dest: /data/tmp/
+    flat: yes
+  tags: cp_known_tokens_files
+
+- name: scp known tokens files in installer to the new one
+  copy:
+    src: /data/tmp/known_tokens.csv
+    dest: /etc/kubernetes/
+  tags: paste_known_tokens_files
+
+- name: scp scheduler files to installer
+  fetch:
+    src: /etc/kubernetes/scheduler-policy-config.json
+    dest: /data/tmp/
+    flat: yes
+  tags: cp_scheduler_files
+
+- name: scp scheduler files in installer to the new one
+  copy:
+    src: /data/tmp/scheduler-policy-config.json
+    dest: /etc/kubernetes/
+  tags: paste_scheduler_files
+  
+- name: clean temp file in new master
+  shell: rm -rf /root/temp
+  tags: clean_new_master
+
+- name: reset the old master
+  script: scripts/master-mgr/clean_old.sh
+  tags: clean_old
+  ignore_errors: yes
+
+- name: delete the old master
+  script: scripts/master-mgr/delete_old.sh -d {{DOWN_MASTER_IP}}
+  tags: delete_old
+  ignore_errors: yes

@@ -3,3 +3,5 @@ hosts
 builder.cfg
 roles/base-component/helms/*
 roles/business/helms/*
+.idea
+.DS_Store

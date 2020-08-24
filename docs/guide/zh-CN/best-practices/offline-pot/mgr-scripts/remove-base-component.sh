@@ -162,7 +162,7 @@ all_func(){
   del_minio
   del_nfs
   del_helm_tiller
-  
+
 }
 
 main(){

@@ -75,7 +75,7 @@ out_ser_domain2='reg.xx.yy.com'
 vg_name='vg_data' # required, volume group name
 lv_name='lv_data' # required, logical volume name
 disk_device_name='/dev/vdb' # data disk device name,fdisk -l to get
-filesystem='xfs' # optional, default is 'xfs'
+filesystem='ext4' # optional, default is 'xfs'
 partition_cmd='n\np\n1\n\n\nt\n8e\nw' # when create partition failed need check system create partition proccess with manual
 
 # offline registry config
@@ -116,7 +116,7 @@ use_aof='no' # redis data whethere use AOF persistence, yes or no
 redis_persistence='false' # redis data whethere use persistence, true or false
 redis_data_dir="/data/redis" # redis persistence data dir
 redis_exporter_img_tag='1.6.1-debian-10-r28' # redis exporter image tag
-redis_sysctl_img_tag='buster' # redis sysctl image tag 
+redis_sysctl_img_tag='buster' # redis sysctl image tag
 redis_taints='true' # redis node whetere add taints for not allow other server pod  schedule, true not allow; true or false
 redis_cluster_client_img_tag='6.0.5-debian-10-r0' # redis cluster client image tag
 
@@ -134,7 +134,7 @@ MYSQL_PASS='mysql_P@s5'
 # common's please set ' ', default is wx's value
 MYSQL_MODE='sql_mode=ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'
 
-# postgres configs, postgres will be deploy db hosts group's second node 
+# postgres configs, postgres will be deploy db hosts group's second node
 POSTGRES_DATA_DIR='/data/postgres/data'
 POSTGRES_PASSWORD='pgdb_P@s5'
 POSTGRES_IMAGE='library/postgres:12-alpine'
@@ -146,7 +146,7 @@ ingress_svc_type='ClusterIP' # when has LoadBalancer ip for nginx-ingress set Lo
 ingress_lb_ip='' # set LoadBalancer ip for nginx-ingress
 
 # kafka and zookeeper configs
-kafka_data='/data/kafka' # kafka and zookeeper data save dir 
+kafka_data='/data/kafka' # kafka and zookeeper data save dir
 kafka_limit_cpu='1' # Adjust according to the actual situation,1 eq 1c
 kafka_limit_mem='2Gi' # Adjust according to the actual situation
 kafka_request_cpu='500m' # Adjust according to the actual situation, 1000m eq 1c
@@ -160,7 +160,7 @@ zk_image_tag='3.5.5' # Adjust according to the actual situation
 kafka_manager_image_name='library/kafka-manager' # Adjust according to the actual situation
 kafka_manager_image_tag='1.3.3.22' # Adjust according to the actual situation
 kafka_manager_username='admin' # Adjust according to the actual situation
-kafka_manager_pwd='kafka_Mgr' # Adjust according to the actual situation 
+kafka_manager_pwd='kafka_Mgr' # Adjust according to the actual situation
 
 # elk configs
 es_data='/data/es' # save es data dir, Adjust according to the actual situation
@@ -182,11 +182,11 @@ es_uname='elastic' # Adjust according to the actual situation
 # nfs config
 nfs_data='/data/nfsdata' # nfs data dir
 nfs_app_list='("wx-nfs" "wx-uni" "wx-web")' # need nfs storage app's name,must be shell array
-nfs_pv_storage_size="2Gi" # nfs pv storage size, app's pvc must be match this size 
+nfs_pv_storage_size="2Gi" # nfs pv storage size, app's pvc must be match this size
 is_create_pv="false" # default will be not create pv, must be true or false
 
 # minio config
-minio_img_name='library/minio' 
+minio_img_name='library/minio'
 minio_img_tag='RELEASE.2019-12-17T23-16-33Z'
 minio_mcimg_name='library/mc'
 minio_mcimg_tag='edge'
@@ -195,7 +195,7 @@ minio_cpu_request='250m' # minio cpu request
 minio_mem_request='256Mi' # minio memory request
 minio_domain='minio.pot.tke.com'
 
-# sg-ik-es 
+# sg-ik-es
 sg_ik_repository="library" # sg ik es registry uri
 sg_ik_busyboxversion="1.29.3" # sg ik busybox image tag
 sg_ik_elkversion="6.8.0" # sg ik elasticsearch image tag
@@ -212,7 +212,7 @@ sg_ik_kibana_cpu_limit="500m" # sg ik kibana cpu limit, please adjust according 
 sg_ik_kibana_mem_limit="1Gi" # sg ik kibana memory limit, please adjust according to the actual situation
 sg_ik_kibana_cpu_req="100m" # sg ik kibana cpu request, please adjust according to the actual situation
 sg_ik_kibana_mem_req="500Mi" # sg ik kibana memory request, please adjust according to the actual situation
-sg_ik_ingress_class="nginx" # sg ik ingress class 
+sg_ik_ingress_class="nginx" # sg ik ingress class
 sg_ik_kibana_domain="sgik-kibana.t*pd.tke.com" # sg ik kibana domain
 sg_ik_es_data="/data/sg-ik-es" # sg ik es data dir
 
@@ -237,7 +237,7 @@ harbor_data_volume="/data/registry" # harbor registry dir
 # Create db group, must be two nodes
 [db]
 
-# create redis group, when master-slave mode must be two nodes; cluster mode less three nodes and 
+# create redis group, when master-slave mode must be two nodes; cluster mode less three nodes and
 # persistence current just support three nodes
 [redis]
 
@@ -267,4 +267,3 @@ harbor_data_volume="/data/registry" # harbor registry dir
 
 # sg ik elasticsearch, current for t*pd,three nodes or six nodes, when six node es master is 0~2, es data is 3~5
 [sgikes]
-

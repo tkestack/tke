@@ -5,3 +5,4 @@
 - include: manager-tke-node.yml
 - include: remove-cluster.yml
 - include: tke-gateway-mgr.yml
+- include: master-mgr.yml
