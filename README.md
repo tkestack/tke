@@ -1,4 +1,5 @@
-# TKE - Tencent Kubernetes Engine
+# TKEStack - Tencent Kubernetes Engine Stack
+
 
 <img align="right" width="100px" src="https://avatars0.githubusercontent.com/u/57258287?s=200&v=4">
 
@@ -7,23 +8,25 @@
 [![Go Report Card](https://goreportcard.com/badge/tkestack.io/tke)](https://goreportcard.com/report/tkestack.io/tke)
 [![Release](https://img.shields.io/github/release/tkestack/tke.svg?style=flat-square)](https://github.com/tkestack/tke/releases)
 
-***TKE*** is an open source project that provides a container management platform built for organizations that deploy containers in production. ***TKE*** makes it easy to run Kubernetes everywhere, meet IT requirements, and empower DevOps teams.
+> Chinese document：https://tkestack.github.io/docs/
+
+***TKEStack*** is an open source project that provides a container management platform built for organizations that deploy containers in production. ***TKEStack*** makes it easy to run Kubernetes everywhere, meet IT requirements, and empower DevOps teams.
 
 ## Features
 
-* Unified Cluster Management
+* **Unified Cluster Management**
   * Web console and command-line client for centrally manages multiple Kubernetes clusters.
   * Integration with your existing authentication mechanisms, including LDAP, Active Directory, front proxy, and public OAuth providers such as GitHub.
   * Unified authorization management, not only at the cluster management level, but even at the Kubernetes resource level.
   * Multi-tenancy support, including team and user isolation of containers, builds, and network communication.
-* Application Workload Management
+* **Application Workload Management**
   * Provides an intuitive UI interface to support visualization and YAML import and other resource creation and editing methods, enabling users to run containers without learning all Kubernetes concepts up-front.
   * An abstract project-level resource container that supports multiple namespace management and deployment applications across multiple clusters.
-* Operation And Maintenance Management
+* **Operation And Maintenance Management**
   * Integrated system monitoring and application monitoring.
   * Persistent Kubernetes events and audit logs.
   * Limit, track, and manage the developers and teams on the platform.
-* Plugin Support And Management  
+* **Plugin Support And Management**  
   * Authentication identity provider plugin.
   * Authorization provider plugin.
   * Event persistence storage plugin.
@@ -37,11 +40,11 @@
 
 ### Minimum Requirements
 
-* Hardware
+* **Hardware**
   * 8 vCPU
   * 16 GB of Memory
   * 100 GB of Disk Space
-* Operating Systems
+* **Operating Systems**
   * Ubuntu 16.04/18.04  LTS (64-bit)
   * CentOS Linux 7.6 (64-bit)
   * Tencent Linux 2.2 
@@ -56,17 +59,17 @@
 arch=amd64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
 ```
 
-3. **Configure Console:** Open your browser to http://`INSTALLER-NODE-IP`:8080/index.html, the Web GUI will guide you to initialize and install the TKEStack's **Global Cluster and Console**. You can refer to [installation-procedures](docs/guide/zh-CN/installation/installation-procedures.md)
+3. **Configure Console & Global Cluster:** Open your browser to `http://【INSTALLER-NODE-IP】:8080/index.html`, the Web GUI will guide you to initialize and install the TKEStack's **Global Cluster and Console**. You can refer to [installation-procedures](docs/guide/zh-CN/installation/installation-procedures.md)
 4. **Enjoy TKEStack:**  Open your browser to http://console.tke.com
 
 > TKEStack use tke-installer tool to deploy. Please refer to [tke-installer](docs/user/tke-installer/README.md) for more information.
 > 
-> If you encounter problems during installation, you can refer to [FAQ installation](docs/guide/zh-CN/FAQ/installation.md)
+> If you encounter problems during installation, you can refer to [FAQ installation](docs/guide/zh-CN/FAQ/Installation)
 
 
 ## Using
 
-[TKEStack Documentation ](docs/guide/zh-CN)
+[TKEStack Documentation ](https://tkestack.github.io/docs/)
 
 ## Developing
 
