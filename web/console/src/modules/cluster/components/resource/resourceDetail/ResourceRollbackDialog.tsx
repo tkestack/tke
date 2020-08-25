@@ -16,7 +16,7 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class ResourceRollbackDialog extends React.Component<RootProps, {}> {
   render() {
-    let { actions, route, subRoot, region } = this.props,
+    let { actions, route, subRoot, region, clusterVersion } = this.props,
       { resourceInfo, resourceDetailState } = subRoot,
       { rollbackResourceFlow, rsSelection } = resourceDetailState;
 
@@ -48,7 +48,7 @@ export class ResourceRollbackDialog extends React.Component<RootProps, {}> {
         caption={t('回滚资源')}
         workflow={rollbackResourceFlow}
         action={actions.workflow.rollbackResource}
-        params={region.selection ? region.selection.value : ''}
+        params={{ regionId: region.selection ? region.selection.value : '', clusterVersion }}
         targets={[resource]}
       >
         <div style={{ fontSize: '14px', lineHeight: '20px' }}>

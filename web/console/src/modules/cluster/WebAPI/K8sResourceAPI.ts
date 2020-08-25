@@ -10,7 +10,8 @@ import {
   reduceK8sRestfulPath,
   reduceNetworkRequest,
   reduceNetworkWorkflow,
-  requestMethodForAction
+  requestMethodForAction,
+  versionBigThanOrEqual
 } from '../../../../helpers';
 import { isEmpty } from '../../common';
 import { CreateResource, MergeType, RequestParams, ResourceInfo, UserDefinedHeader } from '../../common/models';
@@ -794,7 +795,14 @@ export async function deleteResourceIns(resource: CreateResource[], regionId: nu
   try {
     let { resourceIns, clusterId, resourceInfo, namespace, meshId, isSpetialNamespace = true } = resource[0];
 
-    let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, meshId, isSpetialNamespace });
+    let k8sUrl = reduceK8sRestfulPath({
+      resourceInfo,
+      namespace,
+      specificName: resourceIns,
+      clusterId,
+      meshId,
+      isSpetialNamespace
+    });
     let url = k8sUrl;
 
     // 是用于后台去异步的删除resource当中的pod
@@ -828,7 +836,10 @@ export async function deleteResourceIns(resource: CreateResource[], regionId: nu
  * @param resource: CreateResource   创建resourceIns的相关信息
  * @param regionId: number 地域的id
  */
-export async function rollbackResourceIns(resource: CreateResource[], regionId: number) {
+export async function rollbackResourceIns(
+  resource: CreateResource[],
+  { regionId, clusterVersion }: { regionId: number; clusterVersion: string }
+) {
   try {
     let { resourceIns, clusterId, resourceInfo, namespace, jsonData } = resource[0];
 
@@ -841,7 +852,7 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
     /// #endif
     // 因为回滚需要使用特定的apiVersion，故不用reduceK8sRestful
     let k8sUrl =
-      `/${resourceInfo.basicEntry}/apps/v1beta1/` +
+      `/${resourceInfo.basicEntry}/apps/${versionBigThanOrEqual(clusterVersion, '1.16') ? 'v1' : 'v1beta1'}/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
       `${resourceInfo.requestType['list']}/${resourceIns}/rollback`;
     let url = k8sUrl;
