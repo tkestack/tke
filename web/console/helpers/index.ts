@@ -19,4 +19,3 @@ export { dateFormat } from './dateUtil';
 export * from './appUtil';
 export { getCookie } from './cookieUtil';
 export { reduceK8sQueryString, reduceK8sRestfulPath, reduceNs, parseQueryString } from './urlUtil';
-export { versionBigThanOrEqual } from './version';

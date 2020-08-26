@@ -10,8 +10,7 @@ import {
   reduceK8sRestfulPath,
   reduceNetworkRequest,
   reduceNetworkWorkflow,
-  requestMethodForAction,
-  versionBigThanOrEqual
+  requestMethodForAction
 } from '../../../../helpers';
 import { isEmpty } from '../../common';
 import { CreateResource, MergeType, RequestParams, ResourceInfo, UserDefinedHeader } from '../../common/models';
@@ -23,6 +22,8 @@ import {
   Resource,
   ResourceFilter
 } from '../models';
+
+import versionCompare from 'tiny-version-compare';
 
 // 提示框
 const tips = seajs.require('tips');
@@ -852,7 +853,7 @@ export async function rollbackResourceIns(
     /// #endif
     // 因为回滚需要使用特定的apiVersion，故不用reduceK8sRestful
     let k8sUrl =
-      `/${resourceInfo.basicEntry}/apps/${versionBigThanOrEqual(clusterVersion, '1.14') ? 'v1' : 'v1beta1'}/` +
+      `/${resourceInfo.basicEntry}/apps/${versionCompare(clusterVersion, '1.14') >= 0 ? 'v1' : 'v1beta1'}/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
       `${resourceInfo.requestType['list']}/${resourceIns}/rollback`;
     let url = k8sUrl;

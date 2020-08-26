@@ -55,6 +55,7 @@
     "react-transition-group": "^2.5.3",
     "redux-saga": "^1.0.5",
     "redux-thunk": "=2.0.1",
+    "tiny-version-compare": "^3.0.0",
     "ts-optchain": "^0.1.7",
     "typescript": "3.2.1"
   },
