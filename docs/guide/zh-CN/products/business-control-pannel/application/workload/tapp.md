@@ -1,4 +1,4 @@
-## 简介
+# TApp
 
 Kubernetes现有应用类型（如：Deployment、StatefulSet等）无法满足很多非微服务应用的需求，比如：操作（升级、停止等）应用中的指定pod、应用支持多版本的pod。如果要将这些应用改造为适合于这些workload的应用，需要花费很大精力，这将使大多数用户望而却步。
 
@@ -6,10 +6,7 @@ Kubernetes现有应用类型（如：Deployment、StatefulSet等）无法满足�
 
 查询[TApp](../../../../features/tapp.md)可查看更多相关信息
 
-## TApp控制台操作指引
-
-<span id="creatTApp"></span>
-### 创建 TApp
+## 创建 TApp
 
 > 注意：使用前提，在[【扩展组件】](../../../platform/extender.md)安装TApp
 
@@ -90,23 +87,22 @@ Kubernetes现有应用类型（如：Deployment、StatefulSet等）无法满足�
 当“运行/期望Pod数量”相等时，即表示 TApp 下的所有 Pod 已创建完成。
     ![](../../../../../../images/tapp-2.png)
 
-### 更新 TApp
+## 更新 TApp
 
-#### 更新 YAML
 1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。 
 2. 选择需要更新的【业务】下相应的【命名空间】，展开【工作负载】列表，进入【TApp】管理页面。在需要更新 YAML 的 TApp 行中，单击【更多】>【编辑YAML】，进入“更新 TApp” 页面。如下图所示：
    ![](../../../../../../images/tapp-3.png)
 4. 在 “更新TApp” 页面，编辑 YAML，单击【完成】，即可更新 YAML。如下图所示：
 ![更新YAML](../../../../../../images/tapp-4.png)
 
-### 调整 Pod 数量
+## 调整 Pod 数量
 1. 登录 TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。
 2. 选择要变更的业务下相应的命名空间，展开工作负载列表，进入 TApp 管理页面。
 3. 点击 TApp 列表操作栏的【更新实例数量】按钮。如下图所示：
    ![](../../../../../../images/tapp-5.png)
 4. 根据实际需求调整 Pod 数量，如3，单击页面下方的【更新实例数目】即可完成调整。
 
-### TApp特色功能-指定pod灰度升级
+## TApp特色功能-指定pod灰度升级
 
 1. 登录 TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。
 

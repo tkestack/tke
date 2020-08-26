@@ -1,13 +1,11 @@
-## 简介
-Namespaces 是 Kubernetes 在同一个集群中进行逻辑环境划分的对象， 您可以通过 Namespaces 进行管理多个团队多个项目的划分。在 Namespaces 下，Kubernetes 对象的名称必须唯一。您可以通过资源配额进行可用资源的分配，还可以进行不同 Namespaces 网络的访问控制。
+# 命名空间
+命名空间（Namespaces）是 Kubernetes 在同一个集群中进行逻辑环境划分的对象， 您可以通过 Namespaces 进行管理多个团队多个项目的划分。在 Namespaces 下，Kubernetes 对象的名称必须唯一。您可以通过资源配额进行可用资源的分配，还可以进行不同 Namespaces 网络的访问控制。
 
 ## 使用方法
 
 - 通过 TKEStack 控制台使用：TKEStack 控制台提供 Namespaces 的增删改查功能。
   - 【业务管理】平台下不支持对命名空间的直接操作，需在【平台管理】下[【业务管理】](../../../products/platform/business.md)中指定业务通过“创建业务下的命名空间”来实现。
 - 通过 Kubectl 使用：更多详情可查看 [Kubernetes 官网文档](https://kubernetes.io/docs/tasks/administer-cluster/namespaces/)。
-
-
 
 ## 相关知识
 

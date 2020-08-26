@@ -1,5 +1,4 @@
-<span id="ConfigMap"></span>
-## 简介
+# ConfigMap
 
 通过 ConfigMap 您可以将配置和运行的镜像进行解耦，使得应用程序有更强的移植性。ConfigMap 是有 key-value 类型的键值对，您可以通过控制台的 Kubectl 工具创建对应的 ConfigMap 对象，可以通过挂载数据卷、环境变量或在容器的运行命令中使用 ConfigMap。
 ConfigMap 有两种使用方式，创建负载时做为数据卷挂载到容器和作为环境变量映射到容器。

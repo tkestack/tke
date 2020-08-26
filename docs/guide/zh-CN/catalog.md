@@ -36,7 +36,7 @@
         * [Job ](products/business-control-pannel/application/workload/job.md)
         * [CronJob ](products/business-control-pannel/application/workload/cron-job.md)
         * [TApp ](products/business-control-pannel/application/workload/tapp.md)
-        * [设置工作负载的资源限制](products/business-control-pannel/application/workload/resource-limit.md)
+        * [工作负载的请求与限制](products/business-control-pannel/application/workload/resource-limit.md)
       * [服务](products/business-control-pannel/application/services)
         * [Service ](products/business-control-pannel/application/services/service.md)
         * [Ingress ](products/business-control-pannel/application/services/ingress.md)
