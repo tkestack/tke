@@ -36,6 +36,9 @@ export interface CreateResource extends Identifiable {
   mergeType?: string;
 
   meshId?: string;
+
+  /** 集群版本 */
+  clusterVersion?: string;
 }
 
 export const MergeType = {
