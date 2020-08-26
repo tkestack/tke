@@ -9,9 +9,8 @@
 - 已部署 [TKEStack 控制台](../../installation/installation-procedures.md)。
 - 已创建集群。如没有另外创建集群，可以先使用global集群。如要尝试创建新集群，请参见 [创建集群](../../products/platform/cluster.md)。
 
-## 操作步骤
-### 编写代码制作镜像
-#### 编写应用程序
+## 制作镜像
+### 编写应用程序
 
 以CentOS 7.6为例
 
@@ -58,7 +57,7 @@ node server.js
       > 注意：如果本地主机不在该节点所在的内网，IP地址应该是该节点的外网地址
 
 
-#### 创建 Docker 镜像
+### 创建 Docker 镜像
 1. 在 hellonode 文件夹下，创建 Dockerfile 文件。
 ```
 [root@VM_1_98_centos hellonode]# vim Dockerfile
@@ -83,7 +82,7 @@ docker images
 ![](../../../../images/helloworld-3.png)
 
 
-#### 上传该镜像到镜像仓库
+### 上传该镜像到镜像仓库
 >- 已在[【组织资源】](../../../zh-CN/products/platform/resource.md)中的【镜像仓库管理】创建命名空间。
 >- 已在[【组织资源】](../../../zh-CN/products/platform/resource.md)中的【访问凭证】创建访问凭证。
 
@@ -100,13 +99,13 @@ sudo docker push default.registry.tke.com/【命名空间】/helloworld:v1
 显示以下结果，则说明镜像上传成功。
 ![](../../../../images/helloworld-4.png)
 
-#### 在镜像仓库命名空间中进行确认
+### 在镜像仓库命名空间中进行确认
 
 ![](../../../../images/helloworld-6.png)
 
 
 
-### 通过该镜像创建 Hello World 服务
+## 通过该镜像创建 Hello World 服务
 
 1. 登录 TKEStack 控制台。
 2. 单击左侧导航栏中【集群管理】，进入“集群管理”页面。
@@ -122,19 +121,17 @@ sudo docker push default.registry.tke.com/【命名空间】/helloworld:v1
  >2. 服务所在集群的安全组需要放通节点网络及容器网络，同时需要放通30000 - 32768端口，否则可能会出现容器服务无法使用问题。
 5. 单击【创建Workload】，完成 Hello World 服务的创建。
 
-### 访问 Hello World 服务 
+## 访问 Hello World 服务 
 可通过以下两种方式访问 Hello World 服务。
-#### 通过主机节点端口访问 Hello World 服务
+### 通过主机节点端口访问 Hello World 服务
 1. 选择【服务】>【Service】，在“Service”管理页面，看到与名为helloworld的Deployment同名的 helloworld Service已经运行，如下图所示：![](../../../../images/helloworld-11.png)
 
 2. 在本地主机的浏览器地址栏输入`集群任意节点IP:30000 端口`，例如`10.0.0.1:30000`即可访问服务。如果服务创建成功，访问服务时页面会返回` Hello World！ `
 
    > 注意：如果本地主机在集群内网中，输入节点的内网IP地址即可；如果本地主机不在集群内网中，需要输入节点的外网IP地址
 
-#### 通过服务名称访问 Hello World 服务
+### 通过服务名称访问 Hello World 服务
 
 集群内的其他服务或容器可以直接通过服务名称访问。
-
-
 
 更多关于Docker 镜像请参见 [如何构建 Docker 镜像](https://github.com/tkestack/docs/blob/master/QuickStart/%E5%85%A5%E9%97%A8%E7%A4%BA%E4%BE%8B/%E5%A6%82%E4%BD%95%E6%9E%84%E5%BB%BAdocker%E9%95%9C%E5%83%8F.md) 。

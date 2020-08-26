@@ -1,4 +1,4 @@
-## 简介
+# Deployment
 
 Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部署无状态的应用程序。您可以根据业务需求，对 Deployment 中运行的 Pod 的副本数、调度策略、更新策略等进行声明。
 
@@ -27,7 +27,7 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
    - **PVC**：用户在业务namespace下创建的[PVC](../storage/persistent-volume-claim.md)
    
  - **实例内容器**：根据实际需求，为 Deployment 的一个 Pod 设置一个或多个不同的容器。
-    
+   
     - **名称**：自定义
     - **镜像**：根据实际需求进行选择
       - **镜像版本（Tag）**：根据实际需求进行填写，不填默认为`latest`
