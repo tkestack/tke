@@ -23,6 +23,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -61,6 +63,9 @@ const (
 	Etcd              Component = "etcd-0"
 
 	EtcdPrefix = "etcd-"
+
+	FirstLoad    = int32(1)
+	NotFirstLoad = int32(0)
 )
 
 var (
@@ -95,6 +100,8 @@ type cacher struct {
 	clusters            util.ClusterSet
 	credentials         util.ClusterCredentialSet
 	clusterAbnormal     int
+
+	firstLoad int32
 }
 
 func (c *cacher) Reload() {
@@ -103,24 +110,40 @@ func (c *cacher) Reload() {
 
 	c.getClusters()
 	c.getProjects()
+
+	if c.firstLoad == FirstLoad {
+		atomic.StoreInt32(&c.firstLoad, NotFirstLoad)
+	}
 }
 
 func (c *cacher) getClusters() {
 	c.getDynamicClients()
 
-	c.clusterStatisticSet = make(util.ClusterStatisticSet)
-	c.clusterAbnormal = 0
 	if clusters, err := c.platformClient.Clusters().List(context.Background(), metav1.ListOptions{}); err == nil {
 		wg := sync.WaitGroup{}
 		wg.Add(len(clusters.Items))
 		syncMap := sync.Map{}
+		finished := int32(0)
+		allTask := len(clusters.Items)
+		started := time.Now()
 		for i := range clusters.Items {
 			if clusters.Items[i].Status.Phase == platformv1.ClusterFailed {
 				c.clusterAbnormal++
 			}
 			go func(cls platformv1.Cluster) {
-				defer wg.Done()
+				defer func() {
+					defer wg.Done()
+					atomic.AddInt32(&finished, 1)
+					log.Debugf("cacher has finished reloading (%d/%d) clusters, cluster: %s, cost: %v seconds",
+						finished, allTask, cls.GetName(), time.Since(started).Seconds())
+				}()
 				clusterID := cls.GetName()
+				if cls.Status.Phase != platformv1.ClusterRunning {
+					syncMap.Store(clusterID, map[string]interface{}{
+						ClusterPhase: string(cls.Status.Phase),
+					})
+					return
+				}
 				clientSet, err := platformutil.BuildExternalClientSet(context.Background(), &cls, c.platformClient)
 				if err != nil {
 					log.Error("create clientSet of cluster failed", log.Any("cluster", clusterID), log.Err(err))
@@ -132,7 +155,6 @@ func (c *cacher) getClusters() {
 				c.getPods(clusterID, clientSet, resourceCounter)
 				if metricServerClientSet, err := c.getMetricServerClientSet(context.Background(), &cls); err == nil && metricServerClientSet != nil {
 					c.getNodeMetrics(clusterID, metricServerClientSet, resourceCounter)
-					log.Infof("cls: %+v, counter: %+v", clusterID, resourceCounter)
 				}
 				calResourceRate(resourceCounter)
 				health := &util.ComponentHealth{}
@@ -149,45 +171,58 @@ func (c *cacher) getClusters() {
 
 		wg.Wait()
 
+		log.Debugf("finish reloading all clusters, cost: %v seconds", time.Since(started).Seconds())
+
+		c.clusterStatisticSet = make(util.ClusterStatisticSet)
+		c.clusterAbnormal = 0
 		syncMap.Range(func(key, value interface{}) bool {
 			clusterID := key.(string)
 			val := value.(map[string]interface{})
-			clusterClientSet := val[ClusterClientSet].(*kubernetes.Clientset)
-			workloadCounter := val[WorkloadCounter].(*util.WorkloadCounter)
-			resourceCounter := val[ResourceCounter].(*util.ResourceCounter)
 			clusterPhase := val[ClusterPhase].(string)
-			health := val[ComponentHealth].(*util.ComponentHealth)
-			c.clusterClientSets[clusterID] = clusterClientSet
-			c.clusterStatisticSet[clusterID] = &monitor.ClusterStatistic{
-				ClusterID:                clusterID,
-				ClusterPhase:             clusterPhase,
-				NodeCount:                int32(resourceCounter.NodeTotal),
-				NodeAbnormal:             int32(resourceCounter.NodeAbnormal),
-				WorkloadCount:            int32(workloadCounter.Total()),
-				WorkloadAbnormal:         0,
-				HasMetricServer:          resourceCounter.HasMetricServer,
-				CPUUsed:                  resourceCounter.CPUUsed,
-				CPURequest:               resourceCounter.CPURequest,
-				CPULimit:                 resourceCounter.CPULimit,
-				CPUAllocatable:           resourceCounter.CPUAllocatable,
-				CPUCapacity:              resourceCounter.CPUCapacity,
-				CPURequestRate:           transPercent(resourceCounter.CPURequestRate),
-				CPUAllocatableRate:       transPercent(resourceCounter.CPUAllocatableRate),
-				CPUUsage:                 transPercent(resourceCounter.CPUUsage),
-				MemUsed:                  resourceCounter.MemUsed,
-				MemRequest:               resourceCounter.MemRequest,
-				MemLimit:                 resourceCounter.MemLimit,
-				MemAllocatable:           resourceCounter.MemAllocatable,
-				MemCapacity:              resourceCounter.MemCapacity,
-				MemRequestRate:           transPercent(resourceCounter.MemRequestRate),
-				MemAllocatableRate:       transPercent(resourceCounter.MemAllocatableRate),
-				MemUsage:                 transPercent(resourceCounter.MemUsage),
-				SchedulerHealthy:         health.Scheduler,
-				ControllerManagerHealthy: health.ControllerManager,
-				EtcdHealthy:              health.Etcd,
+			if clusterPhase == string(platformv1.ClusterRunning) {
+				clusterClientSet := val[ClusterClientSet].(*kubernetes.Clientset)
+				workloadCounter := val[WorkloadCounter].(*util.WorkloadCounter)
+				resourceCounter := val[ResourceCounter].(*util.ResourceCounter)
+				health := val[ComponentHealth].(*util.ComponentHealth)
+				c.clusterClientSets[clusterID] = clusterClientSet
+				c.clusterStatisticSet[clusterID] = &monitor.ClusterStatistic{
+					ClusterID:                clusterID,
+					ClusterPhase:             clusterPhase,
+					NodeCount:                int32(resourceCounter.NodeTotal),
+					NodeAbnormal:             int32(resourceCounter.NodeAbnormal),
+					WorkloadCount:            int32(workloadCounter.Total()),
+					WorkloadAbnormal:         0,
+					HasMetricServer:          resourceCounter.HasMetricServer,
+					CPUUsed:                  resourceCounter.CPUUsed,
+					CPURequest:               resourceCounter.CPURequest,
+					CPULimit:                 resourceCounter.CPULimit,
+					CPUAllocatable:           resourceCounter.CPUAllocatable,
+					CPUCapacity:              resourceCounter.CPUCapacity,
+					CPURequestRate:           transPercent(resourceCounter.CPURequestRate),
+					CPUAllocatableRate:       transPercent(resourceCounter.CPUAllocatableRate),
+					CPUUsage:                 transPercent(resourceCounter.CPUUsage),
+					MemUsed:                  resourceCounter.MemUsed,
+					MemRequest:               resourceCounter.MemRequest,
+					MemLimit:                 resourceCounter.MemLimit,
+					MemAllocatable:           resourceCounter.MemAllocatable,
+					MemCapacity:              resourceCounter.MemCapacity,
+					MemRequestRate:           transPercent(resourceCounter.MemRequestRate),
+					MemAllocatableRate:       transPercent(resourceCounter.MemAllocatableRate),
+					MemUsage:                 transPercent(resourceCounter.MemUsage),
+					SchedulerHealthy:         health.Scheduler,
+					ControllerManagerHealthy: health.ControllerManager,
+					EtcdHealthy:              health.Etcd,
+				}
+			} else {
+				c.clusterStatisticSet[clusterID] = &monitor.ClusterStatistic{
+					ClusterID:    clusterID,
+					ClusterPhase: clusterPhase,
+				}
 			}
 			return true
 		})
+
+		log.Debugf("finish reloading all results, cost %+v seconds", time.Since(started).Seconds())
 	}
 }
 
@@ -212,8 +247,10 @@ func (c *cacher) getProjects() {
 }
 
 func (c *cacher) GetClusterOverviewResult(clusterIDs []string) *monitor.ClusterOverviewResult {
-	c.RLock()
-	defer c.RUnlock()
+	if atomic.LoadInt32(&c.firstLoad) == FirstLoad {
+		c.RLock()
+		defer c.RUnlock()
+	}
 
 	clusterStatistics := make([]*monitor.ClusterStatistic, 0)
 	result := &monitor.ClusterOverviewResult{}
@@ -244,6 +281,7 @@ func NewCacher(platformClient platformversionedclient.PlatformV1Interface,
 		dynamicClients:      make(util.DynamicClientSet),
 		clusters:            make(util.ClusterSet),
 		credentials:         make(util.ClusterCredentialSet),
+		firstLoad:           FirstLoad,
 	}
 }
 
@@ -260,22 +298,10 @@ func (c *cacher) getTApps(cluster string) int {
 
 func (c *cacher) getDeployments(clusterID string, clientSet *kubernetes.Clientset) int {
 	count := 0
-	if deployments, err := clientSet.AppsV1().Deployments(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil && !errors.IsNotFound(err) {
+	if deployments, err := clientSet.AppsV1().Deployments(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
 		count += len(deployments.Items)
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query deployments of v1 failed", log.Any("clusterID", clusterID), log.Err(err))
-	}
-
-	if deployments, err := clientSet.AppsV1beta1().Deployments(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil && !errors.IsNotFound(err) {
-		count += len(deployments.Items)
-	} else if !errors.IsNotFound(err) {
-		log.Error("Query deployments of v1beta11 failed", log.Any("clusterID", clusterID), log.Err(err))
-	}
-
-	if deployments, err := clientSet.AppsV1beta2().Deployments(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil && !errors.IsNotFound(err) {
-		count += len(deployments.Items)
-	} else if !errors.IsNotFound(err) {
-		log.Error("Query deployments of v1beta2 failed", log.Any("clusterID", clusterID), log.Err(err))
 	}
 	return count
 }
@@ -287,18 +313,6 @@ func (c *cacher) getStatefulSets(clusterID string, clientSet *kubernetes.Clients
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query statefulSets of v1 failed", log.Any("clusterID", clusterID), log.Err(err))
 	}
-
-	if statefulSets, err := clientSet.AppsV1beta1().StatefulSets(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
-		count += len(statefulSets.Items)
-	} else if !errors.IsNotFound(err) {
-		log.Error("Query statefulSets of v1beta1 failed", log.Any("clusterID", clusterID), log.Err(err))
-	}
-
-	if statefulSets, err := clientSet.AppsV1beta2().StatefulSets(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
-		count += len(statefulSets.Items)
-	} else if !errors.IsNotFound(err) {
-		log.Error("Query statefulSets of v1beta2 failed", log.Any("clusterID", clusterID), log.Err(err))
-	}
 	return count
 }
 
@@ -308,12 +322,6 @@ func (c *cacher) getDaemonSets(clusterID string, clientSet *kubernetes.Clientset
 		count += len(daemonSets.Items)
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query daemonSets of v1 failed", log.Any("clusterID", clusterID), log.Err(err))
-	}
-
-	if daemonSets, err := clientSet.AppsV1beta2().DaemonSets(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
-		count += len(daemonSets.Items)
-	} else if !errors.IsNotFound(err) {
-		log.Error("Query daemonSets of v1beta2 failed", log.Any("clusterID", clusterID), log.Err(err))
 	}
 	return count
 }
@@ -355,11 +363,9 @@ func (c *cacher) getNodeMetrics(clusterID string, clientSet *metricsv.Clientset,
 	if nodeMetrics, err := clientSet.MetricsV1beta1().NodeMetricses().List(context.Background(), metav1.ListOptions{}); err == nil {
 		for _, nm := range nodeMetrics.Items {
 			if resourceCPU, ok := nm.Usage[corev1.ResourceCPU]; ok {
-				log.Infof("metric server cpu: %+v", float64(resourceCPU.MilliValue())/float64(1000))
 				counter.CPUUsed += float64(resourceCPU.MilliValue()) / float64(1000)
 			}
 			if resourceMem, ok := nm.Usage[corev1.ResourceMemory]; ok {
-				log.Infof("metric server node used: %+v", resourceMem.Value())
 				counter.MemUsed += resourceMem.Value()
 			}
 		}
@@ -416,10 +422,11 @@ func (c *cacher) getPods(clusterID string, clientSet *kubernetes.Clientset, coun
 
 func (c *cacher) getWorkloadCounter(clusterID string, clientSet *kubernetes.Clientset) *util.WorkloadCounter {
 	counter := &util.WorkloadCounter{}
-	counter.DaemonSet = c.getDeployments(clusterID, clientSet)
+	counter.Deployment = c.getDeployments(clusterID, clientSet)
 	counter.DaemonSet = c.getDaemonSets(clusterID, clientSet)
 	counter.StatefulSet = c.getStatefulSets(clusterID, clientSet)
 	counter.TApp = c.getTApps(clusterID)
+	log.Debugf("finish reloading cluster: %s's workload: %+v", clusterID, counter)
 	return counter
 }
 
