@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Button, Dropdown, List, Modal, Select, Switch, Table, TagSearchBox, Text } from '@tea/component';
+import { Button, Dropdown, List, Modal, Select, Switch, Table, TagSearchBox, Text, Tooltip } from '@tea/component';
 // import { TagSearchBox } from '../../../../common/components/tagsearchbox';
 import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
 import { ChartInstancesPanel } from '@tencent/tchart';
@@ -173,29 +173,45 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   private _renderNamespaceSelect() {
     let { actions, namespaceList, namespaceSelection } = this.props;
 
+    const groups = namespaceList.data.records.reduce((gr, { clusterDisplayName, clusterName }) => {
+      const value = `${clusterDisplayName}(${clusterName})`;
+      return { ...gr, [clusterName]: <Tooltip title={value}>{value}</Tooltip> };
+    }, {});
+
     let options = namespaceList.data.recordCount
-      ? namespaceList.data.records.map((item, index) => ({
-          value: item.name,
-          text: item.displayName
-        }))
+      ? namespaceList.data.records.map(item => {
+          const text = `${item.clusterDisplayName}-${item.namespace}`;
+
+          return {
+            value: item.name,
+            text: <Tooltip title={text}>{text}</Tooltip>,
+            groupKey: item.clusterName,
+            realText: text
+          };
+        })
       : [{ value: '', text: t('无可用命名空间'), disabled: true }];
     return (
       <div style={{ display: 'inline-block', fontSize: '12px', verticalAlign: 'middle' }}>
         <Text theme="label" verticalAlign="middle">
           {t('命名空间')}
         </Text>
-        <Select
-          type="native"
-          appearence="button"
-          size="s"
-          options={options}
-          style={{ width: '130px', marginRight: '5px' }}
-          value={namespaceSelection}
-          onChange={value => {
-            actions.namespace.selectNamespace(value);
-          }}
-          placeholder={namespaceList.data.recordCount ? t('请选择命名空间') : t('无可用命名空间')}
-        />
+        <Tooltip>
+          <Select
+            type="simulate"
+            searchable
+            filter={(inputValue, { realText }: any) => realText.includes(inputValue)}
+            appearence="button"
+            size="s"
+            groups={groups}
+            options={options}
+            style={{ width: '130px', marginRight: '5px' }}
+            value={namespaceSelection}
+            onChange={value => {
+              actions.namespace.selectNamespace(value);
+            }}
+            placeholder={namespaceList.data.recordCount ? t('请选择命名空间') : t('无可用命名空间')}
+          />
+        </Tooltip>
       </div>
     );
   }

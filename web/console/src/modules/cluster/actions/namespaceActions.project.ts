@@ -31,7 +31,9 @@ const fetchNamespaceActions = generateFetcherActionCreator({
           displayName: `${item.spec.namespace}(${item.spec.clusterName})`,
           clusterVersion: item.spec.clusterVersion,
           clusterId: item.spec.clusterVersion,
-          clusterDisplayName: item.spec.clusterDisplayName
+          clusterDisplayName: item.spec.clusterDisplayName,
+          namespace: item.spec.namespace,
+          clusterName: item.spec.clusterName
         });
       });
 
