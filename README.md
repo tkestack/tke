@@ -89,6 +89,8 @@ For the full story, head over to the [developer's documentation](docs/devel/deve
 
 ## Community
 
+If you are interested in contributing to the TKEStack, please check the [CONTRIBUTING.md](https://github.com/tkestack/tke/blob/master/CONTRIBUTING.md) first. 
+
 You are encouraged to communicate most things via GitHub [issues](https://github.com/tkestack/tke/issues/new/choose) or [pull requests](https://github.com/tkestack/tke/pulls).
 
 Other active channels:
