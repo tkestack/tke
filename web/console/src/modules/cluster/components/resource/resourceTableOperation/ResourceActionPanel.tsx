@@ -173,10 +173,16 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   private _renderNamespaceSelect() {
     let { actions, namespaceList, namespaceSelection } = this.props;
 
+    const groups = namespaceList.data.records.reduce(
+      (gr, { clusterDisplayName, clusterName }) => ({ ...gr, [clusterName]: `${clusterDisplayName}(${clusterName})` }),
+      {}
+    );
+
     let options = namespaceList.data.recordCount
       ? namespaceList.data.records.map((item, index) => ({
           value: item.name,
-          text: item.displayName
+          text: `${item.clusterDisplayName}-${item.namespace}`,
+          groupKey: item.clusterName
         }))
       : [{ value: '', text: t('无可用命名空间'), disabled: true }];
     return (
@@ -188,6 +194,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
           type="native"
           appearence="button"
           size="s"
+          groups={groups}
           options={options}
           style={{ width: '130px', marginRight: '5px' }}
           value={namespaceSelection}

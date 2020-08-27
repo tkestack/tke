@@ -24,7 +24,10 @@ const fetchNamespaceActions = generateFetcherActionCreator({
         namespaceList.push({
           id: uuid(),
           name: item.metadata.name,
-          displayName: `${item.spec.namespace}(${item.spec.clusterName})`
+          displayName: `${item.spec.namespace}(${item.spec.clusterName})`,
+          clusterDisplayName: item.spec.clusterDisplayName,
+          clusterName: item.spec.clusterName,
+          namespace: item.spec.namespace
         });
       });
 

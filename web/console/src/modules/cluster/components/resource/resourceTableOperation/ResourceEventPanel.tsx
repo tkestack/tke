@@ -133,10 +133,15 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
       { namespaceSelection, workloadType, workloadList, workloadSelection, isAutoRenew } = subRoot.resourceEventOption;
 
     // 展示命名空间的选择列表
+    const namespaceGroups = namespaceList.data.records.reduce(
+      (gr, { clusterDisplayName, clusterName }) => ({ ...gr, [clusterName]: `${clusterDisplayName}(${clusterName})` }),
+      {}
+    );
     let namespaceOptions = namespaceList.data.records.map(n => {
       return {
         value: n.name,
-        text: n.displayName
+        text: `${n.clusterDisplayName}-${n.namespace}`,
+        groupKey: n.clusterName
       };
     });
 
@@ -174,6 +179,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
                   ) : (
                     <Select
                       size="m"
+                      groups={namespaceGroups}
                       options={namespaceOptions}
                       value={namespaceSelection}
                       onChange={value => {

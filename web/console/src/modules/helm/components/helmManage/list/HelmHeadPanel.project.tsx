@@ -53,9 +53,17 @@ export class HelmHeadPanel extends React.Component<RootProps, {}> {
       text: p.displayName,
       value: p.name
     }));
+    const namespaceGroups = namespaceList.data.records.reduce(
+      (gr, { clusterDisplayName, clusterName }) => ({
+        ...gr,
+        [clusterName]: `${clusterDisplayName}(${clusterName})`
+      }),
+      {}
+    );
     let namespaceOptions = namespaceList.data.records.map((p, index) => ({
-      text: p.displayName,
-      value: p.name
+      value: p.name,
+      text: `${p.clusterDisplayName}-${p.namespace}`,
+      groupKey: p.clusterName
     }));
     return (
       <Justify
@@ -74,6 +82,7 @@ export class HelmHeadPanel extends React.Component<RootProps, {}> {
             <FormPanel.InlineText>{t('namespace：')}</FormPanel.InlineText>
             <FormPanel.Select
               label={'namespace'}
+              groups={namespaceGroups}
               options={namespaceOptions}
               value={namespaceSelection}
               onChange={value => actions.namespace.selectNamespace(value)}

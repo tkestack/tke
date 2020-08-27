@@ -136,9 +136,14 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
     }));
 
     // 展示命名空间的选择列表
+    const namespaceGroups = namespaceList.data.records.reduce(
+      (gr, { clusterDisplayName, clusterName }) => ({ ...gr, [clusterName]: `${clusterDisplayName}(${clusterName})` }),
+      {}
+    );
     let namespaceOptions = namespaceList.data.records.map(item => ({
       value: item.name,
-      text: item.displayName
+      text: `${item.clusterDisplayName}-${item.namespace}`,
+      groupKey: item.clusterName
     }));
 
     // 展示workloadList的选择列表
@@ -197,6 +202,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
                       <Select
                         style={inlineDisplayStyle}
                         value={namespaceSelection}
+                        groups={namespaceGroups}
                         options={namespaceOptions}
                         onChange={value => {
                           this._handleSelectForNamespace(value);
