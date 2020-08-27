@@ -209,6 +209,7 @@ func (c *cacher) getClusters() {
 					MemRequestRate:           transPercent(resourceCounter.MemRequestRate),
 					MemAllocatableRate:       transPercent(resourceCounter.MemAllocatableRate),
 					MemUsage:                 transPercent(resourceCounter.MemUsage),
+					PodCount:                 int32(resourceCounter.PodCount),
 					SchedulerHealthy:         health.Scheduler,
 					ControllerManagerHealthy: health.ControllerManager,
 					EtcdHealthy:              health.Etcd,
@@ -264,6 +265,11 @@ func (c *cacher) GetClusterOverviewResult(clusterIDs []string) *monitor.ClusterO
 			result.NodeAbnormal += clusterStatistic.NodeAbnormal
 			result.WorkloadCount += clusterStatistic.WorkloadCount
 			result.WorkloadAbnormal += clusterStatistic.WorkloadAbnormal
+			result.CPUCapacity += clusterStatistic.CPUCapacity
+			result.CPUAllocatable += clusterStatistic.CPUAllocatable
+			result.MemCapacity += clusterStatistic.MemCapacity
+			result.MemAllocatable += clusterStatistic.MemAllocatable
+			result.PodCount += clusterStatistic.PodCount
 			clusterStatistics = append(clusterStatistics, clusterStatistic)
 		}
 	}
@@ -407,6 +413,7 @@ func (c *cacher) getNodes(clusterID string, clientSet *kubernetes.Clientset, cou
 
 func (c *cacher) getPods(clusterID string, clientSet *kubernetes.Clientset, counter *util.ResourceCounter) {
 	if pods, err := clientSet.CoreV1().Pods(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
+		counter.PodCount = len(pods.Items)
 		for _, pod := range pods.Items {
 			for _, ctn := range pod.Spec.Containers {
 				counter.CPURequest += float64(ctn.Resources.Requests.Cpu().MilliValue()) / float64(1000)
