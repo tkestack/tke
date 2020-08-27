@@ -579,6 +579,7 @@
                     "listRegistrynamespaces",
                     "listPrometheuses",
                     "listUsers",
+                    "listUserProjects",
                     "listPolicies",
                     "listClusters",
                     "listLogcollectors",
@@ -860,6 +861,7 @@
                     "listTapps",
                     "listTemplates",
                     "listUsers",
+                    "listUserProjects",
                     "listVolumeattachments",
                     "updateAlarmpolicy",
                     "updateChart",
@@ -1115,6 +1117,7 @@
                     "listTapps",
                     "listTemplates",
                     "listUsers",
+                    "listUserProjects",
                     "listVolumeattachments",
                     "get",
                     "list"

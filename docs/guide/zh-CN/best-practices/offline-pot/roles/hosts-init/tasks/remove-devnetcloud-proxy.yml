@@ -1,0 +1,51 @@
+# remove devnetcloud docker proxy
+
+- name: get http-proxy.conf state
+  stat:
+    path: /etc/systemd/system/docker.service.d/http-proxy.conf
+  register: http_proxy_file
+  tags: remove_devnetcloud_docker_proxy
+
+
+# get http-proxy.conf.bak stat
+- name: get http-proxy.conf.bak stat
+  stat:
+    path: /etc/systemd/system/docker.service.d/http-proxy.conf.bak
+  register: http_proxy_file_bak
+  tags: remove_devnetcloud_docker_proxy
+
+# backup docker proxy config
+- name: backup docker_proxy
+  shell: \cp /etc/systemd/system/docker.service.d/http-proxy.conf /etc/systemd/system/docker.service.d/http-proxy.conf.bak
+  when: http_proxy_file_bak.stat.exists == False and http_proxy_file.stat.exists == True
+  tags: remove_devnetcloud_docker_proxy
+
+- name: remove devnetcloud docker proxy
+  replace:
+    dest: /etc/systemd/system/docker.service.d/http-proxy.conf
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { regexp: '^Environment="HTTP_PROXY=',replace: '#Environment="HTTP_PROXY=' }
+    - { regexp: '^Environment="HTTPS_PROXY=',replace: '#Environment="HTTPS_PROXY=' }
+  when: http_proxy_file.stat.exists == True
+  notify: restart docker
+  tags: remove_devnetcloud_docker_proxy
+
+# get iProxy.sh file stat
+- name: get iproxy.sh file stat
+  stat:
+    path: ~/iProxy.sh
+  register: iproxy_file
+  tags: remove_devnet_proxy
+
+# get iProxy.sh file
+- name: get iproxy.sh file
+  shell: cat /etc/profile | grep devnet-proxy && wget "http://{{ proxy_domain }}/iProxy.sh" -O iProxy.sh || echo 'not need to get iProxy.sh'
+  when: iproxy_file.stat.exists == False 
+  tags: remove_devnet_proxy
+
+# remove devnet-proxy
+- name: remove devnet-proxy
+  shell: cat /etc/profile | grep devnet-proxy && /bin/bash -c 'source ~/iProxy.sh -uninstall' || echo "not need remove!"
+  tags: remove_devnet_proxy

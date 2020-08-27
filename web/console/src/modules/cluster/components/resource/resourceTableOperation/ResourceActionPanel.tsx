@@ -176,7 +176,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
     let options = namespaceList.data.recordCount
       ? namespaceList.data.records.map((item, index) => ({
           value: item.name,
-          text: item.name
+          text: item.displayName
         }))
       : [{ value: '', text: t('无可用命名空间'), disabled: true }];
     return (

@@ -23,6 +23,8 @@ import {
   ResourceFilter
 } from '../models';
 
+const compareVersions = require('compare-versions');
+
 // 提示框
 const tips = seajs.require('tips');
 
@@ -59,13 +61,15 @@ export async function fetchNamespaceList(query: QueryState<ResourceFilter>, reso
         namespaceList = list.items.map(item => {
           return {
             id: uuid(),
-            name: item.metadata.name
+            name: item.metadata.name,
+            displayName: item.metadata.name
           };
         });
       } else {
         namespaceList.push({
           id: uuid(),
-          name: list.metadata.name
+          name: list.metadata.name,
+          displayName: list.metadata.name
         });
       }
     }
@@ -449,11 +453,7 @@ export async function fetchResourceLogList(
 /**
  * 获取日志组件的组件名称
  */
-export async function fetchLogagentName(
-  resourceInfo: ResourceInfo,
-  clusterId: string,
-  k8sQueryObj: any = {}
-) {
+export async function fetchLogagentName(resourceInfo: ResourceInfo, clusterId: string, k8sQueryObj: any = {}) {
   let logAgent = {};
   let k8sUrl = reduceK8sRestfulPath({ resourceInfo });
   let queryString = reduceK8sQueryString({ k8sQueryObj, restfulPath: k8sUrl });
@@ -461,7 +461,7 @@ export async function fetchLogagentName(
   // 构建参数
   let params: RequestParams = {
     method: Method.get,
-    url,
+    url
   };
 
   let response = await reduceNetworkRequest(params, clusterId);
@@ -499,7 +499,7 @@ export async function fetchResourceLogHierarchy(query: LogHierarchyQuery) {
     method: Method.post,
     url,
     userDefinedHeader: {},
-    data: payload,
+    data: payload
   };
 
   let response = await reduceNetworkRequest(params, clusterId);
@@ -546,14 +546,14 @@ export async function fetchResourceLogContent(query: LogContentQuery) {
       pod,
       start,
       length,
-      filepath,
+      filepath
     }
   };
   let params: RequestParams = {
     method: Method.post,
     url,
     userDefinedHeader: {},
-    data: payload,
+    data: payload
   };
 
   let response = await reduceNetworkRequest(params, clusterId);
@@ -581,13 +581,13 @@ export async function downloadLogFile(query) {
     pod,
     namespace: namespace.replace(new RegExp(`^${clusterId}-`), ''),
     container,
-    path: filepath,
+    path: filepath
   };
   // 构建参数
   let params: RequestParams = {
     method: Method.post,
     url,
-    data: payload,
+    data: payload
   };
 
   let response = await reduceNetworkRequest(params, clusterId);
@@ -794,9 +794,16 @@ export async function modifyMultiResourceIns(resource: CreateResource[], regionI
  */
 export async function deleteResourceIns(resource: CreateResource[], regionId: number) {
   try {
-    let { resourceIns, clusterId, resourceInfo, namespace, meshId } = resource[0];
+    let { resourceIns, clusterId, resourceInfo, namespace, meshId, isSpetialNamespace = true } = resource[0];
 
-    let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, meshId });
+    let k8sUrl = reduceK8sRestfulPath({
+      resourceInfo,
+      namespace,
+      specificName: resourceIns,
+      clusterId,
+      meshId,
+      isSpetialNamespace
+    });
     let url = k8sUrl;
 
     // 是用于后台去异步的删除resource当中的pod
@@ -832,7 +839,7 @@ export async function deleteResourceIns(resource: CreateResource[], regionId: nu
  */
 export async function rollbackResourceIns(resource: CreateResource[], regionId: number) {
   try {
-    let { resourceIns, clusterId, resourceInfo, namespace, jsonData } = resource[0];
+    let { resourceIns, clusterId, resourceInfo, namespace, jsonData, clusterVersion } = resource[0];
 
     let rsResourceInfo = resourceConfig(resourceInfo.k8sVersion).rs;
     /// #if project
@@ -842,8 +849,9 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
     }
     /// #endif
     // 因为回滚需要使用特定的apiVersion，故不用reduceK8sRestful
+    console.log(compareVersions(clusterVersion, '1.14'));
     let k8sUrl =
-      `/${resourceInfo.basicEntry}/apps/v1beta1/` +
+      `/${resourceInfo.basicEntry}/apps/${compareVersions(clusterVersion, '1.14') >= 0 ? 'v1' : 'v1beta1'}/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
       `${resourceInfo.requestType['list']}/${resourceIns}/rollback`;
     let url = k8sUrl;
@@ -875,6 +883,7 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
       return operationResult(resource, reduceNetworkWorkflow(response));
     }
   } catch (error) {
+    console.log(error);
     return operationResult(resource, reduceNetworkWorkflow(error));
   }
 }

@@ -105,6 +105,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	projectName := req.URL.Query().Get("projectName")
+
 	namespace := req.URL.Query().Get("namespace")
 	if namespace == "" {
 		log.Error("Failed to get namespace from webtty request")
@@ -148,7 +150,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	reqURL.Host = h.url.Host
 	reqURL.Scheme = h.url.Scheme
 
-	executor, err := NewSPDYExecutorForTransports(h.roundTripper, h.upgrader, http.MethodPost, reqURL, clusterName, strings.TrimSpace(t.ID))
+	executor, err := NewSPDYExecutorForTransports(h.roundTripper, h.upgrader, http.MethodPost, reqURL, clusterName, projectName, strings.TrimSpace(t.ID))
 	if err != nil {
 		log.Error("Failed to create SPDY executor", log.Err(err))
 		http.Error(w, "Internal Error", http.StatusInternalServerError)

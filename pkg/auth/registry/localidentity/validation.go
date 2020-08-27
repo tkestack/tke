@@ -20,6 +20,7 @@ package localidentity
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
@@ -139,11 +140,11 @@ func ValidateLocalIdentityPasswordUpdate(localIdentity *auth.LocalIdentity, pass
 		return fmt.Errorf("must specify hashedPassword")
 	}
 
-	bcrypted, err := util.BcryptPassword(passwordReq.HashedPassword)
+	_, err = base64.StdEncoding.DecodeString(passwordReq.HashedPassword)
 	if err != nil {
-		return fmt.Errorf("bcrypt password failed: %v", err)
+		return err
 	}
-	localIdentity.Spec.HashedPassword = bcrypted
+	localIdentity.Spec.HashedPassword = passwordReq.HashedPassword
 	return nil
 }
 

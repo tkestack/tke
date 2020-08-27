@@ -1,0 +1,13 @@
+#####################################################################
+# helmDefaults
+###
+### default values to set for args along with dedicated keys that can
+### be set by contributers, cli args take precedence over these
+#####################################################################
+
+helmDefaults:
+  verify: false
+  wait: false
+  timeout: 600
+  force: true
+  tls: false

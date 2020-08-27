@@ -63,7 +63,7 @@ func NewOptions(serverName string) *Options {
 		Authentication:    apiserveroptions.NewAuthenticationWithAPIOptions(),
 		Authorization:     apiserveroptions.NewAuthorizationOptions(),
 		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
-		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", true),
+		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", false),
 		Audit:             genericapiserveroptions.NewAuditOptions(),
 	}
 }

@@ -26,6 +26,8 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/template"
+
+	installerconstants "tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 )
 
 const (
@@ -53,6 +55,7 @@ contexts:
 
 type Option struct {
 	AuthzWebhookEndpoint string
+	IsGlobalCluster      bool
 }
 
 func Install(s ssh.Interface, option *Option) error {
@@ -69,14 +72,22 @@ func Install(s ssh.Interface, option *Option) error {
 	if err != nil {
 		return err
 	}
-
-	adminCertData, _ := ioutil.ReadFile(constants.AppAdminCertFile)
+	basePath := constants.AppCertDir
+	if option.IsGlobalCluster {
+		basePath = installerconstants.DataDir
+	}
+	adminCertData, err := ioutil.ReadFile(basePath + constants.AdminCertName)
+	if err != nil {
+		return err
+	}
 	err = s.WriteFile(bytes.NewReader(adminCertData), constants.AdminCertFile)
 	if err != nil {
 		return err
 	}
-
-	adminKeyData, _ := ioutil.ReadFile(constants.AppAdminKeyFile)
+	adminKeyData, err := ioutil.ReadFile(basePath + constants.AdminkeyName)
+	if err != nil {
+		return err
+	}
 	err = s.WriteFile(bytes.NewReader(adminKeyData), constants.AdminKeyFile)
 	if err != nil {
 		return err

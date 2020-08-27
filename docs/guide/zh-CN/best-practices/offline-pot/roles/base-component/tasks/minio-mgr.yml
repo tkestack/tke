@@ -1,0 +1,121 @@
+# deploy minio and remove minio
+
+# set facts
+- name: set deploy_minio facts
+  set_fact:
+    deploy_minio: "{{ deploy_minio }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: minio_init
+
+# create save minio yaml and helms dir
+- name: create save minio yaml and helms dir
+  shell: (ls /data/tke-yamls/minio || mkdir -p /data/tke-yamls/minio) && \
+         (ls /data/helms || mkdir -p /data/helms)
+  when: inventory_hostname == groups['masters'][0] and deploy_minio == true
+  tags: minio_init
+
+# create  minio  data dir
+- name: create  minio  data dir
+  shell: mkdir -p "{{ minio_mount_path }}"
+  when: inventory_hostname in groups['minio']
+  tags: minio_init
+
+# copy minio helms file to master node
+- name: copy minio helms file to master node
+  copy:
+    src: helms/wx-minio
+    dest: /data/helms/
+  when: inventory_hostname == groups['masters'][0] and deploy_minio == true
+  tags: minio_init
+
+# generate minio yaml
+- name: generate minio  yaml
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+  with_items:
+    - 'templates/common/local-storage.yaml.j2:/data/tke-yamls/minio/local-storage.yaml'
+    - 'templates/minio/minio-local-pv.yaml.j2:/data/tke-yamls/minio/minio-local-pv.yaml'
+    - 'templates/minio/minio-dpl.yaml.j2:/data/helms/wx-minio/values/{{ app_env_flag }}.yaml'
+  when: inventory_hostname == groups['masters'][0] and deploy_minio == true
+  tags: minio_init
+
+# create save deploy minio script dir
+- name: create save deploy minio script dir
+  shell: mkdir -p /data/offline-pot-scripts
+  when: inventory_hostname == groups['masters'][0] and deploy_minio == true
+  tags: minio_init
+
+# generate deploy minio script
+- name: generate deploy minio script
+  template:
+    src: templates/common/base-component-tools.sh.j2
+    dest: /data/offline-pot-scripts/base-component-tools.sh
+    mode: '0755'
+  when: inventory_hostname == groups['masters'][0] and deploy_minio == true
+  tags: minio_init
+
+# get deploy minio script stat
+- name: get deploy minio script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: minio_dpl_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: deploy_minio
+
+# deploy minio 
+- name: deploy minio 
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh dpl_minio
+  when: inventory_hostname == groups['masters'][0] and minio_dpl_script.stat.exists == True
+  tags: deploy_minio
+
+# get remove minio script stat
+- name: get remove minio script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: minio_del_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: remove_minio
+
+# remove minio 
+- name: remove minio
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh del_minio
+  when: inventory_hostname == groups['masters'][0] and minio_del_script.stat.exists == True
+  tags: remove_minio
+
+# remove minio data 
+- name: remove minio  data
+  shell: if [ `ls "{{ minio_mount_path }}" | wc -l` -gt 0 ] && [ `kubectl get pvc | grep minio | wc -l` -eq 0 ];then \ 
+            rm -rf "{{ minio_mount_path }}"; \ 
+         fi
+  when: inventory_hostname in groups['minio']
+  tags: remove_minio
+
+# set deploy_minio facts for health check
+- name: set deploy_minio facts for health check
+  set_fact:
+    deploy_minio: "{{ deploy_minio }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: minio_health_check
+
+#  get minio deploy status
+- name: get minio deploy status
+  shell: if [ `kubectl get pods -n pot | grep minio | grep '1/1' | wc -l` -gt 0 ]; then echo "true"; else echo "false";fi
+  register: minio_dpl_status
+  when: inventory_hostname == groups['masters'][0] and deploy_minio == true
+  tags: minio_health_check
+
+# minio deploy success
+- name: minio deploy success
+  debug:
+    msg: "Info: minio deploy success."
+  when: inventory_hostname == groups['masters'][0] and deploy_minio == true and minio_dpl_status.stdout == "true"
+  tags: minio_health_check
+
+# minio deploy failed
+- name: minio deploy failed
+  debug:
+    msg: "Warning: minio deploy failed, please check!"
+  when: inventory_hostname == groups['masters'][0] and deploy_minio == true and minio_dpl_status.stdout == "false"
+  tags: minio_health_check
+

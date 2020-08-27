@@ -1,7 +1,7 @@
 # Maintainers of this repository with their focus areas:
 
 * Jimmy Chou <liangyuzhou@tencent.com> @choujimmy: Cluster resource management, addon framework, and docker registry.
-* Wallace Qian <wallaceqian@tencent.com> @QianChenglong: Cluster and node lifecycle management, and installer.
+* huxiaoliang <vvictorhu@tencent.com> @huxiaoliang: Cluster and node lifecycle management, and installer.
 * Yacent Lin <yacentlin@tencent.com> @Yacent: Console UI of cluster resource management.
 * Kay Chen <kaychen@tencent.com> @KayIter: Console UI of project resource management.
 * Simon Zhu <simonzhzhu@tencent.com> @Tim-Ju: Installer UI.

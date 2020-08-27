@@ -81,7 +81,7 @@ export class EditServiceWorkloadDialog extends React.Component<RootProps, {}> {
     };
 
     return (
-      <Modal visible={true} caption={t('引用Workload资源')} onClose={cancel} disableEscape={true}>
+      <Modal visible={true} caption={t('引用Workload资源')} onClose={cancel} disableEscape={true} size="l">
         <Modal.Body>
           <FormLayout>
             <div className="param-box server-update add">

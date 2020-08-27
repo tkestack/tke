@@ -8,7 +8,6 @@ import { resourceConfig } from '../../../../config/resourceConfig';
 import * as ActionType from '../constants/ActionType';
 import { initLbcfBackGroupEdition, initLbcfBGPort, initSelector } from '../constants/initState';
 import { RootState, BackendGroup } from '../models';
-import { Namespace } from '../models/Namespace';
 import { ResourceFilter, Resource } from '../models/ResourceOption';
 import { CLB, Selector } from '../models/ServiceEdit';
 import { router } from '../router';

@@ -1,0 +1,136 @@
+# install base tools
+
+# install net-tools 
+- name: install net-tools
+  shell: yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y net-tools
+  ignore_errors: yes
+  when: ansible_distribution == 'CentOS'
+  tags: install_base_tools
+
+# install socat for helm tiller
+- name: install socat for helm tiller
+  shell: yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y socat
+  ignore_errors: yes
+  when: ansible_distribution == 'CentOS'
+  tags: install_base_tools
+
+# install numactl for mysql
+- name: install numactl for mysql
+  shell: yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y numactl
+  ignore_errors: yes
+  when: ansible_distribution == 'CentOS'
+  tags: install_base_tools
+
+# install sshpass for remote copy
+- name: install sshpass for remote copy
+  shell: yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y sshpass
+  ignore_errors: yes
+  when: ansible_distribution == 'CentOS'
+  tags: install_base_tools
+
+# unzip helm install pkg 
+- name: unzip helm install pkg
+  shell: (ls {{ dpl_dir }}-tgz/helm-v3*.tar.gz && cd {{ dpl_dir }}-tgz/ && tar -zxf helm-v3*.tar.gz && mv linux-amd64 helm3-pkg) || (echo 'helm v3 install pkg not exist! '); \
+         (ls {{ dpl_dir }}-tgz/helm-v2*.tar.gz && cd {{ dpl_dir }}-tgz/ && tar -zxf helm-v2*.tar.gz && mv linux-amd64 helm2-pkg) || (echo 'helm v2 install pkg not exist! ')
+  when: ansible_distribution == 'CentOS' and inventory_hostname in groups['installer']
+  tags: install_base_tools  
+
+# install helm client on k8s master node,helm v3 will be default,helm2 is helm version 2 
+- name: install helm client on k8s master node,helm v3 will be default,helm2 is helm version 2
+  copy: 
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+    mode: '0755'
+  with_items:
+    - '{{ dpl_dir }}-tgz/helm3-pkg/helm:/usr/local/bin/helm'
+    - '{{ dpl_dir }}-tgz/helm2-pkg/helm:/usr/local/bin/helm2'
+    - '{{ dpl_dir }}-tgz/helmfile_linux_amd64:/usr/local/bin/helmfile'
+  when: ansible_distribution == 'CentOS' and inventory_hostname in groups['masters']
+  tags: install_base_tools
+
+# remove helm install pkg unzip dir
+- name: remove helm install pkg unzip dir
+  shell: (ls {{ dpl_dir }}-tgz/helm3-pkg && rm -rf {{ dpl_dir }}-tgz/helm3-pkg) || (echo "helm3-pkg not exist!"); \
+         (ls {{ dpl_dir }}-tgz/helm2-pkg && rm -rf {{ dpl_dir }}-tgz/helm2-pkg) || (echo "helm3-pkg not exist!"); \
+  when: ansible_distribution == 'CentOS' and inventory_hostname in groups['installer']
+  tags: install_base_tools
+
+- name: set remote_img_registry_url facts
+  set_fact:
+    remote_img_registry_url: "{{ remote_img_registry_url }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: issue_docker_crt
+
+# unzip remote image registry tar.gz
+- name: unzip remote image registry  tar.gz
+  shell: (ls {{ dpl_dir }}-tgz/{{ remote_img_registry_url }}.cert.tar.gz && cd {{ dpl_dir }}-tgz/ && tar -zxf {{ remote_img_registry_url }}.cert.tar.gz) || (echo '{{ remote_img_registry_url }}.cert.tar.gz not exist!')
+  when: ansible_distribution == 'CentOS' and inventory_hostname in groups['installer']
+  tags: issue_docker_crt
+
+# create save remote image registry  cert dir
+- name: create save remote image registry cert dir
+  shell: mkdir -p /etc/docker/certs.d/{{ remote_img_registry_url }}/
+  when: ansible_distribution == 'CentOS'
+  tags: issue_docker_crt
+
+# config remote image registry cert
+- name: config remote image registry cert
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/docker/certs.d/{{ remote_img_registry_url }}/"
+  with_items:
+    - '{{ dpl_dir }}-tgz/cert/ca.crt'
+    - '{{ dpl_dir }}-tgz/cert/client.cert'
+    - '{{ dpl_dir }}-tgz/cert/client.key'
+  when: ansible_distribution == 'CentOS'
+  tags: issue_docker_crt
+
+# remove remote image registry cert unzip dir
+- name: remove remote image registry cert unzip dir
+  shell: (ls {{ dpl_dir }}-tgz/cert && rm -rf {{ dpl_dir }}-tgz/cert) || (echo '{{ dpl_dir }}-tgz/cert dir not exist!')
+  when: ansible_distribution == 'CentOS' and inventory_hostname in groups['installer']
+  tags: issue_docker_crt
+
+# get helm diff install stat
+- name: get helm diff install stat
+  shell: if [ `helm plugin list | grep diff | wc -l` -eq 0 ]; then echo "False"; else echo "True";fi
+  register: helm_diff_info
+  when: inventory_hostname in groups['masters']
+  tags: install_base_tools
+
+- name: debug helm_diff_info
+  debug: 
+    msg: "{{ helm_diff_info.stdout }}"
+  when: inventory_hostname in groups['masters']
+  tags: install_base_tools
+
+# create helm diff dir
+- name: create helm diff dir
+  shell: mkdir -p /data/helm-diff
+  when: inventory_hostname in groups['masters'] and helm_diff_info.stdout == "False"
+  tags: install_base_tools
+
+# copy  helm diff install pkg
+- name: copy  helm diff install pkg
+  copy: 
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+  with_items:
+    - '{{ dpl_dir }}-tgz/helm-diff.tgz:/tmp/helm-diff.tgz'
+    - '{{ dpl_dir }}-tgz/helm-diff-scode.tar.gz:/data/helm-diff/helm-diff-scode.tar.gz'
+  when: inventory_hostname in groups['masters'] and helm_diff_info.stdout == "False"
+  tags: install_base_tools
+
+# install helm plugin helm diff
+- name: install helm plugin helm diff
+  shell: if [ -f "/tmp/helm-diff.tgz" ] && [ -f "/data/helm-diff/helm-diff-scode.tar.gz" ]; then \
+           if [ -d "/root/.local/share/helm" ]; then \
+             rm -rf /root/.local/share/helm; \
+           fi; \
+           cd /data/helm-diff/ && tar -zxf helm-diff-scode.tar.gz && helm plugin install helm-diff-scode && \
+           rm -rf /tmp/helm-diff*  && rm -rf helm-diff-scode.tar.gz ; \
+         else \
+           echo "helm diff install pkg not exist or maybe had installed. please check!!"; \
+         fi
+  when: inventory_hostname in groups['masters'] and helm_diff_info.stdout == "False"
+  tags: install_base_tools

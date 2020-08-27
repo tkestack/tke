@@ -124,21 +124,45 @@ func (rm *RoleManager) HasLink(name1 string, name2 string, domain ...string) (bo
 		domain[0] = "*"
 	}
 
-	name1 = domain[0] + "::" + name1
-	name2 = domain[0] + "::" + name2
+	roleName1 := domain[0] + "::" + name1
+	roleName2 := domain[0] + "::" + name2
+	result := false
+	var role1 *Role
 
-	if !rm.hasRole(name1) || !rm.hasRole(name2) {
+	if rm.hasRole(roleName1) && rm.hasRole(roleName2) {
+		if _, ok := rm.allRoles.Load(roleName2); !ok {
+			defer rm.allRoles.Delete(roleName2)
+		}
+
+		rm.allRoles.LoadOrStore(roleName2, newRole(roleName2))
+
+		role1 = rm.createRole(roleName1)
+		result = role1.hasRole(roleName2, rm.maxHierarchyLevel)
+	}
+
+	if result {
+		return result, nil
+	}
+
+	if domain[0] != "*" {
+		domain[0] = "*"
+	}
+
+	roleName1 = domain[0] + "::" + name1
+	roleName2 = domain[0] + "::" + name2
+
+	if !rm.hasRole(roleName1) || !rm.hasRole(roleName2) {
 		return false, nil
 	}
 
-	if _, ok := rm.allRoles.Load(name2); !ok {
-		defer rm.allRoles.Delete(name2)
+	if _, ok := rm.allRoles.Load(roleName2); !ok {
+		defer rm.allRoles.Delete(roleName2)
 	}
 
-	rm.allRoles.LoadOrStore(name2, newRole(name2))
+	rm.allRoles.LoadOrStore(roleName2, newRole(roleName2))
 
-	role1 := rm.createRole(name1)
-	return role1.hasRole(name2, rm.maxHierarchyLevel), nil
+	role1 = rm.createRole(roleName1)
+	return role1.hasRole(roleName2, rm.maxHierarchyLevel), nil
 }
 
 // GetRoles gets the roles that a subject inherits.

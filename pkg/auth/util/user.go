@@ -192,7 +192,7 @@ func HandleUserPoliciesUpdate(ctx context.Context, authClient authinternalclient
 		return nil
 	}
 
-	roles := enforcer.GetRolesForUserInDomain(UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), "")
+	roles := enforcer.GetRolesForUserInDomain(UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), DefaultDomain)
 	var oldPolicies []string
 	for _, r := range roles {
 		if strings.HasPrefix(r, "pol-") {
@@ -222,7 +222,7 @@ func SetAdministrator(ctx context.Context, enforcer *casbin.SyncedEnforcer, auth
 	}
 	localIdentity.Spec.Extra[administratorKey] = "false"
 	// Use implicit roles to check admin
-	roles, err := enforcer.GetImplicitRolesForUser(UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), "")
+	roles, err := enforcer.GetImplicitRolesForUser(UserKey(localIdentity.Spec.TenantID, localIdentity.Spec.Username), DefaultDomain)
 	if err != nil {
 		log.Error("Get implicit roles for user failed", log.String("user", localIdentity.Spec.Username), log.Err(err))
 		return
@@ -266,7 +266,7 @@ func FillUserPolicies(ctx context.Context, authClient authinternalclient.AuthInt
 		SetAdministrator(ctx, enforcer, authClient, &localidentityList.Items[i])
 
 		// Use direct roles to fill policies
-		roles := enforcer.GetRolesForUserInDomain(UserKey(item.Spec.TenantID, item.Spec.Username), "")
+		roles := enforcer.GetRolesForUserInDomain(UserKey(item.Spec.TenantID, item.Spec.Username), DefaultDomain)
 		var policies []string
 		for _, r := range roles {
 			if strings.HasPrefix(r, "pol-") {

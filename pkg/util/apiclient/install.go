@@ -37,6 +37,8 @@ import (
 	kuberuntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
+	kubeaggregator "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	"tkestack.io/tke/pkg/util/template"
 )
 
@@ -44,10 +46,27 @@ type object struct {
 	Kind string `yaml:"kind"`
 }
 
-var handlers map[string]func(context.Context, kubernetes.Interface, []byte) error
+var (
+	handlers   map[string]func(context.Context, kubernetes.Interface, []byte) error
+	kaHandlers map[string]func(context.Context, kubeaggregator.Interface, []byte) error
+)
 
 func init() {
 	handlers = make(map[string]func(context.Context, kubernetes.Interface, []byte) error)
+	kaHandlers = make(map[string]func(context.Context, kubeaggregator.Interface, []byte) error)
+
+	// apiregistration
+	kaHandlers["APIService"] = func(ctx context.Context, client kubeaggregator.Interface, data []byte) error {
+		obj := new(apiregistrationv1.APIService)
+		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
+			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
+		}
+		err := CreateOrUpdateAPIService(ctx, client, obj)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 
 	// core
 	handlers["ConfigMap"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
@@ -303,7 +322,7 @@ func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, fi
 		return err
 	}
 
-	items := strings.Split(string(data), "---")
+	items := strings.Split(string(data), "\n---")
 	for _, item := range items {
 		objBytes := []byte(item)
 		obj := new(object)
@@ -321,6 +340,56 @@ func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, fi
 		err = f(ctx, client, objBytes)
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// CreateKAResourceWithFile create k8s and kube-aggregator resource with file
+func CreateKAResourceWithFile(ctx context.Context, client kubernetes.Interface, kaClient kubeaggregator.Interface, filename string, option interface{}) error {
+	var (
+		data []byte
+		err  error
+	)
+	if option != nil {
+		data, err = template.ParseFile(filename, option)
+	} else {
+		data, err = ioutil.ReadFile(filename)
+	}
+	if err != nil {
+		return err
+	}
+
+	items := strings.Split(string(data), "\n---")
+	for _, item := range items {
+		objBytes := []byte(item)
+		obj := new(object)
+		err := yaml.Unmarshal(objBytes, obj)
+		if err != nil {
+			return err
+		}
+		if obj.Kind == "" {
+			continue
+		}
+		if obj.Kind == "APIService" {
+			f, ok := kaHandlers[obj.Kind]
+			if !ok {
+				return errors.Errorf("unsupport kind %q", obj.Kind)
+			}
+			err = f(ctx, kaClient, objBytes)
+			if err != nil {
+				return err
+			}
+		} else {
+			f, ok := handlers[obj.Kind]
+			if !ok {
+				return errors.Errorf("unsupport kind %q", obj.Kind)
+			}
+			err = f(ctx, client, objBytes)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

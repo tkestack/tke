@@ -92,6 +92,8 @@ export class ResourcePodRemoteLoginDialog extends React.Component<RootProps, Res
                 href={
                   '/webtty.html?clusterName=' +
                   route.queries['clusterId'] +
+                  '&projectName=' +
+                  (route.queries['projectName'] || '') +
                   '&podName=' +
                   podSelection[0].metadata.name +
                   '&containerName=' +
