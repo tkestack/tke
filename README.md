@@ -11,7 +11,7 @@
 
 ## Features
 
-* Unified Cluster Management
+* Unified Cluster Management yy
   * Web console and command-line client for centrally manages multiple Kubernetes clusters.
   * Integration with your existing authentication mechanisms, including LDAP, Active Directory, front proxy, and public OAuth providers such as GitHub.
   * Unified authorization management, not only at the cluster management level, but even at the Kubernetes resource level.

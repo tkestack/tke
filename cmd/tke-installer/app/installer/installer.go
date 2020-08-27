@@ -1374,6 +1374,10 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 			Name: "metrics-server-manifests",
 			File: baremetalconstants.ManifestsDir + "/metrics-server/*",
 		},
+		{
+			Name: "nvidia-device-config",
+			File: baremetalconstants.ConfDir + "nvidia-device-config",
+		},
 	}
 	for _, one := range configMaps {
 		err := apiclient.CreateOrUpdateConfigMapFromFile(ctx, t.globalClient,

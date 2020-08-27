@@ -17,8 +17,10 @@
 package gpu
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 
@@ -55,7 +57,16 @@ func InstallNvidiaDriver(s ssh.Interface, option *NvidiaDriverOption) error {
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
-
+	nivdiaData, _ := ioutil.ReadFile("reate-nvidia-uvm")
+	err = s.WriteFile(bytes.NewReader(nivdiaData),"reate-nvidia-uvm")
+	if err != nil {
+		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+	}
+	cmd = "/path/reate-nvidia-uvm"
+	_, stderr, exit, err = s.Exec(cmd)
+	if err != nil || exit != 0 {
+		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+	}
 	return nil
 }
 
