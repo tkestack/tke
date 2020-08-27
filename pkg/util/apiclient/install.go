@@ -322,7 +322,7 @@ func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, fi
 		return err
 	}
 
-	items := strings.Split(string(data), "---")
+	items := strings.Split(string(data), "\n---")
 	for _, item := range items {
 		objBytes := []byte(item)
 		obj := new(object)
@@ -361,7 +361,7 @@ func CreateKAResourceWithFile(ctx context.Context, client kubernetes.Interface, 
 		return err
 	}
 
-	items := strings.Split(string(data), "---")
+	items := strings.Split(string(data), "\n---")
 	for _, item := range items {
 		objBytes := []byte(item)
 		obj := new(object)

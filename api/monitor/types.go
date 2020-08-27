@@ -134,6 +134,14 @@ const (
 	AddonPhaseUnknown AddonPhase = "Unknown"
 )
 
+type OverviewProjectStatus int32
+
+const (
+	OverviewProjectStatusNotFound OverviewProjectStatus = 0
+	OverviewProjectStatusError    OverviewProjectStatus = -1
+	OverviewProjectStatusDisable  OverviewProjectStatus = -2
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:onlyVerbs=create

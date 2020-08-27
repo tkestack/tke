@@ -23,6 +23,8 @@ import {
   ResourceFilter
 } from '../models';
 
+const compareVersions = require('compare-versions');
+
 // 提示框
 const tips = seajs.require('tips');
 
@@ -794,7 +796,14 @@ export async function deleteResourceIns(resource: CreateResource[], regionId: nu
   try {
     let { resourceIns, clusterId, resourceInfo, namespace, meshId, isSpetialNamespace = true } = resource[0];
 
-    let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, meshId, isSpetialNamespace });
+    let k8sUrl = reduceK8sRestfulPath({
+      resourceInfo,
+      namespace,
+      specificName: resourceIns,
+      clusterId,
+      meshId,
+      isSpetialNamespace
+    });
     let url = k8sUrl;
 
     // 是用于后台去异步的删除resource当中的pod
@@ -830,7 +839,7 @@ export async function deleteResourceIns(resource: CreateResource[], regionId: nu
  */
 export async function rollbackResourceIns(resource: CreateResource[], regionId: number) {
   try {
-    let { resourceIns, clusterId, resourceInfo, namespace, jsonData } = resource[0];
+    let { resourceIns, clusterId, resourceInfo, namespace, jsonData, clusterVersion } = resource[0];
 
     let rsResourceInfo = resourceConfig(resourceInfo.k8sVersion).rs;
     /// #if project
@@ -840,8 +849,9 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
     }
     /// #endif
     // 因为回滚需要使用特定的apiVersion，故不用reduceK8sRestful
+    console.log(compareVersions(clusterVersion, '1.14'));
     let k8sUrl =
-      `/${resourceInfo.basicEntry}/apps/v1beta1/` +
+      `/${resourceInfo.basicEntry}/apps/${compareVersions(clusterVersion, '1.14') >= 0 ? 'v1' : 'v1beta1'}/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +
       `${resourceInfo.requestType['list']}/${resourceIns}/rollback`;
     let url = k8sUrl;
@@ -873,6 +883,7 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
       return operationResult(resource, reduceNetworkWorkflow(response));
     }
   } catch (error) {
+    console.log(error);
     return operationResult(resource, reduceNetworkWorkflow(error));
   }
 }
