@@ -117,6 +117,7 @@ type ResourceCounter struct {
 	MemRequestRate     float64
 	MemAllocatableRate float64
 	MemUsage           float64
+	PodCount           int
 }
 
 type ComponentHealth struct {
