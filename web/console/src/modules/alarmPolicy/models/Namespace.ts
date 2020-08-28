@@ -5,6 +5,12 @@ export interface Namespace extends Identifiable {
   name: string;
 
   displayName: string;
+
+  clusterDisplayName?: string;
+
+  clusterName?: string;
+
+  namespace?: string;
 }
 
 export interface NamespaceFilter {

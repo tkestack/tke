@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Card, Icon, Select, Switch } from '@tea/component';
+import { Card, Icon, Select, Switch, Tooltip } from '@tea/component';
 import { bindActionCreators, FetchState } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
@@ -136,10 +136,21 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
     }));
 
     // 展示命名空间的选择列表
-    let namespaceOptions = namespaceList.data.records.map(item => ({
-      value: item.name,
-      text: item.displayName
-    }));
+    const namespaceGroups = namespaceList.data.records.reduce((gr, { clusterDisplayName, clusterName }) => {
+      const value = `${clusterDisplayName}(${clusterName})`;
+      return { ...gr, [clusterName]: <Tooltip title={value}>{value}</Tooltip> };
+    }, {});
+
+    let namespaceOptions = namespaceList.data.records.map(item => {
+      const text = `${item.clusterDisplayName}-${item.namespace}`;
+
+      return {
+        value: item.name,
+        text: <Tooltip title={text}>{text}</Tooltip>,
+        groupKey: item.clusterName,
+        realText: text
+      };
+    });
 
     // 展示workloadList的选择列表
     let workloadListOptions = workloadList.data.records.map(w => ({
@@ -195,8 +206,13 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
                   ) : (
                     <React.Fragment>
                       <Select
+                        type="simulate"
+                        searchable
+                        filter={(inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)}
+                        appearence="button"
                         style={inlineDisplayStyle}
                         value={namespaceSelection}
+                        groups={namespaceGroups}
                         options={namespaceOptions}
                         onChange={value => {
                           this._handleSelectForNamespace(value);

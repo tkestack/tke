@@ -14,6 +14,10 @@ export interface Namespace extends Identifiable {
   clusterId?: string;
 
   clusterDisplayName?: string;
+
+  clusterName?: string;
+
+  namespace?: string;
 }
 
 /** 可视化创建的namespace的相关配置 */
