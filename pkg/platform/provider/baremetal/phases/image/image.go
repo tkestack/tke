@@ -42,7 +42,7 @@ func PullKubernetesImages(s ssh.Interface, option *Option) error {
 		_, err := s.CombinedOutput(cmd)
 		if err != nil {
 			if strings.Contains(err.Error(), "502 Bad Gateway") {
-				cmd = fmt.Sprintf(" docker info | grep Proxy")
+				cmd = " docker info | grep Proxy"
 				output, _ := s.CombinedOutput(cmd)
 				return fmt.Errorf(`pull image fail: %s. maybe set no_proxy for registry(%s,*.%s) in docker dameon.
 					docker info:%s. see: https://docs.docker.com/config/daemon/systemd/#httphttps-proxy`,

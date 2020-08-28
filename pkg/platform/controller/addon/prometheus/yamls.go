@@ -448,7 +448,7 @@ func scrapeConfigForPrometheus() string {
 }
 
 func recordRulesForPrometheus() string {
-	rules := fmt.Sprintf(`
+	rules := `
 groups:
 - name: k8s-ag-data
   rules:
@@ -1175,7 +1175,7 @@ groups:
 
   - record: k8s_component_etcd_version
     expr: label_replace(max(etcd_server_version) by (server_version),"gitVersion", "$1", "server_version", "(.*)")
-`)
+`
 
 	return rules
 }
