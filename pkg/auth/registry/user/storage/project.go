@@ -100,18 +100,9 @@ func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.Lis
 
 		if strings.HasPrefix(prj, "prj-") {
 			if role == projectOwner {
-				if _, ok := managed[prj]; ok {
-					managed[prj] = append(managed[prj], role)
-				} else {
-					managed[prj] = auth.ExtraValue{role}
-				}
+				managed[prj] = append(managed[prj], role)
 			}
-
-			if _, ok := memberd[prj]; ok {
-				memberd[prj] = append(memberd[prj], role)
-			} else {
-				memberd[prj] = auth.ExtraValue{role}
-			}
+			memberd[prj] = append(memberd[prj], role)
 		}
 	}
 

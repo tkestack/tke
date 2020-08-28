@@ -208,11 +208,7 @@ func getGroupsPolicyMap(policyList *auth.ProjectPolicyBindingList) map[string][]
 	groupPolicyMap := make(map[string][]string)
 	for _, policy := range policyList.Items {
 		for _, subj := range policy.Spec.Groups {
-			if _, ok := groupPolicyMap[subj.ID]; ok {
-				groupPolicyMap[subj.ID] = append(groupPolicyMap[subj.ID], policy.Spec.PolicyID)
-			} else {
-				groupPolicyMap[subj.ID] = []string{policy.Spec.PolicyID}
-			}
+			groupPolicyMap[subj.ID] = append(groupPolicyMap[subj.ID], policy.Spec.PolicyID)
 		}
 	}
 
