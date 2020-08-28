@@ -116,6 +116,7 @@ mysecret   Opaque   2      38h
 
 ## Limition
 1.  API chunking doens't support sort the reture data sets by condition, refer to https://github.com/kubernetes/kubernetes/issues/80602 for the details
+2.  API chunking doens't support fuzzy query
 
 ## Reference
 [1] https://kubernetes.io/docs/reference/using-api/api-concepts/#retrieving-large-results-sets-in-chunks
