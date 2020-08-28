@@ -195,6 +195,9 @@ type MetricQueryCondition struct {
 	Value string
 }
 
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:onlyVerbs=create
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterOverview defines the structure for clusters' overview data request and result.

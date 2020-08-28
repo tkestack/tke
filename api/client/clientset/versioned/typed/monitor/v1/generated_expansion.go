@@ -20,6 +20,8 @@
 
 package v1
 
+type ClusterOverviewExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type MetricExpansion interface{}
