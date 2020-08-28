@@ -184,7 +184,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
                     <Select
                       type="simulate"
                       searchable
-                      filter={(inputValue, { realText }: any) => realText.includes(inputValue)}
+                      filter={(inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)}
                       appearence="button"
                       size="m"
                       groups={namespaceGroups}

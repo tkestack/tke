@@ -88,7 +88,7 @@ export class HelmHeadPanel extends React.Component<RootProps, {}> {
               size="m"
               type="simulate"
               searchable
-              filter={(inputValue, { realText }: any) => realText.includes(inputValue)}
+              filter={(inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)}
               appearence="button"
               // label={'namespace'}
               groups={namespaceGroups}

@@ -199,7 +199,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
           <Select
             type="simulate"
             searchable
-            filter={(inputValue, { realText }: any) => realText.includes(inputValue)}
+            filter={(inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)}
             appearence="button"
             size="s"
             groups={groups}

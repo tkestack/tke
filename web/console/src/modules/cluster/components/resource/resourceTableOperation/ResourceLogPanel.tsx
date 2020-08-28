@@ -208,7 +208,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
                       <Select
                         type="simulate"
                         searchable
-                        filter={(inputValue, { realText }: any) => realText.includes(inputValue)}
+                        filter={(inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)}
                         appearence="button"
                         style={inlineDisplayStyle}
                         value={namespaceSelection}
