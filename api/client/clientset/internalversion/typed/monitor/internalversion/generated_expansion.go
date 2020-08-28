@@ -20,6 +20,8 @@
 
 package internalversion
 
+type ClusterOverviewExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type MetricExpansion interface{}
