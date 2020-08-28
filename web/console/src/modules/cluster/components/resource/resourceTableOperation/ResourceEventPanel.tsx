@@ -2,7 +2,7 @@ import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Bubble, Card, Icon, Select, Switch, TableColumn, Text } from '@tea/component';
+import { Bubble, Card, Icon, Select, Switch, TableColumn, Text, Tooltip } from '@tea/component';
 import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
@@ -133,10 +133,19 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
       { namespaceSelection, workloadType, workloadList, workloadSelection, isAutoRenew } = subRoot.resourceEventOption;
 
     // 展示命名空间的选择列表
-    let namespaceOptions = namespaceList.data.records.map(n => {
+    const namespaceGroups = namespaceList.data.records.reduce((gr, { clusterDisplayName, clusterName }) => {
+      const value = `${clusterDisplayName}(${clusterName})`;
+      return { ...gr, [clusterName]: <Tooltip title={value}>{value}</Tooltip> };
+    }, {});
+
+    let namespaceOptions = namespaceList.data.records.map(item => {
+      const text = `${item.clusterDisplayName}-${item.namespace}`;
+
       return {
-        value: n.name,
-        text: n.displayName
+        value: item.name,
+        text: <Tooltip title={text}>{text}</Tooltip>,
+        groupKey: item.clusterName,
+        realText: text
       };
     });
 
@@ -173,7 +182,12 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
                     <Icon type="loading" />
                   ) : (
                     <Select
+                      type="simulate"
+                      searchable
+                      filter={(inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)}
+                      appearence="button"
                       size="m"
+                      groups={namespaceGroups}
                       options={namespaceOptions}
                       value={namespaceSelection}
                       onChange={value => {
