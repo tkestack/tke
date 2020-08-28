@@ -53,6 +53,7 @@ const (
 	WorkloadCounter  = "WorkloadCounter"
 	ResourceCounter  = "ResourceCounter"
 	ClusterPhase     = "ClusterPhase"
+	TenantID         = "TenantID"
 	ComponentHealth  = "ComponentHealth"
 
 	TAppResourceName = "tapps"
@@ -138,9 +139,11 @@ func (c *cacher) getClusters() {
 						finished, allTask, cls.GetName(), time.Since(started).Seconds())
 				}()
 				clusterID := cls.GetName()
+				tenantID := cls.Spec.TenantID
 				if cls.Status.Phase != platformv1.ClusterRunning {
 					syncMap.Store(clusterID, map[string]interface{}{
 						ClusterPhase: string(cls.Status.Phase),
+						TenantID:     tenantID,
 					})
 					return
 				}
@@ -164,6 +167,7 @@ func (c *cacher) getClusters() {
 					WorkloadCounter:  workloadCounter,
 					ResourceCounter:  resourceCounter,
 					ClusterPhase:     string(cls.Status.Phase),
+					TenantID:         tenantID,
 					ComponentHealth:  health,
 				})
 			}(clusters.Items[i])
@@ -178,6 +182,7 @@ func (c *cacher) getClusters() {
 		syncMap.Range(func(key, value interface{}) bool {
 			clusterID := key.(string)
 			val := value.(map[string]interface{})
+			tenantID := val[TenantID].(string)
 			clusterPhase := val[ClusterPhase].(string)
 			if clusterPhase == string(platformv1.ClusterRunning) {
 				clusterClientSet := val[ClusterClientSet].(*kubernetes.Clientset)
@@ -187,6 +192,7 @@ func (c *cacher) getClusters() {
 				c.clusterClientSets[clusterID] = clusterClientSet
 				c.clusterStatisticSet[clusterID] = &monitor.ClusterStatistic{
 					ClusterID:                clusterID,
+					TenantID:                 tenantID,
 					ClusterPhase:             clusterPhase,
 					NodeCount:                int32(resourceCounter.NodeTotal),
 					NodeAbnormal:             int32(resourceCounter.NodeAbnormal),
@@ -218,6 +224,7 @@ func (c *cacher) getClusters() {
 				c.clusterStatisticSet[clusterID] = &monitor.ClusterStatistic{
 					ClusterID:    clusterID,
 					ClusterPhase: clusterPhase,
+					TenantID:     tenantID,
 				}
 			}
 			return true
