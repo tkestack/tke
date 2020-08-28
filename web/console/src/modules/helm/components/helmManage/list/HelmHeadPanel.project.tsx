@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
-import { Justify, Tooltip } from '@tencent/tea-component';
+import { Justify, Tooltip, Select } from '@tencent/tea-component';
 
 import { allActions } from '../../../actions';
 import { router } from '../../../router';
@@ -84,12 +84,13 @@ export class HelmHeadPanel extends React.Component<RootProps, {}> {
               }}
             ></FormPanel.Select>
             <FormPanel.InlineText>{t('namespace：')}</FormPanel.InlineText>
-            <FormPanel.Select
+            <Select
+              size="m"
               type="simulate"
               searchable
               filter={(inputValue, { realText }: any) => realText.includes(inputValue)}
               appearence="button"
-              label={'namespace'}
+              // label={'namespace'}
               groups={namespaceGroups}
               options={namespaceOptions}
               value={namespaceSelection}

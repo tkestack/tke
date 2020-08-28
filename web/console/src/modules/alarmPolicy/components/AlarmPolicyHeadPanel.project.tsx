@@ -1,6 +1,6 @@
 import { FormPanel } from '@tencent/ff-component';
 import { t } from '@tencent/tea-app/lib/i18n';
-import { Justify, Tooltip } from '@tencent/tea-component';
+import { Justify, Tooltip, Select } from '@tencent/tea-component';
 import * as React from 'react';
 import { RootProps } from './AlarmPolicyApp';
 export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
@@ -48,12 +48,13 @@ export class AlarmPolicyHeadPanel extends React.Component<RootProps, {}> {
               }}
             ></FormPanel.Select>
             <FormPanel.InlineText>{t('namespace：')}</FormPanel.InlineText>
-            <FormPanel.Select
+            <Select
+              size="m"
               type="simulate"
               searchable
               filter={(inputValue, { realText }: any) => realText.includes(inputValue)}
               appearence="button"
-              label={'namespace'}
+              // label={'namespace'}
               groups={namespaceGroups}
               options={namespaceOptions}
               value={namespaceSelection}
