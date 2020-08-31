@@ -15,7 +15,6 @@
     * [如何构建 Docker 镜像](QuickStart/examples/如何构建Docker镜像.md)
 
 * [产品使用指南](products)
-
   * [切换控制台](products/controlpannel.md)
   * [平台管理控制台](products/platform)
     * [概览](products/platform/overview.md)
@@ -89,3 +88,10 @@
     * [常见错误事件](FAQ/Events/常见错误事件.md)
   * [平台类](FAQ/品台类)
     * [平台使用常见问题](FAQ/Platform/平台使用常见问题.md)
+
+* [Release Note](../../../CHANGELOG)
+  * [1.0](../../../CHANGELOG/CHANGELOG-1.0.md)
+  * [1.1](../../../CHANGELOG/CHANGELOG-1.1.md)
+  * [1.2](../../../CHANGELOG/CHANGELOG-1.2.md)
+  * [1.3](../../../CHANGELOG/CHANGELOG-1.3.md)
+    * [1.3.1](../../../CHANGELOG/CHANGELOG-1.3.1.md)
