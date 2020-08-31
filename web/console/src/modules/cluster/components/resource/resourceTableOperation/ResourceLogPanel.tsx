@@ -10,6 +10,7 @@ import { allActions } from '../../../actions';
 import { TailList } from '../../../constants/Config';
 import { RootProps } from '../../ClusterApp';
 import { YamlEditorPanel } from '../YamlEditorPanel';
+import { PlatformContext, PlatformTypeEnum, IPlatformContext } from '@/Wrapper';
 
 const workloadTypeList = [
   {
@@ -49,6 +50,9 @@ const mapDispatchToProps = dispatch =>
 
 @connect(state => state, mapDispatchToProps)
 export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPanelState> {
+  static contextType = PlatformContext;
+  context: IPlatformContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -135,22 +139,42 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
       text: w.label
     }));
 
-    // 展示命名空间的选择列表
-    const namespaceGroups = namespaceList.data.records.reduce((gr, { clusterDisplayName, clusterName }) => {
-      const value = `${clusterDisplayName}(${clusterName})`;
-      return { ...gr, [clusterName]: <Tooltip title={value}>{value}</Tooltip> };
-    }, {});
+    let namespaceSelectProps = {};
 
-    let namespaceOptions = namespaceList.data.records.map(item => {
-      const text = `${item.clusterDisplayName}-${item.namespace}`;
+    if (this.context.type === PlatformTypeEnum.Business) {
+      const namespaceGroups = namespaceList.data.records.reduce((gr, { clusterDisplayName, clusterName }) => {
+        const value = `${clusterDisplayName}(${clusterName})`;
+        return { ...gr, [clusterName]: <Tooltip title={value}>{value}</Tooltip> };
+      }, {});
 
-      return {
-        value: item.name,
-        text: <Tooltip title={text}>{text}</Tooltip>,
-        groupKey: item.clusterName,
-        realText: text
+      let namespaceOptions = namespaceList.data.records.map(item => {
+        const text = `${item.clusterDisplayName}-${item.namespace}`;
+
+        return {
+          value: item.name,
+          text: <Tooltip title={text}>{text}</Tooltip>,
+          groupKey: item.clusterName,
+          realText: text
+        };
+      });
+
+      namespaceSelectProps = {
+        groups: namespaceGroups,
+        options: namespaceOptions,
+        filter: (inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)
       };
-    });
+    } else {
+      let namespaceOptions = namespaceList.data.records.map(item => ({
+        value: item.name,
+        text: item.displayName
+      }));
+
+      namespaceSelectProps = {
+        options: namespaceOptions
+      };
+    }
+
+    // 展示命名空间的选择列表
 
     // 展示workloadList的选择列表
     let workloadListOptions = workloadList.data.records.map(w => ({
@@ -206,14 +230,12 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
                   ) : (
                     <React.Fragment>
                       <Select
+                        {...namespaceSelectProps}
                         type="simulate"
                         searchable
-                        filter={(inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)}
                         appearence="button"
                         style={inlineDisplayStyle}
                         value={namespaceSelection}
-                        groups={namespaceGroups}
-                        options={namespaceOptions}
                         onChange={value => {
                           this._handleSelectForNamespace(value);
                         }}
