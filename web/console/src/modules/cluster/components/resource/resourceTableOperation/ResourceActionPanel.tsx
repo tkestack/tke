@@ -18,6 +18,7 @@ import { MonitorPanelProps, resourceMonitorFields } from '../../../models/Monito
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { TellIsNeedFetchNS } from '../ResourceSidebarPanel';
+import { PlatformContext, IPlatformContext, PlatformTypeEnum } from '@/Wrapper';
 
 interface ResouceActionPanelState {
   /** 是否开启自动刷新 */
@@ -38,6 +39,9 @@ const mapDispatchToProps = dispatch =>
 
 @connect(state => state, mapDispatchToProps)
 export class ResourceActionPanel extends React.Component<RootProps, ResouceActionPanelState> {
+  static contextType = PlatformContext;
+  context: IPlatformContext;
+
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -173,23 +177,45 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   private _renderNamespaceSelect() {
     let { actions, namespaceList, namespaceSelection } = this.props;
 
-    const groups = namespaceList.data.records.reduce((gr, { clusterDisplayName, clusterName }) => {
-      const value = `${clusterDisplayName}(${clusterName})`;
-      return { ...gr, [clusterName]: <Tooltip title={value}>{value}</Tooltip> };
-    }, {});
+    let selectProps = {};
 
-    let options = namespaceList.data.recordCount
-      ? namespaceList.data.records.map(item => {
-          const text = `${item.clusterDisplayName}-${item.namespace}`;
+    if (this.context.type === PlatformTypeEnum.Business) {
+      const groups = namespaceList.data.records.reduce((gr, { clusterDisplayName, clusterName }) => {
+        const value = `${clusterDisplayName}(${clusterName})`;
+        return { ...gr, [clusterName]: <Tooltip title={value}>{value}</Tooltip> };
+      }, {});
 
-          return {
+      let options = namespaceList.data.recordCount
+        ? namespaceList.data.records.map(item => {
+            const text = `${item.clusterDisplayName}-${item.namespace}`;
+
+            return {
+              value: item.name,
+              text: <Tooltip title={text}>{text}</Tooltip>,
+              groupKey: item.clusterName,
+              realText: text
+            };
+          })
+        : [{ value: '', text: t('无可用命名空间'), disabled: true }];
+
+      selectProps = {
+        groups,
+        options,
+        filter: (inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)
+      };
+    } else {
+      let options = namespaceList.data.recordCount
+        ? namespaceList.data.records.map((item, index) => ({
             value: item.name,
-            text: <Tooltip title={text}>{text}</Tooltip>,
-            groupKey: item.clusterName,
-            realText: text
-          };
-        })
-      : [{ value: '', text: t('无可用命名空间'), disabled: true }];
+            text: item.displayName
+          }))
+        : [{ value: '', text: t('无可用命名空间'), disabled: true }];
+
+      selectProps = {
+        options
+      };
+    }
+
     return (
       <div style={{ display: 'inline-block', fontSize: '12px', verticalAlign: 'middle' }}>
         <Text theme="label" verticalAlign="middle">
@@ -197,13 +223,11 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
         </Text>
         <Tooltip>
           <Select
+            {...selectProps}
             type="simulate"
             searchable
-            filter={(inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)}
             appearence="button"
             size="s"
-            groups={groups}
-            options={options}
             style={{ width: '130px', marginRight: '5px' }}
             value={namespaceSelection}
             onChange={value => {

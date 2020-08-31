@@ -58,6 +58,12 @@ export enum PlatformTypeEnum {
   Business = 'business'
 }
 
+export interface IPlatformContext {
+  type: PlatformTypeEnum;
+}
+
+export const PlatformContext = React.createContext<IPlatformContext>({ type: PlatformTypeEnum.Manager });
+
 interface RouterConfig {
   /** 导航的路由 */
   url?: string;
@@ -509,7 +515,9 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         </React.Fragment>
       );
     }
-    return finalContent;
+    return (
+      <PlatformContext.Provider value={{ type: this.props.platformType }}>{finalContent}</PlatformContext.Provider>
+    );
   }
 
   /**
