@@ -150,7 +150,7 @@ $ kubect apply -f tapp.yaml
 
 ### 查看TApp应用
 
-```shell script
+```shell
 $ kubectl get tapp XXX
 NAME           AGE
 example-tapp   20m
@@ -218,7 +218,7 @@ spec:
 ```
 
 操作成功后，查看instanceID为'1'的pod已升级，镜像版本为nginx:latest
-```shell script
+```shell
 # kubectl describe tapp example-tapp
 Name:         example-tapp
 Namespace:    default
@@ -341,7 +341,7 @@ spec:
 
 查看pod状态变为Terminating
 
-```shell script
+```shell
 # kubectl get pod
 NAME                   READY   STATUS        RESTARTS   AGE
 example-tapp-0         1/1     Running       1          59m
@@ -353,14 +353,14 @@ example-tapp-2         1/1     Running       1          59m
 
 如果你想要扩展TApp使用默认的spec.template模板，只需增加spec.replicas的值，否则你需要在spec.templates中指定使用哪个模板。kubectl scale也适用于TApp。
 
-```shell script
+```shell
 kubectl scale --replicas=3 tapp/example-tapp
 
 ```
 
 ### 删除TApp应用
 
-```shell script
+```shell
 kubectl delete tapp example-tapp
 ```
 

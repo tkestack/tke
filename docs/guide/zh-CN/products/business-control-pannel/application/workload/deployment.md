@@ -200,7 +200,6 @@ kubectl set image deployment/【name】 【containerName】=【image:tag】
 ```
 kubectl rolling-update 【NAME】 -f 【FILE】
 ```
-更多滚动更新可参见 [滚动更新说明](https://kubernetes.io/docs/tasks/run-application/rolling-update-replication-controller/)。
 
 ### Kubectl 回滚 Deployment
 

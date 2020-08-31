@@ -1,6 +1,6 @@
 # CronHPA
 
-Cron Horizontal Pod Autoscaler(CronHPA)使我们能够使用[crontab](https://en.wikipedia.org/wiki/Cron)模式定期自动扩容工作负载(那些支持扩展子资源的负载，例如deployment、statefulset)。
+Cron Horizontal Pod Autoscaler(CronHPA)使我们能够使用[crontab](https://en.wikipedia.org/wiki/Cron)模式定期自动扩容工作负载（那些支持扩展子资源的负载，例如deployment、statefulset）。
 
 CronHPA使用[Cron](https://en.wikipedia.org/wiki/Cron)格式进行编写，周期性地在给定的调度时间对工作负载进行扩缩容。
 
@@ -54,28 +54,32 @@ type CronHPAList struct {
 }
 ```
 
-## 使用示例
+## 使用CronHPA
 
-### 指定deployment每周五20点扩容到60个实例，周日23点缩容到30个实例
+### 安装CronHPA
+
+CronHPA为TKEStack扩展组件，需要在【平台管理】-> 【扩展组件】里安装该组件。
+
+### 示例1：指定deployment每周五20点扩容到60个实例，周日23点缩容到30个实例
 
 ```yaml
 apiVersion: extensions.tkestack.io/v1
 kind: CronHPA
 metadata:
-  name: example-cron-hpa
+  name: example-cron-hpa	# CronHPA 名
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
-    kind: Deployment
-    name: demo-deployment
+    kind: Deployment	# CronHPA操作的负载类型
+    name: demo-deployment	# CronHPA操作的负载类型名
   crons:
-    - schedule: "0 20 * * 5"
-      targetReplicas: 60
+    - schedule: "0 20 * * 5"	# Crontab语法格式
+      targetReplicas: 60			# 负载目标pod数量
     - schedule: "0 23 * * 7"
       targetReplicas: 30
 ```
 
-### 指定deployment每天8点到9点，19点到21点扩容到60，其他时间点恢复到10
+### 示例2：指定deployment每天8点到9点，19点到21点扩容到60，其他时间点恢复到10
 
 ```yaml
 apiVersion: extensions.tkestack.io/v1
@@ -100,7 +104,7 @@ spec:
 
 ### 查看cronhpa
 
-```shell script
+```shell
 # kubectl get cronhpa
 NAME               AGE
 example-cron-hpa   104s
@@ -124,6 +128,6 @@ spec:
 
 ### 删除cronhpa
 
-```shell script
+```shell
 kubectl delete cronhpa example-cron-hpa
 ```
