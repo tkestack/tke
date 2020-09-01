@@ -89,10 +89,10 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
                   >
                     {x.metadata.name || '-'}
                   </a>
-                  <Clip target={`#${x.metadata.name}`} />
                 </React.Fragment>
               )}
             </Text>
+            <Clip target={`#${x.metadata.name}`} />
             <Text parent="div">
               {x.spec.displayName || '-'}
               <Icon

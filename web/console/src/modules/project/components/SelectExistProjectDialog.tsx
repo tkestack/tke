@@ -94,7 +94,7 @@ export class SelectExistProjectDialog extends React.Component<RootProps, {}> {
         caption={t('添加已有业务')}
         onClose={() => cancel()}
       >
-        <FormPanelTransferTable<Project> {...selectorProps} />;
+        <FormPanelTransferTable<Project> {...selectorProps} />
         <React.Fragment>
           <Button
             type="primary"
