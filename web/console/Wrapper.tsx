@@ -10,7 +10,17 @@ import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
-import { Button, Icon, Text, Bubble, NavMenu, List } from '@tencent/tea-component';
+import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
+import { insertCSS } from '@tencent/ff-redux';
+
+insertCSS(
+  'tkestack-nav-logo',
+  `
+  .tkestack-nav-logo a {
+    display: inline;
+  }
+`
+);
 
 // @ts-ignore
 const routerSea = seajs.require('router');
@@ -520,13 +530,17 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       <NavMenu
         left={
           <React.Fragment>
-            <NavMenu.Item type="logo">
+            <NavMenu.Item type="logo" className={'tkestack-nav-logo'}>
               <img src="/static/icon/logo.svg" style={{ height: '30px' }} alt="logo" />
             </NavMenu.Item>
           </React.Fragment>
         }
         right={
           <React.Fragment>
+            <NavMenu.Item>
+              <ExternalLink href={'https://tkestack.github.io/docs/'}>容器服务帮助手册</ExternalLink>
+            </NavMenu.Item>
+
             <NavMenu.Item
               type="dropdown"
               overlay={() => (
