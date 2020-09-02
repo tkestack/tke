@@ -21,7 +21,6 @@ package identityprovider
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -44,8 +43,6 @@ import (
 )
 
 const (
-	watchDebounceDelay = 100 * time.Millisecond
-
 	controllerName = "identityprovider-controller"
 )
 
@@ -102,18 +99,6 @@ func (c *Controller) enqueue(obj interface{}) {
 		return
 	}
 	c.queue.AddRateLimited(key)
-}
-
-func (c *Controller) needsUpdate(old *authv1.IdentityProvider, new *authv1.IdentityProvider) bool {
-	if old.UID != new.UID {
-		return true
-	}
-
-	if !reflect.DeepEqual(old.Spec, new.Spec) {
-		return true
-	}
-
-	return false
 }
 
 // Run will set up the event handlers for types we are interested in, as well

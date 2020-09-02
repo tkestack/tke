@@ -70,23 +70,3 @@ func (s *applicationCache) delete(name string) {
 	defer s.mu.Unlock()
 	delete(s.m, name)
 }
-
-func (s *applicationCache) listKeys() []string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	keys := make([]string, 0, len(s.m))
-	for k := range s.m {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-func (s *applicationCache) allApplications() []*applicationv1.App {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	applications := make([]*applicationv1.App, 0, len(s.m))
-	for _, v := range s.m {
-		applications = append(applications, v.state)
-	}
-	return applications
-}

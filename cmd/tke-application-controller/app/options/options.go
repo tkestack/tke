@@ -25,11 +25,6 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
-const (
-	flagApplicationConfig   = "application-config"
-	configApplicationConfig = "application_config"
-)
-
 // Options is the main context object for the TKE controller manager.
 type Options struct {
 	Log                  *log.Options

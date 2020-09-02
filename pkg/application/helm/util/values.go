@@ -36,7 +36,7 @@ func MergeValues(values []string, rawValues string, vType string) (map[string]in
 	// try decode first, maybe encoded data
 	bs, err := DecodeValue(rawValues)
 	if err == nil {
-		rawValues = string(bs)
+		rawValues = bs
 	}
 
 	base := map[string]interface{}{}
@@ -46,12 +46,10 @@ func MergeValues(values []string, rawValues string, vType string) (map[string]in
 			if base, err = parseYAMLValue(rawValues); err != nil {
 				return nil, err
 			}
-			break
 		case "json":
 			if base, err = parseJSONValue(rawValues); err != nil {
 				return nil, err
 			}
-			break
 		default:
 			return nil, errors.New(fmt.Sprintf("unsupport value type: %s", vType))
 		}
@@ -64,16 +62,6 @@ func MergeValues(values []string, rawValues string, vType string) (map[string]in
 		}
 	}
 	return base, err
-}
-
-func parseValue(values []string) (map[string]interface{}, error) {
-	base := map[string]interface{}{}
-	for _, value := range values {
-		if err := strvals.ParseInto(value, base); err != nil {
-			return nil, errors.Wrap(err, "failed parsing value data")
-		}
-	}
-	return base, nil
 }
 
 func parseYAMLValue(values string) (map[string]interface{}, error) {

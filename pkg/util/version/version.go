@@ -177,7 +177,7 @@ func atoi(word string) (num int, state int) {
 		if err != nil {
 			panic(err)
 		}
-		num = int(num1)
+		num = num1
 	}
 	return
 }
@@ -214,9 +214,9 @@ func atoi(word string) (num int, state int) {
 //		}
 //	}
 var m = [][]int{
-	[]int{0, 1, -1},
-	[]int{-1, 2, -1},
-	[]int{1, 1, 2},
+	{0, 1, -1},
+	{-1, 2, -1},
+	{1, 1, 2},
 }
 
 func defaultCompare(word1, word2 string) int {

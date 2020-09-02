@@ -101,13 +101,13 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 
 	// optional
-	businessAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
+	businessAPIServerClientConfig, _, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
 	if err != nil {
 		return nil, err
 	}
 
 	// optional
-	authAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.AuthAPIClient)
+	authAPIServerClientConfig, _, err := controllerconfig.BuildClientConfig(opts.AuthAPIClient)
 	if err != nil {
 		return nil, err
 	}

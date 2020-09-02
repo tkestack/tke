@@ -59,10 +59,6 @@ func newChartGroup(name, tenantID string, uid types.UID, visibility v1.Visibilit
 	}
 }
 
-func defaultPrivateChartGroup() *v1.ChartGroup {
-	return newChartGroup("private", "default", types.UID("123"), v1.VisibilityPrivate)
-}
-
 func defaultPublicChartGroup() *v1.ChartGroup {
 	return newChartGroup("public", "default", types.UID("456"), v1.VisibilityPublic)
 }
@@ -205,8 +201,7 @@ func TestProcessUpdateChartGroup(t *testing.T) {
 				businessChartGroup := actions[3].(core.CreateAction).GetObject().(*businessv1.ChartGroup)
 				if businessChartGroup == nil {
 					t.Errorf("There should be a business chartGroup remaining")
-				}
-				if businessChartGroup.Namespace != newProjects[0] || businessChartGroup.Name != cg.Spec.Name {
+				} else if businessChartGroup.Namespace != newProjects[0] || businessChartGroup.Name != cg.Spec.Name {
 					return fmt.Errorf("create business chartGroup error, expected: %s/%s, got: %s/%s", newProjects[0], cg.Spec.Name, businessChartGroup.Namespace, businessChartGroup.Name)
 				}
 				return nil
