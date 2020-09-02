@@ -45302,6 +45302,12 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Ref:         ref("tkestack.io/tke/api/platform/v1.AuthzWebhookAddr"),
 						},
 					},
+					"enableMetricsServer": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},

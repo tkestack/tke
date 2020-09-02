@@ -1650,6 +1650,7 @@ func autoConvert_v1_ClusterFeature_To_platform_ClusterFeature(in *ClusterFeature
 	out.Hooks = *(*map[platform.HookType]string)(unsafe.Pointer(&in.Hooks))
 	out.CSIOperator = (*platform.CSIOperatorFeature)(unsafe.Pointer(in.CSIOperator))
 	out.AuthzWebhookAddr = (*platform.AuthzWebhookAddr)(unsafe.Pointer(in.AuthzWebhookAddr))
+	out.EnableMetricsServer = in.EnableMetricsServer
 	return nil
 }
 
@@ -1670,6 +1671,7 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 	out.Hooks = *(*map[HookType]string)(unsafe.Pointer(&in.Hooks))
 	out.CSIOperator = (*CSIOperatorFeature)(unsafe.Pointer(in.CSIOperator))
 	out.AuthzWebhookAddr = (*AuthzWebhookAddr)(unsafe.Pointer(in.AuthzWebhookAddr))
+	out.EnableMetricsServer = in.EnableMetricsServer
 	return nil
 }
 

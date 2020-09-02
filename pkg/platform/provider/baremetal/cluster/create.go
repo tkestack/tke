@@ -1054,6 +1054,9 @@ func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error {
+	if !c.Cluster.Spec.Features.EnableMetricsServer {
+		return nil
+	}
 	client, err := c.Clientset()
 	if err != nil {
 		return err

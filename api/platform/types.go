@@ -335,6 +335,8 @@ type ClusterFeature struct {
 	// For kube-apiserver authorization webhook
 	// +optional
 	AuthzWebhookAddr *AuthzWebhookAddr
+	// +optional
+	EnableMetricsServer bool
 }
 
 type HA struct {
