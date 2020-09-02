@@ -370,6 +370,9 @@ message ClusterFeature {
   // For kube-apiserver authorization webhook
   // +optional
   optional AuthzWebhookAddr authzWebhookAddr = 11;
+
+  // +optional
+  optional bool enableMetricsServer = 12;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.
