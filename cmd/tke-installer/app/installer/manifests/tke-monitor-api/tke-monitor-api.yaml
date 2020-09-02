@@ -142,9 +142,11 @@ data:
       api_server = "https://tke-platform-api"
       api_server_client_config = "/app/conf/tke-platform-config.yaml"
 
+{{- if .EnableBusiness }}
       [client.business]
       api_server = "https://tke-business-api"
       api_server_client_config = "/app/conf/tke-business-config.yaml"
+{{- end }}
 
   tke-auth-webhook.yaml: |
     apiVersion: v1
@@ -186,6 +188,8 @@ data:
           user: admin-cert
         name: tke
 
+
+{{- if .EnableBusiness }}
   tke-business-config.yaml: |
     apiVersion: v1
     kind: Config
@@ -205,6 +209,7 @@ data:
           cluster: tke
           user: admin-cert
         name: tke
+{{- end }}
 
   tke-monitor-config.yaml: |
     apiVersion: monitor.config.tkestack.io/v1

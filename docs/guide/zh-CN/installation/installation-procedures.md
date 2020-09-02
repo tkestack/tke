@@ -1,26 +1,34 @@
 #  安装步骤
 
-## 1. 需求检查
+TKEStack 使用 tke-installer 安装工具进行安装，通过界面化的方式引导用户一键部署 TKEStack 容器平台。tke-installer 安装工具能够检查基本的环境信息，自动适配 x86 或 arm 版本安装驱动和镜像。离线的安装方式更免去用户拉取镜像的烦恼，极大的提高了容器平台部署的效率。
 
-仔细检查每个节点的硬件和软件需求：[installation requirements](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
+![img](../../../images/1588923565_50_w1747_h691.png)
 
-## 2. Installer安装
+tke-installer 自动等待和检查每一步骤安装完成，如果中间过程出错会自动在日志界面提示相应的信息，并支持根据用户需要，选择[全新安装或从失败步骤继续安装](../FAQ/Installation/如何重新部署.md)。更支持以 hook 方式自定义安装流程，用户可以在安装开始前、集群 ready 后以及安装结束后三个 hook 点添加自己的脚本或命令，实现平台安装的可定制化。
 
-为了简化平台安装过程，容器服务开源版基于 tke-installer 安装器提供了一个向导式的图形化安装指引界面。
+
+
+## 一、需求检查
+
+仔细检查每个节点的硬件和软件需求：[部署环境要求](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
+
+## 二、Installer安装
+
+为了简化平台安装过程，TKEStack基于 tke-installer 安装器提供了一个向导式的图形化安装指引界面。
 
 在您 Installer 节点的终端，执行如下脚本：
 
 ```shell
 # amd64
-arch=amd64 version=v1.3.0 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
+arch=amd64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
 
 # arm64
-arch=arm64 version=v1.3.0 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
+arch=arm64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
 ```
 
 > 您可以查看 TKEStack [Release](https://github.com/tkestack/tke/releases) 按需选择版本进行安装，建议您安装最新版本。
 > 
-> tke-installer 约为 7GB，包含安装所需的所有资源。
+> tke-installer 约为 8GB，包含安装所需的所有资源。
 
 
 
@@ -30,27 +38,26 @@ arch=arm64 version=v1.3.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 
 
-## 3. 控制台安装
+## 三、控制台 和 Global 集群安装
 
-> 注意：控制台是运行在global集群之上，控制台安装就是在安装global集群。
+> 注意：控制台是运行在global集群之上，控制台安装的同时在安装global集群。
 
 1. 填写 TKEStack 控制台基本配置信息
 
 ![img](../../../images/step-1.png)
 
-- **用户名**：TKEStack 控制台管理员名称（**例如：admin**）
-- **密码**：TKEStack 控制台管理员密码
-- **高可用设置**（按需使用，可直接选择【**不设置**】）
-  - **TKE提供**：在所有 master 节点额外安装 Keepalived 完成 VIP 的配置与连接
-  - **使用已有**：对接配置好的外部 LB 实例
-  - **不设置**：访问第一台 master 节点 APIServer
+   - **用户名**：TKEStack 控制台管理员名称（**例如：admin**）
+   - **密码**：TKEStack 控制台管理员密码
+   - **高可用设置**（按需使用，可直接选择【**不设置**】）
+     - **不设置**：第一台 master 节点的IP地址作为 APIServer 地址
+     - **TKE提供**：用户只需提供可用的IP地址，TKE部署Keepalive，配置该IP为Master集群的VIP，以实现Global集群和控制台的高可用，此时该VIP和所有master节点IP地址都是APIserver地址。
+     - **使用已有**：对接配置好的外部 LB 实例，VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）端口，同时确保该VIP有至少两个LB后端（Master节点），以避免LB单后端不可用风险。
 
 2. 填写 TKEStack 控制台集群设置信息
 
 ![img](../../../images/step-2.png)
 
 - **网卡名称**：集群节点使用的网卡，根据实际环境填写正确的网卡名称，默认为eth0（**建议使用默认值**）
-
 - **GPU 类型**：（按需使用，可直接选择【**不设置**】）
   - **不使用**：不安装 Nvidia GPU 相关驱动
   - **Virtual**：平台会自动为集群安装 [GPUManager](https://github.com/tkestack/docs/blob/master/features/gpumanager.md)  扩展组件
@@ -65,11 +72,11 @@ arch=arm64 version=v1.3.0 && wget https://tke-release-1251707795.cos.ap-guangzho
   - **访问地址：** Master 节点**内网 IP**，请配置**至少 8 Cores & 16G内存** 及以上的机型，**否则会部署失败**
   - **SSH 端口**：请确保目标机器安全组开放 SSH 端口和 ICMP 协议，否则无法远程登录和 PING 服务器（建议使用**22**）
   - **用户名和密码：** 均为添加的节点的用户名和密码
-  - 可以通过节点下面的【添加机器】蓝色字体增加master节点（**按需添加**）
+  - 可以通过节点下面的**【添加机器】**蓝色字体增加master节点（**按需添加**）
 
 ![img](../../../images/step-3-2.png)
 
-* **高级设置**（非必须）：可以自定义 Global 集群的 Docker、kube-apiserver、kube-controller-manager、kube-scheduler、kubelet 运行参数
+* **高级设置**（非必须）：可以自定义 Global 集群的 Docker、kube-apiserver、kube-controller-manager、kube-scheduler、kubelet 运行参数，查看对应的帮助文档链接可获取详细信息。
 
 3. 填写 TKEStack 控制台认证信息。（建议使用**TKE提供**）
 
@@ -83,7 +90,7 @@ arch=arm64 version=v1.3.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 ![img](../../../images/step-4.png)
 
-- **镜像仓库类型：**
+- **镜像仓库类型（Installer里的所有镜像都会上传到该仓库）：**
   - **TKE提供**：使用 TKE 自带的镜像仓库
   - **第三方仓库**：对接配置好的外部镜像仓库，此时，TKEStack 将不会再安装镜像仓库，而是使用您提供的镜像仓库作为默认镜像仓库服务
 
@@ -116,7 +123,7 @@ arch=arm64 version=v1.3.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 ![img](../../../images/step-8.png)
 
-9. 开始安装 TKEStack 控制台，安装成功后界面如下，最下面出现【查看指引】的按钮。
+9. 开始安装 TKEStack 控制台，**安装需要60min左右，请耐心等待**。安装成功后界面如下，最下面出现【查看指引】的按钮。
 
 ![img](../../../images/step-9.png)
 
@@ -131,12 +138,12 @@ arch=arm64 version=v1.3.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
   > 注意：这里域名的【IP】地址默认为**内网地址**，如果本地主机不在集群内网，域名的IP地址应该填该内网地址所对应的**外网地址**。
 
-## 4. 访问控制台
+## 四、访问控制台
 
 在本地主机的浏览器地址输入 http://console.tke.com ，可访问Global集群的控制台界面，输入控制台安装创建的用户名和密码后即可使用TKEStack。
 
 # 安装常见问题
 
-安装失败请首先检查硬件和软件需求：[installation requirements](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
+安装失败请首先检查硬件和软件需求：[部署环境要求](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
 
-可参考[FAQ installation](../FAQ/installation)获得更多帮助。
+可参考[FAQ Installation](../FAQ/Installation)获得更多帮助。

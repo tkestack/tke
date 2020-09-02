@@ -1,4 +1,4 @@
-# GPU-Manager说明
+# GPU-Manager
 
 ## 组件介绍
 
@@ -35,13 +35,16 @@ GPU Manager提供一个All-in-One的GPU管理器, 基于Kubernets Device Plugin�
 
 ## GPU-Manager使用方法
 
-1. 安装GPU-Manager扩展组件
+1. 集群的主机有GPU，并且在创建时有勾选**GPU**，已安装GPU插件
 
-2. 在安装了GPU-Manager扩展组件的集群中，创建工作负载。
+2. 集群安装GPU-Manager扩展组件
 
-3. 创建工作负载设置GPU限制，如图：
+3. 在安装了GPU-Manager扩展组件的集群中，创建工作负载
 
-4. ![](https://main.qcloudimg.com/raw/c06872ddc0fafbf92345c0d9f26e4ecd.png)
+4. 创建工作负载设置GPU限制，如图：
+
+   ![](https://main.qcloudimg.com/raw/c06872ddc0fafbf92345c0d9f26e4ecd.png)
+
 
 ### yaml创建
 

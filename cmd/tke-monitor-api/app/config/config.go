@@ -175,12 +175,16 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
-		return nil, fmt.Errorf("failed to initialize client config of platform API server")
+	if !ok && opts.BusinessAPIClient.Required {
+		return nil, fmt.Errorf("failed to initialize client config of business API server")
 	}
-	businessClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(businessAPIServerClientConfig, "tke-monitor-api"))
-	if err != nil {
-		return nil, err
+	var businessClientV1 businessversionedclient.BusinessV1Interface
+	if ok {
+		businessClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(businessAPIServerClientConfig, "tke-monitor-api"))
+		if err != nil {
+			return nil, err
+		}
+		businessClientV1 = businessClient.BusinessV1()
 	}
 
 	return &Config{
@@ -189,7 +193,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		VersionedSharedInformerFactory: versionedInformers,
 		StorageFactory:                 storageFactory,
 		PlatformClient:                 platformClient.PlatformV1(),
-		BusinessClient:                 businessClient.BusinessV1(),
+		BusinessClient:                 businessClientV1,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 		MonitorConfig:                  monitorConfig,
 	}, nil

@@ -41986,6 +41986,36 @@ func schema_tke_api_monitor_v1_ClusterOverviewResult(ref common.ReferenceCallbac
 							Format: "int32",
 						},
 					},
+					"cpuCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"cpuAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"memCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"podCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
 					"clusters": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -41999,7 +42029,7 @@ func schema_tke_api_monitor_v1_ClusterOverviewResult(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"clusterCount", "clusterAbnormal", "projectCount", "projectAbnormal", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "clusters"},
+				Required: []string{"clusterCount", "clusterAbnormal", "projectCount", "projectAbnormal", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "cpuCapacity", "cpuAllocatable", "memCapacity", "memAllocatable", "podCount", "clusters"},
 			},
 		},
 		Dependencies: []string{
@@ -42014,6 +42044,12 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"clusterID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"tenantID": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -42151,6 +42187,12 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 							Format: "",
 						},
 					},
+					"podCount": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
 					"schedulerHealthy": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
@@ -42170,7 +42212,7 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 						},
 					},
 				},
-				Required: []string{"clusterID", "clusterPhase", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "hasMetricServer", "cpuUsed", "cpuRequest", "cpuLimit", "cpuCapacity", "cpuAllocatable", "cpuRequestRate", "cpuAllocatableRate", "cpuUsage", "memUsed", "memRequest", "memLimit", "memCapacity", "memAllocatable", "memRequestRate", "memAllocatableRate", "memUsage", "schedulerHealthy", "controllerManagerHealthy", "etcdHealthy"},
+				Required: []string{"clusterID", "tenantID", "clusterPhase", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "hasMetricServer", "cpuUsed", "cpuRequest", "cpuLimit", "cpuCapacity", "cpuAllocatable", "cpuRequestRate", "cpuAllocatableRate", "cpuUsage", "memUsed", "memRequest", "memLimit", "memCapacity", "memAllocatable", "memRequestRate", "memAllocatableRate", "memUsage", "podCount", "schedulerHealthy", "controllerManagerHealthy", "etcdHealthy"},
 			},
 		},
 	}

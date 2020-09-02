@@ -102,7 +102,6 @@ func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.Lis
 			if role == projectOwner {
 				managed[prj] = append(managed[prj], role)
 			}
-
 			memberd[prj] = append(memberd[prj], role)
 		}
 	}

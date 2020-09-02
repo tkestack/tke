@@ -30,6 +30,7 @@
     "@vx/shape": "0.0.181",
     "@vx/tooltip": "0.0.179",
     "array-move": "^2.1.0",
+    "compare-versions": "^3.6.0",
     "d3": "^5.9.2",
     "d3-scale": "^2.1.2",
     "d3-shape": "^1.2.2",

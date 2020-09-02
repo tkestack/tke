@@ -134,6 +134,14 @@ const (
 	AddonPhaseUnknown AddonPhase = "Unknown"
 )
 
+type OverviewProjectStatus int32
+
+const (
+	OverviewProjectStatusNotFound OverviewProjectStatus = 0
+	OverviewProjectStatusError    OverviewProjectStatus = -1
+	OverviewProjectStatusDisable  OverviewProjectStatus = -2
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:onlyVerbs=create
@@ -187,6 +195,9 @@ type MetricQueryCondition struct {
 	Value string
 }
 
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:onlyVerbs=create
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterOverview defines the structure for clusters' overview data request and result.
@@ -207,11 +218,17 @@ type ClusterOverviewResult struct {
 	NodeAbnormal     int32
 	WorkloadCount    int32
 	WorkloadAbnormal int32
+	CPUCapacity      float64
+	CPUAllocatable   float64
+	MemCapacity      int64
+	MemAllocatable   int64
+	PodCount         int32
 	Clusters         []*ClusterStatistic
 }
 
 type ClusterStatistic struct {
 	ClusterID                string
+	TenantID                 string
 	ClusterPhase             string
 	NodeCount                int32
 	NodeAbnormal             int32
@@ -234,6 +251,7 @@ type ClusterStatistic struct {
 	MemRequestRate           string
 	MemAllocatableRate       string
 	MemUsage                 string
+	PodCount                 int32
 	SchedulerHealthy         bool
 	ControllerManagerHealthy bool
 	EtcdHealthy              bool

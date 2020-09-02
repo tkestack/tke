@@ -1,6 +1,8 @@
-## CronHPA说明
+# CronHPA
 
-### 组件介绍 : Cron Horizontal Pod Autoscaler(CronHPA)
+## 组件介绍
+
+### Cron Horizontal Pod Autoscaler(CronHPA)
 
 CronHPA 可让用户利用[crontab](https://en.wikipedia.org/wiki/Cron)实现对负载（deployment, statefulset，tapp这些支持扩缩容的子资源）定期自动 **扩缩容**。
 
@@ -25,18 +27,17 @@ CronHPA 可让用户利用[crontab](https://en.wikipedia.org/wiki/Cron)实现对
 1. 登录TKEStack
 2. 切换至 平台管理控制台，选择扩展组件页面。
 3. 选择需要安装组件的集群，点击【新建】按钮。如下图所示：
-![新建组件](images/新建扩展组件.png)
+![新建组件](../../../doc/../docs/images/新建扩展组件.png)
 4. 在弹出的扩展组件列表里，滑动列表窗口找到CronHPA组件。如下图所示：
-![CronHPA组件](images/CronHPA.png)
 5. 单击【完成】。
 
 ### 使用CronHPA组件
 
 1. 登录TKEStack
-2. 切换至 平台管理控制台，选择集群管理页面。
-3. 点击要处理的【集群id】，如下图所示：![集群id](images/集群id.png)
-4. 选择工作负载里的你需要的负载类型，这里以 Deployment 为例，点击【新建】，如下图所示：![Deployment](images/Deployment.png)
-5. 在新建负载页面中，【开启】定时调节，如下图所示：![定时调节](images/定时调节.png)
+2. 切换至【平台管理】控制台，选择【集群管理】页面。
+3. 点击要处理的【集群id】
+4. 选择工作负载里的你需要的负载类型，这里以 Deployment 为例，点击【新建】
+5. 在“新建Workload”页面中，点击【开启】定时调节，如下图所示：![定时调节](images/定时调节.png)
 6. 【新增策略】按钮可以新增策略，策略右边的叉可以减少策略
 7. 每条触发策略由两条字段组成
    1. **Crontab** ：例如 "0 23 * * 5"表示每周五23:00，详见[crontab](https://en.wikipedia.org/wiki/Cron)

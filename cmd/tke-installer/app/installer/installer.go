@@ -1796,10 +1796,11 @@ func (t *TKE) installInfluxDB(ctx context.Context) error {
 
 func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":    t.Config.Replicas,
-		"Image":       images.Get().TKEMonitorAPI.FullName(),
-		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
-		"EnableAudit": t.auditEnabled(),
+		"Replicas":       t.Config.Replicas,
+		"Image":          images.Get().TKEMonitorAPI.FullName(),
+		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
+		"EnableBusiness": t.businessEnabled(),
+		"EnableAudit":    t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID

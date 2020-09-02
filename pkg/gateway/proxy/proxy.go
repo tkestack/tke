@@ -35,13 +35,18 @@ import (
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/frontproxy"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/passthrough"
+	"tkestack.io/tke/pkg/gateway/proxy/handler/rewriteproxy"
 	platformapiserver "tkestack.io/tke/pkg/platform/apiserver"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-const apiPrefix = "/apis"
+const (
+	apiPrefix      = "/apis"
+	openapiPrefix  = "/openapi"
+	openapiVersion = "v2"
+)
 
 type moduleName string
 
@@ -189,6 +194,22 @@ func RegisterRoute(m *mux.PathRecorderMux, cfg *gatewayconfig.GatewayConfigurati
 			m.HandlePrefix(pathPrefix.prefix, handler)
 		}
 	}
+	pathOpenapi := openapiProxy(cfg)
+	for path, proxyComponent := range pathOpenapi {
+		if proxyComponent.Passthrough != nil {
+			handler, err := rewriteproxy.NewHandler(
+				proxyComponent.Address,
+				proxyComponent.Passthrough,
+				path.protected,
+				func(string) string { return fmt.Sprintf("%s/%s", openapiPrefix, openapiVersion) },
+			)
+			if err != nil {
+				return err
+			}
+			log.Info("Registered openapi proxy for backend component", log.String("path", path.prefix), log.Bool("protected", path.protected), log.String("address", proxyComponent.Address))
+			m.Handle(path.prefix, handler)
+		}
+	}
 	return nil
 }
 
@@ -268,4 +289,47 @@ func prefixProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gateway
 		}
 	}
 	return pathPrefixProxyMap
+}
+
+func openapiProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gatewayconfig.Component {
+	newOpenapiPath := func(name moduleName) modulePath {
+		return modulePath{
+			prefix:    fmt.Sprintf("/tke-%s-api", name),
+			protected: false,
+		}
+	}
+	openapiProxyMap := make(map[modulePath]gatewayconfig.Component)
+	// platform
+	if cfg.Components.Platform != nil {
+		openapiProxyMap[newOpenapiPath(moduleNamePlatform)] = *cfg.Components.Platform
+	}
+	// business
+	if cfg.Components.Business != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameBusiness)] = *cfg.Components.Business
+	}
+	// notify
+	if cfg.Components.Notify != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameNotify)] = *cfg.Components.Notify
+	}
+	// monitor
+	if cfg.Components.Monitor != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameMonitor)] = *cfg.Components.Monitor
+	}
+	// auth
+	if cfg.Components.Auth != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameAuth)] = *cfg.Components.Auth
+	}
+	// registry
+	if cfg.Components.Registry != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameRegistry)] = *cfg.Components.Registry
+	}
+	// logagent
+	if cfg.Components.LogAgent != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameLogagent)] = *cfg.Components.LogAgent
+	}
+	// audit
+	if cfg.Components.Audit != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameAudit)] = *cfg.Components.Audit
+	}
+	return openapiProxyMap
 }
