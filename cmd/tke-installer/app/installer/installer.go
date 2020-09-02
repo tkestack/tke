@@ -1469,7 +1469,7 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 		"EnableRegistry":    t.Para.Config.Registry.TKERegistry != nil,
 		"EnableAuth":        t.Para.Config.Auth.TKEAuth != nil,
 		"EnableMonitor":     t.Para.Config.Monitor != nil,
-		"EnableBusiness":    t.Para.Config.Business != nil,
+		"EnableBusiness":    t.businessEnabled(),
 		"EnableLogagent":    t.Para.Config.Logagent != nil,
 		"EnableAudit":       t.auditEnabled(),
 		"EnableApplication": t.Para.Config.Application != nil,
@@ -1952,8 +1952,9 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 		"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
 		"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
 		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-		"EnableBusiness": t.Para.Config.Business != nil,
+		"EnableBusiness": t.businessEnabled(),
 		"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
+		"EnableAudit":    t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1983,7 +1984,7 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 			"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
 			"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
 			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-			"EnableBusiness": t.Para.Config.Business != nil,
+			"EnableBusiness": t.businessEnabled(),
 			"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
 		})
 	if err != nil {
@@ -2004,6 +2005,7 @@ func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
 		"Image":          images.Get().TKEApplicationAPI.FullName(),
 		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
 		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":    t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
