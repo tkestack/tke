@@ -20,7 +20,6 @@ package chart
 
 import (
 	"context"
-	stderr "errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -34,7 +33,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
-	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	registryv1informer "tkestack.io/tke/api/client/informers/externalversions/registry/v1"
 	registryv1lister "tkestack.io/tke/api/client/listers/registry/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
@@ -61,7 +59,6 @@ const (
 // Controller is responsible for performing actions dependent upon an chart phase.
 type Controller struct {
 	client       clientset.Interface
-	authClient   authversionedclient.AuthV1Interface
 	cache        *chartCache
 	health       *chartHealth
 	queue        workqueue.RateLimitingInterface
@@ -70,8 +67,6 @@ type Controller struct {
 	stopCh       <-chan struct{}
 	// helper to delete all resources in the chart when the chart is deleted.
 	chartResourcesDeleter deletion.ChartResourcesDeleterInterface
-	// the registry server for chartmuseum
-	multiTenantServer *multitenant.MultiTenantServer
 }
 
 // NewController creates a new Controller object.
@@ -305,7 +300,6 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedChart *c
 		return c.updateStatus(ctx, chart, &chart.Status, newStatus)
 	case registryv1.ChartAvailable:
 		c.startChartHealthCheck(ctx, key)
-		break
 	}
 	return chart, nil
 }
@@ -353,7 +347,7 @@ func (c *Controller) updateChartGroup(ctx context.Context, chart *registryv1.Cha
 	}
 	if len(chartGroupList.Items) == 0 {
 		// Chart group must first be created via console
-		return stderr.New(fmt.Sprintf("chartgroup %s/%s not found", chart.Spec.TenantID, chart.Spec.ChartGroupName))
+		return fmt.Errorf("chartgroup %s/%s not found", chart.Spec.TenantID, chart.Spec.ChartGroupName)
 	}
 
 	rcg := chartGroupList.Items[0].DeepCopy()

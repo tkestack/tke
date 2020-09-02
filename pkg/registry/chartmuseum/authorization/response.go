@@ -20,8 +20,9 @@ package authorization
 
 import (
 	"fmt"
-	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"net/http"
+
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"tkestack.io/tke/pkg/registry/chartmuseum/model"
 )
 
@@ -40,10 +41,10 @@ func (a *authorization) locked(w http.ResponseWriter) {
 	responsewriters.WriteRawJSON(http.StatusLocked, err, w)
 }
 
-func (a *authorization) forbidden(w http.ResponseWriter) {
-	err := &model.ErrorResponse{Error: "forbidden"}
-	responsewriters.WriteRawJSON(http.StatusForbidden, err, w)
-}
+// func (a *authorization) forbidden(w http.ResponseWriter) {
+// 	err := &model.ErrorResponse{Error: "forbidden"}
+// 	responsewriters.WriteRawJSON(http.StatusForbidden, err, w)
+// }
 
 func (a *authorization) notAuthenticated(w http.ResponseWriter, req *http.Request) {
 	realm := fmt.Sprintf("%s://%s", a.externalScheme, req.Host)

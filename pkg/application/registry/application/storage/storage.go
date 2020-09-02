@@ -147,7 +147,7 @@ func (r *GenericREST) List(ctx context.Context, options *metainternal.ListOption
 	}
 
 	fuzzyResourceName := platformfilter.FuzzyResourceFrom(ctx)
-	wrappedOptions, fuzzyResourceName = apiserverutil.InterceptFuzzyResourceNameFromListOptions(wrappedOptions, fuzzyResourceName)
+	_, fuzzyResourceName = apiserverutil.InterceptFuzzyResourceNameFromListOptions(wrappedOptions, fuzzyResourceName)
 	applicationList := obj.(*applicationapi.AppList)
 	if fuzzyResourceName != "" {
 		var newList []applicationapi.App

@@ -22,7 +22,6 @@ import (
 	"context"
 	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -194,8 +193,8 @@ func (rs *REST) ConvertToTable(ctx context.Context, object runtime.Object, table
 func (rs *REST) createOrUpdatePolicyBinding(ctx context.Context, cg *registry.ChartGroup) error {
 	username, _ := authentication.UsernameAndTenantID(ctx)
 	pb := make([]*authv1.CustomPolicyBinding, 0)
-	users := []authv1.Subject{authv1.Subject{ID: username, Name: username}}
-	defaultAll := []authv1.Subject{authv1.Subject{ID: authutil.DefaultAll, Name: authutil.DefaultAll}}
+	users := []authv1.Subject{{ID: username, Name: username}}
+	defaultAll := []authv1.Subject{{ID: authutil.DefaultAll, Name: authutil.DefaultAll}}
 	switch cg.Spec.Type {
 	case registry.RepoTypePersonal:
 		{
@@ -350,9 +349,4 @@ func (rs *REST) deletePolicyBinding(ctx context.Context, cg *registry.ChartGroup
 		}
 	}
 	return nil
-}
-
-// validateProjectOwner validate name and tenantID, if success return ChartGroup
-func (rs *REST) validateProjectOwner(ctx context.Context, cg *registry.ChartGroup) error {
-	return apierrors.NewUnauthorized("Unauthorized to access ChartGroup")
 }

@@ -19,6 +19,7 @@
 package deletion
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -62,7 +63,7 @@ func TestFinalizeChartGroupFunc(t *testing.T) {
 		registryClient: registryClient.RegistryV1(),
 		finalizerToken: v1.ChartGroupFinalize,
 	}
-	d.finalizeChartGroup(testChartGroup)
+	d.finalizeChartGroup(context.Background(), testChartGroup)
 	actions := registryClient.Actions()
 	if len(actions) != 1 {
 		t.Errorf("Expected 1 mock client action, but got %v", len(actions))
@@ -168,7 +169,7 @@ func testSyncChartGroupThatIsTerminating(t *testing.T, versions *metav1.APIVersi
 			businessClient := fake.NewSimpleClientset(testBusinessChartGroup)
 
 			d := NewChartGroupResourcesDeleter(businessClient.BusinessV1(), registryClient.RegistryV1(), v1.ChartGroupFinalize, true)
-			if err := d.Delete(testInput.testChartGroup.Name); err != nil {
+			if err := d.Delete(context.Background(), testInput.testChartGroup.Name); err != nil {
 				t.Errorf("when syncing chartGroup, got %q", err)
 			}
 
@@ -198,7 +199,7 @@ func testSyncChartGroupThatIsTerminating(t *testing.T, versions *metav1.APIVersi
 func TestRetryOnConflictError(t *testing.T) {
 	registryClient := &fake.Clientset{}
 	numTries := 0
-	retryOnce := func(cg *v1.ChartGroup) (*v1.ChartGroup, error) {
+	retryOnce := func(ctx context.Context, cg *v1.ChartGroup) (*v1.ChartGroup, error) {
 		numTries++
 		if numTries <= 1 {
 			return cg, errors.NewConflict(v1.Resource("chartgroups"), cg.Name, fmt.Errorf("ERROR"))
@@ -209,7 +210,7 @@ func TestRetryOnConflictError(t *testing.T) {
 	d := chartGroupResourcesDeleter{
 		registryClient: registryClient.RegistryV1(),
 	}
-	_, err := d.retryOnConflictError(cg, retryOnce)
+	_, err := d.retryOnConflictError(context.Background(), cg, retryOnce)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -241,7 +242,7 @@ func TestSyncChartGroupThatIsAvailable(t *testing.T) {
 		},
 	}
 	d := NewChartGroupResourcesDeleter(nil, registryClient.RegistryV1(), v1.ChartGroupFinalize, true)
-	err := d.Delete(testChartGroup.Name)
+	err := d.Delete(context.Background(), testChartGroup.Name)
 	if err != nil {
 		t.Errorf("Unexpected error when synching namespace %v", err)
 	}
@@ -252,15 +253,4 @@ func TestSyncChartGroupThatIsAvailable(t *testing.T) {
 	if !action.Matches("get", "chartgroups") {
 		t.Errorf("Expected get chartgroups, got: %v", action)
 	}
-}
-
-// matchError returns true if errors match, false if they don't, compares by error message only for convenience which should be sufficient for these tests
-func matchErrors(e1, e2 error) bool {
-	if e1 == nil && e2 == nil {
-		return true
-	}
-	if e1 != nil && e2 != nil {
-		return e1.Error() == e2.Error()
-	}
-	return false
 }
