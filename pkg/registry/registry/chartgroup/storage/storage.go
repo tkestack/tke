@@ -152,22 +152,16 @@ func (r *GenericREST) List(ctx context.Context, options *metainternal.ListOption
 	switch registryapi.RepoType(repoType) {
 	case registryapi.RepoTypePersonal:
 		obj, err = registryutil.ListPersonalChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
-		break
 	case registryapi.RepoTypeProject:
 		obj, err = registryutil.ListProjectChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.authClient, r.privilegedUsername, r.Store)
-		break
 	case registryapi.RepoTypeSystem:
 		obj, err = registryutil.ListSystemChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
-		break
 	case registryapi.RepoTypePublic:
 		obj, err = registryutil.ListPublicChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
-		break
 	case registryapi.RepoTypeAll:
 		obj, err = registryutil.ListAllChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.authClient, r.privilegedUsername, r.Store)
-		break
 	case registryapi.RepoType(defaultType):
 		obj, err = r.Store.List(ctx, wrappedOptions)
-		break
 	default:
 		return nil, errors.NewBadRequest(fmt.Sprintf("unsupport repoType: %s", repoType))
 	}
@@ -176,7 +170,7 @@ func (r *GenericREST) List(ctx context.Context, options *metainternal.ListOption
 	}
 
 	fuzzyResourceName := platformfilter.FuzzyResourceFrom(ctx)
-	wrappedOptions, fuzzyResourceName = apiserverutil.InterceptFuzzyResourceNameFromListOptions(wrappedOptions, fuzzyResourceName)
+	_, fuzzyResourceName = apiserverutil.InterceptFuzzyResourceNameFromListOptions(wrappedOptions, fuzzyResourceName)
 	chartGroupList := obj.(*registryapi.ChartGroupList)
 	if fuzzyResourceName != "" {
 		var newList []registryapi.ChartGroup

@@ -24,7 +24,7 @@ import (
 
 // Filter returning a release of matches.
 func Filter(rels []*release.Release, namespace, name string) (*release.Release, bool) {
-	if rels == nil || len(rels) == 0 {
+	if len(rels) == 0 {
 		return nil, false
 	}
 	for _, v := range rels {

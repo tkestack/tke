@@ -70,23 +70,3 @@ func (s *chartCache) delete(name string) {
 	defer s.mu.Unlock()
 	delete(s.m, name)
 }
-
-func (s *chartCache) listKeys() []string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	keys := make([]string, 0, len(s.m))
-	for k := range s.m {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-func (s *chartCache) allCharts() []*registryv1.Chart {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	charts := make([]*registryv1.Chart, 0, len(s.m))
-	for _, v := range s.m {
-		charts = append(charts, v.state)
-	}
-	return charts
-}

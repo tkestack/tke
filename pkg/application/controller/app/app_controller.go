@@ -322,7 +322,6 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedApp *cac
 		if app.Status.RollbackRevision > 0 {
 			return action.Rollback(ctx, c.client.ApplicationV1(), c.platformClient, app, c.repo, c.updateStatus)
 		}
-		break
 	case applicationv1.AppPhaseRolledBack:
 		// sync release status
 		return c.syncAppFromRelease(ctx, cachedApp, app)
