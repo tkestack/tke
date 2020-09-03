@@ -252,7 +252,7 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({
     url: url + queryString,
-    projectId: filter.projectID ? filter.projectID : undefined,
+    projectId: filter.projectID ? filter.projectID : '',
     keyword
   });
   let objs: Chart[] = !rr.error && rr.data.items ? rr.data.items : [];
@@ -284,7 +284,7 @@ export async function fetchChartInfo(filter: ChartInfoFilter) {
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({
     url: url + '/' + filter.chartVersion + queryString,
-    projectId: filter.projectID
+    projectId: filter.projectID ? filter.projectID : ''
   });
   return rr.data;
 }
