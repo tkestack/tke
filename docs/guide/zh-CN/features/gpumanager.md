@@ -29,19 +29,21 @@ GPU Manager提供一个All-in-One的GPU管理器, 基于Kubernets Device Plugin�
 
 1. 该组件基于Kubernetes DevicePlugin实现, 只能运行在支持DevicePlugin的TKE的1.10kubernetes版本之上。
 
-2. 每张GPU卡一共有100个单位的资源, 仅支持0-1的小数卡,以及1的倍数的整数卡设置. 显存资源是以256MiB为最小的一个单位的分配显存。
+2. 每张GPU卡一共有100个单位的资源, 仅支持0-1的小数卡,以及1的倍数的整数卡设置，如200、500等，不支持类似150、250的资源请求. 显存资源是以256MiB为最小的一个单位的分配显存。
 
 3. 使用GPU-Manager 要求集群内包含GPU机型节点。
 
 ## GPU-Manager使用方法
 
-1. 安装GPU-Manager扩展组件
+1. 集群部署时选择vGPU, 平台会为集群部署GPUManager插件负载。
 
-2. 在安装了GPU-Manager扩展组件的集群中，创建工作负载。
+2. 添加GPU节点时勾选GPU选项，平台会为节点安装GPU驱动。
 
-3. 创建工作负载设置GPU限制，如图：
+3. 在安装了GPU-Manager扩展组件的集群中，创建工作负载。
 
-4. ![](https://main.qcloudimg.com/raw/c06872ddc0fafbf92345c0d9f26e4ecd.png)
+4. 创建工作负载设置GPU限制，如图：
+
+  ![](https://main.qcloudimg.com/raw/c06872ddc0fafbf92345c0d9f26e4ecd.png)
 
 ### yaml创建
 
@@ -50,43 +52,46 @@ GPU Manager提供一个All-in-One的GPU管理器, 基于Kubernets Device Plugin�
 - 使用1张卡
 
 ```
-
 apiVersion: v1
-
 kind: Pod
-
-...
-
+metadata:
+  name: example-gpu
 spec:
-
-containers:
-
-- name: gpu
-
-resources:
-
-tencent.com/vcuda-core: 100
+  containers:
+  - name: example-gpu
+    ... ...
+    resources:
+      limits: 
+        tencent.com/vcuda-core: 100
+      requests:
+        tencent.com/vcuda-core: 100
 ```
 
 - 使用0.3张卡, 5GiB显存的应用（20*256MB）
 
 ```
-
 apiVersion: v1
-
 kind: Pod
-
-...
-
+metadata:
+  name: example-gpu
 spec:
-
-containers:
-
-- name: gpu
-
-resources:
-
-tencent.com/vcuda-core: 30
-
-tencent.com/vcuda-memory: 20
+  containers:
+  - name: example-gpu
+    ... ...
+    resources:
+      limits: 
+        tencent.com/vcuda-core: 30
+        tencent.com/vcuda-memory: 20
+      requests:
+        tencent.com/vcuda-core: 30
+        tencent.com/vcuda-memory: 20
 ```
+### Metric指标查询
+手动获取Metric数据方式（需要先安装socat）：
+
+```
+kubectl port-forward svc/gpu-manager-metric -n kube-system 5678:5678 &
+curl http://127.0.0.1:5678/metric
+```
+结果示例：
+![img](https://qqadapt.qpic.cn/txdocpic/0/46566bc5f81e3923f2df181e03676678/0?w=2620&h=928)
