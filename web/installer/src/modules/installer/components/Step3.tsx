@@ -111,7 +111,9 @@ export class Step3 extends React.Component<RootProps> {
                 <>
                   平台会自动为集群安装
                   <ExternalLink
-                    href={'https://github.com/tkestack/tke/blob/master/docs/guide/zh-CN/features/gpumanager.md'}
+                    href={
+                      'https://github.com/tkestack/docs/blob/master/docs/zh/%E4%BA%A7%E5%93%81%E7%89%B9%E8%89%B2%E5%8A%9F%E8%83%BD/GPUManager.md'
+                    }
                   >
                     GPUManager
                   </ExternalLink>
@@ -120,9 +122,7 @@ export class Step3 extends React.Component<RootProps> {
               ) : (
                 <>
                   平台会自动为集群安装
-                  <ExternalLink href={'https://github.com/NVIDIA/k8s-device-plugin%EF%BC%89'}>
-                    nvidia-k8s-plugin
-                  </ExternalLink>
+                  <ExternalLink href={'https://github.com/NVIDIA/k8s-device-plugin'}>nvidia-k8s-plugin</ExternalLink>
                 </>
               )
             }

@@ -442,6 +442,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           userType,
           projects
         });
+        let isInBlankPage = window.location.pathname.indexOf('tkestack/blank') !== -1;
         if (userType === UserType.member && this.props.platformType === PlatformTypeEnum.Manager) {
           location.href = location.origin + '/tkestack-project/application';
         } else if (
@@ -450,8 +451,14 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           this.props.platformType === PlatformTypeEnum.Business
         ) {
           location.href = location.origin + '/tkestack';
-        } else if (userType === UserType.other && window.location.pathname.indexOf('tkestack/blank') === -1) {
+        } else if (userType === UserType.other && !isInBlankPage) {
           window.location.pathname = 'tkestack/blank';
+        } else if (isInBlankPage) {
+          if (userType === UserType.admin) {
+            location.href = location.origin + '/tkestack';
+          } else if (userType === UserType.member) {
+            location.href = location.origin + '/tkestack-project/application';
+          }
         }
       }
     } catch (error) {}

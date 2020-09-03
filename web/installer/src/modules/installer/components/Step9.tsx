@@ -124,9 +124,12 @@ export class Step9 extends React.Component<RootProps> {
           <Form.Item label="是否开启">
             <Form.Text>{editState.openAudit ? '是' : '否'}</Form.Text>
           </Form.Item>
-          <Form.Item label="ES地址">
-            <Form.Text>{editState.auditEsUrl}</Form.Text>
-          </Form.Item>
+          {editState.openAudit && (
+            <Form.Item label="ES地址">
+              <Form.Text>{editState.auditEsUrl}</Form.Text>
+            </Form.Item>
+          )}
+
           {(editState.auditEsUsername || editState.auditEsPassword) && (
             <>
               <Form.Item label="用户名">
