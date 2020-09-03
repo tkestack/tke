@@ -687,7 +687,7 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
   let opts = { resourceInfo: resourceInfo };
   // if (filter.namespace) {
   //   opts['namespace'] = filter.namespace;
-  //   opts['toSplitIfProjectNamespace'] = false;
+  //   opts['isSpetialNamespace'] = true;
   // }
   const url = reduceK8sRestfulPath(opts);
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
@@ -715,7 +715,7 @@ export async function fetchChart(filter: ChartDetailFilter) {
     resourceInfo,
     namespace: filter.namespace,
     specificName: filter.name,
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   let rr: RequestResult = await GET({ url, projectId: filter.projectID });
   return rr.data;
@@ -731,7 +731,7 @@ export async function updateChart([chartInfo], filter: ChartDetailFilter) {
     resourceInfo,
     namespace: chartInfo.metadata.namespace,
     specificName: chartInfo.metadata.name,
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   let rr: RequestResult = await PUT({ url, bodyData: chartInfo, projectId: filter.projectID });
   return operationResult(rr.data, rr.error);
@@ -754,7 +754,7 @@ export async function deleteChartVersion([chartVersion]: ChartVersion[], filter:
     namespace: filter.chartDetailFilter.namespace,
     specificName: filter.chartDetailFilter.name,
     extraResource: 'version',
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await DELETE({ url: url + queryString, projectId: filter.chartDetailFilter.projectID });
@@ -786,7 +786,7 @@ export async function fetchChartInfo(filter: ChartInfoFilter) {
     namespace: filter.metadata.namespace,
     specificName: filter.metadata.name,
     extraResource: 'info',
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, projectId: filter.projectID });
@@ -802,7 +802,7 @@ export async function addApp([appInfo]) {
   const url = reduceK8sRestfulPath({
     resourceInfo,
     namespace: appInfo.metadata.namespace,
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   let rr: RequestResult = await POST({ url, bodyData: appInfo });
   return operationResult(rr.data, rr.error);

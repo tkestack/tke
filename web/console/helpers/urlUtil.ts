@@ -114,8 +114,6 @@ interface K8sRestfulPathOptions {
 
   meshId?: string;
 
-  /** 业务视图是否切分namespace */
-  toSplitIfProjectNamespace?: boolean;
 }
 
 /**
@@ -130,7 +128,6 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
   let {
     resourceInfo,
     namespace = '',
-    isSpetialNamespace = false,
     specificName = '',
     extraResource = '',
     clusterId = '',

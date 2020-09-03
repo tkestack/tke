@@ -98,7 +98,7 @@ export async function fetchAppList(query: QueryState<AppFilter>) {
   const { keyword, filter } = query;
   const queryObj = {};
   const resourceInfo: ResourceInfo = resourceConfig()['app'];
-  const url = reduceK8sRestfulPath({ resourceInfo, namespace: filter.namespace, toSplitIfProjectNamespace: false });
+  const url = reduceK8sRestfulPath({ resourceInfo, namespace: filter.namespace, isSpetialNamespace: true });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, clusterId: filter.cluster, keyword });
   let objs: App[] = !rr.error && rr.data.items ? rr.data.items : [];
@@ -119,7 +119,7 @@ export async function fetchApp(filter: AppDetailFilter) {
     resourceInfo,
     namespace: filter.namespace,
     specificName: filter.name,
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   let rr: RequestResult = await GET({ url, tipErr: true, clusterId: filter.cluster });
   return rr.data;
@@ -135,7 +135,7 @@ export async function updateApp([appInfo]) {
     resourceInfo,
     namespace: appInfo.metadata.namespace,
     specificName: appInfo.metadata.name,
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   let rr: RequestResult = await PUT({ url, bodyData: appInfo });
   return operationResult(rr.data, rr.error);
@@ -150,7 +150,7 @@ export async function addApp([appInfo]) {
   const url = reduceK8sRestfulPath({
     resourceInfo,
     namespace: appInfo.metadata.namespace,
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   let rr: RequestResult = await POST({ url, bodyData: appInfo });
   return operationResult(rr.data, rr.error);
@@ -166,7 +166,7 @@ export async function deleteApp([app]: App[]) {
     resourceInfo,
     namespace: app.metadata.namespace,
     specificName: app.metadata.name,
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   let rr: RequestResult = await DELETE({ url });
   return operationResult(rr.data, rr.error);
@@ -183,7 +183,7 @@ export async function fetchAppResource(filter: AppResourceFilter) {
     namespace: filter.namespace,
     specificName: filter.name,
     extraResource: 'resources',
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   let rr: RequestResult = await GET({ url, tipErr: true, clusterId: filter.cluster });
   return rr.data;
@@ -200,7 +200,7 @@ export async function fetchAppHistory(filter: AppHistoryFilter) {
     namespace: filter.namespace,
     specificName: filter.name,
     extraResource: 'histories',
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   let rr: RequestResult = await GET({ url, tipErr: true, clusterId: filter.cluster });
   return rr.data;
@@ -224,7 +224,7 @@ export async function rollbackApp([app]: History[]) {
     namespace: namespace,
     specificName: name,
     extraResource: 'rollback',
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await POST({ url: url + queryString, bodyData: {}, tipErr: true, clusterId: cluster });
@@ -246,7 +246,7 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
   let opts = { resourceInfo: resourceInfo };
   if (filter.namespace) {
     opts['namespace'] = filter.namespace;
-    opts['toSplitIfProjectNamespace'] = false;
+    opts['isSpetialNamespace'] = true;
   }
   const url = reduceK8sRestfulPath(opts);
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
@@ -280,7 +280,7 @@ export async function fetchChartInfo(filter: ChartInfoFilter) {
     namespace: filter.metadata.namespace,
     specificName: filter.metadata.name,
     extraResource: 'info',
-    toSplitIfProjectNamespace: false
+    isSpetialNamespace: true
   });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({ url: url + queryString, tipErr: true, projectId: filter.projectID });
