@@ -262,7 +262,7 @@ const businessCommonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维中心',
-    watchModule: [ConsoleModuleEnum.LogAgent],
+    watchModule: [ConsoleModuleEnum.Application, ConsoleModuleEnum.LogAgent],
     subRouterConfig: [
       {
         url: '/tkestack-project/log',
