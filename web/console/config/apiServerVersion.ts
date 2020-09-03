@@ -73,7 +73,7 @@ export const logAgentServiceVersion = {
   group: 'logagent.tkestack.io',
   version: 'v1'
 };
- 
+
 /**
  * 仓库模块
  */
