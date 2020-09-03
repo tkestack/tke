@@ -156,13 +156,9 @@ export class KubectlDialog extends React.Component<RootProps, any> {
             <Trans>
               <h3 style={{ marginBottom: '1em' }}>通过Kubectl连接Kubernetes集群操作说明:</h3>
               <p style={{ marginBottom: '5px' }}>
-                1. 安装 Kubectl 客户端：从
-                <ExternalLink href="https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG.md">
-                  Kubernetes 版本页面
-                </ExternalLink>
-                下载最新的 kubectl 客户端，并安装和设置 kubectl 客户端，具体可参考
-                <ExternalLink href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">
-                  安装和设置 kubectl
+                1.
+                <ExternalLink href="https://kubernetes.io/zh/docs/tasks/tools/install-kubectl/">
+                  安装和设置kubectl
                 </ExternalLink>
                 。
               </p>
