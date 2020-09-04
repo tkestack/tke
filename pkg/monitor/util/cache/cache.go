@@ -49,12 +49,13 @@ type Component string
 const (
 	AllNamespaces = ""
 
-	ClusterClientSet = "ClusterClientSet"
-	WorkloadCounter  = "WorkloadCounter"
-	ResourceCounter  = "ResourceCounter"
-	ClusterPhase     = "ClusterPhase"
-	TenantID         = "TenantID"
-	ComponentHealth  = "ComponentHealth"
+	ClusterClientSet   = "ClusterClientSet"
+	WorkloadCounter    = "WorkloadCounter"
+	ResourceCounter    = "ResourceCounter"
+	ClusterPhase       = "ClusterPhase"
+	TenantID           = "TenantID"
+	ClusterDisplayName = "ClusterDisplayName"
+	ComponentHealth    = "ComponentHealth"
 
 	TAppResourceName = "tapps"
 	TAppGroupName    = "apps.tkestack.io"
@@ -86,7 +87,7 @@ var (
 
 type Cacher interface {
 	Reload()
-	GetClusterOverviewResult(clusterIDs []string) *monitor.ClusterOverviewResult
+	GetClusterOverviewResult(clusters []*platformv1.Cluster) *monitor.ClusterOverviewResult
 }
 
 type cacher struct {
@@ -139,11 +140,13 @@ func (c *cacher) getClusters() {
 						finished, allTask, cls.GetName(), time.Since(started).Seconds())
 				}()
 				clusterID := cls.GetName()
+				clusterDisplayName := cls.Spec.DisplayName
 				tenantID := cls.Spec.TenantID
 				if cls.Status.Phase != platformv1.ClusterRunning {
 					syncMap.Store(clusterID, map[string]interface{}{
-						ClusterPhase: string(cls.Status.Phase),
-						TenantID:     tenantID,
+						ClusterDisplayName: clusterDisplayName,
+						ClusterPhase:       string(cls.Status.Phase),
+						TenantID:           tenantID,
 					})
 					return
 				}
@@ -163,12 +166,13 @@ func (c *cacher) getClusters() {
 				health := &util.ComponentHealth{}
 				c.getComponentStatuses(clusterID, clientSet, health)
 				syncMap.Store(clusterID, map[string]interface{}{
-					ClusterClientSet: clientSet,
-					WorkloadCounter:  workloadCounter,
-					ResourceCounter:  resourceCounter,
-					ClusterPhase:     string(cls.Status.Phase),
-					TenantID:         tenantID,
-					ComponentHealth:  health,
+					ClusterClientSet:   clientSet,
+					WorkloadCounter:    workloadCounter,
+					ResourceCounter:    resourceCounter,
+					ClusterPhase:       string(cls.Status.Phase),
+					ClusterDisplayName: clusterDisplayName,
+					TenantID:           tenantID,
+					ComponentHealth:    health,
 				})
 			}(clusters.Items[i])
 		}
@@ -182,6 +186,7 @@ func (c *cacher) getClusters() {
 		syncMap.Range(func(key, value interface{}) bool {
 			clusterID := key.(string)
 			val := value.(map[string]interface{})
+			clusterDisplayName := val[ClusterDisplayName].(string)
 			tenantID := val[TenantID].(string)
 			clusterPhase := val[ClusterPhase].(string)
 			if clusterPhase == string(platformv1.ClusterRunning) {
@@ -192,6 +197,7 @@ func (c *cacher) getClusters() {
 				c.clusterClientSets[clusterID] = clusterClientSet
 				c.clusterStatisticSet[clusterID] = &monitor.ClusterStatistic{
 					ClusterID:                clusterID,
+					ClusterDisplayName:       clusterDisplayName,
 					TenantID:                 tenantID,
 					ClusterPhase:             clusterPhase,
 					NodeCount:                int32(resourceCounter.NodeTotal),
@@ -222,9 +228,10 @@ func (c *cacher) getClusters() {
 				}
 			} else {
 				c.clusterStatisticSet[clusterID] = &monitor.ClusterStatistic{
-					ClusterID:    clusterID,
-					ClusterPhase: clusterPhase,
-					TenantID:     tenantID,
+					ClusterID:          clusterID,
+					ClusterDisplayName: clusterDisplayName,
+					ClusterPhase:       clusterPhase,
+					TenantID:           tenantID,
 				}
 			}
 			return true
@@ -254,7 +261,7 @@ func (c *cacher) getMetricServerClientSet(ctx context.Context, cls *platformv1.C
 func (c *cacher) getProjects() {
 }
 
-func (c *cacher) GetClusterOverviewResult(clusterIDs []string) *monitor.ClusterOverviewResult {
+func (c *cacher) GetClusterOverviewResult(clusters []*platformv1.Cluster) *monitor.ClusterOverviewResult {
 	if atomic.LoadInt32(&c.firstLoad) == FirstLoad {
 		c.RLock()
 		defer c.RUnlock()
@@ -262,12 +269,16 @@ func (c *cacher) GetClusterOverviewResult(clusterIDs []string) *monitor.ClusterO
 
 	clusterStatistics := make([]*monitor.ClusterStatistic, 0)
 	result := &monitor.ClusterOverviewResult{}
-	result.ClusterCount = int32(len(clusterIDs))
+	result.ClusterCount = int32(len(clusters))
 	result.ClusterAbnormal = int32(c.clusterAbnormal)
 	result.NodeAbnormal = 0
 	result.WorkloadAbnormal = 0
-	for _, clusterID := range clusterIDs {
-		if clusterStatistic, ok := c.clusterStatisticSet[clusterID]; ok {
+	for i := 0; i < len(clusters); i++ {
+		cls := clusters[i]
+		if clusterStatistic, ok := c.clusterStatisticSet[cls.GetName()]; ok {
+			if clusterStatistic.ClusterDisplayName != cls.Spec.DisplayName && len(cls.Spec.DisplayName) > 0 {
+				clusterStatistic.ClusterDisplayName = cls.Spec.DisplayName
+			}
 			result.NodeCount += clusterStatistic.NodeCount
 			result.NodeAbnormal += clusterStatistic.NodeAbnormal
 			result.WorkloadCount += clusterStatistic.WorkloadCount

@@ -30,6 +30,7 @@ import (
 	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/monitor"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/monitor/util/cache"
@@ -89,13 +90,13 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateOb
 	log.Infof("create cluster overview: %+v, tenantID: %+v, wrappedOptions: %+v",
 		listOptions, tenantID, wrappedOptions)
 
-	clusterIDs := make([]string, 0)
+	clusters := make([]*platformv1.Cluster, 0)
 	if clusterList, err := r.platformClient.Clusters().List(ctx, listOptions); err == nil && clusterList != nil {
-		for _, cls := range clusterList.Items {
-			clusterIDs = append(clusterIDs, cls.GetName())
+		for i := 0; i < len(clusterList.Items); i++ {
+			clusters = append(clusters, &clusterList.Items[i])
 		}
 	}
-	clusterOverview.Result = r.cacher.GetClusterOverviewResult(clusterIDs)
+	clusterOverview.Result = r.cacher.GetClusterOverviewResult(clusters)
 
 	if r.businessClient == nil {
 		log.Info("The client for Business API Server is not installed")

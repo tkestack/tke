@@ -228,6 +228,7 @@ type ClusterOverviewResult struct {
 
 type ClusterStatistic struct {
 	ClusterID                string
+	ClusterDisplayName       string
 	TenantID                 string
 	ClusterPhase             string
 	NodeCount                int32
