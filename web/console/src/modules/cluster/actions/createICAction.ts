@@ -22,6 +22,13 @@ export const createICAction = {
         type: ActionType.IC_FetchK8SVersion,
         payload: response
       });
+
+      if (response.length) {
+        dispatch({
+          type: ActionType.IC_K8SVersion,
+          payload: response[0].value
+        });
+      }
     };
   },
 
