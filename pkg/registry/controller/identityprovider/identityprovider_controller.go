@@ -37,7 +37,9 @@ import (
 	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
+	registryconfigv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
 	registrycontrollerconfig "tkestack.io/tke/pkg/registry/controller/config"
+	"tkestack.io/tke/pkg/registry/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -57,6 +59,8 @@ type Controller struct {
 
 	stopCh                       <-chan struct{}
 	registryDefaultConfiguration registrycontrollerconfig.RegistryDefaultConfiguration
+	registryConfig               *registryconfigv1.RegistryConfiguration
+	corednsClient                *util.CoreDNS
 }
 
 func NewController(authClient authversionedclient.AuthV1Interface,
@@ -64,12 +68,19 @@ func NewController(authClient authversionedclient.AuthV1Interface,
 	identityProviderInformer authv1informer.IdentityProviderInformer,
 	resyncPeriod time.Duration,
 	registryDefaultConfiguration registrycontrollerconfig.RegistryDefaultConfiguration,
+	registryConfig *registryconfigv1.RegistryConfiguration,
 ) *Controller {
+	corednsClient, err := util.NewCoreDNS()
+	if err != nil {
+		log.Error("create coredns client failed", log.Err(err))
+	}
 	controller := Controller{
 		client:                       client,
 		authClient:                   authClient,
 		queue:                        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
 		registryDefaultConfiguration: registryDefaultConfiguration,
+		registryConfig:               registryConfig,
+		corednsClient:                corednsClient,
 	}
 
 	if authClient != nil && authClient.RESTClient().GetRateLimiter() != nil {
@@ -180,6 +191,10 @@ func (c *Controller) syncItem(key string) error {
 	default:
 		log.Info("Init default registry setting for identityProvider", log.Any("name", idp.Name))
 		err = c.processUpdateItem(context.Background(), idp, key)
+		if c.corednsClient != nil {
+			item := fmt.Sprintf("%s.%s", idp.Name, c.registryConfig.DomainSuffix)
+			c.corednsClient.ParseCoreFile(item)
+		}
 	}
 	return err
 }
