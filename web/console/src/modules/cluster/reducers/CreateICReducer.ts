@@ -19,7 +19,7 @@ const TempReducer = combineReducers({
 
   maxNodePodNum: reduceToPayload(ActionType.IC_MaxNodePodNum, 256),
 
-  k8sVersion: reduceToPayload(ActionType.IC_K8SVersion, '1.16.6'),
+  k8sVersion: reduceToPayload(ActionType.IC_K8SVersion, ''),
 
   k8sVersionList: reduceToPayload(ActionType.IC_FetchK8SVersion, []),
 
