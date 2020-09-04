@@ -260,6 +260,7 @@ func Convert_monitor_ClusterOverviewResult_To_v1_ClusterOverviewResult(in *monit
 
 func autoConvert_v1_ClusterStatistic_To_monitor_ClusterStatistic(in *ClusterStatistic, out *monitor.ClusterStatistic, s conversion.Scope) error {
 	out.ClusterID = in.ClusterID
+	out.ClusterDisplayName = in.ClusterDisplayName
 	out.TenantID = in.TenantID
 	out.ClusterPhase = in.ClusterPhase
 	out.NodeCount = in.NodeCount
@@ -297,6 +298,7 @@ func Convert_v1_ClusterStatistic_To_monitor_ClusterStatistic(in *ClusterStatisti
 
 func autoConvert_monitor_ClusterStatistic_To_v1_ClusterStatistic(in *monitor.ClusterStatistic, out *ClusterStatistic, s conversion.Scope) error {
 	out.ClusterID = in.ClusterID
+	out.ClusterDisplayName = in.ClusterDisplayName
 	out.TenantID = in.TenantID
 	out.ClusterPhase = in.ClusterPhase
 	out.NodeCount = in.NodeCount
