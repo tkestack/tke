@@ -38,12 +38,12 @@ import (
 )
 
 type Storage struct {
-	LogAgent        *REST
-	LogFileTree     *FileNodeREST
-	LogFileContent  *FileContentREST
-	LogFileDownload *FileDownloadREST
-	LogagentProxy   *LogagentProxyREST
-	Status          *StatusREST
+	LogAgent       *REST
+	LogFileTree    *FileNodeREST
+	LogFileContent *FileContentREST
+	LogagentProxy  *LogagentProxyREST
+	LogfileProxy   *LogfileProxyREST
+	Status         *StatusREST
 }
 
 // NewStorage returns a Storage object that will work against channels.
@@ -76,12 +76,12 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 	statusStore.ExportStrategy = registrylogagent.NewStatusStrategy(strategy)
 
 	return &Storage{
-		LogAgent:        &REST{store, privilegedUsername},
-		LogFileTree:     &FileNodeREST{store, platformClient},
-		LogFileContent:  &FileContentREST{store, platformClient},
-		LogFileDownload: &FileDownloadREST{store, platformClient},
-		LogagentProxy:   &LogagentProxyREST{store, platformClient},
-		Status:          &StatusREST{&statusStore},
+		LogAgent:       &REST{store, privilegedUsername},
+		LogFileTree:    &FileNodeREST{store, platformClient},
+		LogFileContent: &FileContentREST{store, platformClient},
+		LogagentProxy:  &LogagentProxyREST{store, platformClient},
+		LogfileProxy:   &LogfileProxyREST{store, platformClient},
+		Status:         &StatusREST{&statusStore},
 	}
 
 }

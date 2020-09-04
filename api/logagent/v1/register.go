@@ -53,7 +53,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&LogAgentProxyOptions{},
 		&LogFileTree{},
 		&LogFileContent{},
-		&LogFileDownload{},
+		&LogFileProxyOptions{},
 		&ConfigMap{},
 		&ConfigMapList{},
 	)
