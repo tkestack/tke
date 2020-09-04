@@ -873,8 +873,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/logagent/v1.LogAgentStatus":                              schema_tke_api_logagent_v1_LogAgentStatus(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileContent":                              schema_tke_api_logagent_v1_LogFileContent(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileContentSpec":                          schema_tke_api_logagent_v1_LogFileContentSpec(ref),
-		"tkestack.io/tke/api/logagent/v1.LogFileDownload":                             schema_tke_api_logagent_v1_LogFileDownload(ref),
-		"tkestack.io/tke/api/logagent/v1.LogFileDownloadSpec":                         schema_tke_api_logagent_v1_LogFileDownloadSpec(ref),
+		"tkestack.io/tke/api/logagent/v1.LogFileProxyOptions":                         schema_tke_api_logagent_v1_LogFileProxyOptions(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileTree":                                 schema_tke_api_logagent_v1_LogFileTree(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileTreeSpec":                             schema_tke_api_logagent_v1_LogFileTreeSpec(ref),
 		"tkestack.io/tke/api/monitor/v1.ClusterOverview":                              schema_tke_api_monitor_v1_ClusterOverview(ref),
@@ -41733,11 +41732,11 @@ func schema_tke_api_logagent_v1_LogFileContentSpec(ref common.ReferenceCallback)
 	}
 }
 
-func schema_tke_api_logagent_v1_LogFileDownload(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_tke_api_logagent_v1_LogFileProxyOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "LogFileDownload",
+				Description: "LogFileProxyOptions is the query options to a kube-apiserver proxy call for LogFile requests.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -41754,39 +41753,7 @@ func schema_tke_api_logagent_v1_LogFileDownload(ref common.ReferenceCallback) co
 							Format:      "",
 						},
 					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("tkestack.io/tke/api/logagent/v1.LogFileDownloadSpec"),
-						},
-					},
-				},
-				Required: []string{"spec"},
-			},
-		},
-		Dependencies: []string{
-			"tkestack.io/tke/api/logagent/v1.LogFileDownloadSpec"},
-	}
-}
-
-func schema_tke_api_logagent_v1_LogFileDownloadSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"clusterId": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
 					"namespace": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"container": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -41798,19 +41765,7 @@ func schema_tke_api_logagent_v1_LogFileDownloadSpec(ref common.ReferenceCallback
 							Format: "",
 						},
 					},
-					"start": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
-						},
-					},
-					"length": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int32",
-						},
-					},
-					"filepath": {
+					"container": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
