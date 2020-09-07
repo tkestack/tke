@@ -377,8 +377,19 @@ type ExternalAuthzWebhookAddr struct {
 }
 
 const (
+	// node lifecycle hook
 	HookPreInstall  HookType = "PreInstall"
 	HookPostInstall HookType = "PostInstall"
+	HookPreUpgrade  HookType = "PreUpgrade"
+	HookPostUpgrade HookType = "PostUpgrade"
+
+	// custer lifecycle hook
+	HookPreClusterInstall  HookType = "PreClusterInstall"
+	HookPostClusterInstall HookType = "PostClusterInstall"
+	HookPreClusterUpgrade  HookType = "PreClusterUpgrade"
+	HookPostClusterUpgrade HookType = "PostClusterUpgrade"
+	HookPreClusterDelete   HookType = "PreClusterDelete"
+	HookPostClusterDelete  HookType = "PostClusterDelete"
 )
 
 // ClusterProperty records the attribute information of the cluster.
