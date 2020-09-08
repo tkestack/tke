@@ -31,6 +31,7 @@ import (
 	v1 "tkestack.io/tke/api/platform/v1"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -302,7 +303,16 @@ func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machin
 		return err
 	}
 
-	err = clientset.CoreV1().Nodes().Delete(context.Background(), machine.Spec.IP, metav1.DeleteOptions{})
+	node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+		log.FromContext(ctx).Info("deleteNode done")
+		return nil
+	}
+
+	err = clientset.CoreV1().Nodes().Delete(context.Background(), node.Name, metav1.DeleteOptions{})
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err

@@ -1833,6 +1833,7 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	if err := Convert_v1_Upgrade_To_platform_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err
 	}
+	out.HostnameAsNodename = in.HostnameAsNodename
 	return nil
 }
 
@@ -1870,6 +1871,7 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	if err := Convert_platform_Upgrade_To_v1_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err
 	}
+	out.HostnameAsNodename = in.HostnameAsNodename
 	return nil
 }
 

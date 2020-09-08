@@ -44,7 +44,7 @@ func (p *Provider) EnsureUpgrade(ctx context.Context, machine *platformv1.Machin
 
 	option := kubeadm.UpgradeOption{
 		MachineName: machine.Name,
-		NodeName:    machine.Spec.IP,
+		MachineIP:   machine.Spec.IP,
 		NodeRole:    kubeadm.NodeRoleWorker,
 		Version:     cluster.Spec.Version,
 		MaxUnready:  cluster.Spec.Upgrade.Strategy.MaxUnready,

@@ -122,6 +122,9 @@ type ClusterSpec struct {
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade
+	// If true will use hostname as nodename, if false will use machine IP as nodename.
+	// +optional
+	HostnameAsNodename bool
 }
 
 // ClusterStatus represents information about the status of a cluster.

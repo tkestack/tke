@@ -1779,8 +1779,9 @@ func (t *TKE) installTKEBusinessController(ctx context.Context) error {
 func (t *TKE) installInfluxDB(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/influxdb/*.yaml",
 		map[string]interface{}{
-			"Image":    images.Get().InfluxDB.FullName(),
-			"NodeName": t.servers[0],
+			"Image":             images.Get().InfluxDB.FullName(),
+			"NodeSelectorKey":   apiclient.LabelMachineIP,
+			"NodeSelectorValue": t.servers[0],
 		})
 	if err != nil {
 		return err
@@ -1947,15 +1948,16 @@ func (t *TKE) installTKENotifyController(ctx context.Context) error {
 
 func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKERegistryAPI.FullName(),
-		"NodeName":       t.servers[0],
-		"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
-		"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
-		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-		"EnableBusiness": t.businessEnabled(),
-		"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
-		"EnableAudit":    t.auditEnabled(),
+		"Replicas":          t.Config.Replicas,
+		"Image":             images.Get().TKERegistryAPI.FullName(),
+		"NodeSelectorKey":   apiclient.LabelMachineIP,
+		"NodeSelectorValue": t.servers[0],
+		"AdminUsername":     t.Para.Config.Registry.TKERegistry.Username,
+		"AdminPassword":     string(t.Para.Config.Registry.TKERegistry.Password),
+		"EnableAuth":        t.Para.Config.Auth.TKEAuth != nil,
+		"EnableBusiness":    t.businessEnabled(),
+		"DomainSuffix":      t.Para.Config.Registry.TKERegistry.Domain,
+		"EnableAudit":       t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -1979,14 +1981,15 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 func (t *TKE) installTKERegistryController(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-controller/*.yaml",
 		map[string]interface{}{
-			"Replicas":       t.Config.Replicas,
-			"Image":          images.Get().TKERegistryController.FullName(),
-			"NodeName":       t.servers[0],
-			"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
-			"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
-			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-			"EnableBusiness": t.businessEnabled(),
-			"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
+			"Replicas":          t.Config.Replicas,
+			"Image":             images.Get().TKERegistryController.FullName(),
+			"NodeSelectorKey":   apiclient.LabelMachineIP,
+			"NodeSelectorValue": t.servers[0],
+			"AdminUsername":     t.Para.Config.Registry.TKERegistry.Username,
+			"AdminPassword":     string(t.Para.Config.Registry.TKERegistry.Password),
+			"EnableAuth":        t.Para.Config.Auth.TKEAuth != nil,
+			"EnableBusiness":    t.businessEnabled(),
+			"DomainSuffix":      t.Para.Config.Registry.TKERegistry.Domain,
 		})
 	if err != nil {
 		return err

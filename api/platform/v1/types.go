@@ -127,6 +127,9 @@ type ClusterSpec struct {
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
+	// If true will use hostname as nodename, if false will use machine IP as nodename.
+	// +optional
+	HostnameAsNodename bool `json:"hostnameAsNodename,omitempty" protobuf:"bytes,23,opt,name=hostnameAsNodename"`
 }
 
 // ClusterStatus represents information about the status of a cluster.

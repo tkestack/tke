@@ -23,6 +23,7 @@ import (
 
 	"github.com/imdario/mergo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
@@ -32,6 +33,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/json"
 )
 
@@ -45,17 +47,24 @@ func (p *Provider) getKubeadmInitConfig(c *v1.Cluster) *kubeadm.InitConfig {
 	return config
 }
 
-func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadmv1beta2.JoinConfiguration {
+func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubeadmv1beta2.JoinConfiguration {
 	apiServerEndpoint, err := c.HostForBootstrap()
 	if err != nil {
 		panic(err)
 	}
 
+	nodeRegistration := kubeadmv1beta2.NodeRegistrationOptions{}
+	kubeletExtraArgs := p.getKubeletExtraArgs(c)
+	// add label to get node by machine ip.
+	kubeletExtraArgs["node-labels"] = fields.OneTermEqualSelector(string(apiclient.LabelMachineIP), machineIP).String()
+	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
+
+	if !c.Spec.HostnameAsNodename {
+		nodeRegistration.Name = machineIP
+	}
+
 	return &kubeadmv1beta2.JoinConfiguration{
-		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
-			Name:             nodeName,
-			KubeletExtraArgs: p.getKubeletExtraArgs(c),
-		},
+		NodeRegistration: nodeRegistration,
 		Discovery: kubeadmv1beta2.Discovery{
 			BootstrapToken: &kubeadmv1beta2.BootstrapTokenDiscovery{
 				Token:                    *c.ClusterCredential.BootstrapToken,
@@ -73,6 +82,16 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadm
 func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfiguration {
 	token, _ := kubeadmv1beta2.NewBootstrapTokenString(*c.ClusterCredential.BootstrapToken)
 
+	nodeRegistration := kubeadmv1beta2.NodeRegistrationOptions{}
+	kubeletExtraArgs := p.getKubeletExtraArgs(c)
+	// add label to get node by machine ip.
+	kubeletExtraArgs["node-labels"] = fields.OneTermEqualSelector(string(apiclient.LabelMachineIP), c.Spec.Machines[0].IP).String()
+	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
+
+	if !c.Spec.HostnameAsNodename {
+		nodeRegistration.Name = c.Spec.Machines[0].IP
+	}
+
 	return &kubeadmv1beta2.InitConfiguration{
 		BootstrapTokens: []kubeadmv1beta2.BootstrapToken{
 			{
@@ -81,10 +100,7 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 				TTL:         &metav1.Duration{Duration: 0},
 			},
 		},
-		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
-			Name:             c.Spec.Machines[0].IP,
-			KubeletExtraArgs: p.getKubeletExtraArgs(c),
-		},
+		NodeRegistration: nodeRegistration,
 		LocalAPIEndpoint: kubeadmv1beta2.APIEndpoint{
 			AdvertiseAddress: c.Spec.Machines[0].IP,
 		},

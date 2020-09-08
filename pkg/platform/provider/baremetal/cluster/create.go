@@ -692,8 +692,11 @@ func (p *Provider) EnsureKubeadmInitPhaseKubeletStart(ctx context.Context, c *v1
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c),
-		fmt.Sprintf("kubelet-start --node-name=%s", c.Spec.Machines[0].IP))
+	phase := "kubelet-start"
+	if !c.Spec.HostnameAsNodename {
+		phase += fmt.Sprintf(" --node-name=%s", c.Spec.Machines[0].IP)
+	}
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), phase)
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseCerts(ctx context.Context, c *v1.Cluster) error {
@@ -995,7 +998,11 @@ func (p *Provider) EnsureMarkControlPlane(ctx context.Context, c *v1.Cluster) er
 				machine.Taints = append(machine.Taints, taint)
 			}
 		}
-		err := apiclient.MarkNode(ctx, clientset, machine.IP, machine.Labels, machine.Taints)
+		node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.IP)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+		err = apiclient.MarkNode(ctx, clientset, node.Name, machine.Labels, machine.Taints)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

@@ -36,6 +36,7 @@ import (
 	rbac "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -621,4 +622,32 @@ func RemoveNodeTaints(ctx context.Context, client clientset.Interface, nodeName 
 		}
 		n.Spec.Taints = newTaints
 	})
+}
+
+// PlatformLabel represents the type of platform.tkestack.io related label.
+type PlatformLabel string
+
+// These are valid related platform.tkestack.io label.
+const (
+	LabelMachineIP PlatformLabel = "platform.tkestack.io/machine-ip"
+)
+
+// GetNodeByMachineIP get node by machine ip.
+func GetNodeByMachineIP(ctx context.Context, client clientset.Interface, ip string) (*corev1.Node, error) {
+	// try to get node by name = machine ip
+	node, err := client.CoreV1().Nodes().Get(ctx, ip, metav1.GetOptions{})
+	if !apierrors.IsNotFound(err) {
+		return node, err
+	}
+
+	// try to get node by label selector
+	labelSelector := fields.OneTermEqualSelector(string(LabelMachineIP), ip).String()
+	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return &corev1.Node{}, err
+	}
+	if len(nodes.Items) < 1 {
+		return &corev1.Node{}, apierrors.NewNotFound(corev1.Resource("Node"), labelSelector)
+	}
+	return &nodes.Items[0], nil
 }
