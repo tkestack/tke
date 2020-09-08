@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RootProps } from '../ChartApp';
 import { FormPanel } from '@tencent/ff-component';
-import { TipInfo, getWorkflowError, InputField } from '../../../../../modules/common';
+import { TipInfo, getWorkflowError, InputField, Markdown } from '../../../../../modules/common';
 import { Button, Tabs, TabPanel, Card, Bubble, Icon, ContentView, Drawer } from '@tea/component';
 import { dateFormat } from '../../../../../../helpers/dateUtil';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -31,8 +31,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
   }
 
   render() {
-    let { actions, chartEditor, appCreation, route, chartValidator } = this.props;
-
+    let { actions, chartEditor, chartInfo, appCreation, route, chartValidator } = this.props;
     let action = actions.chart.detail.updateChartWorkflow;
     const { chartUpdateWorkflow } = this.props;
     const workflow = chartUpdateWorkflow;
@@ -131,6 +130,21 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
               projectID: route.queries['prj']
             }}
           />
+          {chartInfo &&
+            chartInfo.object &&
+            chartInfo.object.data &&
+            chartInfo.object.data.spec &&
+            chartInfo.object.data.spec.readme &&
+            JSON.stringify(chartInfo.object.data.spec.readme) !== '{}' && (
+              <Card>
+                <Card.Body>
+                  <Markdown
+                    style={{ maxHeight: 700, overflow: 'auto' }}
+                    text={Object.values(chartInfo.object.data.spec.readme)[0] || t('空')}
+                  />
+                </Card.Body>
+              </Card>
+            )}
         </ContentView.Body>
       </ContentView>
     );
