@@ -35,7 +35,7 @@ GPU Manager提供一个All-in-One的GPU管理器, 基于Kubernets Device Plugin�
 
 ## GPU-Manager使用方法
 
-1. 集群部署时选择vGPU, 平台会为集群部署GPUManager插件负载。
+1. 集群部署时选择vGPU, 平台会为集群部署GPUManager插件。
 
 2. 添加GPU节点时勾选GPU选项，平台会为节点安装GPU驱动。
 
