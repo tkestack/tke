@@ -309,6 +309,7 @@ export const v_IC_VipPort = 'v_IC_VipPort';
 export const v_IC_Vip = 'v_IC_Vip';
 export const v_IC_Gpu = 'v_IC_Gpu';
 export const v_IC_GpuType = 'v_IC_GpuType';
+export const v_IC_Mertics_server = 'v_IC_Mertics_server';
 
 export const IC_K8SVersion = 'IC_K8SVersion';
 export const IC_Cidr = 'IC_Cidr';

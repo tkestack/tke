@@ -115,7 +115,8 @@ export async function createIC(clusters: CreateIC[]) {
       vipPort,
       vipType,
       gpu,
-      gpuType
+      gpuType,
+      merticsServer
     } = clusters[0];
 
     let resourceInfo = resourceConfig()['cluster'];
@@ -185,7 +186,9 @@ export async function createIC(clusters: CreateIC[]) {
                         }
                       : undefined
                 }
-              : undefined
+              : undefined,
+
+          enableMetricsServer: merticsServer
         },
         properties: {
           maxClusterServiceNum: maxClusterServiceNum,
