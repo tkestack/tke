@@ -76,8 +76,8 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKernelModule,
 			p.EnsureSysctl,
 			p.EnsureDisableSwap,
-
-			p.EnsurePreflight, // wait basic setting done
+			p.EnsureDisableOffloading, // will remove it when upgrade to k8s v1.18.5
+			p.EnsurePreflight,         // wait basic setting done
 
 			p.EnsureClusterComplete,
 
