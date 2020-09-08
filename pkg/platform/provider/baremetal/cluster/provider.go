@@ -118,7 +118,7 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
-			p.EnsureKeepalivedWithLB,
+			p.EnsureKeepalivedWithoutLB,
 			p.EnsureThirdPartyHA,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
@@ -136,7 +136,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
-			p.EnsureKeepalivedWithLB,
+			p.EnsureKeepalivedWithoutLB,
 			p.EnsureThirdPartyHA,
 		},
 		DeleteHandlers: []clusterprovider.Handler{
