@@ -38,6 +38,8 @@ const TempReducer = combineReducers({
 
   gpu: reduceToPayload(ActionType.v_IC_Gpu, false),
 
+  merticsServer: reduceToPayload(ActionType.v_IC_Mertics_server, true),
+
   gpuType: reduceToPayload(ActionType.v_IC_GpuType, GPUTYPE.PGPU)
 });
 

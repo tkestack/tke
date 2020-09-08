@@ -159,7 +159,9 @@ export async function createCluster(edits: Array<EditState>) {
           kind: 'Cluster',
           spec: {
             networkDevice: edits[0].networkDevice,
-            features: {},
+            features: {
+              enableMetricsServer: true
+            },
             dockerExtraArgs: edits[0].dockerExtraArgs.reduce((prev, next) => {
               if (next.key) {
                 return Object.assign({}, prev, { [next.key]: next.value });

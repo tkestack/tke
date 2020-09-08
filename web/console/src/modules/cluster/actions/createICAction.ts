@@ -67,6 +67,13 @@ export const createICAction = {
     };
   },
 
+  useMerticsServer: (merticsServer: boolean): ReduxAction<boolean> => {
+    return {
+      type: ActionType.v_IC_Mertics_server,
+      payload: merticsServer
+    };
+  },
+
   inputGPUType: (type: string): ReduxAction<string> => {
     return {
       type: ActionType.v_IC_GpuType,
