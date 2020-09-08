@@ -615,14 +615,10 @@ func (t *TKE) setConfigDefault(config *types.Config) {
 
 	config.Logagent = new(types.Logagent)
 
-	//TODO: remove default installation
-	config.Application = new(types.Application)
 	if config.Application != nil {
-		if config.Application.RegistryDomain == "" {
-			config.Application.RegistryDomain = "registry.tke.com"
-		}
-		config.Application.RegistryUsername = config.Basic.Username
-		config.Application.RegistryPassword = config.Basic.Password
+		config.Application.RegistryDomain = config.Registry.Domain()
+		config.Application.RegistryUsername = config.Registry.Username()
+		config.Application.RegistryPassword = config.Registry.Password()
 	}
 }
 
@@ -2055,9 +2051,9 @@ func (t *TKE) installTKEApplicationController(ctx context.Context) error {
 		map[string]interface{}{
 			"Replicas":      t.Config.Replicas,
 			"Image":         images.Get().TKEApplicationController.FullName(),
-			"AdminUsername": t.Para.Config.Registry.TKERegistry.Username,
-			"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
-			"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
+			"AdminUsername": t.Para.Config.Application.RegistryUsername,
+			"AdminPassword": string(t.Para.Config.Application.RegistryPassword),
+			"DomainSuffix":  t.Para.Config.Application.RegistryDomain,
 		})
 	if err != nil {
 		return err
