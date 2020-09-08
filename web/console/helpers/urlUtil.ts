@@ -95,7 +95,8 @@ interface K8sRestfulPathOptions {
   /** 命名空间，具体的ns */
   namespace?: string;
 
-  isSpetialNamespace?: boolean;
+  /** 业务视图是否切分namespace */
+  isSpecialNamespace?: boolean;
 
   /** 不在路径最后的变量，比如projectId*/
   middleKey?: string;
@@ -113,6 +114,7 @@ interface K8sRestfulPathOptions {
   logAgentName?: string;
 
   meshId?: string;
+
 }
 
 /**
@@ -127,12 +129,12 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
   let {
     resourceInfo,
     namespace = '',
-    isSpetialNamespace = false,
+    isSpecialNamespace = false,
     specificName = '',
     extraResource = '',
     clusterId = '',
+    meshId = '',
     logAgentName = '',
-    meshId
   } = options;
 
   namespace = namespace.replace(new RegExp(`^${clusterId}-`), '');

@@ -47,7 +47,10 @@ export enum ConsoleModuleEnum {
   Auth = 'auth',
 
   /** 审计模块 */
-  Audit = 'audit'
+  Audit = 'audit',
+
+  /** Helm应用模块 */
+  Application = 'application'
 }
 
 export enum PlatformTypeEnum {
@@ -106,9 +109,14 @@ const commonRouterConfig: RouterConfig[] = [
         title: '镜像仓库管理',
         watchModule: ConsoleModuleEnum.Registry
       },
+      // {
+      //   url: '/tkestack/registry/chartgroup',
+      //   title: 'Helm仓库',
+      //   watchModule: ConsoleModuleEnum.Registry
+      // },
       {
         url: '/tkestack/registry/chart',
-        title: 'Chart包仓库管理',
+        title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },
       {
@@ -157,13 +165,23 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维中心',
-    watchModule: [ConsoleModuleEnum.PLATFORM, ConsoleModuleEnum.Audit, ConsoleModuleEnum.LogAgent],
+    watchModule: [
+      ConsoleModuleEnum.Application,
+      ConsoleModuleEnum.PLATFORM,
+      ConsoleModuleEnum.Audit,
+      ConsoleModuleEnum.LogAgent
+    ],
     subRouterConfig: [
       {
-        url: '/tkestack/helm',
+        url: '/tkestack/application/app',
         title: 'Helm应用',
-        watchModule: ConsoleModuleEnum.PLATFORM
+        watchModule: ConsoleModuleEnum.Application
       },
+      // {
+      //   url: '/tkestack/helm',
+      //   title: 'Helm2应用',
+      //   watchModule: ConsoleModuleEnum.PLATFORM
+      // },
       {
         url: '/tkestack/log',
         title: '日志采集',
@@ -191,11 +209,6 @@ const businessCommonRouterConfig: RouterConfig[] = [
     watchModule: ConsoleModuleEnum.Business
   },
   {
-    url: '/tkestack-project/helm',
-    title: 'Helm应用',
-    watchModule: ConsoleModuleEnum.PLATFORM
-  },
-  {
     url: '/tkestack-project/project',
     title: '业务管理',
     watchModule: ConsoleModuleEnum.Business
@@ -206,7 +219,17 @@ const businessCommonRouterConfig: RouterConfig[] = [
     subRouterConfig: [
       {
         url: '/tkestack-project/registry/repo',
-        title: '仓库管理',
+        title: '镜像仓库管理',
+        watchModule: ConsoleModuleEnum.Registry
+      },
+      // {
+      //   url: '/tkestack-project/registry/chartgroup',
+      //   title: 'Helm仓库',
+      //   watchModule: ConsoleModuleEnum.Registry
+      // },
+      {
+        url: '/tkestack-project/registry/chart',
+        title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },
       {
@@ -233,9 +256,19 @@ const businessCommonRouterConfig: RouterConfig[] = [
     ]
   },
   {
-    title: '运维中心',
-    watchModule: [ConsoleModuleEnum.LogAgent],
+    title: '运维管理',
+    watchModule: [ConsoleModuleEnum.Application, ConsoleModuleEnum.LogAgent, ConsoleModuleEnum.PLATFORM],
     subRouterConfig: [
+      {
+        url: '/tkestack-project/app/app',
+        title: 'Helm应用',
+        watchModule: ConsoleModuleEnum.Application
+      },
+      // {
+      //   url: '/tkestack-project/helm',
+      //   title: 'Helm2应用',
+      //   watchModule: ConsoleModuleEnum.PLATFORM
+      // },
       {
         url: '/tkestack-project/log',
         title: '日志采集',
@@ -442,6 +475,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           userType,
           projects
         });
+        let isInBlankPage = window.location.pathname.indexOf('tkestack/blank') !== -1;
         if (userType === UserType.member && this.props.platformType === PlatformTypeEnum.Manager) {
           location.href = location.origin + '/tkestack-project/application';
         } else if (
@@ -450,8 +484,14 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           this.props.platformType === PlatformTypeEnum.Business
         ) {
           location.href = location.origin + '/tkestack';
-        } else if (userType === UserType.other && window.location.pathname.indexOf('tkestack/blank') === -1) {
+        } else if (userType === UserType.other && !isInBlankPage) {
           window.location.pathname = 'tkestack/blank';
+        } else if (isInBlankPage) {
+          if (userType === UserType.admin) {
+            location.href = location.origin + '/tkestack';
+          } else if (userType === UserType.member) {
+            location.href = location.origin + '/tkestack-project/application';
+          }
         }
       }
     } catch (error) {}

@@ -4,12 +4,26 @@ import {
   createFFListReducer,
   generateWorkflowReducer,
   reduceToPayload,
-  generateFetcherReducer
+  generateFetcherReducer,
+  createFFObjectReducer
 } from '@tencent/ff-redux';
 
+import { Cluster, Namespace, ProjectNamespace, Project } from '../models';
 import * as ActionType from '../constants/ActionType';
 import { InitApiKey, InitRepo, InitChart, InitImage, Default_D_URL } from '../constants/Config';
 import { router } from '../router';
+import { createValidatorReducer } from '@tencent/ff-validator';
+import { ChartGroupValidateSchema } from '../constants/ChartGroupValidateConfig';
+import { ChartValidateSchema } from '../constants/ChartValidateConfig';
+import { AppValidateSchema } from '../constants/AppValidateConfig';
+import {
+  initChartGroupCreationState,
+  initChartGroupEditorState,
+  initUserInfoState,
+  initChartEditorState,
+  initRemovedChartVersionsState,
+  initAppCreationState
+} from '../constants/initState';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
@@ -62,7 +76,6 @@ export const RootReducer = combineReducers({
     initialData: Default_D_URL
   }),
 
-  /** chart group */
   chart: createFFListReducer('chart'),
 
   chartIns: createFFListReducer('chartIns'),
@@ -75,5 +88,82 @@ export const RootReducer = combineReducers({
 
   deleteChart: generateWorkflowReducer({
     actionType: ActionType.DeleteChart
-  })
+  }),
+
+  /** chartGroup */
+  chartGroupList: createFFListReducer(ActionType.ChartGroupList),
+  chartGroupCreation: reduceToPayload(ActionType.UpdateChartGroupCreationState, initChartGroupCreationState),
+  chartGroupEditor: reduceToPayload(ActionType.UpdateChartGroupEditorState, initChartGroupEditorState),
+  chartGroupValidator: createValidatorReducer(ChartGroupValidateSchema),
+  chartGroupAddWorkflow: generateWorkflowReducer({
+    actionType: ActionType.AddChartGroup
+  }),
+  chartGroupUpdateWorkflow: generateWorkflowReducer({
+    actionType: ActionType.UpdateChartGroup
+  }),
+  chartGroupRemoveWorkflow: generateWorkflowReducer({
+    actionType: ActionType.RemoveChartGroup
+  }),
+  projectList: createFFListReducer(
+    ActionType.ProjectList,
+    '',
+    (x: Project) => x.spec.displayName,
+    (x: Project) => x.metadata.name
+  ),
+  userInfo: reduceToPayload(ActionType.UpdateUserInfo, initUserInfoState),
+
+  /** chart */
+  chartList: createFFListReducer(ActionType.ChartList, null, null, null, {
+    query: {
+      paging: {
+        pageSize: 15
+      }
+    }
+  }),
+  // chartCreation: reduceToPayload(ActionType.UpdateChartCreationState, initChartCreationState),
+  chartEditor: reduceToPayload(ActionType.UpdateChartEditorState, initChartEditorState),
+  chartValidator: createValidatorReducer(ChartValidateSchema),
+  chartAddWorkflow: generateWorkflowReducer({
+    actionType: ActionType.AddChart
+  }),
+  chartUpdateWorkflow: generateWorkflowReducer({
+    actionType: ActionType.UpdateChart
+  }),
+  chartRemoveWorkflow: generateWorkflowReducer({
+    actionType: ActionType.RemoveChart
+  }),
+  chartVersionRemoveWorkflow: generateWorkflowReducer({
+    actionType: ActionType.RemoveChartVersion
+  }),
+  removedChartVersions: reduceToPayload(ActionType.RemovedChartVersions, initRemovedChartVersionsState),
+  chartDetail: createFFObjectReducer(ActionType.Chart),
+  chartInfo: createFFObjectReducer(ActionType.ChartInfo),
+  chartVersionFile: createFFObjectReducer(ActionType.ChartVersionFile),
+  appCreation: reduceToPayload(ActionType.UpdateAppCreationState, initAppCreationState),
+  appValidator: createValidatorReducer(AppValidateSchema),
+  appAddWorkflow: generateWorkflowReducer({
+    actionType: ActionType.AddApp
+  }),
+
+  /** 集群 */
+  /** listActions.selectByValue依赖于valueField */
+  clusterList: createFFListReducer(
+    ActionType.ClusterList,
+    '',
+    (x: Cluster) => x.spec.displayName,
+    (x: Cluster) => x.metadata.name
+  ),
+  /** 命名空间 */
+  namespaceList: createFFListReducer(
+    ActionType.NamespaceList,
+    '',
+    (x: Namespace) => x.metadata.name,
+    (x: Namespace) => x.metadata.name
+  ),
+  projectNamespaceList: createFFListReducer(
+    ActionType.ProjectNamespaceList,
+    '',
+    (x: ProjectNamespace) => x.metadata.name,
+    (x: ProjectNamespace) => x.spec.clusterName + '/' + x.spec.namespace
+  )
 });

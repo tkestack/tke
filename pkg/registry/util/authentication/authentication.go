@@ -19,9 +19,10 @@
 package authentication
 
 import (
+	"net/http"
+
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/user"
-	"net/http"
 	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 )
 

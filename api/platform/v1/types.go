@@ -340,6 +340,8 @@ type ClusterFeature struct {
 	// For kube-apiserver authorization webhook
 	// +optional
 	AuthzWebhookAddr *AuthzWebhookAddr `json:"authzWebhookAddr,omitempty" protobuf:"bytes,11,opt,name=authzWebhookAddr"`
+	// +optional
+	EnableMetricsServer bool `json:"enableMetricsServer,omitempty" protobuf:"bytes,12,opt,name=enableMetricsServer"`
 }
 
 type HA struct {

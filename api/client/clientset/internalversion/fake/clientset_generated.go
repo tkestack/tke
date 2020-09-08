@@ -27,6 +27,8 @@ import (
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/testing"
 	clientset "tkestack.io/tke/api/client/clientset/internalversion"
+	applicationinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
+	fakeapplicationinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion/fake"
 	authinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	fakeauthinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion/fake"
 	businessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
@@ -89,6 +91,11 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 }
 
 var _ clientset.Interface = &Clientset{}
+
+// Application retrieves the ApplicationClient
+func (c *Clientset) Application() applicationinternalversion.ApplicationInterface {
+	return &fakeapplicationinternalversion.FakeApplication{Fake: &c.Fake}
+}
 
 // Auth retrieves the AuthClient
 func (c *Clientset) Auth() authinternalversion.AuthInterface {

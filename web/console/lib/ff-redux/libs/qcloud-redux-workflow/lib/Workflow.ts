@@ -118,7 +118,8 @@ export function generateWorkflowReducer<TTarget extends Identifiable, TParam>({
           return {
             operationState: OperationState.Done,
             targets: state.targets,
-            results: action.payload.results
+            results: action.payload.results,
+            params: action.payload.params
           };
         }
         break;
@@ -243,7 +244,8 @@ export function generateWorkflowActionCreator<TTarget extends Identifiable, TPar
         type: actionType + (OperationTrigger.Done as any),
         payload: {
           trigger: OperationTrigger.Done,
-          results: results
+          results: results,
+          params: workflowStateLocator(getState()).params
         }
       };
       dispatchWithHook(dispatch, getState, doneAction);

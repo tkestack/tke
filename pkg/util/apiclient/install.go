@@ -307,17 +307,18 @@ func CreateResourceWithDir(ctx context.Context, client kubernetes.Interface, pat
 	return nil
 }
 
-// CreateResourceWithFile create k8s resource with file
-func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, filename string, option interface{}) error {
+func CreateResourceWiteContent(ctx context.Context, client kubernetes.Interface, content string,
+	option interface{}) error {
 	var (
 		data []byte
 		err  error
 	)
 	if option != nil {
-		data, err = template.ParseFile(filename, option)
+		data, err = template.ParseString(content, option)
 	} else {
-		data, err = ioutil.ReadFile(filename)
+		data = []byte(content)
 	}
+
 	if err != nil {
 		return err
 	}
@@ -344,6 +345,16 @@ func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, fi
 	}
 
 	return nil
+}
+
+// CreateResourceWithFile create k8s resource with file
+func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, filename string, option interface{}) error {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	return CreateResourceWiteContent(ctx, client, string(data), option)
 }
 
 // CreateKAResourceWithFile create k8s and kube-aggregator resource with file

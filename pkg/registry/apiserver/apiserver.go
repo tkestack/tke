@@ -22,6 +22,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
+	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
@@ -39,10 +42,16 @@ type ExtraConfig struct {
 	StorageFactory          serverstorage.StorageFactory
 	VersionedInformers      versionedinformers.SharedInformerFactory
 	ExternalScheme          string
+	ExternalHost            string
+	ExternalPort            int
+	ExternalCAFile          string
 	OIDCCAFile              string
 	OIDCTokenReviewPath     string
 	OIDCIssuerURL           string
 	RegistryConfig          *registryconfig.RegistryConfiguration
+	AuthClient              authversionedclient.AuthV1Interface
+	BusinessClient          businessversionedclient.BusinessV1Interface
+	PlatformClient          platformversionedclient.PlatformV1Interface
 }
 
 // Config contains the core configuration instance of apiserver and
@@ -109,6 +118,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		OIDCTokenReviewPath:  c.ExtraConfig.OIDCTokenReviewPath,
 		OIDCIssuerURL:        c.ExtraConfig.OIDCIssuerURL,
 		ExternalScheme:       c.ExtraConfig.ExternalScheme,
+		Authorizer:           c.GenericConfig.Authorization.Authorizer,
 	}
 	if err := chartmuseum.RegisterRoute(s.Handler.NonGoRestfulMux, chartmuseumOpts); err != nil {
 		return nil, err
@@ -118,6 +128,15 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	restStorageProviders := []storage.RESTStorageProvider{
 		&registryrest.StorageProvider{
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
+			ExternalScheme:       c.ExtraConfig.ExternalScheme,
+			ExternalHost:         c.ExtraConfig.ExternalHost,
+			ExternalPort:         c.ExtraConfig.ExternalPort,
+			ExternalCAFile:       c.ExtraConfig.ExternalCAFile,
+			AuthClient:           c.ExtraConfig.AuthClient,
+			BusinessClient:       c.ExtraConfig.BusinessClient,
+			PlatformClient:       c.ExtraConfig.PlatformClient,
+			RegistryConfig:       c.ExtraConfig.RegistryConfig,
+			Authorizer:           c.GenericConfig.Authorization.Authorizer,
 		},
 	}
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)

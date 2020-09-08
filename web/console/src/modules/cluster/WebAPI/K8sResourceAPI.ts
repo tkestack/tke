@@ -794,7 +794,7 @@ export async function modifyMultiResourceIns(resource: CreateResource[], regionI
  */
 export async function deleteResourceIns(resource: CreateResource[], regionId: number) {
   try {
-    let { resourceIns, clusterId, resourceInfo, namespace, meshId, isSpetialNamespace = true } = resource[0];
+    let { resourceIns, clusterId, resourceInfo, namespace, meshId, isSpecialNamespace = true } = resource[0];
 
     let k8sUrl = reduceK8sRestfulPath({
       resourceInfo,
@@ -802,7 +802,7 @@ export async function deleteResourceIns(resource: CreateResource[], regionId: nu
       specificName: resourceIns,
       clusterId,
       meshId,
-      isSpetialNamespace
+      isSpecialNamespace
     });
     let url = k8sUrl;
 

@@ -1,4 +1,4 @@
-# GPU-Manager说明
+# GPU-Manager
 
 ## 组件介绍
 

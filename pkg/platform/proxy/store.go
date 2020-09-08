@@ -23,8 +23,6 @@ import (
 	"reflect"
 	"strings"
 
-	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,10 +30,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	clientrest "k8s.io/client-go/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
 )
 
@@ -91,17 +91,7 @@ func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptio
 	}
 
 	fuzzyResourceName := filter.FuzzyResourceFrom(ctx)
-	if options != nil && options.FieldSelector != nil {
-		if name, ok := options.FieldSelector.RequiresExactMatch("metadata.name"); ok {
-			options.FieldSelector, _ = options.FieldSelector.Transform(func(k, v string) (string, string, error) {
-				if k == "metadata.name" {
-					return "", "", nil
-				}
-				return k, v, nil
-			})
-			fuzzyResourceName = name
-		}
-	}
+	options, fuzzyResourceName = apiserverutil.InterceptFuzzyResourceNameFromListOptions(options, fuzzyResourceName)
 
 	result := s.NewListFunc()
 	if err := client.

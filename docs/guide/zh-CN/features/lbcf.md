@@ -1,4 +1,4 @@
-# LBCF说明
+# LBCF
 
 ## 组件介绍 : Load Balancer Controlling Framework (LBCF)
 

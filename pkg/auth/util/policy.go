@@ -31,3 +31,35 @@ func ProjectMemberPolicyID(tenantID string) string {
 func ProjectViewerPolicyID(tenantID string) string {
 	return fmt.Sprintf("pol-%s-project-viewer", tenantID)
 }
+
+func ChartGroupPullPolicyID(tenantID string) string {
+	return fmt.Sprintf("pol-%s-chartgroup-pull-fake", tenantID)
+}
+
+func ChartGroupFullPolicyID(tenantID string) string {
+	return fmt.Sprintf("pol-%s-chartgroup-full-fake", tenantID)
+}
+
+func ChartPullPolicyID(tenantID string) string {
+	return fmt.Sprintf("pol-%s-chart-pull-fake", tenantID)
+}
+
+func ChartPushPolicyID(tenantID string) string {
+	return fmt.Sprintf("pol-%s-chart-push-fake", tenantID)
+}
+
+func ChartDeletePolicyID(tenantID string) string {
+	return fmt.Sprintf("pol-%s-chart-delete-fake", tenantID)
+}
+
+func ChartFullPolicyID(tenantID string) string {
+	return fmt.Sprintf("pol-%s-chart-full-fake", tenantID)
+}
+
+func ChartGroupPolicyResources(cg string) []string {
+	return []string{fmt.Sprintf("chartgroup:%s", cg)}
+}
+
+func ChartPolicyResources(registryNamespace string) []string {
+	return []string{fmt.Sprintf("registrynamespace:%s/*", registryNamespace)}
+}

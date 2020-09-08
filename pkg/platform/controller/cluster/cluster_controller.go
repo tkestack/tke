@@ -47,9 +47,12 @@ import (
 	"tkestack.io/tke/pkg/util/strategicpatch"
 )
 
+type ContextKey int
+
 const (
-	conditionTypeHealthCheck = "HealthCheck"
-	failedHealthCheckReason  = "FailedHealthCheck"
+	KeyLister                ContextKey = iota
+	conditionTypeHealthCheck            = "HealthCheck"
+	failedHealthCheckReason             = "FailedHealthCheck"
 
 	resyncInternal = 1 * time.Minute
 )
@@ -225,7 +228,8 @@ func (c *Controller) syncCluster(key string) error {
 		return err
 	}
 
-	return c.reconcile(ctx, key, cluster)
+	valueCtx := context.WithValue(ctx, KeyLister, &c.lister)
+	return c.reconcile(valueCtx, key, cluster)
 }
 
 func (c *Controller) reconcile(ctx context.Context, key string, cluster *platformv1.Cluster) error {

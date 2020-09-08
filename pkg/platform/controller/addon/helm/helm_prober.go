@@ -125,7 +125,7 @@ func (p *prober) periodHealthCheck(ctx context.Context, phase v1.AddonPhase, dur
 		p.fetchSyncMap(phase).Range(
 			func(k, v interface{}) bool {
 				key := k.(string)
-				log.Info(fmt.Sprintf("Probe check"), log.String("helm", key), log.String("phase", string(phase)))
+				log.Info("Probe check", log.String("helm", key), log.String("phase", string(phase)))
 				curPhase, err := p.checkAddonHealthz(ctx, key, phase)
 				if curPhase == "" || (curPhase != phase && err == nil) {
 					p.fetchSyncMap(phase).Delete(key)

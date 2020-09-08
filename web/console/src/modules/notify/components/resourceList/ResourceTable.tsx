@@ -113,7 +113,7 @@ export class ResourceTable extends React.Component<Props, {}> {
                   let urlParams = router.resolve(route);
                   resource.selections.forEach(resource => {
                     resource.resourceInfo = rc[urlParams.resourceName] || rc.channel;
-                    resource.isSpetialNamespace = true;
+                    resource.isSpecialNamespace = true;
                   });
                   actions.workflow.deleteResource.start(resource.selections);
                 }}
@@ -156,7 +156,7 @@ export class ResourceTable extends React.Component<Props, {}> {
     let { actions, route } = this.props;
     let urlParams = router.resolve(route);
     resource.resourceInfo = rc[urlParams.resourceName] || rc.channel;
-    resource.isSpetialNamespace = true;
+    resource.isSpecialNamespace = true;
     actions.resource[urlParams['resourceName']].selects([resource]);
     actions.workflow.deleteResource.start([resource]);
   }

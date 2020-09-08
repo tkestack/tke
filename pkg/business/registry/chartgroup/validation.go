@@ -40,13 +40,13 @@ func ValidateChartGroupCreate(ctx context.Context, chartGroup *business.ChartGro
 	allErrs := validateChartGroup(chartGroup, businessClient, registryClient)
 
 	fldName := field.NewPath("spec", "name")
-	chartGroupList, err := registryClient.ChartGroups().List(ctx, metav1.ListOptions{
+	chartGroupList, err := businessClient.ChartGroups(chartGroup.Namespace).List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chartGroup.Spec.TenantID, chartGroup.Name),
 	})
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(fldName, fmt.Errorf("failed to check chartGroup conflicting, for %s", err)))
 	} else if len(chartGroupList.Items) != 0 {
-		allErrs = append(allErrs, field.Invalid(fldName, chartGroup.Name, "already has a chart group with the same name"))
+		allErrs = append(allErrs, field.Duplicate(fldName, chartGroup.Name))
 	}
 
 	return allErrs

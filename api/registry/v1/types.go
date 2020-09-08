@@ -22,6 +22,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// FinalizerName is the name identifying a finalizer during resource lifecycle.
+type FinalizerName string
+
+const (
+	// ChartGroupFinalize is an internal finalizer values to ChartGroup.
+	ChartGroupFinalize FinalizerName = "chartgroup"
+	// ChartFinalize is an internal finalizer values to Chart.
+	ChartFinalize FinalizerName = "chart"
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection
@@ -160,6 +170,14 @@ type ChartGroupSpec struct {
 	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,3,opt,name=displayName"`
 	// +optional
 	Visibility Visibility `json:"visibility,omitempty" protobuf:"bytes,4,opt,name=visibility,casttype=Visibility"`
+	// +optional
+	Type RepoType `json:"type,omitempty" protobuf:"bytes,5,opt,name=type"`
+	// +optional
+	Description string `json:"description,omitempty" protobuf:"bytes,6,opt,name=description"`
+	// +optional
+	Projects []string `json:"projects,omitempty" protobuf:"bytes,7,opt,name=projects"`
+	// +optional
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,8,rep,name=finalizers,casttype=FinalizerName"`
 }
 
 // ChartGroupStatus represents information about the status of a chart group.
@@ -167,7 +185,52 @@ type ChartGroupStatus struct {
 	// +optional
 	Locked     *bool `json:"locked,omitempty" protobuf:"varint,1,opt,name=locked"`
 	ChartCount int32 `json:"chartCount" protobuf:"varint,2,opt,name=chartCount"`
+	// +optional
+	Phase ChartGroupPhase `json:"phase" protobuf:"bytes,3,opt,name=phase,casttype=ChartGroupPhase"`
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,4,opt,name=lastTransitionTime"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,5,opt,name=reason"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
 }
+
+// ChartGroupPhase indicates the phase of chart groups.
+type ChartGroupPhase string
+
+// These are valid phases of chart groups.
+const (
+	// ChartGroupPending indicates that the chart group has been declared,
+	// when the chart group has not actually been created.
+	ChartGroupPending ChartGroupPhase = "Pending"
+	// ChartGroupAvailable indicates the chart group of the project is available.
+	ChartGroupAvailable ChartGroupPhase = "Available"
+	// ChartGroupFailed indicates that the chart group failed to be created or deleted
+	// after it has been created.
+	ChartGroupFailed ChartGroupPhase = "Failed"
+	// ChartGroupTerminating means the chart group is undergoing graceful termination.
+	ChartGroupTerminating ChartGroupPhase = "Terminating"
+)
+
+// ChartPhase indicates the phase of chart.
+type ChartPhase string
+
+// These are valid phases of charts.
+const (
+	// ChartPending indicates that the chart has been declared,
+	// when the chart has not actually been created.
+	ChartPending ChartPhase = "Pending"
+	// ChartAvailable indicates the chart of the project is available.
+	ChartAvailable ChartPhase = "Available"
+	// ChartFailed indicates that the chart failed to be created or deleted
+	// after it has been created.
+	ChartFailed ChartPhase = "Failed"
+	// ChartTerminating means the chart is undergoing graceful termination.
+	ChartTerminating ChartPhase = "Terminating"
+)
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -205,6 +268,8 @@ type ChartSpec struct {
 	DisplayName string `json:"displayName,omitempty" protobuf:"bytes,4,opt,name=displayName"`
 	// +optional
 	Visibility Visibility `json:"visibility,omitempty" protobuf:"bytes,5,opt,name=visibility,casttype=Visibility"`
+	// +optional
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,6,rep,name=finalizers,casttype=FinalizerName"`
 }
 
 type ChartStatus struct {
@@ -212,23 +277,94 @@ type ChartStatus struct {
 	Locked    *bool          `json:"locked,omitempty" protobuf:"varint,1,opt,name=locked"`
 	PullCount int32          `json:"pullCount" protobuf:"varint,2,opt,name=pullCount"`
 	Versions  []ChartVersion `json:"versions" protobuf:"bytes,3,rep,name=versions"`
+	// +optional
+	Phase ChartPhase `json:"phase" protobuf:"bytes,4,opt,name=phase,casttype=ChartPhase"`
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,5,opt,name=lastTransitionTime"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,6,opt,name=reason"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,7,opt,name=message"`
 }
 
 type ChartVersion struct {
-	Version     string      `json:"version" protobuf:"bytes,1,opt,name=version"`
-	ChartSize   int64       `json:"chartSize" protobuf:"varint,2,opt,name=chartSize"`
+	Version     string      `json:"version,omitempty" protobuf:"bytes,1,opt,name=version"`
+	ChartSize   int64       `json:"chartSize,omitempty" protobuf:"varint,2,opt,name=chartSize"`
 	TimeCreated metav1.Time `json:"timeCreated,omitempty" protobuf:"bytes,3,opt,name=timeCreated"`
+	Description string      `json:"description,omitempty" protobuf:"bytes,4,opt,name=description"`
+	AppVersion  string      `json:"appVersion,omitempty" protobuf:"bytes,5,opt,name=appVersion"`
+	Icon        string      `json:"icon,omitempty" protobuf:"bytes,6,opt,name=icon"`
 }
 
 // Visibility defines the visible properties of the repo or namespace.
 type Visibility string
+
+// RepoType defines the type properties of the repo or namespace.
+type RepoType string
 
 const (
 	// VisibilityPublic indicates the namespace or repo is public.
 	VisibilityPublic Visibility = "Public"
 	// VisibilityPrivate indicates the namespace or repo is private.
 	VisibilityPrivate Visibility = "Private"
+
+	// RepoTypePersonal indicates the type of namespace or repo is personal.
+	RepoTypePersonal RepoType = "personal"
+	// RepoTypeProject indicates the type of namespace or repo is project.
+	RepoTypeProject RepoType = "project"
+	// RepoTypeSystem indicates the type of namespace or repo is system.
+	RepoTypeSystem RepoType = "system"
+	// RepoTypePublic indicates the type of namespace or repo is visibility public.
+	RepoTypePublic RepoType = "public"
+	// RepoTypeAll indicates all of namespace or repo.
+	RepoTypeAll RepoType = "all"
 )
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartProxyOptions is the query options to a ChartInfo proxy call.
+type ChartProxyOptions struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// +optional
+	Version string `json:"version,omitempty" protobuf:"bytes,1,opt,name=version"`
+	// +optional
+	Cluster string `json:"cluster,omitempty" protobuf:"bytes,2,opt,name=cluster"`
+	// +optional
+	Namespace string `json:"namespace,omitempty" protobuf:"bytes,3,opt,name=namespace"`
+}
+
+// +genclient
+// +genclient:noVerbs
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartInfo describes detail of a chart version.
+type ChartInfo struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	// Spec defines the desired identities of a chart.
+	// +optional
+	Spec ChartInfoSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+}
+
+// ChartInfoSpec is a description of a ChartInfo.
+type ChartInfoSpec struct {
+	// +optional
+	Readme map[string]string `json:"readme,omitempty" protobuf:"bytes,1,opt,name=readme"`
+	// +optional
+	Values map[string]string `json:"values,omitempty" protobuf:"bytes,2,opt,name=values"`
+	// +optional
+	RawFiles map[string]string `json:"rawFiles,omitempty" protobuf:"bytes,3,opt,name=rawFiles"`
+	// +optional
+	ChartSpec `json:",inline" protobuf:"bytes,4,opt,name=chartSpec"`
+	// +optional
+	ChartVersion `json:",inline" protobuf:"bytes,5,opt,name=chartVersion"`
+}
 
 // +genclient
 // +genclient:nonNamespaced

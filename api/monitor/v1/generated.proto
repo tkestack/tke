@@ -56,61 +56,77 @@ message ClusterOverviewResult {
 
   optional int32 workloadAbnormal = 8;
 
-  repeated ClusterStatistic clusters = 9;
+  optional double cpuCapacity = 9;
+
+  optional double cpuAllocatable = 10;
+
+  optional int64 memCapacity = 11;
+
+  optional int64 memAllocatable = 12;
+
+  optional int32 podCount = 13;
+
+  repeated ClusterStatistic clusters = 14;
 }
 
 message ClusterStatistic {
   optional string clusterID = 1;
 
-  optional string clusterPhase = 2;
+  optional string clusterDisplayName = 2;
 
-  optional int32 nodeCount = 3;
+  optional string tenantID = 3;
 
-  optional int32 nodeAbnormal = 4;
+  optional string clusterPhase = 4;
 
-  optional int32 workloadCount = 5;
+  optional int32 nodeCount = 5;
 
-  optional int32 workloadAbnormal = 6;
+  optional int32 nodeAbnormal = 6;
 
-  optional bool hasMetricServer = 7;
+  optional int32 workloadCount = 7;
 
-  optional double cpuUsed = 8;
+  optional int32 workloadAbnormal = 8;
 
-  optional double cpuRequest = 9;
+  optional bool hasMetricServer = 9;
 
-  optional double cpuLimit = 10;
+  optional double cpuUsed = 10;
 
-  optional double cpuCapacity = 11;
+  optional double cpuRequest = 11;
 
-  optional double cpuAllocatable = 12;
+  optional double cpuLimit = 12;
 
-  optional string cpuRequestRate = 13;
+  optional double cpuCapacity = 13;
 
-  optional string cpuAllocatableRate = 14;
+  optional double cpuAllocatable = 14;
 
-  optional string cpuUsage = 15;
+  optional string cpuRequestRate = 15;
 
-  optional int64 memUsed = 16;
+  optional string cpuAllocatableRate = 16;
 
-  optional int64 memRequest = 17;
+  optional string cpuUsage = 17;
 
-  optional int64 memLimit = 18;
+  optional int64 memUsed = 18;
 
-  optional int64 memCapacity = 19;
+  optional int64 memRequest = 19;
 
-  optional int64 memAllocatable = 20;
+  optional int64 memLimit = 20;
 
-  optional string memRequestRate = 21;
+  optional int64 memCapacity = 21;
 
-  optional string memAllocatableRate = 22;
+  optional int64 memAllocatable = 22;
 
-  optional string memUsage = 23;
+  optional string memRequestRate = 23;
 
-  optional bool schedulerHealthy = 24;
+  optional string memAllocatableRate = 24;
 
-  optional bool controllerManagerHealthy = 25;
+  optional string memUsage = 25;
 
-  optional bool etcdHealthy = 26;
+  optional int32 podCount = 26;
+
+  optional bool schedulerHealthy = 27;
+
+  optional bool controllerManagerHealthy = 28;
+
+  optional bool etcdHealthy = 29;
 }
 
 // ConfigMap holds configuration data for tke to consume.

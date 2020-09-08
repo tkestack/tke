@@ -33,6 +33,7 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&Chart{}, func(obj interface{}) { SetObjectDefaults_Chart(obj.(*Chart)) })
 	scheme.AddTypeDefaultingFunc(&ChartGroup{}, func(obj interface{}) { SetObjectDefaults_ChartGroup(obj.(*ChartGroup)) })
 	scheme.AddTypeDefaultingFunc(&ChartGroupList{}, func(obj interface{}) { SetObjectDefaults_ChartGroupList(obj.(*ChartGroupList)) })
+	scheme.AddTypeDefaultingFunc(&ChartInfo{}, func(obj interface{}) { SetObjectDefaults_ChartInfo(obj.(*ChartInfo)) })
 	scheme.AddTypeDefaultingFunc(&ChartList{}, func(obj interface{}) { SetObjectDefaults_ChartList(obj.(*ChartList)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMap{}, func(obj interface{}) { SetObjectDefaults_ConfigMap(obj.(*ConfigMap)) })
 	scheme.AddTypeDefaultingFunc(&ConfigMapList{}, func(obj interface{}) { SetObjectDefaults_ConfigMapList(obj.(*ConfigMapList)) })
@@ -50,6 +51,7 @@ func SetObjectDefaults_Chart(in *Chart) {
 
 func SetObjectDefaults_ChartGroup(in *ChartGroup) {
 	SetDefaults_ChartGroupSpec(&in.Spec)
+	SetDefaults_ChartGroupStatus(&in.Status)
 }
 
 func SetObjectDefaults_ChartGroupList(in *ChartGroupList) {
@@ -57,6 +59,11 @@ func SetObjectDefaults_ChartGroupList(in *ChartGroupList) {
 		a := &in.Items[i]
 		SetObjectDefaults_ChartGroup(a)
 	}
+}
+
+func SetObjectDefaults_ChartInfo(in *ChartInfo) {
+	SetDefaults_ChartInfoSpec(&in.Spec)
+	SetDefaults_ChartSpec(&in.Spec.ChartSpec)
 }
 
 func SetObjectDefaults_ChartList(in *ChartList) {

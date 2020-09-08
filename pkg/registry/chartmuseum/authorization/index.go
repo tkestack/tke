@@ -24,8 +24,7 @@ import (
 
 	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"tkestack.io/tke/api/registry"
-	"tkestack.io/tke/pkg/apiserver/authentication"
+	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -64,45 +63,35 @@ func (a *authorization) index(w http.ResponseWriter, req *http.Request) {
 		a.locked(w)
 		return
 	}
-	username, userTenantID := authentication.UsernameAndTenantID(req.Context())
-	if chartGroup.Spec.Visibility == registry.VisibilityPublic {
-		// visibility is public, everyone can pull
-		if username == "" && userTenantID == "" {
-			log.Debug("Anonymous added public chart repo",
-				log.String("tenantID", tenantID),
-				log.String("repo", chartGroupName))
-		} else {
-			log.Debug("User added public chart repo",
-				log.String("tenantID", tenantID),
-				log.String("repo", chartGroupName),
-				log.String("userTenantID", userTenantID),
-				log.String("username", username))
-		}
+
+	if a.isAdmin(w, req) {
 		a.nextHandler.ServeHTTP(w, req)
 		return
 	}
-	if username != "" && userTenantID != "" && userTenantID == tenantID {
-		// authorized
-		log.Debug("User added private chart repo",
+
+	var cg = &registryv1.ChartGroup{}
+	err = registryv1.Convert_registry_ChartGroup_To_v1_ChartGroup(&chartGroup, cg, nil)
+	if err != nil {
+		log.Error("Failed to convert ChartGroup",
 			log.String("tenantID", tenantID),
-			log.String("repo", chartGroupName),
-			log.String("userTenantID", userTenantID),
-			log.String("username", username))
-		a.nextHandler.ServeHTTP(w, req)
+			log.String("chartGroupName", chartGroupName),
+			log.Err(err))
+		a.internalError(w)
 		return
 	}
-	if username == "" && tenantID == "" {
-		// anonymous user and chart group is private
-		log.Warn("Anonymous user try add a private chart repo",
+
+	authorized, err := AuthorizeForChartGroup(w, req, a.authorizer, "get", *cg)
+	if err != nil {
+		log.Error("Failed to authorize for chartGroup",
 			log.String("tenantID", tenantID),
-			log.String("repo", chartGroupName))
+			log.String("chartGroupName", chartGroupName),
+			log.Err(err))
+		a.internalError(w)
+		return
+	}
+	if !authorized {
 		a.notAuthenticated(w, req)
 		return
 	}
-	log.Warn("Not authorized user try add a private chart repo",
-		log.String("tenantID", tenantID),
-		log.String("repo", chartGroupName),
-		log.String("userTenantID", userTenantID),
-		log.String("username", username))
-	a.forbidden(w)
+	a.nextHandler.ServeHTTP(w, req)
 }

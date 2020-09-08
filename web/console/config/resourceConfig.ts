@@ -76,6 +76,9 @@ import {
   localgroup,
   group,
   audit,
+  chartgroup,
+  chart,
+  app
 } from './resource/k8sConfig';
 import { serviceEntry } from './resource/k8sConfig/serviceEntry';
 import { ResourceInfo } from '../src/modules/common/models';
@@ -209,5 +212,14 @@ export const resourceConfig = (k8sVersion: string = '1.16'): ResourceConfigKey =
     /** 审计记录 */
     audit: getResourceConfig(audit, finalK8sVersion),
     auditFilterCondition: getResourceConfig(audit, finalK8sVersion),
+
+    /** =============== 这里是仓库相关的 =============== */
+    chartgroup: getResourceConfig(chartgroup, finalK8sVersion),
+    chart: getResourceConfig(chart, finalK8sVersion),
+    /** =============== 这里是仓库相关的 =============== */
+
+    /** =============== 这里是应用相关的 =============== */
+    app: getResourceConfig(app, finalK8sVersion)
+    /** =============== 这里是仓库相关的 =============== */
   };
 };

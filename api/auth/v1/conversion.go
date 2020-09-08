@@ -273,3 +273,20 @@ func AddFieldLabelConversionsForGroup(scheme *runtime.Scheme) error {
 			}
 		})
 }
+
+// AddFieldLabelConversionsForCustomPolicyBinding adds a conversion function to convert
+// field selectors of CustomPolicyBinding from the given version to internal version
+// representation.
+func AddFieldLabelConversionsForCustomPolicyBinding(scheme *runtime.Scheme) error {
+	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("CustomPolicyBinding"),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "spec.tenantID",
+				"spec.domain",
+				"spec.policyID":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported: %s", label)
+			}
+		})
+}

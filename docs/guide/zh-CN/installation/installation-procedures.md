@@ -1,5 +1,13 @@
 #  安装步骤
 
+TKEStack 使用 tke-installer 安装工具进行安装，通过界面化的方式引导用户一键部署 TKEStack 容器平台。tke-installer 安装工具能够检查基本的环境信息，自动适配 x86 或 arm 版本安装驱动和镜像。离线的安装方式更免去用户拉取镜像的烦恼，极大的提高了容器平台部署的效率。
+
+![img](../../../images/1588923565_50_w1747_h691.png)
+
+tke-installer 自动等待和检查每一步骤安装完成，如果中间过程出错会自动在日志界面提示相应的信息，并支持根据用户需要，选择[全新安装或从失败步骤继续安装](../FAQ/Installation/如何重新部署.md)。更支持以 hook 方式自定义安装流程，用户可以在安装开始前、集群 ready 后以及安装结束后三个 hook 点添加自己的脚本或命令，实现平台安装的可定制化。
+
+
+
 ## 一、需求检查
 
 仔细检查每个节点的硬件和软件需求：[部署环境要求](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
@@ -41,7 +49,7 @@ arch=arm64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzho
    - **用户名**：TKEStack 控制台管理员名称（**例如：admin**）
    - **密码**：TKEStack 控制台管理员密码
    - **高可用设置**（按需使用，可直接选择【**不设置**】）
-     - **不设置**：访问第一台 master 节点 APIServer
+     - **不设置**：第一台 master 节点的IP地址作为 APIServer 地址
      - **TKE提供**：用户只需提供可用的IP地址，TKE部署Keepalive，配置该IP为Master集群的VIP，以实现Global集群和控制台的高可用，此时该VIP和所有master节点IP地址都是APIserver地址。
      - **使用已有**：对接配置好的外部 LB 实例，VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）端口，同时确保该VIP有至少两个LB后端（Master节点），以避免LB单后端不可用风险。
 
@@ -138,4 +146,4 @@ arch=arm64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 安装失败请首先检查硬件和软件需求：[部署环境要求](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
 
-可参考[FAQ installation](../FAQ/installation)获得更多帮助。
+可参考[FAQ Installation](../FAQ/Installation)获得更多帮助。
