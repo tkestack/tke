@@ -239,6 +239,20 @@ func (p *Provider) EnsureDisableSwap(ctx context.Context, machine *platformv1.Ma
 	return nil
 }
 
+func (p *Provider) EnsureDisableOffloading(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	_, err = machineSSH.CombinedOutput(`ethtool --offload flannel.1 rx off tx off`)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureManifestDir(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {

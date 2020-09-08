@@ -67,6 +67,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKernelModule,
 			p.EnsureSysctl,
 			p.EnsureDisableSwap,
+			p.EnsureDisableOffloading,
 			p.EnsureManifestDir,
 
 			p.EnsurePreflight, // wait basic setting done
