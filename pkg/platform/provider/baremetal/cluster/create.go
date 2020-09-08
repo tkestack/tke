@@ -257,7 +257,7 @@ func (p *Provider) EnsureDisableOffloading(ctx context.Context, c *v1.Cluster) e
 			return err
 		}
 
-		_, err = machineSSH.CombinedOutput(`swapoff -a && sed -i "s/^[^#]*swap/#&/" /etc/fstab`)
+		_, err = machineSSH.CombinedOutput(`ethtool --offload flannel.1 rx off tx off`)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
