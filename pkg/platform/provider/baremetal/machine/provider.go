@@ -90,7 +90,9 @@ func NewProvider() (*Provider, error) {
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []machineprovider.Handler{
+			p.EnsurePreUpgradeHook,
 			p.EnsureUpgrade,
+			p.EnsurePostUpgradeHook,
 		},
 	}
 

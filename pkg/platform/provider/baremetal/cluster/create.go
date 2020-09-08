@@ -59,6 +59,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/thirdpartyha"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
@@ -82,59 +83,47 @@ func (p *Provider) EnsureCopyFiles(ctx context.Context, c *v1.Cluster) error {
 			if err != nil {
 				return err
 			}
-
-			err = machineSSH.CopyFile(file.Src, file.Dst)
+			s, err := os.Stat(file.Src)
 			if err != nil {
 				return err
 			}
+			if s.Mode().IsDir() {
+				if err != nil {
+					return err
+				}
+				err = machineSSH.CopyDir(file.Src, file.Dst)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = machineSSH.CopyFile(file.Src, file.Dst)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
-
 	return nil
+}
+
+func (p *Provider) EnsurePreClusterInstallHook(ctx context.Context, c *v1.Cluster) error {
+
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreClusterInstall, c.Spec.Machines[:1])
 }
 
 func (p *Provider) EnsurePreInstallHook(ctx context.Context, c *v1.Cluster) error {
-	hook := c.Spec.Features.Hooks[platformv1.HookPreInstall]
-	if hook == "" {
-		return nil
-	}
-	cmd := strings.Split(hook, " ")[0]
 
-	for _, machine := range c.Spec.Machines {
-		machineSSH, err := machine.SSH()
-		if err != nil {
-			return err
-		}
-
-		machineSSH.Execf("chmod +x %s", cmd)
-		_, stderr, exit, err := machineSSH.Exec(hook)
-		if err != nil || exit != 0 {
-			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
-		}
-	}
-	return nil
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreInstall, c.Spec.Machines)
 }
 
 func (p *Provider) EnsurePostInstallHook(ctx context.Context, c *v1.Cluster) error {
-	hook := c.Spec.Features.Hooks[platformv1.HookPostInstall]
-	if hook == "" {
-		return nil
-	}
-	cmd := strings.Split(hook, " ")[0]
 
-	for _, machine := range c.Spec.Machines {
-		machineSSH, err := machine.SSH()
-		if err != nil {
-			return err
-		}
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPostInstall, c.Spec.Machines)
+}
 
-		machineSSH.Execf("chmod +x %s", cmd)
-		_, stderr, exit, err := machineSSH.Exec(hook)
-		if err != nil || exit != 0 {
-			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
-		}
-	}
-	return nil
+func (p *Provider) EnsurePostClusterInstallHook(ctx context.Context, c *v1.Cluster) error {
+
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPostClusterInstall, c.Spec.Machines[:1])
 }
 
 func (p *Provider) EnsurePreflight(ctx context.Context, c *v1.Cluster) error {

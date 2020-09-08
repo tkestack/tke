@@ -62,9 +62,20 @@ func (p *Provider) EnsureCopyFiles(ctx context.Context, machine *platformv1.Mach
 	}
 
 	for _, file := range cluster.Spec.Features.Files {
-		err = machineSSH.CopyFile(file.Src, file.Dst)
+		s, err := os.Stat(file.Src)
 		if err != nil {
 			return err
+		}
+		if s.Mode().IsDir() {
+			err = machineSSH.CopyDir(file.Src, file.Dst)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = machineSSH.CopyFile(file.Src, file.Dst)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -72,45 +83,29 @@ func (p *Provider) EnsureCopyFiles(ctx context.Context, machine *platformv1.Mach
 }
 
 func (p *Provider) EnsurePreInstallHook(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	hook := cluster.Spec.Features.Hooks[platformv1.HookPreInstall]
-	if hook == "" {
-		return nil
-	}
 
-	machineSSH, err := machine.Spec.SSH()
-	if err != nil {
-		return err
+	mc := []platformv1.ClusterMachine{
+		{
+			IP:       machine.Spec.IP,
+			Port:     machine.Spec.Port,
+			Username: machine.Spec.Username,
+			Password: machine.Spec.Password,
+		},
 	}
-
-	cmd := strings.Split(hook, " ")[0]
-
-	machineSSH.Execf("chmod +x %s", cmd)
-	_, stderr, exit, err := machineSSH.Exec(hook)
-	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
-	}
-	return nil
+	return util.ExcuteCustomizedHook(ctx, cluster, platformv1.HookPreInstall, mc)
 }
 
 func (p *Provider) EnsurePostInstallHook(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	hook := cluster.Spec.Features.Hooks[platformv1.HookPostInstall]
-	if hook == "" {
-		return nil
-	}
 
-	machineSSH, err := machine.Spec.SSH()
-	if err != nil {
-		return err
+	mc := []platformv1.ClusterMachine{
+		{
+			IP:       machine.Spec.IP,
+			Port:     machine.Spec.Port,
+			Username: machine.Spec.Username,
+			Password: machine.Spec.Password,
+		},
 	}
-
-	cmd := strings.Split(hook, " ")[0]
-
-	machineSSH.Execf("chmod +x %s", cmd)
-	_, stderr, exit, err := machineSSH.Exec(hook)
-	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
-	}
-	return nil
+	return util.ExcuteCustomizedHook(ctx, cluster, platformv1.HookPostInstall, mc)
 }
 
 func (p *Provider) EnsureClean(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {

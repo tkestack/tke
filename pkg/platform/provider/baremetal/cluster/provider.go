@@ -69,6 +69,7 @@ func NewProvider() (*Provider, error) {
 
 		CreateHandlers: []clusterprovider.Handler{
 			p.EnsureCopyFiles,
+			p.EnsurePreClusterInstallHook,
 			p.EnsurePreInstallHook,
 
 			// configure system
@@ -129,8 +130,10 @@ func NewProvider() (*Provider, error) {
 			p.EnsureCleanup,
 			p.EnsureCreateClusterMark,
 			p.EnsurePostInstallHook,
+			p.EnsurePostClusterInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
+			p.EnsurePreClusterUpgradeHook,
 			p.EnsureUpgradeControlPlaneNode,
 
 			p.EnsureRenewCerts,
@@ -138,6 +141,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureStoreCredential,
 			p.EnsureKeepalivedWithoutLB,
 			p.EnsureThirdPartyHA,
+			p.EnsurePostClusterUpgradeHook,
 		},
 		DeleteHandlers: []clusterprovider.Handler{
 			p.EnsureCleanClusterMark,
