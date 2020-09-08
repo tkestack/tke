@@ -45699,6 +45699,13 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							Ref:         ref("tkestack.io/tke/api/platform/v1.Upgrade"),
 						},
 					},
+					"hostnameAsNodename": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If true will use hostname as nodename, if false will use machine IP as nodename.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},

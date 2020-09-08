@@ -39,6 +39,7 @@ import (
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -305,7 +306,7 @@ func (c *Controller) checkHealth(ctx context.Context, machine *platformv1.Machin
 		healthCheckCondition.Reason = failedHealthCheckReason
 		healthCheckCondition.Message = err.Error()
 	} else {
-		_, err = clientset.CoreV1().Nodes().Get(ctx, machine.Spec.IP, metav1.GetOptions{})
+		_, err = apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
 		if err != nil {
 			machine.Status.Phase = platformv1.MachineFailed
 

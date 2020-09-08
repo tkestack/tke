@@ -508,6 +508,10 @@ message ClusterSpec {
   // Upgrade control upgrade process.
   // +optional
   optional Upgrade upgrade = 22;
+
+  // If true will use hostname as nodename, if false will use machine IP as nodename.
+  // +optional
+  optional bool hostnameAsNodename = 23;
 }
 
 // ClusterStatus represents information about the status of a cluster.

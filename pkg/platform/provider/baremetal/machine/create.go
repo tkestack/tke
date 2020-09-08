@@ -29,7 +29,6 @@ import (
 
 	"github.com/imdario/mergo"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -428,7 +427,11 @@ func (p *Provider) EnsureMarkNode(ctx context.Context, machine *platformv1.Machi
 		return err
 	}
 
-	err = apiclient.MarkNode(ctx, clientset, machine.Spec.IP, machine.Spec.Labels, machine.Spec.Taints)
+	node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
+	if err != nil {
+		return err
+	}
+	err = apiclient.MarkNode(ctx, clientset, node.Name, machine.Spec.Labels, machine.Spec.Taints)
 	if err != nil {
 		return err
 	}
@@ -442,7 +445,7 @@ func (p *Provider) EnsureNodeReady(ctx context.Context, machine *platformv1.Mach
 	}
 
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		node, err := clientset.CoreV1().Nodes().Get(ctx, machine.Spec.IP, metav1.GetOptions{})
+		node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
 		if err != nil {
 			return false, nil
 		}

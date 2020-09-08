@@ -147,7 +147,7 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 	}
 	for i, machine := range c.Spec.Machines {
 		option.MachineName = machine.Username
-		option.NodeName = machine.IP
+		option.MachineIP = machine.IP
 		option.BootstrapNode = i == 0
 		s, err := machine.SSH()
 		if err != nil {
