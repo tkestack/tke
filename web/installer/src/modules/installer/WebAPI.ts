@@ -59,6 +59,13 @@ function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] 
 }
 
 export async function createCluster(edits: Array<EditState>) {
+  // 先把host用分号分割的展平为多个
+
+  edits[0].machines = edits[0].machines.reduce(
+    (all, { host, ...restMachine }) => all.concat(host.split(';').map(ip => ({ host: ip, ...restMachine }))),
+    []
+  );
+
   try {
     // 先校验机器连通性
     let requests = edits[0].machines.map(m => {
@@ -78,6 +85,7 @@ export async function createCluster(edits: Array<EditState>) {
           }
           params['privateKey'] = Base64.encode(m.cert);
         }
+
         let rsp = await axios.post(`http://${host}/api/ssh`, params);
         return rsp;
       };
