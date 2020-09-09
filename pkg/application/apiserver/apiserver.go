@@ -27,6 +27,7 @@ import (
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	appconfig "tkestack.io/tke/pkg/application/config"
 	applicationrest "tkestack.io/tke/pkg/application/registry/rest"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -39,6 +40,7 @@ type ExtraConfig struct {
 	VersionedInformers      versionedinformers.SharedInformerFactory
 	RegistryClient          registryversionedclient.RegistryV1Interface
 	PlatformClient          platformversionedclient.PlatformV1Interface
+	RepoConfiguration       appconfig.RepoConfiguration
 }
 
 // Config contains the core configuration instance of apiserver and
@@ -93,6 +95,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 			PlatformClient:       c.ExtraConfig.PlatformClient,
 			RegistryClient:       c.ExtraConfig.RegistryClient,
 			Authorizer:           c.GenericConfig.Authorization.Authorizer,
+			RepoConfiguration:    c.ExtraConfig.RepoConfiguration,
 		},
 	}
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)
