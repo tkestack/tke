@@ -66,6 +66,7 @@ type AppSpec struct {
 	Values AppValues `json:"values,omitempty" protobuf:"bytes,6,opt,name=values,casttype=AppValues"`
 	// +optional
 	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,7,rep,name=finalizers,casttype=FinalizerName"`
+	DryRun     bool            `json:"dryRun" protobuf:"bytes,8,opt,name=dryRun"`
 }
 
 // Chart is a description of a chart.
@@ -110,6 +111,9 @@ type AppStatus struct {
 	// A human readable message indicating details about the transition.
 	// +optional
 	Message string `json:"message,omitempty" protobuf:"bytes,9,opt,name=message"`
+	// Dryrun result.
+	// +optional
+	Manifest string `json:"manifest" protobuf:"bytes,10,opt,name=manifest"`
 }
 
 // +genclient

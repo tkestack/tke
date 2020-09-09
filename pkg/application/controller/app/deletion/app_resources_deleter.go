@@ -31,8 +31,8 @@ import (
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	appconfig "tkestack.io/tke/pkg/application/config"
 	"tkestack.io/tke/pkg/application/controller/app/action"
-	appconfig "tkestack.io/tke/pkg/application/controller/app/config"
 	"tkestack.io/tke/pkg/util/log"
 )
 
