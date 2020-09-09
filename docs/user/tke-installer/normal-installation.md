@@ -21,7 +21,7 @@ The hardware requirements for nodes mostly depend on your workloads, the minimum
   * 16 GB of Memory
   * 50 GB of Disk Space
 
-> Note: Installer node need extra 20GB disk to store images and temporary files.
+> Note: Installer node need extra 25GB /var/lib/ disk to store images and temporary files, 50GB /opt disk to uncompress installer package
 
 TKEStack is tested on the following operating system:
 
@@ -42,7 +42,7 @@ First Log in to your Linux host and install tke-installer via this command:
 
 > Note: this command can be found at [TKEStack Release](https://github.com/tkestack/tke/releases)
 >
-> Note: tke-installer is about 3GB, contains all resources required by the installation, TKEStack will be installed offline, behind a firewall or behind a proxy.
+> Note: tke-installer is about 7.2GB, contains all resources required by the installation, TKEStack will be installed offline, behind a firewall or behind a proxy.
 
 
 ## Starting the installation
