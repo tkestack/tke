@@ -2021,11 +2021,14 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 
 func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKEApplicationAPI.FullName(),
-		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
-		"EnableAudit":    t.auditEnabled(),
+		"Replicas":              t.Config.Replicas,
+		"Image":                 images.Get().TKEApplicationAPI.FullName(),
+		"EnableAuth":            t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry":        t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":           t.auditEnabled(),
+		"RegistryAdminUsername": t.Para.Config.Application.RegistryUsername,
+		"RegistryAdminPassword": string(t.Para.Config.Application.RegistryPassword),
+		"RegistryDomainSuffix":  t.Para.Config.Application.RegistryDomain,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -2049,11 +2052,11 @@ func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
 func (t *TKE) installTKEApplicationController(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-application-controller/*.yaml",
 		map[string]interface{}{
-			"Replicas":      t.Config.Replicas,
-			"Image":         images.Get().TKEApplicationController.FullName(),
-			"AdminUsername": t.Para.Config.Application.RegistryUsername,
-			"AdminPassword": string(t.Para.Config.Application.RegistryPassword),
-			"DomainSuffix":  t.Para.Config.Application.RegistryDomain,
+			"Replicas":              t.Config.Replicas,
+			"Image":                 images.Get().TKEApplicationController.FullName(),
+			"RegistryAdminUsername": t.Para.Config.Application.RegistryUsername,
+			"RegistryAdminPassword": string(t.Para.Config.Application.RegistryPassword),
+			"RegistryDomainSuffix":  t.Para.Config.Application.RegistryDomain,
 		})
 	if err != nil {
 		return err

@@ -72,12 +72,13 @@ data:
       api_server = "https://tke-application-api"
       api_server_client_config = "/app/conf/tke-application-config.yaml"
 
-    [repo]
-      scheme = "https"
-      domain_suffix = "{{ .DomainSuffix }}"
-      admin = "{{ .AdminUsername }}"
-      admin_password = "{{ .AdminPassword }}"
-      cafile = "/app/certs/ca.crt"
+    [features]
+      [repo]
+        scheme = "https"
+        domain_suffix = "{{ .RegistryDomainSuffix }}"
+        admin = "{{ .RegistryAdminUsername }}"
+        admin_password = "{{ .RegistryAdminPassword }}"
+        cafile = "/app/certs/ca.crt"
 
   tke-platform-config.yaml: |
     apiVersion: v1
