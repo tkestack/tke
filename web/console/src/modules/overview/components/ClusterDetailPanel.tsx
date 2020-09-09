@@ -63,6 +63,9 @@ function _renderClusterCard(cluster: ClusterDetail, index: number) {
             >
               {cluster.clusterID}
             </Button>
+
+            <Text theme="weak"> {cluster.clusterDisplayName} </Text>
+
             {cluster.clusterPhase !== 'Running' && (
               <Bubble content={clusterStatus[cluster.clusterPhase] ? clusterStatus[cluster.clusterPhase].text : '-'}>
                 <Icon type={'info'}></Icon>
@@ -75,23 +78,23 @@ function _renderClusterCard(cluster: ClusterDetail, index: number) {
         <Row>
           <Col>
             <div style={{ backgroundColor: '#F2F2F2', padding: '16px 10px' }}>
-              <Text style={{ fontSize: 18, fontWeight: 500 }}>{isFailed ? '-' : cluster.cpuRequestRate}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 500 }}>{isFailed ? '-' : cluster.cpuUsage}</Text>
               <Text style={{ fontSize: 12, fontWeight: 600 }}> CPU利用率</Text>
               <div>
                 <Text theme={'label'} reset>{`总数: ${cluster.cpuCapacity}核 Request已分配: ${
-                  isFailed ? '-' : cluster.cpuAllocatableRate
+                  isFailed ? '-' : cluster.cpuRequestRate
                 }`}</Text>
               </div>
             </div>
           </Col>
           <Col>
             <div style={{ backgroundColor: '#F2F2F2', padding: '16px 10px' }}>
-              <Text style={{ fontSize: 18, fontWeight: 500 }}>{isFailed ? '-' : cluster.memRequestRate}</Text>
+              <Text style={{ fontSize: 18, fontWeight: 500 }}>{isFailed ? '-' : cluster.memUsage}</Text>
               <Text style={{ fontSize: 12, fontWeight: 600 }}> 内存利用率</Text>
               <div>
                 <Text theme={'label'} reset>{`总数: ${
                   isFailed ? '-' : (cluster.memCapacity / 1.0 / 1024 / 1024 / 1024).toPrecision(3)
-                }GB Request已分配: ${isFailed ? '-' : cluster.memAllocatableRate}`}</Text>
+                }GB Request已分配: ${isFailed ? '-' : cluster.memRequestRate}`}</Text>
               </div>
             </div>
           </Col>
