@@ -136,14 +136,14 @@ func (rs *REST) Export(ctx context.Context, name string, opts metav1.ExportOptio
 
 func (rs *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	app := obj.(*application.App)
-	// check chart permission
-	err := canVisitChart(ctx, rs.registryClient, rs.authorizer, app)
+
+	err := rs.prepareForCheck(ctx, app)
 	if err != nil {
 		return nil, err
 	}
 
 	if app.Spec.DryRun {
-		rel, err := dryRun(ctx, rs.platformClient, rs.repo, app)
+		rel, err := rs.dryRun(ctx, app)
 		if err != nil {
 			return nil, err
 		}
@@ -152,11 +152,6 @@ func (rs *REST) Create(ctx context.Context, obj runtime.Object, createValidation
 		return ret, nil
 	}
 
-	// check value format
-	_, err = helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
-	if err != nil {
-		return nil, errors.NewBadRequest(err.Error())
-	}
 	return rs.application.Create(ctx, obj, createValidation, options)
 }
 
@@ -199,15 +194,20 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 	}
 
 	// check chart permission
-	err = canVisitChart(ctx, rs.registryClient, rs.authorizer, app)
+	// check value format
+	err = rs.prepareForCheck(ctx, app)
 	if err != nil {
 		return nil, false, err
 	}
 
-	// check value format
-	_, err = helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
-	if err != nil {
-		return nil, false, errors.NewBadRequest(err.Error())
+	if app.Spec.DryRun {
+		rel, err := rs.dryRun(ctx, app)
+		if err != nil {
+			return nil, false, err
+		}
+		ret := app.DeepCopy()
+		ret.Status.Manifest = rel.Manifest
+		return ret, true, nil
 	}
 
 	// Copy over non-user fields
@@ -229,17 +229,28 @@ func (rs *REST) ConvertToTable(ctx context.Context, object runtime.Object, table
 	return rs.application.ConvertToTable(ctx, object, tableOptions)
 }
 
-func canVisitChart(
-	ctx context.Context,
-	registryClient registryversionedclient.RegistryV1Interface,
-	authorizer authorizer.Authorizer,
-	app *application.App) error {
+func (rs *REST) prepareForCheck(ctx context.Context, app *application.App) error {
+	// check chart permission
+	err := rs.canVisitChart(ctx, app)
+	if err != nil {
+		return err
+	}
+
+	// check value format
+	_, err = helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
+	if err != nil {
+		return errors.NewBadRequest(err.Error())
+	}
+	return nil
+}
+
+func (rs *REST) canVisitChart(ctx context.Context, app *application.App) error {
 	//TODO: allowAlways if registryClient is empty?
-	if registryClient == nil {
+	if rs.registryClient == nil {
 		return nil
 	}
 
-	chartGroupList, err := registryClient.ChartGroups().List(ctx, metav1.ListOptions{
+	chartGroupList, err := rs.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName),
 	})
 	if err != nil {
@@ -249,7 +260,7 @@ func canVisitChart(
 		return errors.NewNotFound(registryv1.Resource("chartgroups"), fmt.Sprintf("%s/%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName))
 	}
 	chartGroup := chartGroupList.Items[0]
-	chartList, err := registryClient.Charts(chartGroup.ObjectMeta.Name).List(ctx, metav1.ListOptions{
+	chartList, err := rs.registryClient.Charts(chartGroup.ObjectMeta.Name).List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartName),
 	})
 	if err != nil {
@@ -264,7 +275,7 @@ func canVisitChart(
 	if !exist || u == nil {
 		return errors.NewUnauthorized("empty user info, not authenticated")
 	}
-	authorized, err := authorizationutil.AuthorizeForChart(ctx, u, authorizer, "get", chartGroup, chart.Name)
+	authorized, err := authorizationutil.AuthorizeForChart(ctx, u, rs.authorizer, "get", chartGroup, chart.Name)
 	if err != nil {
 		return err
 	}
@@ -274,24 +285,21 @@ func canVisitChart(
 	return nil
 }
 
-func dryRun(ctx context.Context,
-	platformClient platformversionedclient.PlatformV1Interface,
-	repo appconfig.RepoConfiguration,
-	app *application.App) (*release.Release, error) {
-	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Namespace)
+func (rs *REST) dryRun(ctx context.Context, app *application.App) (*release.Release, error) {
+	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Namespace)
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
 	loc := &url.URL{
-		Scheme: repo.Scheme,
-		Host:   registryutil.BuildTenantRegistryDomain(repo.DomainSuffix, app.Spec.Chart.TenantID),
+		Scheme: rs.repo.Scheme,
+		Host:   registryutil.BuildTenantRegistryDomain(rs.repo.DomainSuffix, app.Spec.Chart.TenantID),
 		Path:   fmt.Sprintf("/chart/%s", app.Spec.Chart.ChartGroupName),
 	}
 	destfile, err := client.Pull(&helmaction.PullOptions{
 		ChartPathOptions: helmaction.ChartPathOptions{
-			CaFile:    repo.CaFile,
-			Username:  repo.Admin,
-			Password:  repo.AdminPassword,
+			CaFile:    rs.repo.CaFile,
+			Username:  rs.repo.Admin,
+			Password:  rs.repo.AdminPassword,
 			RepoURL:   loc.String(),
 			ChartRepo: app.Spec.Chart.TenantID + "/" + app.Spec.Chart.ChartGroupName,
 			Chart:     app.Spec.Chart.ChartName,
@@ -315,9 +323,9 @@ func dryRun(ctx context.Context,
 		DryRun:           true,
 		Values:           values,
 		ChartPathOptions: helmaction.ChartPathOptions{
-			CaFile:      repo.CaFile,
-			Username:    repo.Admin,
-			Password:    repo.AdminPassword,
+			CaFile:      rs.repo.CaFile,
+			Username:    rs.repo.Admin,
+			Password:    rs.repo.AdminPassword,
 			RepoURL:     loc.String(),
 			ChartRepo:   app.Spec.Chart.TenantID + "/" + app.Spec.Chart.ChartGroupName,
 			Chart:       app.Spec.Chart.ChartName,
