@@ -31,7 +31,6 @@ interface AppCreateState extends RootProps {
     message: string;
   };
   chartInfoFilter?: ChartInfoFilter;
-  dryRun?: boolean;
   showDryRunManifest?: boolean;
 }
 
@@ -45,7 +44,6 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
         message: ''
       },
       chartInfoFilter: this.props.chartInfoFilter,
-      dryRun: false,
       showDryRunManifest: false
     };
   }
@@ -82,7 +80,7 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
         })
       : [];
     /** 提交 */
-    const perform = () => {
+    const perform = (dryRun: boolean = false) => {
       if (appCreation.spec.values.rawValuesType === 'yaml') {
         try {
           JsYAML.safeLoad(appCreation.spec.values.rawValues);
@@ -99,11 +97,10 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
 
       actions.app.create.validator.validate(null, async r => {
         if (isValid(r)) {
-          if (this.state.dryRun) {
-            this.setState({ showDryRunManifest: true });
-          }
-
           let app: App = Object.assign({}, appCreation);
+          app.spec.dryRun = dryRun;
+          this.setState({ showDryRunManifest: dryRun });
+
           action.start([app], {
             cluster: appCreation.spec.targetCluster,
             namespace: appCreation.metadata.namespace,
@@ -134,7 +131,8 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
           <>
             <Button
               type="primary"
-              onClick={() => {
+              onClick={e => {
+                e.preventDefault();
                 perform();
               }}
             >
@@ -231,20 +229,18 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
               </Alert>
             )}
           </FormPanel.Item>
-          <FormPanel.Item
-            label={t('拟运行')}
-            message={t('返回模板渲染清单，不会真正执行安装')}
-            checkbox={{
-              onChange: (checked, ctx) => {
-                this.setState({
-                  dryRun: checked
-                });
-                actions.app.create.updateCreationState({
-                  spec: Object.assign({}, appCreation.spec, { dryRun: checked })
-                });
-              }
-            }}
-          ></FormPanel.Item>
+          <FormPanel.Item label={t('拟运行')} message={t('返回模板渲染清单，不会真正执行安装')}>
+            <Button
+              style={{ paddingTop: '6px' }}
+              type="link"
+              onClick={e => {
+                e.preventDefault();
+                perform(true);
+              }}
+            >
+              {t('点击执行')}
+            </Button>
+          </FormPanel.Item>
         </FormPanel>
         <YamlDialog
           title={
