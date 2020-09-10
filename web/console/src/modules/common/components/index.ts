@@ -31,4 +31,4 @@ export { GridTable } from './gridtable';
 export { TransferTable, TransferTableProps } from './transferTable';
 export { emptyTips } from './empty';
 export { NavigateLink } from './NavigateLink';
-export { YamlEditorPanel } from './yamleditor';
+export * from './yamleditor';

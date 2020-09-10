@@ -18,6 +18,7 @@ export const UpdateApp = 'UpdateApp';
 export const RemoveApp = 'RemoveApp';
 export const UpdateAppCreationState = 'UpdateAppCreationState';
 export const UpdateAppEditorState = 'UpdateAppEditorState';
+export const UpdateAppDryRunState = 'UpdateAppDryRunState';
 export const AppResource = 'AppResource';
 export const ResourceList = 'ResourceList';
 export const AppHistory = 'AppHistory';
