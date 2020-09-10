@@ -125,6 +125,7 @@ export interface RootState {
   appCreation?: AppCreation;
   appValidator?: ValidatorModel;
   appAddWorkflow?: WorkflowState<App, AppFilter>;
+  appDryRun?: App;
 
   /** 集群 */
   clusterList?: FFListModel<Cluster, ClusterFilter>;

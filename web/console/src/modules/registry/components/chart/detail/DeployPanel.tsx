@@ -4,8 +4,8 @@ import { connect } from 'react-redux';
 import { RootProps } from '../ChartApp';
 import { FormPanel } from '@tencent/ff-component';
 import { TipInfo, getWorkflowError, InputField } from '../../../../../modules/common';
-import { YamlEditorPanel } from '../../../../common/components';
-import { Button, Alert, Drawer } from '@tea/component';
+import { YamlEditorPanel, YamlDialog } from '../../../../common/components';
+import { Button, Alert, Drawer, StatusTip } from '@tea/component';
 import { dateFormat } from '../../../../../../helpers/dateUtil';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators, OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
@@ -31,6 +31,8 @@ interface AppCreateState extends RootProps {
     message: string;
   };
   chartInfoFilter?: ChartInfoFilter;
+  dryRun?: boolean;
+  showDryRunManifest?: boolean;
 }
 
 @connect(state => state, mapDispatchToProps)
@@ -42,7 +44,9 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
         result: 0,
         message: ''
       },
-      chartInfoFilter: this.props.chartInfoFilter
+      chartInfoFilter: this.props.chartInfoFilter,
+      dryRun: false,
+      showDryRunManifest: false
     };
   }
 
@@ -65,10 +69,10 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
   };
 
   render() {
-    let { actions, chartEditor, chartInfo, appValidator, appCreation, projectList, route } = this.props;
+    let { actions, chartEditor, chartInfo, appValidator, appCreation, appDryRun, projectList, route } = this.props;
     let action = actions.app.create.addAppWorkflow;
-    const { chartUpdateWorkflow } = this.props;
-    const workflow = chartUpdateWorkflow;
+    const { appAddWorkflow } = this.props;
+    const workflow = appAddWorkflow;
     const versionOptions = chartEditor
       ? chartEditor.status.versions.map(v => {
           return {
@@ -77,7 +81,6 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
           };
         })
       : [];
-
     /** 提交 */
     const perform = () => {
       if (appCreation.spec.values.rawValuesType === 'yaml') {
@@ -96,6 +99,10 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
 
       actions.app.create.validator.validate(null, async r => {
         if (isValid(r)) {
+          if (this.state.dryRun) {
+            this.setState({ showDryRunManifest: true });
+          }
+
           let app: App = Object.assign({}, appCreation);
           action.start([app], {
             cluster: appCreation.spec.targetCluster,
@@ -125,7 +132,12 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
         title={t('创建应用')}
         footer={
           <>
-            <Button type="primary" onClick={() => perform()}>
+            <Button
+              type="primary"
+              onClick={() => {
+                perform();
+              }}
+            >
               {failed ? t('重试') : t('创建')}
             </Button>
             <Button
@@ -219,7 +231,40 @@ export class DeployPanel extends React.Component<AppCreateProps, AppCreateState>
               </Alert>
             )}
           </FormPanel.Item>
+          <FormPanel.Item
+            label={t('拟运行')}
+            message={t('返回模板渲染清单，不会真正执行安装')}
+            checkbox={{
+              onChange: (checked, ctx) => {
+                this.setState({
+                  dryRun: checked
+                });
+                actions.app.create.updateCreationState({
+                  spec: Object.assign({}, appCreation.spec, { dryRun: checked })
+                });
+              }
+            }}
+          ></FormPanel.Item>
         </FormPanel>
+        <YamlDialog
+          title={
+            <span>
+              {t('清单')}
+              {workflow.operationState === OperationState.Performing && (
+                <StatusTip status="loading" loadingText=""></StatusTip>
+              )}
+            </span>
+          }
+          onClose={() => {
+            this.setState({
+              showDryRunManifest: false
+            });
+
+            actions.app.create.clearDryRunState();
+          }}
+          yamlConfig={appDryRun && appDryRun.status ? appDryRun.status.manifest : ''}
+          isShow={this.state.showDryRunManifest}
+        />
       </Drawer>
     );
   }

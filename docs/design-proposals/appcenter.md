@@ -190,4 +190,6 @@ Application的认证鉴权分为两个场景。
 
 ### Installer关于应用商店和应用编排组件的配置
 
-参考commit：[feat: complete installer with registry and application component](https://github.com/tkestack/tke/pull/693/commits/1daa30e46b6e2572957056c3fdbc1ad0605e488e)
+参考commit：
+[feat(installer): complete registry and application component](https://github.com/tkestack/tke/pull/693/commits/1daa30e46b6e2572957056c3fdbc1ad0605e488e)
+[fix(installer): application api component add repo conf](https://github.com/tkestack/tke/pull/706/commits/703c2fa1d5a29b22dd1af97cbe2921e4647b8f35)

@@ -4,15 +4,16 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators, insertCSS, OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { allActions } from '../../../actions';
 import { RootProps } from '../AppContainer';
-import { Button, Bubble, Icon } from '@tencent/tea-component';
+import { Button, Bubble, Icon, StatusTip } from '@tencent/tea-component';
 import { router } from '../../../router';
 import { FormPanel } from '@tencent/ff-component';
 import { InputField, TipInfo, getWorkflowError } from '../../../../../modules/common';
-import { App, Chart } from '../../../models';
+import { App, AppCreation, Chart } from '../../../models';
 import { isValid } from '@tencent/ff-validator';
 import { ChartTablePanel } from '../ChartTablePanel';
 import { ChartActionPanel } from '../ChartActionPanel';
 import { ChartValueYamlDialog } from '../ChartValueYamlDialog';
+import { YamlDialog } from '../../../../common/components';
 import { NamespacePanel } from './NamespacePanel';
 // @ts-ignore
 const tips = seajs.require('tips');
@@ -25,6 +26,8 @@ const mapDispatchToProps = dispatch =>
 interface AppCreateState {
   showValueSetting?: boolean;
   projectID?: string;
+  dryRun?: boolean;
+  showDryRunManifest?: boolean;
 }
 
 @connect(state => state, mapDispatchToProps)
@@ -33,12 +36,14 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
     super(props, context);
     this.state = {
       showValueSetting: false,
-      projectID: ''
+      projectID: '',
+      dryRun: false,
+      showDryRunManifest: false
     };
   }
 
   render() {
-    let { actions, route, appCreation, appValidator, clusterList, namespaceList, chartList, chartInfo } = this.props;
+    let { actions, route, appCreation, appValidator, appDryRun, chartList, chartInfo } = this.props;
     let action = actions.app.create.addAppWorkflow;
     const { appAddWorkflow } = this.props;
     const workflow = appAddWorkflow;
@@ -58,7 +63,11 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
     const perform = () => {
       actions.app.create.validator.validate(null, async r => {
         if (isValid(r)) {
-          let app: App = Object.assign({}, appCreation);
+          if (this.state.dryRun) {
+            this.setState({ showDryRunManifest: true });
+          }
+
+          let app: AppCreation = Object.assign({}, appCreation);
           action.start([app]);
           action.perform();
         } else {
@@ -201,6 +210,20 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
             isShow={this.state.showValueSetting}
           />
         </FormPanel.Item>
+        <FormPanel.Item
+          label={t('拟运行')}
+          message={t('返回模板渲染清单，不会真正执行安装')}
+          checkbox={{
+            onChange: (checked, ctx) => {
+              this.setState({
+                dryRun: checked
+              });
+              actions.app.create.updateCreationState({
+                spec: Object.assign({}, appCreation.spec, { dryRun: checked })
+              });
+            }
+          }}
+        ></FormPanel.Item>
         <FormPanel.Footer>
           <React.Fragment>
             <Button
@@ -228,6 +251,24 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
             </TipInfo>
           </React.Fragment>
         </FormPanel.Footer>
+        <YamlDialog
+          title={
+            <span>
+              {t('清单')}
+              {workflow.operationState === OperationState.Performing && (
+                <StatusTip status="loading" loadingText=""></StatusTip>
+              )}
+            </span>
+          }
+          onClose={() => {
+            this.setState({
+              showDryRunManifest: false
+            });
+            actions.app.create.clearDryRunState();
+          }}
+          yamlConfig={appDryRun && appDryRun.status ? appDryRun.status.manifest : ''}
+          isShow={this.state.showDryRunManifest}
+        />
       </FormPanel>
     );
   }

@@ -25,23 +25,39 @@ const updateAppWorkflow = generateWorkflowActionCreator<App, void>({
   operationExecutor: WebAPI.updateApp,
   after: {
     [OperationTrigger.Done]: (dispatch, getState: GetState) => {
-      if (isSuccessWorkflow(getState().appUpdateWorkflow)) {
-        //表示编辑模式结束
-        let { appEditor, route } = getState();
-        dispatch({
-          type: ActionTypes.UpdateAppEditorState,
-          payload: Object.assign({}, appEditor, { v_editing: false })
-        });
-        /** 重新获取最新数据，从而Detail可以连续编辑且使用到最新的resourceVersion */
-        // dispatch(
-        //   detailActions.fetchApp({
-        //     cluster: appEditor.spec.targetCluster,
-        //     namespace: appEditor.metadata.namespace,
-        //     name: appEditor.metadata.name
-        //   })
-        // );
+      let { appUpdateWorkflow, appEditor, route } = getState();
+      if (isSuccessWorkflow(appUpdateWorkflow)) {
+        //判断是否是dryrun
+        if (appUpdateWorkflow.targets.length > 0 && appUpdateWorkflow.targets[0].spec.dryRun) {
+          if (
+            appUpdateWorkflow.results &&
+            appUpdateWorkflow.results.length > 0 &&
+            appUpdateWorkflow.results[0].success &&
+            appUpdateWorkflow.results[0].target
+          ) {
+            let { appDryRun } = getState();
+            dispatch({
+              type: ActionTypes.UpdateAppDryRunState,
+              payload: Object.assign({}, appDryRun, appUpdateWorkflow.results[0].target)
+            });
+          }
+        } else {
+          //表示编辑模式结束
+          dispatch({
+            type: ActionTypes.UpdateAppEditorState,
+            payload: Object.assign({}, appEditor, { v_editing: false })
+          });
+          /** 重新获取最新数据，从而Detail可以连续编辑且使用到最新的resourceVersion */
+          // dispatch(
+          //   detailActions.fetchApp({
+          //     cluster: appEditor.spec.targetCluster,
+          //     namespace: appEditor.metadata.namespace,
+          //     name: appEditor.metadata.name
+          //   })
+          // );
 
-        router.navigate({ mode: '', sub: 'app' }, route.queries);
+          router.navigate({ mode: '', sub: 'app' }, route.queries);
+        }
       }
       /** 结束工作流 */
       dispatch(detailActions.updateAppWorkflow.reset());
@@ -127,6 +143,14 @@ const restActions = {
   clearValidatorState: (): ReduxAction<any> => {
     return {
       type: getValidatorActionType(AppValidateSchema.formKey),
+      payload: {}
+    };
+  },
+
+  /** 清除DryRun当中的内容 */
+  clearDryRunState: (): ReduxAction<any> => {
+    return {
+      type: ActionTypes.UpdateAppDryRunState,
       payload: {}
     };
   }

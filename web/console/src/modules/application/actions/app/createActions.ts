@@ -6,7 +6,7 @@ import {
   isSuccessWorkflow,
   createFFObjectActions
 } from '@tencent/ff-redux';
-import { App, RootState, ChartInfo, ChartInfoFilter } from '../../models/index';
+import { App, AppCreation, RootState, ChartInfo, ChartInfoFilter } from '../../models/index';
 import * as ActionTypes from '../../constants/ActionTypes';
 import * as WebAPI from '../../WebAPI';
 import { initAppCreationState } from '../../constants/initState';
@@ -27,9 +27,25 @@ const addAppWorkflow = generateWorkflowActionCreator<App, void>({
     [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState: GetState) => {
       let { appAddWorkflow, route } = getState();
       if (isSuccessWorkflow(appAddWorkflow)) {
-        router.navigate({ mode: '', sub: 'app' }, route.queries);
-        //进入列表时自动加载
-        //退出状态页面时自动清理状态
+        //判断是否是dryrun
+        if (appAddWorkflow.targets.length > 0 && appAddWorkflow.targets[0].spec.dryRun) {
+          if (
+            appAddWorkflow.results &&
+            appAddWorkflow.results.length > 0 &&
+            appAddWorkflow.results[0].success &&
+            appAddWorkflow.results[0].target
+          ) {
+            let { appDryRun } = getState();
+            dispatch({
+              type: ActionTypes.UpdateAppDryRunState,
+              payload: Object.assign({}, appDryRun, appAddWorkflow.results[0].target)
+            });
+          }
+        } else {
+          router.navigate({ mode: '', sub: 'app' }, route.queries);
+          //进入列表时自动加载
+          //退出状态页面时自动清理状态
+        }
       }
       /** 结束工作流 */
       dispatch(createActions.addAppWorkflow.reset());
@@ -97,6 +113,14 @@ const restActions = {
   clearValidatorState: (): ReduxAction<any> => {
     return {
       type: getValidatorActionType(AppValidateSchema.formKey),
+      payload: {}
+    };
+  },
+
+  /** 清除DryRun当中的内容 */
+  clearDryRunState: (): ReduxAction<any> => {
+    return {
+      type: ActionTypes.UpdateAppDryRunState,
       payload: {}
     };
   }
