@@ -23,7 +23,6 @@ const mapDispatchToProps = dispatch =>
 interface AppCreateState {
   showValueSetting?: boolean;
   projectID?: string;
-  dryRun?: boolean;
   showDryRunManifest?: boolean;
 }
 
@@ -34,7 +33,6 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
     this.state = {
       showValueSetting: false,
       projectID: '',
-      dryRun: false,
       showDryRunManifest: false
     };
   }
@@ -66,14 +64,13 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
         })
       : [];
     /** 提交 */
-    const perform = () => {
+    const perform = (dryRun: boolean = false) => {
       actions.app.detail.validator.validate(null, async r => {
         if (isValid(r)) {
-          if (this.state.dryRun) {
-            this.setState({ showDryRunManifest: true });
-          }
-
           let app: App = Object.assign({}, appEditor);
+          app.spec.dryRun = dryRun;
+          this.setState({ showDryRunManifest: dryRun });
+
           action.start([app]);
           action.perform();
         } else {
@@ -239,20 +236,18 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
                   />
                 </FormPanel.Item>
                 {appEditor.v_editing && (
-                  <FormPanel.Item
-                    label={t('拟运行')}
-                    message={t('返回模板渲染清单，不会真正执行安装')}
-                    checkbox={{
-                      onChange: (checked, ctx) => {
-                        this.setState({
-                          dryRun: checked
-                        });
-                        actions.app.detail.updateEditorState({
-                          spec: Object.assign({}, appEditor.spec, { dryRun: checked })
-                        });
-                      }
-                    }}
-                  ></FormPanel.Item>
+                  <FormPanel.Item label={t('拟运行')} message={t('返回模板渲染清单，不会真正执行安装')}>
+                    <Button
+                      style={{ paddingTop: '6px' }}
+                      type="link"
+                      onClick={e => {
+                        e.preventDefault();
+                        perform(true);
+                      }}
+                    >
+                      {t('点击执行')}
+                    </Button>
+                  </FormPanel.Item>
                 )}
                 <FormPanel.Item text label={t('创建时间')}>
                   {dateFormat(new Date(appEditor.metadata.creationTimestamp), 'yyyy-MM-dd hh:mm:ss')}

@@ -13,25 +13,12 @@ export function YamlDialog(options: {
   title: string | JSX.Element;
 }) {
   let { onClose, yamlConfig, isShow, title } = options;
-  const [showSearch, setShowSearch] = useState(false);
   const cancel = () => {
     onClose && onClose();
   };
   return (
     <Modal visible={isShow} caption={title} onClose={cancel} disableEscape={true} size={700}>
       <Modal.Body>
-        <ExternalLink
-          href="#"
-          onMouseOver={() => {
-            setShowSearch(true);
-          }}
-          onMouseOut={() => {
-            setShowSearch(false);
-          }}
-        >
-          {t('搜索帮助')}
-        </ExternalLink>
-        <YamlSearchHelperPanel isShow={showSearch} />
         <YamlEditorPanel config={yamlConfig} />
       </Modal.Body>
       <Modal.Footer>

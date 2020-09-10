@@ -26,7 +26,6 @@ const mapDispatchToProps = dispatch =>
 interface AppCreateState {
   showValueSetting?: boolean;
   projectID?: string;
-  dryRun?: boolean;
   showDryRunManifest?: boolean;
 }
 
@@ -37,7 +36,6 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
     this.state = {
       showValueSetting: false,
       projectID: '',
-      dryRun: false,
       showDryRunManifest: false
     };
   }
@@ -60,14 +58,13 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
       : [];
 
     /** 提交 */
-    const perform = () => {
+    const perform = (dryRun: boolean = false) => {
       actions.app.create.validator.validate(null, async r => {
         if (isValid(r)) {
-          if (this.state.dryRun) {
-            this.setState({ showDryRunManifest: true });
-          }
-
           let app: AppCreation = Object.assign({}, appCreation);
+          app.spec.dryRun = dryRun;
+          this.setState({ showDryRunManifest: dryRun });
+
           action.start([app]);
           action.perform();
         } else {
@@ -169,7 +166,7 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
           vkey={'spec.values.rawValues'}
           errorTipsStyle={'Message'}
           label={t('参数')}
-          message={t('更新时如果选择不同版本的Helm Chart,参数设置将被覆盖')}
+          message={t('更新时如果选择不同版本的Helm Chart，参数设置将被覆盖')}
           text={true}
           textProps={{
             onEdit: () => {
@@ -210,20 +207,18 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
             isShow={this.state.showValueSetting}
           />
         </FormPanel.Item>
-        <FormPanel.Item
-          label={t('拟运行')}
-          message={t('返回模板渲染清单，不会真正执行安装')}
-          checkbox={{
-            onChange: (checked, ctx) => {
-              this.setState({
-                dryRun: checked
-              });
-              actions.app.create.updateCreationState({
-                spec: Object.assign({}, appCreation.spec, { dryRun: checked })
-              });
-            }
-          }}
-        ></FormPanel.Item>
+        <FormPanel.Item label={t('拟运行')} message={t('返回模板渲染清单，不会真正执行安装')}>
+          <Button
+            style={{ paddingTop: '6px' }}
+            type="link"
+            onClick={e => {
+              e.preventDefault();
+              perform(true);
+            }}
+          >
+            {t('点击执行')}
+          </Button>
+        </FormPanel.Item>
         <FormPanel.Footer>
           <React.Fragment>
             <Button
