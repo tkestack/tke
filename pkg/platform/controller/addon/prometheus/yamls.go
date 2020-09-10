@@ -1162,7 +1162,7 @@ groups:
     expr: sum(rate(apiserver_request_duration_seconds_sum{verb!="WATCH"}[5m])) by (node) * 1000000 / sum(rate(apiserver_request_duration_seconds_count{verb!="WATCH"}[5m])) by (node)
 
   - record: k8s_component_scheduler_scheduling_latency
-    expr: sum(scheduler_e2e_scheduling_latency_microseconds_sum) by (node) / sum(scheduler_e2e_scheduling_latency_microseconds_count) by (node)
+    expr: sum(scheduler_e2e_scheduling_duration_seconds_sum) by (node) *1000000 / sum(scheduler_e2e_scheduling_duration_seconds_count) by (node)
 
   - record: k8s_component_apiserver_version
     expr: max(kubernetes_build_info{pod_name=~"kube-apiserver.*"}) by (buildDate, compiler, gitCommit, gitTreeState, gitVersion, goVersion, major, minor, platform)
