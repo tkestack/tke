@@ -118,7 +118,7 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
-			p.EnsureKeepalivedWithoutLB,
+			p.EnsureKeepalivedWithLBOption,
 			p.EnsureThirdPartyHA,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
@@ -139,7 +139,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
-			p.EnsureKeepalivedWithoutLB,
+			p.EnsureKeepalivedWithLBOption,
 			p.EnsureThirdPartyHA,
 			p.EnsurePostClusterUpgradeHook,
 		},

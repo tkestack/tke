@@ -1114,7 +1114,7 @@ func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureKeepalivedWithoutLB(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKeepalivedWithLBOption(ctx context.Context, c *v1.Cluster) error {
 	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
 		return nil
 	}
@@ -1134,7 +1134,7 @@ func (p *Provider) EnsureKeepalivedWithoutLB(ctx context.Context, c *v1.Cluster)
 		option := &keepalived.Option{
 			IP:              machine.IP,
 			VIP:             c.Spec.Features.HA.TKEHA.VIP,
-			LoadBalance:     false,
+			LoadBalance:     true,
 			IPVS:            ipvs,
 			KubernetesSvcIP: kubernetesSvcIP,
 		}
