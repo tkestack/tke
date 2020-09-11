@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button, Form, Input, Segment } from '@tencent/tea-component';
+import { Button, Form, Input, Segment, Switch } from '@tencent/tea-component';
 
 import { getValidateStatus } from '../../common/utils';
 import { validateActions } from '../actions/validateActions';
@@ -38,6 +38,13 @@ export class Step5 extends React.Component<RootProps> {
                     <Input
                       value={editState.repoSuffix}
                       onChange={value => actions.installer.updateEdit({ repoSuffix: value })}
+                    />
+                  </Form.Item>
+
+                  <Form.Item label="安装应用商店">
+                    <Switch
+                      value={editState.application}
+                      onChange={value => actions.installer.updateEdit({ application: value })}
                     />
                   </Form.Item>
                 </Form>
