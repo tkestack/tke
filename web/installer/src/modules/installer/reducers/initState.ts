@@ -87,6 +87,7 @@ export const initEdit: EditState = {
   v_repoPassword: initValidation,
   repoNamespace: '',
   v_repoNamespace: initValidation,
+  application: false,
 
   //业务模块设置
   openBusiness: true,

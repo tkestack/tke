@@ -264,6 +264,11 @@ export async function createCluster(edits: Array<EditState>) {
         };
       }
 
+      // 应用商店
+      if (edits[0].application) {
+        params.config['application'] = {};
+      }
+
       // 业务模块设置
       if (edits[0].openBusiness) {
         params.config['business'] = {};
