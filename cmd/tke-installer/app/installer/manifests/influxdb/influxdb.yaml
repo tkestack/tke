@@ -33,8 +33,7 @@ spec:
         - name: data
           mountPath: /var/lib/influxdb
           subPath:
-      nodeSelector:
-        {{ .NodeSelectorKey  }}: {{ .NodeSelectorValue }}
+      nodeName: {{ .NodeName }}
       hostNetwork: true
       volumes:
       - name: data

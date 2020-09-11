@@ -29,9 +29,8 @@ import (
 func TestManifest(t *testing.T) {
 	data, err := template.ParseFile("influxdb.yaml",
 		map[string]interface{}{
-			"Image":             "Image",
-			"NodeSelectorKey":   "LabelMachineIP",
-			"NodeSelectorValue": "MachineIP",
+			"Image":    "Image",
+			"NodeName": "NodeName",
 		})
 	if !assert.Nil(t, err) {
 		t.FailNow()

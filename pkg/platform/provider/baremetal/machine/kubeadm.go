@@ -26,6 +26,7 @@ import (
 	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/apiclient"
 )
 
 func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubeadmv1beta2.JoinConfiguration {
@@ -37,7 +38,7 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 	nodeRegistration := kubeadmv1beta2.NodeRegistrationOptions{}
 	kubeletExtraArgs := p.getKubeletExtraArgs(c)
 	// add label to get node by machine ip.
-	kubeletExtraArgs["node-labels"] = fmt.Sprintf("platform.tkestack.io/machine-ip=%s", machineIP)
+	kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelMachineIP, machineIP)
 	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
 
 	if !c.Spec.HostnameAsNodename {
