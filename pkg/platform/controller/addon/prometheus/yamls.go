@@ -680,6 +680,9 @@ groups:
   - record: k8s_node_status_ready
     expr: max(kube_node_status_condition{condition="Ready", status="true"})  without(condition, status)
 
+  - record: k8s_node_not_ready
+    expr: max(kube_node_status_condition{condition="Ready", status="false"})  without(condition, status)
+
   - record: k8s_node_pod_restart_total
     expr: sum(k8s_pod_restart_total) without (pod_name,workload_kind,workload_name,namespace) * on(node) group_left(device_type) kube_node_labels
 
