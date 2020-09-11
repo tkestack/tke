@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
-	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
 )
 
@@ -216,9 +214,8 @@ func (t *TKE) TKEBusinessController() (option Options) {
 
 func (t *TKE) InfluxDB() (option Options) {
 	option = map[string]interface{}{
-		"Image":             images.Get().InfluxDB.FullName(),
-		"NodeSelectorKey":   apiclient.LabelMachineIP,
-		"NodeSelectorValue": t.Servers[0],
+		"Image":    images.Get().InfluxDB.FullName(),
+		"NodeName": t.Servers[0],
 	}
 	return
 }
@@ -309,13 +306,12 @@ func (t *TKE) TKENotifyController() (option Options) {
 
 func (t *TKE) TKERegistryAPI() (option Options) {
 	option = map[string]interface{}{
-		"Image":             t.GetFullName(images.Get().TKERegistryAPI.Name),
-		"NodeSelectorKey":   apiclient.LabelMachineIP,
-		"NodeSelectorValue": t.Servers[0],
-		"AdminUsername":     t.Para.Config.Registry.TKERegistry.Username,
-		"AdminPassword":     string(t.Para.Config.Registry.TKERegistry.Password),
-		"EnableAuth":        t.Para.Config.Auth.TKEAuth != nil,
-		"DomainSuffix":      t.Para.Config.Registry.TKERegistry.Domain,
+		"Image":         t.GetFullName(images.Get().TKERegistryAPI.Name),
+		"NodeName":      t.Servers[0],
+		"AdminUsername": t.Para.Config.Registry.TKERegistry.Username,
+		"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
+		"EnableAuth":    t.Para.Config.Auth.TKEAuth != nil,
+		"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		option["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID

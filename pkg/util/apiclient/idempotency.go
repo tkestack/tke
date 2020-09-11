@@ -46,6 +46,9 @@ import (
 	controllerutils "tkestack.io/tke/pkg/controller"
 )
 
+// PlatformLabel represents the type of platform.tkestack.io related label.
+type PlatformLabel string
+
 const (
 	// APICallRetryInterval defines how long should wait before retrying a failed API operation
 	APICallRetryInterval = 500 * time.Millisecond
@@ -55,6 +58,8 @@ const (
 	UpdateNodeTimeout = 2 * time.Minute
 	// LabelHostname specifies the lable in node.
 	LabelHostname = "kubernetes.io/hostname"
+	// LabelMachineIP is valid related platform.tkestack.io label.
+	LabelMachineIP PlatformLabel = "platform.tkestack.io/machine-ip"
 )
 
 // CreateOrUpdateConfigMap creates a ConfigMap if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
@@ -624,14 +629,6 @@ func RemoveNodeTaints(ctx context.Context, client clientset.Interface, nodeName 
 	})
 }
 
-// PlatformLabel represents the type of platform.tkestack.io related label.
-type PlatformLabel string
-
-// These are valid related platform.tkestack.io label.
-const (
-	LabelMachineIP PlatformLabel = "platform.tkestack.io/machine-ip"
-)
-
 // GetNodeByMachineIP get node by machine ip.
 func GetNodeByMachineIP(ctx context.Context, client clientset.Interface, ip string) (*corev1.Node, error) {
 	// try to get node by name = machine ip
@@ -646,7 +643,7 @@ func GetNodeByMachineIP(ctx context.Context, client clientset.Interface, ip stri
 	if err != nil {
 		return &corev1.Node{}, err
 	}
-	if len(nodes.Items) < 1 {
+	if len(nodes.Items) == 0 {
 		return &corev1.Node{}, apierrors.NewNotFound(corev1.Resource("Node"), labelSelector)
 	}
 	return &nodes.Items[0], nil

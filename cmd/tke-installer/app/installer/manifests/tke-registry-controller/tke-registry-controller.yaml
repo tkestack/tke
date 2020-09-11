@@ -44,8 +44,7 @@ spec:
             requests:
               cpu: 50m
               memory: 128Mi
-      nodeSelector:
-        {{ .NodeSelectorKey  }}: {{ .NodeSelectorValue }}
+      nodeName: {{ .NodeName }}
       volumes:
         - name: certs-volume
           configMap:
