@@ -844,12 +844,13 @@ export async function rollbackResourceIns(resource: CreateResource[], regionId: 
     let rsResourceInfo = resourceConfig(resourceInfo.k8sVersion).rs;
     /// #if project
     //业务侧ns eg: cls-xxx-ns 需要去除前缀
-    if (resourceInfo.namespaces) {
-      namespace = namespace.split('-').splice(2).join('-');
-    }
+    // if (resourceInfo.namespaces) {
+    //   namespace = namespace.split('-').splice(2).join('-');
+    // }
+
     /// #endif
     // 因为回滚需要使用特定的apiVersion，故不用reduceK8sRestful
-    console.log(compareVersions(clusterVersion, '1.14'));
+
     let k8sUrl =
       `/${resourceInfo.basicEntry}/apps/${compareVersions(clusterVersion, '1.14') >= 0 ? 'v1' : 'v1beta1'}/` +
       (resourceInfo.namespaces ? `${resourceInfo.namespaces}/${namespace}/` : '') +

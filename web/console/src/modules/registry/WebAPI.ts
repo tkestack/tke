@@ -12,7 +12,8 @@ import {
   POST,
   PUT,
   PATCH,
-  DELETE
+  DELETE,
+  getProjectName
 } from '../../../helpers';
 import { resourceConfig } from '../../../config/resourceConfig';
 import { RequestParams, ResourceInfo } from '../common/models';
@@ -510,7 +511,7 @@ export async function fetchChartGroupList(query: QueryState<ChartGroupFilter>) {
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   // TODO FIX
   // reduceNetworkRequest设置了未传业务id则从cookie中读取的逻辑，传空的业务id是为了适配这段逻辑
-  let rr: RequestResult = await GET({ url: url + queryString, keyword: keyword, projectId: '' });
+  let rr: RequestResult = await GET({ url: url + queryString, keyword: keyword, projectId: getProjectName() });
   let objs: ChartGroup[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<ChartGroup> = {
     recordCount: objs.length,
@@ -696,7 +697,7 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
   // reduceNetworkRequest设置了未传业务id则从cookie中读取的逻辑，传空的业务id是为了适配这段逻辑
   let rr: RequestResult = await GET({
     url: url + queryString,
-    projectId: filter.projectID ? filter.projectID : '',
+    projectId: filter.projectID ? filter.projectID : getProjectName(),
     keyword
   });
   let objs: Chart[] = !rr.error && rr.data.items ? rr.data.items : [];
