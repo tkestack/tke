@@ -1316,7 +1316,6 @@
                     "listUsers",
                     "listUserProjects",
                     "listVolumeattachments",
-                    "createPodExec",
                     "get",
                     "list"
                 ],
@@ -2765,8 +2764,7 @@
                 "actions": [
                     "get*",
                     "list*",
-                    "watch*",
-                    "createPodExec"
+                    "watch*"
                 ],
                 "resources": [
                     "*"
