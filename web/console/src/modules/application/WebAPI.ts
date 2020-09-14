@@ -254,7 +254,7 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
     url: url + queryString,
     projectId: filter.projectID ? filter.projectID : '',
     keyword
-  });
+  },);
   let objs: Chart[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Chart> = {
     recordCount: objs.length,
