@@ -197,21 +197,21 @@ func getVariables(alert Alert) map[string]string {
 	labels := alert.Labels
 	annotations := alert.Annotations
 
-	summary = fmt.Sprintf("%s%s", summary, processStartTime(alert.StartsAt))
+	summary = fmt.Sprintf("%s\n发生时间：%s", summary, processStartTime(alert.StartsAt))
 
 	alarmPolicyTypeValue, ok := annotations["alarmPolicyType"]
 	if ok {
-		summary = fmt.Sprintf("%s %s", summary, alarmPolicyTypeValue)
+		summary = fmt.Sprintf("%s\n告警策略类型：%s", summary, alarmPolicyTypeValue)
 	}
 
 	metricDisplayNameValue, ok := annotations[metricDisplayNameKey]
 	if ok {
-		summary = fmt.Sprintf("%s %s", summary, metricDisplayNameValue)
+		summary = fmt.Sprintf("%s\n告警项：%s", summary, metricDisplayNameValue)
 	}
 
 	valueValue, ok := annotations["value"]
 	if ok {
-		summary = fmt.Sprintf("%s %s", summary, valueValue)
+		summary = fmt.Sprintf("%s\n指标值：%s", summary, valueValue)
 	}
 
 	unitValue, ok := annotations[unitKey]
@@ -231,52 +231,52 @@ func getVariables(alert Alert) map[string]string {
 
 	alarmPolicyNameValue, ok := labels["alarmPolicyName"]
 	if ok {
-		summary = fmt.Sprintf("%s, 告警策略名:%s", summary, alarmPolicyNameValue)
+		summary = fmt.Sprintf("%s\n告警策略名：%s", summary, alarmPolicyNameValue)
 	}
 
 	alertNameValue, ok := labels["alertname"]
 	if ok {
-		summary = fmt.Sprintf("%s, 指标名:%s", summary, alertNameValue)
+		summary = fmt.Sprintf("%s\n指标名：%s", summary, alertNameValue)
 	}
 
 	clusterIDValue, ok := labels["cluster_id"]
 	if ok {
-		summary = fmt.Sprintf("%s, 集群ID:%s", summary, clusterIDValue)
+		summary = fmt.Sprintf("%s\n集群ID：%s", summary, clusterIDValue)
 	}
 
 	clusterDisplayNameValue, ok := labels["cluster_display_name"]
 	if ok {
-		summary = fmt.Sprintf("%s, 集群名称:%s", summary, clusterDisplayNameValue)
+		summary = fmt.Sprintf("%s\n集群名称：%s", summary, clusterDisplayNameValue)
 	}
 
 	workloadKindValue, ok := labels["workload_kind"]
 	if ok {
-		summary = fmt.Sprintf("%s, 工作负载类型:%s", summary, workloadKindValue)
+		summary = fmt.Sprintf("%s\n工作负载类型：%s", summary, workloadKindValue)
 	}
 
 	workloadNameValue, ok := labels["workload_name"]
 	if ok {
-		summary = fmt.Sprintf("%s, 工作负载名称:%s", summary, workloadNameValue)
+		summary = fmt.Sprintf("%s\n工作负载名称：%s", summary, workloadNameValue)
 	}
 
 	namespaceValue, ok := labels["namespace"]
 	if ok {
-		summary = fmt.Sprintf("%s, 命名空间:%s", summary, namespaceValue)
+		summary = fmt.Sprintf("%s\n命名空间：%s", summary, namespaceValue)
 	}
 
 	podNameValue, ok := labels["pod_name"]
 	if ok {
-		summary = fmt.Sprintf("%s, POD名称:%s", summary, podNameValue)
+		summary = fmt.Sprintf("%s\nPOD名称：%s", summary, podNameValue)
 	}
 
 	nodeNameValue, ok := labels["node"]
 	if ok {
-		summary = fmt.Sprintf("%s, 节点名称:%s", summary, nodeNameValue)
+		summary = fmt.Sprintf("%s\n节点名称：%s", summary, nodeNameValue)
 	}
 
 	nodeRoleValue, ok := labels["node_role"]
 	if ok {
-		summary = fmt.Sprintf("%s, 节点类型:%s", summary, nodeRoleValue)
+		summary = fmt.Sprintf("%s\n节点类型：%s", summary, nodeRoleValue)
 	}
 
 	variables[startsAtKey] = processStartTime(alert.StartsAt)
