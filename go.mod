@@ -22,7 +22,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.2
 	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution v2.7.2-0.20200708230840-70e0022e42fd+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7
 	github.com/emicklei/go-restful v2.11.1+incompatible
