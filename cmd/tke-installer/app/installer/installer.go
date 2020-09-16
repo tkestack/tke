@@ -1371,6 +1371,10 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 			File: baremetalconstants.ConfDir + "*.yaml",
 		},
 		{
+			Name: "provider-config",
+			File: baremetalconstants.ConfDir + "*.conf",
+		},
+		{
 			Name: "docker",
 			File: baremetalconstants.ConfDir + "docker/*",
 		},
