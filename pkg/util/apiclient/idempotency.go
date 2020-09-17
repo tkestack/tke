@@ -419,7 +419,7 @@ func CreateOrUpdateAPIService(ctx context.Context, client kubeaggregatorclientse
 	return nil
 }
 
-// CreateOrUpdateConfigMapFromFile like kubectl create configmap --from-file
+// CreateOrUpdateConfigMapFromFile like kubectl apply configmap --from-file
 func CreateOrUpdateConfigMapFromFile(ctx context.Context, client clientset.Interface, cm *corev1.ConfigMap, pattern string) error {
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
@@ -427,6 +427,14 @@ func CreateOrUpdateConfigMapFromFile(ctx context.Context, client clientset.Inter
 	}
 	if len(matches) == 0 {
 		return errors.New("no matches found")
+	}
+
+	existCM, err := client.CoreV1().ConfigMaps(cm.Namespace).Get(ctx, cm.Name, metav1.GetOptions{})
+	if err == nil {
+		cm = existCM
+	}
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
 	}
 
 	if cm.Data == nil {
