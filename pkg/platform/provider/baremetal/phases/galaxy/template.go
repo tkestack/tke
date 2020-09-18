@@ -253,7 +253,7 @@ data:
     {
       "Network": "{{ .Network }}",
       "Backend": {
-        "Type": "vxlan"
+        "Type": "{{ .Type }}"
       }
     }
 `

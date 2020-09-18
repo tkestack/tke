@@ -87,6 +87,8 @@ type ClusterSpec struct {
 	// +optional
 	NetworkType NetworkType `json:"networkType,omitempty" protobuf:"bytes,6,opt,name=networkType,casttype=NetworkType"`
 	// +optional
+	NetworkArgs map[string]string `json:"networkArgs,omitempty" protobuf:"bytes,23,name=networkArgs"`
+	// +optional
 	NetworkDevice string `json:"networkDevice,omitempty" protobuf:"bytes,7,opt,name=networkDevice"`
 	// +optional
 	ClusterCIDR string `json:"clusterCIDR,omitempty" protobuf:"bytes,8,opt,name=clusterCIDR"`
