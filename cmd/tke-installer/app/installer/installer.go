@@ -667,7 +667,7 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 		return apierrors.NewBadRequest("tke registry or third party registry required")
 	}
 
-	if config.Registry.ThirdPartyRegistry != nil {
+	if config.Registry.ThirdPartyRegistry != nil && config.Registry.ThirdPartyRegistry.Username != ""{
 		cmd := exec.Command("docker", "login",
 			"--username", config.Registry.ThirdPartyRegistry.Username,
 			"--password", string(config.Registry.ThirdPartyRegistry.Password),
