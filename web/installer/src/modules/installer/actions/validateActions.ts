@@ -758,8 +758,8 @@ export const validateActions = {
     //验证ES用户名
     if (monitorType === 'es') {
       if (!esUsername) {
-        status = 2;
-        message = 'ES用户名不能为空';
+        status = 1;
+        message = '';
       } else {
         status = 1;
         message = '';
@@ -785,8 +785,8 @@ export const validateActions = {
     //验证ES密码
     if (monitorType === 'es') {
       if (!esPassword) {
-        status = 2;
-        message = 'ES密码不能为空';
+        status = 1;
+        message = '';
       } else {
         status = 1;
         message = '';
