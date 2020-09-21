@@ -425,7 +425,7 @@ func CreateOrUpdateConfigMapFromFile(ctx context.Context, client clientset.Inter
 
 	existCM, err := client.CoreV1().ConfigMaps(cm.Namespace).Get(ctx, cm.Name, metav1.GetOptions{})
 	if err == nil {
-		cm = existCM
+		cm.Data = existCM.Data
 	}
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
