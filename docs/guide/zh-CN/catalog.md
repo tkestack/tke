@@ -70,6 +70,8 @@
   * [CronHPA](features/cron-hpa.md)
   * [LBCF](features/lbcf.md)
 
+* [产品API文档](API.md)
+  
 * [FAQ](FAQ)
 
   * [部署类](FAQ/Installation)
