@@ -53,7 +53,11 @@ export class TablePanel extends React.Component<RootProps, {}> {
       {
         key: 'releaseStatus',
         header: t('状态'),
-        render: (x: App) => <Text parent="div">{x.status.releaseStatus || '-'}</Text>
+        render: (x: App) => (
+          <Text parent="div" className={x.status.releaseStatus === 'deployed' ? 'text-success' : 'text-danger'}>
+            {x.status.releaseStatus || '-'}
+          </Text>
+        )
       },
       {
         key: 'revision',

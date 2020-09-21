@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { LinkButton, emptyTips } from '../../../../common/components';
 import { Table, TableColumn, Text, Modal, Card, Bubble, Icon, ContentView } from '@tea/component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -8,7 +7,7 @@ import { router } from '../../../router';
 import { allActions } from '../../../actions';
 import { Resource } from '../../../models';
 import { RootProps } from '../AppContainer';
-import { UnControlled as CodeMirror } from 'react-codemirror2';
+import { YamlEditorPanel } from '../../../../common/components';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
@@ -35,19 +34,9 @@ export class ResourceTablePanel extends React.Component<RootProps, State> {
   _renderYamlDialog() {
     const cancel = () => this.setState({ showYamlDialog: false, yaml: '' });
     return (
-      <Modal visible={true} caption={t('查看YAML')} onClose={cancel} size={960} disableEscape={true}>
+      <Modal visible={true} caption={t('查看YAML')} onClose={cancel} size={700} disableEscape={true}>
         <Modal.Body>
-          <CodeMirror
-            value={this.state.yaml}
-            options={{
-              lineNumbers: true,
-              mode: 'yaml',
-              theme: 'monokai',
-              readOnly: true,
-              lineWrapping: true, // 自动换行
-              styleActiveLine: true // 当前行背景高亮
-            }}
-          />
+          <YamlEditorPanel readOnly={true} config={this.state.yaml} />
         </Modal.Body>
       </Modal>
     );
@@ -410,14 +399,16 @@ export class ResourceTablePanel extends React.Component<RootProps, State> {
                 records={value}
                 columns={columnMap[kind] || commonColumns}
               />
-              {this.state.showYamlDialog && this._renderYamlDialog()}
             </Card.Body>
           </Card>
         );
       });
     return (
       <ContentView>
-        <ContentView.Body>{dom}</ContentView.Body>
+        <ContentView.Body>
+          {dom}
+          {this.state.showYamlDialog && this._renderYamlDialog()}
+        </ContentView.Body>
       </ContentView>
     );
   }
