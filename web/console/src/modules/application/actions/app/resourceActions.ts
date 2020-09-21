@@ -21,13 +21,16 @@ const fetchAppResourceActions = createFFObjectActions<AppResource, AppResourceFi
     return getState().appResource;
   },
   onFinish: (record, dispatch: Redux.Dispatch, getState: GetState) => {
-    let resources = [];
+    let resources = new Map<string, Resource[]>();
     if (record.data) {
       try {
         Object.keys(record.data.spec.resources).forEach(k => {
           record.data.spec.resources[k].forEach(item => {
             let json = JsYAML.safeLoad(item);
-            resources.push({
+            if (!resources.get(k)) {
+              resources.set(k, []);
+            }
+            resources.get(k).push({
               id: uuid(),
               metadata: {
                 namespace: json.metadata.namespace,
@@ -35,7 +38,8 @@ const fetchAppResourceActions = createFFObjectActions<AppResource, AppResourceFi
               },
               kind: json.kind,
               cluster: record.data.spec.targetCluster,
-              yaml: JsYAML.safeDump(json)
+              yaml: JsYAML.safeDump(json),
+              object: json
             });
           });
         });
@@ -53,6 +57,18 @@ const fetchAppResourceActions = createFFObjectActions<AppResource, AppResourceFi
   }
 });
 
-const restActions = {};
+const restActions = {
+  /** 轮询操作 */
+  poll: (filter: AppResourceFilter) => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      dispatch(
+        resourceActions.polling({
+          delayTime: 5000,
+          filter: filter
+        })
+      );
+    };
+  }
+};
 
 export const resourceActions = extend({}, fetchAppResourceActions, restActions);

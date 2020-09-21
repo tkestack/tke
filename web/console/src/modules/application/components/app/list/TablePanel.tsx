@@ -31,7 +31,7 @@ export class TablePanel extends React.Component<RootProps, {}> {
             <a
               href="javascript:;"
               onClick={e => {
-                let q = Object.assign({}, route.queries, { app: x.metadata.name });
+                let q = Object.assign({}, route.queries, { app: x.metadata.name, appName: x.spec.name });
                 router.navigate({ sub: 'app', mode: 'detail' }, q);
               }}
             >

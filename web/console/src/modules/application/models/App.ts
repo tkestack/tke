@@ -133,10 +133,11 @@ export interface Resource extends Identifiable {
   kind?: string;
   cluster?: string;
   yaml?: string;
+  object?: any;
 }
 
 export interface ResourceList extends Identifiable {
-  resources?: Resource[];
+  resources?: Map<string, Resource[]>;
 }
 
 export interface History extends Identifiable {

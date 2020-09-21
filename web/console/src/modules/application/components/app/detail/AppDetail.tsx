@@ -22,12 +22,14 @@ export class AppDetail extends React.Component<RootProps, {}> {
     actions.app.detail.updateAppWorkflow.reset();
     actions.app.detail.clearEditorState();
     actions.app.detail.clearValidatorState();
+
+    actions.app.resource.clearPolling();
   }
 
   componentDidMount() {
     const { actions, route, appEditor } = this.props;
     let urlParam = router.resolve(route);
-    let tab = 'detail';
+    let tab = 'resource';
     if (urlParam['tab']) tab = urlParam['tab'];
     this.changeTab(tab);
   }
@@ -36,6 +38,8 @@ export class AppDetail extends React.Component<RootProps, {}> {
     const { actions, route, appEditor } = this.props;
     switch (tab) {
       case 'detail': {
+        actions.app.resource.clearPolling();
+
         /** 拉取仓库列表 */
         actions.chartGroup.list.applyFilter({});
         /** 查询具体应用，从而Detail可以用到 */
@@ -47,7 +51,7 @@ export class AppDetail extends React.Component<RootProps, {}> {
         break;
       }
       case 'resource': {
-        actions.app.resource.applyFilter({
+        actions.app.resource.poll({
           cluster: route.queries['cluster'],
           namespace: route.queries['namespace'],
           name: route.queries['app']
@@ -55,6 +59,8 @@ export class AppDetail extends React.Component<RootProps, {}> {
         break;
       }
       case 'history': {
+        actions.app.resource.clearPolling();
+
         actions.app.history.applyFilter({
           cluster: route.queries['cluster'],
           namespace: route.queries['namespace'],
@@ -67,14 +73,14 @@ export class AppDetail extends React.Component<RootProps, {}> {
 
   render() {
     const tabs = [
-      { id: 'detail', label: t('应用详情') },
       { id: 'resource', label: t('资源列表') },
+      { id: 'detail', label: t('应用详情') },
       { id: 'history', label: t('版本历史') }
     ];
 
     let { actions, route } = this.props,
       urlParam = router.resolve(route);
-    let tab = 'detail';
+    let tab = 'resource';
     if (urlParam['tab']) tab = urlParam['tab'];
     return (
       <React.Fragment>
