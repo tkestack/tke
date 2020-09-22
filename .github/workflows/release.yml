@@ -84,7 +84,7 @@ jobs:
             "markdown": {
               "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>\n
           >version: <font color=\"comment\">$VERSION</font>\n
-          >status:  <font color=\"comment\">${{ job.status }}</font>\n
+          >status:  <font color=\"warning\">${{ job.status }}</font>\n
           >committer: <font color=\"comment\">${{ github.actor }}</font>\n
           "
             }
