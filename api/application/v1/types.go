@@ -145,6 +145,7 @@ type History struct {
 	Chart       string      `json:"chart,omitempty" protobuf:"bytes,4,opt,name=chart"`
 	AppVersion  string      `json:"appVersion,omitempty" protobuf:"bytes,5,opt,name=appVersion"`
 	Description string      `json:"description,omitempty" protobuf:"bytes,6,opt,name=description"`
+	Manifest    string      `json:"manifest,omitempty" protobuf:"bytes,7,opt,name=manifest"`
 }
 
 // +genclient

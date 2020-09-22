@@ -145,6 +145,7 @@ type History struct {
 	Chart       string
 	AppVersion  string
 	Description string
+	Manifest    string
 }
 
 // +genclient

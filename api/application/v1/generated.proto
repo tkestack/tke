@@ -228,6 +228,8 @@ message History {
   optional string appVersion = 5;
 
   optional string description = 6;
+
+  optional string manifest = 7;
 }
 
 // ResourceValues masks the value so protobuf can generate

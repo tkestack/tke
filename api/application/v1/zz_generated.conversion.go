@@ -521,6 +521,7 @@ func autoConvert_v1_History_To_application_History(in *History, out *application
 	out.Chart = in.Chart
 	out.AppVersion = in.AppVersion
 	out.Description = in.Description
+	out.Manifest = in.Manifest
 	return nil
 }
 
@@ -536,6 +537,7 @@ func autoConvert_application_History_To_v1_History(in *application.History, out 
 	out.Chart = in.Chart
 	out.AppVersion = in.AppVersion
 	out.Description = in.Description
+	out.Manifest = in.Manifest
 	return nil
 }
 
