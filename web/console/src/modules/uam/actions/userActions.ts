@@ -1,8 +1,13 @@
 import { resourceConfig } from '@config';
 import { CommonAPI, ResourceFilter, ResourceInfo } from '@src/modules/common';
 import {
-  createFFListActions, extend, FetchOptions, generateFetcherActionCreator,
-  generateWorkflowActionCreator, isSuccessWorkflow, OperationTrigger
+  createFFListActions,
+  extend,
+  FetchOptions,
+  generateFetcherActionCreator,
+  generateWorkflowActionCreator,
+  isSuccessWorkflow,
+  OperationTrigger
 } from '@tencent/ff-redux';
 
 import * as ActionTypes from '../constants/ActionTypes';
@@ -64,7 +69,7 @@ const getUser = generateFetcherActionCreator({
   fetcher: async (getState: GetState, options: FetchOptions, dispatch) => {
     let result = await WebAPI.getUser(options.data.name);
     return result;
-  },
+  }
 });
 
 /**
@@ -119,7 +124,7 @@ const StrategyListActions = createFFListActions<Strategy, ResourceFilter>({
   fetcher: async (query, getState: GetState) => {
     let resourceInfo: ResourceInfo = resourceConfig()['localidentity'];
 
-    let response = await CommonAPI.fetchExtraResourceList<Strategy>({
+    let response = await CommonAPI.fetchExtraResourceList({
       query,
       resourceInfo,
       extraResource: 'policies'

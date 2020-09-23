@@ -1,3 +1,5 @@
+import { AddonNameMapToGenerateName } from '@src/modules/addon/constants/Config';
+import { AddonEditUniversalJsonYaml } from '@src/modules/addon/models';
 import { createFFListActions, extend, FetchOptions, generateFetcherActionCreator, uuid } from '@tencent/ff-redux';
 import { generateQueryActionCreator } from '@tencent/qcloud-redux-query';
 
@@ -17,6 +19,21 @@ import { resourceActions } from './resourceActions';
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
   noCache: false
+};
+
+const ReduceUniversalJsonData = (options: { resourceInfo: ResourceInfo; clusterId: string }) => {
+  let { resourceInfo, clusterId } = options;
+  let jsonData: AddonEditUniversalJsonYaml = {
+    kind: resourceInfo.headTitle,
+    apiVersion: 'monitor.tkestack.io/v1',
+    metadata: {
+      generateName: AddonNameMapToGenerateName[resourceInfo.headTitle] || resourceInfo.requestType['list']
+    },
+    spec: {
+      clusterName: clusterId
+    }
+  };
+  return JSON.stringify(jsonData);
 };
 
 /** ===================== 通过k8s接口拉取详情，获取k8s的版本详情 ==============================
@@ -78,21 +95,31 @@ const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
     let response = await WebAPI.fetchClusterList(query, query.filter.regionId);
     let ps = await WebAPI.fetchPrometheuses();
     let clusterHasPs = {};
+    const clusterPsInfo = {};
     for (let p of ps.records) {
       clusterHasPs[p.spec.clusterName] = true;
+
+      clusterPsInfo[p.spec.clusterName] = p;
     }
     for (let record of response.records) {
       record.spec.hasPrometheus = clusterHasPs[record.metadata.name];
+
+      record.spec.promethus = clusterPsInfo[record.metadata.name];
     }
     if (window['modules'] && window['modules']['logagent']) {
       // 增加获取日志采集组件信息
       let agents = await CommonAPI.fetchLogagents();
       let clusterHasLogAgent = {};
+      const clusterLogAgentInfo = {};
+
       for (let agent of agents.records) {
         clusterHasLogAgent[agent.spec.clusterName] = agent.metadata.name;
+
+        clusterLogAgentInfo[agent.spec.clusterName] = agent;
       }
       for (let cluster of response.records) {
         cluster.spec.logAgentName = clusterHasLogAgent[cluster.metadata.name];
+        cluster.spec.logAgent = clusterLogAgentInfo[cluster.metadata.name];
       }
     }
     return response;
@@ -291,9 +318,29 @@ const restActions = {
         resourceInfo,
         clusterId: cluster.metadata.name
       };
-      let response = await CommonAPI.deleteLogAgent(resource, cluster.spec.logAgentName);
+      await CommonAPI.deleteLogAgent(resource, cluster.spec.logAgentName);
     };
   },
+
+  enablePromethus: (cluster: Cluster, clusterVersion: string) => {
+    return async () => {
+      let resourceInfo = resourceConfig(clusterVersion)['addon_prometheus'];
+      let resource: CreateResource = {
+        id: uuid(),
+        resourceInfo,
+        clusterId: cluster.metadata.name,
+        mode: 'create',
+        jsonData: ReduceUniversalJsonData({ resourceInfo, clusterId: cluster.metadata.name })
+      };
+      await CommonAPI.createPromethus(resource);
+    };
+  },
+
+  disablePromethus: (cluster: Cluster) => {
+    return async () => {
+      await CommonAPI.deletePromethus(cluster);
+    };
+  }
 };
 
 export const clusterActions = extend({}, FFModelClusterActions, restActions);
