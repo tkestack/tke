@@ -244,15 +244,8 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
           <span style={{ verticalAlign: 'middle' }}>
             <Trans>
               该集群未安装Prometheus组件, 请前往
-              <a
-                href={`/tke/addon?clusterId=${selectCluster.metadata.name}`}
-                onClick={event => {
-                  // this.setupHelm();
-                  addonRouter.navigate({}, { clusterId: selectCluster.metadata.name });
-                  event.preventDefault();
-                }}
-              >
-                扩展组件
+              <a href={`/tkestack/cluster/sub/list/basic/info?clusterId=${cluster.selection.metadata.name}`}>
+                集群基本信息
               </a>
               进行安装
             </Trans>

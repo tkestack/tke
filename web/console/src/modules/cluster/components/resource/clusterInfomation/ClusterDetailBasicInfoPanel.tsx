@@ -130,14 +130,14 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
         <FormPanel.Item label={t('创建时间')} text>
           {dateFormatter(new Date(clusterInfo.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}
         </FormPanel.Item>
-        <FormPanel.Item label={t('日志采集')} text>
+        {/* <FormPanel.Item label={t('日志采集')} text>
           <Switch
             value={Boolean(clusterInfo.spec.logAgentName)}
             onChange={value => {
               this._handleSwitch(clusterInfo);
             }}
           />
-        </FormPanel.Item>
+        </FormPanel.Item> */}
       </React.Fragment>
     ) : (
       <noscript />
