@@ -263,5 +263,10 @@ func buildStorageConfiguration(opts *Options) map[string]configuration.Parameter
 
 		storage["s3"] = s3
 	}
+	if storageCfg.Delete != nil {
+		deleteDriver := make(map[string]interface{})
+		deleteDriver["enabled"] = storageCfg.Delete.Enabled
+		storage["delete"] = deleteDriver
+	}
 	return storage
 }
