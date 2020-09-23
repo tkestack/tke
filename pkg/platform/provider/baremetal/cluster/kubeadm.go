@@ -168,6 +168,7 @@ func (p *Provider) getKubeProxyConfiguration(c *v1.Cluster) *kubeproxyv1alpha1.K
 		config.Mode = "ipvs"
 		config.ClusterCIDR = c.Spec.ClusterCIDR
 	}
+	config.MetricsBindAddress = "0.0.0.0"
 
 	return config
 }
