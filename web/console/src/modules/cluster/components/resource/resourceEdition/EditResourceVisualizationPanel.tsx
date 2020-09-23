@@ -972,7 +972,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
     containersInfo = containers.map(c => {
       let containerItem = {
         name: c.name,
-        image: c.registry + (c.tag ? ':' + c.tag : ''),
+        image: c.registry + ':' + (c.tag ? c.tag : 'latest'),
         imagePullPolicy: c.imagePullPolicy
       };
 
