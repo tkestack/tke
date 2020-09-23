@@ -70,7 +70,7 @@ export function ClusterOverviewPanel(props: { clusterData: ClusterOverview }) {
           </Col>
           <Col>
             <MetricsBoard
-              title="项目"
+              title="业务"
               value={
                 isLodingDone ? (
                   <>
