@@ -52,7 +52,7 @@ Cron 格式说明如下：
     - **镜像**：根据实际需求进行选择。
     - **镜像版本（Tag）**：根据实际需求进行填写。
     - **CPU/内存限制**：可根据 [Kubernetes 资源限制](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/) 进行设置 CPU 和内存的限制范围，提高业务的健壮性。
-    - **GPU限制**：如容器内需要使用GPU，此处填GPU需求
+    - **GPU限制**：如容器内需要使用GPU，此处填GPU需求，前提需要集群在扩展组件中安装了GPUManager
     - **环境变量**：用于设置容器内的变量，变量名只能包含大小写字母、数字及下划线，并且不能以数字开头
        * **新增变量**：自己设定变量键值对
        * **引用ConfigMap/Secret**：引用已有键值对
@@ -89,7 +89,7 @@ Cron 格式说明如下：
       * **FloatingIP（浮动 IP）**：为每个实例分配物理IP，外部可直接访问。支持容器、物理机和虚拟机在同一个扁平面中直接通过IP进行通信的 Underlay 网络方案。提供了 IP 漂移能力，**支持 Pod 重启或迁移时 IP 不变**，跨机器迁移，实例ip也不会发生变化。
       * **NAT（端口映射**）：Kubernetes 原生 NAT 网络方案，实例的端口映射到物理机的某个端口，但IP还是虚拟IP，可通过宿主机IP和映射端口访问。
       * **Host（主机网络）**：Kubernetes 原生 Host 网络方案，即可以直接采用宿主机IP和端口。
-5. 单击【创建Workload】，完成创建。
+1. 单击【创建Workload】，完成创建。
 
 ### 查看 CronJob 状态
 

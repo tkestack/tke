@@ -39,10 +39,12 @@ TKEStack还可以另外**新建独立集群**以及**导入已有集群**实现*
   - **TKE提供**：用户只需提供可用的IP地址，TKE部署Keepalive，配置该IP为Master集群的VIP，以实现Global集群和控制台的高可用，此时该VIP和所有master节点IP地址都是APIserver地址。
   - **使用已有**：对接配置好的外部 LB 实例，VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）端口，同时确保该VIP有至少两个LB后端（Master节点），以避免LB单后端不可用风险。
 
-+ **GPU**：选择是否安装 GPU 相关依赖。（**按需使用**）
++ **GPU **：（按需使用，需要使用GPU可以勾选）
 
-  + **pGPU**：平台会自动为集群安装 [GPUManager](https://github.com/tkestack/docs/blob/master/features/gpumanager.md) 扩展组件
-  + **vGPU**：平台会自动为集群安装 [Nvidia-k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)
+  > 注意：使用GPU首先确保节点有物理GPU卡，选择GPU后，平台将自动为节点安装相应的GPU驱动和运行时工具
+
+  - **pGPU**：平台会自动为集群安装 [Nvidia-k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)，此时可以给负载分配任意整数张卡
+  - **vGPU**：平台会自动为集群安装 [GPUManager](../features/gpumanager.md)  扩展组件，此时GPU可以被虚拟化，可以给负载分配非整数张GPU卡，例如可以给一个负载分配0.3个GPU
 
 + **容器网络** ：将为集群内容器分配在容器网络地址范围内的 IP 地址，您可以自定义三大私有网段作为容器网络， 根据您选择的集群内服务数量的上限，自动分配适当大小的 CIDR 段用于 kubernetes service；根据您选择 Pod 数量上限/节点，自动为集群内每台云服务器分配一个适当大小的网段用于该主机分配 Pod 的 IP 地址。（**建议使用默认值**）
 

@@ -58,10 +58,14 @@ arch=arm64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzho
 ![img](../../../images/step-2.png)
 
 - **网卡名称**：集群节点使用的网卡，根据实际环境填写正确的网卡名称，默认为eth0（**建议使用默认值**）
+
 - **GPU 类型**：（按需使用，可直接选择【**不设置**】）
-  - **不使用**：不安装 Nvidia GPU 相关驱动
-  - **Virtual**：平台会自动为集群安装 [GPUManager](https://github.com/tkestack/docs/blob/master/features/gpumanager.md)  扩展组件
-  - **Physical**：平台会自动为集群安装 [Nvidia-k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)
+
+  > 注意：使用GPU首先确保节点有物理GPU卡，选择GPU类型后，平台将自动为节点安装相应的GPU驱动和运行时工具
+
+  - **不使用**：集群不安装 Nvidia GPU 相关驱动，此时集群不会使用GPU，如果集群需要使用GPU，必须安装以下两个GPU插件中的一个
+  - **Physical**：平台会自动为集群安装 [Nvidia-k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)，此时可以给负载分配任意整数张卡
+  - **Virtual**：平台会自动为集群安装 [GPUManager](../features/gpumanager.md)  扩展组件，此时GPU可以被虚拟化，可以给负载分配非整数张GPU卡，例如可以给一个负载分配0.3个GPU
 
 - **容器网络：** 将为集群内容器分配在容器网络地址范围内的 IP 地址，您可以自定义三大私有网段作为容器网络， 根据您选择的集群内服务数量的上限，自动分配适当大小的 CIDR 段用于 Kubernetes service；根据您选择 Pod 数量上限/节点，自动为集群内每台服务器分配一个适当大小的网段用于该主机分配 Pod 的 IP 地址（**建议使用默认值**）
   - **CIDR：** 集群内 Sevice、 Pod 等资源所在网段
