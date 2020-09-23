@@ -147,6 +147,7 @@ export interface History extends Identifiable {
   chart?: string;
   appVersion?: string;
   description?: string;
+  manifest?: string;
   involvedObject?: App;
 }
 
