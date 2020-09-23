@@ -71,7 +71,7 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	if apiclient.ClusterVersionIsBefore19(client) {
+	if apiclient.ClusterVersionIsBefore116(client) {
 		return listEventsByExtensions(ctx, client, namespaceName, name, options)
 	}
 	return listEventsByNetworkings(ctx, client, namespaceName, name, options)
