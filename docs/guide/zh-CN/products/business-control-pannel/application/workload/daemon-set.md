@@ -35,7 +35,7 @@ DaemonSet 主要用于部署常驻集群内的后台程序，例如节点的日�
     - **镜像**：根据实际需求进行选择。
     - **镜像版本（Tag）**：根据实际需求进行填写。
     - **CPU/内存限制**：可根据 [Kubernetes 资源限制](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/) 进行设置 CPU 和内存的限制范围，提高业务的健壮性。
-    - **GPU限制**：如容器内需要使用GPU，此处填GPU需求
+    - **GPU限制**：如容器内需要使用GPU，此处填GPU需求，前提需要集群在扩展组件中安装了GPUManager
     - **环境变量**：用于设置容器内的变量，变量名只能包含大小写字母、数字及下划线，并且不能以数字开头
        * **新增变量**：自己设定变量键值对
        * **引用ConfigMap/Secret**：引用已有键值对
