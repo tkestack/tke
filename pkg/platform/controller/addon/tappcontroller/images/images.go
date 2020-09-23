@@ -28,7 +28,7 @@ import (
 
 const (
 	// LatestVersion is latest version of addon.
-	LatestVersion = "v1.1.0"
+	LatestVersion = "v1.1.1"
 )
 
 type Components struct {
