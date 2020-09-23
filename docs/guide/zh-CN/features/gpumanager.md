@@ -52,7 +52,7 @@ GPU Manager提供一个All-in-One的GPU管理器, 基于Kubernets Device Plugin�
 
 - 使用1张卡
 
-```
+```yaml
 
 apiVersion: v1
 
@@ -73,7 +73,7 @@ tencent.com/vcuda-core: 100
 
 - 使用0.3张卡, 5GiB显存的应用（20*256MB）
 
-```
+```yaml
 
 apiVersion: v1
 
