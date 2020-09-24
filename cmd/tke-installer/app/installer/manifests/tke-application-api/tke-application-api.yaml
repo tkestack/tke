@@ -124,7 +124,7 @@ data:
     tls_private_key_file = "/app/certs/server.key"
 
     [features]
-      [repo]
+      [features.repo]
         scheme = "https"
         domain_suffix = "{{ .RegistryDomainSuffix }}"
         admin = "{{ .RegistryAdminUsername }}"

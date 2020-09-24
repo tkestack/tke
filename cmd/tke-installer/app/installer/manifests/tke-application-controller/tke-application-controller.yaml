@@ -73,7 +73,7 @@ data:
       api_server_client_config = "/app/conf/tke-application-config.yaml"
 
     [features]
-      [repo]
+      [features.repo]
         scheme = "https"
         domain_suffix = "{{ .RegistryDomainSuffix }}"
         admin = "{{ .RegistryAdminUsername }}"
