@@ -60,8 +60,6 @@ export function downloadKubeconfig(crtText, filename = 'kubeconfig') {
 }
 
 export function getKubectlConfig({ caCert, token, host, clusterId }) {
-  let config = `apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: ${Base64.encode(
-    caCert
-  )}\n    server: ${host}\n  name: ${clusterId}\ncontexts:\n- context:\n    cluster: ${clusterId}\n    user: ${clusterId}-admin\n  name: ${clusterId}-context-default\ncurrent-context: ${clusterId}-context-default\nkind: Config\npreferences: {}\nusers:\n- name: ${clusterId}-admin\n  user:\n    token: ${token}\n`;
+  let config = `apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: ${caCert}\n    server: ${host}\n  name: ${clusterId}\ncontexts:\n- context:\n    cluster: ${clusterId}\n    user: ${clusterId}-admin\n  name: ${clusterId}-context-default\ncurrent-context: ${clusterId}-context-default\nkind: Config\npreferences: {}\nusers:\n- name: ${clusterId}-admin\n  user:\n    token: ${token}\n`;
   return config;
 }
