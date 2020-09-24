@@ -55,7 +55,7 @@ func NewOptions(serverName string) *Options {
 		Generic:           apiserveroptions.NewGenericOptions(),
 		Authentication:    apiserveroptions.NewAuthenticationWithAPIOptions(),
 		Authorization:     apiserveroptions.NewAuthorizationOptions(),
-		RegistryAPIClient: controlleroptions.NewAPIServerClientOptions("registry", true),
+		RegistryAPIClient: controlleroptions.NewAPIServerClientOptions("registry", false),
 		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
 		Audit:             genericapiserveroptions.NewAuditOptions(),
 		FeatureOptions:    NewFeatureOptions(),
