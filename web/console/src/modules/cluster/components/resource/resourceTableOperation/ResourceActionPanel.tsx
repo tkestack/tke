@@ -403,7 +403,6 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
       { resourceName } = subRoot;
 
     let resourceInfo: ResourceInfo = resourceConfig(clusterVersion)[resourceName];
-
     let rows = [],
       head = [];
 
@@ -418,7 +417,6 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
       }
     });
     head = headKeys;
-
     // 这里是去处理rows当中的信息
     resourceList.forEach((resource: Resource) => {
       // 每一行的数据
@@ -470,7 +468,6 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
 
       rows.push(row);
     });
-
     downloadCsv(rows, head, 'tke_' + resourceName + '_' + new Date().getTime() + '.csv');
   }
 
