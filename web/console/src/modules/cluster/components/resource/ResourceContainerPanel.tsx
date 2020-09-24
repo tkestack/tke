@@ -13,6 +13,8 @@ import { ResourceDetail } from './resourceDetail/ResourceDetail';
 import { EditResourcePanel } from './resourceEdition/EditResourcePanel';
 import { UpdateResourcePanel } from './resourceEdition/UpdateResourcePanel';
 import { ResourceListPanel } from './ResourceListPanel';
+import { HPAPanel } from '@src/modules/cluster/components/scale/hpa';
+import { CronHpaPanel } from '@src/modules/cluster/components/scale/cronhpa';
 
 interface ResourceContainerPanelState {
   /** 共享锁 */
@@ -56,28 +58,30 @@ export class ResourceContainerPanel extends React.Component<RootProps, ResourceC
      * 如果直接在集群详情页进行刷新的话，进行特定集群详情的拉取，从集群列表跳转过来的时候，会自动初始化集群版本
      */
     isNeedFetchRegion &&
-      clusterInfoList.data.recordCount === 0 &&
-      actions.cluster.clusterInfo.applyFilter({
-        regionId: rid,
-        specificName: clusterId
-      });
+    clusterInfoList.data.recordCount === 0 &&
+    actions.cluster.clusterInfo.applyFilter({
+      regionId: rid,
+      specificName: clusterId
+    });
 
     !isNeedFetchRegion &&
-      cluster.list.data.recordCount === 0 &&
-      actions.cluster.applyFilter({ regionId: region.selection.value });
+    cluster.list.data.recordCount === 0 &&
+    actions.cluster.applyFilter({ regionId: region.selection.value });
   }
 
   componentWillReceiveProps(nextProps: RootProps) {
     let { route, actions, namespaceSelection, subRoot } = nextProps,
-      newUrlParam = router.resolve(route),
-      { mode, resourceInfo, subRouterList, addons } = subRoot;
+        newUrlParam = router.resolve(route),
+        { mode, resourceInfo, subRouterList, addons } = subRoot;
     let newMode = newUrlParam['mode'];
+    let newResourceName = newUrlParam['resourceName'];
     let oldMode = this.props.subRoot.mode;
 
     if (newMode !== '' && oldMode !== newMode && newMode !== mode) {
       actions.resource.selectMode(newMode);
       // 这里是判断回退动作，取消动作等的时候，回到list页面，需要重新拉取一下，激活一下轮训的状态等
       newUrlParam['sub'] === 'sub' && !isEmpty(resourceInfo) && newMode === 'list' && actions.resource.poll();
+      // newUrlParam['sub'] === 'sub' && !isEmpty(resourceInfo) && newMode === 'list' && newResourceName !== 'hpa' && actions.resource.poll();
     }
 
     /** =================== 这里是判断二级菜单路由的配置 ====================== */
@@ -134,36 +138,45 @@ export class ResourceContainerPanel extends React.Component<RootProps, ResourceC
 
   render() {
     let { route } = this.props,
-      urlParam = router.resolve(route);
-
+        urlParam = router.resolve(route);
+    let { mode, resourceName } = urlParam;
     let content: JSX.Element;
 
-    let mode = urlParam['mode'];
-    // 判断应该展示什么组件
-    switch (mode) {
-      case 'list':
-        content = <ResourceListPanel subRouterList={this.state.finalSubRouterList} />;
-        break;
+    // 截断hpa和cronhpa的页面逻辑到scale模块
+    if (mode !== 'list' && (resourceName === 'hpa' || resourceName === 'cronhpa')) {
+      if (resourceName === 'hpa') {
+        return <HPAPanel />;
+      } else if (resourceName === 'cronhpa') {
+        return <CronHpaPanel />;
+      }
+    } else {
+      // 判断应该展示什么组件
+      switch (mode) {
+        case 'list':
+          content = <ResourceListPanel subRouterList={this.state.finalSubRouterList} />;
+          break;
 
-      case 'detail':
-        content = <ResourceDetail />;
-        break;
+        case 'detail':
+          content = <ResourceDetail />;
+          break;
 
-      case 'create':
-      case 'modify':
-      case 'apply':
-        content = <EditResourcePanel {...this.props} />;
-        break;
+        case 'create':
+        case 'modify':
+        case 'apply':
 
-      case 'update':
-        content = <UpdateResourcePanel />;
-        break;
+          content = <EditResourcePanel {...this.props} />;
+          break;
 
-      default:
-        content = <ResourceListPanel subRouterList={this.state.finalSubRouterList} />;
-        break;
+        case 'update':
+          content = <UpdateResourcePanel />;
+          break;
+
+        default:
+          content = <ResourceListPanel subRouterList={this.state.finalSubRouterList} />;
+          break;
+      }
+
+      return content;
     }
-
-    return content;
   }
 }

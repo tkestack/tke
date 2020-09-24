@@ -246,4 +246,24 @@ export class Router {
       }
     }
   }
+
+  public newNavigate({
+    params = {},
+    queries,
+    url
+  }: {
+    params?: { [key: string]: string };
+    queries?: { [key: string]: string };
+    url?: string;
+  }) {
+    if (url) {
+      nmcRouter.navigate(url);
+    } else {
+      let nextLocationPath = this.buildFragment(params);
+      let prevLocationPath = location.pathname;
+      if (isInSameModule(prevLocationPath, nextLocationPath)) {
+        nmcRouter.navigate(nextLocationPath + buildQueryString(queries));
+      }
+    }
+  }
 }
