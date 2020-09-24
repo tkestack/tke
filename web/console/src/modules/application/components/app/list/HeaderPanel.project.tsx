@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Justify, Icon } from '@tea/component';
+import { Justify, Icon, Select, Tooltip } from '@tea/component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { router } from '../../../router';
@@ -36,6 +36,23 @@ export class HeaderPanel extends React.Component<RootProps, {}> {
     let { projectList, projectNamespaceList, actions, route } = this.props;
     let urlParam = router.resolve(route);
     const { mode } = urlParam;
+
+    const namespaceGroups = projectNamespaceList.list.data.records.reduce((gr, { spec }) => {
+      const value = `${spec.clusterDisplayName}(${spec.clusterName})`;
+      return { ...gr, [spec.clusterName]: <Tooltip title={value}>{value}</Tooltip> };
+    }, {});
+
+    let namespaceOptions = projectNamespaceList.list.data.records.map(item => {
+      const text = `${item.spec.clusterDisplayName}-${item.spec.namespace}`;
+
+      return {
+        value: this.buildNamespace(item),
+        text: <Tooltip title={text}>{text}</Tooltip>,
+        groupKey: item.spec.clusterName,
+        realText: text
+      };
+    });
+
     return (
       <Justify
         left={
@@ -54,13 +71,16 @@ export class HeaderPanel extends React.Component<RootProps, {}> {
               displayField={x => `${x.spec.displayName}`}
             ></FormPanel.Select>
             <FormPanel.InlineText>{t('命名空间：')}</FormPanel.InlineText>
-            <FormPanel.Select
-              label={'命名空间'}
-              model={projectNamespaceList}
-              action={actions.projectNamespace.list}
+            <Select
+              size="m"
+              type="simulate"
+              searchable
+              filter={(inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)}
+              appearence="button"
+              // label={'namespace'}
+              groups={namespaceGroups}
+              options={namespaceOptions}
               value={projectNamespaceList.selection ? this.buildNamespace(projectNamespaceList.selection) : ''}
-              valueField={x => this.buildNamespace(x)}
-              displayField={x => `${x.spec.namespace}(${x.spec.clusterName})`}
               onChange={value => {
                 const parts = value.split('/');
                 actions.projectNamespace.list.selectProjectNamespace(
