@@ -221,8 +221,8 @@ const statusReadyField = table => ({
     return from === 'yAxis'
       ? v
       : {
-          1: `正常`,
-          0: `<span class="text-danger">异常</span>`
+          0: `正常`,
+          1: `<span class="text-danger">异常</span>`
         }[v];
   }
 });
