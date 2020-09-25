@@ -31,7 +31,7 @@ export class TablePanel extends React.Component<RootProps, {}> {
             <a
               href="javascript:;"
               onClick={e => {
-                let q = Object.assign({}, route.queries, { app: x.metadata.name });
+                let q = Object.assign({}, route.queries, { app: x.metadata.name, appName: x.spec.name });
                 router.navigate({ sub: 'app', mode: 'detail' }, q);
               }}
             >
@@ -53,7 +53,11 @@ export class TablePanel extends React.Component<RootProps, {}> {
       {
         key: 'releaseStatus',
         header: t('状态'),
-        render: (x: App) => <Text parent="div">{x.status.releaseStatus || '-'}</Text>
+        render: (x: App) => (
+          <Text parent="div" className={x.status.releaseStatus === 'deployed' ? 'text-success' : 'text-danger'}>
+            {x.status.releaseStatus || '-'}
+          </Text>
+        )
       },
       {
         key: 'revision',

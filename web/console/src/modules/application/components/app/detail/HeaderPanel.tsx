@@ -20,7 +20,7 @@ export class HeaderPanel extends React.Component<RootProps, {}> {
 
   render() {
     let { route } = this.props;
-    let title = route.queries['app'];
+    let title = route.queries['appName'] + '(' + route.queries['namespace'] + ')';
 
     return (
       <Justify

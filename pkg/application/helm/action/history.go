@@ -42,6 +42,7 @@ type ReleaseInfo struct {
 	Chart       string        `json:"chart"`
 	AppVersion  string        `json:"app_version"`
 	Description string        `json:"description"`
+	Manifest    string        `json:"manifest"`
 }
 
 type ReleaseHistory []ReleaseInfo
@@ -87,13 +88,14 @@ func getReleaseHistory(rls []*release.Release) (history ReleaseHistory) {
 		v := r.Version
 		d := r.Info.Description
 		a := formatAppVersion(r.Chart)
-
+		m := r.Manifest
 		rInfo := ReleaseInfo{
 			Revision:    v,
 			Status:      s,
 			Chart:       c,
 			AppVersion:  a,
 			Description: d,
+			Manifest:    m,
 		}
 		if !r.Info.LastDeployed.IsZero() {
 			rInfo.Updated = r.Info.LastDeployed

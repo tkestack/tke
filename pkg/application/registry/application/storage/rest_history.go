@@ -101,6 +101,7 @@ func (rs *HistoryREST) Get(ctx context.Context, name string, options *metav1.Get
 			Chart:       h.Chart,
 			AppVersion:  h.AppVersion,
 			Description: h.Description,
+			Manifest:    h.Manifest,
 		}
 	}
 	return appHistory, nil

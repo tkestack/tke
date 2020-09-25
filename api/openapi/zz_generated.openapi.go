@@ -36297,6 +36297,12 @@ func schema_tke_api_application_v1_History(ref common.ReferenceCallback) common.
 							Format: "",
 						},
 					},
+					"manifest": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},
