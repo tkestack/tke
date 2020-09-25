@@ -19,6 +19,7 @@ interface ChartUsageGuideDialogProps extends RootProps {
   showDialog: boolean;
   chartGroupName: string;
   registryUrl: string;
+  username: string;
   onClose: Function;
 }
 
@@ -82,7 +83,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#installHelm" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="installHelm">{`$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | sh`}</p>
+                <p id="installHelm">{`curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | sh`}</p>
               </code>
             </li>
             <li>
@@ -93,7 +94,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#addTkeRepo" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="addTkeRepo">{`helm repo add ${this.props.chartGroupName} http://${this.props.registryUrl}/chart/${this.props.chartGroupName} --username tkestack --password [访问凭证] `}</p>
+                <p id="addTkeRepo">{`helm repo add ${this.props.chartGroupName} http://${this.props.registryUrl}/chart/${this.props.chartGroupName} --username ${this.props.username} --password [访问凭证] `}</p>
               </code>
               <p className="text-weak">
                 <Trans>
@@ -119,8 +120,11 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#installHelmPush" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="installHelmPush">{`$ helm plugin install https://github.com/chartmuseum/helm-push`}</p>
+                <p id="installHelmPush">{`helm plugin install https://github.com/chartmuseum/helm-push`}</p>
               </code>
+              <p className="text-weak">
+                <Trans>如安装失败，可以手动下载后解压到$HOME/.local/share/helm/plugins，解压路径可以通过helm --help 查看</Trans>
+              </p>
             </li>
             <li>
               <p>
@@ -137,7 +141,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#pushHelmDir" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushHelmDir">{`$ helm push ./myapp ${this.props.chartGroupName}`}</p>
+                <p id="pushHelmDir">{`helm push ./myapp ${this.props.chartGroupName}`}</p>
               </code>
             </li>
             <li>
@@ -148,7 +152,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#pushHelmTar" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushHelmTar">{`$ helm push myapp-1.0.1.tgz ${this.props.chartGroupName}`}</p>
+                <p id="pushHelmTar">{`helm push myapp-1.0.1.tgz ${this.props.chartGroupName}`}</p>
               </code>
             </li>
             <li>
@@ -159,7 +163,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#downloadChart" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="downloadChart">{`$ helm fetch ${this.props.chartGroupName}/myapp`}</p>
+                <p id="downloadChart">{`helm fetch ${this.props.chartGroupName}/myapp`}</p>
               </code>
             </li>
             <li>
@@ -170,7 +174,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#downloadSChart" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="downloadSChart">{`$ helm fetch ${this.props.chartGroupName}/myapp --version 1.0.1`}</p>
+                <p id="downloadSChart">{`helm fetch ${this.props.chartGroupName}/myapp --version 1.0.1`}</p>
               </code>
             </li>
           </ul>

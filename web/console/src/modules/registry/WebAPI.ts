@@ -12,8 +12,7 @@ import {
   POST,
   PUT,
   PATCH,
-  DELETE,
-  getProjectName
+  DELETE
 } from '../../../helpers';
 import { resourceConfig } from '../../../config/resourceConfig';
 import { RequestParams, ResourceInfo } from '../common/models';
