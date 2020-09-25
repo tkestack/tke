@@ -33,7 +33,7 @@ const Event = React.memo((props: {
   const [eventData, setEventData] = useState();
   useEffect(() => {
     async function getEventList(namespace, clusterId, name, uid) {
-      const eventData = await fetchEventList({ namespace, clusterId, name, uid });
+      const eventData = await fetchEventList({ type: 'cronhpa', namespace, clusterId, name, uid });
       setEventData(eventData);
     }
     if (!isEmpty(selectedHpa)) {
