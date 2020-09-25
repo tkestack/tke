@@ -148,18 +148,21 @@ func (r *GenericREST) List(ctx context.Context, options *metainternal.ListOption
 	// repoType is custom label, which not exist in chartgroup
 	repoType := ""
 	defaultType := "__internal"
+	targetProjectID := ""
 	wrappedOptions, repoType = apiserverutil.InterceptCustomSelectorFromListOptions(wrappedOptions, "repoType", defaultType)
+	wrappedOptions, targetProjectID = apiserverutil.InterceptCustomSelectorFromListOptions(options, "projectID", "")
+
 	switch registryapi.RepoType(repoType) {
 	case registryapi.RepoTypePersonal:
 		obj, err = registryutil.ListPersonalChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
 	case registryapi.RepoTypeProject:
-		obj, err = registryutil.ListProjectChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.authClient, r.privilegedUsername, r.Store)
+		obj, err = registryutil.ListProjectChartGroupsFromStore(ctx, wrappedOptions, targetProjectID, r.businessClient, r.authClient, r.privilegedUsername, r.Store)
 	case registryapi.RepoTypeSystem:
 		obj, err = registryutil.ListSystemChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
 	case registryapi.RepoTypePublic:
 		obj, err = registryutil.ListPublicChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
 	case registryapi.RepoTypeAll:
-		obj, err = registryutil.ListAllChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.authClient, r.privilegedUsername, r.Store)
+		obj, err = registryutil.ListAllChartGroupsFromStore(ctx, wrappedOptions, targetProjectID, r.businessClient, r.authClient, r.privilegedUsername, r.Store)
 	case registryapi.RepoType(defaultType):
 		obj, err = r.Store.List(ctx, wrappedOptions)
 	default:

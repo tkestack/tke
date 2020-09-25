@@ -56,12 +56,13 @@ func ListPersonalChartsFromStore(ctx context.Context,
 // ListProjectChartsFromStore list all charts that belongs to project chartgroup
 func ListProjectChartsFromStore(ctx context.Context,
 	options *metainternal.ListOptions,
+	targetProjectID string,
 	businessClient businessversionedclient.BusinessV1Interface,
 	authClient authversionedclient.AuthV1Interface,
 	registryClient *registryinternalclient.RegistryClient,
 	privilegedUsername string,
 	store *registry.Store) (runtime.Object, error) {
-	obj, err := ListProjectChartGroups(ctx, options.DeepCopy(), businessClient, authClient, registryClient, privilegedUsername)
+	obj, err := ListProjectChartGroups(ctx, options.DeepCopy(), targetProjectID, businessClient, authClient, registryClient, privilegedUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +131,7 @@ func mergeCharts(cgs ...runtime.Object) *registryapi.ChartList {
 // ListAllChartsFromStore list all charts
 func ListAllChartsFromStore(ctx context.Context,
 	options *metainternal.ListOptions,
+	targetProjectID string,
 	businessClient businessversionedclient.BusinessV1Interface,
 	authClient authversionedclient.AuthV1Interface,
 	registryClient *registryinternalclient.RegistryClient,
@@ -139,7 +141,7 @@ func ListAllChartsFromStore(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	project, err := ListProjectChartsFromStore(ctx, options.DeepCopy(), businessClient, authClient, registryClient, privilegedUsername, store)
+	project, err := ListProjectChartsFromStore(ctx, options.DeepCopy(), targetProjectID, businessClient, authClient, registryClient, privilegedUsername, store)
 	if err != nil {
 		return nil, err
 	}

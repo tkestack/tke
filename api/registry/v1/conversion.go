@@ -86,7 +86,8 @@ func AddFieldLabelConversionsForChartGroup(scheme *runtime.Scheme) error {
 				"spec.name",
 				"spec.type",
 				"spec.visibility",
-				"repoType", //custom label
+				"repoType",  //custom label
+				"projectID", //custom label
 				"metadata.name":
 				return label, value, nil
 			default:
@@ -105,7 +106,8 @@ func AddFieldLabelConversionsForChart(scheme *runtime.Scheme) error {
 			case "spec.tenantID",
 				"spec.name",
 				"spec.chartGroupName",
-				"repoType", //custom label
+				"repoType",  //custom label
+				"projectID", //custom label
 				"metadata.name":
 				return label, value, nil
 			default:
