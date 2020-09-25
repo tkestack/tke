@@ -101,6 +101,7 @@ var map_AppStatus = map[string]string{
 	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
 	"reason":             "The reason for the condition's last transition.",
 	"message":            "A human readable message indicating details about the transition.",
+	"manifest":           "Dryrun result.",
 }
 
 func (AppStatus) SwaggerDoc() map[string]string {

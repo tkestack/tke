@@ -41,6 +41,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/application/apiserver"
+	appconfig "tkestack.io/tke/pkg/application/config"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 )
 
@@ -57,6 +58,7 @@ type Config struct {
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 	RegistryClient                 registryversionedclient.RegistryV1Interface
 	PlatformClient                 platformversionedclient.PlatformV1Interface
+	RepoConfiguration              appconfig.RepoConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -148,6 +150,10 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		StorageFactory:                 storageFactory,
 		PlatformClient:                 platformClient.PlatformV1(),
 		RegistryClient:                 registryClient.RegistryV1(),
+	}
+
+	if err := (&opts.FeatureOptions.Repo).ApplyTo(&cfg.RepoConfiguration); err != nil {
+		return nil, err
 	}
 
 	return cfg, nil

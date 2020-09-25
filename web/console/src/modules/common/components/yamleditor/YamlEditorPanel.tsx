@@ -1,7 +1,10 @@
 import * as React from 'react';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 
+import { ExternalLink } from '@tea/component';
 import { insertCSS } from '@tencent/ff-redux';
+import { YamlSearchHelperPanel } from '..';
+import { t } from '@tencent/tea-app/lib/i18n';
 
 // 这里是对editor一些配置
 require('codemirror/mode/yaml/yaml');
@@ -35,13 +38,15 @@ interface YamlEditorPanelProps {
 interface YamlEditorPanelState {
   /** 初始化的内容 */
   initValue: string;
+  showSearch: boolean;
 }
 
 export class YamlEditorPanel extends React.Component<YamlEditorPanelProps, YamlEditorPanelState> {
   constructor(props) {
     super(props);
     this.state = {
-      initValue: this.props.config
+      initValue: this.props.config,
+      showSearch: false
     };
   }
 
@@ -79,15 +84,29 @@ export class YamlEditorPanel extends React.Component<YamlEditorPanelProps, YamlE
     };
 
     return (
-      <CodeMirror
-        className={'codeMirrorHeight'}
-        value={this.state.initValue}
-        options={codeOptions}
-        onBeforeChange={(editor, data, value) => {
-          // 配置项当中的value 不用props.config 是因为 更新之后，yaml的光标会默认跳转到末端
-          !readOnly && handleInputForEditor && handleInputForEditor(value);
-        }}
-      />
+      <div>
+        <ExternalLink
+          href="#"
+          onMouseOver={() => {
+            this.setState({ showSearch: true });
+          }}
+          onMouseOut={() => {
+            this.setState({ showSearch: false });
+          }}
+        >
+          {t('搜索帮助')}
+        </ExternalLink>
+        <YamlSearchHelperPanel isShow={this.state.showSearch} />
+        <CodeMirror
+          className={'codeMirrorHeight'}
+          value={this.state.initValue}
+          options={codeOptions}
+          onBeforeChange={(editor, data, value) => {
+            // 配置项当中的value 不用props.config 是因为 更新之后，yaml的光标会默认跳转到末端
+            !readOnly && handleInputForEditor && handleInputForEditor(value);
+          }}
+        />
+      </div>
     );
   }
 }

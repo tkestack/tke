@@ -8,6 +8,7 @@ import { RootProps } from '../../ClusterApp';
 import { KubectlDialog } from '../../KubectlDialog';
 import { ClusterDetailBasicInfoPanel } from './ClusterDetailBasicInfoPanel';
 import { UpdateClusterAllocationRatioDialog } from './UpdateClusterAllocationRatioDialog';
+import { ClusterPlugInfoPanel } from './ClusterPlugInfoPanel';
 
 const tips = seajs.require('tips');
 
@@ -19,6 +20,7 @@ export class ClusterDetailPanel extends React.Component<RootProps, {}> {
     return (
       <React.Fragment>
         <ClusterDetailBasicInfoPanel {...this.props} />
+        <ClusterPlugInfoPanel {...this.props} />
         <UpdateClusterAllocationRatioDialog />
         <KubectlDialog {...this.props} />
       </React.Fragment>

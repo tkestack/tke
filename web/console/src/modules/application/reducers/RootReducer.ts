@@ -63,6 +63,7 @@ export const RootReducer = combineReducers({
   appList: createFFListReducer(ActionTypes.AppList),
   appCreation: reduceToPayload(ActionTypes.UpdateAppCreationState, initAppCreationState),
   appEditor: reduceToPayload(ActionTypes.UpdateAppEditorState, initAppEditorState),
+  appDryRun: reduceToPayload(ActionTypes.UpdateAppDryRunState, {}),
   appValidator: createValidatorReducer(AppValidateSchema),
   appAddWorkflow: generateWorkflowReducer({
     actionType: ActionTypes.AddApp

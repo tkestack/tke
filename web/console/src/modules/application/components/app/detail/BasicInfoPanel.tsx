@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { RootProps } from '../AppContainer';
 import { FormPanel } from '@tencent/ff-component';
 import { TipInfo, getWorkflowError, InputField } from '../../../../../modules/common';
-import { Button, Tabs, TabPanel, Card, Bubble, Icon, ContentView } from '@tea/component';
+import { Button, Tabs, TabPanel, Card, Bubble, Icon, ContentView, StatusTip } from '@tea/component';
 import { dateFormat } from '../../../../../../helpers/dateUtil';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators, OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
@@ -13,6 +13,7 @@ import { App, Chart } from '../../../models';
 import { ChartTablePanel } from '../ChartTablePanel';
 import { ChartActionPanel } from '../ChartActionPanel';
 import { ChartValueYamlDialog } from '../ChartValueYamlDialog';
+import { YamlDialog } from '../../../../common/components';
 // @ts-ignore
 const tips = seajs.require('tips');
 
@@ -22,6 +23,7 @@ const mapDispatchToProps = dispatch =>
 interface AppCreateState {
   showValueSetting?: boolean;
   projectID?: string;
+  showDryRunManifest?: boolean;
 }
 
 @connect(state => state, mapDispatchToProps)
@@ -30,12 +32,13 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
     super(props, context);
     this.state = {
       showValueSetting: false,
-      projectID: ''
+      projectID: '',
+      showDryRunManifest: false
     };
   }
 
   render() {
-    let { actions, appEditor, route, appValidator, chartInfo, chartList } = this.props;
+    let { actions, appEditor, appDryRun, appValidator, chartInfo, chartList } = this.props;
 
     let action = actions.app.detail.updateAppWorkflow;
     const { appUpdateWorkflow } = this.props;
@@ -61,10 +64,13 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
         })
       : [];
     /** 提交 */
-    const perform = () => {
+    const perform = (dryRun: boolean = false) => {
       actions.app.detail.validator.validate(null, async r => {
         if (isValid(r)) {
           let app: App = Object.assign({}, appEditor);
+          app.spec.dryRun = dryRun;
+          this.setState({ showDryRunManifest: dryRun });
+
           action.start([app]);
           action.perform();
         } else {
@@ -229,6 +235,20 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
                     isShow={this.state.showValueSetting}
                   />
                 </FormPanel.Item>
+                {appEditor.v_editing && (
+                  <FormPanel.Item label={t('拟运行')} message={t('返回模板渲染清单，不会真正执行安装')}>
+                    <Button
+                      style={{ paddingTop: '6px' }}
+                      type="link"
+                      onClick={e => {
+                        e.preventDefault();
+                        perform(true);
+                      }}
+                    >
+                      {t('点击执行')}
+                    </Button>
+                  </FormPanel.Item>
+                )}
                 <FormPanel.Item text label={t('创建时间')}>
                   {dateFormat(new Date(appEditor.metadata.creationTimestamp), 'yyyy-MM-dd hh:mm:ss')}
                 </FormPanel.Item>
@@ -264,6 +284,24 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
             </Card.Body>
           </Card>
         </ContentView.Body>
+        <YamlDialog
+          title={
+            <span>
+              {t('清单')}
+              {workflow.operationState === OperationState.Performing && (
+                <StatusTip status="loading" loadingText=""></StatusTip>
+              )}
+            </span>
+          }
+          onClose={() => {
+            this.setState({
+              showDryRunManifest: false
+            });
+            actions.app.detail.clearDryRunState();
+          }}
+          yamlConfig={appDryRun && appDryRun.status ? appDryRun.status.manifest : ''}
+          isShow={this.state.showDryRunManifest}
+        />
       </ContentView>
     );
   }

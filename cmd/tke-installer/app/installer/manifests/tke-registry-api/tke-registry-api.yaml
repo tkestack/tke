@@ -186,6 +186,8 @@ data:
     storage:
       fileSystem:
         rootDirectory: /storage
+      delete:
+        enabled: true
     security:
       tokenPrivateKeyFile: /etc/registry/private_key.pem
       tokenPublicKeyFile: /etc/registry/public_key.crt

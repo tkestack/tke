@@ -15,6 +15,8 @@ import { ResourceDetail } from './resource/resourceDetail/ResourceDetail';
 import { EditResourcePanel } from './resource/resourceEdition/EditResourcePanel';
 import { UpdateResourcePanel } from './resource/resourceEdition/UpdateResourcePanel';
 import { ResourceListPanel } from './resource/ResourceListPanel';
+import { HPAPanel } from './scale/hpa';
+import { CronHpaPanel } from './scale/cronhpa';
 
 const store = configStore();
 
@@ -63,7 +65,6 @@ class ApplicationList extends React.Component<RootProps, ApplicationListPanelSta
     let { actions, route, subRoot } = this.props,
       { subRouterList } = subRoot,
       urlParams = router.resolve(route);
-
     // 这里去拉取侧边栏的配置，侧边路由
     !subRouterList.fetched && actions.subRouter.applyFilter({});
     actions.region.fetch();
@@ -82,12 +83,13 @@ class ApplicationList extends React.Component<RootProps, ApplicationListPanelSta
       newUrlParam = router.resolve(route),
       { mode, subRouterList, addons } = subRoot;
     let newMode = newUrlParam['mode'];
+    let newResourceName = newUrlParam['resourceName'];
     let oldMode = this.props.subRoot.mode;
 
     if (newMode !== '' && oldMode !== newMode && newMode !== mode) {
       actions.resource.selectMode(newMode);
       // 这里是判断回退动作，取消动作等的时候，回到list页面，需要重新拉取一下，激活一下轮训的状态等
-      newMode === 'list' && actions.resource.poll();
+      newMode === 'list' && newResourceName !== 'hpa' && newResourceName !== 'cronhpa' && actions.resource.poll();
     }
 
     /** =================== 这里是判断二级菜单路由的配置 ====================== */
@@ -145,7 +147,7 @@ class ApplicationList extends React.Component<RootProps, ApplicationListPanelSta
   render() {
     let { route, subRoot } = this.props,
       urlParams = router.resolve(route);
-    let urlMode = urlParams['mode'];
+    const { mode: urlMode, resourceName } = urlParams;
     if (!urlMode || urlMode === 'list') {
       return (
         <div className="manage-area manage-area-secondary">
@@ -153,6 +155,10 @@ class ApplicationList extends React.Component<RootProps, ApplicationListPanelSta
           <ResourceListPanel subRouterList={this.state.finalSubRouterList} />
         </div>
       );
+    } else if (resourceName === 'hpa') {
+      return <HPAPanel />;
+    } else if (resourceName === 'cronhpa') {
+      return <CronHpaPanel />;
     } else if (urlMode === 'detail') {
       return <ResourceDetail />;
     } else if (urlMode === 'create' || urlMode === 'modify') {

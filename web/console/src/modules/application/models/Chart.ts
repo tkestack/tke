@@ -32,6 +32,8 @@ export interface ChartVersion {
   description?: string;
   timeCreated?: string;
   version?: string;
+  icon?: string;
+  appVersion?: string;
 }
 
 export interface ChartFilter {

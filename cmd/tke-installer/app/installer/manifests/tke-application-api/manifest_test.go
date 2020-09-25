@@ -29,11 +29,14 @@ import (
 func TestManifest(t *testing.T) {
 	data, err := template.ParseFile("tke-application-api.yaml",
 		map[string]interface{}{
-			"Replicas":       1,
-			"Image":          "Image",
-			"EnableAuth":     true,
-			"EnableAudit":    true,
-			"EnableRegistry": true,
+			"Replicas":              1,
+			"Image":                 "Image",
+			"EnableAuth":            true,
+			"EnableAudit":           true,
+			"EnableRegistry":        true,
+			"RegistryAdminUsername": "RegistryAdminUsername",
+			"RegistryAdminPassword": "RegistryAdminPassword",
+			"RegistryDomainSuffix":  "RegistryDomainSuffix",
 		})
 	if !assert.Nil(t, err) {
 		t.FailNow()

@@ -34,7 +34,7 @@ type Options struct {
 	ApplicationAPIClient *controlleroptions.APIServerClientOptions
 	PlatformAPIClient    *controlleroptions.APIServerClientOptions
 
-	Repo *RepoOptions
+	FeatureOptions *FeatureOptions
 }
 
 // NewOptions creates a new Options with a default config.
@@ -46,7 +46,7 @@ func NewOptions(serverName string, allControllers []string, disabledByDefaultCon
 		Component:            controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
 		ApplicationAPIClient: controlleroptions.NewAPIServerClientOptions("application", true),
 		PlatformAPIClient:    controlleroptions.NewAPIServerClientOptions("platform", true),
-		Repo:                 NewRepoOptions(),
+		FeatureOptions:       NewFeatureOptions(),
 	}
 }
 
@@ -58,7 +58,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Component.AddFlags(fs)
 	o.ApplicationAPIClient.AddFlags(fs)
 	o.PlatformAPIClient.AddFlags(fs)
-	o.Repo.AddFlags(fs)
+	o.FeatureOptions.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -72,7 +72,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Component.ApplyFlags()...)
 	errs = append(errs, o.ApplicationAPIClient.ApplyFlags()...)
 	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
-	errs = append(errs, o.Repo.ApplyFlags()...)
+	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
 
 	return errs
 }

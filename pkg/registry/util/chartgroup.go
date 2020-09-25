@@ -122,6 +122,8 @@ func prepareListProjectChartGroups(ctx context.Context,
 
 // filterProjectChartGroups filter all charts that belongs to project
 func filterProjectChartGroups(ctx context.Context,
+	options *metainternal.ListOptions,
+	targetProjectID string,
 	authClient authversionedclient.AuthV1Interface,
 	chartGroupList *registryapi.ChartGroupList,
 	filterFromProjectBelongs bool) (runtime.Object, error) {
@@ -129,7 +131,6 @@ func filterProjectChartGroups(ctx context.Context,
 	targetPrj := func(prjs []string, prj string) bool {
 		return prj == "" || util.InStringSlice(prjs, prj)
 	}
-	targetProjectID := filter.ProjectIDFrom(ctx)
 
 	if filterFromProjectBelongs && authClient != nil {
 		uid := authentication.GetUID(ctx)
@@ -179,6 +180,7 @@ func filterProjectChartGroups(ctx context.Context,
 // ListProjectChartGroupsFromStore list all charts that belongs to project
 func ListProjectChartGroupsFromStore(ctx context.Context,
 	options *metainternal.ListOptions,
+	targetProjectID string,
 	businessClient businessversionedclient.BusinessV1Interface,
 	authClient authversionedclient.AuthV1Interface,
 	privilegedUsername string,
@@ -195,12 +197,13 @@ func ListProjectChartGroupsFromStore(ctx context.Context,
 	if len(chartGroupList.Items) == 0 {
 		return &registryapi.ChartGroupList{}, nil
 	}
-	return filterProjectChartGroups(ctx, authClient, chartGroupList, (!admin && !platformAdmin))
+	return filterProjectChartGroups(ctx, options, targetProjectID, authClient, chartGroupList, (!admin && !platformAdmin))
 }
 
 // ListProjectChartGroups list all charts that belongs to project
 func ListProjectChartGroups(ctx context.Context,
 	options *metainternal.ListOptions,
+	targetProjectID string,
 	businessClient businessversionedclient.BusinessV1Interface,
 	authClient authversionedclient.AuthV1Interface,
 	registryClient *registryinternalclient.RegistryClient,
@@ -218,7 +221,7 @@ func ListProjectChartGroups(ctx context.Context,
 	if len(chartGroupList.Items) == 0 {
 		return &registryapi.ChartGroupList{}, nil
 	}
-	return filterProjectChartGroups(ctx, authClient, chartGroupList, (!admin && !platformAdmin))
+	return filterProjectChartGroups(ctx, options, targetProjectID, authClient, chartGroupList, (!admin && !platformAdmin))
 }
 
 // prepareListSystemChartGroups list all charts that belongs to system
@@ -333,6 +336,7 @@ func mergeChartgroups(cgs ...runtime.Object) *registryapi.ChartGroupList {
 // ListAllChartGroupsFromStore list all chartgroups
 func ListAllChartGroupsFromStore(ctx context.Context,
 	options *metainternal.ListOptions,
+	targetProjectID string,
 	businessClient businessversionedclient.BusinessV1Interface,
 	authClient authversionedclient.AuthV1Interface,
 	privilegedUsername string,
@@ -341,7 +345,7 @@ func ListAllChartGroupsFromStore(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	project, err := ListProjectChartGroupsFromStore(ctx, options.DeepCopy(), businessClient, authClient, privilegedUsername, store)
+	project, err := ListProjectChartGroupsFromStore(ctx, options.DeepCopy(), targetProjectID, businessClient, authClient, privilegedUsername, store)
 	if err != nil {
 		return nil, err
 	}
@@ -356,6 +360,7 @@ func ListAllChartGroupsFromStore(ctx context.Context,
 // ListAllChartGroups list all chartgroups
 func ListAllChartGroups(ctx context.Context,
 	options *metainternal.ListOptions,
+	targetProjectID string,
 	businessClient businessversionedclient.BusinessV1Interface,
 	authClient authversionedclient.AuthV1Interface,
 	registryClient *registryinternalclient.RegistryClient,
@@ -364,7 +369,7 @@ func ListAllChartGroups(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	project, err := ListProjectChartGroups(ctx, options.DeepCopy(), businessClient, authClient, registryClient, privilegedUsername)
+	project, err := ListProjectChartGroups(ctx, options.DeepCopy(), targetProjectID, businessClient, authClient, registryClient, privilegedUsername)
 	if err != nil {
 		return nil, err
 	}

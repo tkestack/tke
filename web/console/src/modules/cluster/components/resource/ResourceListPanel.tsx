@@ -28,6 +28,8 @@ import { ResourceDeleteDialog } from './resourceTableOperation/ResourceDeleteDia
 import { ResourceEventPanel } from './resourceTableOperation/ResourceEventPanel';
 import { ResourceLogPanel } from './resourceTableOperation/ResourceLogPanel';
 import { ResourceTablePanel } from './resourceTableOperation/ResourceTablePanel';
+import { HPAPanel }  from '../scale/hpa';
+import { CronHpaPanel } from '../scale/cronhpa';
 
 const loadingElement: JSX.Element = (
   <div>
@@ -90,6 +92,17 @@ export class ResourceListPanel extends React.Component<ResourceListPanelProps, {
         content = <ResourceEventPanel />;
         headTitle = t('事件');
         break;
+
+      case 'hpa':
+        content = <HPAPanel />;
+        headTitle = t('HorizontalPodAutoscaler');
+        break;
+
+      case 'cronhpa':
+        content = <CronHpaPanel />;
+        headTitle = t('CronHPA');
+        break;
+
       default:
         content = isEmpty(resourceInfo) ? (
           loadingElement

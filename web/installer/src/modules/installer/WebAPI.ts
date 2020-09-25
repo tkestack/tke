@@ -224,9 +224,7 @@ export async function createCluster(edits: Array<EditState>) {
 
       // GPU设置
       if (edits[0].gpuType !== 'none') {
-        params.cluster.spec['features'] = {
-          gpuType: edits[0].gpuType
-        };
+        params.cluster.spec.features['gpuType'] = edits[0].gpuType;
       }
 
       // 认证模块设置

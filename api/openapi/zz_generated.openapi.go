@@ -35969,8 +35969,14 @@ func schema_tke_api_application_v1_AppSpec(ref common.ReferenceCallback) common.
 							},
 						},
 					},
+					"dryRun": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
-				Required: []string{"type", "tenantID", "name", "targetCluster"},
+				Required: []string{"type", "tenantID", "name", "targetCluster", "dryRun"},
 			},
 		},
 		Dependencies: []string{
@@ -36042,6 +36048,13 @@ func schema_tke_api_application_v1_AppStatus(ref common.ReferenceCallback) commo
 					"message": {
 						SchemaProps: spec.SchemaProps{
 							Description: "A human readable message indicating details about the transition.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"manifest": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Dryrun result.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

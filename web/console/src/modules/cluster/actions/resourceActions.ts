@@ -53,7 +53,7 @@ const listResourceActions = createFFListActions<Resource, ResourceFilter>({
 
     if (ffResourceList.list.data.recordCount) {
       let defaultResourceIns = route.queries['resourceIns'];
-      let finder = ffResourceList.list.data.records.find(item => item.metadata.name === defaultResourceIns);
+      let finder = ffResourceList.list.data.records.find(item => item.metadata && item.metadata.name === defaultResourceIns);
       dispatch(resourceActions.select(finder ? finder : ffResourceList.list.data.records[0]));
 
       /** ============== start 更新的时候，进行一些页面的初始化 =============  */

@@ -4,6 +4,7 @@ import * as ActionTypes from '../../constants/ActionTypes';
 import * as WebAPI from '../../WebAPI';
 import { router } from '../../router';
 import { projectNamespaceActions } from '../namespace';
+import { setProjectName } from '../../../../../helpers';
 type GetState = () => RootState;
 
 /**
@@ -38,6 +39,8 @@ const fetchProjectActions = createFFListActions<Project, void>({
 const restActions = {
   selectProject: (projectId: string) => {
     return async (dispatch, getState: GetState) => {
+      setProjectName(projectId);
+
       let { route } = getState(),
         urlParams = router.resolve(route);
       router.navigate(urlParams, Object.assign({}, route.queries, { projectId: projectId }));

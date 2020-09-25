@@ -615,14 +615,10 @@ func (t *TKE) setConfigDefault(config *types.Config) {
 
 	config.Logagent = new(types.Logagent)
 
-	//TODO: remove default installation
-	config.Application = new(types.Application)
 	if config.Application != nil {
-		if config.Application.RegistryDomain == "" {
-			config.Application.RegistryDomain = "registry.tke.com"
-		}
-		config.Application.RegistryUsername = config.Basic.Username
-		config.Application.RegistryPassword = config.Basic.Password
+		config.Application.RegistryDomain = config.Registry.Domain()
+		config.Application.RegistryUsername = config.Registry.Username()
+		config.Application.RegistryPassword = config.Registry.Password()
 	}
 }
 
@@ -2025,11 +2021,14 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 
 func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKEApplicationAPI.FullName(),
-		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
-		"EnableAudit":    t.auditEnabled(),
+		"Replicas":              t.Config.Replicas,
+		"Image":                 images.Get().TKEApplicationAPI.FullName(),
+		"EnableAuth":            t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry":        t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":           t.auditEnabled(),
+		"RegistryAdminUsername": t.Para.Config.Application.RegistryUsername,
+		"RegistryAdminPassword": string(t.Para.Config.Application.RegistryPassword),
+		"RegistryDomainSuffix":  t.Para.Config.Application.RegistryDomain,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -2053,11 +2052,11 @@ func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
 func (t *TKE) installTKEApplicationController(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-application-controller/*.yaml",
 		map[string]interface{}{
-			"Replicas":      t.Config.Replicas,
-			"Image":         images.Get().TKEApplicationController.FullName(),
-			"AdminUsername": t.Para.Config.Registry.TKERegistry.Username,
-			"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
-			"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
+			"Replicas":              t.Config.Replicas,
+			"Image":                 images.Get().TKEApplicationController.FullName(),
+			"RegistryAdminUsername": t.Para.Config.Application.RegistryUsername,
+			"RegistryAdminPassword": string(t.Para.Config.Application.RegistryPassword),
+			"RegistryDomainSuffix":  t.Para.Config.Application.RegistryDomain,
 		})
 	if err != nil {
 		return err

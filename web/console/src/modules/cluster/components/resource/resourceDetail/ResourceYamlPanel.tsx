@@ -51,7 +51,6 @@ export class ResourceYamlPanel extends React.Component<RootProps, {}> {
       { yamlList } = resourceDetailState;
 
     const yamlData = yamlList.data.recordCount ? yamlList.data.records[0] : t('暂无YAML配置');
-
     let isNeedLoading =
       ffResourceList.list.fetched !== true ||
       ffResourceList.list.fetchState === FetchState.Fetching ||
