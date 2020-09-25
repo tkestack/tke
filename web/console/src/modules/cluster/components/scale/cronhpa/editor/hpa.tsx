@@ -211,7 +211,7 @@ const Hpa = React.memo((props: {
       const { key, value } = item;
       return {
         schedule: key,
-        targetReplicas: value
+        targetReplicas: +value
       };
     });
     let cronHpaData;

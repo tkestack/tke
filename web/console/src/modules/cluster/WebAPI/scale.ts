@@ -309,9 +309,12 @@ export async function fetchResourceList({ resourceType, namespace, clusterId }: 
 /**
  * 获取HPA事件列表
  */
-export async function fetchEventList({ namespace, clusterId, name, uid }: { namespace: string; clusterId: string; name: string; uid: any }) {
+export async function fetchEventList({ type, namespace, clusterId, name, uid }: { type?: string; namespace: string; clusterId: string; name: string; uid: any }) {
   const newNamespace = namespace.replace(new RegExp(`^${clusterId}-`), '');
-  const url = `/api/v1/namespaces/${newNamespace}/events?fieldSelector=involvedObject.namespace=${newNamespace},involvedObject.kind=HorizontalPodAutoscaler,involvedObject.uid=${uid},involvedObject.name=${name}`;
+  let url = `/api/v1/namespaces/${newNamespace}/events?fieldSelector=involvedObject.namespace=${newNamespace},involvedObject.kind=HorizontalPodAutoscaler,involvedObject.uid=${uid},involvedObject.name=${name}`;
+  if (type === 'cronhpa') {
+    url = `/api/v1/namespaces/${newNamespace}/events?fieldSelector=involvedObject.namespace=${newNamespace},involvedObject.kind=CronHPA,involvedObject.uid=${uid},involvedObject.name=${name}`;
+  }
   let params: RequestParams = {
     method: Method.get,
     url,
