@@ -4,6 +4,7 @@ import * as ActionTypes from '../../constants/ActionType';
 import * as WebAPI from '../../WebAPI';
 import { projectNamespaceActions } from '../namespace';
 import { router } from '../../router';
+import { setProjectName } from '../../../../../helpers';
 type GetState = () => RootState;
 
 /**
@@ -29,6 +30,8 @@ const fetchProjectActions = createFFListActions<Project, ProjectFilter, ChartInf
 const restActions = {
   selectProject: (projectId: string, chartInfoFilter?: ChartInfoFilter) => {
     return async (dispatch, getState: GetState) => {
+      setProjectName(projectId);
+
       dispatch(listActions.selectByValue(projectId));
       dispatch(
         projectNamespaceActions.list.applyFilter({

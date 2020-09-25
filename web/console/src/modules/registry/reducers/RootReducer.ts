@@ -144,6 +144,7 @@ export const RootReducer = combineReducers({
   appAddWorkflow: generateWorkflowReducer({
     actionType: ActionType.AddApp
   }),
+  appDryRun: reduceToPayload(ActionType.UpdateAppDryRunState, {}),
 
   /** 集群 */
   /** listActions.selectByValue依赖于valueField */

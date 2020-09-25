@@ -31,6 +31,7 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	appconfig "tkestack.io/tke/pkg/application/config"
 	applicationstorage "tkestack.io/tke/pkg/application/registry/application/storage"
 	configmapstorage "tkestack.io/tke/pkg/application/registry/configmap/storage"
 )
@@ -42,6 +43,7 @@ type StorageProvider struct {
 	PlatformClient       platformversionedclient.PlatformV1Interface
 	RegistryClient       registryversionedclient.RegistryV1Interface
 	Authorizer           authorizer.Authorizer
+	RepoConfiguration    appconfig.RepoConfiguration
 }
 
 // Implement RESTStorageProvider
@@ -73,8 +75,12 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["configmaps"] = configMapREST.ConfigMap
 
 		appRESTStorage := applicationstorage.NewStorage(restOptionsGetter, applicationClient)
-		appREST := applicationstorage.NewREST(appRESTStorage.App, applicationClient, s.PlatformClient, s.RegistryClient,
-			s.Authorizer)
+		appREST := applicationstorage.NewREST(appRESTStorage.App,
+			applicationClient,
+			s.PlatformClient,
+			s.RegistryClient,
+			s.Authorizer,
+			s.RepoConfiguration)
 		appHistoryREST := applicationstorage.NewHistoryREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		appResourceREST := applicationstorage.NewResourceREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		appRollbackREST := applicationstorage.NewRollbackREST(appRESTStorage.App, applicationClient, s.PlatformClient)

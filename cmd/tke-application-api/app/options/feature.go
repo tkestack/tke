@@ -23,26 +23,26 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	appconfig "tkestack.io/tke/pkg/application/controller/app/config"
+	appconfig "tkestack.io/tke/pkg/application/config"
 )
 
 const (
-	flagRepoScheme        = "repo-scheme"
-	flagRepoDomainSuffix  = "repo-domain-suffix"
-	flagRepoCaFile        = "repo-cafile"
-	flagRepoAdmin         = "repo-admin"
-	flagRepoAdminPassword = "repo-admin-password"
+	flagRepoScheme        = "features-repo-scheme"
+	flagRepoDomainSuffix  = "features-repo-domain-suffix"
+	flagRepoCaFile        = "features-repo-cafile"
+	flagRepoAdmin         = "features-repo-admin"
+	flagRepoAdminPassword = "features-repo-admin-password"
 )
 
 const (
-	configRepoScheme        = "repo.scheme"
-	configRepoDomainSuffix  = "repo.domain_suffix"
-	configRepoCaFile        = "repo.cafile"
-	configRepoAdmin         = "repo.admin"
-	configRepoAdminPassword = "repo.admin_password"
+	configRepoScheme        = "features.repo.scheme"
+	configRepoDomainSuffix  = "features.repo.domain_suffix"
+	configRepoCaFile        = "features.repo.cafile"
+	configRepoAdmin         = "features.repo.admin"
+	configRepoAdminPassword = "features.repo.admin_password"
 )
 
-// RepoOptions contains configuration items related to auth attributes.
+// RepoOptions contains configuration items related to application attributes.
 type RepoOptions struct {
 	Scheme        string
 	DomainSuffix  string
@@ -51,52 +51,57 @@ type RepoOptions struct {
 	AdminPassword string
 }
 
-// NewRepoOptions creates a RepoOptions object with default parameters.
-func NewRepoOptions() *RepoOptions {
-	return &RepoOptions{}
+// FeatureOptions contains configuration items related to application attributes.
+type FeatureOptions struct {
+	Repo RepoOptions
+}
+
+// NewFeatureOptions creates a FeatureOptions object with default parameters.
+func NewFeatureOptions() *FeatureOptions {
+	return &FeatureOptions{}
 }
 
 // AddFlags adds flags for console to the specified FlagSet object.
-func (o *RepoOptions) AddFlags(fs *pflag.FlagSet) {
-	fs.String(flagRepoScheme, o.Scheme,
+func (o *FeatureOptions) AddFlags(fs *pflag.FlagSet) {
+	fs.String(flagRepoScheme, o.Repo.Scheme,
 		"Chart repo server scheme.")
 	_ = viper.BindPFlag(configRepoScheme, fs.Lookup(flagRepoScheme))
 
-	fs.String(flagRepoDomainSuffix, o.DomainSuffix,
+	fs.String(flagRepoDomainSuffix, o.Repo.DomainSuffix,
 		"Chart repo domain suffix.")
 	_ = viper.BindPFlag(configRepoDomainSuffix, fs.Lookup(flagRepoDomainSuffix))
 
-	fs.String(flagRepoCaFile, o.CaFile,
+	fs.String(flagRepoCaFile, o.Repo.CaFile,
 		"CA certificate to verify peer against.")
 	_ = viper.BindPFlag(configRepoCaFile, fs.Lookup(flagRepoCaFile))
 
-	fs.String(flagRepoAdmin, o.Admin,
+	fs.String(flagRepoAdmin, o.Repo.Admin,
 		"Repo admin user.")
 	_ = viper.BindPFlag(configRepoAdmin, fs.Lookup(flagRepoAdmin))
 
-	fs.String(flagRepoAdminPassword, o.AdminPassword,
+	fs.String(flagRepoAdminPassword, o.Repo.AdminPassword,
 		"Repo admin user password.")
 	_ = viper.BindPFlag(configRepoAdminPassword, fs.Lookup(flagRepoAdminPassword))
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
 // to the options instance.
-func (o *RepoOptions) ApplyFlags() []error {
+func (o *FeatureOptions) ApplyFlags() []error {
 	var errs []error
 
-	o.Scheme = viper.GetString(configRepoScheme)
-	if o.Scheme == "" {
+	o.Repo.Scheme = viper.GetString(configRepoScheme)
+	if o.Repo.Scheme == "" {
 		errs = append(errs, fmt.Errorf("--%s must be specified", flagRepoScheme))
 	}
 
-	o.DomainSuffix = viper.GetString(configRepoDomainSuffix)
-	if o.DomainSuffix == "" {
+	o.Repo.DomainSuffix = viper.GetString(configRepoDomainSuffix)
+	if o.Repo.DomainSuffix == "" {
 		errs = append(errs, fmt.Errorf("--%s must be specified", flagRepoDomainSuffix))
 	}
 
-	o.CaFile = viper.GetString(configRepoCaFile)
-	o.Admin = viper.GetString(configRepoAdmin)
-	o.AdminPassword = viper.GetString(configRepoAdminPassword)
+	o.Repo.CaFile = viper.GetString(configRepoCaFile)
+	o.Repo.Admin = viper.GetString(configRepoAdmin)
+	o.Repo.AdminPassword = viper.GetString(configRepoAdminPassword)
 
 	return errs
 }

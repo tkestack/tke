@@ -100,6 +100,20 @@ func (r *Registry) Namespace() string {
 	return r.TKERegistry.Namespace
 }
 
+func (r *Registry) Username() string {
+	if r.ThirdPartyRegistry != nil {
+		return r.ThirdPartyRegistry.Username
+	}
+	return r.TKERegistry.Username
+}
+
+func (r *Registry) Password() []byte {
+	if r.ThirdPartyRegistry != nil {
+		return r.ThirdPartyRegistry.Password
+	}
+	return r.TKERegistry.Password
+}
+
 func (r *Registry) Prefix() string {
 	return path.Join(r.Domain(), r.Namespace())
 }

@@ -28,7 +28,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	"tkestack.io/tke/cmd/tke-application-controller/app/options"
-	appconfig "tkestack.io/tke/pkg/application/controller/app/config"
+	appconfig "tkestack.io/tke/pkg/application/config"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
 )
@@ -49,7 +49,7 @@ type Config struct {
 	ApplicationAPIServerClientConfig *restclient.Config
 	// the rest config for the platform apiserver
 	PlatformAPIServerClientConfig *restclient.Config
-	Repo                          appconfig.RepoConfiguration
+	RepoConfiguration             appconfig.RepoConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -93,7 +93,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		PlatformAPIServerClientConfig:    platformAPIServerClientConfig,
 	}
 
-	if err := opts.Repo.ApplyTo(&controllerManagerConfig.Repo); err != nil {
+	if err := (&opts.FeatureOptions.Repo).ApplyTo(&controllerManagerConfig.RepoConfiguration); err != nil {
 		return nil, err
 	}
 	if err := opts.Component.ApplyTo(&controllerManagerConfig.Component); err != nil {

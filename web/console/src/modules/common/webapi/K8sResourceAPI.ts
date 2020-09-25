@@ -223,11 +223,14 @@ export async function applyResourceIns(resource: CreateResource[], regionId: num
  * @param regionId: number  地域的id
  */
 export async function deleteResourceIns(resource: CreateResource[], regionId: number) {
+  console.log('delete---1', resource);
   try {
     let { resourceIns, clusterId, resourceInfo, namespace, mode, logAgentName = '' } = resource[0];
 
     let k8sUrl = reduceK8sRestfulPath({ resourceInfo, namespace, specificName: resourceIns, clusterId, logAgentName });
     let url = k8sUrl;
+
+    console.log('delete---', k8sUrl);
 
     // 是用于后台去异步的删除resource当中的pod
     let extraParamsForDelete = {

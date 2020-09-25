@@ -102,7 +102,7 @@ const restActions = {
         })
       );
       setProjectName(project);
-      dispatch(projectNamespaceActions.applyFilter({ specificName: project }));
+      resourceName !== 'hpa' && dispatch(projectNamespaceActions.applyFilter({ specificName: project }));
     };
   },
 

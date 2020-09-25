@@ -10,6 +10,7 @@ export interface App extends Identifiable {
   };
 
   spec?: {
+    dryRun?: boolean;
     chart?: {
       chartGroupName?: string;
       chartName?: string;
@@ -33,6 +34,7 @@ export interface App extends Identifiable {
     releaseStatus?: string;
     revision?: number;
     observedGeneration?: number;
+    manifest?: string;
   };
 }
 
@@ -53,6 +55,7 @@ export interface AppCreation extends Identifiable {
   };
 
   spec?: {
+    dryRun?: boolean;
     chart?: {
       chartGroupName?: string;
       chartName?: string;
@@ -80,6 +83,7 @@ export interface AppEditor extends Identifiable {
   };
 
   spec?: {
+    dryRun?: boolean;
     chart?: {
       chartGroupName?: string;
       chartName?: string;

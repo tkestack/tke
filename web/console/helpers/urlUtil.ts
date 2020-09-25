@@ -176,7 +176,9 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
   }
   return url;
 };
-
+export function cutNsStartClusterId({ namespace, clusterId }) {
+  return namespace.replace(new RegExp(`^${clusterId}-`), '');
+}
 export function reduceNs(namesapce) {
   let newNs = namesapce;
   /// #if project

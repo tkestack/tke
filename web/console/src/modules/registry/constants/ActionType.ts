@@ -50,6 +50,7 @@ export const ChartVersionFile = 'ChartVersionFile';
 
 export const AddApp = 'AddApp';
 export const UpdateAppCreationState = 'UpdateAppCreationState';
+export const UpdateAppDryRunState = 'UpdateAppDryRunState';
 
 export const ClusterList = 'ClusterList';
 export const NamespaceList = 'NamespaceList';

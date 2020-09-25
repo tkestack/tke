@@ -147,14 +147,8 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
               /// #if tke
               <Trans>
                 该集群未安装Prometheus组件, 请前往
-                <a
-                  href={`/tkestack/addon?clusterId=${cluster.selection.metadata.name}`}
-                  onClick={event => {
-                    addonRouter.navigate({}, { clusterId: cluster.selection.metadata.name });
-                    event.preventDefault();
-                  }}
-                >
-                  扩展组件
+                <a href={`/tkestack/cluster/sub/list/basic/info?clusterId=${cluster.selection.metadata.name}`}>
+                  集群基本信息
                 </a>
                 进行安装
               </Trans>

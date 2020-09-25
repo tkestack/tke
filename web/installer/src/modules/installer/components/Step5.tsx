@@ -19,7 +19,7 @@ export class Step5 extends React.Component<RootProps> {
                 { text: 'TKE提供', value: 'tke' },
                 { text: '第三方仓库', value: 'thirdParty' }
               ]}
-              onChange={value => actions.installer.updateEdit({ repoType: value })}
+              onChange={value => actions.installer.updateEdit({ repoType: value, application: false })}
             />
             <div className="tea-form__help-text">
               {editState.repoType === 'tke'

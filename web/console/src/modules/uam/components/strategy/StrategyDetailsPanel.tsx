@@ -23,7 +23,7 @@ import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormat } from '../../../../../helpers/dateUtil';
-import { LinkButton, usePrevious } from '../../../common/components';
+import { LinkButton } from '../../../common/components';
 import { allActions } from '../../actions';
 import { User } from '../../models';
 import { router } from '../../router';

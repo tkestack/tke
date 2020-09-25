@@ -218,7 +218,7 @@ const fetchChartActions = createFFObjectActions<Chart, ChartDetailFilter>({
 
     let { route } = getState(),
       urlParam = router.resolve(route);
-    if (urlParam['tab'] && urlParam['tab'] === 'file') {
+    if (!urlParam['tab'] || urlParam['tab'] === 'detail' || urlParam['tab'] === 'file') {
       //请求文件目录树
       dispatch(
         detailActions.chartInfo.applyFilter({

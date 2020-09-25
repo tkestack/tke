@@ -63,9 +63,10 @@ type AppSpec struct {
 	Chart Chart
 	// Values holds the values for this app.
 	// +optional
-	Values AppValues
-	// +optional
+	Values     AppValues
 	Finalizers []FinalizerName
+	// +optional
+	DryRun bool
 }
 
 // Chart is a description of a chart.
@@ -110,6 +111,9 @@ type AppStatus struct {
 	// A human readable message indicating details about the transition.
 	// +optional
 	Message string
+	// Dryrun result.
+	// +optional
+	Manifest string
 }
 
 // +genclient

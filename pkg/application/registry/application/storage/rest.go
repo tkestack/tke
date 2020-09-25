@@ -21,7 +21,9 @@ package storage
 import (
 	"context"
 	"fmt"
+	"net/url"
 
+	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,8 +38,12 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
+	appconfig "tkestack.io/tke/pkg/application/config"
+	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	applicationstrategy "tkestack.io/tke/pkg/application/registry/application"
+	"tkestack.io/tke/pkg/application/util"
+	registryutil "tkestack.io/tke/pkg/registry/util"
 	authorizationutil "tkestack.io/tke/pkg/registry/util/authorization"
 )
 
@@ -48,6 +54,7 @@ type REST struct {
 	platformClient    platformversionedclient.PlatformV1Interface
 	registryClient    registryversionedclient.RegistryV1Interface
 	authorizer        authorizer.Authorizer
+	repo              appconfig.RepoConfiguration
 }
 
 type ApplicationStorage interface {
@@ -71,6 +78,7 @@ func NewREST(
 	platformClient platformversionedclient.PlatformV1Interface,
 	registryClient registryversionedclient.RegistryV1Interface,
 	authorizer authorizer.Authorizer,
+	repo appconfig.RepoConfiguration,
 ) *REST {
 	rest := &REST{
 		application:       application,
@@ -78,6 +86,7 @@ func NewREST(
 		platformClient:    platformClient,
 		registryClient:    registryClient,
 		authorizer:        authorizer,
+		repo:              repo,
 	}
 	return rest
 }
@@ -127,17 +136,22 @@ func (rs *REST) Export(ctx context.Context, name string, opts metav1.ExportOptio
 
 func (rs *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	app := obj.(*application.App)
-	// check chart permission
-	err := rs.check(ctx, app)
+
+	err := rs.prepareForCheck(ctx, app)
 	if err != nil {
 		return nil, err
 	}
 
-	// check value format
-	_, err = helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
-	if err != nil {
-		return nil, errors.NewBadRequest(err.Error())
+	if app.Spec.DryRun {
+		rel, err := rs.dryRun(ctx, app)
+		if err != nil {
+			return nil, err
+		}
+		ret := app.DeepCopy()
+		ret.Status.Manifest = rel.Manifest
+		return ret, nil
 	}
+
 	return rs.application.Create(ctx, obj, createValidation, options)
 }
 
@@ -180,15 +194,20 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 	}
 
 	// check chart permission
-	err = rs.check(ctx, app)
+	// check value format
+	err = rs.prepareForCheck(ctx, app)
 	if err != nil {
 		return nil, false, err
 	}
 
-	// check value format
-	_, err = helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
-	if err != nil {
-		return nil, false, errors.NewBadRequest(err.Error())
+	if app.Spec.DryRun {
+		rel, err := rs.dryRun(ctx, app)
+		if err != nil {
+			return nil, false, err
+		}
+		ret := app.DeepCopy()
+		ret.Status.Manifest = rel.Manifest
+		return ret, true, nil
 	}
 
 	// Copy over non-user fields
@@ -210,7 +229,22 @@ func (rs *REST) ConvertToTable(ctx context.Context, object runtime.Object, table
 	return rs.application.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (rs *REST) check(ctx context.Context, app *application.App) error {
+func (rs *REST) prepareForCheck(ctx context.Context, app *application.App) error {
+	// check chart permission
+	err := rs.canVisitChart(ctx, app)
+	if err != nil {
+		return err
+	}
+
+	// check value format
+	_, err = helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
+	if err != nil {
+		return errors.NewBadRequest(err.Error())
+	}
+	return nil
+}
+
+func (rs *REST) canVisitChart(ctx context.Context, app *application.App) error {
 	//TODO: allowAlways if registryClient is empty?
 	if rs.registryClient == nil {
 		return nil
@@ -249,4 +283,55 @@ func (rs *REST) check(ctx context.Context, app *application.App) error {
 		return errors.NewForbidden(registryv1.Resource("charts"), "not authenticated", fmt.Errorf("can not get chart: %s/%s/%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName, app.Spec.Chart.ChartName))
 	}
 	return nil
+}
+
+func (rs *REST) dryRun(ctx context.Context, app *application.App) (*release.Release, error) {
+	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Namespace)
+	if err != nil {
+		return nil, errors.NewBadRequest(err.Error())
+	}
+	loc := &url.URL{
+		Scheme: rs.repo.Scheme,
+		Host:   registryutil.BuildTenantRegistryDomain(rs.repo.DomainSuffix, app.Spec.Chart.TenantID),
+		Path:   fmt.Sprintf("/chart/%s", app.Spec.Chart.ChartGroupName),
+	}
+	destfile, err := client.Pull(&helmaction.PullOptions{
+		ChartPathOptions: helmaction.ChartPathOptions{
+			CaFile:    rs.repo.CaFile,
+			Username:  rs.repo.Admin,
+			Password:  rs.repo.AdminPassword,
+			RepoURL:   loc.String(),
+			ChartRepo: app.Spec.Chart.TenantID + "/" + app.Spec.Chart.ChartGroupName,
+			Chart:     app.Spec.Chart.ChartName,
+			Version:   app.Spec.Chart.ChartVersion,
+		},
+	})
+	if err != nil {
+		return nil, errors.NewBadRequest(err.Error())
+	}
+
+	// check value format
+	values, err := helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
+	if err != nil {
+		return nil, errors.NewBadRequest(err.Error())
+	}
+
+	rel, err := client.Install(&helmaction.InstallOptions{
+		Namespace:        app.Namespace,
+		ReleaseName:      app.Spec.Name,
+		DependencyUpdate: true,
+		DryRun:           true,
+		Values:           values,
+		ChartPathOptions: helmaction.ChartPathOptions{
+			CaFile:      rs.repo.CaFile,
+			Username:    rs.repo.Admin,
+			Password:    rs.repo.AdminPassword,
+			RepoURL:     loc.String(),
+			ChartRepo:   app.Spec.Chart.TenantID + "/" + app.Spec.Chart.ChartGroupName,
+			Chart:       app.Spec.Chart.ChartName,
+			Version:     app.Spec.Chart.ChartVersion,
+			ExistedFile: destfile,
+		},
+	})
+	return rel, err
 }
