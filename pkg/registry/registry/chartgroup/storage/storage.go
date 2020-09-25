@@ -150,7 +150,7 @@ func (r *GenericREST) List(ctx context.Context, options *metainternal.ListOption
 	defaultType := "__internal"
 	targetProjectID := ""
 	wrappedOptions, repoType = apiserverutil.InterceptCustomSelectorFromListOptions(wrappedOptions, "repoType", defaultType)
-	wrappedOptions, targetProjectID = apiserverutil.InterceptCustomSelectorFromListOptions(options, "projectID", "")
+	wrappedOptions, targetProjectID = apiserverutil.InterceptCustomSelectorFromListOptions(wrappedOptions, "projectID", "")
 
 	switch registryapi.RepoType(repoType) {
 	case registryapi.RepoTypePersonal:
