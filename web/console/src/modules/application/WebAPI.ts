@@ -237,9 +237,16 @@ export async function rollbackApp([app]: History[]) {
  */
 export async function fetchChartList(query: QueryState<ChartFilter>) {
   const { keyword, filter } = query;
-  const queryObj = filter.repoType
+  let fieldSelector = '';
+  if (filter.repoType) {
+    fieldSelector = 'repoType=' + filter.repoType;
+  }
+  if (filter.projectID) {
+    fieldSelector = fieldSelector + ',projectID=' + filter.projectID;
+  }
+  const queryObj = fieldSelector
     ? {
-        'fieldSelector=repoType': filter.repoType
+        fieldSelector: fieldSelector
       }
     : {};
   const resourceInfo: ResourceInfo = resourceConfig()['chart'];
@@ -252,9 +259,8 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({
     url: url + queryString,
-    projectId: filter.projectID ? filter.projectID : '',
     keyword
-  },);
+  });
   let objs: Chart[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Chart> = {
     recordCount: objs.length,
@@ -283,8 +289,7 @@ export async function fetchChartInfo(filter: ChartInfoFilter) {
   });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   let rr: RequestResult = await GET({
-    url: url + '/' + filter.chartVersion + queryString,
-    projectId: filter.projectID ? filter.projectID : ''
+    url: url + '/' + filter.chartVersion + queryString
   });
   return rr.data;
 }
