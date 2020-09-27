@@ -149,8 +149,8 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
     } else {
       let options = namespaceList.data.recordCount
         ? namespaceList.data.records.map((item, index) => ({
-            value: item.namespaceValue,
-            text: item.cluster.metadata.name
+            value: item.name,
+            text: item.name
           }))
         : [{ value: '', text: t('无可用命名空间'), disabled: true }];
 
