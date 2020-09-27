@@ -50,7 +50,9 @@
         * [Job ](products/business-control-pannel/application/workload/job.md)
         * [CronJob ](products/business-control-pannel/application/workload/cron-job.md)
         * [TApp ](products/business-control-pannel/application/workload/tapp.md)
-        * [工作负载的请求与限制](products/business-control-pannel/application/workload/resource-limit.md)
+        * [负载的高级设置 ](products/business-control-pannel/application/workload/advancedsetup)
+          * [工作负载的请求与限制](products/business-control-pannel/application/workload/advancedsetup/resource-limit.md)
+          * 
       * [服务](products/business-control-pannel/application/services)
         * [Service ](products/business-control-pannel/application/services/service.md)
         * [Ingress ](products/business-control-pannel/application/services/ingress.md)
@@ -73,7 +75,7 @@
     * [运维管理](products/business-control-pannel/operation)
       * [Helm应用](products/business-control-pannel/operation/helm应用.md)
       * [日志采集](products/business-control-pannel/operation/logcollect.md)
-  
+
 * [产品特色功能](features)
   * [Galaxy](features/galaxy.md)
   * [TAPP](features/tapp.md)

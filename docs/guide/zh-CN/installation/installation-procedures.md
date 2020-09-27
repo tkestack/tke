@@ -47,8 +47,13 @@ arch=arm64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzho
 ![img](../../../images/step-1.png)
 
    - **用户名**：TKEStack 控制台管理员名称（**例如：admin**）
+
    - **密码**：TKEStack 控制台管理员密码
+
    - **高可用设置**（按需使用，可直接选择【**不设置**】）
+     
+     > 注意：如果使用高可用，至少需要三个 master 节点才可组成高可用集群，否则会出现 ***脑裂*** 现象。
+     
      - **不设置**：第一台 master 节点的IP地址作为 APIServer 地址
      - **TKE提供**：用户只需提供可用的IP地址，TKE部署Keepalive，配置该IP为Master集群的VIP，以实现Global集群和控制台的高可用，此时该VIP和所有master节点IP地址都是APIserver地址。
      - **使用已有**：对接配置好的外部 LB 实例，VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）端口，同时确保该VIP有至少两个LB后端（Master节点），以避免LB单后端不可用风险。
@@ -57,7 +62,7 @@ arch=arm64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 ![img](../../../images/step-2.png)
 
-- **网卡名称**：集群节点使用的网卡，根据实际环境填写正确的网卡名称，默认为eth0（**建议使用默认值**）
+- **网卡名称**：设置集群节点使用的网卡，Galaxy插件的floating IP功能会使用该网卡做桥接，如无特殊情况，一般为eth0（**建议使用默认值**）
 
 - **GPU 类型**：（按需使用，可直接选择【**不设置**】）
 
@@ -68,11 +73,14 @@ arch=arm64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzho
   - **Virtual**：平台会自动为集群安装 [GPUManager](../features/gpumanager.md)  扩展组件，此时GPU可以被虚拟化，可以给负载分配非整数张GPU卡，例如可以给一个负载分配0.3个GPU
 
 - **容器网络：** 将为集群内容器分配在容器网络地址范围内的 IP 地址，您可以自定义三大私有网段作为容器网络， 根据您选择的集群内服务数量的上限，自动分配适当大小的 CIDR 段用于 Kubernetes service；根据您选择 Pod 数量上限/节点，自动为集群内每台服务器分配一个适当大小的网段用于该主机分配 Pod 的 IP 地址（**建议使用默认值**）
-  - **CIDR：** 集群内 Sevice、 Pod 等资源所在网段
+  - **CIDR：** 集群内 Sevice、 Pod 等资源所在网段，注意：CIDR不能与目标机器IP段重叠， 否则会造成初始化失败
   - **Pod数量上限/节点：** 决定分配给每个 Node 的 CIDR 的大小
   - **Service数量上限/集群**：决定分配给 Sevice 的 CIDR 大小
 
 - **master 节点：** 输入目标机器信息后单击保存，若保存按钮是灰色，单击网页空白处即可变蓝
+  
+  > 注意：如果在上一步中使用高可用，至少需要三个 master 节点才可组成高可用集群，否则会出现 ***脑裂*** 现象。
+  
   - **访问地址：** Master 节点**内网 IP**，请配置**至少 8 Cores & 16G内存** 及以上的机型，**否则会部署失败**
   - **SSH 端口**：请确保目标机器安全组开放 SSH 端口和 ICMP 协议，否则无法远程登录和 PING 服务器（建议使用**22**）
   - **用户名和密码：** 均为添加的节点的用户名和密码
