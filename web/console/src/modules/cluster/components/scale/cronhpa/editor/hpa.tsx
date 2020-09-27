@@ -115,7 +115,7 @@ const Hpa = React.memo((props: {
     namespace?: string;
     resourceType: string;
     resource: string;
-    strategy: NestedValue<any[]>;
+    strategy: any;
     minReplicas: number;
     maxReplicas: number;
   }>({
@@ -188,7 +188,10 @@ const Hpa = React.memo((props: {
   /**
    * 关联工作负载列表数据处理
    */
-  const [resources, setResources] = useState();
+  const [resources, setResources] = useState({
+    recordCount: 0,
+    records: []
+  });
   useEffect(() => {
     // 请求resourceType对应的列表数据
     async function getResourceList(resourceType, clusterId, namespace) {

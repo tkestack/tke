@@ -30,6 +30,7 @@ import {
 } from '@src/modules/cluster/WebAPI/scale';
 import { MetricsResourceMap } from '../constant';
 import { useNamespaces } from '@src/modules/cluster/components/scale/common/hooks';
+import { RecordSet } from '@tencent/ff-redux';
 
 /**
  * 组件样式
@@ -118,7 +119,7 @@ const Hpa = React.memo((props: {
     namespace?: string;
     resourceType: string;
     resource: string;
-    strategy: NestedValue<any[]>;
+    strategy: any;
     minReplicas: number;
     maxReplicas: number;
   }>({
@@ -193,7 +194,10 @@ const Hpa = React.memo((props: {
   /**
    * 关联工作负载列表数据处理
    */
-  const [resources, setResources] = useState();
+  const [resources, setResources] = useState({
+    recordCount: 0,
+    records: []
+  });
   useEffect(() => {
     // 请求resourceType对应的列表数据
     async function getResourceList(resourceType, clusterId, namespace) {
@@ -450,7 +454,14 @@ const Hpa = React.memo((props: {
                         {
                           fields.map((item, index) => {
                             return (
-                              <li key={item.id} className={errors.strategy && errors.strategy[index] ? 'hpa-edit-strategy-li is-error' : 'hpa-edit-strategy-li'}>
+                              <li
+                                key={item.id}
+                                className={
+                                  errors.strategy && errors.strategy[index]
+                                    ? 'hpa-edit-strategy-li is-error'
+                                    : 'hpa-edit-strategy-li'
+                                }
+                              >
                                 <Controller
                                   as={
                                     <Select
@@ -465,7 +476,7 @@ const Hpa = React.memo((props: {
                                   control={control}
                                   defaultValue={item.key}
                                   rules={{
-                                    required: t('不能有空内容'),
+                                    required: t('不能有空内容')
                                   }}
                                 />
                                 <Text style={{ fontSize: '14px' }}> </Text>
@@ -479,11 +490,18 @@ const Hpa = React.memo((props: {
                                     required: t('不能有空内容')
                                   }}
                                 />
-                                <Text style={{ fontSize: '14px', verticalAlign: 'middle' }}> {strategy && strategy[index] && strategy[index].key ? MetricsResourceMap[strategy[index].key].unit : ''}</Text>
-                                <LinkButton onClick={(e) => {
-                                  e.preventDefault();
-                                  remove(index);
-                                }}>
+                                <Text style={{ fontSize: '14px', verticalAlign: 'middle' }}>
+                                  {' '}
+                                  {strategy && strategy[index] && strategy[index].key
+                                    ? MetricsResourceMap[strategy[index].key].unit
+                                    : ''}
+                                </Text>
+                                <LinkButton
+                                  onClick={e => {
+                                    e.preventDefault();
+                                    remove(index);
+                                  }}
+                                >
                                   <i className="icon-cancel-icon" />
                                 </LinkButton>
                               </li>

@@ -5,7 +5,10 @@ import { fetchNamespaceList, fetchProjectNamespaceList } from '@src/modules/clus
  * 业务侧或者平台侧获取命名空间数据
  */
 export const useNamespaces = ({ projectId, clusterId }) => {
-  const [namespaces, setNamespaces] = useState();
+  const [namespaces, setNamespaces] = useState({
+    recordCount: 0,
+    records: []
+  });
   useEffect(() => {
 
     // 平台侧
