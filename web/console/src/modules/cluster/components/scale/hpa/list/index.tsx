@@ -17,7 +17,7 @@ import { RecordSet } from '@tencent/ff-redux/src';
 import { router } from '@src/modules/cluster/router';
 import { downloadCsv } from '@helper/downloadCsv';
 import { DisplayFiledProps, Resource, ResourceInfo } from '@src/modules/common/models';
-import { MetricsResourceMap } from '../constant';
+import { NestedMetricsResourceMap, MetricsResourceMap } from '../constant';
 import { CHANGE_NAMESPACE, StateContext, DispatchContext } from '../context';
 import { isEmpty, useModal } from '@src/modules/common/utils';
 import { removeHPA } from '@src/modules/cluster/WebAPI/scale';
@@ -194,8 +194,16 @@ const List = React.memo((props: ListProps) => {
                     render: hpa => {
                       return hpa.spec.metrics.map((item, index) => {
                         const { name, targetAverageValue, targetAverageUtilization } = item.resource;
-                        const { meaning, unit } = MetricsResourceMap[name];
-                        const content = targetAverageValue ? meaning + targetAverageValue : meaning + targetAverageUtilization + unit;
+                        const target = targetAverageValue ? 'targetAverageValue' : 'targetAverageUtilization';
+                        let content = '';
+                        if (name === 'cpu' || name === 'memory') {
+                          const target = targetAverageValue ? 'targetAverageValue' : 'targetAverageUtilization';
+                          const { meaning, unit } = NestedMetricsResourceMap[name][target];
+                          content = (targetAverageValue ? meaning + targetAverageValue : meaning + targetAverageUtilization) + unit;
+                        } else {
+                          const { meaning, unit } = MetricsResourceMap[name];
+                          content = (targetAverageValue ? meaning + targetAverageValue : meaning + targetAverageUtilization) + unit;
+                        }
                         return <Text key={index} parent="div">{content}</Text>;
                       });
                     },

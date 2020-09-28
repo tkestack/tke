@@ -32,7 +32,7 @@ const Basic = React.memo((props: {
         <span className="item-descr-txt">{selectedHpa.metadata.namespace}</span>
       </li>
       <li>
-        <span className="item-descr-tit"><Trans>关联deployment</Trans></span>
+        <span className="item-descr-tit"><Trans>关联工作负载</Trans></span>
         <span className="item-descr-txt">{selectedHpa.spec.scaleTargetRef.kind}:{selectedHpa.spec.scaleTargetRef.name}</span>
       </li>
       <li>
@@ -48,7 +48,7 @@ const Basic = React.memo((props: {
         <span className="item-descr-txt">
           {selectedHpa.spec.crons.map((item, index) => {
             const { schedule, targetReplicas } = item;
-            return <Text key={index} parent="div">{`${schedule} ${targetReplicas}`}</Text>;
+            return <Text key={index} parent="div">{`${schedule} ${targetReplicas}个`}</Text>;
           })}
         </span>
       </li>
