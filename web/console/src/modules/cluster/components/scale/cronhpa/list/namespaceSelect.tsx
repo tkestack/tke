@@ -13,7 +13,6 @@ import {
 } from '@tencent/tea-component';
 import { RecordSet } from '@tencent/ff-redux/src';
 import { Resource } from '@src/modules/common/models';
-import { namespace } from '@config/resource/k8sConfig';
 
 // 下边props没有用这个interface因为使用后Select会你报一些类型的问题，感觉还不太好整合，有时间整合下
 interface NamespaceSelectProps {
