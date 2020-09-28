@@ -1328,7 +1328,19 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 }
 
 func (t *TKE) authzWebhookBuiltinEndpoint() string {
-	return utilhttp.MakeEndpoint("https", t.Para.Cluster.Spec.Machines[0].IP,
+	endPointHost := t.Para.Cluster.Spec.Machines[0].IP
+
+	// use VIP in HA situation
+	if t.Para.Cluster.Spec.Features.HA != nil {
+		if t.Para.Cluster.Spec.Features.HA.TKEHA != nil {
+			endPointHost = t.Para.Cluster.Spec.Features.HA.TKEHA.VIP
+		}
+		if t.Para.Cluster.Spec.Features.HA.ThirdPartyHA != nil {
+			endPointHost = t.Para.Cluster.Spec.Features.HA.ThirdPartyHA.VIP
+		}
+	}
+
+	return utilhttp.MakeEndpoint("https", endPointHost,
 		constants.AuthzWebhookNodePort, "/auth/authz")
 }
 
