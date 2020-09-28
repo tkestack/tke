@@ -11,7 +11,8 @@ import {
   Text,
   Button,
   Form,
-  Input
+  Input,
+  InputNumber
 } from '@tencent/tea-component';
 import { LinkButton } from '@src/modules/common/components';
 import { Resource } from '@src/modules/common/models';
@@ -28,7 +29,7 @@ import {
   fetchResourceList,
   fetchProjectNamespaceList
 } from '@src/modules/cluster/WebAPI/scale';
-import { MetricsResourceMap } from '../constant';
+import { MetricsResourceMap, NestedMetricsResourceMap } from '../constant';
 import { useNamespaces } from '@src/modules/cluster/components/scale/common/hooks';
 import { RecordSet } from '@tencent/ff-redux';
 
@@ -89,7 +90,7 @@ const DisabledResourceMap = {
 const KindsMap = {
   deployments: 'Deployment',
   statefulsets: 'StatefulSet',
-  tapps: 'Tapp'
+  tapps: 'TApp'
 };
 const ResourceTypeMap = {
   Deployment: 'deployments',
@@ -129,9 +130,9 @@ const Hpa = React.memo((props: {
       namespace: '',
       resourceType: '',
       resource: '',
-      strategy: [{ key: '', value: '' }],
-      minReplicas: undefined,
-      maxReplicas: undefined
+      strategy: [{ key: '', value: 0 }],
+      minReplicas: 0,
+      maxReplicas: 0
     }
   });
   const { fields, append, remove } = useFieldArray({
@@ -139,7 +140,7 @@ const Hpa = React.memo((props: {
     name: 'strategy'
   });
   const { namespace, resourceType, strategy, minReplicas } = watch();
-
+  console.log('errors is:', strategy, errors);
   // modify的初始化
   const [selectedHpaNamespace, setSelectedHpaNamespace] = useState('');
   useEffect(() => {
@@ -149,7 +150,16 @@ const Hpa = React.memo((props: {
       setSelectedHpaNamespace(namespace);
       const selectedHPAStrategy =  metrics.map((item, index) => {
         const { name, targetAverageValue, targetAverageUtilization } = item.resource;
-        return { key: MetricsResourceMap[name].key, value: parseFloat(targetAverageValue || targetAverageUtilization) };
+        let theKey = '';
+        if (name === 'cpu' || name === 'memory') {
+          const target = targetAverageValue ? 'targetAverageValue' : 'targetAverageUtilization';
+          const { key } = NestedMetricsResourceMap[name][target];
+          theKey = key;
+        } else {
+          const { key } = MetricsResourceMap[name];
+          theKey = key;
+        }
+        return { key: theKey, value: parseInt(targetAverageValue || targetAverageUtilization) };
       });
       reset({
         resourceType: ResourceTypeMap[scaleTargetRef.kind],
@@ -213,29 +223,29 @@ const Hpa = React.memo((props: {
   /**
    * 触发策略数据处理
    */
-  const [showStrategyOptions, setShowStrategyOptions] = useState(StrategyOptions);
-  useEffect(() => {
-    if (strategy) {
-      const selectedStrategyKeys = strategy.map(item => {
-        return item.key;
-      });
-      let disabledStrategyKeys = [];
-      selectedStrategyKeys.forEach(item => {
-        if (item) {
-          disabledStrategyKeys = [...disabledStrategyKeys, ...DisabledResourceMap[item]];
-        }
-      });
-      const newStrategyOptions = StrategyOptions.map(item => {
-        if (disabledStrategyKeys.indexOf(item.value) !== -1) {
-          item.disabled = true;
-        } else {
-          item.disabled = false;
-        }
-        return item;
-      });
-      setShowStrategyOptions(newStrategyOptions);
-    }
-  }, [strategy && strategy.length]);
+  // const [showStrategyOptions, setShowStrategyOptions] = useState(StrategyOptions);
+  // useEffect(() => {
+  //   if (strategy) {
+  //     const selectedStrategyKeys = strategy.map(item => {
+  //       return item.key;
+  //     });
+  //     let disabledStrategyKeys = [];
+  //     selectedStrategyKeys.forEach(item => {
+  //       if (item) {
+  //         disabledStrategyKeys = [...disabledStrategyKeys, ...DisabledResourceMap[item]];
+  //       }
+  //     });
+  //     const newStrategyOptions = StrategyOptions.map(item => {
+  //       if (disabledStrategyKeys.indexOf(item.value) !== -1) {
+  //         item.disabled = true;
+  //       } else {
+  //         item.disabled = false;
+  //       }
+  //       return item;
+  //     });
+  //     setShowStrategyOptions(newStrategyOptions);
+  //   }
+  // }, [strategy && strategy.length]);
 
   /**
    * 表单提交数据处理
@@ -244,11 +254,15 @@ const Hpa = React.memo((props: {
   const onSubmit = data => {
     const { name, namespace, minReplicas, maxReplicas, resource, resourceType, strategy } = data;
     const metrics = strategy.map(item => {
+      // cpu || memory
+      const name = item.key.replace('Utilization', '').replace('Average', '');
+      // targetAverageValue || targetAverageUtilization
+      const strategyKey = item.key.endsWith('Utilization') ? 'targetAverageUtilization' : 'targetAverageValue';
       return {
         type: 'Resource',
         resource: {
-          name: item.key.replace('Utilization', ''),
-          targetAverageUtilization: +item.value
+          name,
+          [strategyKey]: +item.value
         }
       };
     });
@@ -282,7 +296,7 @@ const Hpa = React.memo((props: {
           maxReplicas: +maxReplicas,
           metrics,
           scaleTargetRef: {
-            apiVersion: 'apps/v1',
+            apiVersion: resourceType === 'tapps' ? 'apps.tkestack.io/v1' : 'apps/v1',
             kind: KindsMap[resourceType],
             name: resource
           }
@@ -454,14 +468,7 @@ const Hpa = React.memo((props: {
                         {
                           fields.map((item, index) => {
                             return (
-                              <li
-                                key={item.id}
-                                className={
-                                  errors.strategy && errors.strategy[index]
-                                    ? 'hpa-edit-strategy-li is-error'
-                                    : 'hpa-edit-strategy-li'
-                                }
-                              >
+                              <li key={item.id} className="hpa-edit-strategy-li">
                                 <Controller
                                   as={
                                     <Select
@@ -469,50 +476,116 @@ const Hpa = React.memo((props: {
                                       type="simulate"
                                       appearence="button"
                                       size="m"
-                                      options={showStrategyOptions}
+                                      options={StrategyOptions}
+                                      className={errors.strategy && errors.strategy[index] && errors.strategy[index].key ? 'is-error' : ''}
                                     />
                                   }
                                   name={`strategy[${index}].key`}
                                   control={control}
                                   defaultValue={item.key}
                                   rules={{
-                                    required: t('不能有空内容')
+                                    required: t('请选择触发策略'),
+                                    validate: value => {
+                                      // 之前的选择在这个值对应的的[]中出现了，这里就要报错重复或者二者不能同时选择
+                                      const disabledSelectValue = DisabledResourceMap[value];
+                                      let tip = '',
+                                          repeatFlag = false,
+                                          similarFlag = false;
+                                      strategy && strategy.forEach((item, i) => {
+                                        // 非当前值中判断
+                                        if (index !== i) {
+                                          // 非当前值中有相同策略选择
+                                          if (item.key === value) {
+                                            repeatFlag = true;
+                                          }
+                                          // 非当前值中有相似策略选择
+                                          if (disabledSelectValue.indexOf(item.key) !== -1) {
+                                            similarFlag = true;
+                                          }
+                                        }
+                                      });
+                                      if (repeatFlag) {
+                                        tip = '相同指标不能重复设置';
+                                      } else if (similarFlag) {
+                                        const element = value.replace('Utilization', '').replace('Average', '');
+                                        tip = (element === 'cpu' ? 'CPU' : '内存') + '的利用率和使用量不能同时设置';
+                                      }
+                                      console.log('触发策略select value： ', value, tip, strategy, repeatFlag, similarFlag);
+                                      if (tip) {
+                                        return tip;
+                                      }
+                                    }
                                   }}
                                 />
                                 <Text style={{ fontSize: '14px' }}> </Text>
-                                <Controller
-                                  as={Input}
-                                  name={`strategy[${index}].value`}
-                                  size="s"
-                                  control={control}
-                                  defaultValue={item.value}
-                                  rules={{
-                                    required: t('不能有空内容')
-                                  }}
-                                />
-                                <Text style={{ fontSize: '14px', verticalAlign: 'middle' }}>
-                                  {' '}
-                                  {strategy && strategy[index] && strategy[index].key
-                                    ? MetricsResourceMap[strategy[index].key].unit
-                                    : ''}
-                                </Text>
-                                <LinkButton
-                                  onClick={e => {
+                                {
+                                  strategy && strategy[index] && strategy[index].key && MetricsResourceMap[strategy[index].key].unit === '%'
+                                    ?
+                                      <Controller
+                                        as={
+                                          <InputNumber
+                                            step={1}
+                                            min={0}
+                                            max={100}
+                                            className={errors.strategy && errors.strategy[index] && errors.strategy[index].value ? 'is-error' : ''}
+                                            unit="%"
+                                          />}
+                                        name={`strategy[${index}].value`}
+                                        size="s"
+                                        control={control}
+                                        defaultValue={item.value}
+                                        rules={{
+                                          required: t('请输入0-100之间的整数')
+                                        }}
+                                      />
+                                    :
+                                      <Controller
+                                        as={
+                                          <InputNumber
+                                            step={1}
+                                            min={0}
+                                            className={errors.strategy && errors.strategy[index] && errors.strategy[index].value ? 'is-error' : ''}
+                                            unit={
+                                              strategy && strategy[index] && strategy[index].key
+                                                  ?
+                                                MetricsResourceMap[strategy[index].key].unit
+                                                  :
+                                                ''
+                                            }
+                                          />}
+                                        name={`strategy[${index}].value`}
+                                        size="s"
+                                        control={control}
+                                        defaultValue={item.value}
+                                        rules={{
+                                          required: t('请输入大于等于0的数')
+                                        }}
+                                      />
+                                }
+                                {
+                                  strategy && strategy.length > 1 &&
+                                  <LinkButton onClick={(e) => {
                                     e.preventDefault();
                                     remove(index);
-                                  }}
-                                >
-                                  <i className="icon-cancel-icon" />
-                                </LinkButton>
+                                  }}>
+                                    <i className="icon-cancel-icon" />
+                                  </LinkButton>
+                                }
+                                {
+                                  errors.strategy && errors.strategy[index] &&
+                                    <Text parent="div" theme="danger" reset>
+                                      {errors.strategy[index].key ? errors.strategy[index].key.message : ''}
+                                    </Text>
+                                }
                               </li>
                             );
                           })
                         }
                       </ul>
-                      {errors.strategy && <Text parent="div" theme="danger" reset><Trans>不能有空内容</Trans></Text>}
+                      {/*{errors.strategy && <Text parent="div" theme="danger" reset><Trans>不能有空内容</Trans></Text>}*/}
                       <LinkButton onClick={(e) => {
                         e.preventDefault();
-                        append({ key: '', value: '' });
+                        append({ key: '', value: 0 });
                       }}>
                         <Trans>新增指标</Trans>
                       </LinkButton>
@@ -525,28 +598,28 @@ const Hpa = React.memo((props: {
                       message={(errors.minReplicas && errors.minReplicas.message) || (errors.maxReplicas && errors.maxReplicas.message)}
                     >
                       <Controller
-                        as={<Input type="number" />}
+                        as={<InputNumber step={1} min={0} />}
                         name="minReplicas"
                         size="s"
                         control={control}
                         rules={{
                           required: t('最小值不能为空'),
                           min: {
-                            value: 1,
-                            message: t('最小值大于等于1')
+                            value: 0,
+                            message: t('最小值需是大于等于0的整数')
                           }
                         }}
                       />
                       <Text style={{ fontSize: '14px', verticalAlign: 'middle' }}> ~ </Text>
                       <Controller
-                        as={<Input type="number" />}
+                        as={<InputNumber step={1} min={0} />}
                         name="maxReplicas"
                         size="s"
                         control={control}
                         rules={{
                           required: t('最大值不能为空'),
                           validate: value => {
-                            return value > minReplicas || t('最大值应大于最小值的整数');
+                            return value > minReplicas || t('最大值需是大于最小值的整数');
                           }
                         }}
                       />

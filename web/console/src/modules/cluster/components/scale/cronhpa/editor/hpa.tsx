@@ -11,7 +11,8 @@ import {
   Text,
   Button,
   Form,
-  Input
+  Input,
+  InputNumber
 } from '@tencent/tea-component';
 import { LinkButton } from '@src/modules/common/components';
 import { Resource } from '@src/modules/common/models';
@@ -85,7 +86,7 @@ const DisabledResourceMap = {
 const KindsMap = {
   deployments: 'Deployment',
   statefulsets: 'StatefulSet',
-  tapps: 'Tapp'
+  tapps: 'TApp'
 };
 const ResourceTypeMap = {
   Deployment: 'deployments',
@@ -125,16 +126,14 @@ const Hpa = React.memo((props: {
       namespace: '',
       resourceType: '',
       resource: '',
-      strategy: [{ key: '', value: '' }],
-      minReplicas: undefined,
-      maxReplicas: undefined
+      strategy: [{ key: '', value: 0 }]
     }
   });
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'strategy'
   });
-  const { namespace, resourceType, strategy, minReplicas } = watch();
+  const { namespace, resourceType, strategy } = watch();
 
   // modify的初始化
   const [selectedHpaNamespace, setSelectedHpaNamespace] = useState('');
@@ -240,7 +239,7 @@ const Hpa = React.memo((props: {
         spec: {
           crons,
           scaleTargetRef: {
-            apiVersion: 'apps/v1',
+            apiVersion: resourceType === 'tapps' ? 'apps.tkestack.io/v1' : 'apps/v1',
             kind: KindsMap[resourceType],
             name: resource
           }
@@ -415,9 +414,14 @@ const Hpa = React.memo((props: {
                         {
                           fields.map((item, index) => {
                             return (
-                              <li key={item.id} className={errors.strategy && errors.strategy[index] ? 'hpa-edit-strategy-li is-error' : 'hpa-edit-strategy-li'}>
+                              <li key={item.id} className="hpa-edit-strategy-li">
                                 <Controller
-                                  as={Input}
+                                  as={
+                                    <Input
+                                      placeholder="Crontab"
+                                      className={errors.strategy && errors.strategy[index] && errors.strategy[index].key ? 'is-error' : ''}
+                                    />
+                                  }
                                   name={`strategy[${index}].key`}
                                   control={control}
                                   defaultValue={item.key}
@@ -431,7 +435,11 @@ const Hpa = React.memo((props: {
                                 />
                                 <Text style={{ fontSize: '14px' }}> </Text>
                                 <Controller
-                                  as={<Input type="number" />}
+                                  as={
+                                    <InputNumber
+                                      unit={t('个实例')}
+                                      className={errors.strategy && errors.strategy[index] && errors.strategy[index].value ? 'is-error' : ''}
+                                    />}
                                   name={`strategy[${index}].value`}
                                   size="s"
                                   control={control}
@@ -444,22 +452,30 @@ const Hpa = React.memo((props: {
                                     }
                                   }}
                                 />
-                                {/*<Text style={{ fontSize: '14px', verticalAlign: 'middle' }}> {strategy && strategy[index] && strategy[index].key ? MetricsResourceMap[strategy[index].key].unit : ''}</Text>*/}
-                                <LinkButton onClick={(e) => {
-                                  e.preventDefault();
-                                  remove(index);
-                                }}>
-                                  <i className="icon-cancel-icon" />
-                                </LinkButton>
+                                {
+                                  strategy && strategy.length > 1 &&
+                                  <LinkButton onClick={(e) => {
+                                    e.preventDefault();
+                                    remove(index);
+                                  }}>
+                                    <i className="icon-cancel-icon" />
+                                  </LinkButton>
+                                }
+                                {
+                                  errors.strategy && errors.strategy[index] &&
+                                  <Text parent="div" theme="danger" reset>
+                                    {errors.strategy[index].key ? errors.strategy[index].key.message : ''}
+                                  </Text>
+                                }
                               </li>
                             );
                           })
                         }
                       </ul>
-                      {errors.strategy && <Text parent="div" theme="danger" reset><Trans>不能有空内容或者格式不正确</Trans></Text>}
+                      {/*{errors.strategy && <Text parent="div" theme="danger" reset><Trans>不能有空内容或者格式不正确</Trans></Text>}*/}
                       <LinkButton onClick={(e) => {
                         e.preventDefault();
-                        append({ key: '', value: '' });
+                        append({ key: '', value: 0 });
                       }}>
                         <Trans>新增策略</Trans>
                       </LinkButton>

@@ -34,7 +34,7 @@ const NamespaceSelect = React.memo((props: {
    * 初始化namespace选项为第一个，对应初始化浏览器URL数据
    */
   useEffect(() => {
-    if (!isEmpty(namespaces) && namespaces.recordCount > 0) {
+    if (!isEmpty(namespaces) && namespaces.recordCount) {
       hpaDispatch({
         type: CHANGE_NAMESPACE,
         payload: { namespaceValue: namespaces.records[0].value }

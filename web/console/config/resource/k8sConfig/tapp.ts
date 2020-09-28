@@ -32,7 +32,7 @@ const userDefinedDisplayField: DisplayField = {
     tips: '',
     operatorList: [
       {
-        name: t('更新实例数量'),
+        name: t('更新实例数量页'),
         actionType: 'modifyPod',
         isInMoreOp: false
       },

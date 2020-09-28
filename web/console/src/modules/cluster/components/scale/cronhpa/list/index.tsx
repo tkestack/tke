@@ -198,7 +198,7 @@ const List = React.memo((props: ListProps) => {
                     key: 'triggerStrategy',
                     header: (
                       <>
-                        <Trans>触发策略/实例个数</Trans>
+                        <Trans>触发策略/实例数</Trans>
                         <Bubble content={t('根据设置的Crontab（Crontab语法格式，例如 "0 23 * * 5"表示每周五23:00）周期性地设置实例数量')}>
                           <Icon
                             type="info"
@@ -210,7 +210,7 @@ const List = React.memo((props: ListProps) => {
                     render: hpa => {
                       return hpa.spec.crons.map((item, index) => {
                         const { schedule, targetReplicas } = item;
-                        return <Text key={index} parent="div">{`${schedule} ${targetReplicas}`}</Text>;
+                        return <Text key={index} parent="div">{`${schedule} ${targetReplicas}个`}</Text>;
                       });
                     },
                   },
