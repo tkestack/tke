@@ -37,7 +37,7 @@ TKEStack还可以另外**新建独立集群**以及**导入已有集群**实现*
 
   - **不使用**：第一台 master 节点的IP地址作为 APIServer 地址
   - **TKE提供**：用户只需提供可用的IP地址，TKE部署Keepalive，配置该IP为Master集群的VIP，以实现Global集群和控制台的高可用，此时该VIP和所有master节点IP地址都是APIserver地址。
-  - **使用已有**：对接配置好的外部 LB 实例，VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）端口，同时确保该VIP有至少两个LB后端（Master节点），以避免LB单后端不可用风险。
+  - **使用已有**：对接配置好的外部 LB 实例，VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）端口、31138（tke-auth-api端口），同时确保该VIP有至少两个LB后端（Master节点），以避免LB单后端不可用风险。
 
 + **GPU **：（按需使用，需要使用GPU可以勾选）
 
