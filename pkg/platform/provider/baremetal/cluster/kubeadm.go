@@ -156,7 +156,10 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 	utilruntime.Must(json.Merge(&config.Etcd, &c.Spec.Etcd))
 	if config.Etcd.Local != nil {
 		config.Etcd.Local.ImageTag = images.Get().ETCD.Tag
-		utilruntime.Must(mergo.Merge(&config.Etcd.Local.ExtraArgs, p.config.Etcd.ExtraArgs))
+
+		if config.Etcd.Local.ExtraArgs != nil && p.config.Etcd.ExtraArgs != nil{
+			utilruntime.Must(mergo.Merge(&config.Etcd.Local.ExtraArgs, p.config.Etcd.ExtraArgs))
+		}
 	}
 
 	return config
