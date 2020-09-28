@@ -13,6 +13,7 @@ import {
 } from '@tencent/tea-component';
 import { RecordSet } from '@tencent/ff-redux/src';
 import { Resource } from '@src/modules/common/models';
+import { namespace } from '@config/resource/k8sConfig';
 
 // 下边props没有用这个interface因为使用后Select会你报一些类型的问题，感觉还不太好整合，有时间整合下
 interface NamespaceSelectProps {
@@ -34,7 +35,8 @@ const NamespaceSelect = React.memo((props: {
    * 初始化namespace选项为第一个，对应初始化浏览器URL数据
    */
   useEffect(() => {
-    if (!isEmpty(namespaces)) {
+    console.log(namespaces, '---+++');
+    if (!isEmpty(namespaces) && namespaces.recordCount > 0) {
       hpaDispatch({
         type: CHANGE_NAMESPACE,
         payload: { namespaceValue: namespaces.records[0].value }
@@ -42,7 +44,10 @@ const NamespaceSelect = React.memo((props: {
 
       // 如果是业务侧，
       if (projectName && !namespaces.records[0].spec.clusterName) {
-        router.navigate(urlParams, { ...route.queries, clusterId: namespaces.records[0].spec.clusterName });
+        router.navigate(urlParams, {
+          ...route.queries,
+          clusterId: namespaces.records[0].spec.clusterName
+        });
       }
       // router.navigate(urlParams, { ...route.queries, clusterId: namespaces.records[0].spec.clusterName });
     }
