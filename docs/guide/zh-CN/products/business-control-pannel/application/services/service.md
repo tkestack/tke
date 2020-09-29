@@ -32,8 +32,8 @@ Service 定义访问后端 Pod 的访问方式，并提供固定的虚拟访问 
 一般情况下，4层负载均衡（LB）会绑定多台 Node 作为 real server（rs） ，使用时需要限制 client 和 rs 不能存在于同一台云服务器上，否则会有一定概率导致报文回环出不去。
 当 Pod 去访问 LB 时，Pod 就是源 IP，当其传输到内网时 LB 也不会做 snat 处理将源 IP 转化成 Node IP，那么 LB 收到报文也就不能判断是从哪个 Node 发送的，LB 的避免回环策略也就不会生效，所有的 rs 都可能被转发。当转发到 client 所在的 Node 上时，LB 就无法收到回包，从而导致访问不通。
 
-集群内访问时，支持Headless Service，解析服务名时直接返回对应Pod IP而不是Cluster IP，可以适配自有的服务发现机制。
-两种访问方式均支持Session Affinity，设置会话保持后，会根据请求IP把请求转发给这个IP之前访问过的Pod.
+集群内访问时，支持Headless Service， 不创建用于集群内访问的ClusterIP，访问Service名称时返回后端Pods IP地址，用于适配自有的服务发现机制。解析Service域名时返回相应 Pod IP 而不是 Cluster IP。
+两种访问方式均支持 Session Affinity，设置会话保持后，会根据请求IP把请求转发给这个IP之前访问过的Pod.
 
 
 ## Service 控制台操作指引

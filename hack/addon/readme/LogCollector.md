@@ -19,25 +19,3 @@
 ## LogCollector使用场景
 
 日志收集功能适用于需要对 Kubernetes 集群内服务日志进行存储和分析的用户。用户可以通过配置日志收集规则进行集群内日志的收集并将收集到的日志发送至 Kafka 的指定 Topic 或 日志服务 CLS 的指定日志主题以供用户的其它基础设施进行消费。
-
-## LogCollector限制条件
-
-## LogCollector使用方法
-
-### 安装
-
-1. 登录[容器服务控制台](https://console.qcloud.com/tke2)。
-
-2. 在左侧导航栏中，单击【扩展组件】，进入扩展组件管理页面。
-
-3. 选择需要安装的LogCollector集群，点击【新建】，如图：
-
-![](https://main.qcloudimg.com/raw/aed9a5e2549d865e37f6c77affcca582.png)
-
-### 设置日志采集规则
-
-1. 登录[容器服务控制台](https://console.qcloud.com/tke2)。
-
-2. 在左侧导航栏中，单击【日志采集】，选择进行日志采集的集群。新建日志采集规则。
-
-![](https://main.qcloudimg.com/raw/f714a15be03073c772ab52ddd8853bb3.png)

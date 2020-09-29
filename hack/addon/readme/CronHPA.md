@@ -4,7 +4,7 @@
 
 ### Cron Horizontal Pod Autoscaler(CronHPA)
 
-CronHPA 可让用户利用[crontab](https://en.wikipedia.org/wiki/Cron)实现对负载（deployment, statefulset，tapp这些支持扩缩容的子资源）定期自动 **扩缩容**。
+CronHPA 可让用户利用[crontab](https://en.wikipedia.org/wiki/Cron)实现对负载（deployment, statefulset，tapp这些支持扩缩容的子资源）**定期自动扩缩容**。
 
 ### CronHPA使用场景
 

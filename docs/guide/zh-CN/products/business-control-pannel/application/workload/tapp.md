@@ -62,10 +62,16 @@ Kubernetes现有应用类型（如：Deployment、StatefulSet等）无法满足�
         * **权限集-减少**：减少权限集
     
  - **实例数量**：根据实际需求选择调节方式，设置实例数量。
-   - **手动调节**：直接设定实例个数
-   - **自动调节**：根据设定的触发条件自动调节实例个数，目前支持根据CPU、内存利用率和利用量出入带宽等调节实例个数
    
- - **定时调节**：根据Crontab 语法周期性设置实例个数。前提：在[扩展组件](../../../platform/extender.md)里安装CronHPA
+   - **手动调节**：直接设定实例个数
+   
+   - **自动调节**：根据设定的触发条件自动调节实例个数，目前支持根据CPU、内存的利用率和利用量等调节实例个数。通过HPA支持
+   
+     > 前提：使用 HPA 需要依赖：metrics-server，若集群没有安装则HPA无法成效，请先[安装metrics-server](https://github.com/kubernetes-sigs/metrics-server)
+   
+ - **定时调节**：根据 Crontab 语法周期性设置实例个数
+
+    >  前提：在[扩展组件](../../../platform/extender.md)里安装CronHPA
 
 - **显示高级设置**
 
@@ -97,7 +103,10 @@ Kubernetes现有应用类型（如：Deployment、StatefulSet等）无法满足�
 
 - **端口映射**：输入负载要暴露的端口并指定通信协议类型（**容器和服务端口建议都使用80**）
 
-- **Session Affinity:** 点击【显示高级设置】出现，会话保持，设置会话保持后，会根据请求IP把请求转发给这个IP之前访问过的Pod。默认None，按需使用
+- **Session Affinity:** 点击【显示高级设置】出现，表示会话保持。Service有负载均衡的作用，有两种模式：RoundRobin 和 SessionAffinity（默认None，按需使用）
+
+    - ClientIP：基于客户端IP地址进行会话保持的模式， 即第1次将某个客户端发起的请求转发到后端的某个Pod上，之后从相同的客户端发起的请求都将被转发到后端相同的Pod上。即Service启用了Session Affinity 负载分发策略。
+    - Node：此时Service使用默认的RoundRobin（轮询模式）进行负载分发，即轮询将请求转发到后端的各个 Pod上。
 4. 单击【创建Workload】，完成创建。如下图所示：
 当“运行/期望Pod数量”相等时，即表示 TApp 下的所有 Pod 已创建完成。
     ![](../../../../../../images/tapp-2.png)

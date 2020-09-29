@@ -24,6 +24,7 @@
       * [Prometheus](../zh-CN/features/prometheus.md)
       * [日志](../zh-CN/products/business-control-pannel/operation/logcollect.md)
       * [GPUManager](../zh-CN/features/gpumanager.md)
+      * [CSI-Operator](../../../hack/addon/readme/CSIOperator.md)
     * [组织资源](products/platform/resource)
       * [镜像仓库管理](products/platform/resource/registry.md)
       * [Helm模板](products/platform/resource/helm.md)
@@ -52,8 +53,10 @@
         * [TApp ](products/business-control-pannel/application/workload/tapp.md)
         * [负载的高级设置 ](products/business-control-pannel/application/workload/advancedsetup)
           * [工作负载的请求与限制](products/business-control-pannel/application/workload/advancedsetup/resource-limit.md)
-          * 
-      * [服务](products/business-control-pannel/application/services)
+      * [自动伸缩](products/business-control-pannel/application/autoscale)
+        * [HPA](products/business-control-pannel/application/autoscale/HPA.md)
+        * [CronHPA](products/business-control-pannel/application/autoscale/CronHPA.md)
+      * [服务与路由](products/business-control-pannel/application/services)
         * [Service ](products/business-control-pannel/application/services/service.md)
         * [Ingress ](products/business-control-pannel/application/services/ingress.md)
       * [配置管理](products/business-control-pannel/application/configurations)
@@ -73,9 +76,9 @@
       * [告警设置](products/business-control-pannel/monitor&alert/alertsetting.md)
       * [通知设置](products/business-control-pannel/monitor&alert/notification.md)
     * [运维管理](products/business-control-pannel/operation)
-      * [Helm应用](products/business-control-pannel/operation/helm应用.md)
+    * [Helm应用](products/business-control-pannel/operation/helm应用.md)
       * [日志采集](products/business-control-pannel/operation/logcollect.md)
-
+  
 * [产品特色功能](features)
   * [Galaxy](features/galaxy.md)
   * [TAPP](features/tapp.md)
