@@ -43,7 +43,7 @@ GPU Manager提供一个All-in-One的GPU管理器, 基于Kubernets Device Plugin�
 
 4. 创建工作负载设置GPU限制，如图：
 
-  ![](https://main.qcloudimg.com/raw/c06872ddc0fafbf92345c0d9f26e4ecd.png)
+  ![](../../../images/创建GPU负载.png)
 
 ### yaml创建
 
@@ -94,4 +94,4 @@ kubectl port-forward svc/gpu-manager-metric -n kube-system 5678:5678 &
 curl http://127.0.0.1:5678/metric
 ```
 结果示例：
-![img](https://qqadapt.qpic.cn/txdocpic/0/46566bc5f81e3923f2df181e03676678/0?w=2620&h=928)
+![img](../../../images/gpu-metric-result.png)
