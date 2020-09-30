@@ -2,7 +2,7 @@
 
 HPA 会基于 CPU、内存等指标对负载的 Pod 数量动态调控，达到工作负载稳定的目的。
 
-依赖：[metrics-server](https://github.com/kubernetes-sigs/metrics-server)（**当前global集群自带 metrics-server，导入集群需要检查其是否安装**）
+依赖：[metrics-server](https://github.com/kubernetes-sigs/metrics-server)（**当前Global集群 或者用 TKEStack 控制台新建的独立集群 都自带 metrics-server，导入集群需要检查其是否安装**）
 
 ## 安装依赖
 
@@ -26,7 +26,7 @@ TKEStack 已经支持在页面多处位置为负载配置 HPA
 
 2. 负载列表页（负载包括 Deployment，StatefulSet，TApp）
 
-   ![image-20200929173209190](../../../../../../../../../../Typora/images/image-20200929173209190.png)
+   ![image-20200929173209190](../../../../../../images/image-20200929173209190.png)
 
    * 点击“更新实例数量”，进入配置界面如图所示，这里将会同时新建与负载同名的 HPA 对象：
 

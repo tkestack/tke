@@ -43,7 +43,7 @@ TKEStack 提供以下两种服务访问方式：
 
 ### 创建 Service
 
-1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。
+1. 登录 TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】
 2. 选择需要创建 Service 的【业务】下相应的【命名空间】，展开【服务】列表，进入【Service】管理页面
 3. 单击【新建】，进入 “新建 Service” 页面，如下图所示：
 ![](../../../../../../images/new-service.png)
@@ -61,15 +61,15 @@ TKEStack 提供以下两种服务访问方式：
     - **Session Affinity:** 点击【显示高级设置】出现，表示会话保持。Service 有负载均衡的作用，有两种模式：RoundRobin 和 SessionAffinity（默认 None，按需使用）
       - ClientIP：基于客户端 IP 地址进行会话保持的模式， 即第1次将某个客户端发起的请求转发到后端的某个 Pod 上，之后从相同的客户端发起的请求都将被转发到后端相同的 Pod 上。即 Service 启用了 Session Affinity 负载分发策略
       - Node：此时 Service 使用默认的 RoundRobin（轮询模式）进行负载分发，即轮询将请求转发到后端的各个 Pod 上
-   - **Workload 绑定：**通过 Selectors 进行绑定，可以添加自己设定的 Selectors，也可以引用已有 Workload 的Selectors
+   - **Workload 绑定**：通过 Selectors 进行绑定，可以添加自己设定的 Selectors，也可以引用已有 Workload 的Selectors
 5. 单击【创建服务】，完成创建
 
 ### 更新 Service
 
 #### 更新 YAML
 
-1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】
-2. 选择需要创建Service的业务下相应的命名空间，展开服务列表，进入Service管理页面
+1. 登录 TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】
+2. 选择需要创建 Service 的业务下相应的命名空间，展开服务列表，进入 Service 管理页面
 3. 在需要更新 YAML 的 Service 行中，单击【编辑YAML】，进入更新 Service 页面
 4. 在 “更新Service” 页面，编辑 YAML，单击【完成】，即可更新 YAML
 

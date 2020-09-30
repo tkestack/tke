@@ -12,7 +12,7 @@ Cron Horizontal Pod Autoscaler(CronHPA)可让用户利用 [crontab](https://en.w
 
 ## 使用 CronHPA
 
-前提，在[扩展组件](../../../platform/extender.md)里安装 CronHPA
+> 前提，在[扩展组件](../../../platform/extender.md)里安装 CronHPA
 
 TKEStack 已经支持在页面多处位置为负载配置 CronHPA
 

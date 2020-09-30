@@ -8,31 +8,34 @@
 ### 新建通知渠道
 
  1. 登录 TKEStack
+
  2. 切换至【平台管理】控制台，选择 【监控&告警】->【通知设置】->【通知渠道】，查看“通知渠道”列表
+
  3. 点击【新建】按钮，如下图所示：
     ![新建通知渠道按钮](../../../../../images/新建通知渠道按钮.png)
+    
   4. 在“新建通知渠道”页面填写渠道信息，如下图所示：
-    ![新建通知渠道](../../../../../images/新建通知渠道.png)
 
-      + **名称：** 填写渠道名称
-      + **渠道：** 选择渠道类型，输入渠道信息
-        + **邮件：** 邮件类型
-          + **email：** 邮件发送放地址
-          + **password：** 邮件发送方密码
-          + **smtpHost：** smtp IP 地址
-          + **smtpPort：** smtp 端口
-          + **tls：**  是否使用tls加密
-        + **短信：** 短信方式
-           + **appKey：** 短信发送方的 appKey
-           + **sdkAppID：** sdkAppID
-           + **extend：** extend 信息
-        + **微信公众号：** 微信公众号方式
-           + **appID：** 微信公众号 appID
-           + **appSecret：** 微信公众号 appSecret
-        + **Webhook：** Webhook 方式
-           + **URL**：Webhook 的 URL
-           + **Headers：** 自定义 Header
+     ![新建通知渠道](../../../../../images/新建通知渠道.png)
 
+       + **名称：** 填写渠道名称
+       + **渠道：** 选择渠道类型，输入渠道信息
+         + **邮件：** 邮件类型
+           + **email：** 邮件发送放地址
+           + **password：** 邮件发送方密码
+           + **smtpHost：** smtp IP 地址
+           + **smtpPort：** smtp 端口
+           + **tls：**  是否使用tls加密
+         + **短信：** 短信方式
+            + **appKey：** 短信发送方的 appKey
+            + **sdkAppID：** sdkAppID
+            + **extend：** extend 信息
+         + **微信公众号：** 微信公众号方式
+            + **appID：** 微信公众号 appID
+            + **appSecret：** 微信公众号 appSecret
+         + **Webhook：** Webhook 方式
+            + **URL**：Webhook 的 URL
+            + **Headers：** 自定义 Header
 5. 单击【保存】按钮
 
 ### 编辑通知渠道

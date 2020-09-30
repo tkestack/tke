@@ -7,15 +7,15 @@
 ![image-20200821171320826](../../../../images/overview.png)
 
 1. 平台的资源概览
-   1. 集群：TKEStack 管理的集群数量
-   2. 节点：TKEStack 管理的集群下所有节点数量之和
-   3. 负载数：TKEStack 管理的集群下所有负载数量，包括集群下所有的Deployment、DaemonSet、StatefulSet、TApp（如果在当前集群的[扩展组件](../platform/extender.md)安装了 TApp 组件）数量之和
-   4. 业务：TKEStack 平台已有[业务](../platform/business.md)总和
+   1. **集群**：TKEStack 管理的集群数量
+   2. **节点**：TKEStack 管理的集群下所有节点数量之和
+   3. **负载数**：TKEStack 管理的集群下所有负载数量，包括集群下所有的Deployment、DaemonSet、StatefulSet、TApp（如果在当前集群的[扩展组件](../platform/extender.md)安装了 TApp 组件）数量之和
+   4. **业务**：TKEStack 平台已有[业务](../platform/business.md)总和
 2. 集群的资源状态
-   1. 集群 CPU 和内存的总数、分配数、利用率
-   2. 节点：集群节点数量
-   3. Workload：集群Workload数量，包括集群下所有的Deployment、DaemonSet、StatefulSet、TApp（如果在当前集群的[扩展组件](../platform/extender.md)安装了 TApp 组件）数量之和
-   4. Master&ETCD：检查该组件状态。注意：如果导入一个云厂商的托管集群，是没有该组件的，因此这里会显示异常，但不影响集群的使用
+   1. 集群 CPU 和内存的**总数、分配数、利用率**
+   2. **节点**：集群节点数量
+   3. **Workload**：集群Workload数量，包括集群下所有的Deployment、DaemonSet、StatefulSet、TApp（如果在当前集群的[扩展组件](../platform/extender.md)安装了 TApp 组件）数量之和
+   4. **Master&ETCD**：检查该组件状态。注意：如果导入一个云厂商的托管集群，是没有该组件的，因此这里会显示异常，但不影响集群的使用
 3. 快速入口
    1. 创建独立集群
    2. 创建角色
