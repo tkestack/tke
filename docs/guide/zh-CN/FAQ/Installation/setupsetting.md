@@ -2,17 +2,18 @@
 
 ## 修改 master 的 apiserver 的启动参数
 
-TKEStack 是通过 Kubeadm搭建集群的， Kubernetes apiserver 是由 static pod 启动，其 yaml 文件的位置在master节点的 `/etc/kubernetes/manifest/kube-apiserver.yaml` 这个路径下。如下所示，在`spec.containers.command`里的内容，从`- --advertise-address=10.0.222.102` 开始全是apiserver的启动配置。同样的，可以在`/etc/kubernetes/manifest`该路径下查看 master 节点其他组件的 yaml 文件。
+TKEStack 是通过 Kubeadm 搭建集群的， Kubernetes apiserver 是由 static pod 启动，其 yaml 文件的位置在master节点的 `/etc/kubernetes/manifest/kube-apiserver.yaml` 这个路径下。如下所示，在`spec.containers.command`里的内容，从`- --advertise-address=10.0.222.102` 开始全是apiserver的启动配置。同样的，可以在`/etc/kubernetes/manifest`该路径下查看 master 节点其他组件的 yaml 文件。
 
 ```shell
-[root@VM-222-102-centos opt]# cd /etc/kubernetes/
 # /etc/kubernetes/ 目录下是Kubernetes的相关配置
+[root@VM-222-102-centos opt]# cd /etc/kubernetes/
 [root@VM-222-102-centos kubernetes]# ls
 admin.conf               kubeadm-config.yaml  pki                           tke-authz-webhook.yaml
 controller-manager.conf  kubelet.conf         scheduler-policy-config.json
 known_tokens.csv         manifests            scheduler.conf
-[root@VM-222-102-centos kubernetes]# cd manifests/
+
 # /etc/kubernetes/ 目录下是master组件的相关配置
+[root@VM-222-102-centos kubernetes]# cd manifests/
 [root@VM-222-102-centos manifests]# ls
 etcd.yaml  kube-apiserver.yaml  kube-controller-manager.yaml  kube-scheduler.yaml
 [root@VM-222-102-centos manifests]# cat kube-apiserver.yaml
@@ -59,8 +60,8 @@ Static Pod 的配置文件被修改后，立即生效。
 
 ## 修改 Kubelet 的启动参数
 
-kubelet 组件是通过 systemctl 来管理的，因此可以在/etc/systemd/system
-或/usr/lib/systemd/system下查找相关配置文件
+kubelet 组件是通过 systemctl 来管理的，因此可以在`/etc/systemd/system`
+或`/usr/lib/systemd/system`下查找相关配置文件
 
 ```shell
 找到kubelet对应服务的配置文件目录

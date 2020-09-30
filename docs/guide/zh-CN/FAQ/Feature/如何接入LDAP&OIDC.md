@@ -1,14 +1,14 @@
-### 
+# 如何接入 LDAP & OIDC
 
 
 
 接入LDAP、OIDC有两种方式；
 
-1. 在集群安装时，配置OIDC认证信息，关于OIDC配置信息，请参考[Configuring the API Server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server)。
+1. 在集群安装时，配置OIDC认证信息，关于OIDC配置信息，请参考 [Configuring the API Server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server)。
 
-![installer-oidc](../../../../images/installer-oidc.png)
+   ![installer-oidc](../../../../images/installer-oidc.png)
 
-2. 集群安装完成后，可以通过调用API的形式切换认证模式为OIDC或LDAP
+2. 集群安装完成后，可以通过调用API的形式切换认证模式为 OIDC 或 LDAP
 
    a. 修改auth配置文件，configmap: tke-auth-api，指定默认idp类型为ldap：
 
