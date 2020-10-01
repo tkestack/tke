@@ -147,8 +147,8 @@ func CheckStatefulSet(ctx context.Context, client kubernetes.Interface, namespac
 	return true, nil
 }
 
-// CheckDaemonset check daemonset current replicas is equal to desired and all pods are running
-func CheckDaemonset(ctx context.Context, client kubernetes.Interface, namespace string, name string) (bool, error) {
+// CheckDaemonsetReady check daemonset current ready replicas is equal to desired and all pods are running
+func CheckDaemonsetReady(ctx context.Context, client kubernetes.Interface, namespace string, name string) (bool, error) {
 	daemonSet, err := client.AppsV1().DaemonSets(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return false, err
@@ -158,6 +158,24 @@ func CheckDaemonset(ctx context.Context, client kubernetes.Interface, namespace 
 	}
 	if daemonSet.Status.DesiredNumberScheduled != daemonSet.Status.NumberReady {
 		return false, errors.New("daemonSet.Status.DesiredNumberScheduled != daemonSet.Status.NumberReady")
+	}
+
+	return true, nil
+}
+
+// CheckDaemonsetScheduled check daemonset current scheduled replicas is equal to desired and all pods are running
+func CheckDaemonsetScheduled(ctx context.Context, client kubernetes.Interface, namespace string,
+	name string) (bool,
+	error) {
+	daemonSet, err := client.AppsV1().DaemonSets(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return false, err
+	}
+	if daemonSet.Status.CurrentNumberScheduled == 0 {
+		return false, err
+	}
+	if daemonSet.Status.DesiredNumberScheduled != daemonSet.Status.CurrentNumberScheduled {
+		return false, errors.New("daemonSet.Status.DesiredNumberScheduled != daemonSet.Status.CurrentNumberScheduled")
 	}
 
 	return true, nil

@@ -42,6 +42,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	"gopkg.in/go-playground/validator.v9"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1433,32 +1434,70 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 }
 
 func (t *TKE) prepareImages(ctx context.Context) error {
-	pod := &corev1.Pod{
+	daemonset := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "tke-gateway",
 			Namespace: t.namespace,
 		},
-		Spec: corev1.PodSpec{
-			NodeSelector: map[string]string{
-				"node-role.kubernetes.io/master": "",
+		Spec: appsv1.DaemonSetSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "tke-gateway",
+				},
 			},
-			Containers: []corev1.Container{
-				{
-					Name:  "tke-gateway",
-					Image: images.Get().TKEGateway.FullName(),
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": "tke-gateway",
+					},
+				},
+				Spec: corev1.PodSpec{
+					NodeSelector: map[string]string{
+						"node-role.kubernetes.io/master": "",
+					},
+					Containers: []corev1.Container{
+						{
+							Name:  "tke-gateway",
+							Image: images.Get().TKEGateway.FullName(),
+						},
+					},
 				},
 			},
 		},
 	}
+
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	err := apiclient.PullImageWithPod(ctx, t.globalClient, pod)
+	err := apiclient.CreateOrUpdateDaemonSet(ctx, t.globalClient, daemonset)
 	if err != nil {
-		return fmt.Errorf("prepare image error: %w", err)
+		return err
 	}
 
-	return nil
+	defer apiclient.DeleteDaemonSetForeground(ctx, t.globalClient, daemonset.ObjectMeta.Namespace,
+		daemonset.ObjectMeta.Name)
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDaemonsetScheduled(ctx, t.globalClient, t.namespace, "tke-gateway")
+		if err != nil {
+			return false, nil
+		}
+
+		podList, err := t.globalClient.CoreV1().Pods(namespace).List(ctx,
+			metav1.ListOptions{LabelSelector: "app=tke-gateway"})
+		if err != nil {
+			return false, err
+		}
+
+		for _, pod := range podList.Items {
+			for _, one := range pod.Status.ContainerStatuses {
+				if one.ImageID == "" {
+					return false, nil
+				}
+			}
+		}
+		return ok, nil
+	})
 }
 
 func (t *TKE) stopLocalRegistry(ctx context.Context) error {
@@ -1502,7 +1541,7 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDaemonset(ctx, t.globalClient, t.namespace, "tke-gateway")
+		ok, err := apiclient.CheckDaemonsetReady(ctx, t.globalClient, t.namespace, "tke-gateway")
 		if err != nil {
 			return false, nil
 		}
