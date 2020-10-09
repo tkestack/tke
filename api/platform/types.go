@@ -125,6 +125,8 @@ type ClusterSpec struct {
 	// If true will use hostname as nodename, if false will use machine IP as nodename.
 	// +optional
 	HostnameAsNodename bool
+	// +optional
+	NetworkArgs map[string]string
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -164,6 +166,16 @@ type ClusterStatus struct {
 	DNSIP string
 	// +optional
 	RegistryIPs []string
+	// +optional
+	ClusterCIDR string
+	// +optional
+	SecondaryServiceCIDR string
+	// +optional
+	SecondaryClusterCIDR string
+	// +optional
+	NodeCIDRMaskSizeIPv4 int32
+	// +optional
+	NodeCIDRMaskSizeIPv6 int32
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.
@@ -340,6 +352,8 @@ type ClusterFeature struct {
 	AuthzWebhookAddr *AuthzWebhookAddr
 	// +optional
 	EnableMetricsServer bool
+	// +optional
+	IPv6DualStack bool
 }
 
 type HA struct {

@@ -41,6 +41,7 @@ import (
 	"k8s.io/client-go/rest"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	utilsnet "k8s.io/utils/net"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
@@ -287,15 +288,43 @@ func (p *Provider) EnsureClusterComplete(ctx context.Context, cluster *v1.Cluste
 func completeNetworking(cluster *v1.Cluster) error {
 	var (
 		serviceCIDR      string
+		clusterCIDR      string
 		nodeCIDRMaskSize int32
 		err              error
 	)
 
+	// dual stack case
+	if cluster.Spec.Features.IPv6DualStack {
+		clusterCidrs := strings.Split(cluster.Spec.ClusterCIDR, ",")
+		serviceCidrs := strings.Split(*cluster.Spec.ServiceCIDR, ",")
+		for _, cidr := range clusterCidrs {
+			if maskSize, isIPv6 := CalcNodeCidrSize(cidr); isIPv6 {
+				cluster.Status.NodeCIDRMaskSizeIPv6 = maskSize
+				cluster.Status.SecondaryClusterCIDR = cidr
+			} else {
+				cluster.Status.NodeCIDRMaskSizeIPv4 = maskSize
+				cluster.Status.ClusterCIDR = cidr
+			}
+		}
+		for _, cidr := range serviceCidrs {
+			if utilsnet.IsIPv6CIDRString(cidr) {
+				cluster.Status.SecondaryServiceCIDR = cidr
+			} else {
+				cluster.Status.ServiceCIDR = cidr
+			}
+		}
+		return nil
+	}
+	// single stack case incldue ipv4 and ipv6
 	if cluster.Spec.ServiceCIDR != nil {
 		serviceCIDR = *cluster.Spec.ServiceCIDR
-		nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
-		if err != nil {
-			return errors.Wrap(err, "GetNodeCIDRMaskSize error")
+		if utilsnet.IsIPv6CIDRString(serviceCIDR) {
+			nodeCIDRMaskSize, _ = CalcNodeCidrSize(serviceCIDR)
+		} else {
+			nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
+			if err != nil {
+				return errors.Wrap(err, "GetNodeCIDRMaskSize error")
+			}
 		}
 	} else {
 		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
@@ -303,7 +332,9 @@ func completeNetworking(cluster *v1.Cluster) error {
 			return errors.Wrap(err, "GetServiceCIDRAndNodeCIDRMaskSize error")
 		}
 	}
+	clusterCIDR = cluster.Spec.ClusterCIDR
 	cluster.Status.ServiceCIDR = serviceCIDR
+	cluster.Status.ClusterCIDR = clusterCIDR
 	cluster.Status.NodeCIDRMaskSize = nodeCIDRMaskSize
 
 	return nil
