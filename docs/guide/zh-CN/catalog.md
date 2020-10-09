@@ -1,7 +1,7 @@
 # TKEStack 文档目录
 
 * [产品部署指南](installation)
-  * [部署架构](installation/installation-architecture.md)
+  * [产品架构&能力说明](installation/installation-architecture.md)
   * [部署环境要求](installation/installation-requirement.md)
   * [安装步骤](installation/installation-procedures.md)
 
