@@ -62,6 +62,7 @@ import (
 	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
+	utilhttp "tkestack.io/tke/pkg/util/http"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -689,11 +690,9 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	extensionsAPIGroup := apiclient.ClusterVersionIsBefore19(kubeClient)
 
 	// get notify webhook address
-	var webhookAddr string
-	if prometheus.Spec.NotifyWebhook != "" {
-		webhookAddr = prometheus.Spec.NotifyWebhook
-	} else {
-		webhookAddr = c.notifyAPIAddress + "/webhook"
+	webhookAddr, err := c.getWebhookAddr(ctx, prometheus)
+	if err != nil {
+		return fmt.Errorf("get webhook address failed: %v", err)
 	}
 
 	log.Infof("Start to create alertmanager")
@@ -826,6 +825,34 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		prometheus.Status.SubVersion[nodeProblemDetectorWorkload] = components.NodeProblemDetector.Tag
 	}
 	return nil
+}
+
+func (c *Controller) getWebhookAddr(ctx context.Context, prometheus *v1.Prometheus) (webhookAddr string, err error) {
+	if prometheus.Spec.NotifyWebhook != "" {
+		webhookAddr = prometheus.Spec.NotifyWebhook
+	} else {
+		// use notify api address directly in global cluster
+		webhookAddr = c.notifyAPIAddress + "/webhook"
+		// use tke-gateway as proxy in non-global cluster
+		if prometheus.Spec.ClusterName != "global" {
+			globalCluster, err := c.platformClient.Clusters().Get(ctx, "global", metav1.GetOptions{})
+			if err != nil {
+				return "", fmt.Errorf("get global cluster failed: %v", err)
+			}
+			gatewayAddr := globalCluster.Spec.Machines[0].IP
+			if globalCluster.Spec.Features.HA != nil {
+				if globalCluster.Spec.Features.HA.TKEHA != nil {
+					gatewayAddr = globalCluster.Spec.Features.HA.TKEHA.VIP
+				}
+				if globalCluster.Spec.Features.HA.ThirdPartyHA != nil {
+					gatewayAddr = globalCluster.Spec.Features.HA.ThirdPartyHA.VIP
+				}
+			}
+			webhookAddr = utilhttp.MakeEndpoint("https", gatewayAddr,
+				443, "/webhook")
+		}
+	}
+	return webhookAddr, nil
 }
 
 var selectorForPrometheusOperator = metav1.LabelSelector{
