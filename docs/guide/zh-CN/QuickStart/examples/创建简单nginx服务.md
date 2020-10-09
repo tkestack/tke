@@ -1,16 +1,16 @@
-# 创建简单的nginx服务
+# 创建简单的Nginx服务
 
 ## 操作场景
 
-本文档旨在帮助大家了解如何快速创建一个容器集群内的 nginx 服务。
+本文档旨在帮助大家了解如何快速创建一个容器集群内的 Nginx 服务。
 
 ## 前提条件
 >- 已部署 [TKEStack 控制台](../../installation/installation-procedures.md)
->-  已创建集群。如没有另外创建集群，可以先使用global集群。如要尝试创建新集群，请参见 [创建集群](../../products/platform/cluster.md)
+>-  已创建集群。如没有另外创建集群，可以先使用 global 集群。如要尝试创建新集群，请参见 [创建集群](../../products/platform/cluster.md)
 
 ## 创建 Nginx 服务
 
-1. 登录TKEStack 控制台 
+1. 登录 TKEStack 控制台 
 
 2. 单击左侧导航栏中【集群管理】，进入“集群管理”页面，单击需要创建服务的集群 ID：
 

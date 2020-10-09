@@ -2,15 +2,15 @@
 
 
 
-接入LDAP、OIDC有两种方式；
+接入 LDAP、OIDC 有两种方式；
 
-1. 在集群安装时，配置OIDC认证信息，关于OIDC配置信息，请参考 [Configuring the API Server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server)。
+1. 在集群安装时，配置 OIDC 认证信息，关于 OIDC 配置信息，请参考 [Configuring the API Server](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server)。
 
    ![installer-oidc](../../../../images/installer-oidc.png)
 
-2. 集群安装完成后，可以通过调用API的形式切换认证模式为 OIDC 或 LDAP
+2. 集群安装完成后，可以通过调用 API 的形式切换认证模式为 OIDC 或  LDAP
 
-   a. 修改auth配置文件，configmap: tke-auth-api，指定默认idp类型为ldap：
+   a. 修改 auth 配置文件configmap: tke-auth-api，指定默认 idp 类型为ldap：
 
    ~~~json
    "auth": {
@@ -21,7 +21,7 @@
    }
    ~~~
 
-   b. 准备ldap配置文件，配置说明参见：[dex-ldap](https://github.com/dexidp/dex/blob/master/Documentation/connectors/ldap.md)
+   b. 准备 ldap 配置文件，配置说明参见：[dex-ldap](https://github.com/dexidp/dex/blob/master/Documentation/connectors/ldap.md)
 
    ```json
    {
@@ -49,7 +49,7 @@
    }
    ```
 
-   c. 调用API，新增ldap idp，
+   c. 调用 API，新增 ldap idp
 
    ```shell
    curl -XPOST https://{auth_address}/apis/auth.tkestack.io/v1/identityproviders   -H 'Authorization: Bearer {admin_token}'    -H 'Content-Type: application/json' 
@@ -75,7 +75,7 @@
 
    
 
-   d. 删除IDP
+   d. 删除 IDP
 
    ```
    curl -XDELETE https://{auth_address}/apis/auth.tkestack.io/v1/identityproviders/ldap-test -H 'Authorization: Bearer {admin_token}'
