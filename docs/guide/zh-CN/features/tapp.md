@@ -1,5 +1,5 @@
 # TAPP
-Kubernetes 现有应用类型（如：Deployment、StatefulSet等）无法满足很多非微服务应用的需求。比如：操作（升级、停止等）应用中的指定pod；应用支持多版本的pod。如果要将这些应用改造为适合于这些workload的应用，需要花费很大精力，这将使大多数用户望而却步。
+Kubernetes 现有应用类型（如：Deployment、StatefulSet等）无法满足很多非微服务应用的需求。比如：操作（升级、停止等）应用中的指定 Pod；应用支持多版本的 Pod。如果要将这些应用改造为适合于这些 Workload 的应用，需要花费很大精力，这将使大多数用户望而却步。
 
 为解决上述复杂应用管理场景，TKEStack 基于 Kubernetes CRD 开发了一种新的应用类型 TAPP，它是一种通用类型的 Workload，同时支持 service 和 batch 类型作业，满足绝大部分应用场景，它能让用户更好的将应用迁移到 Kubernetes 集群。
 
@@ -10,8 +10,8 @@ Kubernetes 现有应用类型（如：Deployment、StatefulSet等）无法满足
 
 功能点 | Deployment | StatefulSet | TAPP
 ---------------|-------|--------|--------
-Pod唯一性 | 无 | 每个Pod有唯一标识 | 每个Pod有唯一标识
-Pod存储独占 | 仅支持单容器 | 支持 | 支持
+Pod 唯一性 | 无 | 每个Pod有唯一标识 | 每个Pod有唯一标识
+Pod 存储独占 | 仅支持单容器 | 支持 | 支持
 存储随Pod迁移 | 不支持 | 支持 | 支持
 自动扩缩容 | 支持 | 不支持 | 支持
 批量升级 | 支持 | 不支持 | 支持
