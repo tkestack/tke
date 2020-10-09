@@ -25,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	utilsnet "k8s.io/utils/net"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/util/ipallocator"
 )
@@ -95,7 +96,7 @@ func GetIndexedIP(subnet string, index int) (net.IP, error) {
 
 // GetAPIServerCertSANs returns extra APIServer's certSANs need to pass kubeadm
 func GetAPIServerCertSANs(c *platformv1.Cluster) []string {
-	certSANs := sets.NewString("127.0.0.1", "localhost")
+	certSANs := sets.NewString("127.0.0.1", "localhost", "::1")
 	certSANs = certSANs.Insert(c.Spec.PublicAlternativeNames...)
 	if c.Spec.Features.HA != nil {
 		if c.Spec.Features.HA.TKEHA != nil {
@@ -110,4 +111,29 @@ func GetAPIServerCertSANs(c *platformv1.Cluster) []string {
 	}
 
 	return certSANs.List()
+}
+
+func CalcNodeCidrSize(podSubnet string) (int32, bool) {
+	maskSize := 24
+	isIPv6 := false
+	if ip, podCidr, err := net.ParseCIDR(podSubnet); err == nil {
+		if utilsnet.IsIPv6(ip) {
+			var nodeCidrSize int
+			isIPv6 = true
+			podNetSize, totalBits := podCidr.Mask.Size()
+			switch {
+			case podNetSize == 112:
+				// Special case, allows 256 nodes, 256 pods/node
+				nodeCidrSize = 120
+			case podNetSize < 112:
+				// Use multiple of 8 for node CIDR, with 512 to 64K nodes
+				nodeCidrSize = totalBits - ((totalBits-podNetSize-1)/8-1)*8
+			default:
+				// Not enough bits, will fail later, when validate
+				nodeCidrSize = podNetSize
+			}
+			maskSize = nodeCidrSize
+		}
+	}
+	return int32(maskSize), isIPv6
 }

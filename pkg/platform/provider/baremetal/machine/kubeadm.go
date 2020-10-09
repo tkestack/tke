@@ -39,6 +39,10 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 	kubeletExtraArgs := p.getKubeletExtraArgs(c)
 	// add label to get node by machine ip.
 	kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelMachineIP, machineIP)
+	// add node ip for single stack ipv6 clusters.
+	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
+		kubeletExtraArgs["node-ip"] = machineIP
+	}
 	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
 
 	if !c.Spec.HostnameAsNodename {

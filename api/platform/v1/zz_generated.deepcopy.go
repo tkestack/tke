@@ -901,6 +901,13 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 		(*in).DeepCopyInto(*out)
 	}
 	in.Upgrade.DeepCopyInto(&out.Upgrade)
+	if in.NetworkArgs != nil {
+		in, out := &in.NetworkArgs, &out.NetworkArgs
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
