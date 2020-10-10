@@ -115,8 +115,8 @@ func ValidateCIDRs(spec *platform.ClusterSpec, specPath *field.Path) field.Error
 	}
 
 	fldPath = specPath.Child("serviceCIDR")
-	cidr = *spec.ServiceCIDR
 	if spec.ServiceCIDR != nil {
+		cidr = *spec.ServiceCIDR
 		if len(cidr) == 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath, cidr, "ServiceCIDR is empty string"))
 		} else {
