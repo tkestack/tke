@@ -1062,6 +1062,42 @@ groups:
   - record: k8s_cluster_node_num
     expr: count(kube_node_info)
 
+  - record: k8s_cluster_node_not_ready_num
+    expr: count(k8s_node_status_ready) - count(k8s_node_status_ready == 1)
+
+  - record: k8s_cluster_node_not_ready_rate
+    expr: k8s_cluster_node_not_ready_num / count(k8s_node_status_ready) * 100
+
+  - record: k8s_cluster_pod_status_phase_failed_num
+    expr: count(kube_pod_status_phase{phase="Failed"} == 1)
+
+  - record: k8s_cluster_pod_status_phase_failed_rate
+    expr: count(kube_pod_status_phase{phase="Failed"} == 1) / count(kube_pod_status_phase{phase="Failed"}) * 100
+
+  - record: k8s_cluster_pod_status_phase_pending_num
+    expr: count(kube_pod_status_phase{phase="Pending"} == 1)
+
+  - record: k8s_cluster_pod_status_phase_pending_rate
+    expr: count(kube_pod_status_phase{phase="Pending"} == 1) / count(kube_pod_status_phase{phase="Pending"}) * 100
+
+  - record: k8s_cluster_pod_status_phase_running_num
+    expr: count(kube_pod_status_phase{phase="Running"} == 1)
+
+  - record: k8s_cluster_pod_status_phase_running_rate
+    expr: count(kube_pod_status_phase{phase="Running"} == 1) / count(kube_pod_status_phase{phase="Running"}) * 100
+
+  - record: k8s_cluster_pod_status_phase_succeeded_num
+    expr: count(kube_pod_status_phase{phase="Succeeded"} == 1)
+
+  - record: k8s_cluster_pod_status_phase_succeeded_rate
+    expr: count(kube_pod_status_phase{phase="Succeeded"} == 1) / count(kube_pod_status_phase{phase="Succeeded"}) * 100
+
+  - record: k8s_cluster_pod_status_phase_unknown_num
+    expr: count(kube_pod_status_phase{phase="Unknown"} == 1)
+
+  - record: k8s_cluster_pod_status_phase_unknown_rate
+    expr: count(kube_pod_status_phase{phase="Unknown"} == 1) / count(kube_pod_status_phase{phase="Unknown"}) * 100
+
   - record: k8s_cluster_pod_num
     expr: sum(k8s_node_pod_num)
 
