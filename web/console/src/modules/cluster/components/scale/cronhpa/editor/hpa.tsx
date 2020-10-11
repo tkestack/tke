@@ -91,7 +91,7 @@ const KindsMap = {
 const ResourceTypeMap = {
   Deployment: 'deployments',
   StatefulSet: 'statefulsets',
-  Tapp: 'tapps'
+  TApp: 'tapps'
 };
 
 /**
@@ -437,6 +437,8 @@ const Hpa = React.memo((props: {
                                 <Controller
                                   as={
                                     <InputNumber
+                                      step={1}
+                                      min={0}
                                       unit={t('个实例')}
                                       className={errors.strategy && errors.strategy[index] && errors.strategy[index].value ? 'is-error' : ''}
                                     />}

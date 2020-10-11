@@ -95,7 +95,7 @@ const KindsMap = {
 const ResourceTypeMap = {
   Deployment: 'deployments',
   StatefulSet: 'statefulsets',
-  Tapp: 'tapps'
+  TApp: 'tapps'
 };
 
 /**
