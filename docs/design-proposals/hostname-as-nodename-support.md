@@ -20,9 +20,9 @@
 
 ### Stage 1 (Done)
 
-1. 引入可选`Cluser.spec.hostnameAsNode`字段，在创建集群时供用户选择该集群是否以`hostname`作为`nodename`
+1. 引入可选`Cluser.spec.hostnameAsNodename`字段，在创建集群时供用户选择该集群是否以`hostname`作为`nodename`
 
-2. `Cluser.spec.hostnameAsNode`为`boolean`类型。当为`true`时`Node`将以`hostname`作为`nodename`，当为`false`时`Node`将以`machine IP`作为`nodename`
+2. `Cluser.spec.hostnameAsNodename`为`boolean`类型。当为`true`时`Node`将以`hostname`作为`nodename`，当为`false`时`Node`将以`machine IP`作为`nodename`
 
 3. 创建`Cluser`和添加`Node`时为每一个`Node`添加一个`lable` `platform.tkestack.io/machine-ip`，其值为`machine IP`
 
