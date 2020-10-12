@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -170,7 +171,7 @@ func (c *Cluster) RESTConfigForClientX509(config *rest.Config, clientCertData []
 func (c *Cluster) HostForBootstrap() (string, error) {
 	for _, one := range c.Status.Addresses {
 		if one.Type == platform.AddressReal {
-			return fmt.Sprintf("%s:%d", one.Host, one.Port), nil
+			return net.JoinHostPort(one.Host, fmt.Sprintf("%d", one.Port)), nil
 		}
 	}
 

@@ -117,8 +117,7 @@ func (c *TkeCert) CreateCertMap(ctx context.Context, client kubernetes.Interface
 
 func (c *TkeCert) WriteKubeConfig(host string, port int, namespace string) error {
 	fmt.Println("write kube config")
-	addr := fmt.Sprintf("%s:%d", host, port)
-
+	addr := net.JoinHostPort(host, fmt.Sprintf("%d", port))
 	fmt.Println("kubeconfig addr:", addr)
 
 	caCert, err := files.ReadFileWithDir(c.tmpDir, constants.CACrtFileBaseName)
