@@ -207,7 +207,7 @@ func RegisterRoute(m *mux.PathRecorderMux, cfg *gatewayconfig.GatewayConfigurati
 		}
 	}
 	// proxy /webhook to tke-notify-api for alert
-	if cfg.Components.Notify.Passthrough != nil {
+	if cfg.Components.Notify != nil && cfg.Components.Notify.Passthrough != nil {
 		handler, err := passthrough.NewHandler(cfg.Components.Notify.Address, cfg.Components.Notify.Passthrough, false)
 		if err != nil {
 			return err
