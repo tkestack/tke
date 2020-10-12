@@ -23,7 +23,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -43,6 +45,7 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	utilsnet "k8s.io/utils/net"
 	controllerutils "tkestack.io/tke/pkg/controller"
 )
 
@@ -58,8 +61,12 @@ const (
 	UpdateNodeTimeout = 2 * time.Minute
 	// LabelHostname specifies the lable in node.
 	LabelHostname = "kubernetes.io/hostname"
-	// LabelMachineIP is valid related platform.tkestack.io label.
-	LabelMachineIP PlatformLabel = "platform.tkestack.io/machine-ip"
+	// LabelMachineIPV4 specifies the lable in node.
+	LabelMachineIPV4 PlatformLabel = "platform.tkestack.io/machine-ip"
+	// LabelMachineIPV6Head specifies the lable in node.
+	LabelMachineIPV6Head PlatformLabel = "platform.tkestack.io/machine-ipv6-head"
+	// LabelMachineIPV6Tail specifies the lable in node.
+	LabelMachineIPV6Tail PlatformLabel = "platform.tkestack.io/machine-ipv6-tail"
 )
 
 // CreateOrUpdateConfigMap creates a ConfigMap if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
@@ -644,9 +651,10 @@ func GetNodeByMachineIP(ctx context.Context, client clientset.Interface, ip stri
 	if !apierrors.IsNotFound(err) {
 		return node, err
 	}
-
-	// try to get node by label selector
-	labelSelector := fields.OneTermEqualSelector(string(LabelMachineIP), ip).String()
+	labelSelector := fields.OneTermEqualSelector(string(LabelMachineIPV4), ip).String()
+	if utilsnet.IsIPv6String(ip) {
+		labelSelector = GetNodeIPV6Label(ip)
+	}
 	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return &corev1.Node{}, err
@@ -655,4 +663,16 @@ func GetNodeByMachineIP(ctx context.Context, client clientset.Interface, ip stri
 		return &corev1.Node{}, apierrors.NewNotFound(corev1.Resource("Node"), labelSelector)
 	}
 	return &nodes.Items[0], nil
+}
+
+// GetNodeIPV6Label split ip v6 address to head and tail ensure lable value
+// less than 63 character, since k8s lable doesn't support ":" so that replace
+// to "a", then return the consolidated label string
+// Todo: add more check and corner case handle here later
+func GetNodeIPV6Label(ip string) string {
+	midLength := len(ip) / 2
+	splitLength := int(math.Ceil(float64(midLength)))
+	lableipv6Head := fmt.Sprintf("%s=%s", LabelMachineIPV6Head, strings.Replace(ip[0:splitLength], ":", "a", -1))
+	lableipv6Tail := fmt.Sprintf("%s=%s", LabelMachineIPV6Tail, strings.Replace(ip[splitLength:], ":", "a", -1))
+	return lableipv6Head + "," + lableipv6Tail
 }

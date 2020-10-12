@@ -433,7 +433,7 @@ func ClusterHost(cluster *platform.Cluster) (string, error) {
 		return "", err
 	}
 
-	result := fmt.Sprintf("%s:%d", address.Host, address.Port)
+	result := net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port))
 	if address.Path != "" {
 		result = path.Join(result, address.Path)
 	}

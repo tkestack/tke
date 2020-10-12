@@ -447,13 +447,13 @@ func (c *Controller) ensureSyncClusterMachineNodeLabel(ctx context.Context, clus
 			}
 
 			labels := node.GetLabels()
-			_, ok := labels[string(apiclient.LabelMachineIP)]
+			_, ok := labels[string(apiclient.LabelMachineIPV4)]
 			if ok {
 				return nil
 			}
 
 			oldNode := node.DeepCopy()
-			labels[string(apiclient.LabelMachineIP)] = machine.IP
+			labels[string(apiclient.LabelMachineIPV4)] = machine.IP
 			node.SetLabels(labels)
 
 			patchBytes, err := strategicpatch.GetPatchBytes(oldNode, node)

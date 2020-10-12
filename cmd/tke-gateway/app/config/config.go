@@ -21,6 +21,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -123,7 +124,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		oidcAuthenticator *oidc.Authenticator
 	)
 
-	externalAddress := fmt.Sprintf("%s:%d", opts.Generic.ExternalHost, opts.Generic.ExternalPort)
+	externalAddress := net.JoinHostPort(opts.Generic.ExternalHost, fmt.Sprintf("%d", opts.Generic.ExternalPort))
 	oauthConfig, oidcHTTPClient, err = setupOIDC(opts.OIDC, externalAddress)
 	if err != nil {
 		return nil, err

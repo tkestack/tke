@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"time"
 
 	"tkestack.io/tke/pkg/util/http"
@@ -149,7 +150,7 @@ func (in *Cluster) Host() (string, error) {
 		return "", errors.New("can't find valid address")
 	}
 
-	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
+	return net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port)), nil
 }
 
 func (in *Cluster) AuthzWebhookEnabled() bool {

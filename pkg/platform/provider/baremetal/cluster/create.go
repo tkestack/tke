@@ -287,16 +287,16 @@ func (p *Provider) EnsureClusterComplete(ctx context.Context, cluster *v1.Cluste
 
 func completeNetworking(cluster *v1.Cluster) error {
 	var (
+		clusterCIDR      = cluster.Spec.ClusterCIDR
 		serviceCIDR      string
-		clusterCIDR      string
 		nodeCIDRMaskSize int32
 		err              error
 	)
 
 	// dual stack case
 	if cluster.Spec.Features.IPv6DualStack {
-		clusterCidrs := strings.Split(cluster.Spec.ClusterCIDR, ",")
-		serviceCidrs := strings.Split(*cluster.Spec.ServiceCIDR, ",")
+		clusterCidrs := strings.Split(serviceCIDR, ",")
+		serviceCidrs := strings.Split(clusterCIDR, ",")
 		for _, cidr := range clusterCidrs {
 			if maskSize, isIPv6 := CalcNodeCidrSize(cidr); isIPv6 {
 				cluster.Status.NodeCIDRMaskSizeIPv6 = maskSize
@@ -318,21 +318,21 @@ func completeNetworking(cluster *v1.Cluster) error {
 	// single stack case incldue ipv4 and ipv6
 	if cluster.Spec.ServiceCIDR != nil {
 		serviceCIDR = *cluster.Spec.ServiceCIDR
-		if utilsnet.IsIPv6CIDRString(serviceCIDR) {
-			nodeCIDRMaskSize, _ = CalcNodeCidrSize(serviceCIDR)
+		if utilsnet.IsIPv6CIDRString(clusterCIDR) {
+			nodeCIDRMaskSize, _ = CalcNodeCidrSize(clusterCIDR)
 		} else {
-			nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
+			nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(clusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
 			if err != nil {
 				return errors.Wrap(err, "GetNodeCIDRMaskSize error")
 			}
 		}
 	} else {
-		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
+		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(clusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
 		if err != nil {
 			return errors.Wrap(err, "GetServiceCIDRAndNodeCIDRMaskSize error")
 		}
 	}
-	clusterCIDR = cluster.Spec.ClusterCIDR
+
 	cluster.Status.ServiceCIDR = serviceCIDR
 	cluster.Status.ClusterCIDR = clusterCIDR
 	cluster.Status.NodeCIDRMaskSize = nodeCIDRMaskSize

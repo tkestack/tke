@@ -20,10 +20,10 @@ package cluster
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/imdario/mergo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	utilsnet "k8s.io/utils/net"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -56,8 +56,11 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 
 	nodeRegistration := kubeadmv1beta2.NodeRegistrationOptions{}
 	kubeletExtraArgs := p.getKubeletExtraArgs(c)
-	// add label to get node by machine ip.
-	kubeletExtraArgs["node-labels"] = fields.OneTermEqualSelector(string(apiclient.LabelMachineIP), machineIP).String()
+	if !utilsnet.IsIPv6String(c.Spec.Machines[0].IP) {
+		kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelMachineIPV4, machineIP)
+	} else {
+		kubeletExtraArgs["node-labels"] = apiclient.GetNodeIPV6Label(machineIP)
+	}
 	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
 
 	if !c.Spec.HostnameAsNodename {
@@ -85,16 +88,21 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 
 	nodeRegistration := kubeadmv1beta2.NodeRegistrationOptions{}
 	kubeletExtraArgs := p.getKubeletExtraArgs(c)
-	// add label to get node by machine ip.
-	kubeletExtraArgs["node-labels"] = fields.OneTermEqualSelector(string(apiclient.LabelMachineIP), c.Spec.Machines[0].IP).String()
+	machineIP := c.Spec.Machines[0].IP
+	if !utilsnet.IsIPv6String(c.Spec.Machines[0].IP) {
+		kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelMachineIPV4, machineIP)
+	} else {
+		kubeletExtraArgs["node-labels"] = apiclient.GetNodeIPV6Label(machineIP)
+	}
+
 	// add node ip for single stack ipv6 clusters.
 	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
-		kubeletExtraArgs["node-ip"] = c.Spec.Machines[0].IP
+		kubeletExtraArgs["node-ip"] = machineIP
 	}
 	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
 
 	if !c.Spec.HostnameAsNodename {
-		nodeRegistration.Name = c.Spec.Machines[0].IP
+		nodeRegistration.Name = machineIP
 	}
 
 	return &kubeadmv1beta2.InitConfiguration{
@@ -107,17 +115,17 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 		},
 		NodeRegistration: nodeRegistration,
 		LocalAPIEndpoint: kubeadmv1beta2.APIEndpoint{
-			AdvertiseAddress: c.Spec.Machines[0].IP,
+			AdvertiseAddress: machineIP,
 		},
 		CertificateKey: *c.ClusterCredential.CertificateKey,
 	}
 }
 
 func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.ClusterConfiguration {
-	controlPlaneEndpoint := fmt.Sprintf("%s:6443", c.Spec.Machines[0].IP)
+	controlPlaneEndpoint := net.JoinHostPort(c.Spec.Machines[0].IP, "6443")
 	addr := c.Address(platformv1.AddressAdvertise)
 	if addr != nil {
-		controlPlaneEndpoint = fmt.Sprintf("%s:%d", addr.Host, addr.Port)
+		controlPlaneEndpoint = net.JoinHostPort(addr.Host, fmt.Sprintf("%d", addr.Port))
 	}
 
 	kubernetesVolume := kubeadmv1beta2.HostPathMount{

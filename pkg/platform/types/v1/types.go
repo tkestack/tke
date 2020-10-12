@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net"
 	"path"
 	"time"
 
@@ -188,7 +189,7 @@ func (c *Cluster) Host() (string, error) {
 	if address == nil {
 		return "", errors.New("can't find valid address")
 	}
-	result := fmt.Sprintf("%s:%d", address.Host, address.Port)
+	result := net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port))
 	if address.Path != "" {
 		result = path.Join(result, path.Clean(address.Path))
 		result = fmt.Sprintf("https://%s", result)
@@ -200,7 +201,7 @@ func (c *Cluster) Host() (string, error) {
 func (c *Cluster) HostForBootstrap() (string, error) {
 	for _, one := range c.Status.Addresses {
 		if one.Type == platformv1.AddressReal {
-			return fmt.Sprintf("%s:%d", one.Host, one.Port), nil
+			return net.JoinHostPort(one.Host, fmt.Sprintf("%d", one.Port)), nil
 		}
 	}
 

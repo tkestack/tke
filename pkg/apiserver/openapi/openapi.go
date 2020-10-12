@@ -20,13 +20,15 @@ package openapi
 
 import (
 	"fmt"
+	"net"
+	"os"
+	"strings"
+
 	"github.com/go-openapi/spec"
 	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
-	"os"
-	"strings"
 	"tkestack.io/tke/api/platform"
 	appversion "tkestack.io/tke/pkg/app/version"
 )
@@ -59,7 +61,7 @@ func postProcessOpenAPISpec(host string, port int) func(*spec.Swagger) (*spec.Sw
 		if debug != "" && strings.ToLower(debug) == "true" {
 			swagger.Host = fmt.Sprintf("localhost:%d", port)
 		} else {
-			swagger.Host = fmt.Sprintf("%s:%d", host, port)
+			swagger.Host = net.JoinHostPort(host, fmt.Sprintf("%d", port))
 		}
 		for _, path := range swagger.Paths.Paths {
 			if path.Get != nil {
