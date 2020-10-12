@@ -151,7 +151,7 @@ func RenewCerts(s ssh.Interface) error {
 		return fmt.Errorf("fixKubeadmBug1753(https://github.com/kubernetes/kubeadm/issues/1753) error: %w", err)
 	}
 
-	cmd := fmt.Sprintf("kubeadm alpha certs renew all --config=%s", constants.KubeadmConfigFileName)
+	cmd := "kubeadm alpha certs renew all"
 	_, err = s.CombinedOutput(cmd)
 	if err != nil {
 		return err
