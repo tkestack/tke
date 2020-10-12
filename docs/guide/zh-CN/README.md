@@ -59,7 +59,7 @@
 
    ```shell
    ＃ 根据安装节点的CPU架构选择安装软件包[amd64，arm64]
-   arch=amd64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
+   arch=amd64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
    ```
 
 3. **配置控制台和 Global 集群：** 浏览器访问：`http://【INSTALLER-NODE-IP】:8080/index.html `，Web GUI将指导您初始化和安装TKEStack的 **Global 集群 和 控制台**，您可以参考[安装步骤](installation/installation-procedures.md)。

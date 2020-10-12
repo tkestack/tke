@@ -112,3 +112,4 @@
   * [1.2](../../../CHANGELOG/CHANGELOG-1.2.md)
   * [1.3](../../../CHANGELOG/CHANGELOG-1.3.md)
     * [1.3.1](../../../CHANGELOG/CHANGELOG-1.3.1.md)
+  * [1.4](../../../CHANGELOG/CHANGELOG-1.4.md)
