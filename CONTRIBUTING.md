@@ -22,7 +22,7 @@ TKEStack members or administrators will participate in discussions, respond to m
 
 # How to Pull Request (PR)
 
-## Create RP
+## Create PR
 
 Depending on the type of PR, you should select the appropriate branch. Refer to [Branch and Version Policy](#Branch and Version Policy) for the branch instructions.
 
