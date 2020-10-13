@@ -3,9 +3,10 @@
 
 ## 使用方法
 
-- 通过 TKEStack 控制台使用：TKEStack 控制台提供 Namespaces 的增删改查功能。
-  - 【业务管理】平台下不支持对命名空间的直接操作，需在【平台管理】下[【业务管理】](../../../products/platform/business.md#创建业务下的命名空间)中指定业务通过“创建业务下的命名空间”来实现。
-- 通过 Kubectl 使用：更多详情可查看 [Kubernetes 官网文档](https://kubernetes.io/docs/tasks/administer-cluster/namespaces/)。
+- 通过 TKEStack 控制台使用：TKEStack 控制台提供 Namespaces 的增删改查功能
+
+  > 【业务管理】平台下不支持对命名空间的直接操作，需在【平台管理】下[【业务管理】](../../../products/platform/business.md#创建业务下的命名空间)中指定业务通过“创建业务下的命名空间”来实现。
+- 通过 Kubectl 使用：更多详情可查看 [Kubernetes 官网文档](https://kubernetes.io/docs/tasks/administer-cluster/namespaces/)
 
 ## 相关知识
 
@@ -17,7 +18,9 @@
 - Kubernetes 对象的计数，例如 Deployment 个数配额
 
 不同的 Kubernetes 版本，ResourceQuota 支持的配额设置略有差异，更多详情可查看 [Kubernetes ResourceQuota 官方文档](https://kubernetes.io/docs/concepts/policy/resource-quotas/)。
+
 ResourceQuota 的示例如下所示：
+
 ```yaml
 apiVersion: v1
 kind: ResourceQuota
@@ -34,3 +37,9 @@ spec:
     cpu: "1000" ## 该 Namespaces 下最多使用1000个 CPU 的资源
     memory: 200Gi ## 该 Namespaces 下最多使用200Gi的内存
 ```
+
+### 通过 NetWorkPolicy 设置 Namespaces 网络的访问控制
+
+Network Policy 是 k8s 提供的一种资源，用于定义基于 Pod 的网络隔离策略。不仅可以限制 Namespaces， 还可以控制 Pod 与 Pod 之间的网络访问控制，即控制一组 Pod 是否可以与其它组 Pod，以及其它 network endpoints 进行通信。
+
+在集群内部署 NetworkPolicy Controller，并通过 NetworkPolicy 实现 Namespaces 之间的网络控制的操作详情可查看 [使用 Network Policy 进行网络访问控制](https://cloud.tencent.com/document/product/457/19793)。

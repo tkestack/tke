@@ -19,11 +19,11 @@ DaemonSet 主要用于部署常驻集群内的后台程序，例如节点的日�
    - **标签**：给工作负载添加标签
    - **命名空间**：根据实际需求进行选择
    - **类型**：选择【DaemonSet（在每个主机上运行Pod）】
-   - **数据卷（选填）**：为容器提供存储，目前支持临时路径、主机路径、云硬盘数据卷、文件存储 NFS、配置文件、PVC，还需挂载到容器的指定路径中。如需指定容器挂载至指定路径时，单击【添加数据卷】
+   - **数据卷（选填）**：即 [Volume](https://kubernetes.io/zh/docs/concepts/storage/volumes/) ，为容器提供存储，其生命周期与 Pod 保持一致。如需指定容器挂载至指定路径时，单击【添加数据卷】
       > **数据卷的名称**：给数据卷一个名称，以方便容器使用数据卷
       * **临时目录**：主机上的一个临时目录，生命周期和 Pod 一致
       * **主机路径**：主机上的真实路径，可以重复使用，不会随 Pod 一起销毁
-      * **NFS盘**：挂载外部 NFS 到 Pod，用户需要指定相应 NFS 地址，格式：127.0.0.1:/data。请确保节点当中已经安装 nfs-utils 包，才可正常使用 NFS 数据盘
+      * **NFS 盘**：挂载外部 NFS 到 Pod，用户需要指定相应 NFS 地址，格式：127.0.0.1:/data。请确保节点当中已经安装 [NFS-Utils](http://www.linuxfromscratch.org/blfs/view/svn/basicnet/nfs-utils.html) 包，才可正常使用 NFS 数据盘
       * **ConfigMap**：用户选择在业务 Namespace 下的 [ConfigMap](../products/business-control-pannel/application/configurations/ConfigMap.md)
       * **Secret**：用户选择在业务 Namespace 下的 [Secret](../products/business-control-pannel/application/configurations/secret.md)
       * **PVC**：用户选择在业务 Namespace 下的 [PVC](../products/business-control-pannel/application/storage/persistent-volume-claim.md)
@@ -34,10 +34,10 @@ DaemonSet 主要用于部署常驻集群内的后台程序，例如节点的日�
       * **镜像**：根据实际需求进行选择，这里以`nginx`为例
       * **镜像版本（Tag）**：根据实际需求进行填写，不填默认为`latest`
       * **CPU/内存限制**：可根据 [Kubernetes 资源限制](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/) 进行设置 CPU 和内存的限制范围，提高业务的健壮性（**建议使用默认值**）
-         * Request 用于预分配资源,当集群中的节点没有request所要求的资源数量时,容器会创建失败。
-         * Limit 用于设置容器使用资源的最大上限,避免异常情况下节点资源消耗过多。
+         * **Request**：用于预分配资源,当集群中的节点没有request所要求的资源数量时，容器会创建失败
+         * **Limit**：用于设置容器使用资源的最大上限,避免异常情况下节点资源消耗过多
       * **GPU 限制**：如容器内需要使用 GPU，此处填 GPU 需求
-         
+        
          > 前提：节点有 GPU，并安装了 GPU 组件
       * **环境变量**：用于设置容器内的变量，变量名只能包含大小写字母、数字及下划线，并且不能以数字开头
          * **自定义**：自己设定变量键值对
@@ -57,8 +57,8 @@ DaemonSet 主要用于部署常驻集群内的后台程序，例如节点的日�
             * **IfNotPresent**：默认使用本地镜像，若本地无该镜像则远程拉取该镜像
             * **Never**：只使用本地镜像，若本地没有该镜像将报异常
          * **容器健康检查**
-            * **存活检查**：检查容器是否正常，不正常则重启实例。对于多活无状态的应用采用了存活探针 TCP 探测方式。存活探针组件包括 Gate、Keystone、Webshell、Nginx、Memcache 当连续探测容器端口不通，探针失败时，杀掉容器并重启。
-            * **就绪检查**：检查容器是否就绪，不就绪则停止转发流量到当前实例。对于一主多备的服务采用就绪探针 TCP 探测方式，当探针失败时，将实例从 Service Endpoints 中移除。业务各个组件内部通过Kube-DNS访问CVM-Agent，就绪探针可以保证处于备机状态的 CVM 实例不存在于 Service Endpoints 中，并且将流量转发至主 CVM-Agent 上，从而保证服务的高可用。
+            * **存活检查**：检查容器是否正常，不正常则重启实例。对于多活无状态的应用采用了存活探针 TCP 探测方式。存活探针组件包括 Gate、Keystone、Webshell、Nginx、Memcache 当连续探测容器端口不通，探针失败时，杀掉容器并重启
+            * **就绪检查**：检查容器是否就绪，不就绪则停止转发流量到当前实例。对于一主多备的服务采用就绪探针 TCP 探测方式，当探针失败时，将实例从 Service Endpoints 中移除。业务各个组件内部通过Kube-DNS访问CVM-Agent，就绪探针可以保证处于备机状态的 CVM 实例不存在于 Service Endpoints 中，并且将流量转发至主 CVM-Agent 上，从而保证服务的高可用
          * **特权级容器**：容器开启特权级，将拥有宿主机的 root 权限
          * **权限集-增加**：增加权限集
          * **权限集-删除**：减少权限集

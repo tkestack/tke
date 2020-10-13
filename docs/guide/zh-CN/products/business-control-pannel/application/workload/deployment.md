@@ -5,7 +5,7 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
 ## Deployment 控制台操作指引
 
 ### 创建 Deployment
-1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】。
+1. 登录TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】
 2. 选择需要创建Deployment的【业务】下相应的【命名空间】，展开【工作负载】下拉项，进入【Deployment】管理页面，如下图所示：
    ![](../../../../../../images/deployment.png)
 3. 单击【新建】，进入 “新建Workload” 页面，根据实际需求，设置 Deployment 参数。关键参数信息如下，其中必填项为**工作负载名**、**实例内容器的名称和镜像**：
@@ -15,25 +15,25 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
    - **命名空间**：根据实际需求进行选择
    - **类型**：选择【Deployment（可扩展的部署Pod）】
    
-   - **数据卷（选填）**：为容器提供存储，目前支持临时路径、主机路径、云硬盘数据卷、文件存储 NFS、配置文件、PVC，还需挂载到容器的指定路径中。如需指定容器挂载至指定路径时，单击【添加数据卷】
+   - **数据卷（选填）**：即 [Volume](https://kubernetes.io/zh/docs/concepts/storage/volumes/) ，为容器提供存储，其生命周期与 Pod 保持一致。如需指定容器挂载至指定路径时，单击【添加数据卷】
       > **数据卷的名称**：给数据卷一个名称，以方便容器使用数据卷
       * **临时目录**：主机上的一个临时目录，生命周期和 Pod 一致
       * **主机路径**：主机上的真实路径，可以重复使用，不会随 Pod 一起销毁
-      * **NFS盘**：挂载外部 NFS 到 Pod，用户需要指定相应 NFS 地址，格式：127.0.0.1:/data。请确保节点当中已经安装 nfs-utils 包，才可正常使用 NFS 数据盘
+      * **NFS 盘**：挂载外部 NFS 到 Pod，用户需要指定相应 NFS 地址，格式：127.0.0.1:/data。请确保节点当中已经安装 [NFS-Utils](http://www.linuxfromscratch.org/blfs/view/svn/basicnet/nfs-utils.html) 包，才可正常使用 NFS 数据盘
       * **ConfigMap**：用户选择在业务 Namespace 下的 [ConfigMap](../products/business-control-pannel/application/configurations/ConfigMap.md)
       * **Secret**：用户选择在业务 Namespace 下的 [Secret](../products/business-control-pannel/application/configurations/secret.md)
       * **PVC**：用户选择在业务 Namespace 下的 [PVC](../products/business-control-pannel/application/storage/persistent-volume-claim.md)
-   
+      
    - **实例内容器**：根据实际需求，为 Deployment 的 Pod 设置一个或多个不同的容器，如下图所示：
       ![](../../../../../../images/createDeployment-3.png)
       * **名称**：自定义，这里以`my-container`为例
       * **镜像**：根据实际需求进行选择，这里以`nginx`为例
       * **镜像版本（Tag）**：根据实际需求进行填写，不填默认为`latest`
       * **CPU/内存限制**：可根据 [Kubernetes 资源限制](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/) 进行设置 CPU 和内存的限制范围，提高业务的健壮性（**建议使用默认值**）
-         * Request 用于预分配资源,当集群中的节点没有request所要求的资源数量时,容器会创建失败。
-         * Limit 用于设置容器使用资源的最大上限,避免异常情况下节点资源消耗过多。
+         * **Request**：用于预分配资源,当集群中的节点没有request所要求的资源数量时，容器会创建失败
+         * **Limit**：用于设置容器使用资源的最大上限,避免异常情况下节点资源消耗过多
       * **GPU 限制**：如容器内需要使用 GPU，此处填 GPU 需求
-         
+        
          > 前提：节点有 GPU，并安装了 GPU 组件
       * **环境变量**：用于设置容器内的变量，变量名只能包含大小写字母、数字及下划线，并且不能以数字开头
          * **自定义**：自己设定变量键值对
@@ -53,16 +53,17 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
             * **IfNotPresent**：默认使用本地镜像，若本地无该镜像则远程拉取该镜像
             * **Never**：只使用本地镜像，若本地没有该镜像将报异常
          * **容器健康检查**
-            * **存活检查**：检查容器是否正常，不正常则重启实例。对于多活无状态的应用采用了存活探针 TCP 探测方式。存活探针组件包括 Gate、Keystone、Webshell、Nginx、Memcache 当连续探测容器端口不通，探针失败时，杀掉容器并重启。
-            * **就绪检查**：检查容器是否就绪，不就绪则停止转发流量到当前实例。对于一主多备的服务采用就绪探针 TCP 探测方式，当探针失败时，将实例从 Service Endpoints 中移除。业务各个组件内部通过 Kube-DNS 访问 CVM-Agent，就绪探针可以保证处于备机状态的 CVM 实例不存在于 Service Endpoints 中，并且将流量转发至主 CVM-Agent 上，从而保证服务的高可用。
+            * **存活检查**：检查容器是否正常，不正常则重启实例。对于多活无状态的应用采用了存活探针 TCP 探测方式。存活探针组件包括 Gate、Keystone、Webshell、Nginx、Memcache 当连续探测容器端口不通，探针失败时，杀掉容器并重启
+            * **就绪检查**：检查容器是否就绪，不就绪则停止转发流量到当前实例。对于一主多备的服务采用就绪探针 TCP 探测方式，当探针失败时，将实例从 Service Endpoints 中移除。业务各个组件内部通过 Kube-DNS 访问 CVM-Agent，就绪探针可以保证处于备机状态的 CVM 实例不存在于 Service Endpoints 中，并且将流量转发至主 CVM-Agent 上，从而保证服务的高可用
          * **特权级容器**：容器开启特权级，将拥有宿主机的 root 权限
          * **权限集-增加**：增加权限集
          * **权限集-删除**：减少权限集
    * **实例数量**：根据实际需求选择调节方式，设置实例数量：
     ![](../../../../../../images/createDeployment-4.png)
       * **手动调节**：直接设定实例个数
-      * **自动调节**：依赖 [HPA](https://kubernetes.io/zh/docs/tasks/run-application/horizontal-pod-autoscale/)，根据设定的触发条件自动调节实例个数，目前支持根据CPU、内存利用率等调节实例个数
-      * **定时调节**：根据 [Crontab](https://baike.baidu.com/item/crontab) 语法周期性设置实例个数。前提：在[【扩展组件】](../../../../products/platform/extender.md)里安装CronHPA 
+      * **自动调节**：将新建与负载同名的 HPA 资源对象，根据设定的触发条件自动调节实例个数，目前支持根据 CPU、内存利用率等调节实例个数，更多请参考 [HPA](../autoscale/HPA.md) 
+      * **定时调节**：将新建与负载同名的 CronHPA 资源对象，根据 [Crontab](https://baike.baidu.com/item/crontab) 语法周期性设置实例个数。前提：在[【扩展组件】](../../../../products/platform/extender.md)里安装 CronHPA，更多请参考 [CronHPA](../../../../../../../hack/addon/readme/CronHPA.md)
+    
    * **显示高级设置**
    * **imagePullSecrets**：镜像拉取密钥，用于拉取用户的私有镜像，使用私有镜像首先需要新建 Secret。如果是公有镜像，即支持匿名拉取，则可以忽略此步骤
    - **节点调度策略**：根据配置的调度规则，将 Pod 调度到预期的节点
@@ -79,7 +80,7 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
       * **NAT（端口映射）**：Kubernetes 原生 NAT 网络方案，实例的端口映射到物理机的某个端口，但 IP 还是虚拟 IP ，可通过宿主机 IP 和映射端口访问，即 Pod 的 Container 中指定了 [hostPorts](https://kubernetes.io/zh/docs/concepts/policy/pod-security-policy/#host-namespaces)
       * **Host（主机网络）**：Kubernetes 原生 Host 网络方案，可以直接采用宿主机 IP 和端口，即 Pod 指定了 [hostNetwork=true](https://kubernetes.io/zh/docs/concepts/policy/pod-security-policy/#host-namespaces)
    
-   * **Service**：勾选【启用】按钮，配置负载端口访问，将会创建于负载同名的 Service（按需使用）
+   * **Service**：勾选【启用】按钮，配置负载端口访问，将会创建于负载同名的 Service，更多请参考 [Service](../services/service.md)（按需使用），更多请参考 [Service](../services/service.md)（按需使用）
       ![](../../../../../../images/createDeployment-5.png) 
       > 注意：如果不勾选【启用】则不会创建 Service
       - **服务访问方式**：选择是【仅在集群内部访问】该负载还是集群外部通过【主机端口访问】该负载
@@ -92,7 +93,7 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
       - **Session Affinity:** 点击【显示高级设置】出现，表示会话保持。Service 有负载均衡的作用，有两种模式：RoundRobin 和 SessionAffinity（默认 None，按需使用）
          - **ClientIP**：基于客户端 IP 地址进行会话保持的模式， 即第1次将某个客户端发起的请求转发到后端的某个 Pod 上，之后从相同的客户端发起的请求都将被转发到后端相同的 Pod 上。即 Service 启用了 Session Affinity 负载分发策略
          - **Node**：此时 Service 使用默认的 RoundRobin（轮询模式）进行负载分发，即轮询将请求转发到后端的各个 Pod 上
-4. 单击【创建Workload】，完成创建，如下图所示。当“运行/期望Pod数量”相等时，即表示 Deployment 下的所有 Pod 已创建完成。
+4. 单击【创建Workload】，完成创建，如下图所示。当“运行/期望Pod数量”相等时，即表示 Deployment 下的所有 Pod 已创建完成
     ![](../../../../../../images/workLoad.png)
 
 ### 更新 Deployment
@@ -120,7 +121,7 @@ Deployment 声明了 Pod 的模板和控制 Pod 的运行策略，适用于部�
    ![](../../../../../../images/updateNum.png)
 4. 根据实际需求调整 Pod 数量，单击【更新实例数目】即可完成调整
 
-### 查看Deployment监控数据
+### 查看 Deployment 监控数据
 1. 登录 TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】
 2. 选择要变更的业务下相应的【命名空间】，点击进入 【Deployment】 管理页面
 3. 单击【监控】按钮，在弹出的工作负载监控页面选择工作负载查看监控信息。如下图所示：

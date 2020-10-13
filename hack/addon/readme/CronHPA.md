@@ -2,7 +2,20 @@
 
 ## CronHPA 介绍
 
-Cron Horizontal Pod Autoscaler(CronHPA) 可让用户利用 [crontab](https://en.wikipedia.org/wiki/Cron) 实现对负载（Deployment、StatefulSet、TApp 这些支持扩缩容的资源对象）**定期自动扩缩容**。
+Cron Horizontal Pod Autoscaler(CronHPA) 可让用户利用 [Crontab](https://en.wikipedia.org/wiki/Cron) 实现对负载（Deployment、StatefulSet、TApp 这些支持扩缩容的资源对象）**定期自动扩缩容**。
+
+[Crontab](https://en.wikipedia.org/wiki/Cron) 格式说明如下：
+
+```
+# 文件格式说明
+#  ——分钟（0 - 59）
+# |  ——小时（0 - 23）
+# | |  ——日（1 - 31）
+# | | |  ——月（1 - 12）
+# | | | |  ——星期（0 - 6）
+# | | | | |
+# * * * * *
+```
 
 CronHPA 定义了一个新的 CRD，cron-hpa-controller 是该 CRD 对应的 controller/operator，它解析 CRD 中的配置，根据系统时间信息对相应的工作负载进行扩缩容操作。
 

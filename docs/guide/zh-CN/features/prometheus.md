@@ -1,10 +1,14 @@
 # Prometheus
 
-免去部署和配置 prometheus 的复杂操作，TKEStack 提供高可用性和可扩展性的细粒度监控系统，实时监控 CPU，GPU，内存，显存，网络带宽，磁盘io等多种指标并自动绘制趋势曲线，帮助运维人员全维度的掌握平台运行状态。
+良好的监控环境为 TKEStack 高可靠性、高可用性和高性能提供重要保证。您可以方便为不同资源收集不同维度的监控数据，能方便掌握资源的使用状况，轻松定位故障。
+
+TKEStack 使用开源的 Prometheus 作为监控组件，免去您部署和配置 Prometheus 的复杂操作，TKEStack 提供高可用性和可扩展性的细粒度监控系统，实时监控 CPU，GPU，内存，显存，网络带宽，磁盘 IO 等多种指标并自动绘制趋势曲线，帮助运维人员全维度的掌握平台运行状态。
+
+> 指标具体含义可参考：[监控&告警指标含义](../FAQ/Platform/alert&monitor-metrics.md)
 
 ![img](../../../images/1588923649_45_w2536_h1362.png)
 
-TKEStack通过prometheus组件监控集群状态，prometheus 组件通过 addon 扩展组件自动完成安装和配置，使用 influxdb，elasticsearch 等存储监控数据。监控数据和指标融入到平台界面中以风格统一图表的风格展示，支持以不同时间，粒度等条件，查询集群，节点，业务，workload以及容器等多个层级的监控数据，全维度的掌握平台运行状态。
+TKEStack 通过 Prometheus 组件监控集群状态，Prometheus 组件通过 addon 扩展组件自动完成安装和配置，使用 InfluxDB，ElasticSearch 等存储监控数据。监控数据和指标融入到平台界面中以风格统一图表的风格展示，支持以不同时间，粒度等条件，查询集群，节点，业务，Workload 以及容器等多个层级的监控数据，全维度的掌握平台运行状态。
 
 同时针对在可用性和可扩展性方面，支持使用 thanos 架构提供可靠的细粒度监控和警报服务，构建具有高可用性和可扩展性的细粒度监控能力。
 
@@ -32,8 +36,9 @@ Prometheus 为 TKEStack 扩展组件，需要在集群的 [【基本信息】](.
    3. 上下滑动曲线图可以获得更多监控指标
    
    4. 点击曲线图，会弹出具体时间点的具体监控数据
-   
       ![image-20200831164131879](../../../images/image-20200831164131879.png)
+      
+      > 指标具体含义可参考：[监控&告警指标含义](../FAQ/Platform/alert&monitor-metrics.md)
    
 
 ## 节点监控
@@ -43,10 +48,11 @@ Prometheus 为 TKEStack 扩展组件，需要在集群的 [【基本信息】](.
 2. 切换至【平台管理】控制台，选择【集群管理】
 
 3. 点击【集群 ID】 -> 【节点管理】->【节点】->【监控】图标，如下图所示： 
-
    ![image-20200831164253813](../../../images/image-20200831164253813.png)
 
 4. 具体查看方式和[集群监控](#集群监控)完全一致
+   
+   > 指标具体含义可参考：[监控&告警指标含义](../FAQ/Platform/alert&monitor-metrics.md)
 5. 此处还可以查看节点下的 Pod 监控
    1. 如下图所示，对比维度可选择 节点 或 Pod
    
@@ -68,7 +74,8 @@ Prometheus 为 TKEStack 扩展组件，需要在集群的 [【基本信息】](.
    >
    > 1. 如下图所示，对比维度可选择 Pod 或 Container
    > 2. 选择 Container ，需要在其右侧选择 Container 所属 Pod
-​	![image-20200831164957831](../../../images/image-20200831164957831.png)
+​	 ![image-20200831164957831](../../../images/image-20200831164957831.png)
+   > 指标具体含义可参考：[监控&告警指标含义](../FAQ/Platform/alert&monitor-metrics.md)
 
 ## 负载监控
 
@@ -78,6 +85,8 @@ Prometheus 为 TKEStack 扩展组件，需要在集群的 [【基本信息】](.
    ![image-20200831165200209](../../../images/image-20200831165200209.png)
 
 4. 具体查看方式和[集群监控](#集群监控)完全一致
+   
+   > 指标具体含义可参考：[监控&告警指标含义](../FAQ/Platform/alert&monitor-metrics.md)
 
 ### 负载下 Pod & Container 监控
 
@@ -91,3 +100,4 @@ Prometheus 为 TKEStack 扩展组件，需要在集群的 [【基本信息】](.
 > 1. 如下图所示，对比维度可选择  Pod 或 Container
 > 2. 选择 Container ，需要在其右侧选择 Container 所属 Pod
 > ![image-20200831165554727](../../../images/image-20200831165554727.png)
+> 指标具体含义可参考：[监控&告警指标含义](../FAQ/Platform/alert&monitor-metrics.md)

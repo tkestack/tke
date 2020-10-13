@@ -1,5 +1,7 @@
 # Helm 应用
 
+应用功能是 TKEStack 集成的 [Helm 3.0](https://helm.sh/) 相关功能，为您提供创建 helm chart、容器镜像、软件服务等各种产品和服务的能力。已创建的应用将在您指定的集群中运行，为您带来相应的能力。
+
 ## 新建 Helm 应用
 
 1. 登录 TKEStack

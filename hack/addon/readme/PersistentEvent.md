@@ -1,6 +1,6 @@
-## PersistentEvent
+# PersistentEvent
 
-### PersistentEvent 介绍
+## PersistentEvent 介绍
 
 Kubernetes Events 包括了 Kuberntes 集群的运行和各类资源的调度情况，对维护人员日常观察资源的变更以及定位问题均有帮助。TKEStack 支持为您的所有集群配置事件持久化功能，开启本功能后，会将您的集群事件实时导出到 ElasticSearch 的指定索引。
 
@@ -12,9 +12,9 @@ kubernetes 默认仅提供保留一个小时的 kubernetes 事件到集群的 ET
 
 ### PersistentEvent 限制条件
 
-1. **注意：当前只支持版本号为5的 ES，且未开启 ES 集群的用户登录认证**
-2. 安装 PersistentEvent 将占用集群0.2核 CPU,100MB内存的资源。
-3. 仅在1.8版本以上的kubernetes集群支持。
+1. **注意：当前只支持版本号为5的 ElasticSearch，且未开启 ElasticSearch 集群的用户登录认证**
+2. 安装 PersistentEvent 将占用集群0.2核 CPU,100MB 内存的资源
+3. 仅在1.8版本以上的 kubernetes 集群支持
 
 ### 部署在集群内kubernetes对象
 
@@ -26,7 +26,7 @@ kubernetes 默认仅提供保留一个小时的 kubernetes 事件到集群的 ET
 
 ## PersistentEvent 使用方法
 
-### 在扩展组件里使用
+### 在 扩展组件 里使用
 
   1. 登录 TKEStack
 
@@ -34,7 +34,7 @@ kubernetes 默认仅提供保留一个小时的 kubernetes 事件到集群的 ET
 
      > 注意：当前只支持版本号为5，且未开启用户登录认证的 ES 集群
 
-### 在运维中心里使用
+### 在 运维中心 里使用
 
   1. 登录 TKEStack
 

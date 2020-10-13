@@ -2,7 +2,10 @@
 
 ## Service 概念
 
+**Service**：即服务，用户在 Kubernetes 中可以部署各种容器，其中一部分是通过 HTTP、HTTPS 协议对外提供七层网络服务，另一部分是通过 TCP、UDP 协议提供四层网络服务。而 Kubernetes 定义的服务（Service）资源是用来管理集群中四层网络的服务访问。基于四层网络，Service 提供了集群内容器服务的暴露能力。
+
 Service 定义访问后端 Pod 的访问方式，并提供固定的虚拟访问 IP。您可以在 Service 中通过设置来访问后端的 Pod，不同访问方式的服务可提供不同网络能力。
+
 TKEStack 提供以下两种服务访问方式：
 
 <table>
@@ -29,13 +32,7 @@ TKEStack 提供以下两种服务访问方式：
 </td>
 </tr>
 </table>
-
->集群内进行 Service 访问时，建议不要通过 负载均衡 IP 进行访问，以避免出现访问不通的情况。
-
-一般情况下，4层负载均衡（LB）会绑定多台 Node 作为 Real Server（RS） ，使用时需要限制 Client 和 Rs 不能存在于同一台云服务器上，否则会有一定概率导致报文回环出不去。
-当 Pod 去访问 LB 时，Pod 就是源 IP，当其传输到内网时 LB 也不会做 SNAT 处理将源 IP 转化成 Node IP，那么 LB 收到报文也就不能判断是从哪个 Node 发送的，LB 的避免回环策略也就不会生效，所有的 rs 都可能被转发。当转发到 client 所在的 Node 上时，LB 就无法收到回包，从而导致访问不通。
-
-集群内访问时，支持 Headless Service， 不创建用于集群内访问的 ClusterIP，访问 Service 名称时返回后端 Pods IP：Port，**用于适配自有的服务发现机制**。
+集群内访问时，支持 **Headless** Service， 不创建用于集群内访问的 ClusterIP，访问 Service 名称时返回后端 Pods IP：Port，**用于适配自有的服务发现机制**。
 两种访问方式均支持 Session Affinity，设置会话保持后，会根据请求 IP把请求转发给这个 IP 之前访问过的 Pod。
 
 

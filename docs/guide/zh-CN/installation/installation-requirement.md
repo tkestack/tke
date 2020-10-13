@@ -45,7 +45,7 @@
     </tr>
     <tr>
         <td rowspan="2">业务集群</td>
-        <td>Master & etcd</td>
+        <td>Master & ETCD</td>
         <td>4</td>
         <td>8G</td>
         <td>100G</td>
@@ -59,6 +59,7 @@
         <td>3</td>
     </tr>
   </table>
+
 
 
 * **推荐配置：**
@@ -89,7 +90,7 @@
     </tr>
     <tr>
         <td rowspan="2">业务集群</td>
-        <td>Master & etcd</td>
+        <td>Master & ETCD</td>
         <td>16</td>
         <td>32G</td>
         <td>300G SSD</td>
