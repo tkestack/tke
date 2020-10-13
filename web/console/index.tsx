@@ -82,7 +82,7 @@ interface ForbiddentDialogState {
 class ForbiddentDialog extends React.Component<any, ForbiddentDialogState> {
   constructor(props: any) {
     super(props);
-    state = {
+    this.state = {
       forbiddentConfig: Init_Forbiddent_Config
     };
 
