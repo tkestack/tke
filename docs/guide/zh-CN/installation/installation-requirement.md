@@ -4,17 +4,17 @@
 
 > **特别注意**：
 >
-> 1. 安装的时候，至少需要**一个Installer节点**和**一个作为Global集群的master节点**共**两个节点**。
+> 1. 安装的时候，至少需要**一个 Installer 节点**和**一个作为 Global 集群的 master 节点**共**两个节点**。
 >
->    v1.3.0之后的版本可直接使用all-in-one的安装模式，此时installer节点也可以作为global集群的节点。但注意：此时Installer的节点配置要以global集群的节点配置为准，否则Installer节点配置太低很容易安装失败。另外该功能还不是很成熟，为避免安装失败，尽量**将Installer节点和global节点分开始用**。
+>    v1.3.0 之后的版本可直接使用 All-In-One 的安装模式，此时 Installer 节点也可以作为 Global 集群的节点。但注意：此时 Installer 的节点配置要以 Global 集群的节点配置为准，否则 Installer 节点配置太低很容易安装失败。另外该功能还不是很成熟，为避免安装失败，尽量**将 Installer 节点和 Global 节点分开始用**。
 >
-> 2. **Installer节点**：是单独的用作安装的节点，不能作为Global集群的节点使用。因为在安装Global集群时，需要多次重启docker，此时如果Global集群里面有Installer节点，重启docker会中断Global集群的安装。该节点需要一台**系统盘100G**的机器，系统盘要保证剩余**50GB可用的空间**。
+> 2. **Installer 节点**：是单独的用作安装的节点，不能作为 Global 集群的节点使用。因为在安装 Global 集群时，需要多次重启 docker，此时如果 Global 集群里面有 Installer 节点，重启 docker 会中断 Global 集群的安装。该节点需要一台**系统盘 100G** 的机器，系统盘要保证剩余 **50GB 可用的空间**。
 >
->    **v1.3.0之后Installer节点支持作为global集群的节点使用，但注意此时Installer节点配置以global集群的节点为准**
+>    **v1.3.0 之后 Installer 节点支持作为 Global 集群的节点使用，但注意此时 Installer 节点配置以 Global 集群的节点为准**
 >
-> 3. **Global 集群**：至少需要一台**8核16G内存，100G系统盘**的机器。
+> 3. **Global 集群**：至少需要一台 **8核16G内存，100G系统盘**的机器。
 >
-> 4. **业务集群**：业务集群是在部署完Global集群之后再添加的。
+> 4. **业务集群**：业务集群是在部署完 Global 集群之后再添加的。
 
 
 * **最小化部署配置：**

@@ -38,7 +38,7 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 ## 三、控制台 和 Global 集群安装
 
-> 注意：控制台是运行在 global 集群之上，控制台安装的同时在安装 global 集群。
+> 注意：控制台是运行在 Global 集群之上，控制台安装的同时在安装 Global 集群。
 
 1. 填写 TKEStack 控制台基本配置信息：
 
@@ -52,9 +52,9 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
      
      > 注意：如果使用高可用，至少需要三个 master 节点才可组成高可用集群，否则会出现 ***脑裂*** 现象。
      
-     - **不设置**：第一台 master 节点的IP地址作为 APIServer 地址
-     - **TKE提供**：用户只需提供高可用的IP地址。TKE部署Keepalive，配置该IP为Master集群的VIP，以实现Global集群和控制台的高可用，此时该VIP和所有master节点IP地址都是APIserver地址
-     - **使用已有**：对接配置好的外部 LB 实例。VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）、31138（tke-auth-api端口）端口，同时确保该VIP有至少两个LB后端（Master节点），以避免LB单后端不可用风险
+     - **不设置**：第一台 master 节点的 IP 地址作为 APIServer 地址
+     - **TKE 提供**：用户只需提供高可用的 IP 地址。TKE 部署 Keepalive，配置该 IP 为 Global 集群所有 Master 节点的VIP，以实现 Global 集群和控制台的高可用，此时该 VIP 和所有 Master 节点 IP 地址都是 APIServer 地址
+     - **使用已有**：对接配置好的外部 LB 实例。VIP 绑定 Global 集群所有 Master 节点的 80（TKEStack 控制台）、443（TKEStack 控制台）、6443（kube-apiserver 端口）、31138（tke-auth-api 端口）端口，同时确保该 VIP 有至少两个 LB 后端（Master 节点），以避免 LB 单后端不可用风险
 
 2. 填写 TKEStack 控制台集群设置信息：
 
@@ -80,7 +80,7 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
       
       > 注意：如果在上一步中使用高可用，至少需要三个 master 节点才可组成高可用集群，否则会出现 ***脑裂*** 现象。
       
-      - **访问地址：** Master 节点**内网 IP**，请配置**至少 8 Cores & 16G内存** 及以上的机型，**否则会部署失败**。注意：如上图所示，如果节点密码一样，这里可以通过英文的分号“;”分隔多个IP地址实现快速添加多个节点。
+      - **访问地址：** Master 节点**内网 IP**，请配置**至少 8 Cores & 16G内存** 及以上的机型，**否则会部署失败**。注意：如上图所示，如果节点密码一样，这里可以通过英文的分号“;”分隔多个IP地址实现快速添加多个节点
       
       - **SSH 端口**：请确保目标机器安全组开放 SSH 端口和 ICMP 协议，否则无法远程登录和 PING 服务器（建议使用**22**）
       
@@ -92,11 +92,11 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
            +  **私钥**：目标机器秘钥
            +  **私钥密码**：目标机器私钥密码，可选填
       
-      - **添加机器**：可以通过节点下面的**【添加机器】**蓝色字体增加不同密码的master节点（**按需添加**）
+      - **添加机器**：可以通过节点下面的**【添加机器】**蓝色字体增加不同密码的 master 节点（**按需添加**）
       
         ![img](../../../images/step-3-2.png)
       
-      - **高级设置**（非必须）：可以自定义 Global 集群的 Docker、kube-apiserver、kube-controller-manager、kube-scheduler、kubelet 运行参数，查看对应的帮助文档链接可获取详细信息。
+      - **高级设置**（非必须）：可以自定义 Global 集群的 Docker、kube-apiserver、kube-controller-manager、kube-scheduler、kubelet 运行参数，查看对应的帮助文档链接可获取详细信息
 
 3. 填写 TKEStack 控制台认证信息（建议使用**TKE提供**）
 
@@ -111,7 +111,7 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
     ![img](../../../images/step-4.png)
 
     - **镜像仓库类型（ Installer 里的所有镜像都会上传到该仓库）：**
-      - **TKE 提供**：使用 TKE 自带的镜像仓库
+      - **TKE 提供**：使用 TKE 自带的镜像仓库，已 docker registry 实现后台镜像存储
       - **第三方仓库**：对接配置好的外部镜像仓库，此时，TKEStack 将不会再安装镜像仓库，而是使用您提供的镜像仓库作为默认镜像仓库服务
 
 5. 业务设置

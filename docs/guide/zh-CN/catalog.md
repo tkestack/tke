@@ -24,7 +24,7 @@
       * [Prometheus](../zh-CN/features/prometheus.md)
       * [日志](../zh-CN/products/business-control-pannel/operation/logcollect.md)
       * [GPUManager](../../../hack/addon/readme/GPUManager.md)
-      * [CSI-Operator](../../../hack/addon/readme/CSIOperator.md)
+      * [CSIOperator](../../../hack/addon/readme/CSIOperator.md)
     * [组织资源](products/platform/resource)
       * [镜像仓库管理](products/platform/resource/registry.md)
       * [Helm 模板](products/platform/resource/helm.md)
