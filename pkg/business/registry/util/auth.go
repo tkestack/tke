@@ -94,12 +94,6 @@ func FilterWithUser(ctx context.Context,
 		return isAdmin, projectList, nil
 	}
 
-	for _, project := range rawList {
-		if len(project.Spec.Members) > 0 && project.Spec.Members[0] == userName && !picked[project.Name] {
-			picked[project.Name] = true
-			projectList.Items = append(projectList.Items, project)
-		}
-	}
 	if userID == "" {
 		return isAdmin, projectList, nil
 	}
