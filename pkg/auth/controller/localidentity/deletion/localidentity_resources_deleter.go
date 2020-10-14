@@ -348,13 +348,10 @@ func deleteRelatedProjectPolicyBinding(ctx context.Context, deleter *loalIdentit
 	var errs []error
 	belongsProjectPolicies := make(map[string][]string)
 	for _, r := range rules {
-		// Comment out here is the cause of the PR modified casbin loading rule model token number:
-		// https://github.com/tkestack/tke/pull/744
-		//
-		//if len(r) != 3 {
-		//	log.Warn("invalid rule", log.Strings("rule", r))
-		//	continue
-		//}
+		if len(r) != util.GRuleFieldNumber {
+			log.Warn("invalid rule", log.Strings("rule", r))
+			continue
+		}
 		project := r[2]
 		role := r[1]
 		if strings.HasPrefix(project, "prj-") {

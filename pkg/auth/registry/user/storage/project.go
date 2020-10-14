@@ -25,6 +25,7 @@ import (
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
 
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -90,13 +91,10 @@ func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.Lis
 
 	rules := r.enforcer.GetFilteredGroupingPolicy(0, util.UserKey(user.Spec.TenantID, user.Spec.Name))
 	for _, r := range rules {
-		// Comment out here is the cause of the PR modified casbin loading rule model token number:
-		// https://github.com/tkestack/tke/pull/744
-		//
-		//if len(r) != 3 {
-		//	log.Warn("invalid rule", log.Strings("rule", r))
-		//	continue
-		//}
+		if len(r) != util.GRuleFieldNumber {
+			log.Warn("invalid rule", log.Strings("rule", r))
+			continue
+		}
 		prj := r[2]
 		role := r[1]
 
