@@ -4,7 +4,7 @@ Kubernetes 现有应用类型（如：Deployment、StatefulSet 等）无法满�
 
 为解决上述复杂应用管理场景，TKEStack 基于 Kubernetes CRD 开发了一种新的应用类型 TAPP，它是一种通用类型的 Workload，同时支持 service 和 batch 类型作业，满足绝大部分应用场景，它能让用户更好的将应用迁移到 Kubernetes 集群。
 
-查询 [TApp](../../../../features/tapp.md) 可查看更多相关信息
+查询 [TApp](../../../../features/tapp.md) 可获取更多相关信息。
 
 ## 创建 TApp
 
@@ -38,7 +38,7 @@ Kubernetes 现有应用类型（如：Deployment、StatefulSet 等）无法满�
          * **Request**：用于预分配资源,当集群中的节点没有request所要求的资源数量时，容器会创建失败
          * **Limit**：用于设置容器使用资源的最大上限,避免异常情况下节点资源消耗过多
       * **GPU 限制**：如容器内需要使用 GPU，此处填 GPU 需求
-         
+        
          > 前提：节点有 GPU，并安装了 GPU 组件
       * **环境变量**：用于设置容器内的变量，变量名只能包含大小写字母、数字及下划线，并且不能以数字开头
          * **自定义**：自己设定变量键值对

@@ -8,7 +8,7 @@ tke-installer 自动等待和检查每一步骤安装完成，如果中间过程
 
 ## 一、需求检查
 
-仔细检查每个节点的硬件和软件需求：[部署环境要求](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
+仔细检查每个节点的硬件和软件需求：[部署环境要求](installation-requirement.md)
 
 ## 二、Installer安装
 
@@ -111,13 +111,13 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
     ![img](../../../images/step-4.png)
 
     - **镜像仓库类型（ Installer 里的所有镜像都会上传到该仓库）：**
-      - **TKE 提供**：使用 TKE 自带的镜像仓库，已 docker registry 实现后台镜像存储
+      - **TKE 提供**：使用 TKE 自带的镜像仓库，用 [docker distribution](https://github.com/docker/distribution) 实现后台镜像存储
       - **第三方仓库**：对接配置好的外部镜像仓库，此时，TKEStack 将不会再安装镜像仓库，而是使用您提供的镜像仓库作为默认镜像仓库服务
 
 5. 业务设置
 
    * 确认是否开启 TKEStack 控制台业务模块(**建议开启**)
-   * 确认是否开启平台审计功能，审计模块为平台提供了操作记录,用户可以在平台管理进行查询，需用用户提供 ES 资源（**按需使用，可不开启**）
+   * 确认是否开启平台审计功能，审计模块为平台提供了操作记录,用户可以在平台管理进行查询，需用用户提供 Elasticsearch 资源（**按需使用，可不开启**）
      ![img](../../../images/step-5.png)
 
 6. 选择 TKEStack 控制台监控存储类型（建议使用 **TKE 提供**）
@@ -161,8 +161,12 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
 在本地主机的浏览器地址输入 `http://console.tke.com` ，可访问 TKEStack 的控制台界面，输入控制台安装创建的用户名和密码后即可使用 TKEStack 。
 
-# 安装常见问题
+## 安装常见问题
 
-安装失败请首先检查硬件和软件需求：[部署环境要求](../../../../docs/guide/zh-CN/installation/installation-requirement.md)
+TKEStack 的安装需要一个小时左右，具体时间也依赖使用的硬件能力。目前安装已经非常成熟，如果您安装中遇到任何问题，可以采取如下几种方式：：
 
-可参考[安装常见问题](../FAQ/Installation)获得更多帮助
+1. 请首先检查 [部署环境要求](../installation/installation-requirement.md)
+2. 如有更多安装类问题，例如安装失败了如何重新部署等，请参考 [部署类问题](../FAQ/Installation)
+3. 可以提出一个 [Issue](https://github.com/tkestack/tke/issues/new/choose)，我们会认真对待每一个 Issue
+4. 如果需要更多帮助，欢迎加入 TKEStack 社区，请扫描下方二维码，并备注“TKESTack”。
+   ![](../../../images/wechat.jpeg)
