@@ -40,7 +40,7 @@ TKEStack 支持通过 CSI 存储插件的方式对接外部存储系统，详情
 
 Rook 是一个自管理的分布式存储编排系统，可以为 Kubernetes 提供便利的存储解决方案。
 
-[![img](../../../../../../../Typora/images/68747470733a2f2f726f6f6b2e6769746875622e696f2f646f63732f726f6f6b2f6d61737465722f6d656469612f6b756265726e657465732e706e67.png)](https://camo.githubusercontent.com/89f76191637aa17a8a18fa4e0472567d4bb67249/68747470733a2f2f726f6f6b2e6769746875622e696f2f646f63732f726f6f6b2f6d61737465722f6d656469612f6b756265726e657465732e706e67)
+![img](../../../images/68747470733a2f2f726f6f6b2e6769746875622e696f2f646f63732f726f6f6b2f6d61737465722f6d656469612f6b756265726e657465732e706e67.png)
 
 Rook 支持在 K8S 中部署，主要由 Operator 和 Cluster 两部分组成：
 
@@ -322,7 +322,7 @@ rook-discover-t2jzc                          1/1     Running     0          2d9h
 
 因此在 K8S 使用块存储场景上，基本上一个 Pod 挂载一个 PVC，典型的应用场景是 Redis，ElasticSearch，Mysql数据库等。
 
-如果用户已存在块存储设备，TKEStack 支持通过 CSI 插件对接已有的存储设备，详情请参考 [TKEStack CSI Operator](../../../../hack/addon/readme/CSIOperator.md)
+如果用户已存在块存储设备，TKEStack 支持通过 CSI 插件对接已有的存储设备，详情请参考 [TKEStack CSI Operator](../../../../hack/addon/readme/CSIOperator.md)。
 
 
 
@@ -334,7 +334,7 @@ rook-discover-t2jzc                          1/1     Running     0          2d9h
 
 ChubaoFS (储宝文件系统)是为大规模容器平台设计的分布式文件系统，详情请参考[ChubaoFS 官方文档](https://chubaofs.readthedocs.io/zh_CN/latest/overview.html#)。
 
-![img](../../../images/68747470733a2f2f63687562616f66732e72656164746865646f63732e696f2f7a685f434e2f6c61746573742f5f696d616765732f6366732d617263682e706e67.png)
+<img src="../../../images/68747470733a2f2f63687562616f66732e72656164746865646f63732e696f2f7a685f434e2f6c61746573742f5f696d616765732f6366732d617263682e706e67.png" alt="img" style="zoom:33%;" />
 
 ChubaoFS 支持在 k8s 集群中部署，通过 Helm 的方式在集群中安装元数据子系统，数据子系统和资源管理节点等，对外提供文件存储服务。
 
