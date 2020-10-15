@@ -133,6 +133,10 @@ func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluste
 		return true
 	}
 
+	if !reflect.DeepEqual(old.ObjectMeta, new.ObjectMeta) {
+		return true
+	}
+
 	// Control the synchronization interval through the health detection interval
 	// to avoid version conflicts caused by concurrent modification
 	healthCondition := new.GetCondition(conditionTypeHealthCheck)
