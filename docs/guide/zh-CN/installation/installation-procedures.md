@@ -66,7 +66,7 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
       > 注意：使用 GPU 首先确保节点有物理 GPU 卡，选择 GPU 类型后，平台将自动为节点安装相应的 GPU 驱动和运行时工具
 
-      - **不使用**：集群不安装 Nvidia GPU 相关驱动，此时集群不会使用GPU，如果集群需要使用GPU，必须安装以下两个GPU插件中的一个
+      - **不使用**：集群不安装 Nvidia GPU 相关驱动，此时集群不会使用 GPU，如果集群需要使用 GPU，必须安装以下两个 GPU 插件中的一个
       - **Physical**：平台会自动为集群安装 [Nvidia-k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)，此时可以给负载分配任意整数张卡
       - **Virtual**：平台会自动为集群安装 [GPUManager](../features/gpumanager.md)  扩展组件，此时GPU可以被虚拟化，可以给负载分配非整数张GPU卡，例如可以给一个负载分配0.3个GPU
 
@@ -80,7 +80,7 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
       
       > 注意：如果在上一步中使用高可用，至少需要三个 master 节点才可组成高可用集群，否则会出现 ***脑裂*** 现象。
       
-      - **访问地址：** Master 节点**内网 IP**，请配置**至少 8 Cores & 16G内存** 及以上的机型，**否则会部署失败**。注意：如上图所示，如果节点密码一样，这里可以通过英文的分号“;”分隔多个IP地址实现快速添加多个节点
+      - **访问地址：** Master 节点**内网 IP**，请配置**至少 8 Cores & 16G 内存** 及以上的机型，**否则会部署失败**。注意：如上图所示，如果节点密码一样，这里可以通过英文的分号“;”分隔多个IP地址实现快速添加多个节点
       
       - **SSH 端口**：请确保目标机器安全组开放 SSH 端口和 ICMP 协议，否则无法远程登录和 PING 服务器（建议使用**22**）
       

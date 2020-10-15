@@ -86,7 +86,7 @@
   * [CronHPA](../../../hack/addon/readme/CronHPA.md)
   * [LBCF](features/lbcf.md)
 
-* [产品API文档](API.md)
+* [产品 API 文档](API.md)
   
 * [FAQ](FAQ)
 

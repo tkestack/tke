@@ -1,42 +1,42 @@
-# CSI-Operator
+# CSIOperator
 
-## CSI-Operator 介绍 
+## CSIOperator 介绍 
 
-Container Storage Interface Operator(CSI-Operator)用于部署和更新 Kubernetes 集群中的 CSI 驱动和外部存储组件。
+Container Storage Interface Operator(CSIOperator)用于部署和更新 Kubernetes 集群中的 CSI 驱动和外部存储组件。
 
 
-### CSI-Operator 使用场景
+### CSIOperator 使用场景
 
-CSI-Operator 用于支持集群方便的使用存储资源，当前支持的存储插件包括 RBD、CephFS、TencentCBS 和 TencentCFS（TencentCFS 正在测试中）
+CSIOperator 用于支持集群方便的使用存储资源，当前支持的存储插件包括 RBD、CephFS、TencentCBS 和 TencentCFS（TencentCFS 正在测试中）
 * 其中 RBD 和 CephFS 主要用于部署在 IDC 环境的集群
 * TencentCBS 和 TencentCFS 用于部署在腾讯云环境的集群
 
 
 ### 部署在集群内 kubernetes 对象
 
-在集群内部署 CSI-Operator，将在集群内部署以下 kubernetes 对象
+在集群内部署 CSIOperator，将在集群内部署以下 kubernetes 对象
 
 | kubernetes 对象名称 | 类型 | 默认占用资源 | 所属 Namespaces |
 | ----------------- | --- | ---------- | ------------- |
-| csi-operator |Deployment |每节点0.2核CPU, 256MB内存|kube-system|
+| csi-operator |Deployment |每节点0.2核 CPU, 256MB内存|kube-system|
 
-## CSI-Operator 使用方法
+## CSIOperator 使用方法
 
-### 安装 CSI-Operator
+### 安装 CSIOperator
 
 1. 登录 TKEStack
 2. 切换至 【平台管理】控制台，选择 【扩展组件】 页面
 3. 选择需要安装组件的集群，点击【新建】按钮。如下图所示：
 ![新建组件](images/新建扩展组件.png)
-4. 在弹出的扩展组件列表里，滑动列表窗口找到 CSI-Operator
+4. 在弹出的扩展组件列表里，滑动列表窗口找到 CSIOperator
 5. 单击【完成】进行安装
 
-### 通过 CSI-Operator 使用腾讯云存储资源
+### 通过 CSIOperator 使用腾讯云存储资源
 1. 登录 TKEStack
 
 2. 切换至 【平台管理】控制台，选择 【集群管理】 页面，如下图1所示：
 
-3. 点击安装了 CSI-Operator 组件的【集群ID】，进入要管理的集群，如下图2所示：
+3. 点击安装了 CSIOperator 组件的【集群ID】，进入要管理的集群，如下图2所示：
 
 4. 点击【YAML创建资源】，如下图3所示：![CSI创建](images/CSI创建.png)
 
@@ -58,7 +58,7 @@ CSI-Operator 用于支持集群方便的使用存储资源，当前支持的存�
 
    * secretID、secretKey 来源于 腾讯云控制台 -> 账号中心 -> 访问管理 -> 访问秘钥 -> API密钥管理
 
-6. 创建完 CSI-Operator 的 CRD 对象，同时会为每个存储插件创建默认的 StorageClass 对象（tencentcbs 的 StorageClass 对象名为 cbs-basic-prepaid），如下图：![storageclass](images/storageclass.png)
+6. 创建完 CSIOperator 的 CRD 对象，同时会为每个存储插件创建默认的 StorageClass 对象（tencentcbs 的 StorageClass 对象名为 cbs-basic-prepaid），如下图：![storageclass](images/storageclass.png)
 
    其 YAML 如下：
 
@@ -90,6 +90,6 @@ CSI-Operator 用于支持集群方便的使用存储资源，当前支持的存�
 
 
 
-详情请见 [CSI-Operator Example](https://github.com/tkestack/csi-operator/blob/master/examples)
+详情请见 [CSIOperator Example](https://github.com/tkestack/csi-operator/blob/master/examples)
 
 
