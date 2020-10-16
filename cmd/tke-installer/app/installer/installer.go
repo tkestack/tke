@@ -1433,31 +1433,17 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 }
 
 func (t *TKE) prepareImages(ctx context.Context) error {
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tke-gateway",
-			Namespace: t.namespace,
-		},
-		Spec: corev1.PodSpec{
-			NodeSelector: map[string]string{
-				"node-role.kubernetes.io/master": "",
-			},
-			Containers: []corev1.Container{
-				{
-					Name:  "tke-gateway",
-					Image: images.Get().TKEGateway.FullName(),
-				},
-			},
-		},
+	for _, machine := range t.Cluster.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		cmdString := fmt.Sprintf("docker pull %s", images.Get().TKEGateway.FullName())
+		_, err = machineSSH.CombinedOutput(cmdString)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
 	}
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-
-	err := apiclient.PullImageWithPod(ctx, t.globalClient, pod)
-	if err != nil {
-		return fmt.Errorf("prepare image error: %w", err)
-	}
-
 	return nil
 }
 
