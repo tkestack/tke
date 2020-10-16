@@ -66,7 +66,7 @@ CMD ["apache2-foreground"]
 
 ## 操作步骤
 
-在终端创建一个名为worldpress的文件夹，在该文件夹下创建 Dockerfile 文件，文件内容即以上代码。通过 `docker build ./`命令来构建镜像。
+在终端创建一个名为 worldpress 的文件夹，在该文件夹下创建 Dockerfile 文件，文件内容即以上代码。通过 `docker build ./`命令来构建镜像。
 
 ```shell
 [root@VM_1_98_centos ~]# mkdir worldpress

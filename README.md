@@ -51,20 +51,21 @@
 
 ### QuickStart
 
-1. **Check Requirements:**  Please confirm the [installation requirements](docs/guide/zh-CN/installation/installation-requirement.md)
-2. **Configure Installer:** Please execute the following command in the terminal of your **installer** node
+1. **Check Requirements:**  Please confirm the [installation requirements](docs/guide/zh-CN/installation/installation-requirement.md).
 
-```shell
-# Choose installation package according to your installation node CPU architecture [amd64, arm64]
-arch=amd64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
-```
+2. **Configure Installer:**  Please execute the following command in the terminal of your **installer** node.
 
-3. **Configure Console & Global Cluster:** Open your browser to `http://【INSTALLER-NODE-IP】:8080/index.html`, the Web GUI will guide you to initialize and install the TKEStack's **Global Cluster and Console**. You can refer to [installation-procedures](docs/guide/zh-CN/installation/installation-procedures.md)
-4. **Enjoy TKEStack:**  Open your browser to http://console.tke.com
+   ```shell
+   # Choose installation package according to your installation node CPU architecture [amd64, arm64]
+   arch=amd64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
+   ```
+
+3. **Configure Console & Global Cluster:**  Open your browser to `http://【INSTALLER-NODE-IP】:8080/index.html`, the Web GUI will guide you to initialize and install the TKEStack's **Global Cluster and Console**. You can refer to [installation-procedures](docs/guide/zh-CN/installation/installation-procedures.md) for more information.
+4. **Enjoy TKEStack:**  Open your browser to http://console.tke.com.
 
 > TKEStack use tke-installer tool to deploy. Please refer to [tke-installer](docs/user/tke-installer/README.md) for more information.
 > 
-> If you encounter problems during installation, you can refer to [FAQ installation](docs/guide/zh-CN/FAQ/Installation)
+> If you encounter problems during installation, you can refer to [FAQ installation](docs/guide/zh-CN/FAQ/Installation).
 
 
 ## Using
@@ -89,18 +90,19 @@ For the full story, head over to the [developer's documentation](docs/devel/deve
 
 ## Community
 
-If you are interested in contributing to the TKEStack, please check the [CONTRIBUTING.md](CONTRIBUTING.md) first. 
+* If you are interested in contributing to the TKEStack, please check the [CONTRIBUTING.md](CONTRIBUTING.md) first. 
 
-You are encouraged to communicate most things via GitHub [issues](https://github.com/tkestack/tke/issues/new/choose) or [pull requests](https://github.com/tkestack/tke/pulls).
+* You are encouraged to communicate most things via GitHub [issues](https://github.com/tkestack/tke/issues/new/choose) or [pull requests](https://github.com/tkestack/tke/pulls).
 
-Other active channels:
+* Other active channels:
 
-- WeChat Group
-- Please scan the following WeChat QRcode and note **TKEStack**, he will add you into the TKEStack WeChat Group.
+  * WeChat Group
 
-![TKEStack](docs/images/wechat.jpeg)
+  * Please scan the following WeChat QRcode and note **TKEStack**, he will add you into the TKEStack WeChat Group.
+
+    ![TKEStack](docs/images/wechat.jpeg)
 
 ## Licensing
 
-TKE is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text.
+TKEStack is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text.
 

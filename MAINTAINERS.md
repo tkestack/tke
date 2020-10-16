@@ -17,4 +17,4 @@
 * Rami Chen <ramichen@tencent.com> @chenchun: Galaxy addon.
 * Ian Lang <ianlang@tencent.com> @langyenan: Loadbalancer controller framework and addon.
 * Perfey He <perfeyhe@tencent.com> @perfey-he: Product manager.
-* Lewis <lewislv@tencent.com> @interstallers: Product manager.
+* Willems Wang <willemswang@tencent.com> @willemswang: Product manager.
