@@ -694,7 +694,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			return errors.Wrap(err, machine.IP)
 		}
 
-		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.KuberentesSchedulerPolicyConfigFile)
+		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.KubernetesSchedulerPolicyConfigFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -712,7 +712,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
-				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KuberentesAuditWebhookConfigFile)
+				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KubernetesAuditWebhookConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}

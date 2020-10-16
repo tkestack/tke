@@ -42,8 +42,8 @@ clusters:
 users:
   - name: admin-cert
     user:
-      client-certificate: {{.AdminCertFile}}
-      client-key: {{.AdminKeyFile}}
+      client-certificate: {{.WebhookCertFile}}
+      client-key: {{.WebhookKeyFile}}
 current-context: tke
 contexts:
 - context:
@@ -61,8 +61,8 @@ type Option struct {
 func Install(s ssh.Interface, option *Option) error {
 	authzWebhookConfig, err := template.ParseString(authzWebhookConfig, map[string]interface{}{
 		"AuthzEndpoint": option.AuthzWebhookEndpoint,
-		"AdminCertFile": constants.AdminCertFile,
-		"AdminKeyFile":  constants.AdminKeyFile,
+		"WebhookCertFile": constants.WebhookCertFile,
+		"WebhookKeyFile":  constants.WebhookKeyFile,
 	})
 	if err != nil {
 		return errors.Wrap(err, "parse authzWebhookConfig error")
@@ -76,19 +76,19 @@ func Install(s ssh.Interface, option *Option) error {
 	if option.IsGlobalCluster {
 		basePath = installerconstants.DataDir
 	}
-	adminCertData, err := ioutil.ReadFile(basePath + constants.AdminCertName)
+	webhookCertData, err := ioutil.ReadFile(basePath + constants.WebhookCertName)
 	if err != nil {
 		return err
 	}
-	err = s.WriteFile(bytes.NewReader(adminCertData), constants.AdminCertFile)
+	err = s.WriteFile(bytes.NewReader(webhookCertData), constants.WebhookCertFile)
 	if err != nil {
 		return err
 	}
-	adminKeyData, err := ioutil.ReadFile(basePath + constants.AdminkeyName)
+	webhookKeyData, err := ioutil.ReadFile(basePath + constants.WebhookKeyName)
 	if err != nil {
 		return err
 	}
-	err = s.WriteFile(bytes.NewReader(adminKeyData), constants.AdminKeyFile)
+	err = s.WriteFile(bytes.NewReader(webhookKeyData), constants.WebhookKeyFile)
 	if err != nil {
 		return err
 	}
