@@ -96,9 +96,6 @@ export class CodeMirrorEditor extends React.Component<CodeMirrorEditorProps, Cod
             .tc-15-rich-dialog .CodeMirror{
                 height: ${dHeight || 300}px
             }
-            .CodeMirror-vscrollbar{
-              visibility:hidden
-            }
         `
     );
   }
@@ -221,9 +218,8 @@ export class CodeMirrorEditor extends React.Component<CodeMirrorEditorProps, Cod
               onBeforeChange={() => {}}
               scroll={{
                 x: 0,
-                y: 100000
+                y: Infinity
               }}
-              //onChange={value => this.handChange(value)}
             />
           ) : (
             <div className={'CodeMirror cm-s-' + theme} />
