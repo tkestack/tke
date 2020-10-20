@@ -10,7 +10,7 @@ import {
   Layout,
   Text,
 } from '@tencent/tea-component';
-import { MetricsResourceMap } from '../constant';
+import { MetricsResourceMap, NestedMetricsResourceMap } from '../constant';
 
 const Basic = React.memo((props: {
   selectedHpa: any;
@@ -38,8 +38,12 @@ const Basic = React.memo((props: {
         <span className="item-descr-txt">
           {selectedHpa.spec.metrics.map((item, index) => {
             const { name, targetAverageValue, targetAverageUtilization } = item.resource;
-            const { meaning, unit } = MetricsResourceMap[name];
-            const content = targetAverageValue ? meaning + targetAverageValue : meaning + targetAverageUtilization + unit;
+            const target = targetAverageUtilization ? 'targetAverageUtilization' : 'targetAverageValue';
+            const { meaning, unit } = NestedMetricsResourceMap[name][target];
+            // const { meaning, unit } = MetricsResourceMap[name];
+            // const content = targetAverageValue ? meaning + targetAverageValue : meaning + targetAverageUtilization + unit;
+            const content = targetAverageValue ? meaning + targetAverageValue + unit : meaning + targetAverageUtilization + unit;
+
             return <Text key={index} parent="div">{content}</Text>;
           })}
         </span>
