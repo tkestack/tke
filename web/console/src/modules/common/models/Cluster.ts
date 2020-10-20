@@ -108,6 +108,8 @@ interface ClusterAddress {
   /** 端口名 */
   port: number;
 
+  path?: string;
+
   /** 集群的类型 */
   type: string;
 }
