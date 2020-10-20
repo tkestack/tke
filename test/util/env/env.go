@@ -21,6 +21,8 @@ package env
 import (
 	"os"
 	"path"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
+	"tkestack.io/tke/pkg/spec"
 
 	"github.com/joho/godotenv"
 )
@@ -34,18 +36,66 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	godotenv.Load(path.Join(home, envFile), envFile) // for local dev
+	godotenv.Overload(path.Join(home, envFile), envFile) // for local dev
 }
 
 const (
-	VERSION            = "VERSION"
-	PROVIDERRESVERSION = "PROVIDERRESVERSION"
+	VERSION                = "VERSION"
+	PROVIDERRESVERSION     = "PROVIDERRESVERSION"
+	K8SVERSION             = "K8SVERSION"
+	KUBECONFIG             = "KUBECONFIG"
+	SECRET_ID              = "SECRET_ID"
+	SECRET_KEY             = "SECRET_KEY"
+	REGION                 = "REGION"
+	CREATE_INSTANCES_PARAM = "CREATE_INSTANCES_PARAM"
+	PASSWORD               = "PASSWORD"
+	NEED_DELETE            = "NEED_DELETE"
 )
 
 func ImageVersion() string {
 	return os.Getenv(VERSION)
 }
 
+func Kubeconfig() string {
+	return os.Getenv(KUBECONFIG)
+}
+
+func SecretId() string {
+	return os.Getenv(SECRET_ID)
+}
+
+func SecretKey() string {
+	return os.Getenv(SECRET_KEY)
+}
+
+func Region() string {
+	return os.Getenv(REGION)
+}
+
+func Password() string {
+	return os.Getenv(PASSWORD)
+}
+
+func CreateInstancesParam() string {
+	return os.Getenv(CREATE_INSTANCES_PARAM)
+}
+
+func NeedDelete() string {
+	return os.Getenv(NEED_DELETE)
+}
+
 func ProviderResImageVersion() string {
-	return os.Getenv(PROVIDERRESVERSION)
+	v := os.Getenv(PROVIDERRESVERSION)
+	if v == "" {
+		v = images.Get().ProviderRes.Tag
+	}
+	return v
+}
+
+func K8sVersion() string {
+	v := os.Getenv(K8SVERSION)
+	if v == "" {
+		v = spec.K8sVersions[0]
+	}
+	return v
 }

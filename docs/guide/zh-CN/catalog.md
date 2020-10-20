@@ -1,17 +1,15 @@
 # TKEStack 文档目录
 
 * [产品部署指南](installation)
-  * [产品架构&能力说明](installation/installation-architecture.md)
+  * [产品架构 & 能力说明](installation/installation-architecture.md)
   * [部署环境要求](installation/installation-requirement.md)
   * [安装步骤](installation/installation-procedures.md)
-
 * [产品快速入门](QuickStart)
   * [快速入门](QuickStart/快速入门.md)
   * [入门示例](QuickStart/examples)
     * [创建简单的 Nginx 服务](QuickStart/examples/创建简单nginx服务.md)
     * [编写 Hello World 程序](QuickStart/examples/编写Hello-World程序.md)
     * [如何构建 Docker 镜像](QuickStart/examples/如何构建Docker镜像.md)
-
 * [产品使用指南](products)
   * [切换控制台](products/controlpannel.md)
   * [平台管理控制台](products/platform)
@@ -19,10 +17,10 @@
     * [集群管理](products/platform/cluster.md)
     * [业务管理](products/platform/business.md)
     * [扩展组件](products/platform/extender.md)
-      * [TApp](../zh-CN/products/business-control-pannel/application/workload/tapp.md)
+      * [TApp](../../../hack/addon/readme/TappController.md)
       * [CronHPA](../../../hack/addon/readme/CronHPA.md)
       * [Prometheus](../zh-CN/features/prometheus.md)
-      * [日志](../zh-CN/products/business-control-pannel/operation/logcollect.md)
+      * [日志](../../../hack/addon/readme/LogAgent.md)
       * [GPUManager](../../../hack/addon/readme/GPUManager.md)
       * [CSIOperator](../../../hack/addon/readme/CSIOperator.md)
     * [组织资源](products/platform/resource)
@@ -51,8 +49,9 @@
         * [Job ](products/business-control-pannel/application/workload/job.md)
         * [CronJob ](products/business-control-pannel/application/workload/cron-job.md)
         * [TApp ](products/business-control-pannel/application/workload/tapp.md)
-        * [负载的高级设置 ](products/business-control-pannel/application/workload/advancedsetup)
+        * [更多 ](products/business-control-pannel/application/workload/advancedsetup)
           * [工作负载的请求与限制](products/business-control-pannel/application/workload/advancedsetup/resource-limit.md)
+          * [Pod 状态](products/business-control-pannel/application/workload/advancedsetup/podlife.md)
       * [自动伸缩](products/business-control-pannel/application/autoscale)
         * [HPA](products/business-control-pannel/application/autoscale/HPA.md)
         * [CronHPA](../../../hack/addon/readme/CronHPA.md)
@@ -78,16 +77,13 @@
     * [运维管理](products/business-control-pannel/operation)
       * [Helm 应用](products/business-control-pannel/operation/helm应用.md)
       * [日志采集](products/business-control-pannel/operation/logcollect.md)
-  
 * [产品特色功能](features)
   * [Galaxy](features/galaxy.md)
-  * [TAPP](features/tapp.md)
+  * [TAPP](../../../hack/addon/readme/TappController.md)
   * [GPUManager](../../../hack/addon/readme/GPUManager.md)
   * [CronHPA](../../../hack/addon/readme/CronHPA.md)
   * [LBCF](features/lbcf.md)
 
-* [产品 API 文档](API.md)
-  
 * [FAQ](FAQ)
 
   * [部署类](FAQ/Installation)
@@ -95,6 +91,9 @@
     * [如何规划部署资源](FAQ/Installation/规划部署资源.md)
     * [如何使用存储](FAQ/Installation/如何使用存储.md)
     * [修改组件的启动参数](FAQ/Installation/setupsetting.md)
+  * [平台类](FAQ/品台类)
+    * [平台使用常见问题](FAQ/Platform/平台使用常见问题.md)
+    * [监控&告警指标列表](FAQ/Platform/alert&monitor-metrics.md)
   * [功能类](FAQ/Feature)
     * [如何接入 LDAP & OIDC](FAQ/Feature/如何接入LDAP&OIDC.md)
   * [授权类](FAQ/Authority)
@@ -103,9 +102,14 @@
     * [Docker login 权限错误](FAQ/Authority/Docker-login权限错误.md)
   * [事件类](FAQ/Events)
     * [常见错误事件](FAQ/Events/常见错误事件.md)
-  * [平台类](FAQ/品台类)
-    * [平台使用常见问题](FAQ/Platform/平台使用常见问题.md)
-    * [监控&告警指标列表](FAQ/Platform/alert&monitor-metrics.md)
+
+* [产品 API 文档](API.md)
+* [开发指引](../../devel)
+  * [项目组件介绍](../../devel/components.md)
+  * [开发手册](../../devel/development.md)
+  * [本地运行 TKEStack](../../devel/running-locally.md)
+  * [贡献指南](../../../CONTRIBUTING.md)
+
 
 * [Release Note](../../../CHANGELOG)
   * [1.0](../../../CHANGELOG/CHANGELOG-1.0.md)

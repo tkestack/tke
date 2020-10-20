@@ -1,6 +1,6 @@
 #  安装步骤
 
-TKEStack 使用 tke-installer 安装工具进行安装，通过界面化的方式引导用户一键部署 TKEStack 容器平台。tke-installer 安装工具能够检查基本的环境信息，**自动适配 AMD 或 ARM 版本安装驱动和镜像**。离线的安装方式更免去用户拉取镜像的烦恼，极大的提高了容器平台部署的效率。
+TKEStack 使用 [tke-installer](../../../user/tke-installer/introduction.md) 安装工具进行安装，通过界面化的方式引导用户一键部署 TKEStack 容器平台。tke-installer 安装工具能够检查基本的环境信息，**自动适配 AMD 或 ARM 版本安装驱动和镜像**。离线的安装方式更免去用户拉取镜像的烦恼，极大的提高了容器平台部署的效率。
 
 ![img](../../../images/1588923565_50_w1747_h691.png)
 
@@ -28,13 +28,9 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 > 
 > tke-installer 约为 8GB，包含安装所需的所有资源。
 
-
-
 以上脚本执行完之后，终端会提示访问 `http://[tke-installer-IP]:8080/index.html`，使用本地主机的浏览器访问该地址，按照指引开始安装控制台，可参考下一步：
 
 > 注意：这里`tke-installer-IP`地址默认为**内网地址**，如果本地主机不在集群内网，`tke-installer-IP`为内网地址所对应的**外网地址**。
-
-
 
 ## 三、控制台 和 Global 集群安装
 
@@ -51,10 +47,12 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
    - **高可用设置**（按需使用，可直接选择【**不设置**】）
      
      > 注意：如果使用高可用，至少需要三个 master 节点才可组成高可用集群，否则会出现 ***脑裂*** 现象。
+     >
+     > 生成环境建议使用高可用设置
      
      - **不设置**：第一台 master 节点的 IP 地址作为 APIServer 地址
-     - **TKE 提供**：用户只需提供高可用的 IP 地址。TKE 部署 Keepalive，配置该 IP 为 Global 集群所有 Master 节点的VIP，以实现 Global 集群和控制台的高可用，此时该 VIP 和所有 Master 节点 IP 地址都是 APIServer 地址
-     - **使用已有**：对接配置好的外部 LB 实例。VIP 绑定 Global 集群所有 Master 节点的 80（TKEStack 控制台）、443（TKEStack 控制台）、6443（kube-apiserver 端口）、31138（tke-auth-api 端口）端口，同时确保该 VIP 有至少两个 LB 后端（Master 节点），以避免 LB 单后端不可用风险
+     - **TKE 提供**：用户只需提供高可用的 IP 地址即可。TKE 部署 Keepalive，配置该 IP 为 Global 集群所有 Master 节点的 VIP，以实现 Global 集群和控制台的高可用，此时该 VIP 和所有 Master 节点 IP 地址都是 APIServer 地址
+     - **使用已有**：对接配置好的外部 LB 实例，较为复杂，容易出错，不推荐。VIP 需要 绑定 Global 集群所有 Master 节点的 80（TKEStack 控制台）、443（TKEStack 控制台）、6443（kube-apiserver 端口）、31138（tke-auth-api 端口）端口，同时确保该 VIP 有至少两个 LB 后端（Master 节点），以避免 LB 单后端不可用风险
 
 2. 填写 TKEStack 控制台集群设置信息：
 
@@ -68,7 +66,7 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
       - **不使用**：集群不安装 Nvidia GPU 相关驱动，此时集群不会使用 GPU，如果集群需要使用 GPU，必须安装以下两个 GPU 插件中的一个
       - **Physical**：平台会自动为集群安装 [Nvidia-k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)，此时可以给负载分配任意整数张卡
-      - **Virtual**：平台会自动为集群安装 [GPUManager](../features/gpumanager.md)  扩展组件，此时GPU可以被虚拟化，可以给负载分配非整数张GPU卡，例如可以给一个负载分配0.3个GPU
+      - **Virtual**：平台会自动为集群安装 [GPUManager](../features/gpumanager.md)  扩展组件，此时GPU可以被虚拟化，可以给负载分配非整数张 GPU 卡，例如可以给一个负载分配0.3个 GPU
 
     - **容器网络：** 将为集群内容器分配在容器网络地址范围内的 IP 地址，您可以自定义三大私有网段作为容器网络， 根据您选择的集群内服务数量的上限，自动分配适当大小的 CIDR 段用于 Kubernetes service；根据您选择 Pod 数量上限/节点，自动为集群内每台服务器分配一个适当大小的网段用于该主机分配 Pod 的 IP 地址（**建议使用默认值**）
       
@@ -94,9 +92,9 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
       
       - **添加机器**：可以通过节点下面的**【添加机器】**蓝色字体增加不同密码的 master 节点（**按需添加**）
       
-        ![img](../../../images/step-3-2.png)
-      
       - **高级设置**（非必须）：可以自定义 Global 集群的 Docker、kube-apiserver、kube-controller-manager、kube-scheduler、kubelet 运行参数，查看对应的帮助文档链接可获取详细信息
+      
+        ![img](../../../images/step-3-2.png)
 
 3. 填写 TKEStack 控制台认证信息（建议使用**TKE提供**）
 
@@ -106,13 +104,13 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
       - **TKE提供**：使用 TKE 自带的认证方式
       - **OIDC**：使用 OIDC 认证方式，详见 [OIDC](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens)
 
-4. 填写 TKEStack 控制台镜像仓库信息（建议使用**TKE提供**）
+4. 填写 TKEStack 控制台镜像仓库信息（建议使用 **TKE 提供**）
 
     ![img](../../../images/step-4.png)
 
     - **镜像仓库类型（ Installer 里的所有镜像都会上传到该仓库）：**
-      - **TKE 提供**：使用 TKE 自带的镜像仓库，用 [docker distribution](https://github.com/docker/distribution) 实现后台镜像存储
-      - **第三方仓库**：对接配置好的外部镜像仓库，此时，TKEStack 将不会再安装镜像仓库，而是使用您提供的镜像仓库作为默认镜像仓库服务
+      - **TKE 提供**：使用 TKE 自带的镜像仓库，用 [docker distribution](https://github.com/docker/distribution) 实现后台镜像存储，可配置仓库权限
+      - **第三方仓库**：对接配置好的外部镜像仓库，此时，TKEStack 将不会再安装镜像仓库，而是使用您提供的镜像仓库作为默认镜像仓库服务，不可配置仓库权限
 
 5. 业务设置
 
@@ -146,16 +144,17 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
 
    ![img](../../../images/step-9.png)
 
-10. 点击【查看指引】，按照指引，在访问 TKEStack 控制台的主机上添加域名解：
+10. 点击【查看指引】，按照指引，在需要访问 TKEStack 控制台的主机上添加域名解：
     
 
     ![img](../../../images/step-10.png)
 
-    * **以Linux/MacOS为例**: 在`/etc/hosts`文件中加入以下两行域名解析
+    * **以 Linux/MacOS 为例**: 在`/etc/hosts`文件中加入以下两行域名解析
+      
       * 【IP】 console.tke.com
-      * 【IP】 registry.tke.com
-    
-      > 注意：这里域名的【IP】地址默认为**内网地址**，如果本地主机不在集群内网，域名的IP地址应该填该内网地址所对应的**外网地址**。
+    * 【IP】 registry.tke.com
+      
+      > 注意：这里域名的【IP】地址默认为**内网地址**，如果本地主机不在集群内网，域名的 IP 地址应该填该内网地址所对应的**外网地址**。
 
 ## 四、访问控制台
 
@@ -168,5 +167,5 @@ TKEStack 的安装需要一个小时左右，具体时间也依赖使用的硬�
 1. 请首先检查 [部署环境要求](../installation/installation-requirement.md)
 2. 如有更多安装类问题，例如安装失败了如何重新部署等，请参考 [部署类问题](../FAQ/Installation)
 3. 可以提出一个 [Issue](https://github.com/tkestack/tke/issues/new/choose)，我们会认真对待每一个 Issue
-4. 如果需要更多帮助，欢迎加入 TKEStack 社区，请扫描下方二维码，并备注“TKESTack”。
+4. 如果需要更多帮助，欢迎加入 TKEStack 社区，请扫描下方二维码，并备注“TKESTack”
    ![](../../../images/wechat.jpeg)

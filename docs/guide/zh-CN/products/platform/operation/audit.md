@@ -2,11 +2,11 @@
 
 ## 简介
 
-集群审计是基于 [Kubernetes Audit](https://kubernetes.io/docs/tasks/debug-application-cluster/audit) 对 kube-apiserver 产生的可配置策略的 JSON 结构日志的记录存储及检索功能。本功能记录了对 kube-apiserver 的访问事件，会按顺序记录每个用户、管理员或系统组件影响集群的活动。
+TKEStack 集群审计是基于 [Kubernetes Audit](https://kubernetes.io/docs/tasks/debug-application-cluster/audit) 对 kube-apiserver 产生的可配置策略的 JSON 结构日志的记录存储及检索功能。本功能记录了对 kube-apiserver 的访问事件，会按顺序记录每个用户、管理员或系统组件影响集群的活动。
 
 ### 功能优势
 
-集群审计功能提供了区别于 metrics 的另一种集群观测维度。开启集群审计后，Kubernetes 可以记录每一次对集群操作的审计日志。每一条审计日志是一个 JSON 格式的结构化记录，包括元数据（metadata）、请求内容（requestObject）和响应内容（responseObject）三个部分。其中元数据（包含了请求的上下文信息，例如谁发起的请求、从哪里发起的、访问的 URI 等信息）一定会存在，请求和响应内容是否存在取决于审计级别。通过日志可以了解到以下内容：
+集群审计功能提供了区别于 metrics 的另一种集群观测维度。开启 TKEStack 集群审计后，**会在集群里的 tke 命名空间下生成 tke-audit-api 的 Deployment**，Kubernetes 可以记录每一次对集群操作的审计日志。每一条审计日志是一个 JSON 格式的结构化记录，包括元数据（metadata）、请求内容（requestObject）和响应内容（responseObject）三个部分。其中元数据（包含了请求的上下文信息，例如谁发起的请求、从哪里发起的、访问的 URI 等信息）一定会存在，请求和响应内容是否存在取决于审计级别。通过日志可以了解到以下内容：
 
 - 集群里发生的活动
 - 活动的发生时间及发生对象。
@@ -69,7 +69,7 @@
 
 ## 前提条件
 
->在 [Installer安装页面](../../../installation/installation-procedures.md)的控制台安装的第5步中，如下图所示，已经开启平台审计功能，并配置好 ElasticSearch：
+>在  [Installer 安装页面](../../../installation/installation-procedures.md)的控制台安装的第5步中，如下图所示，已经开启平台审计功能，并配置好 ElasticSearch：
 >![img](../../../../../images/step-5.png)
 
 ## 查看审计
@@ -78,4 +78,21 @@
   2. 切换至【平台管理】控制台，选择 【运维中心】->【审计记录】，查看审计列表：
 
      ![](../../../../../images/audit.png)
+
+## 参考
+
+TKEStack 关于审计的相关配置：
+
+```yaml
+# kube-apiserver 地址：/etc/kubernetes/manifests/kube-apiserver.yaml
+
+--audit-policy-file=/etc/kubernetes/audit-policy.yaml # 审计策略
+--audit-webhook-config-file=/etc/kubernetes/audit-api-client-config.yaml # 指定 Webhook backend 的配置文件
+
+# 获取 TKEStack 审计组件的详细信息
+kubectl describe deploy -ntke tke-audit-api 
+
+# 获取 TKEStack 审计的相关配置
+kubectl describe cm -ntke tke-audit-api 
+```
 

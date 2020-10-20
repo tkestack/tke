@@ -246,7 +246,6 @@ var deleteResourceFuncs = []deleteResourceFunc{
 	deleteTappControllers,
 	deleteClusterProvider,
 	deleteMachine,
-	deleteClusterCredential,
 }
 
 // deleteAllContent will use the client to delete each resource identified in cluster.
@@ -405,6 +404,7 @@ func deleteClusterProvider(ctx context.Context, deleter *clusterDeleter, cluster
 	return nil
 }
 
+/*
 func deleteClusterCredential(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
 	log.FromContext(ctx).Info("deleteClusterCredential doing")
 
@@ -433,6 +433,7 @@ func deleteClusterCredential(ctx context.Context, deleter *clusterDeleter, clust
 
 	return nil
 }
+*/
 
 func deleteMachine(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
 	log.FromContext(ctx).Info("deleteMachine doing")

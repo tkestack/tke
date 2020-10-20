@@ -1,32 +1,34 @@
-# How to run TKE locally
-This guide will walk you through deploying the full TKE stack on you local machine and allow you to play with the core components. It is highly recommended if you want to develop TKE and contribute regularly.
+# How to run TKEStack locally
+This guide will walk you through deploying the full TKEStack on you local machine and allow you to play with the core components. It is highly recommended if you want to develop TKEStack and contribute regularly.
 
 ## Table of Contents
 
-- [Prerequisites](#prerequisites)
-  - [OS Requirements](#os-requirements)
-  - [Docker](#docker)
-  - [etcd](#etcd)
-  - [Go](#go)
-  - [Node.js and NPM](#node-js-and-npm)
-- [Building TKE Components](#building-tke-components)
-- [Create Self-signed Certificates](#create-self-signed-certificates)
-- [Create Static Token](#create-static-token)
-- [Bootstrap TKE Core Components](#bootstrap-tke-core-components)
-  - [tke-auth-api](#tke-auth-api)
-  - [tke-auth-controller](#tke-auth-controller)
-  - [tke-platform-api](#tke-platform-api)
-  - [tke-platform-controller](#tke-platform-controller)
-  - [tke-registry-api(Optional)](#tke-registry-apioptional)
-  - [tke-business-api(Optional)](#tke-business-apioptional)
-  - [tke-business-controller(Optional)](#tke-business-controlleroptional)
-  - [tke-monitor-api(Optional)](#tke-monitor-apioptional)
-  - [tke-monitor-controller(Optional)](#tke-monitor-controlleroptional)
-  - [tke-notify-api(Optional)](#tke-notify-apioptional)
-  - [tke-notify-controller(Optional)](#tke-notify-controlleroptional)
-  - [tke-gateway](#tke-gateway)
-- [Access TKE Web UI](#access-tke-web-ui)
-- [FAQ](#faq)
+- [How to run TKEStack locally](#how-to-run-tkestack-locally)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+    - [OS Requirements](#os-requirements)
+    - [Docker](#docker)
+    - [ETCD](#ETCD)
+    - [Go](#go)
+    - [Node.js and NPM](#nodejs-and-npm)
+  - [Building TKEStack Components](#building-tkestack-components)
+  - [Create Self-signed Certificates](#create-self-signed-certificates)
+  - [Create Static Token](#create-static-token)
+  - [Bootstrap TKEStack Core Components](#bootstrap-tkestack-core-components)
+    - [tke-auth-api](#tke-auth-api)
+    - [tke-auth-controller](#tke-auth-controller)
+    - [tke-platform-api](#tke-platform-api)
+    - [tke-platform-controller](#tke-platform-controller)
+    - [tke-registry-api(Optional)](#tke-registry-apioptional)
+    - [tke-business-api(Optional)](#tke-business-apioptional)
+    - [tke-business-controller(Optional)](#tke-business-controlleroptional)
+    - [tke-monitor-api(Optional)](#tke-monitor-apioptional)
+    - [tke-monitor-controller(Optional)](#tke-monitor-controlleroptional)
+    - [tke-notify-api(Optional)](#tke-notify-apioptional)
+    - [tke-notify-controller(Optional)](#tke-notify-controlleroptional)
+    - [tke-gateway](#tke-gateway)
+  - [Access TKEStack Web UI](#access-tkestack-web-ui)
+  - [FAQ](#faq)
 
 ## Prerequisites
 
@@ -38,16 +40,15 @@ TKE requires [Docker](https://docs.docker.com/installation/#installation) versio
 run its underlying services as docker containers. Ensure the Docker daemon is working by running `docker ps` and check its version by running `docker --version`.
 
 To install Docker,
-  * **macOS:** Use either "Docker for Mac" or “docker-machine”. See instructions [here](https://docs.docker.com/docker-for-mac/).
+  * **MacOS:** Use either "Docker for Mac" or “docker-machine”. See instructions [here](https://docs.docker.com/docker-for-mac/).
   * **Linux:**  Find instructions to install Docker for your Linux OS [here](https://docs.docker.com/installation/#installation).
 
-### etcd
+### ETCD
 
-[etcd](https://github.com/etcd-io/etcd/releases) is a persistent non-sql
-database. TKE services share a running etcd as backend.
+[ETCD](https://github.com/etcd-io/etcd/releases) is a persistent non-sql database. TKEStack services share a running ETCD as backend.
 
-To install etcd,
-  * **macOS:** Install and start etcd as a local service
+To install ETCD,
+  * **MacOS:** Install and start ETCD as a local service
   ```sh
   brew install etcd
   brew services start etcd
@@ -57,16 +58,16 @@ To install etcd,
 
 ### Go
 
-TKE is written in [Go](https://golang.org). See supported version [here](development.md#go).
+TKEStack is written in [Go](https://golang.org). See supported version [here](development.md#Go).
 
-To install go,
-- For macOS users,
+To install Go:
+- For MacOS users,
   ```sh
   brew install go
   ```
 - For other users, see instructions [here](https://golang.org/doc/install).
 
-To configure go,
+To configure go:
 
 - Make sure your `$GOPATH`, `$GORROT` and `$PATH` are configured correctly
 - Add `tkestack.io` to your Go env as below.
@@ -77,20 +78,18 @@ To configure go,
 
 ### Node.js and NPM
 
-TKE requires Node.js and NPM. See [here](development.md#nodejs) for supported
-versions.
+TKEStack requires Node.js and NPM. See [here](development.md#nodejs) for supported versions.
 
-- For macOS users,
+- For macOS users:
   ```sh
   brew install nodejs
   ```
-- For other users, see instructions
- [here](https://nodejs.org/en/download/package-manager/).
+- For other users, see instructions [here](https://nodejs.org/en/download/package-manager/).
 
-## Building TKE Components
-TKE contains 11 core components, a dependency list generator and a customized installer. For detail see [here](/docs/devel/components.md).
+## Building TKEStack Components
+TKEStack contains 11 core components, a dependency list generator and a customized installer. For detail see [here](components.md).
 
-- Clone TKE Repository
+- Clone TKEStack Repository
 
   ```
   git clone --depth=1 https://github.com/tkestack/tke.git
@@ -100,27 +99,21 @@ TKE contains 11 core components, a dependency list generator and a customized in
 
 - Build binaries
 
-  Once all the dependencies and requirements have been installed and configured,
-  you can start compiling TKE on your local machine. Make sure to run it at the TKE root path.
+  Once all the dependencies and requirements have been installed and configured, you can start compiling TKEStack on your local machine. Make sure to run it at the TKEStack root path.
   ```sh
   cd tke
   make build
   ```
-
-  After the compilation is complete, you can get all the binary executables in
-the `_output/${host_os}/${host_arch}` directory.
+  
+After the compilation is complete, you can get all the binary executables in the `_output/${host_os}/${host_arch}` directory.
 
 ## Create Self-signed Certificates
 
-For security reasons, all TKE core components don't support insecure
-HTTP protocol. To enable SSL, you need to make a self-signed root
-certificate and a server certificate.
+For security reasons, all TKEStack core components don't support insecure HTTP protocol. To enable SSL, you need to make a self-signed root certificate and a server certificate.
 
-It is highly recommended to use the [mkcert](https://github.com/FiloSottile/mkcert) to
-generate certificates for developing and testing TKE, which simplifies the process to create certificates.
-see [here](https://github.com/FiloSottile/mkcert#installation) for installation guide.
+It is highly recommended to use the [mkcert](https://github.com/FiloSottile/mkcert) to generate certificates for developing and testing TKEStack, which simplifies the process to create certificates. See [here](https://github.com/FiloSottile/mkcert#installation) for installation guide.
 
-To create cert using `mkcert`,
+To create cert using `mkcert`:
 
 ```sh
 cd tke
@@ -132,7 +125,7 @@ mkcert -install
 mkcert localhost 127.0.0.1 ::1
 ```
 
-You can find your certificates at
+You can find your certificates at:
 
 ```
 _debug/certificates/
@@ -143,28 +136,27 @@ _debug/certificates/
 ```
 
 ## Create Static Token
-Create a static token to authenticate all TKE API services.
+Create a static token to authenticate all TKEStack API services.
 
 ```
 cd tke
 mkdir -p _debug
 touch _debug/token.csv
 echo 'token,admin,1,"administrator"' > _debug/token.csv
-  ```
+```
 
-## Bootstrap TKE Core Components
-This section will walk you through how to bootstrap TKE on your local machine.
+## Bootstrap TKEStack Core Components
+This section will walk you through how to bootstrap TKEStack on your local machine.
 
-TKE contains 11 core components. For detail see [here](/docs/devel/components.md). In order for all the
-services to run properly, please make sure to follow the guide below to bootstrap them in order.
+TKEStack contains 11 core components. For detail see [here](components.md). In order for all the services to run properly, please make sure to follow the guide below to bootstrap them in order.
 You could skip the optional components if it is not needed.
 
 For your convenient,
-- Run the following command in the TKE root directory
+- Run the following command in the TKEStack root directory
 - Export `${host_os}` and `${host_arch}` to your environment variables according to your
- machine. You can find it in your `tke/_output/${host_os}/${host_arch}` path.
+ machine. You can find it in your `tke/_output/${host_os}/${host_arch}`  path.
 - Export `${root_store}` to reference the path of your root certificate created by mkcert in the
-previous step. For macOS, the path is usually /Users/${username}/Library/Application Support/mkcert.
+previous step. For MacOS, the path is usually `/Users/${username}/Library/Application Support/mkcert`.
 
 ### tke-auth-api
 
@@ -925,9 +917,9 @@ previous step. For macOS, the path is usually /Users/${username}/Library/Applica
   $ _output/${host_os}/${host_arch}/tke-gateway -C _debug/gateway.json
   ```
 
-## Access TKE Web UI
+## Access TKEStack Web UI
 
-Once all the TKE services are up and running, you can access TKE Web UI from your browser:
+Once all the TKEStack services are up and running, you can access TKEStack Web UI from your browser:
   * [http://localhost:9442](http://localhost:9442)
   * [https://localhost:9441](https://localhost:9441)
 
@@ -946,6 +938,6 @@ the `tke-auth` component:
 }
 ```
 
-**> Question:** How do I find the config options of TKE services?
+**> Question:** How do I find the config options of TKEStack services?
 
-**Answer:** Instead of using `-C` to pass the configuration file to run TKE services, you can simply use `-h` to get a full list of options.
+**Answer:** Instead of using `-C` to pass the configuration file to run TKEStack services, you can simply use `-h` to get a full list of options.

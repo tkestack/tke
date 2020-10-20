@@ -22,7 +22,9 @@ type Provider interface {
 	// CreateInstances create count instances which wait they are running and return info for ssh
 	CreateInstances(count int64) ([]Instance, error)
 	// DeleteInstances delete instances
-	DeleteInstances(instanceIDs []*string) error
+	DeleteInstances(instanceIDs []string) error
+	// DeleteAllInstances delete all instances
+	DeleteAllInstances() error
 }
 
 type Instance struct {

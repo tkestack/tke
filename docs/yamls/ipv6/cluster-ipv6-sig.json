@@ -1,0 +1,30 @@
+{
+    "apiVersion": "platform.tkestack.io/v1",
+    "kind": "Cluster",
+    "spec": {
+	"hostnameAsNodename": true,
+	"displayName": "ipv6-sig",
+	"clusterCIDR": "fd00:10:16::/64",
+	"serviceCIDR": "fd00:10:96::/112",
+        "tenantID": "default",
+        "type": "Baremetal",
+        "version": "1.18.3",
+        "features": {
+	  "ipvs": false,
+	  "enableMetricsServer": false,
+	  "ipv6DualStack": false,
+	  "skipConditions": ["EnsureGalaxy"]
+	},
+        "kubeletExtraArgs": {
+           "node-ip": "240d:c000:1000:3400:0:91a2:3ff3:4b3e"
+	},
+        "machines": [
+            {
+                "ip": "240d:c000:1000:3400:0:91a2:3ff3:4b3e",
+                "port": 22,
+                "username": "root",
+                "password": "xxxxx"
+            }
+        ]
+    }
+}

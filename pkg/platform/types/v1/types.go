@@ -42,7 +42,8 @@ const (
 
 type Cluster struct {
 	*platformv1.Cluster
-	ClusterCredential *platformv1.ClusterCredential
+	ClusterCredential   *platformv1.ClusterCredential
+	IsCredentialChanged bool
 }
 
 func GetClusterByName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (*Cluster, error) {
@@ -56,6 +57,7 @@ func GetClusterByName(ctx context.Context, platformClient platformversionedclien
 func GetCluster(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*Cluster, error) {
 	result := new(Cluster)
 	result.Cluster = cluster
+	result.IsCredentialChanged = false
 	if cluster.Spec.ClusterCredentialRef != nil {
 		clusterCredential, err := platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
 		if err != nil {

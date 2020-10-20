@@ -242,3 +242,4 @@ default via 172.21.64.1 dev eth0
 192.168.64.202 dev v-hb21e7165d 
 ```
 
+Galaxy 项目请参考：[Galaxy Repository](https://github.com/tkestack/galaxy)

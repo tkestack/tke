@@ -8,7 +8,7 @@ Docker 容器的设计宗旨是让用户在相对独立的环境中运行独立�
 
 Docker 容器程序在镜像内程序运行结束后会自动退出。如果要令构建的镜像在服务中持续运行，需要在创建服务页面指定自身持续执行的程序，如：业务主程序，main 函数入口等。
 
-由于企业环境的多样性，并非所有应用都能在  DockerHub 找到对应的镜像来使用。 您可以通过以下教程了解到如何将应用打包成Docker镜像。
+由于企业环境的多样性，并非所有应用都能在  DockerHub 找到对应的镜像来使用。 您可以通过以下教程了解到如何将应用打包成 Docker 镜像。
 
 Docker 生成镜像目前有两种方式：
 
@@ -107,41 +107,41 @@ docker.io/php                                  5.6-apache          eb8333e24502 
 通过 Dockerfile 可以快速构建镜像，而通过 commit 生成镜像可以解决应用在部署过程中有大量交互内容以及难以通过 Dockerfile 构建的问题。
 
 通过 commit 构建镜像操作如下：
-1. 运行基础镜像容器，并进入console。
-```shell
-[root@VM_88_88_centos ~]# docker run -i -t centos
-[root@f5f1beda4075 /]# 
-```
-2. 安装需要的软件，并添加配置。
-```shell
-[root@f5f1beda4075 /]# yum update && yum install  openssh-server
-Loaded plugins: fastestmirror, ovl
-base                                                                                                                                                                    | 3.6 kB  00:00:00     
-extras                                                                                                                                                                  | 3.4 kB  00:00:00     
-updates                                                                                                                                                                 | 3.4 kB  00:00:00     
-(1/4): base/7/x86_64/group_gz                                                                                                                                           | 155 kB  00:00:00     
-(2/4): extras/7/x86_64/primary_db                                                                                                                                       | 166 kB  00:00:00     
-(3/4): base/7/x86_64/primary_db                                                                                                                                         | 5.3 MB  00:00:00     
-(4/4): updates/7/x86_64/primary_db 
-......
-......
-......
-Dependency Installed:
-  fipscheck.x86_64 0:1.4.1-5.el7              fipscheck-lib.x86_64 0:1.4.1-5.el7              openssh.x86_64 0:6.6.1p1-25.el7_2              tcp_wrappers-libs.x86_64 0:7.6-77.el7             
-Complete!
-```
+1. 运行基础镜像容器，并进入容器：
+	```shell
+	[root@VM_88_88_centos ~]# docker run -i -t centos
+	[root@f5f1beda4075 /]# 
+	```
+2. 安装需要的软件，并添加配置：
+	```shell
+	[root@f5f1beda4075 /]# yum update && yum install  openssh-server
+	Loaded plugins: fastestmirror, ovl
+	base                                                                                                                                                                    | 3.6 kB  00:00:00     
+	extras                                                                                                                                                                  | 3.4 kB  00:00:00     
+	updates                                                                                                                                                                 | 3.4 kB  00:00:00     
+	(1/4): base/7/x86_64/group_gz                                                                                                                                           | 155 kB  00:00:00     
+	(2/4): extras/7/x86_64/primary_db                                                                                                                                       | 166 kB  00:00:00     
+	(3/4): base/7/x86_64/primary_db                                                                                                                                         | 5.3 MB  00:00:00     
+	(4/4): updates/7/x86_64/primary_db 
+	......
+	......
+	......
+	Dependency Installed:
+	fipscheck.x86_64 0:1.4.1-5.el7              fipscheck-lib.x86_64 0:1.4.1-5.el7              openssh.x86_64 0:6.6.1p1-25.el7_2              tcp_wrappers-libs.x86_64 0:7.6-77.el7             
+	Complete!
+	```
 
-3. 配置完成后打开新终端保存该镜像。
-```
-shell
-[root@VM_88_88_centos ~]# docker ps
-CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
-f5f1beda4075        centos              "/bin/bash"         8 minutes ago       Up 8 minutes                            hungry_kare
-[root@VM_88_88_centos ~]# docker commit f5f1beda4075 test:v1.0      
-sha256:65325ffd2af9d574afca917a8ce81cf8a710e6d1067ee611a87087e1aa88e4a4
-[root@VM_88_88_centos ~]# 
-[root@VM_88_88_centos ~]# docker images
-REPOSITORY                                     TAG                 IMAGE ID            CREATED             SIZE
-test                                           v1.0                65325ffd2af9        11 seconds ago      307.8 MB
-```
+3. 配置完成后打开新终端保存该镜像：
+	```
+	shell
+	[root@VM_88_88_centos ~]# docker ps
+	CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+	f5f1beda4075        centos              "/bin/bash"         8 minutes ago       Up 8 minutes                            hungry_kare
+	[root@VM_88_88_centos ~]# docker commit f5f1beda4075 test:v1.0      
+	sha256:65325ffd2af9d574afca917a8ce81cf8a710e6d1067ee611a87087e1aa88e4a4
+	[root@VM_88_88_centos ~]# 
+	[root@VM_88_88_centos ~]# docker images
+	REPOSITORY                                     TAG                 IMAGE ID            CREATED             SIZE
+	test                                           v1.0                65325ffd2af9        11 seconds ago      307.8 MB
+	```
 
